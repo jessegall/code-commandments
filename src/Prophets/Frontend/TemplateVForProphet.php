@@ -116,78 +116,77 @@ SCRIPTURE;
         }
 
         $templateContent = $template['content'];
-        $originalTemplateContent = $templateContent;
-        $absolved = 0;
+        $penance = [];
+        $maxPasses = 10;
+        $pass = 0;
 
         // Build pattern for DOM elements with v-for
         $elementsPattern = implode('|', $this->domElements);
 
-        // Pattern to match full elements with v-for (including self-closing and normal tags)
-        // We need to handle both self-closing tags and tags with content
-        $selfClosingPattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"[^"]*"[^>]*)\s*\/>/is';
-        $openTagPattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"[^"]*"[^>]*)>/is';
+        // Multi-pass to handle nested structures
+        while ($pass < $maxPasses) {
+            // Pattern to find opening tag with v-for
+            $pattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"([^"]*)"[^>]*)(\s*\/?>)/is';
 
-        // Process self-closing tags first
-        $templateContent = preg_replace_callback(
-            $selfClosingPattern,
-            function ($matches) use (&$absolved) {
-                $tagName = $matches[1];
-                $attributes = $matches[2];
+            if (!preg_match($pattern, $templateContent, $match, PREG_OFFSET_CAPTURE)) {
+                break;
+            }
 
-                // Extract v-for and :key from attributes
-                if (preg_match('/\s+v-for\s*=\s*"([^"]*)"/', $attributes, $vForMatch)) {
-                    $vForValue = $vForMatch[1];
-                    $attributes = preg_replace('/\s+v-for\s*=\s*"[^"]*"/', '', $attributes);
+            $position = $match[0][1];
+            $fullOpenTag = $match[0][0];
+            $tagName = $match[1][0];
+            $attributes = $match[2][0];
+            $vForValue = $match[3][0];
+            $tagEnding = $match[4][0];
+            $isSelfClosing = str_ends_with(trim($tagEnding), '/>');
 
-                    $keyAttr = '';
-                    if (preg_match('/\s+:key\s*=\s*"([^"]*)"/', $attributes, $keyMatch)) {
-                        $keyAttr = ' :key="' . $keyMatch[1] . '"';
-                        $attributes = preg_replace('/\s+:key\s*=\s*"[^"]*"/', '', $attributes);
-                    }
+            // Extract :key from attributes
+            $keyAttr = '';
+            if (preg_match('/\s+:key\s*=\s*"([^"]*)"/', $attributes, $keyMatch)) {
+                $keyAttr = ' :key="' . $keyMatch[1] . '"';
+                $attributes = preg_replace('/\s+:key\s*=\s*"[^"]*"/', '', $attributes);
+            }
 
-                    $absolved++;
+            // Remove v-for from attributes
+            $attributes = preg_replace('/\s+v-for\s*=\s*"[^"]*"/', '', $attributes);
 
-                    return '<template v-for="' . $vForValue . '"' . $keyAttr . '>' .
-                        '<' . $tagName . $attributes . ' />' .
-                        '</template>';
+            if ($isSelfClosing) {
+                // Self-closing tag - simple replacement
+                $cleanElement = '<' . $tagName . $attributes . ' />';
+                $wrapped = '<template v-for="' . $vForValue . '"' . $keyAttr . '>' . $cleanElement . '</template>';
+
+                $templateContent = substr($templateContent, 0, $position) .
+                    $wrapped .
+                    substr($templateContent, $position + strlen($fullOpenTag));
+            } else {
+                // Find the matching closing tag
+                $closingTag = $this->findClosingTag($templateContent, $tagName, $position);
+
+                if ($closingTag === null) {
+                    // Can't find closing tag, skip this one
+                    $pass++;
+                    continue;
                 }
 
-                return $matches[0];
-            },
-            $templateContent
-        );
+                // Extract the full element including content
+                $elementEnd = $closingTag['end'];
+                $openTagEnd = $position + strlen($fullOpenTag);
+                $innerContent = substr($templateContent, $openTagEnd, $closingTag['start'] - $openTagEnd);
 
-        // Process tags with content (more complex - need to find matching close tag)
-        // This is a simplified version that handles single-level tags
-        $pattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"([^"]*)"[^>]*)>(.*?)<\/\1>/is';
+                // Build the wrapped element
+                $cleanElement = '<' . $tagName . $attributes . '>' . $innerContent . '</' . $tagName . '>';
+                $wrapped = '<template v-for="' . $vForValue . '"' . $keyAttr . '>' . $cleanElement . '</template>';
 
-        $templateContent = preg_replace_callback(
-            $pattern,
-            function ($matches) use (&$absolved) {
-                $tagName = $matches[1];
-                $attributes = $matches[2];
-                $vForValue = $matches[3];
-                $innerContent = $matches[4];
+                $templateContent = substr($templateContent, 0, $position) .
+                    $wrapped .
+                    substr($templateContent, $elementEnd);
+            }
 
-                // Remove v-for from attributes
-                $attributes = preg_replace('/\s+v-for\s*=\s*"[^"]*"/', '', $attributes);
+            $penance[] = "Wrapped <{$tagName}> with v-for in <template>";
+            $pass++;
+        }
 
-                $keyAttr = '';
-                if (preg_match('/\s+:key\s*=\s*"([^"]*)"/', $attributes, $keyMatch)) {
-                    $keyAttr = ' :key="' . $keyMatch[1] . '"';
-                    $attributes = preg_replace('/\s+:key\s*=\s*"[^"]*"/', '', $attributes);
-                }
-
-                $absolved++;
-
-                return '<template v-for="' . $vForValue . '"' . $keyAttr . '>' .
-                    '<' . $tagName . $attributes . '>' . $innerContent . '</' . $tagName . '>' .
-                    '</template>';
-            },
-            $templateContent
-        );
-
-        if ($templateContent === $originalTemplateContent) {
+        if (empty($penance)) {
             return RepentanceResult::unchanged();
         }
 
@@ -196,9 +195,52 @@ SCRIPTURE;
             $templateContent .
             substr($content, $template['end']);
 
-        return RepentanceResult::absolved(
-            $newContent,
-            ["{$absolved} v-for directive(s) wrapped in <template>"]
-        );
+        return RepentanceResult::absolved($newContent, $penance);
+    }
+
+    /**
+     * Find the matching closing tag for an element, properly handling nested tags.
+     */
+    protected function findClosingTag(string $content, string $tag, int $startPos): ?array
+    {
+        $openTagPattern = '/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?>|<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\s*\/>/i';
+        $closeTagPattern = '/<\/' . preg_quote($tag, '/') . '\s*>/i';
+
+        $depth = 1;
+        $pos = $startPos;
+
+        // Move past the opening tag
+        if (preg_match('/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\/?>/i', $content, $match, PREG_OFFSET_CAPTURE, $pos)) {
+            // Check if self-closing
+            if (str_ends_with(trim($match[0][0]), '/>')) {
+                return null; // Self-closing
+            }
+            $pos = $match[0][1] + strlen($match[0][0]);
+        }
+
+        while ($depth > 0 && $pos < strlen($content)) {
+            $nextOpen = preg_match($openTagPattern, $content, $openMatch, PREG_OFFSET_CAPTURE, $pos) ? $openMatch[0][1] : PHP_INT_MAX;
+            $nextClose = preg_match($closeTagPattern, $content, $closeMatch, PREG_OFFSET_CAPTURE, $pos) ? $closeMatch[0][1] : PHP_INT_MAX;
+
+            if ($nextClose === PHP_INT_MAX) {
+                return null; // No closing tag found
+            }
+
+            if ($nextOpen < $nextClose && !str_ends_with(trim($openMatch[0][0]), '/>')) {
+                $depth++;
+                $pos = $nextOpen + strlen($openMatch[0][0]);
+            } else {
+                $depth--;
+                if ($depth === 0) {
+                    return [
+                        'start' => $closeMatch[0][1],
+                        'end' => $closeMatch[0][1] + strlen($closeMatch[0][0]),
+                    ];
+                }
+                $pos = $nextClose + strlen($closeMatch[0][0]);
+            }
+        }
+
+        return null;
     }
 }

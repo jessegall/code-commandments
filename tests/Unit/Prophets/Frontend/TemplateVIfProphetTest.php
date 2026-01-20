@@ -85,4 +85,67 @@ VUE;
 
         $this->assertTrue($judgment->isRighteous());
     }
+
+    public function test_repent_wraps_v_if_in_template(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const show = ref(true)
+</script>
+
+<template>
+    <div v-if="show">Content</div>
+</template>
+VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertNotEmpty($result->penance);
+
+        // Should have template wrapper
+        $this->assertStringContainsString('<template v-if="show">', $result->newContent);
+        // Should have clean div without v-if
+        $this->assertStringContainsString('<div>Content</div>', $result->newContent);
+        // Should NOT have duplicate closing tags or leftover v-if on div
+        $this->assertStringNotContainsString('<div v-if=', $result->newContent);
+
+        // Verify the result is now righteous
+        $judgment = $this->prophet->judge('/test.vue', $result->newContent);
+        $this->assertTrue($judgment->isRighteous(), "Repented content should be righteous. Got: " . $result->newContent);
+    }
+
+    public function test_repent_does_not_leave_orphan_closing_tags(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const show = ref(true)
+</script>
+
+<template>
+    <div v-if="show">
+        <span>Inner content</span>
+    </div>
+    <p>After</p>
+</template>
+VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+
+        $this->assertTrue($result->absolved);
+
+        // Count div tags - should have equal open and close
+        $openDivCount = preg_match_all('/<div[^>]*>/', $result->newContent);
+        $closeDivCount = preg_match_all('/<\/div>/', $result->newContent);
+        $this->assertEquals($openDivCount, $closeDivCount, "Mismatched div tags in output:\n" . $result->newContent);
+
+        // Count template tags - should have equal open and close
+        $openTemplateCount = preg_match_all('/<template[^>]*>/', $result->newContent);
+        $closeTemplateCount = preg_match_all('/<\/template>/', $result->newContent);
+        $this->assertEquals($openTemplateCount, $closeTemplateCount, "Mismatched template tags in output:\n" . $result->newContent);
+
+        // Verify the result is now righteous
+        $judgment = $this->prophet->judge('/test.vue', $result->newContent);
+        $this->assertTrue($judgment->isRighteous(), "Repented content should be righteous. Got:\n" . $result->newContent);
+    }
 }

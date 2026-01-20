@@ -103,4 +103,39 @@ VUE;
         $this->assertNotEmpty($result->penance);
         $this->assertStringContainsString('<template v-for="item in items"', $result->newContent);
     }
+
+    public function test_repent_handles_nested_elements_correctly(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const items = ref([])
+</script>
+
+<template>
+    <div v-for="item in items" :key="item.id" class="outer">
+        <div class="inner">
+            {{ item.name }}
+        </div>
+        <span>After inner</span>
+    </div>
+</template>
+VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+
+        $this->assertTrue($result->absolved);
+
+        // Count div tags - should have equal open and close
+        preg_match_all('/<div[^>]*>/', $result->newContent, $openDivs);
+        preg_match_all('/<\/div>/', $result->newContent, $closeDivs);
+        $this->assertCount(
+            count($closeDivs[0]),
+            $openDivs[0],
+            "Mismatched div tags in output:\n" . $result->newContent
+        );
+
+        // Verify the result is righteous
+        $judgment = $this->prophet->judge('/test.vue', $result->newContent);
+        $this->assertTrue($judgment->isRighteous(), "Repented content should be righteous:\n" . $result->newContent);
+    }
 }
