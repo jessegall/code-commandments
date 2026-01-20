@@ -8,15 +8,13 @@ use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 
 /**
- * Components with multiple slots should have proper documentation.
+ * Components with slots must use defineSlots for type safety.
  *
- * Components that define 3+ slots should document their slot API
- * to help consumers understand how to use the component correctly.
+ * When a component defines slots in its template, it should use
+ * defineSlots to provide TypeScript typing for those slots.
  */
 class MultipleSlotDefinitionsProphet extends FrontendCommandment
 {
-    private const SLOT_THRESHOLD = 3;
-
     public function applicableExtensions(): array
     {
         return ['vue'];
@@ -24,28 +22,38 @@ class MultipleSlotDefinitionsProphet extends FrontendCommandment
 
     public function description(): string
     {
-        return 'Components with multiple slots should have proper documentation';
+        return 'Components with slots must use defineSlots for type safety';
     }
 
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-Components that define 3+ slots should document their slot API.
-This helps consumers understand how to use the component correctly.
+Components that define slots in their template should use defineSlots
+for type safety. This ensures consumers know what slots are available
+and what props each slot receives.
 
-When you have multiple slots:
-1. Consider if all slots are necessary
-2. Document each slot's purpose
-3. Consider using named slots for clarity
+Bad:
+    <template>
+      <div>
+        <slot name="header"></slot>
+        <slot></slot>
+      </div>
+    </template>
 
-Example documentation:
-    /**
-     * Card component with header, content, and footer slots
-     *
-     * @slot header - Card header content
-     * @slot default - Main card content
-     * @slot footer - Card footer with actions
-     */
+Good:
+    <script setup lang="ts">
+    defineSlots<{
+      header: () => void
+      default: () => void
+    }>()
+    </script>
+
+    <template>
+      <div>
+        <slot name="header"></slot>
+        <slot></slot>
+      </div>
+    </template>
 SCRIPTURE;
     }
 
@@ -60,32 +68,33 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        $template = $this->extractTemplate($content);
+
+        if ($template === null) {
+            return $this->skip('No template section found');
+        }
+
+        // Check if template has slot elements
+        if (!preg_match('/<slot[\s>\/]/', $template['content'])) {
+            return $this->righteous();
+        }
+
         $script = $this->extractScript($content);
 
         if ($script === null) {
             return $this->skip('No script section found');
         }
 
-        $scriptContent = $script['content'];
-
-        // Look for defineSlots usage and count slot definitions
-        if (!preg_match('/defineSlots\s*<\s*\{([^}]*)\}\s*>/', $scriptContent, $matches)) {
-            return $this->righteous();
-        }
-
-        // Count the slot definitions (each slot is a key in the type definition)
-        $slotDefinitions = $matches[1];
-        $slotCount = preg_match_all('/(\w+)\s*[:?]\s*/', $slotDefinitions);
-
-        if ($slotCount >= self::SLOT_THRESHOLD) {
-            $line = $this->getLineFromOffset($content, $script['start']);
+        // Check if defineSlots is used
+        if (!preg_match('/defineSlots\s*[<(]/', $script['content'])) {
+            $line = $this->getLineFromOffset($content, $template['start']);
 
             return $this->fallen([
                 $this->sinAt(
                     $line,
-                    "Defines {$slotCount} slots - ensure proper documentation",
+                    'Component has slots but does not use defineSlots',
                     null,
-                    'Add JSDoc documentation for each slot with @slot tags'
+                    'Add defineSlots<{ ... }>() to type your slots'
                 ),
             ]);
         }

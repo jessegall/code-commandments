@@ -17,22 +17,17 @@ class MultipleSlotDefinitionsProphetTest extends TestCase
         $this->prophet = new MultipleSlotDefinitionsProphet();
     }
 
-    public function test_detects_three_or_more_slots(): void
+    public function test_detects_missing_define_slots(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
-defineSlots<{
-  header: () => void
-  default: () => void
-  footer: () => void
-}>()
+// No defineSlots
 </script>
 
 <template>
   <div>
     <slot name="header"></slot>
     <slot></slot>
-    <slot name="footer"></slot>
   </div>
 </template>
 VUE;
@@ -43,7 +38,7 @@ VUE;
         $this->assertGreaterThan(0, $judgment->sinCount());
     }
 
-    public function test_passes_two_slots(): void
+    public function test_passes_with_define_slots(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
@@ -66,18 +61,16 @@ VUE;
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_passes_single_slot(): void
+    public function test_passes_without_slots(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
-defineSlots<{
-  default: () => void
-}>()
+// No slots, no defineSlots needed
 </script>
 
 <template>
   <div>
-    <slot></slot>
+    <p>No slots here</p>
   </div>
 </template>
 VUE;
@@ -91,18 +84,13 @@ VUE;
     {
         $content = <<<'VUE'
 <script setup lang="ts">
-defineSlots<{
-  header: () => void
-  default: () => void
-  footer: () => void
-}>()
+// No defineSlots - but this is a page, not a component
 </script>
 
 <template>
   <div>
     <slot name="header"></slot>
     <slot></slot>
-    <slot name="footer"></slot>
   </div>
 </template>
 VUE;

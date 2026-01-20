@@ -185,7 +185,7 @@ return [
 18. **DeepNestingProphet** - Thou shalt not deeply nest template elements
 19. **StyleOverridesProphet** - Thou shalt not override child component styles
 20. **ExplicitDefaultSlotProphet** - Thou shalt use explicit default slots
-21. **MultipleSlotDefinitionsProphet** - Thou shalt not define duplicate slots
+21. **MultipleSlotDefinitionsProphet** - Thou shalt type slots with defineSlots
 22. **ConditionalArrayBuildingProphet** - Thou shalt not build arrays with conditional push
 23. **SwitchCheckboxVModelProphet** - Thou shalt use v-model on Switch/Checkbox
 24. **LoopsWithIndexedStateProphet** - Review indexed state in loops (requires confession)
