@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Results\Judgment;
+
+/**
+ * {{ description }}
+ *
+ * Describe what this commandment enforces and why.
+ */
+class {{ class }} extends PhpCommandment
+{
+    public function description(): string
+    {
+        return '{{ description }}';
+    }
+
+    public function detailedDescription(): string
+    {
+        return <<<'SCRIPTURE'
+Provide a detailed explanation of this commandment here.
+
+Include:
+- What patterns are forbidden
+- Why they are problematic
+- What the correct approach is
+- Code examples
+
+Forbidden:
+```php
+// Bad code example
+```
+
+Required:
+```php
+// Good code example
+```
+SCRIPTURE;
+    }
+
+    public function requiresConfession(): bool
+    {
+        return {{ requiresConfession }};
+    }
+
+    public function judge(string $filePath, string $content): Judgment
+    {
+        $ast = $this->parse($content);
+
+        if ($ast === null) {
+            return $this->skip('Unable to parse PHP file');
+        }
+
+        // TODO: Implement your judgment logic here
+        // Use $this->sinAt() to create sins
+        // Use $this->righteous() for passing judgment
+        // Use $this->fallen() for failing judgment
+
+        $sins = [];
+
+        // Example pattern detection:
+        // $visitor = new class($sins) extends \PhpParser\NodeVisitorAbstract { ... };
+        // $this->traverse($ast, $visitor);
+
+        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+    }
+}

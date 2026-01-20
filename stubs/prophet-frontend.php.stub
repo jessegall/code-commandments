@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
+use JesseGall\CodeCommandments\Results\Judgment;
+
+/**
+ * {{ description }}
+ *
+ * Describe what this commandment enforces and why.
+ */
+class {{ class }} extends FrontendCommandment
+{
+    public function description(): string
+    {
+        return '{{ description }}';
+    }
+
+    public function detailedDescription(): string
+    {
+        return <<<'SCRIPTURE'
+Provide a detailed explanation of this commandment here.
+
+Include:
+- What patterns are forbidden
+- Why they are problematic
+- What the correct approach is
+- Code examples
+
+Forbidden:
+```vue
+<!-- Bad code example -->
+```
+
+Required:
+```vue
+<!-- Good code example -->
+```
+SCRIPTURE;
+    }
+
+    public function requiresConfession(): bool
+    {
+        return {{ requiresConfession }};
+    }
+
+    public function judge(string $filePath, string $content): Judgment
+    {
+        if ($this->shouldSkipExtension($filePath)) {
+            return $this->righteous();
+        }
+
+        // For Vue files, you can extract sections:
+        // $script = $this->extractScript($content);
+        // $template = $this->extractTemplate($content);
+        // $style = $this->extractStyle($content);
+
+        $sins = [];
+
+        // TODO: Implement your judgment logic here
+        // Use regex patterns with $this->findMatches()
+        // Use $this->sinAt() to create sins
+        // Use $this->getLineNumber() for line numbers
+
+        // Example pattern detection:
+        // $pattern = '/your-regex-here/';
+        // foreach ($this->findMatches($pattern, $content) as $match) {
+        //     $line = $this->getLineNumber($content, $match[1]);
+        //     $sins[] = $this->sinAt($line, 'Message', $this->getSnippet($content, $match[1]));
+        // }
+
+        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+    }
+}

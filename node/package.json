@@ -1,0 +1,22 @@
+{
+  "name": "code-commandments-node",
+  "version": "1.0.0",
+  "description": "Node.js AST scripts for Vue/JS/TS auto-fixing in code-commandments",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "repent-vue": "node repent-vue.js",
+    "repent-ts": "node repent-ts.js"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.23.0",
+    "@babel/traverse": "^7.23.0",
+    "@babel/generator": "^7.23.0",
+    "@babel/types": "^7.23.0",
+    "@vue/compiler-sfc": "^3.4.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

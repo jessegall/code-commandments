@@ -1,0 +1,115 @@
+<?php
+
+use JesseGall\CodeCommandments\Prophets\Backend;
+use JesseGall\CodeCommandments\Prophets\Frontend;
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Sacred Scrolls (Groups)
+    |--------------------------------------------------------------------------
+    |
+    | Define the scrolls (groups) of commandments. Each scroll contains
+    | prophets that judge specific parts of your codebase.
+    |
+    | The order of prophets in each scroll determines their commandment number.
+    | First prophet = Commandment #1, second = Commandment #2, etc.
+    |
+    */
+
+    'scrolls' => [
+        'backend' => [
+            'path' => app_path(),
+            'extensions' => ['php'],
+            'exclude' => [
+                'Console/Kernel.php',
+                'Exceptions/Handler.php',
+            ],
+            'thresholds' => [
+                'max_method_lines' => 15,
+            ],
+            'prophets' => [
+                Backend\NoRawRequestProphet::class,
+                Backend\NoJsonResponseProphet::class,
+                Backend\NoHasMethodInControllerProphet::class,
+                Backend\NoEventDispatchProphet::class,
+                Backend\NoRecordThatOutsideAggregateProphet::class,
+                Backend\NoValidatedMethodProphet::class,
+                Backend\NoInlineValidationProphet::class,
+                Backend\TypeScriptAttributeProphet::class,
+                Backend\ReadonlyDataPropertiesProphet::class,
+                Backend\FormRequestTypedGettersProphet::class,
+                Backend\HiddenAttributeProphet::class,
+                Backend\NoCustomFromModelProphet::class,
+            ],
+        ],
+
+        'frontend' => [
+            'path' => resource_path('js'),
+            'extensions' => ['vue', 'ts', 'js', 'tsx', 'jsx'],
+            'exclude' => [
+                'node_modules',
+                'dist',
+                '*.d.ts',
+            ],
+            'thresholds' => [
+                'max_vue_lines' => 200,
+                'max_ts_lines' => 300,
+                'max_nesting_depth' => 6,
+                'min_repetitions' => 3,
+            ],
+            'prophets' => [
+                Frontend\NoFetchAxiosProphet::class,
+                Frontend\TemplateVForProphet::class,
+                Frontend\TemplateVIfProphet::class,
+                Frontend\RouterHardcodedUrlsProphet::class,
+                Frontend\CompositionApiProphet::class,
+                Frontend\ArrowFunctionAssignmentsProphet::class,
+                Frontend\SwitchCaseProphet::class,
+                Frontend\LongVueFilesProphet::class,
+                Frontend\LongTsFilesProphet::class,
+                Frontend\RepeatingPatternsProphet::class,
+                Frontend\ScriptFirstProphet::class,
+                Frontend\PropsTypeScriptProphet::class,
+                Frontend\EmitsTypeScriptProphet::class,
+                Frontend\InlineEmitTransformProphet::class,
+                Frontend\InlineTypeCastingProphet::class,
+                Frontend\WatchIfPatternProphet::class,
+                Frontend\PageDataAccessProphet::class,
+                Frontend\DeepNestingProphet::class,
+                Frontend\StyleOverridesProphet::class,
+                Frontend\ExplicitDefaultSlotProphet::class,
+                Frontend\MultipleSlotDefinitionsProphet::class,
+                Frontend\ConditionalArrayBuildingProphet::class,
+                Frontend\SwitchCheckboxVModelProphet::class,
+                Frontend\LoopsWithIndexedStateProphet::class,
+                Frontend\ContentLikePropsProphet::class,
+                Frontend\InlineDialogProphet::class,
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Confession Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure how manual reviews (confessions) are tracked.
+    |
+    */
+
+    'confession' => [
+        'tablet_path' => storage_path('commandments/confessions.json'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Node.js Settings
+    |--------------------------------------------------------------------------
+    |
+    | Settings for Vue/JS/TS auto-fixing using Node.js scripts.
+    |
+    */
+
+    'node_path' => env('COMMANDMENTS_NODE_PATH', null),
+];

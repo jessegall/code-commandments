@@ -1,0 +1,47 @@
+# Dependencies
+/vendor/
+/node/node_modules/
+
+# Composer
+composer.phar
+composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+coverage.xml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Claude Code (generated per-project)
+.claude/
+CLAUDE.md
+
+# Package development
+/storage/
+*.log
+
+# Build artifacts
+/build/
+/dist/
+
+# Testing artifacts
+/tests/Fixtures/temp/
+.php-cs-fixer.cache
+phpstan.neon
+phpcs.xml
