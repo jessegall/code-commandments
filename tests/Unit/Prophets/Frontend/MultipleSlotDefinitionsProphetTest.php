@@ -21,6 +21,11 @@ class MultipleSlotDefinitionsProphetTest extends TestCase
     {
         $content = <<<'VUE'
 <script setup lang="ts">
+defineSlots<{
+  header: () => void
+  default: () => void
+  footer: () => void
+}>()
 </script>
 
 <template>
@@ -42,6 +47,10 @@ VUE;
     {
         $content = <<<'VUE'
 <script setup lang="ts">
+defineSlots<{
+  header: () => void
+  default: () => void
+}>()
 </script>
 
 <template>
@@ -61,6 +70,9 @@ VUE;
     {
         $content = <<<'VUE'
 <script setup lang="ts">
+defineSlots<{
+  default: () => void
+}>()
 </script>
 
 <template>
@@ -79,6 +91,11 @@ VUE;
     {
         $content = <<<'VUE'
 <script setup lang="ts">
+defineSlots<{
+  header: () => void
+  default: () => void
+  footer: () => void
+}>()
 </script>
 
 <template>

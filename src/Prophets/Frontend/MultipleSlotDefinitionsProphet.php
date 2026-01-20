@@ -60,21 +60,29 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        $script = $this->extractScript($content);
 
-        if ($template === null) {
-            return $this->skip('No template section found');
+        if ($script === null) {
+            return $this->skip('No script section found');
         }
 
-        $templateContent = $template['content'];
+        $scriptContent = $script['content'];
 
-        // Count slot definitions
-        $slotCount = preg_match_all('/<slot/', $templateContent);
+        // Look for defineSlots usage and count slot definitions
+        if (!preg_match('/defineSlots\s*<\s*\{([^}]*)\}\s*>/', $scriptContent, $matches)) {
+            return $this->righteous();
+        }
+
+        // Count the slot definitions (each slot is a key in the type definition)
+        $slotDefinitions = $matches[1];
+        $slotCount = preg_match_all('/(\w+)\s*[:?]\s*/', $slotDefinitions);
 
         if ($slotCount >= self::SLOT_THRESHOLD) {
+            $line = $this->getLineFromOffset($content, $script['start']);
+
             return $this->fallen([
                 $this->sinAt(
-                    1,
+                    $line,
                     "Defines {$slotCount} slots - ensure proper documentation",
                     null,
                     'Add JSDoc documentation for each slot with @slot tags'
