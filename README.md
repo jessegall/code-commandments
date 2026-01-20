@@ -95,6 +95,19 @@ php artisan make:prophet NoUnusedImports --repentable
 php artisan make:prophet ComplexLogicReview --confession
 ```
 
+### Claude Code Integration
+
+Install hooks to automatically judge your code when using Claude Code:
+
+```bash
+php artisan commandments:install-hooks
+```
+
+This will:
+- Show the scripture (commandments) when starting a Claude Code session
+- Run the judge command after Claude completes work
+- Distinguish between sins (must fix) and warnings (review and absolve)
+
 ## Configuration
 
 Configure your scrolls in `config/commandments.php`:
