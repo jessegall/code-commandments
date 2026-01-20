@@ -148,4 +148,34 @@ VUE;
         $judgment = $this->prophet->judge('/test.vue', $result->newContent);
         $this->assertTrue($judgment->isRighteous(), "Repented content should be righteous. Got:\n" . $result->newContent);
     }
+
+    public function test_repent_handles_self_closing_tags_inside_element(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const show = ref(true)
+</script>
+
+<template>
+    <div v-if="show" class="outer">
+        <div class="self-closing-1" />
+        <div class="self-closing-2" />
+        <div class="normal">Content</div>
+    </div>
+</template>
+VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+
+        $this->assertTrue($result->absolved);
+
+        // Count self-closing divs
+        preg_match_all('/<div[^>]*\/>/', $result->newContent, $selfClosingDivs);
+        $this->assertCount(2, $selfClosingDivs[0], "Should have 2 self-closing divs");
+
+        // The outer div and normal div should be properly closed
+        // Verify result is righteous
+        $judgment = $this->prophet->judge('/test.vue', $result->newContent);
+        $this->assertTrue($judgment->isRighteous(), "Should be righteous:\n" . $result->newContent);
+    }
 }

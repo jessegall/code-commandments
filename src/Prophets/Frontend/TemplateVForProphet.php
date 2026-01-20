@@ -226,10 +226,17 @@ SCRIPTURE;
                 return null; // No closing tag found
             }
 
-            if ($nextOpen < $nextClose && !str_ends_with(trim($openMatch[0][0]), '/>')) {
-                $depth++;
+            if ($nextOpen < $nextClose) {
+                // Found an open tag before the next close tag
+                $isSelfClosing = str_ends_with(trim($openMatch[0][0]), '/>');
+                if (!$isSelfClosing) {
+                    // Normal open tag - increment depth
+                    $depth++;
+                }
+                // For self-closing tags, just skip them (don't change depth)
                 $pos = $nextOpen + strlen($openMatch[0][0]);
             } else {
+                // Found a close tag
                 $depth--;
                 if ($depth === 0) {
                     return [
