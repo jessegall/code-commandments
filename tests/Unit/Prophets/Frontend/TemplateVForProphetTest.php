@@ -82,4 +82,25 @@ VUE;
 
         $this->assertTrue($judgment->isRighteous());
     }
+
+    public function test_repent_wraps_v_for_in_template(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const items = ref([])
+</script>
+
+<template>
+    <div v-for="item in items" :key="item.id">
+        {{ item.name }}
+    </div>
+</template>
+VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertNotEmpty($result->penance);
+        $this->assertStringContainsString('<template v-for="item in items"', $result->newContent);
+    }
 }

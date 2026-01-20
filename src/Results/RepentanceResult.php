@@ -62,4 +62,15 @@ final class RepentanceResult
             penance: ['No sins found to absolve'],
         );
     }
+
+    /**
+     * Create a result indicating no changes were made.
+     */
+    public static function unchanged(): self
+    {
+        return new self(
+            absolved: false,
+            failureReason: 'No changes made',
+        );
+    }
 }

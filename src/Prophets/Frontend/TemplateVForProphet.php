@@ -124,8 +124,8 @@ SCRIPTURE;
 
         // Pattern to match full elements with v-for (including self-closing and normal tags)
         // We need to handle both self-closing tags and tags with content
-        $selfClosingPattern = '/<(' . $elementsPattern . ')(\s[^>]*?\s+v-for\s*=\s*"[^"]*"[^>]*)\s*\/>/is';
-        $openTagPattern = '/<(' . $elementsPattern . ')(\s[^>]*?\s+v-for\s*=\s*"[^"]*"[^>]*)>/is';
+        $selfClosingPattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"[^"]*"[^>]*)\s*\/>/is';
+        $openTagPattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"[^"]*"[^>]*)>/is';
 
         // Process self-closing tags first
         $templateContent = preg_replace_callback(
@@ -159,7 +159,7 @@ SCRIPTURE;
 
         // Process tags with content (more complex - need to find matching close tag)
         // This is a simplified version that handles single-level tags
-        $pattern = '/<(' . $elementsPattern . ')(\s[^>]*?\s+v-for\s*=\s*"([^"]*)"[^>]*)>(.*?)<\/\1>/is';
+        $pattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"([^"]*)"[^>]*)>(.*?)<\/\1>/is';
 
         $templateContent = preg_replace_callback(
             $pattern,
@@ -198,7 +198,7 @@ SCRIPTURE;
 
         return RepentanceResult::absolved(
             $newContent,
-            "{$absolved} v-for directive(s) wrapped in <template>"
+            ["{$absolved} v-for directive(s) wrapped in <template>"]
         );
     }
 }
