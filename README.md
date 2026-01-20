@@ -153,12 +153,12 @@ return [
 1. **NoRawRequestProphet** - Thou shalt not access raw request data
 2. **NoJsonResponseProphet** - Thou shalt not return raw JSON responses
 3. **NoHasMethodInControllerProphet** - Thou shalt not use has() in controllers
-4. **NoEventDispatchProphet** - Thou shalt not dispatch events in controllers
+4. **NoEventDispatchProphet** - Thou shalt use event() helper for dispatching
 5. **NoRecordThatOutsideAggregateProphet** - Thou shalt not use recordThat() outside aggregates
 6. **NoValidatedMethodProphet** - Thou shalt not use validated() method
 7. **NoInlineValidationProphet** - Thou shalt not use inline validation
 8. **TypeScriptAttributeProphet** - Thou shalt use #[TypeScript] on Resources
-9. **ReadonlyDataPropertiesProphet** - Thou shalt use readonly in Data classes
+9. **ReadonlyDataPropertiesProphet** - Thou shalt not declare readonly properties in Data class body
 10. **FormRequestTypedGettersProphet** - Thou shalt use typed getters in FormRequest
 11. **HiddenAttributeProphet** - Thou shalt hide sensitive model attributes
 12. **NoCustomFromModelProphet** - Thou shalt not use custom fromModel methods
@@ -166,31 +166,32 @@ return [
 ### Frontend (Vue/TypeScript)
 
 1. **NoFetchAxiosProphet** - Thou shalt not use fetch() or axios directly
-2. **TemplateVForProphet** - Thou shalt use :key with v-for
-3. **TemplateVIfProphet** - Thou shalt not use v-if with v-for
-4. **RouterHardcodedUrlsProphet** - Thou shalt not hardcode URLs
-5. **CompositionApiProphet** - Thou shalt use Composition API
-6. **ArrowFunctionAssignmentsProphet** - Thou shalt use const arrow functions
-7. **SwitchCaseProphet** - Thou shalt not use switch statements
-8. **LongVueFilesProphet** - Thou shalt keep Vue files concise
-9. **LongTsFilesProphet** - Thou shalt keep TypeScript files concise
-10. **RepeatingPatternsProphet** - Thou shalt not repeat template patterns
-11. **ScriptFirstProphet** - Thou shalt put script before template
-12. **PropsTypeScriptProphet** - Thou shalt type props with TypeScript
-13. **EmitsTypeScriptProphet** - Thou shalt type emits with TypeScript
-14. **InlineEmitTransformProphet** - Thou shalt not transform data in emit handlers
-15. **InlineTypeCastingProphet** - Thou shalt not type cast in templates
-16. **WatchIfPatternProphet** - Thou shalt not use watch with if conditions
-17. **PageDataAccessProphet** - Thou shalt use typed page props
-18. **DeepNestingProphet** - Thou shalt not deeply nest template elements
-19. **StyleOverridesProphet** - Thou shalt not override child component styles
-20. **ExplicitDefaultSlotProphet** - Thou shalt use explicit default slots
-21. **MultipleSlotDefinitionsProphet** - Thou shalt type slots with defineSlots
-22. **ConditionalArrayBuildingProphet** - Thou shalt not build arrays with conditional push
-23. **SwitchCheckboxVModelProphet** - Thou shalt use v-model on Switch/Checkbox
-24. **LoopsWithIndexedStateProphet** - Review indexed state in loops (requires confession)
-25. **ContentLikePropsProphet** - Review content-like props (requires confession)
-26. **InlineDialogProphet** - Review inline dialog definitions (requires confession)
+2. **TemplateVForProphet** - Thou shalt wrap v-for in template elements
+3. **TemplateVIfProphet** - Thou shalt wrap v-if/v-else in template elements
+4. **RouterHardcodedUrlsProphet** - Thou shalt not hardcode URLs in router calls
+5. **WayfinderRoutesProphet** - Thou shalt not hardcode URLs in href attributes
+6. **CompositionApiProphet** - Thou shalt use Composition API
+7. **ArrowFunctionAssignmentsProphet** - Thou shalt use const arrow functions
+8. **SwitchCaseProphet** - Thou shalt not use switch statements
+9. **LongVueFilesProphet** - Thou shalt keep Vue files concise
+10. **LongTsFilesProphet** - Thou shalt keep TypeScript files concise
+11. **RepeatingPatternsProphet** - Thou shalt not repeat template patterns
+12. **ScriptFirstProphet** - Thou shalt put script before template
+13. **PropsTypeScriptProphet** - Thou shalt type props with TypeScript
+14. **EmitsTypeScriptProphet** - Thou shalt type emits with TypeScript
+15. **InlineEmitTransformProphet** - Thou shalt not transform data in emit handlers
+16. **InlineTypeCastingProphet** - Thou shalt not type cast in templates
+17. **WatchIfPatternProphet** - Thou shalt not use watch with if conditions
+18. **PageDataAccessProphet** - Thou shalt use typed page props
+19. **DeepNestingProphet** - Thou shalt not deeply nest template elements
+20. **StyleOverridesProphet** - Thou shalt not override child component styles
+21. **ExplicitDefaultSlotProphet** - Thou shalt use explicit default slots
+22. **MultipleSlotDefinitionsProphet** - Thou shalt type slots with defineSlots
+23. **ConditionalArrayBuildingProphet** - Consider disabled flags pattern for array building
+24. **SwitchCheckboxVModelProphet** - Thou shalt use v-model on Switch/Checkbox
+25. **LoopsWithIndexedStateProphet** - Review indexed state in loops (requires confession)
+26. **ContentLikePropsProphet** - Review content-like props (requires confession)
+27. **InlineDialogProphet** - Review inline dialog definitions (requires confession)
 
 ## Creating Custom Prophets
 
