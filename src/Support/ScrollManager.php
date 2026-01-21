@@ -69,6 +69,55 @@ class ScrollManager
     }
 
     /**
+     * Judge specific files in a scroll.
+     *
+     * @param  array<string>  $filePaths
+     * @return Collection<string, Collection<string, Judgment>>
+     */
+    public function judgeFiles(string $scroll, array $filePaths): Collection
+    {
+        $config = $this->registry->getScrollConfig($scroll);
+        $extensions = $config['extensions'] ?? [];
+
+        $prophets = $this->registry->getProphets($scroll);
+        $results = collect();
+
+        foreach ($filePaths as $filePath) {
+            if (!file_exists($filePath)) {
+                continue;
+            }
+
+            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+            if (!empty($extensions) && !in_array($extension, $extensions, true)) {
+                continue;
+            }
+
+            $content = file_get_contents($filePath);
+
+            if ($content === false) {
+                continue;
+            }
+
+            $fileResults = collect();
+
+            foreach ($prophets as $prophet) {
+                if (!$this->isProphetApplicable($prophet, $filePath)) {
+                    continue;
+                }
+
+                $judgment = $prophet->judge($filePath, $content);
+                $fileResults->put(get_class($prophet), $judgment);
+            }
+
+            if ($fileResults->isNotEmpty()) {
+                $results->put($filePath, $fileResults);
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * Judge a specific file against all applicable prophets in a scroll.
      *
      * @return Collection<string, Judgment>

@@ -21,6 +21,7 @@ class JudgeCommand extends Command
         {--scroll= : Filter by specific scroll (group)}
         {--prophet= : Summon a specific prophet by name}
         {--file= : Judge a specific file}
+        {--git : Only judge files that are new or changed in git}
         {--absolve : Mark files as absolved after confession (manual review)}
         {--summary : Show summary output only (for hooks)}';
 
@@ -34,8 +35,19 @@ class JudgeCommand extends Command
         $scrollFilter = $this->option('scroll');
         $prophetFilter = $this->option('prophet');
         $fileFilter = $this->option('file');
+        $gitMode = $this->option('git');
         $shouldAbsolve = $this->option('absolve');
         $summaryMode = $this->option('summary');
+
+        $gitFiles = $gitMode ? $this->getGitChangedFiles() : [];
+
+        if ($gitMode && empty($gitFiles)) {
+            if (!$summaryMode) {
+                $this->info('No new or changed files found in git.');
+            }
+
+            return self::SUCCESS;
+        }
 
         if (!$summaryMode) {
             $this->output->writeln('<fg=yellow>');
@@ -73,6 +85,11 @@ class JudgeCommand extends Command
             if ($fileFilter) {
                 $results = $manager->judgeFile($scroll, $fileFilter);
                 $results = collect([$fileFilter => $results]);
+            } elseif ($gitMode) {
+                if (empty($gitFiles)) {
+                    continue;
+                }
+                $results = $manager->judgeFiles($scroll, $gitFiles);
             } else {
                 $results = $manager->judgeScroll($scroll);
             }
@@ -258,5 +275,48 @@ class JudgeCommand extends Command
                 $this->output->writeln("  <fg=gray>{$line}</>");
             }
         }
+    }
+
+    /**
+     * Get files that are new or changed in git.
+     *
+     * @return array<string>
+     */
+    private function getGitChangedFiles(): array
+    {
+        $basePath = base_path();
+        $files = [];
+
+        // Get modified and staged files (tracked files with changes)
+        $diffOutput = shell_exec('git diff --name-only HEAD 2>/dev/null');
+        if ($diffOutput) {
+            foreach (explode("\n", trim($diffOutput)) as $file) {
+                if ($file !== '') {
+                    $files[] = $basePath.'/'.$file;
+                }
+            }
+        }
+
+        // Get staged files (in case they're not in the diff against HEAD)
+        $stagedOutput = shell_exec('git diff --name-only --cached 2>/dev/null');
+        if ($stagedOutput) {
+            foreach (explode("\n", trim($stagedOutput)) as $file) {
+                if ($file !== '') {
+                    $files[] = $basePath.'/'.$file;
+                }
+            }
+        }
+
+        // Get untracked files (new files not yet added to git)
+        $untrackedOutput = shell_exec('git ls-files --others --exclude-standard 2>/dev/null');
+        if ($untrackedOutput) {
+            foreach (explode("\n", trim($untrackedOutput)) as $file) {
+                if ($file !== '') {
+                    $files[] = $basePath.'/'.$file;
+                }
+            }
+        }
+
+        return array_unique($files);
     }
 }
