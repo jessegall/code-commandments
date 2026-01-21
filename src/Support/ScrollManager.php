@@ -78,12 +78,21 @@ class ScrollManager
     {
         $config = $this->registry->getScrollConfig($scroll);
         $extensions = $config['extensions'] ?? [];
+        $excludePaths = $config['exclude'] ?? [];
+
+        // Common directories to always exclude
+        $defaultExcludes = ['vendor', 'node_modules', 'storage', '.git', 'bootstrap/cache'];
 
         $prophets = $this->registry->getProphets($scroll);
         $results = collect();
 
         foreach ($filePaths as $filePath) {
             if (!file_exists($filePath)) {
+                continue;
+            }
+
+            // Check if file is in an excluded path
+            if ($this->isExcluded($filePath, $excludePaths, $defaultExcludes)) {
                 continue;
             }
 
@@ -203,6 +212,32 @@ class ScrollManager
         $applicableExtensions = $prophet->applicableExtensions();
 
         return empty($applicableExtensions) || in_array($extension, $applicableExtensions, true);
+    }
+
+    /**
+     * Check if a file path should be excluded.
+     *
+     * @param  array<string>  $excludePaths
+     * @param  array<string>  $defaultExcludes
+     */
+    protected function isExcluded(string $filePath, array $excludePaths, array $defaultExcludes): bool
+    {
+        // Check default excludes (directory names)
+        foreach ($defaultExcludes as $exclude) {
+            if (str_contains($filePath, DIRECTORY_SEPARATOR.$exclude.DIRECTORY_SEPARATOR) ||
+                str_contains($filePath, '/'.$exclude.'/')) {
+                return true;
+            }
+        }
+
+        // Check configured exclude paths
+        foreach ($excludePaths as $excludePath) {
+            if (str_contains($filePath, $excludePath)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
