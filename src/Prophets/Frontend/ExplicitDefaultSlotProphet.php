@@ -28,10 +28,13 @@ class ExplicitDefaultSlotProphet extends FrontendCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-When a component uses named slots, also use explicit <template #default>
-for default slot content instead of implicit content.
+When using more than one slot, use explicit <template #default> for default content.
 
-Bad:
+If only ONE slot is used (just default, or just one named slot), no explicit
+#default is required. But when combining named slots with default content,
+make the default explicit.
+
+Bad (named slot + implicit default = 2 slots):
     <Card>
         <template #header>Title</template>
         Content here without explicit default slot
@@ -43,6 +46,15 @@ Good:
         <template #default>
             Content here with explicit default slot
         </template>
+    </Card>
+
+Also fine (only one slot used):
+    <Card>
+        <template #header>Title</template>
+    </Card>
+
+    <Card>
+        Just default content, no named slots
     </Card>
 
 This makes the slot usage explicit and easier to understand.
@@ -63,19 +75,21 @@ SCRIPTURE;
 
         $templateContent = $template['content'];
 
-        // Check if file uses named slots
-        $hasNamedSlots = preg_match_all('/<template #[a-zA-Z]/', $templateContent);
-        $hasDefaultSlot = preg_match('/<template #default/', $templateContent);
+        // Count named slots (excluding #default)
+        $namedSlotCount = preg_match_all('/<template\s+#(?!default)[a-zA-Z]/', $templateContent);
+        $hasExplicitDefault = preg_match('/<template\s+#default/', $templateContent);
 
-        if ($hasNamedSlots > 0 && !$hasDefaultSlot) {
-            // Check if there's content that's not in a slot
+        // If there are named slots and implicit default content (not wrapped in #default),
+        // that means more than one slot is being used, so #default should be explicit
+        if ($namedSlotCount >= 1 && !$hasExplicitDefault) {
+            // Check if there's content that's not in a template slot
             // This is a heuristic - check for text content between component tags
             if (preg_match('/>\s*[^<\s]/', $templateContent)) {
                 return Judgment::withWarnings([
                     $this->warningAt(
                         1,
-                        "Has {$hasNamedSlots} named slot(s) but no <template #default>",
-                        'Use explicit <template #default> for default slot content'
+                        'Using named slot(s) with implicit default content',
+                        'Use explicit <template #default> when using more than one slot'
                     ),
                 ]);
             }
