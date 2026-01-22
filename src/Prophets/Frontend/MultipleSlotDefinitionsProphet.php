@@ -28,31 +28,35 @@ class MultipleSlotDefinitionsProphet extends FrontendCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-Components that define slots in their template should use defineSlots
-for type safety. This ensures consumers know what slots are available
-and what props each slot receives.
+Components with scoped slots (slots that pass props) should use defineSlots
+for type safety. This ensures consumers know what props each slot receives.
 
-Bad:
+Simple slots without props don't require defineSlots.
+
+Bad (scoped slot without defineSlots):
     <template>
-      <div>
-        <slot name="header"></slot>
-        <slot></slot>
+      <div v-for="item in items">
+        <slot name="item" :item="item" :index="i"></slot>
       </div>
     </template>
 
 Good:
     <script setup lang="ts">
     defineSlots<{
-      header: () => void
-      default: () => void
+      item: (props: { item: Item; index: number }) => void
     }>()
     </script>
 
     <template>
-      <div>
-        <slot name="header"></slot>
-        <slot></slot>
+      <div v-for="item in items">
+        <slot name="item" :item="item" :index="i"></slot>
       </div>
+    </template>
+
+Fine (simple slots, no props passed):
+    <template>
+      <slot name="header"></slot>
+      <slot></slot>
     </template>
 SCRIPTURE;
     }
@@ -74,8 +78,9 @@ SCRIPTURE;
             return $this->skip('No template section found');
         }
 
-        // Check if template has slot elements
-        if (!preg_match('/<slot[\s>\/]/', $template['content'])) {
+        // Check if template has scoped slots (slots with bound props like :item="item" or v-bind)
+        // Simple slots without props don't need defineSlots
+        if (!$this->hasScopedSlots($template['content'])) {
             return $this->righteous();
         }
 
@@ -92,13 +97,23 @@ SCRIPTURE;
             return $this->fallen([
                 $this->sinAt(
                     $line,
-                    'Component has slots but does not use defineSlots',
+                    'Component has scoped slots but does not use defineSlots',
                     null,
-                    'Add defineSlots<{ ... }>() to type your slots'
+                    'Add defineSlots<{ ... }>() to type your scoped slot props'
                 ),
             ]);
         }
 
         return $this->righteous();
+    }
+
+    /**
+     * Check if template has scoped slots (slots with bound properties).
+     */
+    private function hasScopedSlots(string $templateContent): bool
+    {
+        // Match <slot with bound props like :prop="value" or v-bind:prop="value" or v-bind="obj"
+        // But not just <slot> or <slot name="foo">
+        return (bool) preg_match('/<slot[^>]*\s(:[a-zA-Z]|v-bind)[^>]*>/', $templateContent);
     }
 }

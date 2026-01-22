@@ -17,7 +17,7 @@ class MultipleSlotDefinitionsProphetTest extends TestCase
         $this->prophet = new MultipleSlotDefinitionsProphet();
     }
 
-    public function test_detects_missing_define_slots(): void
+    public function test_detects_missing_define_slots_for_scoped_slots(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
@@ -25,14 +25,13 @@ class MultipleSlotDefinitionsProphetTest extends TestCase
 </script>
 
 <template>
-  <div>
-    <slot name="header"></slot>
-    <slot></slot>
+  <div v-for="(item, i) in items">
+    <slot name="item" :item="item" :index="i"></slot>
   </div>
 </template>
 VUE;
 
-        $judgment = $this->prophet->judge('/components/Card.vue', $content);
+        $judgment = $this->prophet->judge('/components/List.vue', $content);
 
         $this->assertTrue($judgment->isFallen());
         $this->assertGreaterThan(0, $judgment->sinCount());
@@ -43,9 +42,28 @@ VUE;
         $content = <<<'VUE'
 <script setup lang="ts">
 defineSlots<{
-  header: () => void
-  default: () => void
+  item: (props: { item: Item; index: number }) => void
 }>()
+</script>
+
+<template>
+  <div v-for="(item, i) in items">
+    <slot name="item" :item="item" :index="i"></slot>
+  </div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/components/List.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_simple_slots_without_define_slots(): void
+    {
+        // Simple slots (without props) don't need defineSlots
+        $content = <<<'VUE'
+<script setup lang="ts">
+// No defineSlots needed for simple slots
 </script>
 
 <template>
