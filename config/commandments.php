@@ -45,6 +45,7 @@ return [
                 Backend\NoCustomFromModelProphet::class,
                 Backend\ControllerPrivateMethodsProphet::class,
                 Backend\KebabCaseRoutesProphet::class,
+                Backend\ConstructorDependencyInjectionProphet::class,
             ],
         ],
 

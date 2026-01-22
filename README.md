@@ -172,6 +172,7 @@ return [
 12. **NoCustomFromModelProphet** - Thou shalt not use custom fromModel methods
 13. **ControllerPrivateMethodsProphet** - Thou shalt not have too many private methods in controllers
 14. **KebabCaseRoutesProphet** - Thou shalt use kebab-case for route URIs
+15. **ConstructorDependencyInjectionProphet** - Thou shalt inject dependencies via constructor
 
 ### Frontend (Vue/TypeScript)
 
