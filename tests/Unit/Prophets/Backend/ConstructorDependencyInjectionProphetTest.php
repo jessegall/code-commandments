@@ -17,7 +17,7 @@ class ConstructorDependencyInjectionProphetTest extends TestCase
         $this->prophet = new ConstructorDependencyInjectionProphet();
     }
 
-    public function test_detects_service_in_method(): void
+    public function test_detects_non_model_non_request_dependency(): void
     {
         $content = <<<'PHP'
 <?php
@@ -42,36 +42,14 @@ PHP;
         $this->assertStringContainsString('constructor', $judgment->sins[0]->suggestion);
     }
 
-    public function test_detects_repository_in_method(): void
-    {
-        $content = <<<'PHP'
-<?php
-namespace App\Http\Controllers;
-
-use App\Repositories\UserRepository;
-use Illuminate\Routing\Controller;
-
-class UserController extends Controller
-{
-    public function index(UserRepository $repository)
-    {
-        return $repository->all();
-    }
-}
-PHP;
-
-        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
-
-        $this->assertTrue($judgment->isFallen());
-        $this->assertStringContainsString('UserRepository', $judgment->sins[0]->message);
-    }
-
     public function test_detects_multiple_dependencies(): void
     {
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
 
+use App\Services\UserService;
+use App\Handlers\NotificationHandler;
 use Illuminate\Routing\Controller;
 
 class UserController extends Controller
@@ -117,7 +95,7 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_allows_request_in_method(): void
+    public function test_allows_illuminate_request_in_method(): void
     {
         $content = <<<'PHP'
 <?php
@@ -140,8 +118,9 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_allows_form_request_in_method(): void
+    public function test_allows_custom_request_in_method_by_name(): void
     {
+        // Custom requests that don't exist will be allowed based on name ending in "Request"
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
@@ -163,20 +142,21 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_allows_model_binding_in_method(): void
+    public function test_allows_eloquent_model_in_method(): void
     {
+        // Uses real Eloquent Model for reflection
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Controller;
 
 class UserController extends Controller
 {
-    public function show(User $user)
+    public function show(Model $model)
     {
-        return $user;
+        return $model;
     }
 }
 PHP;
@@ -186,60 +166,13 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_allows_multiple_model_bindings(): void
-    {
-        $content = <<<'PHP'
-<?php
-namespace App\Http\Controllers;
-
-use App\Models\User;
-use App\Models\Post;
-use Illuminate\Routing\Controller;
-
-class PostController extends Controller
-{
-    public function show(User $user, Post $post)
-    {
-        return $post;
-    }
-}
-PHP;
-
-        $judgment = $this->prophet->judge('/app/Http/Controllers/PostController.php', $content);
-
-        $this->assertTrue($judgment->isRighteous());
-    }
-
-    public function test_detects_various_dependency_types(): void
-    {
-        $content = <<<'PHP'
-<?php
-namespace App\Http\Controllers;
-
-use Illuminate\Routing\Controller;
-
-class TestController extends Controller
-{
-    public function a(UserFactory $factory) {}
-    public function b(OrderBuilder $builder) {}
-    public function c(PaymentHandler $handler) {}
-    public function d(CacheManager $manager) {}
-    public function e(EventDispatcher $dispatcher) {}
-}
-PHP;
-
-        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
-
-        $this->assertTrue($judgment->isFallen());
-        $this->assertEquals(5, $judgment->sinCount());
-    }
-
     public function test_ignores_private_methods(): void
     {
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
 
+use App\Services\UserService;
 use Illuminate\Routing\Controller;
 
 class UserController extends Controller
@@ -267,6 +200,7 @@ PHP;
 <?php
 namespace App\Http\Controllers;
 
+use App\Services\UserService;
 use Illuminate\Routing\Controller;
 
 class UserController extends Controller
@@ -291,7 +225,7 @@ namespace App\Services;
 
 class UserService
 {
-    public function create(UserRepository $repository)
+    public function create(SomeRepository $repository)
     {
         return $repository->create();
     }
@@ -309,6 +243,7 @@ PHP;
 <?php
 namespace App\Http\Controllers;
 
+use App\Services\UserService;
 use Illuminate\Routing\Controller;
 
 class UserController extends Controller
@@ -348,13 +283,14 @@ PHP;
         $this->assertTrue($judgment->isFallen());
     }
 
-    public function test_combined_request_and_service(): void
+    public function test_combined_request_and_dependency(): void
     {
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
+use App\Services\UserService;
 use Illuminate\Routing\Controller;
 
 class UserController extends Controller
@@ -371,6 +307,28 @@ PHP;
         $this->assertTrue($judgment->isFallen());
         $this->assertEquals(1, $judgment->sinCount());
         $this->assertStringContainsString('UserService', $judgment->sins[0]->message);
+    }
+
+    public function test_ignores_scalar_types(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use Illuminate\Routing\Controller;
+
+class UserController extends Controller
+{
+    public function show(string $id, int $page, ?array $filters)
+    {
+        return $id;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isRighteous());
     }
 
     public function test_provides_helpful_descriptions(): void

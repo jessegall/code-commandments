@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use PhpParser\Node;
+use ReflectionClass;
 
 /**
  * Controller dependencies should be injected via constructor, not methods.
@@ -17,47 +18,10 @@ use PhpParser\Node;
  */
 class ConstructorDependencyInjectionProphet extends PhpCommandment
 {
-    /**
-     * Type suffixes that indicate a service/dependency that should be constructor-injected.
-     */
-    private const DEPENDENCY_SUFFIXES = [
-        'Service',
-        'Repository',
-        'Factory',
-        'Builder',
-        'Handler',
-        'Manager',
-        'Provider',
-        'Client',
-        'Gateway',
-        'Adapter',
-        'Helper',
-        'Processor',
-        'Validator',
-        'Resolver',
-        'Generator',
-        'Writer',
-        'Reader',
-        'Parser',
-        'Formatter',
-        'Transformer',
-        'Calculator',
-        'Notifier',
-        'Dispatcher',
-        'Registry',
-        'Cache',
-        'Logger',
-        'Mailer',
-    ];
+    /** @var array<string, string> */
+    private array $useStatements = [];
 
-    /**
-     * Types that are allowed in method signatures (not dependencies).
-     */
-    private const ALLOWED_METHOD_TYPES = [
-        'Request',
-        'FormRequest',
-        'ServerRequest',
-    ];
+    private ?string $currentNamespace = null;
 
     public function description(): string
     {
@@ -107,6 +71,10 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        // Extract use statements and namespace for resolving FQCNs
+        $this->useStatements = $this->extractUseStatements($ast);
+        $this->currentNamespace = $this->getNamespace($ast);
+
         $sins = [];
         $classes = $this->findNodes($ast, Node\Stmt\Class_::class);
 
@@ -138,6 +106,38 @@ SCRIPTURE;
     }
 
     /**
+     * Extract use statements from AST.
+     *
+     * @return array<string, string> Short name => FQCN
+     */
+    private function extractUseStatements(array $ast): array
+    {
+        $uses = [];
+
+        foreach ($ast as $node) {
+            if ($node instanceof Node\Stmt\Namespace_) {
+                foreach ($node->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Use_) {
+                        foreach ($stmt->uses as $use) {
+                            $fqcn = $use->name->toString();
+                            $alias = $use->alias?->toString() ?? $use->name->getLast();
+                            $uses[$alias] = $fqcn;
+                        }
+                    }
+                }
+            } elseif ($node instanceof Node\Stmt\Use_) {
+                foreach ($node->uses as $use) {
+                    $fqcn = $use->name->toString();
+                    $alias = $use->alias?->toString() ?? $use->name->getLast();
+                    $uses[$alias] = $fqcn;
+                }
+            }
+        }
+
+        return $uses;
+    }
+
+    /**
      * Find dependencies in method parameters that should be constructor-injected.
      *
      * @return array<array{type: string, name: string}>
@@ -157,23 +157,24 @@ SCRIPTURE;
                 continue;
             }
 
-            // Skip allowed types (Request, FormRequest, etc.)
-            if ($this->isAllowedMethodType($typeName)) {
+            // Skip scalar types
+            if ($this->isScalarType($typeName)) {
                 continue;
             }
 
-            // Skip likely route model binding (models don't typically end with dependency suffixes)
-            if ($this->isLikelyModelBinding($typeName)) {
+            // Resolve to FQCN
+            $fqcn = $this->resolveFullyQualifiedName($typeName);
+
+            // Skip if it's a Request or Model
+            if ($this->isRequestType($fqcn) || $this->isModelType($fqcn)) {
                 continue;
             }
 
-            // Check if it looks like a dependency (Service, Repository, etc.)
-            if ($this->isDependencyType($typeName)) {
-                $dependencies[] = [
-                    'type' => $typeName,
-                    'name' => $param->var->name,
-                ];
-            }
+            // It's a dependency that should be constructor-injected
+            $dependencies[] = [
+                'type' => $typeName,
+                'name' => $param->var->name,
+            ];
         }
 
         return $dependencies;
@@ -196,39 +197,87 @@ SCRIPTURE;
         return null;
     }
 
-    private function isAllowedMethodType(string $typeName): bool
+    private function isScalarType(string $typeName): bool
     {
-        $shortName = $this->getShortClassName($typeName);
-
-        foreach (self::ALLOWED_METHOD_TYPES as $allowed) {
-            if ($shortName === $allowed || str_ends_with($shortName, $allowed)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array(strtolower($typeName), [
+            'string', 'int', 'float', 'bool', 'array', 'object',
+            'mixed', 'null', 'void', 'never', 'callable', 'iterable',
+        ], true);
     }
 
-    private function isLikelyModelBinding(string $typeName): bool
+    /**
+     * Resolve a type name to its fully qualified class name.
+     */
+    private function resolveFullyQualifiedName(string $typeName): string
     {
-        $shortName = $this->getShortClassName($typeName);
-
-        // If it doesn't end with a dependency suffix, it's likely a model
-        // Models are typically simple names like User, Order, Product
-        return !$this->isDependencyType($typeName);
-    }
-
-    private function isDependencyType(string $typeName): bool
-    {
-        $shortName = $this->getShortClassName($typeName);
-
-        foreach (self::DEPENDENCY_SUFFIXES as $suffix) {
-            if (str_ends_with($shortName, $suffix)) {
-                return true;
-            }
+        // Already fully qualified
+        if (str_starts_with($typeName, '\\')) {
+            return ltrim($typeName, '\\');
         }
 
-        return false;
+        // Check use statements
+        $parts = explode('\\', $typeName);
+        $firstPart = $parts[0];
+
+        if (isset($this->useStatements[$firstPart])) {
+            if (count($parts) === 1) {
+                return $this->useStatements[$firstPart];
+            }
+            // Partial match - replace first part with use statement
+            $parts[0] = $this->useStatements[$firstPart];
+
+            return implode('\\', $parts);
+        }
+
+        // Assume same namespace
+        if ($this->currentNamespace) {
+            return $this->currentNamespace.'\\'.$typeName;
+        }
+
+        return $typeName;
+    }
+
+    /**
+     * Check if the type is a Request type (allowed in methods).
+     */
+    private function isRequestType(string $fqcn): bool
+    {
+        if (!class_exists($fqcn)) {
+            // Fall back to name-based check if class doesn't exist
+            $shortName = $this->getShortClassName($fqcn);
+
+            return str_ends_with($shortName, 'Request');
+        }
+
+        try {
+            $reflection = new ReflectionClass($fqcn);
+
+            // Check if it's a Request or FormRequest
+            return $reflection->isSubclassOf('Illuminate\\Http\\Request')
+                || $reflection->getName() === 'Illuminate\\Http\\Request';
+        } catch (\ReflectionException) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if the type is an Eloquent Model (allowed in methods for route model binding).
+     */
+    private function isModelType(string $fqcn): bool
+    {
+        if (!class_exists($fqcn)) {
+            // Can't determine - assume it's NOT a model (safer to flag it)
+            return false;
+        }
+
+        try {
+            $reflection = new ReflectionClass($fqcn);
+
+            return $fqcn === 'Illuminate\\Database\\Eloquent\\Model'
+                || $reflection->isSubclassOf('Illuminate\\Database\\Eloquent\\Model');
+        } catch (\ReflectionException) {
+            return false;
+        }
     }
 
     private function getShortClassName(string $typeName): string
