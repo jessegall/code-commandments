@@ -127,6 +127,8 @@ return [
             'exclude' => ['Console/Kernel.php'],
             'thresholds' => [
                 'max_method_lines' => 15,
+                'max_private_methods' => 3,  // For ControllerPrivateMethodsProphet
+                'min_method_lines' => 3,     // Minimum lines for a method to count
             ],
             'prophets' => [
                 \JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet::class,
@@ -168,6 +170,8 @@ return [
 10. **FormRequestTypedGettersProphet** - Thou shalt use typed getters in FormRequest
 11. **HiddenAttributeProphet** - Thou shalt hide sensitive model attributes
 12. **NoCustomFromModelProphet** - Thou shalt not use custom fromModel methods
+13. **ControllerPrivateMethodsProphet** - Thou shalt not have too many private methods in controllers
+14. **KebabCaseRoutesProphet** - Thou shalt use kebab-case for route URIs
 
 ### Frontend (Vue/TypeScript)
 

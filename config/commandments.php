@@ -27,6 +27,8 @@ return [
             ],
             'thresholds' => [
                 'max_method_lines' => 15,
+                'max_private_methods' => 3,
+                'min_method_lines' => 3,
             ],
             'prophets' => [
                 Backend\NoRawRequestProphet::class,
@@ -41,6 +43,8 @@ return [
                 Backend\FormRequestTypedGettersProphet::class,
                 Backend\HiddenAttributeProphet::class,
                 Backend\NoCustomFromModelProphet::class,
+                Backend\ControllerPrivateMethodsProphet::class,
+                Backend\KebabCaseRoutesProphet::class,
             ],
         ],
 

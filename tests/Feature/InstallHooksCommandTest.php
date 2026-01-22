@@ -62,10 +62,17 @@ class InstallHooksCommandTest extends TestCase
     public function test_install_hooks_creates_claude_md(): void
     {
         $claudeMdPath = base_path('CLAUDE.md');
+        $claudeDir = base_path('.claude');
 
         // Remove if exists
         if (file_exists($claudeMdPath)) {
             unlink($claudeMdPath);
+        }
+
+        // Clean up .claude directory from previous tests to avoid confirmation prompt
+        if (is_dir($claudeDir)) {
+            array_map('unlink', glob("{$claudeDir}/*") ?: []);
+            rmdir($claudeDir);
         }
 
         $this->artisan('commandments:install-hooks')
