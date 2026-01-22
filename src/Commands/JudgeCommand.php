@@ -158,15 +158,13 @@ class JudgeCommand extends Command
                         }
                     }
 
-                    // Handle absolution for confession-required prophets
+                    // Handle absolution for warnings
                     if ($shouldAbsolve && $judgment->hasWarnings()) {
-                        if ($prophet->requiresConfession()) {
-                            $content = file_get_contents($filePath);
-                            if ($content !== false) {
-                                $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');
-                                if (!$summaryMode) {
-                                    $this->output->writeln("    <fg=green>✓ Absolved</>");
-                                }
+                        $content = file_get_contents($filePath);
+                        if ($content !== false) {
+                            $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');
+                            if (!$summaryMode) {
+                                $this->output->writeln("    <fg=green>✓ Absolved</>");
                             }
                         }
                     }
