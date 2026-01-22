@@ -57,31 +57,15 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check Data classes and Page Data classes
-        $isDataFile = str_contains($filePath, '/Data/') || str_contains($filePath, '\\Data\\');
-        $isViewFile = str_contains($filePath, 'Http/View') || str_contains($filePath, 'Http\\View');
-
-        if (!$isDataFile && !$isViewFile) {
-            return $this->righteous();
-        }
-
         // Skip utility classes
         if ($this->isUtilityClass($filePath)) {
             return $this->righteous();
         }
 
-        // For View files, only check files ending with Page.php or Data.php
-        if ($isViewFile && !preg_match('/(Page|Data)\.php$/', $filePath)) {
-            return $this->righteous();
-        }
+        // Only check Data classes (using AST)
+        $ast = $this->parse($content);
 
-        // Skip traits (they can't have attributes applied)
-        if (preg_match('/^trait\s+\w+/m', $content)) {
-            return $this->righteous();
-        }
-
-        // Skip classes that don't extend Data
-        if (!preg_match('/extends\s+.*Data/', $content) && !preg_match('/extends\s+Data\b/', $content)) {
+        if (!$ast || !$this->isLaravelClass($ast, 'data')) {
             return $this->righteous();
         }
 

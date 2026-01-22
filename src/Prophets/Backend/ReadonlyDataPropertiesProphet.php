@@ -48,8 +48,10 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check Data classes
-        if (!preg_match('/class\s+\w+\s+extends\s+Data\b/', $content)) {
+        // Only check Data classes (using AST)
+        $ast = $this->parse($content);
+
+        if (!$ast || !$this->isLaravelClass($ast, 'data')) {
             return $this->righteous();
         }
 

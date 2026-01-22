@@ -48,7 +48,9 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         // Only check controllers
-        if (!str_contains($filePath, 'Controller')) {
+        $ast = $this->parse($content);
+
+        if (!$ast || !$this->isLaravelClass($ast, 'controller')) {
             return $this->righteous();
         }
 

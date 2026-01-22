@@ -9,6 +9,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
 use PhpParser\Error as ParseError;
+use ReflectionClass;
 
 /**
  * Base class for PHP file commandments.
@@ -17,6 +18,21 @@ use PhpParser\Error as ParseError;
 abstract class PhpCommandment extends BaseCommandment
 {
     protected ?\PhpParser\Parser $parser = null;
+
+    /**
+     * Map of type aliases to their base classes for reflection checking.
+     */
+    protected const TYPE_MAP = [
+        'controller' => 'Illuminate\\Routing\\Controller',
+        'model' => 'Illuminate\\Database\\Eloquent\\Model',
+        'request' => 'Illuminate\\Foundation\\Http\\FormRequest',
+        'resource' => 'Illuminate\\Http\\Resources\\Json\\JsonResource',
+        'job' => 'Illuminate\\Contracts\\Queue\\ShouldQueue',
+        'command' => 'Illuminate\\Console\\Command',
+        'provider' => 'Illuminate\\Support\\ServiceProvider',
+        'rule' => 'Illuminate\\Contracts\\Validation\\Rule',
+        'data' => 'Spatie\\LaravelData\\Data',
+    ];
 
     public function applicableExtensions(): array
     {
@@ -103,9 +119,60 @@ abstract class PhpCommandment extends BaseCommandment
     }
 
     /**
-     * Check if the file is a specific type of Laravel class.
+     * Check if the file contains a class of a specific Laravel type.
+     *
+     * Uses PHP reflection when the class is autoloadable to check the full
+     * inheritance chain. Falls back to AST-based string matching otherwise.
      */
     protected function isLaravelClass(array $ast, string $type): bool
+    {
+        $baseClass = self::TYPE_MAP[$type] ?? $type;
+        $fqcn = $this->getFullyQualifiedClassName($ast);
+
+        // Try reflection first if the class exists
+        if ($fqcn !== null && class_exists($fqcn)) {
+            return $this->isInstanceOfClass($fqcn, $baseClass);
+        }
+
+        // Fall back to AST-based checking for non-autoloadable classes
+        return $this->isLaravelClassByAst($ast, $type);
+    }
+
+    /**
+     * Check if a class is an instance of another class using reflection.
+     */
+    protected function isInstanceOfClass(string $fqcn, string $baseClass): bool
+    {
+        try {
+            $reflection = new ReflectionClass($fqcn);
+
+            // Check if it's the base class itself
+            if ($reflection->getName() === $baseClass) {
+                return true;
+            }
+
+            // Check if it extends the base class
+            if ($reflection->isSubclassOf($baseClass)) {
+                return true;
+            }
+
+            // Check if it implements the interface (for contracts like ShouldQueue)
+            if (interface_exists($baseClass) && $reflection->implementsInterface($baseClass)) {
+                return true;
+            }
+
+            return false;
+        } catch (\ReflectionException) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if the file is a specific type of Laravel class using AST only.
+     *
+     * This is the fallback when reflection is not available.
+     */
+    protected function isLaravelClassByAst(array $ast, string $type): bool
     {
         $typeMap = [
             'controller' => ['Controller', 'Illuminate\\Routing\\Controller'],

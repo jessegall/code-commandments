@@ -43,8 +43,10 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check FormRequest classes
-        if (!str_contains($filePath, 'Requests') && !str_contains($filePath, 'Request.php')) {
+        // Only check FormRequest classes (using AST)
+        $ast = $this->parse($content);
+
+        if (!$ast || !$this->isLaravelClass($ast, 'request')) {
             return $this->righteous();
         }
 

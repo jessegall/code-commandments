@@ -13,6 +13,8 @@ class JudgeCommandTest extends TestCase
     {
         parent::defineEnvironment($app);
 
+        // Only scan the Righteous fixtures to ensure no sins are found
+        $app['config']->set('commandments.scrolls.backend.path', __DIR__ . '/../Fixtures/Backend/Righteous');
         $app['config']->set('commandments.scrolls.backend.prophets', [
             NoRawRequestProphet::class,
         ]);
@@ -20,7 +22,7 @@ class JudgeCommandTest extends TestCase
 
     public function test_judge_command_runs(): void
     {
-        // Command runs and finds no sins in fixtures (they don't match path patterns)
+        // Command runs and finds no sins in righteous fixtures
         $this->artisan('commandments:judge')
             ->assertSuccessful();
     }
