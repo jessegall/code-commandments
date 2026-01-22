@@ -49,6 +49,9 @@ php artisan commandments:judge --prophet=NoRawRequest
 # Judge a specific file
 php artisan commandments:judge --file=app/Http/Controllers/UserController.php
 
+# Judge multiple specific files (comma-separated)
+php artisan commandments:judge --files=app/Models/User.php,app/Services/AuthService.php
+
 # Mark files as absolved after manual review
 php artisan commandments:judge --absolve
 ```
@@ -64,6 +67,9 @@ php artisan commandments:repent --dry-run
 
 # Fix a specific file
 php artisan commandments:repent --file=app/Http/Controllers/UserController.php
+
+# Fix multiple specific files (comma-separated)
+php artisan commandments:repent --files=app/Models/User.php,app/Services/AuthService.php
 ```
 
 ### Read the Scripture (List Commandments)

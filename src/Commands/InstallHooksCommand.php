@@ -158,6 +158,8 @@ AFTER ANY CODE CHANGES, handle issues based on type:
    3. If acceptable: Run `php artisan commandments:judge --absolve` to mark as reviewed
    4. If needs fixing: Fix the code
 
+📁 To judge/repent specific files, use --files=file1.php,file2.php (comma-separated)
+
 Task is complete when: No sins remain, and warnings are either fixed or absolved.
 INSTRUCTIONS;
     }
@@ -234,8 +236,10 @@ Warnings are potential issues that require your judgment:
 | `php artisan commandments:scripture` | List all commandments |
 | `php artisan commandments:scripture --detailed` | Show full explanations with examples |
 | `php artisan commandments:judge` | Check code - shows sins AND warnings |
+| `php artisan commandments:judge --files=a.php,b.php` | Judge specific files (comma-separated) |
 | `php artisan commandments:judge --absolve` | Mark warnings as reviewed (absolved) |
 | `php artisan commandments:repent` | Auto-fix sins where possible |
+| `php artisan commandments:repent --files=a.php,b.php` | Auto-fix specific files (comma-separated) |
 
 ### Example Workflows
 
@@ -254,6 +258,12 @@ php artisan commandments:judge          # See the warnings
 # If code is fine as-is:
 php artisan commandments:judge --absolve
 # If code needs changes: fix it, then re-run judge
+```
+
+**Judging specific files:**
+```bash
+php artisan commandments:judge --files=app/Models/User.php,app/Services/Auth.php
+php artisan commandments:repent --files=app/Models/User.php,app/Services/Auth.php
 ```
 MARKDOWN;
     }

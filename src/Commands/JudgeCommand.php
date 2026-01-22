@@ -21,6 +21,7 @@ class JudgeCommand extends Command
         {--scroll= : Filter by specific scroll (group)}
         {--prophet= : Summon a specific prophet by name}
         {--file= : Judge a specific file}
+        {--files= : Judge specific files (comma-separated)}
         {--git : Only judge files that are new or changed in git}
         {--absolve : Mark files as absolved after confession (manual review)}
         {--summary : Show summary output only (for hooks)}';
@@ -35,6 +36,9 @@ class JudgeCommand extends Command
         $scrollFilter = $this->option('scroll');
         $prophetFilter = $this->option('prophet');
         $fileFilter = $this->option('file');
+        $filesFilter = $this->option('files')
+            ? array_map('trim', explode(',', $this->option('files')))
+            : [];
         $gitMode = $this->option('git');
         $shouldAbsolve = $this->option('absolve');
         $summaryMode = $this->option('summary');
@@ -85,6 +89,8 @@ class JudgeCommand extends Command
             if ($fileFilter) {
                 $results = $manager->judgeFile($scroll, $fileFilter);
                 $results = collect([$fileFilter => $results]);
+            } elseif (!empty($filesFilter)) {
+                $results = $manager->judgeFiles($scroll, $filesFilter);
             } elseif ($gitMode) {
                 if (empty($gitFiles)) {
                     continue;

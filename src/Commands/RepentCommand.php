@@ -21,6 +21,7 @@ class RepentCommand extends Command
         {--scroll= : Filter by specific scroll (group)}
         {--prophet= : Use a specific prophet for repentance}
         {--file= : Repent sins in a specific file}
+        {--files= : Repent sins in specific files (comma-separated)}
         {--dry-run : Show what sins may be absolved without acting}';
 
     protected $description = 'Seek absolution through auto-fixing transgressions';
@@ -40,6 +41,9 @@ class RepentCommand extends Command
         $scrollFilter = $this->option('scroll');
         $prophetFilter = $this->option('prophet');
         $fileFilter = $this->option('file');
+        $filesFilter = $this->option('files')
+            ? array_map('trim', explode(',', $this->option('files')))
+            : [];
         $dryRun = $this->option('dry-run');
 
         if ($dryRun) {
@@ -84,6 +88,8 @@ class RepentCommand extends Command
 
                 if ($fileFilter) {
                     $files = [new \SplFileInfo($fileFilter)];
+                } elseif (!empty($filesFilter)) {
+                    $files = array_map(fn ($f) => new \SplFileInfo($f), $filesFilter);
                 } else {
                     $files = $manager->getFilesForScroll($scroll);
                 }
