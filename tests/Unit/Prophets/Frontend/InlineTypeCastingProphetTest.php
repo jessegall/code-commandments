@@ -104,6 +104,27 @@ VUE;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_passes_slot_type_annotation(): void
+    {
+        // Type annotations in slot props are allowed
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <DataTable>
+    <template #barcode="{ data }: { data: BarcodeElementData }">
+      {{ data.value }}
+    </template>
+  </DataTable>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_provides_helpful_description(): void
     {
         $this->assertNotEmpty($this->prophet->description());
