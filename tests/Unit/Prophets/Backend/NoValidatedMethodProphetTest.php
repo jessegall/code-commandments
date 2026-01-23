@@ -73,4 +73,28 @@ PHP;
         $judgment = $this->prophet->judge('/app/Services/DataService.php', $content);
         $this->assertTrue($judgment->isRighteous());
     }
+
+    public function test_detects_validated_in_laravel_11_controller(): void
+    {
+        // Laravel 11+ controllers don't extend Illuminate\Routing\Controller
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreRequest;
+
+class UserController extends Controller
+{
+    public function store(StoreRequest $request)
+    {
+        $data = $request->validated();
+        return $data;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+    }
 }

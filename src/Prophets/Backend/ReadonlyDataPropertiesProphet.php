@@ -26,7 +26,8 @@ class ReadonlyDataPropertiesProphet extends PhpCommandment
 In Laravel Data classes, readonly properties declared in the class body
 prevent Laravel Data from injecting values properly.
 
-Only use readonly on constructor-promoted properties.
+The readonly modifier is only allowed on constructor-promoted properties.
+Class body properties must not use readonly.
 
 Bad:
     class UserData extends Data
@@ -36,6 +37,13 @@ Bad:
     }
 
 Good:
+    class UserData extends Data
+    {
+        public string $name;
+        public int $age;
+    }
+
+Also good (readonly in constructor is allowed):
     class UserData extends Data
     {
         public function __construct(
@@ -89,7 +97,7 @@ SCRIPTURE;
                     $lineNum + 1,
                     'Readonly property declared in class body',
                     trim($line),
-                    'Move to constructor promotion: public function __construct(public readonly Type $prop) {}'
+                    'Remove the readonly modifier from class body properties'
                 );
             }
         }

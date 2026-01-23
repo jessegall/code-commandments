@@ -104,4 +104,27 @@ PHP;
         $this->assertNotEmpty($this->prophet->description());
         $this->assertNotEmpty($this->prophet->detailedDescription());
     }
+
+    public function test_detects_raw_request_in_laravel_11_controller(): void
+    {
+        // Laravel 11+ controllers don't extend Illuminate\Routing\Controller
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    public function store(Request $request)
+    {
+        return $request->all();
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+    }
 }

@@ -73,4 +73,25 @@ PHP;
         $judgment = $this->prophet->judge('/test/Service.php', $content);
         $this->assertTrue($judgment->isRighteous());
     }
+
+    public function test_detects_json_response_in_laravel_11_controller(): void
+    {
+        // Laravel 11+ controllers don't extend Illuminate\Routing\Controller
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+class UserController extends Controller
+{
+    public function show()
+    {
+        return response()->json(['user' => 'data']);
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+    }
 }

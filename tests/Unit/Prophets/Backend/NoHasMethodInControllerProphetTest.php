@@ -97,4 +97,29 @@ PHP;
         $judgment = $this->prophet->judge('/app/Services/UserService.php', $content);
         $this->assertTrue($judgment->isRighteous());
     }
+
+    public function test_detects_has_method_in_laravel_11_controller(): void
+    {
+        // Laravel 11+ controllers don't extend Illuminate\Routing\Controller
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    public function store(Request $request)
+    {
+        if ($request->has('name')) {
+            return 'has name';
+        }
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+    }
 }
