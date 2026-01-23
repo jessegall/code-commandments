@@ -33,8 +33,11 @@ Bad:
 Good:
     Route::get('/user-profile', ...);
     Route::get('/orders/{orderId}', ...);
+    Route::get('/feeds/{feed}/reviews.xml', ...);
 
-Route parameters like {orderId} are fine - only the URI segments are checked.
+Exceptions (not checked):
+- Route parameters: {orderId}, {slug}
+- File extensions: .xml, .json, .apk, etc.
 SCRIPTURE;
     }
 
@@ -100,13 +103,25 @@ SCRIPTURE;
                 continue;
             }
 
+            // Strip file extension before checking (e.g., reviews.xml -> reviews)
+            $segmentToCheck = $this->stripFileExtension($segment);
+
             // Valid kebab-case: lowercase letters, numbers, and hyphens only
-            if (! preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $segment)) {
+            if (! preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $segmentToCheck)) {
                 $bad[] = $segment;
             }
         }
 
         return $bad;
+    }
+
+    /**
+     * Strip file extension from a segment.
+     */
+    private function stripFileExtension(string $segment): string
+    {
+        // Match any file extension at the end of the segment (e.g., .xml, .apk, .json)
+        return preg_replace('/\.[a-z0-9]+$/i', '', $segment);
     }
 
     private function toKebabCase(string $uri): string
@@ -118,11 +133,18 @@ SCRIPTURE;
                 return $segment;
             }
 
+            // Preserve file extension
+            $extension = '';
+            if (preg_match('/(\.[a-z0-9]+)$/i', $segment, $extMatch)) {
+                $extension = strtolower($extMatch[1]);
+                $segment = substr($segment, 0, -strlen($extension));
+            }
+
             // Convert camelCase/PascalCase to kebab-case, then replace underscores
             $kebab = preg_replace('/([a-z])([A-Z])/', '$1-$2', $segment);
             $kebab = str_replace('_', '-', $kebab);
 
-            return strtolower($kebab);
+            return strtolower($kebab) . $extension;
         }, $segments);
 
         return implode('/', $converted);
