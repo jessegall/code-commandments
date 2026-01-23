@@ -6,8 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Commandment: #[Hidden] on public properties not returned to frontend.
@@ -44,14 +45,14 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! $ctx->filePathContains('Http/View') && ! $ctx->filePathContains('Http\\View'))
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! preg_match('/(Page|Data)\.php$/', $ctx->filePath))
             ->pipe(fn (PhpContext $ctx) => $this->findPropertiesMissingHidden($ctx))
             ->mapToSins(fn (PhpContext $ctx) => array_map(
-                fn ($match) => $this->sinAt(
-                    $match['line'],
-                    "Property \${$match['name']} has injection attribute but missing #[Hidden]",
+                fn (MatchResult $match) => $this->sinAt(
+                    $match->line,
+                    "Property \${$match->groups['name']} has injection attribute but missing #[Hidden]",
                     null,
                     'Add #[Hidden] attribute to prevent frontend exposure'
                 ),
@@ -93,10 +94,15 @@ SCRIPTURE;
                 continue;
             }
 
-            $matches[] = [
-                'name' => $propName,
-                'line' => substr_count(substr($ctx->content, 0, $offset), "\n") + 1,
-            ];
+            $matches[] = new MatchResult(
+                name: 'missing_hidden',
+                pattern: '',
+                match: '',
+                line: substr_count(substr($ctx->content, 0, $offset), "\n") + 1,
+                offset: $offset,
+                content: null,
+                groups: ['name' => $propName],
+            );
         }
 
         return $ctx->with(matches: $matches);

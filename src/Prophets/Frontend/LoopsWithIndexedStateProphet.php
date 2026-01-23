@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Extract loop items with indexed state to separate components.
@@ -58,36 +61,19 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-
-        // Check if file has v-for and indexed state access patterns
-        if (!str_contains($templateContent, 'v-for=')) {
-            return $this->righteous();
-        }
-
-        // Look for indexed state access patterns: [item.id], [item.key], [variable]., [index]
-        $indexedStatePattern = '/\[[a-zA-Z]+\.(id|key)\]|\[[a-zA-Z]+\]\.|\[index\]/';
-
-        if (preg_match($indexedStatePattern, $templateContent, $match, PREG_OFFSET_CAPTURE)) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            return Judgment::withWarnings([
-                $this->warningAt(
-                    $line,
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->returnRighteousWhen(fn (VueContext $ctx) => !str_contains($ctx->getSectionContent(), 'v-for='))
+            ->matchAll('/\[[a-zA-Z]+\.(id|key)\]|\[[a-zA-Z]+\]\.|\[index\]/')
+            ->mapToWarnings(fn (VueContext $ctx) => array_map(
+                fn ($match) => Warning::at(
+                    $match->line,
                     'Indexed state access in v-for loop - consider extracting to component',
                     'Extract the loop body into a separate component that manages its own state'
                 ),
-            ]);
-        }
-
-        return $this->righteous();
+                $ctx->matches
+            ))
+            ->judge();
     }
 }

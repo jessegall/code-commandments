@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Never hardcode URLs in href attributes.
@@ -49,34 +50,14 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Check for hardcoded URLs in href attributes
-        // Matches: href="/..." or :href="'/..." or :href="`/..."
-        $pattern = '/(href|:href)="[`\'"]\/[a-z]/i';
-
-        preg_match_all($pattern, $templateContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-        foreach ($matches as $match) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->matchAll('/(href|:href)="[`\'"]\/[a-z]/i')
+            ->sinsFromMatches(
                 'Hardcoded URL in href attribute',
-                $this->getSnippet($templateContent, $offset, 60),
                 'Use :href="products.index.url()" with wayfinder helpers'
-            );
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+            )
+            ->judge();
     }
 }

@@ -8,6 +8,9 @@ use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
+use JesseGall\CodeCommandments\Support\Traits\TemplateElementHelper;
 
 /**
  * Thou shalt use <template v-for> wrapper instead of v-for on elements.
@@ -16,6 +19,8 @@ use JesseGall\CodeCommandments\Results\RepentanceResult;
  */
 class TemplateVForProphet extends FrontendCommandment implements SinRepenter
 {
+    use TemplateElementHelper;
+
     /**
      * DOM elements that should not have v-for directly on them.
      */
@@ -64,38 +69,29 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Build pattern for DOM elements with v-for directly on them
         $elementsPattern = implode('|', $this->domElements);
         $pattern = '/<(' . $elementsPattern . ')(\s[^>]*)?\s+v-for\s*=/i';
 
-        preg_match_all($pattern, $templateContent, $matches, PREG_OFFSET_CAPTURE);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->matchAll($pattern)
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                // Extract the tag name from the match
+                if (preg_match('/<(\w+)/', $match->match, $tagMatch)) {
+                    $tagName = $tagMatch[1];
 
-        foreach ($matches[0] as $match) {
-            $element = $match[0];
-            $position = $match[1];
-            $tagName = $matches[1][array_search($match, $matches[0])][0];
+                    return $pipeline->sinAt(
+                        $match->offset,
+                        "v-for on <{$tagName}> element should be wrapped in <template>",
+                        trim($match->match),
+                        "Wrap the <{$tagName}> in a <template v-for=\"...\"> element"
+                    );
+                }
 
-            $line = $this->getLineFromOffset($content, $templateStart + $position);
-
-            $sins[] = $this->sinAt(
-                $line,
-                "v-for on <{$tagName}> element should be wrapped in <template>",
-                trim($element),
-                "Wrap the <{$tagName}> in a <template v-for=\"...\"> element"
-            );
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+                return null;
+            })
+            ->judge();
     }
 
     public function canRepent(string $filePath): bool
@@ -109,13 +105,13 @@ SCRIPTURE;
             return RepentanceResult::unchanged();
         }
 
-        $template = $this->extractTemplate($content);
+        $pipeline = VuePipeline::make($filePath, $content)->extractTemplate();
 
-        if ($template === null) {
+        if ($pipeline->shouldSkip()) {
             return RepentanceResult::unchanged();
         }
 
-        $templateContent = $template['content'];
+        $templateContent = $pipeline->getSectionContent();
         $penance = [];
         $maxPasses = 10;
         $pass = 0;
@@ -191,63 +187,11 @@ SCRIPTURE;
         }
 
         // Replace the template content in the original file
-        $newContent = substr($content, 0, $template['start']) .
+        $ctx = $pipeline->getContext();
+        $newContent = substr($content, 0, $ctx->template['start']) .
             $templateContent .
-            substr($content, $template['end']);
+            substr($content, $ctx->template['end']);
 
         return RepentanceResult::absolved($newContent, $penance);
-    }
-
-    /**
-     * Find the matching closing tag for an element, properly handling nested tags.
-     */
-    protected function findClosingTag(string $content, string $tag, int $startPos): ?array
-    {
-        $openTagPattern = '/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?>|<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\s*\/>/i';
-        $closeTagPattern = '/<\/' . preg_quote($tag, '/') . '\s*>/i';
-
-        $depth = 1;
-        $pos = $startPos;
-
-        // Move past the opening tag
-        if (preg_match('/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\/?>/i', $content, $match, PREG_OFFSET_CAPTURE, $pos)) {
-            // Check if self-closing
-            if (str_ends_with(trim($match[0][0]), '/>')) {
-                return null; // Self-closing
-            }
-            $pos = $match[0][1] + strlen($match[0][0]);
-        }
-
-        while ($depth > 0 && $pos < strlen($content)) {
-            $nextOpen = preg_match($openTagPattern, $content, $openMatch, PREG_OFFSET_CAPTURE, $pos) ? $openMatch[0][1] : PHP_INT_MAX;
-            $nextClose = preg_match($closeTagPattern, $content, $closeMatch, PREG_OFFSET_CAPTURE, $pos) ? $closeMatch[0][1] : PHP_INT_MAX;
-
-            if ($nextClose === PHP_INT_MAX) {
-                return null; // No closing tag found
-            }
-
-            if ($nextOpen < $nextClose) {
-                // Found an open tag before the next close tag
-                $isSelfClosing = str_ends_with(trim($openMatch[0][0]), '/>');
-                if (!$isSelfClosing) {
-                    // Normal open tag - increment depth
-                    $depth++;
-                }
-                // For self-closing tags, just skip them (don't change depth)
-                $pos = $nextOpen + strlen($openMatch[0][0]);
-            } else {
-                // Found a close tag
-                $depth--;
-                if ($depth === 0) {
-                    return [
-                        'start' => $closeMatch[0][1],
-                        'end' => $closeMatch[0][1] + strlen($closeMatch[0][0]),
-                    ];
-                }
-                $pos = $nextClose + strlen($closeMatch[0][0]);
-            }
-        }
-
-        return null;
     }
 }

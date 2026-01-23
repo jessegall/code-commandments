@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use <script setup> Composition API instead of Options API.
@@ -54,29 +55,19 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        // Check for Options API pattern: export default {
-        if (!preg_match('/export default \{/', $content)) {
-            return $this->righteous();
-        }
-
-        // Skip defineComponent (still Composition API technically)
-        if (str_contains($content, 'defineComponent')) {
-            return $this->righteous();
-        }
-
-        // If the file has <script setup, it's using Composition API
-        // The export default is likely just for layout definition
-        if (preg_match('/<script\s+setup/', $content)) {
-            return $this->righteous();
-        }
-
-        return $this->fallen([
-            $this->sinAt(
+        return VuePipeline::make($filePath, $content)
+            // Skip if no Options API pattern
+            ->returnRighteousIfContentMatches('/^(?!.*export default \{)/s')
+            // Skip if using defineComponent (still Composition API)
+            ->returnRighteousIfContentMatches('/defineComponent/')
+            // Skip if using <script setup>
+            ->returnRighteousIfContentMatches('/<script\s+setup/')
+            ->mapToSins(fn () => $this->sinAt(
                 1,
                 'Options API detected (export default { ... })',
                 null,
                 'Use <script setup lang="ts"> with Composition API instead'
-            ),
-        ]);
+            ))
+            ->judge();
     }
 }

@@ -41,22 +41,4 @@ final class Sin
         );
     }
 
-    /**
-     * Get a formatted string representation.
-     */
-    public function format(string $filePath): string
-    {
-        $location = $this->line !== null ? ":{$this->line}" : '';
-        $result = "{$filePath}{$location}: {$this->message}";
-
-        if ($this->snippet !== null) {
-            $result .= "\n    > {$this->snippet}";
-        }
-
-        if ($this->suggestion !== null) {
-            $result .= "\n    Suggestion: {$this->suggestion}";
-        }
-
-        return $result;
-    }
 }

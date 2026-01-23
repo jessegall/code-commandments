@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use Inertia requests instead of fetch/axios.
@@ -50,37 +51,15 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $script = $this->extractScript($content);
-
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
-
-        $scriptContent = $script['content'];
-        $scriptStart = $script['start'];
-
-        // Look for fetch() or axios usage
-        $pattern = '/(fetch\(|axios\.|window\.fetch)/';
-
-        if (preg_match($pattern, $scriptContent, $match, PREG_OFFSET_CAPTURE)) {
-            // Allow fetch if there's a comment indicating it's calling an API controller
-            if (preg_match('/\/\/.*(?:API endpoint|Api\\\\|returns JSON)/i', $content)) {
-                return $this->righteous();
-            }
-
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $scriptStart + $offset);
-
-            return $this->fallen([
-                $this->sinAt(
-                    $line,
-                    'fetch() or axios usage detected',
-                    $this->getSnippet($scriptContent, $offset, 50),
-                    "Use Inertia's router for server communication"
-                ),
-            ]);
-        }
-
-        return $this->righteous();
+        return VuePipeline::make($filePath, $content)
+            ->returnRighteousIfContentMatches('/\/\/.*(?:API endpoint|Api\\\\|returns JSON)/i')
+            ->extractScript()
+            ->returnRighteousIfNoScript()
+            ->matchAll('/(fetch\(|axios\.|window\.fetch)/')
+            ->sinsFromMatches(
+                'fetch() or axios usage detected',
+                "Use Inertia's router for server communication"
+            )
+            ->judge();
     }
 }

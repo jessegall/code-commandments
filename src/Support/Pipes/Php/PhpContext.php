@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use PhpParser\Node;
 
 /**
@@ -26,7 +27,7 @@ final class PhpContext
         /** @var array<string, string> Short name => FQCN */
         public array $useStatements = [],
         public ?string $namespace = null,
-        /** @var array<array{name: string, pattern: string, line: int, content: string, match: string, groups: array}> */
+        /** @var array<MatchResult> */
         public array $matches = [],
     ) {}
 

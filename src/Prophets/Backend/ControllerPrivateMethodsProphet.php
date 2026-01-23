@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterPrivateMethods;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Controllers should not have too many private methods.
@@ -74,7 +74,7 @@ SCRIPTURE;
         $maxPrivateMethods = (int) $this->config('max_private_methods', 3);
         $minMethodLines = (int) $this->config('min_method_lines', 3);
 
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractClasses::class)
             ->pipe(FilterLaravelControllers::class)

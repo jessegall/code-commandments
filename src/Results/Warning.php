@@ -36,18 +36,4 @@ final class Warning
         return new self(message: $message);
     }
 
-    /**
-     * Get a formatted string representation.
-     */
-    public function format(string $filePath): string
-    {
-        $location = $this->line !== null ? ":{$this->line}" : '';
-        $result = "{$filePath}{$location}: {$this->message}";
-
-        if ($this->snippet !== null) {
-            $result .= "\n    > {$this->snippet}";
-        }
-
-        return $result;
-    }
 }

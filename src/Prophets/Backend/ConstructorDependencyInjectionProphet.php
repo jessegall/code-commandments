@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterServiceTypes;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Controller dependencies should be injected via constructor, not methods.
@@ -68,7 +68,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractClasses::class)
             ->pipe(FilterLaravelControllers::class)

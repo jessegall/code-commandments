@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Avoid inline emit handlers with transformation logic in templates.
@@ -52,32 +53,14 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-
-        // Look for $emit with || or && or ? (ternary) in template bindings
-        $pattern = '/@[a-z:-]+="\\$emit\\([^"]*(\|\||&&|\?)[^"]*\\)"/';
-
-        if (preg_match($pattern, $templateContent, $match, PREG_OFFSET_CAPTURE)) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            return $this->fallen([
-                $this->sinAt(
-                    $line,
-                    'Complex transformation in inline emit handler',
-                    $this->getSnippet($templateContent, $offset, 60),
-                    'Move transformation logic to a handler function in script'
-                ),
-            ]);
-        }
-
-        return $this->righteous();
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->matchAll('/@[a-z:-]+="\\$emit\\([^"]*(\|\||&&|\?)[^"]*\\)"/')
+            ->sinsFromMatches(
+                'Complex transformation in inline emit handler',
+                'Move transformation logic to a handler function in script'
+            )
+            ->judge();
     }
 }

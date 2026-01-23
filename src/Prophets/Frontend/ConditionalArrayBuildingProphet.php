@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Consider disabled flags pattern instead of conditional array building.
@@ -66,67 +69,65 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $script = $this->extractScript($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractScript()
+            ->returnRighteousIfNoScript()
+            ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findViolations($ctx)))
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                return $pipeline->sinAt(
+                    $match->offset,
+                    $match->groups['message'],
+                    $pipeline->getSnippet($match->offset, 60),
+                    'Use { item, disabled: !condition } with .filter()'
+                );
+            })
+            ->judge();
+    }
 
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
+    private function findViolations(VueContext $ctx): array
+    {
+        $scriptContent = $ctx->getSectionContent();
+        $matches = [];
 
-        $scriptContent = $script['content'];
-        $scriptStart = $script['start'];
-        $sins = [];
-
-        // Look for conditional spread patterns: ...( condition ? [...] : [] )
-        $spreadPattern = '/\.\.\..*\?.*\[/';
-        preg_match_all($spreadPattern, $scriptContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-        foreach ($matches as $match) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $scriptStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
-                'Conditional spread pattern - consider disabled flags pattern',
-                $this->getSnippet($scriptContent, $offset, 60),
-                'Use { item, disabled: !condition } with .filter()'
+        // Look for conditional spread patterns
+        preg_match_all('/\.\.\..*\?.*\[/', $scriptContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        foreach ($found as $match) {
+            $matches[] = new MatchResult(
+                name: 'conditional_spread',
+                pattern: '',
+                match: $match[0][0],
+                line: $ctx->getLineFromOffset($match[0][1]),
+                offset: $match[0][1],
+                content: null,
+                groups: ['message' => 'Conditional spread pattern - consider disabled flags pattern'],
             );
         }
 
-        // Look for conditional .push() patterns: if (...) array.push() or condition && array.push()
-        // This excludes grouping patterns like: obj[key].push() inside loops
+        // Look for conditional .push() patterns
         $conditionalPushPatterns = [
-            // if (condition) array.push(...) - simple array name before .push
             '/if\s*\([^)]+\)\s*\{?\s*\n?\s*(\w+)\.push\s*\(/m',
-            // if (condition) array.push(...) - single line without braces
             '/if\s*\([^)]+\)\s+(\w+)\.push\s*\(/m',
-            // condition && array.push(...)
             '/\w+\s*&&\s*(\w+)\.push\s*\(/m',
         ];
 
         foreach ($conditionalPushPatterns as $pattern) {
-            preg_match_all($pattern, $scriptContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-            foreach ($matches as $match) {
-                $offset = $match[0][1];
-                $fullMatch = $match[0][0];
-
-                // Skip if this looks like a grouping pattern (dynamic key access before .push)
-                if ($this->isGroupingPattern($scriptContent, $offset)) {
-                    continue;
+            preg_match_all($pattern, $scriptContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+            foreach ($found as $match) {
+                if (!$this->isGroupingPattern($scriptContent, $match[0][1])) {
+                    $matches[] = new MatchResult(
+                        name: 'conditional_push',
+                        pattern: $pattern,
+                        match: $match[0][0],
+                        line: $ctx->getLineFromOffset($match[0][1]),
+                        offset: $match[0][1],
+                        content: null,
+                        groups: ['message' => 'Conditional array.push() - consider disabled flags pattern'],
+                    );
                 }
-
-                $line = $this->getLineFromOffset($content, $scriptStart + $offset);
-
-                $sins[] = $this->sinAt(
-                    $line,
-                    'Conditional array.push() - consider disabled flags pattern',
-                    $this->getSnippet($scriptContent, $offset, 60),
-                    'Use { item, disabled: !condition } with .filter()'
-                );
             }
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $matches;
     }
 
     /**

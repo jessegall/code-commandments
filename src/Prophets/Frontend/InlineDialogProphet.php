@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Extract inline dialog definitions to separate components.
@@ -69,36 +71,27 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        // Only check page files
-        if (!str_contains($filePath, '/Pages/') && !str_contains($filePath, '/pages/')) {
-            return $this->righteous();
-        }
+        return VuePipeline::make($filePath, $content)
+            ->onlyPageFiles()
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->mapToWarnings(function (VueContext $ctx) {
+                $templateContent = $ctx->getSectionContent();
+                $dialogCount = preg_match_all('/<(Dialog|Modal|Sheet|Drawer)\b/', $templateContent);
 
-        $template = $this->extractTemplate($content);
+                if ($dialogCount > 0) {
+                    // Check if the dialog has substantial content (more than just a simple confirmation)
+                    if (preg_match('/<(Dialog|Modal|Sheet|Drawer)[^>]*>[\s\S]{200,}?<\/(Dialog|Modal|Sheet|Drawer)>/s', $templateContent)) {
+                        return $this->warningAt(
+                            1,
+                            "Contains {$dialogCount} inline dialog(s) - consider extracting to components",
+                            'Extract dialogs to dedicated component files'
+                        );
+                    }
+                }
 
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-
-        // Count Dialog/Modal components in the file
-        $dialogCount = preg_match_all('/<(Dialog|Modal|Sheet|Drawer)\b/', $templateContent);
-
-        if ($dialogCount > 0) {
-            // Check if the dialog has substantial content (more than just a simple confirmation)
-            // Look for dialogs with form elements or significant content (200+ chars)
-            if (preg_match('/<(Dialog|Modal|Sheet|Drawer)[^>]*>[\s\S]{200,}?<\/(Dialog|Modal|Sheet|Drawer)>/s', $templateContent)) {
-                return Judgment::withWarnings([
-                    $this->warningAt(
-                        1,
-                        "Contains {$dialogCount} inline dialog(s) - consider extracting to components",
-                        'Extract dialogs to dedicated component files'
-                    ),
-                ]);
-            }
-        }
-
-        return $this->righteous();
+                return null;
+            })
+            ->judge();
     }
 }

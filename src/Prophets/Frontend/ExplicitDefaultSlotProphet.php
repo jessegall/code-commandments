@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use explicit <template #default> when using named slots.
@@ -67,34 +69,27 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->mapToWarnings(function (VueContext $ctx) {
+                $templateContent = $ctx->getSectionContent();
 
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
+                $namedSlotCount = preg_match_all('/<template\s+#(?!default)[a-zA-Z]/', $templateContent);
+                $hasExplicitDefault = preg_match('/<template\s+#default/', $templateContent);
 
-        $templateContent = $template['content'];
+                if ($namedSlotCount >= 1 && !$hasExplicitDefault) {
+                    if (preg_match('/>\s*[^<\s]/', $templateContent)) {
+                        return $this->warningAt(
+                            1,
+                            'Using named slot(s) with implicit default content',
+                            'Use explicit <template #default> when using more than one slot'
+                        );
+                    }
+                }
 
-        // Count named slots (excluding #default)
-        $namedSlotCount = preg_match_all('/<template\s+#(?!default)[a-zA-Z]/', $templateContent);
-        $hasExplicitDefault = preg_match('/<template\s+#default/', $templateContent);
-
-        // If there are named slots and implicit default content (not wrapped in #default),
-        // that means more than one slot is being used, so #default should be explicit
-        if ($namedSlotCount >= 1 && !$hasExplicitDefault) {
-            // Check if there's content that's not in a template slot
-            // This is a heuristic - check for text content between component tags
-            if (preg_match('/>\s*[^<\s]/', $templateContent)) {
-                return Judgment::withWarnings([
-                    $this->warningAt(
-                        1,
-                        'Using named slot(s) with implicit default content',
-                        'Use explicit <template #default> when using more than one slot'
-                    ),
-                ]);
-            }
-        }
-
-        return $this->righteous();
+                return null;
+            })
+            ->judge();
     }
 }

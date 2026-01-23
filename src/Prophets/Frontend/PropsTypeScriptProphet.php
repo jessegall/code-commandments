@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use TypeScript interface for defineProps instead of runtime declaration.
@@ -52,32 +53,14 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $script = $this->extractScript($content);
-
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
-
-        $scriptContent = $script['content'];
-        $scriptStart = $script['start'];
-
-        // Look for defineProps({ - runtime object declaration
-        $pattern = '/defineProps\s*\(\s*\{/';
-
-        if (preg_match($pattern, $scriptContent, $match, PREG_OFFSET_CAPTURE)) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $scriptStart + $offset);
-
-            return $this->fallen([
-                $this->sinAt(
-                    $line,
-                    'Runtime object declaration in defineProps',
-                    $this->getSnippet($scriptContent, $offset, 50),
-                    'Use TypeScript interface: defineProps<Props>()'
-                ),
-            ]);
-        }
-
-        return $this->righteous();
+        return VuePipeline::make($filePath, $content)
+            ->extractScript()
+            ->returnRighteousIfNoScript()
+            ->matchAll('/defineProps\s*\(\s*\{/')
+            ->sinsFromMatches(
+                'Runtime object declaration in defineProps',
+                'Use TypeScript interface: defineProps<Props>()'
+            )
+            ->judge();
     }
 }

@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use SwitchCase component instead of v-if chains comparing the same variable.
@@ -82,47 +85,61 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Check for v-if chains comparing the same variable
-        $chains = $this->findVIfChains($templateContent);
-
-        foreach ($chains as $chain) {
-            if ($chain['count'] >= self::MIN_CASES_THRESHOLD) {
-                $line = $this->getLineFromOffset($content, $templateStart + $chain['offset']);
-                $sins[] = $this->sinAt(
-                    $line,
-                    "Found {$chain['count']} v-if/v-else-if cases comparing '{$chain['variable']}' - consider using SwitchCase component",
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findViolations($ctx)))
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                return $pipeline->sinAt(
+                    $match->offset,
+                    $match->groups['message'],
                     null,
-                    'Use <SwitchCase :value="'.$chain['variable'].'"> with named slots'
+                    $match->groups['suggestion']
+                );
+            })
+            ->judge();
+    }
+
+    private function findViolations(VueContext $ctx): array
+    {
+        $templateContent = $ctx->getSectionContent();
+        $matches = [];
+
+        foreach ($this->findVIfChains($templateContent) as $chain) {
+            if ($chain['count'] >= self::MIN_CASES_THRESHOLD) {
+                $matches[] = new MatchResult(
+                    name: 'v_if_chain',
+                    pattern: '',
+                    match: '',
+                    line: $ctx->getLineFromOffset($chain['offset']),
+                    offset: $chain['offset'],
+                    content: null,
+                    groups: [
+                        'message' => "Found {$chain['count']} v-if/v-else-if cases comparing '{$chain['variable']}' - consider using SwitchCase component",
+                        'suggestion' => 'Use <SwitchCase :value="'.$chain['variable'].'"> with named slots',
+                    ],
                 );
             }
         }
 
-        // Check for complex condition chains
-        $complexChains = $this->findComplexConditionChains($templateContent);
-
-        foreach ($complexChains as $chain) {
+        foreach ($this->findComplexConditionChains($templateContent) as $chain) {
             if ($chain['count'] >= self::MIN_CASES_THRESHOLD) {
-                $line = $this->getLineFromOffset($content, $templateStart + $chain['offset']);
-                $sins[] = $this->sinAt(
-                    $line,
-                    "Found {$chain['count']} complex v-if conditions - consider extracting to a computed state property with SwitchCase",
-                    null,
-                    'Extract conditions to computed property returning state string, then use SwitchCase'
+                $matches[] = new MatchResult(
+                    name: 'complex_condition_chain',
+                    pattern: '',
+                    match: '',
+                    line: $ctx->getLineFromOffset($chain['offset']),
+                    offset: $chain['offset'],
+                    content: null,
+                    groups: [
+                        'message' => "Found {$chain['count']} complex v-if conditions - consider extracting to a computed state property with SwitchCase",
+                        'suggestion' => 'Extract conditions to computed property returning state string, then use SwitchCase',
+                    ],
                 );
             }
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $matches;
     }
 
     /**

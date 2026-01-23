@@ -187,7 +187,7 @@ class ScrollManager
 
             foreach ($fileResults as $judgment) {
                 $fileSins += $judgment->sinCount();
-                $fileWarnings += count($judgment->warnings);
+                $fileWarnings += $judgment->warningCount();
             }
 
             $summary['sins'] += $fileSins;

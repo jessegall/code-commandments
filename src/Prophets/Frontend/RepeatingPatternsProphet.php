@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Detect repeating patterns that could be extracted into reusable components or composables.
@@ -58,34 +60,35 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-        $script = $this->extractScript($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->extractScript()
+            ->mapToWarnings(function (VueContext $ctx) {
+                $templateContent = $ctx->template['content'] ?? '';
+                $scriptContent = $ctx->script['content'] ?? '';
 
-        $templateContent = $template['content'] ?? '';
-        $scriptContent = $script['content'] ?? '';
+                $warnings = [];
+                $detectors = [
+                    'detectDialogPatterns',
+                    'detectFormFieldPatterns',
+                    'detectRefStatePatterns',
+                    'detectHandlerPatterns',
+                    'detectSectionPatterns',
+                    'detectSimilarVModelPatterns',
+                    'detectRepeatedClassPatterns',
+                    'detectRepeatedComponentPatterns',
+                ];
 
-        $warnings = [];
+                foreach ($detectors as $method) {
+                    $result = $this->$method($templateContent, $scriptContent);
+                    if ($result) {
+                        $warnings[] = $this->warningAt(1, $result, 'Consider extracting into reusable component or composable');
+                    }
+                }
 
-        // Run all pattern detectors
-        $detectors = [
-            'detectDialogPatterns',
-            'detectFormFieldPatterns',
-            'detectRefStatePatterns',
-            'detectHandlerPatterns',
-            'detectSectionPatterns',
-            'detectSimilarVModelPatterns',
-            'detectRepeatedClassPatterns',
-            'detectRepeatedComponentPatterns',
-        ];
-
-        foreach ($detectors as $method) {
-            $result = $this->$method($templateContent, $scriptContent);
-            if ($result) {
-                $warnings[] = $this->warningAt(1, $result, 'Consider extracting into reusable component or composable');
-            }
-        }
-
-        return empty($warnings) ? $this->righteous() : Judgment::withWarnings($warnings);
+                return $warnings;
+            })
+            ->judge();
     }
 
     /**

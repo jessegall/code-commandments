@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
 use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Commandment: No JSON from controllers - Use Inertia responses only.
@@ -63,7 +63,7 @@ SCRIPTURE;
             ->add('new_json_response', self::PATTERNS['new_json_response'])
             ->add('response_facade', self::PATTERNS['response_facade']);
 
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractClasses::class)
             ->pipe(FilterLaravelControllers::class)
@@ -73,7 +73,7 @@ SCRIPTURE;
             ->returnRighteousWhen(fn (PhpContext $ctx) => $ctx->filePathContains('Webhook'))
             ->pipe($patterns)
             ->sinsFromMatches(
-                fn ($match) => self::MESSAGES[$match['name']],
+                fn ($match) => self::MESSAGES[$match->name],
                 'Use Inertia::render() instead'
             )
             ->judge();

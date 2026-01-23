@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use v-model for Switch/Checkbox components, not v-model:checked or :checked.
@@ -49,46 +52,53 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->pipe(fn (VueContext $ctx) => $ctx->with(matches: array_merge(
+                $this->findPattern($ctx, '/<(Switch|Checkbox)[^>]*v-model:checked/', 'v-model:checked'),
+                $this->findPattern($ctx, '/<(Switch|Checkbox)[^>]*:checked=/', ':checked')
+            )))
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                $type = $match->groups['type'];
+                $component = $match->groups['component'];
 
-        if ($template === null) {
-            return $this->skip('No template section found');
+                return $pipeline->sinAt(
+                    $match->offset,
+                    "{$type} used on {$component}",
+                    $pipeline->getSnippet($match->offset, 50),
+                    "Use v-model instead of {$type}"
+                );
+            })
+            ->judge();
+    }
+
+    private function findPattern(VueContext $ctx, string $pattern, string $type): array
+    {
+        $matches = [];
+        $content = $ctx->getSectionContent();
+
+        if ($content === null) {
+            return [];
         }
 
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Check for v-model:checked on Switch or Checkbox
-        $vModelCheckedPattern = '/<(Switch|Checkbox)[^>]*v-model:checked/';
-
-        if (preg_match($vModelCheckedPattern, $templateContent, $match, PREG_OFFSET_CAPTURE)) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
-                'v-model:checked used on '.$match[1][0],
-                $this->getSnippet($templateContent, $offset, 50),
-                'Use v-model instead of v-model:checked'
-            );
+        if (preg_match_all($pattern, $content, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+            foreach ($found as $match) {
+                $matches[] = new MatchResult(
+                    name: 'switch_checkbox_vmodel',
+                    pattern: $pattern,
+                    match: $match[0][0],
+                    line: $ctx->getLineFromOffset($match[0][1]),
+                    offset: $match[0][1],
+                    content: null,
+                    groups: [
+                        'type' => $type,
+                        'component' => $match[1][0],
+                    ],
+                );
+            }
         }
 
-        // Check for :checked on Switch or Checkbox (without v-model)
-        $colonCheckedPattern = '/<(Switch|Checkbox)[^>]*:checked=/';
-
-        if (preg_match($colonCheckedPattern, $templateContent, $match, PREG_OFFSET_CAPTURE)) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
-                ':checked used on '.$match[1][0],
-                $this->getSnippet($templateContent, $offset, 50),
-                'Use v-model instead of :checked with @update:checked'
-            );
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $matches;
     }
 }

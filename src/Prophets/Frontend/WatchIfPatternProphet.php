@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Use whenever() instead of watch() with if condition.
@@ -53,31 +56,18 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $script = $this->extractScript($content);
-
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
-
-        $scriptContent = $script['content'];
-        $scriptStart = $script['start'];
-
-        // Look for watch( followed by if ( within a few lines
-        $pattern = '/watch\s*\([^)]+,\s*\([^)]*\)\s*=>\s*\{[^}]*\n\s*if\s*\(/s';
-
-        if (preg_match($pattern, $scriptContent, $match, PREG_OFFSET_CAPTURE)) {
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $scriptStart + $offset);
-
-            return Judgment::withWarnings([
-                $this->warningAt(
-                    $line,
+        return VuePipeline::make($filePath, $content)
+            ->extractScript()
+            ->returnRighteousIfNoScript()
+            ->matchAll('/watch\s*\([^)]+,\s*\([^)]*\)\s*=>\s*\{[^}]*\n\s*if\s*\(/s')
+            ->mapToWarnings(fn (VueContext $ctx) => array_map(
+                fn ($match) => Warning::at(
+                    $match->line,
                     'Found watch with if condition - consider using whenever()',
                     'Use whenever() from VueUse for cleaner, more declarative code'
                 ),
-            ]);
-        }
-
-        return $this->righteous();
+                $ctx->matches
+            ))
+            ->judge();
     }
 }

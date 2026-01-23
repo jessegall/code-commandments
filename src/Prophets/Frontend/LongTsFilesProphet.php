@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * TypeScript files in components should be under 200 lines.
@@ -62,25 +64,23 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $script = $this->extractScript($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractScript()
+            ->skipIfNoScript()
+            ->mapToWarnings(function (VueContext $ctx) {
+                $scriptContent = $ctx->getSectionContent();
+                $lineCount = substr_count($scriptContent, "\n") + 1;
 
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
+                if ($lineCount > self::MAX_TS_LINES) {
+                    return $this->warningAt(
+                        1,
+                        "Script section has {$lineCount} lines (max: ".self::MAX_TS_LINES.')',
+                        'Extract logic to composables, utilities, or smaller components'
+                    );
+                }
 
-        $scriptContent = $script['content'];
-        $lineCount = substr_count($scriptContent, "\n") + 1;
-
-        if ($lineCount > self::MAX_TS_LINES) {
-            return Judgment::withWarnings([
-                $this->warningAt(
-                    1,
-                    "Script section has {$lineCount} lines (max: ".self::MAX_TS_LINES.')',
-                    'Extract logic to composables, utilities, or smaller components'
-                ),
-            ]);
-        }
-
-        return $this->righteous();
+                return null;
+            })
+            ->judge();
     }
 }

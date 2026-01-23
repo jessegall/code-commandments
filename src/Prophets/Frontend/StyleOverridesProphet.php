@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 use JesseGall\CodeCommandments\Support\Pipeline;
 use JesseGall\CodeCommandments\Support\RegexMatcher;
 use JesseGall\CodeCommandments\Support\TailwindClassFilter;
@@ -72,7 +72,7 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $pipeline = ProphetPipeline::make($filePath, $content)
+        $pipeline = VuePipeline::make($filePath, $content)
             ->extractTemplate();
 
         if ($pipeline->shouldSkip()) {
@@ -103,7 +103,7 @@ SCRIPTURE;
     /**
      * Find and add violations for a specific component.
      */
-    private function findViolationsFor(ProphetPipeline $pipeline, string $component): void
+    private function findViolationsFor(VuePipeline $pipeline, string $component): void
     {
         // Pattern for static class attributes (not :class bindings)
         $pattern = '/<'.preg_quote($component, '/').'[^>]*\s(?!:)((?:content-)?class)=["\']([^"\']*)["\'][^>]*>/i';

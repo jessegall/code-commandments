@@ -222,12 +222,4 @@ abstract class FrontendCommandment extends BaseCommandment
     {
         return substr_count($content, "\n") + 1;
     }
-
-    /**
-     * Get line number from character offset.
-     */
-    protected function getLineFromOffset(string $content, int $offset): int
-    {
-        return substr_count(substr($content, 0, $offset), "\n") + 1;
-    }
 }

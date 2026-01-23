@@ -92,6 +92,14 @@ final class Judgment
     }
 
     /**
+     * Get the total number of warnings.
+     */
+    public function warningCount(): int
+    {
+        return count($this->warnings);
+    }
+
+    /**
      * Merge another judgment into this one.
      */
     public function merge(Judgment $other): self

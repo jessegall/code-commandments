@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\TextHelper;
 
 /**
  * Base class for all commandments (prophets).
@@ -123,7 +124,7 @@ abstract class BaseCommandment implements Commandment
      */
     protected function getLineNumber(string $content, int $position): int
     {
-        return substr_count(substr($content, 0, $position), "\n") + 1;
+        return TextHelper::getLineNumber($content, $position);
     }
 
     /**
@@ -131,19 +132,7 @@ abstract class BaseCommandment implements Commandment
      */
     protected function getSnippet(string $content, int $position, int $length = 60): string
     {
-        $start = max(0, $position - 20);
-        $snippet = substr($content, $start, $length);
-        $snippet = trim(preg_replace('/\s+/', ' ', $snippet) ?? $snippet);
-
-        if ($start > 0) {
-            $snippet = '...' . $snippet;
-        }
-
-        if ($position + 40 < strlen($content)) {
-            $snippet .= '...';
-        }
-
-        return $snippet;
+        return TextHelper::getSnippet($content, $position, $length);
     }
 
     /**

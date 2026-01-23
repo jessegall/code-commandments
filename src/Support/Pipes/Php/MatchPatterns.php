@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 
 /**
@@ -33,23 +34,25 @@ final class MatchPatterns implements Pipe
     {
         $matches = [];
         $lines = explode("\n", $input->content);
+        $offset = 0;
 
         foreach ($lines as $lineNum => $line) {
             foreach ($this->patterns as $name => $pattern) {
-                if (preg_match($pattern, $line, $m)) {
-                    $matches[] = [
-                        'name' => $name,
-                        'pattern' => $pattern,
-                        'line' => $lineNum + 1,
-                        'content' => trim($line),
-                        'match' => $m[0],
-                        'groups' => $m,
-                    ];
+                if (preg_match($pattern, $line, $m, PREG_OFFSET_CAPTURE)) {
+                    $matches[] = new MatchResult(
+                        name: $name,
+                        pattern: $pattern,
+                        match: $m[0][0],
+                        line: $lineNum + 1,
+                        offset: $offset + $m[0][1],
+                        content: trim($line),
+                        groups: array_map(fn ($g) => $g[0], $m),
+                    );
                 }
             }
+            $offset += strlen($line) + 1; // +1 for newline
         }
 
-        // Store matches in a generic way - we'll add a matches property to PhpContext
         return $input->with(matches: $matches);
     }
 }

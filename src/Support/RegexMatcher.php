@@ -132,7 +132,7 @@ final class RegexMatcher
      */
     public function getLineFromOffset(int $offset): int
     {
-        return substr_count(substr($this->content, 0, $offset), "\n") + 1;
+        return TextHelper::getLineNumber($this->content, $offset);
     }
 
     /**
@@ -140,18 +140,6 @@ final class RegexMatcher
      */
     public function getSnippet(int $offset, int $length = 60): string
     {
-        $start = max(0, $offset - 20);
-        $snippet = substr($this->content, $start, $length);
-        $snippet = trim(preg_replace('/\s+/', ' ', $snippet) ?? $snippet);
-
-        if ($start > 0) {
-            $snippet = '...'.$snippet;
-        }
-
-        if ($offset + 40 < strlen($this->content)) {
-            $snippet .= '...';
-        }
-
-        return $snippet;
+        return TextHelper::getSnippet($this->content, $offset, $length);
     }
 }

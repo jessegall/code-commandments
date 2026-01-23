@@ -6,12 +6,13 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
 use ReflectionClass;
 
@@ -74,7 +75,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractClasses::class)
             ->pipe(FilterLaravelDataClasses::class)
@@ -82,14 +83,14 @@ SCRIPTURE;
             ->pipe(ExtractUseStatements::class)
             ->pipe(fn (PhpContext $ctx) => $this->findReadonlyPropertiesWithInjectingAttributes($ctx))
             ->mapToSins(fn (PhpContext $ctx) => array_map(
-                fn ($match) => $this->sinAt(
-                    $match['line'],
+                fn (MatchResult $match) => $this->sinAt(
+                    $match->line,
                     sprintf(
                         'Readonly property "$%s" has value-injecting attribute #[%s]',
-                        $match['property'],
-                        $match['attribute']
+                        $match->groups['property'],
+                        $match->groups['attribute']
                     ),
-                    $match['declaration'],
+                    $match->groups['declaration'],
                     'Remove the readonly modifier from the property'
                 ),
                 $ctx->matches
@@ -117,12 +118,19 @@ SCRIPTURE;
                 $injectingAttribute = $this->findInjectingAttribute($stmt, $ctx);
 
                 if ($injectingAttribute !== null) {
-                    $matches[] = [
-                        'line' => $stmt->getStartLine(),
-                        'property' => $stmt->props[0]->name->toString(),
-                        'attribute' => $injectingAttribute,
-                        'declaration' => $this->getPropertyDeclaration($stmt),
-                    ];
+                    $matches[] = new MatchResult(
+                        name: 'readonly_data_property',
+                        pattern: '',
+                        match: '',
+                        line: $stmt->getStartLine(),
+                        offset: null,
+                        content: null,
+                        groups: [
+                            'property' => $stmt->props[0]->name->toString(),
+                            'attribute' => $injectingAttribute,
+                            'declaration' => $this->getPropertyDeclaration($stmt),
+                        ],
+                    );
                 }
             }
         }

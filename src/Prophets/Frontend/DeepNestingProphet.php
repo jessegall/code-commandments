@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Avoid deeply nested templates - consider extracting components.
@@ -52,37 +54,33 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->mapToWarnings(function (VueContext $ctx) {
+                $templateContent = $ctx->getSectionContent();
+                $lines = explode("\n", $templateContent);
+                $deepLines = 0;
 
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
+                foreach ($lines as $line) {
+                    $leadingSpaces = strlen($line) - strlen(ltrim($line));
+                    $indentLevel = (int) ($leadingSpaces / self::INDENT_SPACES);
 
-        $templateContent = $template['content'];
-        $lines = explode("\n", $templateContent);
-        $deepLines = 0;
+                    if ($indentLevel >= self::DEEP_NESTING_THRESHOLD && preg_match('/^\s*<[a-zA-Z]/', $line)) {
+                        $deepLines++;
+                    }
+                }
 
-        foreach ($lines as $line) {
-            // Count leading spaces
-            $leadingSpaces = strlen($line) - strlen(ltrim($line));
-            $indentLevel = (int) ($leadingSpaces / self::INDENT_SPACES);
+                if ($deepLines > 5) {
+                    return $this->warningAt(
+                        1,
+                        "{$deepLines} deeply nested elements - consider component extraction",
+                        'Extract nested sections into separate components'
+                    );
+                }
 
-            // Check if line starts an element and is deeply nested
-            if ($indentLevel >= self::DEEP_NESTING_THRESHOLD && preg_match('/^\s*<[a-zA-Z]/', $line)) {
-                $deepLines++;
-            }
-        }
-
-        if ($deepLines > 5) {
-            return Judgment::withWarnings([
-                $this->warningAt(
-                    1,
-                    "{$deepLines} deeply nested elements - consider component extraction",
-                    'Extract nested sections into separate components'
-                ),
-            ]);
-        }
-
-        return $this->righteous();
+                return null;
+            })
+            ->judge();
     }
 }

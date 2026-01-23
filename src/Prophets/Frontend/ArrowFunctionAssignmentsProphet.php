@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Prefer named function declarations over arrow function assignments.
@@ -62,48 +65,56 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $script = $this->extractScript($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractScript()
+            ->returnRighteousIfNoScript()
+            ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findArrowAssignments($ctx)))
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                $name = $match->groups['name'];
 
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
+                return $pipeline->sinAt(
+                    $match->offset,
+                    "Arrow function assignment for '{$name}' - prefer named function declaration",
+                    $pipeline->getSnippet($match->offset, 60),
+                    "Use: function {$name}() { ... } or async function {$name}() { ... }"
+                );
+            })
+            ->judge();
+    }
 
-        $scriptContent = $script['content'];
-        $scriptStart = $script['start'];
-        $sins = [];
-
-        // Look for const name = () => { patterns (multi-line arrow functions)
-        // This regex looks for arrow functions assigned to const that span multiple lines
+    private function findArrowAssignments(VueContext $ctx): array
+    {
+        $scriptContent = $ctx->getSectionContent();
+        $matches = [];
         $pattern = '/const\s+(\w+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>\s*\{/';
 
-        preg_match_all($pattern, $scriptContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        preg_match_all($pattern, $scriptContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
-        foreach ($matches as $match) {
+        foreach ($found as $match) {
             $fullMatch = $match[0][0];
             $functionName = $match[1][0];
             $offset = $match[0][1];
 
-            // Skip if it's a computed property
             if (str_contains($fullMatch, 'computed(')) {
                 continue;
             }
 
-            // Check if this is inside a computed() call by looking at surrounding context
             $beforeMatch = substr($scriptContent, max(0, $offset - 20), 20);
             if (str_contains($beforeMatch, 'computed(')) {
                 continue;
             }
 
-            $line = $this->getLineFromOffset($content, $scriptStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
-                "Arrow function assignment for '{$functionName}' - prefer named function declaration",
-                $this->getSnippet($scriptContent, $offset, 60),
-                "Use: function {$functionName}() { ... } or async function {$functionName}() { ... }"
+            $matches[] = new MatchResult(
+                name: 'arrow_assignment',
+                pattern: $pattern,
+                match: $fullMatch,
+                line: $ctx->getLineFromOffset($offset),
+                offset: $offset,
+                content: $fullMatch,
+                groups: ['name' => $functionName],
             );
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $matches;
     }
 }

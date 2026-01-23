@@ -8,7 +8,8 @@ use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
-use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 use JesseGall\CodeCommandments\Support\RegexMatcher;
 use JesseGall\CodeCommandments\Support\Str;
 
@@ -58,17 +59,18 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        return ProphetPipeline::make($filePath, $content)
+        return VuePipeline::make($filePath, $content)
             ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
             ->matchAll(self::CAMEL_CASE_BINDING_PATTERN)
-            ->mapToSins(function (array $match, ProphetPipeline $pipeline) {
-                $propName = $match['groups'][1];
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                $propName = $match->groups[1];
                 $kebabCase = Str::toKebabCase($propName);
 
                 return $pipeline->sinAt(
-                    $match['offset'],
+                    $match->offset,
                     'Prop binding uses camelCase instead of kebab-case',
-                    trim($match['match']),
+                    trim($match->match),
                     "Use :{$kebabCase}= instead of :{$propName}="
                 );
             })
@@ -86,7 +88,7 @@ SCRIPTURE;
             return RepentanceResult::unchanged();
         }
 
-        $pipeline = ProphetPipeline::make($filePath, $content)->extractTemplate();
+        $pipeline = VuePipeline::make($filePath, $content)->extractTemplate();
 
         if ($pipeline->shouldSkip()) {
             return RepentanceResult::unchanged();

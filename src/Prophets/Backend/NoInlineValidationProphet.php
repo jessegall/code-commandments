@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
 use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Commandment: No inline $request->validate() in controllers - Use FormRequest.
@@ -53,7 +53,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractClasses::class)
             ->pipe(FilterLaravelControllers::class)

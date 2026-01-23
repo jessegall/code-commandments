@@ -6,8 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Commandment: Dispatch events with event() - Not Event::dispatch(...).
@@ -38,7 +39,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->pipe(fn (PhpContext $ctx) => $this->findEventDispatchCalls($ctx))
             ->sinsFromMatches(
                 'Using static ::dispatch() on event class',
@@ -72,10 +73,15 @@ SCRIPTURE;
 
                 // Check if it looks like an event class (ends with Event or similar)
                 if (preg_match('/(\w+Event|Event\w*)::dispatch/', $line)) {
-                    $matches[] = [
-                        'line' => $lineNum + 1,
-                        'content' => trim($line),
-                    ];
+                    $matches[] = new MatchResult(
+                        name: 'event_dispatch',
+                        pattern: '',
+                        match: '',
+                        line: $lineNum + 1,
+                        offset: null,
+                        content: trim($line),
+                        groups: [],
+                    );
                 }
             }
         }

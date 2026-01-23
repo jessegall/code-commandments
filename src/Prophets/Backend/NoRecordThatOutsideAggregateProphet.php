@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Commandment: No recordThat outside aggregates - Add aggregate methods that encapsulate recordThat internally.
@@ -45,7 +45,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => $this->isDomainFile($ctx->filePath))
             ->pipe((new MatchPatterns)->add('recordThat', '/->recordThat\s*\(/'))
             ->sinsFromMatches(

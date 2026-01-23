@@ -6,8 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Route URIs must use kebab-case.
@@ -39,12 +40,12 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! $this->isRouteFile($ctx->filePath))
             ->pipe(fn (PhpContext $ctx) => $this->findNonKebabRoutes($ctx))
             ->sinsFromMatches(
-                fn ($m) => sprintf('Route URI is not kebab-case: "%s" (found: %s)', $m['uri'], implode(', ', $m['badSegments'])),
-                fn ($m) => sprintf('Use kebab-case: "%s"', $this->toKebabCase($m['uri']))
+                fn (MatchResult $m) => sprintf('Route URI is not kebab-case: "%s" (found: %s)', $m->groups['uri'], implode(', ', $m->groups['badSegments'])),
+                fn (MatchResult $m) => sprintf('Use kebab-case: "%s"', $this->toKebabCase($m->groups['uri']))
             )
             ->judge();
     }
@@ -66,12 +67,18 @@ SCRIPTURE;
                     $badSegments = $this->findNonKebabSegments($uri);
 
                     if (! empty($badSegments)) {
-                        $matches[] = [
-                            'line' => $lineNum + 1,
-                            'uri' => $uri,
-                            'badSegments' => $badSegments,
-                            'content' => trim($line),
-                        ];
+                        $matches[] = new MatchResult(
+                            name: 'non_kebab_route',
+                            pattern: '',
+                            match: $uri,
+                            line: $lineNum + 1,
+                            offset: null,
+                            content: trim($line),
+                            groups: [
+                                'uri' => $uri,
+                                'badSegments' => $badSegments,
+                            ],
+                        );
                     }
                 }
             }

@@ -8,7 +8,9 @@ use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
-use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
+use JesseGall\CodeCommandments\Support\Traits\TemplateElementHelper;
 
 /**
  * Thou shalt wrap v-if/v-else in template elements.
@@ -18,6 +20,8 @@ use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
  */
 class TemplateVIfProphet extends FrontendCommandment implements SinRepenter
 {
+    use TemplateElementHelper;
+
     protected array $domElements = [
         'div', 'span', 'p', 'a', 'button', 'input', 'select', 'textarea',
         'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'thead', 'tbody',
@@ -78,17 +82,18 @@ SCRIPTURE;
         $elementsPattern = implode('|', $this->domElements);
         $pattern = '/<('.$elementsPattern.')\s[^>]*v-(if|else-if|else)[=>\s]/i';
 
-        return ProphetPipeline::make($filePath, $content)
+        return VuePipeline::make($filePath, $content)
             ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
             ->matchAll($pattern)
-            ->mapToSins(function (array $match, ProphetPipeline $pipeline) {
-                $element = $match['groups'][1];
-                $directive = 'v-'.$match['groups'][2];
+            ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
+                $element = $match->groups[1];
+                $directive = 'v-'.$match->groups[2];
 
                 return $pipeline->sinAt(
-                    $match['offset'],
+                    $match->offset,
                     "{$directive} used directly on <{$element}> instead of <template>",
-                    $pipeline->getSnippet($match['offset'], 80),
+                    $pipeline->getSnippet($match->offset, 80),
                     "Wrap the <{$element}> in a <template {$directive}=\"...\"> element"
                 );
             })
@@ -102,13 +107,13 @@ SCRIPTURE;
 
     public function repent(string $filePath, string $content): RepentanceResult
     {
-        $template = $this->extractTemplate($content);
+        $pipeline = VuePipeline::make($filePath, $content)->extractTemplate();
 
-        if ($template === null) {
+        if ($pipeline->shouldSkip()) {
             return RepentanceResult::unrepentant('No template section found');
         }
 
-        $templateContent = $template['content'];
+        $templateContent = $pipeline->getSectionContent();
         $penance = [];
         $maxPasses = 10;
         $pass = 0;
@@ -164,58 +169,9 @@ SCRIPTURE;
         }
 
         // Rebuild the full file content
-        $newContent = substr($content, 0, $template['start']) . $templateContent . substr($content, $template['end']);
+        $ctx = $pipeline->getContext();
+        $newContent = substr($content, 0, $ctx->template['start']) . $templateContent . substr($content, $ctx->template['end']);
 
         return RepentanceResult::absolved($newContent, $penance);
-    }
-
-    protected function findClosingTag(string $content, string $tag, int $startPos): ?array
-    {
-        $openTagPattern = '/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?>|<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\s*\/>/i';
-        $closeTagPattern = '/<\/' . preg_quote($tag, '/') . '\s*>/i';
-
-        $depth = 1;
-        $pos = $startPos;
-
-        // Move past the opening tag
-        if (preg_match('/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\/?>/i', $content, $match, PREG_OFFSET_CAPTURE, $pos)) {
-            // Check if self-closing
-            if (str_ends_with(trim($match[0][0]), '/>')) {
-                return null; // Self-closing
-            }
-            $pos = $match[0][1] + strlen($match[0][0]);
-        }
-
-        while ($depth > 0 && $pos < strlen($content)) {
-            $nextOpen = preg_match($openTagPattern, $content, $openMatch, PREG_OFFSET_CAPTURE, $pos) ? $openMatch[0][1] : PHP_INT_MAX;
-            $nextClose = preg_match($closeTagPattern, $content, $closeMatch, PREG_OFFSET_CAPTURE, $pos) ? $closeMatch[0][1] : PHP_INT_MAX;
-
-            if ($nextClose === PHP_INT_MAX) {
-                return null; // No closing tag found
-            }
-
-            if ($nextOpen < $nextClose) {
-                // Found an open tag before the next close tag
-                $isSelfClosing = str_ends_with(trim($openMatch[0][0]), '/>');
-                if (!$isSelfClosing) {
-                    // Normal open tag - increment depth
-                    $depth++;
-                }
-                // For self-closing tags, just skip them (don't change depth)
-                $pos = $nextOpen + strlen($openMatch[0][0]);
-            } else {
-                // Found a close tag
-                $depth--;
-                if ($depth === 0) {
-                    return [
-                        'start' => $closeMatch[0][1],
-                        'end' => $closeMatch[0][1] + strlen($closeMatch[0][0]),
-                    ];
-                }
-                $pos = $nextClose + strlen($closeMatch[0][0]);
-            }
-        }
-
-        return null;
     }
 }

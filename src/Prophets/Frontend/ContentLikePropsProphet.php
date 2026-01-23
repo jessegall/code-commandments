@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Consider using slots instead of content-like props.
@@ -71,28 +73,26 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->mapToWarnings(function (VueContext $ctx) {
+                $templateContent = $ctx->getSectionContent();
+                $warnings = [];
 
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
+                foreach ($this->contentProps as $prop) {
+                    $pattern = '/' . preg_quote($prop, '/') . '="[^"]{50,}/';
+                    if (preg_match($pattern, $templateContent)) {
+                        $warnings[] = $this->warningAt(
+                            1,
+                            "Long content in '{$prop}' prop - consider using a slot instead",
+                            'Slots provide more flexibility for HTML/formatting'
+                        );
+                    }
+                }
 
-        $templateContent = $template['content'];
-        $warnings = [];
-
-        foreach ($this->contentProps as $prop) {
-            // Look for props with substantial string content (50+ chars)
-            $pattern = '/' . preg_quote($prop, '/') . '="[^"]{50,}/';
-
-            if (preg_match($pattern, $templateContent)) {
-                $warnings[] = $this->warningAt(
-                    1,
-                    "Long content in '{$prop}' prop - consider using a slot instead",
-                    'Slots provide more flexibility for HTML/formatting'
-                );
-            }
-        }
-
-        return empty($warnings) ? $this->righteous() : Judgment::withWarnings($warnings);
+                return $warnings;
+            })
+            ->judge();
     }
 }

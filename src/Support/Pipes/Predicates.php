@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Pipes;
 
 use Closure;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Str;
 use JesseGall\CodeCommandments\Support\TailwindClassFilter;
 
@@ -124,7 +125,11 @@ final class Predicates
      */
     public static function hasGroup(int|string $group): Closure
     {
-        return fn ($match) => isset($match['groups'][$group]) && $match['groups'][$group] !== '';
+        return function ($match) use ($group) {
+            $groups = $match instanceof MatchResult ? $match->groups : ($match['groups'] ?? []);
+
+            return isset($groups[$group]) && $groups[$group] !== '';
+        };
     }
 
     /**
@@ -132,7 +137,11 @@ final class Predicates
      */
     public static function getGroup(int|string $group, mixed $default = null): Closure
     {
-        return fn ($match) => $match['groups'][$group] ?? $default;
+        return function ($match) use ($group, $default) {
+            $groups = $match instanceof MatchResult ? $match->groups : ($match['groups'] ?? []);
+
+            return $groups[$group] ?? $default;
+        };
     }
 
     /**

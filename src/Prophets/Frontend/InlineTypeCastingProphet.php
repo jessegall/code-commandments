@@ -6,6 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Avoid inline type casting in template bindings.
@@ -56,70 +60,65 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        return VuePipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findTypeAssertions($ctx)))
+            ->mapToWarnings(fn (VueContext $ctx) => array_map(
+                fn (MatchResult $match) => Warning::at(
+                    $match->line,
+                    $match->groups['message'],
+                    $match->groups['suggestion']
+                ),
+                $ctx->matches
+            ))
+            ->judge();
+    }
 
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
+    private function findTypeAssertions(VueContext $ctx): array
+    {
+        $templateContent = $ctx->getSectionContent();
+        $matches = [];
 
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Look for type assertions in bindings: :[prop]="... as SomeType"
-        $pattern = '/:[a-z-]+="[^"]*\s+as\s+[A-Za-z]+/';
-
-        preg_match_all($pattern, $templateContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-        foreach ($matches as $match) {
-            // Skip "as const" which is valid
-            if (str_contains($match[0][0], 'as const')) {
-                continue;
+        // Look for type assertions in bindings
+        preg_match_all('/:[a-z-]+="[^"]*\s+as\s+[A-Za-z]+/', $templateContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        foreach ($found as $match) {
+            if (!str_contains($match[0][0], 'as const')) {
+                $matches[] = new MatchResult(
+                    name: 'type_assertion_binding',
+                    pattern: '',
+                    match: $match[0][0],
+                    line: $ctx->getLineFromOffset($match[0][1]),
+                    offset: $match[0][1],
+                    content: null,
+                    groups: [
+                        'message' => 'TypeScript type assertion in template binding',
+                        'suggestion' => 'Move type assertion to a computed property in script',
+                    ],
+                );
             }
-
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
-                'TypeScript type assertion in template binding',
-                $this->getSnippet($templateContent, $offset, 50),
-                'Move type assertion to a computed property in script'
-            );
         }
 
-        // Look for type assertions in slot template bindings but NOT type annotations
-        // Type annotations like #slot="{ data }: { data: Type }" are fine
-        // Type assertions like #slot="data as Type" are not
-        $slotPattern = '/<template\s+#[a-z-]+="[^"]*\s+as\s+[A-Za-z]+/';
-
-        preg_match_all($slotPattern, $templateContent, $slotMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-        foreach ($slotMatches as $match) {
+        // Look for type assertions in slot template bindings
+        preg_match_all('/<template\s+#[a-z-]+="[^"]*\s+as\s+[A-Za-z]+/', $templateContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        foreach ($found as $match) {
             $matchText = $match[0][0];
-
-            // Skip "as const"
-            if (str_contains($matchText, 'as const')) {
-                continue;
+            if (!str_contains($matchText, 'as const') && !preg_match('/}:\s*\{/', $matchText)) {
+                $matches[] = new MatchResult(
+                    name: 'type_assertion_slot',
+                    pattern: '',
+                    match: $matchText,
+                    line: $ctx->getLineFromOffset($match[0][1]),
+                    offset: $match[0][1],
+                    content: null,
+                    groups: [
+                        'message' => 'TypeScript type assertion in slot binding',
+                        'suggestion' => 'Use type annotation instead: #slot="{ data }: { data: Type }"',
+                    ],
+                );
             }
-
-            // Skip type annotations (has }: { pattern before the type)
-            // e.g., #slot="{ data }: { data: Type }" - this is NOT a cast
-            if (preg_match('/}:\s*\{/', $matchText)) {
-                continue;
-            }
-
-            $offset = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $offset);
-
-            $sins[] = $this->sinAt(
-                $line,
-                'TypeScript type assertion in slot binding',
-                $this->getSnippet($templateContent, $offset, 50),
-                'Use type annotation instead: #slot="{ data }: { data: Type }"'
-            );
         }
 
-        return empty($sins) ? $this->righteous() : Judgment::withWarnings($sins);
+        return $matches;
     }
 }

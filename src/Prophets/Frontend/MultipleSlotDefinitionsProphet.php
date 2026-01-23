@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Components with slots must use defineSlots for type safety.
@@ -67,44 +69,21 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        // Only check component files (in /components/ or /Components/ directories)
-        if (!str_contains($filePath, '/components/') && !str_contains($filePath, '/Components/')) {
-            return $this->righteous();
-        }
-
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        // Check if template has scoped slots (slots with bound props like :item="item" or v-bind)
-        // Simple slots without props don't need defineSlots
-        if (!$this->hasScopedSlots($template['content'])) {
-            return $this->righteous();
-        }
-
-        $script = $this->extractScript($content);
-
-        if ($script === null) {
-            return $this->skip('No script section found');
-        }
-
-        // Check if defineSlots is used
-        if (!preg_match('/defineSlots\s*[<(]/', $script['content'])) {
-            $line = $this->getLineFromOffset($content, $template['start']);
-
-            return $this->fallen([
-                $this->sinAt(
-                    $line,
-                    'Component has scoped slots but does not use defineSlots',
-                    null,
-                    'Add defineSlots<{ ... }>() to type your scoped slot props'
-                ),
-            ]);
-        }
-
-        return $this->righteous();
+        return VuePipeline::make($filePath, $content)
+            ->onlyComponentFiles()
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate()
+            ->returnRighteousWhen(fn (VueContext $ctx) => ! $this->hasScopedSlots($ctx->template['content']))
+            ->extractScript()
+            ->returnRighteousIfNoScript()
+            ->returnRighteousIfSectionMatches('/defineSlots\s*[<(]/', 'script')
+            ->mapToSins(fn (VueContext $ctx) => $this->sinAt(
+                1,
+                'Component has scoped slots but does not use defineSlots',
+                null,
+                'Add defineSlots<{ ... }>() to type your scoped slot props'
+            ))
+            ->judge();
     }
 
     /**

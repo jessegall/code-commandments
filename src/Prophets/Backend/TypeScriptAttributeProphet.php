@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
-use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
  * Commandment: All Data classes must have #[TypeScript] attribute.
@@ -62,7 +62,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+        return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => $this->isUtilityClass($ctx->filePath))
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractClasses::class)
