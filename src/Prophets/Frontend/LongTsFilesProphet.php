@@ -16,7 +16,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  */
 class LongTsFilesProphet extends FrontendCommandment
 {
-    private const MAX_TS_LINES = 200;
+    private const DEFAULT_MAX_TS_LINES = 200;
 
     public function applicableExtensions(): array
     {
@@ -25,7 +25,7 @@ class LongTsFilesProphet extends FrontendCommandment
 
     public function description(): string
     {
-        return 'TypeScript files in components should be under '.self::MAX_TS_LINES.' lines';
+        return 'TypeScript files in components should be under '.$this->getMaxTsLines().' lines';
     }
 
     public function detailedDescription(): string
@@ -64,17 +64,19 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        $maxLines = $this->getMaxTsLines();
+
         return VuePipeline::make($filePath, $content)
             ->extractScript()
             ->skipIfNoScript()
-            ->mapToWarnings(function (VueContext $ctx) {
+            ->mapToWarnings(function (VueContext $ctx) use ($maxLines) {
                 $scriptContent = $ctx->getSectionContent();
                 $lineCount = substr_count($scriptContent, "\n") + 1;
 
-                if ($lineCount > self::MAX_TS_LINES) {
+                if ($lineCount > $maxLines) {
                     return $this->warningAt(
                         1,
-                        "Script section has {$lineCount} lines (max: ".self::MAX_TS_LINES.')',
+                        "Script section has {$lineCount} lines (max: {$maxLines})",
                         'Extract logic to composables, utilities, or smaller components'
                     );
                 }
@@ -82,5 +84,10 @@ SCRIPTURE;
                 return null;
             })
             ->judge();
+    }
+
+    private function getMaxTsLines(): int
+    {
+        return (int) $this->config('max_ts_lines', self::DEFAULT_MAX_TS_LINES);
     }
 }

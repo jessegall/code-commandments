@@ -1,8 +1,38 @@
 # Code Commandments
 
-**This is a personal tool I built for my own projects. It's public in case others find it useful, but it's tailored to my specific coding standards and workflow.**
+**This is a personal tool I built for my own projects.** It's public in case others find it useful or want to fork it for their own coding standards.
 
-A Laravel package for enforcing code commandments through prophets who judge and absolve transgressions.
+A Laravel package that enforces coding standards through automated validation, designed to work seamlessly with **Claude Code** (Anthropic's AI coding assistant).
+
+## Why This Exists
+
+When working with Claude Code, I needed a way to:
+1. **Teach Claude my coding standards** - So it writes code the way I want from the start
+2. **Automatically check Claude's output** - Catch violations immediately after Claude makes changes
+3. **Provide actionable feedback** - Give Claude clear instructions on what to fix
+
+This package hooks into Claude Code's hook system to create a feedback loop:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Claude Code Session                          │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Session starts                                               │
+│     └─> Hook runs: commandments:scripture --claude               │
+│         └─> Claude learns all coding rules                       │
+│                                                                  │
+│  2. Claude writes/modifies code                                  │
+│                                                                  │
+│  3. After changes complete                                       │
+│     └─> Hook runs: commandments:judge --claude                   │
+│         └─> Claude sees any violations                           │
+│         └─> Claude fixes them automatically                      │
+│                                                                  │
+│  4. Repeat until code is "righteous" (no violations)             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+The `--claude` flag outputs machine-readable text optimized for AI assistants, without decorative ASCII art or colors.
 
 ## Installation
 
@@ -54,6 +84,9 @@ php artisan commandments:judge --files=app/Models/User.php,app/Services/AuthServ
 
 # Mark files as absolved after manual review
 php artisan commandments:judge --absolve
+
+# Claude-friendly output (for AI assistants)
+php artisan commandments:judge --claude
 ```
 
 ### Seek Absolution (Auto-fix)
@@ -70,6 +103,9 @@ php artisan commandments:repent --file=app/Http/Controllers/UserController.php
 
 # Fix multiple specific files (comma-separated)
 php artisan commandments:repent --files=app/Models/User.php,app/Services/AuthService.php
+
+# Claude-friendly output
+php artisan commandments:repent --claude
 ```
 
 ### Read the Scripture (List Commandments)
@@ -83,6 +119,9 @@ php artisan commandments:scripture --detailed
 
 # List prophets from a specific scroll
 php artisan commandments:scripture --scroll=frontend
+
+# Claude-friendly output
+php artisan commandments:scripture --claude
 ```
 
 ### Summon a New Prophet
@@ -103,16 +142,76 @@ php artisan make:prophet ComplexLogicReview --confession
 
 ### Claude Code Integration
 
-Install hooks to automatically judge your code when using Claude Code:
+#### The `--claude` Flag
+
+The `--claude` flag provides AI-optimized output that's easier for Claude Code to parse and act upon:
+
+```bash
+# Get summary of violations with actionable next steps
+php artisan commandments:judge --claude
+
+# See what auto-fixes are available
+php artisan commandments:repent --dry-run --claude
+
+# List all rules in a machine-readable format
+php artisan commandments:scripture --claude
+```
+
+**Claude output features:**
+- Concise, structured output without decorative ASCII art
+- Groups violations by type with file lists
+- Provides specific commands to run for each violation type
+- Clearly separates sins (must fix) from warnings (review required)
+
+#### Automated Hooks
+
+Claude Code supports [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) - shell commands that run at specific points during a session. This package leverages hooks to create an automated feedback loop.
+
+Install the hooks:
 
 ```bash
 php artisan commandments:install-hooks
 ```
 
-This will:
-- Show the scripture (commandments) when starting a Claude Code session
-- Run the judge command after Claude completes work
-- Distinguish between sins (must fix) and warnings (review and absolve)
+This adds the following to your `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "Notification": [],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "php artisan commandments:judge --claude --git"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": []
+  }
+}
+```
+
+**How it works:**
+
+| Hook | When it runs | What it does |
+|------|--------------|--------------|
+| `Stop` | After Claude finishes a response | Runs `judge --claude --git` to check changed files |
+
+The `--git` flag ensures only new/modified files are checked, keeping feedback focused and fast.
+
+**Typical workflow:**
+
+1. You ask Claude to implement a feature
+2. Claude writes the code
+3. Hook automatically runs `commandments:judge --claude --git`
+4. If violations found, Claude sees them and fixes automatically
+5. Repeat until code passes all checks
 
 ## Configuration
 
@@ -125,25 +224,56 @@ return [
             'path' => app_path(),
             'extensions' => ['php'],
             'exclude' => ['Console/Kernel.php'],
-            'thresholds' => [
-                'max_method_lines' => 15,
-                'max_private_methods' => 3,  // For ControllerPrivateMethodsProphet
-                'min_method_lines' => 3,     // Minimum lines for a method to count
-            ],
             'prophets' => [
-                \JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet::class,
-                // Add more prophets...
+                // Simple registration (no config needed)
+                Backend\NoRawRequestProphet::class,
+                Backend\NoJsonResponseProphet::class,
+
+                // With per-prophet configuration
+                Backend\ControllerPrivateMethodsProphet::class => [
+                    'max_private_methods' => 3,
+                    'min_method_lines' => 3,
+                ],
             ],
         ],
         'frontend' => [
             'path' => resource_path('js'),
             'extensions' => ['vue', 'ts', 'js'],
-            'thresholds' => [
-                'max_vue_lines' => 200,
-            ],
             'prophets' => [
-                \JesseGall\CodeCommandments\Prophets\Frontend\CompositionApiProphet::class,
-                // Add more prophets...
+                Frontend\NoFetchAxiosProphet::class,
+                Frontend\CompositionApiProphet::class,
+
+                // Configure max lines thresholds
+                Frontend\LongVueFilesProphet::class => [
+                    'max_vue_lines' => 200,
+                ],
+                Frontend\LongTsFilesProphet::class => [
+                    'max_ts_lines' => 200,
+                ],
+
+                // Configure allowed Tailwind patterns for style overrides
+                Frontend\StyleOverridesProphet::class => [
+                    'allowed_patterns' => [
+                        // Width/height
+                        '/^(min-|max-)?(w|h)-/',
+                        '/^size-/',
+
+                        // Flexbox
+                        '/^flex$/',
+                        '/^inline-flex$/',
+                        '/^items-/',
+                        '/^justify-/',
+
+                        // Transitions & animations
+                        '/^transition/',
+                        '/^duration-/',
+                        '/^animate-/',
+
+                        // Interactions
+                        '/^cursor-/',
+                        '/^opacity-/',
+                    ],
+                ],
             ],
         ],
     ],
@@ -153,6 +283,56 @@ return [
     ],
 ];
 ```
+
+### Per-Prophet Configuration
+
+Prophets can be registered in two ways:
+
+1. **Simple registration** - Just the class name when no config is needed:
+   ```php
+   Backend\NoRawRequestProphet::class,
+   ```
+
+2. **With configuration** - Class name as key, config array as value:
+   ```php
+   Backend\ControllerPrivateMethodsProphet::class => [
+       'max_private_methods' => 3,
+   ],
+   ```
+
+### Configurable Prophets
+
+| Prophet | Config Key | Default | Description |
+|---------|------------|---------|-------------|
+| `LongVueFilesProphet` | `max_vue_lines` | 200 | Maximum lines in Vue files |
+| `LongTsFilesProphet` | `max_ts_lines` | 200 | Maximum lines in script sections |
+| `ControllerPrivateMethodsProphet` | `max_private_methods` | 3 | Max private methods in controllers |
+| `ControllerPrivateMethodsProphet` | `min_method_lines` | 3 | Min lines for method to count |
+| `StyleOverridesProphet` | `allowed_patterns` | [] | Additional Tailwind patterns to allow |
+
+### StyleOverridesProphet Patterns
+
+The `StyleOverridesProphet` flags appearance classes on base components (Button, Card, etc.) but allows layout classes by default. You can extend the allowed patterns:
+
+```php
+Frontend\StyleOverridesProphet::class => [
+    'allowed_patterns' => [
+        // These are in ADDITION to built-in layout patterns
+        '/^(min-|max-)?(w|h)-/',  // Width/height
+        '/^flex$/',               // Flex display
+        '/^items-/',              // Flex alignment
+        '/^cursor-/',             // Cursor styles
+        '/^transition/',          // Transitions
+    ],
+],
+```
+
+**Built-in allowed patterns** (always allowed):
+- Margin/padding: `m-`, `p-`, `space-`, `gap-`
+- Grid layout: `col-span-`, `row-span-`, etc.
+- Flex behavior: `flex-1`, `grow`, `shrink`, `self-`
+- Positioning: `absolute`, `relative`, `top-`, `z-`
+- Display: `hidden`, `block`, `inline-block`
 
 ## Built-in Prophets
 
@@ -182,7 +362,7 @@ return [
 4. **RouterHardcodedUrlsProphet** - Thou shalt not hardcode URLs in router calls
 5. **WayfinderRoutesProphet** - Thou shalt not hardcode URLs in href attributes
 6. **CompositionApiProphet** - Thou shalt use Composition API
-7. **ArrowFunctionAssignmentsProphet** - Thou shalt use const arrow functions
+7. **ArrowFunctionAssignmentsProphet** - Thou shalt use named function declarations
 8. **SwitchCaseProphet** - Thou shalt not use switch statements
 9. **LongVueFilesProphet** - Thou shalt keep Vue files concise
 10. **LongTsFilesProphet** - Thou shalt keep TypeScript files concise
@@ -205,6 +385,8 @@ return [
 27. **InlineDialogProphet** - Review inline dialog definitions (requires confession)
 
 ## Creating Custom Prophets
+
+### Basic PHP Prophet
 
 ```php
 <?php
@@ -239,6 +421,93 @@ class NoMagicNumbersProphet extends PhpCommandment
         return $this->righteous();
     }
 }
+```
+
+### Using the Pipeline API
+
+The package provides fluent pipeline APIs for both PHP and Vue file analysis.
+
+#### PHP Pipeline (PhpPipeline)
+
+```php
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+
+public function judge(string $filePath, string $content): Judgment
+{
+    return PhpPipeline::make($filePath, $content)
+        ->onlyControllers()  // Filter to Laravel controllers only
+        ->pipe(ExtractMethods::class)
+        ->pipe(FilterPrivateMethod::class)
+        ->mapToSins(fn ($ctx) => /* create sins */)
+        ->judge();
+}
+```
+
+**Available helper methods:**
+
+| Method | Description |
+|--------|-------------|
+| `onlyControllers()` | Filter to Laravel controller classes |
+| `onlyDataClasses()` | Filter to Laravel Data classes |
+| `onlyFormRequestClasses()` | Filter to FormRequest classes |
+| `returnRighteousIfNoClass()` | Return righteous if no class found |
+| `returnRighteousWhenClassHasAttribute($attr)` | Skip if class has specific attribute |
+
+#### Vue Pipeline (VuePipeline)
+
+```php
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
+
+public function judge(string $filePath, string $content): Judgment
+{
+    return VuePipeline::make($filePath, $content)
+        ->inTemplate()  // Extract template, return righteous if not found
+        ->matchAll('/pattern/')
+        ->sinsFromMatches('Message', 'Suggestion')
+        ->judge();
+}
+```
+
+**Available helper methods:**
+
+| Method | Description |
+|--------|-------------|
+| `inTemplate()` | Extract template section, return righteous if not found |
+| `inScript()` | Extract script section, return righteous if not found |
+| `onlyPageFiles()` | Filter to files in Pages/ directory |
+| `onlyComponentFiles()` | Filter to files in Components/ directory |
+| `excludePartialFiles()` | Exclude files in Partials/ directory |
+| `matchAll($pattern)` | Find all regex matches in current section |
+| `sinsFromMatches($msg, $suggestion)` | Convert matches to sins |
+| `mapToSins($callback)` | Custom sin mapping |
+| `mapToWarnings($callback)` | Custom warning mapping |
+
+### Accessing Configuration
+
+Prophets can access their configuration via `$this->config()`:
+
+```php
+class MyProphet extends PhpCommandment
+{
+    public function judge(string $filePath, string $content): Judgment
+    {
+        $maxLines = (int) $this->config('max_lines', 100);
+        $patterns = $this->config('allowed_patterns', []);
+
+        // Use config values...
+    }
+}
+```
+
+Then configure in `config/commandments.php`:
+
+```php
+'prophets' => [
+    MyProphet::class => [
+        'max_lines' => 150,
+        'allowed_patterns' => ['/^custom-/'],
+    ],
+],
 ```
 
 ## Vue/TypeScript Auto-fixing
