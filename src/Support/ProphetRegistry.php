@@ -24,6 +24,13 @@ class ProphetRegistry
     protected array $scrollConfigs = [];
 
     /**
+     * Per-prophet configuration.
+     *
+     * @var array<string, array<class-string<Commandment>, array<string, mixed>>>
+     */
+    protected array $prophetConfigs = [];
+
+    /**
      * Register a prophet for a scroll.
      *
      * @param string $scroll The scroll (group) name
@@ -43,14 +50,54 @@ class ProphetRegistry
     /**
      * Register multiple prophets for a scroll.
      *
+     * Supports two formats:
+     * - Indexed array: [ProphetClass::class, AnotherProphet::class]
+     * - Associative array: [ProphetClass::class => ['config' => 'value']]
+     * - Mixed: [ProphetClass::class, AnotherProphet::class => ['config' => 'value']]
+     *
      * @param string $scroll
-     * @param array<class-string<Commandment>> $prophetClasses
+     * @param array<int|class-string<Commandment>, class-string<Commandment>|array<string, mixed>> $prophetClasses
      */
     public function registerMany(string $scroll, array $prophetClasses): void
     {
-        foreach ($prophetClasses as $prophetClass) {
-            $this->register($scroll, $prophetClass);
+        foreach ($prophetClasses as $key => $value) {
+            if (is_string($key)) {
+                // Associative: class => config
+                $this->register($scroll, $key);
+                $this->setProphetConfig($scroll, $key, $value);
+            } else {
+                // Indexed: just the class
+                $this->register($scroll, $value);
+            }
         }
+    }
+
+    /**
+     * Set configuration for a specific prophet in a scroll.
+     *
+     * @param string $scroll
+     * @param class-string<Commandment> $prophetClass
+     * @param array<string, mixed> $config
+     */
+    public function setProphetConfig(string $scroll, string $prophetClass, array $config): void
+    {
+        if (!isset($this->prophetConfigs[$scroll])) {
+            $this->prophetConfigs[$scroll] = [];
+        }
+
+        $this->prophetConfigs[$scroll][$prophetClass] = $config;
+    }
+
+    /**
+     * Get configuration for a specific prophet in a scroll.
+     *
+     * @param string $scroll
+     * @param class-string<Commandment> $prophetClass
+     * @return array<string, mixed>
+     */
+    public function getProphetConfig(string $scroll, string $prophetClass): array
+    {
+        return $this->prophetConfigs[$scroll][$prophetClass] ?? [];
     }
 
     /**
@@ -72,13 +119,14 @@ class ProphetRegistry
     public function getProphets(string $scroll): Collection
     {
         $classes = $this->prophets[$scroll] ?? [];
-        $config = $this->scrollConfigs[$scroll]['thresholds'] ?? [];
+        $thresholds = $this->scrollConfigs[$scroll]['thresholds'] ?? [];
 
-        return collect($classes)->map(function (string $class) use ($config) {
+        return collect($classes)->map(function (string $class) use ($scroll, $thresholds) {
             $prophet = app($class);
 
             if (method_exists($prophet, 'configure')) {
-                $prophet->configure($config);
+                $prophetConfig = $this->prophetConfigs[$scroll][$class] ?? [];
+                $prophet->configure(array_merge($thresholds, $prophetConfig));
             }
 
             return $prophet;
