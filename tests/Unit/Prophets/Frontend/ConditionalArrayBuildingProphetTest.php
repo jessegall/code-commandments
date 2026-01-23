@@ -97,6 +97,54 @@ VUE;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_passes_grouping_pattern_with_dynamic_key(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const grouped: Record<string, Category[]> = {};
+for (const row of props.rows) {
+    const parentId = row.category.parentId;
+    if (parentId) {
+        if (!grouped[parentId]) {
+            grouped[parentId] = [];
+        }
+        grouped[parentId].push(row.category);
+    }
+}
+</script>
+
+<template>
+  <div>Test</div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_grouping_pattern_in_foreach(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const byCategory: Record<string, Item[]> = {};
+items.forEach(item => {
+    const key = item.categoryId;
+    if (!byCategory[key]) byCategory[key] = [];
+    byCategory[key].push(item);
+});
+</script>
+
+<template>
+  <div>Test</div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_skips_non_vue_files(): void
     {
         $judgment = $this->prophet->judge('/test/script.ts', 'arr.push(1)');

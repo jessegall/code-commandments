@@ -76,6 +76,9 @@ class JudgeCommand extends Command
         $violatedProphets = [];
         $prophetSinCounts = [];
         $prophetFiles = [];
+        $displayedSins = 0;
+        $maxDisplayedSins = 10;
+        $isVerbose = $this->output->isVerbose();
 
         foreach ($scrolls as $scroll) {
             if (!$registry->hasScroll($scroll)) {
@@ -137,11 +140,15 @@ class JudgeCommand extends Command
                         $prophetFiles[$prophetClass][$relativePath] = true;
 
                         if (!$summaryMode && !$claudeMode) {
-                            $line = $sin->line ? ":{$sin->line}" : '';
-                            $this->output->writeln("  <fg=red>✗</> <fg=white>{$relativePath}{$line}</>");
-                            $this->output->writeln("    <fg=red>{$sin->message}</>");
-                            if ($sin->suggestion) {
-                                $this->output->writeln("    <fg=gray>→ {$sin->suggestion}</>");
+                            // Limit output unless verbose mode
+                            if ($isVerbose || $displayedSins < $maxDisplayedSins) {
+                                $line = $sin->line ? ":{$sin->line}" : '';
+                                $this->output->writeln("  <fg=red>✗</> <fg=white>{$relativePath}{$line}</>");
+                                $this->output->writeln("    <fg=red>{$sin->message}</>");
+                                if ($sin->suggestion) {
+                                    $this->output->writeln("    <fg=gray>→ {$sin->suggestion}</>");
+                                }
+                                $displayedSins++;
                             }
                         }
                     }
@@ -191,6 +198,13 @@ class JudgeCommand extends Command
                 $this->output->writeln("  <fg=gray>Files examined: {$summary['files']}, Righteous: {$summary['righteous']}, Fallen: {$summary['fallen']}</>");
                 $this->newLine();
             }
+        }
+
+        // Show message about truncated output
+        if (!$summaryMode && !$claudeMode && !$isVerbose && $totalSins > $maxDisplayedSins) {
+            $remaining = $totalSins - $maxDisplayedSins;
+            $this->newLine();
+            $this->output->writeln("  <fg=yellow>... and {$remaining} more sins. Run with -v to see all.</>");
         }
 
         // Show manual verification section

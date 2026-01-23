@@ -121,9 +121,10 @@ SCRIPTURE;
                 continue;
             }
 
-            // Look for base components with class or content-class attributes
-            // Capture the full attribute value
-            $pattern = '/<'.preg_quote($component, '/').'[^>]*((?:content-)?class)=["\']([^"\']*)["\'][^>]*>/i';
+            // Look for base components with static class or content-class attributes
+            // Must NOT match :class or v-bind:class (dynamic bindings contain JS expressions)
+            // (?!:) negative lookahead ensures we don't match :class after whitespace
+            $pattern = '/<'.preg_quote($component, '/').'[^>]*\s(?!:)((?:content-)?class)=["\']([^"\']*)["\'][^>]*>/i';
 
             preg_match_all($pattern, $templateContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 

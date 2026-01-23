@@ -285,6 +285,42 @@ VUE;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_ignores_dynamic_class_bindings(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+const dynamicClasses = 'bg-red-500 text-white';
+</script>
+
+<template>
+  <Button :class="dynamicClasses">Submit</Button>
+  <Card :class="{ 'bg-blue-500': isActive }">Content</Card>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_detects_static_class_but_ignores_dynamic(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="bg-red-500" :class="extraClasses">Submit</Button>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        // Should flag bg-red-500 from static class, ignore dynamic binding
+        $this->assertTrue($judgment->isFallen());
+        $this->assertStringContainsString('bg-red-500', $judgment->sins[0]->message);
+    }
+
     public function test_skips_non_vue_files(): void
     {
         $judgment = $this->prophet->judge('/test/script.ts', 'const x = 1');
