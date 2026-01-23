@@ -58,12 +58,13 @@ final class PhpPipeline extends PipelineBuilder
     /**
      * Filter to only Laravel Data classes and return righteous if none found.
      *
-     * Combines: ParsePhpAst -> ExtractClass -> FilterLaravelDataClass -> returnRighteousIfNoClass
+     * Combines: ParsePhpAst -> ExtractUseStatements -> ExtractClass -> FilterLaravelDataClass -> returnRighteousIfNoClass
      */
     public function onlyDataClasses(): self
     {
         return $this
             ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractUseStatements::class)
             ->pipe(ExtractClass::class)
             ->pipe(FilterLaravelDataClass::class)
             ->returnRighteousIfNoClass();

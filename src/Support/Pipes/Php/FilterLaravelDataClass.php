@@ -8,35 +8,69 @@ use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
 
 /**
- * Filter to only Laravel Data classes.
+ * Filter to only Spatie Laravel Data classes.
+ *
+ * Only includes classes that extend Spatie\LaravelData\Data or Spatie\LaravelData\Resource.
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
 final class FilterLaravelDataClass implements Pipe
 {
+    /**
+     * Known Spatie Data base classes.
+     */
+    private const SPATIE_DATA_CLASSES = [
+        'Spatie\\LaravelData\\Data',
+        'Spatie\\LaravelData\\Resource',
+    ];
+
     public function handle(mixed $input): mixed
     {
+        $useStatements = $input->useStatements ?? [];
+
         $dataClasses = array_values(array_filter(
             $input->classes,
-            fn (Node\Stmt\Class_ $class) => $this->isDataClass($class)
+            fn (Node\Stmt\Class_ $class) => $this->isSpatieDataClass($class, $useStatements)
         ));
 
         return $input->with(classes: $dataClasses);
     }
 
-    private function isDataClass(Node\Stmt\Class_ $class): bool
+    /**
+     * @param array<string, string> $useStatements
+     */
+    private function isSpatieDataClass(Node\Stmt\Class_ $class, array $useStatements): bool
     {
-        // Check class name ends with Data
-        $className = $class->name?->toString() ?? '';
-        if (str_ends_with($className, 'Data')) {
-            return true;
+        if ($class->extends === null) {
+            return false;
         }
 
-        // Check if extends Data
-        if ($class->extends !== null) {
-            $parentName = $class->extends->toString();
+        $parentName = $class->extends->toString();
 
-            return str_ends_with($parentName, 'Data');
+        // Check if directly extends a Spatie Data class (fully qualified)
+        foreach (self::SPATIE_DATA_CLASSES as $spatieClass) {
+            if ($parentName === $spatieClass || str_ends_with($parentName, '\\' . class_basename($spatieClass))) {
+                return true;
+            }
+        }
+
+        // Check if the parent is imported via use statement
+        $resolvedParent = $useStatements[$parentName] ?? null;
+        if ($resolvedParent !== null) {
+            foreach (self::SPATIE_DATA_CLASSES as $spatieClass) {
+                if ($resolvedParent === $spatieClass) {
+                    return true;
+                }
+            }
+        }
+
+        // Check if extends 'Data' or 'Resource' and there's a matching Spatie import
+        if ($parentName === 'Data' && isset($useStatements['Data'])) {
+            return $useStatements['Data'] === 'Spatie\\LaravelData\\Data';
+        }
+
+        if ($parentName === 'Resource' && isset($useStatements['Resource'])) {
+            return $useStatements['Resource'] === 'Spatie\\LaravelData\\Resource';
         }
 
         return false;
