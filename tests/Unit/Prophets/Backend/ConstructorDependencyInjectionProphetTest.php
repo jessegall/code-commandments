@@ -337,4 +337,56 @@ PHP;
         $this->assertNotEmpty($this->prophet->detailedDescription());
         $this->assertStringContainsString('constructor', strtolower($this->prophet->description()));
     }
+
+    public function test_detects_laravel_11_controller_without_illuminate_base(): void
+    {
+        // Laravel 11+ controllers extend App\Http\Controllers\Controller
+        // which does NOT extend Illuminate\Routing\Controller
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use App\Services\UserService;
+
+class UserController extends Controller
+{
+    public function store(UserService $service)
+    {
+        return $service->create();
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+        $this->assertStringContainsString('UserService', $judgment->sins[0]->message);
+    }
+
+    public function test_laravel_11_controller_passes_with_constructor_injection(): void
+    {
+        // Laravel 11+ controller with proper constructor injection
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use App\Services\UserService;
+
+class UserController extends Controller
+{
+    public function __construct(
+        private UserService $service,
+    ) {}
+
+    public function store()
+    {
+        return $this->service->create();
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
 }

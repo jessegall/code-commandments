@@ -131,11 +131,43 @@ abstract class PhpCommandment extends BaseCommandment
 
         // Try reflection first if the class exists
         if ($fqcn !== null && class_exists($fqcn)) {
-            return $this->isInstanceOfClass($fqcn, $baseClass);
+            if ($this->isInstanceOfClass($fqcn, $baseClass)) {
+                return true;
+            }
+
+            // For controllers, also check Laravel 11+ pattern where controllers
+            // don't extend Illuminate\Routing\Controller
+            if ($type === 'controller' && $this->isLaravel11Controller($ast, $fqcn)) {
+                return true;
+            }
+
+            return false;
         }
 
         // Fall back to AST-based checking for non-autoloadable classes
         return $this->isLaravelClassByAst($ast, $type);
+    }
+
+    /**
+     * Check if a class is a Laravel 11+ controller.
+     *
+     * Laravel 11+ controllers don't extend Illuminate\Routing\Controller,
+     * so we detect them by namespace and parent class name.
+     */
+    protected function isLaravel11Controller(array $ast, string $fqcn): bool
+    {
+        // Check if in a Controllers namespace
+        $namespace = $this->getNamespace($ast);
+        if ($namespace !== null && str_contains($namespace, '\\Controllers')) {
+            // Also verify it extends a class named "Controller"
+            foreach ($this->findNodes($ast, Node\Stmt\Class_::class) as $class) {
+                if ($class->extends !== null && $class->extends->getLast() === 'Controller') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
