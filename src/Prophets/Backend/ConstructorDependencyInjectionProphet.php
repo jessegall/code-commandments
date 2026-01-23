@@ -38,6 +38,7 @@ dependencies and makes the class harder to understand and test.
 Exceptions (allowed in methods):
 - Request/FormRequest objects (designed for method injection)
 - Route model binding (Eloquent models resolved from route parameters)
+- Enums (simple value objects, not services)
 
 Bad:
     class UserController extends Controller
@@ -165,8 +166,8 @@ SCRIPTURE;
             // Resolve to FQCN
             $fqcn = $this->resolveFullyQualifiedName($typeName);
 
-            // Skip if it's a Request or Model
-            if ($this->isRequestType($fqcn) || $this->isModelType($fqcn)) {
+            // Skip if it's a Request, Model, or Enum
+            if ($this->isRequestType($fqcn) || $this->isModelType($fqcn) || $this->isEnumType($fqcn)) {
                 continue;
             }
 
@@ -278,6 +279,18 @@ SCRIPTURE;
         } catch (\ReflectionException) {
             return false;
         }
+    }
+
+    /**
+     * Check if the type is an enum (allowed in methods).
+     */
+    private function isEnumType(string $fqcn): bool
+    {
+        if (!enum_exists($fqcn)) {
+            return false;
+        }
+
+        return true;
     }
 
     private function getShortClassName(string $typeName): string

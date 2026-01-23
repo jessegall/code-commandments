@@ -331,6 +331,34 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_allows_enum_in_method(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+use App\Enums\UserStatus;
+use Illuminate\Routing\Controller;
+
+class UserController extends Controller
+{
+    public function updateStatus(UserStatus $status)
+    {
+        return $status;
+    }
+}
+PHP;
+
+        // Create a test enum
+        if (!enum_exists('App\Enums\UserStatus')) {
+            eval('namespace App\Enums; enum UserStatus: string { case ACTIVE = "active"; case INACTIVE = "inactive"; }');
+        }
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_provides_helpful_descriptions(): void
     {
         $this->assertNotEmpty($this->prophet->description());
