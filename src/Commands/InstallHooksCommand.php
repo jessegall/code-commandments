@@ -129,10 +129,9 @@ class InstallHooksCommand extends Command
      */
     private function getJudgeHookScript(): string
     {
-        // This script runs the judge command and provides clear instructions
-        // distinguishing between sins (must fix) and warnings (review/absolve)
+        // This script runs the judge command with --claude flag for AI-optimized output
         return <<<'BASH'
-OUTPUT=$(php artisan commandments:judge --summary 2>/dev/null); EXIT_CODE=$?; echo "$OUTPUT"; if echo "$OUTPUT" | grep -q "sins found"; then echo ""; echo "🚨 SINS FOUND - These MUST be fixed:"; echo "   1. Run 'php artisan commandments:judge' for details"; echo "   2. Run 'php artisan commandments:repent' to auto-fix"; echo "   3. Manually fix remaining sins"; echo ""; fi; if echo "$OUTPUT" | grep -q "manual verification"; then echo ""; echo "📋 MANUAL VERIFICATION needed - Review and decide:"; echo "   1. Run 'php artisan commandments:judge' to see the warnings"; echo "   2. Review each file - is the code acceptable as-is?"; echo "   3. If acceptable: Run 'php artisan commandments:judge --absolve' to mark as reviewed"; echo "   4. If needs changes: Fix the code"; echo ""; fi; exit 0
+php artisan commandments:judge --claude 2>/dev/null; exit 0
 BASH;
     }
 
@@ -144,23 +143,21 @@ BASH;
         return <<<'INSTRUCTIONS'
 This project uses the Code Commandments package to enforce coding standards.
 
-AFTER ANY CODE CHANGES, handle issues based on type:
+CHECKING CODE QUALITY:
+   Run `php artisan commandments:judge --claude` for AI-optimized output showing:
+   - Summary of sin types and counts
+   - Commands to run for each sin type's details
 
-🔴 SINS (red ✗) - MUST be fixed:
-   1. Run `php artisan commandments:judge` for details
-   2. Run `php artisan commandments:repent` to auto-fix
-   3. Manually fix remaining sins
-   4. Re-run judge until sins are gone
-
-🟡 WARNINGS (yellow ⚠️) - Review and decide:
-   1. Run `php artisan commandments:judge` to see warnings
-   2. Review each warning - is the code acceptable?
-   3. If acceptable: Run `php artisan commandments:judge --absolve` to mark as reviewed
-   4. If needs fixing: Fix the code
+FIXING SINS:
+   1. Run `php artisan commandments:judge --claude` to see summary
+   2. Run `php artisan commandments:judge --prophet=<Name>` for specific sin details
+   3. Run `php artisan commandments:repent` to auto-fix where possible
+   4. Manually fix remaining sins
+   5. Re-run judge until no sins remain
 
 📁 To judge/repent specific files, use --files=file1.php,file2.php (comma-separated)
 
-Task is complete when: No sins remain, and warnings are either fixed or absolved.
+Task is complete when: No sins remain.
 INSTRUCTIONS;
     }
 
@@ -177,19 +174,39 @@ INSTRUCTIONS;
 
             // Check if commandments section already exists
             if (str_contains($content, '## Code Commandments')) {
-                $this->info('CLAUDE.md already contains Code Commandments section');
+                // Replace existing section with updated version
+                $content = $this->replaceCommandmentsSection($content, $commandmentsSection);
+                file_put_contents($claudeMdPath, $content);
+                $this->info('✓ Updated Code Commandments section in CLAUDE.md');
+
                 return;
             }
 
             // Append to existing CLAUDE.md
             $content .= "\n\n".$commandmentsSection;
             file_put_contents($claudeMdPath, $content);
-            $this->info('✓ Updated CLAUDE.md with Code Commandments section');
+            $this->info('✓ Added Code Commandments section to CLAUDE.md');
         } else {
             // Create new CLAUDE.md
             file_put_contents($claudeMdPath, $commandmentsSection);
             $this->info('✓ Created CLAUDE.md with Code Commandments instructions');
         }
+    }
+
+    /**
+     * Replace the Code Commandments section in existing content.
+     */
+    private function replaceCommandmentsSection(string $content, string $newSection): string
+    {
+        // Pattern to match from "## Code Commandments" to the next h2 heading or end of file
+        $pattern = '/(## Code Commandments\s*)(.+?)(?=\n## (?!Code Commandments)|\z)/s';
+
+        if (preg_match($pattern, $content)) {
+            return preg_replace($pattern, $newSection, $content);
+        }
+
+        // Fallback: just append if pattern doesn't match
+        return $content."\n\n".$newSection;
     }
 
     /**
@@ -235,34 +252,25 @@ Warnings are potential issues that require your judgment:
 |---------|---------|
 | `php artisan commandments:scripture` | List all commandments |
 | `php artisan commandments:scripture --detailed` | Show full explanations with examples |
-| `php artisan commandments:judge` | Check code - shows sins AND warnings |
+| `php artisan commandments:judge --claude` | Check code - AI-optimized summary output |
+| `php artisan commandments:judge --prophet=<Name>` | See details for a specific sin type |
 | `php artisan commandments:judge --files=a.php,b.php` | Judge specific files (comma-separated) |
-| `php artisan commandments:judge --absolve` | Mark warnings as reviewed (absolved) |
 | `php artisan commandments:repent` | Auto-fix sins where possible |
 | `php artisan commandments:repent --files=a.php,b.php` | Auto-fix specific files (comma-separated) |
 
-### Example Workflows
+### Example Workflow
 
-**Sins found:**
 ```bash
-php artisan commandments:judge          # See the sins
-php artisan commandments:repent         # Auto-fix
+php artisan commandments:judge --claude          # See summary of sins
+php artisan commandments:judge --prophet=KebabCaseProps  # See details for specific type
+php artisan commandments:repent                  # Auto-fix
 # Manually fix remaining
-php artisan commandments:judge          # Verify clean
-```
-
-**Warnings found (manual validation):**
-```bash
-php artisan commandments:judge          # See the warnings
-# Review each file mentioned...
-# If code is fine as-is:
-php artisan commandments:judge --absolve
-# If code needs changes: fix it, then re-run judge
+php artisan commandments:judge --claude          # Verify clean
 ```
 
 **Judging specific files:**
 ```bash
-php artisan commandments:judge --files=app/Models/User.php,app/Services/Auth.php
+php artisan commandments:judge --claude --files=app/Models/User.php,app/Services/Auth.php
 php artisan commandments:repent --files=app/Models/User.php,app/Services/Auth.php
 ```
 MARKDOWN;

@@ -24,7 +24,8 @@ class JudgeCommand extends Command
         {--files= : Judge specific files (comma-separated)}
         {--git : Only judge files that are new or changed in git}
         {--absolve : Mark files as absolved after confession (manual review)}
-        {--summary : Show summary output only (for hooks)}';
+        {--summary : Show summary output only (for hooks)}
+        {--claude : Output optimized for Claude Code AI assistant}';
 
     protected $description = 'Judge the codebase for sins against the sacred commandments';
 
@@ -42,18 +43,19 @@ class JudgeCommand extends Command
         $gitMode = $this->option('git');
         $shouldAbsolve = $this->option('absolve');
         $summaryMode = $this->option('summary');
+        $claudeMode = $this->option('claude');
 
         $gitFiles = $gitMode ? $this->getGitChangedFiles() : [];
 
         if ($gitMode && empty($gitFiles)) {
-            if (!$summaryMode) {
+            if (!$summaryMode && !$claudeMode) {
                 $this->info('No new or changed files found in git.');
             }
 
             return self::SUCCESS;
         }
 
-        if (!$summaryMode) {
+        if (!$summaryMode && !$claudeMode) {
             $this->output->writeln('<fg=yellow>');
             $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
             $this->output->writeln('  ║          THE PROPHETS HAVE BEEN SUMMONED                  ║');
@@ -72,16 +74,18 @@ class JudgeCommand extends Command
         $totalFiles = 0;
         $manualVerificationFiles = [];
         $violatedProphets = [];
+        $prophetSinCounts = [];
+        $prophetFiles = [];
 
         foreach ($scrolls as $scroll) {
             if (!$registry->hasScroll($scroll)) {
-                if (!$summaryMode) {
+                if (!$summaryMode && !$claudeMode) {
                     $this->error("Unknown scroll: {$scroll}");
                 }
                 continue;
             }
 
-            if (!$summaryMode) {
+            if (!$summaryMode && !$claudeMode) {
                 $this->info("📜 Examining the scroll of <fg=cyan>{$scroll}</>");
                 $this->newLine();
             }
@@ -128,7 +132,11 @@ class JudgeCommand extends Command
                         $fileSins++;
                         $violatedProphets[$prophetClass] = true;
 
-                        if (!$summaryMode) {
+                        // Track per-prophet stats
+                        $prophetSinCounts[$prophetClass] = ($prophetSinCounts[$prophetClass] ?? 0) + 1;
+                        $prophetFiles[$prophetClass][$relativePath] = true;
+
+                        if (!$summaryMode && !$claudeMode) {
                             $line = $sin->line ? ":{$sin->line}" : '';
                             $this->output->writeln("  <fg=red>✗</> <fg=white>{$relativePath}{$line}</>");
                             $this->output->writeln("    <fg=red>{$sin->message}</>");
@@ -151,7 +159,7 @@ class JudgeCommand extends Command
                             ];
                         }
 
-                        if (!$summaryMode) {
+                        if (!$summaryMode && !$claudeMode) {
                             $line = $warning->line ? ":{$warning->line}" : '';
                             $this->output->writeln("  <fg=yellow>⚠</> <fg=white>{$relativePath}{$line}</>");
                             $this->output->writeln("    <fg=yellow>{$warning->message}</>");
@@ -163,7 +171,7 @@ class JudgeCommand extends Command
                         $content = file_get_contents($filePath);
                         if ($content !== false) {
                             $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');
-                            if (!$summaryMode) {
+                            if (!$summaryMode && !$claudeMode) {
                                 $this->output->writeln("    <fg=green>✓ Absolved</>");
                             }
                         }
@@ -177,7 +185,7 @@ class JudgeCommand extends Command
                 }
             }
 
-            if (!$summaryMode) {
+            if (!$summaryMode && !$claudeMode) {
                 $summary = $manager->getSummary($results);
                 $this->newLine();
                 $this->output->writeln("  <fg=gray>Files examined: {$summary['files']}, Righteous: {$summary['righteous']}, Fallen: {$summary['fallen']}</>");
@@ -186,7 +194,7 @@ class JudgeCommand extends Command
         }
 
         // Show manual verification section
-        if (!empty($manualVerificationFiles)) {
+        if (!empty($manualVerificationFiles) && !$claudeMode) {
             $this->newLine();
             $this->output->writeln('<fg=magenta>');
             $this->output->writeln('  ┌───────────────────────────────────────────────────────────┐');
@@ -209,8 +217,15 @@ class JudgeCommand extends Command
         }
 
         // Show violated prophets with detailed descriptions
-        if (!empty($violatedProphets) && !$summaryMode) {
+        if (!empty($violatedProphets) && !$summaryMode && !$claudeMode) {
             $this->showViolatedProphetDetails(array_keys($violatedProphets));
+        }
+
+        // Claude Code optimized output
+        if ($claudeMode) {
+            $this->showClaudeOutput($prophetSinCounts, $prophetFiles, $totalSins, $totalFiles);
+
+            return $totalSins > 0 ? self::FAILURE : self::SUCCESS;
         }
 
         $this->newLine();
@@ -247,6 +262,50 @@ class JudgeCommand extends Command
         }
 
         return $totalSins > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Show Claude Code optimized output.
+     *
+     * @param  array<string, int>  $prophetSinCounts
+     * @param  array<string, array<string, bool>>  $prophetFiles
+     */
+    private function showClaudeOutput(array $prophetSinCounts, array $prophetFiles, int $totalSins, int $totalFiles): void
+    {
+        if ($totalSins === 0) {
+            $this->output->writeln('No sins found. The code is righteous.');
+
+            return;
+        }
+
+        $this->output->writeln("SINS FOUND: {$totalSins} total across {$totalFiles} files");
+        $this->newLine();
+        $this->output->writeln('SUMMARY BY TYPE:');
+
+        // Sort by sin count descending
+        arsort($prophetSinCounts);
+
+        foreach ($prophetSinCounts as $prophetClass => $count) {
+            $shortName = class_basename($prophetClass);
+            $fileCount = count($prophetFiles[$prophetClass] ?? []);
+            $prophet = app($prophetClass);
+            $this->output->writeln("  - {$shortName}: {$count} sins in {$fileCount} files");
+            $this->output->writeln("    {$prophet->description()}");
+        }
+
+        $this->newLine();
+        $this->output->writeln('TO FIX: Run the following commands to see affected files and details for each sin type:');
+        $this->newLine();
+
+        foreach (array_keys($prophetSinCounts) as $prophetClass) {
+            $shortName = class_basename($prophetClass);
+            // Remove "Prophet" suffix for cleaner filter matching
+            $filterName = str_replace('Prophet', '', $shortName);
+            $this->output->writeln("  php artisan commandments:judge --prophet={$filterName}");
+        }
+
+        $this->newLine();
+        $this->output->writeln('TO AUTO-FIX: Run `php artisan commandments:repent` to automatically fix sins where possible.');
     }
 
     /**

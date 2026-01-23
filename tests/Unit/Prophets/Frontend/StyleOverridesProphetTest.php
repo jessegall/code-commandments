@@ -17,7 +17,7 @@ class StyleOverridesProphetTest extends TestCase
         $this->prophet = new StyleOverridesProphet();
     }
 
-    public function test_detects_class_override_on_item_card(): void
+    public function test_detects_appearance_class_override_on_item_card(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
@@ -36,7 +36,7 @@ VUE;
         $this->assertGreaterThan(0, $judgment->sinCount());
     }
 
-    public function test_detects_class_override_on_button(): void
+    public function test_detects_width_class_override_on_button(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
@@ -52,14 +52,30 @@ VUE;
         $this->assertTrue($judgment->isFallen());
     }
 
-    public function test_detects_content_class_attribute(): void
+    public function test_detects_size_class_override(): void
     {
         $content = <<<'VUE'
 <script setup lang="ts">
 </script>
 
 <template>
-  <Card content-class="p-4 bg-gray-100">Content</Card>
+  <Button class="text-sm">Submit</Button>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isFallen());
+    }
+
+    public function test_detects_content_class_with_appearance_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Card content-class="bg-gray-100">Content</Card>
 </template>
 VUE;
 
@@ -85,6 +101,126 @@ VUE;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_passes_margin_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="mt-4 mb-2 mx-auto">Submit</Button>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_grid_layout_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <div class="grid grid-cols-3">
+    <Button class="col-span-2">Submit</Button>
+  </div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_flex_behavior_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <div class="flex">
+    <Input class="flex-1" />
+    <Button class="grow-0 shrink">Submit</Button>
+  </div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_positioning_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Card class="absolute top-0 right-0 z-10">Content</Card>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_display_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="hidden">Hidden Button</Button>
+  <Badge class="inline-block">Tag</Badge>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_arbitrary_width_height(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Card class="w-[200px] min-h-[100px]">Content</Card>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_detects_mixed_allowed_and_disallowed_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="mt-4 bg-blue-500 col-span-2">Submit</Button>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isFallen());
+        // Should only report the disallowed class
+        $this->assertStringContainsString('bg-blue-500', $judgment->sins[0]->message);
+    }
+
     public function test_skips_component_definition_file(): void
     {
         $content = <<<'VUE'
@@ -108,7 +244,39 @@ VUE;
 </script>
 
 <template>
-  <MyCustomComponent class="mt-4">Content</MyCustomComponent>
+  <MyCustomComponent class="bg-red-500">Content</MyCustomComponent>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_negative_margin_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="-mt-2 -ml-4">Submit</Button>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_self_alignment_classes(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="self-center justify-self-end">Submit</Button>
 </template>
 VUE;
 
