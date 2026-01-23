@@ -106,6 +106,44 @@ VUE;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_skips_partial_components(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+interface Props {
+    customer: CustomerDetailedInformationData;
+}
+</script>
+
+<template>
+  <div>Customer Details</div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/Pages/Customers/Partials/CustomerDetailsCard.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_skips_nested_partial_components(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+interface Props {
+    items: ItemData[];
+}
+</script>
+
+<template>
+  <div>Items</div>
+</template>
+VUE;
+
+        $judgment = $this->prophet->judge('/pages/orders/partials/components/ItemList.vue', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_provides_helpful_description(): void
     {
         $this->assertNotEmpty($this->prophet->description());

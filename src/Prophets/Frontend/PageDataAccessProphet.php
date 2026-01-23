@@ -59,6 +59,11 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        // Skip partial components - they receive props from parent pages, not from the backend
+        if (str_contains($filePath, '/Partials/') || str_contains($filePath, '/partials/')) {
+            return $this->righteous();
+        }
+
         $script = $this->extractScript($content);
 
         if ($script === null) {
