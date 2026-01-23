@@ -6,11 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClass;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelController;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterPrivateMethod;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -75,10 +72,7 @@ SCRIPTURE;
         $minMethodLines = (int) $this->config('min_method_lines', 3);
 
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClass::class)
-            ->pipe(FilterLaravelController::class)
-            ->returnRighteousIfNoClass()
+            ->onlyControllers()
             ->pipe(new ExtractMethods)
             ->pipe((new FilterPrivateMethod)->withMinLines($minMethodLines))
             ->returnRighteousWhen(fn (PhpContext $ctx) => count($ctx->methods) <= $maxPrivateMethods)

@@ -6,13 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClass;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethodParameters;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelController;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterRawRequestParameter;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -50,10 +47,7 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClass::class)
-            ->pipe(FilterLaravelController::class)
-            ->returnRighteousIfNoClass()
+            ->onlyControllers()
             ->pipe(ExtractUseStatements::class)
             ->pipe((new ExtractMethods)->excludeConstructor())
             ->pipe(ExtractMethodParameters::class)
