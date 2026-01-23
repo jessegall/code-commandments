@@ -8,6 +8,9 @@ use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
+use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
+use JesseGall\CodeCommandments\Support\RegexMatcher;
+use JesseGall\CodeCommandments\Support\Str;
 
 /**
  * Props should be bound using kebab-case in templates.
@@ -17,6 +20,8 @@ use JesseGall\CodeCommandments\Results\RepentanceResult;
  */
 class KebabCasePropsProphet extends FrontendCommandment implements SinRepenter
 {
+    private const CAMEL_CASE_BINDING_PATTERN = '/(?::|v-bind:)([a-z]+[A-Z][a-zA-Z]*)\s*=/';
+
     public function applicableExtensions(): array
     {
         return ['vue'];
@@ -53,47 +58,21 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        return ProphetPipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->matchAll(self::CAMEL_CASE_BINDING_PATTERN)
+            ->mapToSins(function (array $match, ProphetPipeline $pipeline) {
+                $propName = $match['groups'][1];
+                $kebabCase = Str::toKebabCase($propName);
 
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Pattern to find camelCase prop bindings
-        // Matches :propName=" or v-bind:propName=" where propName contains lowercase followed by uppercase
-        $pattern = '/(?::|v-bind:)([a-z]+[A-Z][a-zA-Z]*)\s*=/';
-
-        preg_match_all($pattern, $templateContent, $matches, PREG_OFFSET_CAPTURE);
-
-        foreach ($matches[0] as $index => $match) {
-            $fullMatch = $match[0];
-            $position = $match[1];
-            $propName = $matches[1][$index][0];
-
-            $line = $this->getLineFromOffset($content, $templateStart + $position);
-            $kebabCase = $this->toKebabCase($propName);
-
-            $sins[] = $this->sinAt(
-                $line,
-                "Prop binding uses camelCase instead of kebab-case",
-                trim($fullMatch),
-                "Use :{$kebabCase}= instead of :{$propName}="
-            );
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
-    }
-
-    /**
-     * Convert camelCase to kebab-case.
-     */
-    protected function toKebabCase(string $value): string
-    {
-        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $value) ?? $value);
+                return $pipeline->sinAt(
+                    $match['offset'],
+                    'Prop binding uses camelCase instead of kebab-case',
+                    trim($match['match']),
+                    "Use :{$kebabCase}= instead of :{$propName}="
+                );
+            })
+            ->judge();
     }
 
     public function canRepent(string $filePath): bool
@@ -103,45 +82,38 @@ SCRIPTURE;
 
     public function repent(string $filePath, string $content): RepentanceResult
     {
-        if (!$this->canRepent($filePath)) {
+        if (! $this->canRepent($filePath)) {
             return RepentanceResult::unchanged();
         }
 
-        $template = $this->extractTemplate($content);
+        $pipeline = ProphetPipeline::make($filePath, $content)->extractTemplate();
 
-        if ($template === null) {
+        if ($pipeline->shouldSkip()) {
             return RepentanceResult::unchanged();
         }
 
-        $templateContent = $template['content'];
         $penance = [];
-
-        // Pattern to find camelCase prop bindings
         $pattern = '/(:|v-bind:)([a-z]+[A-Z][a-zA-Z]*)(\s*=)/';
 
-        $newTemplateContent = preg_replace_callback(
-            $pattern,
-            function ($matches) use (&$penance) {
+        $newTemplateContent = RegexMatcher::for($pipeline->getSectionContent())
+            ->replaceWith($pattern, function ($matches) use (&$penance) {
                 $prefix = $matches[1];
                 $propName = $matches[2];
                 $suffix = $matches[3];
-                $kebabCase = $this->toKebabCase($propName);
+                $kebabCase = Str::toKebabCase($propName);
 
                 $penance[] = "Converted :{$propName} to :{$kebabCase}";
 
-                return $prefix . $kebabCase . $suffix;
-            },
-            $templateContent
-        );
+                return $prefix.$kebabCase.$suffix;
+            });
 
-        if ($newTemplateContent === $templateContent || empty($penance)) {
+        if ($newTemplateContent === $pipeline->getSectionContent() || empty($penance)) {
             return RepentanceResult::unchanged();
         }
 
-        // Replace the template content in the original file
-        $newContent = substr($content, 0, $template['start'])
-            . $newTemplateContent
-            . substr($content, $template['end']);
+        $newContent = substr($content, 0, $pipeline->getSectionStart())
+            .$newTemplateContent
+            .substr($content, $pipeline->getSectionStart() + strlen($pipeline->getSectionContent()));
 
         return RepentanceResult::absolved($newContent, $penance);
     }

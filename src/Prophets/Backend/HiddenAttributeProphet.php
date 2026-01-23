@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: #[Hidden] on public properties not returned to frontend.
@@ -42,28 +44,38 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check Page Data classes in Http/View
-        if (!str_contains($filePath, 'Http/View') && !str_contains($filePath, 'Http\\View')) {
-            return $this->righteous();
-        }
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => ! $ctx->filePathContains('Http/View') && ! $ctx->filePathContains('Http\\View'))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => ! preg_match('/(Page|Data)\.php$/', $ctx->filePath))
+            ->pipe(fn (PhpContext $ctx) => $this->findPropertiesMissingHidden($ctx))
+            ->mapToSins(fn (PhpContext $ctx) => array_map(
+                fn ($match) => $this->sinAt(
+                    $match['line'],
+                    "Property \${$match['name']} has injection attribute but missing #[Hidden]",
+                    null,
+                    'Add #[Hidden] attribute to prevent frontend exposure'
+                ),
+                $ctx->matches
+            ))
+            ->judge();
+    }
 
-        // Only check files ending with Page.php or Data.php
-        if (!preg_match('/(Page|Data)\.php$/', $filePath)) {
-            return $this->righteous();
-        }
-
-        $sins = [];
+    /**
+     * Find properties with injection attributes but missing #[Hidden].
+     */
+    private function findPropertiesMissingHidden(PhpContext $ctx): PhpContext
+    {
+        $matches = [];
 
         // Find all public properties with their full attribute blocks
-        // Match: attributes + public [readonly] Type $name
         preg_match_all(
             '/((#\[[^\]]+\]\s*)+)?\s*public\s+(?:readonly\s+)?([\w\\\\|]+)\s+\$(\w+)/s',
-            $content,
-            $matches,
+            $ctx->content,
+            $rawMatches,
             PREG_SET_ORDER | PREG_OFFSET_CAPTURE
         );
 
-        foreach ($matches as $match) {
+        foreach ($rawMatches as $match) {
             $attributeBlock = $match[1][0] ?? '';
             $propName = $match[4][0];
             $offset = $match[0][1];
@@ -72,7 +84,7 @@ SCRIPTURE;
             $hasInjectionAttribute = str_contains($attributeBlock, '#[FromContainer')
                 || str_contains($attributeBlock, '#[FromSession');
 
-            if (!$hasInjectionAttribute) {
+            if (! $hasInjectionAttribute) {
                 continue;
             }
 
@@ -81,16 +93,12 @@ SCRIPTURE;
                 continue;
             }
 
-            $line = substr_count(substr($content, 0, $offset), "\n") + 1;
-
-            $sins[] = $this->sinAt(
-                $line,
-                "Property \${$propName} has injection attribute but missing #[Hidden]",
-                null,
-                "Add #[Hidden] attribute to prevent frontend exposure"
-            );
+            $matches[] = [
+                'name' => $propName,
+                'line' => substr_count(substr($ctx->content, 0, $offset), "\n") + 1,
+            ];
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $ctx->with(matches: $matches);
     }
 }

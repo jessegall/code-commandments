@@ -6,7 +6,13 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use PhpParser\Node;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterPrivateMethods;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Controllers should not have too many private methods.
@@ -65,70 +71,49 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check controllers
-        $ast = $this->parse($content);
-
-        if (!$ast || !$this->isLaravelClass($ast, 'controller')) {
-            return $this->righteous();
-        }
-
         $maxPrivateMethods = (int) $this->config('max_private_methods', 3);
         $minMethodLines = (int) $this->config('min_method_lines', 3);
 
-        $privateMethods = $this->findPrivateMethods($ast, $minMethodLines);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelControllers::class)
+            ->returnRighteousIfNoClasses()
+            ->pipe(new ExtractMethods)
+            ->pipe((new FilterPrivateMethods)->withMinLines($minMethodLines))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => count($ctx->methods) <= $maxPrivateMethods)
+            ->mapToSins(fn (PhpContext $ctx) => $this->createSin($ctx, $maxPrivateMethods))
+            ->judge();
+    }
 
-        if (count($privateMethods) <= $maxPrivateMethods) {
-            return $this->righteous();
+    /**
+     * Create a sin for having too many private methods.
+     */
+    private function createSin(PhpContext $ctx, int $maxPrivateMethods): ?\JesseGall\CodeCommandments\Results\Sin
+    {
+        if (empty($ctx->methods)) {
+            return null;
         }
 
         $methodNames = array_map(
-            fn (Node\Stmt\ClassMethod $method) => $method->name->toString(),
-            $privateMethods
+            fn ($m) => $m['method']->name->toString(),
+            $ctx->methods
         );
 
-        $sins = [];
-        $className = $this->getClassName($ast) ?? 'Controller';
+        $className = $ctx->getClassName() ?? 'Controller';
+        $firstMethod = $ctx->methods[0]['method'];
 
-        // Create one sin at the class level with all method names
-        $firstMethod = $privateMethods[0];
-        $sins[] = $this->sinAt(
+        return $this->sinAt(
             $firstMethod->getStartLine(),
             sprintf(
                 '%s has %d private methods (%s) which exceeds the threshold of %d',
                 $className,
-                count($privateMethods),
+                count($ctx->methods),
                 implode(', ', $methodNames),
                 $maxPrivateMethods
             ),
             null,
             'Extract these methods to a service class or delegate/action class'
         );
-
-        return $this->fallen($sins);
-    }
-
-    /**
-     * Find all private methods that meet the minimum line threshold.
-     *
-     * @param array<Node> $ast
-     * @return array<Node\Stmt\ClassMethod>
-     */
-    private function findPrivateMethods(array $ast, int $minLines): array
-    {
-        $methods = $this->findNodes($ast, Node\Stmt\ClassMethod::class);
-
-        return array_values(array_filter($methods, function (Node\Stmt\ClassMethod $method) use ($minLines) {
-            // Check if method is private
-            if (!$method->isPrivate()) {
-                return false;
-            }
-
-            // Calculate method line count
-            $startLine = $method->getStartLine();
-            $endLine = $method->getEndLine();
-            $lineCount = $endLine - $startLine + 1;
-
-            return $lineCount >= $minLines;
-        }));
     }
 }

@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: No $request->validated() in controllers - Use typed getters.
@@ -38,28 +44,16 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check controllers
-        $ast = $this->parse($content);
-
-        if (!$ast || !$this->isLaravelClass($ast, 'controller')) {
-            return $this->righteous();
-        }
-
-        $sins = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNum => $line) {
-            // Check for $request->validated() without key argument
-            if (preg_match('/\$request->validated\(\)/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'Using $request->validated() returns untyped array',
-                    trim($line),
-                    'Use typed getter methods on FormRequest instead'
-                );
-            }
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelControllers::class)
+            ->returnRighteousIfNoClasses()
+            ->pipe((new MatchPatterns)->add('validated', '/\$request->validated\(\)/'))
+            ->sinsFromMatches(
+                'Using $request->validated() returns untyped array',
+                'Use typed getter methods on FormRequest instead'
+            )
+            ->judge();
     }
 }

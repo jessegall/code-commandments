@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: No recordThat outside aggregates - Add aggregate methods that encapsulate recordThat internally.
@@ -42,32 +45,20 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Skip validator/prophet files (they contain example code in heredocs)
-        if (str_contains($filePath, 'Commandments/Validators/') || str_contains($filePath, 'Prophets/')) {
-            return $this->righteous();
-        }
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => $this->isDomainFile($ctx->filePath))
+            ->pipe((new MatchPatterns)->add('recordThat', '/->recordThat\s*\(/'))
+            ->sinsFromMatches(
+                'recordThat() called outside aggregate root',
+                'Create a method on the aggregate that encapsulates recordThat() internally'
+            )
+            ->judge();
+    }
 
-        // recordThat is allowed in domain/ (aggregates)
+    private function isDomainFile(string $filePath): bool
+    {
         $lowerPath = strtolower($filePath);
-        if (str_starts_with($lowerPath, 'domain/') || str_contains($lowerPath, '/domain/')) {
-            return $this->righteous();
-        }
 
-        $sins = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNum => $line) {
-            // Find recordThat usages
-            if (preg_match('/->recordThat\s*\(/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'recordThat() called outside aggregate root',
-                    trim($line),
-                    'Create a method on the aggregate that encapsulates recordThat() internally'
-                );
-            }
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return str_starts_with($lowerPath, 'domain/') || str_contains($lowerPath, '/domain/');
     }
 }

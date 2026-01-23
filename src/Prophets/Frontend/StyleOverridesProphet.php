@@ -6,6 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
+use JesseGall\CodeCommandments\Support\Pipeline;
+use JesseGall\CodeCommandments\Support\RegexMatcher;
+use JesseGall\CodeCommandments\Support\TailwindClassFilter;
 
 /**
  * Avoid style/class overrides on base components - use semantic props instead.
@@ -20,47 +24,10 @@ class StyleOverridesProphet extends FrontendCommandment
 {
     /**
      * Base components that shouldn't have class overrides.
+     *
+     * @var array<string>
      */
     protected array $baseComponents = ['ItemCard', 'Card', 'Button', 'Input', 'Badge'];
-
-    /**
-     * Patterns for allowed layout/spacing classes.
-     * These are contextual concerns that belong to the parent layout.
-     */
-    protected array $allowedPatterns = [
-        // Spacing/Margin (including negative)
-        '/^-?m[trblxyse]?-/',
-        '/^-?p[trblxyse]?-/',
-        '/^space-[xy]-/',
-        '/^gap-/',
-
-        // Grid layout
-        '/^col-span-/',
-        '/^col-start-/',
-        '/^col-end-/',
-        '/^row-span-/',
-        '/^row-start-/',
-        '/^row-end-/',
-
-        // Flexbox behavior
-        '/^flex-(1|auto|initial|none)$/',
-        '/^(grow|shrink)(-0)?$/',
-        '/^self-/',
-        '/^justify-self-/',
-        '/^place-self-/',
-        '/^order-/',
-
-        // Positioning
-        '/^(absolute|relative|fixed|sticky)$/',
-        '/^-?(top|right|bottom|left|inset)-/',
-        '/^z-/',
-
-        // Arbitrary width/height constraints
-        '/^(min-|max-)?(w|h)-\[/',
-
-        // Display/Visibility
-        '/^(hidden|block|inline|inline-block|inline-flex|invisible|visible)$/',
-    ];
 
     public function applicableExtensions(): array
     {
@@ -105,73 +72,65 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
+        $pipeline = ProphetPipeline::make($filePath, $content)
+            ->extractTemplate();
 
-        if ($template === null) {
-            return $this->skip('No template section found');
+        if ($pipeline->shouldSkip()) {
+            return $pipeline->judge();
         }
 
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
+        // Check each base component for violations (skip if file is the component itself)
+        $components = Pipeline::from($this->baseComponents)
+            ->reject(fn ($component) => $this->isComponentDefinition($filePath, $component))
+            ->toArray();
 
-        foreach ($this->baseComponents as $component) {
-            // Skip the component definition itself
-            if (str_contains($filePath, "/{$component}.vue") || str_contains($filePath, '/'.strtolower($component).'/')) {
-                continue;
-            }
-
-            // Look for base components with static class or content-class attributes
-            // Must NOT match :class or v-bind:class (dynamic bindings contain JS expressions)
-            // (?!:) negative lookahead ensures we don't match :class after whitespace
-            $pattern = '/<'.preg_quote($component, '/').'[^>]*\s(?!:)((?:content-)?class)=["\']([^"\']*)["\'][^>]*>/i';
-
-            preg_match_all($pattern, $templateContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-            foreach ($matches as $match) {
-                $offset = $match[0][1];
-                $classValue = $match[2][0];
-
-                // Extract individual classes and filter out allowed layout classes
-                $classes = preg_split('/\s+/', trim($classValue), -1, PREG_SPLIT_NO_EMPTY);
-                $disallowedClasses = $this->filterDisallowedClasses($classes);
-
-                // Only flag if there are disallowed classes
-                if (empty($disallowedClasses)) {
-                    continue;
-                }
-
-                $line = $this->getLineFromOffset($content, $templateStart + $offset);
-                $disallowedList = implode(', ', $disallowedClasses);
-
-                $sins[] = $this->sinAt(
-                    $line,
-                    "Style override on <{$component}>: {$disallowedList}",
-                    $this->getSnippet($templateContent, $offset, 60),
-                    "Use semantic props instead (e.g., 'variant', 'size', 'fullWidth')"
-                );
-            }
+        foreach ($components as $component) {
+            $this->findViolationsFor($pipeline, $component);
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $pipeline->judge();
     }
 
     /**
-     * Filter out allowed layout/spacing classes, returning only disallowed ones.
-     *
-     * @param  array<string>  $classes
-     * @return array<string>
+     * Check if the file is the component definition itself.
      */
-    protected function filterDisallowedClasses(array $classes): array
+    private function isComponentDefinition(string $filePath, string $component): bool
     {
-        return array_filter($classes, function (string $class): bool {
-            foreach ($this->allowedPatterns as $pattern) {
-                if (preg_match($pattern, $class)) {
-                    return false; // Class is allowed
-                }
-            }
+        return str_contains($filePath, "/{$component}.vue")
+            || str_contains($filePath, '/'.strtolower($component).'/');
+    }
 
-            return true; // Class is not allowed
-        });
+    /**
+     * Find and add violations for a specific component.
+     */
+    private function findViolationsFor(ProphetPipeline $pipeline, string $component): void
+    {
+        // Pattern for static class attributes (not :class bindings)
+        $pattern = '/<'.preg_quote($component, '/').'[^>]*\s(?!:)((?:content-)?class)=["\']([^"\']*)["\'][^>]*>/i';
+
+        $matcher = RegexMatcher::for($pipeline->getSectionContent());
+
+        $sins = Pipeline::from($matcher->matchAll($pattern))
+            ->map(function (array $match) use ($pipeline, $component, $matcher) {
+                $classValue = $match['groups'][2] ?? '';
+                $disallowed = TailwindClassFilter::onlyAppearance(
+                    TailwindClassFilter::parse($classValue)
+                );
+
+                if (empty($disallowed)) {
+                    return null;
+                }
+
+                return $this->sinAt(
+                    $pipeline->getLineFromOffset($match['offset']),
+                    "Style override on <{$component}>: ".implode(', ', $disallowed),
+                    $matcher->getSnippet($match['offset'], 60),
+                    "Use semantic props instead (e.g., 'variant', 'size', 'fullWidth')"
+                );
+            })
+            ->compact()
+            ->toArray();
+
+        $pipeline->addSins($sins);
     }
 }

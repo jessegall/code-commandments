@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
+use JesseGall\CodeCommandments\Support\GitFileDetector;
+use JesseGall\CodeCommandments\Support\Output\JudgmentPresenter;
+use JesseGall\CodeCommandments\Support\Pipeline;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 
@@ -29,371 +32,340 @@ class JudgeCommand extends Command
 
     protected $description = 'Judge the codebase for sins against the sacred commandments';
 
+    private JudgmentPresenter $presenter;
+
+    private int $totalSins = 0;
+
+    private int $totalWarnings = 0;
+
+    private int $totalFiles = 0;
+
+    /** @var array<string, array<array{prophet: string, message: string, line: int|null}>> */
+    private array $manualVerificationFiles = [];
+
+    /** @var array<string, bool> */
+    private array $violatedProphets = [];
+
+    /** @var array<string, int> */
+    private array $prophetSinCounts = [];
+
+    /** @var array<string, array<string, bool>> */
+    private array $prophetFiles = [];
+
     public function handle(
         ProphetRegistry $registry,
         ScrollManager $manager,
         ConfessionTracker $tracker
     ): int {
-        $scrollFilter = $this->option('scroll');
-        $prophetFilter = $this->option('prophet');
-        $fileFilter = $this->option('file');
-        $filesFilter = $this->option('files')
-            ? array_map('trim', explode(',', $this->option('files')))
-            : [];
-        $gitMode = $this->option('git');
-        $shouldAbsolve = $this->option('absolve');
-        $summaryMode = $this->option('summary');
-        $claudeMode = $this->option('claude');
+        $options = $this->parseOptions();
 
-        $gitFiles = $gitMode ? $this->getGitChangedFiles() : [];
+        $this->presenter = new JudgmentPresenter(
+            $this->output,
+            $this->output->isVerbose()
+        );
 
-        if ($gitMode && empty($gitFiles)) {
-            if (!$summaryMode && !$claudeMode) {
-                $this->info('No new or changed files found in git.');
+        // Handle git mode
+        if ($options['gitMode']) {
+            $gitFiles = GitFileDetector::for(base_path())->getChangedFiles();
+
+            if (empty($gitFiles)) {
+                if (! $options['summaryMode'] && ! $options['claudeMode']) {
+                    $this->info('No new or changed files found in git.');
+                }
+
+                return self::SUCCESS;
             }
 
-            return self::SUCCESS;
+            $options['gitFiles'] = $gitFiles;
         }
 
-        if (!$summaryMode && !$claudeMode) {
-            $this->output->writeln('<fg=yellow>');
-            $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
-            $this->output->writeln('  ║          THE PROPHETS HAVE BEEN SUMMONED                  ║');
-            $this->output->writeln('  ║       Let thy code be judged by the commandments          ║');
-            $this->output->writeln('  ╚═══════════════════════════════════════════════════════════╝');
-            $this->output->writeln('</>');
-            $this->newLine();
+        // Show header
+        if (! $options['summaryMode'] && ! $options['claudeMode']) {
+            $this->presenter->showHeader();
         }
 
-        $scrolls = $scrollFilter
-            ? [$scrollFilter]
+        // Process scrolls
+        $scrolls = $options['scrollFilter']
+            ? [$options['scrollFilter']]
             : $registry->getScrolls();
 
-        $totalSins = 0;
-        $totalWarnings = 0;
-        $totalFiles = 0;
-        $manualVerificationFiles = [];
-        $violatedProphets = [];
-        $prophetSinCounts = [];
-        $prophetFiles = [];
-        $displayedSins = 0;
-        $maxDisplayedSins = 10;
-        $isVerbose = $this->output->isVerbose();
-
         foreach ($scrolls as $scroll) {
-            if (!$registry->hasScroll($scroll)) {
-                if (!$summaryMode && !$claudeMode) {
-                    $this->error("Unknown scroll: {$scroll}");
-                }
-                continue;
-            }
-
-            if (!$summaryMode && !$claudeMode) {
-                $this->info("📜 Examining the scroll of <fg=cyan>{$scroll}</>");
-                $this->newLine();
-            }
-
-            if ($fileFilter) {
-                $results = $manager->judgeFile($scroll, $fileFilter);
-                $results = collect([$fileFilter => $results]);
-            } elseif (!empty($filesFilter)) {
-                $results = $manager->judgeFiles($scroll, $filesFilter);
-            } elseif ($gitMode) {
-                if (empty($gitFiles)) {
-                    continue;
-                }
-                $results = $manager->judgeFiles($scroll, $gitFiles);
-            } else {
-                $results = $manager->judgeScroll($scroll);
-            }
-
-            foreach ($results as $filePath => $judgments) {
-                $relativePath = str_replace(base_path().'/', '', $filePath);
-                $fileSins = 0;
-                $fileWarnings = 0;
-
-                foreach ($judgments as $prophetClass => $judgment) {
-                    // Apply prophet filter if specified
-                    if ($prophetFilter) {
-                        $shortName = class_basename($prophetClass);
-                        if (!str_contains(strtolower($shortName), strtolower($prophetFilter))) {
-                            continue;
-                        }
-                    }
-
-                    // Check if file is absolved
-                    if ($tracker->isAbsolved($filePath, $prophetClass)) {
-                        $content = file_get_contents($filePath);
-                        if ($content !== false && !$tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content)) {
-                            continue; // Skip absolved and unchanged files
-                        }
-                    }
-
-                    $prophet = app($prophetClass);
-
-                    foreach ($judgment->sins as $sin) {
-                        $fileSins++;
-                        $violatedProphets[$prophetClass] = true;
-
-                        // Track per-prophet stats
-                        $prophetSinCounts[$prophetClass] = ($prophetSinCounts[$prophetClass] ?? 0) + 1;
-                        $prophetFiles[$prophetClass][$relativePath] = true;
-
-                        if (!$summaryMode && !$claudeMode) {
-                            // Limit output unless verbose mode
-                            if ($isVerbose || $displayedSins < $maxDisplayedSins) {
-                                $line = $sin->line ? ":{$sin->line}" : '';
-                                $this->output->writeln("  <fg=red>✗</> <fg=white>{$relativePath}{$line}</>");
-                                $this->output->writeln("    <fg=red>{$sin->message}</>");
-                                if ($sin->suggestion) {
-                                    $this->output->writeln("    <fg=gray>→ {$sin->suggestion}</>");
-                                }
-                                $displayedSins++;
-                            }
-                        }
-                    }
-
-                    foreach ($judgment->warnings as $warning) {
-                        $fileWarnings++;
-                        $violatedProphets[$prophetClass] = true;
-
-                        // Track files requiring manual verification
-                        if ($prophet->requiresConfession()) {
-                            $manualVerificationFiles[$relativePath][] = [
-                                'prophet' => class_basename($prophetClass),
-                                'message' => $warning->message,
-                                'line' => $warning->line,
-                            ];
-                        }
-
-                        if (!$summaryMode && !$claudeMode) {
-                            $line = $warning->line ? ":{$warning->line}" : '';
-                            $this->output->writeln("  <fg=yellow>⚠</> <fg=white>{$relativePath}{$line}</>");
-                            $this->output->writeln("    <fg=yellow>{$warning->message}</>");
-                        }
-                    }
-
-                    // Handle absolution for warnings
-                    if ($shouldAbsolve && $judgment->hasWarnings()) {
-                        $content = file_get_contents($filePath);
-                        if ($content !== false) {
-                            $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');
-                            if (!$summaryMode && !$claudeMode) {
-                                $this->output->writeln("    <fg=green>✓ Absolved</>");
-                            }
-                        }
-                    }
-                }
-
-                $totalSins += $fileSins;
-                $totalWarnings += $fileWarnings;
-                if ($fileSins > 0 || $fileWarnings > 0) {
-                    $totalFiles++;
-                }
-            }
-
-            if (!$summaryMode && !$claudeMode) {
-                $summary = $manager->getSummary($results);
-                $this->newLine();
-                $this->output->writeln("  <fg=gray>Files examined: {$summary['files']}, Righteous: {$summary['righteous']}, Fallen: {$summary['fallen']}</>");
-                $this->newLine();
-            }
+            $this->processScroll($scroll, $registry, $manager, $tracker, $options);
         }
 
-        // Show message about truncated output
-        if (!$summaryMode && !$claudeMode && !$isVerbose && $totalSins > $maxDisplayedSins) {
-            $remaining = $totalSins - $maxDisplayedSins;
-            $this->newLine();
-            $this->output->writeln("  <fg=yellow>... and {$remaining} more sins. Run with -v to see all.</>");
-        }
-
-        // Show manual verification section
-        if (!empty($manualVerificationFiles) && !$claudeMode) {
-            $this->newLine();
-            $this->output->writeln('<fg=magenta>');
-            $this->output->writeln('  ┌───────────────────────────────────────────────────────────┐');
-            $this->output->writeln('  │         📋 FILES REQUIRING MANUAL VERIFICATION            │');
-            $this->output->writeln('  └───────────────────────────────────────────────────────────┘');
-            $this->output->writeln('</>');
-            $this->newLine();
-
-            foreach ($manualVerificationFiles as $file => $issues) {
-                $this->output->writeln("  <fg=white>{$file}</>");
-                foreach ($issues as $issue) {
-                    $line = $issue['line'] ? ":{$issue['line']}" : '';
-                    $this->output->writeln("    <fg=magenta>→ [{$issue['prophet']}]{$line}</> {$issue['message']}");
-                }
-                $this->newLine();
-            }
-
-            $this->output->writeln('  <fg=gray>Review these files manually and run with --absolve to mark as reviewed.</>');
-            $this->newLine();
-        }
-
-        // Show violated prophets with detailed descriptions
-        if (!empty($violatedProphets) && !$summaryMode && !$claudeMode) {
-            $this->showViolatedProphetDetails(array_keys($violatedProphets));
-        }
-
-        // Claude Code optimized output
-        if ($claudeMode) {
-            $this->showClaudeOutput($prophetSinCounts, $prophetFiles, $totalSins, $totalFiles);
-
-            return $totalSins > 0 ? self::FAILURE : self::SUCCESS;
-        }
-
-        $this->newLine();
-        if ($totalSins === 0 && $totalWarnings === 0) {
-            $this->output->writeln('<fg=green>');
-            $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
-            $this->output->writeln('  ║                   THY CODE IS RIGHTEOUS                   ║');
-            $this->output->writeln('  ║            The prophets find no transgressions            ║');
-            $this->output->writeln('  ╚═══════════════════════════════════════════════════════════╝');
-            $this->output->writeln('</>');
-
-            return self::SUCCESS;
-        }
-
-        if ($summaryMode) {
-            // Compact output for hooks
-            if ($totalSins > 0) {
-                $this->output->writeln("<fg=red>⛔ {$totalSins} sins found in {$totalFiles} files. Run 'php artisan commandments:judge' for details.</>");
-            }
-            if (count($manualVerificationFiles) > 0) {
-                $this->output->writeln('<fg=magenta>📋 '.count($manualVerificationFiles)." files need manual verification.</>");
-            }
-        } else {
-            $this->output->writeln('<fg=red>');
-            $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
-            $this->output->writeln("  ║  {$totalSins} SINS found across {$totalFiles} files".str_repeat(' ', max(0, 35 - strlen((string) $totalSins) - strlen((string) $totalFiles))).'║');
-            if ($totalWarnings > 0) {
-                $this->output->writeln("  ║  {$totalWarnings} WARNINGS requiring review".str_repeat(' ', max(0, 34 - strlen((string) $totalWarnings))).'║');
-            }
-            $this->output->writeln('  ║                                                             ║');
-            $this->output->writeln('  ║      Run "php artisan commandments:repent" for absolution   ║');
-            $this->output->writeln('  ╚═══════════════════════════════════════════════════════════╝');
-            $this->output->writeln('</>');
-        }
-
-        return $totalSins > 0 ? self::FAILURE : self::SUCCESS;
+        // Show results
+        return $this->showResults($options);
     }
 
     /**
-     * Show Claude Code optimized output.
+     * Parse command options into an array.
      *
-     * @param  array<string, int>  $prophetSinCounts
-     * @param  array<string, array<string, bool>>  $prophetFiles
+     * @return array<string, mixed>
      */
-    private function showClaudeOutput(array $prophetSinCounts, array $prophetFiles, int $totalSins, int $totalFiles): void
+    private function parseOptions(): array
     {
-        if ($totalSins === 0) {
-            $this->output->writeln('No sins found. The code is righteous.');
+        return [
+            'scrollFilter' => $this->option('scroll'),
+            'prophetFilter' => $this->option('prophet'),
+            'fileFilter' => $this->option('file'),
+            'filesFilter' => $this->option('files')
+                ? Pipeline::from(explode(',', $this->option('files')))
+                    ->map(fn ($f) => trim($f))
+                    ->toArray()
+                : [],
+            'gitMode' => (bool) $this->option('git'),
+            'gitFiles' => [],
+            'shouldAbsolve' => (bool) $this->option('absolve'),
+            'summaryMode' => (bool) $this->option('summary'),
+            'claudeMode' => (bool) $this->option('claude'),
+        ];
+    }
+
+    /**
+     * Process a single scroll.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    private function processScroll(
+        string $scroll,
+        ProphetRegistry $registry,
+        ScrollManager $manager,
+        ConfessionTracker $tracker,
+        array $options
+    ): void {
+        if (! $registry->hasScroll($scroll)) {
+            if (! $options['summaryMode'] && ! $options['claudeMode']) {
+                $this->error("Unknown scroll: {$scroll}");
+            }
 
             return;
         }
 
-        $this->output->writeln("SINS FOUND: {$totalSins} total across {$totalFiles} files");
-        $this->newLine();
-        $this->output->writeln('SUMMARY BY TYPE:');
-
-        // Sort by sin count descending
-        arsort($prophetSinCounts);
-
-        foreach ($prophetSinCounts as $prophetClass => $count) {
-            $shortName = class_basename($prophetClass);
-            $fileCount = count($prophetFiles[$prophetClass] ?? []);
-            $prophet = app($prophetClass);
-            $this->output->writeln("  - {$shortName}: {$count} sins in {$fileCount} files");
-            $this->output->writeln("    {$prophet->description()}");
+        if (! $options['summaryMode'] && ! $options['claudeMode']) {
+            $this->presenter->showScrollHeader($scroll);
         }
 
-        $this->newLine();
-        $this->output->writeln('TO FIX: Run the following commands to see affected files and details for each sin type:');
-        $this->newLine();
+        $results = $this->getResults($scroll, $manager, $options);
 
-        foreach (array_keys($prophetSinCounts) as $prophetClass) {
-            $shortName = class_basename($prophetClass);
-            // Remove "Prophet" suffix for cleaner filter matching
-            $filterName = str_replace('Prophet', '', $shortName);
-            $this->output->writeln("  php artisan commandments:judge --prophet={$filterName}");
+        foreach ($results as $filePath => $judgments) {
+            $this->processFileJudgments(
+                $filePath,
+                $judgments,
+                $tracker,
+                $options
+            );
         }
 
-        $this->newLine();
-        $this->output->writeln('TO AUTO-FIX: Run `php artisan commandments:repent` to automatically fix sins where possible.');
-    }
-
-    /**
-     * Show detailed descriptions for violated prophets.
-     *
-     * @param  array<string>  $prophetClasses
-     */
-    private function showViolatedProphetDetails(array $prophetClasses): void
-    {
-        $this->newLine();
-        $this->output->writeln('<fg=cyan>');
-        $this->output->writeln('  ┌───────────────────────────────────────────────────────────┐');
-        $this->output->writeln('  │              📖 COMMANDMENT DETAILS                       │');
-        $this->output->writeln('  └───────────────────────────────────────────────────────────┘');
-        $this->output->writeln('</>');
-
-        foreach ($prophetClasses as $prophetClass) {
-            $prophet = app($prophetClass);
-            $shortName = class_basename($prophetClass);
-
-            $this->newLine();
-            $this->output->writeln("  <fg=cyan;options=bold>{$shortName}</>");
-            $this->output->writeln("  <fg=white>{$prophet->description()}</>");
-            $this->newLine();
-
-            // Show detailed description with proper indentation
-            $detailed = $prophet->detailedDescription();
-            $lines = explode("\n", $detailed);
-            foreach ($lines as $line) {
-                $this->output->writeln("  <fg=gray>{$line}</>");
-            }
+        if (! $options['summaryMode'] && ! $options['claudeMode']) {
+            $this->presenter->showScrollSummary($manager->getSummary($results));
         }
     }
 
     /**
-     * Get files that are new or changed in git.
+     * Get judgment results based on options.
      *
-     * @return array<string>
+     * @param  array<string, mixed>  $options
+     * @return \Illuminate\Support\Collection
      */
-    private function getGitChangedFiles(): array
+    private function getResults(string $scroll, ScrollManager $manager, array $options)
     {
-        $basePath = base_path();
-        $files = [];
+        if ($options['fileFilter']) {
+            $results = $manager->judgeFile($scroll, $options['fileFilter']);
 
-        // Get modified and staged files (tracked files with changes)
-        $diffOutput = shell_exec('git diff --name-only HEAD 2>/dev/null');
-        if ($diffOutput) {
-            foreach (explode("\n", trim($diffOutput)) as $file) {
-                if ($file !== '') {
-                    $files[] = $basePath.'/'.$file;
+            return collect([$options['fileFilter'] => $results]);
+        }
+
+        if (! empty($options['filesFilter'])) {
+            return $manager->judgeFiles($scroll, $options['filesFilter']);
+        }
+
+        if ($options['gitMode'] && ! empty($options['gitFiles'])) {
+            return $manager->judgeFiles($scroll, $options['gitFiles']);
+        }
+
+        return $manager->judgeScroll($scroll);
+    }
+
+    /**
+     * Process judgments for a single file.
+     *
+     * @param  \Illuminate\Support\Collection  $judgments
+     * @param  array<string, mixed>  $options
+     */
+    private function processFileJudgments(
+        string $filePath,
+        $judgments,
+        ConfessionTracker $tracker,
+        array $options
+    ): void {
+        $relativePath = str_replace(base_path().'/', '', $filePath);
+        $fileSins = 0;
+        $fileWarnings = 0;
+
+        foreach ($judgments as $prophetClass => $judgment) {
+            // Apply prophet filter
+            if ($options['prophetFilter']) {
+                $shortName = class_basename($prophetClass);
+                if (! str_contains(strtolower($shortName), strtolower($options['prophetFilter']))) {
+                    continue;
                 }
+            }
+
+            // Check absolution
+            if ($this->isAbsolved($filePath, $prophetClass, $tracker)) {
+                continue;
+            }
+
+            $prophet = app($prophetClass);
+
+            // Process sins
+            foreach ($judgment->sins as $sin) {
+                $fileSins++;
+                $this->trackSin($prophetClass, $relativePath);
+
+                if (! $options['summaryMode'] && ! $options['claudeMode']) {
+                    $this->presenter->showSin($relativePath, $sin);
+                }
+            }
+
+            // Process warnings
+            foreach ($judgment->warnings as $warning) {
+                $fileWarnings++;
+                $this->violatedProphets[$prophetClass] = true;
+
+                if ($prophet->requiresConfession()) {
+                    $this->manualVerificationFiles[$relativePath][] = [
+                        'prophet' => class_basename($prophetClass),
+                        'message' => $warning->message,
+                        'line' => $warning->line,
+                    ];
+                }
+
+                if (! $options['summaryMode'] && ! $options['claudeMode']) {
+                    $this->presenter->showWarning($relativePath, $warning);
+                }
+            }
+
+            // Handle absolution
+            if ($options['shouldAbsolve'] && $judgment->hasWarnings()) {
+                $this->absolveFile($filePath, $prophetClass, $tracker, $options);
             }
         }
 
-        // Get staged files (in case they're not in the diff against HEAD)
-        $stagedOutput = shell_exec('git diff --name-only --cached 2>/dev/null');
-        if ($stagedOutput) {
-            foreach (explode("\n", trim($stagedOutput)) as $file) {
-                if ($file !== '') {
-                    $files[] = $basePath.'/'.$file;
-                }
-            }
+        $this->totalSins += $fileSins;
+        $this->totalWarnings += $fileWarnings;
+
+        if ($fileSins > 0 || $fileWarnings > 0) {
+            $this->totalFiles++;
+        }
+    }
+
+    /**
+     * Track a sin for statistics.
+     */
+    private function trackSin(string $prophetClass, string $relativePath): void
+    {
+        $this->violatedProphets[$prophetClass] = true;
+        $this->prophetSinCounts[$prophetClass] = ($this->prophetSinCounts[$prophetClass] ?? 0) + 1;
+        $this->prophetFiles[$prophetClass][$relativePath] = true;
+    }
+
+    /**
+     * Check if a file is absolved.
+     */
+    private function isAbsolved(string $filePath, string $prophetClass, ConfessionTracker $tracker): bool
+    {
+        if (! $tracker->isAbsolved($filePath, $prophetClass)) {
+            return false;
         }
 
-        // Get untracked files (new files not yet added to git)
-        $untrackedOutput = shell_exec('git ls-files --others --exclude-standard 2>/dev/null');
-        if ($untrackedOutput) {
-            foreach (explode("\n", trim($untrackedOutput)) as $file) {
-                if ($file !== '') {
-                    $files[] = $basePath.'/'.$file;
-                }
-            }
+        $content = file_get_contents($filePath);
+
+        return $content !== false && ! $tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content);
+    }
+
+    /**
+     * Absolve a file.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    private function absolveFile(
+        string $filePath,
+        string $prophetClass,
+        ConfessionTracker $tracker,
+        array $options
+    ): void {
+        $content = file_get_contents($filePath);
+
+        if ($content === false) {
+            return;
         }
 
-        return array_unique($files);
+        $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');
+
+        if (! $options['summaryMode'] && ! $options['claudeMode']) {
+            $this->output->writeln('    <fg=green>✓ Absolved</>');
+        }
+    }
+
+    /**
+     * Show final results.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    private function showResults(array $options): int
+    {
+        // Show truncation message
+        if (! $options['summaryMode'] && ! $options['claudeMode']) {
+            $this->presenter->showTruncationMessage($this->totalSins);
+        }
+
+        // Show manual verification section
+        if (! empty($this->manualVerificationFiles) && ! $options['claudeMode']) {
+            $this->presenter->showManualVerificationSection($this->manualVerificationFiles);
+        }
+
+        // Show violated prophets details
+        if (! empty($this->violatedProphets) && ! $options['summaryMode'] && ! $options['claudeMode']) {
+            $this->presenter->showViolatedProphetDetails(array_keys($this->violatedProphets));
+        }
+
+        // Claude mode output
+        if ($options['claudeMode']) {
+            $this->presenter->showClaudeOutput(
+                $this->prophetSinCounts,
+                $this->prophetFiles,
+                $this->totalSins,
+                $this->totalFiles,
+                $this->totalWarnings,
+                $this->manualVerificationFiles
+            );
+
+            return $this->totalSins > 0 ? self::FAILURE : self::SUCCESS;
+        }
+
+        // No sins found
+        if ($this->totalSins === 0 && $this->totalWarnings === 0) {
+            $this->presenter->showRighteousBanner();
+
+            return self::SUCCESS;
+        }
+
+        // Summary mode
+        if ($options['summaryMode']) {
+            $this->presenter->showSummaryOutput(
+                $this->totalSins,
+                $this->totalFiles,
+                count($this->manualVerificationFiles)
+            );
+        } else {
+            $this->presenter->showFallenBanner(
+                $this->totalSins,
+                $this->totalFiles,
+                $this->totalWarnings
+            );
+        }
+
+        return $this->totalSins > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

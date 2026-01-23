@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterFormRequestClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: FormRequest getters must have explicit return types.
@@ -43,39 +49,39 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check FormRequest classes (using AST)
-        $ast = $this->parse($content);
+        // Pattern matches getter methods without return types
+        // Matches: public function getName() or public function getName()  {
+        // Does NOT match: public function getName(): Type
+        $pattern = '/public\s+function\s+(get\w+)\s*\([^)]*\)(?!\s*:)/';
 
-        if (!$ast || !$this->isLaravelClass($ast, 'request')) {
-            return $this->righteous();
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterFormRequestClasses::class)
+            ->returnRighteousIfNoClasses()
+            ->pipe((new MatchPatterns)->add('getter_no_return', $pattern))
+            ->mapToWarnings(fn (PhpContext $ctx) => $this->createWarnings($ctx))
+            ->judge();
+    }
+
+    /**
+     * Create warnings for methods missing return types.
+     *
+     * @return array<\JesseGall\CodeCommandments\Results\Warning>
+     */
+    private function createWarnings(PhpContext $ctx): array
+    {
+        if (empty($ctx->matches)) {
+            return [];
         }
 
-        $warnings = [];
-
-        // Find public get* methods without return types
-        // Pattern: public function getSomething() { (missing : Type before {)
-        if (preg_match_all('/public\s+function\s+(get\w+)\s*\([^)]*\)\s*\{/m', $content, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
-            foreach ($matches as $match) {
-                $methodName = $match[1][0];
-                $offset = $match[0][1];
-
-                // Check if there's a return type (should have : before {)
-                $fullPattern = '/public\s+function\s+' . preg_quote($methodName, '/') . '\s*\([^)]*\)\s*:\s*[\w\\\\|?]+\s*\{/';
-                if (!preg_match($fullPattern, $content)) {
-                    $line = substr_count(substr($content, 0, $offset), "\n") + 1;
-                    $warnings[] = $this->warningAt(
-                        $line,
-                        "Method {$methodName}() missing return type",
-                        "Add explicit return type: public function {$methodName}(): Type"
-                    );
-                }
-            }
-        }
-
-        if (empty($warnings)) {
-            return $this->righteous();
-        }
-
-        return Judgment::withWarnings($warnings);
+        return array_map(
+            fn ($match) => $this->warningAt(
+                $match['line'],
+                "Method {$match['groups'][1]}() missing return type",
+                "Add explicit return type: public function {$match['groups'][1]}(): Type"
+            ),
+            $ctx->matches
+        );
     }
 }

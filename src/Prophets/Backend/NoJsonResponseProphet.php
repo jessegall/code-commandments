@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: No JSON from controllers - Use Inertia responses only.
@@ -14,6 +20,18 @@ use JesseGall\CodeCommandments\Results\Judgment;
  */
 class NoJsonResponseProphet extends PhpCommandment
 {
+    private const PATTERNS = [
+        'response_json' => '/response\(\)->json\(/',
+        'new_json_response' => '/return\s+new\s+JsonResponse/',
+        'response_facade' => '/Response::json\(/',
+    ];
+
+    private const MESSAGES = [
+        'response_json' => 'JSON response via response()->json()',
+        'new_json_response' => 'JSON response via new JsonResponse()',
+        'response_facade' => 'JSON response via Response::json()',
+    ];
+
     public function description(): string
     {
         return 'Use Inertia responses instead of JSON in web controllers';
@@ -40,58 +58,24 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check controllers
-        $ast = $this->parse($content);
+        $patterns = (new MatchPatterns)
+            ->add('response_json', self::PATTERNS['response_json'])
+            ->add('new_json_response', self::PATTERNS['new_json_response'])
+            ->add('response_facade', self::PATTERNS['response_facade']);
 
-        if (!$ast || !$this->isLaravelClass($ast, 'controller')) {
-            return $this->righteous();
-        }
-
-        // Allow JSON in API controllers
-        if (str_contains($filePath, 'Controllers/Api/') || str_contains($filePath, 'Controllers\\Api\\')) {
-            return $this->righteous();
-        }
-
-        // Allow JSON in webhook controllers
-        if (str_contains($filePath, 'Webhook')) {
-            return $this->righteous();
-        }
-
-        $sins = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNum => $line) {
-            // Check for response()->json()
-            if (preg_match('/response\(\)->json\(/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'JSON response via response()->json()',
-                    trim($line),
-                    'Use Inertia::render() instead'
-                );
-            }
-
-            // Check for return new JsonResponse
-            if (preg_match('/return\s+new\s+JsonResponse/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'JSON response via new JsonResponse()',
-                    trim($line),
-                    'Use Inertia::render() instead'
-                );
-            }
-
-            // Check for Response::json()
-            if (preg_match('/Response::json\(/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'JSON response via Response::json()',
-                    trim($line),
-                    'Use Inertia::render() instead'
-                );
-            }
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelControllers::class)
+            ->returnRighteousIfNoClasses()
+            ->returnRighteousWhen(fn (PhpContext $ctx) => $ctx->filePathContains('Controllers/Api/'))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => $ctx->filePathContains('Controllers\\Api\\'))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => $ctx->filePathContains('Webhook'))
+            ->pipe($patterns)
+            ->sinsFromMatches(
+                fn ($match) => self::MESSAGES[$match['name']],
+                'Use Inertia::render() instead'
+            )
+            ->judge();
     }
 }

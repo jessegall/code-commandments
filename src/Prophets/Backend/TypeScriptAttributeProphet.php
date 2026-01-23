@@ -6,6 +6,11 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: All Data classes must have #[TypeScript] attribute.
@@ -57,34 +62,20 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Skip utility classes
-        if ($this->isUtilityClass($filePath)) {
-            return $this->righteous();
-        }
-
-        // Only check Data classes (using AST)
-        $ast = $this->parse($content);
-
-        if (!$ast || !$this->isLaravelClass($ast, 'data')) {
-            return $this->righteous();
-        }
-
-        // Check for #[TypeScript] attribute
-        if (preg_match('/#\[TypeScript\]/', $content)) {
-            return $this->righteous();
-        }
-
-        // Extract class name for the error message
-        $className = basename($filePath, '.php');
-
-        return $this->fallen([
-            $this->sinAt(
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => $this->isUtilityClass($ctx->filePath))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelDataClasses::class)
+            ->returnRighteousIfNoClasses()
+            ->returnRighteousWhen(fn (PhpContext $ctx) => (bool) preg_match('/#\[TypeScript\]/', $ctx->content))
+            ->mapToSins(fn (PhpContext $ctx) => $this->sinAt(
                 1,
-                "Data class '{$className}' missing #[TypeScript] attribute",
+                "Data class '".basename($ctx->filePath, '.php')."' missing #[TypeScript] attribute",
                 null,
                 'Add #[TypeScript] attribute to enable TypeScript generation'
-            ),
-        ]);
+            ))
+            ->judge();
     }
 
     private function isUtilityClass(string $filePath): bool

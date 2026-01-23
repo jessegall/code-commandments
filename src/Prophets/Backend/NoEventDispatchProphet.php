@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: Dispatch events with event() - Not Event::dispatch(...).
@@ -36,13 +38,19 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Skip validator files (they contain example code in heredocs)
-        if (str_contains($filePath, 'Commandments/Validators/') || str_contains($filePath, 'Prophets/')) {
-            return $this->righteous();
-        }
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(fn (PhpContext $ctx) => $this->findEventDispatchCalls($ctx))
+            ->sinsFromMatches(
+                'Using static ::dispatch() on event class',
+                'Use event() helper instead: event(new EventClass(...))'
+            )
+            ->judge();
+    }
 
-        $sins = [];
-        $lines = explode("\n", $content);
+    private function findEventDispatchCalls(PhpContext $ctx): PhpContext
+    {
+        $matches = [];
+        $lines = explode("\n", $ctx->content);
 
         foreach ($lines as $lineNum => $line) {
             // Skip comments and docblocks
@@ -56,7 +64,6 @@ SCRIPTURE;
             }
 
             // Look for static dispatch calls on event classes
-            // Pattern: SomeEvent::dispatch( or SomeEvent::dispatch(
             if (preg_match('/[A-Z]\w+::dispatch\s*\(/', $line)) {
                 // Allow Bus::dispatch, Queue::dispatch, etc.
                 if (preg_match('/(Bus|Queue|Job|Notification)::dispatch/', $line)) {
@@ -65,16 +72,14 @@ SCRIPTURE;
 
                 // Check if it looks like an event class (ends with Event or similar)
                 if (preg_match('/(\w+Event|Event\w*)::dispatch/', $line)) {
-                    $sins[] = $this->sinAt(
-                        $lineNum + 1,
-                        'Using static ::dispatch() on event class',
-                        trim($line),
-                        'Use event() helper instead: event(new EventClass(...))'
-                    );
+                    $matches[] = [
+                        'line' => $lineNum + 1,
+                        'content' => trim($line),
+                    ];
                 }
             }
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return $ctx->with(matches: $matches);
     }
 }

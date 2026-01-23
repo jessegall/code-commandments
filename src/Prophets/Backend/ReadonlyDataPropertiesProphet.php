@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 use PhpParser\Node;
 use ReflectionClass;
 
@@ -20,11 +26,6 @@ class ReadonlyDataPropertiesProphet extends PhpCommandment
     private const INJECTS_PROPERTY_VALUE_INTERFACE = 'Spatie\\LaravelData\\Attributes\\InjectsPropertyValue';
 
     private const WITH_CAST_ATTRIBUTE = 'Spatie\\LaravelData\\Attributes\\WithCast';
-
-    /** @var array<string, string> */
-    private array $useStatements = [];
-
-    private ?string $currentNamespace = null;
 
     public function description(): string
     {
@@ -73,83 +74,60 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        $ast = $this->parse($content);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelDataClasses::class)
+            ->returnRighteousIfNoClasses()
+            ->pipe(ExtractUseStatements::class)
+            ->pipe(fn (PhpContext $ctx) => $this->findReadonlyPropertiesWithInjectingAttributes($ctx))
+            ->mapToSins(fn (PhpContext $ctx) => array_map(
+                fn ($match) => $this->sinAt(
+                    $match['line'],
+                    sprintf(
+                        'Readonly property "$%s" has value-injecting attribute #[%s]',
+                        $match['property'],
+                        $match['attribute']
+                    ),
+                    $match['declaration'],
+                    'Remove the readonly modifier from the property'
+                ),
+                $ctx->matches
+            ))
+            ->judge();
+    }
 
-        if (!$ast || !$this->isLaravelClass($ast, 'data')) {
-            return $this->righteous();
-        }
+    private function findReadonlyPropertiesWithInjectingAttributes(PhpContext $ctx): PhpContext
+    {
+        $matches = [];
 
-        // Extract use statements and namespace for resolving FQCNs
-        $this->useStatements = $this->extractUseStatements($ast);
-        $this->currentNamespace = $this->getNamespace($ast);
-
-        $sins = [];
-        $classes = $this->findNodes($ast, Node\Stmt\Class_::class);
-
-        foreach ($classes as $class) {
+        foreach ($ctx->classes as $class) {
             foreach ($class->stmts as $stmt) {
                 // Only check property declarations (not constructor-promoted properties)
-                if (!$stmt instanceof Node\Stmt\Property) {
+                if (! $stmt instanceof Node\Stmt\Property) {
                     continue;
                 }
 
                 // Skip non-readonly properties
-                if (!$stmt->isReadonly()) {
+                if (! $stmt->isReadonly()) {
                     continue;
                 }
 
                 // Check if property has value-injecting attributes
-                $injectingAttribute = $this->findInjectingAttribute($stmt);
+                $injectingAttribute = $this->findInjectingAttribute($stmt, $ctx);
 
                 if ($injectingAttribute !== null) {
-                    $propertyName = $stmt->props[0]->name->toString();
-                    $sins[] = $this->sinAt(
-                        $stmt->getStartLine(),
-                        sprintf(
-                            'Readonly property "$%s" has value-injecting attribute #[%s]',
-                            $propertyName,
-                            $injectingAttribute
-                        ),
-                        $this->getPropertyDeclaration($stmt),
-                        'Remove the readonly modifier from the property'
-                    );
+                    $matches[] = [
+                        'line' => $stmt->getStartLine(),
+                        'property' => $stmt->props[0]->name->toString(),
+                        'attribute' => $injectingAttribute,
+                        'declaration' => $this->getPropertyDeclaration($stmt),
+                    ];
                 }
             }
         }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
-    }
-
-    /**
-     * Extract use statements from AST.
-     *
-     * @return array<string, string> Short name => FQCN
-     */
-    private function extractUseStatements(array $ast): array
-    {
-        $uses = [];
-
-        foreach ($ast as $node) {
-            if ($node instanceof Node\Stmt\Namespace_) {
-                foreach ($node->stmts as $stmt) {
-                    if ($stmt instanceof Node\Stmt\Use_) {
-                        foreach ($stmt->uses as $use) {
-                            $fqcn = $use->name->toString();
-                            $alias = $use->alias?->toString() ?? $use->name->getLast();
-                            $uses[$alias] = $fqcn;
-                        }
-                    }
-                }
-            } elseif ($node instanceof Node\Stmt\Use_) {
-                foreach ($node->uses as $use) {
-                    $fqcn = $use->name->toString();
-                    $alias = $use->alias?->toString() ?? $use->name->getLast();
-                    $uses[$alias] = $fqcn;
-                }
-            }
-        }
-
-        return $uses;
+        return $ctx->with(matches: $matches);
     }
 
     /**
@@ -157,12 +135,12 @@ SCRIPTURE;
      *
      * @return string|null The attribute name if found, null otherwise
      */
-    private function findInjectingAttribute(Node\Stmt\Property $property): ?string
+    private function findInjectingAttribute(Node\Stmt\Property $property, PhpContext $ctx): ?string
     {
         foreach ($property->attrGroups as $attrGroup) {
             foreach ($attrGroup->attrs as $attr) {
                 $attributeName = $attr->name->toString();
-                $fqcn = $this->resolveFullyQualifiedName($attributeName);
+                $fqcn = $this->resolveFullyQualifiedName($attributeName, $ctx);
 
                 // Check for WithCast directly
                 if ($fqcn === self::WITH_CAST_ATTRIBUTE || $attributeName === 'WithCast') {
@@ -184,7 +162,7 @@ SCRIPTURE;
      */
     private function implementsInjectsPropertyValue(string $fqcn): bool
     {
-        if (!class_exists($fqcn)) {
+        if (! class_exists($fqcn)) {
             return false;
         }
 
@@ -200,7 +178,7 @@ SCRIPTURE;
     /**
      * Resolve a type name to its fully qualified class name.
      */
-    private function resolveFullyQualifiedName(string $typeName): string
+    private function resolveFullyQualifiedName(string $typeName, PhpContext $ctx): string
     {
         // Already fully qualified
         if (str_starts_with($typeName, '\\')) {
@@ -211,19 +189,19 @@ SCRIPTURE;
         $parts = explode('\\', $typeName);
         $firstPart = $parts[0];
 
-        if (isset($this->useStatements[$firstPart])) {
+        if (isset($ctx->useStatements[$firstPart])) {
             if (count($parts) === 1) {
-                return $this->useStatements[$firstPart];
+                return $ctx->useStatements[$firstPart];
             }
             // Partial match - replace first part with use statement
-            $parts[0] = $this->useStatements[$firstPart];
+            $parts[0] = $ctx->useStatements[$firstPart];
 
             return implode('\\', $parts);
         }
 
         // Assume same namespace
-        if ($this->currentNamespace) {
-            return $this->currentNamespace . '\\' . $typeName;
+        if ($ctx->namespace) {
+            return $ctx->namespace.'\\'. $typeName;
         }
 
         return $typeName;
@@ -242,7 +220,7 @@ SCRIPTURE;
             foreach ($attrGroup->attrs as $attr) {
                 $attrs[] = $attr->name->toString();
             }
-            $parts[] = '#[' . implode(', ', $attrs) . ']';
+            $parts[] = '#['.implode(', ', $attrs).']';
         }
 
         // Add visibility and readonly
@@ -268,7 +246,7 @@ SCRIPTURE;
         }
 
         // Add property name
-        $parts[] = '$' . $property->props[0]->name->toString();
+        $parts[] = '$'.$property->props[0]->name->toString();
 
         return implode(' ', $parts);
     }

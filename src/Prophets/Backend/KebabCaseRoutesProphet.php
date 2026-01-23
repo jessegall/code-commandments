@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Route URIs must use kebab-case.
@@ -37,37 +39,45 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        if (!$this->isRouteFile($filePath)) {
-            return $this->righteous();
-        }
-
-        $sins = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNum => $line) {
-            if (preg_match_all('/(?:Route::|->)(?:get|post|put|patch|delete|any|match|prefix|resource|apiResource)\s*\(\s*[\'"]([^\'"]+)[\'"]/', $line, $matches, PREG_SET_ORDER)) {
-                foreach ($matches as $match) {
-                    $uri = $match[1];
-                    $badSegments = $this->findNonKebabSegments($uri);
-
-                    if (!empty($badSegments)) {
-                        $sins[] = $this->sinAt(
-                            $lineNum + 1,
-                            sprintf('Route URI is not kebab-case: "%s" (found: %s)', $uri, implode(', ', $badSegments)),
-                            trim($line),
-                            sprintf('Use kebab-case: "%s"', $this->toKebabCase($uri))
-                        );
-                    }
-                }
-            }
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->returnRighteousWhen(fn (PhpContext $ctx) => ! $this->isRouteFile($ctx->filePath))
+            ->pipe(fn (PhpContext $ctx) => $this->findNonKebabRoutes($ctx))
+            ->sinsFromMatches(
+                fn ($m) => sprintf('Route URI is not kebab-case: "%s" (found: %s)', $m['uri'], implode(', ', $m['badSegments'])),
+                fn ($m) => sprintf('Use kebab-case: "%s"', $this->toKebabCase($m['uri']))
+            )
+            ->judge();
     }
 
     private function isRouteFile(string $filePath): bool
     {
         return str_contains($filePath, '/routes/') || str_contains($filePath, 'routes.php');
+    }
+
+    private function findNonKebabRoutes(PhpContext $ctx): PhpContext
+    {
+        $matches = [];
+        $lines = explode("\n", $ctx->content);
+
+        foreach ($lines as $lineNum => $line) {
+            if (preg_match_all('/(?:Route::|->)(?:get|post|put|patch|delete|any|match|prefix|resource|apiResource)\s*\(\s*[\'"]([^\'"]+)[\'"]/', $line, $routeMatches, PREG_SET_ORDER)) {
+                foreach ($routeMatches as $match) {
+                    $uri = $match[1];
+                    $badSegments = $this->findNonKebabSegments($uri);
+
+                    if (! empty($badSegments)) {
+                        $matches[] = [
+                            'line' => $lineNum + 1,
+                            'uri' => $uri,
+                            'badSegments' => $badSegments,
+                            'content' => trim($line),
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $ctx->with(matches: $matches);
     }
 
     /**
@@ -84,7 +94,7 @@ SCRIPTURE;
             }
 
             // Valid kebab-case: lowercase letters, numbers, and hyphens only
-            if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $segment)) {
+            if (! preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $segment)) {
                 $bad[] = $segment;
             }
         }

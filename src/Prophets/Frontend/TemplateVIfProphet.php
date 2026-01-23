@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
+use JesseGall\CodeCommandments\Support\Pipes\ProphetPipeline;
 
 /**
  * Thou shalt wrap v-if/v-else in template elements.
@@ -74,38 +75,24 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $template = $this->extractTemplate($content);
-
-        if ($template === null) {
-            return $this->skip('No template section found');
-        }
-
-        $templateContent = $template['content'];
-        $templateStart = $template['start'];
-        $sins = [];
-
-        // Build pattern for DOM elements with v-if/v-else-if/v-else
-        // Match element name followed by space then v-if/v-else-if/v-else
         $elementsPattern = implode('|', $this->domElements);
-        $pattern = '/<(' . $elementsPattern . ')\s[^>]*v-(if|else-if|else)[=>\s]/i';
+        $pattern = '/<('.$elementsPattern.')\s[^>]*v-(if|else-if|else)[=>\s]/i';
 
-        preg_match_all($pattern, $templateContent, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        return ProphetPipeline::make($filePath, $content)
+            ->extractTemplate()
+            ->matchAll($pattern)
+            ->mapToSins(function (array $match, ProphetPipeline $pipeline) {
+                $element = $match['groups'][1];
+                $directive = 'v-'.$match['groups'][2];
 
-        foreach ($matches as $match) {
-            $element = $match[1][0];
-            $directive = 'v-' . $match[2][0];
-            $position = $match[0][1];
-            $line = $this->getLineFromOffset($content, $templateStart + $position);
-
-            $sins[] = $this->sinAt(
-                $line,
-                "{$directive} used directly on <{$element}> instead of <template>",
-                $this->getSnippet($templateContent, $position, 80),
-                "Wrap the <{$element}> in a <template {$directive}=\"...\"> element"
-            );
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+                return $pipeline->sinAt(
+                    $match['offset'],
+                    "{$directive} used directly on <{$element}> instead of <template>",
+                    $pipeline->getSnippet($match['offset'], 80),
+                    "Wrap the <{$element}> in a <template {$directive}=\"...\"> element"
+                );
+            })
+            ->judge();
     }
 
     public function canRepent(string $filePath): bool

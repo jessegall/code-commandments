@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: No custom fromModel methods in Data classes - Laravel Data handles this automatically.
@@ -53,28 +59,16 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check Data classes (using AST)
-        $ast = $this->parse($content);
-
-        if (!$ast || !$this->isLaravelClass($ast, 'data')) {
-            return $this->righteous();
-        }
-
-        $sins = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNum => $line) {
-            // Look for "fromModel" method definitions in Data classes
-            if (preg_match('/public static function fromModel\(/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'Custom fromModel() method in Data class',
-                    trim($line),
-                    'Use Data::from($model) instead - Laravel Data handles model transformation automatically'
-                );
-            }
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelDataClasses::class)
+            ->returnRighteousIfNoClasses()
+            ->pipe((new MatchPatterns)->add('fromModel', '/public static function fromModel\(/'))
+            ->sinsFromMatches(
+                'Custom fromModel() method in Data class',
+                'Use Data::from($model) instead - Laravel Data handles model transformation automatically'
+            )
+            ->judge();
     }
 }

@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
+use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
 
 /**
  * Commandment: No inline $request->validate() in controllers - Use FormRequest.
@@ -47,28 +53,16 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Only check controllers
-        $ast = $this->parse($content);
-
-        if (!$ast || !$this->isLaravelClass($ast, 'controller')) {
-            return $this->righteous();
-        }
-
-        $sins = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNum => $line) {
-            // Check for $request->validate()
-            if (preg_match('/\$request->validate\s*\(/', $line)) {
-                $sins[] = $this->sinAt(
-                    $lineNum + 1,
-                    'Inline validation via $request->validate()',
-                    trim($line),
-                    'Move validation to a dedicated FormRequest class'
-                );
-            }
-        }
-
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+        return PipelineBuilder::make(PhpContext::from($filePath, $content))
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClasses::class)
+            ->pipe(FilterLaravelControllers::class)
+            ->returnRighteousIfNoClasses()
+            ->pipe((new MatchPatterns)->add('validate', '/\$request->validate\s*\(/'))
+            ->sinsFromMatches(
+                'Inline validation via $request->validate()',
+                'Move validation to a dedicated FormRequest class'
+            )
+            ->judge();
     }
 }
