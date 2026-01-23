@@ -333,4 +333,59 @@ VUE;
         $this->assertNotEmpty($this->prophet->description());
         $this->assertNotEmpty($this->prophet->detailedDescription());
     }
+
+    public function test_allows_classes_matching_configured_patterns(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="w-full h-12 flex items-center">Submit</Button>
+</template>
+VUE;
+
+        // Without config, w-full, h-12, flex, and items-center are flagged
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+        $this->assertTrue($judgment->isFallen());
+
+        // With config, these patterns are allowed
+        $prophet = (new StyleOverridesProphet())->configure([
+            'allowed_patterns' => [
+                '/^(min-|max-)?(w|h)-/',
+                '/^flex$/',
+                '/^items-/',
+            ],
+        ]);
+
+        $judgment = $prophet->judge('/test/Component.vue', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_configured_patterns_combine_with_defaults(): void
+    {
+        $content = <<<'VUE'
+<script setup lang="ts">
+</script>
+
+<template>
+  <Button class="mt-4 cursor-pointer">Submit</Button>
+</template>
+VUE;
+
+        // mt-4 is allowed by default, cursor-pointer is not
+        $judgment = $this->prophet->judge('/test/Component.vue', $content);
+        $this->assertTrue($judgment->isFallen());
+        $this->assertStringContainsString('cursor-pointer', $judgment->sins[0]->message);
+
+        // With config, cursor-pointer is also allowed
+        $prophet = (new StyleOverridesProphet())->configure([
+            'allowed_patterns' => [
+                '/^cursor-/',
+            ],
+        ]);
+
+        $judgment = $prophet->judge('/test/Component.vue', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
 }

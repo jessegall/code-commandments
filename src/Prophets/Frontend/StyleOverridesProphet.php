@@ -109,12 +109,14 @@ SCRIPTURE;
         $pattern = '/<'.preg_quote($component, '/').'[^>]*\s(?!:)((?:content-)?class)=["\']([^"\']*)["\'][^>]*>/i';
 
         $matcher = RegexMatcher::for($pipeline->getSectionContent());
+        $allowedPatterns = $this->getAllowedPatterns();
 
         $sins = Pipeline::from($matcher->matchAll($pattern))
-            ->map(function (array $match) use ($pipeline, $component, $matcher) {
+            ->map(function (array $match) use ($pipeline, $component, $matcher, $allowedPatterns) {
                 $classValue = $match['groups'][2] ?? '';
                 $disallowed = TailwindClassFilter::onlyAppearance(
-                    TailwindClassFilter::parse($classValue)
+                    TailwindClassFilter::parse($classValue),
+                    $allowedPatterns
                 );
 
                 if (empty($disallowed)) {
@@ -132,5 +134,15 @@ SCRIPTURE;
             ->toArray();
 
         $pipeline->addSins($sins);
+    }
+
+    /**
+     * Get additional allowed patterns from config.
+     *
+     * @return array<string>
+     */
+    private function getAllowedPatterns(): array
+    {
+        return $this->config('allowed_patterns', []);
     }
 }

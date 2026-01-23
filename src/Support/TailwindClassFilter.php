@@ -67,30 +67,39 @@ final class TailwindClassFilter
 
     /**
      * Check if a class is a layout class (allowed on components).
+     *
+     * @param  array<string>  $additionalPatterns  Additional patterns to consider as layout classes
      */
-    public static function isLayoutClass(string $class): bool
+    public static function isLayoutClass(string $class, array $additionalPatterns = []): bool
     {
-        return Str::matchesAny($class, self::$layoutPatterns);
+        $patterns = empty($additionalPatterns)
+            ? self::$layoutPatterns
+            : array_merge(self::$layoutPatterns, $additionalPatterns);
+
+        return Str::matchesAny($class, $patterns);
     }
 
     /**
      * Check if a class is an appearance class (should use semantic props).
+     *
+     * @param  array<string>  $additionalLayoutPatterns  Additional patterns to consider as layout classes
      */
-    public static function isAppearanceClass(string $class): bool
+    public static function isAppearanceClass(string $class, array $additionalLayoutPatterns = []): bool
     {
-        return ! self::isLayoutClass($class);
+        return ! self::isLayoutClass($class, $additionalLayoutPatterns);
     }
 
     /**
      * Filter classes to only layout classes.
      *
      * @param  array<string>  $classes
+     * @param  array<string>  $additionalPatterns  Additional patterns to consider as layout classes
      * @return array<string>
      */
-    public static function onlyLayout(array $classes): array
+    public static function onlyLayout(array $classes, array $additionalPatterns = []): array
     {
         return Pipeline::from($classes)
-            ->filter(fn ($class) => self::isLayoutClass($class))
+            ->filter(fn ($class) => self::isLayoutClass($class, $additionalPatterns))
             ->values()
             ->toArray();
     }
@@ -99,12 +108,13 @@ final class TailwindClassFilter
      * Filter classes to only appearance classes (disallowed).
      *
      * @param  array<string>  $classes
+     * @param  array<string>  $additionalLayoutPatterns  Additional patterns to consider as layout classes
      * @return array<string>
      */
-    public static function onlyAppearance(array $classes): array
+    public static function onlyAppearance(array $classes, array $additionalLayoutPatterns = []): array
     {
         return Pipeline::from($classes)
-            ->filter(fn ($class) => self::isAppearanceClass($class))
+            ->filter(fn ($class) => self::isAppearanceClass($class, $additionalLayoutPatterns))
             ->values()
             ->toArray();
     }
@@ -113,11 +123,12 @@ final class TailwindClassFilter
      * Check if all classes are layout classes.
      *
      * @param  array<string>  $classes
+     * @param  array<string>  $additionalPatterns  Additional patterns to consider as layout classes
      */
-    public static function allLayout(array $classes): bool
+    public static function allLayout(array $classes, array $additionalPatterns = []): bool
     {
         return Pipeline::from($classes)
-            ->filter(fn ($class) => self::isAppearanceClass($class))
+            ->filter(fn ($class) => self::isAppearanceClass($class, $additionalPatterns))
             ->isEmpty();
     }
 
@@ -125,11 +136,12 @@ final class TailwindClassFilter
      * Check if any class is an appearance class.
      *
      * @param  array<string>  $classes
+     * @param  array<string>  $additionalLayoutPatterns  Additional patterns to consider as layout classes
      */
-    public static function hasAppearanceClasses(array $classes): bool
+    public static function hasAppearanceClasses(array $classes, array $additionalLayoutPatterns = []): bool
     {
         return Pipeline::from($classes)
-            ->filter(fn ($class) => self::isAppearanceClass($class))
+            ->filter(fn ($class) => self::isAppearanceClass($class, $additionalLayoutPatterns))
             ->isNotEmpty();
     }
 
