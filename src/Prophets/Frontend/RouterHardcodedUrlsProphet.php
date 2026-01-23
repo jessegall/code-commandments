@@ -6,6 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Sin;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
+use JesseGall\CodeCommandments\Support\RegexMatcher;
+use JesseGall\CodeCommandments\Support\TextHelper;
 
 /**
  * Never hardcode URLs in router.visit/push/replace calls.
@@ -47,26 +53,37 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        // Skip files in routes/ or actions/ directories
-        if (str_contains($filePath, '/routes/') || str_contains($filePath, '/actions/')) {
-            return $this->righteous();
-        }
-
-        $sins = [];
-
-        // Check for router calls with hardcoded URLs starting with /
-        $pattern = '/router\.(visit|push|replace)\([\'"`]\//';
-
-        foreach ($this->findMatches($pattern, $content) as $match) {
-            $line = $this->getLineNumber($content, $match[1]);
-            $sins[] = $this->sinAt(
-                $line,
+        return VuePipeline::make($filePath, $content)
+            ->returnRighteousWhen(fn (VueContext $ctx) => $this->shouldSkip($ctx))
+            ->pipe(fn (VueContext $ctx) => $this->findHardcodedUrls($ctx))
+            ->sinsFromMatches(
                 'Hardcoded URL in router call',
-                $this->getSnippet($content, $match[1]),
                 'Use wayfinder-generated route helper: products.index.url()'
-            );
-        }
+            )
+            ->judge();
+    }
 
-        return empty($sins) ? $this->righteous() : $this->fallen($sins);
+    private function findHardcodedUrls(VueContext $ctx): VueContext
+    {
+        $pattern = '/router\.(visit|push|replace)\([\'"`]\//';
+        $rawMatches = RegexMatcher::for($ctx->content)->matchAll($pattern);
+
+        $matches = array_map(fn ($match) => new MatchResult(
+            name: 'hardcoded_url',
+            pattern: $pattern,
+            match: $match['match'],
+            line: TextHelper::getLineNumber($ctx->content, $match['offset']),
+            offset: $match['offset'],
+            content: TextHelper::getSnippet($ctx->content, $match['offset']),
+            groups: $match['groups'],
+        ), $rawMatches);
+
+        return $ctx->with(matches: $matches);
+    }
+
+    private function shouldSkip(VueContext $ctx): bool
+    {
+        return $ctx->filePathContains('/routes/')
+            || $ctx->filePathContains('/actions/');
     }
 }

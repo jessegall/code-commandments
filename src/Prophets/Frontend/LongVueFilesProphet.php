@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
 
 /**
  * Keep Vue files under max lines by extracting components.
@@ -53,19 +56,25 @@ SCRIPTURE;
         }
 
         $maxLines = $this->getMaxLines();
-        $lineCount = substr_count($content, "\n") + 1;
+
+        return VuePipeline::make($filePath, $content)
+            ->mapToWarnings(fn (VueContext $ctx) => $this->checkLineCount($ctx, $maxLines))
+            ->judge();
+    }
+
+    private function checkLineCount(VueContext $ctx, int $maxLines): ?Warning
+    {
+        $lineCount = substr_count($ctx->content, "\n") + 1;
 
         if ($lineCount > $maxLines) {
-            return Judgment::withWarnings([
-                $this->warningAt(
-                    1,
-                    "{$lineCount} lines - review for potential component extraction",
-                    "Keep Vue files under {$maxLines} lines"
-                ),
-            ]);
+            return Warning::at(
+                line: 1,
+                message: "{$lineCount} lines - review for potential component extraction",
+                snippet: "Keep Vue files under {$maxLines} lines"
+            );
         }
 
-        return $this->righteous();
+        return null;
     }
 
     private function getMaxLines(): int

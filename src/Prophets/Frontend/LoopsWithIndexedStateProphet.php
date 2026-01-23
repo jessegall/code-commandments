@@ -62,8 +62,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->returnRighteousWhen(fn (VueContext $ctx) => !str_contains($ctx->getSectionContent(), 'v-for='))
             ->matchAll('/\[[a-zA-Z]+\.(id|key)\]|\[[a-zA-Z]+\]\.|\[index\]/')
             ->mapToWarnings(fn (VueContext $ctx) => array_map(

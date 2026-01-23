@@ -86,8 +86,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findViolations($ctx)))
             ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
                 return $pipeline->sinAt(

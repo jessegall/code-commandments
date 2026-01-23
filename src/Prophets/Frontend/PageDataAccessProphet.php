@@ -59,8 +59,7 @@ SCRIPTURE;
         return VuePipeline::make($filePath, $content)
             ->onlyPageFiles()
             ->excludePartialFiles()
-            ->extractScript()
-            ->returnRighteousIfNoScript()
+            ->inScript()
             ->returnRighteousIfSectionMatches('/Page\[/i')
             ->matchAll('/^\s+\w+:\s+(?:App\.Data\.|[A-Z][a-zA-Z]+Data)(?:\[\])?;/m')
             ->sinsFromMatches(

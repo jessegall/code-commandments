@@ -73,8 +73,7 @@ SCRIPTURE;
 
         return VuePipeline::make($filePath, $content)
             ->onlyPageFiles()
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->mapToWarnings(function (VueContext $ctx) {
                 $templateContent = $ctx->getSectionContent();
                 $dialogCount = preg_match_all('/<(Dialog|Modal|Sheet|Drawer)\b/', $templateContent);

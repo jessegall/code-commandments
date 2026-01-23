@@ -6,13 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethodParameters;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterServiceTypes;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterServiceType;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -69,14 +66,11 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelControllers::class)
-            ->returnRighteousIfNoAstOrClasses()
+            ->onlyControllers()
             ->pipe(ExtractUseStatements::class)
             ->pipe((new ExtractMethods)->onlyPublic()->excludeConstructor())
             ->pipe(ExtractMethodParameters::class)
-            ->pipe(FilterServiceTypes::class)
+            ->pipe(FilterServiceType::class)
             ->mapToSins(fn (PhpContext $ctx) => array_map(
                 fn ($param) => $this->createSin($param),
                 $ctx->parameters

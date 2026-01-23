@@ -51,8 +51,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->matchAll('/(href|:href)="[`\'"]\/[a-z]/i')
             ->sinsFromMatches(
                 'Hardcoded URL in href attribute',

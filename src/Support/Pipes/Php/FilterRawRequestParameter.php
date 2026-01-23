@@ -14,7 +14,7 @@ use ReflectionClass;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class FilterRawRequestParameters implements Pipe
+final class FilterRawRequestParameter implements Pipe
 {
     public function handle(mixed $input): mixed
     {

@@ -57,8 +57,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractScript()
-            ->returnRighteousIfNoScript()
+            ->inScript()
             ->matchAll('/watch\s*\([^)]+,\s*\([^)]*\)\s*=>\s*\{[^}]*\n\s*if\s*\(/s')
             ->mapToWarnings(fn (VueContext $ctx) => array_map(
                 fn ($match) => Warning::at(

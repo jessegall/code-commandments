@@ -16,8 +16,7 @@ use JesseGall\CodeCommandments\Support\RegexMatcher;
  * Example usage:
  *
  * VuePipeline::make($filePath, $content)
- *     ->extractTemplate()
- *     ->returnRighteousIfNoTemplate()
+ *     ->inTemplate()
  *     ->matchAll('/pattern/')
  *     ->sinsFromMatches('Message', 'Suggestion')
  *     ->judge();
@@ -42,6 +41,30 @@ final class VuePipeline extends PipelineBuilder
     public static function make(string $filePath, string $content): self
     {
         return new self(VueContext::from($filePath, $content));
+    }
+
+    /**
+     * Extract the template section and return righteous if not found.
+     *
+     * Combines: extractTemplate + returnRighteousIfNoTemplate
+     */
+    public function inTemplate(): self
+    {
+        return $this
+            ->extractTemplate()
+            ->returnRighteousIfNoTemplate();
+    }
+
+    /**
+     * Extract the script section and return righteous if not found.
+     *
+     * Combines: extractScript + returnRighteousIfNoScript
+     */
+    public function inScript(): self
+    {
+        return $this
+            ->extractScript()
+            ->returnRighteousIfNoScript();
     }
 
     /**

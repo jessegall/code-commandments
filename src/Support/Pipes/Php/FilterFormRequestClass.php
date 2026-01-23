@@ -12,7 +12,7 @@ use PhpParser\Node;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class FilterFormRequestClasses implements Pipe
+final class FilterFormRequestClass implements Pipe
 {
     public function handle(mixed $input): mixed
     {

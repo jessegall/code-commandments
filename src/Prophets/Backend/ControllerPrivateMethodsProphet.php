@@ -6,10 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClass;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterPrivateMethods;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelController;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterPrivateMethod;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
@@ -76,11 +76,11 @@ SCRIPTURE;
 
         return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelControllers::class)
-            ->returnRighteousIfNoClasses()
+            ->pipe(ExtractClass::class)
+            ->pipe(FilterLaravelController::class)
+            ->returnRighteousIfNoClass()
             ->pipe(new ExtractMethods)
-            ->pipe((new FilterPrivateMethods)->withMinLines($minMethodLines))
+            ->pipe((new FilterPrivateMethod)->withMinLines($minMethodLines))
             ->returnRighteousWhen(fn (PhpContext $ctx) => count($ctx->methods) <= $maxPrivateMethods)
             ->mapToSins(fn (PhpContext $ctx) => $this->createSin($ctx, $maxPrivateMethods))
             ->judge();

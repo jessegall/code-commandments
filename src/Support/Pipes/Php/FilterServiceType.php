@@ -16,7 +16,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Pipe;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class FilterServiceTypes implements Pipe
+final class FilterServiceType implements Pipe
 {
     public function handle(mixed $input): mixed
     {

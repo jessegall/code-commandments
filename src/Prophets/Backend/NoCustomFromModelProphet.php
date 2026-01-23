@@ -6,11 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
-use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
@@ -60,10 +56,7 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelDataClasses::class)
-            ->returnRighteousIfNoClasses()
+            ->onlyDataClasses()
             ->pipe((new MatchPatterns)->add('fromModel', '/public static function fromModel\(/'))
             ->sinsFromMatches(
                 'Custom fromModel() method in Data class',

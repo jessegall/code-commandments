@@ -7,10 +7,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterFormRequestClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -56,10 +53,7 @@ SCRIPTURE;
         $pattern = '/public\s+function\s+(get\w+)\s*\([^)]*\)(?!\s*:)/';
 
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterFormRequestClasses::class)
-            ->returnRighteousIfNoClasses()
+            ->onlyFormRequestClasses()
             ->pipe((new MatchPatterns)->add('getter_no_return', $pattern))
             ->mapToWarnings(fn (PhpContext $ctx) => $this->createWarnings($ctx))
             ->judge();

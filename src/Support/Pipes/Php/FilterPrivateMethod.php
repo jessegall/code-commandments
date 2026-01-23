@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Pipe;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class FilterPrivateMethods implements Pipe
+final class FilterPrivateMethod implements Pipe
 {
     private int $minLines = 0;
 

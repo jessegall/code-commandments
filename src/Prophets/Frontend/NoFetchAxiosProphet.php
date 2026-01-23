@@ -53,8 +53,7 @@ SCRIPTURE;
 
         return VuePipeline::make($filePath, $content)
             ->returnRighteousIfContentMatches('/\/\/.*(?:API endpoint|Api\\\\|returns JSON)/i')
-            ->extractScript()
-            ->returnRighteousIfNoScript()
+            ->inScript()
             ->matchAll('/(fetch\(|axios\.|window\.fetch)/')
             ->sinsFromMatches(
                 'fetch() or axios usage detected',

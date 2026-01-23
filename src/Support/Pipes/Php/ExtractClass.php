@@ -13,7 +13,7 @@ use PhpParser\NodeFinder;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class ExtractClasses implements Pipe
+final class ExtractClass implements Pipe
 {
     public function handle(mixed $input): mixed
     {

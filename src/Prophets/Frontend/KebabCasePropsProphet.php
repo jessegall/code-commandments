@@ -60,8 +60,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->matchAll(self::CAMEL_CASE_BINDING_PATTERN)
             ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
                 $propName = $match->groups[1];

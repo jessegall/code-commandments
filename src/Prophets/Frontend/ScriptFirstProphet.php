@@ -6,6 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Sin;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
+use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
+use JesseGall\CodeCommandments\Support\TextHelper;
 
 /**
  * Thou shalt put script before template in Vue files.
@@ -59,27 +63,30 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        // Find positions of script and template tags
-        $scriptPos = strpos($content, '<script');
-        $templatePos = strpos($content, '<template');
+        return VuePipeline::make($filePath, $content)
+            ->mapToSins(fn (VueContext $ctx) => $this->checkScriptOrder($ctx))
+            ->judge();
+    }
+
+    private function checkScriptOrder(VueContext $ctx): ?Sin
+    {
+        $scriptPos = strpos($ctx->content, '<script');
+        $templatePos = strpos($ctx->content, '<template');
 
         if ($scriptPos === false || $templatePos === false) {
-            return $this->skip('Missing script or template section');
+            return null;
         }
 
         if ($scriptPos > $templatePos) {
-            $line = $this->getLineNumber($content, $templatePos);
+            $line = TextHelper::getLineNumber($ctx->content, $templatePos);
 
-            return $this->fallen([
-                $this->sinAt(
-                    $line,
-                    'Template appears before script section',
-                    null,
-                    'Move <script setup> section before <template>'
-                ),
-            ]);
+            return Sin::at(
+                line: $line,
+                message: 'Template appears before script section',
+                suggestion: 'Move <script setup> section before <template>'
+            );
         }
 
-        return $this->righteous();
+        return null;
     }
 }

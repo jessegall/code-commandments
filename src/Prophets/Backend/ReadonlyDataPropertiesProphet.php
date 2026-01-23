@@ -7,10 +7,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
@@ -76,10 +73,7 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelDataClasses::class)
-            ->returnRighteousIfNoClasses()
+            ->onlyDataClasses()
             ->pipe(ExtractUseStatements::class)
             ->pipe(fn (PhpContext $ctx) => $this->findReadonlyPropertiesWithInjectingAttributes($ctx))
             ->mapToSins(fn (PhpContext $ctx) => array_map(

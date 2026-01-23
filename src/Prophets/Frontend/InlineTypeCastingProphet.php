@@ -61,8 +61,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findTypeAssertions($ctx)))
             ->mapToWarnings(fn (VueContext $ctx) => array_map(
                 fn (MatchResult $match) => Warning::at(

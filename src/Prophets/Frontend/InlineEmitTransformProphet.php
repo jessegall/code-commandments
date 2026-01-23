@@ -54,8 +54,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->matchAll('/@[a-z:-]+="\\$emit\\([^"]*(\|\||&&|\?)[^"]*\\)"/')
             ->sinsFromMatches(
                 'Complex transformation in inline emit handler',

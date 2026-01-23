@@ -49,8 +49,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractScript()
-            ->returnRighteousIfNoScript()
+            ->inScript()
             ->matchAll('/defineEmits\s*\(\s*\[/')
             ->sinsFromMatches(
                 'Runtime array declaration in defineEmits',

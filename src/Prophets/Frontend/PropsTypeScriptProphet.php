@@ -54,8 +54,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractScript()
-            ->returnRighteousIfNoScript()
+            ->inScript()
             ->matchAll('/defineProps\s*\(\s*\{/')
             ->sinsFromMatches(
                 'Runtime object declaration in defineProps',

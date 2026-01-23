@@ -14,10 +14,7 @@ use JesseGall\CodeCommandments\Support\Pipes\PipelineBuilder;
  * Example usage:
  *
  * PhpPipeline::make($filePath, $content)
- *     ->pipe(ParsePhpAst::class)
- *     ->pipe(ExtractClasses::class)
- *     ->pipe(FilterLaravelControllers::class)
- *     ->returnRighteousIfNoClasses()
+ *     ->onlyControllers()
  *     ->pipe(new MatchPatterns()->add('pattern', '/regex/'))
  *     ->sinsFromMatches('Message', 'Suggestion')
  *     ->judge();
@@ -45,9 +42,51 @@ final class PhpPipeline extends PipelineBuilder
     }
 
     /**
+     * Filter to only Laravel controllers and return righteous if none found.
+     *
+     * Combines: ParsePhpAst -> ExtractClass -> FilterLaravelController -> returnRighteousIfNoClass
+     */
+    public function onlyControllers(): self
+    {
+        return $this
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClass::class)
+            ->pipe(FilterLaravelController::class)
+            ->returnRighteousIfNoClass();
+    }
+
+    /**
+     * Filter to only Laravel Data classes and return righteous if none found.
+     *
+     * Combines: ParsePhpAst -> ExtractClass -> FilterLaravelDataClass -> returnRighteousIfNoClass
+     */
+    public function onlyDataClasses(): self
+    {
+        return $this
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClass::class)
+            ->pipe(FilterLaravelDataClass::class)
+            ->returnRighteousIfNoClass();
+    }
+
+    /**
+     * Filter to only FormRequest classes and return righteous if none found.
+     *
+     * Combines: ParsePhpAst -> ExtractClass -> FilterFormRequestClass -> returnRighteousIfNoClass
+     */
+    public function onlyFormRequestClasses(): self
+    {
+        return $this
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractClass::class)
+            ->pipe(FilterFormRequestClass::class)
+            ->returnRighteousIfNoClass();
+    }
+
+    /**
      * Return righteous judgment early if context has no classes.
      */
-    public function returnRighteousIfNoClasses(): self
+    public function returnRighteousIfNoClass(): self
     {
         return $this->returnRighteousWhen(fn (PhpContext $ctx) => ! $ctx->hasClasses());
     }
@@ -55,9 +94,45 @@ final class PhpPipeline extends PipelineBuilder
     /**
      * Return righteous judgment early if context has no AST or classes.
      */
-    public function returnRighteousIfNoAstOrClasses(): self
+    public function returnRighteousIfNoAstOrClass(): self
     {
         return $this->returnRighteousWhen(fn (PhpContext $ctx) => ! $ctx->hasAst() || ! $ctx->hasClasses());
+    }
+
+    /**
+     * Return righteous judgment early if any class has the specified attribute.
+     *
+     * Uses AST analysis to check for attributes without requiring class loading.
+     *
+     * @param  string  $attributeName  The short or fully qualified attribute name (e.g., 'TypeScript' or 'Spatie\TypeScriptTransformer\Attributes\TypeScript')
+     */
+    public function returnRighteousWhenClassHasAttribute(string $attributeName): self
+    {
+        return $this->returnRighteousWhen(fn (PhpContext $ctx) => $this->classHasAttribute($ctx, $attributeName));
+    }
+
+    /**
+     * Check if any class in the context has the specified attribute.
+     */
+    private function classHasAttribute(PhpContext $ctx, string $attributeName): bool
+    {
+        // Get just the short name for comparison
+        $shortName = class_basename($attributeName);
+
+        foreach ($ctx->classes as $class) {
+            foreach ($class->attrGroups as $attrGroup) {
+                foreach ($attrGroup->attrs as $attr) {
+                    $attrName = $attr->name->toString();
+
+                    // Match against full name or short name
+                    if ($attrName === $attributeName || $attrName === $shortName || class_basename($attrName) === $shortName) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -6,11 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
 use JesseGall\CodeCommandments\Support\Pipes\Php\MatchPatterns;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
-use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
 /**
@@ -45,10 +41,7 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         return PhpPipeline::make($filePath, $content)
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelControllers::class)
-            ->returnRighteousIfNoClasses()
+            ->onlyControllers()
             ->pipe((new MatchPatterns)->add('validated', '/\$request->validated\(\)/'))
             ->sinsFromMatches(
                 'Using $request->validated() returns untyped array',

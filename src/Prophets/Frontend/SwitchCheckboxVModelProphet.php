@@ -53,8 +53,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->pipe(fn (VueContext $ctx) => $ctx->with(matches: array_merge(
                 $this->findPattern($ctx, '/<(Switch|Checkbox)[^>]*v-model:checked/', 'v-model:checked'),
                 $this->findPattern($ctx, '/<(Switch|Checkbox)[^>]*:checked=/', ':checked')

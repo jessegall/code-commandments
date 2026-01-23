@@ -73,8 +73,7 @@ SCRIPTURE;
         $pattern = '/<(' . $elementsPattern . ')(\s[^>]*)?\s+v-for\s*=/i';
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->matchAll($pattern)
             ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
                 // Extract the tag name from the match

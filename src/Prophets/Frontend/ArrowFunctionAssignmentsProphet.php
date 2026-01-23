@@ -66,8 +66,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractScript()
-            ->returnRighteousIfNoScript()
+            ->inScript()
             ->pipe(fn (VueContext $ctx) => $ctx->with(matches: $this->findArrowAssignments($ctx)))
             ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
                 $name = $match->groups['name'];

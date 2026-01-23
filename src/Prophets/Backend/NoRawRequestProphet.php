@@ -6,12 +6,12 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClass;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethodParameters;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelControllers;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterRawRequestParameters;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelController;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FilterRawRequestParameter;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
@@ -51,13 +51,13 @@ SCRIPTURE;
     {
         return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelControllers::class)
-            ->returnRighteousIfNoClasses()
+            ->pipe(ExtractClass::class)
+            ->pipe(FilterLaravelController::class)
+            ->returnRighteousIfNoClass()
             ->pipe(ExtractUseStatements::class)
             ->pipe((new ExtractMethods)->excludeConstructor())
             ->pipe(ExtractMethodParameters::class)
-            ->pipe(FilterRawRequestParameters::class)
+            ->pipe(FilterRawRequestParameter::class)
             ->mapToSins(fn (PhpContext $ctx) => array_map(
                 fn ($param) => $this->sinAt(
                     $param['method']->getStartLine(),

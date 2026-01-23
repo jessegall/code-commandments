@@ -83,8 +83,7 @@ SCRIPTURE;
         $pattern = '/<('.$elementsPattern.')\s[^>]*v-(if|else-if|else)[=>\s]/i';
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->matchAll($pattern)
             ->forEachMatch(function (MatchResult $match, VuePipeline $pipeline) {
                 $element = $match->groups[1];

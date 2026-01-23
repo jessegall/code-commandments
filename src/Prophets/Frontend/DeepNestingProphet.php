@@ -55,8 +55,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->extractTemplate()
-            ->returnRighteousIfNoTemplate()
+            ->inTemplate()
             ->mapToWarnings(function (VueContext $ctx) {
                 $templateContent = $ctx->getSectionContent();
                 $lines = explode("\n", $templateContent);

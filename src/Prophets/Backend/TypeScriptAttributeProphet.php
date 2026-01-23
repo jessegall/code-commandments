@@ -6,9 +6,6 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClasses;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLaravelDataClasses;
-use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -64,11 +61,8 @@ SCRIPTURE;
     {
         return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => $this->isUtilityClass($ctx->filePath))
-            ->pipe(ParsePhpAst::class)
-            ->pipe(ExtractClasses::class)
-            ->pipe(FilterLaravelDataClasses::class)
-            ->returnRighteousIfNoClasses()
-            ->returnRighteousWhen(fn (PhpContext $ctx) => (bool) preg_match('/#\[TypeScript\]/', $ctx->content))
+            ->onlyDataClasses()
+            ->returnRighteousWhenClassHasAttribute('TypeScript')
             ->mapToSins(fn (PhpContext $ctx) => $this->sinAt(
                 1,
                 "Data class '".basename($ctx->filePath, '.php')."' missing #[TypeScript] attribute",
