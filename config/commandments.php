@@ -47,6 +47,7 @@ return [
                 Backend\KebabCaseRoutesProphet::class,
                 Backend\ConstructorDependencyInjectionProphet::class,
                 Backend\NoInlineBootLogicProphet::class,
+                Backend\ComputedPropertyMustHookProphet::class,
             ],
         ],
 
