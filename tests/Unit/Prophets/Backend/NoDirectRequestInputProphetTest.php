@@ -39,11 +39,11 @@ class NoDirectRequestInputProphetTest extends TestCase
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         if ($request->has('name')) {
             return 'has name';
@@ -61,11 +61,11 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         if ($request->filled('name')) {
             return 'has name';
@@ -83,11 +83,11 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         $active = $request->boolean('active');
         return $active;
@@ -104,11 +104,11 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         $name = $request->input('name');
         return $name;
@@ -125,13 +125,13 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    private Request $request;
+    private StoreUserRequest $request;
 
-    public function __construct(Request $request)
+    public function __construct(StoreUserRequest $request)
     {
         $this->request = $request;
     }
@@ -153,13 +153,13 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    private Request $request;
+    private StoreUserRequest $request;
 
-    public function __construct(Request $request)
+    public function __construct(StoreUserRequest $request)
     {
         $this->request = $request;
     }
@@ -182,12 +182,12 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
     public function __construct(
-        private Request $request
+        private StoreUserRequest $request
     ) {}
 
     public function index()
@@ -248,6 +248,30 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_allows_raw_request(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Middleware;
+use Illuminate\Http\Request;
+
+class TrackVisitor
+{
+    public function handle(Request $request, $next)
+    {
+        $ip = $request->input('ip');
+        if ($request->has('token')) {
+            // do something
+        }
+        return $next($request);
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Middleware/TrackVisitor.php', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_detects_in_non_controller_class(): void
     {
         $content = <<<'PHP'
@@ -282,11 +306,11 @@ PHP;
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class UserController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         if ($request->has('name')) {
             return 'has name';
@@ -305,11 +329,11 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         $all = $request->input();
         return $all;
@@ -326,11 +350,11 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function index(Request $request)
+    public function index(StoreUserRequest $request)
     {
         $params = $request->query();
         return $params;
@@ -347,11 +371,11 @@ PHP;
         $content = <<<'PHP'
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreUserRequest;
 
 class TestController extends Controller
 {
-    public function index(Request $request)
+    public function index(StoreUserRequest $request)
     {
         $name = $request->query('name');
         return $name;

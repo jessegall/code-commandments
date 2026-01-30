@@ -34,19 +34,22 @@ class NoDirectRequestInputProphet extends PhpCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-Never access request data directly using methods like
-has(), hasFile(), filled(), boolean(), input(), or query().
+Never access request data directly on FormRequest objects using methods
+like has(), hasFile(), filled(), boolean(), input(), or query().
 
 These methods should be encapsulated in FormRequest typed getters.
-This applies to any class that interacts with a request object,
+This applies to any class that interacts with a FormRequest object,
 including controllers, data classes, and other classes.
 Covers both $request-> and $this->request-> usage.
+
+Raw Illuminate\Http\Request is allowed (e.g. in middleware) since
+there are no typed getters to use instead.
 
 Empty calls to input() and query() (without arguments) are allowed,
 since they return all data and are not accessing a specific field.
 
 The prophet uses AST analysis and reflection to verify that the object
-being called on is actually a Laravel request class.
+being called on is a FormRequest subclass.
 
 Bad:
     if ($request->has('name')) {

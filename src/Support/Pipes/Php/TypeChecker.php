@@ -79,6 +79,29 @@ final class TypeChecker
     }
 
     /**
+     * Check if the type is a FormRequest (subclass of Illuminate\Foundation\Http\FormRequest).
+     */
+    public static function isFormRequestType(string $fqcn): bool
+    {
+        if (! class_exists($fqcn)) {
+            // Fall back to name-based check: any *Request except bare "Request"
+            $shortName = self::getShortClassName($fqcn);
+
+            return str_ends_with($shortName, 'Request')
+                && $shortName !== 'Request'
+                && $fqcn !== 'Illuminate\\Http\\Request';
+        }
+
+        try {
+            $reflection = new ReflectionClass($fqcn);
+
+            return $reflection->isSubclassOf('Illuminate\\Foundation\\Http\\FormRequest');
+        } catch (\ReflectionException) {
+            return false;
+        }
+    }
+
+    /**
      * Get short class name from FQCN.
      */
     public static function getShortClassName(string $fqcn): string

@@ -131,7 +131,7 @@ final class FindDirectRequestMethodCalls implements Pipe
 
             $fqcn = $this->resolveFullyQualifiedName($typeName, $useStatements, $namespace);
 
-            if (TypeChecker::isRequestType($fqcn)) {
+            if (TypeChecker::isFormRequestType($fqcn)) {
                 foreach ($property->props as $prop) {
                     $names[] = $prop->name->toString();
                 }
@@ -159,7 +159,7 @@ final class FindDirectRequestMethodCalls implements Pipe
 
                 $fqcn = $this->resolveFullyQualifiedName($typeName, $useStatements, $namespace);
 
-                if (TypeChecker::isRequestType($fqcn)) {
+                if (TypeChecker::isFormRequestType($fqcn)) {
                     $names[] = $param->var->name;
                 }
             }
@@ -190,7 +190,7 @@ final class FindDirectRequestMethodCalls implements Pipe
 
             $fqcn = $this->resolveFullyQualifiedName($typeName, $useStatements, $namespace);
 
-            if (TypeChecker::isRequestType($fqcn)) {
+            if (TypeChecker::isFormRequestType($fqcn)) {
                 $names[] = $param->var->name;
             }
         }
