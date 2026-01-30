@@ -39,7 +39,8 @@ final class TypeChecker
     public static function isModelType(string $fqcn): bool
     {
         if (! class_exists($fqcn)) {
-            return false;
+            return str_contains($fqcn, '\\Models\\')
+                || str_contains($fqcn, '\\Projections\\');
         }
 
         try {

@@ -48,6 +48,7 @@ return [
                 Backend\ConstructorDependencyInjectionProphet::class,
                 Backend\NoInlineBootLogicProphet::class,
                 Backend\ComputedPropertyMustHookProphet::class,
+                Backend\QueryModelsThroughQueryMethodProphet::class,
             ],
         ],
 

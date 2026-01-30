@@ -353,6 +353,9 @@ Frontend\StyleOverridesProphet::class => [
 13. **ControllerPrivateMethodsProphet** - Thou shalt not have too many private methods in controllers
 14. **KebabCaseRoutesProphet** - Thou shalt use kebab-case for route URIs
 15. **ConstructorDependencyInjectionProphet** - Thou shalt inject dependencies via constructor
+16. **NoInlineBootLogicProphet** - Thou shalt not inline boot logic
+17. **ComputedPropertyMustHookProphet** - Thou shalt hook computed properties
+18. **QueryModelsThroughQueryMethodProphet** - Thou shalt query models through ::query()
 
 ### Frontend (Vue/TypeScript)
 
