@@ -61,6 +61,11 @@ final class FindDirectRequestMethodCalls implements Pipe
                         continue;
                     }
 
+                    // Allow empty calls like $request->input() or $request->query() (no arguments)
+                    if (in_array($methodName, ['input', 'query'], true) && empty($call->args)) {
+                        continue;
+                    }
+
                     if ($this->isRequestObject($call->var, $paramRequestNames, $propertyRequestNames)) {
                         $line = $call->getStartLine();
 

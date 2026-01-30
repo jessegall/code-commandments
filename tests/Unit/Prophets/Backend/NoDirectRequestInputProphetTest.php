@@ -300,6 +300,69 @@ PHP;
         $this->assertTrue($judgment->isFallen());
     }
 
+    public function test_allows_empty_input_call(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use Illuminate\Http\Request;
+
+class TestController extends Controller
+{
+    public function store(Request $request)
+    {
+        $all = $request->input();
+        return $all;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_allows_empty_query_call(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use Illuminate\Http\Request;
+
+class TestController extends Controller
+{
+    public function index(Request $request)
+    {
+        $params = $request->query();
+        return $params;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_detects_query_with_args(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use Illuminate\Http\Request;
+
+class TestController extends Controller
+{
+    public function index(Request $request)
+    {
+        $name = $request->query('name');
+        return $name;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
+        $this->assertTrue($judgment->isFallen());
+    }
+
     public function test_provides_helpful_description(): void
     {
         $this->assertNotEmpty($this->prophet->description());

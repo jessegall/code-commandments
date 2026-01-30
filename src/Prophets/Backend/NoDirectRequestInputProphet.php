@@ -23,6 +23,7 @@ class NoDirectRequestInputProphet extends PhpCommandment
         'filled' => ['message' => 'Using filled() directly on request', 'suggestion' => 'Use typed FormRequest getter with nullable return'],
         'boolean' => ['message' => 'Using boolean() directly on request', 'suggestion' => 'Use typed FormRequest getter that returns bool'],
         'input' => ['message' => 'Using input() directly on request', 'suggestion' => 'Use typed FormRequest getter method instead'],
+        'query' => ['message' => 'Using query() directly on request', 'suggestion' => 'Use typed FormRequest getter method instead'],
     ];
 
     public function description(): string
