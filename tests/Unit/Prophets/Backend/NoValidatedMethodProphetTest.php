@@ -97,4 +97,32 @@ PHP;
 
         $this->assertTrue($judgment->isFallen());
     }
+
+    public function test_detects_this_request_validated(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Http\Requests\StoreRequest;
+
+class TestController extends Controller
+{
+    private StoreRequest $request;
+
+    public function __construct(StoreRequest $request)
+    {
+        $this->request = $request;
+    }
+
+    public function store()
+    {
+        $data = $this->request->validated();
+        return $data;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
+        $this->assertTrue($judgment->isFallen());
+    }
 }

@@ -340,7 +340,7 @@ Frontend\StyleOverridesProphet::class => [
 
 1. **NoRawRequestProphet** - Thou shalt not access raw request data
 2. **NoJsonResponseProphet** - Thou shalt not return raw JSON responses
-3. **NoHasMethodInControllerProphet** - Thou shalt not use has() in controllers
+3. **NoDirectRequestInputProphet** - Thou shalt not access request data directly in controllers
 4. **NoEventDispatchProphet** - Thou shalt use event() helper for dispatching
 5. **NoRecordThatOutsideAggregateProphet** - Thou shalt not use recordThat() outside aggregates
 6. **NoValidatedMethodProphet** - Thou shalt not use validated() method

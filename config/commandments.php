@@ -33,7 +33,7 @@ return [
             'prophets' => [
                 Backend\NoRawRequestProphet::class,
                 Backend\NoJsonResponseProphet::class,
-                Backend\NoHasMethodInControllerProphet::class,
+                Backend\NoDirectRequestInputProphet::class,
                 Backend\NoEventDispatchProphet::class,
                 Backend\NoRecordThatOutsideAggregateProphet::class,
                 Backend\NoValidatedMethodProphet::class,

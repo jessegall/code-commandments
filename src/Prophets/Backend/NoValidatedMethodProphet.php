@@ -42,7 +42,7 @@ SCRIPTURE;
     {
         return PhpPipeline::make($filePath, $content)
             ->onlyControllers()
-            ->pipe((new MatchPatterns)->add('validated', '/\$request->validated\(\)/'))
+            ->pipe((new MatchPatterns)->add('validated', '/\$(?:this->)?request->validated\(\)/'))
             ->sinsFromMatches(
                 'Using $request->validated() returns untyped array',
                 'Use typed getter methods on FormRequest instead'
