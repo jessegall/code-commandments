@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Output;
 
 use Illuminate\Console\OutputStyle;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
@@ -195,7 +196,8 @@ final class JudgmentPresenter
                 $shortName = class_basename($prophetClass);
                 $fileCount = count($prophetFiles[$prophetClass] ?? []);
                 $prophet = app($prophetClass);
-                $this->output->writeln("  - {$shortName}: {$count} sins in {$fileCount} files");
+                $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
+                $this->output->writeln("  - {$shortName}: {$count} sins in {$fileCount} files{$autoFixable}");
                 $this->output->writeln("    {$prophet->description()}");
             }
 
