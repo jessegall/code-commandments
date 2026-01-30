@@ -5,16 +5,23 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindDirectStaticModelCalls;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+use JesseGall\CodeCommandments\Support\Pipes\Php\TypeChecker;
+use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 
 /**
  * Commandment: Query models through ::query() method.
  */
-class QueryModelsThroughQueryMethodProphet extends PhpCommandment
+class QueryModelsThroughQueryMethodProphet extends PhpCommandment implements SinRepenter
 {
     private const FORBIDDEN_METHODS = [
         'where', 'whereIn', 'whereNotIn', 'whereNull', 'whereNotNull',
@@ -81,5 +88,158 @@ SCRIPTURE;
                 fn () => 'Use Model::query()->method() instead of Model::method()'
             )
             ->judge();
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $parser = (new ParserFactory)->createForHostVersion();
+        $ast = $parser->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $useStatements = $this->extractUseStatements($ast);
+        $namespace = $this->extractNamespace($ast);
+
+        $insertPositions = $this->findInsertPositions($ast, $useStatements, $namespace);
+
+        if (empty($insertPositions)) {
+            return RepentanceResult::unchanged();
+        }
+
+        // Sort by position descending to avoid offset shifts
+        usort($insertPositions, fn ($a, $b) => $b['position'] <=> $a['position']);
+
+        $penance = [];
+
+        foreach ($insertPositions as $entry) {
+            $content = substr($content, 0, $entry['position'])
+                . 'query()->'
+                . substr($content, $entry['position']);
+
+            $penance[] = "Inserted ::query()-> before ::{$entry['method']}()";
+        }
+
+        return RepentanceResult::absolved($content, $penance);
+    }
+
+    /**
+     * @return array<array{position: int, method: string}>
+     */
+    private function findInsertPositions(array $ast, array $useStatements, ?string $namespace): array
+    {
+        $positions = [];
+        $nodeFinder = new NodeFinder;
+
+        /** @var array<Expr\StaticCall> $staticCalls */
+        $staticCalls = $nodeFinder->findInstanceOf($ast, Expr\StaticCall::class);
+
+        foreach ($staticCalls as $call) {
+            if (! $call->name instanceof Node\Identifier) {
+                continue;
+            }
+
+            $methodName = $call->name->toString();
+
+            if (! in_array($methodName, self::FORBIDDEN_METHODS, true)) {
+                continue;
+            }
+
+            if (! $call->class instanceof Node\Name) {
+                continue;
+            }
+
+            $className = $this->resolveClassName($call->class, $useStatements, $namespace);
+
+            if ($className === null || ! TypeChecker::isModelType($className)) {
+                continue;
+            }
+
+            $positions[] = [
+                'position' => $call->name->getStartFilePos(),
+                'method' => $methodName,
+            ];
+        }
+
+        return $positions;
+    }
+
+    private function resolveClassName(Node\Name $class, array $useStatements, ?string $namespace): ?string
+    {
+        $name = $class->toString();
+
+        if (str_starts_with($name, '\\')) {
+            return ltrim($name, '\\');
+        }
+
+        $parts = explode('\\', $name);
+        $firstPart = $parts[0];
+
+        if (isset($useStatements[$firstPart])) {
+            if (count($parts) === 1) {
+                return $useStatements[$firstPart];
+            }
+
+            $parts[0] = $useStatements[$firstPart];
+
+            return implode('\\', $parts);
+        }
+
+        if ($namespace) {
+            return $namespace . '\\' . $name;
+        }
+
+        return $name;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function extractUseStatements(array $ast): array
+    {
+        $uses = [];
+
+        foreach ($ast as $node) {
+            if ($node instanceof Node\Stmt\Namespace_) {
+                foreach ($node->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Use_) {
+                        foreach ($stmt->uses as $useUse) {
+                            $fqcn = $useUse->name->toString();
+                            $alias = $useUse->alias?->toString() ?? $useUse->name->getLast();
+                            $uses[$alias] = $fqcn;
+                        }
+                    }
+                }
+            } elseif ($node instanceof Node\Stmt\Use_) {
+                foreach ($node->uses as $useUse) {
+                    $fqcn = $useUse->name->toString();
+                    $alias = $useUse->alias?->toString() ?? $useUse->name->getLast();
+                    $uses[$alias] = $fqcn;
+                }
+            }
+        }
+
+        return $uses;
+    }
+
+    private function extractNamespace(array $ast): ?string
+    {
+        foreach ($ast as $node) {
+            if ($node instanceof Node\Stmt\Namespace_) {
+                return $node->name?->toString();
+            }
+        }
+
+        return null;
     }
 }

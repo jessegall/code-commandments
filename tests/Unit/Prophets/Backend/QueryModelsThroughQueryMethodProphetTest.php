@@ -305,4 +305,102 @@ PHP;
         $this->assertNotEmpty($this->prophet->description());
         $this->assertNotEmpty($this->prophet->detailedDescription());
     }
+
+    public function test_repent_fixes_single_static_call(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        return User::where('active', true)->get();
+    }
+}
+PHP;
+
+        $result = $this->prophet->repent('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('User::query()->where(', $result->newContent);
+        $this->assertNotEmpty($result->penance);
+    }
+
+    public function test_repent_fixes_multiple_static_calls(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        $active = User::where('active', true)->get();
+        $latest = User::latest()->first();
+        return compact('active', 'latest');
+    }
+}
+PHP;
+
+        $result = $this->prophet->repent('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('User::query()->where(', $result->newContent);
+        $this->assertStringContainsString('User::query()->latest(', $result->newContent);
+        $this->assertCount(2, $result->penance);
+    }
+
+    public function test_repent_leaves_allowed_calls_untouched(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        return User::all();
+    }
+}
+PHP;
+
+        $result = $this->prophet->repent('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertFalse($result->absolved);
+    }
+
+    public function test_repent_produces_valid_php(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        $users = User::where('active', true)->get();
+        $first = User::firstWhere('email', 'test@example.com');
+        $count = User::count();
+        return compact('users', 'first', 'count');
+    }
+}
+PHP;
+
+        $result = $this->prophet->repent('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($result->absolved);
+
+        // Verify the result is still valid PHP by re-judging
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $result->newContent);
+        $this->assertTrue($judgment->isRighteous());
+    }
 }
