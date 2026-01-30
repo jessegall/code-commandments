@@ -35,12 +35,15 @@ class NoDirectRequestInputProphet extends PhpCommandment
     {
         return <<<'SCRIPTURE'
 Never access request data directly using methods like
-has(), hasFile(), filled(), boolean(), or input().
+has(), hasFile(), filled(), boolean(), input(), or query().
 
 These methods should be encapsulated in FormRequest typed getters.
 This applies to any class that interacts with a request object,
 including controllers, data classes, and other classes.
 Covers both $request-> and $this->request-> usage.
+
+Empty calls to input() and query() (without arguments) are allowed,
+since they return all data and are not accessing a specific field.
 
 The prophet uses AST analysis and reflection to verify that the object
 being called on is actually a Laravel request class.
@@ -51,6 +54,7 @@ Bad:
     }
 
     $window = $this->request->input('movementWindow', '30d');
+    $search = $request->query('search');
 
 Good:
     // In FormRequest:
@@ -74,6 +78,10 @@ Good:
     }
 
     $window = $request->getMovementWindow();
+
+    // Allowed (no arguments):
+    $allInput = $request->input();
+    $allQuery = $request->query();
 SCRIPTURE;
     }
 
