@@ -57,7 +57,7 @@ PHP;
         $this->assertTrue($judgment->isFallen());
     }
 
-    public function test_detects_find_on_model(): void
+    public function test_passes_find_on_model(): void
     {
         $content = <<<'PHP'
 <?php
@@ -74,7 +74,27 @@ class UserController extends Controller
 PHP;
 
         $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
-        $this->assertTrue($judgment->isFallen());
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_passes_find_or_fail_on_model(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function show(int $id)
+    {
+        return User::findOrFail($id);
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+        $this->assertTrue($judgment->isRighteous());
     }
 
     public function test_detects_first_where_on_model(): void
@@ -269,8 +289,8 @@ class UserController extends Controller
     public function index()
     {
         $active = User::where('active', true)->get();
-        $user = User::find(1);
-        return compact('active', 'user');
+        $latest = User::latest()->first();
+        return compact('active', 'latest');
     }
 }
 PHP;

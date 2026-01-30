@@ -23,14 +23,13 @@ class QueryModelsThroughQueryMethodProphet extends PhpCommandment
         'select', 'selectRaw', 'addSelect',
         'orderBy', 'orderByDesc', 'latest', 'oldest',
         'groupBy', 'having', 'limit', 'offset', 'skip', 'take',
-        'find', 'findOrFail', 'findMany',
         'first', 'firstOrFail', 'firstWhere', 'firstOrNew', 'firstOrCreate',
         'get', 'paginate', 'simplePaginate', 'cursorPaginate',
         'join', 'leftJoin', 'rightJoin',
         'pluck', 'value', 'exists', 'doesntExist',
         'chunk', 'each', 'cursor', 'lazy',
         'withTrashed', 'onlyTrashed',
-        'updateOrCreate', 'upsert', 'when', 'sole', 'distinct',
+        'upsert', 'when', 'sole', 'distinct',
     ];
 
     public function description(): string
@@ -48,23 +47,23 @@ Direct static calls like User::where(...) bypass the explicit query()
 entry point, making it less clear that a query builder chain is being
 started. Using ::query() makes the intent explicit and consistent.
 
-Methods like count(), all(), create(), factory(), and observe() are
-allowed as direct static calls since they are not query builder entry
-points.
+Methods like find(), findOrFail(), count(), all(), create(), delete(),
+update(), updateOrCreate(), factory(), and observe() are allowed as
+direct static calls since they are not query builder entry points.
 
 Bad:
     $users = User::where('active', true)->get();
-    $user = User::find(1);
     $stockpiles = Stockpile::with('items')->get();
     $first = User::firstWhere('email', $email);
 
 Good:
     $users = User::query()->where('active', true)->get();
-    $user = User::query()->find(1);
     $stockpiles = Stockpile::query()->with('items')->get();
     $first = User::query()->firstWhere('email', $email);
 
     // These are allowed (not query builder entry points):
+    $user = User::find(1);
+    $user = User::findOrFail(1);
     $count = User::count();
     $all = User::all();
     User::create([...]);
