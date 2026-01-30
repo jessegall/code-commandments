@@ -111,7 +111,7 @@ SCRIPTURE;
         $useStatements = $this->extractUseStatements($ast);
         $namespace = $this->extractNamespace($ast);
 
-        $insertPositions = $this->findInsertPositions($ast, $useStatements, $namespace);
+        $insertPositions = $this->findInsertPositions($ast, $content, $useStatements, $namespace);
 
         if (empty($insertPositions)) {
             return RepentanceResult::unchanged();
@@ -124,7 +124,7 @@ SCRIPTURE;
 
         foreach ($insertPositions as $entry) {
             $content = substr($content, 0, $entry['position'])
-                . 'query()->'
+                . $entry['insert']
                 . substr($content, $entry['position']);
 
             $penance[] = "Inserted ::query()-> before ::{$entry['method']}()";
@@ -134,9 +134,9 @@ SCRIPTURE;
     }
 
     /**
-     * @return array<array{position: int, method: string}>
+     * @return array<array{position: int, method: string, insert: string}>
      */
-    private function findInsertPositions(array $ast, array $useStatements, ?string $namespace): array
+    private function findInsertPositions(array $ast, string $content, array $useStatements, ?string $namespace): array
     {
         $positions = [];
         $nodeFinder = new NodeFinder;
@@ -165,9 +165,20 @@ SCRIPTURE;
                 continue;
             }
 
+            $insert = 'query()->';
+
+            // If the chain continues on the next line, format as multi-line
+            $afterCall = substr($content, $call->getEndFilePos() + 1);
+
+            if (preg_match('/^\s*\n(\s*)->/', $afterCall, $indentMatch)) {
+                $indent = $indentMatch[1];
+                $insert = "query()\n{$indent}->";
+            }
+
             $positions[] = [
                 'position' => $call->name->getStartFilePos(),
                 'method' => $methodName,
+                'insert' => $insert,
             ];
         }
 

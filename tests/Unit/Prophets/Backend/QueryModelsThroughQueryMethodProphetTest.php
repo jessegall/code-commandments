@@ -376,6 +376,60 @@ PHP;
         $this->assertFalse($result->absolved);
     }
 
+    public function test_repent_formats_multi_line_chain(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        return User::where('active', true)
+            ->orderBy('name')
+            ->get();
+    }
+}
+PHP;
+
+        $result = $this->prophet->repent('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($result->absolved);
+
+        $expected = <<<'PHP'
+        return User::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
+PHP;
+
+        $this->assertStringContainsString($expected, $result->newContent);
+    }
+
+    public function test_repent_keeps_single_line_chain_inline(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        return User::where('active', true)->get();
+    }
+}
+PHP;
+
+        $result = $this->prophet->repent('/app/Http/Controllers/UserController.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('User::query()->where(\'active\', true)->get()', $result->newContent);
+    }
+
     public function test_repent_produces_valid_php(): void
     {
         $content = <<<'PHP'
