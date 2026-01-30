@@ -27,7 +27,7 @@ class QueryModelsThroughQueryMethodProphet extends PhpCommandment
         'get', 'paginate', 'simplePaginate', 'cursorPaginate',
         'join', 'leftJoin', 'rightJoin',
         'pluck', 'value', 'exists', 'doesntExist',
-        'chunk', 'each', 'cursor', 'lazy',
+        'each', 'cursor', 'lazy',
         'withTrashed', 'onlyTrashed',
         'upsert', 'when', 'sole', 'distinct',
     ];
