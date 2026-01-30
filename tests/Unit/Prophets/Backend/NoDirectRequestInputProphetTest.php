@@ -227,7 +227,7 @@ PHP;
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_skips_non_controller(): void
+    public function test_ignores_untyped_parameters(): void
     {
         $content = <<<'PHP'
 <?php
@@ -246,6 +246,34 @@ PHP;
 
         $judgment = $this->prophet->judge('/app/Services/UserService.php', $content);
         $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_detects_in_non_controller_class(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\View;
+
+use App\Http\Requests\StoreUserRequest;
+use Spatie\LaravelData\Data;
+
+class SomePage extends Data
+{
+    public function __construct(
+        public readonly StoreUserRequest $request,
+    ) {
+        $this->init();
+    }
+
+    private function init(): void
+    {
+        $window = $this->request->input('movementWindow', '30d');
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/View/SomePage.php', $content);
+        $this->assertTrue($judgment->isFallen());
     }
 
     public function test_detects_in_laravel_11_controller(): void
