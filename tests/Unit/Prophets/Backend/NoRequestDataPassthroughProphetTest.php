@@ -300,6 +300,50 @@ PHP;
         $this->assertTrue($judgment->isFallen());
     }
 
+    public function test_ignores_from_on_non_page_class(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Http\Requests\StoreUserRequest;
+
+class UserController extends Controller
+{
+    public function create(StoreUserRequest $request)
+    {
+        return UserData::from([
+            'search' => $request->getSearch(),
+        ]);
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_detects_from_on_page_class(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+use App\Http\Requests\StoreUserRequest;
+
+class UserController extends Controller
+{
+    public function create(StoreUserRequest $request)
+    {
+        return UserSettingsPage::from([
+            'search' => $request->getSearch(),
+        ]);
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/UserController.php', $content);
+        $this->assertTrue($judgment->isFallen());
+    }
+
     public function test_provides_helpful_description(): void
     {
         $this->assertNotEmpty($this->prophet->description());

@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
+use ReflectionClass;
 
 /**
  * Find cases where request method calls are passed as values in Data::from() arrays.
@@ -43,6 +44,16 @@ final class FindRequestToDataPassthrough implements Pipe
                         continue;
                     }
 
+                    if (! $call->class instanceof Node\Name) {
+                        continue;
+                    }
+
+                    $className = $call->class->toString();
+
+                    if (! $this->isDataPageClass($className, $input->useStatements, $input->namespace)) {
+                        continue;
+                    }
+
                     if (empty($call->args)) {
                         continue;
                     }
@@ -70,10 +81,6 @@ final class FindRequestToDataPassthrough implements Pipe
                     if (empty($requestKeys)) {
                         continue;
                     }
-
-                    $className = $call->class instanceof Node\Name
-                        ? $call->class->toString()
-                        : '?';
 
                     $line = $call->getStartLine();
 
@@ -103,6 +110,34 @@ final class FindRequestToDataPassthrough implements Pipe
         }
 
         return $this->isRequestObject($expr->var, $requestNames);
+    }
+
+    /**
+     * Check if the target class of a ::from() call is a Data page class.
+     *
+     * The class name must end with "Page" and, when autoloadable, must extend Spatie\LaravelData\Data.
+     */
+    private function isDataPageClass(string $className, array $useStatements, ?string $namespace): bool
+    {
+        $shortName = class_basename($className);
+
+        if (! str_ends_with($shortName, 'Page')) {
+            return false;
+        }
+
+        $fqcn = $this->resolveFullyQualifiedName($className, $useStatements, $namespace);
+
+        if (class_exists($fqcn)) {
+            try {
+                $reflection = new ReflectionClass($fqcn);
+
+                return $reflection->isSubclassOf('Spatie\\LaravelData\\Data');
+            } catch (\ReflectionException) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
