@@ -49,6 +49,7 @@ return [
                 Backend\NoInlineBootLogicProphet::class,
                 Backend\ComputedPropertyMustHookProphet::class,
                 Backend\QueryModelsThroughQueryMethodProphet::class,
+                Backend\NoRequestDataPassthroughProphet::class,
             ],
         ],
 
