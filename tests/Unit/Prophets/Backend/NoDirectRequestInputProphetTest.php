@@ -387,6 +387,46 @@ PHP;
         $this->assertTrue($judgment->isFallen());
     }
 
+    public function test_detects_request_helper_function(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+class TestController extends Controller
+{
+    public function store()
+    {
+        $name = request()->input('name');
+        return $name;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
+        $this->assertTrue($judgment->isFallen());
+    }
+
+    public function test_allows_empty_input_on_request_helper(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Http\Controllers;
+
+class TestController extends Controller
+{
+    public function store()
+    {
+        $all = request()->input();
+        return $all;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Http/Controllers/TestController.php', $content);
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_provides_helpful_description(): void
     {
         $this->assertNotEmpty($this->prophet->description());

@@ -87,7 +87,7 @@ final class FindDirectRequestMethodCalls implements Pipe
     }
 
     /**
-     * Check if the expression is a request variable or $this->request property.
+     * Check if the expression is a request variable, $this->request property, or request() helper.
      */
     private function isRequestObject(Expr $var, array $paramNames, array $propertyNames): bool
     {
@@ -103,6 +103,14 @@ final class FindDirectRequestMethodCalls implements Pipe
             && $var->name instanceof Node\Identifier
         ) {
             return in_array($var->name->toString(), $propertyNames, true);
+        }
+
+        // request()->method()
+        if ($var instanceof Expr\FuncCall
+            && $var->name instanceof Node\Name
+            && $var->name->toString() === 'request'
+        ) {
+            return true;
         }
 
         return false;

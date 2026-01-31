@@ -40,7 +40,7 @@ like has(), hasFile(), filled(), boolean(), input(), or query().
 These methods should be encapsulated in FormRequest typed getters.
 This applies to any class that interacts with a FormRequest object,
 including controllers, data classes, and other classes.
-Covers both $request-> and $this->request-> usage.
+Covers $request->, $this->request->, and request()-> usage.
 
 Raw Illuminate\Http\Request is allowed (e.g. in middleware) since
 there are no typed getters to use instead.
