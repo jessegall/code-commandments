@@ -50,6 +50,7 @@ return [
                 Backend\ComputedPropertyMustHookProphet::class,
                 Backend\QueryModelsThroughQueryMethodProphet::class,
                 Backend\NoRequestDataPassthroughProphet::class,
+                Backend\NoAuthUserInDataClassesProphet::class,
             ],
         ],
 
