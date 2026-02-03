@@ -109,11 +109,9 @@ class ScriptureCommand extends Command
      */
     private function showClaudeOutput(ProphetRegistry $registry, array $scrolls, bool $detailed): int
     {
-        $this->output->writeln('CODE COMMANDMENTS');
-        $this->output->writeln('=================');
+        $this->output->writeln('CODE COMMANDMENTS - Coding standards for this project');
         $this->output->newLine();
-        $this->output->writeln('These are the coding standards enforced by this project.');
-        $this->output->writeln('Violations are called "sins" and must be fixed before committing.');
+        $this->output->writeln('IMPORTANT: Never commit code with sins. Fix all violations first.');
         $this->output->newLine();
 
         foreach ($scrolls as $scroll) {
@@ -121,46 +119,33 @@ class ScriptureCommand extends Command
                 continue;
             }
 
-            $this->output->writeln(strtoupper($scroll) . ' RULES:');
-            $this->output->writeln(str_repeat('-', 40));
+            $this->output->writeln(strtoupper($scroll) . ':');
 
             $prophets = $registry->getProphets($scroll);
 
             foreach ($prophets as $prophet) {
                 $className = str_replace('Prophet', '', class_basename($prophet));
                 $canRepent = $prophet instanceof SinRepenter;
-                $requiresConfession = $prophet->requiresConfession();
 
-                $badges = [];
-                if ($canRepent) {
-                    $badges[] = 'auto-fixable';
-                }
-                if ($requiresConfession) {
-                    $badges[] = 'requires-review';
-                }
+                $badge = $canRepent ? ' [AUTO-FIXABLE]' : '';
 
-                $badgeStr = !empty($badges) ? ' [' . implode(', ', $badges) . ']' : '';
-
-                $this->output->writeln("- {$className}{$badgeStr}");
-                $this->output->writeln("  {$prophet->description()}");
+                $this->output->writeln("- {$className}{$badge}: {$prophet->description()}");
 
                 if ($detailed) {
-                    $this->output->newLine();
                     $detailedDesc = $prophet->detailedDescription();
                     $lines = explode("\n", $detailedDesc);
                     foreach ($lines as $line) {
                         $this->output->writeln("  {$line}");
                     }
+                    $this->output->newLine();
                 }
-
-                $this->output->newLine();
             }
+
+            $this->output->newLine();
         }
 
-        $totalCount = $registry->totalCount();
-        $this->output->writeln("Total rules: {$totalCount}");
-        $this->output->newLine();
-        $this->output->writeln('Run `php artisan commandments:judge --claude` to check for violations.');
+        $this->output->writeln('Check violations: php artisan commandments:judge --claude');
+        $this->output->writeln('Auto-fix sins: php artisan commandments:repent');
 
         return self::SUCCESS;
     }

@@ -17,7 +17,7 @@ class NoRequestDataPassthroughProphet extends PhpCommandment
 {
     public function description(): string
     {
-        return 'Do not pass request computed values to Data::from() in controllers';
+        return 'Inject request in Data class instead of passing computed values to from()';
     }
 
     public function detailedDescription(): string

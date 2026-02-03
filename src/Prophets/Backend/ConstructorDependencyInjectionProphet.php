@@ -24,7 +24,7 @@ class ConstructorDependencyInjectionProphet extends PhpCommandment
 {
     public function description(): string
     {
-        return 'Controller dependencies should be injected via constructor';
+        return 'Move service dependencies from controller methods to constructor';
     }
 
     public function detailedDescription(): string

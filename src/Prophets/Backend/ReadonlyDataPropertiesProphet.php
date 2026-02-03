@@ -27,7 +27,7 @@ class ReadonlyDataPropertiesProphet extends PhpCommandment
 
     public function description(): string
     {
-        return 'Data classes must not have readonly properties with value-injecting attributes';
+        return 'Remove readonly from Data properties with value-injecting attributes like #[WithCast]';
     }
 
     public function detailedDescription(): string

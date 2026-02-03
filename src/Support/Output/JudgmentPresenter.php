@@ -178,66 +178,53 @@ final class JudgmentPresenter
         array $manualVerificationFiles = []
     ): void {
         if ($totalSins === 0 && $totalWarnings === 0) {
-            $this->output->writeln('No sins found. The code is righteous.');
+            $this->output->writeln('Righteous: No sins found.');
 
             return;
         }
 
         // Show sins section
         if ($totalSins > 0) {
-            $this->output->writeln("SINS FOUND: {$totalSins} total across {$totalFiles} files");
+            $this->output->writeln("SINS: {$totalSins} in {$totalFiles} files");
             $this->output->newLine();
-            $this->output->writeln('SUMMARY BY TYPE:');
+
+            // Critical instruction for Claude
+            $this->output->writeln('DO NOT COMMIT: Fix all sins before committing.');
+            $this->output->newLine();
 
             // Sort by sin count descending
             arsort($prophetSinCounts);
 
             foreach ($prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
+                $filterName = str_replace('Prophet', '', $shortName);
                 $fileCount = count($prophetFiles[$prophetClass] ?? []);
                 $prophet = app($prophetClass);
                 $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
-                $this->output->writeln("  - {$shortName}: {$count} sins in {$fileCount} files{$autoFixable}");
-                $this->output->writeln("    {$prophet->description()}");
+
+                $this->output->writeln("{$shortName} ({$count}){$autoFixable}");
+                $this->output->writeln("  {$prophet->description()}");
+                $this->output->writeln("  Files: " . implode(', ', array_keys($prophetFiles[$prophetClass] ?? [])));
+                $this->output->writeln("  Details: php artisan commandments:judge --prophet={$filterName}");
+                $this->output->newLine();
             }
 
-            $this->output->newLine();
-            $this->output->writeln('TO FIX: Run the following commands to see affected files and details for each sin type:');
-            $this->output->newLine();
-
-            foreach (array_keys($prophetSinCounts) as $prophetClass) {
-                $shortName = class_basename($prophetClass);
-                $filterName = str_replace('Prophet', '', $shortName);
-                $this->output->writeln("  php artisan commandments:judge --prophet={$filterName}");
-            }
-
-            $this->output->newLine();
-            $this->output->writeln('TO AUTO-FIX: Run `php artisan commandments:repent` to automatically fix sins where possible.');
+            $this->output->writeln('Auto-fix available sins: php artisan commandments:repent');
         }
 
         // Show warnings section
         if ($totalWarnings > 0 && ! empty($manualVerificationFiles)) {
             $this->output->newLine();
-            $this->output->writeln('---');
+            $this->output->writeln("WARNINGS: {$totalWarnings} requiring manual review");
             $this->output->newLine();
-            $this->output->writeln("WARNINGS REQUIRING MANUAL REVIEW: {$totalWarnings} total");
-            $this->output->newLine();
-            $this->output->writeln('IMPORTANT: Warnings are potential issues that require your manual review.');
-            $this->output->writeln('You must examine each warning and determine if it is an actual sin that needs fixing.');
-            $this->output->writeln('Some warnings may be false positives depending on the context.');
-            $this->output->newLine();
-            $this->output->writeln('FILES TO REVIEW:');
 
             foreach ($manualVerificationFiles as $file => $issues) {
-                $this->output->writeln("  {$file}");
+                $this->output->writeln($file);
                 foreach ($issues as $issue) {
                     $line = $issue['line'] ? ":{$issue['line']}" : '';
-                    $this->output->writeln("    [{$issue['prophet']}]{$line} {$issue['message']}");
+                    $this->output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
                 }
             }
-
-            $this->output->newLine();
-            $this->output->writeln('After reviewing, use --absolve flag to mark files as reviewed.');
         }
     }
 

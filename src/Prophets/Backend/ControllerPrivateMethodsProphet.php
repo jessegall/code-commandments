@@ -21,7 +21,7 @@ class ControllerPrivateMethodsProphet extends PhpCommandment
 {
     public function description(): string
     {
-        return 'Controllers should not have too many private methods';
+        return 'Extract private methods to service classes when controller exceeds limit';
     }
 
     public function detailedDescription(): string
