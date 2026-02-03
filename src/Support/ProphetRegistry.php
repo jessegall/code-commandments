@@ -130,7 +130,7 @@ class ProphetRegistry
             }
 
             return $prophet;
-        });
+        })->filter(fn (Commandment $prophet) => $prophet->supported());
     }
 
     /**

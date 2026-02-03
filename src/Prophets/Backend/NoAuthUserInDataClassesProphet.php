@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindAuthUserCalls;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -14,6 +15,11 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  */
 class NoAuthUserInDataClassesProphet extends PhpCommandment
 {
+    public function supported(): bool
+    {
+        return PackageDetector::hasSpatieData();
+    }
+
     public function description(): string
     {
         return 'Use #[FromAuthenticatedUser] attribute instead of auth()->user() in Data classes';

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Prophets\Frontend;
 use JesseGall\CodeCommandments\Commandments\FrontendCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Sin;
+use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Vue\VueContext;
 use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
@@ -20,6 +21,11 @@ use JesseGall\CodeCommandments\Support\TextHelper;
  */
 class RouterHardcodedUrlsProphet extends FrontendCommandment
 {
+    public function supported(): bool
+    {
+        return PackageDetector::hasWayfinder();
+    }
+
     public function applicableExtensions(): array
     {
         return ['vue', 'ts'];

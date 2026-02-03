@@ -52,6 +52,16 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
+     * Check if this commandment is supported in the current project.
+     *
+     * Override this method to check for package dependencies.
+     */
+    public function supported(): bool
+    {
+        return true;
+    }
+
+    /**
      * Create a righteous judgment.
      */
     protected function righteous(): Judgment

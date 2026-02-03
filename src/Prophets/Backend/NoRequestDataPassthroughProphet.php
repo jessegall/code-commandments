@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindRequestToDataPassthrough;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
@@ -15,6 +16,11 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  */
 class NoRequestDataPassthroughProphet extends PhpCommandment
 {
+    public function supported(): bool
+    {
+        return PackageDetector::hasSpatieData();
+    }
+
     public function description(): string
     {
         return 'Inject request in Data class instead of passing computed values to from()';

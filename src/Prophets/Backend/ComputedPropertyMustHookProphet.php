@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClass;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
@@ -22,6 +23,11 @@ use ReflectionProperty;
 class ComputedPropertyMustHookProphet extends PhpCommandment
 {
     private const COMPUTED_ATTRIBUTE = 'Spatie\\LaravelData\\Attributes\\Computed';
+
+    public function supported(): bool
+    {
+        return PackageDetector::hasSpatieData();
+    }
 
     public function description(): string
     {

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 
@@ -14,6 +15,11 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  */
 class TypeScriptAttributeProphet extends PhpCommandment
 {
+    public function supported(): bool
+    {
+        return PackageDetector::hasSpatieData();
+    }
+
     protected array $utilityPaths = [
         'Data/Casts/',
         'Data/Attributes/',

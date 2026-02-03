@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Unit\Support;
 
+use JesseGall\CodeCommandments\Commandments\BaseCommandment;
 use JesseGall\CodeCommandments\Prophets\Frontend\StyleOverridesProphet;
 use JesseGall\CodeCommandments\Prophets\Frontend\NoFetchAxiosProphet;
+use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
@@ -102,5 +104,37 @@ class ProphetRegistryTest extends TestCase
 
         $config = $this->registry->getProphetConfig('frontend', NoFetchAxiosProphet::class);
         $this->assertEquals([], $config);
+    }
+
+    public function test_get_prophets_filters_out_unsupported_prophets(): void
+    {
+        // Create anonymous classes for testing
+        $supportedProphet = new class extends BaseCommandment {
+            public function supported(): bool { return true; }
+            public function applicableExtensions(): array { return ['php']; }
+            public function description(): string { return 'Supported'; }
+            public function detailedDescription(): string { return 'Supported prophet'; }
+            public function judge(string $filePath, string $content): Judgment { return $this->righteous(); }
+        };
+
+        $unsupportedProphet = new class extends BaseCommandment {
+            public function supported(): bool { return false; }
+            public function applicableExtensions(): array { return ['php']; }
+            public function description(): string { return 'Unsupported'; }
+            public function detailedDescription(): string { return 'Unsupported prophet'; }
+            public function judge(string $filePath, string $content): Judgment { return $this->righteous(); }
+        };
+
+        // Register the anonymous classes by their class name
+        $this->app->bind('supported_prophet', fn () => $supportedProphet);
+        $this->app->bind('unsupported_prophet', fn () => $unsupportedProphet);
+
+        $this->registry->register('test', 'supported_prophet');
+        $this->registry->register('test', 'unsupported_prophet');
+
+        $prophets = $this->registry->getProphets('test');
+
+        $this->assertCount(1, $prophets);
+        $this->assertTrue($prophets->first()->supported());
     }
 }

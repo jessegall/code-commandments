@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
@@ -24,6 +25,11 @@ class ReadonlyDataPropertiesProphet extends PhpCommandment
     private const INJECTS_PROPERTY_VALUE_INTERFACE = 'Spatie\\LaravelData\\Attributes\\InjectsPropertyValue';
 
     private const WITH_CAST_ATTRIBUTE = 'Spatie\\LaravelData\\Attributes\\WithCast';
+
+    public function supported(): bool
+    {
+        return PackageDetector::hasSpatieData();
+    }
 
     public function description(): string
     {
