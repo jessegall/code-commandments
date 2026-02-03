@@ -12,14 +12,17 @@ use Symfony\Component\Finder\Finder;
  */
 class GenericFileScanner implements FileScanner
 {
-    public function scan(string $path, array $extensions = [], array $excludePaths = []): iterable
+    public function scan(string|array $path, array $extensions = [], array $excludePaths = []): iterable
     {
-        if (!is_dir($path)) {
+        $paths = is_array($path) ? $path : [$path];
+        $validPaths = array_filter($paths, fn (string $p) => is_dir($p));
+
+        if (empty($validPaths)) {
             return;
         }
 
         $finder = new Finder();
-        $finder->files()->in($path);
+        $finder->files()->in($validPaths);
 
         if (!empty($extensions)) {
             $patterns = array_map(fn (string $ext) => '*.' . ltrim($ext, '.'), $extensions);
