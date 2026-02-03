@@ -15,6 +15,9 @@ return [
     | The order of prophets in each scroll determines their commandment number.
     | First prophet = Commandment #1, second = Commandment #2, etc.
     |
+    | Prophets can be configured using the associative array format:
+    | ProphetClass::class => ['option' => 'value']
+    |
     */
 
     'scrolls' => [
@@ -24,11 +27,6 @@ return [
             'exclude' => [
                 'Console/Kernel.php',
                 'Exceptions/Handler.php',
-            ],
-            'thresholds' => [
-                'max_method_lines' => 15,
-                'max_private_methods' => 3,
-                'min_method_lines' => 3,
             ],
             'prophets' => [
                 Backend\NoRawRequestProphet::class,
@@ -43,7 +41,10 @@ return [
                 Backend\FormRequestTypedGettersProphet::class,
                 Backend\HiddenAttributeProphet::class,
                 Backend\NoCustomFromModelProphet::class,
-                Backend\ControllerPrivateMethodsProphet::class,
+                Backend\ControllerPrivateMethodsProphet::class => [
+                    'max_private_methods' => 3,
+                    'min_method_lines' => 3,
+                ],
                 Backend\KebabCaseRoutesProphet::class,
                 Backend\ConstructorDependencyInjectionProphet::class,
                 Backend\NoInlineBootLogicProphet::class,
@@ -62,12 +63,6 @@ return [
                 'dist',
                 '*.d.ts',
             ],
-            'thresholds' => [
-                'max_vue_lines' => 200,
-                'max_ts_lines' => 300,
-                'max_nesting_depth' => 6,
-                'min_repetitions' => 3,
-            ],
             'prophets' => [
                 Frontend\NoFetchAxiosProphet::class,
                 Frontend\TemplateVForProphet::class,
@@ -78,8 +73,12 @@ return [
                 Frontend\CompositionApiProphet::class,
                 Frontend\ArrowFunctionAssignmentsProphet::class,
                 Frontend\SwitchCaseProphet::class,
-                Frontend\LongVueFilesProphet::class,
-                Frontend\LongTsFilesProphet::class,
+                Frontend\LongVueFilesProphet::class => [
+                    'max_vue_lines' => 200,
+                ],
+                Frontend\LongTsFilesProphet::class => [
+                    'max_ts_lines' => 300,
+                ],
                 Frontend\RepeatingPatternsProphet::class,
                 Frontend\ScriptFirstProphet::class,
                 Frontend\PropsTypeScriptProphet::class,
