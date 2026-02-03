@@ -10,10 +10,7 @@ use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 
 /**
- * Seek absolution through auto-fixing sins.
- *
- * The prophets who can offer absolution will transform
- * your code to follow the commandments.
+ * Auto-fix sins that can be automatically resolved.
  */
 class RepentCommand extends Command
 {
@@ -22,15 +19,12 @@ class RepentCommand extends Command
         {--prophet= : Use a specific prophet for repentance}
         {--file= : Repent sins in a specific file}
         {--files= : Repent sins in specific files (comma-separated)}
-        {--dry-run : Show what sins may be absolved without acting}
-        {--claude : Output optimized for Claude Code AI assistant}';
+        {--dry-run : Show what would be fixed without making changes}';
 
-    protected $description = 'Seek absolution through auto-fixing transgressions';
-
-    private bool $claudeMode = false;
+    protected $description = 'Auto-fix sins that can be automatically resolved';
 
     /** @var array<string, array<string>> */
-    private array $absolvedFiles = [];
+    private array $fixedFiles = [];
 
     /** @var array<string, array<string>> */
     private array $failedFiles = [];
@@ -46,50 +40,26 @@ class RepentCommand extends Command
             ? array_map('trim', explode(',', $this->option('files')))
             : [];
         $dryRun = $this->option('dry-run');
-        $this->claudeMode = (bool) $this->option('claude');
-
-        if (!$this->claudeMode) {
-            $this->output->writeln('<fg=yellow>');
-            $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
-            $this->output->writeln('  ║              SEEKING ABSOLUTION                           ║');
-            $this->output->writeln('  ║      The prophets shall transform thy transgressions      ║');
-            $this->output->writeln('  ╚═══════════════════════════════════════════════════════════╝');
-            $this->output->writeln('</>');
-            $this->newLine();
-        }
-
-        if ($dryRun && !$this->claudeMode) {
-            $this->warn('  DRY RUN MODE - No changes will be made');
-            $this->newLine();
-        }
 
         $scrolls = $scrollFilter
             ? [$scrollFilter]
             : $registry->getScrolls();
 
-        $totalAbsolved = 0;
+        $totalFixed = 0;
         $totalFailed = 0;
 
         foreach ($scrolls as $scroll) {
             if (!$registry->hasScroll($scroll)) {
-                $this->error("Unknown scroll: {$scroll}");
                 continue;
-            }
-
-            if (!$this->claudeMode) {
-                $this->info("📜 Seeking absolution in the scroll of <fg=cyan>{$scroll}</>");
-                $this->newLine();
             }
 
             $prophets = $registry->getProphets($scroll);
 
             foreach ($prophets as $prophet) {
-                // Only process prophets that can repent
                 if (!$prophet instanceof SinRepenter) {
                     continue;
                 }
 
-                // Apply prophet filter if specified
                 if ($prophetFilter) {
                     $shortName = class_basename($prophet);
                     if (!str_contains(strtolower($shortName), strtolower($prophetFilter))) {
@@ -98,9 +68,6 @@ class RepentCommand extends Command
                 }
 
                 $prophetName = class_basename($prophet);
-                if (!$this->claudeMode) {
-                    $this->output->writeln("  <fg=cyan>Prophet {$prophetName}</> offers absolution...");
-                }
 
                 if ($fileFilter) {
                     $files = [new \SplFileInfo($fileFilter)];
@@ -113,11 +80,7 @@ class RepentCommand extends Command
                 foreach ($files as $file) {
                     $filePath = $file->getRealPath();
 
-                    if ($filePath === false) {
-                        continue;
-                    }
-
-                    if (!$prophet->canRepent($filePath)) {
+                    if ($filePath === false || !$prophet->canRepent($filePath)) {
                         continue;
                     }
 
@@ -126,132 +89,63 @@ class RepentCommand extends Command
                         continue;
                     }
 
-                    // First judge to see if there are sins
                     $judgment = $prophet->judge($filePath, $content);
 
                     if ($judgment->isRighteous()) {
                         continue;
                     }
 
-                    // Attempt repentance
                     $result = $prophet->repent($filePath, $content);
                     $relativePath = str_replace(base_path() . '/', '', $filePath);
 
                     if ($result->absolved && $result->newContent !== null) {
-                        if ($dryRun) {
-                            if (!$this->claudeMode) {
-                                $this->output->writeln("    <fg=yellow>Would absolve:</> {$relativePath}");
-                                foreach ($result->penance as $action) {
-                                    $this->output->writeln("      <fg=gray>→ {$action}</>");
-                                }
-                            }
-                            $this->absolvedFiles[$prophetName][] = $relativePath;
-                            $totalAbsolved++;
-                        } else {
-                            // Create backup
-                            $backupPath = $filePath . '.bak';
-                            file_put_contents($backupPath, $content);
-
-                            // Write new content
+                        if (!$dryRun) {
                             file_put_contents($filePath, $result->newContent);
-
-                            if (!$this->claudeMode) {
-                                $this->output->writeln("    <fg=green>✓ Absolved:</> {$relativePath}");
-                                foreach ($result->penance as $action) {
-                                    $this->output->writeln("      <fg=gray>→ {$action}</>");
-                                }
-                            }
-                            $this->absolvedFiles[$prophetName][] = $relativePath;
-                            $totalAbsolved++;
-
-                            // Remove backup if successful
-                            unlink($backupPath);
                         }
+                        $this->fixedFiles[$prophetName][] = $relativePath;
+                        $totalFixed++;
                     } elseif (!$result->absolved) {
-                        if (!$this->claudeMode) {
-                            $this->output->writeln("    <fg=red>✗ Cannot absolve:</> {$relativePath}");
-                            if ($result->failureReason) {
-                                $this->output->writeln("      <fg=gray>→ {$result->failureReason}</>");
-                            }
-                        }
                         $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : '');
                         $totalFailed++;
                     }
                 }
             }
-
-            if (!$this->claudeMode) {
-                $this->newLine();
-            }
         }
 
-        return $this->showResults($totalAbsolved, $totalFailed, $dryRun);
+        return $this->showResults($totalFixed, $totalFailed, $dryRun);
     }
 
-    private function showResults(int $totalAbsolved, int $totalFailed, bool $dryRun): int
+    private function showResults(int $totalFixed, int $totalFailed, bool $dryRun): int
     {
-        if ($this->claudeMode) {
-            return $this->showClaudeOutput($totalAbsolved, $totalFailed, $dryRun);
-        }
-
-        $this->newLine();
-
-        if ($totalAbsolved === 0 && $totalFailed === 0) {
-            $this->output->writeln('<fg=green>');
-            $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
-            $this->output->writeln('  ║           NO TRANSGRESSIONS REQUIRE ABSOLUTION            ║');
-            $this->output->writeln('  ║                  Thy code is already pure                 ║');
-            $this->output->writeln('  ╚═══════════════════════════════════════════════════════════╝');
-            $this->output->writeln('</>');
+        if ($totalFixed === 0 && $totalFailed === 0) {
+            $this->output->writeln('No sins to fix. Code is righteous.');
 
             return self::SUCCESS;
         }
 
-        $action = $dryRun ? 'would be' : 'have been';
+        $action = $dryRun ? 'WOULD FIX' : 'FIXED';
 
-        $this->output->writeln('<fg=green>');
-        $this->output->writeln('  ╔═══════════════════════════════════════════════════════════╗');
-        $this->output->writeln("  ║  {$totalAbsolved} transgressions {$action} forgiven" . str_repeat(' ', max(0, 28 - strlen((string)$totalAbsolved) - strlen($action))) . '║');
-        if ($totalFailed > 0) {
-            $this->output->writeln("  ║  {$totalFailed} could not be absolved (manual fix required)" . str_repeat(' ', max(0, 17 - strlen((string)$totalFailed))) . '║');
-        }
-        $this->output->writeln('  ╚═══════════════════════════════════════════════════════════╝');
-        $this->output->writeln('</>');
-
-        return self::SUCCESS;
-    }
-
-    private function showClaudeOutput(int $totalAbsolved, int $totalFailed, bool $dryRun): int
-    {
-        if ($totalAbsolved === 0 && $totalFailed === 0) {
-            $this->output->writeln('No sins to fix. The code is already righteous.');
-
-            return self::SUCCESS;
-        }
-
-        $action = $dryRun ? 'WOULD BE FIXED' : 'FIXED';
-
-        if ($totalAbsolved > 0) {
-            $this->output->writeln("{$action}: {$totalAbsolved} sins across " . count($this->absolvedFiles) . ' prophets');
+        if ($totalFixed > 0) {
+            $this->output->writeln("{$action}: {$totalFixed} sins");
             $this->output->newLine();
 
-            foreach ($this->absolvedFiles as $prophet => $files) {
+            foreach ($this->fixedFiles as $prophet => $files) {
                 $this->output->writeln("{$prophet}:");
                 foreach ($files as $file) {
-                    $this->output->writeln("  - {$file}");
+                    $this->output->writeln("  {$file}");
                 }
             }
         }
 
         if ($totalFailed > 0) {
             $this->output->newLine();
-            $this->output->writeln("FAILED (manual fix required): {$totalFailed} sins");
+            $this->output->writeln("FAILED (manual fix required): {$totalFailed}");
             $this->output->newLine();
 
             foreach ($this->failedFiles as $prophet => $files) {
                 $this->output->writeln("{$prophet}:");
                 foreach ($files as $file) {
-                    $this->output->writeln("  - {$file}");
+                    $this->output->writeln("  {$file}");
                 }
             }
         }

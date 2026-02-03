@@ -34,15 +34,16 @@ class JudgeCommandTest extends TestCase
             ->assertSuccessful();
     }
 
-    public function test_judge_command_shows_prophets_summoned_message(): void
+    public function test_judge_command_shows_righteous_when_no_sins(): void
     {
         $this->artisan('commandments:judge')
-            ->expectsOutputToContain('PROPHETS HAVE BEEN SUMMONED');
+            ->expectsOutputToContain('Righteous');
     }
 
     public function test_judge_command_with_unknown_scroll(): void
     {
+        // Unknown scrolls are silently skipped in the new plain output
         $this->artisan('commandments:judge', ['--scroll' => 'unknown'])
-            ->expectsOutputToContain('Unknown scroll');
+            ->assertSuccessful();
     }
 }

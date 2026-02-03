@@ -2,7 +2,7 @@
 
 **This is a personal tool I built for my own projects.** It's public in case others find it useful or want to fork it for their own coding standards.
 
-A Laravel package that enforces coding standards through automated validation, designed to work seamlessly with **Claude Code** (Anthropic's AI coding assistant).
+A Laravel package that enforces coding standards through automated validation, designed specifically for **Claude Code** (Anthropic's AI coding assistant).
 
 ## Why This Exists
 
@@ -15,24 +15,24 @@ This package hooks into Claude Code's hook system to create a feedback loop:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Claude Code Session                          │
+│                     Claude Code Session                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  1. Session starts                                               │
-│     └─> Hook runs: commandments:scripture --claude               │
-│         └─> Claude learns all coding rules                       │
-│                                                                  │
-│  2. Claude writes/modifies code                                  │
-│                                                                  │
-│  3. After changes complete                                       │
-│     └─> Hook runs: commandments:judge --claude                   │
-│         └─> Claude sees any violations                           │
-│         └─> Claude fixes them automatically                      │
-│                                                                  │
-│  4. Repeat until code is "righteous" (no violations)             │
+│  1. Session starts                                              │
+│     └─> Hook runs: commandments:scripture                       │
+│         └─> Claude learns all coding rules                      │
+│                                                                 │
+│  2. Claude writes/modifies code                                 │
+│                                                                 │
+│  3. After changes complete                                      │
+│     └─> Hook runs: commandments:judge --git                     │
+│         └─> Claude sees any violations                          │
+│         └─> Claude fixes them automatically                     │
+│                                                                 │
+│  4. Repeat until code is "righteous" (no violations)            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The `--claude` flag outputs machine-readable text optimized for AI assistants, without decorative ASCII art or colors.
+All output is plain text optimized for AI assistants - concise, actionable, no decorative ASCII art.
 
 ## Installation
 
@@ -82,11 +82,11 @@ php artisan commandments:judge --file=app/Http/Controllers/UserController.php
 # Judge multiple specific files (comma-separated)
 php artisan commandments:judge --files=app/Models/User.php,app/Services/AuthService.php
 
+# Only judge files changed in git
+php artisan commandments:judge --git
+
 # Mark files as absolved after manual review
 php artisan commandments:judge --absolve
-
-# Claude-friendly output (for AI assistants)
-php artisan commandments:judge --claude
 ```
 
 ### Seek Absolution (Auto-fix)
@@ -103,9 +103,6 @@ php artisan commandments:repent --file=app/Http/Controllers/UserController.php
 
 # Fix multiple specific files (comma-separated)
 php artisan commandments:repent --files=app/Models/User.php,app/Services/AuthService.php
-
-# Claude-friendly output
-php artisan commandments:repent --claude
 ```
 
 ### Read the Scripture (List Commandments)
@@ -114,14 +111,11 @@ php artisan commandments:repent --claude
 # List all prophets
 php artisan commandments:scripture
 
-# List with detailed descriptions
+# List with detailed descriptions and examples
 php artisan commandments:scripture --detailed
 
 # List prophets from a specific scroll
 php artisan commandments:scripture --scroll=frontend
-
-# Claude-friendly output
-php artisan commandments:scripture --claude
 ```
 
 ### Summon a New Prophet
@@ -142,27 +136,6 @@ php artisan make:prophet ComplexLogicReview --confession
 
 ### Claude Code Integration
 
-#### The `--claude` Flag
-
-The `--claude` flag provides AI-optimized output that's easier for Claude Code to parse and act upon:
-
-```bash
-# Get summary of violations with actionable next steps
-php artisan commandments:judge --claude
-
-# See what auto-fixes are available
-php artisan commandments:repent --dry-run --claude
-
-# List all rules in a machine-readable format
-php artisan commandments:scripture --claude
-```
-
-**Claude output features:**
-- Concise, structured output without decorative ASCII art
-- Groups violations by type with file lists
-- Provides specific commands to run for each violation type
-- Clearly separates sins (must fix) from warnings (review required)
-
 #### Automated Hooks
 
 Claude Code supports [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) - shell commands that run at specific points during a session. This package leverages hooks to create an automated feedback loop.
@@ -178,21 +151,26 @@ This adds the following to your `.claude/settings.json`:
 ```json
 {
   "hooks": {
-    "PreToolUse": [],
-    "PostToolUse": [],
-    "Notification": [],
-    "Stop": [
+    "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "php artisan commandments:judge --claude --git"
+            "command": "php artisan commandments:scripture 2>/dev/null || true"
           }
         ]
       }
     ],
-    "SubagentStop": []
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "php artisan commandments:judge --git 2>/dev/null; exit 0"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -201,7 +179,8 @@ This adds the following to your `.claude/settings.json`:
 
 | Hook | When it runs | What it does |
 |------|--------------|--------------|
-| `Stop` | After Claude finishes a response | Runs `judge --claude --git` to check changed files |
+| `SessionStart` | When Claude Code session begins | Shows all commandments so Claude knows the rules |
+| `Stop` | After Claude finishes a response | Runs `judge --git` to check changed files |
 
 The `--git` flag ensures only new/modified files are checked, keeping feedback focused and fast.
 
@@ -209,7 +188,7 @@ The `--git` flag ensures only new/modified files are checked, keeping feedback f
 
 1. You ask Claude to implement a feature
 2. Claude writes the code
-3. Hook automatically runs `commandments:judge --claude --git`
+3. Hook automatically runs `commandments:judge --git`
 4. If violations found, Claude sees them and fixes automatically
 5. Repeat until code passes all checks
 
@@ -356,6 +335,7 @@ Frontend\StyleOverridesProphet::class => [
 16. **NoInlineBootLogicProphet** - Thou shalt not inline boot logic
 17. **ComputedPropertyMustHookProphet** - Thou shalt hook computed properties
 18. **QueryModelsThroughQueryMethodProphet** - Thou shalt query models through ::query()
+19. **NoAuthUserInDataClassesProphet** - Thou shalt use #[FromAuthenticatedUser] attribute
 
 ### Frontend (Vue/TypeScript)
 

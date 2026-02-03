@@ -29,24 +29,25 @@ class ScriptureCommandTest extends TestCase
             ->assertSuccessful();
     }
 
-    public function test_scripture_command_shows_sacred_scripture(): void
+    public function test_scripture_command_shows_code_commandments(): void
     {
         $this->artisan('commandments:scripture')
-            ->expectsOutputToContain('SACRED SCRIPTURE');
+            ->expectsOutputToContain('CODE COMMANDMENTS');
     }
 
     public function test_scripture_command_lists_prophets(): void
     {
+        // Prophet names are shown without the "Prophet" suffix
         $this->artisan('commandments:scripture')
-            ->expectsOutputToContain('NoRawRequestProphet')
-            ->expectsOutputToContain('CompositionApiProphet');
+            ->expectsOutputToContain('NoRawRequest')
+            ->expectsOutputToContain('CompositionApi');
     }
 
     public function test_scripture_command_with_scroll_filter(): void
     {
         $this->artisan('commandments:scripture', ['--scroll' => 'backend'])
-            ->expectsOutputToContain('NoRawRequestProphet')
-            ->doesntExpectOutputToContain('CompositionApiProphet');
+            ->expectsOutputToContain('NoRawRequest')
+            ->doesntExpectOutputToContain('CompositionApi');
     }
 
     public function test_scripture_command_detailed_mode(): void
@@ -55,9 +56,9 @@ class ScriptureCommandTest extends TestCase
             ->expectsOutputToContain('Bad:');
     }
 
-    public function test_scripture_command_shows_total_count(): void
+    public function test_scripture_command_shows_check_violations(): void
     {
         $this->artisan('commandments:scripture')
-            ->expectsOutputToContain('Total commandments:');
+            ->expectsOutputToContain('commandments:judge');
     }
 }
