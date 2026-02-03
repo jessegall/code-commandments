@@ -247,6 +247,7 @@ class JudgeCommand extends Command
 
                 $this->output->writeln("{$shortName} ({$count}){$autoFixable}");
                 $this->output->writeln("  {$prophet->description()}");
+                $this->output->writeln("  Details: php artisan commandments:scripture --prophet={$filterName}");
                 $this->output->newLine();
 
                 // Show file:line details
