@@ -52,6 +52,16 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
+     * Get paths that should be excluded from this commandment.
+     *
+     * @return array<string>
+     */
+    public function getExcludedPaths(): array
+    {
+        return $this->config('exclude', []);
+    }
+
+    /**
      * Check if this commandment is supported in the current project.
      *
      * Override this method to check for package dependencies.

@@ -18,6 +18,9 @@ return [
     | Prophets can be configured using the associative array format:
     | ProphetClass::class => ['option' => 'value']
     |
+    | You can also exclude specific paths per-prophet:
+    | ProphetClass::class => ['exclude' => ['path/to/exclude', 'another/path']]
+    |
     */
 
     'scrolls' => [

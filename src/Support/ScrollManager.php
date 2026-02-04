@@ -211,7 +211,18 @@ class ScrollManager
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
         $applicableExtensions = $prophet->applicableExtensions();
 
-        return empty($applicableExtensions) || in_array($extension, $applicableExtensions, true);
+        if (!empty($applicableExtensions) && !in_array($extension, $applicableExtensions, true)) {
+            return false;
+        }
+
+        // Check prophet-specific exclusions
+        foreach ($prophet->getExcludedPaths() as $excludePath) {
+            if (str_contains($filePath, $excludePath)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

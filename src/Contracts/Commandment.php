@@ -39,4 +39,11 @@ interface Commandment
      * @return array<string>
      */
     public function applicableExtensions(): array;
+
+    /**
+     * Get paths that should be excluded from this commandment.
+     *
+     * @return array<string>
+     */
+    public function getExcludedPaths(): array;
 }

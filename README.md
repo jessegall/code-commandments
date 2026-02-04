@@ -279,6 +279,27 @@ Prophets can be registered in two ways:
    ],
    ```
 
+### Per-Prophet Exclusions
+
+You can exclude specific paths for individual prophets. This is useful when a rule shouldn't apply to certain files:
+
+```php
+'prophets' => [
+    // Exclude legacy controllers from this rule
+    Backend\ConstructorDependencyInjectionProphet::class => [
+        'exclude' => ['Http/Controllers/Legacy', 'Http/Controllers/Api/V1'],
+    ],
+
+    // Combine exclusions with other config options
+    Backend\ControllerPrivateMethodsProphet::class => [
+        'max_private_methods' => 3,
+        'exclude' => ['Http/Controllers/ReportController.php'],
+    ],
+],
+```
+
+The exclusion uses substring matching - if the path contains any of the excluded strings, that prophet will skip the file.
+
 ### Configurable Prophets
 
 | Prophet | Config Key | Default | Description |
