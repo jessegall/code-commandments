@@ -351,4 +351,83 @@ PHP;
 
         $this->assertTrue($judgment->isRighteous());
     }
+
+    public function test_detects_inline_logic_in_closure_with_return_type(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    protected static function booted(): void
+    {
+        static::forceDeleting(function (Product $product): void {
+            if (PrepItem::query()->where('product_id', $product->id)->exists()) {
+                throw new RuntimeException(
+                    'Cannot permanently delete product with existing prep items'
+                );
+            }
+        });
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Models/Product.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+        $this->assertStringContainsString('forceDeleting', $judgment->sins[0]->message);
+    }
+
+    public function test_passes_event_only_closure_with_return_type(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    protected static function booted(): void
+    {
+        static::deleting(function (Product $product): void {
+            event(new ProductDeleting($product));
+        });
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Models/Product.php', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_detects_inline_logic_with_nullable_return_type(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+    protected static function booted(): void
+    {
+        static::creating(function (Order $order): ?bool {
+            $order->number = Order::generateNumber();
+            return true;
+        });
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Models/Order.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+        $this->assertStringContainsString('creating', $judgment->sins[0]->message);
+    }
 }

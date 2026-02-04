@@ -127,7 +127,8 @@ SCRIPTURE;
 
         // Find all lifecycle hook calls
         $hookPattern = implode('|', self::LIFECYCLE_HOOKS);
-        $pattern = '/static::(' . $hookPattern . ')\s*\(\s*function\s*\([^)]*\)\s*\{/';
+        // Match optional return type declarations (void, ?string, string|null, Foo&Bar, \Namespace\Class)
+        $pattern = '/static::(' . $hookPattern . ')\s*\(\s*function\s*\([^)]*\)(?:\s*:\s*[?\w|&\\\\]+)?\s*\{/';
 
         preg_match_all($pattern, $ctx->content, $hookMatches, PREG_OFFSET_CAPTURE);
 
