@@ -18,6 +18,11 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  */
 class WatchIfPatternProphet extends FrontendCommandment
 {
+    public function requiresConfession(): bool
+    {
+        return true;
+    }
+
     public function applicableExtensions(): array
     {
         return ['vue'];
