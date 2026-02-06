@@ -91,6 +91,9 @@ return [
                 Frontend\WatchIfPatternProphet::class,
                 Frontend\PageDataAccessProphet::class,
                 Frontend\DeepNestingProphet::class,
+                Frontend\InlineMarkupProphet::class => [
+                    'max_html_tags' => 15,
+                ],
                 Frontend\StyleOverridesProphet::class,
                 Frontend\ExplicitDefaultSlotProphet::class,
                 Frontend\MultipleSlotDefinitionsProphet::class,
