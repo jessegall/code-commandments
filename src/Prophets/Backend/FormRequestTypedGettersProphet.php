@@ -16,11 +16,6 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  */
 class FormRequestTypedGettersProphet extends PhpCommandment
 {
-    public function requiresConfession(): bool
-    {
-        return true;
-    }
-
     public function description(): string
     {
         return 'Add explicit return types to FormRequest getter methods';

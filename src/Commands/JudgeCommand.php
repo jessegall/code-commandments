@@ -162,16 +162,14 @@ class JudgeCommand extends Command
                 $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message);
             }
 
-            // Process warnings (only count those requiring manual review)
+            // Process warnings
             foreach ($judgment->warnings as $warning) {
-                if ($prophet->requiresConfession()) {
-                    $fileWarnings++;
-                    $this->manualVerificationFiles[$relativePath][] = [
-                        'prophet' => class_basename($prophetClass),
-                        'message' => $warning->message,
-                        'line' => $warning->line,
-                    ];
-                }
+                $fileWarnings++;
+                $this->manualVerificationFiles[$relativePath][] = [
+                    'prophet' => class_basename($prophetClass),
+                    'message' => $warning->message,
+                    'line' => $warning->line,
+                ];
             }
 
             // Handle absolution

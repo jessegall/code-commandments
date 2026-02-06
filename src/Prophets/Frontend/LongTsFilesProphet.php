@@ -18,11 +18,6 @@ class LongTsFilesProphet extends FrontendCommandment
 {
     private const DEFAULT_MAX_TS_LINES = 200;
 
-    public function requiresConfession(): bool
-    {
-        return true;
-    }
-
     public function applicableExtensions(): array
     {
         return ['vue'];
