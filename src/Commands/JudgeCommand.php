@@ -272,7 +272,9 @@ class JudgeCommand extends Command
                 $this->output->writeln($file);
                 foreach ($issues as $issue) {
                     $line = $issue['line'] ? ":{$issue['line']}" : '';
+                    $filterName = str_replace('Prophet', '', $issue['prophet']);
                     $this->output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
+                    $this->output->writeln("    Details: php artisan commandments:scripture --prophet={$filterName}");
                 }
             }
         }
