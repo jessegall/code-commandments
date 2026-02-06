@@ -16,10 +16,6 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  */
 class DeepNestingProphet extends FrontendCommandment
 {
-    private const DEEP_NESTING_THRESHOLD = 5;
-
-    private const INDENT_SPACES = 4;
-
     public function applicableExtensions(): array
     {
         return ['vue'];
@@ -61,16 +57,20 @@ SCRIPTURE;
                 $lines = explode("\n", $templateContent);
                 $deepLines = 0;
 
+                $maxNestingDepth = (int) $this->config('max_nesting_depth', 5);
+                $indentSpaces = (int) $this->config('indent_spaces', 4);
+                $minDeepLines = (int) $this->config('min_deep_lines', 5);
+
                 foreach ($lines as $line) {
                     $leadingSpaces = strlen($line) - strlen(ltrim($line));
-                    $indentLevel = (int) ($leadingSpaces / self::INDENT_SPACES);
+                    $indentLevel = (int) ($leadingSpaces / $indentSpaces);
 
-                    if ($indentLevel >= self::DEEP_NESTING_THRESHOLD && preg_match('/^\s*<[a-zA-Z]/', $line)) {
+                    if ($indentLevel >= $maxNestingDepth && preg_match('/^\s*<[a-zA-Z]/', $line)) {
                         $deepLines++;
                     }
                 }
 
-                if ($deepLines > 5) {
+                if ($deepLines > $minDeepLines) {
                     return $this->warningAt(
                         1,
                         "{$deepLines} deeply nested elements - consider component extraction",

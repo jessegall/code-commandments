@@ -18,8 +18,6 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  */
 class SwitchCaseProphet extends FrontendCommandment
 {
-    private const MIN_CASES_THRESHOLD = 3;
-
     public function applicableExtensions(): array
     {
         return ['vue'];
@@ -99,13 +97,18 @@ SCRIPTURE;
             ->judge();
     }
 
+    private function getMinCases(): int
+    {
+        return (int) $this->config('min_cases', 3);
+    }
+
     private function findViolations(VueContext $ctx): array
     {
         $templateContent = $ctx->getSectionContent();
         $matches = [];
 
         foreach ($this->findVIfChains($templateContent) as $chain) {
-            if ($chain['count'] >= self::MIN_CASES_THRESHOLD) {
+            if ($chain['count'] >= $this->getMinCases()) {
                 $matches[] = new MatchResult(
                     name: 'v_if_chain',
                     pattern: '',
@@ -122,7 +125,7 @@ SCRIPTURE;
         }
 
         foreach ($this->findComplexConditionChains($templateContent) as $chain) {
-            if ($chain['count'] >= self::MIN_CASES_THRESHOLD) {
+            if ($chain['count'] >= $this->getMinCases()) {
                 $matches[] = new MatchResult(
                     name: 'complex_condition_chain',
                     pattern: '',
@@ -167,13 +170,13 @@ SCRIPTURE;
                 $currentChain['count']++;
             } elseif ($currentChain && preg_match('/v-else[^-]/', $line)) {
                 // End of chain
-                if ($currentChain['count'] >= self::MIN_CASES_THRESHOLD) {
+                if ($currentChain['count'] >= $this->getMinCases()) {
                     $chains[] = $currentChain;
                 }
                 $currentChain = null;
             } elseif ($currentChain && preg_match('/v-if="/', $line)) {
                 // New v-if breaks the chain
-                if ($currentChain['count'] >= self::MIN_CASES_THRESHOLD) {
+                if ($currentChain['count'] >= $this->getMinCases()) {
                     $chains[] = $currentChain;
                 }
                 $currentChain = null;
@@ -183,7 +186,7 @@ SCRIPTURE;
         }
 
         // Save last chain if valid
-        if ($currentChain && $currentChain['count'] >= self::MIN_CASES_THRESHOLD) {
+        if ($currentChain && $currentChain['count'] >= $this->getMinCases()) {
             $chains[] = $currentChain;
         }
 
@@ -219,13 +222,13 @@ SCRIPTURE;
                 $currentChain['count']++;
             } elseif ($currentChain && preg_match('/v-else[^-]/', $line)) {
                 // v-else ends the chain
-                if ($currentChain['count'] >= self::MIN_CASES_THRESHOLD) {
+                if ($currentChain['count'] >= $this->getMinCases()) {
                     $chains[] = $currentChain;
                 }
                 $currentChain = null;
             } elseif (preg_match('/v-if="/', $line)) {
                 // New v-if - save current and start new if complex
-                if ($currentChain && $currentChain['count'] >= self::MIN_CASES_THRESHOLD) {
+                if ($currentChain && $currentChain['count'] >= $this->getMinCases()) {
                     $chains[] = $currentChain;
                 }
                 $currentChain = null;
@@ -235,7 +238,7 @@ SCRIPTURE;
         }
 
         // Save last chain
-        if ($currentChain && $currentChain['count'] >= self::MIN_CASES_THRESHOLD) {
+        if ($currentChain && $currentChain['count'] >= $this->getMinCases()) {
             $chains[] = $currentChain;
         }
 

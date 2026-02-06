@@ -99,11 +99,11 @@ SCRIPTURE;
         $dialogCount = preg_match_all('/<(Alert)?Dialog\s/i', $template);
         $dialogOpenRefs = preg_match_all('/(\w+DialogOpen|dialog\w*Open)\s*=\s*ref\s*\(\s*false\s*\)/', $script);
 
-        if ($dialogCount >= 3) {
+        if ($dialogCount >= (int) $this->config('min_dialogs', 3)) {
             return "Found {$dialogCount} dialogs - consider extracting similar dialogs into a reusable component";
         }
 
-        if ($dialogOpenRefs >= 4 && $dialogCount === 0) {
+        if ($dialogOpenRefs >= (int) $this->config('min_dialog_refs', 4) && $dialogCount === 0) {
             return "Found {$dialogOpenRefs} dialog state refs - consider extracting dialog management into a composable";
         }
 
@@ -117,7 +117,7 @@ SCRIPTURE;
     {
         // Check for repeated Input patterns
         $inputCount = preg_match_all('/<Input\s[^>]*v-model[^>]*>/', $template);
-        if ($inputCount >= 5) {
+        if ($inputCount >= (int) $this->config('min_input_fields', 5)) {
             return "Found {$inputCount} Input fields - consider extracting repeated field patterns";
         }
 
@@ -137,7 +137,7 @@ SCRIPTURE;
 
         foreach ($patterns as $name => $pattern) {
             $count = preg_match_all($pattern, $script);
-            if ($count >= 3) {
+            if ($count >= (int) $this->config('min_ref_states', 3)) {
                 return "Found {$count} similar {$name} - consider a composable like useDialogState()";
             }
         }
@@ -152,13 +152,13 @@ SCRIPTURE;
     {
         // Detect open* functions
         $openFunctions = preg_match_all('/function\s+open\w+\s*\(/', $script);
-        if ($openFunctions >= 4) {
+        if ($openFunctions >= (int) $this->config('min_open_functions', 4)) {
             return "Found {$openFunctions} open* functions - consider extracting dialog management into a composable";
         }
 
         // Detect on*Updated/on*Saved patterns
         $onHandlers = preg_match_all('/function\s+on\w+(Updated|Saved|Deleted|Created|Changed)\s*\(/', $script);
-        if ($onHandlers >= 3) {
+        if ($onHandlers >= (int) $this->config('min_on_handlers', 3)) {
             return "Found {$onHandlers} similar on* handlers - consider standardizing with a pattern";
         }
 
@@ -172,7 +172,7 @@ SCRIPTURE;
     {
         // Detect repeated card patterns
         $cardCount = preg_match_all('/<Card[^>]*>.*?<CardHeader/s', $template);
-        if ($cardCount >= 3) {
+        if ($cardCount >= (int) $this->config('min_card_patterns', 3)) {
             return "Found {$cardCount} similar Card patterns - consider a specialized card component";
         }
 
@@ -192,7 +192,7 @@ SCRIPTURE;
 
         // Look for patterns like form.fieldName
         $formBindings = array_filter($matches[1], fn ($m) => str_starts_with($m, 'form.'));
-        if (count($formBindings) >= 6) {
+        if (count($formBindings) >= (int) $this->config('min_form_bindings', 6)) {
             return 'Found '.count($formBindings).' form field bindings - consider extracting form sections into components';
         }
 
@@ -211,7 +211,7 @@ SCRIPTURE;
         }
 
         $classCounts = array_count_values($matches[1]);
-        $duplicates = array_filter($classCounts, fn ($count) => $count >= 3);
+        $duplicates = array_filter($classCounts, fn ($count) => $count >= (int) $this->config('min_class_duplicates', 3));
 
         if (!empty($duplicates)) {
             $count = array_sum($duplicates);
@@ -250,12 +250,13 @@ SCRIPTURE;
 
         $warnings = [];
         foreach ($componentUsages as $componentName => $usages) {
-            if (count($usages) < 3) {
+            $minComponentDuplicates = (int) $this->config('min_component_duplicates', 3);
+            if (count($usages) < $minComponentDuplicates) {
                 continue;
             }
 
             $tagCounts = array_count_values($usages);
-            $duplicateTags = array_filter($tagCounts, fn ($count) => $count >= 3);
+            $duplicateTags = array_filter($tagCounts, fn ($count) => $count >= $minComponentDuplicates);
 
             if (!empty($duplicateTags)) {
                 $totalDupes = array_sum($duplicateTags);

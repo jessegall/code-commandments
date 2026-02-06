@@ -73,6 +73,8 @@ SCRIPTURE;
 
         return VuePipeline::make($filePath, $content)
             ->onlyPageFiles()
+            ->excludePartialFiles()
+            ->returnRighteousWhen(fn (VueContext $ctx) => (bool) preg_match('/(Dialog|Modal|Sheet|Drawer)\.vue$/', $ctx->filePath))
             ->inTemplate()
             ->mapToWarnings(function (VueContext $ctx) {
                 $templateContent = $ctx->getSectionContent();
@@ -80,7 +82,8 @@ SCRIPTURE;
 
                 if ($dialogCount > 0) {
                     // Check if the dialog has substantial content (more than just a simple confirmation)
-                    if (preg_match('/<(Dialog|Modal|Sheet|Drawer)[^>]*>[\s\S]{200,}?<\/(Dialog|Modal|Sheet|Drawer)>/s', $templateContent)) {
+                    $minContentLength = (int) $this->config('min_content_length', 200);
+                    if (preg_match('/<(Dialog|Modal|Sheet|Drawer)[^>]*>[\s\S]{'.$minContentLength.',}?<\/(Dialog|Modal|Sheet|Drawer)>/s', $templateContent)) {
                         return $this->warningAt(
                             1,
                             "Contains {$dialogCount} inline dialog(s) - consider extracting to components",
