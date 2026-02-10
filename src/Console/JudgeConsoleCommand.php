@@ -92,7 +92,7 @@ class JudgeConsoleCommand extends Command
             }
         }
 
-        return $this->showResults($output);
+        return $this->showResults($output, $prophetFilter);
     }
 
     private function getResults(
@@ -193,7 +193,7 @@ class JudgeConsoleCommand extends Command
         return $content !== false && !$tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content);
     }
 
-    private function showResults(OutputInterface $output): int
+    private function showResults(OutputInterface $output, ?string $prophetFilter = null): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
             $output->writeln('Righteous: No sins found.');
@@ -201,38 +201,55 @@ class JudgeConsoleCommand extends Command
             return Command::SUCCESS;
         }
 
+        $isDetailedView = $prophetFilter !== null;
+
         if ($this->totalSins > 0) {
             $output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
             $output->writeln('');
             $output->writeln('DO NOT COMMIT: Fix all sins before committing.');
-            $output->writeln('REQUIRED: For each sin type below, run the scripture command to read the full rule before fixing.');
             $output->writeln('');
 
             arsort($this->prophetSinCounts);
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
-                $filterName = str_replace('Prophet', '', $shortName);
                 $prophet = new $prophetClass();
                 $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
 
-                $output->writeln("{$shortName} ({$count}){$autoFixable}");
-                $output->writeln("  {$prophet->description()}");
-                $output->writeln("  MUST READ: commandments scripture --prophet={$filterName}");
-                $output->writeln('');
+                $output->writeln("- {$shortName} ({$count}){$autoFixable}");
 
-                foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
-                    foreach ($sins as $sin) {
-                        $line = $sin['line'] ? ":{$sin['line']}" : '';
-                        $output->writeln("  {$file}{$line}");
-                        $output->writeln("    {$sin['message']}");
+                if ($isDetailedView) {
+                    foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
+                        foreach ($sins as $sin) {
+                            $line = $sin['line'] ? ":{$sin['line']}" : '';
+                            $output->writeln("  {$file}{$line}");
+                            $output->writeln("    {$sin['message']}");
+                        }
                     }
                 }
-
-                $output->writeln('');
             }
 
-            $output->writeln('Auto-fix: commandments repent');
+            if (!$isDetailedView) {
+                $output->writeln('');
+                $output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
+                $output->writeln('  1. Read the rule:    commandments scripture --prophet=NAME');
+                $output->writeln('  2. See the files:    commandments judge --prophet=NAME');
+                $output->writeln('  3. Fix all violations following the detailed description exactly');
+                $output->writeln('  4. Move to the next sin type');
+            }
+
+            $hasAutoFixable = false;
+            foreach ($this->prophetSinCounts as $prophetClass => $count) {
+                if (new $prophetClass() instanceof SinRepenter) {
+                    $hasAutoFixable = true;
+                    break;
+                }
+            }
+
+            if ($hasAutoFixable) {
+                $output->writeln('');
+                $output->writeln('[AUTO-FIXABLE] sins can be fixed with: commandments repent --git');
+            }
         }
 
         if ($this->totalWarnings > 0 && !empty($this->manualVerificationFiles)) {
@@ -240,14 +257,32 @@ class JudgeConsoleCommand extends Command
             $output->writeln("WARNINGS: {$this->totalWarnings} requiring manual review");
             $output->writeln('');
 
-            foreach ($this->manualVerificationFiles as $file => $issues) {
-                $output->writeln($file);
-                foreach ($issues as $issue) {
-                    $line = $issue['line'] ? ":{$issue['line']}" : '';
-                    $filterName = str_replace('Prophet', '', $issue['prophet']);
-                    $output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
-                    $output->writeln("    MUST READ: commandments scripture --prophet={$filterName}");
+            if ($isDetailedView) {
+                foreach ($this->manualVerificationFiles as $file => $issues) {
+                    foreach ($issues as $issue) {
+                        $line = $issue['line'] ? ":{$issue['line']}" : '';
+                        $output->writeln("  {$file}{$line}");
+                        $output->writeln("    {$issue['message']}");
+                    }
                 }
+            } else {
+                $warningProphets = [];
+                foreach ($this->manualVerificationFiles as $file => $issues) {
+                    foreach ($issues as $issue) {
+                        $filterName = str_replace('Prophet', '', $issue['prophet']);
+                        $warningProphets[$filterName] = ($warningProphets[$filterName] ?? 0) + 1;
+                    }
+                }
+
+                foreach ($warningProphets as $filterName => $count) {
+                    $output->writeln("- {$filterName}Prophet ({$count})");
+                }
+
+                $output->writeln('');
+                $output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
+                $output->writeln('  1. Read the rule:    commandments scripture --prophet=NAME');
+                $output->writeln('  2. See the files:    commandments judge --prophet=NAME');
+                $output->writeln('  3. Review and fix following the detailed description exactly');
             }
         }
 
