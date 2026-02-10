@@ -175,13 +175,16 @@ final class JudgmentPresenter
         int $totalSins,
         int $totalFiles,
         int $totalWarnings = 0,
-        array $manualVerificationFiles = []
+        array $manualVerificationFiles = [],
+        bool $gitMode = false,
     ): void {
         if ($totalSins === 0 && $totalWarnings === 0) {
             $this->output->writeln('Righteous: No sins found.');
 
             return;
         }
+
+        $gitFlag = $gitMode ? ' --git' : '';
 
         // Show sins section
         if ($totalSins > 0) {
@@ -202,8 +205,8 @@ final class JudgmentPresenter
 
             $this->output->newLine();
             $this->output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
-            $this->output->writeln('  1. Read the rule:    php artisan commandments:scripture --prophet=NAME');
-            $this->output->writeln('  2. See the files:    php artisan commandments:judge --prophet=NAME');
+            $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
+            $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
             $this->output->writeln('  3. Fix all violations following the detailed description exactly');
             $this->output->writeln('  4. Move to the next sin type');
 
@@ -217,7 +220,7 @@ final class JudgmentPresenter
 
             if ($hasAutoFixable) {
                 $this->output->newLine();
-                $this->output->writeln('[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent --git');
+                $this->output->writeln("[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent{$gitFlag}");
             }
         }
 
@@ -241,8 +244,8 @@ final class JudgmentPresenter
 
             $this->output->newLine();
             $this->output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
-            $this->output->writeln('  1. Read the rule:    php artisan commandments:scripture --prophet=NAME');
-            $this->output->writeln('  2. See the files:    php artisan commandments:judge --prophet=NAME');
+            $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
+            $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
             $this->output->writeln('  3. Review and fix following the detailed description exactly');
         }
     }
