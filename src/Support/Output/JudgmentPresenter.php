@@ -247,6 +247,9 @@ final class JudgmentPresenter
             $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
             $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
             $this->output->writeln('  3. Review and fix following the detailed description exactly');
+            $this->output->newLine();
+            $this->output->writeln('NOTE: Warnings in files you just created or edited MUST be investigated.');
+            $this->output->writeln('Warnings in files you did not touch can be ignored.');
         }
     }
 

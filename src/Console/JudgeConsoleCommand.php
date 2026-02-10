@@ -284,6 +284,9 @@ class JudgeConsoleCommand extends Command
                 $output->writeln("  1. Read the rule:    commandments scripture --prophet=NAME");
                 $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
                 $output->writeln('  3. Review and fix following the detailed description exactly');
+                $output->writeln('');
+                $output->writeln('NOTE: Warnings in files you just created or edited MUST be investigated.');
+                $output->writeln('Warnings in files you did not touch can be ignored.');
             }
         }
 
