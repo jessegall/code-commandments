@@ -92,7 +92,7 @@ class JudgeCommand extends Command
             }
         }
 
-        return $this->showResults();
+        return $this->showResults($prophetFilter);
     }
 
     /**
@@ -219,7 +219,7 @@ class JudgeCommand extends Command
     /**
      * Show final results.
      */
-    private function showResults(): int
+    private function showResults(?string $prophetFilter = null): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
             $this->output->writeln('Righteous: No sins found.');
@@ -227,57 +227,88 @@ class JudgeCommand extends Command
             return self::SUCCESS;
         }
 
-        // Show sins
+        $isDetailedView = $prophetFilter !== null;
+
         if ($this->totalSins > 0) {
             $this->output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
             $this->output->newLine();
             $this->output->writeln('DO NOT COMMIT: Fix all sins before committing.');
-            $this->output->writeln('REQUIRED: For each sin type below, run the scripture command to read the full rule before fixing.');
             $this->output->newLine();
 
-            // Sort by sin count descending
             arsort($this->prophetSinCounts);
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
-                $filterName = str_replace('Prophet', '', $shortName);
                 $prophet = new $prophetClass();
                 $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
 
-                $this->output->writeln("{$shortName} ({$count}){$autoFixable}");
-                $this->output->writeln("  {$prophet->description()}");
-                $this->output->writeln("  MUST READ: php artisan commandments:scripture --prophet={$filterName}");
-                $this->output->newLine();
+                $this->output->writeln("- {$shortName} ({$count}){$autoFixable}");
 
-                // Show file:line details
-                foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
-                    foreach ($sins as $sin) {
-                        $line = $sin['line'] ? ":{$sin['line']}" : '';
-                        $this->output->writeln("  {$file}{$line}");
-                        $this->output->writeln("    {$sin['message']}");
+                if ($isDetailedView) {
+                    foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
+                        foreach ($sins as $sin) {
+                            $line = $sin['line'] ? ":{$sin['line']}" : '';
+                            $this->output->writeln("  {$file}{$line}");
+                            $this->output->writeln("    {$sin['message']}");
+                        }
                     }
                 }
-
-                $this->output->newLine();
             }
 
-            $this->output->writeln('Auto-fix: php artisan commandments:repent');
+            if (!$isDetailedView) {
+                $this->output->newLine();
+                $this->output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
+                $this->output->writeln('  1. Read the rule:    php artisan commandments:scripture --prophet=NAME');
+                $this->output->writeln('  2. See the files:    php artisan commandments:judge --prophet=NAME');
+                $this->output->writeln('  3. Fix all violations following the detailed description exactly');
+                $this->output->writeln('  4. Move to the next sin type');
+            }
+
+            $hasAutoFixable = false;
+            foreach ($this->prophetSinCounts as $prophetClass => $count) {
+                if (new $prophetClass() instanceof SinRepenter) {
+                    $hasAutoFixable = true;
+                    break;
+                }
+            }
+
+            if ($hasAutoFixable) {
+                $this->output->newLine();
+                $this->output->writeln('[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent --git');
+            }
         }
 
-        // Show warnings
         if ($this->totalWarnings > 0 && ! empty($this->manualVerificationFiles)) {
             $this->output->newLine();
             $this->output->writeln("WARNINGS: {$this->totalWarnings} requiring manual review");
             $this->output->newLine();
 
-            foreach ($this->manualVerificationFiles as $file => $issues) {
-                $this->output->writeln($file);
-                foreach ($issues as $issue) {
-                    $line = $issue['line'] ? ":{$issue['line']}" : '';
-                    $filterName = str_replace('Prophet', '', $issue['prophet']);
-                    $this->output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
-                    $this->output->writeln("    MUST READ: php artisan commandments:scripture --prophet={$filterName}");
+            if ($isDetailedView) {
+                foreach ($this->manualVerificationFiles as $file => $issues) {
+                    foreach ($issues as $issue) {
+                        $line = $issue['line'] ? ":{$issue['line']}" : '';
+                        $this->output->writeln("  {$file}{$line}");
+                        $this->output->writeln("    {$issue['message']}");
+                    }
                 }
+            } else {
+                $warningProphets = [];
+                foreach ($this->manualVerificationFiles as $file => $issues) {
+                    foreach ($issues as $issue) {
+                        $filterName = str_replace('Prophet', '', $issue['prophet']);
+                        $warningProphets[$filterName] = ($warningProphets[$filterName] ?? 0) + 1;
+                    }
+                }
+
+                foreach ($warningProphets as $filterName => $count) {
+                    $this->output->writeln("- {$filterName}Prophet ({$count})");
+                }
+
+                $this->output->newLine();
+                $this->output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
+                $this->output->writeln('  1. Read the rule:    php artisan commandments:scripture --prophet=NAME');
+                $this->output->writeln('  2. See the files:    php artisan commandments:judge --prophet=NAME');
+                $this->output->writeln('  3. Review and fix following the detailed description exactly');
             }
         }
 
