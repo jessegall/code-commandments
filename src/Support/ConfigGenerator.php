@@ -48,7 +48,7 @@ class ConfigGenerator
     }
 
     /**
-     * @return string[]
+     * @return array<string, array<string, string>> class => [key => default, ...]
      */
     private function discoverProphets(string $type): array
     {
@@ -71,16 +71,71 @@ class ConfigGenerator
             }
 
             $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', '', $file);
-            $prophets[] = $className;
+            $configOptions = $this->extractConfigOptions($dir . '/' . $file);
+            $prophets[$className] = $configOptions;
         }
 
-        sort($prophets);
+        ksort($prophets);
 
         return $prophets;
     }
 
     /**
-     * @param array<string, array{path: string, extensions: string[], exclude: string[], prophets: string[]}> $scrolls
+     * Extract config keys and defaults from a prophet source file.
+     *
+     * @return array<string, string> key => default value as raw PHP string
+     */
+    private function extractConfigOptions(string $filePath): array
+    {
+        $content = file_get_contents($filePath);
+
+        if ($content === false) {
+            return [];
+        }
+
+        $options = [];
+
+        // Match $this->config('key', default)
+        if (preg_match_all('/\$this->config\(\s*\'([^\']+)\'\s*,\s*(.+?)\)/', $content, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $key = $match[1];
+
+                if ($key === 'exclude') {
+                    continue;
+                }
+
+                $default = trim($match[2]);
+
+                // Clean up constants like self::DEFAULT_MAX_TS_LINES - resolve from file
+                if (str_contains($default, '::')) {
+                    $resolved = $this->resolveConstant($content, $default);
+
+                    if ($resolved !== null) {
+                        $default = $resolved;
+                    }
+                }
+
+                $options[$key] = $default;
+            }
+        }
+
+        return $options;
+    }
+
+    private function resolveConstant(string $fileContent, string $constant): ?string
+    {
+        // Handle self::CONSTANT_NAME or static::CONSTANT_NAME
+        $constName = preg_replace('/^(self|static)::/', '', $constant);
+
+        if (preg_match("/const\s+{$constName}\s*=\s*(.+?);/", $fileContent, $match)) {
+            return trim($match[1]);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, array{path: string, extensions: string[], exclude: string[], prophets: array<string, array<string, string>>}> $scrolls
      */
     private function render(array $scrolls): string
     {
@@ -100,8 +155,18 @@ class ConfigGenerator
             $entry[] = "            'exclude' => " . $this->renderArray($config['exclude']) . ',';
             $entry[] = "            'prophets' => [";
 
-            foreach ($config['prophets'] as $prophet) {
-                $entry[] = "                \\{$prophet}::class,";
+            foreach ($config['prophets'] as $prophet => $configOptions) {
+                if (empty($configOptions)) {
+                    $entry[] = "                \\{$prophet}::class,";
+                } else {
+                    $entry[] = "                \\{$prophet}::class => [";
+
+                    foreach ($configOptions as $key => $default) {
+                        $entry[] = "                    // '{$key}' => {$default},";
+                    }
+
+                    $entry[] = '                ],';
+                }
             }
 
             $entry[] = '            ],';
