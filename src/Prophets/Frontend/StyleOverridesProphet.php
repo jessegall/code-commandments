@@ -75,8 +75,8 @@ SCRIPTURE;
         $pipeline = VuePipeline::make($filePath, $content)
             ->extractTemplate();
 
-        if ($pipeline->shouldSkip()) {
-            return $pipeline->judge();
+        if ($pipeline->shouldSkip() || $pipeline->getSectionContent() === null) {
+            return $this->righteous();
         }
 
         // Check each base component for violations (skip if file is the component itself)

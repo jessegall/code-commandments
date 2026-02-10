@@ -106,7 +106,7 @@ SCRIPTURE;
 
         $pipeline = VuePipeline::make($filePath, $content)->extractTemplate();
 
-        if ($pipeline->shouldSkip()) {
+        if ($pipeline->shouldSkip() || $pipeline->getSectionContent() === null) {
             return RepentanceResult::unchanged();
         }
 
