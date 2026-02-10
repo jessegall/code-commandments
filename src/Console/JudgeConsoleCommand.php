@@ -205,6 +205,7 @@ class JudgeConsoleCommand extends Command
             $output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
             $output->writeln('');
             $output->writeln('DO NOT COMMIT: Fix all sins before committing.');
+            $output->writeln('REQUIRED: For each sin type below, run the scripture command to read the full rule before fixing.');
             $output->writeln('');
 
             arsort($this->prophetSinCounts);
@@ -217,7 +218,7 @@ class JudgeConsoleCommand extends Command
 
                 $output->writeln("{$shortName} ({$count}){$autoFixable}");
                 $output->writeln("  {$prophet->description()}");
-                $output->writeln("  Details: commandments scripture --prophet={$filterName}");
+                $output->writeln("  MUST READ: commandments scripture --prophet={$filterName}");
                 $output->writeln('');
 
                 foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
@@ -245,7 +246,7 @@ class JudgeConsoleCommand extends Command
                     $line = $issue['line'] ? ":{$issue['line']}" : '';
                     $filterName = str_replace('Prophet', '', $issue['prophet']);
                     $output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
-                    $output->writeln("    Details: commandments scripture --prophet={$filterName}");
+                    $output->writeln("    MUST READ: commandments scripture --prophet={$filterName}");
                 }
             }
         }

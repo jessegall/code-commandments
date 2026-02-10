@@ -190,6 +190,7 @@ final class JudgmentPresenter
 
             // Critical instruction for Claude
             $this->output->writeln('DO NOT COMMIT: Fix all sins before committing.');
+            $this->output->writeln('REQUIRED: For each sin type below, run the scripture command to read the full rule before fixing.');
             $this->output->newLine();
 
             // Sort by sin count descending
@@ -205,7 +206,7 @@ final class JudgmentPresenter
                 $this->output->writeln("{$shortName} ({$count}){$autoFixable}");
                 $this->output->writeln("  {$prophet->description()}");
                 $this->output->writeln("  Files: " . implode(', ', array_keys($prophetFiles[$prophetClass] ?? [])));
-                $this->output->writeln("  Details: php artisan commandments:judge --prophet={$filterName}");
+                $this->output->writeln("  MUST READ: php artisan commandments:scripture --prophet={$filterName}");
                 $this->output->newLine();
             }
 
@@ -224,7 +225,7 @@ final class JudgmentPresenter
                     $line = $issue['line'] ? ":{$issue['line']}" : '';
                     $filterName = str_replace('Prophet', '', $issue['prophet']);
                     $this->output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
-                    $this->output->writeln("    Details: php artisan commandments:scripture --prophet={$filterName}");
+                    $this->output->writeln("    MUST READ: php artisan commandments:scripture --prophet={$filterName}");
                 }
             }
         }

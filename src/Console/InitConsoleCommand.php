@@ -188,10 +188,13 @@ This project uses Code Commandments to enforce coding standards.
 
 IMPORTANT: Never commit code with sins. Fix all violations first.
 
+REQUIRED: When judge reports sins, you MUST run the scripture --prophet command for EACH violated prophet to read the full rule before fixing. The detailed description is the authoritative specification — follow it exactly.
+
 COMMANDS:
   vendor/bin/commandments judge              # Check for violations
   vendor/bin/commandments repent             # Auto-fix where possible
   vendor/bin/commandments scripture          # List all rules
+  vendor/bin/commandments scripture --prophet=NAME  # MUST READ for each sin
 
 Use --files=a.php,b.php to target specific files.
 INSTRUCTIONS;
@@ -212,6 +215,8 @@ This project enforces coding standards via the Code Commandments package.
 
 **IMPORTANT: Never commit code with sins. Fix all violations first.**
 
+**REQUIRED: When judge reports sins, you MUST run `commandments scripture --prophet=NAME` for EACH violated prophet to read the full rule before fixing. The detailed description is the authoritative specification — follow it exactly.**
+
 ### Commands
 
 ```bash
@@ -219,6 +224,7 @@ vendor/bin/commandments judge              # Check for violations
 vendor/bin/commandments judge --git        # Check only changed files
 vendor/bin/commandments repent             # Auto-fix [AUTO-FIXABLE] sins
 vendor/bin/commandments scripture          # List all rules
+vendor/bin/commandments scripture --prophet=NAME  # MUST READ for each sin
 ```
 
 Use `--files=a.php,b.php` to target specific files.
@@ -227,9 +233,10 @@ Use `--files=a.php,b.php` to target specific files.
 
 1. Write code
 2. Run `commandments judge` - see violations
-3. Run `commandments repent` - auto-fix what's possible
-4. Manually fix remaining sins
-5. Re-run judge until clean, then commit
+3. For each sin type, run `commandments scripture --prophet=NAME` to read the full rule
+4. Run `commandments repent` - auto-fix what's possible
+5. Manually fix remaining sins following the detailed descriptions exactly
+6. Re-run judge until clean, then commit
 MARKDOWN;
 
         if (file_exists($claudeMdPath)) {
