@@ -16,5 +16,6 @@ class Application extends SymfonyApplication
         $this->add(new RepentConsoleCommand());
         $this->add(new ScriptureConsoleCommand());
         $this->add(new InitConsoleCommand());
+        $this->add(new SyncConsoleCommand());
     }
 }

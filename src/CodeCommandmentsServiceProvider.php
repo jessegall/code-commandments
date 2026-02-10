@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Commands\JudgeCommand;
 use JesseGall\CodeCommandments\Commands\MakeProphetCommand;
 use JesseGall\CodeCommandments\Commands\RepentCommand;
 use JesseGall\CodeCommandments\Commands\ScriptureCommand;
+use JesseGall\CodeCommandments\Commands\SyncCommand;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker as ConfessionTrackerContract;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
@@ -71,6 +72,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 ScriptureCommand::class,
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
+                SyncCommand::class,
             ]);
         }
     }
