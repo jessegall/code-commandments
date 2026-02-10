@@ -95,10 +95,12 @@ class ScriptureCommand extends Command
 
         $this->output->writeln(strtoupper($shortName));
         $this->output->newLine();
-        $this->output->writeln($prophet->description());
+        $this->output->writeln('REQUIREMENT: ' . $prophet->description());
         if ($canRepent) {
             $this->output->writeln('[AUTO-FIXABLE with: php artisan commandments:repent]');
         }
+        $this->output->newLine();
+        $this->output->writeln('You MUST follow this rule exactly as described below:');
         $this->output->newLine();
 
         $detailedDesc = $prophet->detailedDescription();

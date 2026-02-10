@@ -99,10 +99,12 @@ class ScriptureConsoleCommand extends Command
 
         $output->writeln(strtoupper($shortName));
         $output->writeln('');
-        $output->writeln($prophet->description());
+        $output->writeln('REQUIREMENT: ' . $prophet->description());
         if ($canRepent) {
             $output->writeln('[AUTO-FIXABLE with: commandments repent]');
         }
+        $output->writeln('');
+        $output->writeln('You MUST follow this rule exactly as described below:');
         $output->writeln('');
 
         $detailedDesc = $prophet->detailedDescription();
