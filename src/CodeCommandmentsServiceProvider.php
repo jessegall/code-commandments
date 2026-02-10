@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Commands\ScriptureCommand;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker as ConfessionTrackerContract;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
+use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
@@ -22,6 +23,8 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        Environment::setBasePath(base_path());
+
         $this->mergeConfigFrom(
             __DIR__ . '/../config/commandments.php',
             'commandments'

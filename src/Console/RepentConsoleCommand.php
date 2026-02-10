@@ -2,27 +2,18 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Commands;
+namespace JesseGall\CodeCommandments\Console;
 
-use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
-use JesseGall\CodeCommandments\Support\ProphetRegistry;
-use JesseGall\CodeCommandments\Support\ScrollManager;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Auto-fix sins that can be automatically resolved.
- */
-class RepentCommand extends Command
+class RepentConsoleCommand extends Command
 {
-    protected $signature = 'commandments:repent
-        {--scroll= : Filter by specific scroll (group)}
-        {--prophet= : Use a specific prophet for repentance}
-        {--file= : Repent sins in a specific file}
-        {--files= : Repent sins in specific files (comma-separated)}
-        {--dry-run : Show what would be fixed without making changes}';
-
-    protected $description = 'Auto-fix sins that can be automatically resolved';
+    use BootsStandalone;
 
     /** @var array<string, array<string>> */
     private array $fixedFiles = [];
@@ -30,17 +21,30 @@ class RepentCommand extends Command
     /** @var array<string, array<string>> */
     private array $failedFiles = [];
 
-    public function handle(
-        ProphetRegistry $registry,
-        ScrollManager $manager
-    ): int {
-        $scrollFilter = $this->option('scroll');
-        $prophetFilter = $this->option('prophet');
-        $fileFilter = $this->option('file');
-        $filesFilter = $this->option('files')
-            ? array_map('trim', explode(',', $this->option('files')))
+    protected function configure(): void
+    {
+        $this
+            ->setName('repent')
+            ->setDescription('Auto-fix sins that can be automatically resolved')
+            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
+            ->addOption('scroll', null, InputOption::VALUE_REQUIRED, 'Filter by specific scroll (group)')
+            ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Use a specific prophet for repentance')
+            ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Repent sins in a specific file')
+            ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Repent sins in specific files (comma-separated)')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be fixed without making changes');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        [$registry, $manager] = $this->bootEnvironment($input->getOption('config'));
+
+        $scrollFilter = $input->getOption('scroll');
+        $prophetFilter = $input->getOption('prophet');
+        $fileFilter = $input->getOption('file');
+        $filesFilter = $input->getOption('files')
+            ? array_map('trim', explode(',', $input->getOption('files')))
             : [];
-        $dryRun = $this->option('dry-run');
+        $dryRun = (bool) $input->getOption('dry-run');
 
         $scrolls = $scrollFilter
             ? [$scrollFilter]
@@ -113,49 +117,49 @@ class RepentCommand extends Command
             }
         }
 
-        return $this->showResults($totalFixed, $totalFailed, $dryRun);
+        return $this->showResults($output, $totalFixed, $totalFailed, $dryRun);
     }
 
-    private function showResults(int $totalFixed, int $totalFailed, bool $dryRun): int
+    private function showResults(OutputInterface $output, int $totalFixed, int $totalFailed, bool $dryRun): int
     {
         if ($totalFixed === 0 && $totalFailed === 0) {
-            $this->output->writeln('No sins to fix. Code is righteous.');
+            $output->writeln('No sins to fix. Code is righteous.');
 
-            return self::SUCCESS;
+            return Command::SUCCESS;
         }
 
         $action = $dryRun ? 'WOULD FIX' : 'FIXED';
 
         if ($totalFixed > 0) {
-            $this->output->writeln("{$action}: {$totalFixed} sins");
-            $this->output->newLine();
+            $output->writeln("{$action}: {$totalFixed} sins");
+            $output->writeln('');
 
             foreach ($this->fixedFiles as $prophet => $files) {
-                $this->output->writeln("{$prophet}:");
+                $output->writeln("{$prophet}:");
                 foreach ($files as $file) {
-                    $this->output->writeln("  {$file}");
+                    $output->writeln("  {$file}");
                 }
             }
         }
 
         if ($totalFailed > 0) {
-            $this->output->newLine();
-            $this->output->writeln("FAILED (manual fix required): {$totalFailed}");
-            $this->output->newLine();
+            $output->writeln('');
+            $output->writeln("FAILED (manual fix required): {$totalFailed}");
+            $output->writeln('');
 
             foreach ($this->failedFiles as $prophet => $files) {
-                $this->output->writeln("{$prophet}:");
+                $output->writeln("{$prophet}:");
                 foreach ($files as $file) {
-                    $this->output->writeln("  {$file}");
+                    $output->writeln("  {$file}");
                 }
             }
         }
 
         if ($dryRun) {
-            $this->output->newLine();
-            $this->output->writeln('Run without --dry-run to apply fixes.');
+            $output->writeln('');
+            $output->writeln('Run without --dry-run to apply fixes.');
         }
 
-        return self::SUCCESS;
+        return Command::SUCCESS;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tracking;
 
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
+use JesseGall\CodeCommandments\Support\Environment;
 use Illuminate\Filesystem\Filesystem;
 
 /**
@@ -38,7 +39,7 @@ class JsonConfessionTracker implements ConfessionTracker
         }
 
         $this->absolutions[$normalizedPath][$commandmentClass] = [
-            'absolved_at' => now()->toIso8601String(),
+            'absolved_at' => date('c'),
             'reason' => $reason,
             'content_hash' => $contentHash,
         ];
@@ -181,7 +182,7 @@ class JsonConfessionTracker implements ConfessionTracker
      */
     protected function normalizePath(string $filePath): string
     {
-        $basePath = base_path();
+        $basePath = Environment::basePath();
 
         if (str_starts_with($filePath, $basePath)) {
             return substr($filePath, strlen($basePath) + 1);

@@ -2,31 +2,22 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Commands;
+namespace JesseGall\CodeCommandments\Console;
 
-use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
-use JesseGall\CodeCommandments\Support\Pipeline;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Judge the codebase for sins.
- */
-class JudgeCommand extends Command
+class JudgeConsoleCommand extends Command
 {
-    protected $signature = 'commandments:judge
-        {--scroll= : Filter by specific scroll (group)}
-        {--prophet= : Summon a specific prophet by name}
-        {--file= : Judge a specific file}
-        {--files= : Judge specific files (comma-separated)}
-        {--git : Only judge files that are new or changed in git}
-        {--absolve : Mark files as absolved after confession (manual review)}';
-
-    protected $description = 'Judge the codebase for sins against the commandments';
+    use BootsStandalone;
 
     private int $totalSins = 0;
 
@@ -40,42 +31,51 @@ class JudgeCommand extends Command
     /** @var array<string, int> */
     private array $prophetSinCounts = [];
 
-    /** @var array<string, array<string, array{line: int|null, message: string}>> */
+    /** @var array<string, array<string, array<array{line: int|null, message: string}>>> */
     private array $prophetFileDetails = [];
 
-    public function handle(
-        ProphetRegistry $registry,
-        ScrollManager $manager,
-        ConfessionTracker $tracker
-    ): int {
-        $scrollFilter = $this->option('scroll');
-        $prophetFilter = $this->option('prophet');
-        $fileFilter = $this->option('file');
-        $filesFilter = $this->option('files')
-            ? Pipeline::from(explode(',', $this->option('files')))
-                ->map(fn ($f) => trim($f))
-                ->toArray()
-            : [];
-        $gitMode = (bool) $this->option('git');
-        $shouldAbsolve = (bool) $this->option('absolve');
+    protected function configure(): void
+    {
+        $this
+            ->setName('judge')
+            ->setDescription('Judge the codebase for sins against the commandments')
+            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
+            ->addOption('scroll', null, InputOption::VALUE_REQUIRED, 'Filter by specific scroll (group)')
+            ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Summon a specific prophet by name')
+            ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Judge a specific file')
+            ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Judge specific files (comma-separated)')
+            ->addOption('git', null, InputOption::VALUE_NONE, 'Only judge files that are new or changed in git')
+            ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession');
+    }
 
-        // Handle git mode
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
+
+        $scrollFilter = $input->getOption('scroll');
+        $prophetFilter = $input->getOption('prophet');
+        $fileFilter = $input->getOption('file');
+        $filesFilter = $input->getOption('files')
+            ? array_map('trim', explode(',', $input->getOption('files')))
+            : [];
+        $gitMode = (bool) $input->getOption('git');
+        $shouldAbsolve = (bool) $input->getOption('absolve');
+
         $gitFiles = [];
         if ($gitMode) {
             $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
 
             if (empty($gitFiles)) {
-                return self::SUCCESS;
+                return Command::SUCCESS;
             }
         }
 
-        // Process scrolls
         $scrolls = $scrollFilter
             ? [$scrollFilter]
             : $registry->getScrolls();
 
         foreach ($scrolls as $scroll) {
-            if (! $registry->hasScroll($scroll)) {
+            if (!$registry->hasScroll($scroll)) {
                 continue;
             }
 
@@ -92,14 +92,9 @@ class JudgeCommand extends Command
             }
         }
 
-        return $this->showResults();
+        return $this->showResults($output);
     }
 
-    /**
-     * Get judgment results based on options.
-     *
-     * @return \Illuminate\Support\Collection
-     */
     private function getResults(
         string $scroll,
         ScrollManager $manager,
@@ -114,22 +109,17 @@ class JudgeCommand extends Command
             return collect([$fileFilter => $results]);
         }
 
-        if (! empty($filesFilter)) {
+        if (!empty($filesFilter)) {
             return $manager->judgeFiles($scroll, $filesFilter);
         }
 
-        if ($gitMode && ! empty($gitFiles)) {
+        if ($gitMode && !empty($gitFiles)) {
             return $manager->judgeFiles($scroll, $gitFiles);
         }
 
         return $manager->judgeScroll($scroll);
     }
 
-    /**
-     * Process judgments for a single file.
-     *
-     * @param  \Illuminate\Support\Collection  $judgments
-     */
     private function processFileJudgments(
         string $filePath,
         $judgments,
@@ -137,33 +127,27 @@ class JudgeCommand extends Command
         ?string $prophetFilter,
         bool $shouldAbsolve
     ): void {
-        $relativePath = str_replace(Environment::basePath().'/', '', $filePath);
+        $relativePath = str_replace(Environment::basePath() . '/', '', $filePath);
         $fileSins = 0;
         $fileWarnings = 0;
 
         foreach ($judgments as $prophetClass => $judgment) {
-            // Apply prophet filter
             if ($prophetFilter) {
                 $shortName = class_basename($prophetClass);
-                if (! str_contains(strtolower($shortName), strtolower($prophetFilter))) {
+                if (!str_contains(strtolower($shortName), strtolower($prophetFilter))) {
                     continue;
                 }
             }
 
-            // Check absolution
             if ($this->isAbsolved($filePath, $prophetClass, $tracker)) {
                 continue;
             }
 
-            $prophet = new $prophetClass();
-
-            // Process sins
             foreach ($judgment->sins as $sin) {
                 $fileSins++;
                 $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message);
             }
 
-            // Process warnings
             foreach ($judgment->warnings as $warning) {
                 $fileWarnings++;
                 $this->manualVerificationFiles[$relativePath][] = [
@@ -173,11 +157,10 @@ class JudgeCommand extends Command
                 ];
             }
 
-            // Handle absolution
             if ($shouldAbsolve && $judgment->hasWarnings()) {
                 $content = file_get_contents($filePath);
                 if ($content !== false) {
-                    $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');
+                    $tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments judge --absolve');
                 }
             }
         }
@@ -190,9 +173,6 @@ class JudgeCommand extends Command
         }
     }
 
-    /**
-     * Track a sin for statistics.
-     */
     private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message): void
     {
         $this->prophetSinCounts[$prophetClass] = ($this->prophetSinCounts[$prophetClass] ?? 0) + 1;
@@ -202,39 +182,31 @@ class JudgeCommand extends Command
         ];
     }
 
-    /**
-     * Check if a file is absolved.
-     */
     private function isAbsolved(string $filePath, string $prophetClass, ConfessionTracker $tracker): bool
     {
-        if (! $tracker->isAbsolved($filePath, $prophetClass)) {
+        if (!$tracker->isAbsolved($filePath, $prophetClass)) {
             return false;
         }
 
         $content = file_get_contents($filePath);
 
-        return $content !== false && ! $tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content);
+        return $content !== false && !$tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content);
     }
 
-    /**
-     * Show final results.
-     */
-    private function showResults(): int
+    private function showResults(OutputInterface $output): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
-            $this->output->writeln('Righteous: No sins found.');
+            $output->writeln('Righteous: No sins found.');
 
-            return self::SUCCESS;
+            return Command::SUCCESS;
         }
 
-        // Show sins
         if ($this->totalSins > 0) {
-            $this->output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
-            $this->output->newLine();
-            $this->output->writeln('DO NOT COMMIT: Fix all sins before committing.');
-            $this->output->newLine();
+            $output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
+            $output->writeln('');
+            $output->writeln('DO NOT COMMIT: Fix all sins before committing.');
+            $output->writeln('');
 
-            // Sort by sin count descending
             arsort($this->prophetSinCounts);
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
@@ -243,43 +215,41 @@ class JudgeCommand extends Command
                 $prophet = new $prophetClass();
                 $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
 
-                $this->output->writeln("{$shortName} ({$count}){$autoFixable}");
-                $this->output->writeln("  {$prophet->description()}");
-                $this->output->writeln("  Details: php artisan commandments:scripture --prophet={$filterName}");
-                $this->output->newLine();
+                $output->writeln("{$shortName} ({$count}){$autoFixable}");
+                $output->writeln("  {$prophet->description()}");
+                $output->writeln("  Details: commandments scripture --prophet={$filterName}");
+                $output->writeln('');
 
-                // Show file:line details
                 foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
                     foreach ($sins as $sin) {
                         $line = $sin['line'] ? ":{$sin['line']}" : '';
-                        $this->output->writeln("  {$file}{$line}");
-                        $this->output->writeln("    {$sin['message']}");
+                        $output->writeln("  {$file}{$line}");
+                        $output->writeln("    {$sin['message']}");
                     }
                 }
 
-                $this->output->newLine();
+                $output->writeln('');
             }
 
-            $this->output->writeln('Auto-fix: php artisan commandments:repent');
+            $output->writeln('Auto-fix: commandments repent');
         }
 
-        // Show warnings
-        if ($this->totalWarnings > 0 && ! empty($this->manualVerificationFiles)) {
-            $this->output->newLine();
-            $this->output->writeln("WARNINGS: {$this->totalWarnings} requiring manual review");
-            $this->output->newLine();
+        if ($this->totalWarnings > 0 && !empty($this->manualVerificationFiles)) {
+            $output->writeln('');
+            $output->writeln("WARNINGS: {$this->totalWarnings} requiring manual review");
+            $output->writeln('');
 
             foreach ($this->manualVerificationFiles as $file => $issues) {
-                $this->output->writeln($file);
+                $output->writeln($file);
                 foreach ($issues as $issue) {
                     $line = $issue['line'] ? ":{$issue['line']}" : '';
                     $filterName = str_replace('Prophet', '', $issue['prophet']);
-                    $this->output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
-                    $this->output->writeln("    Details: php artisan commandments:scripture --prophet={$filterName}");
+                    $output->writeln("  [{$issue['prophet']}]{$line} {$issue['message']}");
+                    $output->writeln("    Details: commandments scripture --prophet={$filterName}");
                 }
             }
         }
 
-        return $this->totalSins > 0 ? self::FAILURE : self::SUCCESS;
+        return $this->totalSins > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 }

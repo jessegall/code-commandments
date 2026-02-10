@@ -1,0 +1,27 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Find the Composer autoloader
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',        // Running from package source
+    __DIR__ . '/../../../autoload.php',          // Installed as a Composer dependency
+];
+
+$autoloaded = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (file_exists($autoloadPath)) {
+        require $autoloadPath;
+        $autoloaded = true;
+        break;
+    }
+}
+
+if (!$autoloaded) {
+    fwrite(STDERR, "Could not find Composer autoloader. Run 'composer install' first.\n");
+    exit(1);
+}
+
+$app = new \JesseGall\CodeCommandments\Console\Application();
+$app->run();

@@ -2,7 +2,7 @@
 
 **This is a personal tool I built for my own projects.** It's public in case others find it useful or want to fork it for their own coding standards.
 
-A Laravel package that enforces coding standards through automated validation, designed specifically for **Claude Code** (Anthropic's AI coding assistant).
+A PHP package that enforces coding standards through automated validation, designed specifically for **Claude Code** (Anthropic's AI coding assistant). Works as a standalone CLI tool or as a Laravel package.
 
 ## Why This Exists
 
@@ -40,10 +40,44 @@ All output is plain text optimized for AI assistants - concise, actionable, no d
 composer require --dev jessegall/code-commandments
 ```
 
+### Laravel
+
 Publish the configuration file:
 
 ```bash
 php artisan vendor:publish --tag=commandments-config
+```
+
+### Standalone (non-Laravel)
+
+Run the init command to set up everything at once (config file, Claude Code hooks, CLAUDE.md):
+
+```bash
+vendor/bin/commandments init
+```
+
+Then edit the generated `commandments.php` to define your scrolls using `__DIR__`-based paths:
+
+```php
+return [
+    'scrolls' => [
+        'backend' => [
+            'path' => __DIR__ . '/src',
+            'extensions' => ['php'],
+            'prophets' => [
+                \JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet::class,
+            ],
+        ],
+    ],
+];
+```
+
+Run commands via the `commandments` binary:
+
+```bash
+vendor/bin/commandments judge
+vendor/bin/commandments repent
+vendor/bin/commandments scripture
 ```
 
 ## Sacred Terminology
@@ -63,6 +97,16 @@ php artisan vendor:publish --tag=commandments-config
 | Groups | **Scrolls** |
 
 ## Commands
+
+All commands are available via both Laravel artisan and the standalone CLI:
+
+| Laravel | Standalone |
+|---------|-----------|
+| `php artisan commandments:judge` | `vendor/bin/commandments judge` |
+| `php artisan commandments:repent` | `vendor/bin/commandments repent` |
+| `php artisan commandments:scripture` | `vendor/bin/commandments scripture` |
+
+The standalone CLI also accepts `--config=path` to specify a custom config file location.
 
 ### Judge the Codebase
 
@@ -118,7 +162,7 @@ php artisan commandments:scripture --detailed
 php artisan commandments:scripture --scroll=frontend
 ```
 
-### Summon a New Prophet
+### Summon a New Prophet (Laravel only)
 
 ```bash
 # Create a new backend prophet
@@ -140,13 +184,21 @@ php artisan make:prophet ComplexLogicReview --confession
 
 Claude Code supports [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) - shell commands that run at specific points during a session. This package leverages hooks to create an automated feedback loop.
 
-Install the hooks:
+**Laravel projects:**
 
 ```bash
 php artisan commandments:install-hooks
 ```
 
-This adds the following to your `.claude/settings.json`:
+**Standalone projects** (included in `init`, or run separately):
+
+```bash
+vendor/bin/commandments init
+```
+
+Both commands create `.claude/settings.json` with hooks and a `CLAUDE.md` file. The standalone version uses `vendor/bin/commandments` instead of `php artisan`.
+
+Example hooks configuration:
 
 ```json
 {
@@ -156,7 +208,7 @@ This adds the following to your `.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "php artisan commandments:scripture 2>/dev/null || true"
+            "command": "vendor/bin/commandments scripture 2>/dev/null || true"
           }
         ]
       }
@@ -166,7 +218,7 @@ This adds the following to your `.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "php artisan commandments:judge --git 2>/dev/null; exit 0"
+            "command": "vendor/bin/commandments judge --git 2>/dev/null; exit 0"
           }
         ]
       }

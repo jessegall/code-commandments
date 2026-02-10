@@ -122,7 +122,7 @@ class ProphetRegistry
         $thresholds = $this->scrollConfigs[$scroll]['thresholds'] ?? [];
 
         return collect($classes)->map(function (string $class) use ($scroll, $thresholds) {
-            $prophet = app($class);
+            $prophet = new $class();
 
             if (method_exists($prophet, 'configure')) {
                 $prophetConfig = $this->prophetConfigs[$scroll][$class] ?? [];
@@ -229,7 +229,7 @@ class ProphetRegistry
                     return [
                         'scroll' => $scroll,
                         'number' => $index + 1,
-                        'prophet' => app($prophetClass),
+                        'prophet' => new $prophetClass(),
                     ];
                 }
             }

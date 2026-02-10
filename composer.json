@@ -10,12 +10,14 @@
             "email": "jessegall@example.com"
         }
     ],
+    "bin": ["bin/commandments"],
     "require": {
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/console": "^10.0|^11.0|^12.0",
         "illuminate/filesystem": "^10.0|^11.0|^12.0",
         "nikic/php-parser": "^5.0",
+        "symfony/console": "^6.0|^7.0|^8.0",
         "symfony/finder": "^6.0|^7.0|^8.0"
     },
     "require-dev": {

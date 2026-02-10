@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Support\Environment;
+
 /**
  * Detects whether specific packages are installed in the current project.
  */
@@ -31,7 +33,7 @@ class PackageDetector
     public static function hasWayfinder(): bool
     {
         if (self::$hasWayfinder === null) {
-            self::$hasWayfinder = is_dir(base_path('resources/js/actions'));
+            self::$hasWayfinder = is_dir(Environment::basePath('resources/js/actions'));
         }
 
         return self::$hasWayfinder;

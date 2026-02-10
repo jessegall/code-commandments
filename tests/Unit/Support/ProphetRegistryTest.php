@@ -108,29 +108,8 @@ class ProphetRegistryTest extends TestCase
 
     public function test_get_prophets_filters_out_unsupported_prophets(): void
     {
-        // Create anonymous classes for testing
-        $supportedProphet = new class extends BaseCommandment {
-            public function supported(): bool { return true; }
-            public function applicableExtensions(): array { return ['php']; }
-            public function description(): string { return 'Supported'; }
-            public function detailedDescription(): string { return 'Supported prophet'; }
-            public function judge(string $filePath, string $content): Judgment { return $this->righteous(); }
-        };
-
-        $unsupportedProphet = new class extends BaseCommandment {
-            public function supported(): bool { return false; }
-            public function applicableExtensions(): array { return ['php']; }
-            public function description(): string { return 'Unsupported'; }
-            public function detailedDescription(): string { return 'Unsupported prophet'; }
-            public function judge(string $filePath, string $content): Judgment { return $this->righteous(); }
-        };
-
-        // Register the anonymous classes by their class name
-        $this->app->bind('supported_prophet', fn () => $supportedProphet);
-        $this->app->bind('unsupported_prophet', fn () => $unsupportedProphet);
-
-        $this->registry->register('test', 'supported_prophet');
-        $this->registry->register('test', 'unsupported_prophet');
+        $this->registry->register('test', \JesseGall\CodeCommandments\Tests\Fixtures\Prophets\SupportedTestProphet::class);
+        $this->registry->register('test', \JesseGall\CodeCommandments\Tests\Fixtures\Prophets\UnsupportedTestProphet::class);
 
         $prophets = $this->registry->getProphets('test');
 

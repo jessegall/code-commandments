@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * Code Commandments - Standalone Configuration
+ *
+ * Copy this file to commandments.php in your project root and adjust as needed.
+ *
+ * When running standalone (outside Laravel), use __DIR__ to build paths:
+ *   'path' => __DIR__ . '/src'
+ *
+ * When running inside Laravel, you can use helpers like app_path() or resource_path().
+ */
+
+return [
+    'scrolls' => [
+        // 'backend' => [
+        //     'path' => __DIR__ . '/app',
+        //     'extensions' => ['php'],
+        //     'exclude' => [],
+        //     'prophets' => [
+        //         // \JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet::class,
+        //     ],
+        // ],
+
+        // 'frontend' => [
+        //     'path' => __DIR__ . '/resources/js',
+        //     'extensions' => ['vue', 'ts', 'js', 'tsx', 'jsx'],
+        //     'exclude' => [
+        //         'node_modules',
+        //         'dist',
+        //     ],
+        //     'prophets' => [
+        //         // \JesseGall\CodeCommandments\Prophets\Frontend\CompositionApiProphet::class,
+        //     ],
+        // ],
+    ],
+
+    'confession' => [
+        'tablet_path' => __DIR__ . '/.commandments/confessions.json',
+    ],
+];

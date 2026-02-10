@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
+use JesseGall\CodeCommandments\Support\Environment;
 use Illuminate\Support\Collection;
 
 /**
@@ -29,7 +30,7 @@ class ScrollManager
     public function judgeScroll(string $scroll): Collection
     {
         $config = $this->registry->getScrollConfig($scroll);
-        $path = $config['path'] ?? base_path();
+        $path = $config['path'] ?? Environment::basePath();
         $extensions = $config['extensions'] ?? [];
         $excludePaths = $config['exclude'] ?? [];
 
@@ -259,7 +260,7 @@ class ScrollManager
     public function getFilesForScroll(string $scroll): iterable
     {
         $config = $this->registry->getScrollConfig($scroll);
-        $path = $config['path'] ?? base_path();
+        $path = $config['path'] ?? Environment::basePath();
         $extensions = $config['extensions'] ?? [];
         $excludePaths = $config['exclude'] ?? [];
 

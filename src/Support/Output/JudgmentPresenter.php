@@ -199,7 +199,7 @@ final class JudgmentPresenter
                 $shortName = class_basename($prophetClass);
                 $filterName = str_replace('Prophet', '', $shortName);
                 $fileCount = count($prophetFiles[$prophetClass] ?? []);
-                $prophet = app($prophetClass);
+                $prophet = new $prophetClass();
                 $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
 
                 $this->output->writeln("{$shortName} ({$count}){$autoFixable}");
