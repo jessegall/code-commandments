@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
+use JesseGall\CodeCommandments\Support\ConfigGenerator;
+use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -20,32 +22,46 @@ class InitConsoleCommand extends Command
         $this
             ->setName('init')
             ->setDescription('Initialize code commandments for a standalone project')
-            ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing files');
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing files')
+            ->addOption('auto-detect', null, InputOption::VALUE_NONE, 'Auto-detect projects and generate config');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $basePath = getcwd();
         $force = (bool) $input->getOption('force');
+        $autoDetect = (bool) $input->getOption('auto-detect');
 
-        $this->createConfig($basePath, $force, $output);
+        $this->createConfig($basePath, $force, $autoDetect, $output);
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
 
         $output->writeln('');
         $output->writeln('Done! Next steps:');
-        $output->writeln('  1. Edit commandments.php to configure your scrolls and prophets');
-        $output->writeln('  2. Run: vendor/bin/commandments judge');
+
+        if ($autoDetect) {
+            $output->writeln('  1. Review the generated commandments.php');
+            $output->writeln('  2. Run: vendor/bin/commandments judge');
+        } else {
+            $output->writeln('  1. Edit commandments.php to configure your scrolls and prophets');
+            $output->writeln('  2. Run: vendor/bin/commandments judge');
+        }
 
         return Command::SUCCESS;
     }
 
-    private function createConfig(string $basePath, bool $force, OutputInterface $output): void
+    private function createConfig(string $basePath, bool $force, bool $autoDetect, OutputInterface $output): void
     {
         $configPath = $basePath . '/commandments.php';
 
         if (file_exists($configPath) && !$force) {
             $output->writeln('commandments.php already exists (use --force to overwrite)');
+
+            return;
+        }
+
+        if ($autoDetect) {
+            $this->createAutoDetectedConfig($basePath, $configPath, $output);
 
             return;
         }
@@ -60,6 +76,47 @@ class InitConsoleCommand extends Command
 
         copy($distPath, $configPath);
         $output->writeln('Created commandments.php');
+    }
+
+    private function createAutoDetectedConfig(string $basePath, string $configPath, OutputInterface $output): void
+    {
+        $detector = new ProjectDetector();
+        $projects = $detector->detect($basePath);
+
+        if (empty($projects)) {
+            $output->writeln('No projects detected. Falling back to template.');
+
+            $distPath = $this->findDistFile();
+
+            if ($distPath !== null) {
+                copy($distPath, $configPath);
+                $output->writeln('Created commandments.php');
+            }
+
+            return;
+        }
+
+        $output->writeln('Detected projects:');
+
+        foreach ($projects as $project) {
+            $types = [];
+
+            if ($project->hasPhp) {
+                $types[] = 'PHP (' . $project->phpSourcePath . '/)';
+            }
+
+            if ($project->hasFrontend) {
+                $types[] = 'Frontend (' . $project->frontendSourcePath . '/)';
+            }
+
+            $output->writeln('  - ' . $project->name . ': ' . implode(', ', $types));
+        }
+
+        $generator = new ConfigGenerator();
+        $content = $generator->generate($projects, $basePath);
+
+        file_put_contents($configPath, $content);
+        $output->writeln('Created commandments.php (auto-detected)');
     }
 
     private function findDistFile(): ?string
