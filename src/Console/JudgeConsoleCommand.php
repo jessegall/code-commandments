@@ -92,7 +92,7 @@ class JudgeConsoleCommand extends Command
             }
         }
 
-        return $this->showResults($output, $prophetFilter);
+        return $this->showResults($output, $prophetFilter, $gitMode);
     }
 
     private function getResults(
@@ -193,7 +193,7 @@ class JudgeConsoleCommand extends Command
         return $content !== false && !$tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content);
     }
 
-    private function showResults(OutputInterface $output, ?string $prophetFilter = null): int
+    private function showResults(OutputInterface $output, ?string $prophetFilter = null, bool $gitMode = false): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
             $output->writeln('Righteous: No sins found.');
@@ -202,6 +202,7 @@ class JudgeConsoleCommand extends Command
         }
 
         $isDetailedView = $prophetFilter !== null;
+        $gitFlag = $gitMode ? ' --git' : '';
 
         if ($this->totalSins > 0) {
             $output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
@@ -232,8 +233,8 @@ class JudgeConsoleCommand extends Command
             if (!$isDetailedView) {
                 $output->writeln('');
                 $output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
-                $output->writeln('  1. Read the rule:    commandments scripture --prophet=NAME');
-                $output->writeln('  2. See the files:    commandments judge --prophet=NAME');
+                $output->writeln("  1. Read the rule:    commandments scripture --prophet=NAME");
+                $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
                 $output->writeln('  3. Fix all violations following the detailed description exactly');
                 $output->writeln('  4. Move to the next sin type');
             }
@@ -248,7 +249,7 @@ class JudgeConsoleCommand extends Command
 
             if ($hasAutoFixable) {
                 $output->writeln('');
-                $output->writeln('[AUTO-FIXABLE] sins can be fixed with: commandments repent --git');
+                $output->writeln("[AUTO-FIXABLE] sins can be fixed with: commandments repent{$gitFlag}");
             }
         }
 
@@ -280,8 +281,8 @@ class JudgeConsoleCommand extends Command
 
                 $output->writeln('');
                 $output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
-                $output->writeln('  1. Read the rule:    commandments scripture --prophet=NAME');
-                $output->writeln('  2. See the files:    commandments judge --prophet=NAME');
+                $output->writeln("  1. Read the rule:    commandments scripture --prophet=NAME");
+                $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
                 $output->writeln('  3. Review and fix following the detailed description exactly');
             }
         }

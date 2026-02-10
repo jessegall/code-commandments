@@ -92,7 +92,7 @@ class JudgeCommand extends Command
             }
         }
 
-        return $this->showResults($prophetFilter);
+        return $this->showResults($prophetFilter, $gitMode);
     }
 
     /**
@@ -219,7 +219,7 @@ class JudgeCommand extends Command
     /**
      * Show final results.
      */
-    private function showResults(?string $prophetFilter = null): int
+    private function showResults(?string $prophetFilter = null, bool $gitMode = false): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
             $this->output->writeln('Righteous: No sins found.');
@@ -228,6 +228,7 @@ class JudgeCommand extends Command
         }
 
         $isDetailedView = $prophetFilter !== null;
+        $gitFlag = $gitMode ? ' --git' : '';
 
         if ($this->totalSins > 0) {
             $this->output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
@@ -258,8 +259,8 @@ class JudgeCommand extends Command
             if (!$isDetailedView) {
                 $this->output->newLine();
                 $this->output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
-                $this->output->writeln('  1. Read the rule:    php artisan commandments:scripture --prophet=NAME');
-                $this->output->writeln('  2. See the files:    php artisan commandments:judge --prophet=NAME');
+                $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
+                $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
                 $this->output->writeln('  3. Fix all violations following the detailed description exactly');
                 $this->output->writeln('  4. Move to the next sin type');
             }
@@ -274,7 +275,7 @@ class JudgeCommand extends Command
 
             if ($hasAutoFixable) {
                 $this->output->newLine();
-                $this->output->writeln('[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent --git');
+                $this->output->writeln("[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent{$gitFlag}");
             }
         }
 
@@ -306,8 +307,8 @@ class JudgeCommand extends Command
 
                 $this->output->newLine();
                 $this->output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
-                $this->output->writeln('  1. Read the rule:    php artisan commandments:scripture --prophet=NAME');
-                $this->output->writeln('  2. See the files:    php artisan commandments:judge --prophet=NAME');
+                $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
+                $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
                 $this->output->writeln('  3. Review and fix following the detailed description exactly');
             }
         }
