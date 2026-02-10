@@ -72,6 +72,22 @@ return [
 ];
 ```
 
+#### Auto-detect mode
+
+Use `--auto-detect` to automatically scan your project structure and generate a working config:
+
+```bash
+vendor/bin/commandments init --auto-detect
+```
+
+This scans the current directory and its immediate subdirectories, detects project types (PHP and/or frontend), and generates `commandments.php` with appropriate scrolls, paths, and all available prophets pre-configured.
+
+Detection rules:
+- **PHP**: directory has `composer.json` and an `app/` or `src/` folder containing `.php` files
+- **Frontend**: directory has `package.json` and contains `.vue`, `.ts`, or `.tsx` files
+
+For monorepos with multiple subprojects, each detected project gets its own scrolls (e.g. `api-backend`, `dashboard-frontend`).
+
 Run commands via the `commandments` binary:
 
 ```bash
