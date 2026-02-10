@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\GitFileDetector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -31,6 +32,7 @@ class RepentConsoleCommand extends Command
             ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Use a specific prophet for repentance')
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Repent sins in a specific file')
             ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Repent sins in specific files (comma-separated)')
+            ->addOption('git', null, InputOption::VALUE_NONE, 'Only repent files that are new or changed in git')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be fixed without making changes');
     }
 
@@ -44,7 +46,19 @@ class RepentConsoleCommand extends Command
         $filesFilter = $input->getOption('files')
             ? array_map('trim', explode(',', $input->getOption('files')))
             : [];
+        $gitMode = (bool) $input->getOption('git');
         $dryRun = (bool) $input->getOption('dry-run');
+
+        $gitFiles = [];
+        if ($gitMode) {
+            $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
+
+            if (empty($gitFiles)) {
+                $output->writeln('No changed files in git. Nothing to repent.');
+
+                return Command::SUCCESS;
+            }
+        }
 
         $scrolls = $scrollFilter
             ? [$scrollFilter]
@@ -78,6 +92,8 @@ class RepentConsoleCommand extends Command
                     $files = [new \SplFileInfo($fileFilter)];
                 } elseif (!empty($filesFilter)) {
                     $files = array_map(fn ($f) => new \SplFileInfo($f), $filesFilter);
+                } elseif ($gitMode && !empty($gitFiles)) {
+                    $files = array_map(fn ($f) => new \SplFileInfo($f), $gitFiles);
                 } else {
                     $files = $manager->getFilesForScroll($scroll);
                 }

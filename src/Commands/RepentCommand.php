@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\GitFileDetector;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 
@@ -20,6 +21,7 @@ class RepentCommand extends Command
         {--prophet= : Use a specific prophet for repentance}
         {--file= : Repent sins in a specific file}
         {--files= : Repent sins in specific files (comma-separated)}
+        {--git : Only repent files that are new or changed in git}
         {--dry-run : Show what would be fixed without making changes}';
 
     protected $description = 'Auto-fix sins that can be automatically resolved';
@@ -40,7 +42,19 @@ class RepentCommand extends Command
         $filesFilter = $this->option('files')
             ? array_map('trim', explode(',', $this->option('files')))
             : [];
+        $gitMode = (bool) $this->option('git');
         $dryRun = $this->option('dry-run');
+
+        $gitFiles = [];
+        if ($gitMode) {
+            $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
+
+            if (empty($gitFiles)) {
+                $this->output->writeln('No changed files in git. Nothing to repent.');
+
+                return self::SUCCESS;
+            }
+        }
 
         $scrolls = $scrollFilter
             ? [$scrollFilter]
@@ -74,6 +88,8 @@ class RepentCommand extends Command
                     $files = [new \SplFileInfo($fileFilter)];
                 } elseif (!empty($filesFilter)) {
                     $files = array_map(fn ($f) => new \SplFileInfo($f), $filesFilter);
+                } elseif ($gitMode && !empty($gitFiles)) {
+                    $files = array_map(fn ($f) => new \SplFileInfo($f), $gitFiles);
                 } else {
                     $files = $manager->getFilesForScroll($scroll);
                 }
