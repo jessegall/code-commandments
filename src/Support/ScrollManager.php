@@ -78,6 +78,7 @@ class ScrollManager
     public function judgeFiles(string $scroll, array $filePaths): Collection
     {
         $config = $this->registry->getScrollConfig($scroll);
+        $path = $config['path'] ?? Environment::basePath();
         $extensions = $config['extensions'] ?? [];
         $excludePaths = $config['exclude'] ?? [];
 
@@ -87,8 +88,16 @@ class ScrollManager
         $prophets = $this->registry->getProphets($scroll);
         $results = collect();
 
+        // Normalize the scroll path for comparison
+        $scrollPath = realpath($path);
+
         foreach ($filePaths as $filePath) {
             if (!file_exists($filePath)) {
+                continue;
+            }
+
+            // Only judge files within the scroll's configured path
+            if ($scrollPath !== false && !str_starts_with(realpath($filePath), $scrollPath)) {
                 continue;
             }
 
