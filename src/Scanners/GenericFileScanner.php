@@ -30,7 +30,11 @@ class GenericFileScanner implements FileScanner
         }
 
         foreach ($excludePaths as $excludePath) {
-            $finder->notPath($excludePath);
+            // Convert to regex to avoid Symfony Finder misinterpreting
+            // glob patterns (e.g. "*.min.js") as malformed PCRE
+            $regex = preg_quote(rtrim($excludePath, '/'), '/');
+            $regex = str_replace('\*', '.*', $regex);
+            $finder->notPath('/' . $regex . '/');
         }
 
         // Exclude common directories
