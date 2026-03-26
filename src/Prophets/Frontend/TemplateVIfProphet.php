@@ -136,24 +136,26 @@ SCRIPTURE;
             $closingTag = $this->findClosingTag($templateContent, $element, $position);
 
             if ($closingTag === null) {
-                // Self-closing tag
-                $elementEnd = strpos($templateContent, '/>', $position);
-                if ($elementEnd === false) {
+                // Self-closing tag - use attribute-aware regex to find the element end
+                $attr = $this->tagAttributePattern();
+                if (preg_match('/<' . preg_quote($element, '/') . '(?:\s' . $attr . ')?\s*\/?>/i', $templateContent, $endMatch, PREG_OFFSET_CAPTURE, $position)) {
+                    $elementEnd = $endMatch[0][1] + strlen($endMatch[0][0]);
+                } else {
                     $elementEnd = strpos($templateContent, '>', $position);
+                    $elementEnd = $elementEnd !== false ? $elementEnd + 1 : $position + strlen($fullMatch);
                 }
-                $elementEnd += (substr($templateContent, $elementEnd, 2) === '/>' ? 2 : 1);
 
                 $originalElement = substr($templateContent, $position, $elementEnd - $position);
                 // Remove directive from element and wrap
-                $cleanElement = preg_replace('/\s+v-(if|else-if|else)(="[^"]*")?/', '', $originalElement);
+                $cleanElement = preg_replace('/\s+v-(if|else-if|else)(="[^"]*")?/', '', $originalElement, 1);
                 $wrapped = "<template {$directive}>\n    {$cleanElement}\n</template>";
 
                 $templateContent = substr($templateContent, 0, $position) . $wrapped . substr($templateContent, $elementEnd);
             } else {
                 // Element with closing tag
                 $originalBlock = substr($templateContent, $position, $closingTag['end'] - $position);
-                // Remove directive from opening tag
-                $cleanBlock = preg_replace('/(<' . preg_quote($element, '/') . '(?:\s[^>]*)?)\s+v-(if|else-if|else)(="[^"]*")?/', '$1', $originalBlock);
+                // Remove directive from opening tag (limit 1 to only affect the outermost element)
+                $cleanBlock = preg_replace('/\s+v-(if|else-if|else)(="[^"]*")?/', '', $originalBlock, 1);
                 $wrapped = "<template {$directive}>\n    {$cleanBlock}\n</template>";
 
                 $templateContent = substr($templateContent, 0, $position) . $wrapped . substr($templateContent, $closingTag['end']);

@@ -23,20 +23,30 @@ trait TemplateElementHelper
     ];
 
     /**
+     * Regex fragment that matches tag attributes, correctly handling > inside quoted values.
+     */
+    protected function tagAttributePattern(): string
+    {
+        return '(?:[^>"\']*(?:"[^"]*"|\'[^\']*\'))*[^>"\']*';
+    }
+
+    /**
      * Find the matching closing tag for an element, properly handling nested tags.
      *
      * @return array{start: int, end: int}|null
      */
     protected function findClosingTag(string $content, string $tag, int $startPos): ?array
     {
-        $openTagPattern = '/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?>|<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\s*\/>/i';
-        $closeTagPattern = '/<\/' . preg_quote($tag, '/') . '\s*>/i';
+        $tagQ = preg_quote($tag, '/');
+        $attr = $this->tagAttributePattern();
+        $openTagPattern = '/<' . $tagQ . '(?:\s' . $attr . ')?\s*\/?>/i';
+        $closeTagPattern = '/<\/' . $tagQ . '\s*>/i';
 
         $depth = 1;
         $pos = $startPos;
 
         // Move past the opening tag
-        if (preg_match('/<' . preg_quote($tag, '/') . '(?:\s[^>]*)?\/?>/i', $content, $match, PREG_OFFSET_CAPTURE, $pos)) {
+        if (preg_match('/<' . $tagQ . '(?:\s' . $attr . ')?\s*\/?>/i', $content, $match, PREG_OFFSET_CAPTURE, $pos)) {
             // Check if self-closing
             if (str_ends_with(trim($match[0][0]), '/>')) {
                 return null; // Self-closing
