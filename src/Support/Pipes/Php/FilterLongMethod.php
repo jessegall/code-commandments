@@ -26,9 +26,13 @@ final class FilterLongMethod implements Pipe
     {
         $filtered = array_values(array_filter(
             $input->methods,
-            function ($methodData) {
+            function ($methodData) use ($input) {
                 $method = $methodData['method'];
-                $lineCount = $method->getEndLine() - $method->getStartLine() + 1;
+                $lineCount = MethodLineCounter::count(
+                    $input->content,
+                    $method->getStartLine(),
+                    $method->getEndLine()
+                );
 
                 return $lineCount > $this->maxLines;
             }

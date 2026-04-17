@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractClass;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractMethods;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FilterLongMethod;
+use JesseGall\CodeCommandments\Support\Pipes\Php\MethodLineCounter;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
@@ -85,7 +86,11 @@ SCRIPTURE;
             $class = $methodData['class'];
             $className = $class->name?->toString() ?? 'Unknown';
             $methodName = $method->name->toString();
-            $lineCount = $method->getEndLine() - $method->getStartLine() + 1;
+            $lineCount = MethodLineCounter::count(
+                $ctx->content,
+                $method->getStartLine(),
+                $method->getEndLine()
+            );
 
             $sins[] = $this->sinAt(
                 $method->getStartLine(),

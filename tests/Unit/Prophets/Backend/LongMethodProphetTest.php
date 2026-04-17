@@ -214,4 +214,63 @@ PHP;
         $this->assertNotEmpty($this->prophet->description());
         $this->assertNotEmpty($this->prophet->detailedDescription());
     }
+
+    public function test_ignores_comment_only_lines(): void
+    {
+        $this->prophet->configure(['max_method_lines' => 6]);
+
+        $content = <<<'PHP'
+<?php
+namespace App\Services;
+
+class OrderService
+{
+    public function process()
+    {
+        // explanation one
+        $a = 1;
+        // explanation two
+        $b = 2;
+        /*
+         * block comment
+         * spanning lines
+         */
+        $c = 3;
+    }
+}
+PHP;
+
+        // Method spans 12 lines (6-17). 6 are comment-only, 6 remain → within threshold of 6.
+        $judgment = $this->prophet->judge('/app/Services/OrderService.php', $content);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_reports_line_count_excluding_comments(): void
+    {
+        $content = <<<'PHP'
+<?php
+namespace App\Services;
+
+class OrderService
+{
+    public function process()
+    {
+        // one
+        $a = 1;
+        $b = 2;
+        $c = 3;
+        $d = 4;
+        $e = 5;
+        $f = 6;
+    }
+}
+PHP;
+
+        $judgment = $this->prophet->judge('/app/Services/OrderService.php', $content);
+
+        $this->assertTrue($judgment->isFallen());
+        // 10 total lines in method minus 1 comment-only line = 9 lines reported
+        $this->assertStringContainsString('is 9 lines long', $judgment->sins[0]->message);
+    }
 }
