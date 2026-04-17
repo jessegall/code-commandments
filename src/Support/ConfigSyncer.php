@@ -4,21 +4,34 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Attributes\IntroducedIn;
+use ReflectionClass;
+use ReflectionException;
+
 /**
  * Syncs newly available prophets into an existing commandments.php config file.
  *
  * Discovers all prophets shipped with the package, compares them against
  * those already registered in each scroll, and inserts missing ones
  * into the config file source.
+ *
+ * With `$after` set, only prophets marked `#[IntroducedIn(version)]`
+ * with `version > $after` (semver) are added. Untagged prophets are
+ * treated as predating the versioning scheme and skipped in filtered
+ * mode — this prevents intentionally-removed prophets from being
+ * re-added on every upgrade.
  */
 class ConfigSyncer
 {
     /**
      * Sync new prophets into a config file.
      *
-     * @return array{added: array<array{class: string, scroll: string}>, source: string}
+     * @param  string|null  $after  When set, only add prophets whose
+     *   `#[IntroducedIn(...)]` version is strictly greater than this.
+     *   Pass null for the classic blanket-add behavior.
+     * @return array{added: array<array{class: string, scroll: string, introduced_in: ?string}>, source: string}
      */
-    public function sync(string $configPath): array
+    public function sync(string $configPath, ?string $after = null): array
     {
         $config = ConfigLoader::load($configPath);
         $source = file_get_contents($configPath);
@@ -38,20 +51,59 @@ class ConfigSyncer
 
             $available = $this->discoverProphets($type);
             $existing = $this->getExistingProphetClasses($scrollConfig['prophets'] ?? []);
-            $new = array_diff_key($available, array_flip($existing));
+            $missing = array_diff_key($available, array_flip($existing));
 
-            if (empty($new)) {
+            if ($after !== null) {
+                $missing = $this->filterByIntroducedAfter($missing, $after);
+            }
+
+            if (empty($missing)) {
                 continue;
             }
 
-            $source = $this->insertProphetsIntoSource($source, $scrollName, $new);
+            $newEntries = array_map(
+                fn (array $meta) => $meta['config'],
+                $missing,
+            );
 
-            foreach (array_keys($new) as $class) {
-                $added[] = ['class' => $class, 'scroll' => $scrollName];
+            $source = $this->insertProphetsIntoSource($source, $scrollName, $newEntries);
+
+            foreach ($missing as $class => $meta) {
+                $added[] = [
+                    'class' => $class,
+                    'scroll' => $scrollName,
+                    'introduced_in' => $meta['introduced_in'] ?? null,
+                ];
             }
         }
 
         return ['added' => $added, 'source' => $source];
+    }
+
+    /**
+     * Keep only prophets whose `introduced_in` version is strictly greater
+     * than `$after`. Untagged prophets are skipped in filtered mode.
+     *
+     * @param  array<string, array{config: array<string, string>, introduced_in: ?string}>  $prophets
+     * @return array<string, array{config: array<string, string>, introduced_in: ?string}>
+     */
+    private function filterByIntroducedAfter(array $prophets, string $after): array
+    {
+        $out = [];
+
+        foreach ($prophets as $class => $meta) {
+            $introducedIn = $meta['introduced_in'] ?? null;
+
+            if ($introducedIn === null) {
+                continue;
+            }
+
+            if (version_compare($introducedIn, $after, '>')) {
+                $out[$class] = $meta;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -91,7 +143,7 @@ class ConfigSyncer
     /**
      * Discover all prophets of a given type from the package source.
      *
-     * @return array<string, array<string, string>> class => [config_key => default, ...]
+     * @return array<string, array{config: array<string, string>, introduced_in: ?string}>
      */
     private function discoverProphets(string $type): array
     {
@@ -115,12 +167,38 @@ class ConfigSyncer
 
             $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', '', $file);
             $configOptions = $this->extractConfigOptions($dir . '/' . $file);
-            $prophets[$className] = $configOptions;
+            $introducedIn = $this->extractIntroducedIn($className);
+
+            $prophets[$className] = [
+                'config' => $configOptions,
+                'introduced_in' => $introducedIn,
+            ];
         }
 
         ksort($prophets);
 
         return $prophets;
+    }
+
+    /**
+     * Read the `#[IntroducedIn(...)]` attribute from a prophet class via
+     * reflection. Returns null when the attribute is absent.
+     */
+    private function extractIntroducedIn(string $className): ?string
+    {
+        try {
+            $ref = new ReflectionClass($className);
+        } catch (ReflectionException) {
+            return null;
+        }
+
+        $attributes = $ref->getAttributes(IntroducedIn::class);
+
+        if (empty($attributes)) {
+            return null;
+        }
+
+        return $attributes[0]->newInstance()->version;
     }
 
     /**

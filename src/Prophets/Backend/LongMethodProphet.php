@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Sin;
@@ -21,6 +22,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * Long methods are a sign that the method is doing too many things
  * and should be broken down into smaller, well-named methods.
  */
+#[IntroducedIn('1.3.1')]
 class LongMethodProphet extends PhpCommandment
 {
     public function description(): string

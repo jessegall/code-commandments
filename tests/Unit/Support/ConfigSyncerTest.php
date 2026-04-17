@@ -205,6 +205,101 @@ PHP;
         $this->assertContains('frontend', $scrolls);
     }
 
+    public function test_after_filter_only_adds_prophets_introduced_later(): void
+    {
+        $configPath = $this->createConfigFile([
+            'backend' => [
+                'extensions' => ['php'],
+                'prophets' => [],
+            ],
+        ]);
+
+        // Filter at 1.3.5: LongMethodProphet (1.3.1) stays OUT,
+        // NoArrayStringIndexingProphet (1.4.0) comes IN.
+        $result = $this->syncer->sync($configPath, '1.3.5');
+
+        $classes = array_column($result['added'], 'class');
+
+        $this->assertContains(
+            'JesseGall\\CodeCommandments\\Prophets\\Backend\\NoArrayStringIndexingProphet',
+            $classes,
+            'Expected NoArrayStringIndexingProphet (1.4.0) to be added'
+        );
+        $this->assertNotContains(
+            'JesseGall\\CodeCommandments\\Prophets\\Backend\\LongMethodProphet',
+            $classes,
+            'Did not expect LongMethodProphet (1.3.1) to be re-added'
+        );
+    }
+
+    public function test_after_filter_skips_untagged_prophets(): void
+    {
+        $configPath = $this->createConfigFile([
+            'backend' => [
+                'extensions' => ['php'],
+                'prophets' => [],
+            ],
+        ]);
+
+        $result = $this->syncer->sync($configPath, '0.0.0');
+
+        $classes = array_column($result['added'], 'class');
+
+        // Untagged legacy prophets should NOT be re-added via --after=0.0.0
+        $this->assertNotContains(
+            'JesseGall\\CodeCommandments\\Prophets\\Backend\\NoRawRequestProphet',
+            $classes,
+            'Untagged prophets should be skipped in filtered mode'
+        );
+        // Tagged ones (after 0.0.0) should come in
+        $this->assertContains(
+            'JesseGall\\CodeCommandments\\Prophets\\Backend\\NoArrayStringIndexingProphet',
+            $classes,
+        );
+    }
+
+    public function test_after_filter_excludes_equal_version(): void
+    {
+        $configPath = $this->createConfigFile([
+            'backend' => [
+                'extensions' => ['php'],
+                'prophets' => [],
+            ],
+        ]);
+
+        // --after=1.4.0 should NOT include NoArrayStringIndexing (introduced in exactly 1.4.0)
+        // because the comparison is strictly greater-than.
+        $result = $this->syncer->sync($configPath, '1.4.0');
+
+        $classes = array_column($result['added'], 'class');
+        $this->assertNotContains(
+            'JesseGall\\CodeCommandments\\Prophets\\Backend\\NoArrayStringIndexingProphet',
+            $classes,
+        );
+    }
+
+    public function test_added_entries_include_introduced_in_version(): void
+    {
+        $configPath = $this->createConfigFile([
+            'backend' => [
+                'extensions' => ['php'],
+                'prophets' => [],
+            ],
+        ]);
+
+        $result = $this->syncer->sync($configPath);
+
+        foreach ($result['added'] as $entry) {
+            $this->assertArrayHasKey('introduced_in', $entry);
+        }
+
+        $indexed = array_column($result['added'], 'introduced_in', 'class');
+        $this->assertSame(
+            '1.4.0',
+            $indexed['JesseGall\\CodeCommandments\\Prophets\\Backend\\NoArrayStringIndexingProphet'] ?? null,
+        );
+    }
+
     /**
      * Create a temporary config file from scroll definitions.
      */
