@@ -95,6 +95,68 @@ class ScrollManagerTest extends TestCase
         $this->assertTrue(ExcludingTestProphet2::$wasJudged);
     }
 
+    public function test_judge_files_honors_glob_exclude_patterns(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/cc-scroll-' . uniqid();
+        mkdir($tempDir);
+
+        $dts = $tempDir . '/types.d.ts';
+        $php = $tempDir . '/user.php';
+
+        file_put_contents($dts, "// typescript declaration\n");
+        file_put_contents($php, "<?php\n");
+
+        try {
+            $this->registry->register('test', ExcludingTestProphet::class);
+            $this->registry->setScrollConfig('test', [
+                'path' => $tempDir,
+                'extensions' => ['php', 'd.ts', 'ts'],
+                'exclude' => ['*.d.ts'],
+            ]);
+
+            $results = $this->scrollManager->judgeFiles('test', [$dts, $php]);
+
+            $this->assertTrue($results->has($php), 'Expected user.php to be judged');
+            $this->assertFalse($results->has($dts), 'Expected types.d.ts to be excluded via glob');
+        } finally {
+            @unlink($dts);
+            @unlink($php);
+            @rmdir($tempDir);
+        }
+    }
+
+    public function test_judge_files_honors_plain_string_exclude(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/cc-scroll-' . uniqid();
+        mkdir($tempDir);
+        mkdir($tempDir . '/Console');
+
+        $kernel = $tempDir . '/Console/Kernel.php';
+        $other = $tempDir . '/Foo.php';
+
+        file_put_contents($kernel, "<?php\n");
+        file_put_contents($other, "<?php\n");
+
+        try {
+            $this->registry->register('test', ExcludingTestProphet::class);
+            $this->registry->setScrollConfig('test', [
+                'path' => $tempDir,
+                'extensions' => ['php'],
+                'exclude' => ['Console/Kernel.php'],
+            ]);
+
+            $results = $this->scrollManager->judgeFiles('test', [$kernel, $other]);
+
+            $this->assertTrue($results->has($other));
+            $this->assertFalse($results->has($kernel));
+        } finally {
+            @unlink($kernel);
+            @unlink($other);
+            @rmdir($tempDir . '/Console');
+            @rmdir($tempDir);
+        }
+    }
+
     public function test_base_commandment_get_excluded_paths_returns_config_value(): void
     {
         $prophet = new class extends BaseCommandment {
