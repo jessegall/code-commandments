@@ -11,7 +11,6 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 use ReflectionEnum;
-use ReflectionException;
 
 /**
  * Flag raw string literals that are really enum cases in disguise.
@@ -219,7 +218,9 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 }
 
                 $ref = new ReflectionEnum($fqcn);
-            } catch (ReflectionException) {
+            } catch (\Throwable) {
+                // Autoloading the class can fatal-out on broken consumer code
+                // (e.g. LSP violations). Catch what's catchable and skip.
                 return null;
             }
 
