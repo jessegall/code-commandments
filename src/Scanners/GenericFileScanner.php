@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scanners;
 
 use JesseGall\CodeCommandments\Contracts\FileScanner;
+use JesseGall\CodeCommandments\Support\PathExcludeMatcher;
 use Symfony\Component\Finder\Finder;
 
 /**
@@ -30,11 +31,7 @@ class GenericFileScanner implements FileScanner
         }
 
         foreach ($excludePaths as $excludePath) {
-            // Convert to regex to avoid Symfony Finder misinterpreting
-            // glob patterns (e.g. "*.min.js") as malformed PCRE
-            $regex = preg_quote(rtrim($excludePath, '/'), '/');
-            $regex = str_replace('\*', '.*', $regex);
-            $finder->notPath('/' . $regex . '/');
+            $finder->notPath(PathExcludeMatcher::toRegex($excludePath));
         }
 
         // Exclude common directories

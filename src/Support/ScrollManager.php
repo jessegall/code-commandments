@@ -251,14 +251,7 @@ class ScrollManager
             }
         }
 
-        // Check configured exclude paths
-        foreach ($excludePaths as $excludePath) {
-            if (str_contains($filePath, $excludePath)) {
-                return true;
-            }
-        }
-
-        return false;
+        return PathExcludeMatcher::matchesAny($filePath, $excludePaths);
     }
 
     /**
