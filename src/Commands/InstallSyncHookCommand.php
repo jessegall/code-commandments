@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
+use JesseGall\CodeCommandments\Support\ComposerScriptInstaller;
+use JesseGall\CodeCommandments\Support\VersionResolver;
 
 /**
  * Install a git post-merge hook that auto-runs
@@ -48,18 +50,60 @@ class InstallSyncHookCommand extends Command
 
         @chmod($hookPath, 0755);
 
-        $this->info("Installed git post-merge hook at .git/hooks/post-merge");
+        $this->info('Installed git post-merge hook at .git/hooks/post-merge');
+
+        $this->installComposerScript($basePath);
+        $this->recordBaselineVersion($basePath);
+
         $this->newLine();
-        $this->line('Fires on <info>git pull</info> / <info>git merge</info> when composer.lock changes.');
-        $this->line('For <info>composer update</info> integration too, add this to your composer.json:');
-        $this->newLine();
-        $this->line('  "scripts": {');
-        $this->line('    "post-update-cmd": [');
-        $this->line('      "@php artisan commandments:sync --after=previous"');
-        $this->line('    ]');
-        $this->line('  }');
+        $this->line('Now every <info>git pull</info> and <info>composer update</info> will run sync automatically.');
 
         return self::SUCCESS;
+    }
+
+    private function installComposerScript(string $basePath): void
+    {
+        $composerJson = $basePath . '/composer.json';
+        $installer = new ComposerScriptInstaller();
+        $command = '@php artisan commandments:sync --after=previous';
+
+        $status = $installer->install($composerJson, 'post-update-cmd', $command);
+
+        match ($status) {
+            ComposerScriptInstaller::STATUS_INSTALLED => $this->info(
+                'Added artisan commandments:sync --after=previous to composer.json post-update-cmd'
+            ),
+            ComposerScriptInstaller::STATUS_ALREADY_PRESENT => $this->line(
+                'composer.json already has the sync script — skipped'
+            ),
+            ComposerScriptInstaller::STATUS_MISSING_FILE => $this->warn(
+                'No composer.json found — skipping composer-script install.'
+            ),
+            ComposerScriptInstaller::STATUS_INVALID_JSON => $this->error(
+                'composer.json is not valid JSON — skipping composer-script install. Add the script manually.'
+            ),
+            ComposerScriptInstaller::STATUS_WRITE_FAILED => $this->error(
+                'Failed to write composer.json — check permissions.'
+            ),
+        };
+    }
+
+    private function recordBaselineVersion(string $basePath): void
+    {
+        $resolver = new VersionResolver();
+        $current = $resolver->currentVersion();
+
+        if ($current === null) {
+            $this->warn('Could not resolve installed package version (dev install?) — skipping baseline record.');
+
+            return;
+        }
+
+        if ($resolver->recordSyncedVersion($basePath, $current)) {
+            $this->info("Recorded baseline sync version {$current} in .commandments-last-synced");
+        } else {
+            $this->warn('Failed to write .commandments-last-synced — check permissions.');
+        }
     }
 
     private function hookScript(): string
