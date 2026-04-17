@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\OriginTracer;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -50,6 +52,18 @@ final class FindArrayStringIndexing implements Pipe
     ];
 
     private const DICT_KEY_TYPE_PATTERN = '(?:string|int\|string|string\|int|array-key)';
+
+    private ?CodebaseIndex $codebaseIndex = null;
+
+    private int $maxTraceDepth = 10;
+
+    public function withCodebaseIndex(CodebaseIndex $index, int $maxDepth): self
+    {
+        $this->codebaseIndex = $index;
+        $this->maxTraceDepth = max(1, $maxDepth);
+
+        return $this;
+    }
 
     public function handle(mixed $input): mixed
     {
@@ -100,7 +114,7 @@ final class FindArrayStringIndexing implements Pipe
             $seen[$dedupeKey] = true;
 
             $line = $access->getStartLine();
-            $source = $this->describeSource($access, $parents);
+            $source = $this->describeSource($access, $parents, $input->namespace);
 
             $matches[] = new MatchResult(
                 name: $keyDisplay,
@@ -128,7 +142,7 @@ final class FindArrayStringIndexing implements Pipe
      * @param  array<int, Node>  $parents
      * @return array{kind: string, hint: string}
      */
-    private function describeSource(Expr\ArrayDimFetch $access, array $parents): array
+    private function describeSource(Expr\ArrayDimFetch $access, array $parents, ?string $namespace): array
     {
         $var = $access->var;
 
@@ -201,6 +215,12 @@ final class FindArrayStringIndexing implements Pipe
             $enclosing = $this->findEnclosingFunctionLike($access, $parents);
 
             if ($enclosing !== null && $this->variableIsParameter($enclosing, $var->name)) {
+                $traced = $this->traceOrigin($enclosing, $access, $parents, $namespace, $var->name);
+
+                if ($traced !== null) {
+                    return $traced;
+                }
+
                 $funcName = $this->functionLikeLabel($enclosing);
 
                 return [
@@ -230,6 +250,77 @@ final class FindArrayStringIndexing implements Pipe
             'kind' => 'other',
             'hint' => 'Wrap this array in a DTO at the point it enters the codebase',
         ];
+    }
+
+    /**
+     * Consult the codebase index (if injected) to walk upstream through
+     * callers and name the DTO-introduction point.
+     *
+     * @param  array<int, Node>  $parents
+     * @return array{kind: string, hint: string}|null
+     */
+    private function traceOrigin(
+        Node $enclosing,
+        Expr\ArrayDimFetch $access,
+        array $parents,
+        ?string $namespace,
+        string $varName,
+    ): ?array {
+        if ($this->codebaseIndex === null) {
+            return null;
+        }
+
+        if (! $enclosing instanceof Node\Stmt\ClassMethod) {
+            return null;
+        }
+
+        $classNode = $this->findEnclosingClass($access, $parents);
+
+        if ($classNode === null || $classNode->name === null) {
+            return null;
+        }
+
+        $shortName = $classNode->name->toString();
+        $classFqcn = $namespace !== null && $namespace !== ''
+            ? $namespace . '\\' . $shortName
+            : $shortName;
+
+        $tracer = new OriginTracer($this->codebaseIndex, $this->maxTraceDepth);
+        $trace = $tracer->trace($classFqcn, $enclosing->name->toString(), $varName);
+
+        if ($trace === null) {
+            return null;
+        }
+
+        return [
+            'kind' => 'param_traced',
+            'hint' => sprintf(
+                'DTO boundary is %s::%s() (%d hop%s upstream, via %s) — introduce the DTO there instead of here',
+                $trace->originClassFqcn,
+                $trace->originMethod,
+                $trace->hops,
+                $trace->hops === 1 ? '' : 's',
+                $trace->reason,
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<int, Node>  $parents
+     */
+    private function findEnclosingClass(Node $node, array $parents): ?Node\Stmt\Class_
+    {
+        $current = $parents[spl_object_id($node)] ?? null;
+
+        while ($current !== null) {
+            if ($current instanceof Node\Stmt\Class_) {
+                return $current;
+            }
+
+            $current = $parents[spl_object_id($current)] ?? null;
+        }
+
+        return null;
     }
 
     /**

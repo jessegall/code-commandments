@@ -44,6 +44,7 @@ class JudgeConsoleCommand extends Command
             ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Summon a specific prophet by name')
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Judge a specific file')
             ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Judge specific files (comma-separated)')
+            ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Override the scroll path and target a specific directory (bypasses all excludes — use to scan subtrees regardless of config)')
             ->addOption('git', null, InputOption::VALUE_NONE, 'Only judge files that are new or changed in git')
             ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession');
     }
@@ -59,7 +60,33 @@ class JudgeConsoleCommand extends Command
             ? array_map('trim', explode(',', $input->getOption('files')))
             : [];
         $gitMode = (bool) $input->getOption('git');
+        $pathFilter = $input->getOption('path');
         $shouldAbsolve = (bool) $input->getOption('absolve');
+
+        $exclusiveFlags = array_filter([
+            '--file' => $fileFilter !== null,
+            '--files' => ! empty($filesFilter),
+            '--git' => $gitMode,
+            '--path' => $pathFilter !== null,
+        ]);
+
+        if (count($exclusiveFlags) > 1) {
+            $output->writeln('<error>--file, --files, --git, and --path are mutually exclusive.</error>');
+
+            return Command::FAILURE;
+        }
+
+        if ($pathFilter !== null) {
+            $resolvedPath = realpath($pathFilter);
+
+            if ($resolvedPath === false || ! is_dir($resolvedPath)) {
+                $output->writeln("<error>--path does not point to an existing directory: {$pathFilter}</error>");
+
+                return Command::FAILURE;
+            }
+
+            $pathFilter = $resolvedPath;
+        }
 
         $gitFiles = [];
         if ($gitMode) {
@@ -79,7 +106,7 @@ class JudgeConsoleCommand extends Command
                 continue;
             }
 
-            $results = $this->getResults($scroll, $manager, $fileFilter, $filesFilter, $gitMode, $gitFiles);
+            $results = $this->getResults($scroll, $manager, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter);
 
             foreach ($results as $filePath => $judgments) {
                 $this->processFileJudgments(
@@ -101,7 +128,8 @@ class JudgeConsoleCommand extends Command
         ?string $fileFilter,
         array $filesFilter,
         bool $gitMode,
-        array $gitFiles
+        array $gitFiles,
+        ?string $pathFilter = null,
     ) {
         if ($fileFilter) {
             $results = $manager->judgeFile($scroll, $fileFilter);
@@ -115,6 +143,10 @@ class JudgeConsoleCommand extends Command
 
         if ($gitMode && !empty($gitFiles)) {
             return $manager->judgeFiles($scroll, $gitFiles);
+        }
+
+        if ($pathFilter !== null) {
+            return $manager->judgePath($scroll, $pathFilter);
         }
 
         return $manager->judgeScroll($scroll);
@@ -237,6 +269,8 @@ class JudgeConsoleCommand extends Command
                 $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
                 $output->writeln('  3. Fix all violations following the detailed description exactly');
                 $output->writeln('  4. Move to the next sin type');
+                $output->writeln('');
+                $output->writeln('Target a subtree:     commandments judge --path=<dir>   (ignores all excludes)');
             }
 
             $hasAutoFixable = false;

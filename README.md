@@ -145,6 +145,10 @@ php artisan commandments:judge --files=app/Models/User.php,app/Services/AuthServ
 # Only judge files changed in git
 php artisan commandments:judge --git
 
+# Target a specific directory, bypassing every exclude
+# (both default `vendor`/`node_modules`/... AND scroll-configured excludes)
+php artisan commandments:judge --path=app/Http/Controllers
+
 # Mark files as absolved after manual review
 php artisan commandments:judge --absolve
 ```

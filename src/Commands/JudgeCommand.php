@@ -23,6 +23,7 @@ class JudgeCommand extends Command
         {--prophet= : Summon a specific prophet by name}
         {--file= : Judge a specific file}
         {--files= : Judge specific files (comma-separated)}
+        {--path= : Override the scroll path and target a specific directory (bypasses all excludes)}
         {--git : Only judge files that are new or changed in git}
         {--absolve : Mark files as absolved after confession (manual review)}';
 
@@ -57,7 +58,33 @@ class JudgeCommand extends Command
                 ->toArray()
             : [];
         $gitMode = (bool) $this->option('git');
+        $pathFilter = $this->option('path');
         $shouldAbsolve = (bool) $this->option('absolve');
+
+        $exclusiveFlags = array_filter([
+            '--file' => $fileFilter !== null,
+            '--files' => ! empty($filesFilter),
+            '--git' => $gitMode,
+            '--path' => $pathFilter !== null,
+        ]);
+
+        if (count($exclusiveFlags) > 1) {
+            $this->error('--file, --files, --git, and --path are mutually exclusive.');
+
+            return self::FAILURE;
+        }
+
+        if ($pathFilter !== null) {
+            $resolvedPath = realpath($pathFilter);
+
+            if ($resolvedPath === false || ! is_dir($resolvedPath)) {
+                $this->error("--path does not point to an existing directory: {$pathFilter}");
+
+                return self::FAILURE;
+            }
+
+            $pathFilter = $resolvedPath;
+        }
 
         // Handle git mode
         $gitFiles = [];
@@ -79,7 +106,7 @@ class JudgeCommand extends Command
                 continue;
             }
 
-            $results = $this->getResults($scroll, $manager, $fileFilter, $filesFilter, $gitMode, $gitFiles);
+            $results = $this->getResults($scroll, $manager, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter);
 
             foreach ($results as $filePath => $judgments) {
                 $this->processFileJudgments(
@@ -106,7 +133,8 @@ class JudgeCommand extends Command
         ?string $fileFilter,
         array $filesFilter,
         bool $gitMode,
-        array $gitFiles
+        array $gitFiles,
+        ?string $pathFilter = null,
     ) {
         if ($fileFilter) {
             $results = $manager->judgeFile($scroll, $fileFilter);
@@ -120,6 +148,10 @@ class JudgeCommand extends Command
 
         if ($gitMode && ! empty($gitFiles)) {
             return $manager->judgeFiles($scroll, $gitFiles);
+        }
+
+        if ($pathFilter !== null) {
+            return $manager->judgePath($scroll, $pathFilter);
         }
 
         return $manager->judgeScroll($scroll);
@@ -263,6 +295,8 @@ class JudgeCommand extends Command
                 $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
                 $this->output->writeln('  3. Fix all violations following the detailed description exactly');
                 $this->output->writeln('  4. Move to the next sin type');
+                $this->output->writeln('');
+                $this->output->writeln('Target a subtree:     php artisan commandments:judge --path=<dir>   (ignores all excludes)');
             }
 
             $hasAutoFixable = false;
