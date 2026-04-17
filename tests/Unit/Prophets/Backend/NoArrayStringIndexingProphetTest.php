@@ -582,6 +582,59 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_flag_eloquent_update_with_array_literal(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        $run->update([
+            'status' => 'delayed',
+            'duration_ms' => 42,
+            'resume_node_id' => 'n-1',
+        ]);
+        return 'ok';
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_eloquent_create_with_array_literal(): void
+    {
+        $judgment = $this->judge("\$model = Run::create(['status' => 'ready', 'name' => 'n']); return \$model;");
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_where_with_array_literal(): void
+    {
+        $judgment = $this->judge("\$q = Run::query()->where(['status' => 'ready']); return \$q;");
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_nested_array_literal_values(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        return [
+            'meta' => ['v' => 1, 'source' => 'api'],
+            'payload' => ['id' => 'x', 'label' => 'y'],
+        ];
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_still_flags_array_subscripts_inside_update_call(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        $run->update([
+            'status' => $data['status'],
+        ]);
+        return 'ok';
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString("\$data['status']", $judgment->sins[0]->message);
+    }
+
     public function test_does_not_flag_array_keys(): void
     {
         $judgment = $this->judge('return array_keys($row);');
