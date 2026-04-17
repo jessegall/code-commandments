@@ -55,6 +55,10 @@ return [
                 Backend\QueryModelsThroughQueryMethodProphet::class,
                 Backend\NoRequestDataPassthroughProphet::class,
                 Backend\NoAuthUserInDataClassesProphet::class,
+                Backend\LongMethodProphet::class => [
+                    // 'max_method_lines' => 20,
+                ],
+                Backend\NoArrayStringIndexingProphet::class,
             ],
         ],
 
