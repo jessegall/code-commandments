@@ -3,6 +3,8 @@
 
 declare(strict_types=1);
 
+@ini_set('memory_limit', '-1');
+
 // Find the Composer autoloader
 $autoloadPaths = [
     __DIR__ . '/../vendor/autoload.php',        // Running from package source
