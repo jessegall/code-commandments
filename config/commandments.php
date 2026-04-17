@@ -59,6 +59,7 @@ return [
                     // 'max_method_lines' => 20,
                 ],
                 Backend\NoArrayStringIndexingProphet::class,
+                Backend\StringsThatShouldBeEnumsProphet::class,
             ],
         ],
 
