@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use Composer\Autoload\ClassLoader;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 use ReflectionEnum;
 
 /**
@@ -49,8 +51,12 @@ final class FindStringsThatShouldBeEnums implements Pipe
         'JsonResource', 'Resource', 'Response',
     ];
 
-    /** @var array<string, ReflectionEnum> */
-    private static array $reflectionCache = [];
+    /** @var array<string, array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}|false> */
+    private static array $enumCache = [];
+
+    private static ?ClassLoader $composerLoader = null;
+
+    private static bool $composerLoaderResolved = false;
 
     public function handle(mixed $input): mixed
     {
@@ -209,24 +215,47 @@ final class FindStringsThatShouldBeEnums implements Pipe
      */
     private function reflectEnum(string $fqcn): ?array
     {
-        if (isset(self::$reflectionCache[$fqcn])) {
-            $ref = self::$reflectionCache[$fqcn];
-        } else {
-            try {
-                if (! enum_exists($fqcn)) {
-                    return null;
-                }
+        if (array_key_exists($fqcn, self::$enumCache)) {
+            $cached = self::$enumCache[$fqcn];
 
-                $ref = new ReflectionEnum($fqcn);
-            } catch (\Throwable) {
-                // Autoloading the class can fatal-out on broken consumer code
-                // (e.g. LSP violations). Catch what's catchable and skip.
-                return null;
-            }
-
-            self::$reflectionCache[$fqcn] = $ref;
+            return $cached === false ? null : $cached;
         }
 
+        $info = $this->resolveEnumInfo($fqcn);
+        self::$enumCache[$fqcn] = $info ?? false;
+
+        return $info;
+    }
+
+    /**
+     * @return array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}|null
+     */
+    private function resolveEnumInfo(string $fqcn): ?array
+    {
+        // Already loaded — reflection is safe.
+        if (enum_exists($fqcn, autoload: false)) {
+            try {
+                return $this->enumInfoFromReflection(new ReflectionEnum($fqcn));
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        // If it's a loaded non-enum class, it's definitively not an enum.
+        if (class_exists($fqcn, autoload: false) || interface_exists($fqcn, autoload: false) || trait_exists($fqcn, autoload: false)) {
+            return null;
+        }
+
+        // Not loaded. Parse the source file without autoloading so a broken
+        // consumer class can't fatal the whole run.
+        return $this->enumInfoFromAst($fqcn);
+    }
+
+    /**
+     * @return array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}
+     */
+    private function enumInfoFromReflection(ReflectionEnum $ref): array
+    {
         $cases = [];
 
         foreach ($ref->getCases() as $case) {
@@ -238,7 +267,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
             }
         }
 
-        $short = $ref->getShortName();
         $backing = null;
 
         if ($ref->isBacked()) {
@@ -247,11 +275,151 @@ final class FindStringsThatShouldBeEnums implements Pipe
         }
 
         return [
+            'fqcn' => $ref->getName(),
+            'short' => $ref->getShortName(),
+            'backing' => $backing,
+            'cases' => $cases,
+        ];
+    }
+
+    /**
+     * @return array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}|null
+     */
+    private function enumInfoFromAst(string $fqcn): ?array
+    {
+        $loader = $this->getComposerLoader();
+
+        if ($loader === null) {
+            return null;
+        }
+
+        $file = $loader->findFile($fqcn);
+
+        if ($file === false || ! is_file($file)) {
+            return null;
+        }
+
+        $content = @file_get_contents($file);
+
+        if ($content === false || $content === '') {
+            return null;
+        }
+
+        try {
+            $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($ast === null) {
+            return null;
+        }
+
+        $parts = explode('\\', $fqcn);
+        $short = array_pop($parts);
+        $namespace = implode('\\', $parts);
+
+        $enumNode = $this->findEnumNode($ast, $short, $namespace);
+
+        if ($enumNode === null) {
+            return null;
+        }
+
+        $cases = [];
+        $backing = null;
+
+        if ($enumNode->scalarType instanceof Node\Identifier) {
+            $backing = $enumNode->scalarType->toString();
+        }
+
+        foreach ($enumNode->stmts as $stmt) {
+            if (! $stmt instanceof Node\Stmt\EnumCase) {
+                continue;
+            }
+
+            $caseName = $stmt->name->toString();
+
+            if ($backing !== null && $stmt->expr !== null) {
+                $value = $this->extractScalarValue($stmt->expr);
+
+                if ($value === null) {
+                    continue;
+                }
+
+                $cases[(string) $value] = $caseName;
+            } else {
+                $cases[$caseName] = $caseName;
+            }
+        }
+
+        return [
             'fqcn' => $fqcn,
             'short' => $short,
             'backing' => $backing,
             'cases' => $cases,
         ];
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function findEnumNode(array $ast, string $short, string $namespace): ?Node\Stmt\Enum_
+    {
+        foreach ($ast as $node) {
+            if ($node instanceof Node\Stmt\Namespace_) {
+                $ns = $node->name?->toString() ?? '';
+
+                if ($ns !== $namespace) {
+                    continue;
+                }
+
+                foreach ($node->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Enum_ && $stmt->name?->toString() === $short) {
+                        return $stmt;
+                    }
+                }
+            } elseif ($node instanceof Node\Stmt\Enum_ && $namespace === '' && $node->name?->toString() === $short) {
+                return $node;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractScalarValue(Node\Expr $expr): string|int|null
+    {
+        if ($expr instanceof Scalar\String_) {
+            return $expr->value;
+        }
+
+        if ($expr instanceof Scalar\Int_) {
+            return $expr->value;
+        }
+
+        if ($expr instanceof Expr\UnaryMinus && $expr->expr instanceof Scalar\Int_) {
+            return -$expr->expr->value;
+        }
+
+        return null;
+    }
+
+    private function getComposerLoader(): ?ClassLoader
+    {
+        if (self::$composerLoaderResolved) {
+            return self::$composerLoader;
+        }
+
+        self::$composerLoaderResolved = true;
+
+        foreach (spl_autoload_functions() ?: [] as $autoload) {
+            if (is_array($autoload) && isset($autoload[0]) && $autoload[0] instanceof ClassLoader) {
+                self::$composerLoader = $autoload[0];
+
+                return self::$composerLoader;
+            }
+        }
+
+        return null;
     }
 
     /**
