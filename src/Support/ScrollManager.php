@@ -8,10 +8,12 @@ use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\ProphetFailure;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Environment;
 use Illuminate\Support\Collection;
+use Throwable;
 
 /**
  * Manages the sacred scrolls (groups of commandments).
@@ -19,10 +21,38 @@ use Illuminate\Support\Collection;
  */
 class ScrollManager
 {
+    /** @var array<ProphetFailure> */
+    protected array $failures = [];
+
     public function __construct(
         protected ProphetRegistry $registry,
         protected FileScanner $scanner,
-    ) {}
+    ) {
+        ProphetExecutionContext::register();
+    }
+
+    /**
+     * @return array<ProphetFailure>
+     */
+    public function getFailures(): array
+    {
+        return $this->failures;
+    }
+
+    protected function runProphet(Commandment $prophet, string $filePath, string $content): ?Judgment
+    {
+        ProphetExecutionContext::enter(get_class($prophet), $filePath);
+
+        try {
+            return $prophet->judge($filePath, $content);
+        } catch (Throwable $e) {
+            $this->failures[] = new ProphetFailure(get_class($prophet), $filePath, $e);
+
+            return null;
+        } finally {
+            ProphetExecutionContext::leave();
+        }
+    }
 
     /**
      * Judge all files in a scroll.
@@ -61,8 +91,11 @@ class ScrollManager
                     continue;
                 }
 
-                $judgment = $prophet->judge($filePath, $content);
-                $fileResults->put(get_class($prophet), $judgment);
+                $judgment = $this->runProphet($prophet, $filePath, $content);
+
+                if ($judgment !== null) {
+                    $fileResults->put(get_class($prophet), $judgment);
+                }
             }
 
             if ($fileResults->isNotEmpty()) {
@@ -132,8 +165,11 @@ class ScrollManager
                     continue;
                 }
 
-                $judgment = $prophet->judge($filePath, $content);
-                $fileResults->put(get_class($prophet), $judgment);
+                $judgment = $this->runProphet($prophet, $filePath, $content);
+
+                if ($judgment !== null) {
+                    $fileResults->put(get_class($prophet), $judgment);
+                }
             }
 
             if ($fileResults->isNotEmpty()) {
@@ -183,8 +219,11 @@ class ScrollManager
                     continue;
                 }
 
-                $judgment = $prophet->judge($filePath, $content);
-                $fileResults->put(get_class($prophet), $judgment);
+                $judgment = $this->runProphet($prophet, $filePath, $content);
+
+                if ($judgment !== null) {
+                    $fileResults->put(get_class($prophet), $judgment);
+                }
             }
 
             if ($fileResults->isNotEmpty()) {
@@ -220,8 +259,11 @@ class ScrollManager
                 continue;
             }
 
-            $judgment = $prophet->judge($filePath, $content);
-            $results->put(get_class($prophet), $judgment);
+            $judgment = $this->runProphet($prophet, $filePath, $content);
+
+            if ($judgment !== null) {
+                $results->put(get_class($prophet), $judgment);
+            }
         }
 
         return $results;

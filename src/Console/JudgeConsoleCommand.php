@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
+use JesseGall\CodeCommandments\Results\ProphetFailure;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
@@ -119,7 +120,12 @@ class JudgeConsoleCommand extends Command
             }
         }
 
-        return $this->showResults($output, $prophetFilter, $gitMode);
+        $failures = $manager->getFailures();
+        $this->showFailures($output, $failures);
+
+        $exitCode = $this->showResults($output, $prophetFilter, $gitMode, hadFailures: ! empty($failures));
+
+        return $exitCode;
     }
 
     private function getResults(
@@ -225,12 +231,49 @@ class JudgeConsoleCommand extends Command
         return $content !== false && !$tracker->hasChangedSinceAbsolution($filePath, $prophetClass, $content);
     }
 
-    private function showResults(OutputInterface $output, ?string $prophetFilter = null, bool $gitMode = false): int
+    /**
+     * @param array<ProphetFailure> $failures
+     */
+    private function showFailures(OutputInterface $output, array $failures): void
+    {
+        if (empty($failures)) {
+            return;
+        }
+
+        $grouped = [];
+
+        foreach ($failures as $failure) {
+            $grouped[$failure->prophetClass][] = $failure;
+        }
+
+        $total = count($failures);
+        $output->writeln('');
+        $output->writeln("<comment>PROPHET ERRORS: {$total} (these prophets crashed and were skipped)</comment>");
+        $output->writeln('');
+
+        foreach ($grouped as $prophetClass => $prophetFailures) {
+            $shortName = class_basename($prophetClass);
+            $count = count($prophetFailures);
+            $output->writeln("- {$shortName} ({$count})");
+
+            foreach ($prophetFailures as $failure) {
+                $relative = str_replace(Environment::basePath() . '/', '', $failure->filePath);
+                $output->writeln("    {$relative}");
+                $output->writeln("      " . get_class($failure->error) . ': ' . $failure->error->getMessage());
+            }
+        }
+
+        $output->writeln('');
+    }
+
+    private function showResults(OutputInterface $output, ?string $prophetFilter = null, bool $gitMode = false, bool $hadFailures = false): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
-            $output->writeln('Righteous: No sins found.');
+            if (! $hadFailures) {
+                $output->writeln('Righteous: No sins found.');
+            }
 
-            return Command::SUCCESS;
+            return $hadFailures ? Command::FAILURE : Command::SUCCESS;
         }
 
         $isDetailedView = $prophetFilter !== null;
