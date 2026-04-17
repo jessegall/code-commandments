@@ -14,8 +14,6 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
-use ReflectionClass;
-use ReflectionProperty;
 
 /**
  * Commandment: Computed properties must use property hooks, not constructor assignment.
@@ -92,7 +90,7 @@ SCRIPTURE;
         $matches = [];
 
         foreach ($ctx->classes as $class) {
-            $computedProperties = $this->getComputedPropertyNames($class, $ctx);
+            $computedProperties = $this->getComputedPropertyNames($class);
 
             if (empty($computedProperties)) {
                 continue;
@@ -129,70 +127,9 @@ SCRIPTURE;
     }
 
     /**
-     * Get property names that have the #[Computed] attribute.
-     *
-     * Uses reflection when the class is autoloadable, falls back to AST analysis.
-     *
      * @return array<string>
      */
-    private function getComputedPropertyNames(Node\Stmt\Class_ $class, PhpContext $ctx): array
-    {
-        $fqcn = $this->resolveClassFqcn($class, $ctx);
-
-        if ($fqcn !== null && class_exists($fqcn)) {
-            return $this->getComputedPropertyNamesByReflection($fqcn);
-        }
-
-        return $this->getComputedPropertyNamesByAst($class);
-    }
-
-    /**
-     * Use reflection to find properties with #[Computed] attribute.
-     *
-     * @return array<string>
-     */
-    private function getComputedPropertyNamesByReflection(string $fqcn): array
-    {
-        try {
-            $reflection = new ReflectionClass($fqcn);
-            $names = [];
-
-            foreach ($reflection->getProperties() as $property) {
-                if ($this->propertyHasComputedAttribute($property)) {
-                    $names[] = $property->getName();
-                }
-            }
-
-            return $names;
-        } catch (\ReflectionException) {
-            return [];
-        }
-    }
-
-    /**
-     * Check if a reflected property has the #[Computed] attribute.
-     */
-    private function propertyHasComputedAttribute(ReflectionProperty $property): bool
-    {
-        foreach ($property->getAttributes() as $attribute) {
-            if ($attribute->getName() === self::COMPUTED_ATTRIBUTE) {
-                return true;
-            }
-
-            if (class_basename($attribute->getName()) === 'Computed') {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Use AST to find properties with #[Computed] attribute.
-     *
-     * @return array<string>
-     */
-    private function getComputedPropertyNamesByAst(Node\Stmt\Class_ $class): array
+    private function getComputedPropertyNames(Node\Stmt\Class_ $class): array
     {
         $names = [];
 
@@ -286,19 +223,4 @@ SCRIPTURE;
         return $assignments;
     }
 
-    /**
-     * Resolve the fully qualified class name from an AST class node.
-     */
-    private function resolveClassFqcn(Node\Stmt\Class_ $class, PhpContext $ctx): ?string
-    {
-        $className = $class->name?->toString();
-
-        if ($className === null) {
-            return null;
-        }
-
-        return $ctx->namespace !== null
-            ? $ctx->namespace . '\\' . $className
-            : $className;
-    }
 }
