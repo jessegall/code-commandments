@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Judgment;
@@ -24,6 +25,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * suggestions walk upstream through `max_trace_depth` hops to point at
  * the method where the DTO should actually be introduced.
  */
+#[IntroducedIn('1.4.0')]
 class NoArrayStringIndexingProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
     private ?CodebaseIndex $codebaseIndex = null;

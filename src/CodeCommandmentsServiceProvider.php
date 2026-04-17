@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments;
 
 use Illuminate\Support\ServiceProvider;
 use JesseGall\CodeCommandments\Commands\InstallHooksCommand;
+use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
 use JesseGall\CodeCommandments\Commands\JudgeCommand;
 use JesseGall\CodeCommandments\Commands\MakeProphetCommand;
 use JesseGall\CodeCommandments\Commands\RepentCommand;
@@ -72,6 +73,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 ScriptureCommand::class,
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
+                InstallSyncHookCommand::class,
                 SyncCommand::class,
             ]);
         }
