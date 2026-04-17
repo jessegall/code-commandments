@@ -13,8 +13,12 @@ use Symfony\Component\Finder\Finder;
  */
 class GenericFileScanner implements FileScanner
 {
-    public function scan(string|array $path, array $extensions = [], array $excludePaths = []): iterable
-    {
+    public function scan(
+        string|array $path,
+        array $extensions = [],
+        array $excludePaths = [],
+        bool $honorDefaultExcludes = true,
+    ): iterable {
         $paths = is_array($path) ? $path : [$path];
         $validPaths = array_filter($paths, fn (string $p) => is_dir($p));
 
@@ -30,18 +34,19 @@ class GenericFileScanner implements FileScanner
             $finder->name($patterns);
         }
 
-        foreach ($excludePaths as $excludePath) {
-            $finder->notPath(PathExcludeMatcher::toRegex($excludePath));
-        }
+        if ($honorDefaultExcludes) {
+            foreach ($excludePaths as $excludePath) {
+                $finder->notPath(PathExcludeMatcher::toRegex($excludePath));
+            }
 
-        // Exclude common directories
-        $finder->exclude([
-            'vendor',
-            'node_modules',
-            'storage',
-            '.git',
-            'bootstrap/cache',
-        ]);
+            $finder->exclude([
+                'vendor',
+                'node_modules',
+                'storage',
+                '.git',
+                'bootstrap/cache',
+            ]);
+        }
 
         foreach ($finder as $file) {
             yield $file;

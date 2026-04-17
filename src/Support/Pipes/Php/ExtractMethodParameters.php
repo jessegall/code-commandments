@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
 
@@ -36,7 +37,7 @@ final class ExtractMethodParameters implements Pipe
                     continue;
                 }
 
-                $typeName = $this->getTypeName($param->type);
+                $typeName = NameResolver::typeName($param->type);
 
                 if ($typeName === null) {
                     continue;
@@ -46,7 +47,7 @@ final class ExtractMethodParameters implements Pipe
                     continue;
                 }
 
-                $fqcn = $this->resolveFullyQualifiedName($typeName, $input->useStatements, $input->namespace);
+                $fqcn = NameResolver::resolve($typeName, $input->useStatements, $input->namespace);
 
                 $parameters[] = [
                     'class' => $class,
@@ -62,28 +63,6 @@ final class ExtractMethodParameters implements Pipe
         return $input->with(parameters: $parameters);
     }
 
-    private function getTypeName(?Node $type): ?string
-    {
-        if ($type instanceof Node\Name) {
-            return $type->toString();
-        }
-
-        if ($type instanceof Node\Identifier) {
-            return $type->toString();
-        }
-
-        if ($type instanceof Node\NullableType) {
-            return $this->getTypeName($type->type);
-        }
-
-        if ($type instanceof Node\UnionType || $type instanceof Node\IntersectionType) {
-            // For union/intersection types, just get the first type
-            return $this->getTypeName($type->types[0] ?? null);
-        }
-
-        return null;
-    }
-
     private function isScalarType(string $typeName): bool
     {
         return in_array(strtolower($typeName), [
@@ -91,37 +70,5 @@ final class ExtractMethodParameters implements Pipe
             'mixed', 'null', 'void', 'never', 'callable', 'iterable',
             'true', 'false',
         ], true);
-    }
-
-    /**
-     * @param  array<string, string>  $useStatements
-     */
-    private function resolveFullyQualifiedName(string $typeName, array $useStatements, ?string $namespace): string
-    {
-        // Already fully qualified
-        if (str_starts_with($typeName, '\\')) {
-            return ltrim($typeName, '\\');
-        }
-
-        // Check use statements
-        $parts = explode('\\', $typeName);
-        $firstPart = $parts[0];
-
-        if (isset($useStatements[$firstPart])) {
-            if (count($parts) === 1) {
-                return $useStatements[$firstPart];
-            }
-
-            $parts[0] = $useStatements[$firstPart];
-
-            return implode('\\', $parts);
-        }
-
-        // Assume same namespace
-        if ($namespace) {
-            return $namespace.'\\'.$typeName;
-        }
-
-        return $typeName;
     }
 }

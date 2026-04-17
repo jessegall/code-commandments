@@ -157,6 +157,77 @@ class ScrollManagerTest extends TestCase
         }
     }
 
+    public function test_judge_path_scans_files_under_targeted_directory(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/cc-scroll-' . uniqid();
+        mkdir($tempDir);
+        mkdir($tempDir . '/vendor');
+        mkdir($tempDir . '/app');
+
+        $inVendor = $tempDir . '/vendor/pkg.php';
+        $inApp = $tempDir . '/app/user.php';
+
+        file_put_contents($inVendor, "<?php\n");
+        file_put_contents($inApp, "<?php\n");
+
+        try {
+            $this->registry->register('test', ExcludingTestProphet::class);
+            $this->registry->setScrollConfig('test', [
+                'path' => $tempDir,
+                'extensions' => ['php'],
+                // configure excludes that would normally skip vendor
+                'exclude' => ['vendor'],
+            ]);
+
+            // judgePath into vendor directly bypasses both the 'vendor' default
+            // exclude and the configured 'vendor' exclude.
+            $results = $this->scrollManager->judgePath('test', $tempDir . '/vendor');
+
+            $this->assertTrue($results->has(realpath($inVendor)), 'Expected vendor/pkg.php to be scanned via --path');
+            $this->assertFalse($results->has(realpath($inApp) ?: $inApp), 'Expected app/user.php to be outside --path scope');
+        } finally {
+            @unlink($inVendor);
+            @unlink($inApp);
+            @rmdir($tempDir . '/vendor');
+            @rmdir($tempDir . '/app');
+            @rmdir($tempDir);
+        }
+    }
+
+    public function test_judge_path_bypasses_glob_excludes(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/cc-scroll-' . uniqid();
+        mkdir($tempDir);
+
+        $generated = $tempDir . '/types.generated.php';
+        $normal = $tempDir . '/user.php';
+
+        file_put_contents($generated, "<?php\n");
+        file_put_contents($normal, "<?php\n");
+
+        try {
+            $this->registry->register('test', ExcludingTestProphet::class);
+            $this->registry->setScrollConfig('test', [
+                'path' => $tempDir,
+                'extensions' => ['php'],
+                'exclude' => ['*.generated.php'],
+            ]);
+
+            // judgeScroll honours the glob exclude — generated file skipped
+            $normalResults = $this->scrollManager->judgeScroll('test');
+            $this->assertFalse($normalResults->has(realpath($generated)), 'judgeScroll should skip glob-excluded file');
+
+            // judgePath bypasses it
+            $pathResults = $this->scrollManager->judgePath('test', $tempDir);
+            $this->assertTrue($pathResults->has(realpath($generated)), 'judgePath should bypass glob exclude');
+            $this->assertTrue($pathResults->has(realpath($normal)), 'judgePath should scan normal files too');
+        } finally {
+            @unlink($generated);
+            @unlink($normal);
+            @rmdir($tempDir);
+        }
+    }
+
     public function test_base_commandment_get_excluded_paths_returns_config_value(): void
     {
         $prophet = new class extends BaseCommandment {

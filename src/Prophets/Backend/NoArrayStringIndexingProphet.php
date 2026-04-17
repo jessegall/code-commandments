@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindArrayStringIndexing;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
@@ -17,9 +19,20 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * When the key is a known-at-write-time string (literal, class constant,
  * enum case `->value`), the array is a structured record in disguise.
  * Wrap it in a DTO or value object so reads become typed property access.
+ *
+ * When a `CodebaseIndex` is injected (same-scroll call graph), per-sin
+ * suggestions walk upstream through `max_trace_depth` hops to point at
+ * the method where the DTO should actually be introduced.
  */
-class NoArrayStringIndexingProphet extends PhpCommandment
+class NoArrayStringIndexingProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
+    private ?CodebaseIndex $codebaseIndex = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->codebaseIndex = $index;
+    }
+
     public function description(): string
     {
         return 'Prefer typed DTOs over string-indexed arrays for structured data';
@@ -60,15 +73,28 @@ Dictionary-shaped arrays (dynamic keys, homogeneous values) are fine —
 annotate them with `@var array<string, T>` / `@param array<string, T>`
 to opt out. Wrapper helpers (`config()`, `Arr::get()`, `data_get()`,
 etc.) already signal "this is dynamic lookup" and are not flagged.
+
+When a codebase index is available, the suggestion walks back through
+caller methods up to `max_trace_depth` hops (default 10) to name the
+originating method instead of the local one.
 SCRIPTURE;
     }
 
     public function judge(string $filePath, string $content): Judgment
     {
+        $pipe = new FindArrayStringIndexing();
+
+        if ($this->codebaseIndex !== null && $this->config('cross_file_trace', true)) {
+            $pipe = $pipe->withCodebaseIndex(
+                $this->codebaseIndex,
+                (int) $this->config('max_trace_depth', 10),
+            );
+        }
+
         return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractUseStatements::class)
-            ->pipe(new FindArrayStringIndexing)
+            ->pipe($pipe)
             ->sinsFromMatches(
                 fn ($match) => sprintf(
                     'Array string indexing on %s[%s] — wrap in a DTO',
