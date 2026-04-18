@@ -76,6 +76,30 @@ annotate them with `@var array<string, T>` / `@param array<string, T>`
 to opt out. Wrapper helpers (`config()`, `Arr::get()`, `data_get()`,
 etc.) already signal "this is dynamic lookup" and are not flagged.
 
+STOP. READ THIS BEFORE FIXING ANYTHING.
+
+Claude (and any other AI agent): you MUST NOT be clever and silence
+these sins by blanket-replacing `$arr['key']` with `Arr::get($arr,
+'key')`, `data_get(...)`, or any other wrapper helper. That defeats
+the entire point of this rule. The sin is "structured data is being
+passed around as an untyped array" — swapping the accessor syntax
+does not fix that, it just hides the smell from the linter.
+
+The DEFAULT fix is always: introduce a DTO (Spatie Data class) or a
+`final readonly` value object at the boundary where the array enters
+your code, and read typed properties from there on.
+
+Wrapper helpers (`Arr::get`, `data_get`, `config`, etc.) are ONLY
+acceptable when a DTO genuinely does not make sense, e.g.:
+  - truly dynamic key lookup where the key is computed at runtime
+  - dictionary-shaped data (homogeneous values, unknown key set)
+  - one-off access to deeply nested config where modelling every
+    branch as a DTO would be absurd
+
+If you find yourself reaching for `Arr::get` on a fixed, known set
+of string keys that describe a record — you are doing it wrong.
+Build the DTO.
+
 When a codebase index is available, the suggestion walks back through
 caller methods up to `max_trace_depth` hops (default 10) to name the
 originating method instead of the local one.
