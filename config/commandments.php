@@ -60,6 +60,7 @@ return [
                 ],
                 Backend\NoArrayStringIndexingProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
+                Backend\PreferStaticOverInvokableConstructProphet::class,
             ],
         ],
 
