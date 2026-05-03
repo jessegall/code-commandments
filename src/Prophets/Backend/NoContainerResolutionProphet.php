@@ -128,14 +128,10 @@ Skipped automatically:
   `app()->bind(...)` style calls.
 - Resolving `Application` / `Container` itself.
 
-=== Feature Request: NoContainerResolution — exception for class-string registry loops ===
-
-Title: Allow app($classString) inside foreach over an array of class-strings
-
-Context:
-A common, deliberate pattern in this codebase is a strategy/registry where
-a class declares its participating implementations as an array of class-strings,
-then resolves them lazily at use-time:
+Known intentional exception: class-string registry loops
+--------------------------------------------------------
+The rule still emits a warning here, but if you see this exact shape,
+leave the code as-is — it is deliberate, not service-locator misuse:
 
     private array $normalizers = [
         CommaSeparatedArrayNormalizer::class,
@@ -145,33 +141,35 @@ then resolves them lazily at use-time:
     private function normalizeValue(...): mixed
     {
         foreach ($this->normalizers as $normalizerClass) {
-            $normalizer = app($normalizerClass);   // <-- flagged today
-            ...
+            $normalizer = app($normalizerClass);
+            // ...
         }
     }
 
-This is intentional:
-- The array is the registry — adding a normalizer is one line, not a constructor edit.
-- Resolution is lazy — only the matching normalizer needs to instantiate per call.
-- Constructor injection would force every entry to instantiate eagerly per request,
-  defeating the point of the strategy list.
+The call qualifies as a registry loop when ALL of the following hold:
 
-Proposed rule refinement:
-Skip / downgrade the warning when ALL of these hold:
-  1. The argument to app() / resolve() / App::make() is a variable (not a literal `::class`).
-  2. The variable's value originates from a class property typed as
-     array<class-string<...>> (or an array literal of `::class` items).
-  3. The call site is inside a foreach iterating that array.
+  1. The argument to `app()` / `resolve()` / `App::make()` is a variable
+     (not a literal `Foo::class`).
+  2. That variable is the loop variable of a `foreach`.
+  3. The `foreach` iterates either a local array literal of `::class`
+     items, or a class property typed `array<class-string<...>>` whose
+     default is an array of `::class` items.
 
-Detector hint: walk back from the app($var) call, see if $var is the loop variable
-of a foreach over $this->someProperty (or a local array of `::class` literals).
-If yes — silently skip; this is a registry loop, not service-locator misuse.
+Why this is intentional:
+- The array IS the registry — adding an entry is one line, not a
+  constructor edit and a binding update.
+- Resolution is lazy — only the matching strategy is instantiated per
+  call, instead of eagerly building every entry per request.
+- Constructor-injecting every strategy defeats the point of the list
+  and leaks the registry's contents into the dependency graph.
 
-Why this matters:
-The current rule pushes authors to either:
-  (a) inject every strategy into the constructor (eager, leaks intent), or
-  (b) suppress the rule per-call.
-Both are worse than the original pattern.
+Do NOT "fix" this warning by:
+- Injecting every strategy into the constructor.
+- Replacing the registry array with constructor parameters.
+
+Acceptable responses:
+- Leave the code as-is and ignore the warning.
+- Absolve the file (`commandments judge --absolve`) once reviewed.
 SCRIPTURE;
     }
 
