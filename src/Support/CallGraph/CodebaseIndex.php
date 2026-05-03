@@ -42,6 +42,9 @@ final class CodebaseIndex
     /** @var array<string, list<CallSite>>   key = "FQCN::method" */
     private array $callersByCallee = [];
 
+    /** @var array<string, list<array{file: string, line: int, in_class: string, in_method: string}>>   key = newed-class FQCN */
+    private array $instantiationsByClass = [];
+
     /**
      * Build from an iterable of file paths. Parse failures are swallowed —
      * partial indices are still useful.
@@ -163,6 +166,26 @@ final class CodebaseIndex
     public function callersOf(string $calleeFqcn, string $method): array
     {
         return $this->callersByCallee[$calleeFqcn . '::' . $method] ?? [];
+    }
+
+    /**
+     * Every `new <fqcn>(...)` site found inside the indexed methods.
+     *
+     * Returns an empty list when the class is known to the index (so the
+     * caller can confidently say "never `new`-instantiated"). Returns an
+     * empty list ALSO when the class is unknown — callers should consult
+     * `classByFqcn()` first if they need to distinguish "definitely zero"
+     * from "we don't know about this class".
+     *
+     * Limitation: only tracks `new` expressions inside methods of indexed
+     * classes. `new` calls in top-level scripts or in classes outside the
+     * scroll are not seen.
+     *
+     * @return list<array{file: string, line: int, in_class: string, in_method: string}>
+     */
+    public function instantiationsOf(string $fqcn): array
+    {
+        return $this->instantiationsByClass[$fqcn] ?? [];
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -383,6 +406,35 @@ final class CodebaseIndex
                     $callSites[] = $cs;
                     $index->registerCallSite($cs);
                 }
+            }
+
+            foreach ($finder->findInstanceOf($method->stmts, Expr\New_::class) as $new) {
+                assert($new instanceof Expr\New_);
+
+                if (! $new->class instanceof Node\Name) {
+                    // Anonymous class or dynamic class — can't resolve.
+                    continue;
+                }
+
+                $newedFqcn = NameResolver::resolve(
+                    $new->class->toString(),
+                    $shell['uses'],
+                    $shell['namespace'],
+                );
+
+                // Only register `new` sites for classes we know about — the
+                // index is consulted to answer "is THIS class ever `new`d?",
+                // and unknown classes wouldn't be queried.
+                if (! isset($shells[$newedFqcn])) {
+                    continue;
+                }
+
+                $index->registerInstantiation($newedFqcn, [
+                    'file' => $shell['file'],
+                    'line' => $new->getStartLine(),
+                    'in_class' => $classFqcn,
+                    'in_method' => $method->name->toString(),
+                ]);
             }
         }
 
@@ -607,5 +659,13 @@ final class CodebaseIndex
     {
         $key = $cs->calleeFqcn . '::' . $cs->calleeMethod;
         $this->callersByCallee[$key][] = $cs;
+    }
+
+    /**
+     * @param  array{file: string, line: int, in_class: string, in_method: string}  $site
+     */
+    private function registerInstantiation(string $fqcn, array $site): void
+    {
+        $this->instantiationsByClass[$fqcn][] = $site;
     }
 }

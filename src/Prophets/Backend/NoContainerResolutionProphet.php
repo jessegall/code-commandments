@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 
@@ -35,8 +37,15 @@ use PhpParser\NodeFinder;
  *   instance itself is rarely a constructor-injection candidate).
  */
 #[IntroducedIn('1.9.0')]
-class NoContainerResolutionProphet extends PhpCommandment
+class NoContainerResolutionProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
+    private ?CodebaseIndex $codebaseIndex = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->codebaseIndex = $index;
+    }
+
     /**
      * Class arguments that are noisy to flag — fetching the application
      * or container instance itself isn't the smell this prophet targets.
@@ -93,11 +102,17 @@ Good:
 Tracking the origin
 -------------------
 Constructor injection only works if the *containing* class is itself
-resolved by the container — i.e. nobody constructs it with `new`.
-Before moving the call to the constructor, search for `new YourClass(`
-across the codebase. If there are no matches, the class is DI-resolved
-and constructor injection is safe. If there are matches, fix those
-call sites first (or accept that this particular call has to stay).
+resolved by the container — i.e. nobody constructs it with `new`. The
+prophet uses the same scroll-wide call graph that other cross-file
+prophets rely on to answer this for you:
+
+- If no `new ContainingClass(...)` exists anywhere in the scroll, the
+  warning says so plainly — move the dependency to the constructor.
+- If one exists, the warning points at the file:line so you can fix
+  the call site first (or accept that this resolution has to stay).
+- In single-file mode (`--file`) or when the containing class lives
+  outside the scanned scroll, the prophet falls back to a "verify
+  manually" hint instead of guessing.
 
 Reported as a warning, not a sin
 --------------------------------
@@ -127,76 +142,103 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        $namespace = $this->getNamespace($ast);
         $finder = new NodeFinder;
         $warnings = [];
         $seen = [];
 
-        // app(X) and resolve(X) — bare function calls.
-        /** @var array<Node\Expr\FuncCall> $funcCalls */
-        $funcCalls = $finder->findInstanceOf($ast, Node\Expr\FuncCall::class);
+        /** @var array<Node\Stmt\Class_> $classes */
+        $classes = $finder->findInstanceOf($ast, Node\Stmt\Class_::class);
 
-        foreach ($funcCalls as $call) {
-            if (! $call->name instanceof Node\Name) {
+        // Walk per class so each match knows its containing class FQCN.
+        // Calls outside any class (top-level scripts) are walked once with
+        // a null containing FQCN.
+        $scopes = [];
+
+        foreach ($classes as $class) {
+            if ($class->name === null) {
                 continue;
             }
 
-            $fnName = $call->name->toString();
-
-            if ($fnName === 'app' && ! empty($call->args)) {
-                $warning = $this->buildWarning('app', $call, $content);
-            } elseif ($fnName === 'resolve' && ! empty($call->args)) {
-                $warning = $this->buildWarning('resolve', $call, $content);
-            } else {
-                continue;
-            }
-
-            $this->addUnique($warnings, $seen, $warning);
+            $shortName = $class->name->toString();
+            $fqcn = $namespace !== null ? $namespace . '\\' . $shortName : $shortName;
+            $scopes[] = ['fqcn' => $fqcn, 'short' => $shortName, 'nodes' => $class->stmts ?? []];
         }
 
-        // app()->make(X) and app()->makeWith(X, ...) — chained method calls.
-        /** @var array<Node\Expr\MethodCall> $methodCalls */
-        $methodCalls = $finder->findInstanceOf($ast, Node\Expr\MethodCall::class);
-
-        foreach ($methodCalls as $call) {
-            if (! $this->isResolveMethod($call->name)) {
-                continue;
-            }
-
-            if (! $this->isAppFuncCall($call->var)) {
-                continue;
-            }
-
-            if (empty($call->args)) {
-                continue;
-            }
-
-            $warning = $this->buildWarning('app()->make', $call, $content);
-            $this->addUnique($warnings, $seen, $warning);
+        if ($scopes === []) {
+            $scopes[] = ['fqcn' => null, 'short' => null, 'nodes' => $ast];
         }
 
-        // App::make(X) and App::makeWith(X, ...) — facade static calls.
-        /** @var array<Node\Expr\StaticCall> $staticCalls */
-        $staticCalls = $finder->findInstanceOf($ast, Node\Expr\StaticCall::class);
+        foreach ($scopes as $scope) {
+            $context = ['fqcn' => $scope['fqcn'], 'short' => $scope['short']];
 
-        foreach ($staticCalls as $call) {
-            if (! $this->isResolveMethod($call->name)) {
-                continue;
+            // app(X) and resolve(X) — bare function calls.
+            /** @var array<Node\Expr\FuncCall> $funcCalls */
+            $funcCalls = $finder->findInstanceOf($scope['nodes'], Node\Expr\FuncCall::class);
+
+            foreach ($funcCalls as $call) {
+                if (! $call->name instanceof Node\Name) {
+                    continue;
+                }
+
+                $fnName = $call->name->toString();
+
+                if ($fnName === 'app' && ! empty($call->args)) {
+                    $warning = $this->buildWarning('app', $call, $content, $context);
+                } elseif ($fnName === 'resolve' && ! empty($call->args)) {
+                    $warning = $this->buildWarning('resolve', $call, $content, $context);
+                } else {
+                    continue;
+                }
+
+                $this->addUnique($warnings, $seen, $warning);
             }
 
-            if (! $call->class instanceof Node\Name) {
-                continue;
+            // app()->make(X) and app()->makeWith(X, ...).
+            /** @var array<Node\Expr\MethodCall> $methodCalls */
+            $methodCalls = $finder->findInstanceOf($scope['nodes'], Node\Expr\MethodCall::class);
+
+            foreach ($methodCalls as $call) {
+                if (! $this->isResolveMethod($call->name)) {
+                    continue;
+                }
+
+                if (! $this->isAppFuncCall($call->var)) {
+                    continue;
+                }
+
+                if (empty($call->args)) {
+                    continue;
+                }
+
+                $warning = $this->buildWarning('app()->make', $call, $content, $context);
+                $this->addUnique($warnings, $seen, $warning);
             }
 
-            if (! $this->isAppFacade($call->class)) {
-                continue;
-            }
+            // App::make(X) and App::makeWith(X, ...).
+            /** @var array<Node\Expr\StaticCall> $staticCalls */
+            $staticCalls = $finder->findInstanceOf($scope['nodes'], Node\Expr\StaticCall::class);
 
-            if (empty($call->args)) {
-                continue;
-            }
+            foreach ($staticCalls as $call) {
+                if (! $this->isResolveMethod($call->name)) {
+                    continue;
+                }
 
-            $warning = $this->buildWarning('App::make', $call, $content);
-            $this->addUnique($warnings, $seen, $warning);
+                if (! $call->class instanceof Node\Name) {
+                    continue;
+                }
+
+                if (! $this->isAppFacade($call->class)) {
+                    continue;
+                }
+
+                if (empty($call->args)) {
+                    continue;
+                }
+
+                $warning = $this->buildWarning('App::make', $call, $content, $context);
+                $this->addUnique($warnings, $seen, $warning);
+            }
         }
 
         if ($warnings === []) {
@@ -226,7 +268,10 @@ SCRIPTURE;
         $warnings[] = $warning;
     }
 
-    private function buildWarning(string $shape, Node\Expr $call, string $content): ?Warning
+    /**
+     * @param  array{fqcn: ?string, short: ?string}  $context
+     */
+    private function buildWarning(string $shape, Node\Expr $call, string $content, array $context): ?Warning
     {
         $args = $this->getCallArgs($call);
 
@@ -246,17 +291,65 @@ SCRIPTURE;
         $targetLabel = $target['display'] ?? 'a service';
 
         $message = sprintf(
-            '%s — inject %s via the constructor of the containing class instead.',
+            '%s — inject %s via the constructor of %s instead.',
             $callShape,
             $targetLabel,
+            $context['short'] !== null ? $context['short'] : 'the containing class',
         );
 
-        $message .= ' Verify the containing class is itself resolved by Laravel: search for'
-            . ' `new <ContainingClass>(` — if there are no matches, the class is DI-resolved'
-            . ' and constructor injection works there too. If it is constructed manually,'
-            . ' fix those call sites first or keep this resolution.';
+        $message .= ' ' . $this->originHint($context['fqcn']);
 
         return Warning::at($line, $message, $snippet);
+    }
+
+    /**
+     * Build the second sentence of the warning, hinting at whether the
+     * containing class can actually take a constructor dependency. Uses
+     * the cross-file index when available; falls back to a generic prompt
+     * to inspect manually.
+     */
+    private function originHint(?string $containingFqcn): string
+    {
+        $shortName = $containingFqcn !== null ? $this->shortName($containingFqcn) : '<ContainingClass>';
+
+        if ($this->codebaseIndex === null || $containingFqcn === null) {
+            return sprintf(
+                'Verify the containing class is itself DI-resolved (search for `new %s(` — no matches means it is, so constructor injection works there too).',
+                $shortName,
+            );
+        }
+
+        // The index only tracks classes it actually saw being defined.
+        // If the containing class isn't there (e.g. excluded path, vendor),
+        // we have no authority to claim "never `new`d".
+        if ($this->codebaseIndex->classByFqcn($containingFqcn) === null) {
+            return 'Containing class is outside the scanned scroll — verify manually that it is DI-resolved before moving the dependency.';
+        }
+
+        $sites = $this->codebaseIndex->instantiationsOf($containingFqcn);
+
+        if ($sites === []) {
+            return 'No `new ' . $this->shortName($containingFqcn) . '(` was found in the scroll, so the class is DI-resolved — move the dependency to the constructor.';
+        }
+
+        $sample = $sites[0];
+        $relative = basename(dirname($sample['file'])) . '/' . basename($sample['file']);
+        $extra = count($sites) > 1 ? sprintf(' (+%d more)', count($sites) - 1) : '';
+
+        return sprintf(
+            '`new %s(` is constructed manually at %s:%d%s — fix those call sites first or accept that this resolution stays.',
+            $this->shortName($containingFqcn),
+            $relative,
+            $sample['line'],
+            $extra,
+        );
+    }
+
+    private function shortName(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     /**
