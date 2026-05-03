@@ -127,6 +127,51 @@ Skipped automatically:
 - `app()` with no arguments — returns the container, common with
   `app()->bind(...)` style calls.
 - Resolving `Application` / `Container` itself.
+
+=== Feature Request: NoContainerResolution — exception for class-string registry loops ===
+
+Title: Allow app($classString) inside foreach over an array of class-strings
+
+Context:
+A common, deliberate pattern in this codebase is a strategy/registry where
+a class declares its participating implementations as an array of class-strings,
+then resolves them lazily at use-time:
+
+    private array $normalizers = [
+        CommaSeparatedArrayNormalizer::class,
+        StringToArrayNormalizer::class,
+    ];
+
+    private function normalizeValue(...): mixed
+    {
+        foreach ($this->normalizers as $normalizerClass) {
+            $normalizer = app($normalizerClass);   // <-- flagged today
+            ...
+        }
+    }
+
+This is intentional:
+- The array is the registry — adding a normalizer is one line, not a constructor edit.
+- Resolution is lazy — only the matching normalizer needs to instantiate per call.
+- Constructor injection would force every entry to instantiate eagerly per request,
+  defeating the point of the strategy list.
+
+Proposed rule refinement:
+Skip / downgrade the warning when ALL of these hold:
+  1. The argument to app() / resolve() / App::make() is a variable (not a literal `::class`).
+  2. The variable's value originates from a class property typed as
+     array<class-string<...>> (or an array literal of `::class` items).
+  3. The call site is inside a foreach iterating that array.
+
+Detector hint: walk back from the app($var) call, see if $var is the loop variable
+of a foreach over $this->someProperty (or a local array of `::class` literals).
+If yes — silently skip; this is a registry loop, not service-locator misuse.
+
+Why this matters:
+The current rule pushes authors to either:
+  (a) inject every strategy into the constructor (eager, leaks intent), or
+  (b) suppress the rule per-call.
+Both are worse than the original pattern.
 SCRIPTURE;
     }
 
