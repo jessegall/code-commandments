@@ -116,10 +116,43 @@ prophets rely on to answer this for you:
 
 Reported as a warning, not a sin
 --------------------------------
-A few legitimate uses exist (lazy resolution to break circular
-dependencies, deferred facades, fetching `Application` itself from
-procedural code), and the fix may cascade. So this is surfaced for
-review rather than failing the run.
+The fix sometimes can't be made and sometimes cascades, so this is
+surfaced for review rather than failing the run.
+
+When constructor injection genuinely doesn't work — leave the warning alone
+--------------------------------------------------------------------------
+Some call sites cannot be moved to the constructor. Don't force a
+refactor in any of these cases — accept the warning, or absolve the
+file (`commandments judge --absolve`):
+
+- Circular dependency. A → B → A constructor injection deadlocks.
+  Resolving B lazily inside a method on A is the standard escape.
+- Containing class is `new`-constructed manually. The cross-file
+  origin trace will tell you this. If you can't move every `new`
+  call site to DI (e.g. it's instantiated by a framework callback,
+  a serializer, or third-party code), constructor injection isn't
+  available — the manual `new` would have to pass the dependency in,
+  defeating the point.
+- Frozen signature. Framework callbacks, event listeners, queue
+  jobs deserialised from storage, custom Eloquent casts, and similar
+  hooks have a fixed constructor / handle signature you don't own.
+  Resolving inside the body is the only option.
+- Runtime-selected service. `app($cls)` where `$cls` comes from
+  config, the request, or a registry of class-strings (already
+  skipped by the dynamic-arg rule).
+- Optional / lazy heavyweight dependency that you only want to
+  build on the rare path that actually needs it. Constructor
+  injection would build it eagerly per request.
+- The class is a one-off entry point (e.g. a console command that
+  Laravel resolves from the container itself but whose handler runs
+  exactly once) and pulling 8 services through the constructor would
+  obscure intent without test or wiring benefit.
+
+How to tell which case you're in: read the surrounding code. If
+moving the resolution to the constructor would either break the
+program (circular dep, frozen signature, runtime-selected target)
+or measurably degrade it (eager heavyweights, registry expansion),
+the warning is noise — leave it.
 
 Skipped automatically:
 - Service providers (`extends ServiceProvider`) — wiring the container
