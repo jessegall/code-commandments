@@ -127,11 +127,16 @@ Skipped automatically:
 - `app()` with no arguments — returns the container, common with
   `app()->bind(...)` style calls.
 - Resolving `Application` / `Container` itself.
+- Dynamic arguments — `app($var)`, `app($this->prop)`, `app(self::$x)`,
+  `app($arr[$i])`, etc. We can't tell what's being resolved, and these
+  shapes are almost always the class-string registry loop pattern
+  documented below.
 
-Known intentional exception: class-string registry loops
---------------------------------------------------------
-The rule still emits a warning here, but if you see this exact shape,
-leave the code as-is — it is deliberate, not service-locator misuse:
+Class-string registry loops (covered by the dynamic-arg skip above)
+-------------------------------------------------------------------
+A common deliberate pattern: a class lists its participating
+implementations as an array of class-strings, then resolves them
+lazily inside a loop:
 
     private array $normalizers = [
         CommaSeparatedArrayNormalizer::class,
@@ -146,30 +151,13 @@ leave the code as-is — it is deliberate, not service-locator misuse:
         }
     }
 
-The call qualifies as a registry loop when ALL of the following hold:
-
-  1. The argument to `app()` / `resolve()` / `App::make()` is a variable
-     (not a literal `Foo::class`).
-  2. That variable is the loop variable of a `foreach`.
-  3. The `foreach` iterates either a local array literal of `::class`
-     items, or a class property typed `array<class-string<...>>` whose
-     default is an array of `::class` items.
-
-Why this is intentional:
+The `app($normalizerClass)` call is a `Variable` argument, so the
+prophet skips it under the dynamic-arg rule above. Don't refactor this
+to constructor injection — that defeats the registry's purpose:
 - The array IS the registry — adding an entry is one line, not a
   constructor edit and a binding update.
 - Resolution is lazy — only the matching strategy is instantiated per
   call, instead of eagerly building every entry per request.
-- Constructor-injecting every strategy defeats the point of the list
-  and leaks the registry's contents into the dependency graph.
-
-Do NOT "fix" this warning by:
-- Injecting every strategy into the constructor.
-- Replacing the registry array with constructor parameters.
-
-Acceptable responses:
-- Leave the code as-is and ignore the warning.
-- Absolve the file (`commandments judge --absolve`) once reviewed.
 SCRIPTURE;
     }
 
@@ -319,6 +307,12 @@ SCRIPTURE;
         $args = $this->getCallArgs($call);
 
         if ($args === []) {
+            return null;
+        }
+
+        // Dynamic args (variables, property fetches) — we can't tell what's
+        // being resolved, and the registry-loop pattern lives here. Skip.
+        if ($this->isDynamicArg($args[0]->value)) {
             return null;
         }
 
@@ -476,6 +470,20 @@ SCRIPTURE;
         }
 
         return $display;
+    }
+
+    /**
+     * Whether the argument's value is too dynamic to attribute to a specific
+     * service. Variables and property fetches are the registry-loop pattern's
+     * call shape; flagging them produces noise we can't act on.
+     */
+    private function isDynamicArg(Node\Expr $value): bool
+    {
+        return $value instanceof Node\Expr\Variable
+            || $value instanceof Node\Expr\PropertyFetch
+            || $value instanceof Node\Expr\NullsafePropertyFetch
+            || $value instanceof Node\Expr\StaticPropertyFetch
+            || $value instanceof Node\Expr\ArrayDimFetch;
     }
 
     private function isResolveMethod(Node\Identifier|Node\Expr $name): bool
