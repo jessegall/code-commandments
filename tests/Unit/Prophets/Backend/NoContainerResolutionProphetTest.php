@@ -6,16 +6,28 @@ namespace JesseGall\CodeCommandments\Tests\Unit\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Prophets\Backend\NoContainerResolutionProphet;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
 class NoContainerResolutionProphetTest extends TestCase
 {
     private NoContainerResolutionProphet $prophet;
+    private ?string $tempDir = null;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->prophet = new NoContainerResolutionProphet();
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->tempDir !== null && is_dir($this->tempDir)) {
+            $this->removeDir($this->tempDir);
+            $this->tempDir = null;
+        }
+
+        parent::tearDown();
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -168,6 +180,137 @@ class NoContainerResolutionProphetTest extends TestCase
         $message = $judgment->warnings[0]->message;
         $this->assertStringContainsString('new', $message);
         $this->assertStringContainsString('DI-resolved', $message);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Cross-file origin tracing via CodebaseIndex
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_index_proves_containing_class_is_di_resolved(): void
+    {
+        // Service is never `new`d in the indexed scroll → strong "DI-resolved" wording.
+        [$serviceFile] = $this->writeIndexedFiles([
+            'Service.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class Service {
+                public function run(): mixed { return app(Foo::class); }
+            }
+            PHP,
+            'Caller.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class Caller {
+                public function __construct(private Service $service) {}
+                public function run(): mixed { return $this->service->run(); }
+            }
+            PHP,
+        ]);
+
+        $judgment = $this->prophet->judge($serviceFile, file_get_contents($serviceFile));
+
+        $this->assertWarningCount($judgment, 1);
+        $message = $judgment->warnings[0]->message;
+        $this->assertStringContainsString('No `new Service(', $message);
+        $this->assertStringContainsString('move the dependency', $message);
+    }
+
+    public function test_index_points_at_manual_construction_site(): void
+    {
+        [$serviceFile] = $this->writeIndexedFiles([
+            'Service.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class Service {
+                public function run(): mixed { return app(Foo::class); }
+            }
+            PHP,
+            'BadCaller.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class BadCaller {
+                public function run(): mixed { return (new Service())->run(); }
+            }
+            PHP,
+        ]);
+
+        $judgment = $this->prophet->judge($serviceFile, file_get_contents($serviceFile));
+
+        $this->assertWarningCount($judgment, 1);
+        $message = $judgment->warnings[0]->message;
+        $this->assertStringContainsString('`new Service(`', $message);
+        $this->assertStringContainsString('BadCaller.php', $message);
+    }
+
+    public function test_index_aggregates_count_when_multiple_new_sites(): void
+    {
+        [$serviceFile] = $this->writeIndexedFiles([
+            'Service.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class Service {
+                public function run(): mixed { return app(Foo::class); }
+            }
+            PHP,
+            'CallerA.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class CallerA { public function go(): mixed { return (new Service())->run(); } }
+            PHP,
+            'CallerB.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class CallerB { public function go(): mixed { return (new Service())->run(); } }
+            PHP,
+        ]);
+
+        $judgment = $this->prophet->judge($serviceFile, file_get_contents($serviceFile));
+
+        $this->assertWarningCount($judgment, 1);
+        $this->assertStringContainsString('+1 more', $judgment->warnings[0]->message);
+    }
+
+    public function test_index_unknown_containing_class_falls_back_to_outside_scroll_hint(): void
+    {
+        // Index built from a different class set entirely — Service isn't in it.
+        [$serviceFile] = $this->writeIndexedFiles([
+            // Subject file (Service) intentionally NOT registered with the index.
+            'Other.php' => <<<'PHP'
+            <?php
+            namespace App;
+            class Other {}
+            PHP,
+        ], registerSubject: false);
+
+        // Subject file added separately and judged.
+        $serviceFile = dirname($serviceFile) . '/Service.php';
+        file_put_contents($serviceFile, <<<'PHP'
+        <?php
+        namespace App;
+        class Service {
+            public function run(): mixed { return app(Foo::class); }
+        }
+        PHP);
+
+        $judgment = $this->prophet->judge($serviceFile, file_get_contents($serviceFile));
+
+        $this->assertWarningCount($judgment, 1);
+        $this->assertStringContainsString('outside the scanned scroll', $judgment->warnings[0]->message);
+    }
+
+    public function test_no_index_falls_back_to_manual_verify_hint(): void
+    {
+        // Whole-file judge with no index → fall back to "verify manually".
+        $judgment = $this->judge(<<<'PHP'
+        class Service {
+            public function run(): mixed { return app(Foo::class); }
+        }
+        PHP);
+
+        $this->assertWarningCount($judgment, 1);
+        $message = $judgment->warnings[0]->message;
+        $this->assertStringContainsString('Verify the containing class', $message);
+        $this->assertStringContainsString('search for `new Service(`', $message);
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -342,6 +485,58 @@ class NoContainerResolutionProphetTest extends TestCase
         $content = "<?php\nnamespace App;\n" . $body;
 
         return $this->prophet->judge('/x.php', $content);
+    }
+
+    /**
+     * Write the given files to a temp dir, build a CodebaseIndex from them,
+     * inject it into the prophet, and return the absolute paths in the
+     * order given. The first file is the "subject" — the one tests will
+     * judge directly. Pass `registerSubject: false` to omit that file from
+     * the index (used to test the "outside scroll" code path).
+     *
+     * @param  array<string, string>  $files  filename => php source
+     * @return list<string>
+     */
+    private function writeIndexedFiles(array $files, bool $registerSubject = true): array
+    {
+        $this->tempDir = realpath(sys_get_temp_dir())
+            . '/code-commandments-resolution-' . uniqid();
+        mkdir($this->tempDir, 0777, true);
+
+        $paths = [];
+        $indexPaths = [];
+
+        foreach ($files as $name => $content) {
+            $path = $this->tempDir . '/' . $name;
+            file_put_contents($path, $content);
+            $paths[] = $path;
+
+            // Skip the subject (first file) when explicitly asked, so the
+            // index won't know about its class.
+            if (! $registerSubject && count($paths) === 1) {
+                continue;
+            }
+
+            $indexPaths[] = $path;
+        }
+
+        $this->prophet->setCodebaseIndex(CodebaseIndex::build($indexPaths));
+
+        return $paths;
+    }
+
+    private function removeDir(string $dir): void
+    {
+        foreach (scandir($dir) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            $path = $dir . '/' . $entry;
+            is_dir($path) ? $this->removeDir($path) : unlink($path);
+        }
+
+        rmdir($dir);
     }
 
     private function assertWarningCount(Judgment $judgment, int $expected): void
