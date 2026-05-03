@@ -5,13 +5,26 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support;
 
 /**
- * Turns scroll `exclude` entries into PCRE patterns and tests file paths
- * against them. Shared between GenericFileScanner (full scan) and
- * ScrollManager::judgeFiles (--git mode) so both paths honor the same
- * glob semantics.
+ * Single source of truth for exclude decisions across every code path that
+ * scans files (`judgeScroll`, `judgeFiles`, `judgeFile`). The only entry
+ * point that intentionally bypasses this is `judgePath` (the explicit
+ * `--path` escape hatch).
  */
 final class PathExcludeMatcher
 {
+    /**
+     * Directories every scan should skip unless the caller explicitly
+     * opts out. Kept here (not in the scanner / scroll manager) so every
+     * exclude check uses the same baseline.
+     */
+    public const DEFAULT_EXCLUDES = [
+        'vendor',
+        'node_modules',
+        'storage',
+        '.git',
+        'bootstrap/cache',
+    ];
+
     /**
      * Convert a single exclude entry into a regex suitable for matching
      * against a file path. Supports `*` as a wildcard; all other regex
@@ -27,6 +40,9 @@ final class PathExcludeMatcher
 
     /**
      * Whether the given file path matches any of the exclude patterns.
+     * Substring/regex match against the (typically absolute) file path,
+     * so absolute exclude entries like `/abs/proj/tests` and relative
+     * ones like `tests` both match `/abs/proj/tests/Foo.php`.
      *
      * @param  array<string>  $excludePaths
      */
@@ -39,5 +55,30 @@ final class PathExcludeMatcher
         }
 
         return false;
+    }
+
+    /**
+     * Authoritative exclude check used by every scanning entry point.
+     * Combines the user's configured excludes with the always-on default
+     * excludes (vendor, node_modules, etc.) so callers don't each have
+     * to maintain their own copy of the defaults.
+     *
+     * @param  array<string>  $excludePaths  User-configured excludes (relative or absolute).
+     */
+    public static function shouldExclude(
+        string $filePath,
+        array $excludePaths,
+        bool $applyDefaults = true,
+    ): bool {
+        if ($applyDefaults) {
+            foreach (self::DEFAULT_EXCLUDES as $default) {
+                if (str_contains($filePath, '/'.$default.'/')
+                    || str_contains($filePath, '\\'.$default.'\\')) {
+                    return true;
+                }
+            }
+        }
+
+        return self::matchesAny($filePath, $excludePaths);
     }
 }
