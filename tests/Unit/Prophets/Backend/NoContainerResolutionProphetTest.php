@@ -371,6 +371,104 @@ class NoContainerResolutionProphetTest extends TestCase
     }
 
     // ────────────────────────────────────────────────────────────────
+    // Dynamic arguments — registry-loop pattern, etc.
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_flag_app_with_variable_argument(): void
+    {
+        // The registry-loop pattern: app($var) inside a foreach over an
+        // array of ::class strings. The variable arg is the signal — we
+        // skip it regardless of where the variable came from.
+        $judgment = $this->judge(<<<'PHP'
+        class StrategyRunner {
+            private array $normalizers = [
+                CommaSeparatedArrayNormalizer::class,
+                StringToArrayNormalizer::class,
+            ];
+
+            public function normalize(mixed $value): mixed {
+                foreach ($this->normalizers as $normalizerClass) {
+                    $normalizer = app($normalizerClass);
+                    $value = $normalizer->run($value);
+                }
+                return $value;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+        $this->assertFalse($judgment->hasWarnings());
+    }
+
+    public function test_does_not_flag_resolve_with_variable_argument(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Service {
+            public function run(string $serviceClass): mixed {
+                return resolve($serviceClass);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_app_make_with_variable_argument(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Service {
+            public function run(string $cls): mixed {
+                return app()->make($cls);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_app_with_property_fetch_argument(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Service {
+            public string $cls;
+            public function run(): mixed {
+                return app($this->cls);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_app_with_array_index_argument(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Service {
+            private array $services = [];
+            public function run(int $i): mixed {
+                return app($this->services[$i]);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_still_flags_literal_string_argument(): void
+    {
+        // A string-key argument is still a service-locator call we can name.
+        $judgment = $this->judge(<<<'PHP'
+        class Service {
+            public function run(): mixed {
+                return app('config');
+            }
+        }
+        PHP);
+
+        $this->assertWarningCount($judgment, 1);
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // Multiple matches
     // ────────────────────────────────────────────────────────────────
 
