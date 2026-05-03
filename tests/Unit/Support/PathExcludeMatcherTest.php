@@ -75,4 +75,54 @@ class PathExcludeMatcherTest extends TestCase
         $this->assertSame('/node_modules/', PathExcludeMatcher::toRegex('node_modules'));
         $this->assertSame('/.*\.d\.ts/', PathExcludeMatcher::toRegex('*.d.ts'));
     }
+
+    // ────────────────────────────────────────────────────────────────
+    // shouldExclude — unified entry point used by every scan path
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_should_exclude_applies_default_excludes(): void
+    {
+        $this->assertTrue(PathExcludeMatcher::shouldExclude('/abs/proj/vendor/foo/Bar.php', []));
+        $this->assertTrue(PathExcludeMatcher::shouldExclude('/abs/proj/node_modules/x/index.js', []));
+        $this->assertTrue(PathExcludeMatcher::shouldExclude('/abs/proj/storage/cache/x', []));
+        $this->assertTrue(PathExcludeMatcher::shouldExclude('/abs/proj/.git/HEAD', []));
+        $this->assertTrue(PathExcludeMatcher::shouldExclude('/abs/proj/bootstrap/cache/x.php', []));
+    }
+
+    public function test_should_exclude_can_skip_default_excludes(): void
+    {
+        $this->assertFalse(
+            PathExcludeMatcher::shouldExclude('/abs/proj/vendor/foo/Bar.php', [], applyDefaults: false)
+        );
+    }
+
+    public function test_should_exclude_matches_user_absolute_paths(): void
+    {
+        $this->assertTrue(
+            PathExcludeMatcher::shouldExclude(
+                '/abs/proj/tests/Feature/Octane/WorkerTest.php',
+                ['/abs/proj/tests/'],
+            )
+        );
+    }
+
+    public function test_should_exclude_matches_user_relative_paths(): void
+    {
+        $this->assertTrue(
+            PathExcludeMatcher::shouldExclude(
+                '/abs/proj/tests/Feature/Octane/WorkerTest.php',
+                ['tests'],
+            )
+        );
+    }
+
+    public function test_should_exclude_returns_false_for_non_matching_paths(): void
+    {
+        $this->assertFalse(
+            PathExcludeMatcher::shouldExclude(
+                '/abs/proj/src/Service.php',
+                ['tests', 'database'],
+            )
+        );
+    }
 }

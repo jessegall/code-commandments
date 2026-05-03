@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Results\ProphetFailure;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\PathExcludeMatcher;
 use Illuminate\Support\Collection;
 use Throwable;
 
@@ -119,9 +120,6 @@ class ScrollManager
         $extensions = $config['extensions'] ?? [];
         $excludePaths = $config['exclude'] ?? [];
 
-        // Common directories to always exclude
-        $defaultExcludes = ['vendor', 'node_modules', 'storage', '.git', 'bootstrap/cache'];
-
         $prophets = $this->registry->getProphets($scroll);
         // Build the index from the FULL scroll so cross-file tracing can still
         // see callers that live outside the --git file set.
@@ -142,8 +140,7 @@ class ScrollManager
                 continue;
             }
 
-            // Check if file is in an excluded path
-            if ($this->isExcluded($filePath, $excludePaths, $defaultExcludes)) {
+            if (PathExcludeMatcher::shouldExclude(realpath($filePath) ?: $filePath, $excludePaths)) {
                 continue;
             }
 
@@ -245,6 +242,14 @@ class ScrollManager
      */
     public function judgeFile(string $scroll, string $filePath): Collection
     {
+        $config = $this->registry->getScrollConfig($scroll);
+        $excludePaths = $config['exclude'] ?? [];
+        $resolvedPath = realpath($filePath) ?: $filePath;
+
+        if (PathExcludeMatcher::shouldExclude($resolvedPath, $excludePaths)) {
+            return collect();
+        }
+
         $content = file_get_contents($filePath);
 
         if ($content === false) {
@@ -338,25 +343,6 @@ class ScrollManager
         }
 
         return true;
-    }
-
-    /**
-     * Check if a file path should be excluded.
-     *
-     * @param  array<string>  $excludePaths
-     * @param  array<string>  $defaultExcludes
-     */
-    protected function isExcluded(string $filePath, array $excludePaths, array $defaultExcludes): bool
-    {
-        // Check default excludes (directory names)
-        foreach ($defaultExcludes as $exclude) {
-            if (str_contains($filePath, DIRECTORY_SEPARATOR.$exclude.DIRECTORY_SEPARATOR) ||
-                str_contains($filePath, '/'.$exclude.'/')) {
-                return true;
-            }
-        }
-
-        return PathExcludeMatcher::matchesAny($filePath, $excludePaths);
     }
 
     /**
