@@ -355,6 +355,84 @@ class StringsThatShouldBeEnumsProphetTest extends TestCase
     }
 
     // ────────────────────────────────────────────────────────────────
+    // Vendor-target exception (Pattern 1)
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_flag_named_arg_when_target_constructor_is_in_vendor(): void
+    {
+        // BufferedOutput resolves to vendor/symfony/console/... via composer autoload.
+        // The `direction` arg name still suffix-matches PortDirection and the
+        // value matches a case — but the consumer can't change Symfony's signature.
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        use Symfony\\Component\\Console\\Output\\BufferedOutput;
+        class W {
+            public function build(): BufferedOutput {
+                return new BufferedOutput(direction: 'input');
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
+    public function test_does_not_flag_named_arg_when_target_is_fully_qualified_vendor_class(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function build() {
+                return new \\Symfony\\Component\\Console\\Output\\BufferedOutput(direction: 'input');
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
+    public function test_does_not_flag_named_arg_on_vendor_static_call(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        use Symfony\\Component\\Console\\Output\\BufferedOutput;
+        class W {
+            public function build() {
+                return BufferedOutput::factory(direction: 'input');
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
+    public function test_still_flags_named_arg_when_target_constructor_is_project_owned(): void
+    {
+        // Regression: vendor filter must not over-match. A project-defined
+        // class (no autoload path under /vendor/) still gets flagged.
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class Port {
+            public function __construct(public PortDirection \$direction) {}
+        }
+        class W {
+            public function build(): Port {
+                return new Port(direction: 'input');
+            }
+        }
+        PHP;
+
+        $this->assertFallen($this->judge($content), 1);
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // Sanity
     // ────────────────────────────────────────────────────────────────
 
