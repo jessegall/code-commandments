@@ -8,16 +8,18 @@ namespace JesseGall\CodeCommandments\Support\CallGraph;
  * A single call expression within a method body, with primitive argument
  * fingerprints so the AST can be dropped after index build.
  *
- * `argExprs` entries take one of these shapes:
- *   ['kind' => 'var',      'name' => string]        → a plain $var reference
- *   ['kind' => 'prop',     'prop' => string]        → $this->prop
- *   ['kind' => 'complex']                           → anything else
+ * `argExprs` entries take one of these shapes (every entry may also carry an
+ * `argName` key when the call site used named-argument syntax):
+ *   ['kind' => 'var',            'name'  => string]   → a plain $var reference
+ *   ['kind' => 'prop',           'prop'  => string]   → $this->prop
+ *   ['kind' => 'string_literal', 'value' => string]   → a 'literal' scalar
+ *   ['kind' => 'complex']                             → anything else
  */
 final readonly class CallSite
 {
     /**
      * @param  'method'|'static'|'func'|'nullsafe'  $calleeKind
-     * @param  list<array{kind: string, name?: string, prop?: string}>  $argExprs
+     * @param  list<array{kind: string, name?: string, prop?: string, value?: string, argName?: string}>  $argExprs
      */
     public function __construct(
         public string $calleeFqcn,
