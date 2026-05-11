@@ -411,6 +411,28 @@ class StringsThatShouldBeEnumsProphetTest extends TestCase
         $this->assertTrue($this->judge($content)->isRighteous());
     }
 
+    public function test_does_not_flag_named_arg_on_vendor_attribute(): void
+    {
+        // The named arg lives inside `#[VendorClass(...)]`, an attribute
+        // rather than a `new`/static call. Without Attribute support in
+        // the vendor filter, the literal 'Red' would be flagged against
+        // Color::Red even though the attribute class is vendored. Uses
+        // Symfony's autoloadable BufferedOutput purely as a vendor target
+        // — the parser only cares the FQCN resolves under /vendor/.
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('Color')};
+        use Symfony\\Component\\Console\\Output\\BufferedOutput;
+        class D {
+            #[BufferedOutput(color: 'Red')]
+            public string \$color;
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
     public function test_still_flags_named_arg_when_target_constructor_is_project_owned(): void
     {
         // Regression: vendor filter must not over-match. A project-defined

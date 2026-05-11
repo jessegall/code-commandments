@@ -553,10 +553,11 @@ final class FindStringsThatShouldBeEnums implements Pipe
     }
 
     /**
-     * Walk up from a named argument to its enclosing call/new and decide
-     * whether that target class lives under /vendor/. Only `Expr\New_` and
-     * `Expr\StaticCall` are resolved — instance method calls (`$x->m(...)`)
-     * would require type inference and are left as a non-vendor default.
+     * Walk up from a named argument to its enclosing call/new/attribute
+     * and decide whether that target class lives under /vendor/. Only
+     * `Expr\New_`, `Expr\StaticCall`, and `Node\Attribute` are resolved —
+     * instance method calls (`$x->m(...)`) would require type inference
+     * and are left as a non-vendor default.
      *
      * @param  array<int, Node>  $parentMap
      * @param  array<string, string>  $useStatements  alias => FQCN
@@ -568,7 +569,10 @@ final class FindStringsThatShouldBeEnums implements Pipe
         // Args are typically wrapped in their call node directly, but walk
         // a couple of hops in case the parser adds an intermediate.
         while ($parent !== null) {
-            if ($parent instanceof Expr\New_ || $parent instanceof Expr\StaticCall) {
+            if ($parent instanceof Expr\New_
+                || $parent instanceof Expr\StaticCall
+                || $parent instanceof Node\Attribute
+            ) {
                 break;
             }
 
@@ -586,7 +590,8 @@ final class FindStringsThatShouldBeEnums implements Pipe
             return false;
         }
 
-        $classNode = $parent->class;
+        // `New_`/`StaticCall` carry the target on `->class`; `Attribute` on `->name`.
+        $classNode = $parent instanceof Node\Attribute ? $parent->name : $parent->class;
 
         if (! $classNode instanceof Node\Name) {
             // Anonymous-class new or dynamic class — can't resolve, don't filter.
