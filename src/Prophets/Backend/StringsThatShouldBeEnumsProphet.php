@@ -96,6 +96,10 @@ Exceptions: values inside `toArray`, `jsonSerialize`, `render`, or
 inside a `JsonResource`/`Resource`/`Response` class are left alone —
 those are wire-format boundaries where the literal string is the
 public contract.
+
+Named args passed to a `new VendorClass(...)` or `VendorClass::m(...)`
+where the target class file lives under `/vendor/` are also skipped —
+the consumer can't change a third-party signature to take an enum.
 SCRIPTURE;
     }
 

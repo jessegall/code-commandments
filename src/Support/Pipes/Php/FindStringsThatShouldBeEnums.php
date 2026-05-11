@@ -60,6 +60,9 @@ final class FindStringsThatShouldBeEnums implements Pipe
     /** @var array<string, array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}|false> */
     private static array $enumCache = [];
 
+    /** @var array<string, bool> FQCN => whether the class file lives under /vendor/. */
+    private static array $vendorCache = [];
+
     private static ?ClassLoader $composerLoader = null;
 
     private static bool $composerLoaderResolved = false;
@@ -128,6 +131,13 @@ final class FindStringsThatShouldBeEnums implements Pipe
             $candidate = $this->findCandidateEnum($argName, $value, $importedEnums);
 
             if ($candidate === null) {
+                continue;
+            }
+
+            // Skip when the called target lives in /vendor/ — the consumer
+            // can't change a third-party method's string-typed parameter to
+            // an enum, so flagging the literal is noise.
+            if ($this->callTargetIsVendor($arg, $parentMap, $input->useStatements, $input->namespace)) {
                 continue;
             }
 
@@ -540,6 +550,98 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
         // Unit enum: compare against case names.
         return $info['cases'][$value] ?? null;
+    }
+
+    /**
+     * Walk up from a named argument to its enclosing call/new and decide
+     * whether that target class lives under /vendor/. Only `Expr\New_` and
+     * `Expr\StaticCall` are resolved — instance method calls (`$x->m(...)`)
+     * would require type inference and are left as a non-vendor default.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @param  array<string, string>  $useStatements  alias => FQCN
+     */
+    private function callTargetIsVendor(Node\Arg $arg, array $parentMap, array $useStatements, ?string $namespace): bool
+    {
+        $parent = $parentMap[spl_object_id($arg)] ?? null;
+
+        // Args are typically wrapped in their call node directly, but walk
+        // a couple of hops in case the parser adds an intermediate.
+        while ($parent !== null) {
+            if ($parent instanceof Expr\New_ || $parent instanceof Expr\StaticCall) {
+                break;
+            }
+
+            if ($parent instanceof Expr\MethodCall
+                || $parent instanceof Expr\NullsafeMethodCall
+                || $parent instanceof Expr\FuncCall
+            ) {
+                return false;
+            }
+
+            $parent = $parentMap[spl_object_id($parent)] ?? null;
+        }
+
+        if ($parent === null) {
+            return false;
+        }
+
+        $classNode = $parent->class;
+
+        if (! $classNode instanceof Node\Name) {
+            // Anonymous-class new or dynamic class — can't resolve, don't filter.
+            return false;
+        }
+
+        $fqcn = $this->resolveFqcn($classNode, $useStatements, $namespace);
+
+        return $this->fqcnIsVendor($fqcn);
+    }
+
+    /**
+     * @param  array<string, string>  $useStatements
+     */
+    private function resolveFqcn(Node\Name $name, array $useStatements, ?string $namespace): string
+    {
+        if ($name->isFullyQualified()) {
+            return ltrim($name->toString(), '\\');
+        }
+
+        $parts = explode('\\', $name->toString());
+        $first = $parts[0];
+
+        if (isset($useStatements[$first])) {
+            $parts[0] = $useStatements[$first];
+
+            return implode('\\', $parts);
+        }
+
+        if ($namespace !== null && $namespace !== '') {
+            return $namespace . '\\' . $name->toString();
+        }
+
+        return $name->toString();
+    }
+
+    private function fqcnIsVendor(string $fqcn): bool
+    {
+        if (array_key_exists($fqcn, self::$vendorCache)) {
+            return self::$vendorCache[$fqcn];
+        }
+
+        $loader = $this->getComposerLoader();
+
+        if ($loader === null) {
+            return self::$vendorCache[$fqcn] = false;
+        }
+
+        $file = $loader->findFile($fqcn);
+
+        if ($file === false) {
+            return self::$vendorCache[$fqcn] = false;
+        }
+
+        return self::$vendorCache[$fqcn] = str_contains($file, '/vendor/');
     }
 
     /**
