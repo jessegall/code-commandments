@@ -193,6 +193,26 @@ class StringsThatShouldBeEnumsProphetTest extends TestCase
         $this->assertTrue($this->judge($content)->isRighteous());
     }
 
+    public function test_bidirectional_suffix_match_arg_name_ending_with_enum_short(): void
+    {
+        // `Color` is a short enum name; `$themeColor` should still resolve.
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('Color')};
+        class Theme {}
+        class W {
+            public function build(): Theme {
+                return new Theme(themeColor: 'Red');
+            }
+        }
+        PHP;
+
+        $judgment = $this->judge($content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Color::Red', $judgment->sins[0]->message);
+    }
+
     public function test_aliased_enum_import_still_detected(): void
     {
         $content = <<<PHP

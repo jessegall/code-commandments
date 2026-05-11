@@ -39,6 +39,12 @@ final class CodebaseIndex
     /** @var array<string, ClassSummary> */
     private array $classes = [];
 
+    /** @var array<string, EnumSummary>   key = enum FQCN */
+    private array $enumsByFqcn = [];
+
+    /** @var array<string, list<EnumSummary>>   key = lowercased short name */
+    private array $enumsByShortName = [];
+
     /** @var array<string, list<CallSite>>   key = "FQCN::method" */
     private array $callersByCallee = [];
 
@@ -102,6 +108,17 @@ final class CodebaseIndex
                     'class' => $class,
                 ];
             }
+
+            foreach (self::findEnums($ast) as [$namespace, $enum]) {
+                $summary = self::summariseEnum($namespace, $enum, $path);
+
+                if ($summary === null) {
+                    continue;
+                }
+
+                $instance->enumsByFqcn[$summary->fqcn] = $summary;
+                $instance->enumsByShortName[strtolower($summary->short)][] = $summary;
+            }
         }
 
         // Pass 1: build ClassSummary shells (fqcn, parent, use map, propertyTypes)
@@ -160,6 +177,33 @@ final class CodebaseIndex
         return $this->classes[$fqcn] ?? null;
     }
 
+    public function enumByFqcn(string $fqcn): ?EnumSummary
+    {
+        return $this->enumsByFqcn[$fqcn] ?? null;
+    }
+
+    /**
+     * Every enum whose short name matches (case-insensitively). Multiple
+     * enums can share a short name across namespaces — the caller decides
+     * which one to use.
+     *
+     * @return list<EnumSummary>
+     */
+    public function enumsByShortName(string $short): array
+    {
+        return $this->enumsByShortName[strtolower($short)] ?? [];
+    }
+
+    /**
+     * Every enum in the project, regardless of short name.
+     *
+     * @return array<string, EnumSummary>  fqcn => summary
+     */
+    public function allEnums(): array
+    {
+        return $this->enumsByFqcn;
+    }
+
     /**
      * @return list<CallSite>
      */
@@ -216,6 +260,94 @@ final class CodebaseIndex
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @return list<array{0: ?string, 1: Node\Stmt\Enum_}>
+     */
+    private static function findEnums(array $ast): array
+    {
+        $out = [];
+
+        foreach ($ast as $node) {
+            if ($node instanceof Node\Stmt\Namespace_) {
+                $ns = $node->name?->toString();
+
+                foreach ($node->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Enum_) {
+                        $out[] = [$ns, $stmt];
+                    }
+                }
+            } elseif ($node instanceof Node\Stmt\Enum_) {
+                $out[] = [null, $node];
+            }
+        }
+
+        return $out;
+    }
+
+    private static function summariseEnum(?string $namespace, Node\Stmt\Enum_ $enum, string $file): ?EnumSummary
+    {
+        if ($enum->name === null) {
+            return null;
+        }
+
+        $short = $enum->name->toString();
+        $fqcn = $namespace !== null && $namespace !== ''
+            ? $namespace . '\\' . $short
+            : $short;
+
+        $backing = $enum->scalarType instanceof Node\Identifier
+            ? $enum->scalarType->toString()
+            : null;
+
+        $cases = [];
+
+        foreach ($enum->stmts as $stmt) {
+            if (! $stmt instanceof Node\Stmt\EnumCase) {
+                continue;
+            }
+
+            $caseName = $stmt->name->toString();
+
+            if ($backing !== null && $stmt->expr !== null) {
+                $value = self::scalarValue($stmt->expr);
+
+                if ($value === null) {
+                    continue;
+                }
+
+                $cases[(string) $value] = $caseName;
+            } else {
+                $cases[$caseName] = $caseName;
+            }
+        }
+
+        return new EnumSummary(
+            fqcn: $fqcn,
+            short: $short,
+            backing: $backing,
+            cases: $cases,
+            filePath: $file,
+        );
+    }
+
+    private static function scalarValue(Node\Expr $expr): string|int|null
+    {
+        if ($expr instanceof Scalar\String_) {
+            return $expr->value;
+        }
+
+        if ($expr instanceof Scalar\Int_) {
+            return $expr->value;
+        }
+
+        if ($expr instanceof Expr\UnaryMinus && $expr->expr instanceof Scalar\Int_) {
+            return -$expr->expr->value;
+        }
+
+        return null;
     }
 
     /**
@@ -621,7 +753,7 @@ final class CodebaseIndex
 
     /**
      * @param  list<Node\Arg|Node\VariadicPlaceholder>  $args
-     * @return list<array{kind: string, name?: string, prop?: string}>
+     * @return list<array{kind: string, name?: string, prop?: string, value?: string, argName?: string}>
      */
     private static function fingerprintArgs(array $args): array
     {
@@ -634,9 +766,27 @@ final class CodebaseIndex
             }
 
             $expr = $arg->value;
+            $argName = $arg->name?->toString();
+
+            if ($expr instanceof Scalar\String_) {
+                $entry = ['kind' => 'string_literal', 'value' => $expr->value];
+
+                if ($argName !== null) {
+                    $entry['argName'] = $argName;
+                }
+
+                $out[] = $entry;
+                continue;
+            }
 
             if ($expr instanceof Expr\Variable && is_string($expr->name)) {
-                $out[] = ['kind' => 'var', 'name' => $expr->name];
+                $entry = ['kind' => 'var', 'name' => $expr->name];
+
+                if ($argName !== null) {
+                    $entry['argName'] = $argName;
+                }
+
+                $out[] = $entry;
                 continue;
             }
 
@@ -645,11 +795,23 @@ final class CodebaseIndex
                 && $expr->var->name === 'this'
                 && $expr->name instanceof Node\Identifier
             ) {
-                $out[] = ['kind' => 'prop', 'prop' => $expr->name->toString()];
+                $entry = ['kind' => 'prop', 'prop' => $expr->name->toString()];
+
+                if ($argName !== null) {
+                    $entry['argName'] = $argName;
+                }
+
+                $out[] = $entry;
                 continue;
             }
 
-            $out[] = ['kind' => 'complex'];
+            $entry = ['kind' => 'complex'];
+
+            if ($argName !== null) {
+                $entry['argName'] = $argName;
+            }
+
+            $out[] = $entry;
         }
 
         return $out;

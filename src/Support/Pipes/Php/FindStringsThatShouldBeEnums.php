@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use Composer\Autoload\ClassLoader;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\EnumSummary;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -17,19 +19,23 @@ use ReflectionEnum;
 /**
  * Flag raw string literals that are really enum cases in disguise.
  *
- * High-signal patterns (v1):
- *
  *   1. Named arg passed to a ctor / call where the arg name matches an
- *      enum imported in the same file (by case-insensitive suffix match)
- *      AND the literal value matches one of that enum's cases.
+ *      enum (imported in the file, or — with a CodebaseIndex — any enum
+ *      defined in the project) and the value matches one of its cases.
  *
- *   2. A string-typed class/constructor property with a default value
- *      whose value matches a case on an imported enum whose short name
- *      shares a suffix with the property name.
+ *   2. A `string`-typed parameter with a default literal whose value
+ *      matches a case on an enum whose short name shares a suffix with
+ *      the parameter name.
  *
- * Enum introspection is reflection-based — the enum classes must be
- * autoloadable at judgement time, which is true when `commandments`
- * runs inside the consumer's project.
+ *   3. A `string`-typed parameter whose call sites across the project
+ *      use a small closed set of literals. When a CodebaseIndex is
+ *      injected, the pipe walks every call site to the containing
+ *      method and flags the param even when no enum exists yet — that
+ *      is the highest-value moment to suggest creating one.
+ *
+ * Enum introspection prefers reflection (when the enum is autoloadable)
+ * and falls back to AST parsing for project enums known via the
+ * CodebaseIndex.
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
@@ -58,6 +64,29 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
     private static bool $composerLoaderResolved = false;
 
+    private ?CodebaseIndex $codebaseIndex = null;
+
+    /**
+     * Minimum number of distinct call sites a parameter must have before the
+     * literal-frequency heuristic considers it a closed set rather than a
+     * one-off.
+     */
+    private int $minCallSites = 2;
+
+    /**
+     * Maximum number of distinct literal values a parameter may receive
+     * before the heuristic gives up — past this it's unlikely to be a
+     * closed set in disguise.
+     */
+    private int $maxDistinctLiterals = 5;
+
+    public function withCodebaseIndex(CodebaseIndex $index): self
+    {
+        $this->codebaseIndex = $index;
+
+        return $this;
+    }
+
     public function handle(mixed $input): mixed
     {
         if ($input->ast === null) {
@@ -65,8 +94,11 @@ final class FindStringsThatShouldBeEnums implements Pipe
         }
 
         $importedEnums = $this->resolveImportedEnums($input->useStatements);
+        $hasIndex = $this->codebaseIndex !== null;
 
-        if (empty($importedEnums)) {
+        // Without imported enums AND no codebase index, none of the
+        // patterns this pipe knows about can fire.
+        if (empty($importedEnums) && ! $hasIndex) {
             return $input->with(matches: []);
         }
 
@@ -77,7 +109,8 @@ final class FindStringsThatShouldBeEnums implements Pipe
         $seen = [];
 
         // Pattern 1: named args whose value is a string literal matching
-        // a case on an imported enum whose name matches the arg name.
+        // a case on any enum (imported or — with a CodebaseIndex — any
+        // project enum) whose name matches the arg name.
         foreach ($nodeFinder->find($input->ast, fn ($n) => $n instanceof Node\Arg && $n->name !== null) as $arg) {
             assert($arg instanceof Node\Arg);
 
@@ -92,48 +125,41 @@ final class FindStringsThatShouldBeEnums implements Pipe
             $argName = $arg->name->toString();
             $value = $arg->value->value;
 
-            foreach ($importedEnums as $shortName => $info) {
-                if (! $this->nameMatches($argName, $shortName)) {
-                    continue;
-                }
+            $candidate = $this->findCandidateEnum($argName, $value, $importedEnums);
 
-                $caseName = $this->matchCase($info, $value);
-
-                if ($caseName === null) {
-                    continue;
-                }
-
-                $dedupe = "arg::{$shortName}::{$argName}::{$value}";
-
-                if (isset($seen[$dedupe])) {
-                    continue;
-                }
-
-                $seen[$dedupe] = true;
-
-                $matches[] = $this->makeMatch(
-                    name: 'named_arg',
-                    line: $arg->getStartLine(),
-                    content: $this->getSnippet($input->content, $arg->getStartLine()),
-                    shortName: $shortName,
-                    fqcn: $info['fqcn'],
-                    caseName: $caseName,
-                    value: $value,
-                    subject: "\${$argName}",
-                );
-
-                break; // one match per arg is enough
-            }
-        }
-
-        // Pattern 2: string-typed property/param defaults matching a case
-        // on an imported enum whose name matches the property/param name.
-        foreach ($nodeFinder->findInstanceOf($input->ast, Node\Param::class) as $param) {
-            assert($param instanceof Node\Param);
-
-            if ($param->default === null || ! $param->default instanceof Scalar\String_) {
+            if ($candidate === null) {
                 continue;
             }
+
+            [$shortName, $info, $importedAlias] = $candidate;
+
+            $dedupe = "arg::{$info['fqcn']}::{$argName}::{$value}";
+
+            if (isset($seen[$dedupe])) {
+                continue;
+            }
+
+            $seen[$dedupe] = true;
+
+            $matches[] = $this->makeMatch(
+                name: 'named_arg',
+                line: $arg->getStartLine(),
+                content: $this->getSnippet($input->content, $arg->getStartLine()),
+                shortName: $shortName,
+                fqcn: $info['fqcn'],
+                caseName: $info['cases'][$value] ?? $this->matchCase($info, $value) ?? $value,
+                value: $value,
+                subject: "\${$argName}",
+                requiresImport: $importedAlias === null,
+            );
+        }
+
+        // Pattern 2 + 3: string-typed parameters.
+        //   2. With a default literal that matches a case on a name-matched enum.
+        //   3. With OR without a default, when call-site analysis (via the
+        //      codebase index) shows the literals form a closed set.
+        foreach ($nodeFinder->findInstanceOf($input->ast, Node\Param::class) as $param) {
+            assert($param instanceof Node\Param);
 
             if (! $this->typeIsString($param->type)) {
                 continue;
@@ -148,39 +174,87 @@ final class FindStringsThatShouldBeEnums implements Pipe
             }
 
             $paramName = $param->var->name;
-            $value = $param->default->value;
+            $matched = false;
 
-            foreach ($importedEnums as $shortName => $info) {
-                if (! $this->nameMatches($paramName, $shortName)) {
-                    continue;
+            // Pattern 2 — default literal matching a known enum case.
+            if ($param->default instanceof Scalar\String_) {
+                $value = $param->default->value;
+                $candidate = $this->findCandidateEnum($paramName, $value, $importedEnums);
+
+                if ($candidate !== null) {
+                    [$shortName, $info, $importedAlias] = $candidate;
+                    // Pattern 2 short-circuits Pattern 3 for this param even
+                    // when the dedupe key suppresses a duplicate emission.
+                    $matched = true;
+
+                    $dedupe = "param::{$info['fqcn']}::{$paramName}::{$value}";
+
+                    if (! isset($seen[$dedupe])) {
+                        $seen[$dedupe] = true;
+
+                        $matches[] = $this->makeMatch(
+                            name: 'param_default',
+                            line: $param->getStartLine(),
+                            content: $this->getSnippet($input->content, $param->getStartLine()),
+                            shortName: $shortName,
+                            fqcn: $info['fqcn'],
+                            caseName: $info['cases'][$value] ?? $this->matchCase($info, $value) ?? $value,
+                            value: $value,
+                            subject: "\${$paramName}",
+                            requiresImport: $importedAlias === null,
+                        );
+                    }
                 }
+            }
 
-                $caseName = $this->matchCase($info, $value);
+            // Pattern 3 — literal-frequency heuristic. Walks every call site
+            // to the containing method via the codebase index, collects the
+            // literals passed at this parameter's position, and flags a
+            // closed set even when no enum exists yet.
+            if (! $matched && $hasIndex) {
+                $closedSet = $this->collectClosedSet($input, $param, $parentMap);
 
-                if ($caseName === null) {
-                    continue;
+                if ($closedSet !== null) {
+                    [$paramIndex, $literals] = $closedSet;
+                    $candidate = $this->findCandidateEnumForLiterals($paramName, $literals, $importedEnums);
+
+                    if ($candidate !== null) {
+                        [$shortName, $info, $importedAlias] = $candidate;
+                        $dedupe = "param_freq::{$info['fqcn']}::{$paramName}";
+
+                        if (! isset($seen[$dedupe])) {
+                            $seen[$dedupe] = true;
+
+                            $matches[] = $this->makeMatchForClosedSet(
+                                line: $param->getStartLine(),
+                                content: $this->getSnippet($input->content, $param->getStartLine()),
+                                shortName: $shortName,
+                                fqcn: $info['fqcn'],
+                                literals: $literals,
+                                subject: "\${$paramName}",
+                                requiresImport: $importedAlias === null,
+                                matchedEnum: true,
+                            );
+                        }
+                    } else {
+                        $dedupe = "param_freq::{$paramName}::" . implode(',', $literals);
+
+                        if (! isset($seen[$dedupe])) {
+                            $seen[$dedupe] = true;
+
+                            $matches[] = $this->makeMatchForClosedSet(
+                                line: $param->getStartLine(),
+                                content: $this->getSnippet($input->content, $param->getStartLine()),
+                                shortName: $this->suggestEnumName($paramName),
+                                fqcn: '',
+                                literals: $literals,
+                                subject: "\${$paramName}",
+                                requiresImport: false,
+                                matchedEnum: false,
+                            );
+                        }
+                    }
                 }
-
-                $dedupe = "param::{$shortName}::{$paramName}::{$value}";
-
-                if (isset($seen[$dedupe])) {
-                    continue;
-                }
-
-                $seen[$dedupe] = true;
-
-                $matches[] = $this->makeMatch(
-                    name: 'param_default',
-                    line: $param->getStartLine(),
-                    content: $this->getSnippet($input->content, $param->getStartLine()),
-                    shortName: $shortName,
-                    fqcn: $info['fqcn'],
-                    caseName: $caseName,
-                    value: $value,
-                    subject: "\${$paramName}",
-                );
-
-                break;
             }
         }
 
@@ -424,7 +498,9 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
     /**
      * Does the given identifier (arg name, param name) plausibly refer to
-     * this enum? Matches on exact name or suffix of the enum short name.
+     * this enum? Matches both directions:
+     *   - identifier is a suffix of the enum short name (`$direction` ≈ `PortDirection`)
+     *   - enum short name is a suffix of the identifier (`$mirroringVerb` ≈ `Verb`)
      */
     private function nameMatches(string $identifier, string $enumShort): bool
     {
@@ -435,8 +511,13 @@ final class FindStringsThatShouldBeEnums implements Pipe
             return true;
         }
 
-        // arg "direction" matches enum "PortDirection"
-        return strlen($id) >= 3 && str_ends_with($short, $id);
+        // arg "direction" matches enum "PortDirection" — id is suffix of short.
+        if (strlen($id) >= 3 && str_ends_with($short, $id)) {
+            return true;
+        }
+
+        // arg "mirroringVerb" matches enum "Verb" — short is suffix of id.
+        return strlen($short) >= 3 && str_ends_with($id, $short);
     }
 
     /**
@@ -568,6 +649,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
         string $caseName,
         string $value,
         string $subject,
+        bool $requiresImport = false,
     ): MatchResult {
         return new MatchResult(
             name: $name,
@@ -582,7 +664,334 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 'enum_short' => $shortName,
                 'enum_fqcn' => $fqcn,
                 'case' => $caseName,
+                'requires_import' => $requiresImport ? '1' : '',
             ],
         );
+    }
+
+    /**
+     * Build a match for the literal-frequency heuristic.
+     *
+     * @param  list<string>  $literals
+     */
+    private function makeMatchForClosedSet(
+        int $line,
+        string $content,
+        string $shortName,
+        string $fqcn,
+        array $literals,
+        string $subject,
+        bool $requiresImport,
+        bool $matchedEnum,
+    ): MatchResult {
+        sort($literals);
+
+        return new MatchResult(
+            name: $matchedEnum ? 'param_closed_set_matched_enum' : 'param_closed_set',
+            pattern: '',
+            match: $matchedEnum
+                ? "{$subject} ≈ {$shortName} (" . implode(', ', $literals) . ')'
+                : "{$subject} closed set: " . implode(', ', $literals),
+            line: $line,
+            offset: null,
+            content: $content,
+            groups: [
+                'subject' => $subject,
+                'value' => implode(', ', $literals),
+                'enum_short' => $shortName,
+                'enum_fqcn' => $fqcn,
+                'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
+                'requires_import' => $requiresImport ? '1' : '',
+                'matched_enum' => $matchedEnum ? '1' : '',
+            ],
+        );
+    }
+
+    /**
+     * Pick a candidate enum for a (name, value) pair: prefer imported enums,
+     * then fall back to any project enum known via the codebase index.
+     *
+     * @param  array<string, array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}>  $importedEnums
+     * @return array{0: string, 1: array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}, 2: ?string}|null  [displayShort, info, importedAlias]
+     */
+    private function findCandidateEnum(string $identifier, string $value, array $importedEnums): ?array
+    {
+        foreach ($importedEnums as $alias => $info) {
+            if (! $this->nameMatches($identifier, $alias) && ! $this->nameMatches($identifier, $info['short'])) {
+                continue;
+            }
+
+            if ($this->matchCase($info, $value) !== null) {
+                return [$alias, $info, $alias];
+            }
+        }
+
+        if ($this->codebaseIndex === null) {
+            return null;
+        }
+
+        foreach ($this->codebaseIndex->allEnums() as $summary) {
+            if (! $this->nameMatches($identifier, $summary->short)) {
+                continue;
+            }
+
+            $info = $this->infoFromEnumSummary($summary);
+
+            if ($this->matchCase($info, $value) !== null) {
+                return [$summary->short, $info, null];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a name-matched enum whose cases cover every observed literal.
+     *
+     * @param  list<string>  $literals
+     * @param  array<string, array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}>  $importedEnums
+     * @return array{0: string, 1: array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}, 2: ?string}|null
+     */
+    private function findCandidateEnumForLiterals(string $identifier, array $literals, array $importedEnums): ?array
+    {
+        foreach ($importedEnums as $alias => $info) {
+            if (! $this->nameMatches($identifier, $alias) && ! $this->nameMatches($identifier, $info['short'])) {
+                continue;
+            }
+
+            if ($this->casesCoverAll($info, $literals)) {
+                return [$alias, $info, $alias];
+            }
+        }
+
+        if ($this->codebaseIndex === null) {
+            return null;
+        }
+
+        foreach ($this->codebaseIndex->allEnums() as $summary) {
+            if (! $this->nameMatches($identifier, $summary->short)) {
+                continue;
+            }
+
+            $info = $this->infoFromEnumSummary($summary);
+
+            if ($this->casesCoverAll($info, $literals)) {
+                return [$summary->short, $info, null];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{backing: ?string, cases: array<string, string>}  $info
+     * @param  list<string>  $literals
+     */
+    private function casesCoverAll(array $info, array $literals): bool
+    {
+        foreach ($literals as $literal) {
+            if ($this->matchCase($info, $literal) === null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array{fqcn: string, short: string, backing: ?string, cases: array<string, string>}
+     */
+    private function infoFromEnumSummary(EnumSummary $summary): array
+    {
+        return [
+            'fqcn' => $summary->fqcn,
+            'short' => $summary->short,
+            'backing' => $summary->backing,
+            'cases' => $summary->cases,
+        ];
+    }
+
+    /**
+     * Walk every call site to the method that contains $param and collect
+     * the literals passed at $param's position. Returns null when the
+     * heuristic cannot fire (not enough call sites, not a closed set, or
+     * the values don't look like case names).
+     *
+     * @param  array<int, Node>  $parentMap
+     * @return array{0: int, 1: list<string>}|null  [paramIndex, sortedDistinctLiterals]
+     */
+    private function collectClosedSet(mixed $input, Node\Param $param, array $parentMap): ?array
+    {
+        if ($this->codebaseIndex === null) {
+            return null;
+        }
+
+        [$classFqcn, $methodName, $paramIndex] = $this->resolveContainingMethod($param, $parentMap, $input->namespace ?? null) ?? [null, null, null];
+
+        if ($classFqcn === null || $methodName === null || $paramIndex === null) {
+            return null;
+        }
+
+        $paramName = $param->var instanceof Expr\Variable && is_string($param->var->name)
+            ? $param->var->name
+            : null;
+
+        $callers = $this->codebaseIndex->callersOf($classFqcn, $methodName);
+
+        if (empty($callers)) {
+            return null;
+        }
+
+        $literals = [];
+        $sites = 0;
+
+        foreach ($callers as $site) {
+            $literal = $this->literalFromCallSite($site->argExprs, $paramIndex, $paramName);
+
+            if ($literal === null) {
+                // Mixed call: at least one site passes something non-literal.
+                // That breaks the closed-set guarantee.
+                return null;
+            }
+
+            $sites++;
+
+            if (! in_array($literal, $literals, true)) {
+                $literals[] = $literal;
+            }
+
+            if (count($literals) > $this->maxDistinctLiterals) {
+                return null;
+            }
+        }
+
+        if ($sites < $this->minCallSites) {
+            return null;
+        }
+
+        if (count($literals) < 2) {
+            // A single literal is hardly a "set" — leave it alone.
+            return null;
+        }
+
+        foreach ($literals as $literal) {
+            if (! $this->looksLikeCaseName($literal)) {
+                return null;
+            }
+        }
+
+        return [$paramIndex, $literals];
+    }
+
+    /**
+     * Extract the literal value the call site passed for the parameter at
+     * $paramIndex. Honours named-argument syntax: a call site that names
+     * arguments out of position is matched by `argName === $paramName`.
+     *
+     * @param  list<array{kind: string, name?: string, prop?: string, value?: string, argName?: string}>  $argExprs
+     */
+    private function literalFromCallSite(array $argExprs, int $paramIndex, ?string $paramName): ?string
+    {
+        // First: any named arg matching this parameter wins regardless of position.
+        if ($paramName !== null) {
+            foreach ($argExprs as $entry) {
+                if (($entry['argName'] ?? null) !== $paramName) {
+                    continue;
+                }
+
+                return $entry['kind'] === 'string_literal' ? ($entry['value'] ?? null) : null;
+            }
+        }
+
+        // Fall back to positional. Skip any named-arg entries before this index
+        // so positional reasoning matches PHP's resolution.
+        $positional = [];
+
+        foreach ($argExprs as $entry) {
+            if (isset($entry['argName'])) {
+                continue;
+            }
+
+            $positional[] = $entry;
+        }
+
+        $entry = $positional[$paramIndex] ?? null;
+
+        if ($entry === null) {
+            return null;
+        }
+
+        return $entry['kind'] === 'string_literal' ? ($entry['value'] ?? null) : null;
+    }
+
+    /**
+     * Walks up the parent map to find the enclosing class + method, returning
+     * the resolved FQCN, method name, and param index.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @return array{0: string, 1: string, 2: int}|null
+     */
+    private function resolveContainingMethod(Node\Param $param, array $parentMap, ?string $namespace): ?array
+    {
+        $current = $parentMap[spl_object_id($param)] ?? null;
+        $method = null;
+        $class = null;
+
+        while ($current !== null) {
+            if ($method === null && $current instanceof Node\Stmt\ClassMethod) {
+                $method = $current;
+            }
+
+            if ($current instanceof Node\Stmt\Class_) {
+                $class = $current;
+                break;
+            }
+
+            $current = $parentMap[spl_object_id($current)] ?? null;
+        }
+
+        if ($method === null || $class === null || $class->name === null) {
+            return null;
+        }
+
+        $shortName = $class->name->toString();
+        $fqcn = $namespace !== null && $namespace !== ''
+            ? $namespace . '\\' . $shortName
+            : $shortName;
+
+        $index = array_search($param, $method->params, true);
+
+        if ($index === false) {
+            return null;
+        }
+
+        return [$fqcn, $method->name->toString(), (int) $index];
+    }
+
+    /**
+     * Strings that plausibly stand in for an enum case: short, lowercase-ish
+     * identifiers, no whitespace, no special chars, not numeric, not empty.
+     */
+    private function looksLikeCaseName(string $value): bool
+    {
+        if ($value === '' || strlen($value) > 64) {
+            return false;
+        }
+
+        return (bool) preg_match('/^[a-z_][a-z0-9_-]*$/i', $value);
+    }
+
+    /**
+     * Best-effort guess at an enum name for a param when no enum exists yet.
+     */
+    private function suggestEnumName(string $paramName): string
+    {
+        $clean = trim($paramName, '_');
+
+        if ($clean === '') {
+            return 'Kind';
+        }
+
+        return ucfirst($clean);
     }
 }
