@@ -193,6 +193,58 @@ abstract class PipelineBuilder
     }
 
     /**
+     * Create warnings from context matches with the given message.
+     *
+     * @param  string|Closure(MatchResult): string  $message
+     * @return static
+     */
+    public function warningsFromMatches(string|Closure $message): static
+    {
+        if ($this->shouldSkip()) {
+            return $this;
+        }
+
+        foreach ($this->getMatches() as $match) {
+            $msg = $message instanceof Closure ? $message($match) : $message;
+
+            $this->warnings[] = Warning::at(
+                line: $match->line,
+                message: $msg,
+                snippet: $match->content,
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * Partition matches into sins and warnings using a single callback per
+     * match. Return a Sin, Warning, or null. Useful for prophets whose pipe
+     * emits both severities and discriminates by match name.
+     *
+     * @param  Closure(MatchResult, static, int): (Sin|Warning|null)  $callback
+     * @return static
+     */
+    public function partitionMatches(Closure $callback): static
+    {
+        if ($this->shouldSkip()) {
+            return $this;
+        }
+
+        foreach ($this->getMatches() as $index => $match) {
+            $result = $callback($match, $this, $index);
+
+            if ($result instanceof Sin) {
+                $this->sins[] = $result;
+            } elseif ($result instanceof Warning) {
+                $this->warnings[] = $result;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Map context to warnings using a callback.
      *
      * @param  Closure(TContext): (Warning|array<Warning>|null)  $callback
@@ -275,6 +327,11 @@ abstract class PipelineBuilder
 
     /**
      * Build and return the final Judgment.
+     *
+     * A pipeline can accumulate both sins and warnings (e.g. a prophet that
+     * flags a definite violation in one shape and a softer code smell in
+     * another). When both exist, they're packed into a single Judgment so
+     * neither side is lost.
      */
     public function judge(): Judgment
     {
@@ -286,12 +343,8 @@ abstract class PipelineBuilder
             return Judgment::skipped($this->skipReason);
         }
 
-        if (! empty($this->sins)) {
-            return Judgment::fallen($this->sins);
-        }
-
-        if (! empty($this->warnings)) {
-            return Judgment::withWarnings($this->warnings);
+        if (! empty($this->sins) || ! empty($this->warnings)) {
+            return new Judgment(sins: $this->sins, warnings: $this->warnings);
         }
 
         return Judgment::righteous();

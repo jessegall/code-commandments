@@ -62,6 +62,12 @@ return [
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\PreferStaticOverInvokableConstructProphet::class,
                 Backend\NoContainerResolutionProphet::class,
+                Backend\PreferNullObjectDefaultsProphet::class => [
+                    'null_objects' => [
+                        'callable' => 'App\\Support\\NullCallable',
+                        'Psr\\Log\\LoggerInterface' => 'Psr\\Log\\NullLogger',
+                    ],
+                ],
             ],
         ],
 
