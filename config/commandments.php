@@ -68,6 +68,9 @@ return [
                         'Psr\\Log\\LoggerInterface' => 'Psr\\Log\\NullLogger',
                     ],
                 ],
+                Backend\LongDocblockProphet::class => [
+                    // 'max_narrative_lines' => 3,
+                ],
             ],
         ],
 
