@@ -221,6 +221,14 @@ final class FindNullObjectDefaultsCandidates implements Pipe
                 continue;
             }
 
+            // The `= null` default is the smell — it says "I'm willing to do
+            // nothing when this isn't provided." Without it, the nullability
+            // is a deliberate contract the caller must satisfy, not a soft
+            // optional dep masquerading as one.
+            if (! $typeInfo['hasNullDefault']) {
+                continue;
+            }
+
             if (in_array($typeInfo['typeName'], self::PATTERN_B_TYPE_WHITELIST, true)) {
                 continue;
             }
@@ -697,14 +705,14 @@ final class FindNullObjectDefaultsCandidates implements Pipe
      * Resolve the declared type of a receiver expression. Looks at param
      * declarations and promoted/regular properties on the enclosing class.
      *
-     * @return array{typeName: string, nullable: bool}|null
+     * @return array{typeName: string, nullable: bool, hasNullDefault: bool}|null
      */
     private function resolveReceiverType(Expr $expr, Stmt\ClassMethod $method, ?Stmt\Class_ $class): ?array
     {
         if ($expr instanceof Expr\Variable && is_string($expr->name)) {
             foreach ($method->params as $param) {
                 if ($param->var instanceof Expr\Variable && $param->var->name === $expr->name) {
-                    return $this->plainTypeInfo($param->type);
+                    return $this->plainTypeInfo($param->type, $param->default);
                 }
             }
 
@@ -724,9 +732,9 @@ final class FindNullObjectDefaultsCandidates implements Pipe
     }
 
     /**
-     * @return array{typeName: string, nullable: bool}|null
+     * @return array{typeName: string, nullable: bool, hasNullDefault: bool}|null
      */
-    private function plainTypeInfo(?Node $type): ?array
+    private function plainTypeInfo(?Node $type, ?Expr $default = null): ?array
     {
         $info = $this->extractNullableTypeInfo($type);
 
@@ -734,11 +742,21 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             return null;
         }
 
-        return ['typeName' => $info['typeName'], 'nullable' => $info['nullable']];
+        return [
+            'typeName' => $info['typeName'],
+            'nullable' => $info['nullable'],
+            'hasNullDefault' => $this->isNullDefault($default),
+        ];
+    }
+
+    private function isNullDefault(?Expr $default): bool
+    {
+        return $default instanceof Expr\ConstFetch
+            && strtolower($default->name->toString()) === 'null';
     }
 
     /**
-     * @return array{typeName: string, nullable: bool}|null
+     * @return array{typeName: string, nullable: bool, hasNullDefault: bool}|null
      */
     private function findPropertyType(string $propertyName, Stmt\Class_ $class): ?array
     {
@@ -746,7 +764,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             if ($stmt instanceof Stmt\Property) {
                 foreach ($stmt->props as $propProp) {
                     if ($propProp->name->toString() === $propertyName) {
-                        return $this->plainTypeInfo($stmt->type);
+                        return $this->plainTypeInfo($stmt->type, $propProp->default);
                     }
                 }
             }
@@ -763,7 +781,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
                 }
 
                 if ($param->var instanceof Expr\Variable && $param->var->name === $propertyName) {
-                    return $this->plainTypeInfo($param->type);
+                    return $this->plainTypeInfo($param->type, $param->default);
                 }
             }
         }
