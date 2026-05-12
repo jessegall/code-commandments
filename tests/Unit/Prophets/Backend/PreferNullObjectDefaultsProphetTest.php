@@ -343,6 +343,96 @@ class PreferNullObjectDefaultsProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_warn_when_param_has_no_default(): void
+    {
+        // The classic "caller decides explicitly" contract — `T|null $tax`
+        // with no default is *the caller's* responsibility to handle, not
+        // a soft optional dep on the callee side.
+        $judgment = $this->judge(<<<'PHP'
+        class Payload {
+            public function withTax(TaxData | null $tax): static {
+                return $this
+                    ->set('tax_class', $tax?->name)
+                    ->set('tax_status', $tax?->status);
+            }
+            private function set(string $k, mixed $v): static { return $this; }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous(), 'Nullable param without `= null` is a contract, not a Null Object candidate.');
+    }
+
+    public function test_does_not_warn_when_promoted_property_has_no_default(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Worker {
+            public function __construct(
+                private readonly LoggerInterface | null $logger,
+            ) {}
+            public function hash(string $url): string {
+                $this->logger?->info('a');
+                $this->logger?->info('b');
+                return $url;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_warns_when_promoted_property_has_explicit_null_default(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Worker {
+            public function __construct(
+                private readonly LoggerInterface | null $logger = null,
+            ) {}
+            public function hash(string $url): string {
+                $this->logger?->info('a');
+                $this->logger?->info('b');
+                return $url;
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
+    public function test_does_not_warn_when_class_property_has_no_default(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Worker {
+            private LoggerInterface | null $logger;
+            public function __construct(LoggerInterface | null $logger) {
+                $this->logger = $logger;
+            }
+            public function hash(string $url): string {
+                $this->logger?->info('a');
+                $this->logger?->info('b');
+                return $url;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_warns_when_class_property_has_explicit_null_default(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Worker {
+            private LoggerInterface | null $logger = null;
+            public function hash(string $url): string {
+                $this->logger?->info('a');
+                $this->logger?->info('b');
+                return $url;
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
     // ────────────────────────────────────────────────────────────────
     // Mixed sins + warnings in one judgment
     // ────────────────────────────────────────────────────────────────
