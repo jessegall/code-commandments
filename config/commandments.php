@@ -71,6 +71,13 @@ return [
                 Backend\LongDocblockProphet::class => [
                     // 'max_narrative_lines' => 3,
                 ],
+                Backend\SuggestCompareSelfTraitProphet::class => [
+                    'trait' => 'App\\Support\\Enums\\CompareSelf',
+                    // 'is_one_of_method' => 'isOneOf',
+                    // 'is_not_one_of_method' => 'isNotOneOf',
+                    // 'min_chain' => 2,
+                    // 'exclude_enums' => [],
+                ],
             ],
         ],
 

@@ -1,0 +1,383 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Prophets\Backend;
+
+use JesseGall\CodeCommandments\Attributes\IntroducedIn;
+use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FindChainedEnumEqualityComparisons;
+use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
+use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+use PhpParser\Node;
+use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
+use ReflectionEnum;
+
+/**
+ * Surface enum equality chains that should collapse to a single
+ * `isOneOf(...)` / `isNotOneOf(...)` helper provided by a configurable trait.
+ *
+ *   Before:
+ *     if (
+ *         $descriptor->kind === NodeKind::Trigger
+ *         || $descriptor->kind === NodeKind::Input
+ *         || $descriptor->kind === NodeKind::Output
+ *     ) { … }
+ *
+ *   After:
+ *     if ($descriptor->kind->isOneOf(NodeKind::Trigger, NodeKind::Input, NodeKind::Output)) { … }
+ *
+ * The prophet emits two tiers:
+ *
+ *   - Primary warning when the matched enum already uses the configured
+ *     trait — the rewrite is a one-liner and the helper is in scope.
+ *
+ *   - Adoption hint (also a warning, but deduplicated per enum per file)
+ *     when the enum exists but hasn't adopted the trait yet — surfaces a
+ *     single nudge to adopt the trait, with the offending chain as
+ *     motivation, instead of spamming one warning per call site.
+ *
+ * The trait FQCN, helper method names, minimum chain length, and excluded
+ * enums are all configurable.
+ */
+#[IntroducedIn('1.15.0')]
+class SuggestCompareSelfTraitProphet extends PhpCommandment
+{
+    private const DEFAULT_TRAIT = 'App\\Support\\Enums\\CompareSelf';
+    private const DEFAULT_IS_ONE_OF = 'isOneOf';
+    private const DEFAULT_IS_NOT_ONE_OF = 'isNotOneOf';
+
+    public function description(): string
+    {
+        return 'Use a CompareSelf-style trait helper instead of chained enum equality comparisons';
+    }
+
+    public function detailedDescription(): string
+    {
+        return <<<'SCRIPTURE'
+Code that asks "is this enum value one of N cases?" routinely degrades into
+a chain of identity comparisons:
+
+    if (
+        $descriptor->kind === NodeKind::Trigger
+        || $descriptor->kind === NodeKind::Input
+        || $descriptor->kind === NodeKind::Output
+    ) {
+        return $descriptor;
+    }
+
+That shape is hard to scan, grows by a multiple of cases on every edit, and
+becomes a negation salad when inverted with `!==` / `&&`.
+
+A small trait on the enum collapses the pattern:
+
+    use CompareSelf;
+    // exposes isOneOf(self ...$cases) and isNotOneOf(self ...$cases)
+
+    if ($descriptor->kind->isOneOf(NodeKind::Trigger, NodeKind::Input, NodeKind::Output)) {
+        return $descriptor;
+    }
+
+This prophet matches boolean chains where every atom compares the same
+left-hand expression to a case of the same enum:
+
+  - `||` chains of `===` (suggest `isOneOf`)
+  - `&&` chains of `!==` (suggest `isNotOneOf`)
+
+A chain must contain at least `min_chain` atoms (default 2 — twos are
+already noise). Mixed-enum chains, chains with different left-hand sides,
+single comparisons, and `match` expressions are intentionally ignored —
+they are not "one-of" tests.
+
+Severities are tiered:
+
+  - WARNING when the matched enum already uses the configured trait —
+    the rewrite is a one-liner.
+
+  - WARNING (quieter, one per enum per file) when the enum exists but
+    hasn't adopted the trait yet — a nudge to add the trait first.
+
+Comparisons inside `toArray`, `jsonSerialize`, `render`, or inside a
+`JsonResource` / `Resource` / `Response` class are left alone — those
+are wire-format boundaries where literal-shaped logic is the contract.
+
+Configuration:
+
+    SuggestCompareSelfTraitProphet::class => [
+        'trait' => App\Support\Enums\CompareSelf::class,
+        'is_one_of_method' => 'isOneOf',
+        'is_not_one_of_method' => 'isNotOneOf',
+        'min_chain' => 2,
+        'exclude_enums' => [],
+    ],
+SCRIPTURE;
+    }
+
+    public function judge(string $filePath, string $content): Judgment
+    {
+        $traitFqcn = $this->traitFqcn();
+        $isOneOfMethod = (string) $this->config('is_one_of_method', self::DEFAULT_IS_ONE_OF);
+        $isNotOneOfMethod = (string) $this->config('is_not_one_of_method', self::DEFAULT_IS_NOT_ONE_OF);
+        $minChain = (int) $this->config('min_chain', 2);
+        $excludeEnums = $this->config('exclude_enums', []);
+
+        if (! is_array($excludeEnums)) {
+            $excludeEnums = [];
+        }
+
+        $pipe = (new FindChainedEnumEqualityComparisons)
+            ->withMinChain($minChain)
+            ->withExcludeEnums(array_values(array_map(static fn ($v) => (string) $v, $excludeEnums)));
+
+        $pipeline = PhpPipeline::make($filePath, $content)
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractUseStatements::class)
+            ->pipe($pipe);
+
+        $ast = $pipeline->getContext()->ast;
+        $seenAdoptionHint = [];
+
+        return $pipeline
+            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $isOneOfMethod, $isNotOneOfMethod, $ast, &$seenAdoptionHint): ?Warning {
+                $enumFqcn = $match->groups['enum_fqcn'];
+                $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
+
+                if ($hasTrait === true) {
+                    return $this->primaryWarning($match, $isOneOfMethod, $isNotOneOfMethod);
+                }
+
+                $key = $enumFqcn;
+
+                if (isset($seenAdoptionHint[$key])) {
+                    return null;
+                }
+
+                $seenAdoptionHint[$key] = true;
+
+                return $this->adoptionHint($match, $traitFqcn);
+            })
+            ->judge();
+    }
+
+    private function traitFqcn(): string
+    {
+        $raw = (string) $this->config('trait', self::DEFAULT_TRAIT);
+
+        return ltrim($raw, '\\');
+    }
+
+    private function primaryWarning(MatchResult $match, string $isOneOfMethod, string $isNotOneOfMethod): Warning
+    {
+        $groups = $match->groups;
+        $cases = explode(',', $groups['cases']);
+        $methodName = $groups['op'] === 'one_of' ? $isOneOfMethod : $isNotOneOfMethod;
+
+        $callArgs = implode(', ', array_map(
+            static fn (string $c) => $groups['enum_short'] . '::' . $c,
+            $cases,
+        ));
+
+        $message = sprintf(
+            '%d-chain of %s comparisons on %s — collapse to `%s->%s(%s)`.',
+            (int) $groups['chain_length'],
+            $groups['op'] === 'one_of' ? '`===`/`||`' : '`!==`/`&&`',
+            $groups['enum_short'],
+            $groups['lhs'],
+            $methodName,
+            $callArgs,
+        );
+
+        return Warning::at(
+            line: $match->line,
+            message: $message,
+            snippet: $match->content,
+        );
+    }
+
+    private function adoptionHint(MatchResult $match, string $traitFqcn): Warning
+    {
+        $groups = $match->groups;
+        $traitShort = $this->shortName($traitFqcn);
+
+        $message = sprintf(
+            '[ADOPT] %s could adopt the `%s` trait — chained %s comparisons on it would collapse to a single helper call (e.g. line %d).',
+            $groups['enum_short'],
+            $traitShort,
+            $groups['op'] === 'one_of' ? '`===`/`||`' : '`!==`/`&&`',
+            $match->line,
+        );
+
+        return Warning::at(
+            line: $match->line,
+            message: $message,
+            snippet: $match->content,
+        );
+    }
+
+    private function shortName(string $fqcn): string
+    {
+        $parts = explode('\\', $fqcn);
+
+        return end($parts) ?: $fqcn;
+    }
+
+    /**
+     * Decide whether the enum identified by $enumFqcn uses $traitFqcn.
+     *
+     * Order: in-file AST first (the file under analysis may declare the
+     * enum), then reflection (autoloadable enums), then null when neither
+     * can answer — the prophet treats null as "trait absent" and falls back
+     * to the quieter adoption hint.
+     *
+     * @param  array<Node>|null  $ast
+     */
+    private function enumUsesTrait(string $enumFqcn, string $traitFqcn, ?array $ast): ?bool
+    {
+        $fromAst = $ast !== null ? $this->enumTraitFromAst($ast, $enumFqcn, $traitFqcn) : null;
+
+        if ($fromAst !== null) {
+            return $fromAst;
+        }
+
+        if (enum_exists($enumFqcn, autoload: true)) {
+            try {
+                $ref = new ReflectionEnum($enumFqcn);
+                $traits = $ref->getTraitNames();
+
+                foreach ($traits as $usedTrait) {
+                    if (ltrim($usedTrait, '\\') === ltrim($traitFqcn, '\\')) {
+                        return true;
+                    }
+                }
+
+                return false;
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Walk the file's AST for an enum declaration matching $enumFqcn. If
+     * found, return whether it uses $traitFqcn. Returns null when the file
+     * does not declare this enum.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function enumTraitFromAst(array $ast, string $enumFqcn, string $traitFqcn): ?bool
+    {
+        $traitFqcn = ltrim($traitFqcn, '\\');
+        $enumFqcn = ltrim($enumFqcn, '\\');
+
+        $finder = new NodeFinder;
+
+        foreach ($ast as $top) {
+            if ($top instanceof Node\Stmt\Namespace_) {
+                $ns = $top->name?->toString() ?? '';
+                $uses = $this->collectUses($top->stmts);
+
+                foreach ($top->stmts as $stmt) {
+                    if (! $stmt instanceof Node\Stmt\Enum_ || $stmt->name === null) {
+                        continue;
+                    }
+
+                    $declaredFqcn = $ns !== '' ? $ns . '\\' . $stmt->name->toString() : $stmt->name->toString();
+
+                    if ($declaredFqcn !== $enumFqcn) {
+                        continue;
+                    }
+
+                    return $this->enumNodeUsesTrait($stmt, $traitFqcn, $uses, $ns);
+                }
+            } elseif ($top instanceof Node\Stmt\Enum_ && $top->name !== null) {
+                $uses = $this->collectUses($ast);
+                $declaredFqcn = $top->name->toString();
+
+                if ($declaredFqcn !== $enumFqcn) {
+                    continue;
+                }
+
+                return $this->enumNodeUsesTrait($top, $traitFqcn, $uses, null);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, string>  $uses  alias => FQCN
+     */
+    private function enumNodeUsesTrait(Node\Stmt\Enum_ $enum, string $traitFqcn, array $uses, ?string $namespace): bool
+    {
+        foreach ($enum->stmts as $stmt) {
+            if (! $stmt instanceof Node\Stmt\TraitUse) {
+                continue;
+            }
+
+            foreach ($stmt->traits as $traitName) {
+                $resolved = $this->resolveTraitFqcn($traitName, $uses, $namespace);
+
+                if ($resolved === ltrim($traitFqcn, '\\')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, string>  $uses
+     */
+    private function resolveTraitFqcn(Node\Name $name, array $uses, ?string $namespace): string
+    {
+        if ($name->isFullyQualified()) {
+            return ltrim($name->toString(), '\\');
+        }
+
+        $parts = explode('\\', $name->toString());
+        $first = $parts[0];
+
+        if (isset($uses[$first])) {
+            $parts[0] = $uses[$first];
+
+            return implode('\\', $parts);
+        }
+
+        if ($namespace !== null && $namespace !== '') {
+            return $namespace . '\\' . $name->toString();
+        }
+
+        return $name->toString();
+    }
+
+    /**
+     * @param  array<Node>  $stmts
+     * @return array<string, string>
+     */
+    private function collectUses(array $stmts): array
+    {
+        $uses = [];
+
+        foreach ($stmts as $stmt) {
+            if (! $stmt instanceof Node\Stmt\Use_) {
+                continue;
+            }
+
+            foreach ($stmt->uses as $useUse) {
+                $fqcn = $useUse->name->toString();
+                $alias = $useUse->alias?->toString() ?? $useUse->name->getLast();
+                $uses[$alias] = $fqcn;
+            }
+        }
+
+        return $uses;
+    }
+}

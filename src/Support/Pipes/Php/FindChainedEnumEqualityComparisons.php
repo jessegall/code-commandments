@@ -1,0 +1,470 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Support\Pipes\Php;
+
+use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
+use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\NodeFinder;
+use PhpParser\PrettyPrinter;
+
+/**
+ * Find boolean chains of enum equality comparisons where the same LHS is
+ * compared against multiple cases of the same enum.
+ *
+ *   $kind === Foo::A || $kind === Foo::B            // one_of   (>= 2 atoms)
+ *   $status !== Status::Done && $status !== Status::Failed  // not_one_of
+ *
+ * A chain is the maximal sub-tree of either `||` or `&&` operators. To count
+ * it must:
+ *   - contain only `===` (for `||`) or only `!==` (for `&&`),
+ *   - share a single LHS expression across every atom (pretty-printed equality),
+ *   - share a single enum class on every RHS,
+ *   - have length >= minChain (default 2).
+ *
+ * The pipe stays away from wire-format scopes (`toArray`, `jsonSerialize`,
+ * etc., and `JsonResource`/`Response` classes) — the same boundary other
+ * enum-leaning prophets respect.
+ *
+ * @implements Pipe<PhpContext, PhpContext>
+ */
+final class FindChainedEnumEqualityComparisons implements Pipe
+{
+    private const WIRE_FORMAT_METHODS = [
+        'toArray', 'jsonSerialize', 'render', 'toResponse', 'resolve',
+    ];
+
+    private const WIRE_FORMAT_PARENT_SUFFIXES = [
+        'JsonResource', 'Resource', 'Response',
+    ];
+
+    private int $minChain = 2;
+
+    /** @var list<string> Lowercased FQCNs or short names. */
+    private array $excludeEnums = [];
+
+    public function withMinChain(int $n): self
+    {
+        $this->minChain = max(2, $n);
+
+        return $this;
+    }
+
+    /**
+     * @param  list<string>  $enums  Either short names or FQCNs (matched case-insensitively).
+     */
+    public function withExcludeEnums(array $enums): self
+    {
+        $this->excludeEnums = array_values(array_map(
+            static fn (string $s) => strtolower(ltrim($s, '\\')),
+            $enums,
+        ));
+
+        return $this;
+    }
+
+    public function handle(mixed $input): mixed
+    {
+        if ($input->ast === null) {
+            return $input->with(matches: []);
+        }
+
+        $printer = new PrettyPrinter\Standard;
+        $finder = new NodeFinder;
+        $parentMap = $this->buildParentMap($input->ast);
+
+        $matches = [];
+
+        $orRoots = $this->collectChainRoots(
+            $finder->findInstanceOf($input->ast, Expr\BinaryOp\BooleanOr::class),
+            Expr\BinaryOp\BooleanOr::class,
+            $parentMap,
+        );
+
+        foreach ($orRoots as $root) {
+            if ($this->isInsideWireFormatScope($root, $parentMap)) {
+                continue;
+            }
+
+            $atoms = $this->flatten($root, Expr\BinaryOp\BooleanOr::class);
+
+            if (count($atoms) < $this->minChain) {
+                continue;
+            }
+
+            $analysis = $this->analyseChain($atoms, Expr\BinaryOp\Identical::class, $printer);
+
+            if ($analysis === null) {
+                continue;
+            }
+
+            $resolvedFqcn = $this->resolveFqcn($analysis['classNode'], $input->useStatements, $input->namespace);
+
+            if ($this->isExcluded($resolvedFqcn, $analysis['shortName'])) {
+                continue;
+            }
+
+            $matches[] = $this->makeMatch(
+                root: $root,
+                analysis: $analysis,
+                resolvedFqcn: $resolvedFqcn,
+                content: $input->content,
+                op: 'one_of',
+            );
+        }
+
+        $andRoots = $this->collectChainRoots(
+            $finder->findInstanceOf($input->ast, Expr\BinaryOp\BooleanAnd::class),
+            Expr\BinaryOp\BooleanAnd::class,
+            $parentMap,
+        );
+
+        foreach ($andRoots as $root) {
+            if ($this->isInsideWireFormatScope($root, $parentMap)) {
+                continue;
+            }
+
+            $atoms = $this->flatten($root, Expr\BinaryOp\BooleanAnd::class);
+
+            if (count($atoms) < $this->minChain) {
+                continue;
+            }
+
+            $analysis = $this->analyseChain($atoms, Expr\BinaryOp\NotIdentical::class, $printer);
+
+            if ($analysis === null) {
+                continue;
+            }
+
+            $resolvedFqcn = $this->resolveFqcn($analysis['classNode'], $input->useStatements, $input->namespace);
+
+            if ($this->isExcluded($resolvedFqcn, $analysis['shortName'])) {
+                continue;
+            }
+
+            $matches[] = $this->makeMatch(
+                root: $root,
+                analysis: $analysis,
+                resolvedFqcn: $resolvedFqcn,
+                content: $input->content,
+                op: 'not_one_of',
+            );
+        }
+
+        return $input->with(matches: $matches);
+    }
+
+    /**
+     * Keep only nodes whose direct parent is not the same kind — i.e., the
+     * topmost node of each maximal `||` or `&&` chain.
+     *
+     * @template T of Node
+     * @param  list<T>  $nodes
+     * @param  class-string<T>  $kind
+     * @param  array<int, Node>  $parentMap
+     * @return list<T>
+     */
+    private function collectChainRoots(array $nodes, string $kind, array $parentMap): array
+    {
+        $roots = [];
+
+        foreach ($nodes as $node) {
+            $parent = $parentMap[spl_object_id($node)] ?? null;
+
+            if ($parent instanceof $kind) {
+                continue;
+            }
+
+            $roots[] = $node;
+        }
+
+        return $roots;
+    }
+
+    /**
+     * Flatten a tree of $kind operators into the leaf atoms.
+     *
+     * @return list<Node>
+     */
+    private function flatten(Node $node, string $kind): array
+    {
+        if ($node instanceof $kind) {
+            /** @var Expr\BinaryOp $node */
+            return array_merge(
+                $this->flatten($node->left, $kind),
+                $this->flatten($node->right, $kind),
+            );
+        }
+
+        return [$node];
+    }
+
+    /**
+     * Validate that every atom is the expected comparison shape and that the
+     * chain agrees on LHS expression + enum class.
+     *
+     * @param  list<Node>  $atoms
+     * @return array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>}|null
+     */
+    private function analyseChain(array $atoms, string $comparisonClass, PrettyPrinter\Standard $printer): ?array
+    {
+        $lhsSource = null;
+        $classKey = null;
+        $classNode = null;
+        $shortName = null;
+        $cases = [];
+
+        foreach ($atoms as $atom) {
+            if (! $atom instanceof $comparisonClass) {
+                return null;
+            }
+
+            /** @var Expr\BinaryOp $atom */
+            [$expr, $caseFetch] = $this->orientAtom($atom);
+
+            if ($caseFetch === null) {
+                return null;
+            }
+
+            $printed = $printer->prettyPrintExpr($expr);
+
+            if ($lhsSource === null) {
+                $lhsSource = $printed;
+            } elseif ($lhsSource !== $printed) {
+                return null;
+            }
+
+            $caseClass = $caseFetch->class;
+
+            if (! $caseClass instanceof Node\Name) {
+                return null;
+            }
+
+            $currentKey = $caseClass->toString();
+
+            if ($classKey === null) {
+                $classKey = $currentKey;
+                $classNode = $caseClass;
+                $shortName = $caseClass->getLast();
+            } elseif ($classKey !== $currentKey) {
+                return null;
+            }
+
+            if (! $caseFetch->name instanceof Node\Identifier) {
+                return null;
+            }
+
+            $caseName = $caseFetch->name->toString();
+
+            if ($caseName === '' || strtolower($caseName) === 'class') {
+                return null;
+            }
+
+            $cases[] = $caseName;
+        }
+
+        if ($lhsSource === null || $classNode === null || $shortName === null) {
+            return null;
+        }
+
+        return [
+            'lhsSource' => $lhsSource,
+            'classNode' => $classNode,
+            'shortName' => $shortName,
+            'cases' => $cases,
+        ];
+    }
+
+    /**
+     * Identify which side of a binary comparison is the enum-case fetch and
+     * which is the candidate LHS expression. Returns [lhs, caseFetch] or
+     * [null, null] when neither side matches.
+     *
+     * @return array{0: Node|null, 1: Expr\ClassConstFetch|null}
+     */
+    private function orientAtom(Expr\BinaryOp $atom): array
+    {
+        if ($this->isCaseFetch($atom->right)) {
+            return [$atom->left, $atom->right];
+        }
+
+        if ($this->isCaseFetch($atom->left)) {
+            return [$atom->right, $atom->left];
+        }
+
+        return [null, null];
+    }
+
+    private function isCaseFetch(Node $node): bool
+    {
+        if (! $node instanceof Expr\ClassConstFetch) {
+            return false;
+        }
+
+        if (! $node->class instanceof Node\Name) {
+            return false;
+        }
+
+        if (! $node->name instanceof Node\Identifier) {
+            return false;
+        }
+
+        // `Foo::class` is not a case access.
+        return strtolower($node->name->toString()) !== 'class';
+    }
+
+    /**
+     * @param  array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>}  $analysis
+     */
+    private function makeMatch(
+        Node $root,
+        array $analysis,
+        string $resolvedFqcn,
+        string $content,
+        string $op,
+    ): MatchResult {
+        $line = $root->getStartLine();
+
+        return new MatchResult(
+            name: 'enum_equality_chain',
+            pattern: '',
+            match: $analysis['lhsSource'] . ' ' . $op . ' ' . implode('/', $analysis['cases']),
+            line: $line,
+            offset: null,
+            content: $this->getSnippet($content, $line),
+            groups: [
+                'op' => $op,
+                'lhs' => $analysis['lhsSource'],
+                'enum_short' => $analysis['shortName'],
+                'enum_fqcn' => $resolvedFqcn,
+                'cases' => implode(',', $analysis['cases']),
+                'chain_length' => (string) count($analysis['cases']),
+            ],
+        );
+    }
+
+    private function isExcluded(string $resolvedFqcn, string $shortName): bool
+    {
+        if ($this->excludeEnums === []) {
+            return false;
+        }
+
+        $fqcn = strtolower(ltrim($resolvedFqcn, '\\'));
+        $short = strtolower($shortName);
+
+        foreach ($this->excludeEnums as $entry) {
+            if ($entry === $fqcn || $entry === $short) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, string>  $useStatements  alias => FQCN
+     */
+    private function resolveFqcn(Node\Name $name, array $useStatements, ?string $namespace): string
+    {
+        if ($name->isFullyQualified()) {
+            return ltrim($name->toString(), '\\');
+        }
+
+        $parts = explode('\\', $name->toString());
+        $first = $parts[0];
+
+        if (isset($useStatements[$first])) {
+            $parts[0] = $useStatements[$first];
+
+            return implode('\\', $parts);
+        }
+
+        if ($namespace !== null && $namespace !== '') {
+            return $namespace . '\\' . $name->toString();
+        }
+
+        return $name->toString();
+    }
+
+    /**
+     * @param  array<int, Node>  $parentMap
+     */
+    private function isInsideWireFormatScope(Node $node, array $parentMap): bool
+    {
+        $current = $parentMap[spl_object_id($node)] ?? null;
+
+        while ($current !== null) {
+            if ($current instanceof Node\Stmt\ClassMethod
+                && in_array($current->name->toString(), self::WIRE_FORMAT_METHODS, true)
+            ) {
+                return true;
+            }
+
+            if ($current instanceof Node\Stmt\Class_ && $current->extends !== null) {
+                $parent = $current->extends->toString();
+
+                foreach (self::WIRE_FORMAT_PARENT_SUFFIXES as $suffix) {
+                    if ($parent === $suffix || str_ends_with($parent, '\\' . $suffix)) {
+                        return true;
+                    }
+                }
+            }
+
+            $current = $parentMap[spl_object_id($current)] ?? null;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @return array<int, Node>
+     */
+    private function buildParentMap(array $ast): array
+    {
+        $parents = [];
+        $stack = [];
+
+        $walker = static function (mixed $node) use (&$walker, &$parents, &$stack): void {
+            if (! $node instanceof Node) {
+                return;
+            }
+
+            if (! empty($stack)) {
+                $parents[spl_object_id($node)] = end($stack);
+            }
+
+            $stack[] = $node;
+
+            foreach ($node->getSubNodeNames() as $name) {
+                $child = $node->{$name};
+
+                if (is_array($child)) {
+                    foreach ($child as $c) {
+                        $walker($c);
+                    }
+                } else {
+                    $walker($child);
+                }
+            }
+
+            array_pop($stack);
+        };
+
+        foreach ($ast as $node) {
+            $walker($node);
+        }
+
+        return $parents;
+    }
+
+    private function getSnippet(string $content, int $line): string
+    {
+        $lines = explode("\n", $content);
+
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+    }
+}
