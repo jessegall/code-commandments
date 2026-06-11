@@ -43,7 +43,6 @@ return [
                 Backend\ReadonlyDataPropertiesProphet::class,
                 Backend\FormRequestTypedGettersProphet::class,
                 Backend\HiddenAttributeProphet::class,
-                Backend\NoCustomFromModelProphet::class,
                 Backend\ControllerPrivateMethodsProphet::class => [
                     'max_private_methods' => 3,
                     'min_method_lines' => 3,
