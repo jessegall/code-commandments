@@ -850,6 +850,80 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
     }
 
+    public function test_flags_despite_all_mixed_shape_annotation(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array{name?: mixed, type?: mixed} $row */
+            public function name(array $row): mixed { return $row['name']; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_arr_get_despite_all_mixed_shape_annotation(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class L {
+            /** @param array{name?: mixed, type?: mixed} $row */
+            public function name(array $row): mixed { return Arr::get($row, 'name'); }
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Arr::get', $judgment->sins[0]->message);
+    }
+
+    public function test_respects_shape_with_one_concrete_type_among_mixed(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array{name: string, default?: mixed} $row */
+            public function name(array $row): mixed { return $row['default']; }
+        }
+        PHP;
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_flags_despite_inline_var_all_mixed_shape(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            public function name(): mixed {
+                /** @var array{name?: mixed} $row */
+                $row = $this->load();
+                return $row['name'];
+            }
+            public function load(): array { return []; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_despite_property_all_mixed_shape(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @var array{label?: mixed, weight?: mixed} */
+            private array $config = [];
+            public function label(): mixed { return $this->config['label']; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
     public function test_array_shape_does_not_leak_to_other_methods(): void
     {
         $content = <<<'PHP'

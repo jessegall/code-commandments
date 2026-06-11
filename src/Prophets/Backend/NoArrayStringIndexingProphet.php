@@ -84,7 +84,9 @@ Exact array shapes are also accepted as typed: when you declare
 `@var array{0: string, 1: int} $pair`, the shape is known and accesses
 into it are not flagged. Prefer a real DTO where the structure lives
 longer than one normalisation step, but a shape annotation is an
-honest contract and counts.
+honest contract and counts. A shape must declare at least one concrete
+value type — `array{name?: mixed, type?: mixed}` is `array<string,
+mixed>` in shape clothing and does NOT opt out.
 
 Wrapper helpers (`config()`, `Arr::get()`, `data_get()`, etc.) signal
 "this is dynamic lookup" — but ONLY when the lookup actually is dynamic.
