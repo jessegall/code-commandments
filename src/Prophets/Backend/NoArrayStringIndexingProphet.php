@@ -86,8 +86,14 @@ into it are not flagged. Prefer a real DTO where the structure lives
 longer than one normalisation step, but a shape annotation is an
 honest contract and counts.
 
-Wrapper helpers (`config()`, `Arr::get()`, `data_get()`, etc.) already
-signal "this is dynamic lookup" and are not flagged.
+Wrapper helpers (`config()`, `Arr::get()`, `data_get()`, etc.) signal
+"this is dynamic lookup" — but ONLY when the lookup actually is dynamic.
+Calling `Arr::get($graph, 'nodes')` or `data_get($row, 'name')` with a
+literal single-segment key is `$graph['nodes']` wearing a disguise, and
+is flagged as the same sin. Wrapper calls stay exempt when the key is
+dynamic (a variable or expression), a dotted deep path (`'nested.key'`
+— the one-off deep-config case), or the target is annotated as a
+genuine dictionary or exact shape.
 
 STOP. READ THIS BEFORE FIXING ANYTHING.
 
@@ -96,7 +102,10 @@ these sins by blanket-replacing `$arr['key']` with `Arr::get($arr,
 'key')`, `data_get(...)`, or any other wrapper helper. That defeats
 the entire point of this rule. The sin is "structured data is being
 passed around as an untyped array" — swapping the accessor syntax
-does not fix that, it just hides the smell from the linter.
+does not fix that, it just hides the smell from the linter. The
+prophet DETECTS this dodge: a wrapper call with a literal key on a
+non-dictionary array is reported as the same sin. The only way out
+is the DTO.
 
 The DEFAULT fix is always: introduce a DTO (Spatie Data class) or a
 `final readonly` value object at the boundary where the array enters
@@ -135,11 +144,18 @@ SCRIPTURE;
             ->pipe(ExtractUseStatements::class)
             ->pipe($pipe)
             ->sinsFromMatches(
-                fn ($match) => sprintf(
-                    'Array string indexing on %s[%s] — wrap in a DTO',
-                    $match->groups['var'],
-                    $match->groups['key'],
-                ),
+                fn ($match) => isset($match->groups['via'])
+                    ? sprintf(
+                        'Array string indexing via %s(%s, %s) — wrapper helpers do not absolve, wrap in a DTO',
+                        $match->groups['via'],
+                        $match->groups['var'],
+                        $match->groups['key'],
+                    )
+                    : sprintf(
+                        'Array string indexing on %s[%s] — wrap in a DTO',
+                        $match->groups['var'],
+                        $match->groups['key'],
+                    ),
                 fn ($match) => $match->groups['source_hint']
                     . '. Use a Spatie Data class for inbound arrays, or a `final readonly` value object for code you own.'
             )

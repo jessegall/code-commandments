@@ -313,7 +313,7 @@ class NoArrayStringIndexingProphetTest extends TestCase
         use Illuminate\Support\Arr;
         class S {
             public function read(array $row, string $d): mixed {
-                return Arr::get($row['orders'], 'first', $d);
+                return Arr::get($row['orders'], $d);
             }
         }
         PHP;
@@ -329,8 +329,8 @@ class NoArrayStringIndexingProphetTest extends TestCase
         namespace App;
         use Illuminate\Support\Arr;
         class S {
-            public function write(array $row): array {
-                Arr::set($row['nested'], 'key', 1);
+            public function write(array $row, string $key): array {
+                Arr::set($row['nested'], $key, 1);
                 return $row;
             }
         }
@@ -347,8 +347,8 @@ class NoArrayStringIndexingProphetTest extends TestCase
         namespace App;
         use Illuminate\Support\Arr;
         class S {
-            public function has(array $row): bool {
-                return Arr::has($row['nested'], 'key');
+            public function has(array $row, string $key): bool {
+                return Arr::has($row['nested'], $key);
             }
         }
         PHP;
@@ -363,8 +363,8 @@ class NoArrayStringIndexingProphetTest extends TestCase
         <?php
         namespace App;
         class S {
-            public function read(array $row): mixed {
-                return \Illuminate\Support\Arr::get($row['nested'], 'key');
+            public function read(array $row, string $key): mixed {
+                return \Illuminate\Support\Arr::get($row['nested'], $key);
             }
         }
         PHP;
@@ -380,8 +380,8 @@ class NoArrayStringIndexingProphetTest extends TestCase
         namespace App;
         use Illuminate\Support\Arr as ArrHelper;
         class S {
-            public function read(array $row): mixed {
-                return ArrHelper::get($row['nested'], 'key');
+            public function read(array $row, string $key): mixed {
+                return ArrHelper::get($row['nested'], $key);
             }
         }
         PHP;
@@ -395,6 +395,225 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $judgment = $this->judge("return data_get(config('app'), \$row['key']);");
 
         $this->assertTrue($judgment->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Wrapper circumvention — Arr::get etc. with a literal key
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_arr_get_with_literal_key(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            public function nodes(array $graph): mixed {
+                return Arr::get($graph, 'nodes');
+            }
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Arr::get', $judgment->sins[0]->message);
+        $this->assertStringContainsString("'nodes'", $judgment->sins[0]->message);
+        $this->assertStringContainsString('do not absolve', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_data_get_with_literal_single_segment_key(): void
+    {
+        $judgment = $this->judge("return data_get(\$row, 'name');");
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('data_get', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_other_arr_methods_with_literal_key(): void
+    {
+        $methods = [
+            "Arr::has(\$row, 'name')",
+            "Arr::set(\$row, 'name', 1)",
+            "Arr::forget(\$row, 'name')",
+            "Arr::pull(\$row, 'name')",
+            "Arr::add(\$row, 'name', 1)",
+            "Arr::exists(\$row, 'name')",
+        ];
+
+        foreach ($methods as $call) {
+            $content = <<<PHP
+            <?php
+            namespace App;
+            use Illuminate\Support\Arr;
+            class S {
+                public function touch(array \$row): mixed {
+                    return {$call};
+                }
+            }
+            PHP;
+
+            $this->assertFallen(
+                $this->prophet->judge('/x.php', $content),
+                1,
+            );
+        }
+    }
+
+    public function test_flags_aliased_arr_with_literal_key(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr as ArrHelper;
+        class S {
+            public function read(array $row): mixed {
+                return ArrHelper::get($row, 'name');
+            }
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_arr_get_with_enum_value_key(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            public function total(array $row): mixed {
+                return Arr::get($row, Field::Total->value);
+            }
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_does_not_flag_arr_get_with_dynamic_key(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            public function read(array $row, string $key): mixed {
+                return Arr::get($row, $key);
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_arr_get_with_dotted_deep_path(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            public function read(array $row): mixed {
+                return Arr::get($row, 'meta.created.at');
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_arr_get_on_dict_annotated_target(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            /** @param array<string, int> $scores */
+            public function read(array $scores): mixed {
+                return Arr::get($scores, 'alice');
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_flags_arr_get_on_mixed_dict_annotated_target(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            /** @param array<string, mixed> $graph */
+            public function nodes(array $graph): mixed {
+                return Arr::get($graph, 'nodes');
+            }
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_does_not_flag_arr_get_on_shape_annotated_target(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            /** @param array{nodes: list<mixed>} $graph */
+            public function nodes(array $graph): mixed {
+                return Arr::get($graph, 'nodes');
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_arr_except_with_key_list(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            public function strip(array $node): array {
+                return Arr::except($node, ['position']);
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_dedupes_subscript_and_wrapper_access_to_same_key(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        class S {
+            public function read(array $row): mixed {
+                $a = $row['name'];
+                return [$a, Arr::get($row, 'name')];
+            }
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_wrapper_sin_suggestion_mentions_dto(): void
+    {
+        $judgment = $this->judge("return data_get(\$row, 'name');");
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('DTO', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('parameter', $judgment->sins[0]->suggestion);
     }
 
     public function test_does_not_flag_any_superglobal(): void

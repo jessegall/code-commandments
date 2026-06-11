@@ -43,6 +43,18 @@ final class FindArrayStringIndexing implements Pipe
     private const SKIP_STATIC_CLASSES = ['Arr'];
 
     /**
+     * Arr:: methods with an (array, key) signature. Calling one with a
+     * statically-known single-segment key is the same sin as subscripting —
+     * swapping the accessor syntax doesn't make the array a dictionary.
+     */
+    private const CIRCUMVENTION_ARR_METHODS = ['get', 'has', 'set', 'forget', 'pull', 'add', 'exists'];
+
+    /**
+     * Global helpers with an (array, key) signature, same rule as above.
+     */
+    private const CIRCUMVENTION_FUNCTIONS = ['data_get', 'data_set', 'data_forget'];
+
+    /**
      * Superglobals are genuine dictionaries. Subscripting them is a
      * different sin (raw request input) handled elsewhere.
      */
@@ -109,7 +121,7 @@ final class FindArrayStringIndexing implements Pipe
                 continue;
             }
 
-            if ($this->isDictVariable($access, $parents, $scopedDictVars, $globalDictVars, $dictProps)) {
+            if ($this->isDictNode($this->rootSubscripted($access), $access, $parents, $scopedDictVars, $globalDictVars, $dictProps)) {
                 continue;
             }
 
@@ -123,7 +135,7 @@ final class FindArrayStringIndexing implements Pipe
             $seen[$dedupeKey] = true;
 
             $line = $access->getStartLine();
-            $source = $this->describeSource($access, $parents, $input->namespace);
+            $source = $this->describeSource($access->var, $access, $parents, $input->namespace);
 
             $matches[] = new MatchResult(
                 name: $keyDisplay,
@@ -141,20 +153,149 @@ final class FindArrayStringIndexing implements Pipe
             );
         }
 
+        $this->findWrapperCircumventions($input, $parents, $scopedDictVars, $globalDictVars, $dictProps, $seen, $matches);
+
         return $input->with(matches: $matches);
     }
 
     /**
-     * Classify where the array being subscripted originates, so the
-     * prophet can point at the place a DTO should be introduced.
+     * Flag wrapper-helper calls used to dodge the subscript rule:
+     * `Arr::get($graph, 'nodes')` is `$graph['nodes']` wearing a disguise.
+     *
+     * Legitimate wrapper uses stay exempt: dynamic keys, dotted deep paths
+     * (`'nested.key'` — the one-off deep-config case), and targets annotated
+     * as genuine dictionaries or exact shapes.
+     *
+     * @param  array<int, Node>  $parents
+     * @param  array<int, array<string, true>>  $scopedDictVars
+     * @param  array<string, true>  $globalDictVars
+     * @param  array<string, true>  $dictProps
+     * @param  array<string, true>  $seen
+     * @param  array<MatchResult>  $matches
+     */
+    private function findWrapperCircumventions(
+        mixed $input,
+        array $parents,
+        array $scopedDictVars,
+        array $globalDictVars,
+        array $dictProps,
+        array &$seen,
+        array &$matches,
+    ): void {
+        $nodeFinder = new NodeFinder;
+
+        $calls = $nodeFinder->find(
+            $input->ast,
+            fn (Node $n): bool => $n instanceof Expr\StaticCall || $n instanceof Expr\FuncCall,
+        );
+
+        foreach ($calls as $call) {
+            $via = $this->circumventionLabel($call, $input->useStatements);
+
+            if ($via === null) {
+                continue;
+            }
+
+            $args = $call->args;
+
+            if (count($args) < 2
+                || ! $args[0] instanceof Node\Arg
+                || ! $args[1] instanceof Node\Arg
+            ) {
+                continue;
+            }
+
+            $target = $args[0]->value;
+            $keyNode = $args[1]->value;
+            $keyDisplay = $this->classifyKey($keyNode);
+
+            if ($keyDisplay === null) {
+                continue;
+            }
+
+            if ($keyNode instanceof Scalar\String_ && str_contains($keyNode->value, '.')) {
+                continue;
+            }
+
+            if ($this->isSuperglobalAccess($target)) {
+                continue;
+            }
+
+            $rootVar = $target instanceof Expr\ArrayDimFetch
+                ? $this->rootSubscripted($target)
+                : $target;
+
+            if ($this->isDictNode($rootVar, $call, $parents, $scopedDictVars, $globalDictVars, $dictProps)) {
+                continue;
+            }
+
+            $varSnippet = $this->extractSource($input->content, $target);
+            $dedupeKey = $varSnippet . '[' . $keyDisplay . ']';
+
+            if (isset($seen[$dedupeKey])) {
+                continue;
+            }
+
+            $seen[$dedupeKey] = true;
+
+            $line = $call->getStartLine();
+            $source = $this->describeSource($target, $call, $parents, $input->namespace);
+
+            $matches[] = new MatchResult(
+                name: $keyDisplay,
+                pattern: '',
+                match: $via . '(' . $varSnippet . ', ' . $keyDisplay . ')',
+                line: $line,
+                offset: null,
+                content: $this->getSnippet($input->content, $line),
+                groups: [
+                    'var' => $varSnippet,
+                    'key' => $keyDisplay,
+                    'via' => $via,
+                    'source_kind' => $source['kind'],
+                    'source_hint' => $source['hint'],
+                ],
+            );
+        }
+    }
+
+    /**
+     * Return a display label ("Arr::get", "data_get") when the call is a
+     * wrapper helper with an (array, key) signature, null otherwise.
+     *
+     * @param  array<string, string>  $useStatements
+     */
+    private function circumventionLabel(Node $call, array $useStatements): ?string
+    {
+        if ($call instanceof Expr\FuncCall
+            && $call->name instanceof Node\Name
+            && in_array($call->name->toString(), self::CIRCUMVENTION_FUNCTIONS, true)
+        ) {
+            return $call->name->toString();
+        }
+
+        if ($call instanceof Expr\StaticCall
+            && $call->class instanceof Node\Name
+            && $call->name instanceof Node\Identifier
+            && in_array($call->name->toString(), self::CIRCUMVENTION_ARR_METHODS, true)
+            && $this->staticCallMatchesSkipClass($call, $useStatements)
+        ) {
+            return 'Arr::' . $call->name->toString();
+        }
+
+        return null;
+    }
+
+    /**
+     * Classify where the accessed array originates, so the prophet can
+     * point at the place a DTO should be introduced. `$context` is the
+     * access/call node used for walking up to the enclosing scope.
      *
      * @param  array<int, Node>  $parents
      * @return array{kind: string, hint: string}
      */
-    private function describeSource(Expr\ArrayDimFetch $access, array $parents, ?string $namespace): array
+    private function describeSource(Node $var, Node $context, array $parents, ?string $namespace): array
     {
-        $var = $access->var;
-
         if ($var instanceof Expr\ArrayDimFetch) {
             return [
                 'kind' => 'nested',
@@ -221,10 +362,10 @@ final class FindArrayStringIndexing implements Pipe
         }
 
         if ($var instanceof Expr\Variable && is_string($var->name)) {
-            $enclosing = $this->findEnclosingFunctionLike($access, $parents);
+            $enclosing = $this->findEnclosingFunctionLike($context, $parents);
 
             if ($enclosing !== null && $this->variableIsParameter($enclosing, $var->name)) {
-                $traced = $this->traceOrigin($enclosing, $access, $parents, $namespace, $var->name);
+                $traced = $this->traceOrigin($enclosing, $context, $parents, $namespace, $var->name);
 
                 if ($traced !== null) {
                     return $traced;
@@ -270,7 +411,7 @@ final class FindArrayStringIndexing implements Pipe
      */
     private function traceOrigin(
         Node $enclosing,
-        Expr\ArrayDimFetch $access,
+        Node $context,
         array $parents,
         ?string $namespace,
         string $varName,
@@ -283,7 +424,7 @@ final class FindArrayStringIndexing implements Pipe
             return null;
         }
 
-        $classNode = $this->findEnclosingClass($access, $parents);
+        $classNode = $this->findEnclosingClass($context, $parents);
 
         if ($classNode === null || $classNode->name === null) {
             return null;
@@ -532,8 +673,9 @@ final class FindArrayStringIndexing implements Pipe
     }
 
     /**
-     * Skip when the subscripted variable is known to be a real dictionary
-     * via PHPDoc (`@var array<string, T>` / `@param array<string, T>`).
+     * Skip when the accessed variable is known to be a real dictionary or
+     * exact shape via PHPDoc (`@var` / `@param`). `$context` is the
+     * access/call node used for walking up to the enclosing scope.
      *
      * Variable lookups are scope-aware: a dict tag on a method's param does
      * not leak to other methods that happen to use the same variable name.
@@ -545,19 +687,18 @@ final class FindArrayStringIndexing implements Pipe
      * @param  array<string, true>          $globalDictVars
      * @param  array<string, true>          $dictProps
      */
-    private function isDictVariable(
-        Expr\ArrayDimFetch $access,
+    private function isDictNode(
+        Node $var,
+        Node $context,
         array $parents,
         array $scopedDictVars,
         array $globalDictVars,
         array $dictProps,
     ): bool {
-        $var = $this->rootSubscripted($access);
-
         if ($var instanceof Expr\Variable && is_string($var->name)) {
             $name = $var->name;
 
-            $current = $parents[spl_object_id($access)] ?? null;
+            $current = $parents[spl_object_id($context)] ?? null;
 
             while ($current !== null) {
                 if ($this->isFunctionLikeScope($current)) {
