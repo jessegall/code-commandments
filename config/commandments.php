@@ -59,6 +59,9 @@ return [
                     // 'max_method_lines' => 20,
                 ],
                 Backend\NoArrayStringIndexingProphet::class,
+                Backend\NoManualHydrationProphet::class => [
+                    // 'min_key_reads' => 2,
+                ],
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\PreferStaticOverInvokableConstructProphet::class,
                 Backend\NoContainerResolutionProphet::class,

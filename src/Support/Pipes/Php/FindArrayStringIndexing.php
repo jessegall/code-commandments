@@ -824,38 +824,55 @@ final class FindArrayStringIndexing implements Pipe
              */
             private function parseDictVarNames(string $text, string $tag): array
             {
-                $pattern = '/@' . preg_quote($tag, '/')
-                    . '\s+' . $this->optOutTypePattern() . '\s+\$(\w+)/i';
+                $names = [];
+                $tag = preg_quote($tag, '/');
+
+                $pattern = '/@' . $tag . '\s+' . $this->dictTypePattern() . '\s+\$(\w+)/i';
 
                 if (preg_match_all($pattern, $text, $matches)) {
-                    return $matches[1];
+                    $names = $matches[1];
                 }
 
-                return [];
+                $shape = FindArrayStringIndexing::arrayShapePattern();
+                $pattern = '/@' . $tag . '\s+(' . $shape . ')\s+\$(\w+)/i';
+
+                if (preg_match_all($pattern, $text, $matches)) {
+                    foreach ($matches[1] as $i => $shapeText) {
+                        if (FindArrayStringIndexing::shapeDeclaresConcreteType($shapeText)) {
+                            $names[] = $matches[2][$i];
+                        }
+                    }
+                }
+
+                return $names;
             }
 
             private function hasDictVarTag(string $text): bool
             {
-                $pattern = '/@var\s+' . $this->optOutTypePattern() . '/i';
+                if (preg_match('/@var\s+' . $this->dictTypePattern() . '/i', $text)) {
+                    return true;
+                }
 
-                return (bool) preg_match($pattern, $text);
+                $shape = FindArrayStringIndexing::arrayShapePattern();
+
+                if (preg_match('/@var\s+(' . $shape . ')/i', $text, $matches)) {
+                    return FindArrayStringIndexing::shapeDeclaresConcreteType($matches[1]);
+                }
+
+                return false;
             }
 
             /**
-             * Types that opt an array out of flagging: a genuine dictionary
-             * (`array<string, T>` with a concrete T — `mixed` and bare
-             * `array` don't count) or an exact shape (`array{...}`).
+             * A genuine dictionary: `array<string, T>` with a concrete T —
+             * `mixed` and bare `array` don't count.
              */
-            private function optOutTypePattern(): string
+            private function dictTypePattern(): string
             {
                 $type = FindArrayStringIndexing::dictKeyTypePattern();
                 $nonDict = FindArrayStringIndexing::nonDictValueTypePattern();
                 $inner = '(?:[^<>]|<[^<>]*>)*';
 
-                $dict = 'array<\s*' . $type . '\s*,(?!\s*' . $nonDict . '\s*>)' . $inner . '>';
-                $shape = FindArrayStringIndexing::arrayShapePattern();
-
-                return '(?:' . $dict . '|' . $shape . ')';
+                return 'array<\s*' . $type . '\s*,(?!\s*' . $nonDict . '\s*>)' . $inner . '>';
             }
 
             private function findEnclosingFunctionId(Node $node): ?int
@@ -898,6 +915,16 @@ final class FindArrayStringIndexing implements Pipe
     public static function arrayShapePattern(): string
     {
         return 'array\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}';
+    }
+
+    /**
+     * A shape only counts as typed when at least one entry declares a
+     * concrete value type. `array{name?: mixed, type?: mixed}` is
+     * `array<string, mixed>` in shape clothing — it declares nothing.
+     */
+    public static function shapeDeclaresConcreteType(string $shape): bool
+    {
+        return (bool) preg_match('/:\s*+(?!mixed\s*[,}])/i', $shape);
     }
 
     /**
