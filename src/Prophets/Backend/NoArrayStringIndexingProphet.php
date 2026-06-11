@@ -73,8 +73,21 @@ Good:
 
 Dictionary-shaped arrays (dynamic keys, homogeneous values) are fine —
 annotate them with `@var array<string, T>` / `@param array<string, T>`
-to opt out. Wrapper helpers (`config()`, `Arr::get()`, `data_get()`,
-etc.) already signal "this is dynamic lookup" and are not flagged.
+to opt out, where T is a CONCRETE value type. `array<string, mixed>`
+and `array<string, array>` do NOT opt out: heterogeneous values mean
+the values differ per key, which means the keys are a fixed known set
+— that's a record wearing a dictionary's clothes. Name the value type
+or build the DTO.
+
+Exact array shapes are also accepted as typed: when you declare
+`@param array{nodes: list<mixed>, edges: list<mixed>} $graph` or
+`@var array{0: string, 1: int} $pair`, the shape is known and accesses
+into it are not flagged. Prefer a real DTO where the structure lives
+longer than one normalisation step, but a shape annotation is an
+honest contract and counts.
+
+Wrapper helpers (`config()`, `Arr::get()`, `data_get()`, etc.) already
+signal "this is dynamic lookup" and are not flagged.
 
 STOP. READ THIS BEFORE FIXING ANYTHING.
 
