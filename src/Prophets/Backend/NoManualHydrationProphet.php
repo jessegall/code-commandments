@@ -88,33 +88,144 @@ HOW SPATIE DATA REPLACES YOUR MANUAL CODE — read before writing any:
     every property nullable with a default, hydrate, THEN validate the
     typed object. Wrap ::from() in try/catch when rejection is expected.
 
+OBJECT-TO-OBJECT MAPPING — the same sin with properties instead of keys.
+
+Building a foreign class field-by-field from one source object is the
+mapping equivalent of fromArray():
+
+Bad — mapping written at the call site:
+    $fieldOutputs = array_map(
+        static fn (OutputPort $port) => new OutputPort(
+            name: 'value.' . $port->name,
+            type: $port->type,
+            nullable: $port->nullable,
+            label: $port->label ?? $port->name,
+            description: $port->description,
+        ),
+        $ports,
+    );
+
+Good — the mapping lives ON the target as a named factory:
+    // In OutputPort:
+    public static function passThrough(self $port, string $prefix = 'value.'): self
+    {
+        return new self(
+            name: $prefix . $port->name,
+            type: $port->type,
+            nullable: $port->nullable,
+            label: $port->label ?? $port->name,
+            description: $port->description,
+        );
+    }
+
+    $fieldOutputs = array_map(OutputPort::passThrough(...), $ports);
+
+COPY-WITH-CHANGES — when source and target are the SAME type, re-listing
+every constructor field to change one is a missing wither:
+
+Bad:
+    return new NodeDescriptor(
+        key: $descriptor->key,
+        kind: $descriptor->kind,
+        label: $descriptor->label,
+        // ...nine more copied fields...
+        traceHandles: [...$descriptor->traceHandles, 'next'],
+    );
+
+Good — add a with(...) helper to the class (readonly and Spatie Data
+classes alike):
+    public function with(mixed ...$changes): static
+    {
+        $fields = get_object_vars($this);
+
+        return new static(...[...$fields, ...$changes]);
+    }
+
+    return $descriptor->with(traceHandles: [...$descriptor->traceHandles, 'next']);
+
+The exemption IS the rule: factories and withers themselves construct
+from another instance's (or $this's) properties — inside the target
+class that is righteous, because the mapping finally has one home.
+Making the class a Spatie Data object helps the array boundary; the
+wither is what kills the twelve-line copies.
+
 Claude (and any other AI agent): do NOT write fromArray/fromRow/
-fromMetadata static constructors that read keys manually. If you are
-typing Arr::get more than once inside a static creator, stop — extend
-Data and delete the method. The prophet detects per-key reads feeding
-new self(...) regardless of how the parameter is annotated.
+fromMetadata static constructors that read keys manually, and do NOT
+spell out another object's fields inside new Foo(...) at a call site.
+If you are typing Arr::get more than once inside a static creator, or
+forwarding three properties of the same object into a constructor,
+stop — the hydration/mapping belongs on the target class. The prophet
+detects both regardless of how parameters are annotated.
 SCRIPTURE;
     }
 
     public function judge(string $filePath, string $content): Judgment
     {
-        $minKeyReads = (int) $this->config('min_key_reads', 2);
+        $pipe = (new FindManualHydration)
+            ->withMinKeyReads((int) $this->config('min_key_reads', 2))
+            ->withMinPropertyReads((int) $this->config('min_property_reads', 3));
 
         return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractUseStatements::class)
-            ->pipe((new FindManualHydration)->withMinKeyReads($minKeyReads))
+            ->pipe($pipe)
             ->sinsFromMatches(
-                fn ($match) => sprintf(
-                    'Manual hydration in %s — %s array keys read by hand (%s)',
-                    $match->groups['method'],
-                    $match->groups['count'],
-                    $match->groups['keys'],
-                ),
-                fn ($match) => 'Extend Spatie\LaravelData\Data and use ::from($row) / ::collect($rows) — '
-                    . 'Data auto-maps keys, coerces declared property types, and hydrates nested Data objects. '
-                    . 'Use #[MapInputName(...)] for key renames and nullable properties with defaults for tolerant decoding.'
+                fn ($match) => $this->messageFor($match->groups),
+                fn ($match) => $this->suggestionFor($match->groups),
             )
             ->judge();
+    }
+
+    /**
+     * @param  array<string, string>  $groups
+     */
+    private function messageFor(array $groups): string
+    {
+        return match ($groups['kind']) {
+            'object_mapping' => sprintf(
+                'Manual mapping in %s — new %s built field-by-field from %s (%s properties: %s)',
+                $groups['method'],
+                $groups['target'],
+                $groups['source'],
+                $groups['count'],
+                $groups['keys'],
+            ),
+            'object_copy' => sprintf(
+                'Manual copy in %s — new %s re-lists %s fields of %s to change a few',
+                $groups['method'],
+                $groups['target'],
+                $groups['count'],
+                $groups['source'],
+            ),
+            default => sprintf(
+                'Manual hydration in %s — %s array keys read by hand (%s)',
+                $groups['method'],
+                $groups['count'],
+                $groups['keys'],
+            ),
+        };
+    }
+
+    /**
+     * @param  array<string, string>  $groups
+     */
+    private function suggestionFor(array $groups): string
+    {
+        return match ($groups['kind']) {
+            'object_mapping' => sprintf(
+                'Move the mapping onto %s as a named factory — e.g. %s::passThrough(%s) or a purpose-named constructor — so it has one home and a name that says what it means.',
+                $groups['target'],
+                $groups['target'],
+                $groups['source'],
+            ),
+            'object_copy' => sprintf(
+                'Add a with(...) clone helper to %s (works on readonly and Spatie Data classes alike) so this becomes %s->with(changedField: ...) instead of re-listing every field.',
+                $groups['target'],
+                $groups['source'],
+            ),
+            default => 'Extend Spatie\LaravelData\Data and use ::from($row) / ::collect($rows) — '
+                . 'Data auto-maps keys, coerces declared property types, and hydrates nested Data objects. '
+                . 'Use #[MapInputName(...)] for key renames and nullable properties with defaults for tolerant decoding.',
+        };
     }
 }

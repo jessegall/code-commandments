@@ -324,6 +324,223 @@ class NoManualHydrationProphetTest extends TestCase
     }
 
     // ────────────────────────────────────────────────────────────────
+    // Object-to-object mapping — foreign class from one source's props
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_foreign_class_built_from_source_properties(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function expand(object $port): object {
+            return new OutputPort(
+                name: 'value.' . $port->name,
+                type: $port->type,
+                nullable: $port->nullable,
+                label: $port->label ?? $port->name,
+            );
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('new OutputPort built field-by-field from $port', $judgment->sins[0]->message);
+        $this->assertStringContainsString('OutputPort::passThrough($port)', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_mapping_inside_array_map_closure(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function expandAll(array $ports): array {
+            return array_map(
+                static fn (object $port) => new OutputPort(
+                    name: $port->name,
+                    type: $port->type,
+                    label: $port->label,
+                ),
+                $ports,
+            );
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    public function test_flags_nullsafe_property_reads(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function expand(?object $port): object {
+            return new OutputPort(
+                name: $port?->name,
+                type: $port?->type,
+                label: $port?->label,
+            );
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    public function test_reports_copy_when_source_type_matches_target(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class Registry {
+            public function withImplicitControlIn(NodeDescriptor $descriptor): NodeDescriptor {
+                return new NodeDescriptor(
+                    key: $descriptor->key,
+                    kind: $descriptor->kind,
+                    label: $descriptor->label,
+                    inputs: $descriptor->inputs,
+                    traceHandles: [...$descriptor->traceHandles, 'next'],
+                );
+            }
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('re-lists 5 fields of $descriptor', $judgment->sins[0]->message);
+        $this->assertStringContainsString('with(...)', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('$descriptor->with(changedField: ...)', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_copy_detection_works_for_closure_param_types(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class Registry {
+            public function retype(array $outputs, string $elementType): array {
+                return array_map(
+                    static fn (OutputPort $port) => new OutputPort(
+                        name: 'item',
+                        type: $elementType,
+                        nullable: $port->nullable,
+                        source: $port->source,
+                        label: $port->label,
+                        description: $port->description,
+                    ),
+                    $outputs,
+                );
+            }
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Manual copy', $judgment->sins[0]->message);
+    }
+
+    public function test_does_not_flag_mapping_inside_target_class_itself(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final readonly class OutputPort {
+            public function __construct(
+                public string $name,
+                public ?string $type = null,
+                public ?string $label = null,
+            ) {}
+
+            public static function passThrough(self $port, string $prefix = 'value.'): self {
+                return new self(
+                    name: $prefix . $port->name,
+                    type: $port->type,
+                    label: $port->label ?? $port->name,
+                );
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_wither_reading_this(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final readonly class NodeDescriptor {
+            public function __construct(
+                public string $key,
+                public string $label,
+                public array $traceHandles = [],
+            ) {}
+
+            public function withTraceHandle(string $handle): self {
+                return new self(
+                    key: $this->key,
+                    label: $this->label,
+                    traceHandles: [...$this->traceHandles, $handle],
+                );
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_below_property_threshold(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function expand(object $port): object {
+            return new OutputPort(name: $port->name, type: $port->type);
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_sum_properties_across_different_sources(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function combine(object $a, object $b): object {
+            return new OutputPort(
+                name: $a->name,
+                type: $b->type,
+                label: $a->label,
+                description: $b->description,
+            );
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_count_method_calls_as_property_reads(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function expand(object $property): object {
+            return new OutputPort(
+                name: $property->getName(),
+                type: $property->getType(),
+                label: $property->getLabel(),
+            );
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_respects_min_property_reads_config(): void
+    {
+        $this->prophet->configure(['min_property_reads' => 5]);
+
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function expand(object $port): object {
+            return new OutputPort(
+                name: $port->name,
+                type: $port->type,
+                label: $port->label,
+                description: $port->description,
+            );
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // Multiple sins / counting
     // ────────────────────────────────────────────────────────────────
 

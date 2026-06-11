@@ -61,6 +61,7 @@ return [
                 Backend\NoArrayStringIndexingProphet::class,
                 Backend\NoManualHydrationProphet::class => [
                     // 'min_key_reads' => 2,
+                    // 'min_property_reads' => 3,
                 ],
                 Backend\PreferOptionOverNullProphet::class => [
                     // Suggested wrapper for value-or-nothing returns:
