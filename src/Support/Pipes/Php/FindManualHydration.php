@@ -12,18 +12,21 @@ use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 
 /**
- * Find methods that hand-roll array-to-object hydration: reading several
- * statically-known keys out of an array (subscripts, Arr::get, data_get,
- * destructuring) and feeding them into an object instantiation.
+ * Find methods that hand-roll object hydration.
  *
- * That is Spatie Laravel Data reimplemented by hand — `::from($row)` does
- * the mapping, coercion, and nested hydration automatically.
+ * Array-to-object: reading several statically-known keys out of an array
+ * (subscripts, Arr::get, data_get, destructuring) and feeding them into an
+ * instantiation — Spatie Data's `::from($row)` reimplemented by hand.
+ * Flagged when the method instantiates its own class and the body reads
+ * >= min distinct known keys, or when any `new <Class>(...)`'s arguments
+ * read >= min distinct known keys.
  *
- * A method is flagged when either:
- *  - it instantiates its own class (`new self/static/<OwnClass>`) and the
- *    method body reads >= min distinct known keys, or
- *  - it contains a `new <AnyClass>(...)` whose arguments themselves read
- *    >= min distinct known keys (hydrating someone else's DTO inline).
+ * Object-to-object: building a FOREIGN class field-by-field from one
+ * source object's properties (`new OutputPort(name: $port->name, ...)`).
+ * That mapping belongs on the target DTO as a named factory or wither —
+ * so construction inside the target class itself and `$this`-sourced
+ * reads (the fix) are exempt. When the source's declared type equals the
+ * target class it's a copy-with-changes, reported as such.
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
@@ -41,9 +44,18 @@ final class FindManualHydration implements Pipe
 
     private int $minKeyReads = 2;
 
+    private int $minPropertyReads = 3;
+
     public function withMinKeyReads(int $min): self
     {
         $this->minKeyReads = max(1, $min);
+
+        return $this;
+    }
+
+    public function withMinPropertyReads(int $min): self
+    {
+        $this->minPropertyReads = max(1, $min);
 
         return $this;
     }
@@ -82,8 +94,11 @@ final class FindManualHydration implements Pipe
                     content: $this->getSnippet($input->content, $line),
                     groups: [
                         'method' => $label,
-                        'count' => (string) count($hydration),
-                        'keys' => implode(', ', array_slice($hydration, 0, 5)),
+                        'kind' => $hydration['kind'],
+                        'count' => (string) count($hydration['keys']),
+                        'keys' => implode(', ', array_slice($hydration['keys'], 0, 5)),
+                        'source' => $hydration['source'],
+                        'target' => $hydration['target'],
                     ],
                 );
             }
@@ -93,11 +108,11 @@ final class FindManualHydration implements Pipe
     }
 
     /**
-     * Return the distinct keys read by hand when the method hydrates an
-     * object from them, null when the method is clean.
+     * Describe the first hand-rolled hydration in the method, null when
+     * the method is clean.
      *
      * @param  array<string, string>  $useStatements
-     * @return list<string>|null
+     * @return array{kind: string, keys: list<string>, source: string, target: string}|null
      */
     private function inspectMethod(Node\Stmt\ClassMethod $method, ?string $ownName, array $useStatements): ?array
     {
@@ -115,17 +130,165 @@ final class FindManualHydration implements Pipe
         }
 
         $methodKeys = $this->collectKeyReads($method->stmts, $useStatements);
+        $paramTypes = $this->collectParamTypes($method);
 
         foreach ($instantiations as $new) {
             if ($this->instantiatesOwnClass($new, $ownName) && count($methodKeys) >= $this->minKeyReads) {
-                return $methodKeys;
+                return ['kind' => 'array', 'keys' => $methodKeys, 'source' => '', 'target' => ''];
             }
 
             $argKeys = $this->collectKeyReads($this->argExpressions($new), $useStatements);
 
             if (count($argKeys) >= $this->minKeyReads) {
-                return $argKeys;
+                return ['kind' => 'array', 'keys' => $argKeys, 'source' => '', 'target' => ''];
             }
+
+            $objectMapping = $this->inspectObjectMapping($new, $ownName, $paramTypes);
+
+            if ($objectMapping !== null) {
+                return $objectMapping;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Detect a foreign class built field-by-field from one source object's
+     * properties. Construction of the method's own class is exempt — named
+     * factories and withers on the target ARE the fix — as are `$this`
+     * reads (wither implementations).
+     *
+     * @param  array<string, string>  $paramTypes  var name => short type
+     * @return array{kind: string, keys: list<string>, source: string, target: string}|null
+     */
+    private function inspectObjectMapping(Expr\New_ $new, ?string $ownName, array $paramTypes): ?array
+    {
+        if (! $new->class instanceof Node\Name) {
+            return null;
+        }
+
+        $target = $new->class->getLast();
+
+        if ($target === 'self' || $target === 'static' || $target === $ownName) {
+            return null;
+        }
+
+        $bySource = $this->collectPropertyReadsBySource($this->argExpressions($new));
+
+        foreach ($bySource as $source => $properties) {
+            if (count($properties) < $this->minPropertyReads) {
+                continue;
+            }
+
+            $kind = ($paramTypes[$source] ?? null) === $target ? 'object_copy' : 'object_mapping';
+
+            return [
+                'kind' => $kind,
+                'keys' => array_keys($properties),
+                'source' => '$' . $source,
+                'target' => $target,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Distinct property names read per source variable in the subtree.
+     * `$this` is never a source — copying own state into another object
+     * is a builder/wither, not hydration gone astray.
+     *
+     * @param  array<Node>  $nodes
+     * @return array<string, array<string, true>>
+     */
+    private function collectPropertyReadsBySource(array $nodes): array
+    {
+        $nodeFinder = new NodeFinder;
+        $bySource = [];
+
+        $fetches = $nodeFinder->find(
+            $nodes,
+            fn (Node $n): bool => $n instanceof Expr\PropertyFetch || $n instanceof Expr\NullsafePropertyFetch,
+        );
+
+        foreach ($fetches as $fetch) {
+            if (! $fetch->var instanceof Expr\Variable
+                || ! is_string($fetch->var->name)
+                || $fetch->var->name === 'this'
+                || ! $fetch->name instanceof Node\Identifier
+            ) {
+                continue;
+            }
+
+            $bySource[$fetch->var->name][$fetch->name->toString()] = true;
+        }
+
+        return $bySource;
+    }
+
+    /**
+     * Short type name per typed parameter of the method and any nested
+     * closures/arrow functions, for copy-vs-mapping classification.
+     *
+     * @return array<string, string>
+     */
+    private function collectParamTypes(Node\Stmt\ClassMethod $method): array
+    {
+        $nodeFinder = new NodeFinder;
+        $types = [];
+
+        $functionLikes = [
+            $method,
+            ...$nodeFinder->find(
+                $method->stmts ?? [],
+                fn (Node $n): bool => $n instanceof Expr\Closure || $n instanceof Expr\ArrowFunction,
+            ),
+        ];
+
+        foreach ($functionLikes as $functionLike) {
+            foreach ($functionLike->params as $param) {
+                if (! $param->var instanceof Expr\Variable || ! is_string($param->var->name)) {
+                    continue;
+                }
+
+                $short = $this->typeShortName($param->type);
+
+                if ($short !== null) {
+                    $types[$param->var->name] = $short;
+                }
+            }
+        }
+
+        return $types;
+    }
+
+    private function typeShortName(?Node $type): ?string
+    {
+        if ($type instanceof Node\NullableType) {
+            return $this->typeShortName($type->type);
+        }
+
+        if ($type instanceof Node\UnionType) {
+            $named = [];
+
+            foreach ($type->types as $member) {
+                if ($member instanceof Node\Identifier && strtolower($member->toString()) === 'null') {
+                    continue;
+                }
+
+                if ($member instanceof Node\Name && strtolower($member->toString()) === 'null') {
+                    continue;
+                }
+
+                $named[] = $member;
+            }
+
+            return count($named) === 1 ? $this->typeShortName($named[0]) : null;
+        }
+
+        if ($type instanceof Node\Name) {
+            return $type->getLast();
         }
 
         return null;
