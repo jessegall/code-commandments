@@ -132,16 +132,16 @@ Bad:
         traceHandles: [...$descriptor->traceHandles, 'next'],
     );
 
-Good — add a with(...) helper to the class (readonly and Spatie Data
-classes alike):
-    public function with(mixed ...$changes): static
+Good — add a copyWith(...) helper to the class (named copyWith, NOT
+with: Spatie Data already defines with() for transformation payload):
+    public function copyWith(mixed ...$changes): static
     {
         $fields = get_object_vars($this);
 
         return new static(...[...$fields, ...$changes]);
     }
 
-    return $descriptor->with(traceHandles: [...$descriptor->traceHandles, 'next']);
+    return $descriptor->copyWith(traceHandles: [...$descriptor->traceHandles, 'next']);
 
 The exemption IS the rule: factories and withers themselves construct
 from another instance's (or $this's) properties — inside the target
@@ -219,7 +219,7 @@ SCRIPTURE;
                 $groups['source'],
             ),
             'object_copy' => sprintf(
-                'Add a with(...) clone helper to %s (works on readonly and Spatie Data classes alike) so this becomes %s->with(changedField: ...) instead of re-listing every field.',
+                'Add a copyWith(...) clone helper to %s (named copyWith, not with — Spatie Data already defines with()) so this becomes %s->copyWith(changedField: ...) instead of re-listing every field.',
                 $groups['target'],
                 $groups['source'],
             ),

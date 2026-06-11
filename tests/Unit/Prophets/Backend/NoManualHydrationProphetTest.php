@@ -399,8 +399,8 @@ class NoManualHydrationProphetTest extends TestCase
         $judgment = $this->prophet->judge('/x.php', $content);
         $this->assertFallen($judgment, 1);
         $this->assertStringContainsString('re-lists 5 fields of $descriptor', $judgment->sins[0]->message);
-        $this->assertStringContainsString('with(...)', $judgment->sins[0]->suggestion);
-        $this->assertStringContainsString('$descriptor->with(changedField: ...)', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('copyWith(...)', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('$descriptor->copyWith(changedField: ...)', $judgment->sins[0]->suggestion);
     }
 
     public function test_copy_detection_works_for_closure_param_types(): void
