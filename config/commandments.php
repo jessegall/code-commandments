@@ -62,6 +62,20 @@ return [
                 Backend\NoManualHydrationProphet::class => [
                     // 'min_key_reads' => 2,
                 ],
+                Backend\PreferOptionOverNullProphet::class => [
+                    // Suggested wrapper for value-or-nothing returns:
+                    // 'option_class' => 'App\\Support\\Option',
+                    //
+                    // Per-type sentinels: when a flagged method's return type
+                    // matches a key, the suggestion becomes "return this Null
+                    // Object" instead of "wrap in Option":
+                    // 'null_objects' => [
+                    //     'App\\Workflow\\PortRef' => 'App\\Workflow\\NullPortRef',
+                    // ],
+                    //
+                    // 'exclude_methods' => ['try*', '__*'],
+                    // 'severity' => 'warning', // or 'sin'
+                ],
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\PreferStaticOverInvokableConstructProphet::class,
                 Backend\NoContainerResolutionProphet::class,
