@@ -513,6 +513,140 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
     }
 
+    public function test_flags_despite_param_dict_tag_with_mixed_value_type(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array<string, mixed> $graph */
+            public function nodes(array $graph): mixed { return $graph['nodes']; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_despite_param_dict_tag_with_bare_array_value_type(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array<string, array> $graph */
+            public function nodes(array $graph): mixed { return $graph['nodes']; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_despite_inline_var_dict_tag_with_mixed_value_type(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            public function nodes(): mixed {
+                /** @var array<string, mixed> $graph */
+                $graph = $this->load();
+                return $graph['nodes'];
+            }
+            public function load(): array { return []; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_despite_property_dict_tag_with_mixed_value_type(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @var array<string, mixed> */
+            private array $graph = [];
+            public function nodes(): mixed { return $this->graph['nodes']; }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // PHPDoc array shapes — exact shapes count as typed
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_respects_param_array_shape(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array{nodes: list<mixed>, edges: list<mixed>} $graph */
+            public function nodes(array $graph): mixed { return $graph['nodes']; }
+        }
+        PHP;
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_respects_param_array_shape_with_nested_shape(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array{meta: array{version: int}, payload: string} $envelope */
+            public function version(array $envelope): mixed { return $envelope['meta']['version']; }
+        }
+        PHP;
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_respects_inline_var_array_shape(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            public function pair(): string {
+                /** @var array{0: string, 1: int} $pair */
+                $pair = $this->load();
+                return $pair['0'];
+            }
+            public function load(): array { return []; }
+        }
+        PHP;
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_respects_property_array_shape(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @var array{label: string, weight: int} */
+            private array $config = [];
+            public function label(): string { return $this->config['label']; }
+        }
+        PHP;
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_array_shape_does_not_leak_to_other_methods(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            /** @param array{a: int} $items */
+            public function first(array $items): int { return $items['a']; }
+            public function second(array $items): int { return $items['a']; }
+        }
+        PHP;
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertSame(6, $judgment->sins[0]->line);
+    }
+
     public function test_ignores_plain_list_phpdoc(): void
     {
         $content = <<<'PHP'

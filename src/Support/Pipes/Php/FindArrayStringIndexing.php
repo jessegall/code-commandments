@@ -53,6 +53,15 @@ final class FindArrayStringIndexing implements Pipe
 
     private const DICT_KEY_TYPE_PATTERN = '(?:string|int\|string|string\|int|array-key)';
 
+    /**
+     * Value types that do NOT make an array a dictionary. A heterogeneous
+     * value type means the values differ per key — i.e. the keys are a
+     * fixed, known set and the array is a record in disguise. Annotating
+     * `array<string, mixed>` is not an opt-out; name the value type or
+     * declare the exact shape (`array{...}`) instead.
+     */
+    private const NON_DICT_VALUE_TYPE_PATTERN = '(?:mixed|array)';
+
     private ?CodebaseIndex $codebaseIndex = null;
 
     private int $maxTraceDepth = 10;
@@ -674,11 +683,8 @@ final class FindArrayStringIndexing implements Pipe
              */
             private function parseDictVarNames(string $text, string $tag): array
             {
-                $type = FindArrayStringIndexing::dictKeyTypePattern();
-                $inner = '(?:[^<>]|<[^<>]*>)*';
-
                 $pattern = '/@' . preg_quote($tag, '/')
-                    . '\s+array<\s*' . $type . '\s*,' . $inner . '>\s+\$(\w+)/i';
+                    . '\s+' . $this->optOutTypePattern() . '\s+\$(\w+)/i';
 
                 if (preg_match_all($pattern, $text, $matches)) {
                     return $matches[1];
@@ -689,12 +695,26 @@ final class FindArrayStringIndexing implements Pipe
 
             private function hasDictVarTag(string $text): bool
             {
-                $type = FindArrayStringIndexing::dictKeyTypePattern();
-                $inner = '(?:[^<>]|<[^<>]*>)*';
-
-                $pattern = '/@var\s+array<\s*' . $type . '\s*,' . $inner . '>/i';
+                $pattern = '/@var\s+' . $this->optOutTypePattern() . '/i';
 
                 return (bool) preg_match($pattern, $text);
+            }
+
+            /**
+             * Types that opt an array out of flagging: a genuine dictionary
+             * (`array<string, T>` with a concrete T — `mixed` and bare
+             * `array` don't count) or an exact shape (`array{...}`).
+             */
+            private function optOutTypePattern(): string
+            {
+                $type = FindArrayStringIndexing::dictKeyTypePattern();
+                $nonDict = FindArrayStringIndexing::nonDictValueTypePattern();
+                $inner = '(?:[^<>]|<[^<>]*>)*';
+
+                $dict = 'array<\s*' . $type . '\s*,(?!\s*' . $nonDict . '\s*>)' . $inner . '>';
+                $shape = FindArrayStringIndexing::arrayShapePattern();
+
+                return '(?:' . $dict . '|' . $shape . ')';
             }
 
             private function findEnclosingFunctionId(Node $node): ?int
@@ -723,6 +743,20 @@ final class FindArrayStringIndexing implements Pipe
     public static function dictKeyTypePattern(): string
     {
         return self::DICT_KEY_TYPE_PATTERN;
+    }
+
+    public static function nonDictValueTypePattern(): string
+    {
+        return self::NON_DICT_VALUE_TYPE_PATTERN;
+    }
+
+    /**
+     * PHPStan/Psalm array-shape annotation (`array{name: string, ...}`),
+     * tolerating two levels of nested braces.
+     */
+    public static function arrayShapePattern(): string
+    {
+        return 'array\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}';
     }
 
     /**
