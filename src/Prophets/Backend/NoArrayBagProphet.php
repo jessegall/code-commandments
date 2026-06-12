@@ -115,6 +115,52 @@ in one place:
         return $this->get($key->value, $default);
     }
 
+WHEN EXTENDING FLUENT COLLIDES — Fluent is method-heavy (`get()`,
+`value()`, `all()`, `scope()`, ...) and its magic `__call` doubles as a
+dynamic attribute setter. If the bag's domain vocabulary clashes with
+one of those names, do not contort the domain: compose a Fluent inside
+the class and forward to it:
+
+    final class PortValues
+    {
+        /** @var Fluent<string, mixed> */
+        private readonly Fluent $attributes;
+
+        /**
+         * @param  array<string, mixed>  $attributes
+         */
+        public function __construct(array $attributes = [])
+        {
+            $this->attributes = new Fluent($attributes);
+        }
+
+        public function get(string $key, mixed $default = null): mixed
+        {
+            return $this->attributes->get($key, $default);
+        }
+
+        public function has(string $key): bool
+        {
+            return $this->attributes->has($key);
+        }
+
+        // `value()` is free to mean what the DOMAIN needs it to mean.
+        public function value(PortRef $ref): mixed { /* ... */ }
+
+        /**
+         * @return array<string, mixed>
+         */
+        public function toArray(): array
+        {
+            return $this->attributes->toArray();
+        }
+    }
+
+Forward explicitly (a handful of one-liners) rather than via a blanket
+`__call` — the public surface stays typed and discoverable. The
+Castable trick composes the same way: `dataCastUsing()` just news up
+the wrapper instead of the Fluent subclass.
+
 WHAT REMAINS RIGHTEOUS:
 
   - Genuine dictionaries with a concrete value type — `array<string,
@@ -126,8 +172,9 @@ WHAT REMAINS RIGHTEOUS:
     is a container of dynamic payloads — and a class wrapping such
     storage behind get()/set()/has() accessors (a ScopeFrames-style
     hand-rolled bag abstraction) is the goal, not the sin.
-  - The Fluent subclass itself: its constructor and helpers take raw
-    arrays because it IS the array boundary.
+  - The bag class itself — whether it extends Fluent or composes one —
+    takes raw arrays at its constructor and helpers because it IS the
+    array boundary.
   - Serialization signatures: toArray(), jsonSerialize(), and vendor-
     interface methods like Cast::cast() keep their array shapes.
 
