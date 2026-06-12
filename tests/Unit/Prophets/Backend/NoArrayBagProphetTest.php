@@ -364,6 +364,72 @@ class NoArrayBagProphetTest extends TestCase
         $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
     }
 
+    public function test_does_not_flag_class_composing_a_fluent(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Fluent;
+        final class PortValues {
+            /** @var Fluent<string, mixed> */
+            private readonly Fluent $attributes;
+
+            /**
+             * @param array<string, mixed> $attributes
+             */
+            public function __construct(array $attributes = []) {
+                $this->attributes = new Fluent($attributes);
+            }
+
+            public function get(string $key, mixed $default = null): mixed {
+                return $this->attributes->get($key, $default);
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_class_with_promoted_fluent_property(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Fluent;
+        final class PortValues {
+            /**
+             * @param array<string, mixed> $defaults
+             */
+            public function __construct(
+                private readonly Fluent $attributes,
+                array $defaults = [],
+            ) {}
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_composing_an_unrelated_class_is_not_an_exemption(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final class Compiler {
+            private readonly NodeRegistry $registry;
+
+            /**
+             * @param array<string, mixed> $metadata
+             */
+            public function __construct(NodeRegistry $registry, array $metadata) {
+                $this->registry = $registry;
+            }
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
     public function test_does_not_flag_inside_anonymous_class(): void
     {
         $content = <<<'PHP'

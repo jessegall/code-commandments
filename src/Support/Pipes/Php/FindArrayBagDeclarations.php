@@ -79,8 +79,10 @@ final class FindArrayBagDeclarations implements Pipe
                 continue; // Anonymous classes implement vendor interfaces (Casts etc.)
             }
 
-            if ($this->extendsOneOf($classLike, self::BAG_BASE_CLASSES, $input->useStatements)) {
-                continue; // The bag class itself is the array boundary.
+            if ($this->extendsOneOf($classLike, self::BAG_BASE_CLASSES, $input->useStatements)
+                || $this->composesOneOf($classLike, self::BAG_BASE_CLASSES, $input->useStatements)
+            ) {
+                continue; // The bag class itself is the array boundary — extended or composed.
             }
 
             $className = $classLike->name?->toString() ?? '?';
@@ -388,6 +390,65 @@ final class FindArrayBagDeclarations implements Pipe
             $short = substr($candidate, (int) strrpos($candidate, '\\') + 1);
 
             if ($parent === $short || $resolved === $candidate || str_ends_with($resolved, '\\' . $short)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the class holds a property (plain or constructor-promoted)
+     * typed as one of the candidates — the composed-bag variant used when
+     * the candidate's method names collide with the domain's.
+     *
+     * @param  list<string>  $candidates
+     * @param  array<string, string>  $useStatements
+     */
+    private function composesOneOf(Node\Stmt\ClassLike $classLike, array $candidates, array $useStatements): bool
+    {
+        foreach ($classLike->stmts as $stmt) {
+            if ($stmt instanceof Node\Stmt\Property && $this->typeIsOneOf($stmt->type, $candidates, $useStatements)) {
+                return true;
+            }
+        }
+
+        foreach ($classLike->getMethods() as $method) {
+            if ($method->name->toString() !== '__construct') {
+                continue;
+            }
+
+            foreach ($method->params as $param) {
+                if ($param->flags !== 0 && $this->typeIsOneOf($param->type, $candidates, $useStatements)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<string>  $candidates
+     * @param  array<string, string>  $useStatements
+     */
+    private function typeIsOneOf(?Node $type, array $candidates, array $useStatements): bool
+    {
+        if ($type instanceof Node\NullableType) {
+            return $this->typeIsOneOf($type->type, $candidates, $useStatements);
+        }
+
+        if (! $type instanceof Node\Name) {
+            return false;
+        }
+
+        $name = $type->toString();
+        $resolved = $useStatements[$name] ?? $name;
+
+        foreach ($candidates as $candidate) {
+            $short = substr($candidate, (int) strrpos($candidate, '\\') + 1);
+
+            if ($name === $short || $resolved === $candidate || str_ends_with($resolved, '\\' . $short)) {
                 return true;
             }
         }
