@@ -68,6 +68,10 @@ return [
                     // 'min_key_reads' => 2,
                     // 'min_property_reads' => 3,
                 ],
+                Backend\PreferNamedExceptionsProphet::class => [
+                    // Exception classes that may be thrown inline:
+                    // 'allow' => ['InvalidArgumentException'],
+                ],
                 Backend\PreferOptionOverNullProphet::class => [
                     // Suggested wrapper for value-or-nothing returns:
                     // 'option_class' => 'App\\Support\\Option',
