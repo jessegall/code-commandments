@@ -1,0 +1,526 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Tests\Unit\Prophets\Backend;
+
+use JesseGall\CodeCommandments\Prophets\Backend\NoArrayBagProphet;
+use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Tests\TestCase;
+
+class NoArrayBagProphetTest extends TestCase
+{
+    private NoArrayBagProphet $prophet;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->prophet = new NoArrayBagProphet();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Parameters
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_bag_parameter(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed> $staticInputs
+         */
+        public function resolveFor(object $port, array $staticInputs): bool {
+            return true;
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Parameter $staticInputs of resolveFor()', $judgment->sins[0]->message);
+        $this->assertStringContainsString('array<string, mixed>', $judgment->sins[0]->message);
+        $this->assertStringContainsString('StaticInputs extends Fluent', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_each_bag_parameter_separately(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed> $metadata
+         * @param array<string, mixed> $inputs
+         */
+        public function compile(array $metadata, array $inputs): void {}
+        PHP);
+
+        $this->assertFallen($judgment, 2);
+    }
+
+    public function test_flags_nullable_array_parameter(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed>|null $metadata
+         */
+        public function compile(?array $metadata): void {}
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    public function test_flags_snake_case_name_with_studly_suggestion(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed> $static_inputs
+         */
+        public function compile(array $static_inputs): void {}
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('StaticInputs', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_int_string_keyed_bag(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<int|string, mixed> $rows
+         */
+        public function compile(array $rows): void {}
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    public function test_flags_bare_array_value_bag(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, array> $config
+         */
+        public function compile(array $config): void {}
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Properties — plain and constructor-promoted
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_property_with_bag_var_tag(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /** @var array<string, mixed> */
+        private array $metadata = [];
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Property $metadata of Spec', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_promoted_constructor_property(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final class WorkflowNode {
+            /**
+             * @param array<string, mixed> $staticInputs
+             */
+            public function __construct(
+                public readonly string $id,
+                public readonly array $staticInputs = [],
+            ) {}
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Property $staticInputs of WorkflowNode', $judgment->sins[0]->message);
+    }
+
+    public function test_promoted_property_on_data_class_suggests_castable(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Spatie\LaravelData\Data;
+        final class WorkflowNode extends Data {
+            /**
+             * @param array<string, mixed> $metadata
+             */
+            public function __construct(
+                public readonly string $id,
+                public readonly array $metadata = [],
+            ) {}
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Metadata extends Fluent implements Castable', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('dataCastUsing()', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('#[WithCastable(Metadata::class)]', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_property_on_data_class_with_var_tag_suggests_castable(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Spatie\LaravelData\Data;
+        final class WorkflowNode extends Data {
+            /** @var array<string, mixed> */
+            public array $metadata = [];
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Castable', $judgment->sins[0]->suggestion);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Returns
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_bag_return(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function snapshot(): array {
+            return [];
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('snapshot() returns a raw array<string, mixed> bag', $judgment->sins[0]->message);
+        $this->assertStringContainsString('Fluent', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_does_not_flag_to_array_return(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function toArray(): array {
+            return [];
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_json_serialize_return(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function jsonSerialize(): array {
+            return [];
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_respects_exempt_methods_config(): void
+    {
+        $this->prophet->configure(['exempt_methods' => ['definition']]);
+
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function definition(): array {
+            return [];
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Non-flagging — genuine dictionaries and typed declarations
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_flag_concrete_value_dictionary(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, PortRef> $ports
+         */
+        public function wire(array $ports): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_nested_generic_dictionary(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, list<int>> $edges
+         */
+        public function wire(array $edges): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_list_annotations(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param list<string> $names
+         * @param array<int, string> $labels
+         */
+        public function wire(array $names, array $labels): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_stale_annotation_on_typed_parameter(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed> $metadata
+         */
+        public function compile(NodeMetadata $metadata): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_undocumented_array_parameter(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function compile(array $rows): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_variadic_bag_parameter(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed> ...$bags
+         */
+        public function merge(array ...$bags): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Non-flagging — the bag class itself and vendor boundaries
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_flag_inside_fluent_subclass(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Fluent;
+        final class StaticInputs extends Fluent {
+            /**
+             * @param array<string, mixed> $expected
+             */
+            public function matches(array $expected): bool {
+                return true;
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_inside_anonymous_class(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Support\Fluent;
+        final class NodeMetadata extends Fluent {
+            public static function dataCastUsing(mixed ...$arguments): object {
+                return new class {
+                    /**
+                     * @param array<string, mixed> $properties
+                     */
+                    public function cast(object $property, mixed $value, array $properties): NodeMetadata {
+                        return new NodeMetadata(is_array($value) ? $value : []);
+                    }
+                };
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_cast_method_in_named_class(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param array<string, mixed> $properties
+         */
+        public function cast(object $property, mixed $value, array $properties): object {
+            return (object) $value;
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Interfaces and traits
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_bag_parameter_on_interface_method(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        interface CompilesNodes {
+            /**
+             * @param array<string, mixed> $metadata
+             */
+            public function compile(array $metadata): void;
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_flags_bag_parameter_in_trait(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        trait CompilesNodes {
+            /**
+             * @param array<string, mixed> $metadata
+             */
+            public function compile(array $metadata): void {}
+        }
+        PHP;
+
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Robustness
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_reports_line_numbers(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final class Spec {
+            /**
+             * @param array<string, mixed> $metadata
+             */
+            public function compile(array $metadata): void {}
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertSame(7, $judgment->sins[0]->line);
+    }
+
+    public function test_handles_empty_file(): void
+    {
+        $this->assertTrue($this->prophet->judge('/x.php', '<?php')->isRighteous());
+    }
+
+    public function test_handles_invalid_php_gracefully(): void
+    {
+        $this->assertTrue($this->prophet->judge('/x.php', '<?php this is not <<< valid')->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Real-world fixture — the workflows WorkflowNode shape
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_real_world_workflow_node(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Spatie\LaravelData\Data;
+        final class WorkflowNode extends Data {
+            /**
+             * @param array<string, mixed> $staticInputs
+             * @param array<string, mixed> $metadata
+             */
+            public function __construct(
+                public readonly string $id,
+                public readonly string $descriptorKey,
+                public readonly array $staticInputs = [],
+                public readonly array $metadata = [],
+            ) {}
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 2);
+        $this->assertStringContainsString('WithCastable', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('WithCastable', $judgment->sins[1]->suggestion);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Description sanity
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_provides_helpful_descriptions(): void
+    {
+        $this->assertNotEmpty($this->prophet->description());
+        $this->assertStringContainsString('Fluent', $this->prophet->description());
+        $this->assertStringContainsString('Castable', $this->prophet->detailedDescription());
+        $this->assertStringContainsString('WithCastable', $this->prophet->detailedDescription());
+        $this->assertStringContainsString('dataCastUsing', $this->prophet->detailedDescription());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Helpers
+    // ────────────────────────────────────────────────────────────────
+
+    private function judgeClass(string $members): Judgment
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use Illuminate\Support\Arr;
+        final class Spec {
+            {$members}
+        }
+        PHP;
+
+        return $this->prophet->judge('/x.php', $content);
+    }
+
+    private function assertFallen(Judgment $judgment, ?int $expectedSins = null): void
+    {
+        $this->assertTrue(
+            $judgment->isFallen(),
+            'Expected judgment to be fallen. Sins: ' . json_encode(array_map(
+                fn ($s) => $s->message,
+                $judgment->sins,
+            ))
+        );
+
+        if ($expectedSins !== null) {
+            $this->assertCount(
+                $expectedSins,
+                $judgment->sins,
+                'Sins: ' . json_encode(array_map(fn ($s) => $s->message, $judgment->sins))
+            );
+        }
+    }
+}

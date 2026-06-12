@@ -58,6 +58,12 @@ return [
                     // 'max_method_lines' => 20,
                 ],
                 Backend\NoArrayStringIndexingProphet::class,
+                Backend\NoArrayBagProphet::class => [
+                    // Extra method names whose array params/returns stay
+                    // exempt (toArray, jsonSerialize, cast, rules, ... are
+                    // built in):
+                    // 'exempt_methods' => ['definition'],
+                ],
                 Backend\NoManualHydrationProphet::class => [
                     // 'min_key_reads' => 2,
                     // 'min_property_reads' => 3,
