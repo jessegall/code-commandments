@@ -121,6 +121,11 @@ WHAT REMAINS RIGHTEOUS:
     PortRef>`, `array<string, list<int>>` — are real maps, not records
     in disguise. Name the value type and the prophet stays silent.
     Annotating `array<string, mixed>` is NOT an opt-out.
+  - Nested structures: only a TOP-LEVEL bag type is flagged. A type like
+    `array<string, array<string, mixed>>` or `list<array<string, mixed>>`
+    is a container of dynamic payloads — and a class wrapping such
+    storage behind get()/set()/has() accessors (a ScopeFrames-style
+    hand-rolled bag abstraction) is the goal, not the sin.
   - The Fluent subclass itself: its constructor and helpers take raw
     arrays because it IS the array boundary.
   - Serialization signatures: toArray(), jsonSerialize(), and vendor-

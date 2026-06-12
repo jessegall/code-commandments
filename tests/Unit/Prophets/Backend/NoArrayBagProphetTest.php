@@ -304,6 +304,31 @@ class NoArrayBagProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_flags_bag_branch_of_top_level_union(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param int|float|string|array<string, mixed>|null $seconds
+         */
+        public function delay(int | float | string | array | null $seconds): void {}
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    public function test_does_not_flag_bag_nested_inside_generic(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @param list<array<string, mixed>> $rows
+         * @param array<string, array<string, mixed>> $framesByNode
+         */
+        public function seed(array $rows, array $framesByNode): void {}
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_flag_variadic_bag_parameter(): void
     {
         $judgment = $this->judgeClass(<<<'PHP'
@@ -472,6 +497,42 @@ class NoArrayBagProphetTest extends TestCase
         $this->assertFallen($judgment, 2);
         $this->assertStringContainsString('WithCastable', $judgment->sins[0]->suggestion);
         $this->assertStringContainsString('WithCastable', $judgment->sins[1]->suggestion);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Real-world fixture — a hand-rolled bag abstraction stays clean
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_flag_scope_frames_style_bag_abstraction(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final class ScopeFrames {
+            /** @var list<array<string, array<string, mixed>>> */
+            private array $frames = [[]];
+
+            public function set(string $nodeId, string $port, mixed $value): void {
+                $this->frames[count($this->frames) - 1][$nodeId][$port] = $value;
+            }
+
+            /**
+             * @return array<string, array<string, mixed>>
+             */
+            public function snapshot(): array {
+                return array_merge(...$this->frames);
+            }
+
+            /**
+             * @return array<string, array<string, mixed>>
+             */
+            public function base(): array {
+                return $this->frames[0];
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
     }
 
     // ────────────────────────────────────────────────────────────────

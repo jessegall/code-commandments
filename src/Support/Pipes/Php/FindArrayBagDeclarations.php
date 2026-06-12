@@ -217,9 +217,11 @@ final class FindArrayBagDeclarations implements Pipe
      */
     private function bagAnnotationIn(string $doc, string $tag): ?string
     {
-        $pattern = '/@' . $tag . '\s+[^$\n]*?(' . $this->bagTypePattern() . ')/i';
+        if (preg_match('/@' . $tag . '\s+(\S[^\n]*)/i', $doc, $m) !== 1) {
+            return null;
+        }
 
-        return preg_match($pattern, $doc, $m) === 1 ? $m[1] : null;
+        return $this->topLevelBagIn($this->typeToken($m[1]));
     }
 
     /**
@@ -229,25 +231,102 @@ final class FindArrayBagDeclarations implements Pipe
      */
     private function bagParamAnnotationsIn(string $doc): array
     {
-        $pattern = '/@param\s+[^$\n]*?(' . $this->bagTypePattern() . ')[^$\n]*?\$(\w+)/i';
-
-        if (preg_match_all($pattern, $doc, $m) === 0) {
+        if (preg_match_all('/@param\s+(\S[^\n]*?)\s+(?:\.\.\.)?&?\$(\w+)/i', $doc, $m, PREG_SET_ORDER) === 0) {
             return [];
         }
 
-        return array_combine($m[2], $m[1]);
+        $bags = [];
+
+        foreach ($m as $set) {
+            $bag = $this->topLevelBagIn($this->typeToken($set[1]));
+
+            if ($bag !== null) {
+                $bags[$set[2]] = $bag;
+            }
+        }
+
+        return $bags;
     }
 
     /**
-     * A string-keyed array whose value type declares nothing — the record
-     * in disguise. `array<string, ConcreteType>` intentionally does NOT
-     * match: that is a genuine dictionary.
+     * The bag branch of a type expression, or null. Only TOP-LEVEL bags
+     * count: a bag nested inside another generic (`list<array<string,
+     * mixed>>`, `array<string, array<string, mixed>>`) makes the outer
+     * type a genuine container — the same semantics as a concrete value
+     * type. Union branches are checked individually so
+     * `int|array<string, mixed>|null` still flags.
      */
-    private function bagTypePattern(): string
+    private function topLevelBagIn(string $type): ?string
     {
-        return 'array<\s*' . FindArrayStringIndexing::dictKeyTypePattern()
+        $pattern = '/^array<\s*' . FindArrayStringIndexing::dictKeyTypePattern()
             . '\s*,\s*' . FindArrayStringIndexing::nonDictValueTypePattern()
-            . '\s*>';
+            . '\s*>$/i';
+
+        foreach ($this->splitTopLevelUnion($type) as $branch) {
+            $branch = ltrim($branch, '?');
+
+            if (preg_match($pattern, $branch) === 1) {
+                return $branch;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The leading type token of an annotation line — stops at the first
+     * whitespace outside `<>`/`{}`/`()` nesting, so descriptions and
+     * variable names don't bleed in.
+     */
+    private function typeToken(string $text): string
+    {
+        $depth = 0;
+        $token = '';
+
+        foreach (str_split($text) as $char) {
+            if ($char === '<' || $char === '{' || $char === '(') {
+                $depth++;
+            } elseif ($char === '>' || $char === '}' || $char === ')') {
+                $depth--;
+            } elseif (ctype_space($char) && $depth === 0) {
+                break;
+            }
+
+            $token .= $char;
+        }
+
+        return $token;
+    }
+
+    /**
+     * Split a type expression on `|` at nesting depth zero.
+     *
+     * @return list<string>
+     */
+    private function splitTopLevelUnion(string $type): array
+    {
+        $branches = [];
+        $depth = 0;
+        $current = '';
+
+        foreach (str_split($type) as $char) {
+            if ($char === '<' || $char === '{' || $char === '(') {
+                $depth++;
+            } elseif ($char === '>' || $char === '}' || $char === ')') {
+                $depth--;
+            } elseif ($char === '|' && $depth === 0) {
+                $branches[] = trim($current);
+                $current = '';
+
+                continue;
+            }
+
+            $current .= $char;
+        }
+
+        $branches[] = trim($current);
+
+        return $branches;
     }
 
     private function findParam(Node\Stmt\ClassMethod $method, string $name): ?Node\Param
