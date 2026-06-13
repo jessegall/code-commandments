@@ -97,6 +97,16 @@ return [
                     // 'severity' => 'warning', // or 'sin'
                 ],
                 Backend\StringsThatShouldBeEnumsProphet::class,
+                Backend\RepeatedFallbackProphet::class => [
+                    // How many identical occurrences before it's flagged:
+                    // 'min_occurrences' => 2,
+                    //
+                    // Null-object classes whose fallbacks defer to the
+                    // null-object prophet (the map's values are reused):
+                    // 'null_objects' => [
+                    //     'App\\Workflow\\PortRef' => 'App\\Workflow\\NullPortRef',
+                    // ],
+                ],
                 Backend\PreferStaticOverInvokableConstructProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [

@@ -51,6 +51,9 @@ final class CodebaseIndex
     /** @var array<string, list<array{file: string, line: int, in_class: string, in_method: string}>>   key = newed-class FQCN */
     private array $instantiationsByClass = [];
 
+    /** @var array<string, list<array{file: string, line: int}>>   key = fallback-expression fingerprint */
+    private array $fallbacksByFingerprint = [];
+
     /**
      * Build from an iterable of file paths. Parse failures are swallowed —
      * partial indices are still useful.
@@ -118,6 +121,21 @@ final class CodebaseIndex
 
                 $instance->enumsByFqcn[$summary->fqcn] = $summary;
                 $instance->enumsByShortName[strtolower($summary->short)][] = $summary;
+            }
+
+            $fallbackFinder = new NodeFinder;
+
+            foreach ($fallbackFinder->find($ast, static fn (Node $n): bool => FallbackFingerprint::qualifies($n)) as $node) {
+                $fingerprint = FallbackFingerprint::fingerprint($node, $content);
+
+                if ($fingerprint === null) {
+                    continue;
+                }
+
+                $instance->fallbacksByFingerprint[$fingerprint][] = [
+                    'file' => $path,
+                    'line' => $node->getStartLine(),
+                ];
             }
         }
 
@@ -230,6 +248,18 @@ final class CodebaseIndex
     public function instantiationsOf(string $fqcn): array
     {
         return $this->instantiationsByClass[$fqcn] ?? [];
+    }
+
+    /**
+     * Every site across the scroll whose fallback expression (`??` / `?:` /
+     * full-ternary null check) normalises to the same fingerprint. Used to
+     * tell whether a chain is genuinely repeated and worth a named factory.
+     *
+     * @return list<array{file: string, line: int}>
+     */
+    public function fallbackOccurrences(string $fingerprint): array
+    {
+        return $this->fallbacksByFingerprint[$fingerprint] ?? [];
     }
 
     // ────────────────────────────────────────────────────────────────
