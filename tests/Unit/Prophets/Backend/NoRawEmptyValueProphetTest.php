@@ -177,6 +177,79 @@ class NoRawEmptyValueProphetTest extends TestCase
         $this->assertStringContainsString('T_Array::empty()', $judgment->sins[0]->suggestion);
     }
 
+    public function test_flags_nested_matrix_literal_by_default(): void
+    {
+        $judgment = $this->judgeBody("return [[]];");
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('Raw nested-array literal `[[]]`', $judgment->sins[0]->message);
+        $this->assertStringContainsString('T_Array::matrix()', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_matrix_in_property_default_suggests_constant(): void
+    {
+        $content = $this->wrap("private array \$frames = [[]];");
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Array::MATRIX', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_does_not_flag_nested_array_with_content(): void
+    {
+        $this->assertTrue($this->judgeBody("return [['a']];")->isRighteous());
+        $this->assertTrue($this->judgeBody("return [[], []];")->isRighteous());
+    }
+
+    public function test_collapses_half_converted_matrix_constant_form(): void
+    {
+        // The artifact a prior empty-array fix leaves behind.
+        $judgment = $this->judgeBody('return [T_Array::EMPTY];');
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Array::matrix()', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_collapses_half_converted_matrix_factory_form(): void
+    {
+        $judgment = $this->judgeBody('return [T_Array::empty()];');
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Array::matrix()', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_matrix_takes_precedence_over_inner_empty_array(): void
+    {
+        // Even with empty-array flagging on, [[]] yields ONE matrix finding,
+        // not a matrix plus the inner [].
+        $this->prophet->configure(['flag_empty_array' => true]);
+
+        $judgment = $this->judgeBody("return [[]];");
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('matrix', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_repent_rewrites_matrix_to_factory_with_import(): void
+    {
+        $content = $this->wrap("public function f(): array { return [[]]; }");
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return T_Array::matrix();', $result->newContent);
+        $this->assertStringContainsString('use JesseGall\PhpTypes\T_Array;', $result->newContent);
+    }
+
+    public function test_repent_rewrites_matrix_property_default_to_constant(): void
+    {
+        $content = $this->wrap("private array \$frames = [[]];");
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('$frames = T_Array::MATRIX;', $result->newContent);
+    }
+
     public function test_does_not_flag_the_type_helper_class_itself(): void
     {
         $content = <<<'PHP'

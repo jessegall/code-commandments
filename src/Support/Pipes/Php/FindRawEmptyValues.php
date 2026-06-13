@@ -129,7 +129,31 @@ final class FindRawEmptyValues implements Pipe
             }
         }
 
-        // Pass 3 — empty array literals, opt-in.
+        // Pass 3 — the nested-array seed `[[]]`. Always on: it is a
+        // distinctive, low-noise literal (a stack/grid started with one empty
+        // inner array). Marks the inner `[]` consumed so it is not separately
+        // rewritten.
+        foreach ($nodeFinder->findInstanceOf($ast, Expr\Array_::class) as $array) {
+            if (isset($consumed[spl_object_id($array)]) || ! self::isMatrixSeed($array)) {
+                continue;
+            }
+
+            $inner = $array->items[0]->value;
+
+            if ($inner instanceof Expr\Array_) {
+                $consumed[spl_object_id($inner)] = true;
+            }
+
+            $findings[] = self::finding(
+                kind: 'matrix_literal',
+                node: $array,
+                content: $content,
+                position: self::isConstPosition($array, $parents) ? 'const' : 'value',
+                literal: self::source($content, $array),
+            );
+        }
+
+        // Pass 4 — bare empty array literals `[]`, opt-in.
         if ($flagEmptyArray) {
             foreach ($nodeFinder->findInstanceOf($ast, Expr\Array_::class) as $array) {
                 if ($array->items !== [] || isset($consumed[spl_object_id($array)])) {
@@ -340,6 +364,51 @@ final class FindRawEmptyValues implements Pipe
             'literal' => $literal,
             'fixable' => true,
         ];
+    }
+
+    /**
+     * Whether the array is a matrix seed — exactly one unkeyed, non-spread
+     * element that is an empty inner array. Both the raw `[[]]` literal and
+     * the already-half-converted `[T_Array::EMPTY]` / `[T_Array::empty()]`
+     * forms count, so a partial earlier fix still collapses to MATRIX.
+     */
+    private static function isMatrixSeed(Expr\Array_ $array): bool
+    {
+        if (count($array->items) !== 1) {
+            return false;
+        }
+
+        $item = $array->items[0];
+
+        if (! $item instanceof Node\ArrayItem || $item->key !== null || $item->unpack) {
+            return false;
+        }
+
+        $value = $item->value;
+
+        if ($value instanceof Expr\Array_) {
+            return $value->items === [];
+        }
+
+        if ($value instanceof Expr\ClassConstFetch) {
+            return self::isArrayHelper($value->class)
+                && $value->name instanceof Node\Identifier
+                && $value->name->toString() === 'EMPTY';
+        }
+
+        if ($value instanceof Expr\StaticCall) {
+            return self::isArrayHelper($value->class)
+                && $value->name instanceof Node\Identifier
+                && $value->name->toString() === 'empty'
+                && $value->args === [];
+        }
+
+        return false;
+    }
+
+    private static function isArrayHelper(Node $class): bool
+    {
+        return $class instanceof Node\Name && $class->getLast() === 'T_Array';
     }
 
     private static function emptyStringNode(Node $node): ?Scalar\String_
