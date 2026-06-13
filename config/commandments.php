@@ -57,6 +57,16 @@ return [
                 Backend\LongMethodProphet::class => [
                     // 'max_method_lines' => 20,
                 ],
+                Backend\NoRawEmptyStringProphet::class => [
+                    // Flag empty array literals `[]` too (off by default —
+                    // `= []` defaults are everywhere and noisy):
+                    // 'flag_empty_array' => true,
+                    //
+                    // Override the type-helper classes the fixer rewrites to:
+                    // 'string_class' => 'JesseGall\\PhpTypes\\T_String',
+                    // 'json_class' => 'JesseGall\\PhpTypes\\T_Json',
+                    // 'array_class' => 'JesseGall\\PhpTypes\\T_Array',
+                ],
                 Backend\NoArrayStringIndexingProphet::class,
                 Backend\NoArrayBagProphet::class => [
                     // Extra method names whose array params/returns stay
