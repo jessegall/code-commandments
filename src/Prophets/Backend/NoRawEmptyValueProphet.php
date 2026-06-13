@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FindRawEmptyStrings;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FindRawEmptyValues;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
@@ -22,7 +22,7 @@ use PhpParser\ParserFactory;
  * helpers from jessegall/php-types (`T_String`, `T_Json`, `T_Array`).
  */
 #[IntroducedIn('1.24.0')]
-class NoRawEmptyStringProphet extends PhpCommandment implements SinRepenter
+class NoRawEmptyValueProphet extends PhpCommandment implements SinRepenter
 {
     private const STRING_CLASS = 'JesseGall\\PhpTypes\\T_String';
 
@@ -115,7 +115,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        $pipe = (new FindRawEmptyStrings)
+        $pipe = (new FindRawEmptyValues)
             ->withFlagEmptyArray((bool) $this->config('flag_empty_array', false));
 
         return PhpPipeline::make($filePath, $content)
@@ -145,7 +145,7 @@ SCRIPTURE;
             return RepentanceResult::unrepentant('Unable to parse PHP file');
         }
 
-        $findings = FindRawEmptyStrings::analyze($ast, $content, (bool) $this->config('flag_empty_array', false));
+        $findings = FindRawEmptyValues::analyze($ast, $content, (bool) $this->config('flag_empty_array', false));
         $findings = array_values(array_filter($findings, fn ($f) => $f['fixable']));
 
         if ($findings === []) {

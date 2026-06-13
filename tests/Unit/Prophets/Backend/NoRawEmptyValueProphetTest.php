@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Unit\Prophets\Backend;
 
-use JesseGall\CodeCommandments\Prophets\Backend\NoRawEmptyStringProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoRawEmptyValueProphet;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
-class NoRawEmptyStringProphetTest extends TestCase
+class NoRawEmptyValueProphetTest extends TestCase
 {
-    private NoRawEmptyStringProphet $prophet;
+    private NoRawEmptyValueProphet $prophet;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->prophet = new NoRawEmptyStringProphet();
+        $this->prophet = new NoRawEmptyValueProphet();
     }
 
     // ────────────────────────────────────────────────────────────────

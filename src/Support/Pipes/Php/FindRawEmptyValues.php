@@ -23,7 +23,7 @@ use PhpParser\NodeVisitorAbstract;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class FindRawEmptyStrings implements Pipe
+final class FindRawEmptyValues implements Pipe
 {
     /**
      * `strlen`-like calls whose comparison to 0/1 is an empty-string check.

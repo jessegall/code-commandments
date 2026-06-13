@@ -57,7 +57,7 @@ return [
                 Backend\LongMethodProphet::class => [
                     // 'max_method_lines' => 20,
                 ],
-                Backend\NoRawEmptyStringProphet::class => [
+                Backend\NoRawEmptyValueProphet::class => [
                     // Flag empty array literals `[]` too (off by default —
                     // `= []` defaults are everywhere and noisy):
                     // 'flag_empty_array' => true,
