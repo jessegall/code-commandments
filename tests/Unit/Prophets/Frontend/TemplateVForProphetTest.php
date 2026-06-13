@@ -104,6 +104,89 @@ VUE;
         $this->assertStringContainsString('<template v-for="item in items"', $result->newContent);
     }
 
+    public function test_repent_preserves_indentation(): void
+    {
+        $content = <<<'VUE'
+        <script setup lang="ts">
+        const items = ref([])
+        </script>
+
+        <template>
+            <div v-for="item in items" :key="item.id">
+                {{ item.name }}
+            </div>
+        </template>
+        VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+
+        $this->assertTrue($result->absolved);
+
+        $expected = <<<'VUE'
+        <script setup lang="ts">
+        const items = ref([])
+        </script>
+
+        <template>
+            <template v-for="item in items" :key="item.id">
+                <div>
+                    {{ item.name }}
+                </div>
+            </template>
+        </template>
+        VUE;
+
+        $this->assertSame($expected, $result->newContent);
+    }
+
+    public function test_repent_infers_two_space_indentation(): void
+    {
+        $content = <<<'VUE'
+        <template>
+          <div v-for="item in items" :key="item.id">
+            {{ item.name }}
+          </div>
+        </template>
+        VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+        $this->assertTrue($result->absolved);
+
+        $expected = <<<'VUE'
+        <template>
+          <template v-for="item in items" :key="item.id">
+            <div>
+              {{ item.name }}
+            </div>
+          </template>
+        </template>
+        VUE;
+
+        $this->assertSame($expected, $result->newContent);
+    }
+
+    public function test_repent_wraps_self_closing_element_with_indentation(): void
+    {
+        $content = <<<'VUE'
+        <template>
+            <span v-for="x in xs" :key="x.id" :title="x.name" />
+        </template>
+        VUE;
+
+        $result = $this->prophet->repent('/test.vue', $content);
+        $this->assertTrue($result->absolved);
+
+        $expected = <<<'VUE'
+        <template>
+            <template v-for="x in xs" :key="x.id">
+                <span :title="x.name" />
+            </template>
+        </template>
+        VUE;
+
+        $this->assertSame($expected, $result->newContent);
+    }
+
     public function test_repent_handles_nested_elements_correctly(): void
     {
         $content = <<<'VUE'
