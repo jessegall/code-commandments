@@ -52,6 +52,8 @@ LITERALS — name the empty value:
     '{}'          ->  T_Json::emptyObject()
     '[]'          ->  T_Json::emptyArray()
     []            ->  T_Array::empty()           // opt-in (flag_empty_array)
+    [[]]          ->  T_Array::matrix()          // nested array seeded with one
+                                                 // empty inner array
 
 CHECKS — name the predicate:
 
@@ -190,7 +192,7 @@ SCRIPTURE;
     {
         return match (true) {
             str_starts_with($kind, 'json') => (string) $this->config('json_class', self::JSON_CLASS),
-            $kind === 'array_literal' => (string) $this->config('array_class', self::ARRAY_CLASS),
+            $kind === 'array_literal', $kind === 'matrix_literal' => (string) $this->config('array_class', self::ARRAY_CLASS),
             default => (string) $this->config('string_class', self::STRING_CLASS),
         };
     }
@@ -207,6 +209,7 @@ SCRIPTURE;
             'json_object_literal' => $const ? "{$short}::EMPTY_OBJECT" : "{$short}::emptyObject()",
             'json_array_literal' => $const ? "{$short}::EMPTY_ARRAY" : "{$short}::emptyArray()",
             'array_literal' => $const ? "{$short}::EMPTY" : "{$short}::empty()",
+            'matrix_literal' => $const ? "{$short}::MATRIX" : "{$short}::matrix()",
             'json_object_compare', 'json_array_compare' => ($finding['negate'] ? '! ' : '')
                 . "{$short}::{$finding['predicate']}({$finding['var']})",
             default => "{$short}::{$finding['predicate']}({$finding['var']})",
@@ -223,6 +226,7 @@ SCRIPTURE;
             'json_object_literal' => "Raw empty JSON object literal `{$groups['literal']}` — use T_Json",
             'json_array_literal' => "Raw empty JSON array literal `{$groups['literal']}` — use T_Json",
             'array_literal' => 'Raw empty array literal `[]` — use T_Array',
+            'matrix_literal' => "Raw nested-array literal `{$groups['literal']}` — use T_Array::MATRIX",
             'strlen_compare' => "Empty-string check via strlen() on {$groups['var']} — use a named predicate",
             'trim_compare' => "Blank check via trim() on {$groups['var']} — use a named predicate",
             'json_object_compare', 'json_array_compare' => "Raw empty-JSON comparison against `{$groups['literal']}` — use a T_Json predicate",
@@ -250,6 +254,9 @@ SCRIPTURE;
             'array_literal' => $groups['position'] === 'const'
                 ? 'Replace with T_Array::EMPTY.'
                 : 'Replace with T_Array::empty().',
+            'matrix_literal' => $groups['position'] === 'const'
+                ? 'Replace with T_Array::MATRIX.'
+                : 'Replace with T_Array::matrix().',
             'trim_compare' => "Replace with T_String::{$groups['predicate']}({$groups['var']}) — isBlank() is the named home for 'empty or whitespace'. Better still, store a trimmed value object so the check is unnecessary.",
             'json_object_compare', 'json_array_compare' => "Replace with {$negate}T_Json::{$groups['predicate']}({$groups['var']}).",
             default => "Replace with T_String::{$groups['predicate']}({$groups['var']}).",
