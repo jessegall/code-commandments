@@ -118,10 +118,16 @@ SCRIPTURE;
         // Build pattern for DOM elements with v-for
         $elementsPattern = implode('|', $this->domElements);
 
+        // One indentation level for this file, used to nest the unwrapped
+        // element under its new <template>.
+        $indentUnit = $this->detectIndentUnit($templateContent);
+
         // Multi-pass to handle nested structures
         while ($pass < $maxPasses) {
             // Pattern to find opening tag with v-for
-            $pattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"([^"]*)"[^>]*)(\s*\/?>)/is';
+            // Lazy tail so a trailing `/` is left for group 4 — otherwise
+            // `[^>]*` swallows it and self-closing tags look like open tags.
+            $pattern = '/<(' . $elementsPattern . ')(\s[^>]*?v-for\s*=\s*"([^"]*)"[^>]*?)(\s*\/?>)/is';
 
             if (!preg_match($pattern, $templateContent, $match, PREG_OFFSET_CAPTURE)) {
                 break;
@@ -134,6 +140,10 @@ SCRIPTURE;
             $vForValue = $match[3][0];
             $tagEnding = $match[4][0];
             $isSelfClosing = str_ends_with(trim($tagEnding), '/>');
+
+            // Indentation of the line the element sits on — the <template> takes
+            // its place, and the element nests one level deeper.
+            $baseIndent = $this->leadingIndentAt($templateContent, $position);
 
             // Extract :key from attributes
             $keyAttr = '';
@@ -148,7 +158,9 @@ SCRIPTURE;
             if ($isSelfClosing) {
                 // Self-closing tag - simple replacement
                 $cleanElement = '<' . $tagName . $attributes . ' />';
-                $wrapped = '<template v-for="' . $vForValue . '"' . $keyAttr . '>' . $cleanElement . '</template>';
+                $wrapped = '<template v-for="' . $vForValue . '"' . $keyAttr . '>' . "\n"
+                    . $baseIndent . $indentUnit . $cleanElement . "\n"
+                    . $baseIndent . '</template>';
 
                 $templateContent = substr($templateContent, 0, $position) .
                     $wrapped .
@@ -168,9 +180,13 @@ SCRIPTURE;
                 $openTagEnd = $position + strlen($fullOpenTag);
                 $innerContent = substr($templateContent, $openTagEnd, $closingTag['start'] - $openTagEnd);
 
-                // Build the wrapped element
+                // Build the wrapped element, nesting the original element (and
+                // all of its inner content) one indentation level deeper.
                 $cleanElement = '<' . $tagName . $attributes . '>' . $innerContent . '</' . $tagName . '>';
-                $wrapped = '<template v-for="' . $vForValue . '"' . $keyAttr . '>' . $cleanElement . '</template>';
+                $nested = $this->indentInnerBlock($baseIndent . $cleanElement, $indentUnit);
+                $wrapped = '<template v-for="' . $vForValue . '"' . $keyAttr . '>' . "\n"
+                    . $nested . "\n"
+                    . $baseIndent . '</template>';
 
                 $templateContent = substr($templateContent, 0, $position) .
                     $wrapped .
@@ -192,5 +208,60 @@ SCRIPTURE;
             substr($content, $ctx->template['end']);
 
         return RepentanceResult::absolved($newContent, $penance);
+    }
+
+    /**
+     * The leading whitespace of the line `$position` sits on, or '' when the
+     * element is not at the start of its line (nothing clean to indent from).
+     */
+    private function leadingIndentAt(string $content, int $position): string
+    {
+        $newlinePos = strrpos(substr($content, 0, $position), "\n");
+        $lineStart = $newlinePos === false ? 0 : $newlinePos + 1;
+        $prefix = substr($content, $lineStart, $position - $lineStart);
+
+        return preg_match('/^[ \t]*$/', $prefix) === 1 ? $prefix : '';
+    }
+
+    /**
+     * One indentation level for this file: tabs if any line is tab-indented,
+     * otherwise the smallest run of leading spaces seen. Defaults to 4 spaces.
+     */
+    private function detectIndentUnit(string $content): string
+    {
+        if (preg_match('/\n\t/', $content) === 1) {
+            return "\t";
+        }
+
+        $smallest = null;
+
+        if (preg_match_all('/\n( +)\S/', $content, $matches) > 0) {
+            foreach ($matches[1] as $spaces) {
+                $length = strlen($spaces);
+
+                if ($smallest === null || $length < $smallest) {
+                    $smallest = $length;
+                }
+            }
+        }
+
+        return str_repeat(' ', $smallest ?? 4);
+    }
+
+    /**
+     * Prepend `$prefix` to every non-blank line of `$block`, shifting the whole
+     * element right by one level without leaving trailing whitespace on blanks.
+     */
+    private function indentInnerBlock(string $block, string $prefix): string
+    {
+        $lines = explode("\n", $block);
+
+        foreach ($lines as $index => $line) {
+            if (trim($line) !== '') {
+                $lines[$index] = $prefix . $line;
+            }
+        }
+
+        return implode("\n", $lines);
     }
 }
