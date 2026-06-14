@@ -72,6 +72,24 @@ type but the message still leaked out of its home:
                                                       // builds the message
     throw new PortNotWiredException("Port '...'");    // still a sin
 
+A FACTORY DOES NOT LAUNDER A MESSAGE. Handing the message string to a
+static factory is the same sin wearing a `::make()` — the prose still
+lives at the call site, not in the exception:
+
+    // sin — the factory is just a message courier:
+    throw InvalidPipeDefinitionException::make(
+        $reflection->getName(),
+        'SingleSubPipelineAdapter implementations must define mapTo()',
+        'public function mapTo(): mixed',
+    );
+
+    // righteous — the call site passes DATA; the message is built inside:
+    throw InvalidPipeDefinitionException::missingMethod($reflection->getName(), 'mapTo');
+
+The factory takes domain values (the class, the missing method) and
+assembles the sentence itself. A multi-word string argument to an
+exception factory is the tell that the message leaked.
+
 FACTORY CONVENTIONS:
 
   - `::for(...)` is the default name; purpose-named factories are even
@@ -141,6 +159,12 @@ SCRIPTURE;
                 $groups['exception'],
                 $groups['method'],
             ),
+            'factory_message' => sprintf(
+                'throw %s::%s() in %s() is handed a message string — the message must be built inside the exception, not passed to the factory',
+                $groups['exception'],
+                $groups['factory'],
+                $groups['method'],
+            ),
             default => sprintf(
                 'throw new %s with an inline message string in %s() — the message leaked out of the exception',
                 $groups['exception'],
@@ -161,6 +185,12 @@ SCRIPTURE;
                 $groups['suggested'],
                 $groups['exception'],
                 $groups['suggested'],
+            ),
+            'factory_message' => sprintf(
+                'Move the message string INSIDE %s — its %s() factory should take domain values and assemble '
+                . 'the message itself, so the call site passes data, not prose.',
+                $groups['exception'],
+                $groups['factory'],
             ),
             default => sprintf(
                 'Move the message into %s as a static factory — throw %s::for(...) with the domain values '
