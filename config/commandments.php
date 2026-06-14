@@ -66,6 +66,7 @@ return [
                     // 'flag_space'         => true,  // ' '
                     // 'flag_separators'    => true,  // , ', ' / . -
                     // 'flag_sentinel_ints' => true,  // 0 1 -1
+                    // 'flag_sentinel_floats' => true,  // 0.0
                     //
                     // Override the type-helper classes the fixer rewrites to:
                     // 'string_class' => 'JesseGall\\PhpTypes\\T_String',

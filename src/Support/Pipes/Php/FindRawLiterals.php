@@ -46,7 +46,7 @@ final class FindRawLiterals implements Pipe
      * string / JSON / matrix) are on by default; the noisy categories are
      * opt-in.
      *
-     * @var array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool}
+     * @var array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool, sentinel_floats: bool}
      */
     private array $options = [
         'empty_array' => false,
@@ -54,6 +54,7 @@ final class FindRawLiterals implements Pipe
         'space' => false,
         'separators' => false,
         'sentinel_ints' => false,
+        'sentinel_floats' => false,
     ];
 
     /**
@@ -112,6 +113,7 @@ final class FindRawLiterals implements Pipe
             'space' => false,
             'separators' => false,
             'sentinel_ints' => false,
+            'sentinel_floats' => false,
         ], $options);
 
         $nodeFinder = new NodeFinder;
@@ -217,6 +219,23 @@ final class FindRawLiterals implements Pipe
                     content: $content,
                     position: 'value',
                     literal: (string) $int->value,
+                );
+            }
+        }
+
+        // Pass 6 — the float zero `0.0`, opt-in.
+        if ($options['sentinel_floats']) {
+            foreach ($nodeFinder->findInstanceOf($ast, Scalar\Float_::class) as $float) {
+                if (isset($consumed[spl_object_id($float)]) || $float->value !== 0.0 || self::inDeclare($float, $parents)) {
+                    continue;
+                }
+
+                $findings[] = self::finding(
+                    kind: 'float_zero',
+                    node: $float,
+                    content: $content,
+                    position: 'value',
+                    literal: self::source($content, $float),
                 );
             }
         }

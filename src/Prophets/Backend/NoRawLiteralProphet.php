@@ -35,6 +35,8 @@ class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
 
     private const INT_CLASS = 'JesseGall\\PhpTypes\\T_Int';
 
+    private const FLOAT_CLASS = 'JesseGall\\PhpTypes\\T_Float';
+
     /**
      * Literal kinds that map to a plain `Class::CONST` (valid in every
      * position, so no const/value juggling). kind => constant name.
@@ -55,6 +57,7 @@ class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
         'int_zero' => 'ZERO',
         'int_one' => 'ONE',
         'int_minus_one' => 'MINUS_ONE',
+        'float_zero' => 'ZERO',
     ];
 
     public function description(): string
@@ -97,6 +100,7 @@ OPT-IN CATEGORIES — off by default, enable per project:
     ' '           ->  T_String::SPACE          // flag_space
     ',' ', ' '/'  ->  T_String::COMMA / COMMA_SPACE / SLASH …   // flag_separators
     0  1  -1      ->  T_Int::ZERO / ONE / MINUS_ONE             // flag_sentinel_ints
+    0.0           ->  T_Float::ZERO                             // flag_sentinel_floats
 
 CHECKS — name the predicate:
 
@@ -235,6 +239,7 @@ SCRIPTURE;
         return match (true) {
             str_starts_with($kind, 'json') => (string) $this->config('json_class', self::JSON_CLASS),
             str_starts_with($kind, 'int_') => (string) $this->config('int_class', self::INT_CLASS),
+            str_starts_with($kind, 'float_') => (string) $this->config('float_class', self::FLOAT_CLASS),
             $kind === 'array_literal', $kind === 'matrix_literal' => (string) $this->config('array_class', self::ARRAY_CLASS),
             default => (string) $this->config('string_class', self::STRING_CLASS),
         };
@@ -251,6 +256,7 @@ SCRIPTURE;
             'space' => (bool) $this->config('flag_space', false),
             'separators' => (bool) $this->config('flag_separators', false),
             'sentinel_ints' => (bool) $this->config('flag_sentinel_ints', false),
+            'sentinel_floats' => (bool) $this->config('flag_sentinel_floats', false),
         ];
     }
 
@@ -259,9 +265,11 @@ SCRIPTURE;
      */
     private function constantReplacementFor(string $kind): string
     {
-        $class = str_starts_with($kind, 'int_')
-            ? (string) $this->config('int_class', self::INT_CLASS)
-            : (string) $this->config('string_class', self::STRING_CLASS);
+        $class = match (true) {
+            str_starts_with($kind, 'int_') => (string) $this->config('int_class', self::INT_CLASS),
+            str_starts_with($kind, 'float_') => (string) $this->config('float_class', self::FLOAT_CLASS),
+            default => (string) $this->config('string_class', self::STRING_CLASS),
+        };
 
         return $this->shortName($class) . '::' . self::CONSTANT_KINDS[$kind];
     }

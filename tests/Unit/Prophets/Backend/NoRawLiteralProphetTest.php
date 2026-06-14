@@ -455,6 +455,31 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_Int::MINUS_ONE', $this->judgeBody('return -1;')->sins[0]->suggestion);
     }
 
+    public function test_flags_float_zero_when_enabled(): void
+    {
+        $this->prophet->configure(['flag_sentinel_floats' => true]);
+
+        $judgment = $this->judgeBody('return 0.0;');
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Float::ZERO', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_does_not_flag_float_zero_by_default(): void
+    {
+        $this->assertTrue($this->judgeBody('return 0.0;')->isRighteous());
+    }
+
+    public function test_repent_rewrites_float_zero_with_t_float_import(): void
+    {
+        $this->prophet->configure(['flag_sentinel_floats' => true]);
+
+        $result = $this->prophet->repent('/x.php', $this->wrap('public function f(): float { return 0.0; }'));
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return T_Float::ZERO;', $result->newContent);
+        $this->assertStringContainsString('use JesseGall\PhpTypes\T_Float;', $result->newContent);
+    }
+
     public function test_minus_one_is_one_finding_not_a_nested_one(): void
     {
         $this->prophet->configure(['flag_sentinel_ints' => true]);
