@@ -57,15 +57,21 @@ return [
                 Backend\LongMethodProphet::class => [
                     // 'max_method_lines' => 20,
                 ],
-                Backend\NoRawEmptyValueProphet::class => [
-                    // Flag empty array literals `[]` too (off by default —
-                    // `= []` defaults are everywhere and noisy):
-                    // 'flag_empty_array' => true,
+                Backend\NoRawLiteralProphet::class => [
+                    // Always on: empty '' / JSON {} [] / matrix [[]].
+                    // Whitespace (\n \n\n \t \r \r\n \0) is on by default.
+                    // The rest are opt-in (off by default):
+                    // 'flag_whitespace'    => true,  // \n \n\n \t \r \r\n \0
+                    // 'flag_empty_array'   => true,  // []
+                    // 'flag_space'         => true,  // ' '
+                    // 'flag_separators'    => true,  // , ', ' / . -
+                    // 'flag_sentinel_ints' => true,  // 0 1 -1
                     //
                     // Override the type-helper classes the fixer rewrites to:
                     // 'string_class' => 'JesseGall\\PhpTypes\\T_String',
                     // 'json_class' => 'JesseGall\\PhpTypes\\T_Json',
                     // 'array_class' => 'JesseGall\\PhpTypes\\T_Array',
+                    // 'int_class' => 'JesseGall\\PhpTypes\\T_Int',
                 ],
                 Backend\NoArrayStringIndexingProphet::class,
                 Backend\NoArrayBagProphet::class => [

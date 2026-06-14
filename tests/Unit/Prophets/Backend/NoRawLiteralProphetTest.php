@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Unit\Prophets\Backend;
 
-use JesseGall\CodeCommandments\Prophets\Backend\NoRawEmptyValueProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoRawLiteralProphet;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
-class NoRawEmptyValueProphetTest extends TestCase
+class NoRawLiteralProphetTest extends TestCase
 {
-    private NoRawEmptyValueProphet $prophet;
+    private NoRawLiteralProphet $prophet;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->prophet = new NoRawEmptyValueProphet();
+        $this->prophet = new NoRawLiteralProphet();
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -366,6 +366,130 @@ class NoRawEmptyValueProphetTest extends TestCase
         $this->assertStringContainsString('T_String', $this->prophet->detailedDescription());
         $this->assertStringContainsString('isBlank', $this->prophet->detailedDescription());
         $this->assertStringContainsString('parse, don', $this->prophet->detailedDescription());
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Whitespace / control literals (on by default)
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_newline_literal_by_default(): void
+    {
+        $judgment = $this->judgeBody('return "\n";');
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_String::NEWLINE', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_paragraph_literal(): void
+    {
+        $judgment = $this->judgeBody('return "\n\n";');
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_String::PARAGRAPH', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_tab_cr_crlf_and_null_byte(): void
+    {
+        $this->assertStringContainsString('T_String::TAB', $this->judgeBody('return "\t";')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_String::CARRIAGE_RETURN', $this->judgeBody('return "\r";')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_String::CRLF', $this->judgeBody('return "\r\n";')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_String::NULL_BYTE', $this->judgeBody('return "\0";')->sins[0]->suggestion);
+    }
+
+    public function test_does_not_flag_string_with_content_containing_newline(): void
+    {
+        $this->assertTrue($this->judgeBody('return "hello\nworld";')->isRighteous());
+    }
+
+    public function test_whitespace_can_be_disabled(): void
+    {
+        $this->prophet->configure(['flag_whitespace' => false]);
+
+        $this->assertTrue($this->judgeBody('return "\n";')->isRighteous());
+    }
+
+    public function test_repent_rewrites_newline_with_import(): void
+    {
+        $result = $this->prophet->repent('/x.php', $this->wrap('public function f(): string { return "\n"; }'));
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return T_String::NEWLINE;', $result->newContent);
+        $this->assertStringContainsString('use JesseGall\PhpTypes\T_String;', $result->newContent);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Opt-in: space, separators, sentinel ints
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_flag_space_or_separators_or_ints_by_default(): void
+    {
+        $this->assertTrue($this->judgeBody('return " ";')->isRighteous());
+        $this->assertTrue($this->judgeBody('return ",";')->isRighteous());
+        $this->assertTrue($this->judgeBody('return 1;')->isRighteous());
+        $this->assertTrue($this->judgeBody('return -1;')->isRighteous());
+    }
+
+    public function test_flags_space_when_enabled(): void
+    {
+        $this->prophet->configure(['flag_space' => true]);
+
+        $judgment = $this->judgeBody('return " ";');
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_String::SPACE', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_separators_when_enabled(): void
+    {
+        $this->prophet->configure(['flag_separators' => true]);
+
+        $this->assertStringContainsString('T_String::COMMA_SPACE', $this->judgeBody('return ", ";')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_String::SLASH', $this->judgeBody('return "/";')->sins[0]->suggestion);
+    }
+
+    public function test_flags_sentinel_ints_when_enabled(): void
+    {
+        $this->prophet->configure(['flag_sentinel_ints' => true]);
+
+        $this->assertStringContainsString('T_Int::ZERO', $this->judgeBody('return 0;')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Int::ONE', $this->judgeBody('return 1;')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Int::MINUS_ONE', $this->judgeBody('return -1;')->sins[0]->suggestion);
+    }
+
+    public function test_minus_one_is_one_finding_not_a_nested_one(): void
+    {
+        $this->prophet->configure(['flag_sentinel_ints' => true]);
+
+        $this->assertFallen($this->judgeBody('return -1;'), 1);
+    }
+
+    public function test_does_not_flag_int_inside_declare(): void
+    {
+        $this->prophet->configure(['flag_sentinel_ints' => true]);
+
+        $content = <<<'PHP'
+        <?php
+        declare(strict_types=1);
+        namespace App;
+        final class Spec {
+            public function f(): int { return 1; }
+        }
+        PHP;
+
+        // The `1` in declare() is illegal as a constant — only the return's `1` flags.
+        $judgment = $this->prophet->judge('/x.php', $content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Int::ONE', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_repent_rewrites_minus_one_with_t_int_import(): void
+    {
+        $this->prophet->configure(['flag_sentinel_ints' => true]);
+
+        $result = $this->prophet->repent('/x.php', $this->wrap('public function f(): int { return -1; }'));
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return T_Int::MINUS_ONE;', $result->newContent);
+        $this->assertStringContainsString('use JesseGall\PhpTypes\T_Int;', $result->newContent);
     }
 
     // ────────────────────────────────────────────────────────────────
