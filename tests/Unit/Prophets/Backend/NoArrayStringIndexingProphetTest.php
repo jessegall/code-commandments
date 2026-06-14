@@ -226,12 +226,39 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $this->assertStringContainsString('static::FIELD', $judgment->sins[0]->message);
     }
 
-    public function test_flags_fully_qualified_class_constant_key(): void
+    public function test_does_not_flag_unconfirmable_external_class_constant_key(): void
     {
-        $judgment = $this->judge('return $row[\App\Foo::KEY];');
+        // KEY is not declared in this file — we can't confirm it's a string
+        // (it could be an int index), so it must not be flagged.
+        $this->assertTrue($this->judge('return $row[\App\Foo::KEY];')->isRighteous());
+    }
 
-        $this->assertFallen($judgment, 1);
-        $this->assertStringContainsString('KEY', $judgment->sins[0]->message);
+    public function test_does_not_flag_numeric_constant_key(): void
+    {
+        // T_Int::ZERO is an integer index, not a record field.
+        $this->assertTrue($this->judge('return $row[\JesseGall\PhpTypes\T_Int::ZERO];')->isRighteous());
+    }
+
+    public function test_does_not_flag_class_string_key(): void
+    {
+        $this->assertTrue($this->judge('return $row[\App\Foo::class];')->isRighteous());
+        $this->assertTrue($this->judge('$obj = new \App\Foo; return $row[$obj::class];')->isRighteous());
+    }
+
+    public function test_does_not_flag_class_string_keyed_dictionary_property(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        final class Registry {
+            /** @var array<class-string<Detector>, Detector> */
+            private array $detectors = [];
+            public function add(Detector $d): void { $this->detectors[$d::class] = $d; }
+            public function get(string $c): ?Detector { return $this->detectors[$c] ?? null; }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
     }
 
     public function test_flags_enum_case_value_key(): void
