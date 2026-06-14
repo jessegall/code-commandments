@@ -141,6 +141,49 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_Json::isEmptyObject($this->payload)', $judgment->sins[0]->suggestion);
     }
 
+    public function test_flags_comparison_against_t_array_empty_factory(): void
+    {
+        $judgment = $this->judgeBody('return $added === \JesseGall\PhpTypes\T_Array::empty() ? 1 : 2;');
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Array::isEmpty($added)', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_comparison_against_t_array_empty_constant(): void
+    {
+        $judgment = $this->judgeBody('return $added === \JesseGall\PhpTypes\T_Array::EMPTY ? 1 : 2;');
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('T_Array::isEmpty($added)', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_helper_comparison_for_other_kinds(): void
+    {
+        $this->assertStringContainsString('T_Int::isZero($n)', $this->judgeBody('return $n === \JesseGall\PhpTypes\T_Int::ZERO;')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Float::isZero($f)', $this->judgeBody('return $f === \JesseGall\PhpTypes\T_Float::ZERO;')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Bool::isTrue($b)', $this->judgeBody('return $b === \JesseGall\PhpTypes\T_Bool::TRUE;')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Json::isEmptyObject($j)', $this->judgeBody('return $j === \JesseGall\PhpTypes\T_Json::EMPTY_OBJECT;')->sins[0]->suggestion);
+    }
+
+    public function test_helper_comparison_negation_uses_inverse_predicate(): void
+    {
+        $this->assertStringContainsString('T_Array::isNotEmpty($a)', $this->judgeBody('return $a !== \JesseGall\PhpTypes\T_Array::empty();')->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Bool::isFalse($b)', $this->judgeBody('return $b !== \JesseGall\PhpTypes\T_Bool::TRUE;')->sins[0]->suggestion);
+    }
+
+    public function test_helper_comparison_negation_without_inverse_uses_bang(): void
+    {
+        $this->assertStringContainsString('! T_Json::isEmptyObject($j)', $this->judgeBody('return $j !== \JesseGall\PhpTypes\T_Json::EMPTY_OBJECT;')->sins[0]->suggestion);
+    }
+
+    public function test_repent_rewrites_helper_comparison(): void
+    {
+        $result = $this->prophet->repent('/x.php', $this->wrap('public function f(array $added): bool { return $added === \JesseGall\PhpTypes\T_Array::empty(); }'));
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return T_Array::isEmpty($added);', $result->newContent);
+    }
+
     public function test_flags_negated_json_array_comparison(): void
     {
         $judgment = $this->judgeBody("if (\$this->payload !== '[]') { return; }");
