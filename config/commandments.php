@@ -88,6 +88,12 @@ return [
                     // Exception classes that may be thrown inline:
                     // 'allow' => ['InvalidArgumentException'],
                 ],
+                Backend\PreferSprintfProphet::class => [
+                    // Opinionated/opt-in. Defaults shown:
+                    // 'require_escape' => true,      // only flag interpolation that also has \n / \t / …
+                    // 'extract_whitespace' => true,  // \n\n -> a T_String::PARAGRAPH arg
+                    // 'min_interpolations' => 1,
+                ],
                 Backend\PreferOptionOverNullProphet::class => [
                     // Suggested wrapper for value-or-nothing returns:
                     // 'option_class' => 'App\\Support\\Option',
