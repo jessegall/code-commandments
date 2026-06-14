@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 
 /**
@@ -177,7 +179,10 @@ final class FindArrayBagDeclarations implements Pipe
 
         $returnAnnotation = $this->bagAnnotationIn($doc, 'return');
 
-        if ($returnAnnotation !== null && $this->isArrayNativeType($method->returnType)) {
+        if ($returnAnnotation !== null
+            && $this->isArrayNativeType($method->returnType)
+            && $this->buildsStringKeyedArray($method)
+        ) {
             $matches[] = $this->match(
                 kind: 'return',
                 name: $methodName,
@@ -187,6 +192,38 @@ final class FindArrayBagDeclarations implements Pipe
                 content: $content,
             );
         }
+    }
+
+    /**
+     * Whether the method assembles an array with a STRING-LITERAL key — the
+     * mark of a record-shaped bag (`['name' => …]` or `$x['name'] = …`).
+     *
+     * A method that only ever uses dynamic keys (`$out[$field->name] = …`) or
+     * delegates its return is a genuine dynamic dictionary, not a bag that
+     * wants a typed value object — so its `array<string, mixed>` return is left
+     * alone.
+     */
+    private function buildsStringKeyedArray(Node\Stmt\ClassMethod $method): bool
+    {
+        if ($method->stmts === null) {
+            return false;
+        }
+
+        $finder = new NodeFinder;
+
+        foreach ($finder->findInstanceOf($method->stmts, Node\ArrayItem::class) as $item) {
+            if ($item->key instanceof Scalar\String_) {
+                return true;
+            }
+        }
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\Assign::class) as $assign) {
+            if ($assign->var instanceof Expr\ArrayDimFetch && $assign->var->dim instanceof Scalar\String_) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function match(
