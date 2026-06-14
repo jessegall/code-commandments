@@ -35,6 +35,7 @@ final class FindArrayBagDeclarations implements Pipe
         '__serialize', '__unserialize', '__debugInfo',
         'cast', 'transform',
         'rules', 'messages', 'attributes', 'casts',
+        'jsonSchema', 'schema', 'toSchema',
     ];
 
     /**
