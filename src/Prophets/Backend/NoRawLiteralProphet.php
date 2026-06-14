@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
-use JesseGall\CodeCommandments\Support\Pipes\Php\FindRawEmptyValues;
+use JesseGall\CodeCommandments\Support\Pipes\Php\FindRawLiterals;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
@@ -17,12 +17,15 @@ use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
 
 /**
- * Flag raw empty literals and empty checks — `''`, `'{}'`, `'[]'`, `[]`, and
- * `=== ''` / `strlen()` / `trim()` — and rewrite them to the named type
- * helpers from jessegall/php-types (`T_String`, `T_Json`, `T_Array`).
+ * Flag raw magic literals — empties (`''`, `'{}'`, `'[]'`, `[]`, `[[]]`),
+ * invisible whitespace (`"\n"`, `"\n\n"`, `"\t"`, `"\r"`, `"\r\n"`, `"\0"`),
+ * opt-in separators / spaces, and opt-in sentinel ints (`0`, `1`, `-1`) — plus
+ * the empty checks (`=== ''` / `strlen()` / `trim()`), and rewrite them to the
+ * named type helpers from jessegall/php-types (`T_String`, `T_Json`, `T_Array`,
+ * `T_Int`).
  */
-#[IntroducedIn('1.24.0')]
-class NoRawEmptyValueProphet extends PhpCommandment implements SinRepenter
+#[IntroducedIn('1.28.0')]
+class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
 {
     private const STRING_CLASS = 'JesseGall\\PhpTypes\\T_String';
 
@@ -30,9 +33,33 @@ class NoRawEmptyValueProphet extends PhpCommandment implements SinRepenter
 
     private const ARRAY_CLASS = 'JesseGall\\PhpTypes\\T_Array';
 
+    private const INT_CLASS = 'JesseGall\\PhpTypes\\T_Int';
+
+    /**
+     * Literal kinds that map to a plain `Class::CONST` (valid in every
+     * position, so no const/value juggling). kind => constant name.
+     */
+    private const CONSTANT_KINDS = [
+        'newline' => 'NEWLINE',
+        'paragraph' => 'PARAGRAPH',
+        'tab' => 'TAB',
+        'carriage_return' => 'CARRIAGE_RETURN',
+        'crlf' => 'CRLF',
+        'null_byte' => 'NULL_BYTE',
+        'space' => 'SPACE',
+        'comma' => 'COMMA',
+        'comma_space' => 'COMMA_SPACE',
+        'slash' => 'SLASH',
+        'dot' => 'DOT',
+        'dash' => 'DASH',
+        'int_zero' => 'ZERO',
+        'int_one' => 'ONE',
+        'int_minus_one' => 'MINUS_ONE',
+    ];
+
     public function description(): string
     {
-        return 'Do not write raw empty literals or empty checks — name them with T_String / T_Json / T_Array';
+        return 'Do not write raw magic literals (empties, newlines, …) — name them with T_String / T_Json / T_Array / T_Int';
     }
 
     public function detailedDescription(): string
@@ -54,6 +81,22 @@ LITERALS — name the empty value:
     []            ->  T_Array::empty()           // opt-in (flag_empty_array)
     [[]]          ->  T_Array::matrix()          // nested array seeded with one
                                                  // empty inner array
+
+INVISIBLE WHITESPACE — escape sequences you can't see and easily miscount
+(`"\n"` vs `"\n "` vs `"\n\n"`). On by default — these map to constants,
+so they read the same in every position:
+
+    "\n"          ->  T_String::NEWLINE
+    "\n\n"        ->  T_String::PARAGRAPH
+    "\t"          ->  T_String::TAB
+    "\r" "\r\n"   ->  T_String::CARRIAGE_RETURN / T_String::CRLF
+    "\0"          ->  T_String::NULL_BYTE
+
+OPT-IN CATEGORIES — off by default, enable per project:
+
+    ' '           ->  T_String::SPACE          // flag_space
+    ',' ', ' '/'  ->  T_String::COMMA / COMMA_SPACE / SLASH …   // flag_separators
+    0  1  -1      ->  T_Int::ZERO / ONE / MINUS_ONE             // flag_sentinel_ints
 
 CHECKS — name the predicate:
 
@@ -117,8 +160,7 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        $pipe = (new FindRawEmptyValues)
-            ->withFlagEmptyArray((bool) $this->config('flag_empty_array', false));
+        $pipe = (new FindRawLiterals)->withOptions($this->optionsFromConfig());
 
         return PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
@@ -147,7 +189,7 @@ SCRIPTURE;
             return RepentanceResult::unrepentant('Unable to parse PHP file');
         }
 
-        $findings = FindRawEmptyValues::analyze($ast, $content, (bool) $this->config('flag_empty_array', false));
+        $findings = FindRawLiterals::analyze($ast, $content, $this->optionsFromConfig());
         $findings = array_values(array_filter($findings, fn ($f) => $f['fixable']));
 
         if ($findings === []) {
@@ -192,9 +234,36 @@ SCRIPTURE;
     {
         return match (true) {
             str_starts_with($kind, 'json') => (string) $this->config('json_class', self::JSON_CLASS),
+            str_starts_with($kind, 'int_') => (string) $this->config('int_class', self::INT_CLASS),
             $kind === 'array_literal', $kind === 'matrix_literal' => (string) $this->config('array_class', self::ARRAY_CLASS),
             default => (string) $this->config('string_class', self::STRING_CLASS),
         };
+    }
+
+    /**
+     * @return array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool}
+     */
+    private function optionsFromConfig(): array
+    {
+        return [
+            'empty_array' => (bool) $this->config('flag_empty_array', false),
+            'whitespace' => (bool) $this->config('flag_whitespace', true),
+            'space' => (bool) $this->config('flag_space', false),
+            'separators' => (bool) $this->config('flag_separators', false),
+            'sentinel_ints' => (bool) $this->config('flag_sentinel_ints', false),
+        ];
+    }
+
+    /**
+     * `Class::CONST` for a constant-mapped literal kind, using configured class.
+     */
+    private function constantReplacementFor(string $kind): string
+    {
+        $class = str_starts_with($kind, 'int_')
+            ? (string) $this->config('int_class', self::INT_CLASS)
+            : (string) $this->config('string_class', self::STRING_CLASS);
+
+        return $this->shortName($class) . '::' . self::CONSTANT_KINDS[$kind];
     }
 
     /**
@@ -202,6 +271,10 @@ SCRIPTURE;
      */
     private function replacementFor(array $finding, string $short): string
     {
+        if (isset(self::CONSTANT_KINDS[$finding['kind']])) {
+            return $short . '::' . self::CONSTANT_KINDS[$finding['kind']];
+        }
+
         $const = $finding['position'] === 'const';
 
         return match ($finding['kind']) {
@@ -221,6 +294,10 @@ SCRIPTURE;
      */
     private function messageFor(array $groups): string
     {
+        if (isset(self::CONSTANT_KINDS[$groups['kind']])) {
+            return "Raw literal `{$groups['literal']}` — name it with " . $this->constantReplacementFor($groups['kind']);
+        }
+
         return match ($groups['kind']) {
             'string_literal' => "Raw empty string literal `{$groups['literal']}` — give it a name with T_String",
             'json_object_literal' => "Raw empty JSON object literal `{$groups['literal']}` — use T_Json",
@@ -239,6 +316,10 @@ SCRIPTURE;
      */
     private function suggestionFor(array $groups): string
     {
+        if (isset(self::CONSTANT_KINDS[$groups['kind']])) {
+            return 'Replace with ' . $this->constantReplacementFor($groups['kind']) . '.';
+        }
+
         $negate = $groups['negate'] === '1' ? '! ' : '';
 
         return match ($groups['kind']) {

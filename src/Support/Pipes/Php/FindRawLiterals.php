@@ -23,7 +23,7 @@ use PhpParser\NodeVisitorAbstract;
  *
  * @implements Pipe<PhpContext, PhpContext>
  */
-final class FindRawEmptyValues implements Pipe
+final class FindRawLiterals implements Pipe
 {
     /**
      * `strlen`-like calls whose comparison to 0/1 is an empty-string check.
@@ -41,11 +41,27 @@ final class FindRawEmptyValues implements Pipe
      */
     private const TYPE_CLASS_NAMES = ['T_String', 'T_Json', 'T_Array', 'T_Int', 'T_Float', 'T_Bool', 'T_Null'];
 
-    private bool $flagEmptyArray = false;
+    /**
+     * Which literal categories to flag. `whitespace` (and the always-on empty
+     * string / JSON / matrix) are on by default; the noisy categories are
+     * opt-in.
+     *
+     * @var array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool}
+     */
+    private array $options = [
+        'empty_array' => false,
+        'whitespace' => true,
+        'space' => false,
+        'separators' => false,
+        'sentinel_ints' => false,
+    ];
 
-    public function withFlagEmptyArray(bool $flag): self
+    /**
+     * @param  array<string, bool>  $options
+     */
+    public function withOptions(array $options): self
     {
-        $this->flagEmptyArray = $flag;
+        $this->options = array_merge($this->options, array_intersect_key($options, $this->options));
 
         return $this;
     }
@@ -56,7 +72,7 @@ final class FindRawEmptyValues implements Pipe
             return $input->with(matches: []);
         }
 
-        $findings = self::analyze($input->ast, $input->content, $this->flagEmptyArray);
+        $findings = self::analyze($input->ast, $input->content, $this->options);
 
         $matches = [];
 
@@ -88,8 +104,16 @@ final class FindRawEmptyValues implements Pipe
      * @param  array<Node>  $ast
      * @return list<array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, fixable: bool}>
      */
-    public static function analyze(array $ast, string $content, bool $flagEmptyArray): array
+    public static function analyze(array $ast, string $content, array $options): array
     {
+        $options = array_merge([
+            'empty_array' => false,
+            'whitespace' => true,
+            'space' => false,
+            'separators' => false,
+            'sentinel_ints' => false,
+        ], $options);
+
         $nodeFinder = new NodeFinder;
 
         // Files that DEFINE a type helper hold the canonical literal — skip them.
@@ -122,7 +146,7 @@ final class FindRawEmptyValues implements Pipe
                 continue;
             }
 
-            $finding = self::classifyStringLiteral($string, $content, $parents);
+            $finding = self::classifyStringLiteral($string, $content, $parents, $options);
 
             if ($finding !== null) {
                 $findings[] = $finding;
@@ -154,7 +178,7 @@ final class FindRawEmptyValues implements Pipe
         }
 
         // Pass 4 — bare empty array literals `[]`, opt-in.
-        if ($flagEmptyArray) {
+        if ($options['empty_array']) {
             foreach ($nodeFinder->findInstanceOf($ast, Expr\Array_::class) as $array) {
                 if ($array->items !== [] || isset($consumed[spl_object_id($array)])) {
                     continue;
@@ -166,6 +190,33 @@ final class FindRawEmptyValues implements Pipe
                     content: $content,
                     position: self::isConstPosition($array, $parents) ? 'const' : 'value',
                     literal: '[]',
+                );
+            }
+        }
+
+        // Pass 5 — sentinel integers 0 / 1 / -1, opt-in. `-1` is a UnaryMinus
+        // wrapping `1`; flag it whole and consume the inner `1`.
+        if ($options['sentinel_ints']) {
+            foreach ($nodeFinder->findInstanceOf($ast, Expr\UnaryMinus::class) as $neg) {
+                if (! $neg->expr instanceof Scalar\Int_ || $neg->expr->value !== 1 || self::inDeclare($neg, $parents)) {
+                    continue;
+                }
+
+                $consumed[spl_object_id($neg->expr)] = true;
+                $findings[] = self::finding('int_minus_one', $neg, $content, 'value', '-1');
+            }
+
+            foreach ($nodeFinder->findInstanceOf($ast, Scalar\Int_::class) as $int) {
+                if (isset($consumed[spl_object_id($int)]) || ! in_array($int->value, [0, 1], true) || self::inDeclare($int, $parents)) {
+                    continue;
+                }
+
+                $findings[] = self::finding(
+                    kind: $int->value === 0 ? 'int_zero' : 'int_one',
+                    node: $int,
+                    content: $content,
+                    position: 'value',
+                    literal: (string) $int->value,
                 );
             }
         }
@@ -302,23 +353,76 @@ final class FindRawEmptyValues implements Pipe
     /**
      * @return array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, fixable: bool}|null
      */
-    private static function classifyStringLiteral(Scalar\String_ $string, string $content, array $parents): ?array
+    private static function classifyStringLiteral(Scalar\String_ $string, string $content, array $parents, array $options): ?array
     {
         $position = self::isConstPosition($string, $parents) ? 'const' : 'value';
+        $value = $string->value;
 
-        if ($string->value === '') {
-            return self::finding('string_literal', $string, $content, $position, self::source($content, $string));
+        $make = static fn (string $kind): array => self::finding(
+            $kind,
+            $string,
+            $content,
+            $position,
+            self::source($content, $string),
+        );
+
+        // Always on — empty string and the JSON literals.
+        $kind = match ($value) {
+            '' => 'string_literal',
+            '{}' => 'json_object_literal',
+            '[]' => 'json_array_literal',
+            default => null,
+        };
+
+        if ($kind === null && $options['whitespace']) {
+            $kind = match ($value) {
+                "\n" => 'newline',
+                "\n\n" => 'paragraph',
+                "\t" => 'tab',
+                "\r" => 'carriage_return',
+                "\r\n" => 'crlf',
+                "\0" => 'null_byte',
+                default => null,
+            };
         }
 
-        if ($string->value === '{}') {
-            return self::finding('json_object_literal', $string, $content, $position, self::source($content, $string));
+        if ($kind === null && $options['space'] && $value === ' ') {
+            $kind = 'space';
         }
 
-        if ($string->value === '[]') {
-            return self::finding('json_array_literal', $string, $content, $position, self::source($content, $string));
+        if ($kind === null && $options['separators']) {
+            $kind = match ($value) {
+                ',' => 'comma',
+                ', ' => 'comma_space',
+                '/' => 'slash',
+                '.' => 'dot',
+                '-' => 'dash',
+                default => null,
+            };
         }
 
-        return null;
+        return $kind === null ? null : $make($kind);
+    }
+
+    /**
+     * Whether the node sits inside a `declare(...)` directive, where a literal
+     * is required and a class constant is illegal.
+     *
+     * @param  array<int, Node>  $parents
+     */
+    private static function inDeclare(Node $node, array $parents): bool
+    {
+        $current = $parents[spl_object_id($node)] ?? null;
+
+        while ($current !== null) {
+            if ($current instanceof Node\Stmt\Declare_) {
+                return true;
+            }
+
+            $current = $parents[spl_object_id($current)] ?? null;
+        }
+
+        return false;
     }
 
     /**
