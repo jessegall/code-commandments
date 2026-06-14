@@ -169,6 +169,58 @@ class PreferNamedExceptionsProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_flags_factory_handed_a_message_string(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function resolve(object $reflection): void {
+            throw InvalidPipeDefinitionException::make(
+                $reflection->getName(),
+                'SingleSubPipelineAdapter implementations must define mapTo()',
+                'public function mapTo(): mixed',
+            );
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('InvalidPipeDefinitionException::make()', $judgment->sins[0]->message);
+        $this->assertStringContainsString('built inside the exception', $judgment->sins[0]->message);
+        $this->assertStringContainsString('Move the message string INSIDE', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_flags_factory_handed_an_interpolated_message(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function resolve(string $name): void {
+            throw PortNotWiredException::make("Port '{$name}' is not wired");
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
+    public function test_does_not_flag_factory_with_single_token_value(): void
+    {
+        // 'email' is a domain value (a field name), not a message.
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function resolve(): void {
+            throw ValidationFailedException::forField('email');
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_factory_with_only_domain_values(): void
+    {
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function resolve(object $reflection): void {
+            throw InvalidPipeDefinitionException::missingMethod($reflection->getName(), 'mapTo');
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_flag_named_exception_with_domain_values(): void
     {
         $judgment = $this->judgeClass(<<<'PHP'

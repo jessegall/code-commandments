@@ -83,56 +83,131 @@ final class FindInlineExceptionConstruction implements Pipe
         $matches = [];
 
         foreach ($throws as $throw) {
-            $new = $throw->expr;
+            $expr = $throw->expr;
 
-            if (! $new instanceof Expr\New_ || ! $new->class instanceof Node\Name) {
-                continue; // Rethrows, variables, and dynamic classes are not call-site construction.
+            $match = match (true) {
+                $expr instanceof Expr\New_ => $this->classifyNew($expr, $throw, $input, $parents),
+                $expr instanceof Expr\StaticCall => $this->classifyFactory($expr, $throw, $input, $parents),
+                default => null, // rethrows, variables, dynamic classes
+            };
+
+            if ($match !== null) {
+                $matches[] = $match;
             }
-
-            $rawName = $new->class->toString();
-
-            if (in_array(strtolower($rawName), ['self', 'static', 'parent'], true)) {
-                continue; // The exception's own factory is the message's home.
-            }
-
-            $shortName = $this->shortName($rawName);
-            $resolved = $input->useStatements[$rawName] ?? $rawName;
-
-            if ($shortName === $this->enclosingClassName($throw, $parents)) {
-                continue; // Factory constructing its own class by name.
-            }
-
-            if ($this->isAllowed($shortName, $resolved)) {
-                continue;
-            }
-
-            $isGeneric = $this->isGenericException($resolved);
-            $firstArg = $this->firstArgument($new);
-            $messageIsString = $firstArg !== null && $this->isStringExpression($firstArg);
-
-            if (! $isGeneric && ! $messageIsString) {
-                continue; // Named exception fed domain values — acceptable, though a factory reads better.
-            }
-
-            $line = $throw->getStartLine();
-
-            $matches[] = new MatchResult(
-                name: $shortName,
-                pattern: '',
-                match: 'new ' . $shortName,
-                line: $line,
-                offset: null,
-                content: $this->getSnippet($input->content, $line),
-                groups: [
-                    'kind' => $isGeneric ? 'generic' : 'custom_message',
-                    'exception' => $shortName,
-                    'method' => $this->enclosingFunctionLabel($throw, $parents),
-                    'suggested' => $this->suggestedExceptionName($firstArg) ?? ($isGeneric ? null : $shortName) ?? 'a named exception',
-                ],
-            );
         }
 
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * `throw new SomeException(...)` — generic SPL exceptions, and named
+     * exceptions fed a message string.
+     *
+     * @param  array<int, Node>  $parents
+     */
+    private function classifyNew(Expr\New_ $new, Expr\Throw_ $throw, PhpContext $input, array $parents): ?MatchResult
+    {
+        if (! $new->class instanceof Node\Name) {
+            return null;
+        }
+
+        $rawName = $new->class->toString();
+
+        if (in_array(strtolower($rawName), ['self', 'static', 'parent'], true)) {
+            return null; // The exception's own factory is the message's home.
+        }
+
+        $shortName = $this->shortName($rawName);
+        $resolved = $input->useStatements[$rawName] ?? $rawName;
+
+        if ($shortName === $this->enclosingClassName($throw, $parents) || $this->isAllowed($shortName, $resolved)) {
+            return null;
+        }
+
+        $isGeneric = $this->isGenericException($resolved);
+        $firstArg = $this->firstArgument($new);
+        $messageIsString = $firstArg !== null && $this->isStringExpression($firstArg);
+
+        if (! $isGeneric && ! $messageIsString) {
+            return null; // Named exception fed domain values — acceptable.
+        }
+
+        $line = $throw->getStartLine();
+
+        return new MatchResult(
+            name: $shortName,
+            pattern: '',
+            match: 'new ' . $shortName,
+            line: $line,
+            offset: null,
+            content: $this->getSnippet($input->content, $line),
+            groups: [
+                'kind' => $isGeneric ? 'generic' : 'custom_message',
+                'exception' => $shortName,
+                'method' => $this->enclosingFunctionLabel($throw, $parents),
+                'factory' => '',
+                'suggested' => $this->suggestedExceptionName($firstArg) ?? ($isGeneric ? null : $shortName) ?? 'a named exception',
+            ],
+        );
+    }
+
+    /**
+     * `throw SomeException::make("message", ...)` — a named-exception FACTORY
+     * that is still handed the message string. The message has not moved into
+     * the exception; it just leaked into a `::make()` instead of a `new`. A
+     * factory must take DOMAIN VALUES and assemble the message itself.
+     *
+     * @param  array<int, Node>  $parents
+     */
+    private function classifyFactory(Expr\StaticCall $call, Expr\Throw_ $throw, PhpContext $input, array $parents): ?MatchResult
+    {
+        if (! $call->class instanceof Node\Name) {
+            return null;
+        }
+
+        $rawName = $call->class->toString();
+
+        if (in_array(strtolower($rawName), ['self', 'static', 'parent'], true)) {
+            return null; // The exception's own factory — the message's home.
+        }
+
+        $shortName = $this->shortName($rawName);
+        $resolved = $input->useStatements[$rawName] ?? $rawName;
+
+        if ($shortName === $this->enclosingClassName($throw, $parents) || $this->isAllowed($shortName, $resolved)) {
+            return null;
+        }
+
+        $hasMessage = false;
+
+        foreach ($call->args as $arg) {
+            if ($arg instanceof Node\Arg && $this->isMessageArg($arg)) {
+                $hasMessage = true;
+                break;
+            }
+        }
+
+        if (! $hasMessage) {
+            return null; // Factory fed only domain values — righteous.
+        }
+
+        $line = $throw->getStartLine();
+
+        return new MatchResult(
+            name: $shortName,
+            pattern: '',
+            match: $shortName . '::' . ($call->name instanceof Node\Identifier ? $call->name->toString() : 'make'),
+            line: $line,
+            offset: null,
+            content: $this->getSnippet($input->content, $line),
+            groups: [
+                'kind' => 'factory_message',
+                'exception' => $shortName,
+                'method' => $this->enclosingFunctionLabel($throw, $parents),
+                'factory' => $call->name instanceof Node\Identifier ? $call->name->toString() : 'make',
+                'suggested' => $shortName,
+            ],
+        );
     }
 
     private function isGenericException(string $resolved): bool
@@ -183,6 +258,30 @@ final class FindInlineExceptionConstruction implements Pipe
         return $expr instanceof Expr\FuncCall
             && $expr->name instanceof Node\Name
             && in_array($expr->name->toString(), self::MESSAGE_BUILDERS, true);
+    }
+
+    /**
+     * Whether the factory argument is a MESSAGE (vs a domain value). A built
+     * string (interpolated / concatenated / sprintf) or a multi-word literal
+     * is a message; a single-token literal like `'email'` is a value and is
+     * left alone, so value-factories (`X::forField('email')`) don't trip.
+     */
+    private function isMessageArg(Node\Arg $arg): bool
+    {
+        $expr = $arg->value;
+
+        if ($expr instanceof Scalar\InterpolatedString || $expr instanceof Expr\BinaryOp\Concat) {
+            return true;
+        }
+
+        if ($expr instanceof Expr\FuncCall
+            && $expr->name instanceof Node\Name
+            && in_array($expr->name->toString(), self::MESSAGE_BUILDERS, true)
+        ) {
+            return true;
+        }
+
+        return $expr instanceof Scalar\String_ && str_contains(trim($expr->value), ' ');
     }
 
     /**
