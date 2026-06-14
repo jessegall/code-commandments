@@ -189,13 +189,50 @@ class NoArrayBagProphetTest extends TestCase
          * @return array<string, mixed>
          */
         public function snapshot(): array {
-            return [];
+            return ['name' => $this->name, 'type' => $this->type];
         }
         PHP);
 
         $this->assertFallen($judgment, 1);
         $this->assertStringContainsString('snapshot() returns a raw array<string, mixed> bag', $judgment->sins[0]->message);
         $this->assertStringContainsString('Fluent', $judgment->sins[0]->suggestion);
+    }
+
+    public function test_does_not_flag_dynamic_dictionary_return(): void
+    {
+        // Keys are computed at runtime (reflection) — a genuine dictionary,
+        // not a record-shaped bag. The unpacker contract.
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function reflectValues(object $instance): array {
+            $values = [];
+
+            foreach ((new \ReflectionClass($instance))->getProperties() as $property) {
+                $values[$property->getName()] = $property->getValue($instance);
+            }
+
+            return $values;
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_delegating_dictionary_return(): void
+    {
+        // Builds no string-keyed array itself — forwards another call's result.
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function extract(object $instance): array {
+            return $this->reflectValues($instance);
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
     }
 
     public function test_does_not_flag_to_array_return(): void
