@@ -63,7 +63,7 @@ final class FindArrayStringIndexing implements Pipe
         '_SERVER', '_ENV', '_FILES', 'GLOBALS',
     ];
 
-    private const DICT_KEY_TYPE_PATTERN = '(?:string|int\|string|string\|int|array-key)';
+    private const DICT_KEY_TYPE_PATTERN = '(?:string|int\|string|string\|int|array-key|class-string(?:<[^<>]*>)?)';
 
     /**
      * Value types that do NOT make an array a dictionary. A heterogeneous
@@ -77,6 +77,15 @@ final class FindArrayStringIndexing implements Pipe
     private ?CodebaseIndex $codebaseIndex = null;
 
     private int $maxTraceDepth = 10;
+
+    /**
+     * Names of class constants declared with a STRING value in the current
+     * file. Only these (used as `Class::CONST` keys) are record-field keys;
+     * an int/float const like `T_Int::ZERO` is a numeric index, not a sin.
+     *
+     * @var list<string>
+     */
+    private array $stringConstNames = [];
 
     public function withCodebaseIndex(CodebaseIndex $index, int $maxDepth): self
     {
@@ -92,6 +101,7 @@ final class FindArrayStringIndexing implements Pipe
             return $input->with(matches: []);
         }
 
+        $this->stringConstNames = $this->collectStringConstNames($input->ast);
         $parents = $this->buildParentMap($input->ast);
         [$scopedDictVars, $globalDictVars, $dictProps] = $this->collectDictInfo($input->ast, $parents);
 
@@ -578,7 +588,21 @@ final class FindArrayStringIndexing implements Pipe
         }
 
         if ($dim instanceof Expr\ClassConstFetch) {
-            return $this->renderClassConstFetch($dim);
+            // `::class` is a class-string — a dictionary key, never a field.
+            if ($dim->name instanceof Node\Identifier && strtolower($dim->name->toString()) === 'class') {
+                return null;
+            }
+
+            // Only a class constant we can CONFIRM holds a string (declared in
+            // this file) is a record-field key. `T_Int::ZERO` and other
+            // numeric / unresolved constants are indices, not sins.
+            if ($dim->name instanceof Node\Identifier
+                && in_array($dim->name->toString(), $this->stringConstNames, true)
+            ) {
+                return $this->renderClassConstFetch($dim);
+            }
+
+            return null;
         }
 
         if ($dim instanceof Expr\PropertyFetch
@@ -590,6 +614,28 @@ final class FindArrayStringIndexing implements Pipe
         }
 
         return null;
+    }
+
+    /**
+     * Names of class constants declared with a string value anywhere in the
+     * file. Const names are effectively unique per file, so we key by name.
+     *
+     * @param  array<Node>  $ast
+     * @return list<string>
+     */
+    private function collectStringConstNames(array $ast): array
+    {
+        $names = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\ClassConst::class) as $classConst) {
+            foreach ($classConst->consts as $const) {
+                if ($const->value instanceof Scalar\String_) {
+                    $names[] = $const->name->toString();
+                }
+            }
+        }
+
+        return array_values(array_unique($names));
     }
 
     private function renderClassConstFetch(Expr\ClassConstFetch $node): string
