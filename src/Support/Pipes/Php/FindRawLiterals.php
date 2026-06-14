@@ -42,6 +42,26 @@ final class FindRawLiterals implements Pipe
     private const TYPE_CLASS_NAMES = ['T_String', 'T_Json', 'T_Array', 'T_Int', 'T_Float', 'T_Bool', 'T_Null'];
 
     /**
+     * Named type-helper values that, when compared against, have an equivalent
+     * predicate. key = `T_Class::CONST` or `T_Class::factory()`; value =
+     * [class, predicate, inverse-predicate or null].
+     */
+    private const HELPER_VALUE_MAP = [
+        'T_String::EMPTY' => ['T_String', 'isEmpty', 'isNotEmpty'],
+        'T_String::empty()' => ['T_String', 'isEmpty', 'isNotEmpty'],
+        'T_Array::EMPTY' => ['T_Array', 'isEmpty', 'isNotEmpty'],
+        'T_Array::empty()' => ['T_Array', 'isEmpty', 'isNotEmpty'],
+        'T_Json::EMPTY_OBJECT' => ['T_Json', 'isEmptyObject', null],
+        'T_Json::emptyObject()' => ['T_Json', 'isEmptyObject', null],
+        'T_Json::EMPTY_ARRAY' => ['T_Json', 'isEmptyArray', null],
+        'T_Json::emptyArray()' => ['T_Json', 'isEmptyArray', null],
+        'T_Int::ZERO' => ['T_Int', 'isZero', 'isNotZero'],
+        'T_Float::ZERO' => ['T_Float', 'isZero', 'isNotZero'],
+        'T_Bool::TRUE' => ['T_Bool', 'isTrue', 'isFalse'],
+        'T_Bool::FALSE' => ['T_Bool', 'isFalse', 'isTrue'],
+    ];
+
+    /**
      * Which literal categories to flag. `whitespace` (and the always-on empty
      * string / JSON / matrix) are on by default; the noisy categories are
      * opt-in.
@@ -92,6 +112,7 @@ final class FindRawLiterals implements Pipe
                     'negate' => $finding['negate'] ? '1' : '',
                     'var' => $finding['var'],
                     'literal' => $finding['literal'],
+                    'helper_class' => $finding['helper_class'],
                 ],
             );
         }
@@ -339,6 +360,36 @@ final class FindRawLiterals implements Pipe
             }
         }
 
+        // Comparison against a named type-helper value — `$x === T_Array::empty()`,
+        // `$x !== T_Int::ZERO`, … — has a ready-made predicate.
+        if ($isEquality) {
+            $helper = self::helperValueOperand($left) ?? self::helperValueOperand($right);
+
+            if ($helper !== null) {
+                [$node, $info] = $helper;
+                $other = $node === $left ? $right : $left;
+                [$class, $predicate, $inverse] = $info;
+
+                if ($negated && $inverse !== null) {
+                    $predicate = $inverse;
+                    $negated = false;
+                }
+
+                $consumed[spl_object_id($node)] = true;
+
+                return self::comparisonFinding(
+                    kind: 'helper_compare',
+                    cmp: $cmp,
+                    content: $content,
+                    predicate: $predicate,
+                    var: self::source($content, $other),
+                    literal: self::source($content, $node),
+                    negate: $negated,
+                    helperClass: $class,
+                );
+            }
+        }
+
         // strlen($x) compared to 0 / 1.
         $lenCall = self::lengthCall($left) ?? self::lengthCall($right);
 
@@ -459,12 +510,13 @@ final class FindRawLiterals implements Pipe
             'negate' => false,
             'var' => '',
             'literal' => $literal,
+            'helper_class' => '',
             'fixable' => true,
         ];
     }
 
     /**
-     * @return array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, fixable: bool}
+     * @return array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, helper_class: string, fixable: bool}
      */
     private static function comparisonFinding(
         string $kind,
@@ -474,6 +526,7 @@ final class FindRawLiterals implements Pipe
         string $var,
         string $literal,
         bool $negate = false,
+        string $helperClass = '',
     ): array {
         return [
             'kind' => $kind,
@@ -485,6 +538,7 @@ final class FindRawLiterals implements Pipe
             'negate' => $negate,
             'var' => $var,
             'literal' => $literal,
+            'helper_class' => $helperClass,
             'fixable' => true,
         ];
     }
@@ -542,6 +596,37 @@ final class FindRawLiterals implements Pipe
     private static function jsonNode(Node $node): ?Scalar\String_
     {
         return $node instanceof Scalar\String_ && in_array($node->value, ['{}', '[]'], true) ? $node : null;
+    }
+
+    /**
+     * If the node is a named type-helper value (`T_Array::EMPTY`,
+     * `T_Int::ZERO`, `T_Array::empty()`, …), return [node, [class, predicate,
+     * inverse]]; otherwise null.
+     *
+     * @return array{0: Node, 1: array{0: string, 1: string, 2: ?string}}|null
+     */
+    private static function helperValueOperand(Node $node): ?array
+    {
+        if ($node instanceof Expr\ClassConstFetch
+            && $node->class instanceof Node\Name
+            && $node->name instanceof Node\Identifier
+        ) {
+            $info = self::HELPER_VALUE_MAP[$node->class->getLast() . '::' . $node->name->toString()] ?? null;
+
+            return $info === null ? null : [$node, $info];
+        }
+
+        if ($node instanceof Expr\StaticCall
+            && $node->class instanceof Node\Name
+            && $node->name instanceof Node\Identifier
+            && $node->args === []
+        ) {
+            $info = self::HELPER_VALUE_MAP[$node->class->getLast() . '::' . $node->name->toString() . '()'] ?? null;
+
+            return $info === null ? null : [$node, $info];
+        }
+
+        return null;
     }
 
     private static function lengthCall(Node $node): ?Expr\FuncCall

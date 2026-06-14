@@ -37,6 +37,8 @@ class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
 
     private const FLOAT_CLASS = 'JesseGall\\PhpTypes\\T_Float';
 
+    private const BOOL_CLASS = 'JesseGall\\PhpTypes\\T_Bool';
+
     /**
      * Literal kinds that map to a plain `Class::CONST` (valid in every
      * position, so no const/value juggling). kind => constant name.
@@ -206,7 +208,9 @@ SCRIPTURE;
         $penance = [];
 
         foreach ($findings as $finding) {
-            $fqcn = $this->classFor($finding['kind']);
+            $fqcn = $finding['kind'] === 'helper_compare'
+                ? $this->fqcnForHelper($finding['helper_class'])
+                : $this->classFor($finding['kind']);
             $short = $imported[$fqcn] ?? $this->shortName($fqcn);
 
             if (! isset($imported[$fqcn])) {
@@ -241,6 +245,21 @@ SCRIPTURE;
             str_starts_with($kind, 'int_') => (string) $this->config('int_class', self::INT_CLASS),
             str_starts_with($kind, 'float_') => (string) $this->config('float_class', self::FLOAT_CLASS),
             $kind === 'array_literal', $kind === 'matrix_literal' => (string) $this->config('array_class', self::ARRAY_CLASS),
+            default => (string) $this->config('string_class', self::STRING_CLASS),
+        };
+    }
+
+    /**
+     * Resolve a helper short name (`T_Array`, `T_Int`, …) to its configured FQCN.
+     */
+    private function fqcnForHelper(string $short): string
+    {
+        return match ($short) {
+            'T_Array' => (string) $this->config('array_class', self::ARRAY_CLASS),
+            'T_Json' => (string) $this->config('json_class', self::JSON_CLASS),
+            'T_Int' => (string) $this->config('int_class', self::INT_CLASS),
+            'T_Float' => (string) $this->config('float_class', self::FLOAT_CLASS),
+            'T_Bool' => (string) $this->config('bool_class', self::BOOL_CLASS),
             default => (string) $this->config('string_class', self::STRING_CLASS),
         };
     }
@@ -291,7 +310,7 @@ SCRIPTURE;
             'json_array_literal' => $const ? "{$short}::EMPTY_ARRAY" : "{$short}::emptyArray()",
             'array_literal' => $const ? "{$short}::EMPTY" : "{$short}::empty()",
             'matrix_literal' => $const ? "{$short}::MATRIX" : "{$short}::matrix()",
-            'json_object_compare', 'json_array_compare' => ($finding['negate'] ? '! ' : '')
+            'json_object_compare', 'json_array_compare', 'helper_compare' => ($finding['negate'] ? '! ' : '')
                 . "{$short}::{$finding['predicate']}({$finding['var']})",
             default => "{$short}::{$finding['predicate']}({$finding['var']})",
         };
@@ -315,6 +334,7 @@ SCRIPTURE;
             'strlen_compare' => "Empty-string check via strlen() on {$groups['var']} — use a named predicate",
             'trim_compare' => "Blank check via trim() on {$groups['var']} — use a named predicate",
             'json_object_compare', 'json_array_compare' => "Raw empty-JSON comparison against `{$groups['literal']}` — use a T_Json predicate",
+            'helper_compare' => "Comparison against `{$groups['literal']}` — use the predicate {$groups['helper_class']}::{$groups['predicate']}({$groups['var']})",
             default => "Raw empty-string comparison on {$groups['var']} — use a named predicate",
         };
     }
@@ -348,6 +368,7 @@ SCRIPTURE;
                 : 'Replace with T_Array::matrix().',
             'trim_compare' => "Replace with T_String::{$groups['predicate']}({$groups['var']}) — isBlank() is the named home for 'empty or whitespace'. Better still, store a trimmed value object so the check is unnecessary.",
             'json_object_compare', 'json_array_compare' => "Replace with {$negate}T_Json::{$groups['predicate']}({$groups['var']}).",
+            'helper_compare' => "Replace with {$negate}{$groups['helper_class']}::{$groups['predicate']}({$groups['var']}).",
             default => "Replace with T_String::{$groups['predicate']}({$groups['var']}).",
         };
     }
