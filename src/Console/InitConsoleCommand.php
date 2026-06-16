@@ -54,15 +54,51 @@ class InitConsoleCommand extends Command
 
     private function installCommitHook(string $basePath, bool $force, OutputInterface $output): void
     {
-        $status = (new CommitHookInstaller())->install($basePath, $force);
+        $installer = new CommitHookInstaller();
 
-        match ($status) {
+        $pre = $installer->install($basePath, $force);
+
+        match ($pre) {
             CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git pre-commit gate at .git/hooks/pre-commit'),
             CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the pre-commit gate to your existing .git/hooks/pre-commit'),
             CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Pre-commit gate already installed (use --force to refresh it)'),
-            CommitHookInstaller::STATUS_NOT_GIT => $output->writeln('Not a git repository — skipped the pre-commit gate.'),
+            CommitHookInstaller::STATUS_NOT_GIT => $output->writeln('Not a git repository — skipped the commit hooks.'),
             CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/pre-commit — check permissions.'),
         };
+
+        if ($pre === CommitHookInstaller::STATUS_NOT_GIT) {
+            return;
+        }
+
+        $post = $installer->installPostCommit($basePath, $force);
+
+        match ($post) {
+            CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git post-commit reset at .git/hooks/post-commit'),
+            CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the post-commit reset to your existing .git/hooks/post-commit'),
+            CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Post-commit reset already installed (use --force to refresh it)'),
+            CommitHookInstaller::STATUS_NOT_GIT => null,
+            CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/post-commit — check permissions.'),
+        };
+    }
+
+    /**
+     * A PostToolUse (Bash) hook command: when the tool call was a git commit,
+     * inject a reminder into Claude's context to re-read the commandments and
+     * resolve every sin before the next phase.
+     */
+    private function postCommitReminderCommand(): string
+    {
+        $message = 'A commit just landed — a phase is complete. Re-read the Code Commandments '
+            . 'section of CLAUDE.md now and act as a sin resolver: run `vendor/bin/commandments judge --next --git` '
+            . 'and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in '
+            . 'files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely '
+            . 'applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to '
+            . 'leave a sin in place.';
+
+        $json = '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"' . $message . '"}}';
+
+        return 'in=$(cat); printf "%s" "$in" | grep -q "git commit" && printf '
+            . escapeshellarg($json) . '; exit 0';
     }
 
     private function createConfig(string $basePath, bool $force, bool $autoDetect, OutputInterface $output): void
@@ -164,15 +200,9 @@ class InitConsoleCommand extends Command
         if (file_exists($settingsFile)) {
             $content = file_get_contents($settingsFile);
             $existingSettings = json_decode($content ?: '{}', true) ?? [];
-
-            if (!$force && isset($existingSettings['hooks'])) {
-                $output->writeln('.claude/settings.json hooks already exist (use --force to overwrite)');
-
-                return;
-            }
         }
 
-        $hooks = [
+        $ourHooks = [
             'SessionStart' => [
                 [
                     'hooks' => [
@@ -193,7 +223,22 @@ class InitConsoleCommand extends Command
                     ],
                 ],
             ],
+            'PostToolUse' => [
+                [
+                    'matcher' => 'Bash',
+                    'hooks' => [
+                        [
+                            'type' => 'command',
+                            'command' => $this->postCommitReminderCommand(),
+                        ],
+                    ],
+                ],
+            ],
         ];
+
+        // Merge our events into any existing hooks (overwrite only our events,
+        // preserve the user's other hooks; idempotent across re-runs).
+        $hooks = array_merge($existingSettings['hooks'] ?? [], $ourHooks);
 
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 
@@ -281,7 +326,7 @@ It shows exactly **one finding at a time** with its full rule inline — so noth
 - If it is an advisory **warning** whose rubric does not apply here, **absolve it with a reason**:
   `vendor/bin/commandments absolve --fingerprint=<hash> --reason="why it does not apply"`.
 
-Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave one untouched — fix or absolve every one.
+Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. **Default to FIXING a warning.** Absolve it only when the rubric's LEAVE-WHEN genuinely applies, and say why — absolve is not a dismiss button, and the post-commit reset wipes absolutions anyway, so a dodged warning comes back next phase. Never leave a warning untouched.
 
 ### Own every sin you encounter
 

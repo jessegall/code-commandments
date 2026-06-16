@@ -68,4 +68,12 @@ interface ConfessionTracker
      * @return int Number of stale absolutions removed
      */
     public function gcUnseenFindings(): int;
+
+    /**
+     * Remove every finding absolution. Used by the post-commit reset so
+     * absolutions never silently persist across commits.
+     *
+     * @return int Number of absolutions removed
+     */
+    public function clearFindingAbsolutions(): int;
 }

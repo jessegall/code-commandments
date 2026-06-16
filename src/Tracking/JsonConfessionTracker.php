@@ -135,6 +135,20 @@ class JsonConfessionTracker implements ConfessionTracker
         $this->seen[$fingerprint] = true;
     }
 
+    public function clearFindingAbsolutions(): int
+    {
+        $this->load();
+
+        $count = count($this->findings);
+
+        if ($count > 0) {
+            $this->findings = [];
+            $this->save();
+        }
+
+        return $count;
+    }
+
     public function gcUnseenFindings(): int
     {
         $this->load();

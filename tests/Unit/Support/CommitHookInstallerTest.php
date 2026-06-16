@@ -21,10 +21,34 @@ class CommitHookInstallerTest extends TestCase
     protected function tearDown(): void
     {
         @unlink($this->dir . '/.git/hooks/pre-commit');
+        @unlink($this->dir . '/.git/hooks/post-commit');
         @rmdir($this->dir . '/.git/hooks');
         @rmdir($this->dir . '/.git');
         @rmdir($this->dir);
         parent::tearDown();
+    }
+
+    public function test_installs_a_post_commit_reset_hook(): void
+    {
+        $status = (new CommitHookInstaller())->installPostCommit($this->dir);
+
+        $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $status);
+
+        $hook = file_get_contents($this->dir . '/.git/hooks/post-commit');
+        $this->assertStringContainsString('absolve --clear', $hook);
+        $this->assertStringContainsString('post-commit reset', $hook);
+        $this->assertTrue(is_executable($this->dir . '/.git/hooks/post-commit'));
+    }
+
+    public function test_pre_and_post_commit_hooks_are_independent(): void
+    {
+        $installer = new CommitHookInstaller();
+
+        $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $installer->install($this->dir));
+        $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $installer->installPostCommit($this->dir));
+
+        $this->assertStringContainsString('judge --git', file_get_contents($this->dir . '/.git/hooks/pre-commit'));
+        $this->assertStringContainsString('absolve --clear', file_get_contents($this->dir . '/.git/hooks/post-commit'));
     }
 
     public function test_installs_a_fresh_pre_commit_hook(): void

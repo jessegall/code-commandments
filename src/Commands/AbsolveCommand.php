@@ -18,7 +18,8 @@ class AbsolveCommand extends Command
     protected $signature = 'commandments:absolve
         {--fingerprint= : The finding fingerprint shown by judge --next}
         {--reason= : Why the rule does not apply here (required)}
-        {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}';
+        {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}
+        {--clear : Remove every absolution (used by the post-commit reset so nothing stays hidden)}';
 
     protected $description = 'Absolve a single finding by fingerprint, with a required reason';
 
@@ -27,6 +28,13 @@ class AbsolveCommand extends Command
         ScrollManager $manager,
         ConfessionTracker $tracker
     ): int {
+        if ((bool) $this->option('clear')) {
+            $cleared = $tracker->clearFindingAbsolutions();
+            $this->info("Cleared {$cleared} absolution(s). Every finding will be re-evaluated from scratch.");
+
+            return self::SUCCESS;
+        }
+
         if ((bool) $this->option('all')) {
             $result = (new Absolver($manager, $registry, $tracker))->absolveAll($this->option('reason'));
 

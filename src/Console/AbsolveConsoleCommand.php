@@ -22,12 +22,20 @@ class AbsolveConsoleCommand extends Command
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint shown by judge --next')
             ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply here (required)')
-            ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)');
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)')
+            ->addOption('clear', null, InputOption::VALUE_NONE, 'Remove every absolution (used by the post-commit reset so nothing stays hidden)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
+
+        if ((bool) $input->getOption('clear')) {
+            $cleared = $tracker->clearFindingAbsolutions();
+            $output->writeln("<info>Cleared {$cleared} absolution(s). Every finding will be re-evaluated from scratch.</info>");
+
+            return Command::SUCCESS;
+        }
 
         if ((bool) $input->getOption('all')) {
             $result = (new Absolver($manager, $registry, $tracker))->absolveAll($input->getOption('reason'));
