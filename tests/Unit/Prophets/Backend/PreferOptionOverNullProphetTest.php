@@ -647,4 +647,103 @@ class PreferOptionOverNullProphetTest extends TestCase
             'Warnings: ' . json_encode(array_map(fn ($w) => $w->message, $judgment->warnings))
         );
     }
+
+    // ────────────────────────────────────────────────────────────────
+    // Measure & suppress — caller count from the codebase index
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_suppresses_when_resolved_callers_below_threshold(): void
+    {
+        // One internal caller, default threshold of 2 → measured as low-value,
+        // stay silent.
+        $judgment = $this->judgeWithIndex(<<<'PHP'
+        <?php
+        namespace App;
+        class Service {
+            public function findRef(array $edges): mixed {
+                foreach ($edges as $e) { if ($e) { return $e; } }
+                return null;
+            }
+            public function only(): void { $this->findRef([]); }
+        }
+        PHP);
+
+        $this->assertCleanFor($judgment);
+    }
+
+    public function test_emits_with_caller_count_when_above_threshold(): void
+    {
+        $judgment = $this->judgeWithIndex(<<<'PHP'
+        <?php
+        namespace App;
+        class Service {
+            public function findRef(array $edges): mixed {
+                foreach ($edges as $e) { if ($e) { return $e; } }
+                return null;
+            }
+            public function a(): void { $this->findRef([]); }
+            public function b(): void { $this->findRef([]); }
+            public function c(): void { $this->findRef([]); }
+        }
+        PHP);
+
+        $this->assertHasWarnings($judgment, 1);
+        $this->assertStringContainsString('3 call sites', $judgment->warnings[0]->message);
+    }
+
+    public function test_high_threshold_suppresses_even_several_callers(): void
+    {
+        $this->prophet->configure(['min_callers' => 10]);
+
+        $judgment = $this->judgeWithIndex(<<<'PHP'
+        <?php
+        namespace App;
+        class Service {
+            public function findRef(array $edges): mixed {
+                foreach ($edges as $e) { if ($e) { return $e; } }
+                return null;
+            }
+            public function a(): void { $this->findRef([]); }
+            public function b(): void { $this->findRef([]); }
+            public function c(): void { $this->findRef([]); }
+        }
+        PHP);
+
+        $this->assertCleanFor($judgment);
+    }
+
+    public function test_unknown_caller_count_is_not_suppressed(): void
+    {
+        // No callers the index can resolve → unknown, not "unused" → emit.
+        $judgment = $this->judgeWithIndex(<<<'PHP'
+        <?php
+        namespace App;
+        class Service {
+            public function findRef(array $edges): mixed {
+                foreach ($edges as $e) { if ($e) { return $e; } }
+                return null;
+            }
+        }
+        PHP);
+
+        $this->assertHasWarnings($judgment, 1);
+    }
+
+    private function judgeWithIndex(string $fileContent): Judgment
+    {
+        $dir = sys_get_temp_dir() . '/cc-prefer-' . uniqid();
+        mkdir($dir);
+        $path = $dir . '/Service.php';
+        file_put_contents($path, $fileContent);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$path]);
+        $this->prophet->setCodebaseIndex($index);
+
+        $judgment = $this->prophet->judge($path, $fileContent);
+
+        @unlink($path);
+        @rmdir($dir);
+
+        return $judgment;
+    }
 }

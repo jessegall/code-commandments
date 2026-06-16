@@ -13,6 +13,7 @@ class Application extends SymfonyApplication
         parent::__construct('Code Commandments', '1.0.0');
 
         $this->add(new JudgeConsoleCommand());
+        $this->add(new AbsolveConsoleCommand());
         $this->add(new RepentConsoleCommand());
         $this->add(new ScriptureConsoleCommand());
         $this->add(new InitConsoleCommand());

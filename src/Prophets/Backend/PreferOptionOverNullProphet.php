@@ -6,7 +6,11 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
+use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
@@ -22,13 +26,46 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * Object when one exists for the return type.
  */
 #[IntroducedIn('1.19.0')]
-class PreferOptionOverNullProphet extends PhpCommandment
+class PreferOptionOverNullProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
     private const DEFAULT_EXCLUDED_METHODS = ['try*', '__*'];
+
+    private const DEFAULT_MIN_CALLERS = 2;
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
+
+    protected function defaultTier(): Tier
+    {
+        return Tier::Structural;
+    }
 
     public function description(): string
     {
         return 'Do not return null from decision methods — return an Option or a Null Object';
+    }
+
+    public function advisory(): Advisory
+    {
+        return Advisory::make()
+            ->applyWhen(
+                'The method has several callers — each one otherwise grows its own '
+                . 'null check (=== null, ?->, or ??), and forgetting one is a '
+                . 'TypeError in production. The more call sites, the stronger the case.'
+            )
+            ->leaveWhen(
+                'There are only one or two callers, or the empty case is local and '
+                . 'obvious right where it is handled. Wrapping a single nearby check '
+                . 'in an Option buys nothing.'
+            )
+            ->whenUnsure(
+                'Leave it. This is a refactor toward fewer hidden branches, not a '
+                . 'mandate to wrap every nullable return in new syntax.'
+            );
     }
 
     public function detailedDescription(): string
@@ -187,8 +224,19 @@ isn't theirs to change. Configure via:
             App\Workflow\PortRef::class => App\Workflow\NullPortRef::class,
         ],
         'exclude_methods' => ['try*', '__*'],
+        'min_callers' => 2,        // suppress when the index resolves fewer
+                                   // than this many call sites (the refactor
+                                   // only pays off with several consumers)
         'severity' => 'warning',   // or 'sin' to block commits
     ],
+
+WHEN THIS FIRES (applicability): the value of an Option grows with the
+number of callers — every call site otherwise repeats the same null check.
+When the cross-file index can resolve how many call sites a method has and
+that count is below `min_callers`, this prophet stays SILENT: a single
+nearby null check is not worth an Option. Zero resolved callers is treated
+as "unknown" (a public method may have callers the index can't see) and is
+NOT suppressed. Single-file runs have no index, so nothing is suppressed.
 SCRIPTURE;
     }
 
@@ -205,30 +253,92 @@ SCRIPTURE;
             ->judge();
     }
 
-    private function translate(MatchResult $match): Sin|Warning
+    private function translate(MatchResult $match): Sin|Warning|null
     {
-        $message = $this->messageFor($match);
-        $suggestion = $this->suggestionFor($match);
+        $callers = $this->callerInfoFor($match);
 
-        if ($this->config('severity', 'warning') === 'sin') {
-            return $this->sinAt($match->line, $message, $match->content, $suggestion);
+        // Measure & suppress: when the index can resolve how many call sites
+        // depend on this method and that number is below the threshold, the
+        // refactor isn't worth the ceremony — stay silent.
+        if ($callers['known'] && $callers['count'] < $this->minCallers()) {
+            return null;
         }
 
-        return $this->warningAt($match->line, $message . ' ' . $suggestion, $match->content);
+        $message = $this->messageFor($match, $callers);
+        $suggestion = $this->suggestionFor($match);
+
+        $symbol = $match->groups['method'] ?? null;
+
+        if ($this->config('severity', 'warning') === 'sin') {
+            return $this->sinAt($match->line, $message, $match->content, $suggestion, $symbol);
+        }
+
+        return $this->warningAt($match->line, $message . ' ' . $suggestion, $match->content, $symbol);
     }
 
-    private function messageFor(MatchResult $match): string
+    /**
+     * Resolve how many call sites the index can attribute to this method.
+     *
+     * Zero resolved callers is treated as UNKNOWN, not "unused": a public
+     * method may have callers the index can't see (out of scroll, dynamic
+     * dispatch). We only suppress when we positively know the count is low.
+     *
+     * @return array{known: bool, count: int}
+     */
+    private function callerInfoFor(MatchResult $match): array
+    {
+        if ($this->index === null) {
+            return ['known' => false, 'count' => 0];
+        }
+
+        $fqcn = $match->groups['class_fqcn'] ?? '';
+        $method = $match->groups['method_name'] ?? '';
+
+        if ($fqcn === '' || $method === '') {
+            return ['known' => false, 'count' => 0];
+        }
+
+        $count = count($this->index->callersOf($fqcn, $method));
+
+        if ($count === 0) {
+            return ['known' => false, 'count' => 0];
+        }
+
+        return ['known' => true, 'count' => $count];
+    }
+
+    private function minCallers(): int
+    {
+        $value = $this->config('min_callers', self::DEFAULT_MIN_CALLERS);
+
+        return is_numeric($value) ? max(1, (int) $value) : self::DEFAULT_MIN_CALLERS;
+    }
+
+    /**
+     * @param  array{known: bool, count: int}  $callers
+     */
+    private function messageFor(MatchResult $match, array $callers): string
     {
         $groups = $match->groups;
         $type = $groups['type_name'] !== '' ? $groups['type_name'] . ' | null' : 'a value | null';
 
+        $callerClause = $callers['known']
+            ? sprintf(
+                ' %d call site%s carr%s this null check.',
+                $callers['count'],
+                $callers['count'] === 1 ? '' : 's',
+                $callers['count'] === 1 ? 'ies' : 'y',
+            )
+            : '';
+
         return sprintf(
-            '%s returns %s — the body decides nothingness (%s `return null`, %s value return%s).',
+            '%s returns %s — the body decides nothingness (%s `return null`, %s value return%s).%s',
             $groups['method'],
             $type,
             $groups['null_count'],
             $groups['value_count'],
             $groups['value_count'] === '1' ? '' : 's',
+            $callerClause,
         );
     }
 

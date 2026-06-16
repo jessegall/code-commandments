@@ -8,7 +8,11 @@ use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\FindingCollector;
+use JesseGall\CodeCommandments\Support\FindingQueue;
+use JesseGall\CodeCommandments\Support\Fingerprint;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
+use JesseGall\CodeCommandments\Support\Output\NextFindingPresenter;
 use JesseGall\CodeCommandments\Support\Pipeline;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
@@ -25,7 +29,8 @@ class JudgeCommand extends Command
         {--files= : Judge specific files (comma-separated)}
         {--path= : Override the scroll path and target a specific directory (bypasses all excludes)}
         {--git : Only judge files that are new or changed in git}
-        {--absolve : Mark files as absolved after confession (manual review)}';
+        {--absolve : Mark files as absolved after confession (manual review)}
+        {--next : Show exactly one finding at a time (fix or absolve to advance)}';
 
     protected $description = 'Judge the codebase for sins against the commandments';
 
@@ -101,6 +106,28 @@ class JudgeCommand extends Command
             ? [$scrollFilter]
             : $registry->getScrolls();
 
+        $fullScan = $fileFilter === null
+            && empty($filesFilter)
+            && ! $gitMode
+            && $pathFilter === null
+            && $prophetFilter === null;
+
+        if ((bool) $this->option('next')) {
+            return $this->runNext(
+                $registry,
+                $manager,
+                $tracker,
+                $scrolls,
+                $fileFilter,
+                $filesFilter,
+                $gitMode,
+                $gitFiles,
+                $pathFilter,
+                $prophetFilter,
+                $fullScan,
+            );
+        }
+
         foreach ($scrolls as $scroll) {
             if (! $registry->hasScroll($scroll)) {
                 continue;
@@ -119,7 +146,63 @@ class JudgeCommand extends Command
             }
         }
 
+        if ($fullScan) {
+            $tracker->gcUnseenFindings();
+        }
+
         return $this->showResults($prophetFilter, $gitMode);
+    }
+
+    /**
+     * @param  array<string>  $scrolls
+     * @param  array<string>  $filesFilter
+     * @param  array<string>  $gitFiles
+     */
+    private function runNext(
+        ProphetRegistry $registry,
+        ScrollManager $manager,
+        ConfessionTracker $tracker,
+        array $scrolls,
+        ?string $fileFilter,
+        array $filesFilter,
+        bool $gitMode,
+        array $gitFiles,
+        ?string $pathFilter,
+        ?string $prophetFilter,
+        bool $fullScan,
+    ): int {
+        $collector = new FindingCollector($tracker);
+        $findings = [];
+
+        foreach ($scrolls as $scroll) {
+            if (! $registry->hasScroll($scroll)) {
+                continue;
+            }
+
+            $results = $this->getResults($scroll, $manager, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter);
+            $findings = array_merge($findings, $collector->collect($results, $prophetFilter, markSeen: true));
+        }
+
+        if ($fullScan) {
+            $tracker->gcUnseenFindings();
+        }
+
+        $ordered = FindingQueue::order($findings);
+
+        if ($ordered === []) {
+            $this->output->writeln(NextFindingPresenter::clearLine());
+
+            return self::SUCCESS;
+        }
+
+        $finding = $ordered[0];
+        $absolvable = $finding->isWarning() || (new $finding->prophetClass())->requiresConfession();
+
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable) as $line) {
+            $this->output->writeln($line);
+        }
+
+        return self::FAILURE;
     }
 
     /**
@@ -191,12 +274,26 @@ class JudgeCommand extends Command
 
             // Process sins
             foreach ($judgment->sins as $sin) {
+                $fingerprint = Fingerprint::of($prophetClass, $relativePath, $sin->symbol, $sin->snippet);
+                $tracker->markFindingSeen($fingerprint);
+
+                if ($tracker->isFindingAbsolved($fingerprint)) {
+                    continue;
+                }
+
                 $fileSins++;
                 $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message);
             }
 
             // Process warnings
             foreach ($judgment->warnings as $warning) {
+                $fingerprint = Fingerprint::of($prophetClass, $relativePath, $warning->symbol, $warning->snippet);
+                $tracker->markFindingSeen($fingerprint);
+
+                if ($tracker->isFindingAbsolved($fingerprint)) {
+                    continue;
+                }
+
                 $fileWarnings++;
                 $this->manualVerificationFiles[$relativePath][] = [
                     'prophet' => class_basename($prophetClass),
@@ -290,11 +387,14 @@ class JudgeCommand extends Command
 
             if (!$isDetailedView) {
                 $this->output->newLine();
-                $this->output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
+                $this->output->writeln('GUIDED FIX (recommended): walk findings one at a time, full rule shown');
+                $this->output->writeln('inline, nothing to scroll past or skip:');
+                $this->output->writeln("  php artisan commandments:judge --next{$gitFlag}");
+                $this->output->newLine();
+                $this->output->writeln('Or fix each sin type manually:');
                 $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
                 $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
                 $this->output->writeln('  3. Fix all violations following the detailed description exactly');
-                $this->output->writeln('  4. Move to the next sin type');
                 $this->output->writeln('');
                 $this->output->writeln('Target a subtree:     php artisan commandments:judge --path=<dir>   (ignores all excludes)');
             }
@@ -340,13 +440,14 @@ class JudgeCommand extends Command
                 }
 
                 $this->output->newLine();
-                $this->output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
-                $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
-                $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
-                $this->output->writeln('  3. Review and fix following the detailed description exactly');
+                $this->output->writeln('Warnings are ADVISORY — each one carries an APPLY-WHEN / LEAVE-WHEN');
+                $this->output->writeln('rubric. You must not leave any untouched. Walk them one at a time');
+                $this->output->writeln('(rubric + full rule shown inline):');
+                $this->output->writeln("  php artisan commandments:judge --next{$gitFlag}");
                 $this->output->newLine();
-                $this->output->writeln('NOTE: Warnings in files you just created or edited MUST be investigated.');
-                $this->output->writeln('Warnings in files you did not touch can be ignored.');
+                $this->output->writeln('For each: fix it, OR — if the rubric says it does not apply here —');
+                $this->output->writeln('absolve it WITH A REASON:');
+                $this->output->writeln('  php artisan commandments:absolve --fingerprint=<hash> --reason="why it does not apply"');
             }
         }
 

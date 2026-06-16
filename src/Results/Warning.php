@@ -14,17 +14,19 @@ final class Warning
         public readonly string $message,
         public readonly ?int $line = null,
         public readonly ?string $snippet = null,
+        public readonly ?string $symbol = null,
     ) {}
 
     /**
      * Create a warning with a line number.
      */
-    public static function at(int $line, string $message, ?string $snippet = null): self
+    public static function at(int $line, string $message, ?string $snippet = null, ?string $symbol = null): self
     {
         return new self(
             message: $message,
             line: $line,
             snippet: $snippet,
+            symbol: $symbol,
         );
     }
 

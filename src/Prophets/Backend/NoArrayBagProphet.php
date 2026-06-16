@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindArrayBagDeclarations;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
@@ -24,6 +25,23 @@ class NoArrayBagProphet extends PhpCommandment
     public function description(): string
     {
         return 'Do not pass array<string, mixed> bags around — give the bag a Fluent value class';
+    }
+
+    protected function defaultTier(): Tier
+    {
+        return Tier::Structural;
+    }
+
+    /**
+     * Giving the bag a value class removes the very `$bag['key']` access
+     * that NoArrayStringIndexing flags — so the bag is the root cause and
+     * its string-indexing symptoms are deferred until it is resolved.
+     *
+     * @return list<class-string>
+     */
+    public function supersedes(): array
+    {
+        return [NoArrayStringIndexingProphet::class];
     }
 
     public function detailedDescription(): string

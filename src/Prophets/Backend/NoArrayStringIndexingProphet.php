@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindArrayStringIndexing;
@@ -33,6 +34,11 @@ class NoArrayStringIndexingProphet extends PhpCommandment implements NeedsCodeba
     public function setCodebaseIndex(CodebaseIndex $index): void
     {
         $this->codebaseIndex = $index;
+    }
+
+    protected function defaultTier(): Tier
+    {
+        return Tier::Structural;
     }
 
     public function description(): string

@@ -19,6 +19,20 @@ class JsonConfessionTracker implements ConfessionTracker
      */
     protected array $absolutions = [];
 
+    /**
+     * Finding-level absolutions keyed by content fingerprint.
+     *
+     * @var array<string, array{absolved_at: string, reason: string|null}>
+     */
+    protected array $findings = [];
+
+    /**
+     * Fingerprints encountered live during this run (not persisted).
+     *
+     * @var array<string, true>
+     */
+    protected array $seen = [];
+
     protected bool $loaded = false;
 
     public function __construct(
@@ -97,6 +111,50 @@ class JsonConfessionTracker implements ConfessionTracker
         return md5($currentContent) !== $storedHash;
     }
 
+    public function absolveFinding(string $fingerprint, ?string $reason = null): void
+    {
+        $this->load();
+
+        $this->findings[$fingerprint] = [
+            'absolved_at' => date('c'),
+            'reason' => $reason,
+        ];
+
+        $this->save();
+    }
+
+    public function isFindingAbsolved(string $fingerprint): bool
+    {
+        $this->load();
+
+        return isset($this->findings[$fingerprint]);
+    }
+
+    public function markFindingSeen(string $fingerprint): void
+    {
+        $this->seen[$fingerprint] = true;
+    }
+
+    public function gcUnseenFindings(): int
+    {
+        $this->load();
+
+        $removed = 0;
+
+        foreach (array_keys($this->findings) as $fingerprint) {
+            if (! isset($this->seen[$fingerprint])) {
+                unset($this->findings[$fingerprint]);
+                $removed++;
+            }
+        }
+
+        if ($removed > 0) {
+            $this->save();
+        }
+
+        return $removed;
+    }
+
     /**
      * Get all absolutions across all files.
      *
@@ -140,11 +198,15 @@ class JsonConfessionTracker implements ConfessionTracker
     public function clear(): void
     {
         $this->absolutions = [];
+        $this->findings = [];
         $this->save();
     }
 
     /**
      * Load absolutions from the tablet (JSON file).
+     *
+     * Accepts both the current wrapped format ({"files": ..., "findings":
+     * ...}) and the legacy flat format (a top-level path => commandment map).
      */
     protected function load(): void
     {
@@ -154,7 +216,15 @@ class JsonConfessionTracker implements ConfessionTracker
 
         if ($this->filesystem->exists($this->tabletPath)) {
             $content = $this->filesystem->get($this->tabletPath);
-            $this->absolutions = json_decode($content, true) ?? [];
+            $data = json_decode($content, true) ?? [];
+
+            if (array_key_exists('files', $data) || array_key_exists('findings', $data)) {
+                $this->absolutions = $data['files'] ?? [];
+                $this->findings = $data['findings'] ?? [];
+            } else {
+                // Legacy flat format: the whole document is the file map.
+                $this->absolutions = $data;
+            }
         }
 
         $this->loaded = true;
@@ -173,7 +243,10 @@ class JsonConfessionTracker implements ConfessionTracker
 
         $this->filesystem->put(
             $this->tabletPath,
-            json_encode($this->absolutions, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            json_encode([
+                'files' => $this->absolutions,
+                'findings' => $this->findings,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
     }
 

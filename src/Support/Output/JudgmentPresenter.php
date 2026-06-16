@@ -204,11 +204,13 @@ final class JudgmentPresenter
             }
 
             $this->output->newLine();
-            $this->output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
+            $this->output->writeln('GUIDED FIX (recommended): one finding at a time, full rule shown inline:');
+            $this->output->writeln("  php artisan commandments:judge --next{$gitFlag}");
+            $this->output->newLine();
+            $this->output->writeln('Or fix each sin type manually:');
             $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
             $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
             $this->output->writeln('  3. Fix all violations following the detailed description exactly');
-            $this->output->writeln('  4. Move to the next sin type');
 
             $hasAutoFixable = false;
             foreach ($prophetSinCounts as $prophetClass => $count) {
@@ -243,13 +245,13 @@ final class JudgmentPresenter
             }
 
             $this->output->newLine();
-            $this->output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
-            $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
-            $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
-            $this->output->writeln('  3. Review and fix following the detailed description exactly');
+            $this->output->writeln('Warnings are ADVISORY — each carries an APPLY-WHEN / LEAVE-WHEN rubric.');
+            $this->output->writeln('Walk them one at a time (rubric + full rule shown inline):');
+            $this->output->writeln("  php artisan commandments:judge --next{$gitFlag}");
             $this->output->newLine();
-            $this->output->writeln('NOTE: Warnings in files you just created or edited MUST be investigated.');
-            $this->output->writeln('Warnings in files you did not touch can be ignored.');
+            $this->output->writeln('For each: fix it, OR absolve it WITH A REASON if the rubric says it');
+            $this->output->writeln('does not apply here:');
+            $this->output->writeln('  php artisan commandments:absolve --fingerprint=<hash> --reason="…"');
         }
     }
 

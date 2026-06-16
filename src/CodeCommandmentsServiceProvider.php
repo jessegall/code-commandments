@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use Illuminate\Support\ServiceProvider;
+use JesseGall\CodeCommandments\Commands\AbsolveCommand;
 use JesseGall\CodeCommandments\Commands\InstallHooksCommand;
 use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
 use JesseGall\CodeCommandments\Commands\JudgeCommand;
@@ -69,6 +70,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
 
             $this->commands([
                 JudgeCommand::class,
+                AbsolveCommand::class,
                 RepentCommand::class,
                 ScriptureCommand::class,
                 MakeProphetCommand::class,
