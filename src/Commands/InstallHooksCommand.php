@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
+use JesseGall\CodeCommandments\Support\HookConfigMerger;
 
 /**
  * Install Claude Code hooks for the commandments.
@@ -35,10 +36,9 @@ class InstallHooksCommand extends Command
             $existingSettings = json_decode($content ?: '{}', true) ?? [];
         }
 
-        // Merge our hook events into any existing hooks, overwriting only the
-        // events we own (so re-running upgrades them without duplicating, and
-        // without clobbering hooks the user added under other events).
-        $hooks = array_merge($existingSettings['hooks'] ?? [], $this->buildHooksConfig());
+        // Merge our hook entries into any existing hooks WITHOUT clobbering
+        // entries the user added under the same event (idempotent, additive).
+        $hooks = HookConfigMerger::merge($existingSettings['hooks'] ?? [], $this->buildHooksConfig());
 
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 
