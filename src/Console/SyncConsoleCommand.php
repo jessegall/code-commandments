@@ -31,6 +31,31 @@ class SyncConsoleCommand extends Command
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be added without modifying the file');
     }
 
+    private function autoScaffold(string $configPath, string $basePath, OutputInterface $output): void
+    {
+        $scaffold = (ConfigLoader::load($configPath)['scaffold'] ?? []);
+
+        if (($scaffold['auto'] ?? true) === false) {
+            return;
+        }
+
+        $results = \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator::packaged()->generate(
+            $scaffold['namespace'] ?? 'App\\Support',
+            $scaffold['path'] ?? ($basePath . '/app/Support'),
+            false,
+            $scaffold['except'] ?? [],
+        );
+
+        $created = \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter::report(
+            $results,
+            fn (string $line) => $output->writeln($line),
+        );
+
+        if ($created > 0) {
+            $output->writeln("<info>Generated {$created} new support class(es).</info>");
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $basePath = getcwd();
@@ -42,6 +67,10 @@ class SyncConsoleCommand extends Command
             $output->writeln('No configuration file found. Run "commandments init" first.');
 
             return Command::FAILURE;
+        }
+
+        if (! $input->getOption('dry-run')) {
+            $this->autoScaffold($configPath, $basePath, $output);
         }
 
         $after = $input->getOption('after');

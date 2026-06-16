@@ -213,6 +213,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Scaffolding
+    |--------------------------------------------------------------------------
+    |
+    | Support classes the prophets recommend (Option, FromArrayOnly trait,
+    | NullCallable, …) generated into your namespace. New scaffolds introduced
+    | by a package upgrade are created automatically on `sync` unless `auto`
+    | is false. Existing files are never overwritten (run `commandments:scaffold
+    | --force` to refresh). Add names to `except` to opt out of specific ones.
+    |
+    */
+
+    'scaffold' => [
+        'auto' => true,
+        'namespace' => 'App\\Support',
+        'path' => app_path('Support'),
+        'except' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Node.js Settings
     |--------------------------------------------------------------------------
     |

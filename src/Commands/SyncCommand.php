@@ -23,6 +23,31 @@ class SyncCommand extends Command
 
     protected $description = 'Add newly available prophets to your config file';
 
+    private function autoScaffold(): void
+    {
+        $scaffold = config('commandments.scaffold', []);
+
+        if (($scaffold['auto'] ?? true) === false) {
+            return;
+        }
+
+        $results = \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator::packaged()->generate(
+            $scaffold['namespace'] ?? 'App\\Support',
+            $scaffold['path'] ?? app_path('Support'),
+            false,
+            $scaffold['except'] ?? [],
+        );
+
+        $created = \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter::report(
+            $results,
+            fn (string $line) => $this->line($line),
+        );
+
+        if ($created > 0) {
+            $this->info("Generated {$created} new support class(es).");
+        }
+    }
+
     public function handle(): int
     {
         $configPath = config_path('commandments.php');
@@ -31,6 +56,10 @@ class SyncCommand extends Command
             $this->error('Config file not found. Run "php artisan vendor:publish --tag=commandments-config" first.');
 
             return self::FAILURE;
+        }
+
+        if (! $this->option('dry-run')) {
+            $this->autoScaffold();
         }
 
         $after = $this->option('after');
