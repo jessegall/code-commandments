@@ -22,4 +22,12 @@ trait FromArrayOnly
 
         return parent::from(...$payloads);
     }
+
+    /**
+     * A default instance, with no input. Use this instead of from([]) / new self().
+     */
+    public static function make(): static
+    {
+        return static::from();
+    }
 }

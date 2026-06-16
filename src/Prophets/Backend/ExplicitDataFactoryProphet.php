@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
@@ -16,14 +18,21 @@ use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindImplicitDataFrom;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+use PhpParser\Node;
+use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 
 /**
  * Keep Spatie Data construction explicit: `from()` takes an array, never the
  * magic object dispatch; object→Data mapping lives in named fromX() factories.
+ * The mechanical cases — from(empty array) and bare new self() — are
+ * auto-fixable to ::make().
  */
 #[IntroducedIn('1.40.0')]
-class ExplicitDataFactoryProphet extends PhpCommandment
+class ExplicitDataFactoryProphet extends PhpCommandment implements SinRepenter
 {
+    private const EMPTY_ARRAY_CALLS = ['T_Array::empty', 'Arr::empty'];
+
     public function supported(): bool
     {
         return PackageDetector::hasSpatieData();
@@ -139,12 +148,22 @@ SCRIPTURE;
         $target = $match->groups['target'];
 
         return match ($match->groups['kind']) {
+            'empty_from' => sprintf(
+                '%s::from() is handed an empty array — that reads as a default. Use %s::make() instead.',
+                $target,
+                $target,
+            ),
             'toarray_outside' => sprintf(
                 '%s::from($x->toArray()) converts an object to an array at the call site — that bypass belongs in a factory.',
                 $target,
             ),
-            'new_in_factory' => sprintf(
-                'new %s() constructs the Data object by hand in a factory — hydrate through static::from(array) instead.',
+            'new_default' => sprintf(
+                'new %s() builds a default instance by hand — use %s::make() instead.',
+                $target,
+                $target,
+            ),
+            'new_mapping' => sprintf(
+                'new %s() constructs the Data object field-by-field in a factory — hydrate through static::from(array) instead.',
                 $target,
             ),
             default => sprintf(
@@ -158,10 +177,141 @@ SCRIPTURE;
     {
         $target = $match->groups['target'];
 
+        if (in_array($match->groups['kind'], ['empty_from', 'new_default'], true)) {
+            return sprintf('AUTO-FIXABLE: run repent to rewrite this to %s::make().', $target);
+        }
+
         return sprintf(
             'Add an explicit `%s::fromX(Type $x): static` factory that does static::from($x->toArray()), and call that instead.',
             $target,
         );
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    /**
+     * Auto-fix the mechanical cases: `X::from(<empty array>)` and a bare
+     * `new X()` default-construction in a Data factory both become
+     * `X::make()`. Object-args and field-by-field construction need a human
+     * factory and are left alone.
+     */
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $nodeFinder = new NodeFinder;
+        $edits = [];
+        $penance = [];
+
+        // X::from(<empty array>) -> X::make()
+        foreach ($nodeFinder->findInstanceOf($ast, Node\Expr\StaticCall::class) as $call) {
+            if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'from'
+                || ! $call->class instanceof Node\Name || count($call->args) !== 1
+                || ! $call->args[0] instanceof Node\Arg || ! $this->isEmptyArray($call->args[0]->value)
+            ) {
+                continue;
+            }
+
+            $edits[] = $this->replace($call, $call->class->getLast() . '::make()');
+            $penance[] = 'Rewrote from(empty array) to ::make()';
+        }
+
+        // bare new self()/static() in a static method of a Data class -> X::make()
+        foreach ($nodeFinder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if (! $this->classIsData($class)) {
+                continue;
+            }
+
+            $ownName = $class->name?->toString();
+
+            foreach ($class->getMethods() as $method) {
+                if (! $method->isStatic() || $method->stmts === null) {
+                    continue;
+                }
+
+                foreach ($nodeFinder->findInstanceOf($method->stmts, Node\Expr\New_::class) as $new) {
+                    if ($new->args !== [] || ! $new->class instanceof Node\Name) {
+                        continue;
+                    }
+
+                    $short = $new->class->getLast();
+
+                    if (! in_array($short, ['self', 'static'], true) && $short !== $ownName) {
+                        continue;
+                    }
+
+                    $edits[] = $this->replace($new, $short . '::make()');
+                    $penance[] = 'Rewrote new ' . $short . '() to ::make()';
+                }
+            }
+        }
+
+        if ($edits === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        usort($edits, fn ($a, $b) => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        return RepentanceResult::absolved($content, $penance);
+    }
+
+    /**
+     * @return array{start: int, end: int, text: string}
+     */
+    private function replace(Node $node, string $text): array
+    {
+        return ['start' => (int) $node->getStartFilePos(), 'end' => (int) $node->getEndFilePos(), 'text' => $text];
+    }
+
+    private function isEmptyArray(Node $arg): bool
+    {
+        if ($arg instanceof Node\Expr\Array_) {
+            return $arg->items === [];
+        }
+
+        if ($arg instanceof Node\Expr\StaticCall
+            && $arg->class instanceof Node\Name
+            && $arg->name instanceof Node\Identifier
+        ) {
+            return in_array($arg->class->getLast() . '::' . $arg->name->toString(), self::EMPTY_ARRAY_CALLS, true);
+        }
+
+        return $arg instanceof Node\Expr\FuncCall
+            && $arg->name instanceof Node\Name
+            && $arg->name->toString() === 'array'
+            && $arg->args === [];
+    }
+
+    private function classIsData(Node\Stmt\Class_ $class): bool
+    {
+        if (! $class->extends instanceof Node\Name) {
+            return false;
+        }
+
+        $parent = $class->extends->getLast();
+
+        foreach ($this->resolveSuffixes() as $suffix) {
+            if (str_ends_with($parent, $suffix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

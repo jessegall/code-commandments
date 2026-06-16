@@ -96,11 +96,37 @@ class ExplicitDataFactoryProphetTest extends TestCase
 
     // ── new self() in a static factory of a Data class ────────────────
 
-    public function test_flags_new_self_in_static_factory(): void
+    public function test_flags_new_self_field_by_field_in_static_factory(): void
     {
         $j = $this->judge('class SongData extends \Spatie\LaravelData\Data { public static function fromSong(\App\Song $song): self { return new self(title: $song->title); } }');
         $this->assertTrue($j->hasWarnings());
-        $this->assertStringContainsString('by hand', $j->warnings[0]->message);
+        $this->assertStringContainsString('field-by-field', $j->warnings[0]->message);
+    }
+
+    public function test_flags_empty_from_and_bare_new_self_toward_make(): void
+    {
+        $j = $this->judge('class SongData extends \Spatie\LaravelData\Data { public static function blank(): self { return self::from([]); } public static function def(): self { return new self(); } }');
+        $this->assertTrue($j->hasWarnings());
+        $msgs = implode("\n", array_map(fn ($w) => $w->message, $j->warnings));
+        $this->assertStringContainsString('make()', $msgs);
+    }
+
+    public function test_repent_rewrites_empty_from_and_bare_new_to_make(): void
+    {
+        $src = "<?php\nnamespace App;\nfinal class SongData extends \\Spatie\\LaravelData\\Data {\n    public static function blank(): self { return self::from([]); }\n    public static function def(): self { return new self(); }\n}\n";
+        $r = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($r->absolved);
+        $this->assertStringContainsString('self::make()', $r->newContent);
+        $this->assertStringNotContainsString('from([])', $r->newContent);
+        $this->assertStringNotContainsString('new self()', $r->newContent);
+    }
+
+    public function test_repent_leaves_object_from_alone(): void
+    {
+        // Not mechanical — needs a human factory — so repent does not touch it.
+        $src = "<?php\nnamespace App;\nclass C { public function go(\\App\\Song \$s): mixed { return \\App\\SongData::from(\$s); } }\n";
+        $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
     }
 
     public function test_copy_wither_spread_is_exempt(): void
