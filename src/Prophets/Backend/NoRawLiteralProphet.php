@@ -27,6 +27,18 @@ use PhpParser\ParserFactory;
 #[IntroducedIn('1.28.0')]
 class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
 {
+    /**
+     * Rewriting `$x ?? T_String::empty()` to `T_String::coalesce($x)` removes
+     * the very fallback expression RepeatedFallback would flag — so resolve
+     * the raw literal first; its symptoms there are deferred until then.
+     *
+     * @return list<class-string>
+     */
+    public function supersedes(): array
+    {
+        return [RepeatedFallbackProphet::class];
+    }
+
     private const STRING_CLASS = 'JesseGall\\PhpTypes\\T_String';
 
     private const JSON_CLASS = 'JesseGall\\PhpTypes\\T_Json';
@@ -208,7 +220,7 @@ SCRIPTURE;
         $penance = [];
 
         foreach ($findings as $finding) {
-            $fqcn = $finding['kind'] === 'helper_compare'
+            $fqcn = in_array($finding['kind'], ['helper_compare', 'coalesce'], true)
                 ? $this->fqcnForHelper($finding['helper_class'])
                 : $this->classFor($finding['kind']);
             $short = $imported[$fqcn] ?? $this->shortName($fqcn);
@@ -312,6 +324,7 @@ SCRIPTURE;
             'matrix_literal' => $const ? "{$short}::MATRIX" : "{$short}::matrix()",
             'json_object_compare', 'json_array_compare', 'helper_compare' => ($finding['negate'] ? '! ' : '')
                 . "{$short}::{$finding['predicate']}({$finding['var']})",
+            'coalesce' => "{$short}::coalesce({$finding['var']})",
             default => "{$short}::{$finding['predicate']}({$finding['var']})",
         };
     }
@@ -335,6 +348,7 @@ SCRIPTURE;
             'trim_compare' => "Blank check via trim() on {$groups['var']} — use a named predicate",
             'json_object_compare', 'json_array_compare' => "Raw empty-JSON comparison against `{$groups['literal']}` — use a T_Json predicate",
             'helper_compare' => "Comparison against `{$groups['literal']}` — use the predicate {$groups['helper_class']}::{$groups['predicate']}({$groups['var']})",
+            'coalesce' => "Null-coalesce to a {$groups['helper_class']} empty (`{$groups['literal']}`) — use {$groups['helper_class']}::coalesce({$groups['var']})",
             default => "Raw empty-string comparison on {$groups['var']} — use a named predicate",
         };
     }
@@ -369,6 +383,7 @@ SCRIPTURE;
             'trim_compare' => "Replace with T_String::{$groups['predicate']}({$groups['var']}) — isBlank() is the named home for 'empty or whitespace'. Better still, store a trimmed value object so the check is unnecessary.",
             'json_object_compare', 'json_array_compare' => "Replace with {$negate}T_Json::{$groups['predicate']}({$groups['var']}).",
             'helper_compare' => "Replace with {$negate}{$groups['helper_class']}::{$groups['predicate']}({$groups['var']}).",
+            'coalesce' => "Replace with {$groups['helper_class']}::coalesce({$groups['var']}).",
             default => "Replace with T_String::{$groups['predicate']}({$groups['var']}).",
         };
     }

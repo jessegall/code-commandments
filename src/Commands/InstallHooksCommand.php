@@ -313,8 +313,11 @@ php artisan commandments:judge --git        # Check changed files
 php artisan commandments:judge --next       # GUIDED: one finding at a time
 php artisan commandments:absolve --fingerprint=H --reason="…"  # warnings only
 php artisan commandments:repent             # Auto-fix [AUTO-FIXABLE] sins
+php artisan commandments:report --prophet=NAME --reason="…"  # Report a false positive
 php artisan commandments:scripture --prophet=NAME  # Full rule for a prophet
 ```
+
+**See a genuine false positive (or a rule that does not fit)?** Don't just absolve and move on — `commandments:report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue so the prophet gets fixed.
 MARKDOWN;
     }
 }

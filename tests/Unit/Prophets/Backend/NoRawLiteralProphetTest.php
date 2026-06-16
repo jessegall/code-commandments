@@ -564,6 +564,25 @@ class NoRawLiteralProphetTest extends TestCase
     // Helpers
     // ────────────────────────────────────────────────────────────────
 
+    public function test_flags_cast_coalesce_to_empty_toward_coalesce_helper(): void
+    {
+        $judgment = $this->judgeBody('return (string) ($this->value ?? "");');
+
+        $this->assertTrue($judgment->isFallen());
+        $messages = implode("\n", array_map(fn ($s) => $s->message, $judgment->sins));
+        $this->assertStringContainsString('T_String::coalesce', $messages);
+    }
+
+    public function test_repent_rewrites_coalesce_to_helper(): void
+    {
+        $src = "<?php\nnamespace App;\nfinal class Spec {\n    public function a(\$x): string { return (string) (\$x ?? \"\"); }\n}\n";
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('T_String::coalesce($x)', $result->newContent);
+        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T_String;', $result->newContent);
+    }
+
     private function judgeBody(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', $this->wrap("public function run(): mixed { {$body} }"));

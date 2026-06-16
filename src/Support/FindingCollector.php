@@ -52,6 +52,7 @@ final class FindingCollector
                 $tier = $prophet->tier();
                 $advisory = $prophet->advisory();
                 $supersedes = $prophet->supersedes();
+                $autoFixable = $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter;
                 $short = class_basename($prophetClass);
 
                 foreach ($judgment->sins as $sin) {
@@ -80,6 +81,7 @@ final class FindingCollector
                         tier: $tier,
                         supersedes: $supersedes,
                         fingerprint: $fingerprint,
+                        autoFixable: $autoFixable,
                     );
                 }
 
@@ -109,6 +111,7 @@ final class FindingCollector
                         tier: $tier,
                         supersedes: $supersedes,
                         fingerprint: $fingerprint,
+                        autoFixable: $autoFixable,
                     );
                 }
             }

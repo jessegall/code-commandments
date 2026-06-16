@@ -365,8 +365,11 @@ vendor/bin/commandments judge --git        # Check changed files
 vendor/bin/commandments judge --next       # GUIDED: one finding at a time
 vendor/bin/commandments absolve --fingerprint=H --reason="…"  # warnings only
 vendor/bin/commandments repent             # Auto-fix [AUTO-FIXABLE] sins
+vendor/bin/commandments report --prophet=NAME --reason="…"  # Report a false positive
 vendor/bin/commandments scripture --prophet=NAME  # Full rule for a prophet
 ```
+
+**See a genuine false positive (or a rule that does not fit)?** Don't just absolve and move on — `commandments report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue so the prophet gets fixed.
 MARKDOWN;
 
         if (file_exists($claudeMdPath)) {
