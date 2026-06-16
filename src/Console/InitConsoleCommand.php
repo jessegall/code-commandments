@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
+use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -246,9 +247,9 @@ class InitConsoleCommand extends Command
             ],
         ];
 
-        // Merge our events into any existing hooks (overwrite only our events,
-        // preserve the user's other hooks; idempotent across re-runs).
-        $hooks = array_merge($existingSettings['hooks'] ?? [], $ourHooks);
+        // Merge our entries into any existing hooks WITHOUT clobbering entries
+        // the user added under the same event (idempotent, additive).
+        $hooks = HookConfigMerger::merge($existingSettings['hooks'] ?? [], $ourHooks);
 
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 
