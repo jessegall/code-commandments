@@ -296,7 +296,7 @@ SCRIPTURE;
                 assert($array instanceof Expr\Array_);
 
                 if (EnumCaseGroup::isMembershipNeedle($array, $call)) {
-                    $needles->attach($array);
+                    $needles->offsetSet($array, null);
                 }
             }
         }
