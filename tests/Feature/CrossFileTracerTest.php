@@ -81,8 +81,11 @@ class CrossFileTracerTest extends TestCase
         }
     }
 
-    public function test_single_file_judgement_skips_index_and_uses_local_hint(): void
+    public function test_single_file_judgement_still_builds_full_scroll_index_and_traces(): void
     {
+        // `--file` narrows what gets reported, not what the cross-file prophet
+        // may see: the index is still built from the full scroll, so tracing
+        // upstream to A::ingest works exactly like a full run.
         $this->registerProphet(['max_trace_depth' => 10]);
 
         $results = $this->manager->judgeFile('test', $this->fixtureDir . '/C.php');
@@ -91,9 +94,11 @@ class CrossFileTracerTest extends TestCase
         $this->assertNotNull($judgment);
         $this->assertTrue($judgment->isFallen());
 
-        foreach ($judgment->sins as $sin) {
-            $this->assertStringNotContainsString('DTO boundary', $sin->suggestion);
-        }
+        $suggestions = array_map(fn ($s) => $s->suggestion, $judgment->sins);
+        $this->assertTrue(
+            (bool) array_filter($suggestions, fn ($s) => str_contains($s, 'DTO boundary')),
+            'Single-file run should still trace the DTO origin via the full-scroll index',
+        );
     }
 
     private function registerProphet(array $config = []): void

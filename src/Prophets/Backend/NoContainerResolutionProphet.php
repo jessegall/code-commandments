@@ -110,9 +110,10 @@ prophets rely on to answer this for you:
   warning says so plainly — move the dependency to the constructor.
 - If one exists, the warning points at the file:line so you can fix
   the call site first (or accept that this resolution has to stay).
-- In single-file mode (`--file`) or when the containing class lives
-  outside the scanned scroll, the prophet falls back to a "verify
-  manually" hint instead of guessing.
+- When the containing class lives outside the scanned scroll (or the
+  index could not be built), the prophet falls back to a "verify
+  manually" hint instead of guessing. `--file` still builds the
+  full-scroll index, so single-file runs trace call sites normally.
 
 Reported as a warning, not a sin
 --------------------------------

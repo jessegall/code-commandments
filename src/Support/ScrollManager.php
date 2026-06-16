@@ -244,9 +244,13 @@ class ScrollManager
     /**
      * Judge a specific file against all applicable prophets in a scroll.
      *
-     * Single-file mode skips the cross-file codebase index build — tracing
-     * is inherently useless here and the cost would dominate a single-file
-     * run.
+     * The `--file` flag narrows WHICH file gets reported on, not what the
+     * cross-file prophets are allowed to see: the codebase index is still
+     * built from the FULL scroll so `NeedsCodebaseIndex` prophets (reused
+     * enum-case groups, closed-set call sites, origin tracing) can judge
+     * this one file against the whole project. Anything that lives outside
+     * the targeted file simply isn't reported, but it still informs the
+     * verdict on the file that is.
      *
      * @return Collection<string, Judgment>
      */
@@ -267,6 +271,8 @@ class ScrollManager
         }
 
         $prophets = $this->registry->getProphets($scroll);
+        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+
         $results = collect();
 
         foreach ($prophets as $prophet) {
