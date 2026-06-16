@@ -164,6 +164,45 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         $this->assertStringContainsString('CompareSelf', $judgment->warnings[0]->message);
     }
 
+    public function test_ignores_constant_comparison_on_non_enum_class(): void
+    {
+        // A value/node class with string constants is NOT an enum — `$x ===
+        // PackNode::KEY` is a plain constant comparison, not enum equality.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        final class PackNode {
+            public const string KEY = 'pack';
+        }
+
+        class Registry {
+            public function expand(object $descriptor): bool {
+                return $descriptor->key === PackNode::KEY;
+            }
+        }
+        PHP);
+
+        $this->assertCount(0, $judgment->warnings);
+    }
+
+    public function test_ignores_self_constant_comparison_in_value_class(): void
+    {
+        // `self::MIXED` inside a non-enum class — a string-constant comparison.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        final readonly class WireType {
+            public const string MIXED = 'mixed';
+
+            public function isMixed(mixed $token): bool {
+                return $token === null || $token === self::MIXED;
+            }
+        }
+        PHP);
+
+        $this->assertCount(0, $judgment->warnings);
+    }
+
     public function test_deduplicates_adoption_hint_per_enum_per_file(): void
     {
         $judgment = $this->judge(<<<'PHP'

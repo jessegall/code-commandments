@@ -139,6 +139,15 @@ SCRIPTURE;
         return $pipeline
             ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $ast, &$seenAdoptionHint): ?Warning {
                 $enumFqcn = $match->groups['enum_fqcn'];
+
+                // `$x === Foo::BAR` is only enum-case equality when Foo is an
+                // actual enum. Value classes / node classes with string
+                // constants (and bogus `self::` resolutions on non-enums) are
+                // plain constant comparisons — never flag them.
+                if (! $this->isEnum($enumFqcn, $ast)) {
+                    return null;
+                }
+
                 $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
 
                 if ($hasTrait === true) {
@@ -327,6 +336,50 @@ SCRIPTURE;
         $parts = explode('\\', $fqcn);
 
         return end($parts) ?: $fqcn;
+    }
+
+    /**
+     * Whether $fqcn is an actual enum — declared in the file under analysis or
+     * resolvable as an enum. A class/interface/trait (or an unresolvable name,
+     * e.g. a `self::` reference inside a non-enum class) is not.
+     *
+     * @param  array<Node>|null  $ast
+     */
+    private function isEnum(string $fqcn, ?array $ast): bool
+    {
+        $fqcn = ltrim($fqcn, '\\');
+
+        if ($ast !== null && $this->enumDeclaredInAst($fqcn, $ast)) {
+            return true;
+        }
+
+        return enum_exists($fqcn, autoload: true);
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function enumDeclaredInAst(string $fqcn, array $ast): bool
+    {
+        foreach ($ast as $top) {
+            if ($top instanceof Node\Stmt\Namespace_) {
+                $ns = $top->name?->toString() ?? '';
+
+                foreach ($top->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Enum_ && $stmt->name !== null) {
+                        $declared = $ns !== '' ? $ns . '\\' . $stmt->name->toString() : $stmt->name->toString();
+
+                        if ($declared === $fqcn) {
+                            return true;
+                        }
+                    }
+                }
+            } elseif ($top instanceof Node\Stmt\Enum_ && $top->name !== null && $top->name->toString() === $fqcn) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
