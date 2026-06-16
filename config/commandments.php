@@ -241,6 +241,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Reporting
+    |--------------------------------------------------------------------------
+    |
+    | Where `commandments:report` files prophet false-positives / wrong-rule
+    | reports as GitHub issues (via the `gh` CLI). Defaults to the package repo
+    | so prophet bugs land where the prophets are maintained.
+    |
+    */
+
+    'report' => [
+        'repo' => 'jessegall/code-commandments',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Node.js Settings
     |--------------------------------------------------------------------------
     |

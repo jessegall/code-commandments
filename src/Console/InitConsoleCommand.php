@@ -292,11 +292,18 @@ PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
   4. Move to the next phase and repeat.
 This keeps every commit righteous and each phase reviewable on its own.
 
+FALSE POSITIVE? If a finding is genuinely wrong (a true false-positive, or a
+rule that does not fit), do NOT just absolve and move on — REPORT it so the
+prophet gets fixed:
+  vendor/bin/commandments report --prophet=NAME --file=PATH --line=N --reason="why it is wrong"
+This files a GitHub issue another session can pick up and fix.
+
 COMMANDS:
   vendor/bin/commandments judge --git        # Check changed files
   vendor/bin/commandments judge --next       # GUIDED: one finding at a time
   vendor/bin/commandments absolve --fingerprint=H --reason="…"  # warnings only
   vendor/bin/commandments repent             # Auto-fix where possible
+  vendor/bin/commandments report --prophet=NAME --reason="…"  # report a false positive
   vendor/bin/commandments scripture --prophet=NAME  # Full rule for a prophet
 INSTRUCTIONS;
         }
