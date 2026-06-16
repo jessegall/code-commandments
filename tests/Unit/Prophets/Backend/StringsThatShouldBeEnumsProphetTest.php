@@ -510,6 +510,61 @@ class StringsThatShouldBeEnumsProphetTest extends TestCase
     }
 
     // ────────────────────────────────────────────────────────────────
+    // Pattern 4: array of string literals (closed-set membership test)
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_in_array_literal_set_matching_enum(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function check(\$direction): bool {
+                return in_array(\$direction, ['input', 'output'], true);
+            }
+        }
+        PHP;
+
+        $judgment = $this->judge($content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('PortDirection', $judgment->sins[0]->message);
+        $this->assertStringContainsString("'input'", $judgment->sins[0]->message);
+    }
+
+    public function test_does_not_flag_in_array_literals_with_no_matching_enum(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function check(\$direction): bool {
+                return in_array(\$direction, ['north', 'south'], true);
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
+    public function test_does_not_flag_in_array_with_non_string_elements(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function check(\$direction, \$x): bool {
+                return in_array(\$direction, ['input', \$x], true);
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // Helpers
     // ────────────────────────────────────────────────────────────────
 
