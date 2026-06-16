@@ -169,7 +169,7 @@ SCRIPTURE;
             $arrays = $finder->findInstanceOf($scope, Expr\Array_::class);
 
             foreach ($arrays as $array) {
-                if ($needles->contains($array)) {
+                if ($needles->offsetExists($array)) {
                     continue;
                 }
 
