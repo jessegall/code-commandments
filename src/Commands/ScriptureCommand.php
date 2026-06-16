@@ -72,7 +72,7 @@ class ScriptureCommand extends Command
 
         $this->output->writeln('Check violations: php artisan commandments:judge --next --git');
         $this->output->writeln('Auto-fix [AUTO-FIXABLE] sins: php artisan commandments:repent  (do NOT hand-fix these)');
-        $this->output->writeln('Report a false positive: php artisan commandments:report --prophet=NAME --reason="why it is wrong"');
+        $this->output->writeln('Report a false positive OR prophet bug (proactively!): php artisan commandments:report --prophet=NAME --reason="what is wrong"');
 
         return self::SUCCESS;
     }

@@ -293,11 +293,16 @@ PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
   4. Move to the next phase and repeat.
 This keeps every commit righteous and each phase reviewable on its own.
 
-FALSE POSITIVE? If a finding is genuinely wrong (a true false-positive, or a
-rule that does not fit), do NOT just absolve and move on — REPORT it so the
-prophet gets fixed:
-  vendor/bin/commandments report --prophet=NAME --file=PATH --line=N --reason="why it is wrong"
-This files a GitHub issue another session can pick up and fix.
+REPORT PROPHET PROBLEMS YOURSELF — proactively, without being asked. The
+moment you hit any of these, file a report (do not just absolve, work around,
+or move on):
+  - a genuine false positive (flagged code that is actually fine);
+  - a wrong/ill-fitting rule;
+  - a prophet BUG: tagged [AUTO-FIXABLE] but `repent` no-ops or fails, a crash,
+    a misleading or incorrect message, a bad auto-fix.
+  vendor/bin/commandments report --prophet=NAME --file=PATH --line=N --reason="what is wrong"
+This files a GitHub issue another session picks up and fixes. Reporting is
+part of the job — it is how the prophets improve.
 
 COMMANDS:
   vendor/bin/commandments judge --git        # Check changed files
@@ -370,7 +375,7 @@ vendor/bin/commandments report --prophet=NAME --reason="…"  # Report a false p
 vendor/bin/commandments scripture --prophet=NAME  # Full rule for a prophet
 ```
 
-**See a genuine false positive (or a rule that does not fit)?** Don't just absolve and move on — `commandments report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue so the prophet gets fixed.
+**Hit a prophet problem? Report it yourself, proactively.** A false positive, a rule that does not fit, OR a prophet bug (tagged [AUTO-FIXABLE] but `repent` no-ops/fails, a crash, a wrong message) — do not just absolve or work around it: `commandments report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue another session fixes.
 MARKDOWN;
 
         if (file_exists($claudeMdPath)) {

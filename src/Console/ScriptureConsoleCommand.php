@@ -78,7 +78,7 @@ class ScriptureConsoleCommand extends Command
 
         $output->writeln('Check violations: commandments judge --next --git');
         $output->writeln('Auto-fix [AUTO-FIXABLE] sins: commandments repent  (do NOT hand-fix these)');
-        $output->writeln('Report a false positive: commandments report --prophet=NAME --reason="why it is wrong"');
+        $output->writeln('Report a false positive OR prophet bug (proactively!): commandments report --prophet=NAME --reason="what is wrong"');
 
         return Command::SUCCESS;
     }
