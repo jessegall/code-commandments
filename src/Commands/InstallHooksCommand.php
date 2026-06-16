@@ -215,11 +215,18 @@ PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
   4. Move to the next phase and repeat.
 This keeps every commit righteous and each phase reviewable on its own.
 
+FALSE POSITIVE? If a finding is genuinely wrong (a true false-positive, or a
+rule that does not fit), do NOT just absolve and move on — REPORT it so the
+prophet gets fixed:
+  php artisan commandments:report --prophet=NAME --file=PATH --line=N --reason="why it is wrong"
+This files a GitHub issue another session can pick up and fix.
+
 COMMANDS:
   php artisan commandments:judge --git        # Check changed files
   php artisan commandments:judge --next       # GUIDED: one finding at a time
   php artisan commandments:absolve --fingerprint=H --reason="…"  # warnings only
   php artisan commandments:repent             # Auto-fix where possible
+  php artisan commandments:report --prophet=NAME --reason="…"  # report a false positive
   php artisan commandments:scripture --prophet=NAME  # Full rule for a prophet
 INSTRUCTIONS;
     }
