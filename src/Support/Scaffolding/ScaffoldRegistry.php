@@ -39,11 +39,11 @@ final class ScaffoldRegistry
                 purpose: 'Null Object for a callable/Closure slot.',
             ),
             new Scaffold(
-                name: 'enum-comparator',
-                className: 'EnumComparator',
-                stubFile: 'EnumComparator.stub',
-                introducedIn: '1.51.0',
-                purpose: 'Comparison engine the CompareSelf trait forwards to.',
+                name: 'equality-operator',
+                className: 'EqualityOperator',
+                stubFile: 'EqualityOperator.stub',
+                introducedIn: '1.52.0',
+                purpose: 'Typed equality operators the CompareSelf trait forwards to.',
             ),
             new Scaffold(
                 name: 'compare-self',
