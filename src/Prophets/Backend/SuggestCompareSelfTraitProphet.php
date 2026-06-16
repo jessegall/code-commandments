@@ -6,7 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
@@ -15,12 +17,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
 use ReflectionEnum;
 
 /**
- * Surface enum equality chains that should collapse to a single
- * `isOneOf(...)` / `isNotOneOf(...)` helper provided by a configurable trait.
+ * Surface raw enum equality comparisons that should route through the
+ * CompareSelf trait's `equals` family — single comparisons and the boolean
+ * chains that string them together.
  *
  *   Before:
  *     if (
@@ -29,28 +31,30 @@ use ReflectionEnum;
  *         || $descriptor->kind === NodeKind::Output
  *     ) { … }
  *
- *   After:
- *     if ($descriptor->kind->isOneOf(NodeKind::Trigger, NodeKind::Input, NodeKind::Output)) { … }
+ *   After (null-safe static form — never crashes on a null/non-enum LHS):
+ *     if (NodeKind::equalsAny($descriptor->kind, NodeKind::Trigger, NodeKind::Input, NodeKind::Output)) { … }
  *
  * The prophet emits two tiers:
  *
  *   - Primary warning when the matched enum already uses the configured
- *     trait — the rewrite is a one-liner and the helper is in scope.
+ *     trait — the static rewrite is valid and is [AUTO-FIXABLE].
  *
  *   - Adoption hint (also a warning, but deduplicated per enum per file)
- *     when the enum exists but hasn't adopted the trait yet — surfaces a
- *     single nudge to adopt the trait, with the offending chain as
- *     motivation, instead of spamming one warning per call site.
+ *     when the enum exists but hasn't adopted the trait yet — a single nudge
+ *     to adopt the trait first. NOT auto-fixable: the static call would hit a
+ *     non-existent `__callStatic` until the trait is in place.
  *
- * The trait FQCN, helper method names, minimum chain length, and excluded
- * enums are all configurable.
+ * The trait FQCN, the four `equals`-family method names, minimum chain length,
+ * and excluded enums are all configurable.
  */
 #[IntroducedIn('1.15.0')]
-class SuggestCompareSelfTraitProphet extends PhpCommandment
+class SuggestCompareSelfTraitProphet extends PhpCommandment implements SinRepenter
 {
     private const DEFAULT_TRAIT = 'App\\Support\\Enums\\CompareSelf';
-    private const DEFAULT_IS_ONE_OF = 'isOneOf';
-    private const DEFAULT_IS_NOT_ONE_OF = 'isNotOneOf';
+    private const EQUALS = 'equals';
+    private const EQUALS_ANY = 'equalsAny';
+    private const NOT_EQUALS = 'notEquals';
+    private const NOT_EQUALS_ANY = 'notEqualsAny';
 
     public function description(): string
     {
@@ -60,47 +64,45 @@ class SuggestCompareSelfTraitProphet extends PhpCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-Code that asks "is this enum value one of N cases?" routinely degrades into
-a chain of identity comparisons:
-
-    if (
-        $descriptor->kind === NodeKind::Trigger
-        || $descriptor->kind === NodeKind::Input
-        || $descriptor->kind === NodeKind::Output
-    ) {
-        return $descriptor;
-    }
-
-That shape is hard to scan, grows by a multiple of cases on every edit, and
-becomes a negation salad when inverted with `!==` / `&&`.
-
-A small trait on the enum collapses the pattern:
+Raw enum equality with `===` / `!==` scatters comparison logic and is not
+null-safe — a null or non-enum left-hand side silently fails the test rather
+than answering it. The CompareSelf trait names the comparison and makes it
+null-safe under ONE family of helpers:
 
     use CompareSelf;
-    // exposes isOneOf(self ...$cases) and isNotOneOf(self ...$cases)
+    // instance: $case->equals($x) / notEquals / equalsAny / notEqualsAny
+    // static (null-safe): Enum::equals($value, $case) / notEquals / equalsAny / notEqualsAny
 
-    if ($descriptor->kind->isOneOf(NodeKind::Trigger, NodeKind::Input, NodeKind::Output)) {
-        return $descriptor;
-    }
+This prophet matches a subject compared to case(s) of one enum — single
+comparisons AND the boolean chains that string them together:
 
-This prophet matches boolean chains where every atom compares the same
-left-hand expression to a case of the same enum:
+  - single `$x === Case`            -> equals
+  - single `$x !== Case`            -> notEquals
+  - `||` chain of `===`            -> equalsAny
+  - `&&` chain of `!==`            -> notEqualsAny
 
-  - `||` chains of `===` (suggest `isOneOf`)
-  - `&&` chains of `!==` (suggest `isNotOneOf`)
+A chain must contain at least `min_chain` atoms (default 1 — single
+comparisons are flagged too). Mixed-enum chains, chains with different
+left-hand sides, and `match` expressions are intentionally ignored.
 
-A chain must contain at least `min_chain` atoms (default 2 — twos are
-already noise). Mixed-enum chains, chains with different left-hand sides,
-single comparisons, and `match` expressions are intentionally ignored —
-they are not "one-of" tests.
+The suggested rewrite uses the null-safe STATIC form so it never crashes on
+a null/non-enum LHS, and it reuses the enum class reference exactly as
+written, so no new `use` import is needed:
+
+    $x === Status::A                      ->  Status::equals($x, Status::A)
+    $x !== Status::A                      ->  Status::notEquals($x, Status::A)
+    $x === Status::A || $x === Status::B  ->  Status::equalsAny($x, Status::A, Status::B)
+    $x !== Status::A && $x !== Status::B  ->  Status::notEqualsAny($x, Status::A, Status::B)
 
 Severities are tiered:
 
-  - WARNING when the matched enum already uses the configured trait —
-    the rewrite is a one-liner.
+  - WARNING ([AUTO-FIXABLE]) when the matched enum already uses the
+    configured trait — the static helper exists, so `repent` rewrites it.
 
   - WARNING (quieter, one per enum per file) when the enum exists but
-    hasn't adopted the trait yet — a nudge to add the trait first.
+    hasn't adopted the trait yet — a nudge to add the trait first. NOT
+    auto-fixed: the static call would hit a missing `__callStatic` until
+    the enum `use`s the trait.
 
 Comparisons inside `toArray`, `jsonSerialize`, `render`, or inside a
 `JsonResource` / `Resource` / `Response` class are left alone — those
@@ -110,9 +112,11 @@ Configuration:
 
     SuggestCompareSelfTraitProphet::class => [
         'trait' => App\Support\Enums\CompareSelf::class,
-        'is_one_of_method' => 'isOneOf',
-        'is_not_one_of_method' => 'isNotOneOf',
-        'min_chain' => 2,
+        'equals_method' => 'equals',
+        'equals_any_method' => 'equalsAny',
+        'not_equals_method' => 'notEquals',
+        'not_equals_any_method' => 'notEqualsAny',
+        'min_chain' => 1,
         'exclude_enums' => [],
     ],
 SCRIPTURE;
@@ -121,18 +125,8 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         $traitFqcn = $this->traitFqcn();
-        $isOneOfMethod = (string) $this->config('is_one_of_method', self::DEFAULT_IS_ONE_OF);
-        $isNotOneOfMethod = (string) $this->config('is_not_one_of_method', self::DEFAULT_IS_NOT_ONE_OF);
-        $minChain = (int) $this->config('min_chain', 2);
-        $excludeEnums = $this->config('exclude_enums', []);
-
-        if (! is_array($excludeEnums)) {
-            $excludeEnums = [];
-        }
-
-        $pipe = (new FindChainedEnumEqualityComparisons)
-            ->withMinChain($minChain)
-            ->withExcludeEnums(array_values(array_map(static fn ($v) => (string) $v, $excludeEnums)));
+        $minChain = (int) $this->config('min_chain', 1);
+        $pipe = $this->buildPipe($minChain);
 
         $pipeline = PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
@@ -143,12 +137,12 @@ SCRIPTURE;
         $seenAdoptionHint = [];
 
         return $pipeline
-            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $isOneOfMethod, $isNotOneOfMethod, $ast, &$seenAdoptionHint): ?Warning {
+            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $ast, &$seenAdoptionHint): ?Warning {
                 $enumFqcn = $match->groups['enum_fqcn'];
                 $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
 
                 if ($hasTrait === true) {
-                    return $this->primaryWarning($match, $isOneOfMethod, $isNotOneOfMethod);
+                    return $this->primaryWarning($match);
                 }
 
                 $key = $enumFqcn;
@@ -164,6 +158,19 @@ SCRIPTURE;
             ->judge();
     }
 
+    private function buildPipe(int $minChain): FindChainedEnumEqualityComparisons
+    {
+        $excludeEnums = $this->config('exclude_enums', []);
+
+        if (! is_array($excludeEnums)) {
+            $excludeEnums = [];
+        }
+
+        return (new FindChainedEnumEqualityComparisons)
+            ->withMinChain($minChain)
+            ->withExcludeEnums(array_values(array_map(static fn ($v) => (string) $v, $excludeEnums)));
+    }
+
     private function traitFqcn(): string
     {
         $raw = (string) $this->config('trait', self::DEFAULT_TRAIT);
@@ -171,31 +178,55 @@ SCRIPTURE;
         return ltrim($raw, '\\');
     }
 
-    private function primaryWarning(MatchResult $match, string $isOneOfMethod, string $isNotOneOfMethod): Warning
+    /**
+     * Map a pipe op to the configured method name.
+     */
+    private function methodFor(string $op): string
+    {
+        return match ($op) {
+            'equals' => (string) $this->config('equals_method', self::EQUALS),
+            'not_equals' => (string) $this->config('not_equals_method', self::NOT_EQUALS),
+            'one_of' => (string) $this->config('equals_any_method', self::EQUALS_ANY),
+            'not_one_of' => (string) $this->config('not_equals_any_method', self::NOT_EQUALS_ANY),
+            default => (string) $this->config('equals_method', self::EQUALS),
+        };
+    }
+
+    /**
+     * Build the null-safe static rewrite: `Class::method($lhs, Class::CaseA, …)`,
+     * using the class reference exactly as written in source.
+     *
+     * @param  array<string, string>  $groups
+     */
+    private function staticRewrite(array $groups): string
+    {
+        $classRef = $groups['class_ref'];
+        $cases = explode(',', $groups['cases']);
+
+        $args = array_merge(
+            [$groups['lhs']],
+            array_map(static fn (string $c) => $classRef . '::' . $c, $cases),
+        );
+
+        return sprintf('%s::%s(%s)', $classRef, $this->methodFor($groups['op']), implode(', ', $args));
+    }
+
+    private function primaryWarning(MatchResult $match): Warning
     {
         $groups = $match->groups;
-        $cases = explode(',', $groups['cases']);
-        $methodName = $groups['op'] === 'one_of' ? $isOneOfMethod : $isNotOneOfMethod;
-
-        $callArgs = implode(', ', array_map(
-            static fn (string $c) => $groups['enum_short'] . '::' . $c,
-            $cases,
-        ));
 
         $message = sprintf(
-            '%d-chain of %s comparisons on %s — collapse to `%s->%s(%s)`.',
-            (int) $groups['chain_length'],
-            $groups['op'] === 'one_of' ? '`===`/`||`' : '`!==`/`&&`',
+            '%s comparison on %s — use the null-safe `%s`.',
+            $this->opLabel($groups['op']),
             $groups['enum_short'],
-            $groups['lhs'],
-            $methodName,
-            $callArgs,
+            $this->staticRewrite($groups),
         );
 
         return Warning::at(
             line: $match->line,
             message: $message,
             snippet: $match->content,
+            autoFixable: true,
         );
     }
 
@@ -205,11 +236,12 @@ SCRIPTURE;
         $traitShort = $this->shortName($traitFqcn);
 
         $message = sprintf(
-            '[ADOPT] %s could adopt the `%s` trait — chained %s comparisons on it would collapse to a single helper call (e.g. line %d).',
+            '[ADOPT] %s could adopt the `%s` trait — %s comparisons on it would route through the null-safe `equals` API (e.g. line %d). Add `use %s;` to the enum first, then the rewrite applies.',
             $groups['enum_short'],
             $traitShort,
-            $groups['op'] === 'one_of' ? '`===`/`||`' : '`!==`/`&&`',
+            $this->opLabel($groups['op']),
             $match->line,
+            $traitShort,
         );
 
         return Warning::at(
@@ -217,6 +249,77 @@ SCRIPTURE;
             message: $message,
             snippet: $match->content,
         );
+    }
+
+    private function opLabel(string $op): string
+    {
+        return match ($op) {
+            'equals' => '`===`',
+            'not_equals' => '`!==`',
+            'one_of' => '`===`/`||`',
+            'not_one_of' => '`!==`/`&&`',
+            default => 'equality',
+        };
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $traitFqcn = $this->traitFqcn();
+        $minChain = (int) $this->config('min_chain', 1);
+        $pipe = $this->buildPipe($minChain);
+
+        $pipeline = PhpPipeline::make($filePath, $content)
+            ->pipe(ParsePhpAst::class)
+            ->pipe(ExtractUseStatements::class)
+            ->pipe($pipe);
+
+        $ast = $pipeline->getContext()->ast;
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $edits = [];
+        $penance = [];
+
+        foreach ($pipeline->getContext()->matches as $match) {
+            $groups = $match->groups;
+
+            // Only primary-tier findings (enum uses the trait) are safe to
+            // rewrite — the static call needs the trait's __callStatic.
+            if ($this->enumUsesTrait($groups['enum_fqcn'], $traitFqcn, $ast) !== true) {
+                continue;
+            }
+
+            $start = (int) $groups['start'];
+            $end = (int) $groups['end'];
+            $replacement = $this->staticRewrite($groups);
+            $original = substr($content, $start, $end - $start + 1);
+
+            $edits[] = ['start' => $start, 'end' => $end, 'text' => $replacement];
+            $penance[] = "Replaced `{$original}` with `{$replacement}`";
+        }
+
+        if ($edits === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        usort($edits, fn ($a, $b) => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        return RepentanceResult::absolved($content, $penance);
     }
 
     private function shortName(string $fqcn): string

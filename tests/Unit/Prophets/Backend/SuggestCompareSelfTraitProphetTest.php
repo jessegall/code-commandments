@@ -52,10 +52,11 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
 
         $this->assertCount(0, $judgment->sins);
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('isOneOf', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('NodeKind::equalsAny(', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
         $this->assertStringContainsString('NodeKind::Input', $judgment->warnings[0]->message);
         $this->assertStringContainsString('NodeKind::Output', $judgment->warnings[0]->message);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
     }
 
     public function test_flags_and_chain_with_not_identical_when_enum_uses_trait(): void
@@ -80,7 +81,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('isNotOneOf', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Status::notEqualsAny(', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
     }
 
@@ -106,8 +107,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('3-chain', $judgment->warnings[0]->message);
-        $this->assertStringContainsString('Foo::A, Foo::B, Foo::C', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Foo::equalsAny($kind, Foo::A, Foo::B, Foo::C)', $judgment->warnings[0]->message);
     }
 
     public function test_handles_property_fetch_lhs(): void
@@ -134,7 +134,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('$descriptor->kind->isOneOf', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('NodeKind::equalsAny($descriptor->kind,', $judgment->warnings[0]->message);
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -194,7 +194,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     // Negative cases
     // ────────────────────────────────────────────────────────────────
 
-    public function test_ignores_single_comparison(): void
+    public function test_flags_single_identical_as_equals(): void
     {
         $judgment = $this->judge(<<<'PHP'
         namespace App;
@@ -213,10 +213,37 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         }
         PHP);
 
-        $this->assertTrue($judgment->isRighteous());
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('NodeKind::equals($kind, NodeKind::Input)', $judgment->warnings[0]->message);
+        $this->assertStringNotContainsString('equalsAny', $judgment->warnings[0]->message);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
     }
 
-    public function test_ignores_different_lhs(): void
+    public function test_flags_single_not_identical_as_not_equals(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum NodeKind {
+            use CompareSelf;
+            case Input;
+        }
+
+        class Router {
+            public function route(NodeKind $kind): bool {
+                return $kind !== NodeKind::Input;
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('NodeKind::notEquals($kind, NodeKind::Input)', $judgment->warnings[0]->message);
+        $this->assertStringNotContainsString('notEqualsAny', $judgment->warnings[0]->message);
+    }
+
+    public function test_mixed_lhs_chain_yields_two_separate_singles(): void
     {
         $judgment = $this->judge(<<<'PHP'
         namespace App;
@@ -236,10 +263,40 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         }
         PHP);
 
-        $this->assertTrue($judgment->isRighteous());
+        // The chain analysis fails (different LHS), so neither atom is consumed
+        // and each surfaces as its own single `equals` finding.
+        $this->assertCount(2, $judgment->warnings);
+        $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
+        $this->assertStringContainsString('Foo::equals($a, Foo::A)', $messages);
+        $this->assertStringContainsString('Foo::equals($b, Foo::B)', $messages);
     }
 
-    public function test_ignores_mixed_enum_chain(): void
+    public function test_real_chain_does_not_double_count_with_singles(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Foo {
+            use CompareSelf;
+            case A;
+            case B;
+        }
+
+        class Sieve {
+            public function pick(Foo $kind): bool {
+                return $kind === Foo::A || $kind === Foo::B;
+            }
+        }
+        PHP);
+
+        // One chain warning only — the two atoms are consumed, not re-emitted.
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('Foo::equalsAny($kind, Foo::A, Foo::B)', $judgment->warnings[0]->message);
+    }
+
+    public function test_mixed_enum_chain_yields_singles_per_enum(): void
     {
         $judgment = $this->judge(<<<'PHP'
         namespace App;
@@ -263,7 +320,11 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         }
         PHP);
 
-        $this->assertTrue($judgment->isRighteous());
+        // No valid same-enum chain, so each side is a standalone single.
+        $this->assertCount(2, $judgment->warnings);
+        $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
+        $this->assertStringContainsString('Foo::equals($x, Foo::A)', $messages);
+        $this->assertStringContainsString('Bar::equals($x, Bar::Y)', $messages);
     }
 
     public function test_ignores_match_expression(): void
@@ -293,7 +354,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_ignores_or_chain_with_non_identical_atom(): void
+    public function test_or_chain_with_non_identical_atom_yields_single(): void
     {
         $judgment = $this->judge(<<<'PHP'
         namespace App;
@@ -313,7 +374,10 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         }
         PHP);
 
-        $this->assertTrue($judgment->isRighteous());
+        // The chain isn't a pure enum-equality chain, so only the lone
+        // `$kind === Foo::A` atom surfaces, as a single equals.
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('Foo::equals($kind, Foo::A)', $judgment->warnings[0]->message);
     }
 
     public function test_ignores_chain_inside_to_array(): void
@@ -422,8 +486,8 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     public function test_custom_method_names_appear_in_suggestion(): void
     {
         $this->prophet->configure([
-            'is_one_of_method' => 'isAny',
-            'is_not_one_of_method' => 'isNone',
+            'equals_any_method' => 'isAny',
+            'not_equals_any_method' => 'isNone',
         ]);
 
         $judgment = $this->judge(<<<'PHP'
@@ -445,8 +509,8 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('->isAny(', $judgment->warnings[0]->message);
-        $this->assertStringNotContainsString('isOneOf', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Foo::isAny(', $judgment->warnings[0]->message);
+        $this->assertStringNotContainsString('equalsAny', $judgment->warnings[0]->message);
     }
 
     public function test_custom_trait_fqcn_resolves_via_use_alias(): void
@@ -473,6 +537,89 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
 
         $this->assertCount(1, $judgment->warnings);
         $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Auto-fix (repent)
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_repent_rewrites_all_four_shapes_to_static_form(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Status {
+            use CompareSelf;
+            case A;
+            case B;
+        }
+
+        class C {
+            public function a($x): bool { return $x === Status::A; }
+            public function b($x): bool { return $x !== Status::A; }
+            public function c($x): bool { return $x === Status::A || $x === Status::B; }
+            public function d($x): bool { return $x !== Status::A && $x !== Status::B; }
+        }
+        PHP;
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return Status::equals($x, Status::A);', $result->newContent);
+        $this->assertStringContainsString('return Status::notEquals($x, Status::A);', $result->newContent);
+        $this->assertStringContainsString('return Status::equalsAny($x, Status::A, Status::B);', $result->newContent);
+        $this->assertStringContainsString('return Status::notEqualsAny($x, Status::A, Status::B);', $result->newContent);
+    }
+
+    public function test_repent_preserves_written_class_reference(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+
+        enum Status {
+            use \App\Support\Enums\CompareSelf;
+            case A;
+        }
+
+        class C {
+            public function a($x): bool { return $x === \App\Status::A; }
+        }
+        PHP;
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return \App\Status::equals($x, \App\Status::A);', $result->newContent);
+    }
+
+    public function test_repent_leaves_adoption_hint_findings_untouched(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+
+        enum LegacyKind {
+            case X;
+            case Y;
+        }
+
+        class Gate {
+            public function check(LegacyKind $legacy): bool {
+                return $legacy === LegacyKind::X || $legacy === LegacyKind::Y;
+            }
+        }
+        PHP;
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        // Enum does not use the trait — rewriting would call a missing
+        // __callStatic, so repent makes no change.
+        $this->assertFalse($result->absolved);
+        $this->assertNull($result->newContent);
     }
 
     // ────────────────────────────────────────────────────────────────

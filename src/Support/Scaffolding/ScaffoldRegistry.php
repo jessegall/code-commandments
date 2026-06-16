@@ -38,6 +38,13 @@ final class ScaffoldRegistry
                 introducedIn: '1.39.0',
                 purpose: 'Null Object for a callable/Closure slot.',
             ),
+            new Scaffold(
+                name: 'compare-self',
+                className: 'CompareSelf',
+                stubFile: 'CompareSelf.stub',
+                introducedIn: '1.49.0',
+                purpose: 'Enum trait: $case->equals($x) / Enum::equals($x, Case) (null-safe) for SuggestCompareSelfTrait.',
+            ),
         ];
     }
 }

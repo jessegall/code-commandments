@@ -12,18 +12,25 @@ use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
 
 /**
- * Find boolean chains of enum equality comparisons where the same LHS is
- * compared against multiple cases of the same enum.
+ * Find enum equality comparisons where a subject is compared against case(s)
+ * of one enum — single comparisons and the boolean chains that string them
+ * together.
  *
- *   $kind === Foo::A || $kind === Foo::B            // one_of   (>= 2 atoms)
- *   $status !== Status::Done && $status !== Status::Failed  // not_one_of
+ *   $kind === Foo::A                                       // equals
+ *   $kind !== Foo::A                                       // not_equals
+ *   $kind === Foo::A || $kind === Foo::B                   // one_of   (>= 2 atoms)
+ *   $status !== Status::Done && $status !== Status::Failed // not_one_of
  *
  * A chain is the maximal sub-tree of either `||` or `&&` operators. To count
  * it must:
  *   - contain only `===` (for `||`) or only `!==` (for `&&`),
  *   - share a single LHS expression across every atom (pretty-printed equality),
  *   - share a single enum class on every RHS,
- *   - have length >= minChain (default 2).
+ *   - have length >= minChain.
+ *
+ * When minChain <= 1 a second pass emits each standalone `===`/`!==` against an
+ * enum-case fetch as a length-1 `equals`/`not_equals` match. Atoms already
+ * consumed by an emitted chain are skipped, so a real chain never double-counts.
  *
  * The pipe stays away from wire-format scopes (`toArray`, `jsonSerialize`,
  * etc., and `JsonResource`/`Response` classes) — the same boundary other
@@ -41,14 +48,14 @@ final class FindChainedEnumEqualityComparisons implements Pipe
         'JsonResource', 'Resource', 'Response',
     ];
 
-    private int $minChain = 2;
+    private int $minChain = 1;
 
     /** @var list<string> Lowercased FQCNs or short names. */
     private array $excludeEnums = [];
 
     public function withMinChain(int $n): self
     {
-        $this->minChain = max(2, $n);
+        $this->minChain = max(1, $n);
 
         return $this;
     }
@@ -77,6 +84,10 @@ final class FindChainedEnumEqualityComparisons implements Pipe
         $parentMap = $this->buildParentMap($input->ast);
 
         $matches = [];
+
+        // Object ids of atoms already consumed by an emitted chain match — they
+        // must not also surface as standalone single comparisons.
+        $consumed = [];
 
         $orRoots = $this->collectChainRoots(
             $finder->findInstanceOf($input->ast, Expr\BinaryOp\BooleanOr::class),
@@ -114,6 +125,10 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 content: $input->content,
                 op: 'one_of',
             );
+
+            foreach ($analysis['atoms'] as $atom) {
+                $consumed[spl_object_id($atom)] = true;
+            }
         }
 
         $andRoots = $this->collectChainRoots(
@@ -152,9 +167,92 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 content: $input->content,
                 op: 'not_one_of',
             );
+
+            foreach ($analysis['atoms'] as $atom) {
+                $consumed[spl_object_id($atom)] = true;
+            }
+        }
+
+        if ($this->minChain <= 1) {
+            $this->collectSingles($input, $finder, $printer, $parentMap, $consumed, $matches);
         }
 
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * Single-comparison pass: every `===`/`!==` that compares a subject to an
+     * enum-case fetch and is NOT already part of an emitted chain.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @param  array<int, bool>  $consumed
+     * @param  list<MatchResult>  $matches
+     */
+    private function collectSingles(
+        mixed $input,
+        NodeFinder $finder,
+        PrettyPrinter\Standard $printer,
+        array $parentMap,
+        array $consumed,
+        array &$matches,
+    ): void {
+        $singles = [
+            [Expr\BinaryOp\Identical::class, 'equals'],
+            [Expr\BinaryOp\NotIdentical::class, 'not_equals'],
+        ];
+
+        foreach ($singles as [$nodeClass, $op]) {
+            foreach ($finder->findInstanceOf($input->ast, $nodeClass) as $node) {
+                if (isset($consumed[spl_object_id($node)])) {
+                    continue;
+                }
+
+                if ($this->isInsideWireFormatScope($node, $parentMap)) {
+                    continue;
+                }
+
+                /** @var Expr\BinaryOp $node */
+                [$expr, $caseFetch] = $this->orientAtom($node);
+
+                if ($caseFetch === null || ! $caseFetch->class instanceof Node\Name) {
+                    continue;
+                }
+
+                if (! $caseFetch->name instanceof Node\Identifier) {
+                    continue;
+                }
+
+                $caseName = $caseFetch->name->toString();
+
+                if ($caseName === '' || strtolower($caseName) === 'class') {
+                    continue;
+                }
+
+                $classNode = $caseFetch->class;
+                $shortName = $classNode->getLast();
+                $resolvedFqcn = $this->resolveFqcn($classNode, $input->useStatements, $input->namespace);
+
+                if ($this->isExcluded($resolvedFqcn, $shortName)) {
+                    continue;
+                }
+
+                $analysis = [
+                    'lhsSource' => $printer->prettyPrintExpr($expr),
+                    'classNode' => $classNode,
+                    'shortName' => $shortName,
+                    'cases' => [$caseName],
+                    'atoms' => [$node],
+                ];
+
+                $matches[] = $this->makeMatch(
+                    root: $node,
+                    analysis: $analysis,
+                    resolvedFqcn: $resolvedFqcn,
+                    content: $input->content,
+                    op: $op,
+                );
+            }
+        }
     }
 
     /**
@@ -207,7 +305,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
      * chain agrees on LHS expression + enum class.
      *
      * @param  list<Node>  $atoms
-     * @return array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>}|null
+     * @return array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>, atoms: list<Node>}|null
      */
     private function analyseChain(array $atoms, string $comparisonClass, PrettyPrinter\Standard $printer): ?array
     {
@@ -275,6 +373,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
             'classNode' => $classNode,
             'shortName' => $shortName,
             'cases' => $cases,
+            'atoms' => $atoms,
         ];
     }
 
@@ -317,7 +416,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
     }
 
     /**
-     * @param  array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>}  $analysis
+     * @param  array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>, atoms: list<Node>}  $analysis
      */
     private function makeMatch(
         Node $root,
@@ -342,8 +441,21 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 'enum_fqcn' => $resolvedFqcn,
                 'cases' => implode(',', $analysis['cases']),
                 'chain_length' => (string) count($analysis['cases']),
+                'start' => (string) $root->getStartFilePos(),
+                'end' => (string) $root->getEndFilePos(),
+                'class_ref' => $this->renderClassRef($analysis['classNode']),
             ],
         );
+    }
+
+    /**
+     * Render the enum class reference exactly as written in source, preserving
+     * a leading backslash for fully-qualified names so the rewrite needs no new
+     * `use` import.
+     */
+    private function renderClassRef(Node\Name $name): string
+    {
+        return ($name->isFullyQualified() ? '\\' : '') . $name->toString();
     }
 
     private function isExcluded(string $resolvedFqcn, string $shortName): bool
