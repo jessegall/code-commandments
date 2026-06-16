@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 use Composer\Autoload\ClassLoader;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\EnumSummary;
+use JesseGall\CodeCommandments\Support\VendorPath;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -646,7 +647,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
             return self::$vendorCache[$fqcn] = false;
         }
 
-        return self::$vendorCache[$fqcn] = str_contains($file, '/vendor/');
+        return self::$vendorCache[$fqcn] = VendorPath::isVendor($file);
     }
 
     /**

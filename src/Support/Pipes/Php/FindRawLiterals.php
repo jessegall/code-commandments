@@ -261,10 +261,12 @@ final class FindRawLiterals implements Pipe
             }
         }
 
-        // Pass 7 — null-coalesce to a type empty:
-        //   (string)($x ?? '')        -> T_String::coalesce($x)
-        //   (int)($x ?? 0)            -> T_Int::coalesce($x)
-        //   $x ?? T_Array::empty()    -> T_Array::coalesce($x)
+        // Pass 7 — cast over a null-coalesce, with the fallback carried as the
+        // helper's $default so behaviour is preserved for ANY fallback:
+        //   (string)($x ?? '')             -> T_String::coalesce($x)
+        //   (string)($x ?? T_String::COMMA)-> T_String::coalesce($x, T_String::COMMA)
+        //   (int)($x ?? 0)                 -> T_Int::coalesce($x)
+        //   $x ?? T_Array::empty()         -> T_Array::coalesce($x)
         $castTypes = [
             Expr\Cast\String_::class => 'T_String',
             Expr\Cast\Int_::class => 'T_Int',
@@ -279,14 +281,15 @@ final class FindRawLiterals implements Pipe
                 continue;
             }
 
-            if (self::coalesceEmptyMatches($cast->expr->right, $type)) {
-                $findings[] = self::coalesceFinding($cast, $cast->expr->left, $type, $content);
-            }
+            $findings[] = self::coalesceFinding($cast, $cast->expr->left, $cast->expr->right, $type, $content);
         }
 
+        // The array coalesce has no cast to disclose its type, so only the
+        // explicit empty-array fallback is recognised (avoids flagging every
+        // `$x ?? [...]` with an arbitrary default).
         foreach ($nodeFinder->findInstanceOf($ast, Expr\BinaryOp\Coalesce::class) as $coalesce) {
             if (self::coalesceEmptyMatches($coalesce->right, 'T_Array')) {
-                $findings[] = self::coalesceFinding($coalesce, $coalesce->left, 'T_Array', $content);
+                $findings[] = self::coalesceFinding($coalesce, $coalesce->left, null, 'T_Array', $content);
             }
         }
 
@@ -547,7 +550,7 @@ final class FindRawLiterals implements Pipe
     /**
      * @return array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, helper_class: string, fixable: bool}
      */
-    private static function coalesceFinding(Node $expr, Node $left, string $type, string $content): array
+    private static function coalesceFinding(Node $expr, Node $left, ?Node $right, string $type, string $content): array
     {
         $leftSource = self::source($content, $left);
 
@@ -558,6 +561,13 @@ final class FindRawLiterals implements Pipe
         // becomes the clean `coalesce($x)`; anything else keeps the suppression
         // with `coalesce($x ?? null)` so behaviour is preserved exactly.
         $var = self::isSafeCoalesceTarget($left) ? $leftSource : $leftSource . ' ?? null';
+
+        // A non-empty fallback is carried through as coalesce()'s $default so the
+        // rewrite preserves it; the type's own empty value is the default, so it
+        // is omitted to keep `coalesce($x)` clean.
+        if ($right !== null && ! self::coalesceEmptyMatches($right, $type)) {
+            $var .= ', ' . self::source($content, $right);
+        }
 
         return [
             'kind' => 'coalesce',
@@ -592,15 +602,27 @@ final class FindRawLiterals implements Pipe
 
     private static function coalesceEmptyMatches(Node $node, string $type): bool
     {
-        if ($node instanceof Expr\ClassConstFetch && $node->class instanceof Node\Name) {
-            return $node->class->getLast() === $type;
+        // The fallback must be the type's EMPTY value specifically — a
+        // non-empty named constant (T_String::COMMA, ::SPACE, …) is a real
+        // default, NOT the coalesce-to-empty idiom; rewriting it would change
+        // behaviour.
+        [$constName, $methodName] = match ($type) {
+            'T_String', 'T_Array' => ['EMPTY', 'empty'],
+            'T_Int', 'T_Float' => ['ZERO', 'zero'],
+            'T_Bool' => ['FALSE', null],
+            default => [null, null],
+        };
+
+        if ($node instanceof Expr\ClassConstFetch && $node->class instanceof Node\Name
+            && $node->name instanceof Node\Identifier
+        ) {
+            return $node->class->getLast() === $type && $node->name->toString() === $constName;
         }
 
         if ($node instanceof Expr\StaticCall && $node->class instanceof Node\Name
-            && $node->name instanceof Node\Identifier
-            && in_array($node->name->toString(), ['empty', 'zero'], true)
+            && $node->name instanceof Node\Identifier && $methodName !== null
         ) {
-            return $node->class->getLast() === $type;
+            return $node->class->getLast() === $type && $node->name->toString() === $methodName;
         }
 
         return match ($type) {
