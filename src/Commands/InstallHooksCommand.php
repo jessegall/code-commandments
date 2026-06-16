@@ -124,6 +124,10 @@ class InstallHooksCommand extends Command
                             'type' => 'command',
                             'command' => 'php artisan commandments:scripture 2>/dev/null || true',
                         ],
+                        [
+                            'type' => 'command',
+                            'command' => 'php artisan commandments:reports --check 2>/dev/null || true',
+                        ],
                     ],
                 ],
             ],

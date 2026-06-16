@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments;
 use Illuminate\Support\ServiceProvider;
 use JesseGall\CodeCommandments\Commands\AbsolveCommand;
 use JesseGall\CodeCommandments\Commands\ReportCommand;
+use JesseGall\CodeCommandments\Commands\ReportsCommand;
 use JesseGall\CodeCommandments\Commands\ScaffoldCommand;
 use JesseGall\CodeCommandments\Commands\InstallHooksCommand;
 use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
@@ -84,6 +85,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 ScriptureCommand::class,
                 ScaffoldCommand::class,
                 ReportCommand::class,
+                ReportsCommand::class,
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
                 InstallSyncHookCommand::class,
