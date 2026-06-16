@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 use Composer\Autoload\ClassLoader;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use JesseGall\CodeCommandments\Support\VendorPath;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
@@ -51,7 +52,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
         }
 
         $localClasses = $this->collectLocalClasses($input->ast);
-        $currentFileInVendor = str_contains($input->filePath, '/vendor/');
+        $currentFileInVendor = VendorPath::isVendor($input->filePath);
 
         $finder = new NodeFinder;
 
@@ -173,7 +174,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
             }
 
             return [
-                'vendor' => $cached['file'] !== null && str_contains($cached['file'], '/vendor/'),
+                'vendor' => $cached['file'] !== null && VendorPath::isVendor($cached['file']),
                 'statics' => $cached['statics'],
             ];
         }
@@ -186,7 +187,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
         }
 
         return [
-            'vendor' => $resolved['file'] !== null && str_contains($resolved['file'], '/vendor/'),
+            'vendor' => $resolved['file'] !== null && VendorPath::isVendor($resolved['file']),
             'statics' => $resolved['statics'],
         ];
     }

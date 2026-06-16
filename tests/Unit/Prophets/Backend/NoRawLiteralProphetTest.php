@@ -583,6 +583,17 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('use JesseGall\\PhpTypes\\T_String;', $result->newContent);
     }
 
+    public function test_coalesce_carries_non_empty_fallback_as_default(): void
+    {
+        // `$x ?? T_String::COMMA` is a real default (',') — the rewrite must
+        // carry it through as coalesce()'s second arg, never drop it to ''.
+        $src = "<?php\nnamespace App;\nuse JesseGall\\PhpTypes\\T_String;\nfinal class Spec {\n    public function a(\$x): string { return (string) (\$x ?? T_String::COMMA); }\n}\n";
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('T_String::coalesce($x, T_String::COMMA)', $result->newContent);
+    }
+
     public function test_coalesce_autofix_preserves_isset_semantics_on_array_access(): void
     {
         // Regression: `$arr[$k] ?? T_Array::empty()` must NOT become
