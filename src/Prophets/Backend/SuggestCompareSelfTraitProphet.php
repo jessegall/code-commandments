@@ -254,11 +254,11 @@ SCRIPTURE;
     private function opLabel(string $op): string
     {
         return match ($op) {
-            'equals' => '`===`',
-            'not_equals' => '`!==`',
-            'one_of' => '`===`/`||`',
-            'not_one_of' => '`!==`/`&&`',
-            default => 'equality',
+            'equals' => 'Equality',
+            'not_equals' => 'Inequality',
+            'one_of' => 'One-of',
+            'not_one_of' => 'None-of',
+            default => 'Equality',
         };
     }
 

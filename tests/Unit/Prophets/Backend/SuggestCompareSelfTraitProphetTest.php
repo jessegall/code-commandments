@@ -623,6 +623,83 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     }
 
     // ────────────────────────────────────────────────────────────────
+    // in_array membership tests
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_in_array_over_enum_cases_as_one_of(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Status {
+            use CompareSelf;
+            case A;
+            case B;
+        }
+
+        class C {
+            public function f($x): bool {
+                return in_array($x, [Status::A, Status::B], true);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('Status::equalsAny($x, Status::A, Status::B)', $judgment->warnings[0]->message);
+    }
+
+    public function test_repent_rewrites_in_array_to_equals_any(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Status {
+            use CompareSelf;
+            case A;
+            case B;
+        }
+
+        class C {
+            public function f($x): bool { return in_array($x, [Status::A, Status::B], true); }
+            public function g($x): bool { return in_array($x, [Status::A], true); }
+        }
+        PHP;
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return Status::equalsAny($x, Status::A, Status::B);', $result->newContent);
+        $this->assertStringContainsString('return Status::equals($x, Status::A);', $result->newContent);
+    }
+
+    public function test_ignores_in_array_with_non_case_elements(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Status {
+            use CompareSelf;
+            case A;
+        }
+
+        class C {
+            public function f($x, $y): bool {
+                return in_array($x, [Status::A, $y], true);
+            }
+        }
+        PHP);
+
+        $this->assertCount(0, $judgment->warnings);
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // Robustness
     // ────────────────────────────────────────────────────────────────
 
