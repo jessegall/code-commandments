@@ -53,9 +53,24 @@ final class FindChainedEnumEqualityComparisons implements Pipe
     /** @var list<string> Lowercased FQCNs or short names. */
     private array $excludeEnums = [];
 
+    /** @var array{equals: string, not_equals: string} Configured singular method names. */
+    private array $equalityMethods = ['equals' => 'equals', 'not_equals' => 'notEquals'];
+
     public function withMinChain(int $n): self
     {
         $this->minChain = max(1, $n);
+
+        return $this;
+    }
+
+    /**
+     * The configured names of the SINGULAR equals-family helpers, so the pipe
+     * can recognise an existing static call (`Enum::equals($x, Enum::Case)`)
+     * that should be re-anchored onto the literal case.
+     */
+    public function withEqualityMethods(string $equals, string $notEquals): self
+    {
+        $this->equalityMethods = ['equals' => $equals, 'not_equals' => $notEquals];
 
         return $this;
     }
@@ -178,8 +193,108 @@ final class FindChainedEnumEqualityComparisons implements Pipe
         }
 
         $this->collectInArray($input, $finder, $printer, $parentMap, $matches);
+        $this->collectStaticEqualityCalls($input, $finder, $printer, $parentMap, $matches);
 
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * `Enum::equals($x, Enum::Case)` / `Enum::notEquals($x, Enum::Case)` — an
+     * existing CompareSelf static call whose target is a LITERAL case. The
+     * static form is only warranted when neither operand is a known case;
+     * here it should be re-anchored onto the case as `Enum::Case->equals($x)`
+     * (still null-safe, reads better). Calls with no literal case (two dynamic
+     * values) or two literal cases are left alone.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @param  list<MatchResult>  $matches
+     */
+    private function collectStaticEqualityCalls(
+        mixed $input,
+        NodeFinder $finder,
+        PrettyPrinter\Standard $printer,
+        array $parentMap,
+        array &$matches,
+    ): void {
+        $methodToOp = [];
+
+        foreach ($this->equalityMethods as $op => $method) {
+            $methodToOp[strtolower($method)] = $op;
+        }
+
+        foreach ($finder->findInstanceOf($input->ast, Expr\StaticCall::class) as $call) {
+            if (! $call->name instanceof Node\Identifier || ! $call->class instanceof Node\Name) {
+                continue;
+            }
+
+            $op = $methodToOp[strtolower($call->name->toString())] ?? null;
+
+            if ($op === null) {
+                continue;
+            }
+
+            $args = $call->getArgs();
+
+            // The singular helpers take exactly (subject, case). Named or
+            // spread args can't be re-ordered safely.
+            if (count($args) !== 2 || $args[0]->name !== null || $args[1]->name !== null
+                || $args[0]->unpack || $args[1]->unpack) {
+                continue;
+            }
+
+            $left = $args[0]->value;
+            $right = $args[1]->value;
+            $leftIsCase = $this->isCaseFetch($left);
+            $rightIsCase = $this->isCaseFetch($right);
+
+            // Need exactly one literal case to anchor on.
+            if ($leftIsCase === $rightIsCase) {
+                continue;
+            }
+
+            /** @var Expr\ClassConstFetch $caseFetch */
+            $caseFetch = $leftIsCase ? $left : $right;
+            $subject = $leftIsCase ? $right : $left;
+
+            if (! $caseFetch->class instanceof Node\Name || ! $caseFetch->name instanceof Node\Identifier) {
+                continue;
+            }
+
+            $caseName = $caseFetch->name->toString();
+
+            if ($caseName === '' || strtolower($caseName) === 'class') {
+                continue;
+            }
+
+            if ($this->isInsideWireFormatScope($call, $parentMap)) {
+                continue;
+            }
+
+            $classNode = $caseFetch->class;
+            $shortName = $classNode->getLast();
+            $resolvedFqcn = $this->resolveFqcn($classNode, $input->useStatements, $input->namespace);
+
+            if ($this->isExcluded($resolvedFqcn, $shortName)) {
+                continue;
+            }
+
+            $analysis = [
+                'lhsSource' => $printer->prettyPrintExpr($subject),
+                'classNode' => $classNode,
+                'shortName' => $shortName,
+                'cases' => [$caseName],
+                'atoms' => [],
+            ];
+
+            $matches[] = $this->makeMatch(
+                root: $call,
+                analysis: $analysis,
+                resolvedFqcn: $resolvedFqcn,
+                content: $input->content,
+                op: $op,
+                fromStatic: true,
+            );
+        }
     }
 
     /**
@@ -537,6 +652,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
         string $resolvedFqcn,
         string $content,
         string $op,
+        bool $fromStatic = false,
     ): MatchResult {
         $line = $root->getStartLine();
 
@@ -557,6 +673,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 'start' => (string) $root->getStartFilePos(),
                 'end' => (string) $root->getEndFilePos(),
                 'class_ref' => $this->renderClassRef($analysis['classNode']),
+                'from_static' => $fromStatic ? '1' : '0',
             ],
         );
     }

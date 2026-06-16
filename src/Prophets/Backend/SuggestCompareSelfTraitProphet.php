@@ -85,14 +85,24 @@ A chain must contain at least `min_chain` atoms (default 1 — single
 comparisons are flagged too). Mixed-enum chains, chains with different
 left-hand sides, and `match` expressions are intentionally ignored.
 
-The suggested rewrite uses the null-safe STATIC form so it never crashes on
-a null/non-enum LHS, and it reuses the enum class reference exactly as
-written, so no new `use` import is needed:
+The rewrite is always null-safe and reuses the enum class reference exactly
+as written, so no new `use` import is needed. A SINGLE comparison against
+one known case anchors on the case — the case literal is never null, so
+`Case->equals($x)` is just as null-safe as the static helper and reads
+better. Only multi-case sets keep the static form (there is no single case
+to anchor on):
 
-    $x === Status::A                      ->  Status::equals($x, Status::A)
-    $x !== Status::A                      ->  Status::notEquals($x, Status::A)
+    $x === Status::A                      ->  Status::A->equals($x)
+    $x !== Status::A                      ->  Status::A->notEquals($x)
     $x === Status::A || $x === Status::B  ->  Status::equalsAny($x, Status::A, Status::B)
     $x !== Status::A && $x !== Status::B  ->  Status::notEqualsAny($x, Status::A, Status::B)
+
+Use the STATIC form ONLY when the value being checked against is dynamic
+(neither operand is a literal case). When you already know the case, an
+existing static call is itself flagged and re-anchored:
+
+    Status::equals($x, Status::A)         ->  Status::A->equals($x)
+    Status::notEquals($x, Status::A)      ->  Status::A->notEquals($x)
 
 Severities are tiered:
 
@@ -148,6 +158,14 @@ SCRIPTURE;
                     return null;
                 }
 
+                // An EXISTING `Enum::equals($x, Enum::Case)` static call already
+                // routes through the trait (it would not compile otherwise), so
+                // it is always re-anchorable and auto-fixable — never an adoption
+                // hint.
+                if (($match->groups['from_static'] ?? '0') === '1') {
+                    return $this->primaryWarning($match);
+                }
+
                 $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
 
                 if ($hasTrait === true) {
@@ -177,6 +195,10 @@ SCRIPTURE;
 
         return (new FindChainedEnumEqualityComparisons)
             ->withMinChain($minChain)
+            ->withEqualityMethods(
+                (string) $this->config('equals_method', self::EQUALS),
+                (string) $this->config('not_equals_method', self::NOT_EQUALS),
+            )
             ->withExcludeEnums(array_values(array_map(static fn ($v) => (string) $v, $excludeEnums)));
     }
 
@@ -202,34 +224,59 @@ SCRIPTURE;
     }
 
     /**
-     * Build the null-safe static rewrite: `Class::method($lhs, Class::CaseA, …)`,
-     * using the class reference exactly as written in source.
+     * Build the null-safe rewrite.
+     *
+     * A single comparison against ONE known case anchors on the case —
+     * `Class::Case->equals($lhs)` — which is null-safe (the case literal is
+     * never null) and reads better than the static helper. The static form
+     * `Class::method($lhs, Class::CaseA, …)` is reserved for multi-case sets
+     * (`equalsAny`/`notEqualsAny`), where there is no single case to anchor on.
      *
      * @param  array<string, string>  $groups
      */
-    private function staticRewrite(array $groups): string
+    private function rewrite(array $groups): string
     {
         $classRef = $groups['class_ref'];
         $cases = explode(',', $groups['cases']);
+        $op = $groups['op'];
+        $method = $this->methodFor($op);
+
+        if (($op === 'equals' || $op === 'not_equals') && count($cases) === 1) {
+            return sprintf('%s::%s->%s(%s)', $classRef, $cases[0], $method, $groups['lhs']);
+        }
 
         $args = array_merge(
             [$groups['lhs']],
             array_map(static fn (string $c) => $classRef . '::' . $c, $cases),
         );
 
-        return sprintf('%s::%s(%s)', $classRef, $this->methodFor($groups['op']), implode(', ', $args));
+        return sprintf('%s::%s(%s)', $classRef, $method, implode(', ', $args));
     }
 
     private function primaryWarning(MatchResult $match): Warning
     {
         $groups = $match->groups;
+        $rewrite = $this->rewrite($groups);
 
-        $message = sprintf(
-            '%s comparison on %s — use the null-safe `%s`.',
-            $this->opLabel($groups['op']),
-            $groups['enum_short'],
-            $this->staticRewrite($groups),
-        );
+        if (($groups['from_static'] ?? '0') === '1') {
+            $case = explode(',', $groups['cases'])[0];
+
+            $message = sprintf(
+                'Static `%s::%s(...)` checks against the known case `%s::%s` — anchor on the case instead: `%s`. Reserve the static form for dynamic-vs-dynamic checks.',
+                $groups['enum_short'],
+                $this->methodFor($groups['op']),
+                $groups['enum_short'],
+                $case,
+                $rewrite,
+            );
+        } else {
+            $message = sprintf(
+                '%s comparison on %s — use the null-safe `%s`.',
+                $this->opLabel($groups['op']),
+                $groups['enum_short'],
+                $rewrite,
+            );
+        }
 
         return Warning::at(
             line: $match->line,
@@ -303,15 +350,19 @@ SCRIPTURE;
         foreach ($pipeline->getContext()->matches as $match) {
             $groups = $match->groups;
 
+            $fromStatic = ($groups['from_static'] ?? '0') === '1';
+
             // Only primary-tier findings (enum uses the trait) are safe to
-            // rewrite — the static call needs the trait's __callStatic.
-            if ($this->enumUsesTrait($groups['enum_fqcn'], $traitFqcn, $ast) !== true) {
+            // rewrite — the static call needs the trait's __callStatic. An
+            // existing `Enum::equals(...)` static call already proves the trait
+            // is in place, so it is always safe to re-anchor.
+            if (! $fromStatic && $this->enumUsesTrait($groups['enum_fqcn'], $traitFqcn, $ast) !== true) {
                 continue;
             }
 
             $start = (int) $groups['start'];
             $end = (int) $groups['end'];
-            $replacement = $this->staticRewrite($groups);
+            $replacement = $this->rewrite($groups);
             $original = substr($content, $start, $end - $start + 1);
 
             $edits[] = ['start' => $start, 'end' => $end, 'text' => $replacement];
