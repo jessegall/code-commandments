@@ -253,7 +253,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('NodeKind::equals($kind, NodeKind::Input)', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('NodeKind::Input->equals($kind)', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('equalsAny', $judgment->warnings[0]->message);
         $this->assertTrue($judgment->warnings[0]->autoFixable);
     }
@@ -278,7 +278,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('NodeKind::notEquals($kind, NodeKind::Input)', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('NodeKind::Input->notEquals($kind)', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('notEqualsAny', $judgment->warnings[0]->message);
     }
 
@@ -306,8 +306,8 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         // and each surfaces as its own single `equals` finding.
         $this->assertCount(2, $judgment->warnings);
         $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
-        $this->assertStringContainsString('Foo::equals($a, Foo::A)', $messages);
-        $this->assertStringContainsString('Foo::equals($b, Foo::B)', $messages);
+        $this->assertStringContainsString('Foo::A->equals($a)', $messages);
+        $this->assertStringContainsString('Foo::B->equals($b)', $messages);
     }
 
     public function test_real_chain_does_not_double_count_with_singles(): void
@@ -362,8 +362,8 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         // No valid same-enum chain, so each side is a standalone single.
         $this->assertCount(2, $judgment->warnings);
         $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
-        $this->assertStringContainsString('Foo::equals($x, Foo::A)', $messages);
-        $this->assertStringContainsString('Bar::equals($x, Bar::Y)', $messages);
+        $this->assertStringContainsString('Foo::A->equals($x)', $messages);
+        $this->assertStringContainsString('Bar::Y->equals($x)', $messages);
     }
 
     public function test_ignores_match_expression(): void
@@ -416,7 +416,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         // The chain isn't a pure enum-equality chain, so only the lone
         // `$kind === Foo::A` atom surfaces, as a single equals.
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Foo::equals($kind, Foo::A)', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Foo::A->equals($kind)', $judgment->warnings[0]->message);
     }
 
     public function test_ignores_chain_inside_to_array(): void
@@ -582,7 +582,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     // Auto-fix (repent)
     // ────────────────────────────────────────────────────────────────
 
-    public function test_repent_rewrites_all_four_shapes_to_static_form(): void
+    public function test_repent_rewrites_all_four_shapes(): void
     {
         $content = <<<'PHP'
         <?php
@@ -607,8 +607,8 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         $result = $this->prophet->repent('/x.php', $content);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('return Status::equals($x, Status::A);', $result->newContent);
-        $this->assertStringContainsString('return Status::notEquals($x, Status::A);', $result->newContent);
+        $this->assertStringContainsString('return Status::A->equals($x);', $result->newContent);
+        $this->assertStringContainsString('return Status::A->notEquals($x);', $result->newContent);
         $this->assertStringContainsString('return Status::equalsAny($x, Status::A, Status::B);', $result->newContent);
         $this->assertStringContainsString('return Status::notEqualsAny($x, Status::A, Status::B);', $result->newContent);
     }
@@ -632,7 +632,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         $result = $this->prophet->repent('/x.php', $content);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('return \App\Status::equals($x, \App\Status::A);', $result->newContent);
+        $this->assertStringContainsString('return \App\Status::A->equals($x);', $result->newContent);
     }
 
     public function test_repent_leaves_adoption_hint_findings_untouched(): void
@@ -713,7 +713,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
 
         $this->assertTrue($result->absolved);
         $this->assertStringContainsString('return Status::equalsAny($x, Status::A, Status::B);', $result->newContent);
-        $this->assertStringContainsString('return Status::equals($x, Status::A);', $result->newContent);
+        $this->assertStringContainsString('return Status::A->equals($x);', $result->newContent);
     }
 
     public function test_ignores_in_array_with_non_case_elements(): void
@@ -736,6 +736,108 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(0, $judgment->warnings);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Re-anchoring an existing static call onto the literal case
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_static_equals_against_literal_case(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum PortKind {
+            use CompareSelf;
+            case Bag;
+            case Single;
+        }
+
+        class Wiring {
+            public function isBag($input): bool {
+                return PortKind::equals($input->kind(), PortKind::Bag);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('PortKind::Bag->equals($input->kind())', $judgment->warnings[0]->message);
+        $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
+    }
+
+    public function test_flags_static_not_equals_against_literal_case(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum PortKind {
+            use CompareSelf;
+            case Bag;
+        }
+
+        class Wiring {
+            public function notBag($input): bool {
+                return PortKind::notEquals($input->kind(), PortKind::Bag);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('PortKind::Bag->notEquals($input->kind())', $judgment->warnings[0]->message);
+    }
+
+    public function test_does_not_flag_static_equals_between_two_dynamic_values(): void
+    {
+        // Neither operand is a literal case — there is no case to anchor on, so
+        // the null-safe static form is the correct call. Leave it.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum PortKind {
+            use CompareSelf;
+            case Bag;
+        }
+
+        class Wiring {
+            public function same($a, $b): bool {
+                return PortKind::equals($a, $b);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_repent_reanchors_static_equals_onto_case(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum PortKind {
+            use CompareSelf;
+            case Bag;
+        }
+
+        class Wiring {
+            public function isBag($input): bool { return PortKind::equals($input->kind(), PortKind::Bag); }
+        }
+        PHP;
+
+        $result = $this->prophet->repent('/x.php', $content);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('return PortKind::Bag->equals($input->kind());', $result->newContent);
+        $this->assertStringNotContainsString('PortKind::equals(', $result->newContent);
     }
 
     // ────────────────────────────────────────────────────────────────
