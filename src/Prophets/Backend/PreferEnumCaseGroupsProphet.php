@@ -27,7 +27,7 @@ class PreferEnumCaseGroupsProphet extends PhpCommandment implements NeedsCodebas
 {
     private const DEFAULT_MIN_GROUP = 3;
 
-    private const DEFAULT_MIN_REUSE = 2;
+    private const DEFAULT_MIN_REUSE = 1;
 
     private ?CodebaseIndex $index = null;
 
@@ -50,10 +50,11 @@ class PreferEnumCaseGroupsProphet extends PhpCommandment implements NeedsCodebas
     {
         return Advisory::make()
             ->applyWhen(
-                'The same subset of an enum\'s cases is inlined as an array in two '
-                . 'or more places and the group has a clear name (numeric, textual, '
-                . 'terminal, editable…). Each inline copy is a named concept in '
-                . 'disguise; a drift in one copy silently diverges from the others.'
+                'A recognisable subset of an enum\'s cases is inlined as an array '
+                . 'and the group has a clear name (numeric, textual, terminal, '
+                . 'editable…). The inline list is a named concept in disguise; it '
+                . 'belongs on the enum. Reuse makes it worse — every copy can drift '
+                . 'independently — but even a single inline group reads better named.'
             )
             ->leaveWhen(
                 'The array is a genuine one-off, or the grouping carries no '
@@ -70,11 +71,12 @@ class PreferEnumCaseGroupsProphet extends PhpCommandment implements NeedsCodebas
     {
         return <<<'SCRIPTURE'
 When a recognisable SUBSET of an enum's cases is inlined as an array
-literal — and that same group is duplicated elsewhere — it is a named
-concept in disguise. Give it a name ON the enum and call that, instead
-of re-inlining the subset everywhere it is needed.
+literal it is a named concept in disguise. Give it a name ON the enum
+and call that, instead of inlining the subset where it is needed. If the
+same group is also inlined elsewhere the case is stronger still — every
+copy can drift independently — but a single inline group is enough.
 
-Bad — the same two groups, inlined and duplicated across the codebase:
+Bad — two named groups, inlined by hand:
 
     $operators = $numeric
         ? [CompareOperator::Equals, CompareOperator::NotEquals, CompareOperator::GreaterThan,
@@ -110,31 +112,32 @@ WHAT FIRES — an `[...]` array literal is flagged when ALL hold:
   1. It has 3 or more items (configurable `min_group`, default 3), and
      every item is a plain enum-case fetch (`Enum::Case`) of the SAME
      enum. A mix of enums, or any non-case item, disqualifies it.
-  2. The same case-group appears 2 or more times across the codebase
-     (configurable `min_reuse`, default 2). A single-use inline array is
-     a one-off and is NOT flagged. The group is canonicalised as the
-     sorted, de-duplicated set of `EnumFqcn::CaseName` strings, so order
-     and repetition inside the array don't matter.
+  2. The group occurs at least `min_reuse` times across the codebase
+     (default 1 — a single inline group is flagged on sight). Raise
+     `min_reuse` to 2+ to only flag groups that are actually duplicated.
+     The group is canonicalised as the sorted, de-duplicated set of
+     `EnumFqcn::CaseName` strings, so order and repetition inside the
+     array don't matter, and the finding reports how many sites repeat it.
   3. It is NOT the haystack (2nd argument) of `in_array(...)` /
      `array_search(...)` — that one-of membership test belongs to the
      CompareSelf `equalsAny` rule; this rule must not double-flag it.
   4. It is NOT inside the enum's own file — that is exactly where the
      named-group accessor would live.
 
-This is a cross-file rule: it needs the codebase index to know a group
-is reused. The index is always built from the FULL scroll — even under
-`--file`, `--git`, or `--staged`, which only narrow what gets reported,
-not what the rule may see. The prophet stays SILENT only when no index
-could be built at all.
+The rule is LOCAL: a nameable inline group is flagged with or without a
+codebase index, so it fires under `--file` too. The index, when built
+(always from the FULL scroll, even under `--file`/`--git`/`--staged`),
+only enriches the finding with how many other sites repeat the group —
+and is required if you raise `min_reuse` above 1.
 
 The fix is not auto-fixable: the group's NAME is semantic and can't be
-inferred. The prophet points at the duplicate; you name it.
+inferred. The prophet points at the group; you name it.
 
 Configure via:
 
     Backend\PreferEnumCaseGroupsProphet::class => [
         'min_group' => 3,        // smallest inline group worth a name
-        'min_reuse' => 2,        // how many sites before it's "reused"
+        'min_reuse' => 1,        // sites required before flagging (1 = on sight)
         'exclude_enums' => [     // enums whose groups never get flagged
             // 'App\\Support\\SomeFlagEnum',
         ],
@@ -144,13 +147,9 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
-        // Cross-file rule: without an index we cannot establish reuse, so we
-        // stay silent. `--file` now builds the full-scroll index, so this
-        // only triggers when no index could be built at all.
-        if ($this->index === null) {
-            return $this->righteous();
-        }
-
+        // The rule is local: a nameable inline group of enum cases is flagged
+        // on sight, with or without a codebase index. The index, when present,
+        // only enriches the finding with how many OTHER sites repeat the group.
         $ast = $this->parse($content);
 
         if ($ast === null) {
@@ -183,6 +182,16 @@ SCRIPTURE;
                 }
 
                 // Exclusion 4: the enum's own file is where the accessor lives.
+                // A `self::`/`static::` group can only appear inside the very
+                // enum it names — that is the home for the accessor, never a
+                // duplicate. (It resolves to a pseudo-FQCN like `Ns\self`, so
+                // it would otherwise dodge the localEnumFqcns check below.)
+                $shortEnum = $this->shortName($resolved['fqcn']);
+
+                if ($shortEnum === 'self' || $shortEnum === 'static') {
+                    continue;
+                }
+
                 if (isset($localEnumFqcns[$resolved['fqcn']])) {
                     continue;
                 }
@@ -192,7 +201,9 @@ SCRIPTURE;
                 }
 
                 $key = EnumCaseGroup::canonicalKey($resolved);
-                $count = $this->index->enumCaseGroupCount($key);
+                // The group always occupies at least this one site; the index
+                // (when built) knows about repeats elsewhere.
+                $count = max(1, $this->index?->enumCaseGroupCount($key) ?? 1);
 
                 if ($count < $minReuse) {
                     continue;
@@ -229,13 +240,17 @@ SCRIPTURE;
             array_values(array_unique($resolved['cases'])),
         ));
 
+        $reuseNote = $count >= 2
+            ? sprintf(' (the same group is inlined in %d sites)', $count)
+            : '';
+
         $message = sprintf(
-            'Inline group of %d %s cases [%s] is duplicated (%d sites) — give it a name on the enum '
-            . '(e.g. `%s::someGroup(): array`) and call that instead of re-inlining the subset.',
+            'Inline group of %d %s cases [%s] is a named concept in disguise%s — give it a name on the enum '
+            . '(e.g. `%s::someGroup(): array`) and call that instead of inlining the subset.',
             $caseCount,
             $short,
             $caseList,
-            $count,
+            $reuseNote,
             $short,
         );
 
@@ -341,7 +356,7 @@ SCRIPTURE;
     {
         $value = $this->config('min_reuse', self::DEFAULT_MIN_REUSE);
 
-        return is_numeric($value) ? max(2, (int) $value) : self::DEFAULT_MIN_REUSE;
+        return is_numeric($value) ? max(1, (int) $value) : self::DEFAULT_MIN_REUSE;
     }
 
     /**

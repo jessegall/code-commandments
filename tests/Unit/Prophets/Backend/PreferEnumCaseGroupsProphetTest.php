@@ -46,22 +46,40 @@ class PreferEnumCaseGroupsProphetTest extends TestCase
         $warningA = $this->firstWarningFor($results, $this->fixtureDir . '/NumericSiteA.php');
         $this->assertNotNull($warningA, 'NumericSiteA should be flagged.');
         $this->assertStringContainsString('CompareOperator', $warningA->message);
-        $this->assertStringContainsString('duplicated', $warningA->message);
-        $this->assertStringContainsString('2 sites', $warningA->message);
+        $this->assertStringContainsString('inlined in 2 sites', $warningA->message);
         $this->assertStringContainsString('CompareOperator::someGroup', $warningA->message);
 
         $warningB = $this->firstWarningFor($results, $this->fixtureDir . '/NumericSiteB.php');
         $this->assertNotNull($warningB, 'NumericSiteB should be flagged (different order, same group).');
-        $this->assertStringContainsString('2 sites', $warningB->message);
+        $this->assertStringContainsString('inlined in 2 sites', $warningB->message);
     }
 
-    public function test_does_not_flag_a_group_that_appears_only_once(): void
+    public function test_flags_a_single_inline_group_on_sight(): void
     {
+        // min_reuse defaults to 1: a nameable inline group is flagged even when
+        // it appears exactly once. The reuse note is omitted (no other sites).
+        $results = $this->manager->judgeScroll('test');
+
+        $warning = $this->firstWarningFor($results, $this->fixtureDir . '/OneOff.php');
+        $this->assertNotNull($warning, 'A single 3-case group must be flagged on sight.');
+        $this->assertStringContainsString('CompareOperator', $warning->message);
+        $this->assertStringContainsString('named concept in disguise', $warning->message);
+        $this->assertStringNotContainsString('sites', $warning->message);
+    }
+
+    public function test_min_reuse_override_restores_duplicate_only_flagging(): void
+    {
+        // Raising min_reuse back to 2 makes a single inline group a one-off
+        // again — the opt-in "only flag real duplicates" mode.
+        $this->registry->registerMany('test', [
+            PreferEnumCaseGroupsProphet::class => ['min_reuse' => 2],
+        ]);
+
         $results = $this->manager->judgeScroll('test');
 
         $this->assertNull(
             $this->firstWarningFor($results, $this->fixtureDir . '/OneOff.php'),
-            'A 3-case group used only once is a one-off and must not be flagged.',
+            'With min_reuse=2 a single inline group is a one-off and must not be flagged.',
         );
     }
 
@@ -120,15 +138,22 @@ class PreferEnumCaseGroupsProphetTest extends TestCase
         );
     }
 
-    public function test_stays_silent_in_single_file_mode_without_an_index(): void
+    public function test_flags_in_single_file_mode_without_an_index(): void
     {
-        // Judging one file directly injects no codebase index, so reuse cannot
-        // be established and the prophet must stay silent.
+        // The rule is local: even with no codebase index injected, a nameable
+        // inline group is flagged. Without the index there is no reuse count,
+        // so the finding carries no "N sites" note.
         $prophet = new PreferEnumCaseGroupsProphet;
         $file = $this->fixtureDir . '/NumericSiteA.php';
         $content = file_get_contents($file);
 
-        $this->assertTrue($prophet->judge($file, $content)->isRighteous());
+        $judgment = $prophet->judge($file, $content);
+
+        $this->assertTrue($judgment->isFallen() || $judgment->warningCount() > 0);
+        $warning = array_values($judgment->warnings)[0] ?? null;
+        $this->assertNotNull($warning);
+        $this->assertStringContainsString('CompareOperator', $warning->message);
+        $this->assertStringNotContainsString('sites', $warning->message);
     }
 
     /**
