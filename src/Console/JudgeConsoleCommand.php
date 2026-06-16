@@ -51,6 +51,7 @@ class JudgeConsoleCommand extends Command
             ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Judge specific files (comma-separated)')
             ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Override the scroll path and target a specific directory (bypasses all excludes — use to scan subtrees regardless of config)')
             ->addOption('git', null, InputOption::VALUE_NONE, 'Only judge files that are new or changed in git')
+            ->addOption('staged', null, InputOption::VALUE_NONE, 'Only judge files staged for commit (what the pre-commit gate uses)')
             ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession')
             ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)');
     }
@@ -66,6 +67,7 @@ class JudgeConsoleCommand extends Command
             ? array_map('trim', explode(',', $input->getOption('files')))
             : [];
         $gitMode = (bool) $input->getOption('git');
+        $stagedMode = (bool) $input->getOption('staged');
         $pathFilter = $input->getOption('path');
         $shouldAbsolve = (bool) $input->getOption('absolve');
 
@@ -73,11 +75,12 @@ class JudgeConsoleCommand extends Command
             '--file' => $fileFilter !== null,
             '--files' => ! empty($filesFilter),
             '--git' => $gitMode,
+            '--staged' => $stagedMode,
             '--path' => $pathFilter !== null,
         ]);
 
         if (count($exclusiveFlags) > 1) {
-            $output->writeln('<error>--file, --files, --git, and --path are mutually exclusive.</error>');
+            $output->writeln('<error>--file, --files, --git, --staged, and --path are mutually exclusive.</error>');
 
             return Command::FAILURE;
         }
@@ -94,9 +97,16 @@ class JudgeConsoleCommand extends Command
             $pathFilter = $resolvedPath;
         }
 
+        // --staged reuses the git file-list routing, but with only the files
+        // staged for commit — this is what the pre-commit gate judges.
+        if ($stagedMode) {
+            $gitMode = true;
+        }
+
         $gitFiles = [];
         if ($gitMode) {
-            $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
+            $detector = GitFileDetector::for(Environment::basePath());
+            $gitFiles = $stagedMode ? $detector->getStagedFiles() : $detector->getChangedFiles();
 
             if (empty($gitFiles)) {
                 return Command::SUCCESS;

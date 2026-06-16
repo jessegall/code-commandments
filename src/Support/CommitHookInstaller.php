@@ -107,13 +107,14 @@ final class CommitHookInstaller
 
         return <<<HOOK
         {$begin}
-        # Blocks the commit when code-commandments finds sins in changed files.
-        # Run `judge --next` to walk and fix them one at a time.
+        # Blocks the commit when code-commandments finds sins in the STAGED
+        # changes (only what is actually being committed). Run `judge --next`
+        # to walk and fix them one at a time.
         if [ -x vendor/bin/commandments ]; then
-            vendor/bin/commandments judge --git
+            vendor/bin/commandments judge --staged
             cc_status=\$?
         elif [ -f artisan ]; then
-            php artisan commandments:judge --git
+            php artisan commandments:judge --staged
             cc_status=\$?
         else
             cc_status=0

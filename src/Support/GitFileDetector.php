@@ -48,6 +48,30 @@ final class GitFileDetector
     }
 
     /**
+     * Get only the files staged for commit (the index). This is what a
+     * pre-commit hook should judge — unstaged or branch-historical changes
+     * are not part of the commit being made.
+     *
+     * @return array<string>
+     */
+    public function getStagedFiles(): array
+    {
+        $git = 'git -C ' . escapeshellarg($this->basePath);
+
+        // ACMR = added, copied, modified, renamed (skip deletions).
+        $files = $this->parseGitOutput(
+            shell_exec("{$git} diff --name-only --cached --diff-filter=ACMR 2>/dev/null"),
+            $this->basePath,
+        );
+
+        return Pipeline::from($files)
+            ->filter(fn ($file) => is_file($file))
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
      * Get changed files for a specific git directory.
      *
      * @return array<string>
