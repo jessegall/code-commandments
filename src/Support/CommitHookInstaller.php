@@ -23,7 +23,24 @@ final class CommitHookInstaller
     private const BEGIN = '# >>> code-commandments pre-commit gate >>>';
     private const END = '# <<< code-commandments pre-commit gate <<<';
 
+    private const POST_BEGIN = '# >>> code-commandments post-commit reset >>>';
+    private const POST_END = '# <<< code-commandments post-commit reset <<<';
+
     public function install(string $basePath, bool $force = false): string
+    {
+        return $this->writeHook($basePath, 'pre-commit', $this->block(), $force);
+    }
+
+    /**
+     * Install the post-commit hook that clears absolutions after a commit,
+     * so an absolved finding never silently persists into the next phase.
+     */
+    public function installPostCommit(string $basePath, bool $force = false): string
+    {
+        return $this->writeHook($basePath, 'post-commit', $this->postCommitBlock(), $force);
+    }
+
+    private function writeHook(string $basePath, string $name, string $block, bool $force): string
     {
         $gitDir = $basePath . '/.git';
 
@@ -37,8 +54,9 @@ final class CommitHookInstaller
             @mkdir($hooksDir, 0755, true);
         }
 
-        $hookPath = $hooksDir . '/pre-commit';
-        $block = $this->block();
+        $hookPath = $hooksDir . '/' . $name;
+        $begin = str_contains($block, self::POST_BEGIN) ? self::POST_BEGIN : self::BEGIN;
+        $end = str_contains($block, self::POST_END) ? self::POST_END : self::END;
 
         if (! is_file($hookPath)) {
             if (@file_put_contents($hookPath, "#!/usr/bin/env sh\n\n" . $block . "\n") === false) {
@@ -52,13 +70,13 @@ final class CommitHookInstaller
 
         $existing = (string) @file_get_contents($hookPath);
 
-        if (str_contains($existing, self::BEGIN)) {
+        if (str_contains($existing, $begin)) {
             if (! $force) {
                 return self::STATUS_ALREADY_PRESENT;
             }
 
             $replaced = (string) preg_replace(
-                '/' . preg_quote(self::BEGIN, '/') . '.*?' . preg_quote(self::END, '/') . '/s',
+                '/' . preg_quote($begin, '/') . '.*?' . preg_quote($end, '/') . '/s',
                 $block,
                 $existing,
             );
@@ -107,6 +125,24 @@ final class CommitHookInstaller
             echo "  Walk and fix them one at a time:  commandments judge --next"
             echo "  (Bypass only in a real emergency with: git commit --no-verify)"
             exit 1
+        fi
+        {$end}
+        HOOK;
+    }
+
+    private function postCommitBlock(): string
+    {
+        $begin = self::POST_BEGIN;
+        $end = self::POST_END;
+
+        return <<<HOOK
+        {$begin}
+        # Clear absolutions after a commit so an absolved finding never
+        # silently persists into the next phase.
+        if [ -x vendor/bin/commandments ]; then
+            vendor/bin/commandments absolve --clear >/dev/null 2>&1
+        elif [ -f artisan ]; then
+            php artisan commandments:absolve --clear >/dev/null 2>&1
         fi
         {$end}
         HOOK;

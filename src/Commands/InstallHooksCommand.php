@@ -33,17 +33,13 @@ class InstallHooksCommand extends Command
         if (file_exists($settingsFile)) {
             $content = file_get_contents($settingsFile);
             $existingSettings = json_decode($content ?: '{}', true) ?? [];
-
-            if (!$this->option('force') && isset($existingSettings['hooks'])) {
-                $this->output->writeln('Existing hooks found. Use --force to overwrite.');
-                return self::SUCCESS;
-            }
         }
 
-        // Build the hooks configuration
-        $hooks = $this->buildHooksConfig();
+        // Merge our hook events into any existing hooks, overwriting only the
+        // events we own (so re-running upgrades them without duplicating, and
+        // without clobbering hooks the user added under other events).
+        $hooks = array_merge($existingSettings['hooks'] ?? [], $this->buildHooksConfig());
 
-        // Merge with existing settings
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 
         // Add instructions if not present
@@ -60,28 +56,48 @@ class InstallHooksCommand extends Command
         // Create/update CLAUDE.md
         $this->createClaudeMd();
 
-        // Install the git pre-commit gate that hard-blocks commits with sins.
+        // Install the git pre-commit gate (blocks sins) and post-commit reset
+        // (clears absolutions so nothing stays silently hidden).
         $this->installCommitHook();
 
         $this->output->newLine();
         $this->output->writeln('Hooks will:');
         $this->output->writeln('- Show commandments on session start');
         $this->output->writeln('- Judge changed code after Claude completes work');
+        $this->output->writeln('- Remind Claude to resolve sins after every commit');
         $this->output->writeln('- Block git commits while any sins remain (pre-commit hook)');
+        $this->output->writeln('- Clear absolutions after each commit (post-commit hook)');
 
         return self::SUCCESS;
     }
 
     private function installCommitHook(): void
     {
-        $status = (new CommitHookInstaller())->install(base_path(), (bool) $this->option('force'));
+        $installer = new CommitHookInstaller();
+        $force = (bool) $this->option('force');
 
-        match ($status) {
+        $pre = $installer->install(base_path(), $force);
+
+        match ($pre) {
             CommitHookInstaller::STATUS_INSTALLED => $this->output->writeln('Installed git pre-commit gate at .git/hooks/pre-commit'),
             CommitHookInstaller::STATUS_APPENDED => $this->output->writeln('Appended the pre-commit gate to your existing .git/hooks/pre-commit'),
             CommitHookInstaller::STATUS_ALREADY_PRESENT => $this->output->writeln('Pre-commit gate already installed — use --force to refresh it'),
-            CommitHookInstaller::STATUS_NOT_GIT => $this->warn('Not a git repository — skipped the pre-commit gate.'),
+            CommitHookInstaller::STATUS_NOT_GIT => $this->warn('Not a git repository — skipped the commit hooks.'),
             CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/pre-commit — check permissions.'),
+        };
+
+        if ($pre === CommitHookInstaller::STATUS_NOT_GIT) {
+            return;
+        }
+
+        $post = $installer->installPostCommit(base_path(), $force);
+
+        match ($post) {
+            CommitHookInstaller::STATUS_INSTALLED => $this->output->writeln('Installed git post-commit reset at .git/hooks/post-commit'),
+            CommitHookInstaller::STATUS_APPENDED => $this->output->writeln('Appended the post-commit reset to your existing .git/hooks/post-commit'),
+            CommitHookInstaller::STATUS_ALREADY_PRESENT => $this->output->writeln('Post-commit reset already installed — use --force to refresh it'),
+            CommitHookInstaller::STATUS_NOT_GIT => null,
+            CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/post-commit — check permissions.'),
         };
     }
 
@@ -111,7 +127,38 @@ class InstallHooksCommand extends Command
                     ],
                 ],
             ],
+            'PostToolUse' => [
+                [
+                    'matcher' => 'Bash',
+                    'hooks' => [
+                        [
+                            'type' => 'command',
+                            'command' => $this->postCommitReminderCommand('php artisan commandments'),
+                        ],
+                    ],
+                ],
+            ],
         ];
+    }
+
+    /**
+     * A PostToolUse (Bash) hook command: when the tool call was a git commit,
+     * inject a reminder into Claude's context to re-read the commandments and
+     * resolve every sin before the next phase.
+     */
+    private function postCommitReminderCommand(string $binary): string
+    {
+        $message = 'A commit just landed — a phase is complete. Re-read the Code Commandments '
+            . 'section of CLAUDE.md now and act as a sin resolver: run `' . $binary . ':judge --next --git` '
+            . 'and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in '
+            . 'files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely '
+            . 'applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to '
+            . 'leave a sin in place.';
+
+        $json = '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"' . $message . '"}}';
+
+        return 'in=$(cat); printf "%s" "$in" | grep -q "git commit" && printf '
+            . escapeshellarg($json) . '; exit 0';
     }
 
     /**
@@ -227,7 +274,7 @@ It shows exactly **one finding at a time** with its full rule inline — so noth
 - If it is an advisory **warning** whose rubric does not apply here, **absolve it with a reason**:
   `php artisan commandments:absolve --fingerprint=<hash> --reason="why it does not apply"`.
 
-Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave one untouched — fix or absolve every one.
+Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. **Default to FIXING a warning.** Absolve it only when the rubric's LEAVE-WHEN genuinely applies, and say why — absolve is not a dismiss button, and the post-commit reset wipes absolutions anyway, so a dodged warning comes back next phase. Never leave a warning untouched.
 
 ### Own every sin you encounter
 

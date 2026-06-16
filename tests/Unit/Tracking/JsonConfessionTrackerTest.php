@@ -56,6 +56,19 @@ class JsonConfessionTrackerTest extends TestCase
         $this->assertFalse($tracker->isFindingAbsolved('gone-one'));
     }
 
+    public function test_clears_all_finding_absolutions(): void
+    {
+        $tracker = $this->tracker();
+        $tracker->absolveFinding('one');
+        $tracker->absolveFinding('two');
+
+        $cleared = $tracker->clearFindingAbsolutions();
+
+        $this->assertSame(2, $cleared);
+        $this->assertFalse($this->tracker()->isFindingAbsolved('one'));
+        $this->assertFalse($this->tracker()->isFindingAbsolved('two'));
+    }
+
     public function test_reads_legacy_flat_format(): void
     {
         // Legacy file: a top-level path => commandment map, no wrapper keys.
