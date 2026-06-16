@@ -94,6 +94,10 @@ return [
                     // 'methods' => ['from'],
                     // 'severity' => 'warning',   // or 'sin'
                 ],
+                Backend\ExplicitDataFactoryProphet::class => [
+                    // 'data_suffixes' => ['Data'],
+                    // 'severity' => 'warning',   // or 'sin'
+                ],
                 Backend\PreferNamedExceptionsProphet::class => [
                     // Exception classes that may be thrown inline:
                     // 'allow' => ['InvalidArgumentException'],
