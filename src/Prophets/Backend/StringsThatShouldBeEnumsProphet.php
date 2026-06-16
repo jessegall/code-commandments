@@ -92,6 +92,14 @@ This prophet flags three patterns:
    if one doesn't exist yet. When a name-matched enum DOES exist,
    the suggestion gets concrete.
 
+IMPORTANT: the matched enum is only the closest EXISTING one (by name
+and cases) — it is a CANDIDATE, not a requirement. The fix is "make
+this a typed enum value", NOT "reuse that specific enum". If the match
+models a different concern — a schema field type where you really want
+a port type, say — prefer creating a new, purpose-specific enum over
+forcing the value into an unrelated one. Reuse the matched enum only
+when it is genuinely the right home.
+
 Exceptions: values inside `toArray`, `jsonSerialize`, `render`, or
 inside a `JsonResource`/`Resource`/`Response` class are left alone —
 those are wire-format boundaries where the literal string is the
@@ -147,14 +155,13 @@ SCRIPTURE;
         $unimported = $groups['requires_import'] === '1';
 
         return sprintf(
-            "Raw string literal '%s' for %s — %s case of %s. Replace with %s::%s%s.",
+            "Raw string literal '%s' for %s belongs in an enum. %s::%s is the closest existing match%s — reuse it if %s is the right home, otherwise introduce a purpose-specific enum.",
             $groups['value'],
             $groups['subject'],
-            $unimported ? 'matches a' : 'looks like a',
-            $groups['enum_short'],
             $groups['enum_short'],
             $groups['case'],
             $unimported ? " (add `use {$groups['enum_fqcn']};`)" : '',
+            $groups['enum_short'],
         );
     }
 
@@ -184,7 +191,7 @@ SCRIPTURE;
             );
         }
 
-        $base = 'Stringly-typed closed-set values bypass static analysis, IDE refactors, and exhaustive match. Use the enum case.';
+        $base = 'Stringly-typed closed-set values bypass static analysis, IDE refactors, and exhaustive match. Use an enum case — the matched enum is the closest EXISTING one, but creating a new purpose-specific enum is often the better fit.';
 
         if (($groups['requires_import'] ?? '') === '1') {
             return $base . sprintf(' Add `use %s;` to this file.', $groups['enum_fqcn']);
