@@ -43,10 +43,12 @@ final class FindingQueue
         ));
 
         usort($kept, static function (Finding $a, Finding $b): int {
-            // Sins (blocking) before warnings (advisory); then most
-            // root-cause tier; then a stable file/line/prophet walk.
-            return [$a->isSin() ? 0 : 1, $a->tier->weight(), $a->relativePath, $a->line ?? PHP_INT_MAX, $a->prophetClass]
-                <=> [$b->isSin() ? 0 : 1, $b->tier->weight(), $b->relativePath, $b->line ?? PHP_INT_MAX, $b->prophetClass];
+            // Auto-fixable findings first — one `repent` clears them all, so
+            // get them out of the way before anything that needs hand work.
+            // Then sins (blocking) before warnings; then most root-cause tier;
+            // then a stable file/line/prophet walk.
+            return [$a->autoFixable ? 0 : 1, $a->isSin() ? 0 : 1, $a->tier->weight(), $a->relativePath, $a->line ?? PHP_INT_MAX, $a->prophetClass]
+                <=> [$b->autoFixable ? 0 : 1, $b->isSin() ? 0 : 1, $b->tier->weight(), $b->relativePath, $b->line ?? PHP_INT_MAX, $b->prophetClass];
         });
 
         return $kept;

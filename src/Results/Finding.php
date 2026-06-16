@@ -34,6 +34,7 @@ final class Finding
         public readonly Tier $tier,
         public readonly array $supersedes,
         public readonly string $fingerprint,
+        public readonly bool $autoFixable = false,
     ) {}
 
     public function isSin(): bool

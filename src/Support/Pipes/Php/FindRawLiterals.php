@@ -261,6 +261,35 @@ final class FindRawLiterals implements Pipe
             }
         }
 
+        // Pass 7 — null-coalesce to a type empty:
+        //   (string)($x ?? '')        -> T_String::coalesce($x)
+        //   (int)($x ?? 0)            -> T_Int::coalesce($x)
+        //   $x ?? T_Array::empty()    -> T_Array::coalesce($x)
+        $castTypes = [
+            Expr\Cast\String_::class => 'T_String',
+            Expr\Cast\Int_::class => 'T_Int',
+            Expr\Cast\Double::class => 'T_Float',
+            Expr\Cast\Bool_::class => 'T_Bool',
+        ];
+
+        foreach ($nodeFinder->findInstanceOf($ast, Expr\Cast::class) as $cast) {
+            $type = $castTypes[$cast::class] ?? null;
+
+            if ($type === null || ! $cast->expr instanceof Expr\BinaryOp\Coalesce) {
+                continue;
+            }
+
+            if (self::coalesceEmptyMatches($cast->expr->right, $type)) {
+                $findings[] = self::coalesceFinding($cast, $cast->expr->left, $type, $content);
+            }
+        }
+
+        foreach ($nodeFinder->findInstanceOf($ast, Expr\BinaryOp\Coalesce::class) as $coalesce) {
+            if (self::coalesceEmptyMatches($coalesce->right, 'T_Array')) {
+                $findings[] = self::coalesceFinding($coalesce, $coalesce->left, 'T_Array', $content);
+            }
+        }
+
         usort($findings, static fn ($a, $b) => ($a['start'] <=> $b['start']) ?: ($b['end'] <=> $a['end']));
 
         // Drop findings nested inside another (e.g. the `''` inside
@@ -513,6 +542,48 @@ final class FindRawLiterals implements Pipe
             'helper_class' => '',
             'fixable' => true,
         ];
+    }
+
+    /**
+     * @return array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, helper_class: string, fixable: bool}
+     */
+    private static function coalesceFinding(Node $expr, Node $left, string $type, string $content): array
+    {
+        return [
+            'kind' => 'coalesce',
+            'start' => (int) $expr->getStartFilePos(),
+            'end' => (int) $expr->getEndFilePos(),
+            'line' => $expr->getStartLine(),
+            'position' => 'value',
+            'predicate' => '',
+            'negate' => false,
+            'var' => self::source($content, $left),
+            'literal' => self::source($content, $expr),
+            'helper_class' => $type,
+            'fixable' => true,
+        ];
+    }
+
+    private static function coalesceEmptyMatches(Node $node, string $type): bool
+    {
+        if ($node instanceof Expr\ClassConstFetch && $node->class instanceof Node\Name) {
+            return $node->class->getLast() === $type;
+        }
+
+        if ($node instanceof Expr\StaticCall && $node->class instanceof Node\Name
+            && $node->name instanceof Node\Identifier
+            && in_array($node->name->toString(), ['empty', 'zero'], true)
+        ) {
+            return $node->class->getLast() === $type;
+        }
+
+        return match ($type) {
+            'T_String' => $node instanceof Scalar\String_ && $node->value === '',
+            'T_Int' => $node instanceof Scalar\Int_ && $node->value === 0,
+            'T_Float' => $node instanceof Scalar\Float_ && $node->value === 0.0,
+            'T_Bool' => $node instanceof Expr\ConstFetch && strtolower($node->name->toString()) === 'false',
+            default => false,
+        };
     }
 
     /**

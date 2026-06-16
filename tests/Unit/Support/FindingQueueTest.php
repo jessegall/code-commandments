@@ -17,6 +17,7 @@ class FindingQueueTest extends TestCase
         ?int $line,
         Tier $tier = Tier::Convention,
         array $supersedes = [],
+        bool $autoFixable = false,
     ): Finding {
         return new Finding(
             prophetClass: $prophet,
@@ -33,7 +34,21 @@ class FindingQueueTest extends TestCase
             tier: $tier,
             supersedes: $supersedes,
             fingerprint: md5($prophet . $file . $line),
+            autoFixable: $autoFixable,
         );
+    }
+
+    public function test_auto_fixable_findings_come_first(): void
+    {
+        // A non-fixable Structural sin vs an auto-fixable Cosmetic warning:
+        // auto-fixable wins regardless of tier, so `repent` clears the batch.
+        $structuralSin = $this->finding('Struct', 'a.php', 10, Tier::Structural);
+        $fixableCosmetic = $this->finding('Fixable', 'z.php', 99, Tier::Cosmetic, autoFixable: true);
+
+        $ordered = FindingQueue::order([$structuralSin, $fixableCosmetic]);
+
+        $this->assertSame($fixableCosmetic, $ordered[0]);
+        $this->assertSame($structuralSin, $ordered[1]);
     }
 
     public function test_orders_by_tier_then_file_then_line(): void
