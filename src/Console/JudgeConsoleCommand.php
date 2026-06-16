@@ -219,9 +219,11 @@ class JudgeConsoleCommand extends Command
         }
 
         $finding = $ordered[0];
-        $absolvable = $finding->isWarning() || (new $finding->prophetClass())->requiresConfession();
+        $prophet = new $finding->prophetClass();
+        $absolvable = $finding->isWarning() || $prophet->requiresConfession();
+        $autoFixable = $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter;
 
-        foreach (NextFindingPresenter::lines($finding, count($ordered), 'commandments', $absolvable) as $line) {
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'commandments', $absolvable, $autoFixable) as $line) {
             $output->writeln($line);
         }
 
@@ -443,7 +445,9 @@ class JudgeConsoleCommand extends Command
 
             if ($hasAutoFixable) {
                 $output->writeln('');
-                $output->writeln("[AUTO-FIXABLE] sins can be fixed with: commandments repent{$gitFlag}");
+                $output->writeln('[AUTO-FIXABLE] sins are mechanical — DO NOT fix them by hand. Run:');
+                $output->writeln("  commandments repent{$gitFlag}");
+                $output->writeln('  (repent rewrites them reliably via AST; hand-fixing wastes effort and risks mistakes.)');
             }
         }
 

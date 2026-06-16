@@ -222,7 +222,9 @@ final class JudgmentPresenter
 
             if ($hasAutoFixable) {
                 $this->output->newLine();
-                $this->output->writeln("[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent{$gitFlag}");
+                $this->output->writeln('[AUTO-FIXABLE] sins are mechanical — DO NOT fix them by hand. Run:');
+                $this->output->writeln("  php artisan commandments:repent{$gitFlag}");
+                $this->output->writeln('  (repent rewrites them reliably via AST; hand-fixing wastes effort and risks mistakes.)');
             }
         }
 

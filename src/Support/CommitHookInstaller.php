@@ -26,9 +26,12 @@ final class CommitHookInstaller
     private const POST_BEGIN = '# >>> code-commandments post-commit reset >>>';
     private const POST_END = '# <<< code-commandments post-commit reset <<<';
 
+    private const MSG_BEGIN = '# >>> code-commandments commit-msg guard >>>';
+    private const MSG_END = '# <<< code-commandments commit-msg guard <<<';
+
     public function install(string $basePath, bool $force = false): string
     {
-        return $this->writeHook($basePath, 'pre-commit', $this->block(), $force);
+        return $this->writeHook($basePath, 'pre-commit', $this->block(), self::BEGIN, self::END, $force);
     }
 
     /**
@@ -37,10 +40,18 @@ final class CommitHookInstaller
      */
     public function installPostCommit(string $basePath, bool $force = false): string
     {
-        return $this->writeHook($basePath, 'post-commit', $this->postCommitBlock(), $force);
+        return $this->writeHook($basePath, 'post-commit', $this->postCommitBlock(), self::POST_BEGIN, self::POST_END, $force);
     }
 
-    private function writeHook(string $basePath, string $name, string $block, bool $force): string
+    /**
+     * Install the commit-msg hook that rejects Co-authored-by trailers.
+     */
+    public function installCommitMsg(string $basePath, bool $force = false): string
+    {
+        return $this->writeHook($basePath, 'commit-msg', $this->commitMsgBlock(), self::MSG_BEGIN, self::MSG_END, $force);
+    }
+
+    private function writeHook(string $basePath, string $name, string $block, string $begin, string $end, bool $force): string
     {
         $gitDir = $basePath . '/.git';
 
@@ -55,8 +66,6 @@ final class CommitHookInstaller
         }
 
         $hookPath = $hooksDir . '/' . $name;
-        $begin = str_contains($block, self::POST_BEGIN) ? self::POST_BEGIN : self::BEGIN;
-        $end = str_contains($block, self::POST_END) ? self::POST_END : self::END;
 
         if (! is_file($hookPath)) {
             if (@file_put_contents($hookPath, "#!/usr/bin/env sh\n\n" . $block . "\n") === false) {
@@ -144,6 +153,24 @@ final class CommitHookInstaller
             vendor/bin/commandments absolve --clear >/dev/null 2>&1
         elif [ -f artisan ]; then
             php artisan commandments:absolve --clear >/dev/null 2>&1
+        fi
+        {$end}
+        HOOK;
+    }
+
+    private function commitMsgBlock(): string
+    {
+        $begin = self::MSG_BEGIN;
+        $end = self::MSG_END;
+
+        return <<<HOOK
+        {$begin}
+        # Reject Co-authored-by trailers in commit messages.
+        if grep -qiE '^[[:space:]]*co-authored-by:' "\$1"; then
+            echo ""
+            echo "✗ Commit blocked: Co-authored-by trailers are not allowed."
+            echo "  Remove the Co-authored-by line(s) from the commit message."
+            exit 1
         fi
         {$end}
         HOOK;

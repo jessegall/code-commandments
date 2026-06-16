@@ -22,6 +22,7 @@ class CommitHookInstallerTest extends TestCase
     {
         @unlink($this->dir . '/.git/hooks/pre-commit');
         @unlink($this->dir . '/.git/hooks/post-commit');
+        @unlink($this->dir . '/.git/hooks/commit-msg');
         @rmdir($this->dir . '/.git/hooks');
         @rmdir($this->dir . '/.git');
         @rmdir($this->dir);
@@ -83,6 +84,28 @@ class CommitHookInstallerTest extends TestCase
         $hook = file_get_contents($this->dir . '/.git/hooks/pre-commit');
         $this->assertStringContainsString('echo hi', $hook);
         $this->assertStringContainsString('code-commandments pre-commit gate', $hook);
+    }
+
+    public function test_installs_commit_msg_guard_that_blocks_coauthors(): void
+    {
+        $status = (new CommitHookInstaller())->installCommitMsg($this->dir);
+        $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $status);
+
+        $hook = $this->dir . '/.git/hooks/commit-msg';
+        $this->assertStringContainsString('co-authored-by', file_get_contents($hook));
+
+        // A message with a Co-authored-by trailer is rejected.
+        file_put_contents($this->dir . '/coauthor.txt', "feat: x\n\nCo-Authored-By: Bob <b@x>\n");
+        exec('sh ' . escapeshellarg($hook) . ' ' . escapeshellarg($this->dir . '/coauthor.txt') . ' 2>/dev/null', $o1, $blocked);
+        $this->assertSame(1, $blocked, 'Co-authored-by message should be blocked');
+
+        // A clean message passes.
+        file_put_contents($this->dir . '/clean.txt', "feat: x\n");
+        exec('sh ' . escapeshellarg($hook) . ' ' . escapeshellarg($this->dir . '/clean.txt') . ' 2>/dev/null', $o2, $clean);
+        $this->assertSame(0, $clean, 'Clean message should pass');
+
+        @unlink($this->dir . '/coauthor.txt');
+        @unlink($this->dir . '/clean.txt');
     }
 
     public function test_reports_when_not_a_git_repo(): void
