@@ -47,7 +47,7 @@ final class IssueReporter
 
     /**
      * @param  array{title: string, body: string}  $issue
-     * @return array{ok: bool, message: string}
+     * @return array{ok: bool, message: string, url: ?string, number: ?int}
      */
     public function send(array $issue, string $label = 'commandments-report'): array
     {
@@ -56,6 +56,8 @@ final class IssueReporter
                 'ok' => false,
                 'message' => "The `gh` CLI is not available. File this manually at "
                     . "https://github.com/{$this->repo}/issues/new with title:\n{$issue['title']}",
+                'url' => null,
+                'number' => null,
             ];
         }
 
@@ -81,11 +83,36 @@ final class IssueReporter
             $out = trim(implode("\n", $retry));
 
             if ($retryCode !== 0) {
-                return ['ok' => false, 'message' => "gh issue create failed: {$out}"];
+                return ['ok' => false, 'message' => "gh issue create failed: {$out}", 'url' => null, 'number' => null];
             }
         }
 
-        return ['ok' => true, 'message' => "Reported: {$out}"];
+        $url = $this->extractIssueUrl($out);
+
+        return [
+            'ok' => true,
+            'message' => "Reported: {$out}",
+            'url' => $url,
+            'number' => $url !== null ? $this->numberFromUrl($url) : null,
+        ];
+    }
+
+    private function extractIssueUrl(string $output): ?string
+    {
+        if (preg_match('#https://github\.com/[^\s]+/issues/\d+#', $output, $m) === 1) {
+            return $m[0];
+        }
+
+        return null;
+    }
+
+    private function numberFromUrl(string $url): ?int
+    {
+        if (preg_match('#/issues/(\d+)#', $url, $m) === 1) {
+            return (int) $m[1];
+        }
+
+        return null;
     }
 
     private function ghAvailable(): bool

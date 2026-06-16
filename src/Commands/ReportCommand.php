@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
+use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
 
 /**
  * Report a prophet false-positive or wrong rule as a GitHub issue.
@@ -43,6 +44,17 @@ class ReportCommand extends Command
 
         if ($result['ok']) {
             $this->info($result['message']);
+
+            if (($result['number'] ?? null) !== null && ($result['url'] ?? null) !== null) {
+                (new ReportLedger(base_path()))->record(
+                    $result['number'],
+                    $result['url'],
+                    $prophet,
+                    $repo,
+                    $reason,
+                    date('c'),
+                );
+            }
 
             return self::SUCCESS;
         }

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Console;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
+use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -50,6 +51,17 @@ class ReportConsoleCommand extends Command
 
         if ($result['ok']) {
             $output->writeln('<info>' . $result['message'] . '</info>');
+
+            if (($result['number'] ?? null) !== null && ($result['url'] ?? null) !== null) {
+                (new ReportLedger(getcwd() ?: '.'))->record(
+                    $result['number'],
+                    $result['url'],
+                    $prophet,
+                    $repo,
+                    $reason,
+                    date('c'),
+                );
+            }
 
             return Command::SUCCESS;
         }
