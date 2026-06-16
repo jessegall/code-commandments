@@ -137,6 +137,13 @@ cannot miss anything in a wall of output. For each finding do exactly one:
     WITH A REASON: `php artisan commandments:absolve --fingerprint=<hash> --reason="…"`.
 Sins are imperative and cannot be absolved — they must be fixed.
 
+OWN EVERY SIN YOU ENCOUNTER: a sin is a sin regardless of who wrote it. If
+judge surfaces a sin — in your own changes OR pre-existing in a file you are
+working in — you handle it. Fix it (sins cannot be absolved), or for an
+advisory warning whose rubric genuinely does not apply, absolve it with a
+reason. "I didn't cause this" is NEVER a reason to leave a finding in place.
+Be a gentleman: leave every file you touch righteous.
+
 REQUIRED: Always read the rule before fixing. `judge --next` prints the
 rubric inline; for the full scripture run
 `php artisan commandments:scripture --prophet=NAME`. Warnings are ADVISORY —
@@ -221,6 +228,10 @@ It shows exactly **one finding at a time** with its full rule inline — so noth
   `php artisan commandments:absolve --fingerprint=<hash> --reason="why it does not apply"`.
 
 Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave one untouched — fix or absolve every one.
+
+### Own every sin you encounter
+
+A sin is a sin regardless of who wrote it. If `judge` surfaces a sin — whether in your own changes or **pre-existing** in a file you are working in — **you handle it**: fix it (sins cannot be absolved), or for an advisory warning whose rubric genuinely does not apply, absolve it with a reason. **"I didn't cause this" is never a reason to leave a finding in place.** Be a gentleman: leave every file you touch righteous.
 
 ### Phased-commit workflow (multi-step changes, one PR)
 
