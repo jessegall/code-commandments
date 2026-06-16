@@ -39,6 +39,9 @@ final class FindImplicitDataFrom implements Pipe
         'iterator_to_array',
     ];
 
+    /** `<ShortClass>::<method>` calls that build an empty array. */
+    private const EMPTY_ARRAY_CALLS = ['T_Array::empty', 'Arr::empty'];
+
     /** @var list<string> */
     private array $dataSuffixes = ['Data'];
 
@@ -76,10 +79,15 @@ final class FindImplicitDataFrom implements Pipe
                 // new self()/static() inside a static factory of a Data class.
                 if ($isDataClass && $method->isStatic() && $method->stmts !== null) {
                     foreach ($nodeFinder->findInstanceOf($method->stmts, Expr\New_::class) as $new) {
-                        if ($this->constructsOwnClass($new, $ownName) && ! $this->hasSpread($new)) {
-                            $matches[] = $this->match($input->content, $new->getStartLine(), 'new_in_factory', $ownName ?? 'self');
-                            break;
+                        if (! $this->constructsOwnClass($new, $ownName) || $this->hasSpread($new)) {
+                            continue;
                         }
+
+                        // Bare `new self()` is a default instance → make(); a
+                        // field-by-field `new self(a: ...)` is hand hydration.
+                        $kind = $new->args === [] ? 'new_default' : 'new_mapping';
+                        $matches[] = $this->match($input->content, $new->getStartLine(), $kind, $ownName ?? 'self');
+                        break;
                     }
                 }
 
@@ -125,6 +133,10 @@ final class FindImplicitDataFrom implements Pipe
         $kind = $this->classifyArg($call->args[0]->value, $paramTypes, $propTypes, $localTypes);
         $isInside = in_array($target, ['self', 'static', 'parent'], true) || $target === $ownName;
 
+        if ($kind === 'empty') {
+            return ['kind' => 'empty_from', 'target' => $isInside ? ($ownName ?? 'self') : $target];
+        }
+
         if ($kind === 'object') {
             return ['kind' => 'nonarray', 'target' => $isInside ? ($ownName ?? 'self') : $target];
         }
@@ -145,7 +157,24 @@ final class FindImplicitDataFrom implements Pipe
     private function classifyArg(Expr $arg, array $paramTypes, array $propTypes, array $localTypes): string
     {
         if ($arg instanceof Expr\Array_) {
-            return 'array';
+            return $arg->items === [] ? 'empty' : 'array';
+        }
+
+        // Empty-array factories: T_Array::empty(), array() with no args.
+        if ($arg instanceof Expr\StaticCall
+            && $arg->class instanceof Node\Name
+            && $arg->name instanceof Node\Identifier
+            && in_array($arg->class->getLast() . '::' . $arg->name->toString(), self::EMPTY_ARRAY_CALLS, true)
+        ) {
+            return 'empty';
+        }
+
+        if ($arg instanceof Expr\FuncCall
+            && $arg->name instanceof Node\Name
+            && $arg->name->toString() === 'array'
+            && $arg->args === []
+        ) {
+            return 'empty';
         }
 
         if ($arg instanceof Scalar\String_ || $arg instanceof Scalar\Int_ || $arg instanceof Scalar\Float_
