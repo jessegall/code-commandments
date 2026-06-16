@@ -82,4 +82,44 @@ class DataClassFromArrayOnlyProphetTest extends TestCase
         $this->assertTrue($this->prophet->canRepent('/x.php'));
         $this->assertFalse($this->prophet->canRepent('/x.vue'));
     }
+
+    // ── inheritance awareness via the codebase index ──────────────────
+
+    public function test_subclass_is_clean_when_base_has_the_trait(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc-dcfao-' . uniqid();
+        mkdir($dir);
+        // Base extends Spatie Data and USES the trait.
+        file_put_contents($dir . '/BaseData.php', "<?php\nnamespace App;\nuse Spatie\\LaravelData\\Data;\nuse App\\Support\\FromArrayOnly;\nabstract class BaseData extends Data { use FromArrayOnly; }\n");
+        // Subclass extends the base — inherits the trait, so it has access.
+        $subPath = $dir . '/SongData.php';
+        $subSrc = "<?php\nnamespace App;\nfinal class SongData extends BaseData { public string \$title; }\n";
+        file_put_contents($subPath, $subSrc);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/BaseData.php', $subPath]);
+        $this->prophet->setCodebaseIndex($index);
+
+        $this->assertTrue($this->prophet->judge($subPath, $subSrc)->isRighteous());
+
+        shell_exec('rm -rf ' . escapeshellarg($dir));
+    }
+
+    public function test_subclass_is_flagged_when_no_ancestor_has_the_trait(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc-dcfao-' . uniqid();
+        mkdir($dir);
+        // Base extends Spatie Data but does NOT use the trait.
+        file_put_contents($dir . '/BaseData.php', "<?php\nnamespace App;\nuse Spatie\\LaravelData\\Data;\nabstract class BaseData extends Data {}\n");
+        $subPath = $dir . '/SongData.php';
+        $subSrc = "<?php\nnamespace App;\nfinal class SongData extends BaseData { public string \$title; }\n";
+        file_put_contents($subPath, $subSrc);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/BaseData.php', $subPath]);
+        $this->prophet->setCodebaseIndex($index);
+
+        // No ancestor provides the trait → the subclass lacks access → flagged.
+        $this->assertTrue($this->prophet->judge($subPath, $subSrc)->isFallen());
+
+        shell_exec('rm -rf ' . escapeshellarg($dir));
+    }
 }

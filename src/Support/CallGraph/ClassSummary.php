@@ -17,6 +17,7 @@ final readonly class ClassSummary
      * @param  array<string, string>  $useStatements  alias => FQCN
      * @param  array<string, string>  $propertyTypes  propName => FQCN
      * @param  array<string, MethodSummary>  $methods
+     * @param  list<string>  $traits  resolved FQCNs of traits this class uses
      */
     public function __construct(
         public string $fqcn,
@@ -25,5 +26,6 @@ final readonly class ClassSummary
         public array $propertyTypes,
         public array $methods,
         public string $filePath,
+        public array $traits = [],
     ) {}
 }

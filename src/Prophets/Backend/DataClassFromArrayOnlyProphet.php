@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
@@ -13,6 +14,7 @@ use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\PackageDetector;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
@@ -24,10 +26,17 @@ use PhpParser\ParserFactory;
  * runtime. Mechanical, so it is auto-fixable.
  */
 #[IntroducedIn('1.41.0')]
-class DataClassFromArrayOnlyProphet extends PhpCommandment implements SinRepenter
+class DataClassFromArrayOnlyProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
 {
     private const DEFAULT_BASE = 'Spatie\\LaravelData\\Data';
     private const DEFAULT_TRAIT = 'App\\Support\\FromArrayOnly';
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     public function supported(): bool
     {
@@ -116,12 +125,12 @@ SCRIPTURE;
         $warnings = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            if (! $this->extendsDataBase($class, $uses, $namespace) || $this->usesTrait($class, $traitShort)) {
+            if (! $this->lacksTraitAccess($class, $uses, $namespace)) {
                 continue;
             }
 
             $name = $class->name?->toString() ?? 'class';
-            $message = "{$name} extends Data but does not use the {$traitShort} trait.";
+            $message = "{$name} is a Data class without access to the {$traitShort} trait (not on it or any ancestor).";
             $suggestion = "Add `use {$traitShort};` to the class (and import {$this->traitFqcn()}). Run `commandments repent` to fix automatically.";
             $line = $class->getStartLine();
             $snippet = $this->lineAt($content, $line);
@@ -196,6 +205,85 @@ SCRIPTURE;
         }
 
         return RepentanceResult::absolved($content, $penance);
+    }
+
+    /**
+     * Whether this class is a Data class (extends the Data base, possibly
+     * transitively) that has NO access to the trait — neither on itself nor
+     * on any ancestor. With the cross-file index this checks the whole chain
+     * ("does the base already provide it?"); without it, it falls back to
+     * flagging only classes that extend the Data base directly.
+     *
+     * @param  array<string, string>  $uses
+     */
+    private function lacksTraitAccess(Node\Stmt\Class_ $class, array $uses, ?string $namespace): bool
+    {
+        if (! $class->extends instanceof Node\Name) {
+            return false;
+        }
+
+        if ($this->usesTrait($class, $this->traitShort())) {
+            return false;
+        }
+
+        $parentFqcn = $this->resolve($class->extends, $uses, $namespace);
+
+        if ($this->index !== null) {
+            [$isData, $hasTrait] = $this->walkChain($parentFqcn);
+
+            return $isData && ! $hasTrait;
+        }
+
+        return $parentFqcn === $this->baseFqcn();
+    }
+
+    /**
+     * Walk the ancestor chain via the index, reporting whether it reaches the
+     * Data base and whether any ancestor uses the trait.
+     *
+     * @return array{0: bool, 1: bool}  [isData, hasTrait]
+     */
+    private function walkChain(?string $parentFqcn): array
+    {
+        $isData = false;
+        $hasTrait = false;
+        $seen = [];
+        $cur = $parentFqcn;
+        $traitShort = $this->traitShort();
+        $baseShort = $this->shortName($this->baseFqcn());
+
+        while ($cur !== null && ! isset($seen[$cur])) {
+            $seen[$cur] = true;
+
+            if ($cur === $this->baseFqcn() || $this->shortName($cur) === $baseShort) {
+                $isData = true;
+                break;
+            }
+
+            $summary = $this->index?->classByFqcn($cur);
+
+            if ($summary === null) {
+                break;
+            }
+
+            foreach ($summary->traits as $trait) {
+                if ($this->shortName($trait) === $traitShort) {
+                    $hasTrait = true;
+                    break;
+                }
+            }
+
+            $cur = $summary->parent;
+        }
+
+        return [$isData, $hasTrait];
+    }
+
+    private function shortName(string $fqcn): string
+    {
+        $parts = explode('\\', $fqcn);
+
+        return end($parts) ?: $fqcn;
     }
 
     /**
