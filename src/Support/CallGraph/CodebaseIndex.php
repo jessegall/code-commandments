@@ -184,6 +184,7 @@ final class CodebaseIndex
                 propertyTypes: $shell['propertyTypes'],
                 methods: $methods,
                 filePath: $shell['file'],
+                traits: self::collectTraits($shell['classNode'], $shell['uses'], $shell['namespace']),
             );
         }
 
@@ -467,6 +468,29 @@ final class CodebaseIndex
         }
 
         return $types;
+    }
+
+    /**
+     * Resolved FQCNs of every trait the class `use`s.
+     *
+     * @param  array<string, string>  $uses
+     * @return list<string>
+     */
+    private static function collectTraits(Node\Stmt\Class_ $class, array $uses, ?string $namespace): array
+    {
+        $traits = [];
+
+        foreach ($class->stmts as $stmt) {
+            if (! $stmt instanceof Node\Stmt\TraitUse) {
+                continue;
+            }
+
+            foreach ($stmt->traits as $trait) {
+                $traits[] = NameResolver::resolve($trait->toString(), $uses, $namespace);
+            }
+        }
+
+        return $traits;
     }
 
     private static function isScalar(string $type): bool
