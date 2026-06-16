@@ -85,6 +85,11 @@ return [
                     // 'min_key_reads' => 2,
                     // 'min_property_reads' => 3,
                 ],
+                Backend\NoRepeatedHydrationProphet::class => [
+                    // 'min_occurrences' => 2,
+                    // 'methods' => ['from'],
+                    // 'severity' => 'warning',   // or 'sin'
+                ],
                 Backend\PreferNamedExceptionsProphet::class => [
                     // Exception classes that may be thrown inline:
                     // 'allow' => ['InvalidArgumentException'],
