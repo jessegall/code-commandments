@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
+use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
@@ -106,8 +107,14 @@ existing static call is itself flagged and re-anchored:
 
 Severities are tiered:
 
-  - WARNING ([AUTO-FIXABLE]) when the matched enum already uses the
-    configured trait — the static helper exists, so `repent` rewrites it.
+  - SIN ([AUTO-FIXABLE]) for an existing static `Enum::equals($x, Enum::Case)`
+    against a literal case — unambiguously the wrong form (the call already
+    uses the trait API; the case must anchor on itself), so `repent` rewrites
+    it to `Enum::Case->equals($x)`.
+
+  - WARNING ([AUTO-FIXABLE]) for a raw `===`/`!==` comparison when the matched
+    enum already uses the configured trait — the helper exists, so `repent`
+    rewrites it.
 
   - WARNING (quieter, one per enum per file) when the enum exists but
     hasn't adopted the trait yet — a nudge to add the trait first. NOT
@@ -147,7 +154,7 @@ SCRIPTURE;
         $seenAdoptionHint = [];
 
         return $pipeline
-            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $ast, &$seenAdoptionHint): ?Warning {
+            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $ast, &$seenAdoptionHint): Sin|Warning|null {
                 $enumFqcn = $match->groups['enum_fqcn'];
 
                 // `$x === Foo::BAR` is only enum-case equality when Foo is an
@@ -159,11 +166,11 @@ SCRIPTURE;
                 }
 
                 // An EXISTING `Enum::equals($x, Enum::Case)` static call already
-                // routes through the trait (it would not compile otherwise), so
-                // it is always re-anchorable and auto-fixable — never an adoption
-                // hint.
+                // routes through the trait (it would not compile otherwise) and
+                // is unambiguously the wrong form — a known case must anchor on
+                // itself. That is a SIN (auto-fixable), not a soft nudge.
                 if (($match->groups['from_static'] ?? '0') === '1') {
-                    return $this->primaryWarning($match);
+                    return $this->staticAnchorSin($match);
                 }
 
                 $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
@@ -256,33 +263,46 @@ SCRIPTURE;
     private function primaryWarning(MatchResult $match): Warning
     {
         $groups = $match->groups;
-        $rewrite = $this->rewrite($groups);
 
-        if (($groups['from_static'] ?? '0') === '1') {
-            $case = explode(',', $groups['cases'])[0];
-
-            $message = sprintf(
-                'Static `%s::%s(...)` checks against the known case `%s::%s` — anchor on the case instead: `%s`. Reserve the static form for dynamic-vs-dynamic checks.',
-                $groups['enum_short'],
-                $this->methodFor($groups['op']),
-                $groups['enum_short'],
-                $case,
-                $rewrite,
-            );
-        } else {
-            $message = sprintf(
-                '%s comparison on %s — use the null-safe `%s`.',
-                $this->opLabel($groups['op']),
-                $groups['enum_short'],
-                $rewrite,
-            );
-        }
+        $message = sprintf(
+            '%s comparison on %s — use the null-safe `%s`.',
+            $this->opLabel($groups['op']),
+            $groups['enum_short'],
+            $this->rewrite($groups),
+        );
 
         return Warning::at(
             line: $match->line,
             message: $message,
             snippet: $match->content,
             autoFixable: true,
+        );
+    }
+
+    /**
+     * A static `Enum::equals($x, Enum::Case)` against a literal case is the
+     * wrong form — anchor on the case. This is a sin (auto-fixable), since it
+     * is unambiguous and already uses the trait API.
+     */
+    private function staticAnchorSin(MatchResult $match): Sin
+    {
+        $groups = $match->groups;
+        $case = explode(',', $groups['cases'])[0];
+        $rewrite = $this->rewrite($groups);
+
+        $message = sprintf(
+            'Static `%s::%s(...)` checks against the known case `%s::%s` — only use the static form when the value being checked against is dynamic. Anchor on the case instead.',
+            $groups['enum_short'],
+            $this->methodFor($groups['op']),
+            $groups['enum_short'],
+            $case,
+        );
+
+        return Sin::at(
+            line: $match->line,
+            message: $message,
+            snippet: $match->content,
+            suggestion: sprintf('Rewrite as `%s` (auto-fixable).', $rewrite),
         );
     }
 
