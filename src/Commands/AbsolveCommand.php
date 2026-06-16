@@ -17,7 +17,8 @@ class AbsolveCommand extends Command
 {
     protected $signature = 'commandments:absolve
         {--fingerprint= : The finding fingerprint shown by judge --next}
-        {--reason= : Why the rule does not apply here (required)}';
+        {--reason= : Why the rule does not apply here (required)}
+        {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}';
 
     protected $description = 'Absolve a single finding by fingerprint, with a required reason';
 
@@ -26,6 +27,18 @@ class AbsolveCommand extends Command
         ScrollManager $manager,
         ConfessionTracker $tracker
     ): int {
+        if ((bool) $this->option('all')) {
+            $result = (new Absolver($manager, $registry, $tracker))->absolveAll($this->option('reason'));
+
+            $this->info("Baselined the queue: absolved {$result['absolved']} advisory finding(s).");
+
+            if ($result['blocking_sins'] > 0) {
+                $this->warn("{$result['blocking_sins']} sin(s) cannot be absolved and still block — fix them with: php artisan commandments:judge --next");
+            }
+
+            return self::SUCCESS;
+        }
+
         $fingerprint = $this->option('fingerprint');
 
         if (! is_string($fingerprint) || trim($fingerprint) === '') {

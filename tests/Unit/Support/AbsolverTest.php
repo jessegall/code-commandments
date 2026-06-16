@@ -141,4 +141,21 @@ class AbsolverTest extends TestCase
         $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
         $this->assertStringContainsString('No live finding', $result['message']);
     }
+
+    public function test_absolve_all_baselines_warnings_but_not_sins(): void
+    {
+        $absolver = new Absolver($this->manager, $this->registry, $this->tracker);
+
+        $result = $absolver->absolveAll('baseline backlog');
+
+        $this->assertGreaterThanOrEqual(1, $result['absolved']);
+        $this->assertGreaterThanOrEqual(1, $result['blocking_sins']);
+
+        // The warning is now absolved; the sin still surfaces.
+        $remaining = $this->findings();
+        $this->assertNotEmpty($remaining, 'The sin should still be reported.');
+        foreach ($remaining as $finding) {
+            $this->assertSame('sin', $finding->kind, 'Only sins should remain after baselining.');
+        }
+    }
 }

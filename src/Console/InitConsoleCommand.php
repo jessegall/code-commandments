@@ -204,7 +204,11 @@ This project uses Code Commandments to enforce coding standards.
 IMPORTANT: Never commit code with sins. The git pre-commit hook will BLOCK
 any commit while sins remain.
 
-THE GUIDED WORKFLOW (use this): run `vendor/bin/commandments judge --next`.
+THE GUIDED WORKFLOW (use this): run `vendor/bin/commandments judge --next --git`.
+Scope to YOUR changes with --git so you are not handed the repo's pre-existing
+backlog (plain `--next` walks the whole codebase). To accept a large
+pre-existing backlog once so only NEW findings surface, run
+`vendor/bin/commandments absolve --all --reason="accept backlog"`.
 It shows exactly ONE finding at a time with its full rule inline, so you
 cannot miss anything in a wall of output. For each finding do exactly one:
   - Fix it, then run `judge --next` again for the next one; OR
@@ -255,7 +259,13 @@ This project enforces coding standards via the Code Commandments package.
 ### The guided workflow (use this)
 
 ```bash
-vendor/bin/commandments judge --next
+vendor/bin/commandments judge --next --git   # walk findings in YOUR changes
+```
+
+**Scope to your own changes with `--git`** so you are not handed the whole repo's pre-existing backlog. (Plain `judge --next` walks the entire codebase.) If a large pre-existing backlog is in the way, baseline it once — this absolves every current advisory finding so only NEW ones surface (sins still block):
+
+```bash
+vendor/bin/commandments absolve --all --reason="accept pre-existing backlog"
 ```
 
 It shows exactly **one finding at a time** with its full rule inline — so nothing gets lost in a wall of output. For each finding, do exactly one of:

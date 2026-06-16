@@ -21,12 +21,25 @@ class AbsolveConsoleCommand extends Command
             ->setDescription('Absolve a single finding by fingerprint, with a required reason')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint shown by judge --next')
-            ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply here (required)');
+            ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply here (required)')
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
+
+        if ((bool) $input->getOption('all')) {
+            $result = (new Absolver($manager, $registry, $tracker))->absolveAll($input->getOption('reason'));
+
+            $output->writeln("<info>Baselined the queue: absolved {$result['absolved']} advisory finding(s).</info>");
+
+            if ($result['blocking_sins'] > 0) {
+                $output->writeln("<comment>{$result['blocking_sins']} sin(s) cannot be absolved and still block — fix them with: commandments judge --next</comment>");
+            }
+
+            return Command::SUCCESS;
+        }
 
         $fingerprint = $input->getOption('fingerprint');
 
