@@ -9,6 +9,11 @@ namespace JesseGall\CodeCommandments\Results;
  */
 final class Sin
 {
+    /**
+     * @param  bool|null  $autoFixable  per-finding override of the prophet's
+     *   SinRepenter capability: true/false forces it, null defers to the
+     *   prophet (a prophet that only fixes SOME of its findings sets this).
+     */
     public function __construct(
         public readonly string $message,
         public readonly ?int $line = null,
@@ -16,12 +21,13 @@ final class Sin
         public readonly ?string $snippet = null,
         public readonly ?string $suggestion = null,
         public readonly ?string $symbol = null,
+        public readonly ?bool $autoFixable = null,
     ) {}
 
     /**
      * Create a sin with a line number.
      */
-    public static function at(int $line, string $message, ?string $snippet = null, ?string $suggestion = null, ?string $symbol = null): self
+    public static function at(int $line, string $message, ?string $snippet = null, ?string $suggestion = null, ?string $symbol = null, ?bool $autoFixable = null): self
     {
         return new self(
             message: $message,
@@ -29,6 +35,7 @@ final class Sin
             snippet: $snippet,
             suggestion: $suggestion,
             symbol: $symbol,
+            autoFixable: $autoFixable,
         );
     }
 

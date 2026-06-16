@@ -549,6 +549,16 @@ final class FindRawLiterals implements Pipe
      */
     private static function coalesceFinding(Node $expr, Node $left, string $type, string $content): array
     {
+        $leftSource = self::source($content, $left);
+
+        // `??` has isset semantics — it suppresses undefined-key / unset-property
+        // warnings on the left operand. Passing that operand to coalesce()
+        // evaluates it eagerly, which would throw for, say, a missing array key.
+        // So only a definitely-evaluable operand (a plain variable or $this->prop)
+        // becomes the clean `coalesce($x)`; anything else keeps the suppression
+        // with `coalesce($x ?? null)` so behaviour is preserved exactly.
+        $var = self::isSafeCoalesceTarget($left) ? $leftSource : $leftSource . ' ?? null';
+
         return [
             'kind' => 'coalesce',
             'start' => (int) $expr->getStartFilePos(),
@@ -557,11 +567,27 @@ final class FindRawLiterals implements Pipe
             'position' => 'value',
             'predicate' => '',
             'negate' => false,
-            'var' => self::source($content, $left),
+            'var' => $var,
             'literal' => self::source($content, $expr),
             'helper_class' => $type,
             'fixable' => true,
         ];
+    }
+
+    /**
+     * Whether the operand can be evaluated eagerly without `??`'s isset
+     * suppression changing behaviour.
+     */
+    private static function isSafeCoalesceTarget(Node $left): bool
+    {
+        if ($left instanceof Expr\Variable) {
+            return true;
+        }
+
+        return $left instanceof Expr\PropertyFetch
+            && $left->var instanceof Expr\Variable
+            && $left->var->name === 'this'
+            && $left->name instanceof Node\Identifier;
     }
 
     private static function coalesceEmptyMatches(Node $node, string $type): bool

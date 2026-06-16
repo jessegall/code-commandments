@@ -583,6 +583,19 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('use JesseGall\\PhpTypes\\T_String;', $result->newContent);
     }
 
+    public function test_coalesce_autofix_preserves_isset_semantics_on_array_access(): void
+    {
+        // Regression: `$arr[$k] ?? T_Array::empty()` must NOT become
+        // `T_Array::coalesce($arr[$k])` (eager eval throws on a missing key).
+        // It must keep the isset suppression via `?? null`.
+        $src = "<?php\nnamespace App;\nuse JesseGall\\PhpTypes\\T_Array;\nfinal class Spec {\n    public function a(array \$arr, \$k): array { return \$arr[\$k] ?? T_Array::empty(); }\n}\n";
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('T_Array::coalesce($arr[$k] ?? null)', $result->newContent);
+        $this->assertStringNotContainsString('coalesce($arr[$k])', $result->newContent);
+    }
+
     private function judgeBody(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', $this->wrap("public function run(): mixed { {$body} }"));

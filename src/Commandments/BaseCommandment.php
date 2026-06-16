@@ -138,9 +138,9 @@ abstract class BaseCommandment implements Commandment
     /**
      * Create a sin at a specific line.
      */
-    protected function sinAt(int $line, string $message, ?string $snippet = null, ?string $suggestion = null, ?string $symbol = null): Sin
+    protected function sinAt(int $line, string $message, ?string $snippet = null, ?string $suggestion = null, ?string $symbol = null, ?bool $autoFixable = null): Sin
     {
-        return Sin::at($line, $message, $snippet, $suggestion, $symbol);
+        return Sin::at($line, $message, $snippet, $suggestion, $symbol, $autoFixable);
     }
 
     /**
@@ -154,9 +154,9 @@ abstract class BaseCommandment implements Commandment
     /**
      * Create a warning at a specific line.
      */
-    protected function warningAt(int $line, string $message, ?string $snippet = null, ?string $symbol = null): Warning
+    protected function warningAt(int $line, string $message, ?string $snippet = null, ?string $symbol = null, ?bool $autoFixable = null): Warning
     {
-        return Warning::at($line, $message, $snippet, $symbol);
+        return Warning::at($line, $message, $snippet, $symbol, $autoFixable);
     }
 
     /**

@@ -136,11 +136,16 @@ SCRIPTURE;
         $suggestion = $this->suggestionFor($match);
         $symbol = $match->groups['target'] . ':' . $match->groups['kind'];
 
+        // Only the mechanical cases are auto-fixable; field-by-field new self()
+        // and object/toArray from() need a human factory, so do NOT advertise
+        // [AUTO-FIXABLE] there (repent would no-op and waste a cycle).
+        $autoFixable = in_array($match->groups['kind'], ['empty_from', 'new_default'], true);
+
         if ($this->config('severity', 'warning') === 'sin') {
-            return $this->sinAt($match->line, $message, $match->content, $suggestion, $symbol);
+            return $this->sinAt($match->line, $message, $match->content, $suggestion, $symbol, $autoFixable);
         }
 
-        return $this->warningAt($match->line, $message . ' ' . $suggestion, $match->content, $symbol);
+        return $this->warningAt($match->line, $message . ' ' . $suggestion, $match->content, $symbol, $autoFixable);
     }
 
     private function messageFor(MatchResult $match): string
