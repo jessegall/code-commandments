@@ -64,6 +64,53 @@ final class Absolver
         ];
     }
 
+    /**
+     * Baseline the queue: absolve every live advisory finding at once (and
+     * requiresConfession sins), so `judge --next` and the warning report
+     * start clean. Plain sins are NEVER absolved — they are reported back as
+     * still-blocking. New findings (different fingerprints) still surface
+     * later; this only accepts the CURRENT backlog.
+     *
+     * @return array{absolved: int, blocking_sins: int}
+     */
+    public function absolveAll(?string $reason): array
+    {
+        $reason = ($reason === null || trim($reason) === '')
+            ? 'Baselined: pre-existing finding accepted'
+            : $reason;
+
+        $collector = new FindingCollector($this->tracker);
+        $seen = [];
+        $absolved = 0;
+        $blockingSins = 0;
+
+        foreach ($this->registry->getScrolls() as $scroll) {
+            $results = $this->manager->judgeScroll($scroll);
+
+            foreach ($collector->collect($results, null, markSeen: false) as $finding) {
+                if (isset($seen[$finding->fingerprint])) {
+                    continue;
+                }
+
+                $seen[$finding->fingerprint] = true;
+
+                $absolvable = $finding->isWarning()
+                    || $this->prophet($finding->prophetClass)->requiresConfession();
+
+                if (! $absolvable) {
+                    $blockingSins++;
+
+                    continue;
+                }
+
+                $this->tracker->absolveFinding($finding->fingerprint, $reason);
+                $absolved++;
+            }
+        }
+
+        return ['absolved' => $absolved, 'blocking_sins' => $blockingSins];
+    }
+
     private function locate(string $fingerprint): ?Finding
     {
         $collector = new FindingCollector($this->tracker);
