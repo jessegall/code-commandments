@@ -137,6 +137,18 @@ return [
                     //     'App\\Workflow\\PortRef' => 'App\\Workflow\\NullPortRef',
                     // ],
                 ],
+                Backend\PreferEnumCaseGroupsProphet::class => [
+                    // Smallest inline group worth naming on the enum:
+                    // 'min_group' => 3,
+                    //
+                    // How many sites inline the same group before it's "reused":
+                    // 'min_reuse' => 2,
+                    //
+                    // Enums whose groups should never be flagged:
+                    // 'exclude_enums' => [
+                    //     'App\\Support\\SomeFlagEnum',
+                    // ],
+                ],
                 Backend\PreferStaticOverInvokableConstructProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [

@@ -565,6 +565,97 @@ class StringsThatShouldBeEnumsProphetTest extends TestCase
     }
 
     // ────────────────────────────────────────────────────────────────
+    // Pattern 5/6/7: match / switch / if-else branching on a closed set
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_flags_match_on_enum_case_strings(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function f(\$direction): string {
+                return match (\$direction) {
+                    'input' => 'a',
+                    'output' => 'b',
+                    default => 'c',
+                };
+            }
+        }
+        PHP;
+
+        $judgment = $this->judge($content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('PortDirection', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_switch_on_enum_case_strings(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function f(\$direction): string {
+                switch (\$direction) {
+                    case 'input': return 'a';
+                    case 'output': return 'b';
+                }
+                return 'c';
+            }
+        }
+        PHP;
+
+        $judgment = $this->judge($content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('PortDirection', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_if_elseif_chain_on_enum_case_strings(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function f(\$direction): string {
+                if (\$direction === 'input') {
+                    return 'a';
+                } elseif (\$direction === 'output') {
+                    return 'b';
+                }
+                return 'c';
+            }
+        }
+        PHP;
+
+        $judgment = $this->judge($content);
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('PortDirection', $judgment->sins[0]->message);
+    }
+
+    public function test_does_not_flag_match_with_no_matching_enum(): void
+    {
+        $content = <<<PHP
+        <?php
+        namespace App;
+        use {$this->ns('PortDirection')};
+        class W {
+            public function f(\$direction): string {
+                return match (\$direction) {
+                    'north' => 'a',
+                    'south' => 'b',
+                    default => 'c',
+                };
+            }
+        }
+        PHP;
+
+        $this->assertTrue($this->judge($content)->isRighteous());
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // Helpers
     // ────────────────────────────────────────────────────────────────
 

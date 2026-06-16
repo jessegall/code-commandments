@@ -36,6 +36,13 @@ final class CodebaseIndex
         'request' => 'request()',
     ];
 
+    /**
+     * Smallest group size the index records. Kept permissive (below the
+     * prophet's default `min_group` of 3) so a lowered config still finds
+     * its occurrences — the prophet re-applies its own threshold.
+     */
+    private const ENUM_GROUP_MIN_FLOOR = 2;
+
     /** @var array<string, ClassSummary> */
     private array $classes = [];
 
@@ -53,6 +60,9 @@ final class CodebaseIndex
 
     /** @var array<string, list<array{file: string, line: int}>>   key = fallback-expression fingerprint */
     private array $fallbacksByFingerprint = [];
+
+    /** @var array<string, list<array{file: string, line: int}>>   key = canonical enum-case-group key */
+    private array $enumCaseGroupsByKey = [];
 
     /**
      * Build from an iterable of file paths. Parse failures are swallowed —
@@ -137,6 +147,8 @@ final class CodebaseIndex
                     'line' => $node->getStartLine(),
                 ];
             }
+
+            self::indexEnumCaseGroups($ast, $path, $instance);
         }
 
         // Pass 1: build ClassSummary shells (fqcn, parent, use map, propertyTypes)
@@ -263,6 +275,28 @@ final class CodebaseIndex
         return $this->fallbacksByFingerprint[$fingerprint] ?? [];
     }
 
+    /**
+     * Every site across the scroll where an inline subset of an enum's cases
+     * canonicalises to the same group key. Order and repetition of cases
+     * inside each array don't matter — the key is the sorted, de-duplicated
+     * set of `EnumFqcn::CaseName` strings. Used to tell whether a group is
+     * genuinely reused (and so deserves a named accessor on the enum).
+     *
+     * @return list<array{file: string, line: int}>
+     */
+    public function enumCaseGroupOccurrences(string $key): array
+    {
+        return $this->enumCaseGroupsByKey[$key] ?? [];
+    }
+
+    /**
+     * How many sites across the scroll inline the same enum-case group.
+     */
+    public function enumCaseGroupCount(string $key): int
+    {
+        return count($this->enumCaseGroupsByKey[$key] ?? []);
+    }
+
     // ────────────────────────────────────────────────────────────────
     // Build helpers
     // ────────────────────────────────────────────────────────────────
@@ -316,6 +350,87 @@ final class CodebaseIndex
         }
 
         return $out;
+    }
+
+    /**
+     * Record every qualifying inline enum-case group in the file, keyed by
+     * its canonical group key. Groups inside the enum's OWN file are skipped
+     * (that file is where the named accessor would live, and named-group
+     * method bodies like `return [self::A, self::B]` would otherwise inflate
+     * the count). Groups that are the haystack of `in_array`/`array_search`
+     * are skipped too — that membership test is the CompareSelf rule's
+     * territory.
+     *
+     * @param  array<Node>  $ast
+     */
+    private static function indexEnumCaseGroups(array $ast, string $path, self $instance): void
+    {
+        $finder = new NodeFinder;
+
+        foreach ($ast as $node) {
+            $namespace = null;
+            $scope = [$node];
+
+            if ($node instanceof Node\Stmt\Namespace_) {
+                $namespace = $node->name?->toString();
+                $scope = $node->stmts;
+            }
+
+            $uses = self::collectUseStatements($scope);
+
+            // FQCNs of enums DEFINED in this scope — arrays of their own cases
+            // are the named-group home, not a duplicate inline subset.
+            $localEnumFqcns = [];
+
+            foreach ($scope as $stmt) {
+                if ($stmt instanceof Node\Stmt\Enum_ && $stmt->name !== null) {
+                    $short = $stmt->name->toString();
+                    $localEnumFqcns[$namespace !== null && $namespace !== '' ? $namespace . '\\' . $short : $short] = true;
+                }
+            }
+
+            // Membership-test haystacks to exclude.
+            $needles = new \SplObjectStorage;
+
+            /** @var array<Expr\FuncCall> $calls */
+            $calls = $finder->findInstanceOf($scope, Expr\FuncCall::class);
+
+            foreach ($calls as $call) {
+                foreach ($finder->findInstanceOf([$call], Expr\Array_::class) as $array) {
+                    assert($array instanceof Expr\Array_);
+
+                    if (EnumCaseGroup::isMembershipNeedle($array, $call)) {
+                        $needles->attach($array);
+                    }
+                }
+            }
+
+            /** @var array<Expr\Array_> $arrays */
+            $arrays = $finder->findInstanceOf($scope, Expr\Array_::class);
+
+            foreach ($arrays as $array) {
+                assert($array instanceof Expr\Array_);
+
+                if ($needles->contains($array)) {
+                    continue;
+                }
+
+                $resolved = EnumCaseGroup::resolve($array, $uses, $namespace, self::ENUM_GROUP_MIN_FLOOR);
+
+                if ($resolved === null) {
+                    continue;
+                }
+
+                if (isset($localEnumFqcns[$resolved['fqcn']])) {
+                    continue;
+                }
+
+                $instance->enumCaseGroupsByKey[EnumCaseGroup::canonicalKey($resolved)][] = [
+                    'file' => $path,
+                    'line' => $array->getStartLine(),
+                ];
+            }
+        }
     }
 
     private static function summariseEnum(?string $namespace, Node\Stmt\Enum_ $enum, string $file): ?EnumSummary
