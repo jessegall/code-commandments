@@ -411,7 +411,7 @@ final class CodebaseIndex
             foreach ($arrays as $array) {
                 assert($array instanceof Expr\Array_);
 
-                if ($needles->contains($array)) {
+                if ($needles->offsetExists($array)) {
                     continue;
                 }
 
