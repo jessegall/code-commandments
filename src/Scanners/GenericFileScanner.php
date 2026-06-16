@@ -27,7 +27,10 @@ class GenericFileScanner implements FileScanner
         }
 
         $finder = new Finder();
-        $finder->files()->in($validPaths);
+        // A single unreadable subdirectory (macOS-protected temp dirs,
+        // permission-locked vendored trees, etc.) must not crash the whole
+        // run — skip what we can't read and keep scanning.
+        $finder->files()->ignoreUnreadableDirs()->in($validPaths);
 
         if (!empty($extensions)) {
             $patterns = array_map(fn (string $ext) => '*.' . ltrim($ext, '.'), $extensions);

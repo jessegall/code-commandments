@@ -122,8 +122,10 @@ WHAT FIRES — an `[...]` array literal is flagged when ALL hold:
      named-group accessor would live.
 
 This is a cross-file rule: it needs the codebase index to know a group
-is reused. Single-file runs (`--file`) have no index, so this prophet
-stays SILENT — it cannot establish reuse from one file.
+is reused. The index is always built from the FULL scroll — even under
+`--file`, `--git`, or `--staged`, which only narrow what gets reported,
+not what the rule may see. The prophet stays SILENT only when no index
+could be built at all.
 
 The fix is not auto-fixable: the group's NAME is semantic and can't be
 inferred. The prophet points at the duplicate; you name it.
@@ -143,7 +145,8 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         // Cross-file rule: without an index we cannot establish reuse, so we
-        // stay silent (single-file `--file` runs land here).
+        // stay silent. `--file` now builds the full-scroll index, so this
+        // only triggers when no index could be built at all.
         if ($this->index === null) {
             return $this->righteous();
         }
