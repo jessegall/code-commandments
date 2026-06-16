@@ -47,7 +47,7 @@ class CommitHookInstallerTest extends TestCase
         $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $installer->install($this->dir));
         $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $installer->installPostCommit($this->dir));
 
-        $this->assertStringContainsString('judge --git', file_get_contents($this->dir . '/.git/hooks/pre-commit'));
+        $this->assertStringContainsString('judge --staged', file_get_contents($this->dir . '/.git/hooks/pre-commit'));
         $this->assertStringContainsString('absolve --clear', file_get_contents($this->dir . '/.git/hooks/post-commit'));
     }
 
@@ -58,7 +58,7 @@ class CommitHookInstallerTest extends TestCase
         $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $status);
 
         $hook = file_get_contents($this->dir . '/.git/hooks/pre-commit');
-        $this->assertStringContainsString('judge --git', $hook);
+        $this->assertStringContainsString('judge --staged', $hook);
         $this->assertStringContainsString('Commit blocked', $hook);
         $this->assertTrue(is_executable($this->dir . '/.git/hooks/pre-commit'));
     }

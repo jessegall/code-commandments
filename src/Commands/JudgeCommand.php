@@ -29,6 +29,7 @@ class JudgeCommand extends Command
         {--files= : Judge specific files (comma-separated)}
         {--path= : Override the scroll path and target a specific directory (bypasses all excludes)}
         {--git : Only judge files that are new or changed in git}
+        {--staged : Only judge files staged for commit (what the pre-commit gate uses)}
         {--absolve : Mark files as absolved after confession (manual review)}
         {--next : Show exactly one finding at a time (fix or absolve to advance)}';
 
@@ -63,6 +64,7 @@ class JudgeCommand extends Command
                 ->toArray()
             : [];
         $gitMode = (bool) $this->option('git');
+        $stagedMode = (bool) $this->option('staged');
         $pathFilter = $this->option('path');
         $shouldAbsolve = (bool) $this->option('absolve');
 
@@ -70,11 +72,12 @@ class JudgeCommand extends Command
             '--file' => $fileFilter !== null,
             '--files' => ! empty($filesFilter),
             '--git' => $gitMode,
+            '--staged' => $stagedMode,
             '--path' => $pathFilter !== null,
         ]);
 
         if (count($exclusiveFlags) > 1) {
-            $this->error('--file, --files, --git, and --path are mutually exclusive.');
+            $this->error('--file, --files, --git, --staged, and --path are mutually exclusive.');
 
             return self::FAILURE;
         }
@@ -91,10 +94,17 @@ class JudgeCommand extends Command
             $pathFilter = $resolvedPath;
         }
 
+        // --staged reuses the git file-list routing, but with only the files
+        // staged for commit — this is what the pre-commit gate judges.
+        if ($stagedMode) {
+            $gitMode = true;
+        }
+
         // Handle git mode
         $gitFiles = [];
         if ($gitMode) {
-            $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
+            $detector = GitFileDetector::for(Environment::basePath());
+            $gitFiles = $stagedMode ? $detector->getStagedFiles() : $detector->getChangedFiles();
 
             if (empty($gitFiles)) {
                 return self::SUCCESS;
