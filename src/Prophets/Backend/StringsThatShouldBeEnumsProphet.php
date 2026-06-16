@@ -92,6 +92,17 @@ This prophet flags three patterns:
    if one doesn't exist yet. When a name-matched enum DOES exist,
    the suggestion gets concrete.
 
+4. Array of string literals as a closed-set membership test.
+
+   Bad:
+       in_array($type, ['string', 'int', 'float', 'bool'], true)
+   Good:
+       in_array($type, [FieldType::String, FieldType::Int, FieldType::Float, FieldType::Bool], true)
+
+   When every literal in an `in_array(...)` / `array_search(...)` array
+   is a case of one name-matched enum, the bare strings are an enum in
+   disguise — build the set from the enum's cases instead.
+
 IMPORTANT: the matched enum is only the closest EXISTING one (by name
 and cases) — it is a CANDIDATE, not a requirement. The fix is "make
 this a typed enum value", NOT "reuse that specific enum". If the match
@@ -152,6 +163,17 @@ SCRIPTURE;
             );
         }
 
+        if ($match->name === 'literal_array_closed_set') {
+            return sprintf(
+                "Closed set of string literals [%s] tested against %s — every value is a case of %s. Build the set from enum cases (%s::Case, …), or introduce a purpose-specific enum if %s is not the right home.",
+                $groups['literals'],
+                $groups['subject'],
+                $groups['enum_short'],
+                $groups['enum_short'],
+                $groups['enum_short'],
+            );
+        }
+
         $unimported = $groups['requires_import'] === '1';
 
         return sprintf(
@@ -188,6 +210,19 @@ SCRIPTURE;
                 $groups['enum_short'],
                 $importHint,
                 $groups['subject'],
+            );
+        }
+
+        if ($match->name === 'literal_array_closed_set') {
+            $importHint = ($groups['requires_import'] ?? '') === '1'
+                ? sprintf(' Import `%s` and ', $groups['enum_fqcn'])
+                : ' ';
+
+            return sprintf(
+                'The literals are cases of `%s`.%sbuild the array from its cases — or, if %s models a different concern, define a purpose-specific enum.',
+                $groups['enum_short'],
+                $importHint,
+                $groups['enum_short'],
             );
         }
 

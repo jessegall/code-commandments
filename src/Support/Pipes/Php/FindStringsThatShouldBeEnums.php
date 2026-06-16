@@ -269,7 +269,121 @@ final class FindStringsThatShouldBeEnums implements Pipe
             }
         }
 
+        // Pattern 4: an array of string literals used as a closed-set membership
+        // test — `in_array($x, ['string', 'int', 'float', 'bool'], true)` — whose
+        // values are all cases of one name-matched enum.
+        foreach ($nodeFinder->find($input->ast, fn ($n) => $n instanceof Expr\FuncCall) as $call) {
+            assert($call instanceof Expr\FuncCall);
+
+            if (! $this->isInArrayCall($call) || count($call->args) < 2) {
+                continue;
+            }
+
+            $needle = $call->args[0] instanceof Node\Arg ? $call->args[0]->value : null;
+            $arrayArg = $call->args[1] instanceof Node\Arg ? $call->args[1]->value : null;
+
+            if ($needle === null || ! $arrayArg instanceof Expr\Array_) {
+                continue;
+            }
+
+            $literals = $this->stringLiteralsOf($arrayArg);
+
+            if ($literals === null || count($literals) < 2) {
+                continue;
+            }
+
+            if ($this->isInsideWireFormatScope($call, $parentMap)) {
+                continue;
+            }
+
+            $identifier = $this->subjectIdentifier($needle);
+
+            if ($identifier === null) {
+                continue;
+            }
+
+            $candidate = $this->findCandidateEnumForLiterals($identifier, $literals, $importedEnums);
+
+            if ($candidate === null) {
+                continue;
+            }
+
+            [$shortName, $info, $importedAlias] = $candidate;
+            $dedupe = "in_array::{$info['fqcn']}::" . implode(',', $literals);
+
+            if (isset($seen[$dedupe])) {
+                continue;
+            }
+
+            $seen[$dedupe] = true;
+            sort($literals);
+
+            $matches[] = new MatchResult(
+                name: 'literal_array_closed_set',
+                pattern: '',
+                match: "in_array(\${$identifier}, [" . implode(', ', $literals) . '])',
+                line: $call->getStartLine(),
+                offset: null,
+                content: $this->getSnippet($input->content, $call->getStartLine()),
+                groups: [
+                    'subject' => "\${$identifier}",
+                    'enum_short' => $shortName,
+                    'enum_fqcn' => $info['fqcn'],
+                    'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
+                    'requires_import' => $importedAlias === null ? '1' : '',
+                ],
+            );
+        }
+
         return $input->with(matches: $matches);
+    }
+
+    private function isInArrayCall(Expr\FuncCall $call): bool
+    {
+        return $call->name instanceof Node\Name
+            && in_array(strtolower($call->name->toString()), ['in_array', 'array_search'], true);
+    }
+
+    /**
+     * Every element is a plain string literal — returns their distinct values,
+     * or null when the array holds anything else (non-string, spread, keyed).
+     *
+     * @return list<string>|null
+     */
+    private function stringLiteralsOf(Expr\Array_ $array): ?array
+    {
+        $values = [];
+
+        foreach ($array->items as $item) {
+            if (! $item instanceof Node\ArrayItem || $item->key !== null || $item->byRef || $item->unpack) {
+                return null;
+            }
+
+            if (! $item->value instanceof Scalar\String_) {
+                return null;
+            }
+
+            $values[$item->value->value] = true;
+        }
+
+        return $values === [] ? null : array_keys($values);
+    }
+
+    /**
+     * The name to correlate against an enum — a plain variable or property
+     * fetch. Returns null for anything without a stable identifier.
+     */
+    private function subjectIdentifier(Node $needle): ?string
+    {
+        if ($needle instanceof Expr\Variable && is_string($needle->name)) {
+            return $needle->name;
+        }
+
+        if ($needle instanceof Expr\PropertyFetch && $needle->name instanceof Node\Identifier) {
+            return $needle->name->toString();
+        }
+
+        return null;
     }
 
     /**
