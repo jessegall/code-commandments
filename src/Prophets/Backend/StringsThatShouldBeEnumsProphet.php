@@ -103,6 +103,19 @@ This prophet flags three patterns:
    is a case of one name-matched enum, the bare strings are an enum in
    disguise — build the set from the enum's cases instead.
 
+5. Branching on string literals — `match`, `switch`, `if`/`elseif`.
+
+   Bad:
+       match ($port->kind) { 'input' => …, 'output' => … }
+       switch ($port->kind) { case 'input': …; case 'output': … }
+       if ($port->kind === 'input') { … } elseif ($port->kind === 'output') { … }
+   Good:
+       match ($port->kind) { PortKind::Input => …, PortKind::Output => … }
+
+   When the arms / cases / chain conditions are all string literals that
+   are cases of one name-matched enum, type the subject as the enum and
+   branch on its cases — bare strings bypass exhaustiveness and refactors.
+
 IMPORTANT: the matched enum is only the closest EXISTING one (by name
 and cases) — it is a CANDIDATE, not a requirement. The fix is "make
 this a typed enum value", NOT "reuse that specific enum". If the match
@@ -163,6 +176,19 @@ SCRIPTURE;
             );
         }
 
+        if ($match->name === 'control_flow_closed_set') {
+            return sprintf(
+                "%s branches on string literals [%s] of %s — every value is a case of %s. Type %s as %s and branch on its cases (%s) instead of raw strings.",
+                ucfirst((string) ($groups['kind'] ?? 'match')),
+                $groups['literals'],
+                $groups['subject'],
+                $groups['enum_short'],
+                $groups['subject'],
+                $groups['enum_short'],
+                $groups['enum_cases'],
+            );
+        }
+
         if ($match->name === 'literal_array_closed_set') {
             return sprintf(
                 "Closed set of string literals [%s] tested against %s — a one-of test where every value is a case of %s. Collapse it with the CompareSelf helper: %s::equalsAny(%s, %s) (static, since %s is a value), or %s->equalsAny(...) once %s is the enum. Don't rebuild it as a raw in_array.",
@@ -214,6 +240,21 @@ SCRIPTURE;
                 $groups['enum_short'],
                 $importHint,
                 $groups['subject'],
+            );
+        }
+
+        if ($match->name === 'control_flow_closed_set') {
+            $importHint = ($groups['requires_import'] ?? '') === '1'
+                ? sprintf('Import `%s`, then ', $groups['enum_fqcn'])
+                : '';
+
+            return sprintf(
+                '%sthe branch labels are cases of `%s` — make %s an `%s` and switch on its cases (%s). If a different concern, a purpose-specific enum may fit better.',
+                $importHint,
+                $groups['enum_short'],
+                $groups['subject'],
+                $groups['enum_short'],
+                $groups['enum_cases'],
             );
         }
 

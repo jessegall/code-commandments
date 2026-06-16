@@ -15,6 +15,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter;
 use ReflectionEnum;
 
 /**
@@ -341,7 +342,220 @@ final class FindStringsThatShouldBeEnums implements Pipe
             );
         }
 
+        // Pattern 5/6/7: branching on a closed set of string literals — `match`
+        // arms, `switch` cases, or an `if`/`elseif` chain comparing one subject
+        // to string literals — where the literals are all cases of one
+        // name-matched enum. Branch on the enum, not raw strings.
+        foreach ($this->controlFlowSets($input->ast, $nodeFinder) as [$subjectNode, $literals, $node, $kind]) {
+            if (count($literals) < 2) {
+                continue;
+            }
+
+            if ($this->isInsideWireFormatScope($node, $parentMap)) {
+                continue;
+            }
+
+            $identifier = $this->subjectIdentifier($subjectNode);
+
+            if ($identifier === null) {
+                continue;
+            }
+
+            $candidate = $this->findCandidateEnumForLiterals($identifier, $literals, $importedEnums);
+
+            if ($candidate === null) {
+                continue;
+            }
+
+            [$shortName, $info, $importedAlias] = $candidate;
+            $dedupe = "ctrl::{$info['fqcn']}::{$identifier}::" . $node->getStartLine();
+
+            if (isset($seen[$dedupe])) {
+                continue;
+            }
+
+            $seen[$dedupe] = true;
+            sort($literals);
+
+            $enumCases = implode(', ', array_map(
+                fn ($lit) => $shortName . '::' . ($info['cases'][$lit] ?? $lit),
+                $literals,
+            ));
+
+            $matches[] = new MatchResult(
+                name: 'control_flow_closed_set',
+                pattern: '',
+                match: "{$kind} on \${$identifier}: " . implode(', ', $literals),
+                line: $node->getStartLine(),
+                offset: null,
+                content: $this->getSnippet($input->content, $node->getStartLine()),
+                groups: [
+                    'kind' => $kind,
+                    'subject' => "\${$identifier}",
+                    'enum_short' => $shortName,
+                    'enum_fqcn' => $info['fqcn'],
+                    'enum_cases' => $enumCases,
+                    'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
+                    'requires_import' => $importedAlias === null ? '1' : '',
+                ],
+            );
+        }
+
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * Collect (subject, string-literal set, node, kind) tuples from `match`
+     * expressions, `switch` statements, and `if`/`elseif` equality chains.
+     *
+     * @param  array<Node>  $ast
+     * @return list<array{0: Node, 1: list<string>, 2: Node, 3: string}>
+     */
+    private function controlFlowSets(array $ast, NodeFinder $finder): array
+    {
+        $sets = [];
+
+        foreach ($finder->findInstanceOf($ast, Expr\Match_::class) as $match) {
+            $literals = $this->armStringLiterals($match->arms);
+
+            if ($literals !== null) {
+                $sets[] = [$match->cond, $literals, $match, 'match'];
+            }
+        }
+
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\Switch_::class) as $switch) {
+            $literals = $this->caseStringLiterals($switch->cases);
+
+            if ($literals !== null) {
+                $sets[] = [$switch->cond, $literals, $switch, 'switch'];
+            }
+        }
+
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\If_::class) as $if) {
+            $chain = $this->ifChainStringLiterals($if);
+
+            if ($chain !== null) {
+                $sets[] = [$chain[0], $chain[1], $if, 'if/else'];
+            }
+        }
+
+        return $sets;
+    }
+
+    /**
+     * Every non-default arm condition is a string literal — return their
+     * distinct values, or null if any arm matches on something else.
+     *
+     * @param  array<Node\MatchArm>  $arms
+     * @return list<string>|null
+     */
+    private function armStringLiterals(array $arms): ?array
+    {
+        $values = [];
+
+        foreach ($arms as $arm) {
+            if ($arm->conds === null) {
+                continue; // default arm
+            }
+
+            foreach ($arm->conds as $cond) {
+                if (! $cond instanceof Scalar\String_) {
+                    return null;
+                }
+
+                $values[$cond->value] = true;
+            }
+        }
+
+        return $values === [] ? null : array_keys($values);
+    }
+
+    /**
+     * @param  array<Node\Stmt\Case_>  $cases
+     * @return list<string>|null
+     */
+    private function caseStringLiterals(array $cases): ?array
+    {
+        $values = [];
+
+        foreach ($cases as $case) {
+            if ($case->cond === null) {
+                continue; // default
+            }
+
+            if (! $case->cond instanceof Scalar\String_) {
+                return null;
+            }
+
+            $values[$case->cond->value] = true;
+        }
+
+        return $values === [] ? null : array_keys($values);
+    }
+
+    /**
+     * An `if`/`elseif` chain where every branch compares the SAME subject to a
+     * string literal (`$x === 'a'` / `'a' === $x`). Returns [subject, literals]
+     * or null.
+     *
+     * @return array{0: Node, 1: list<string>}|null
+     */
+    private function ifChainStringLiterals(Node\Stmt\If_ $if): ?array
+    {
+        $conds = array_merge([$if->cond], array_map(static fn ($e) => $e->cond, $if->elseifs));
+        $printer = new PrettyPrinter\Standard;
+
+        $subjectSource = null;
+        $subjectNode = null;
+        $values = [];
+
+        foreach ($conds as $cond) {
+            $pair = $this->equalityAgainstString($cond);
+
+            if ($pair === null) {
+                return null;
+            }
+
+            [$subj, $literal] = $pair;
+            $printed = $printer->prettyPrintExpr($subj);
+
+            if ($subjectSource === null) {
+                $subjectSource = $printed;
+                $subjectNode = $subj;
+            } elseif ($subjectSource !== $printed) {
+                return null;
+            }
+
+            $values[$literal] = true;
+        }
+
+        if ($subjectNode === null || count($values) < 2) {
+            return null;
+        }
+
+        return [$subjectNode, array_keys($values)];
+    }
+
+    /**
+     * `$x === 'literal'` / `'literal' === $x` -> [subject, literal].
+     *
+     * @return array{0: Node, 1: string}|null
+     */
+    private function equalityAgainstString(Node $cond): ?array
+    {
+        if (! $cond instanceof Expr\BinaryOp\Identical) {
+            return null;
+        }
+
+        if ($cond->right instanceof Scalar\String_) {
+            return [$cond->left, $cond->right->value];
+        }
+
+        if ($cond->left instanceof Scalar\String_) {
+            return [$cond->right, $cond->left->value];
+        }
+
+        return null;
     }
 
     private function isInArrayCall(Expr\FuncCall $call): bool
