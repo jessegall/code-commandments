@@ -177,7 +177,120 @@ final class FindChainedEnumEqualityComparisons implements Pipe
             $this->collectSingles($input, $finder, $printer, $parentMap, $consumed, $matches);
         }
 
+        $this->collectInArray($input, $finder, $printer, $parentMap, $matches);
+
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * `in_array($x, [Enum::A, Enum::B, …], true)` — a membership test against a
+     * closed set of cases of ONE enum — is a one-of test and collapses to
+     * `$x->equalsAny(...)` / `Enum::equalsAny($x, ...)`.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @param  list<MatchResult>  $matches
+     */
+    private function collectInArray(
+        mixed $input,
+        NodeFinder $finder,
+        PrettyPrinter\Standard $printer,
+        array $parentMap,
+        array &$matches,
+    ): void {
+        foreach ($finder->findInstanceOf($input->ast, Expr\FuncCall::class) as $call) {
+            if (! $call->name instanceof Node\Name
+                || strtolower($call->name->toString()) !== 'in_array'
+                || count($call->args) < 2
+            ) {
+                continue;
+            }
+
+            $needle = $call->args[0] instanceof Node\Arg ? $call->args[0]->value : null;
+            $haystack = $call->args[1] instanceof Node\Arg ? $call->args[1]->value : null;
+
+            if ($needle === null || ! $haystack instanceof Expr\Array_) {
+                continue;
+            }
+
+            $analysis = $this->analyseCaseArray($needle, $haystack, $printer);
+
+            if ($analysis === null || $this->isInsideWireFormatScope($call, $parentMap)) {
+                continue;
+            }
+
+            $resolvedFqcn = $this->resolveFqcn($analysis['classNode'], $input->useStatements, $input->namespace);
+
+            if ($this->isExcluded($resolvedFqcn, $analysis['shortName'])) {
+                continue;
+            }
+
+            $matches[] = $this->makeMatch(
+                root: $call,
+                analysis: $analysis,
+                resolvedFqcn: $resolvedFqcn,
+                content: $input->content,
+                op: count($analysis['cases']) === 1 ? 'equals' : 'one_of',
+            );
+        }
+    }
+
+    /**
+     * Validate that every element of the array is an enum-case fetch of the same
+     * enum, and return the chain analysis shape.
+     *
+     * @return array{lhsSource: string, classNode: Node\Name, shortName: string, cases: list<string>, atoms: list<Node>}|null
+     */
+    private function analyseCaseArray(Node $needle, Expr\Array_ $array, PrettyPrinter\Standard $printer): ?array
+    {
+        if ($array->items === []) {
+            return null;
+        }
+
+        $classKey = null;
+        $classNode = null;
+        $shortName = null;
+        $cases = [];
+
+        foreach ($array->items as $item) {
+            if (! $item instanceof Node\ArrayItem || $item->key !== null || $item->byRef || $item->unpack) {
+                return null;
+            }
+
+            if (! $this->isCaseFetch($item->value)) {
+                return null;
+            }
+
+            /** @var Expr\ClassConstFetch $fetch */
+            $fetch = $item->value;
+
+            if (! $fetch->class instanceof Node\Name || ! $fetch->name instanceof Node\Identifier) {
+                return null;
+            }
+
+            $currentKey = $fetch->class->toString();
+
+            if ($classKey === null) {
+                $classKey = $currentKey;
+                $classNode = $fetch->class;
+                $shortName = $fetch->class->getLast();
+            } elseif ($classKey !== $currentKey) {
+                return null;
+            }
+
+            $cases[] = $fetch->name->toString();
+        }
+
+        if ($classNode === null || $shortName === null) {
+            return null;
+        }
+
+        return [
+            'lhsSource' => $printer->prettyPrintExpr($needle),
+            'classNode' => $classNode,
+            'shortName' => $shortName,
+            'cases' => $cases,
+            'atoms' => [],
+        ];
     }
 
     /**

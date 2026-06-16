@@ -165,12 +165,16 @@ SCRIPTURE;
 
         if ($match->name === 'literal_array_closed_set') {
             return sprintf(
-                "Closed set of string literals [%s] tested against %s — every value is a case of %s. Build the set from enum cases (%s::Case, …), or introduce a purpose-specific enum if %s is not the right home.",
+                "Closed set of string literals [%s] tested against %s — a one-of test where every value is a case of %s. Collapse it with the CompareSelf helper: %s::equalsAny(%s, %s) (static, since %s is a value), or %s->equalsAny(...) once %s is the enum. Don't rebuild it as a raw in_array.",
                 $groups['literals'],
                 $groups['subject'],
                 $groups['enum_short'],
                 $groups['enum_short'],
-                $groups['enum_short'],
+                $groups['subject'],
+                $groups['enum_cases'],
+                $groups['subject'],
+                $groups['subject'],
+                $groups['subject'],
             );
         }
 
@@ -215,13 +219,15 @@ SCRIPTURE;
 
         if ($match->name === 'literal_array_closed_set') {
             $importHint = ($groups['requires_import'] ?? '') === '1'
-                ? sprintf(' Import `%s` and ', $groups['enum_fqcn'])
-                : ' ';
+                ? sprintf('Import `%s`, then ', $groups['enum_fqcn'])
+                : '';
 
             return sprintf(
-                'The literals are cases of `%s`.%sbuild the array from its cases — or, if %s models a different concern, define a purpose-specific enum.',
-                $groups['enum_short'],
+                '%sreplace the membership test with `%s::equalsAny(%s, %s)` (CompareSelf). If %s is not the right home, a purpose-specific enum may fit better.',
                 $importHint,
+                $groups['enum_short'],
+                $groups['subject'],
+                $groups['enum_cases'],
                 $groups['enum_short'],
             );
         }

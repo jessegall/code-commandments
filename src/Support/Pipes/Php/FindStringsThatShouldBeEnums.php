@@ -318,6 +318,11 @@ final class FindStringsThatShouldBeEnums implements Pipe
             $seen[$dedupe] = true;
             sort($literals);
 
+            $enumCases = implode(', ', array_map(
+                fn ($lit) => $shortName . '::' . ($info['cases'][$lit] ?? $lit),
+                $literals,
+            ));
+
             $matches[] = new MatchResult(
                 name: 'literal_array_closed_set',
                 pattern: '',
@@ -329,6 +334,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                     'subject' => "\${$identifier}",
                     'enum_short' => $shortName,
                     'enum_fqcn' => $info['fqcn'],
+                    'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
                     'requires_import' => $importedAlias === null ? '1' : '',
                 ],
