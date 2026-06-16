@@ -762,10 +762,11 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         }
         PHP);
 
-        $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('PortKind::Bag->equals($input->kind())', $judgment->warnings[0]->message);
-        $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
-        $this->assertTrue($judgment->warnings[0]->autoFixable);
+        // The wrong-form static call is a SIN (auto-fixable), not a soft nudge.
+        $this->assertCount(1, $judgment->sins);
+        $this->assertCount(0, $judgment->warnings);
+        $this->assertStringContainsString('known case `PortKind::Bag`', $judgment->sins[0]->message);
+        $this->assertStringContainsString('PortKind::Bag->equals($input->kind())', $judgment->sins[0]->suggestion);
     }
 
     public function test_flags_static_not_equals_against_literal_case(): void
@@ -787,8 +788,8 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         }
         PHP);
 
-        $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('PortKind::Bag->notEquals($input->kind())', $judgment->warnings[0]->message);
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('PortKind::Bag->notEquals($input->kind())', $judgment->sins[0]->suggestion);
     }
 
     public function test_does_not_flag_static_equals_between_two_dynamic_values(): void
