@@ -104,6 +104,35 @@ class PreferNamedExceptionsProphetTest extends TestCase
         $this->assertFallen($judgment, 1);
     }
 
+    public function test_does_not_flag_message_less_bad_method_call_guard(): void
+    {
+        // The canonical __call / __callStatic guard — the TYPE is the signal and
+        // no message is assembled, so the named-exception rule does not apply.
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function __call(string $name, array $arguments): mixed {
+            throw new \BadMethodCallException();
+        }
+        PHP);
+
+        $this->assertFalse(
+            $judgment->isFallen(),
+            'Sins: ' . json_encode(array_map(fn ($s) => $s->message, $judgment->sins))
+        );
+    }
+
+    public function test_flags_bad_method_call_with_message(): void
+    {
+        // A BadMethodCallException handed a message string is still a sin —
+        // only the message-less guard is exempt.
+        $judgment = $this->judgeClass(<<<'PHP'
+        public function __call(string $name, array $arguments): mixed {
+            throw new \BadMethodCallException("no such method {$name} on this class");
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+    }
+
     // ────────────────────────────────────────────────────────────────
     // Named exceptions with inline message strings
     // ────────────────────────────────────────────────────────────────

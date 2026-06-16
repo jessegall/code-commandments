@@ -128,6 +128,13 @@ final class FindInlineExceptionConstruction implements Pipe
         $firstArg = $this->firstArgument($new);
         $messageIsString = $firstArg !== null && $this->isStringExpression($firstArg);
 
+        // A message-less BadMethodCall/BadFunctionCallException is the canonical
+        // __call / __callStatic / __invoke guard — the TYPE is the entire signal
+        // and no message is assembled, so the named-exception rule does not apply.
+        if ($firstArg === null && $this->isCallMisuseException($resolved)) {
+            return null;
+        }
+
         if (! $isGeneric && ! $messageIsString) {
             return null; // Named exception fed domain values — acceptable.
         }
@@ -207,6 +214,15 @@ final class FindInlineExceptionConstruction implements Pipe
                 'factory' => $call->name instanceof Node\Identifier ? $call->name->toString() : 'make',
                 'suggested' => $shortName,
             ],
+        );
+    }
+
+    private function isCallMisuseException(string $resolved): bool
+    {
+        return in_array(
+            ltrim($resolved, '\\'),
+            ['BadMethodCallException', 'BadFunctionCallException'],
+            true,
         );
     }
 
