@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
+use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
@@ -35,6 +36,7 @@ class InitConsoleCommand extends Command
         $this->createConfig($basePath, $force, $autoDetect, $output);
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
+        $this->installCommitHook($basePath, $force, $output);
 
         $output->writeln('');
         $output->writeln('Done! Next steps:');
@@ -48,6 +50,19 @@ class InitConsoleCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function installCommitHook(string $basePath, bool $force, OutputInterface $output): void
+    {
+        $status = (new CommitHookInstaller())->install($basePath, $force);
+
+        match ($status) {
+            CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git pre-commit gate at .git/hooks/pre-commit'),
+            CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the pre-commit gate to your existing .git/hooks/pre-commit'),
+            CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Pre-commit gate already installed (use --force to refresh it)'),
+            CommitHookInstaller::STATUS_NOT_GIT => $output->writeln('Not a git repository — skipped the pre-commit gate.'),
+            CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/pre-commit — check permissions.'),
+        };
     }
 
     private function createConfig(string $basePath, bool $force, bool $autoDetect, OutputInterface $output): void
@@ -186,17 +201,37 @@ class InitConsoleCommand extends Command
             $settings['instructions'] = <<<'INSTRUCTIONS'
 This project uses Code Commandments to enforce coding standards.
 
-IMPORTANT: Never commit code with sins. Fix all violations first.
+IMPORTANT: Never commit code with sins. The git pre-commit hook will BLOCK
+any commit while sins remain.
 
-REQUIRED: When judge reports sins, you MUST run the scripture --prophet command for EACH violated prophet to read the full rule before fixing. The detailed description is the authoritative specification — follow it exactly.
+THE GUIDED WORKFLOW (use this): run `vendor/bin/commandments judge --next`.
+It shows exactly ONE finding at a time with its full rule inline, so you
+cannot miss anything in a wall of output. For each finding do exactly one:
+  - Fix it, then run `judge --next` again for the next one; OR
+  - If it is an advisory WARNING whose rubric does not apply here, absolve it
+    WITH A REASON: `vendor/bin/commandments absolve --fingerprint=<hash> --reason="…"`.
+Sins are imperative and cannot be absolved — they must be fixed.
+
+REQUIRED: Always read the rule before fixing. `judge --next` prints the
+rubric inline; for the full scripture run
+`vendor/bin/commandments scripture --prophet=NAME`. Warnings are ADVISORY —
+each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave
+one untouched: fix or absolve every one.
+
+PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
+  1. Implement ONE phase.
+  2. Run `vendor/bin/commandments judge --git`, then `--next` until clean —
+     fix every sin (and address each warning).
+  3. Commit and push that phase.
+  4. Move to the next phase and repeat.
+This keeps every commit righteous and each phase reviewable on its own.
 
 COMMANDS:
-  vendor/bin/commandments judge              # Check for violations
+  vendor/bin/commandments judge --git        # Check changed files
+  vendor/bin/commandments judge --next       # GUIDED: one finding at a time
+  vendor/bin/commandments absolve --fingerprint=H --reason="…"  # warnings only
   vendor/bin/commandments repent             # Auto-fix where possible
-  vendor/bin/commandments scripture          # List all rules
-  vendor/bin/commandments scripture --prophet=NAME  # MUST READ for each sin
-
-Use --files=a.php,b.php to target specific files.
+  vendor/bin/commandments scripture --prophet=NAME  # Full rule for a prophet
 INSTRUCTIONS;
         }
 
@@ -213,30 +248,42 @@ INSTRUCTIONS;
 
 This project enforces coding standards via the Code Commandments package.
 
-**IMPORTANT: Never commit code with sins. Fix all violations first.**
+**IMPORTANT: Never commit code with sins. A git pre-commit hook will BLOCK any commit while sins remain.**
 
-**REQUIRED: When judge reports sins, you MUST run `commandments scripture --prophet=NAME` for EACH violated prophet to read the full rule before fixing. The detailed description is the authoritative specification — follow it exactly.**
+**REQUIRED: Always read the rule before fixing. `judge --next` shows the rubric inline; `commandments scripture --prophet=NAME` shows the full scripture. The detailed description is the authoritative specification — follow it exactly.**
+
+### The guided workflow (use this)
+
+```bash
+vendor/bin/commandments judge --next
+```
+
+It shows exactly **one finding at a time** with its full rule inline — so nothing gets lost in a wall of output. For each finding, do exactly one of:
+
+- **Fix it**, then run `judge --next` again for the next finding; or
+- If it is an advisory **warning** whose rubric does not apply here, **absolve it with a reason**:
+  `vendor/bin/commandments absolve --fingerprint=<hash> --reason="why it does not apply"`.
+
+Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave one untouched — fix or absolve every one.
+
+### Phased-commit workflow (multi-step changes, one PR)
+
+1. Implement **one phase**.
+2. Run `commandments judge --git`, then `--next` until clean — fix every sin and address each warning.
+3. **Commit and push** that phase.
+4. Move to the next phase and repeat.
+
+Every commit stays righteous and each phase is reviewable on its own.
 
 ### Commands
 
 ```bash
-vendor/bin/commandments judge              # Check for violations
-vendor/bin/commandments judge --git        # Check only changed files
+vendor/bin/commandments judge --git        # Check changed files
+vendor/bin/commandments judge --next       # GUIDED: one finding at a time
+vendor/bin/commandments absolve --fingerprint=H --reason="…"  # warnings only
 vendor/bin/commandments repent             # Auto-fix [AUTO-FIXABLE] sins
-vendor/bin/commandments scripture          # List all rules
-vendor/bin/commandments scripture --prophet=NAME  # MUST READ for each sin
+vendor/bin/commandments scripture --prophet=NAME  # Full rule for a prophet
 ```
-
-Use `--files=a.php,b.php` to target specific files.
-
-### Workflow
-
-1. Write code
-2. Run `commandments judge` - see violations
-3. For each sin type, run `commandments scripture --prophet=NAME` to read the full rule
-4. Run `commandments repent` - auto-fix what's possible
-5. Manually fix remaining sins following the detailed descriptions exactly
-6. Re-run judge until clean, then commit
 MARKDOWN;
 
         if (file_exists($claudeMdPath)) {

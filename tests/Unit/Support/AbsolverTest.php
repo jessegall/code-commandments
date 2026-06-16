@@ -1,0 +1,144 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Tests\Unit\Support;
+
+use Illuminate\Filesystem\Filesystem;
+use JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Results\Finding;
+use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
+use JesseGall\CodeCommandments\Support\Absolver;
+use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\FindingCollector;
+use JesseGall\CodeCommandments\Support\ProphetRegistry;
+use JesseGall\CodeCommandments\Support\ScrollManager;
+use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
+use JesseGall\CodeCommandments\Tests\TestCase;
+
+class AbsolverTest extends TestCase
+{
+    private string $dir;
+    private string $tablet;
+    private ProphetRegistry $registry;
+    private ScrollManager $manager;
+    private JsonConfessionTracker $tracker;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->dir = sys_get_temp_dir() . '/cc-absolver-' . uniqid();
+        mkdir($this->dir);
+        Environment::setBasePath($this->dir);
+
+        // A warning (PreferOption, 3 callers) and a sin (raw request input in a
+        // controller) in one file.
+        file_put_contents($this->dir . '/ServiceController.php', <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Http\Request;
+        class ServiceController {
+            public function findRef(array $edges): mixed {
+                foreach ($edges as $e) { if ($e) { return $e; } }
+                return null;
+            }
+            public function a(): void { $this->findRef([]); }
+            public function b(): void { $this->findRef([]); }
+            public function c(): void { $this->findRef([]); }
+            public function store(Request $request): mixed { return $request->input('name'); }
+        }
+        PHP);
+
+        $this->tablet = $this->dir . '/.commandments/confessions.json';
+
+        $this->registry = new ProphetRegistry();
+        $this->registry->registerMany('backend', [
+            PreferOptionOverNullProphet::class,
+            NoRawRequestProphet::class,
+        ]);
+        $this->registry->setScrollConfig('backend', [
+            'path' => $this->dir,
+            'extensions' => ['php'],
+            'exclude' => [],
+            'prophets' => [PreferOptionOverNullProphet::class, NoRawRequestProphet::class],
+        ]);
+
+        $this->manager = new ScrollManager($this->registry, new GenericFileScanner());
+        $this->tracker = new JsonConfessionTracker($this->tablet, new Filesystem());
+    }
+
+    protected function tearDown(): void
+    {
+        @unlink($this->dir . '/ServiceController.php');
+        @unlink($this->tablet);
+        @rmdir($this->dir . '/.commandments');
+        @rmdir($this->dir);
+        parent::tearDown();
+    }
+
+    /**
+     * @return list<Finding>
+     */
+    private function findings(): array
+    {
+        $collector = new FindingCollector($this->tracker);
+
+        return $collector->collect($this->manager->judgeScroll('backend'), null, markSeen: false);
+    }
+
+    private function findingOfKind(string $kind): Finding
+    {
+        foreach ($this->findings() as $finding) {
+            if ($finding->kind === $kind) {
+                return $finding;
+            }
+        }
+
+        $this->fail("No {$kind} finding produced by fixture.");
+    }
+
+    public function test_absolves_a_warning_with_a_reason(): void
+    {
+        $warning = $this->findingOfKind('warning');
+
+        $result = (new Absolver($this->manager, $this->registry, $this->tracker))
+            ->absolve($warning->fingerprint, 'only an internal helper, callers are local');
+
+        $this->assertSame(Absolver::STATUS_OK, $result['status']);
+        $this->assertTrue($this->tracker->isFindingAbsolved($warning->fingerprint));
+    }
+
+    public function test_refuses_to_absolve_a_sin(): void
+    {
+        $sin = $this->findingOfKind('sin');
+
+        $result = (new Absolver($this->manager, $this->registry, $this->tracker))
+            ->absolve($sin->fingerprint, 'I do not want to fix it');
+
+        $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
+        $this->assertStringContainsString('must be FIXED', $result['message']);
+        $this->assertFalse($this->tracker->isFindingAbsolved($sin->fingerprint));
+    }
+
+    public function test_requires_a_reason(): void
+    {
+        $warning = $this->findingOfKind('warning');
+
+        $result = (new Absolver($this->manager, $this->registry, $this->tracker))
+            ->absolve($warning->fingerprint, '   ');
+
+        $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
+        $this->assertStringContainsString('reason is required', $result['message']);
+    }
+
+    public function test_unknown_fingerprint_is_rejected(): void
+    {
+        $result = (new Absolver($this->manager, $this->registry, $this->tracker))
+            ->absolve('deadbeefdeadbeef', 'whatever');
+
+        $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
+        $this->assertStringContainsString('No live finding', $result['message']);
+    }
+}

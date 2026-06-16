@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
+use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 
 /**
  * Install Claude Code hooks for the commandments.
@@ -59,12 +60,29 @@ class InstallHooksCommand extends Command
         // Create/update CLAUDE.md
         $this->createClaudeMd();
 
+        // Install the git pre-commit gate that hard-blocks commits with sins.
+        $this->installCommitHook();
+
         $this->output->newLine();
         $this->output->writeln('Hooks will:');
         $this->output->writeln('- Show commandments on session start');
-        $this->output->writeln('- Judge code after Claude completes work');
+        $this->output->writeln('- Judge changed code after Claude completes work');
+        $this->output->writeln('- Block git commits while any sins remain (pre-commit hook)');
 
         return self::SUCCESS;
+    }
+
+    private function installCommitHook(): void
+    {
+        $status = (new CommitHookInstaller())->install(base_path(), (bool) $this->option('force'));
+
+        match ($status) {
+            CommitHookInstaller::STATUS_INSTALLED => $this->output->writeln('Installed git pre-commit gate at .git/hooks/pre-commit'),
+            CommitHookInstaller::STATUS_APPENDED => $this->output->writeln('Appended the pre-commit gate to your existing .git/hooks/pre-commit'),
+            CommitHookInstaller::STATUS_ALREADY_PRESENT => $this->output->writeln('Pre-commit gate already installed — use --force to refresh it'),
+            CommitHookInstaller::STATUS_NOT_GIT => $this->warn('Not a git repository — skipped the pre-commit gate.'),
+            CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/pre-commit — check permissions.'),
+        };
     }
 
     /**
@@ -104,17 +122,37 @@ class InstallHooksCommand extends Command
         return <<<'INSTRUCTIONS'
 This project uses Code Commandments to enforce coding standards.
 
-IMPORTANT: Never commit code with sins. Fix all violations first.
+IMPORTANT: Never commit code with sins. The git pre-commit hook will BLOCK
+any commit while sins remain.
 
-REQUIRED: When judge reports sins, you MUST run the scripture --prophet command for EACH violated prophet to read the full rule before fixing. The detailed description is the authoritative specification — follow it exactly.
+THE GUIDED WORKFLOW (use this): run `php artisan commandments:judge --next`.
+It shows exactly ONE finding at a time with its full rule inline, so you
+cannot miss anything in a wall of output. For each finding do exactly one:
+  - Fix it, then run `judge --next` again for the next one; OR
+  - If it is an advisory WARNING whose rubric does not apply here, absolve it
+    WITH A REASON: `php artisan commandments:absolve --fingerprint=<hash> --reason="…"`.
+Sins are imperative and cannot be absolved — they must be fixed.
+
+REQUIRED: Always read the rule before fixing. `judge --next` prints the
+rubric inline; for the full scripture run
+`php artisan commandments:scripture --prophet=NAME`. Warnings are ADVISORY —
+each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave
+one untouched: fix or absolve every one.
+
+PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
+  1. Implement ONE phase.
+  2. Run `php artisan commandments:judge --git`, then `--next` until clean —
+     fix every sin (and address each warning).
+  3. Commit and push that phase.
+  4. Move to the next phase and repeat.
+This keeps every commit righteous and each phase reviewable on its own.
 
 COMMANDS:
-  php artisan commandments:judge              # Check for violations
+  php artisan commandments:judge --git        # Check changed files
+  php artisan commandments:judge --next       # GUIDED: one finding at a time
+  php artisan commandments:absolve --fingerprint=H --reason="…"  # warnings only
   php artisan commandments:repent             # Auto-fix where possible
-  php artisan commandments:scripture          # List all rules
-  php artisan commandments:scripture --prophet=NAME  # MUST READ for each sin
-
-Use --files=a.php,b.php to target specific files.
+  php artisan commandments:scripture --prophet=NAME  # Full rule for a prophet
 INSTRUCTIONS;
     }
 
@@ -156,30 +194,42 @@ INSTRUCTIONS;
 
 This project enforces coding standards via the Code Commandments package.
 
-**IMPORTANT: Never commit code with sins. Fix all violations first.**
+**IMPORTANT: Never commit code with sins. A git pre-commit hook will BLOCK any commit while sins remain.**
 
-**REQUIRED: When judge reports sins, you MUST run `commandments:scripture --prophet=NAME` for EACH violated prophet to read the full rule before fixing. The detailed description is the authoritative specification — follow it exactly.**
+**REQUIRED: Always read the rule before fixing. `judge --next` shows the rubric inline; `commandments:scripture --prophet=NAME` shows the full scripture. The detailed description is the authoritative specification — follow it exactly.**
+
+### The guided workflow (use this)
+
+```bash
+php artisan commandments:judge --next
+```
+
+It shows exactly **one finding at a time** with its full rule inline — so nothing gets lost in a wall of output. For each finding, do exactly one of:
+
+- **Fix it**, then run `judge --next` again for the next finding; or
+- If it is an advisory **warning** whose rubric does not apply here, **absolve it with a reason**:
+  `php artisan commandments:absolve --fingerprint=<hash> --reason="why it does not apply"`.
+
+Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave one untouched — fix or absolve every one.
+
+### Phased-commit workflow (multi-step changes, one PR)
+
+1. Implement **one phase**.
+2. Run `commandments:judge --git`, then `--next` until clean — fix every sin and address each warning.
+3. **Commit and push** that phase.
+4. Move to the next phase and repeat.
+
+Every commit stays righteous and each phase is reviewable on its own.
 
 ### Commands
 
 ```bash
-php artisan commandments:judge              # Check for violations
-php artisan commandments:judge --git        # Check only changed files
+php artisan commandments:judge --git        # Check changed files
+php artisan commandments:judge --next       # GUIDED: one finding at a time
+php artisan commandments:absolve --fingerprint=H --reason="…"  # warnings only
 php artisan commandments:repent             # Auto-fix [AUTO-FIXABLE] sins
-php artisan commandments:scripture          # List all rules
-php artisan commandments:scripture --prophet=NAME  # MUST READ for each sin
+php artisan commandments:scripture --prophet=NAME  # Full rule for a prophet
 ```
-
-Use `--files=a.php,b.php` to target specific files.
-
-### Workflow
-
-1. Write code
-2. Run `commandments:judge` - see violations
-3. For each sin type, run `commandments:scripture --prophet=NAME` to read the full rule
-4. Run `commandments:repent` - auto-fix what's possible
-5. Manually fix remaining sins following the detailed descriptions exactly
-6. Re-run judge until clean, then commit
 MARKDOWN;
     }
 }

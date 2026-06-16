@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Tests\Unit\Support;
+
+use JesseGall\CodeCommandments\Support\CommitHookInstaller;
+use JesseGall\CodeCommandments\Tests\TestCase;
+
+class CommitHookInstallerTest extends TestCase
+{
+    private string $dir;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->dir = sys_get_temp_dir() . '/cc-commit-hook-' . uniqid();
+        mkdir($this->dir . '/.git', 0755, true);
+    }
+
+    protected function tearDown(): void
+    {
+        @unlink($this->dir . '/.git/hooks/pre-commit');
+        @rmdir($this->dir . '/.git/hooks');
+        @rmdir($this->dir . '/.git');
+        @rmdir($this->dir);
+        parent::tearDown();
+    }
+
+    public function test_installs_a_fresh_pre_commit_hook(): void
+    {
+        $status = (new CommitHookInstaller())->install($this->dir);
+
+        $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $status);
+
+        $hook = file_get_contents($this->dir . '/.git/hooks/pre-commit');
+        $this->assertStringContainsString('judge --git', $hook);
+        $this->assertStringContainsString('Commit blocked', $hook);
+        $this->assertTrue(is_executable($this->dir . '/.git/hooks/pre-commit'));
+    }
+
+    public function test_is_idempotent_without_force(): void
+    {
+        $installer = new CommitHookInstaller();
+        $installer->install($this->dir);
+
+        $this->assertSame(CommitHookInstaller::STATUS_ALREADY_PRESENT, $installer->install($this->dir));
+    }
+
+    public function test_appends_to_an_existing_unrelated_hook(): void
+    {
+        mkdir($this->dir . '/.git/hooks', 0755, true);
+        file_put_contents($this->dir . '/.git/hooks/pre-commit', "#!/usr/bin/env sh\necho hi\n");
+
+        $status = (new CommitHookInstaller())->install($this->dir);
+
+        $this->assertSame(CommitHookInstaller::STATUS_APPENDED, $status);
+
+        $hook = file_get_contents($this->dir . '/.git/hooks/pre-commit');
+        $this->assertStringContainsString('echo hi', $hook);
+        $this->assertStringContainsString('code-commandments pre-commit gate', $hook);
+    }
+
+    public function test_reports_when_not_a_git_repo(): void
+    {
+        @rmdir($this->dir . '/.git');
+
+        $status = (new CommitHookInstaller())->install($this->dir);
+
+        $this->assertSame(CommitHookInstaller::STATUS_NOT_GIT, $status);
+    }
+}

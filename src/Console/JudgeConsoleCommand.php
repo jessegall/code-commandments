@@ -8,7 +8,11 @@ use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\ProphetFailure;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\FindingCollector;
+use JesseGall\CodeCommandments\Support\FindingQueue;
+use JesseGall\CodeCommandments\Support\Fingerprint;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
+use JesseGall\CodeCommandments\Support\Output\NextFindingPresenter;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 use Symfony\Component\Console\Command\Command;
@@ -47,7 +51,8 @@ class JudgeConsoleCommand extends Command
             ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Judge specific files (comma-separated)')
             ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Override the scroll path and target a specific directory (bypasses all excludes — use to scan subtrees regardless of config)')
             ->addOption('git', null, InputOption::VALUE_NONE, 'Only judge files that are new or changed in git')
-            ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession');
+            ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession')
+            ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -102,6 +107,34 @@ class JudgeConsoleCommand extends Command
             ? [$scrollFilter]
             : $registry->getScrolls();
 
+        $shouldNext = (bool) $input->getOption('next');
+
+        // Garbage-collect stale finding absolutions, but only on a complete
+        // scan — a narrowed run does not see every finding, so unseen ones
+        // there are not necessarily gone.
+        $fullScan = $fileFilter === null
+            && empty($filesFilter)
+            && ! $gitMode
+            && $pathFilter === null
+            && $prophetFilter === null;
+
+        if ($shouldNext) {
+            return $this->runNext(
+                $output,
+                $registry,
+                $manager,
+                $tracker,
+                $scrolls,
+                $fileFilter,
+                $filesFilter,
+                $gitMode,
+                $gitFiles,
+                $pathFilter,
+                $prophetFilter,
+                $fullScan,
+            );
+        }
+
         foreach ($scrolls as $scroll) {
             if (!$registry->hasScroll($scroll)) {
                 continue;
@@ -120,12 +153,69 @@ class JudgeConsoleCommand extends Command
             }
         }
 
+        if ($fullScan) {
+            $tracker->gcUnseenFindings();
+        }
+
         $failures = $manager->getFailures();
         $this->showFailures($output, $failures);
 
         $exitCode = $this->showResults($output, $prophetFilter, $gitMode, hadFailures: ! empty($failures));
 
         return $exitCode;
+    }
+
+    /**
+     * @param  array<string>  $scrolls
+     * @param  array<string>  $filesFilter
+     * @param  array<string>  $gitFiles
+     */
+    private function runNext(
+        OutputInterface $output,
+        ProphetRegistry $registry,
+        ScrollManager $manager,
+        ConfessionTracker $tracker,
+        array $scrolls,
+        ?string $fileFilter,
+        array $filesFilter,
+        bool $gitMode,
+        array $gitFiles,
+        ?string $pathFilter,
+        ?string $prophetFilter,
+        bool $fullScan,
+    ): int {
+        $collector = new FindingCollector($tracker);
+        $findings = [];
+
+        foreach ($scrolls as $scroll) {
+            if (! $registry->hasScroll($scroll)) {
+                continue;
+            }
+
+            $results = $this->getResults($scroll, $manager, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter);
+            $findings = array_merge($findings, $collector->collect($results, $prophetFilter, markSeen: true));
+        }
+
+        if ($fullScan) {
+            $tracker->gcUnseenFindings();
+        }
+
+        $ordered = FindingQueue::order($findings);
+
+        if ($ordered === []) {
+            $output->writeln(NextFindingPresenter::clearLine());
+
+            return Command::SUCCESS;
+        }
+
+        $finding = $ordered[0];
+        $absolvable = $finding->isWarning() || (new $finding->prophetClass())->requiresConfession();
+
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'commandments', $absolvable) as $line) {
+            $output->writeln($line);
+        }
+
+        return Command::FAILURE;
     }
 
     private function getResults(
@@ -182,11 +272,25 @@ class JudgeConsoleCommand extends Command
             }
 
             foreach ($judgment->sins as $sin) {
+                $fingerprint = Fingerprint::of($prophetClass, $relativePath, $sin->symbol, $sin->snippet);
+                $tracker->markFindingSeen($fingerprint);
+
+                if ($tracker->isFindingAbsolved($fingerprint)) {
+                    continue;
+                }
+
                 $fileSins++;
                 $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message);
             }
 
             foreach ($judgment->warnings as $warning) {
+                $fingerprint = Fingerprint::of($prophetClass, $relativePath, $warning->symbol, $warning->snippet);
+                $tracker->markFindingSeen($fingerprint);
+
+                if ($tracker->isFindingAbsolved($fingerprint)) {
+                    continue;
+                }
+
                 $fileWarnings++;
                 $this->manualVerificationFiles[$relativePath][] = [
                     'prophet' => class_basename($prophetClass),
@@ -307,11 +411,14 @@ class JudgeConsoleCommand extends Command
 
             if (!$isDetailedView) {
                 $output->writeln('');
-                $output->writeln('FIX EACH SIN TYPE: Process one at a time, in order:');
+                $output->writeln('GUIDED FIX (recommended): walk findings one at a time, full rule shown');
+                $output->writeln('inline, nothing to scroll past or skip:');
+                $output->writeln("  commandments judge --next{$gitFlag}");
+                $output->writeln('');
+                $output->writeln('Or fix each sin type manually:');
                 $output->writeln("  1. Read the rule:    commandments scripture --prophet=NAME");
                 $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
                 $output->writeln('  3. Fix all violations following the detailed description exactly');
-                $output->writeln('  4. Move to the next sin type');
                 $output->writeln('');
                 $output->writeln('Target a subtree:     commandments judge --path=<dir>   (ignores all excludes)');
             }
@@ -357,13 +464,14 @@ class JudgeConsoleCommand extends Command
                 }
 
                 $output->writeln('');
-                $output->writeln('REVIEW EACH WARNING TYPE: Process one at a time:');
-                $output->writeln("  1. Read the rule:    commandments scripture --prophet=NAME");
-                $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
-                $output->writeln('  3. Review and fix following the detailed description exactly');
+                $output->writeln('Warnings are ADVISORY — each one carries an APPLY-WHEN / LEAVE-WHEN');
+                $output->writeln('rubric. You must not leave any untouched. Walk them one at a time');
+                $output->writeln('(rubric + full rule shown inline):');
+                $output->writeln("  commandments judge --next{$gitFlag}");
                 $output->writeln('');
-                $output->writeln('NOTE: Warnings in files you just created or edited MUST be investigated.');
-                $output->writeln('Warnings in files you did not touch can be ignored.');
+                $output->writeln('For each: fix it, OR — if the rubric says it does not apply here —');
+                $output->writeln('absolve it WITH A REASON:');
+                $output->writeln('  commandments absolve --fingerprint=<hash> --reason="why it does not apply"');
             }
         }
 

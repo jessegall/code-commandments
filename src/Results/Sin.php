@@ -15,18 +15,20 @@ final class Sin
         public readonly ?int $column = null,
         public readonly ?string $snippet = null,
         public readonly ?string $suggestion = null,
+        public readonly ?string $symbol = null,
     ) {}
 
     /**
      * Create a sin with a line number.
      */
-    public static function at(int $line, string $message, ?string $snippet = null, ?string $suggestion = null): self
+    public static function at(int $line, string $message, ?string $snippet = null, ?string $suggestion = null, ?string $symbol = null): self
     {
         return new self(
             message: $message,
             line: $line,
             snippet: $snippet,
             suggestion: $suggestion,
+            symbol: $symbol,
         );
     }
 

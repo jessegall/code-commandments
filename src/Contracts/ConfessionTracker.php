@@ -40,4 +40,32 @@ interface ConfessionTracker
      * Check if the file has changed since it was absolved.
      */
     public function hasChangedSinceAbsolution(string $filePath, string $commandmentClass, string $currentContent): bool;
+
+    /**
+     * Absolve a single finding, identified by its content fingerprint.
+     * Absolution lasts only until the flagged code changes (which yields a
+     * new fingerprint that is no longer recorded here).
+     */
+    public function absolveFinding(string $fingerprint, ?string $reason = null): void;
+
+    /**
+     * Check whether a specific finding fingerprint has been absolved.
+     */
+    public function isFindingAbsolved(string $fingerprint): bool;
+
+    /**
+     * Record that a finding fingerprint was encountered live in this run.
+     * Used by garbage collection to drop stale absolutions whose findings
+     * no longer exist.
+     */
+    public function markFindingSeen(string $fingerprint): void;
+
+    /**
+     * Drop every finding absolution whose fingerprint was not marked seen
+     * this run. Only safe to call after a complete scan — a narrowed scan
+     * (--file/--git/--path) does not see every finding.
+     *
+     * @return int Number of stale absolutions removed
+     */
+    public function gcUnseenFindings(): int;
 }

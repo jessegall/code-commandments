@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commandments;
 
 use JesseGall\CodeCommandments\Contracts\Commandment;
+use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\TextHelper;
@@ -52,6 +54,50 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
+     * By default a commandment is imperative and carries no advisory rubric.
+     * Warning-emitting prophets override this to declare apply/leave/unsure.
+     */
+    public function advisory(): ?Advisory
+    {
+        return null;
+    }
+
+    /**
+     * The ordering tier. Honours a `tier` config override (by name), then
+     * falls back to the prophet's declared default.
+     */
+    public function tier(): Tier
+    {
+        $configured = $this->config('tier');
+
+        if (is_string($configured)) {
+            return Tier::tryFromName($configured) ?? $this->defaultTier();
+        }
+
+        return $this->defaultTier();
+    }
+
+    /**
+     * The prophet's intrinsic tier. Override in prophets that are more (or
+     * less) structural than the default convention tier.
+     */
+    protected function defaultTier(): Tier
+    {
+        return Tier::Convention;
+    }
+
+    /**
+     * Prophet classes whose findings this commandment supersedes. Empty by
+     * default; override where fixing this rule dissolves another's symptom.
+     *
+     * @return list<class-string>
+     */
+    public function supersedes(): array
+    {
+        return [];
+    }
+
+    /**
      * Get paths that should be excluded from this commandment.
      *
      * @return array<string>
@@ -92,9 +138,9 @@ abstract class BaseCommandment implements Commandment
     /**
      * Create a sin at a specific line.
      */
-    protected function sinAt(int $line, string $message, ?string $snippet = null, ?string $suggestion = null): Sin
+    protected function sinAt(int $line, string $message, ?string $snippet = null, ?string $suggestion = null, ?string $symbol = null): Sin
     {
-        return Sin::at($line, $message, $snippet, $suggestion);
+        return Sin::at($line, $message, $snippet, $suggestion, $symbol);
     }
 
     /**
@@ -108,9 +154,9 @@ abstract class BaseCommandment implements Commandment
     /**
      * Create a warning at a specific line.
      */
-    protected function warningAt(int $line, string $message, ?string $snippet = null): Warning
+    protected function warningAt(int $line, string $message, ?string $snippet = null, ?string $symbol = null): Warning
     {
-        return Warning::at($line, $message, $snippet);
+        return Warning::at($line, $message, $snippet, $symbol);
     }
 
     /**

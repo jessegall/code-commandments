@@ -75,6 +75,9 @@ final class FindNullableValueReturns implements Pipe
                 $typeInfo = $this->returnTypeInfo($method->returnType, $input->useStatements, $input->namespace);
                 $label = ($ownName !== null ? $ownName . '::' : '') . $method->name->toString() . '()';
                 $line = $method->getStartLine();
+                $classFqcn = $ownName !== null
+                    ? (($input->namespace !== null && $input->namespace !== '') ? $input->namespace . '\\' . $ownName : $ownName)
+                    : '';
 
                 $matches[] = new MatchResult(
                     name: $method->name->toString(),
@@ -85,6 +88,8 @@ final class FindNullableValueReturns implements Pipe
                     content: $this->getSnippet($input->content, $line),
                     groups: [
                         'method' => $label,
+                        'method_name' => $method->name->toString(),
+                        'class_fqcn' => $classFqcn,
                         'type_name' => $typeInfo['name'],
                         'type_fqcn' => $typeInfo['fqcn'],
                         'null_count' => (string) $counts['null'],
