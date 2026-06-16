@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments;
 
 use Illuminate\Support\ServiceProvider;
 use JesseGall\CodeCommandments\Commands\AbsolveCommand;
+use JesseGall\CodeCommandments\Commands\ScaffoldCommand;
 use JesseGall\CodeCommandments\Commands\InstallHooksCommand;
 use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
 use JesseGall\CodeCommandments\Commands\JudgeCommand;
@@ -68,11 +69,19 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 __DIR__ . '/../stubs' => base_path('stubs/commandments'),
             ], 'commandments-stubs');
 
+            // Raw support-class stubs, for those who prefer the native
+            // vendor:publish flow over `commandments:scaffold` (note: this does
+            // NOT rewrite the namespace — the command does).
+            $this->publishes([
+                __DIR__ . '/../stubs/scaffold' => base_path('stubs/commandments/scaffold'),
+            ], 'commandments-scaffold');
+
             $this->commands([
                 JudgeCommand::class,
                 AbsolveCommand::class,
                 RepentCommand::class,
                 ScriptureCommand::class,
+                ScaffoldCommand::class,
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
                 InstallSyncHookCommand::class,
