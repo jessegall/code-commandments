@@ -98,6 +98,10 @@ return [
                     // 'data_suffixes' => ['Data'],
                     // 'severity' => 'warning',   // or 'sin'
                 ],
+                Backend\DataClassFromArrayOnlyProphet::class => [
+                    // 'trait_class' => App\Support\FromArrayOnly::class,
+                    // 'base_class'  => Spatie\LaravelData\Data::class,
+                ],
                 Backend\PreferNamedExceptionsProphet::class => [
                     // Exception classes that may be thrown inline:
                     // 'allow' => ['InvalidArgumentException'],

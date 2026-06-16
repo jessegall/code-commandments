@@ -20,13 +20,13 @@ final class NextFindingPresenter
     /**
      * @return list<string>
      */
-    public static function lines(Finding $finding, int $totalRemaining, string $binary, bool $absolvable): array
+    public static function lines(Finding $finding, int $totalRemaining, string $binary, bool $absolvable, bool $autoFixable = false): array
     {
         $kind = $finding->isSin() ? '✗ SIN' : '⚠ WARNING';
 
         $lines = [];
         $lines[] = '';
-        $lines[] = sprintf('NEXT  [%d remaining]  %s', $totalRemaining, $kind);
+        $lines[] = sprintf('NEXT  [%d remaining]  %s%s', $totalRemaining, $kind, $autoFixable ? '  [AUTO-FIXABLE]' : '');
         $lines[] = '';
         $lines[] = '  ' . $finding->prophetShort;
         $lines[] = '  ' . $finding->location();
@@ -47,6 +47,18 @@ final class NextFindingPresenter
         if ($finding->suggestion !== null && trim($finding->suggestion) !== '') {
             $lines[] = '';
             $lines[] = '  → ' . $finding->suggestion;
+        }
+
+        if ($autoFixable) {
+            $lines[] = '';
+            $lines[] = 'This is AUTO-FIXABLE — DO NOT fix it by hand. Run:';
+            $lines[] = sprintf('  %s repent --git', $binary);
+            $lines[] = '  then `' . $binary . ' judge --next` for the next finding.';
+            $lines[] = '  (repent rewrites it reliably via AST; hand-fixing wastes effort and risks mistakes.)';
+            $lines[] = '';
+            $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? '' : 's');
+
+            return $lines;
         }
 
         $lines[] = '';

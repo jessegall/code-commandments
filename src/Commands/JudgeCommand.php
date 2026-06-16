@@ -206,9 +206,11 @@ class JudgeCommand extends Command
         }
 
         $finding = $ordered[0];
-        $absolvable = $finding->isWarning() || (new $finding->prophetClass())->requiresConfession();
+        $prophet = new $finding->prophetClass();
+        $absolvable = $finding->isWarning() || $prophet->requiresConfession();
+        $autoFixable = $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter;
 
-        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable) as $line) {
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable, $autoFixable) as $line) {
             $this->output->writeln($line);
         }
 
@@ -419,7 +421,9 @@ class JudgeCommand extends Command
 
             if ($hasAutoFixable) {
                 $this->output->newLine();
-                $this->output->writeln("[AUTO-FIXABLE] sins can be fixed with: php artisan commandments:repent{$gitFlag}");
+                $this->output->writeln('[AUTO-FIXABLE] sins are mechanical — DO NOT fix them by hand. Run:');
+                $this->output->writeln("  php artisan commandments:repent{$gitFlag}");
+                $this->output->writeln('  (repent rewrites them reliably via AST; hand-fixing wastes effort and risks mistakes.)');
             }
         }
 

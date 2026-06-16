@@ -99,6 +99,16 @@ class InstallHooksCommand extends Command
             CommitHookInstaller::STATUS_NOT_GIT => null,
             CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/post-commit — check permissions.'),
         };
+
+        $msg = $installer->installCommitMsg(base_path(), $force);
+
+        match ($msg) {
+            CommitHookInstaller::STATUS_INSTALLED => $this->output->writeln('Installed git commit-msg guard (rejects Co-authored-by) at .git/hooks/commit-msg'),
+            CommitHookInstaller::STATUS_APPENDED => $this->output->writeln('Appended the commit-msg guard to your existing .git/hooks/commit-msg'),
+            CommitHookInstaller::STATUS_ALREADY_PRESENT => $this->output->writeln('Commit-msg guard already installed — use --force to refresh it'),
+            CommitHookInstaller::STATUS_NOT_GIT => null,
+            CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/commit-msg — check permissions.'),
+        };
     }
 
     /**
