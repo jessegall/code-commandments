@@ -92,10 +92,17 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertFileExists($union);
         $src = file_get_contents($union);
         $this->assertStringContainsString('namespace Acme\\Support;', $src);
-        $this->assertStringContainsString('final class Union', $src);
-        $this->assertStringContainsString('public static function of(mixed $value): self', $src);
+        // Not final — a constrained subclass extends it; of() returns static.
+        $this->assertStringContainsString("\nclass Union", $src);
+        $this->assertStringContainsString('public static function of(mixed $value): static', $src);
         $this->assertStringContainsString('public function match(array $handlers): mixed', $src);
         $this->assertStringContainsString('public function is(string $type): bool', $src);
+        $this->assertStringContainsString('protected function allowedTypes(): array', $src);
+
+        // The ready-made scalar-constrained Union.
+        $scalar = file_get_contents($this->dir . '/ScalarUnion.php');
+        $this->assertStringContainsString('final class ScalarUnion extends Union', $scalar);
+        $this->assertStringContainsString("return ['string', 'int', 'float', 'bool'];", $scalar);
     }
 
     public function test_generates_capture_and_wrap_result_factories(): void

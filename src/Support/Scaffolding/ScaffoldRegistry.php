@@ -39,6 +39,13 @@ final class ScaffoldRegistry
                 purpose: 'Sum type: a present value that is one of several types (WideUnion no-null case).',
             ),
             new Scaffold(
+                name: 'scalar-union',
+                className: 'ScalarUnion',
+                stubFile: 'ScalarUnion.stub',
+                introducedIn: '1.84.0',
+                purpose: 'A Union constrained to string|int|float|bool — the ready-made scalar sum type.',
+            ),
+            new Scaffold(
                 name: 'null-callable',
                 className: 'NullCallable',
                 stubFile: 'NullCallable.stub',
