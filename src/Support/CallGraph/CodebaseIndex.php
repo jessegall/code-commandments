@@ -80,10 +80,23 @@ final class CodebaseIndex
     public static function build(iterable $files): self
     {
         $instance = new self();
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-
-        /** @var array<array{file: string, namespace: ?string, uses: array<string, string>, class: Node\Stmt\Class_}> $classesPass1 */
         $classesPass1 = [];
+        self::parseFiles($files, $instance, $classesPass1);
+        $shells = self::buildClassShells($classesPass1);
+        self::buildMethodsAndClasses($shells, $instance);
+
+        return $instance;
+    }
+
+    /**
+     * Parse all PHP files and collect class/enum definitions and cross-file metadata.
+     *
+     * @param  iterable<string>|iterable<\SplFileInfo>  $files
+     * @param  array<array{file: string, namespace: ?string, uses: array<string, string>, class: Node\Stmt\Class_}>  $classesPass1
+     */
+    private static function parseFiles(iterable $files, self $instance, array &$classesPass1): void
+    {
+        $parser = (new ParserFactory)->createForNewestSupportedVersion();
 
         foreach ($files as $file) {
             $path = $file instanceof \SplFileInfo ? $file->getRealPath() : (string) $file;
@@ -157,10 +170,16 @@ final class CodebaseIndex
 
             self::indexEnumCaseGroups($ast, $path, $instance);
         }
+    }
 
-        // Pass 1: build ClassSummary shells (fqcn, parent, use map, propertyTypes)
-        //         and MethodSummaries with UNRESOLVED call sites temporarily keyed by
-        //         the expression shape.
+    /**
+     * Build ClassSummary shells with fqcn, parent, use map, and propertyTypes.
+     *
+     * @param  array<array{file: string, namespace: ?string, uses: array<string, string>, class: Node\Stmt\Class_}>  $classesPass1
+     * @return array<string, array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}>
+     */
+    private static function buildClassShells(array $classesPass1): array
+    {
         $shells = [];
 
         foreach ($classesPass1 as $entry) {
@@ -182,7 +201,16 @@ final class CodebaseIndex
             ];
         }
 
-        // Pass 2: walk each method, resolve call sites using the populated shells.
+        return $shells;
+    }
+
+    /**
+     * Build method summaries and ClassSummary objects in pass 2.
+     *
+     * @param  array<string, array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}>  $shells
+     */
+    private static function buildMethodsAndClasses(array $shells, self $instance): void
+    {
         foreach ($shells as $fqcn => $shell) {
             $methods = [];
 
@@ -218,8 +246,6 @@ final class CodebaseIndex
                 traits: self::collectTraits($shell['classNode'], $shell['uses'], $shell['namespace']),
             );
         }
-
-        return $instance;
     }
 
     public function classByFqcn(string $fqcn): ?ClassSummary
@@ -658,6 +684,35 @@ final class CodebaseIndex
         array $shells,
         self $index,
     ): MethodSummary {
+        $params = self::buildMethodParams($method, $shell);
+        $assignments = [];
+        $callSites = [];
+
+        if ($method->stmts !== null) {
+            self::buildAssignments($method, $assignments);
+            self::buildCallSites($classFqcn, $method, $params, $shell, $shells, $index, $callSites);
+            self::buildInstantiations($method, $shell, $shells, $index);
+        }
+
+        return new MethodSummary(
+            classFqcn: $classFqcn,
+            name: $method->name->toString(),
+            params: $params,
+            callSites: $callSites,
+            assignments: $assignments,
+            filePath: $shell['file'],
+            line: $method->getStartLine(),
+        );
+    }
+
+    /**
+     * Build method parameter summaries with resolved types.
+     *
+     * @param  array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}  $shell
+     * @return list<array{name: string, type: ?string}>
+     */
+    private static function buildMethodParams(Node\Stmt\ClassMethod $method, array $shell): array
+    {
         $params = [];
 
         foreach ($method->params as $param) {
@@ -678,106 +733,138 @@ final class CodebaseIndex
             ];
         }
 
+        return $params;
+    }
+
+    /**
+     * Build assignment kind map from all assignments in method body.
+     *
+     * @param  array<string, array{kind: string, reason?: string}>  $assignments
+     */
+    private static function buildAssignments(Node\Stmt\ClassMethod $method, array &$assignments): void
+    {
+        if ($method->stmts === null) {
+            return;
+        }
+
         $finder = new NodeFinder;
-        $assignments = [];
-        $callSites = [];
+        /** @var array<Expr\Assign> $assigns */
+        $assigns = $finder->findInstanceOf($method->stmts, Expr\Assign::class);
 
-        if ($method->stmts !== null) {
-            /** @var array<Expr\Assign> $assigns */
-            $assigns = $finder->findInstanceOf($method->stmts, Expr\Assign::class);
-
-            foreach ($assigns as $assign) {
-                if (! $assign->var instanceof Expr\Variable || ! is_string($assign->var->name)) {
-                    continue;
-                }
-
-                $kind = self::classifyAssignmentRhs($assign->expr);
-
-                // Keep the first classification — later reassignments are less
-                // informative about where the value was first introduced.
-                if (! isset($assignments[$assign->var->name])) {
-                    $assignments[$assign->var->name] = $kind;
-                }
+        foreach ($assigns as $assign) {
+            if (! $assign->var instanceof Expr\Variable || ! is_string($assign->var->name)) {
+                continue;
             }
 
-            foreach ($finder->findInstanceOf($method->stmts, Expr\MethodCall::class) as $call) {
-                assert($call instanceof Expr\MethodCall);
-                $cs = self::buildCallSite(
-                    $classFqcn, $method->name->toString(),
-                    $call, $params, $shell, $shells, 'method',
-                );
+            $kind = self::classifyAssignmentRhs($assign->expr);
 
-                if ($cs !== null) {
-                    $callSites[] = $cs;
-                    $index->registerCallSite($cs);
-                }
+            // Keep the first classification — later reassignments are less
+            // informative about where the value was first introduced.
+            if (! isset($assignments[$assign->var->name])) {
+                $assignments[$assign->var->name] = $kind;
             }
+        }
+    }
 
-            foreach ($finder->findInstanceOf($method->stmts, Expr\NullsafeMethodCall::class) as $call) {
-                assert($call instanceof Expr\NullsafeMethodCall);
-                $cs = self::buildCallSite(
-                    $classFqcn, $method->name->toString(),
-                    $call, $params, $shell, $shells, 'nullsafe',
-                );
+    /**
+     * Build call sites (method, nullsafe, and static calls) from method body.
+     *
+     * @param  list<array{name: string, type: ?string}>  $params
+     * @param  array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}  $shell
+     * @param  array<string, array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}>  $shells
+     * @param  list<CallSite>  $callSites
+     */
+    private static function buildCallSites(
+        string $classFqcn,
+        Node\Stmt\ClassMethod $method,
+        array $params,
+        array $shell,
+        array $shells,
+        self $index,
+        array &$callSites,
+    ): void {
+        if ($method->stmts === null) {
+            return;
+        }
 
-                if ($cs !== null) {
-                    $callSites[] = $cs;
-                    $index->registerCallSite($cs);
-                }
-            }
+        $finder = new NodeFinder;
+        $methodName = $method->name->toString();
 
-            foreach ($finder->findInstanceOf($method->stmts, Expr\StaticCall::class) as $call) {
-                assert($call instanceof Expr\StaticCall);
-                $cs = self::buildCallSite(
-                    $classFqcn, $method->name->toString(),
-                    $call, $params, $shell, $shells, 'static',
-                );
-
-                if ($cs !== null) {
-                    $callSites[] = $cs;
-                    $index->registerCallSite($cs);
-                }
-            }
-
-            foreach ($finder->findInstanceOf($method->stmts, Expr\New_::class) as $new) {
-                assert($new instanceof Expr\New_);
-
-                if (! $new->class instanceof Node\Name) {
-                    // Anonymous class or dynamic class — can't resolve.
-                    continue;
-                }
-
-                $newedFqcn = NameResolver::resolve(
-                    $new->class->toString(),
-                    $shell['uses'],
-                    $shell['namespace'],
-                );
-
-                // Only register `new` sites for classes we know about — the
-                // index is consulted to answer "is THIS class ever `new`d?",
-                // and unknown classes wouldn't be queried.
-                if (! isset($shells[$newedFqcn])) {
-                    continue;
-                }
-
-                $index->registerInstantiation($newedFqcn, [
-                    'file' => $shell['file'],
-                    'line' => $new->getStartLine(),
-                    'in_class' => $classFqcn,
-                    'in_method' => $method->name->toString(),
-                ]);
+        foreach ($finder->findInstanceOf($method->stmts, Expr\MethodCall::class) as $call) {
+            assert($call instanceof Expr\MethodCall);
+            $cs = self::buildCallSite($classFqcn, $methodName, $call, $params, $shell, $shells, 'method');
+            if ($cs !== null) {
+                $callSites[] = $cs;
+                $index->registerCallSite($cs);
             }
         }
 
-        return new MethodSummary(
-            classFqcn: $classFqcn,
-            name: $method->name->toString(),
-            params: $params,
-            callSites: $callSites,
-            assignments: $assignments,
-            filePath: $shell['file'],
-            line: $method->getStartLine(),
-        );
+        foreach ($finder->findInstanceOf($method->stmts, Expr\NullsafeMethodCall::class) as $call) {
+            assert($call instanceof Expr\NullsafeMethodCall);
+            $cs = self::buildCallSite($classFqcn, $methodName, $call, $params, $shell, $shells, 'nullsafe');
+            if ($cs !== null) {
+                $callSites[] = $cs;
+                $index->registerCallSite($cs);
+            }
+        }
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\StaticCall::class) as $call) {
+            assert($call instanceof Expr\StaticCall);
+            $cs = self::buildCallSite($classFqcn, $methodName, $call, $params, $shell, $shells, 'static');
+            if ($cs !== null) {
+                $callSites[] = $cs;
+                $index->registerCallSite($cs);
+            }
+        }
+    }
+
+    /**
+     * Register instantiations (new expressions) found in method body.
+     *
+     * @param  array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}  $shell
+     * @param  array<string, array{file: string, namespace: ?string, uses: array<string, string>, propertyTypes: array<string, string>, classNode: Node\Stmt\Class_, parent: ?string}>  $shells
+     */
+    private static function buildInstantiations(
+        Node\Stmt\ClassMethod $method,
+        array $shell,
+        array $shells,
+        self $index,
+    ): void {
+        if ($method->stmts === null) {
+            return;
+        }
+
+        $finder = new NodeFinder;
+        $classFqcn = self::classFqcn($shell['namespace'], $shell['classNode']);
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\New_::class) as $new) {
+            assert($new instanceof Expr\New_);
+
+            if (! $new->class instanceof Node\Name) {
+                // Anonymous class or dynamic class — can't resolve.
+                continue;
+            }
+
+            $newedFqcn = NameResolver::resolve(
+                $new->class->toString(),
+                $shell['uses'],
+                $shell['namespace'],
+            );
+
+            // Only register `new` sites for classes we know about — the
+            // index is consulted to answer "is THIS class ever `new`d?",
+            // and unknown classes wouldn't be queried.
+            if (! isset($shells[$newedFqcn])) {
+                continue;
+            }
+
+            $index->registerInstantiation($newedFqcn, [
+                'file' => $shell['file'],
+                'line' => $new->getStartLine(),
+                'in_class' => $classFqcn,
+                'in_method' => $method->name->toString(),
+            ]);
+        }
     }
 
     /**
