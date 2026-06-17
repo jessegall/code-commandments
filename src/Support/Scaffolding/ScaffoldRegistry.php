@@ -180,6 +180,22 @@ final class ScaffoldRegistry
                 purpose: 'Transform: drop a known prefix (StripPrefix::of(...)).',
                 subNamespace: 'Resolvers\\Transforms',
             ),
+            new Scaffold(
+                name: 'factory-capture',
+                className: 'Capture',
+                stubFile: 'Capture.stub',
+                introducedIn: '1.70.0',
+                purpose: 'Result factory: return the matched value unchanged (Capture::make()).',
+                subNamespace: 'Resolvers\\Factories',
+            ),
+            new Scaffold(
+                name: 'factory-wrap',
+                className: 'Wrap',
+                stubFile: 'Wrap.stub',
+                introducedIn: '1.70.0',
+                purpose: 'Result factory: wrap the matched value in a single-element list (Wrap::make()).',
+                subNamespace: 'Resolvers\\Factories',
+            ),
         ];
     }
 }

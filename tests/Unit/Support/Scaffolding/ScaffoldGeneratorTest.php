@@ -84,6 +84,26 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('$value instanceof $this->class', $src);
     }
 
+    public function test_generates_capture_and_wrap_result_factories(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $capture = $this->dir . '/Resolvers/Factories/Capture.php';
+        $wrap = $this->dir . '/Resolvers/Factories/Wrap.php';
+        $this->assertFileExists($capture);
+        $this->assertFileExists($wrap);
+
+        $captureSrc = file_get_contents($capture);
+        $this->assertStringContainsString('namespace Acme\\Support\\Resolvers\\Factories;', $captureSrc);
+        $this->assertStringContainsString('final class Capture', $captureSrc);
+        $this->assertStringContainsString('return $value;', $captureSrc);
+
+        $wrapSrc = file_get_contents($wrap);
+        $this->assertStringContainsString('final class Wrap', $wrapSrc);
+        $this->assertStringContainsString('return [$value];', $wrapSrc);
+        $this->assertStringContainsString('@return array{0: T}', $wrapSrc);
+    }
+
     public function test_generated_kernel_is_generic_and_uses_then(): void
     {
         // The resolver kernel threads PHPStan generics so resolve() infers what
