@@ -17,7 +17,7 @@ interface ResolveStrategy
 {
 
     /**
-     * @param  iterable<callable(mixed): mixed>  $resolvers
+     * @param  iterable<callable>  $resolvers
      * @return mixed
      */
     public function __invoke(iterable $resolvers, mixed $input): mixed;

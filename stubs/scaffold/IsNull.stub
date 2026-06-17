@@ -18,6 +18,7 @@ final class IsNull extends Predicate
 
     public static function make(): self
     {
+        /** @var self|null $instance */
         static $instance = null;
 
         return $instance ??= new self();

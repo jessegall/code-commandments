@@ -44,7 +44,7 @@ abstract class Predicate
      * A resolver chain entry: when this predicate holds for the input, build
      * the result via $make; otherwise null (so the chain falls through).
      *
-     * @param  callable(mixed): mixed  $make
+     * @param  callable  $make
      * @return callable(mixed): mixed
      */
     public function when(callable $make): callable
@@ -61,7 +61,7 @@ abstract class Predicate
      *         ->transform(StripPrefix::of('list:'))
      *         ->when(WireType::listOf(...));
      *
-     * @param  callable(mixed): mixed  $transform
+     * @param  callable  $transform
      */
     public function transform(callable $transform): PredicateEntry
     {
