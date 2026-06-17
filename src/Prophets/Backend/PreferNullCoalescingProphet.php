@@ -36,7 +36,7 @@ class PreferNullCoalescingProphet extends PhpCommandment
 {
     public function description(): string
     {
-        return 'Use `??` instead of a self-fallback null-check ternary';
+        return 'Use `??` (or Option::getOr) instead of a self-fallback ternary';
     }
 
     protected function defaultTier(): Tier
@@ -51,7 +51,9 @@ class PreferNullCoalescingProphet extends PhpCommandment
                 'A ternary whose condition is a null/presence test on the SAME value '
                 . 'one branch returns, the other branch being a fallback '
                 . '(`$x !== null ? $x : $d`, `isset($x) ? $x : $d`). It is the '
-                . 'null-coalescing operator written the long way.'
+                . 'null-coalescing operator written the long way — or, on an Option '
+                . '(`$opt->hasValue() ? $opt->getOrThrow() : $d`), a hand-rolled '
+                . '`getOr()`.'
             )
             ->leaveWhen(
                 'The two branches return DIFFERENT values (a real decision, not a '
@@ -95,10 +97,27 @@ test (`V !== null`, `V === null`, `isset(V)`, `! isset(V)`, `is_null(V)`,
 `! is_null(V)`) on a side-effect-free value V, and the branch on the "present"
 side is V itself. The fix is `V ?? <fallback>`.
 
+The same shape on an Option is `getOr()`:
+
+    // Bad — check then unwrap by hand:
+    $name = $opt->hasValue() ? $opt->getOrThrow() : 'guest';
+    $name = $opt->isEmpty()  ? 'guest' : $opt->getOrThrow();
+
+    // Good:
+    $name = $opt->getOr('guest');
+
 WHAT DOES NOT — a real two-outcome ternary (the branches are different values),
 a short ternary `?:`, a loose `== null` / `!= null` test (not equivalent to
 `??`), or a value with side effects (a call), where collapsing two evaluations
 into one would change behaviour.
+
+Configuration (Option method names, if yours differ):
+
+    Backend\PreferNullCoalescingProphet::class => [
+        'present_checks'   => ['hasValue', 'isPresent'],
+        'absent_checks'    => ['isEmpty', 'isNone'],
+        'unwrap_accessors' => ['getOrThrow', 'get'],
+    ],
 SCRIPTURE;
     }
 
@@ -116,29 +135,47 @@ SCRIPTURE;
         foreach ((new NodeFinder)->findInstanceOf($ast, Expr\Ternary::class) as $ternary) {
             $parts = $this->coalesceParts($ternary, $printer);
 
-            if ($parts === null) {
+            if ($parts !== null) {
+                [$value, $fallback] = $parts;
+                $valueText = $printer->prettyPrintExpr($value);
+                $fallbackText = $printer->prettyPrintExpr($fallback);
+
+                $warnings[] = $this->warningAt(
+                    $ternary->getStartLine(),
+                    sprintf(
+                        'This ternary tests `%s` and hands it straight back — it is `%s ?? %s` written the long way. Use the null-coalescing operator: `%s ?? %s`. (If `%s` is an Option, this is `%s->getOr(%s)`.)',
+                        $valueText,
+                        $valueText,
+                        $fallbackText,
+                        $valueText,
+                        $fallbackText,
+                        $valueText,
+                        $valueText,
+                        $fallbackText,
+                    ),
+                    'null-coalesce:' . $valueText,
+                );
+
                 continue;
             }
 
-            [$value, $fallback] = $parts;
-            $valueText = $printer->prettyPrintExpr($value);
-            $fallbackText = $printer->prettyPrintExpr($fallback);
+            $getOr = $this->getOrParts($ternary, $printer);
 
-            $warnings[] = $this->warningAt(
-                $ternary->getStartLine(),
-                sprintf(
-                    'This ternary tests `%s` and hands it straight back — it is `%s ?? %s` written the long way. Use the null-coalescing operator: `%s ?? %s`. (If `%s` is an Option, this is `%s->getOr(%s)`.)',
-                    $valueText,
-                    $valueText,
-                    $fallbackText,
-                    $valueText,
-                    $fallbackText,
-                    $valueText,
-                    $valueText,
-                    $fallbackText,
-                ),
-                'null-coalesce:' . $valueText,
-            );
+            if ($getOr !== null) {
+                [$receiverText, $fallback] = $getOr;
+                $fallbackText = $printer->prettyPrintExpr($fallback);
+
+                $warnings[] = $this->warningAt(
+                    $ternary->getStartLine(),
+                    sprintf(
+                        'This ternary checks `%s` for presence and unwraps it by hand — that is exactly what `getOr()` is for. Use `%s->getOr(%s)`.',
+                        $receiverText,
+                        $receiverText,
+                        $fallbackText,
+                    ),
+                    'option-getor:' . $receiverText,
+                );
+            }
         }
 
         if ($warnings === []) {
@@ -225,6 +262,72 @@ SCRIPTURE;
     }
 
     /**
+     * If the ternary hand-rolls `Option::getOr()` — a presence check on a
+     * receiver whose "present" branch unwraps that SAME receiver — return its
+     * [receiverText, fallback]. Null otherwise.
+     *
+     * @return array{string, Expr}|null
+     */
+    private function getOrParts(Expr\Ternary $ternary, PrettyPrinter\Standard $printer): ?array
+    {
+        if ($ternary->if === null) {
+            return null;
+        }
+
+        $cond = $ternary->cond;
+        $negated = false;
+
+        if ($cond instanceof Expr\BooleanNot) {
+            $negated = true;
+            $cond = $cond->expr;
+        }
+
+        if (! $cond instanceof Expr\MethodCall
+            || $cond->isFirstClassCallable()
+            || ! $cond->name instanceof Node\Identifier) {
+            return null;
+        }
+
+        // hasValue() → present when true; isEmpty() → present when false.
+        $guard = strtolower($cond->name->toString());
+        $presentWhenTrue = match (true) {
+            in_array($guard, $this->presentChecks(), true) => true,
+            in_array($guard, $this->absentChecks(), true) => false,
+            default => null,
+        };
+
+        if ($presentWhenTrue === null) {
+            return null;
+        }
+
+        $receiver = $cond->var;
+
+        if (! $this->isPure($receiver)) {
+            return null;
+        }
+
+        if ($negated) {
+            $presentWhenTrue = ! $presentWhenTrue;
+        }
+
+        $presentBranch = $presentWhenTrue ? $ternary->if : $ternary->else;
+        $fallbackBranch = $presentWhenTrue ? $ternary->else : $ternary->if;
+
+        // The present branch must unwrap the SAME receiver, e.g.
+        // `$opt->getOrThrow()`.
+        if (! $presentBranch instanceof Expr\MethodCall
+            || $presentBranch->isFirstClassCallable()
+            || ! $presentBranch->name instanceof Node\Identifier
+            || ! in_array(strtolower($presentBranch->name->toString()), $this->unwrapAccessors(), true)
+            || $presentBranch->getArgs() !== []
+            || ! $this->eq($presentBranch->var, $receiver, $printer)) {
+            return null;
+        }
+
+        return [$printer->prettyPrintExpr($receiver), $fallbackBranch];
+    }
+
+    /**
      * The non-null operand of a strict comparison against `null` — or null if
      * neither (or both) operands are the `null` literal.
      */
@@ -272,5 +375,53 @@ SCRIPTURE;
     private function eq(Expr $a, Expr $b, PrettyPrinter\Standard $printer): bool
     {
         return $printer->prettyPrintExpr($a) === $printer->prettyPrintExpr($b);
+    }
+
+    /**
+     * Option methods that read as "a value is present" (true → present).
+     *
+     * @return list<string>
+     */
+    private function presentChecks(): array
+    {
+        return $this->lowerList('present_checks', ['hasvalue', 'haselement', 'ispresent', 'isset']);
+    }
+
+    /**
+     * Option methods that read as "a value is absent" (true → absent).
+     *
+     * @return list<string>
+     */
+    private function absentChecks(): array
+    {
+        return $this->lowerList('absent_checks', ['isempty', 'isnone', 'isabsent']);
+    }
+
+    /**
+     * Option methods that unwrap the held value (the present-branch accessor).
+     *
+     * @return list<string>
+     */
+    private function unwrapAccessors(): array
+    {
+        return $this->lowerList('unwrap_accessors', ['getorthrow', 'get', 'unwrap', 'value']);
+    }
+
+    /**
+     * @param  list<string>  $default
+     * @return list<string>
+     */
+    private function lowerList(string $key, array $default): array
+    {
+        $configured = $this->config($key, $default);
+
+        if (! is_array($configured) || $configured === []) {
+            $configured = $default;
+        }
+
+        return array_values(array_map(
+            static fn (string $name): string => strtolower($name),
+            array_filter($configured, 'is_string'),
+        ));
     }
 }

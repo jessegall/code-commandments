@@ -68,6 +68,36 @@ class PreferNullCoalescingProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
     }
 
+    public function test_flags_option_hasvalue_unwrap(): void
+    {
+        $judgment = $this->judge('$name = $opt->hasValue() ? $opt->getOrThrow() : "guest";');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('getOr', $judgment->warnings[0]->message);
+    }
+
+    public function test_flags_option_isempty_inverted(): void
+    {
+        $judgment = $this->judge('$name = $this->opt->isEmpty() ? "guest" : $this->opt->getOrThrow();');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('getOr', $judgment->warnings[0]->message);
+    }
+
+    public function test_flags_negated_option_hasvalue(): void
+    {
+        $judgment = $this->judge('$name = ! $opt->hasValue() ? "guest" : $opt->getOrThrow();');
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
+    public function test_does_not_flag_option_unwrap_on_a_different_receiver(): void
+    {
+        $judgment = $this->judge('$name = $a->hasValue() ? $b->getOrThrow() : "guest";');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_flag_a_real_two_outcome_ternary(): void
     {
         // Different values on each branch — a genuine decision, not a fallback.
