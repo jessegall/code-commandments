@@ -13,7 +13,7 @@ use PhpParser\Node;
 use PhpParser\NodeFinder;
 
 /**
- * Flag a type union of more than `max_types` members (default 2) — `array |
+ * Flag a type union by width — 2 members warn, 3+ sin (configurable). `array |
  * string | null`, `int | float | string | null`. A value with three-plus shapes
  * is under-modelled: it pushes "what is this really?" onto every caller. When
  * the union is value-or-nothing (it includes null), the answer is an `Option`
@@ -23,7 +23,9 @@ use PhpParser\NodeFinder;
 #[IntroducedIn('1.81.0')]
 class WideUnionTypeProphet extends PhpCommandment
 {
-    private const DEFAULT_MAX = 2;
+    private const DEFAULT_WARN_AT = 2;
+
+    private const DEFAULT_SIN_AT = 3;
 
     public function description(): string
     {
@@ -35,15 +37,11 @@ class WideUnionTypeProphet extends PhpCommandment
         return Tier::Convention;
     }
 
-    public function advisory(): ?Advisory
+    public function advisory(): Advisory
     {
-        if ($this->isSin()) {
-            return null;
-        }
-
         return Advisory::make()
             ->applyWhen(
-                'A parameter, return, or property type unions more than two members '
+                'A parameter, return, or property type unions two or more members '
                 . '(`array | string | null`) — an under-modelled value that forces '
                 . 'every caller to re-decide what it is.'
             )
@@ -61,18 +59,22 @@ class WideUnionTypeProphet extends PhpCommandment
 
     public function detailedDescription(): string
     {
-        $max = $this->maxTypes();
+        $warnAt = $this->warnThreshold();
+        $sinAt = $this->sinThreshold();
 
         return <<<SCRIPTURE
-A union of three or more types is a value nobody has modelled — `array | string
-| null` says "it might be one of these, you figure it out". Every caller then
-re-derives what it actually is. Almost always it is really value-or-nothing, or
-one concept wearing several disguises.
+A type union is a value nobody has modelled — `array | string | null` says "it
+might be one of these, you figure it out", and every caller re-derives what it
+actually is. Almost always it is really value-or-nothing, or one concept wearing
+several disguises. The wider the union, the worse — so this rule graduates:
+
+  - {$warnAt} union members  → WARNING (consider an Option / value object)
+  - {$sinAt}+ union members  → SIN (clearly under-modelled — fix it)
 
 Bad:
     Option | array | string | null \$isVisibleRule = null,   // (and a contradiction)
-    array | string | null \$isVisibleRule = null,            // the "fix" — still wide
-    string | int | float | bool | null \$defaultValue = null,
+    array | string | null \$isVisibleRule = null,            // 3+ → sin
+    string | int \$value,                                    // 2 → warning
 
 Good — value-or-nothing is an Option (the null IS the absence):
     /** @var Option<array|string> */
@@ -82,16 +84,17 @@ Good — one concept wearing disguises is a value object:
     VisibilityRule \$isVisibleRule,
 
 WHAT FIRES — a native type or a `@param`/`@return`/`@var` docblock type whose
-TOP-LEVEL union has more than {$max} members (a union INSIDE a generic, like
+TOP-LEVEL union has >= {$warnAt} members (a union INSIDE a generic, like
 `Option<array|string>`, does not count — that is correctly modelled).
 
-WHAT DOES NOT — a simple nullable (`?T` / `T | null`), a two-member union, or a
-union nested inside a generic.
+WHAT DOES NOT — a simple nullable (`?T`), a union nested inside a generic, or —
+when the warning band is disabled — a union below the sin threshold.
 
 Configure via:
 
     Backend\WideUnionTypeProphet::class => [
-        'max_types' => {$max},
+        'warn_at_types' => {$warnAt},   // 0 (or warnings_enabled => false) disables warnings
+        'sin_at_types'  => {$sinAt},
     ],
 SCRIPTURE;
     }
@@ -104,17 +107,20 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $max = $this->maxTypes();
-        $isSin = $this->isSin();
+        $warnAt = $this->warnThreshold();
+        $sinAt = $this->sinThreshold();
+        $floor = $warnAt > 0 ? min($warnAt, $sinAt) : $sinAt;
         $sins = [];
         $warnings = [];
         $flaggedLines = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
-            if (count($union->types) > $max) {
+            $count = count($union->types);
+
+            if ($count >= $floor) {
                 $line = $union->getStartLine();
                 $flaggedLines[$line] = true;
-                $this->emit($line, count($union->types), $content, $isSin, $sins, $warnings);
+                $this->emit($line, $count, $content, $count >= $sinAt, $sins, $warnings);
             }
         }
 
@@ -130,8 +136,8 @@ SCRIPTURE;
             if (preg_match('/@(?:param|return|var)\s+(.+)$/', $text, $m)) {
                 $count = $this->topLevelUnionCount($this->cleanDocType($m[1]));
 
-                if ($count > $max) {
-                    $this->emit($line, $count, $content, $isSin, $sins, $warnings);
+                if ($count >= $floor) {
+                    $this->emit($line, $count, $content, $count >= $sinAt, $sins, $warnings);
                 }
             }
         }
@@ -154,7 +160,7 @@ SCRIPTURE;
     private function emit(int $line, int $count, string $content, bool $isSin, array &$sins, array &$warnings): void
     {
         $message = sprintf(
-            'This type unions %d members — a value with three-plus shapes is under-modelled and pushes "what is this really?" onto every caller. If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). Otherwise make a small value object, or pick one type.',
+            'This type unions %d members — a value worn as several shapes is under-modelled and pushes "what is this really?" onto every caller. If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). Otherwise make a small value object, or pick one type.',
             $count,
         );
         $snippet = $this->lineAt($content, $line);
@@ -192,23 +198,36 @@ SCRIPTURE;
             $stripped = preg_replace('/<[^<>]*>/', '', $stripped) ?? $stripped;
         } while ($stripped !== $previous);
 
+        // A leading `?` is the idiomatic nullable, not a union member — `?Foo`
+        // counts as 1 (clean), `Foo|null` as 2.
         $atoms = array_filter(array_map('trim', explode('|', ltrim($stripped, '?'))));
-        $count = count($atoms);
 
-        // A leading `?` adds the implicit null member.
-        return str_starts_with(ltrim($stripped), '?') ? $count + 1 : $count;
+        return count($atoms);
     }
 
-    private function maxTypes(): int
+    /**
+     * Smallest union size that warns. 0 (or `warnings_enabled => false`) disables
+     * the warning band — only sins fire then.
+     */
+    private function warnThreshold(): int
     {
-        $value = $this->config('max_types', self::DEFAULT_MAX);
+        if ($this->config('warnings_enabled', true) === false) {
+            return 0;
+        }
 
-        return is_numeric($value) ? max(1, (int) $value) : self::DEFAULT_MAX;
+        $value = $this->config('warn_at_types', self::DEFAULT_WARN_AT);
+
+        return is_numeric($value) ? max(0, (int) $value) : self::DEFAULT_WARN_AT;
     }
 
-    private function isSin(): bool
+    /**
+     * Smallest union size that is a sin.
+     */
+    private function sinThreshold(): int
     {
-        return $this->config('severity', 'warning') === 'sin';
+        $value = $this->config('sin_at_types', self::DEFAULT_SIN_AT);
+
+        return is_numeric($value) ? max(2, (int) $value) : self::DEFAULT_SIN_AT;
     }
 
     private function lineAt(string $content, int $line): string

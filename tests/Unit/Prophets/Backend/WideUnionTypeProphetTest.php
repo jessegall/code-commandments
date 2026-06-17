@@ -18,29 +18,38 @@ class WideUnionTypeProphetTest extends TestCase
         $this->prophet = new WideUnionTypeProphet;
     }
 
-    public function test_flags_a_native_three_member_union(): void
+    public function test_two_member_union_is_a_warning(): void
     {
-        $judgment = $this->judge('class A { public function m(array | string | null $x = null) {} }');
+        $judgment = $this->judge('class A { public function m(string | int $x): void {} }');
 
         $this->assertCount(1, $judgment->warnings);
+        $this->assertCount(0, $judgment->sins);
         $this->assertStringContainsString('Option', $judgment->warnings[0]->message);
     }
 
-    public function test_flags_a_docblock_union_with_spaces_in_generics(): void
+    public function test_three_plus_member_union_is_a_sin(): void
+    {
+        $judgment = $this->judge('class A { public function m(array | string | null $x = null): void {} }');
+
+        $this->assertTrue($judgment->isFallen());
+        $this->assertCount(1, $judgment->sins);
+        $this->assertCount(0, $judgment->warnings);
+    }
+
+    public function test_docblock_three_member_with_spaces_is_a_sin(): void
     {
         // The space inside array<string, int> must not truncate the type.
         $judgment = $this->judge('class A { /** @param array<string, int>|string|null $x */ public function m($x) {} }');
 
-        $this->assertCount(1, $judgment->warnings);
+        $this->assertCount(1, $judgment->sins);
     }
 
     public function test_does_not_flag_a_simple_nullable(): void
     {
-        $two = $this->judge('class A { public function m(string | null $x = null) {} }');
-        $nullable = $this->judge('class A { public function m(?Thing $x = null) {} }');
+        // `?T` is the idiomatic nullable (a NullableType, not a union) — exempt.
+        $judgment = $this->judge('class A { public function m(?Thing $x = null): void {} }');
 
-        $this->assertTrue($two->isRighteous());
-        $this->assertTrue($nullable->isRighteous());
+        $this->assertTrue($judgment->isRighteous());
     }
 
     public function test_does_not_flag_a_union_inside_a_generic(): void
@@ -50,25 +59,26 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_sin_mode_blocks(): void
+    public function test_warning_band_can_be_disabled(): void
     {
-        $prophet = (new WideUnionTypeProphet)->configure(['severity' => 'sin']);
+        $prophet = (new WideUnionTypeProphet)->configure(['warnings_enabled' => false]);
 
-        $judgment = $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | null \$x = null) {} }");
-
-        $this->assertTrue($judgment->isFallen());
-        $this->assertCount(1, $judgment->sins);
-        $this->assertNull($prophet->advisory());
+        // 2-member warning gone …
+        $this->assertTrue($prophet->judge('/x.php', "<?php\nclass A { public function m(string | int \$x): void {} }")->isRighteous());
+        // … but 3+ is still a sin.
+        $this->assertCount(1, $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | null \$x = null): void {} }")->sins);
     }
 
-    public function test_respects_a_configured_max(): void
+    public function test_respects_configured_thresholds(): void
     {
-        $prophet = (new WideUnionTypeProphet)->configure(['max_types' => 3]);
+        $prophet = (new WideUnionTypeProphet)->configure(['warn_at_types' => 3, 'sin_at_types' => 4]);
 
-        // 3 members is now within the limit.
-        $this->assertTrue($prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | null \$x = null) {} }")->isRighteous());
-        // 4 members still flagged.
-        $this->assertCount(1, $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | int | null \$x = null) {} }")->warnings);
+        // 2 now below the warning floor.
+        $this->assertTrue($prophet->judge('/x.php', "<?php\nclass A { public function m(string | int \$x): void {} }")->isRighteous());
+        // 3 is now a warning.
+        $this->assertCount(1, $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | null \$x = null): void {} }")->warnings);
+        // 4 is a sin.
+        $this->assertCount(1, $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | int | null \$x = null): void {} }")->sins);
     }
 
     public function test_describes_itself(): void
