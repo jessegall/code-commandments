@@ -79,6 +79,7 @@ return [
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
                 Backend\NoOptionToNullProphet::class,
+                Backend\NoOptionOveruseProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class,
                 Backend\LongDocblockProphet::class,
