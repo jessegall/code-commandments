@@ -1262,6 +1262,44 @@ final class FindStringsThatShouldBeEnums implements Pipe
      * @param  array<int, Node>  $parentMap
      * @return array{0: int, 1: list<string>}|null  [paramIndex, sortedDistinctLiterals]
      */
+    /**
+     * Whether the parameter is the lookup key of a generic typed bag accessor,
+     * whose key space is open (any string), so the literals seen across call
+     * sites are a sample, not an enumerable closed set.
+     */
+    private function isBagAccessorKeyParam(string $paramName, ?string $methodName, ?int $paramIndex): bool
+    {
+        // A generically-named lookup key is an open key space regardless of the
+        // method it sits on.
+        if (in_array(strtolower($paramName), ['key', 'offset', 'index', 'path'], true)) {
+            return true;
+        }
+
+        // The first string parameter of a typed accessor (`get`, `has`,
+        // `string`/`int`/`float`/`bool`/`array`, `value`, `offsetGet`, or an
+        // `as<Type>` getter) is the bag key.
+        if ($paramIndex === 0 && $methodName !== null && $this->looksLikeBagAccessor($methodName)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function looksLikeBagAccessor(string $method): bool
+    {
+        $lower = strtolower($method);
+
+        if (in_array($lower, [
+            'get', 'has', 'value', 'offsetget', 'offsetexists', '__get',
+            'string', 'int', 'integer', 'float', 'double', 'bool', 'boolean', 'array', 'collect',
+        ], true)) {
+            return true;
+        }
+
+        // `as<Type>` typed getters: asFloat, asString, asInt, asBool, asArray…
+        return preg_match('/^as[A-Z]/', $method) === 1;
+    }
+
     private function collectClosedSet(mixed $input, Node\Param $param, array $parentMap): ?array
     {
         if ($this->codebaseIndex === null) {
@@ -1277,6 +1315,14 @@ final class FindStringsThatShouldBeEnums implements Pipe
         $paramName = $param->var instanceof Expr\Variable && is_string($param->var->name)
             ? $param->var->name
             : null;
+
+        // A generic typed-accessor key (`$bag->asFloat($key)`, `get($name)`,
+        // `offsetGet($key)`) addresses an OPEN string-keyed bag. The literals
+        // it happens to receive are a sample, not a closed set — enum-ifying
+        // the key would be wrong. Skip the frequency heuristic for these.
+        if ($this->isBagAccessorKeyParam((string) $paramName, $methodName, $paramIndex)) {
+            return null;
+        }
 
         $callers = $this->codebaseIndex->callersOf($classFqcn, $methodName);
 
