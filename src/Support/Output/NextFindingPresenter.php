@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Output;
 
 use JesseGall\CodeCommandments\Results\Finding;
+use JesseGall\CodeCommandments\Results\RepentInput;
 use JesseGall\PhpTypes\T_String;
 
 /**
@@ -19,9 +20,10 @@ use JesseGall\PhpTypes\T_String;
 final class NextFindingPresenter
 {
     /**
+     * @param  list<RepentInput>|null  $repentInputs  declared inputs when the fixer is parameterized
      * @return list<string>
      */
-    public static function lines(Finding $finding, int $totalRemaining, string $binary, bool $absolvable, bool $autoFixable = false): array
+    public static function lines(Finding $finding, int $totalRemaining, string $binary, bool $absolvable, bool $autoFixable = false, ?array $repentInputs = null): array
     {
         $kind = $finding->isSin() ? '✗ SIN' : '⚠ WARNING';
 
@@ -48,6 +50,32 @@ final class NextFindingPresenter
         if ($finding->suggestion !== null && T_String::isNotBlank($finding->suggestion)) {
             $lines[] = T_String::empty();
             $lines[] = '  → ' . $finding->suggestion;
+        }
+
+        if ($autoFixable && $repentInputs !== null && $repentInputs !== []) {
+            $lines[] = T_String::empty();
+            $lines[] = 'This is AUTO-FIXABLE, but it NEEDS INPUT — DO NOT fix it by hand. Run:';
+            $lines[] = sprintf('  %s repent --prophet=%s --file=%s \\', $binary, $finding->prophetShort, $finding->relativePath);
+
+            $flags = [];
+            foreach ($repentInputs as $spec) {
+                $example = $spec->example !== '' ? $spec->example : '<value>';
+                $flags[] = sprintf('--input %s=%s', $spec->name, $example);
+            }
+            $lines[] = '      ' . implode(' ', $flags);
+
+            $lines[] = T_String::empty();
+            $lines[] = '  Inputs:';
+            foreach ($repentInputs as $spec) {
+                $lines[] = sprintf('    %s%s — %s', $spec->name, $spec->required ? ' (required)' : ' (optional)', $spec->description);
+            }
+
+            $lines[] = T_String::empty();
+            $lines[] = '  then `' . $binary . ' judge --next` for the next finding.';
+            $lines[] = T_String::empty();
+            $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? T_String::empty() : 's');
+
+            return $lines;
         }
 
         if ($autoFixable) {

@@ -123,8 +123,12 @@ pick which field when a file has more than one.)
 WHAT FIRES — a `string` / `?string` typed property or promoted ctor property
 whose name matches the configured closed-set list at a word boundary.
 
-WHAT DOES NOT — non-string types, a plain method parameter, a name not in the
-list, or — when the list is configured empty — nothing.
+WHAT DOES NOT — non-string types, a plain method parameter, a field that
+carries ANY attribute (`#[Input]`, `#[Pick*]`, a container binding: it is
+hydrated with a raw string regardless of the declared type, so an enum retype
+would throw — only Spatie Data `::from()`, on attribute-free promoted props,
+casts string→enum), a name not in the list, or — when the list is configured
+empty — nothing.
 
 Configure via:
 
@@ -150,14 +154,16 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $field['line'],
                 sprintf(
-                    'The string field `$%s` reads like a closed set (a %s). Stringly-typed closed sets bypass static analysis, IDE refactors, and exhaustive `match`. If its values are a known finite set, create a purpose-specific enum (e.g. `enum %s: string { case … }`) and type `$%s` as it — `repent --input create-enum-class=%s --input cases=…` does it. If it is genuinely open free text, leave it.',
+                    'The string field `$%s` reads like a closed set (a %s). Stringly-typed closed sets bypass static analysis, IDE refactors, and exhaustive `match`. If its values are a known finite set, create a purpose-specific enum (e.g. `enum %s: string { case … }`) and type `$%s` as it — auto-fixable: `repent --input create-enum-class=%s --input cases=…` generates the enum and retypes the field. If it is genuinely open free text, leave it.',
                     $field['name'],
                     $field['noun'],
                     $enum,
                     $field['name'],
                     $enum,
                 ),
+                null,
                 "closed-set-field:{$field['name']}",
+                true,
             );
         }
 
@@ -262,17 +268,29 @@ SCRIPTURE;
         $finder = new NodeFinder;
         $fields = [];
 
-        // Promoted constructor properties (declared data fields).
+        // Promoted constructor properties (declared data fields). A field that
+        // carries an attribute is skipped: an attribute (`#[Input]`, `#[Pick*]`,
+        // a container/framework binding) signals hydration that hands the field
+        // a raw STRING regardless of the declared type — the Laravel container
+        // does not cast string→BackedEnum the way Spatie Data ::from() does — so
+        // retyping it to an enum would throw a TypeError at runtime.
         foreach ($finder->findInstanceOf($ast, Node\Param::class) as $param) {
-            if ($param->flags === 0 || ! $param->var instanceof Node\Expr\Variable || ! is_string($param->var->name)) {
+            if ($param->flags === 0
+                || $param->attrGroups !== []
+                || ! $param->var instanceof Node\Expr\Variable
+                || ! is_string($param->var->name)) {
                 continue;
             }
 
             $this->addField($fields, $param->type, $param->var->name, $param->getStartLine(), $names);
         }
 
-        // Class properties.
+        // Class properties (same attribute exemption).
         foreach ($finder->findInstanceOf($ast, Node\Stmt\Property::class) as $property) {
+            if ($property->attrGroups !== []) {
+                continue;
+            }
+
             foreach ($property->props as $prop) {
                 $this->addField($fields, $property->type, $prop->name->toString(), $prop->getStartLine(), $names);
             }
