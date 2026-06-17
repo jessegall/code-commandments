@@ -249,6 +249,47 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
     }
 
+    public function test_repent_converts_same_file_readers(): void
+    {
+        // issue #30: the exact Field.php readers must convert with the retype.
+        $code = "<?php\n"
+            . "class Field extends Data {\n"
+            . "    public function __construct(public string \$type = SchemaFieldType::String->value) {}\n"
+            . "    public function wireSocketType(): string { return \$this->type; }\n"
+            . "    public function elementWireType(): string|null { return \$this->type === 'array' ? null : \$this->type; }\n"
+            . "    public function label(): string { return 'Field: ' . \$this->type; }\n"
+            . "}";
+        $this->prophet->setRepentInput(['enum-class' => 'SchemaFieldType']);
+
+        $fixed = $this->prophet->repent('/x.php', $code)->newContent;
+
+        // (1) direct return in a `: string` method → ->value
+        $this->assertStringContainsString('return $this->type->value;', $fixed);
+        // (2a) comparison literal → enum case
+        $this->assertStringContainsString("\$this->type === SchemaFieldType::Array", $fixed);
+        // (2b) return-through-ternary in a `string|null` method → ->value
+        $this->assertStringContainsString('null : $this->type->value', $fixed);
+        // concat operand → ->value
+        $this->assertStringContainsString("'Field: ' . \$this->type->value", $fixed);
+        // and the property + default retyped
+        $this->assertStringContainsString('public SchemaFieldType $type = SchemaFieldType::String', $fixed);
+        // result parses
+        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
+    }
+
+    public function test_repent_does_not_unwrap_non_string_readers(): void
+    {
+        // A reader where the enum itself is fine (e.g. returned from an enum-typed
+        // method) must NOT get ->value.
+        $code = "<?php\nclass A extends Data {\n public function __construct(public string \$status = 'on') {}\n public function s(): SomeStatus { return \$this->status; }\n}";
+        $this->prophet->setRepentInput(['enum-class' => 'SomeStatus']);
+
+        $fixed = $this->prophet->repent('/x.php', $code)->newContent;
+
+        $this->assertStringContainsString('return $this->status;', $fixed);
+        $this->assertStringNotContainsString('$this->status->value', $fixed);
+    }
+
     public function test_repent_is_ambiguous_with_multiple_fields_and_no_field_input(): void
     {
         $code = "<?php\nclass A extends Data { public string \$direction; public string \$status; }";
