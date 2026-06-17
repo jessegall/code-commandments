@@ -101,6 +101,81 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertNotNull($this->prophet->advisory());
     }
 
+    public function test_declares_required_repent_inputs(): void
+    {
+        $inputs = $this->prophet->repentInputs();
+        $byName = [];
+        foreach ($inputs as $spec) {
+            $byName[$spec->name] = $spec;
+        }
+
+        $this->assertTrue($byName['create-enum-class']->required);
+        $this->assertTrue($byName['cases']->required);
+        $this->assertFalse($byName['field']->required);
+    }
+
+    public function test_repent_creates_enum_and_retypes_the_field(): void
+    {
+        $code = "<?php\nnamespace App\\Data;\nclass NodeSocketData { public function __construct(public string \$direction) {} }";
+        $this->prophet->setRepentInput(['create-enum-class' => 'SocketDirection', 'cases' => 'input,output']);
+
+        $result = $this->prophet->repent('/app/Data/NodeSocketData.php', $code);
+
+        $this->assertTrue($result->absolved);
+        // Field retyped.
+        $this->assertStringContainsString('public SocketDirection $direction', $result->newContent);
+        // Enum file created in the same namespace, with studly-cased cases.
+        $this->assertArrayHasKey('/app/Data/SocketDirection.php', $result->createdFiles);
+        $enum = $result->createdFiles['/app/Data/SocketDirection.php'];
+        $this->assertStringContainsString('namespace App\\Data;', $enum);
+        $this->assertStringContainsString('enum SocketDirection: string', $enum);
+        $this->assertStringContainsString("case Input = 'input';", $enum);
+        $this->assertStringContainsString("case Output = 'output';", $enum);
+    }
+
+    public function test_repent_preserves_nullability(): void
+    {
+        $code = "<?php\nclass A { public function __construct(public ?string \$mode = null) {} }";
+        $this->prophet->setRepentInput(['create-enum-class' => 'Mode', 'cases' => 'fast,slow']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertStringContainsString('public ?Mode $mode', $result->newContent);
+    }
+
+    public function test_repent_without_inputs_is_unrepentant(): void
+    {
+        $code = "<?php\nclass A { public string \$direction; }";
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertFalse($result->absolved);
+        $this->assertStringContainsString('create-enum-class', (string) $result->failureReason);
+    }
+
+    public function test_repent_is_ambiguous_with_multiple_fields_and_no_field_input(): void
+    {
+        $code = "<?php\nclass A { public string \$direction; public string \$status; }";
+        $this->prophet->setRepentInput(['create-enum-class' => 'X', 'cases' => 'a,b']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertFalse($result->absolved);
+        $this->assertStringContainsString('field=', (string) $result->failureReason);
+    }
+
+    public function test_repent_targets_the_named_field(): void
+    {
+        $code = "<?php\nclass A { public string \$direction; public string \$status; }";
+        $this->prophet->setRepentInput(['create-enum-class' => 'Status', 'cases' => 'active,archived', 'field' => 'status']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public Status $status', $result->newContent);
+        $this->assertStringContainsString('public string $direction', $result->newContent);
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);

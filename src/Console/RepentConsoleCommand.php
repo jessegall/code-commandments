@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
+use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
@@ -34,6 +35,7 @@ class RepentConsoleCommand extends Command
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Repent sins in a specific file')
             ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Repent sins in specific files (comma-separated)')
             ->addOption('git', null, InputOption::VALUE_NONE, 'Only repent files that are new or changed in git')
+            ->addOption('input', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Input for a parameterized fixer, repeatable: --input key=value')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be fixed without making changes');
     }
 
@@ -49,6 +51,7 @@ class RepentConsoleCommand extends Command
             : [];
         $gitMode = (bool) $input->getOption('git');
         $dryRun = (bool) $input->getOption('dry-run');
+        $repentInput = $this->parseInputs((array) $input->getOption('input'));
 
         $gitFiles = [];
         if ($gitMode) {
@@ -113,18 +116,49 @@ class RepentConsoleCommand extends Command
 
                     $judgment = $prophet->judge($filePath, $content);
 
-                    if ($judgment->isRighteous()) {
+                    $parameterized = $prophet instanceof ParameterizedRepenter;
+
+                    // A parameterized fixer may act on advisory warnings too (the
+                    // closed-set-enum fix is a warning) — so it is not skipped just
+                    // because there are no sins. Other repenters keep sins-only.
+                    $hasWork = ! $judgment->isRighteous() || ($parameterized && $judgment->warnings !== []);
+
+                    if (! $hasWork) {
                         continue;
                     }
 
-                    $result = $prophet->repent($filePath, $content);
                     $relativePath = str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
+
+                    if ($parameterized) {
+                        $missing = $this->missingInputs($prophet, $repentInput);
+
+                        if ($missing !== []) {
+                            $this->reportMissingInputs($output, $prophetName, $relativePath, $missing);
+                            $this->failedFiles[$prophetName][] = $relativePath . ' (missing required --input)';
+                            $totalFailed++;
+
+                            continue;
+                        }
+
+                        $prophet->setRepentInput($repentInput);
+                    }
+
+                    $result = $prophet->repent($filePath, $content);
 
                     if ($result->absolved && $result->newContent !== null) {
                         if (!$dryRun) {
                             file_put_contents($filePath, $result->newContent);
+
+                            foreach ($result->createdFiles as $newPath => $newFileContent) {
+                                file_put_contents($newPath, $newFileContent);
+                            }
                         }
                         $this->fixedFiles[$prophetName][] = $relativePath;
+
+                        foreach (array_keys($result->createdFiles) as $newPath) {
+                            $created = str_replace(Environment::basePath() . '/', T_String::empty(), $newPath);
+                            $this->fixedFiles[$prophetName][] = "{$created} (created)";
+                        }
                         $totalFixed++;
                     } elseif (!$result->absolved) {
                         $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : T_String::empty());
@@ -135,6 +169,63 @@ class RepentConsoleCommand extends Command
         }
 
         return $this->showResults($output, $totalFixed, $totalFailed, $dryRun);
+    }
+
+    /**
+     * Parse repeatable `--input key=value` tokens into a map.
+     *
+     * @param  array<int, string>  $tokens
+     * @return array<string, string>
+     */
+    private function parseInputs(array $tokens): array
+    {
+        $values = [];
+
+        foreach ($tokens as $token) {
+            $pos = strpos($token, '=');
+
+            if ($pos === false) {
+                continue;
+            }
+
+            $values[trim(substr($token, 0, $pos))] = substr($token, $pos + 1);
+        }
+
+        return $values;
+    }
+
+    /**
+     * The required inputs a parameterized repenter is still missing.
+     *
+     * @param  array<string, string>  $provided
+     * @return list<\JesseGall\CodeCommandments\Results\RepentInput>
+     */
+    private function missingInputs(ParameterizedRepenter $prophet, array $provided): array
+    {
+        $missing = [];
+
+        foreach ($prophet->repentInputs() as $spec) {
+            if ($spec->required && trim($provided[$spec->name] ?? '') === '') {
+                $missing[] = $spec;
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * @param  list<\JesseGall\CodeCommandments\Results\RepentInput>  $missing
+     */
+    private function reportMissingInputs(OutputInterface $output, string $prophetName, string $relativePath, array $missing): void
+    {
+        $output->writeln("{$prophetName} can fix {$relativePath}, but needs input:");
+
+        foreach ($missing as $spec) {
+            $example = $spec->example !== '' ? $spec->example : '<value>';
+            $output->writeln(sprintf('  --input %s=%s   (required) %s', $spec->name, $example, $spec->description));
+        }
+
+        $output->writeln(T_String::empty());
     }
 
     private function showResults(OutputInterface $output, int $totalFixed, int $totalFailed, bool $dryRun): int
