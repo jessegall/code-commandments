@@ -22,7 +22,7 @@ use PhpParser\NodeFinder;
  * Constructors are exempt by default: a Data/DTO/DI constructor legitimately
  * lists its fields/dependencies (and `from([...])` is how it is built).
  */
-#[IntroducedIn('1.78.0')]
+#[IntroducedIn('1.79.0')]
 class TooManyParametersProphet extends PhpCommandment
 {
     private const DEFAULT_MAX = 6;
