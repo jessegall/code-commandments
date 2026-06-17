@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Enforce explicit Spatie Data construction:
@@ -58,7 +59,7 @@ final class FindImplicitDataFrom implements Pipe
     private function matchesDataSuffix(string $name): bool
     {
         foreach ($this->dataSuffixes as $suffix) {
-            if ($suffix !== '' && str_ends_with($name, $suffix)) {
+            if (T_String::isNotEmpty($suffix) && str_ends_with($name, $suffix)) {
                 return true;
             }
         }
@@ -432,7 +433,7 @@ final class FindImplicitDataFrom implements Pipe
     {
         return new MatchResult(
             name: $target,
-            pattern: '',
+            pattern: T_String::empty(),
             match: $target . '::from / ' . $kind,
             line: $line,
             offset: null,
@@ -446,8 +447,8 @@ final class FindImplicitDataFrom implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

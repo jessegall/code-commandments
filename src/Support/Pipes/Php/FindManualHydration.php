@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find methods that hand-roll object hydration.
@@ -82,12 +83,12 @@ final class FindManualHydration implements Pipe
                     continue;
                 }
 
-                $label = ($ownName !== null ? $ownName . '::' : '') . $method->name->toString() . '()';
+                $label = ($ownName !== null ? $ownName . '::' : T_String::empty()) . $method->name->toString() . '()';
                 $line = $method->getStartLine();
 
                 $matches[] = new MatchResult(
                     name: $method->name->toString(),
-                    pattern: '',
+                    pattern: T_String::empty(),
                     match: $label,
                     line: $line,
                     offset: null,
@@ -134,13 +135,13 @@ final class FindManualHydration implements Pipe
 
         foreach ($instantiations as $new) {
             if ($this->instantiatesOwnClass($new, $ownName) && count($methodKeys) >= $this->minKeyReads) {
-                return ['kind' => 'array', 'keys' => $methodKeys, 'source' => '', 'target' => ''];
+                return ['kind' => 'array', 'keys' => $methodKeys, 'source' => T_String::empty(), 'target' => T_String::empty()];
             }
 
             $argKeys = $this->collectKeyReads($this->argExpressions($new), $useStatements);
 
             if (count($argKeys) >= $this->minKeyReads) {
-                return ['kind' => 'array', 'keys' => $argKeys, 'source' => '', 'target' => ''];
+                return ['kind' => 'array', 'keys' => $argKeys, 'source' => T_String::empty(), 'target' => T_String::empty()];
             }
 
             $objectMapping = $this->inspectObjectMapping($new, $ownName, $paramTypes);
@@ -474,8 +475,8 @@ final class FindManualHydration implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

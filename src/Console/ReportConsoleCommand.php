@@ -12,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 class ReportConsoleCommand extends Command
 {
@@ -35,7 +36,7 @@ class ReportConsoleCommand extends Command
         $prophet = $input->getOption('prophet');
         $reason = $input->getOption('reason');
 
-        if (! is_string($prophet) || trim($prophet) === '' || ! is_string($reason) || trim($reason) === '') {
+        if (! is_string($prophet) || T_String::isBlank($prophet) || ! is_string($reason) || T_String::isBlank($reason)) {
             $output->writeln('<error>--prophet and --reason are required.</error>');
 
             return Command::FAILURE;
@@ -80,7 +81,7 @@ class ReportConsoleCommand extends Command
         if ($resolved !== null) {
             $repo = ConfigLoader::load($resolved)['report']['repo'] ?? null;
 
-            if (is_string($repo) && $repo !== '') {
+            if (is_string($repo) && T_String::isNotEmpty($repo)) {
                 return $repo;
             }
         }
@@ -94,7 +95,7 @@ class ReportConsoleCommand extends Command
             return null;
         }
 
-        $lines = explode("\n", (string) file_get_contents($file));
+        $lines = explode(T_String::NEWLINE, (string) file_get_contents($file));
 
         return $lines[$line - 1] ?? null;
     }

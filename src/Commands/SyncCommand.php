@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\ConfigSyncer;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\VersionResolver;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Add newly available prophets to the published config file.
@@ -98,7 +99,7 @@ class SyncCommand extends Command
             $shortName = class_basename($entry['class']);
             $versionTag = $entry['introduced_in'] !== null
                 ? " (introduced in {$entry['introduced_in']})"
-                : '';
+                : T_String::empty();
             $this->line("  + {$shortName} → {$entry['scroll']}{$versionTag}");
         }
 

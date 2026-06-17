@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Results\Finding;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Flattens the per-file / per-prophet judgment structure into an ordered
@@ -143,7 +144,7 @@ final class FindingCollector
 
     private function relative(string $filePath): string
     {
-        return str_replace(Environment::basePath() . '/', '', $filePath);
+        return str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
     }
 
     private function isFileAbsolved(string $filePath, string $prophetClass): bool

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_Json;
+use JesseGall\PhpTypes\T_String;
+
 class ConfigGenerator
 {
     /**
@@ -17,7 +20,7 @@ class ConfigGenerator
         $scrolls = [];
 
         foreach ($projects as $project) {
-            $prefix = $singleProject ? '' : $project->name . '-';
+            $prefix = $singleProject ? T_String::empty() : $project->name . '-';
 
             if ($project->hasPhp) {
                 $scrollName = $singleProject ? 'backend' : $prefix . 'backend';
@@ -70,7 +73,7 @@ class ConfigGenerator
                 continue;
             }
 
-            $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', '', $file);
+            $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', T_String::empty(), $file);
             $configOptions = $this->extractConfigOptions($dir . '/' . $file);
             $prophets[$className] = $configOptions;
         }
@@ -125,7 +128,7 @@ class ConfigGenerator
     private function resolveConstant(string $fileContent, string $constant): ?string
     {
         // Handle self::CONSTANT_NAME or static::CONSTANT_NAME
-        $constName = preg_replace('/^(self|static)::/', '', $constant);
+        $constName = preg_replace('/^(self|static)::/', T_String::empty(), $constant);
 
         if (preg_match("/const\s+{$constName}\s*=\s*(.+?);/", $fileContent, $match)) {
             return trim($match[1]);
@@ -141,7 +144,7 @@ class ConfigGenerator
     {
         $lines = [];
         $lines[] = '<?php';
-        $lines[] = '';
+        $lines[] = T_String::empty();
         $lines[] = 'return [';
         $lines[] = "    'scrolls' => [";
 
@@ -172,19 +175,19 @@ class ConfigGenerator
             $entry[] = '            ],';
             $entry[] = '        ],';
 
-            $scrollEntries[] = implode("\n", $entry);
+            $scrollEntries[] = implode(T_String::NEWLINE, $entry);
         }
 
-        $lines[] = implode("\n\n", $scrollEntries);
+        $lines[] = implode(T_String::PARAGRAPH, $scrollEntries);
         $lines[] = '    ],';
-        $lines[] = '';
+        $lines[] = T_String::empty();
         $lines[] = "    'confession' => [";
         $lines[] = "        'tablet_path' => __DIR__ . '/.commandments/confessions.json',";
         $lines[] = '    ],';
         $lines[] = '];';
-        $lines[] = '';
+        $lines[] = T_String::empty();
 
-        return implode("\n", $lines);
+        return implode(T_String::NEWLINE, $lines);
     }
 
     /**
@@ -193,7 +196,7 @@ class ConfigGenerator
     private function renderArray(array $items): string
     {
         if (empty($items)) {
-            return '[]';
+            return T_Json::emptyArray();
         }
 
         $quoted = array_map(fn (string $item) => "'{$item}'", $items);
@@ -210,7 +213,7 @@ class ConfigGenerator
             return "__DIR__";
         }
 
-        $relative = str_replace($basePath . '/', '', $absolutePath);
+        $relative = str_replace($basePath . '/', T_String::empty(), $absolutePath);
 
         return "__DIR__ . '/{$relative}'";
     }

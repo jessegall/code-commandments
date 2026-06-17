@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
 use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Report a prophet false-positive or wrong rule as a GitHub issue.
@@ -27,7 +28,7 @@ class ReportCommand extends Command
         $prophet = $this->option('prophet');
         $reason = $this->option('reason');
 
-        if (! is_string($prophet) || trim($prophet) === '' || ! is_string($reason) || trim($reason) === '') {
+        if (! is_string($prophet) || T_String::isBlank($prophet) || ! is_string($reason) || T_String::isBlank($reason)) {
             $this->error('--prophet and --reason are required.');
 
             return self::FAILURE;
@@ -70,7 +71,7 @@ class ReportCommand extends Command
             return null;
         }
 
-        $lines = explode("\n", (string) file_get_contents($file));
+        $lines = explode(T_String::NEWLINE, (string) file_get_contents($file));
 
         return $lines[$line - 1] ?? null;
     }

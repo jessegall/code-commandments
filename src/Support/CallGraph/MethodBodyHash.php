@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support\CallGraph;
 
 use PhpParser\Node;
 use PhpParser\PrettyPrinter;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * A structural fingerprint of a method body — pretty-printed with local
@@ -30,11 +31,11 @@ final class MethodBodyHash
 
         $code = trim((new PrettyPrinter\Standard)->prettyPrint($method->stmts));
 
-        if ($code === '') {
+        if (T_String::isEmpty($code)) {
             return null;
         }
 
-        $lines = substr_count($code, "\n") + 1;
+        $lines = substr_count($code, T_String::NEWLINE) + 1;
 
         if ($lines < $minLines) {
             return null;

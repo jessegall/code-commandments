@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use ReflectionClass;
 use ReflectionException;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Syncs newly available prophets into an existing commandments.php config file.
@@ -37,7 +38,7 @@ class ConfigSyncer
         $source = file_get_contents($configPath);
 
         if ($source === false) {
-            return ['added' => [], 'source' => ''];
+            return ['added' => [], 'source' => T_String::empty()];
         }
 
         $added = [];
@@ -165,7 +166,7 @@ class ConfigSyncer
                 continue;
             }
 
-            $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', '', $file);
+            $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', T_String::empty(), $file);
             $configOptions = $this->extractConfigOptions($dir . '/' . $file);
             $introducedIn = $this->extractIntroducedIn($className);
 
@@ -243,7 +244,7 @@ class ConfigSyncer
 
     private function resolveConstant(string $fileContent, string $constant): ?string
     {
-        $constName = preg_replace('/^(self|static)::/', '', $constant);
+        $constName = preg_replace('/^(self|static)::/', T_String::empty(), $constant);
 
         if (preg_match("/const\s+{$constName}\s*=\s*(.+?);/", $fileContent, $match)) {
             return trim($match[1]);
@@ -280,7 +281,7 @@ class ConfigSyncer
         }
 
         // Detect indentation from the 'prophets' line
-        $lineStart = strrpos(substr($source, 0, $prophetsPos), "\n");
+        $lineStart = strrpos(substr($source, 0, $prophetsPos), T_String::NEWLINE);
         $prophetsIndent = $prophetsPos - ($lineStart === false ? 0 : $lineStart + 1);
         $entryIndent = str_repeat(' ', $prophetsIndent + 4);
         $closingIndent = str_repeat(' ', $prophetsIndent);
@@ -294,7 +295,7 @@ class ConfigSyncer
         $between = trim(substr($source, $openBracket + 1, $closingBracket - $openBracket - 1));
         $entries = $this->renderProphetEntries($newProphets, $entryIndent);
 
-        if ($between === '') {
+        if (T_String::isEmpty($between)) {
             // Empty array: expand [] into multi-line
             $replacement = "[\n" . $entries . $closingIndent . ']';
 
@@ -302,7 +303,7 @@ class ConfigSyncer
         }
 
         // Non-empty: insert before the closing bracket's line
-        $lineStart = strrpos(substr($source, 0, $closingBracket), "\n");
+        $lineStart = strrpos(substr($source, 0, $closingBracket), T_String::NEWLINE);
 
         if ($lineStart === false) {
             return $source;
@@ -322,7 +323,7 @@ class ConfigSyncer
         $pos = $openPos + 1;
         $len = strlen($source);
         $inString = false;
-        $stringChar = '';
+        $stringChar = T_String::empty();
 
         while ($pos < $len && $depth > 0) {
             $char = $source[$pos];
@@ -361,19 +362,39 @@ class ConfigSyncer
      */
     private function renderProphetEntries(array $prophets, string $indent): string
     {
-        $lines = '';
+        $lines = T_String::empty();
 
         foreach ($prophets as $class => $configOptions) {
             if (empty($configOptions)) {
-                $lines .= "{$indent}\\{$class}::class,\n";
+                $lines .= sprintf(
+                    '%s\\%s::class,%s',
+                    $indent,
+                    $class,
+                    T_String::NEWLINE,
+                );
             } else {
-                $lines .= "{$indent}\\{$class}::class => [\n";
+                $lines .= sprintf(
+                    '%s\\%s::class => [%s',
+                    $indent,
+                    $class,
+                    T_String::NEWLINE,
+                );
 
                 foreach ($configOptions as $key => $default) {
-                    $lines .= "{$indent}    // '{$key}' => {$default},\n";
+                    $lines .= sprintf(
+                        '%s    // \'%s\' => %s,%s',
+                        $indent,
+                        $key,
+                        $default,
+                        T_String::NEWLINE,
+                    );
                 }
 
-                $lines .= "{$indent}],\n";
+                $lines .= sprintf(
+                    '%s],%s',
+                    $indent,
+                    T_String::NEWLINE,
+                );
             }
         }
 

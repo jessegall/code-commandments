@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Support\Output\NextFindingPresenter;
 use JesseGall\CodeCommandments\Support\Pipeline;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Judge the codebase for sins.
@@ -268,7 +269,7 @@ class JudgeCommand extends Command
         ?string $prophetFilter,
         bool $shouldAbsolve
     ): void {
-        $relativePath = str_replace(Environment::basePath().'/', '', $filePath);
+        $relativePath = str_replace(Environment::basePath().'/', T_String::empty(), $filePath);
         $fileSins = 0;
         $fileWarnings = 0;
 
@@ -379,7 +380,7 @@ class JudgeCommand extends Command
         }
 
         $isDetailedView = $prophetFilter !== null;
-        $gitFlag = $gitMode ? ' --git' : '';
+        $gitFlag = $gitMode ? ' --git' : T_String::empty();
 
         if ($this->totalSins > 0) {
             $this->output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
@@ -393,7 +394,7 @@ class JudgeCommand extends Command
                 $shortName = class_basename($prophetClass);
                 $fixable = $this->prophetAutoFixable[$prophetClass] ?? 0;
                 $autoFixable = match (true) {
-                    $fixable <= 0 => '',
+                    $fixable <= 0 => T_String::empty(),
                     $fixable >= $count => ' [AUTO-FIXABLE]',
                     default => " [{$fixable}/{$count} AUTO-FIXABLE]",
                 };
@@ -403,7 +404,7 @@ class JudgeCommand extends Command
                 if ($isDetailedView) {
                     foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
                         foreach ($sins as $sin) {
-                            $line = $sin['line'] ? ":{$sin['line']}" : '';
+                            $line = $sin['line'] ? ":{$sin['line']}" : T_String::empty();
                             $this->output->writeln("  {$file}{$line}");
                             $this->output->writeln("    {$sin['message']}");
                         }
@@ -421,7 +422,7 @@ class JudgeCommand extends Command
                 $this->output->writeln("  1. Read the rule:    php artisan commandments:scripture --prophet=NAME");
                 $this->output->writeln("  2. See the files:    php artisan commandments:judge --prophet=NAME{$gitFlag}");
                 $this->output->writeln('  3. Fix all violations following the detailed description exactly');
-                $this->output->writeln('');
+                $this->output->writeln(T_String::empty());
                 $this->output->writeln('Target a subtree:     php artisan commandments:judge --path=<dir>   (ignores all excludes)');
             }
 
@@ -446,7 +447,7 @@ class JudgeCommand extends Command
             if ($isDetailedView) {
                 foreach ($this->manualVerificationFiles as $file => $issues) {
                     foreach ($issues as $issue) {
-                        $line = $issue['line'] ? ":{$issue['line']}" : '';
+                        $line = $issue['line'] ? ":{$issue['line']}" : T_String::empty();
                         $this->output->writeln("  {$file}{$line}");
                         $this->output->writeln("    {$issue['message']}");
                     }
@@ -455,7 +456,7 @@ class JudgeCommand extends Command
                 $warningProphets = [];
                 foreach ($this->manualVerificationFiles as $file => $issues) {
                     foreach ($issues as $issue) {
-                        $filterName = str_replace('Prophet', '', $issue['prophet']);
+                        $filterName = str_replace('Prophet', T_String::empty(), $issue['prophet']);
                         $warningProphets[$filterName] = ($warningProphets[$filterName] ?? 0) + 1;
                     }
                 }

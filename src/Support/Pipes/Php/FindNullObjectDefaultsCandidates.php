@@ -11,6 +11,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Flag nullable parameters / properties that should hold a Null Object
@@ -617,18 +618,18 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             ? $param->var->name
             : '?';
 
-        $nullObjectFqcn = '';
+        $nullObjectFqcn = T_String::empty();
 
         if ($kind === 'a2_known') {
             $mapKey = $this->resolveMapKey($typeInfo['typeName']);
-            $nullObjectFqcn = $mapKey !== null ? $this->nullObjectMap[$mapKey] : '';
+            $nullObjectFqcn = $mapKey !== null ? $this->nullObjectMap[$mapKey] : T_String::empty();
         }
 
         $line = $param->getStartLine();
 
         return new MatchResult(
             name: $matchName,
-            pattern: '',
+            pattern: T_String::empty(),
             match: "\${$paramName}",
             line: $line,
             offset: null,
@@ -845,11 +846,11 @@ final class FindNullObjectDefaultsCandidates implements Pipe
         $subject = $this->renderExpr($entry['expr']);
         $line = $entry['firstLine'];
         $mapKey = $this->resolveMapKey($typeInfo['typeName']);
-        $suggestedFqcn = $mapKey !== null ? $this->nullObjectMap[$mapKey] : '';
+        $suggestedFqcn = $mapKey !== null ? $this->nullObjectMap[$mapKey] : T_String::empty();
 
         return new MatchResult(
             name: 'pattern_b',
-            pattern: '',
+            pattern: T_String::empty(),
             match: $subject,
             line: $line,
             offset: null,
@@ -917,8 +918,8 @@ final class FindNullObjectDefaultsCandidates implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

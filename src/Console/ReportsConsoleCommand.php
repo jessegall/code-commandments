@@ -9,6 +9,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_Int;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Track the prophet reports this project filed and surface the ones that have
@@ -50,7 +52,7 @@ class ReportsConsoleCommand extends Command
             $alreadyDone = ($report['resolved'] ?? false) && ($report['notified'] ?? false);
 
             if (! ($report['resolved'] ?? false)) {
-                $state = $this->issueState((string) ($report['repo'] ?? ''), (int) ($report['number'] ?? 0));
+                $state = $this->issueState(T_String::coalesce($report['repo'] ?? null), T_Int::coalesce($report['number'] ?? null));
 
                 if ($state === 'CLOSED') {
                     $reports[$i]['resolved'] = true;
@@ -72,7 +74,7 @@ class ReportsConsoleCommand extends Command
                     $report['number'] ?? 0,
                     $state,
                     $report['prophet'] ?? '?',
-                    $report['url'] ?? '',
+                    $report['url'] ?? T_String::empty(),
                 ));
             }
         }
@@ -85,7 +87,7 @@ class ReportsConsoleCommand extends Command
             $output->writeln('RESOLVED PROPHET REPORTS — reports you filed are now fixed upstream:');
 
             foreach ($newlyResolved as $report) {
-                $output->writeln(sprintf('  #%d %s — %s', $report['number'] ?? 0, $report['prophet'] ?? '?', $report['url'] ?? ''));
+                $output->writeln(sprintf('  #%d %s — %s', $report['number'] ?? 0, $report['prophet'] ?? '?', $report['url'] ?? T_String::empty()));
             }
 
             $output->writeln('Run `composer update jessegall/code-commandments` and re-run judge — the finding you reported should be gone.');
@@ -96,7 +98,7 @@ class ReportsConsoleCommand extends Command
 
     private function issueState(string $repo, int $number): ?string
     {
-        if ($repo === '' || $number === 0) {
+        if (T_String::isEmpty($repo) || $number === 0) {
             return null;
         }
 
@@ -116,6 +118,6 @@ class ReportsConsoleCommand extends Command
             return null;
         }
 
-        return trim(implode('', $out)) ?: null;
+        return trim(implode(T_String::empty(), $out)) ?: null;
     }
 }

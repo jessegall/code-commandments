@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * A stable, content-derived identity for a single finding (sin or warning).
  *
@@ -27,11 +29,11 @@ final class Fingerprint
         ?string $symbol,
         ?string $snippet,
     ): string {
-        $parts = implode("\0", [
+        $parts = implode(T_String::NULL_BYTE, [
             $prophetClass,
             $relativePath,
-            $symbol ?? '',
-            self::normalize($snippet ?? ''),
+            $symbol ?? T_String::empty(),
+            self::normalize($snippet ?? T_String::empty()),
         ]);
 
         return substr(sha1($parts), 0, 16);

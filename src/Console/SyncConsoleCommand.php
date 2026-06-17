@@ -12,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Add newly available prophets to an existing config file.
@@ -108,14 +109,14 @@ class SyncConsoleCommand extends Command
             $shortName = class_basename($entry['class']);
             $versionTag = $entry['introduced_in'] !== null
                 ? " (introduced in {$entry['introduced_in']})"
-                : '';
+                : T_String::empty();
             $output->writeln("  + {$shortName} → {$entry['scroll']}{$versionTag}");
         }
 
         $count = count($result['added']);
 
         if ($input->getOption('dry-run')) {
-            $output->writeln('');
+            $output->writeln(T_String::empty());
             $output->writeln("{$count} new prophet(s) found (dry run, no changes made).");
 
             return Command::SUCCESS;
@@ -130,10 +131,10 @@ class SyncConsoleCommand extends Command
         }
 
         $relativePath = str_starts_with($configPath, $basePath)
-            ? ltrim(str_replace($basePath, '', $configPath), '/')
+            ? ltrim(str_replace($basePath, T_String::empty(), $configPath), '/')
             : $configPath;
 
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln("Synced {$count} new prophet(s) into {$relativePath}.");
 
         if ($currentVersion !== null) {

@@ -10,6 +10,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Cross-file call-graph and class-shape index, built once per scroll run.
@@ -87,7 +88,7 @@ final class CodebaseIndex
         foreach ($files as $file) {
             $path = $file instanceof \SplFileInfo ? $file->getRealPath() : (string) $file;
 
-            if ($path === '' || $path === false) {
+            if (T_String::isEmpty($path) || $path === false) {
                 continue;
             }
 
@@ -101,7 +102,7 @@ final class CodebaseIndex
 
             $content = @file_get_contents($path);
 
-            if ($content === false || $content === '') {
+            if ($content === false || T_String::isEmpty($content)) {
                 continue;
             }
 
@@ -414,7 +415,7 @@ final class CodebaseIndex
             foreach ($scope as $stmt) {
                 if ($stmt instanceof Node\Stmt\Enum_ && $stmt->name !== null) {
                     $short = $stmt->name->toString();
-                    $localEnumFqcns[$namespace !== null && $namespace !== '' ? $namespace . '\\' . $short : $short] = true;
+                    $localEnumFqcns[$namespace !== null && T_String::isNotEmpty($namespace) ? $namespace . '\\' . $short : $short] = true;
                 }
             }
 
@@ -469,7 +470,7 @@ final class CodebaseIndex
         }
 
         $short = $enum->name->toString();
-        $fqcn = $namespace !== null && $namespace !== ''
+        $fqcn = $namespace !== null && T_String::isNotEmpty($namespace)
             ? $namespace . '\\' . $short
             : $short;
 
@@ -552,7 +553,7 @@ final class CodebaseIndex
     {
         $short = $class->name?->toString() ?? 'Anonymous';
 
-        return $namespace !== null && $namespace !== ''
+        return $namespace !== null && T_String::isNotEmpty($namespace)
             ? $namespace . '\\' . $short
             : $short;
     }

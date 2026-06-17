@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * String helper utilities.
  */
@@ -22,7 +24,7 @@ final class Str
      */
     public static function toCamelCase(string $value): string
     {
-        return lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $value))));
+        return lcfirst(str_replace(' ', T_String::empty(), ucwords(str_replace('-', ' ', $value))));
     }
 
     /**
@@ -30,7 +32,7 @@ final class Str
      */
     public static function toPascalCase(string $value): string
     {
-        return str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $value)));
+        return str_replace(' ', T_String::empty(), ucwords(str_replace(['-', '_'], ' ', $value)));
     }
 
     /**

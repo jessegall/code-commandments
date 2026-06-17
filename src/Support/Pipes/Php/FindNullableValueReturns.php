@@ -13,6 +13,7 @@ use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find methods that decide between a value and nothing by returning null.
@@ -73,15 +74,15 @@ final class FindNullableValueReturns implements Pipe
                 }
 
                 $typeInfo = $this->returnTypeInfo($method->returnType, $input->useStatements, $input->namespace);
-                $label = ($ownName !== null ? $ownName . '::' : '') . $method->name->toString() . '()';
+                $label = ($ownName !== null ? $ownName . '::' : T_String::empty()) . $method->name->toString() . '()';
                 $line = $method->getStartLine();
                 $classFqcn = $ownName !== null
-                    ? (($input->namespace !== null && $input->namespace !== '') ? $input->namespace . '\\' . $ownName : $ownName)
-                    : '';
+                    ? (($input->namespace !== null && T_String::isNotEmpty($input->namespace)) ? $input->namespace . '\\' . $ownName : $ownName)
+                    : T_String::empty();
 
                 $matches[] = new MatchResult(
                     name: $method->name->toString(),
-                    pattern: '',
+                    pattern: T_String::empty(),
                     match: $label,
                     line: $line,
                     offset: null,
@@ -239,7 +240,7 @@ final class FindNullableValueReturns implements Pipe
             ? implode('&', array_map(fn ($t) => $t->toString(), $m->types))
             : $m->toString(), $members);
 
-        $fqcn = '';
+        $fqcn = T_String::empty();
 
         if (count($members) === 1 && $members[0] instanceof Node\Name) {
             $fqcn = $this->resolveFqcn($members[0], $useStatements, $namespace);
@@ -265,16 +266,16 @@ final class FindNullableValueReturns implements Pipe
         if (isset($useStatements[$first])) {
             $rest = array_slice($name->getParts(), 1);
 
-            return $useStatements[$first] . ($rest !== [] ? '\\' . implode('\\', $rest) : '');
+            return $useStatements[$first] . ($rest !== [] ? '\\' . implode('\\', $rest) : T_String::empty());
         }
 
-        return ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . $name->toString();
+        return ($namespace !== null && T_String::isNotEmpty($namespace) ? $namespace . '\\' : T_String::empty()) . $name->toString();
     }
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

@@ -11,6 +11,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
 use ReflectionClass;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find cases where request method calls are passed as values in Data::from() arrays.
@@ -86,7 +87,7 @@ final class FindRequestToDataPassthrough implements Pipe
 
                     $matches[] = new MatchResult(
                         name: $className,
-                        pattern: '',
+                        pattern: T_String::empty(),
                         match: $className . '::from()',
                         line: $line,
                         offset: null,
@@ -310,8 +311,8 @@ final class FindRequestToDataPassthrough implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

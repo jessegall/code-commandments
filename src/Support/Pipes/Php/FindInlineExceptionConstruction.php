@@ -12,6 +12,7 @@ use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find `throw new ...` sites that assemble the exception at the call
@@ -143,7 +144,7 @@ final class FindInlineExceptionConstruction implements Pipe
 
         return new MatchResult(
             name: $shortName,
-            pattern: '',
+            pattern: T_String::empty(),
             match: 'new ' . $shortName,
             line: $line,
             offset: null,
@@ -152,7 +153,7 @@ final class FindInlineExceptionConstruction implements Pipe
                 'kind' => $isGeneric ? 'generic' : 'custom_message',
                 'exception' => $shortName,
                 'method' => $this->enclosingFunctionLabel($throw, $parents),
-                'factory' => '',
+                'factory' => T_String::empty(),
                 'suggested' => $this->suggestedExceptionName($firstArg) ?? ($isGeneric ? null : $shortName) ?? 'a named exception',
             ],
         );
@@ -202,7 +203,7 @@ final class FindInlineExceptionConstruction implements Pipe
 
         return new MatchResult(
             name: $shortName,
-            pattern: '',
+            pattern: T_String::empty(),
             match: $shortName . '::' . ($call->name instanceof Node\Identifier ? $call->name->toString() : 'make'),
             line: $line,
             offset: null,
@@ -308,16 +309,16 @@ final class FindInlineExceptionConstruction implements Pipe
     private function suggestedExceptionName(?Node\Arg $arg): ?string
     {
         $text = $arg === null ? null : $this->leadingLiteralText($arg->value);
-        $text = $text === null ? null : preg_replace('/%[a-zA-Z]/', '', $text);
+        $text = $text === null ? null : preg_replace('/%[a-zA-Z]/', T_String::empty(), $text);
 
         if ($text === null || preg_match_all('/[A-Za-z]{2,}/', $text, $m) === 0) {
             return null;
         }
 
         $words = array_slice($m[0], 0, 4);
-        $studly = implode('', array_map(static fn (string $w) => ucfirst(strtolower($w)), $words));
+        $studly = implode(T_String::empty(), array_map(static fn (string $w) => ucfirst(strtolower($w)), $words));
 
-        if ($studly === '') {
+        if (T_String::isEmpty($studly)) {
             return null;
         }
 
@@ -442,8 +443,8 @@ final class FindInlineExceptionConstruction implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

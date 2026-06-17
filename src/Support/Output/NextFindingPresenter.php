@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Output;
 
 use JesseGall\CodeCommandments\Results\Finding;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Renders exactly ONE finding for the serialized `--next` walk.
@@ -25,46 +26,46 @@ final class NextFindingPresenter
         $kind = $finding->isSin() ? '✗ SIN' : '⚠ WARNING';
 
         $lines = [];
-        $lines[] = '';
-        $lines[] = sprintf('NEXT  [%d remaining]  %s%s', $totalRemaining, $kind, $autoFixable ? '  [AUTO-FIXABLE]' : '');
-        $lines[] = '';
+        $lines[] = T_String::empty();
+        $lines[] = sprintf('NEXT  [%d remaining]  %s%s', $totalRemaining, $kind, $autoFixable ? '  [AUTO-FIXABLE]' : T_String::empty());
+        $lines[] = T_String::empty();
         $lines[] = '  ' . $finding->prophetShort;
         $lines[] = '  ' . $finding->location();
         $lines[] = '  ' . $finding->message;
 
-        if ($finding->snippet !== null && trim($finding->snippet) !== '') {
-            $lines[] = '';
+        if ($finding->snippet !== null && T_String::isNotBlank($finding->snippet)) {
+            $lines[] = T_String::empty();
             $lines[] = '    ' . trim($finding->snippet);
         }
 
         if ($finding->advisory !== null) {
-            $lines[] = '';
+            $lines[] = T_String::empty();
             foreach ($finding->advisory->lines() as $rubricLine) {
                 $lines[] = '  ' . $rubricLine;
             }
         }
 
-        if ($finding->suggestion !== null && trim($finding->suggestion) !== '') {
-            $lines[] = '';
+        if ($finding->suggestion !== null && T_String::isNotBlank($finding->suggestion)) {
+            $lines[] = T_String::empty();
             $lines[] = '  → ' . $finding->suggestion;
         }
 
         if ($autoFixable) {
-            $lines[] = '';
+            $lines[] = T_String::empty();
             $lines[] = 'This is AUTO-FIXABLE — DO NOT fix it by hand. Run:';
             $lines[] = sprintf('  %s repent --git', $binary);
             $lines[] = '  then `' . $binary . ' judge --next` for the next finding.';
             $lines[] = '  (repent rewrites it reliably via AST; hand-fixing wastes effort and risks mistakes.)';
-            $lines[] = '';
-            $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? '' : 's');
+            $lines[] = T_String::empty();
+            $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? T_String::empty() : 's');
 
             return $lines;
         }
 
-        $lines[] = '';
+        $lines[] = T_String::empty();
         $lines[] = 'READ THE FULL RULE BEFORE TOUCHING THIS:';
         $lines[] = sprintf('  %s scripture --prophet=%s', $binary, $finding->prophetShort);
-        $lines[] = '';
+        $lines[] = T_String::empty();
         $lines[] = 'Then do exactly ONE of these — there is no skip:';
         $lines[] = '  1. Fix it, then run:  ' . $binary . ' judge --next';
 
@@ -79,8 +80,8 @@ final class NextFindingPresenter
             $lines[] = '  (This is a sin — it cannot be absolved. It must be fixed.)';
         }
 
-        $lines[] = '';
-        $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? '' : 's');
+        $lines[] = T_String::empty();
+        $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? T_String::empty() : 's');
 
         return $lines;
     }

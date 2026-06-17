@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\CallGraph;
 
 use PhpParser\Node;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * AST-only FQCN resolution.
@@ -38,7 +39,7 @@ final class NameResolver
             return implode('\\', $parts);
         }
 
-        if ($namespace !== null && $namespace !== '') {
+        if ($namespace !== null && T_String::isNotEmpty($namespace)) {
             return $namespace . '\\' . $typeName;
         }
 

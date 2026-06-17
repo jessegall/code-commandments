@@ -8,6 +8,7 @@ use Closure;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Str;
 use JesseGall\CodeCommandments\Support\TailwindClassFilter;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Common predicates for filtering in pipelines.
@@ -128,7 +129,7 @@ final class Predicates
         return function ($match) use ($group) {
             $groups = $match instanceof MatchResult ? $match->groups : ($match['groups'] ?? []);
 
-            return isset($groups[$group]) && $groups[$group] !== '';
+            return isset($groups[$group]) && T_String::isNotEmpty($groups[$group]);
         };
     }
 

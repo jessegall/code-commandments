@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support\CallGraph;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Shared classification + fingerprinting for "computed value or fallback"
@@ -87,9 +88,9 @@ final class FallbackFingerprint
             return null;
         }
 
-        $normalized = preg_replace('/\s+/', '', substr($content, $start, $end - $start + 1));
+        $normalized = preg_replace('/\s+/', T_String::empty(), substr($content, $start, $end - $start + 1));
 
-        return $normalized === '' || $normalized === null ? null : $normalized;
+        return T_String::isEmpty($normalized) || $normalized === null ? null : $normalized;
     }
 
     /**

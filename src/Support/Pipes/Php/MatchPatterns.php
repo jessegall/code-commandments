@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Match regex patterns in the content and store matches in context.
@@ -33,7 +34,7 @@ final class MatchPatterns implements Pipe
     public function handle(mixed $input): mixed
     {
         $matches = [];
-        $lines = explode("\n", $input->content);
+        $lines = explode(T_String::NEWLINE, $input->content);
         $offset = 0;
 
         foreach ($lines as $lineNum => $line) {

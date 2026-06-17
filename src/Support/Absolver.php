@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Results\Finding;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Records a finding-level absolution after validating it.
@@ -36,7 +37,7 @@ final class Absolver
      */
     public function absolve(string $fingerprint, ?string $reason): array
     {
-        if ($reason === null || trim($reason) === '') {
+        if ($reason === null || T_String::isBlank($reason)) {
             return $this->error('A reason is required: --reason="why this rule does not apply here".');
         }
 
@@ -75,7 +76,7 @@ final class Absolver
      */
     public function absolveAll(?string $reason): array
     {
-        $reason = ($reason === null || trim($reason) === '')
+        $reason = ($reason === null || T_String::isBlank($reason))
             ? 'Baselined: pre-existing finding accepted'
             : $reason;
 

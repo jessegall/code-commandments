@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find double-quoted string interpolation (`"...{$x}..."`) and rewrite it to
@@ -25,12 +26,12 @@ final class FindStringInterpolations implements Pipe
 {
     /** Control characters that map to a T_String constant, longest first. */
     private const WHITESPACE_CONSTANTS = [
-        "\r\n" => 'CRLF',
-        "\n\n" => 'PARAGRAPH',
-        "\n" => 'NEWLINE',
-        "\r" => 'CARRIAGE_RETURN',
-        "\t" => 'TAB',
-        "\0" => 'NULL_BYTE',
+        T_String::CRLF => 'CRLF',
+        T_String::PARAGRAPH => 'PARAGRAPH',
+        T_String::NEWLINE => 'NEWLINE',
+        T_String::CARRIAGE_RETURN => 'CARRIAGE_RETURN',
+        T_String::TAB => 'TAB',
+        T_String::NULL_BYTE => 'NULL_BYTE',
     ];
 
     /**
@@ -64,7 +65,7 @@ final class FindStringInterpolations implements Pipe
         foreach (self::analyze($input->ast, $input->content, $this->options) as $finding) {
             $matches[] = new MatchResult(
                 name: 'interpolation',
-                pattern: '',
+                pattern: T_String::empty(),
                 match: $finding['snippet'],
                 line: $finding['line'],
                 offset: null,
@@ -118,7 +119,7 @@ final class FindStringInterpolations implements Pipe
         }
 
         $shortClass = self::shortName($options['string_class']);
-        $format = '';
+        $format = T_String::empty();
         $args = [];
         $interpolations = 0;
         $hasEscape = false;
@@ -167,7 +168,7 @@ final class FindStringInterpolations implements Pipe
             'end' => $end,
             'line' => $node->getStartLine(),
             'replacement' => self::renderSprintf($format, $args, $options['extract_whitespace'], self::lineIndent($content, $start)),
-            'snippet' => self::source($content, $node) ?? '',
+            'snippet' => self::source($content, $node) ?? T_String::empty(),
             'needs_import' => $needsImport,
             'string_class' => $options['string_class'],
             'arg_count' => count($args),
@@ -182,9 +183,9 @@ final class FindStringInterpolations implements Pipe
      */
     private static function tokenizeLiteral(string $text, string $shortClass): array
     {
-        $format = '';
+        $format = T_String::empty();
         $args = [];
-        $plain = '';
+        $plain = T_String::empty();
         $hasEscape = false;
         $length = strlen($text);
         $i = 0;
@@ -208,9 +209,9 @@ final class FindStringInterpolations implements Pipe
                 continue;
             }
 
-            if ($plain !== '') {
+            if (T_String::isNotEmpty($plain)) {
                 $format .= str_replace('%', '%%', $plain);
-                $plain = '';
+                $plain = T_String::empty();
             }
 
             $format .= '%s';
@@ -219,7 +220,7 @@ final class FindStringInterpolations implements Pipe
             $i += $advance;
         }
 
-        if ($plain !== '') {
+        if (T_String::isNotEmpty($plain)) {
             $format .= str_replace('%', '%%', $plain);
         }
 
@@ -233,7 +234,7 @@ final class FindStringInterpolations implements Pipe
     {
         $literal = $extractWhitespace
             ? "'" . strtr($format, ['\\' => '\\\\', "'" => "\\'"]) . "'"
-            : '"' . strtr($format, ['\\' => '\\\\', '"' => '\\"', '$' => '\\$', "\n" => '\\n', "\r" => '\\r', "\t" => '\\t', "\0" => '\\0']) . '"';
+            : '"' . strtr($format, ['\\' => '\\\\', '"' => '\\"', '$' => '\\$', T_String::NEWLINE => '\\n', T_String::CARRIAGE_RETURN => '\\r', T_String::TAB => '\\t', T_String::NULL_BYTE => '\\0']) . '"';
 
         if ($args === []) {
             return 'sprintf(' . $literal . ')';
@@ -250,7 +251,7 @@ final class FindStringInterpolations implements Pipe
             $lines[] = $inner . $arg . ',';
         }
 
-        return "sprintf(\n" . implode("\n", $lines) . "\n" . $baseIndent . ')';
+        return "sprintf(\n" . implode(T_String::NEWLINE, $lines) . T_String::NEWLINE . $baseIndent . ')';
     }
 
     /**
@@ -258,12 +259,12 @@ final class FindStringInterpolations implements Pipe
      */
     private static function lineIndent(string $content, int $position): string
     {
-        $newline = strrpos(substr($content, 0, $position), "\n");
+        $newline = strrpos(substr($content, 0, $position), T_String::NEWLINE);
         $lineStart = $newline === false ? 0 : $newline + 1;
 
         preg_match('/\A[ \t]*/', substr($content, $lineStart), $match);
 
-        return $match[0] ?? '';
+        return $match[0] ?? T_String::empty();
     }
 
     private static function source(string $content, Node $node): ?string

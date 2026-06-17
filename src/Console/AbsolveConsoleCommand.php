@@ -9,6 +9,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 class AbsolveConsoleCommand extends Command
 {
@@ -51,7 +52,7 @@ class AbsolveConsoleCommand extends Command
 
         $fingerprint = $input->getOption('fingerprint');
 
-        if (! is_string($fingerprint) || trim($fingerprint) === '') {
+        if (! is_string($fingerprint) || T_String::isBlank($fingerprint)) {
             $output->writeln('<error>--fingerprint is required (copy it from judge --next).</error>');
 
             return Command::FAILURE;

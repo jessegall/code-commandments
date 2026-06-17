@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Idempotently registers a command in a composer.json `scripts` block.
  *
@@ -76,7 +78,7 @@ final class ComposerScriptInstaller
             return self::STATUS_WRITE_FAILED;
         }
 
-        if (@file_put_contents($composerJsonPath, $encoded . "\n") === false) {
+        if (@file_put_contents($composerJsonPath, $encoded . T_String::NEWLINE) === false) {
             return self::STATUS_WRITE_FAILED;
         }
 

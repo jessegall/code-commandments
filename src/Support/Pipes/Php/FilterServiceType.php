@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Filter method parameters to only service types.
@@ -22,7 +23,7 @@ final class FilterServiceType implements Pipe
     {
         $filtered = array_values(array_filter(
             $input->parameters,
-            fn ($param) => TypeChecker::isServiceType($param['fqcn'] ?? '')
+            fn ($param) => TypeChecker::isServiceType($param['fqcn'] ?? T_String::empty())
         ));
 
         return $input->with(parameters: $filtered);

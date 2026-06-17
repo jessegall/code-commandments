@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find auth user/id access patterns in PHP code.
@@ -165,7 +166,7 @@ final class FindAuthUserCalls implements Pipe
 
         return new MatchResult(
             name: $source . '::' . $methodName . '()',
-            pattern: '',
+            pattern: T_String::empty(),
             match: $source . '->' . $methodName . '()',
             line: $line,
             offset: null,
@@ -176,8 +177,8 @@ final class FindAuthUserCalls implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

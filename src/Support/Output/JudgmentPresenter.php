@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\Pipeline;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Handles presentation/output of judgment results.
@@ -67,7 +68,7 @@ final class JudgmentPresenter
             return false;
         }
 
-        $line = $sin->line ? ":{$sin->line}" : '';
+        $line = $sin->line ? ":{$sin->line}" : T_String::empty();
         $this->output->writeln("  <fg=red>✗</> <fg=white>{$filePath}{$line}</>");
         $this->output->writeln("    <fg=red>{$sin->message}</>");
 
@@ -85,7 +86,7 @@ final class JudgmentPresenter
      */
     public function showWarning(string $filePath, Warning $warning): void
     {
-        $line = $warning->line ? ":{$warning->line}" : '';
+        $line = $warning->line ? ":{$warning->line}" : T_String::empty();
         $this->output->writeln("  <fg=yellow>⚠</> <fg=white>{$filePath}{$line}</>");
         $this->output->writeln("    <fg=yellow>{$warning->message}</>");
     }
@@ -184,7 +185,7 @@ final class JudgmentPresenter
             return;
         }
 
-        $gitFlag = $gitMode ? ' --git' : '';
+        $gitFlag = $gitMode ? ' --git' : T_String::empty();
 
         // Show sins section
         if ($totalSins > 0) {
@@ -198,7 +199,7 @@ final class JudgmentPresenter
             foreach ($prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
                 $prophet = new $prophetClass();
-                $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
+                $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : T_String::empty();
 
                 $this->output->writeln("- {$shortName} ({$count}){$autoFixable}");
             }
@@ -237,7 +238,7 @@ final class JudgmentPresenter
             $warningProphets = [];
             foreach ($manualVerificationFiles as $file => $issues) {
                 foreach ($issues as $issue) {
-                    $filterName = str_replace('Prophet', '', $issue['prophet']);
+                    $filterName = str_replace('Prophet', T_String::empty(), $issue['prophet']);
                     $warningProphets[$filterName] = ($warningProphets[$filterName] ?? 0) + 1;
                 }
             }
@@ -279,7 +280,7 @@ final class JudgmentPresenter
         foreach ($files as $file => $issues) {
             $this->output->writeln("  <fg=white>{$file}</>");
             foreach ($issues as $issue) {
-                $line = $issue['line'] ? ":{$issue['line']}" : '';
+                $line = $issue['line'] ? ":{$issue['line']}" : T_String::empty();
                 $this->output->writeln("    <fg=magenta>→ [{$issue['prophet']}]{$line}</> {$issue['message']}");
             }
             $this->output->newLine();
@@ -313,7 +314,7 @@ final class JudgmentPresenter
             $this->output->newLine();
 
             $detailed = $prophet->detailedDescription();
-            $lines = explode("\n", $detailed);
+            $lines = explode(T_String::NEWLINE, $detailed);
             foreach ($lines as $line) {
                 $this->output->writeln("  <fg=gray>{$line}</>");
             }
