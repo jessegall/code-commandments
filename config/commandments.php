@@ -177,6 +177,7 @@ return [
                     // 'warn_at_types' => 2,   // 0 (or warnings_enabled => false) disables warnings
                     // 'sin_at_types'  => 3,
                 ],
+                Backend\PreferNullCoalescingProphet::class,
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],

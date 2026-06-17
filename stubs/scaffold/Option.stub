@@ -37,6 +37,28 @@ final readonly class Option
         return new self(null, false);
     }
 
+    /**
+     * Some of the FIRST non-null candidate; none if every candidate is null. The
+     * coalescing constructor — `Option::coalesce($value, $fallback)` is "value,
+     * else fallback, else absent" (mirrors `??`, but a trailing null collapses
+     * to none instead of leaking out).
+     *
+     * @template TValue
+     *
+     * @param  TValue|null  ...$candidates
+     * @return self<TValue>
+     */
+    public static function coalesce(mixed ...$candidates): self
+    {
+        foreach ($candidates as $candidate) {
+            if ($candidate !== null) {
+                return self::some($candidate);
+            }
+        }
+
+        return self::none();
+    }
+
     public function hasValue(): bool
     {
         return $this->hasValue;
