@@ -170,6 +170,9 @@ return [
                 Backend\NoOptionOveruseProphet::class => [
                     // 'option_class' => App\Support\Option::class,
                 ],
+                Backend\NoOptionInUnionProphet::class => [
+                    // 'option_class' => App\Support\Option::class,
+                ],
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],
