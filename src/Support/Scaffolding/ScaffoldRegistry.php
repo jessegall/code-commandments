@@ -32,6 +32,13 @@ final class ScaffoldRegistry
                 purpose: 'Present-or-absent value type for PreferOptionOverNull.',
             ),
             new Scaffold(
+                name: 'union',
+                className: 'Union',
+                stubFile: 'Union.stub',
+                introducedIn: '1.83.0',
+                purpose: 'Sum type: a present value that is one of several types (WideUnion no-null case).',
+            ),
+            new Scaffold(
                 name: 'null-callable',
                 className: 'NullCallable',
                 stubFile: 'NullCallable.stub',

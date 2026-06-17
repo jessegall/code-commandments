@@ -160,7 +160,7 @@ SCRIPTURE;
     private function emit(int $line, int $count, string $content, bool $isSin, array &$sins, array &$warnings): void
     {
         $message = sprintf(
-            'This type unions %d members — a value worn as several shapes is under-modelled and pushes "what is this really?" onto every caller. If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). Otherwise make a small value object, or pick one type.',
+            'This type unions %d members — a value worn as several shapes is under-modelled and pushes "what is this really?" onto every caller. If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). If it is always present but one-of-N types, model it as a `Union` sum type (or a named value object). Or pick one type.',
             $count,
         );
         $snippet = $this->lineAt($content, $line);
