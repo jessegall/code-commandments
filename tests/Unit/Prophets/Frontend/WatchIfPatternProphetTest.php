@@ -38,6 +38,52 @@ VUE;
         $this->assertTrue($judgment->hasWarnings());
     }
 
+    public function test_does_not_flag_a_guard_on_unrelated_state(): void
+    {
+        // Issue #19: the if condition is not the watched value — converting to
+        // whenever() would change behaviour.
+        $content = <<<'VUE'
+        <script setup lang="ts">
+        watch(editor.nodes, (nodes) => {
+            if (current === null) return;
+            build(nodes)
+        })
+        </script>
+        VUE;
+
+        $this->assertTrue($this->prophet->judge('/test/Component.vue', $content)->isRighteous());
+    }
+
+    public function test_does_not_flag_a_guard_on_a_falsy_unrelated_value(): void
+    {
+        // `if (!somethingElse)` is neither the watched param nor an early guard
+        // on it — leave it.
+        $content = <<<'VUE'
+        <script setup lang="ts">
+        watch(open, (isOpen) => {
+            if (!somethingElse) act()
+        })
+        </script>
+        VUE;
+
+        $this->assertTrue($this->prophet->judge('/test/Component.vue', $content)->isRighteous());
+    }
+
+    public function test_flags_an_early_return_guard_on_the_watched_value(): void
+    {
+        // `if (!val) return` is the negated-guard form — convertible.
+        $content = <<<'VUE'
+        <script setup lang="ts">
+        watch(ready, (val) => {
+            if (!val) return;
+            doIt()
+        })
+        </script>
+        VUE;
+
+        $this->assertTrue($this->prophet->judge('/test/Component.vue', $content)->hasWarnings());
+    }
+
     public function test_passes_whenever_usage(): void
     {
         $content = <<<'VUE'
