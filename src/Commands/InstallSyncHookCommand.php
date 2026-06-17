@@ -119,6 +119,7 @@ changed_files="$(git diff-tree -r --name-only ORIG_HEAD HEAD 2>/dev/null)"
 if printf '%s\n' "$changed_files" | grep -qx 'composer\.lock'; then
     if [ -x artisan ]; then
         php artisan commandments:sync --after=previous || true
+        php artisan commandments:reports --check 2>/dev/null || true
     fi
 fi
 
