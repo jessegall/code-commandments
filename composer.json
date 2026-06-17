@@ -24,6 +24,14 @@
         "phpunit/phpunit": "^10.0|^11.0",
         "orchestra/testbench": "^8.0|^9.0|^10.0"
     },
+    "scripts": {
+        "judge:self": "php bin/commandments judge -c commandments.self.php",
+        "judge:self:next": "php bin/commandments judge -c commandments.self.php --next"
+    },
+    "scripts-descriptions": {
+        "judge:self": "Run the prophets against this package's own src/ (dogfooding).",
+        "judge:self:next": "Walk the package's own findings one at a time."
+    },
     "autoload": {
         "psr-4": {
             "JesseGall\\CodeCommandments\\": "src/"

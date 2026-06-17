@@ -45,3 +45,6 @@ CLAUDE.md
 .php-cs-fixer.cache
 phpstan.neon
 phpcs.xml
+
+# code-commandments self-judgment runtime artifacts
+.commandments/
