@@ -114,9 +114,28 @@ final class FindStringsThatShouldBeEnums implements Pipe
         $matches = [];
         $seen = [];
 
-        // Pattern 1: named args whose value is a string literal matching
-        // a case on any enum (imported or — with a CodebaseIndex — any
-        // project enum) whose name matches the arg name.
+        // Pattern 1: named args
+        $this->processNamedArgPattern($input, $nodeFinder, $parentMap, $importedEnums, $matches, $seen);
+
+        // Pattern 2 + 3: string-typed parameters
+        $this->processStringParametersPattern($input, $nodeFinder, $parentMap, $importedEnums, $hasIndex, $matches, $seen);
+
+        // Pattern 4: in_array with string literals
+        $this->processInArrayPattern($input, $nodeFinder, $parentMap, $importedEnums, $matches, $seen);
+
+        // Pattern 5/6/7: branching on closed sets
+        $this->processControlFlowPattern($input, $nodeFinder, $parentMap, $importedEnums, $matches, $seen);
+
+        return $input->with(matches: $matches);
+    }
+
+    /**
+     * Pattern 1: named args whose value is a string literal matching
+     * a case on any enum (imported or — with a CodebaseIndex — any
+     * project enum) whose name matches the arg name.
+     */
+    private function processNamedArgPattern(mixed $input, NodeFinder $nodeFinder, array $parentMap, array $importedEnums, array &$matches, array &$seen): void
+    {
         foreach ($nodeFinder->find($input->ast, fn ($n) => $n instanceof Node\Arg && $n->name !== null) as $arg) {
             assert($arg instanceof Node\Arg);
 
@@ -166,11 +185,16 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 requiresImport: $importedAlias === null,
             );
         }
+    }
 
-        // Pattern 2 + 3: string-typed parameters.
-        //   2. With a default literal that matches a case on a name-matched enum.
-        //   3. With OR without a default, when call-site analysis (via the
-        //      codebase index) shows the literals form a closed set.
+    /**
+     * Pattern 2 + 3: string-typed parameters.
+     *   2. With a default literal that matches a case on a name-matched enum.
+     *   3. With OR without a default, when call-site analysis (via the
+     *      codebase index) shows the literals form a closed set.
+     */
+    private function processStringParametersPattern(mixed $input, NodeFinder $nodeFinder, array $parentMap, array $importedEnums, bool $hasIndex, array &$matches, array &$seen): void
+    {
         foreach ($nodeFinder->findInstanceOf($input->ast, Node\Param::class) as $param) {
             assert($param instanceof Node\Param);
 
@@ -220,60 +244,74 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 }
             }
 
-            // Pattern 3 — literal-frequency heuristic. Walks every call site
-            // to the containing method via the codebase index, collects the
-            // literals passed at this parameter's position, and flags a
-            // closed set even when no enum exists yet.
+            // Pattern 3 — literal-frequency heuristic.
             if (! $matched && $hasIndex) {
-                $closedSet = $this->collectClosedSet($input, $param, $parentMap);
-
-                if ($closedSet !== null) {
-                    [$paramIndex, $literals] = $closedSet;
-                    $candidate = $this->findCandidateEnumForLiterals($paramName, $literals, $importedEnums);
-
-                    if ($candidate !== null) {
-                        [$shortName, $info, $importedAlias] = $candidate;
-                        $dedupe = "param_freq::{$info['fqcn']}::{$paramName}";
-
-                        if (! isset($seen[$dedupe])) {
-                            $seen[$dedupe] = true;
-
-                            $matches[] = $this->makeMatchForClosedSet(
-                                line: $param->getStartLine(),
-                                content: $this->getSnippet($input->content, $param->getStartLine()),
-                                shortName: $shortName,
-                                fqcn: $info['fqcn'],
-                                literals: $literals,
-                                subject: "\${$paramName}",
-                                requiresImport: $importedAlias === null,
-                                matchedEnum: true,
-                            );
-                        }
-                    } else {
-                        $dedupe = "param_freq::{$paramName}::" . implode(',', $literals);
-
-                        if (! isset($seen[$dedupe])) {
-                            $seen[$dedupe] = true;
-
-                            $matches[] = $this->makeMatchForClosedSet(
-                                line: $param->getStartLine(),
-                                content: $this->getSnippet($input->content, $param->getStartLine()),
-                                shortName: $this->suggestEnumName($paramName),
-                                fqcn: T_String::empty(),
-                                literals: $literals,
-                                subject: "\${$paramName}",
-                                requiresImport: false,
-                                matchedEnum: false,
-                            );
-                        }
-                    }
-                }
+                $this->processFrequencyPattern($input, $param, $parentMap, $importedEnums, $matches, $seen, $paramName);
             }
         }
+    }
 
-        // Pattern 4: an array of string literals used as a closed-set membership
-        // test — `in_array($x, ['string', 'int', 'float', 'bool'], true)` — whose
-        // values are all cases of one name-matched enum.
+    /**
+     * Pattern 3: literal-frequency heuristic. Walks every call site to the containing
+     * method via the codebase index, collects the literals passed at this
+     * parameter's position, and flags a closed set even when no enum exists yet.
+     */
+    private function processFrequencyPattern(mixed $input, Node\Param $param, array $parentMap, array $importedEnums, array &$matches, array &$seen, string $paramName): void
+    {
+        $closedSet = $this->collectClosedSet($input, $param, $parentMap);
+
+        if ($closedSet === null) {
+            return;
+        }
+
+        [$paramIndex, $literals] = $closedSet;
+        $candidate = $this->findCandidateEnumForLiterals($paramName, $literals, $importedEnums);
+
+        if ($candidate !== null) {
+            [$shortName, $info, $importedAlias] = $candidate;
+            $dedupe = "param_freq::{$info['fqcn']}::{$paramName}";
+
+            if (! isset($seen[$dedupe])) {
+                $seen[$dedupe] = true;
+
+                $matches[] = $this->makeMatchForClosedSet(
+                    line: $param->getStartLine(),
+                    content: $this->getSnippet($input->content, $param->getStartLine()),
+                    shortName: $shortName,
+                    fqcn: $info['fqcn'],
+                    literals: $literals,
+                    subject: "\${$paramName}",
+                    requiresImport: $importedAlias === null,
+                    matchedEnum: true,
+                );
+            }
+        } else {
+            $dedupe = "param_freq::{$paramName}::" . implode(',', $literals);
+
+            if (! isset($seen[$dedupe])) {
+                $seen[$dedupe] = true;
+
+                $matches[] = $this->makeMatchForClosedSet(
+                    line: $param->getStartLine(),
+                    content: $this->getSnippet($input->content, $param->getStartLine()),
+                    shortName: $this->suggestEnumName($paramName),
+                    fqcn: T_String::empty(),
+                    literals: $literals,
+                    subject: "\${$paramName}",
+                    requiresImport: false,
+                    matchedEnum: false,
+                );
+            }
+        }
+    }
+
+    /**
+     * Pattern 4: an array of string literals used as a closed-set membership
+     * test — `in_array($x, ['string', 'int', 'float', 'bool'], true)` — whose
+     * values are all cases of one name-matched enum.
+     */
+    private function processInArrayPattern(mixed $input, NodeFinder $nodeFinder, array $parentMap, array $importedEnums, array &$matches, array &$seen): void
+    {
         foreach ($nodeFinder->find($input->ast, fn ($n) => $n instanceof Expr\FuncCall) as $call) {
             assert($call instanceof Expr\FuncCall);
 
@@ -342,11 +380,16 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 ],
             );
         }
+    }
 
-        // Pattern 5/6/7: branching on a closed set of string literals — `match`
-        // arms, `switch` cases, or an `if`/`elseif` chain comparing one subject
-        // to string literals — where the literals are all cases of one
-        // name-matched enum. Branch on the enum, not raw strings.
+    /**
+     * Pattern 5/6/7: branching on a closed set of string literals — `match`
+     * arms, `switch` cases, or an `if`/`elseif` chain comparing one subject
+     * to string literals — where the literals are all cases of one
+     * name-matched enum. Branch on the enum, not raw strings.
+     */
+    private function processControlFlowPattern(mixed $input, NodeFinder $nodeFinder, array $parentMap, array $importedEnums, array &$matches, array &$seen): void
+    {
         foreach ($this->controlFlowSets($input->ast, $nodeFinder) as [$subjectNode, $literals, $node, $kind]) {
             if (count($literals) < 2) {
                 continue;
@@ -401,8 +444,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 ],
             );
         }
-
-        return $input->with(matches: $matches);
     }
 
     /**
