@@ -160,6 +160,9 @@ return [
                     // 'data_base' => 'Spatie\\LaravelData\\Data',
                     // 'min_reads' => 3,
                 ],
+                Backend\PreferDefaultFallbackProphet::class => [
+                    // 'presence_prefixes' => ['has', 'contains', 'includes', 'exists'],
+                ],
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [
                     'null_objects' => [
