@@ -92,4 +92,23 @@ final class Resolver
         return ($this->strategy)($this->resolvers, $input);
     }
 
+    /**
+     * Resolve, then keep the result only when it is an instance of $type — a
+     * built-in type guard, so the call site needs no `instanceof` dance to know
+     * the resolved value is the expected shape (or nothing).
+     *
+     *     $field = Resolver::firstResultWins(...)
+     *         ->resolveInstanceOf($request, CreatableFieldType::class);  // ?CreatableFieldType
+     *
+     * @template T of object
+     * @param  class-string<T>  $type
+     * @return T|null
+     */
+    public function resolveInstanceOf(mixed $input, string $type): ?object
+    {
+        $result = $this->resolve($input);
+
+        return $result instanceof $type ? $result : null;
+    }
+
 }

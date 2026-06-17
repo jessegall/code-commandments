@@ -120,6 +120,10 @@ a closure). `$t` is any callable; reusable ones extend `Transform`
 instead of the first; any other combine rule is a `ResolveStrategy` passed to
 `Resolver::using($strategy, ...entries)`.
 
+To guard the resolved value to an expected type, use `->resolveInstanceOf($input,
+Type::class)` (returns `?Type`) instead of a hand-rolled
+`$x instanceof Type ? $x : null` after `->resolve()`.
+
 The `->then()` argument is the RESULT FACTORY (it produces the resolved value)
 — NOT a transform (a transform pre-processes the matched input). When a chain
 repeatedly inlines a domain factory closure

@@ -123,6 +123,9 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('@return self<T|null>', $resolver);
         $this->assertStringContainsString('@return self<list<T>>', $resolver);
         $this->assertStringContainsString('@return TResult', $resolver);
+        // Typed result guard: resolveInstanceOf($input, Type::class): ?Type.
+        $this->assertStringContainsString('public function resolveInstanceOf(mixed $input, string $type): ?object', $resolver);
+        $this->assertStringContainsString('@param  class-string<T>  $type', $resolver);
 
         // Transform path is typed end-to-end too.
         $transform = file_get_contents($this->dir . '/Resolvers/Transforms/Transform.php');
