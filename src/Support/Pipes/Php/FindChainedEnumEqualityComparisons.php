@@ -98,13 +98,31 @@ final class FindChainedEnumEqualityComparisons implements Pipe
         $printer = new PrettyPrinter\Standard;
         $finder = new NodeFinder;
         $parentMap = $this->buildParentMap($input->ast);
-
         $matches = [];
-
-        // Object ids of atoms already consumed by an emitted chain match — they
-        // must not also surface as standalone single comparisons.
         $consumed = [];
 
+        $this->processOrChains($input, $finder, $printer, $parentMap, $matches, $consumed);
+        $this->processAndChains($input, $finder, $printer, $parentMap, $matches, $consumed);
+
+        if ($this->minChain <= 1) {
+            $this->collectSingles($input, $finder, $printer, $parentMap, $consumed, $matches);
+        }
+
+        $this->collectInArray($input, $finder, $printer, $parentMap, $matches);
+        $this->collectStaticEqualityCalls($input, $finder, $printer, $parentMap, $matches);
+
+        return $input->with(matches: $matches);
+    }
+
+    /**
+     * Process OR chains of Identical comparisons.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @param  array<int, true>  $consumed
+     * @param  list<MatchResult>  $matches
+     */
+    private function processOrChains(mixed $input, NodeFinder $finder, PrettyPrinter\Standard $printer, array $parentMap, array &$matches, array &$consumed): void
+    {
         $orRoots = $this->collectChainRoots(
             $finder->findInstanceOf($input->ast, Expr\BinaryOp\BooleanOr::class),
             Expr\BinaryOp\BooleanOr::class,
@@ -146,7 +164,17 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 $consumed[spl_object_id($atom)] = true;
             }
         }
+    }
 
+    /**
+     * Process AND chains of NotIdentical comparisons.
+     *
+     * @param  array<int, Node>  $parentMap
+     * @param  array<int, true>  $consumed
+     * @param  list<MatchResult>  $matches
+     */
+    private function processAndChains(mixed $input, NodeFinder $finder, PrettyPrinter\Standard $printer, array $parentMap, array &$matches, array &$consumed): void
+    {
         $andRoots = $this->collectChainRoots(
             $finder->findInstanceOf($input->ast, Expr\BinaryOp\BooleanAnd::class),
             Expr\BinaryOp\BooleanAnd::class,
@@ -188,15 +216,6 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 $consumed[spl_object_id($atom)] = true;
             }
         }
-
-        if ($this->minChain <= 1) {
-            $this->collectSingles($input, $finder, $printer, $parentMap, $consumed, $matches);
-        }
-
-        $this->collectInArray($input, $finder, $printer, $parentMap, $matches);
-        $this->collectStaticEqualityCalls($input, $finder, $printer, $parentMap, $matches);
-
-        return $input->with(matches: $matches);
     }
 
     /**
