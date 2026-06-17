@@ -18,176 +18,98 @@ class ResolverPatternProphetTest extends TestCase
         $this->prophet = new ResolverPatternProphet;
     }
 
-    public function test_flags_a_skip_or_match_chain_predicate_in_a_resolver(): void
+
+    public function test_sins_a_composed_resolver_of_inline_closures(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver extends Resolver
+        class WireType
         {
-            public function resolvers(): array
+            public static function parse(?string $token): self
             {
-                return [
+                return Resolver::firstResultWins(
+                    fn (?string $t): ?self => $t === self::MIXED ? self::mixed() : null,
+                    fn (string $t): ?self => str_starts_with($t, 'list:') ? self::listOf($t) : null,
+                    fn (string $t): ?self => str_starts_with($t, 'res:') ? self::resource($t) : null,
+                    fn (string $t): ?self => in_array($t, ['a', 'b'], true) ? self::scalar($t) : null,
+                )->resolve($token) ?? self::classRef($token);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('inline predicate closures', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_a_single_inline_closure_entry_as_a_warning(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class C
+        {
+            public function r($x)
+            {
+                return Resolver::firstResultWins(
                     fn (string $t): ?string => str_starts_with($t, 'list:') ? $t : null,
-                ];
+                )->resolve($x);
             }
         }
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('str_starts_with', $judgment->warnings[0]->message);
-        $this->assertStringContainsString('Predicate', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('named Predicate', $judgment->warnings[0]->message);
     }
 
-    public function test_flags_explicit_bool_matcher_in_a_resolver(): void
+    public function test_flags_a_forwarding_closure_entry(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class ThingResolver extends Resolver
+        class C
         {
-            public function resolvers(): array
+            public function r($x)
             {
-                return [
-                    fn (string $field): bool => in_array($field, ['a', 'b'], true),
-                ];
+                return Resolver::collect(
+                    fn ($req) => $this->fieldCandidate($req),
+                )->resolve($x);
             }
         }
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('in_array', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('first-class callable', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('$this->fieldCandidate(...)', $judgment->warnings[0]->message);
     }
 
-    public function test_domain_bound_predicate_points_at_the_resolvers_own_folder(): void
+    public function test_does_not_flag_named_predicate_entries(): void
     {
-        // in_array(self::SCALARS) reads a type's constants -> domain-bound, and
-        // is not a kernel shape -> resolver's own folder.
         $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver extends Resolver
+        class C
         {
-            public function resolvers(): array
+            public function r($x)
             {
-                return [
-                    fn (string $t): ?string => in_array($t, self::SCALARS, true) ? $t : null,
-                ];
+                return Resolver::firstResultWins(
+                    IsNull::make()->when(fn () => 'a'),
+                    HasPrefix::of('list:')->when(fn ($t) => 'b'),
+                )->resolve($x);
             }
         }
         PHP);
 
-        $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Resolvers\\WireType\\Predicates', $judgment->warnings[0]->message);
+        $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_generic_predicate_points_at_the_shared_folder(): void
+    public function test_does_not_flag_a_value_transform_entry(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver extends Resolver
+        class C
         {
-            public function resolvers(): array
+            public function r($x)
             {
-                return [
-                    fn (string $t): ?string => in_array($t, ['a', 'b'], true) ? $t : null,
-                ];
-            }
-        }
-        PHP);
-
-        $this->assertStringContainsString('shared `Resolvers\\Predicates`', $judgment->warnings[0]->message);
-    }
-
-    public function test_reuses_a_kernel_predicate_when_one_fits(): void
-    {
-        // A null/instanceof/str_starts_with test maps to an existing kernel
-        // Predicate — reuse it, don't create a new class.
-        $judgment = $this->judge(<<<'PHP'
-        class TokenResolver extends Resolver
-        {
-            public function resolvers(): array
-            {
-                return [
-                    fn (?string $t): ?string => str_starts_with((string) $t, 'list:') ? $t : null,
-                ];
-            }
-        }
-        PHP);
-
-        $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('HasPrefix', $judgment->warnings[0]->message);
-        $this->assertStringContainsString('reuse the kernel', $judgment->warnings[0]->message);
-    }
-
-    public function test_does_not_flag_a_value_transform_ternary(): void
-    {
-        // Both branches are values — a map, not a skip-or-match predicate.
-        $judgment = $this->judge(<<<'PHP'
-        class ThingResolver extends Resolver
-        {
-            public function resolvers(): array
-            {
-                return [
+                return Resolver::firstResultWins(
                     fn ($entry) => $entry instanceof self ? $entry : self::from($entry),
-                ];
+                )->resolve($x);
             }
         }
         PHP);
 
         $this->assertTrue($judgment->isRighteous());
-    }
-
-    public function test_does_not_flag_predicates_outside_a_resolver_class(): void
-    {
-        // Same closure shape, but the class is not a resolver.
-        $judgment = $this->judge(<<<'PHP'
-        class WorkflowSettings
-        {
-            public function build(): array
-            {
-                return [
-                    fn (string $t): ?string => str_starts_with($t, 'list:') ? $t : null,
-                ];
-            }
-        }
-        PHP);
-
-        $this->assertTrue($judgment->isRighteous());
-    }
-
-    public function test_does_not_flag_a_non_predicate_ternary_condition(): void
-    {
-        // The null branch is present, but the condition is a plain truthiness
-        // check, not a predicate worth extracting.
-        $judgment = $this->judge(<<<'PHP'
-        class ThingResolver extends Resolver
-        {
-            public function resolvers(): array
-            {
-                return [
-                    fn ($x): ?string => $x ? 'yes' : null,
-                ];
-            }
-        }
-        PHP);
-
-        $this->assertTrue($judgment->isRighteous());
-    }
-
-    public function test_base_class_config_marks_a_resolver(): void
-    {
-        $this->prophet->configure([
-            'suffix' => '',
-            'base_classes' => ['App\\Support\\Resolvers\\Resolver'],
-        ]);
-
-        $judgment = $this->judge(<<<'PHP'
-        class Whatever extends Resolver
-        {
-            public function resolvers(): array
-            {
-                return [
-                    fn (string $t): ?string => str_contains($t, 'x') ? $t : null,
-                ];
-            }
-        }
-        PHP);
-
-        $this->assertCount(1, $judgment->warnings);
     }
 
     public function test_does_not_flag_one_off_helper_booleans_in_a_named_only_resolver(): void
@@ -227,6 +149,47 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
         $this->assertStringContainsString('instantiated and invoked inline', $judgment->warnings[0]->message);
         $this->assertStringContainsString('IsNull', $judgment->warnings[0]->message);
+    }
+
+    public function test_flags_a_scattered_predicate_via_a_local_variable(): void
+    {
+        // `$p = new IsNull(); $p($x)` — laundering the inline invocation through
+        // a variable is the same smell.
+        $judgment = $this->judge(<<<'PHP'
+        use App\Support\Resolvers\Predicates\IsNull;
+
+        class TypeService
+        {
+            public function compatible($source, $target): bool
+            {
+                $isNull = new IsNull();
+                if ($isNull($source) || $isNull($target)) { return true; }
+                return false;
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('IsNull', $judgment->warnings[0]->message);
+    }
+
+    public function test_does_not_flag_a_predicate_passed_as_a_callback(): void
+    {
+        // Passing a predicate as a filter callback is legit — it is used, not
+        // instantiated-and-invoked for one check.
+        $judgment = $this->judge(<<<'PHP'
+        use App\Support\Resolvers\Predicates\IsControlInSocket;
+
+        class Service
+        {
+            public function handle($inputs)
+            {
+                return Option::first($inputs, new IsControlInSocket());
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
     }
 
     public function test_does_not_flag_a_predicate_used_as_a_chain_entry(): void
@@ -270,7 +233,7 @@ class ResolverPatternProphetTest extends TestCase
 
         $this->assertCount(1, $judgment->warnings);
         $this->assertStringContainsString('first-match dispatch chain', $judgment->warnings[0]->message);
-        $this->assertStringContainsString('Resolvers\\WireType\\WireTypeResolver', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Resolver::firstResultWins', $judgment->warnings[0]->message);
     }
 
     public function test_does_not_nominate_when_fewer_than_three_guards(): void
@@ -307,30 +270,6 @@ class ResolverPatternProphetTest extends TestCase
         PHP);
 
         $this->assertTrue($judgment->isRighteous());
-    }
-
-    public function test_sins_an_ugly_resolver_of_inline_closures(): void
-    {
-        // >= 3 chain entries that still inline a predicate closure — the
-        // half-done extraction. A sin, not a nudge.
-        $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver extends Resolver
-        {
-            protected function resolvers(): iterable
-            {
-                return [
-                    static fn (string $t): ?WireType => $t === WireType::MIXED ? WireType::mixed() : null,
-                    static fn (string $t): ?WireType => str_starts_with($t, 'list:') ? WireType::listOf($t) : null,
-                    static fn (string $t): ?WireType => str_starts_with($t, 'res:') ? WireType::resource($t) : null,
-                    static fn (string $t): ?WireType => in_array($t, ['a','b'], true) ? WireType::scalar($t) : null,
-                ];
-            }
-        }
-        PHP);
-
-        $this->assertCount(1, $judgment->sins);
-        $this->assertCount(0, $judgment->warnings);
-        $this->assertStringContainsString('inline predicate closures', $judgment->sins[0]->message);
     }
 
     public function test_flags_match_true_dispatch_as_a_resolver(): void

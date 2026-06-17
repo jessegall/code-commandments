@@ -75,18 +75,18 @@ THE MISSION
 ===========
 First-match dispatch (map an input to one of several outputs by a chain of
 tests) and ad-hoc boolean logic belong in the resolver + Predicate pattern:
-a Resolver of NAMED Predicate objects, NOT an if/match chain and NOT a
-resolver full of inline closures. Each test becomes a class you can name,
-reuse, and compose. The package SCAFFOLDS the building blocks — run
-`scaffold`: a `Resolver` base and a `Predicate` kernel (`IsNull`, `IsEnum`,
-`HasPrefix`, `AllOf`/`AnyOf`/`Negated`) under `Support\Resolvers`.
+a Resolver COMPOSED from NAMED Predicate objects + a strategy, NOT an if/match
+chain and NOT a resolver of inline closures. Each test becomes a class you
+name, reuse, and compose. Run `scaffold` for the kernel under
+`Support\Resolvers`: a composable `Resolver`, `ResolveStrategy`
+(`FirstResultWins`, `CollectResults`), and a `Predicate` kernel (`IsNull`,
+`IsEnum`, `HasPrefix`, `Equals`, `AllOf`/`AnyOf`/`Negated`).
 
-When you fix a finding from this rule, do the WHOLE job — half-measures (a
-resolver whose entries are still inline `fn (...) => test ? … : null`) are a
-SIN, not progress.
+When you fix a finding here, do the WHOLE job — a resolver whose entries are
+still inline `fn (...) => test ? … : null` is a SIN, not progress.
 
-MODE 1 — DISPATCH CHAIN → RESOLVER
-----------------------------------
+MODE 1 — DISPATCH CHAIN → COMPOSED RESOLVER
+-------------------------------------------
 A method that is a first-match dispatch chain is a resolver in disguise:
 
     public static function parse(?string $token): self
@@ -99,83 +99,72 @@ A method that is a first-match dispatch chain is a resolver in disguise:
     }
 
 Fires on >= 3 predicate guards (`if`/`switch`) OR `match (true)` arms that
-produce one type. Extract to a Resolver and DELEGATE:
+produce one type. COMPOSE a Resolver and delegate:
 
     public static function parse(?string $token): self
     {
-        return new WireTypeResolver()->resolve($token) ?? self::classRef($token);
+        return Resolver::firstResultWins(
+            IsNull::make()->when(WireType::mixed(...)),
+            HasPrefix::of('resource:')->when(WireType::resource(...)),
+            HasPrefix::of('list:')->when(WireType::listOf(...)),
+            IsScalarToken::make()->when(WireType::scalar(...)),   // domain predicate
+        )->resolve($token) ?? self::classRef($token);
     }
 
-    final class WireTypeResolver extends Resolver   // Resolvers\WireType\
-    {
-        protected function resolvers(): iterable
-        {
-            return [
-                // reuse kernel predicates; first-class callables for the result
-                new IsNull()->when(WireType::mixed(...)),
-                self::prefixed(WireType::RESOURCE_PREFIX, WireType::resource(...)),
-                self::nested(WireType::LIST_PREFIX,       WireType::listOf(...)),  // remainder pre-parsed
-                new IsScalarToken()->when(WireType::scalar(...)),                  // domain predicate
-            ];
-        }
-    }
-
-Each entry is a NAMED Predicate + a result factory — never an inline test.
+Each entry is a NAMED Predicate paired with a result factory via `->when()` —
+never an inline test. `Resolver::collect(...)` gathers ALL matches (a list)
+instead of the first; any other combine rule is a `ResolveStrategy` passed to
+`Resolver::using($strategy, ...entries)`.
 
 MODE 2 — BOOLEAN CHAIN → COMPOSITE PREDICATE
 --------------------------------------------
 A >= 3-guard method returning `bool` is a composite Predicate. Build it from
-named Predicate objects combined with the kernel combinators:
+named Predicate objects and the kernel combinators:
 
     // was: if (a) return true; if (b) return true; if (c) return false; …
-    new AnyOf(new IsMixed(), new IsListType(), new IsScalarType())
+    AnyOf::of(IsMixed::make(), IsListType::make(), IsScalarType::make())
 
-MODE 3 — EXTRACT a resolver's inline predicates
------------------------------------------------
-An existing resolver must read as named Predicates. An inline test is a
-concept in disguise — give it a class:
+MODE 3 — EXTRACT a resolver's inline predicates / fix entries
+-------------------------------------------------------------
+A composed resolver's entries must be NAMED Predicates. Give each inline test
+a class:
 
-  - REUSE THE KERNEL when one fits: `$x === null` → `IsNull`;
+  - REUSE THE KERNEL when one fits: `$x === null` → `IsNull::make()`;
     `$x instanceof SomeEnum` → `IsEnum::for(...)`; `str_starts_with(...)` →
-    `HasPrefix`. Do not re-create these.
-  - GENERIC (no domain knowledge) but not in the kernel → add it to the
-    SHARED `Support\Resolvers\Predicates\`.
+    `HasPrefix::of(...)`. Do not re-create these.
+  - GENERIC but not in the kernel → add it to the SHARED
+    `Support\Resolvers\Predicates\`.
   - DOMAIN-BOUND (reads a type's constants — `self::SCALARS`, `WireType::MIXED`)
-    → that resolver's OWN `Support\Resolvers\<Name>\Predicates\`.
+    → the resolver's OWN `Support\Resolvers\<Name>\Predicates\`.
+
+An entry that just FORWARDS to one method (`fn ($r) => $this->candidate($r)`)
+should be the first-class callable `$this->candidate(...)`.
 
 PREDICATE CONVENTIONS
 ---------------------
-  - NAMED STATIC FACTORY, not `new`: `HasPrefix::of('list:')`,
-    `IsEnum::for(NodeType::class)`, `IsNull::make()`. Give the predicate a
-    PRIVATE constructor so the factory is the only way in (and a no-arg
-    predicate can hand back a cached flyweight).
-  - A predicate is for the CHAIN — named, reused, composed. NEVER instantiate
-    one just to call it once inline: `(new IsNull())($x)` is WORSE than the
-    plain `$x === null` — more allocation, more noise, no reuse. Use the plain
-    test where it is a one-off, or put the predicate IN a chain Resolver.
+  - NAMED STATIC FACTORY, never `new` at the call site: `HasPrefix::of('list:')`,
+    `IsEnum::for(NodeType::class)`, `IsNull::make()`. PRIVATE constructor so the
+    factory is the only way in (a no-arg predicate hands back a flyweight).
+  - A predicate is for the CHAIN. NEVER instantiate one to call it once inline:
+    `(new IsNull())($x)` — or `$p = new IsNull(); $p($x)` — is WORSE than the
+    plain `$x === null`. Use the plain test for a one-off, or the chain.
 
 THE SIN — an UGLY resolver
 --------------------------
-A resolver whose chain is >= 3 inline predicate closures
-(`fn (...) => test ? … : null`) is the original chain with extra boilerplate
-— it gained nothing. That is a SIN: extract every test to a named Predicate
-(reusing the kernel) and drive the chain with those.
+`Resolver::firstResultWins(fn (...) => test ? … : null, …)` with >= 3 inline
+predicate closures is the original chain with extra boilerplate. SIN: make
+each entry a named Predicate `->when(factory)`.
 
-WHAT DOES NOT FIRE — a value-mapping ternary (`$x instanceof Foo ? $x : …`,
-both arms values), a bare `var === var` comparison (not a named concept), a
-method that transforms / throws / returns unrelated shapes, and a `match`
-on an enum subject (that is PreferTypeMethodOverInlineDispatch's rule).
-
-Advisory for the nudges (naming + placement are yours); the ugly-resolver
-case is a sin. Not auto-fixed.
+WHAT DOES NOT FIRE — a value-mapping ternary, a bare `var === var`, a method
+that transforms / throws / returns unrelated shapes, a predicate passed as a
+callback argument (`Option::first($xs, new IsX())`), and a `match` on an enum
+subject (PreferTypeMethodOverInlineDispatch's rule).
 
 Configuration:
 
     Backend\ResolverPatternProphet::class => [
         'suffix' => 'Resolver',          // class-name suffix that marks a resolver
-        'base_classes' => [              // …or extend one of these
-            // 'App\\Support\\Resolvers\\Resolver',
-        ],
+        'base_classes' => [],            // classes whose extension marks a resolver
     ],
 SCRIPTURE;
     }
@@ -197,22 +186,16 @@ SCRIPTURE;
 
         $sins = [];
 
+        // Nominate: a method that is a first-match dispatch chain (a resolver
+        // in disguise) or a composite predicate. Never flags a one-off boolean.
         foreach ($classes as $class) {
-            if ($this->isChainResolver($class)) {
-                // A real chain resolver (extends the Resolver base): its chain
-                // entries must be named Predicates, not inline closures.
-                $this->judgeResolver($finder, $printer, $class, $sins, $warnings);
-
-                continue;
-            }
-
-            // Otherwise nominate: a method that is a first-match dispatch chain
-            // (a resolver in disguise) or a composite predicate. This never
-            // flags a one-off boolean — only a whole dispatching method.
             foreach ($this->dispatchChainMethods($finder, $class) as $chain) {
                 $warnings[] = $this->warningAt($chain['line'], $this->nominateMessage($chain), null, $chain['kind']);
             }
         }
+
+        // Police composed resolvers — `Resolver::using/firstResultWins/collect(...)`.
+        $this->judgeCompositions($finder, $printer, $ast, $sins, $warnings);
 
         // Anti-pattern, anywhere: a Predicate instantiated and invoked inline
         // for a single check — worse than the plain test it replaces.
@@ -228,35 +211,122 @@ SCRIPTURE;
     }
 
     /**
-     * An existing resolver: SIN it when >= 3 chain entries still inline a
-     * predicate (the half-done extraction that buys nothing over the original
-     * chain); otherwise nudge each remaining inline predicate out.
+     * Each `Resolver::using(...)` / `::firstResultWins(...)` / `::collect(...)`
+     * composition: entries must be NAMED predicates paired with a result
+     * factory, not inline closures. >= 3 inline predicate closures = SIN; a
+     * closure that just forwards to one call should be a first-class callable.
      *
+     * @param  array<Node>  $ast
      * @param  list<\JesseGall\CodeCommandments\Results\Sin>  $sins
      * @param  list<\JesseGall\CodeCommandments\Results\Warning>  $warnings
      */
-    private function judgeResolver(NodeFinder $finder, PrettyPrinter\Standard $printer, Node\Stmt\Class_ $class, array &$sins, array &$warnings): void
+    private function judgeCompositions(NodeFinder $finder, PrettyPrinter\Standard $printer, array $ast, array &$sins, array &$warnings): void
     {
-        $baseName = $this->resolverBaseName($class);
-        $closures = $this->chainClosurePredicates($finder, $class);
+        /** @var array<Expr\StaticCall> $calls */
+        $calls = $finder->findInstanceOf($ast, Expr\StaticCall::class);
 
-        if (count($closures) >= 3) {
-            $line = $closures[0][1];
-            $sins[] = $this->sinAt(
-                $line,
-                sprintf(
-                    'This resolver is just %d inline predicate closures — a resolver of `fn (...) => test ? … : null` entries is the original chain with extra boilerplate. Extract every test to a named Predicate (reuse the kernel `IsNull`/`IsEnum`/`HasPrefix` where one fits, create a domain Predicate otherwise) and drive the chain with those.',
-                    count($closures),
-                ),
-                null,
-                null,
-                'ugly-resolver',
-            );
-        } else {
-            foreach ($closures as [$expr, $line]) {
-                $warnings[] = $this->warningAt($line, $this->messageFor($expr, $printer->prettyPrintExpr($expr), $baseName, $finder), null, 'inline-predicate');
+        foreach ($calls as $call) {
+            if (! $call->class instanceof Node\Name || $call->class->getLast() !== 'Resolver'
+                || ! $call->name instanceof Node\Identifier
+                || ! in_array($call->name->toString(), ['using', 'firstResultWins', 'collect'], true)
+            ) {
+                continue;
+            }
+
+            $args = $call->getArgs();
+            // `using($strategy, ...entries)` — the first arg is the strategy.
+            $entries = $call->name->toString() === 'using' ? array_slice($args, 1) : $args;
+
+            $inline = [];
+
+            foreach ($entries as $arg) {
+                if (! $arg->value instanceof Expr\ArrowFunction) {
+                    continue;
+                }
+
+                if ($this->chainPredicateOf($arg->value) !== null) {
+                    $inline[] = [$arg->value->getStartLine(), $printer->prettyPrintExpr($arg->value)];
+                } elseif (($forward = $this->forwardedCallable($arg->value)) !== null) {
+                    $warnings[] = $this->warningAt(
+                        $arg->value->getStartLine(),
+                        sprintf('Resolver entry `%s` just forwards to one call — use the first-class callable `%s` instead.', $this->truncate($printer->prettyPrintExpr($arg->value)), $forward),
+                        null,
+                        'redundant-closure',
+                    );
+                }
+            }
+
+            if (count($inline) >= 3) {
+                $sins[] = $this->sinAt(
+                    $inline[0][0],
+                    sprintf(
+                        'This composed resolver is %d inline predicate closures — `Resolver::…(fn (...) => test ? … : null, …)` is the original chain with extra boilerplate. Make each entry a NAMED Predicate paired with a factory (reuse `IsNull`/`IsEnum`/`HasPrefix`; create a domain Predicate otherwise): `HasPrefix::of(…)->when(Factory::make(...))`.',
+                        count($inline),
+                    ),
+                    null,
+                    null,
+                    'ugly-resolver',
+                );
+            } else {
+                foreach ($inline as [$line, $printed]) {
+                    $warnings[] = $this->warningAt(
+                        $line,
+                        sprintf('Resolver entry `%s` inlines a predicate — make it a named Predicate paired with a factory (`Predicate->when(...)`).', $this->truncate($printed)),
+                        null,
+                        'inline-predicate',
+                    );
+                }
             }
         }
+    }
+
+    /**
+     * For an arrow function that merely forwards its params to one call
+     * (`fn ($a, $b) => $this->x($a, $b)`), the first-class-callable form
+     * (`$this->x(...)`), or null when it transforms / re-orders / drops args.
+     */
+    private function forwardedCallable(Expr\ArrowFunction $arrow): ?string
+    {
+        $body = $arrow->expr;
+
+        $args = match (true) {
+            $body instanceof Expr\MethodCall, $body instanceof Expr\StaticCall, $body instanceof Expr\FuncCall => $body->getArgs(),
+            default => null,
+        };
+
+        if ($args === null) {
+            return null;
+        }
+
+        $params = $arrow->params;
+
+        if (count($args) !== count($params)) {
+            return null;
+        }
+
+        foreach ($params as $i => $param) {
+            $arg = $args[$i];
+
+            if ($arg->name !== null || $arg->unpack
+                || ! $arg->value instanceof Expr\Variable
+                || ! $param->var instanceof Expr\Variable
+                || $arg->value->name !== $param->var->name
+            ) {
+                return null;
+            }
+        }
+
+        $printer = new PrettyPrinter\Standard;
+
+        return match (true) {
+            $body instanceof Expr\MethodCall && $body->name instanceof Node\Identifier
+                => $printer->prettyPrintExpr($body->var) . '->' . $body->name->toString() . '(...)',
+            $body instanceof Expr\StaticCall && $body->class instanceof Node\Name && $body->name instanceof Node\Identifier
+                => $body->class->toString() . '::' . $body->name->toString() . '(...)',
+            $body instanceof Expr\FuncCall && $body->name instanceof Node\Name
+                => $body->name->toString() . '(...)',
+            default => null,
+        };
     }
 
     /**
@@ -323,14 +393,52 @@ SCRIPTURE;
                 continue;
             }
 
-            $fqcn = $uses[$rooted] ?? $rooted;
-
-            if (str_contains($fqcn, '\\Predicates\\') || str_ends_with($fqcn, '\\Predicates')) {
+            if ($this->isPredicateFqcn($uses[$rooted] ?? $rooted)) {
                 $out[] = [$call->getStartLine(), $rooted];
             }
         }
 
-        return $out;
+        // Form B: `$p = new Predicate(); … $p($x)` — instantiated into a local
+        // and invoked. Same smell, laundered through a variable.
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class) as $method) {
+            if ($method->stmts === null) {
+                continue;
+            }
+
+            $predVars = [];
+
+            foreach ($finder->findInstanceOf($method->stmts, Expr\Assign::class) as $assign) {
+                if ($assign->var instanceof Expr\Variable && is_string($assign->var->name)
+                    && $assign->expr instanceof Expr\New_ && $assign->expr->class instanceof Node\Name
+                ) {
+                    $cls = $assign->expr->class->getLast();
+
+                    if ($this->isPredicateFqcn($uses[$cls] ?? $cls)) {
+                        $predVars[$assign->var->name] = [$cls, $assign->getStartLine()];
+                    }
+                }
+            }
+
+            if ($predVars === []) {
+                continue;
+            }
+
+            foreach ($finder->findInstanceOf($method->stmts, Expr\FuncCall::class) as $call) {
+                if ($call->name instanceof Expr\Variable && is_string($call->name->name)
+                    && isset($predVars[$call->name->name])
+                ) {
+                    [$cls, $line] = $predVars[$call->name->name];
+                    $out[$line . ':' . $cls] = [$line, $cls];
+                }
+            }
+        }
+
+        return array_values($out);
+    }
+
+    private function isPredicateFqcn(string $fqcn): bool
+    {
+        return str_contains($fqcn, '\\Predicates\\') || str_ends_with($fqcn, '\\Predicates');
     }
 
     /**
@@ -447,12 +555,10 @@ SCRIPTURE;
         }
 
         return sprintf(
-            '%s() is a first-match dispatch chain — %d predicate guards each producing a %s. That is a resolver in disguise: extract it to a Resolver (e.g. `Resolvers\\%s\\%sResolver` extending the kernel `Resolver`), each guard becoming a NAMED Predicate (reuse `IsNull`/`IsEnum`/`HasPrefix`; create domain ones for type-specific tests). Do NOT leave the predicates as inline `fn (...) => test ? … : null` closures — that is the same chain with extra boilerplate.',
+            '%s() is a first-match dispatch chain — %d predicate guards each producing a %s. That is a resolver in disguise: compose it with `Resolver::firstResultWins(...)` (or `Resolver::collect(...)` to gather all matches), each guard becoming a NAMED Predicate paired with a factory via `->when(...)` — reuse `IsNull`/`IsEnum`/`HasPrefix`, create domain Predicates for type-specific tests. Do NOT compose it from inline `fn (...) => test ? … : null` closures — that is the same chain with extra boilerplate.',
             $chain['method'],
             $chain['guards'],
             $chain['type'],
-            $chain['resolver'],
-            $chain['resolver'],
         );
     }
 
