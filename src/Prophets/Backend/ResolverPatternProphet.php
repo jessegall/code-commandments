@@ -120,6 +120,27 @@ a closure). `$t` is any callable; reusable ones extend `Transform`
 instead of the first; any other combine rule is a `ResolveStrategy` passed to
 `Resolver::using($strategy, ...entries)`.
 
+The `->then()` argument is the RESULT FACTORY (it produces the resolved value)
+— NOT a transform (a transform pre-processes the matched input). When a chain
+repeatedly inlines a domain factory closure
+(`->then(fn ($r) => $this->expandX($r->descriptor, $r->node))`), the factories
+are the only un-named part of the chain. Name them like the predicates: a
+first-class callable when the factory is a pure forward, or an invokable
+factory class under `Support\Resolvers\Factories` otherwise:
+
+    final class ExpandInputBag
+    {
+        public function __invoke(DescriptorExpansionRequest $r): Node
+        {
+            return /* … */;
+        }
+    }
+
+    DescriptorKeyIs::of(InputBagNode::KEY)->then(new ExpandInputBag(...));
+
+The kernel ships two ready-made result factories there: `Capture::make()`
+(identity — return the value unchanged) and `Wrap::make()` (`$v => [$v]`).
+
 MODE 2 — BOOLEAN CHAIN → COMPOSITE PREDICATE
 --------------------------------------------
 A >= 3-guard method returning `bool` is a composite Predicate. Build it from
@@ -244,6 +265,7 @@ SCRIPTURE;
             $entries = $call->name->toString() === 'using' ? array_slice($args, 1) : $args;
 
             $inline = [];
+            $inlineFactories = [];
 
             foreach ($entries as $arg) {
                 if ($arg->value instanceof Expr\MethodCall && $this->stripsPrefixInThen($arg->value)) {
@@ -253,6 +275,27 @@ SCRIPTURE;
                         null,
                         'prefix-substr',
                     );
+
+                    continue;
+                }
+
+                // A `Predicate->…->then(<closure>)` entry: the closure is the
+                // RESULT FACTORY. A pure forward should be a first-class
+                // callable; a real adapter doing domain work should be a named
+                // invokable factory class.
+                if ($arg->value instanceof Expr\MethodCall) {
+                    $then = $this->thenClosureArg($arg->value);
+
+                    if ($then instanceof Expr\ArrowFunction && ($forward = $this->forwardedCallable($then)) !== null) {
+                        $warnings[] = $this->warningAt(
+                            $then->getStartLine(),
+                            sprintf('Resolver `->then()` factory just forwards to one call — use the first-class callable `%s` instead.', $forward),
+                            null,
+                            'redundant-then-closure',
+                        );
+                    } elseif ($then !== null && $this->isDomainFactoryClosure($then)) {
+                        $inlineFactories[] = $then->getStartLine();
+                    }
 
                     continue;
                 }
@@ -294,7 +337,75 @@ SCRIPTURE;
                     );
                 }
             }
+
+            // A resolver whose entries repeatedly inline a domain factory closure
+            // (`->then(fn ($r) => $this->expandX($r->…)))`) is restating the same
+            // boilerplate per entry. Name them: invokable factory classes under
+            // Support\Resolvers\Factories, like the predicates are named.
+            if (count($inlineFactories) >= 3) {
+                $warnings[] = $this->warningAt(
+                    $inlineFactories[0],
+                    sprintf(
+                        'This resolver has %d inline `->then()` factory closures (`fn ($x) => $this->build($x->…))`) — the result factories are the only un-named part of the chain. Extract each into a NAMED invokable factory class under `Support\\Resolvers\\Factories` (e.g. `final class ExpandInputBag { public function __invoke(Request $r): Node { … } }`) and reference it — `Predicate->then(new ExpandInputBag(...))` — or reshape the method to take the matched value and pass a first-class callable. Keeps the chain declarative and the factories named, testable, and reusable. (These are FACTORIES — they produce the result — not transforms, which pre-process the matched input.)',
+                        count($inlineFactories),
+                    ),
+                    null,
+                    'inline-then-factories',
+                );
+            }
         }
+    }
+
+    /**
+     * The closure passed to a chain entry's terminal `->then(<closure>)`, or
+     * null when the entry does not end in `->then()` with an inline closure.
+     */
+    private function thenClosureArg(Expr\MethodCall $entry): Expr\ArrowFunction|Expr\Closure|null
+    {
+        if (! $entry->name instanceof Node\Identifier || $entry->name->toString() !== 'then'
+            || $entry->isFirstClassCallable()
+        ) {
+            return null;
+        }
+
+        $args = $entry->getArgs();
+        $first = $args[0]->value ?? null;
+
+        return $first instanceof Expr\ArrowFunction || $first instanceof Expr\Closure ? $first : null;
+    }
+
+    /**
+     * Whether a `->then()` factory closure does real domain work (its body is a
+     * method/static/func call or a `new`) AND is not a pure forward (which would
+     * be a first-class callable). Those deserve a named invokable factory.
+     */
+    private function isDomainFactoryClosure(Expr\ArrowFunction|Expr\Closure $fn): bool
+    {
+        if ($fn instanceof Expr\ArrowFunction && $this->forwardedCallable($fn) !== null) {
+            return false;
+        }
+
+        $body = $this->closureResultExpr($fn);
+
+        return $body instanceof Expr\MethodCall
+            || $body instanceof Expr\StaticCall
+            || $body instanceof Expr\New_
+            || $body instanceof Expr\FuncCall;
+    }
+
+    private function closureResultExpr(Expr\ArrowFunction|Expr\Closure $fn): ?Node
+    {
+        if ($fn instanceof Expr\ArrowFunction) {
+            return $fn->expr;
+        }
+
+        foreach ($fn->stmts as $stmt) {
+            if ($stmt instanceof Node\Stmt\Return_) {
+                return $stmt->expr;
+            }
+        }
+
+        return null;
     }
 
     /**

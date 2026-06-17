@@ -376,6 +376,50 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertStringContainsString('composite Predicate', $judgment->warnings[0]->message);
     }
 
+    public function test_flags_repeated_inline_then_factory_closures(): void
+    {
+        // >= 3 entries each inlining a domain factory closure -> suggest named
+        // invokable factory classes under Support\Resolvers\Factories.
+        $judgment = $this->judge(<<<'PHP'
+        class Expander
+        {
+            public function expand($request)
+            {
+                return Resolver::firstResultWins(
+                    KeyIs::of('a')->then(fn ($r) => $this->expandA($r->descriptor, $r->node)),
+                    KeyIs::of('b')->then(fn ($r) => $this->expandB($r->descriptor, $r->node)),
+                    KeyIs::of('c')->then(fn ($r) => $this->expandC($r->descriptor, $r->node)),
+                )->resolve($request);
+            }
+        }
+        PHP);
+
+        $messages = array_map(fn ($w) => $w->message, $judgment->warnings);
+        $hit = array_filter($messages, fn ($m) => str_contains($m, 'inline `->then()` factory closures'));
+        $this->assertNotEmpty($hit);
+        $this->assertStringContainsString('Support\\Resolvers\\Factories', implode("\n", $messages));
+    }
+
+    public function test_does_not_flag_a_couple_of_inline_then_factories(): void
+    {
+        // Below the threshold — a one-off inline factory is fine, not nagged.
+        $judgment = $this->judge(<<<'PHP'
+        class C
+        {
+            public function go($req)
+            {
+                return Resolver::firstResultWins(
+                    KeyIs::of('a')->then(fn ($r) => $this->buildA($r->x)),
+                    KeyIs::of('b')->then(fn ($r) => $this->buildB($r->x)),
+                )->resolve($req);
+            }
+        }
+        PHP);
+
+        $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
+        $this->assertStringNotContainsString('inline `->then()` factory closures', $messages);
+    }
+
     public function test_does_not_crash_on_first_class_callables(): void
     {
         // Issue #18: getArgs() asserts on a first-class callable. A forwarding
