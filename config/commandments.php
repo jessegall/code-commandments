@@ -150,6 +150,7 @@ return [
                     // ],
                 ],
                 Backend\PreferStaticOverInvokableConstructProphet::class,
+                Backend\NoConditionalArraySpreadProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [
                     'null_objects' => [
