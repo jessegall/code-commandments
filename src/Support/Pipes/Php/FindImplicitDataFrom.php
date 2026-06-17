@@ -55,6 +55,17 @@ final class FindImplicitDataFrom implements Pipe
         return $this;
     }
 
+    private function matchesDataSuffix(string $name): bool
+    {
+        foreach ($this->dataSuffixes as $suffix) {
+            if ($suffix !== '' && str_ends_with($name, $suffix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function handle(mixed $input): mixed
     {
         if ($input->ast === null) {
@@ -96,7 +107,7 @@ final class FindImplicitDataFrom implements Pipe
                 }
 
                 foreach ($nodeFinder->findInstanceOf($method->stmts, Expr\StaticCall::class) as $call) {
-                    $finding = $this->classifyFromCall($call, $ownName, $paramTypes, $propTypes, $localTypes);
+                    $finding = $this->classifyFromCall($call, $ownName, $isDataClass, $paramTypes, $propTypes, $localTypes);
 
                     if ($finding !== null) {
                         $matches[] = $this->match($input->content, $call->getStartLine(), $finding['kind'], $finding['target']);
@@ -114,7 +125,7 @@ final class FindImplicitDataFrom implements Pipe
      * @param  array<string, string>  $localTypes
      * @return array{kind: string, target: string}|null
      */
-    private function classifyFromCall(Expr\StaticCall $call, ?string $ownName, array $paramTypes, array $propTypes, array $localTypes): ?array
+    private function classifyFromCall(Expr\StaticCall $call, ?string $ownName, bool $isDataClass, array $paramTypes, array $propTypes, array $localTypes): ?array
     {
         if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'from') {
             return null;
@@ -130,8 +141,17 @@ final class FindImplicitDataFrom implements Pipe
             return null;
         }
 
-        $kind = $this->classifyArg($call->args[0]->value, $paramTypes, $propTypes, $localTypes);
         $isInside = in_array($target, ['self', 'static', 'parent'], true) || $target === $ownName;
+
+        // Only a Spatie Data `::from()` carries the magic object dispatch this
+        // rule is about. A same-class call counts only when THIS class is a
+        // Data class; an external target must look like one (configured suffix,
+        // default `Data`). A domain `Unpacker::from(Model): array` is neither.
+        if ($isInside ? ! $isDataClass : ! $this->matchesDataSuffix($target)) {
+            return null;
+        }
+
+        $kind = $this->classifyArg($call->args[0]->value, $paramTypes, $propTypes, $localTypes);
 
         if ($kind === 'empty') {
             return ['kind' => 'empty_from', 'target' => $isInside ? ($ownName ?? 'self') : $target];
