@@ -71,6 +71,33 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringNotContainsString('self ...$cases', $trait);
     }
 
+    public function test_generated_kernel_is_phpstan_clean(): void
+    {
+        // Regression guard (issue #13): the generated resolver/predicate kernel
+        // must pass PHPStan max out of the box. Three defects had to be patched
+        // by hand in the consumer — guard each here.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        // 1. Singleton factories need `@var self|null` on the static, otherwise
+        // `make()` infers a `mixed` return.
+        foreach (['Resolvers/Predicates/IsNull.php', 'Resolvers/Strategies/FirstResultWins.php', 'Resolvers/Strategies/CollectResults.php'] as $rel) {
+            $src = file_get_contents($this->dir . '/' . $rel);
+            $this->assertStringContainsString('/** @var self|null $instance */', $src, "$rel missing @var on singleton static");
+        }
+
+        // 2 & 3. No `callable(mixed): mixed` in *param* position — that shape
+        // triggers contravariance errors at every typed call site
+        // (`fn(string $t): WireType`) and rejects real entry collections.
+        foreach (['Resolvers/Resolver.php', 'Resolvers/Predicates/Predicate.php', 'Resolvers/Predicates/PredicateEntry.php', 'Resolvers/Strategies/ResolveStrategy.php'] as $rel) {
+            $src = file_get_contents($this->dir . '/' . $rel);
+            foreach (explode("\n", $src) as $line) {
+                if (str_contains($line, '@param') && str_contains($line, 'callable(mixed): mixed')) {
+                    $this->fail("$rel still has a contravariant callable(mixed): mixed @param: " . trim($line));
+                }
+            }
+        }
+    }
+
     public function test_generates_sub_namespaced_classes_into_a_subdirectory(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);

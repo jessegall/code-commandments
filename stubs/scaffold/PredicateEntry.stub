@@ -26,7 +26,7 @@ final class PredicateEntry
     }
 
     /**
-     * @param  callable(mixed): mixed  $make
+     * @param  callable  $make
      * @return callable(mixed): mixed
      */
     public function when(callable $make): callable

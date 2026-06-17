@@ -19,6 +19,7 @@ final class FirstResultWins implements ResolveStrategy
 
     public static function make(): self
     {
+        /** @var self|null $instance */
         static $instance = null;
 
         return $instance ??= new self();
