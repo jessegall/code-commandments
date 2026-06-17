@@ -68,10 +68,19 @@ class WideUnionTypeProphet extends PhpCommandment
 A type union is a value nobody has modelled — `array | string | null` says "it
 might be one of these, you figure it out", and every caller re-derives what it
 actually is. Almost always it is really value-or-nothing, or one concept wearing
-several disguises. The wider the union, the worse — so this rule graduates:
+several disguises. The rule graduates by the strongest signal — does it include
+`null`?
 
-  - {$warnAt} union members  → WARNING (consider an Option / value object)
-  - {$sinAt}+ union members  → SIN (clearly under-modelled — fix it)
+  - includes `null`, {$sinAt}+ members  → SIN (value-or-nothing → `Option<rest>`,
+    the one high-confidence fix; this blocks)
+  - no `null` (always present, one-of-N) → WARNING (ad-hoc polymorphism — what
+    PHP unions are FOR; consider a `Union` sum type / value object, advisory)
+  - any union of {$warnAt}+ members below those bars → WARNING
+
+A null-free union is never a blocking sin: when every shape is always present
+and they share no interface, a union is a legitimate way to spell polymorphism.
+The blocker is reserved for the value-or-nothing case, where `Option` is the
+clear answer.
 
 Bad:
     Option | array | string | null \$isVisibleRule = null,   // (and a contradiction)
@@ -157,7 +166,7 @@ SCRIPTURE;
                 }
 
                 $flaggedLines[$line] = true;
-                $this->emit($line, $count, $this->nativeAtoms($union), $content, $count >= $sinAt, $sins, $warnings);
+                $this->emit($line, $count, $this->nativeAtoms($union), $content, $warnAt, $sinAt, $sins, $warnings);
             }
         }
 
@@ -179,7 +188,7 @@ SCRIPTURE;
                 $count = $this->effectiveCount($atoms);
 
                 if ($count >= $floor) {
-                    $this->emit($line, $count, $atoms, $content, $count >= $sinAt, $sins, $warnings);
+                    $this->emit($line, $count, $atoms, $content, $warnAt, $sinAt, $sins, $warnings);
                 }
             }
         }
@@ -196,13 +205,27 @@ SCRIPTURE;
     }
 
     /**
+     * Classify and record a flagged union. A union is a SIN only when it is
+     * value-or-nothing — it includes `null` AND has reached the sin threshold:
+     * that is the high-confidence `Option<rest>` case. A null-free union is
+     * ad-hoc polymorphism (what PHP unions are for) — a WARNING, not a blocker.
+     *
      * @param  list<string>  $atoms  the union's member names (lowercased, null included)
      * @param  list<\JesseGall\CodeCommandments\Results\Sin>  $sins
      * @param  list<\JesseGall\CodeCommandments\Results\Warning>  $warnings
      */
-    private function emit(int $line, int $count, array $atoms, string $content, bool $isSin, array &$sins, array &$warnings): void
+    private function emit(int $line, int $count, array $atoms, string $content, int $warnAt, int $sinAt, array &$sins, array &$warnings): void
     {
-        $message = $this->message($count, $atoms);
+        $hasNull = in_array('null', $atoms, true);
+        $isSin = $hasNull && $count >= $sinAt;
+
+        // A null-free union below the warning floor (only possible when the
+        // warning band is disabled) is not reportable at all.
+        if (! $isSin && ($warnAt <= 0 || $count < $warnAt)) {
+            return;
+        }
+
+        $message = $this->message($count, $atoms, $isSin);
         $snippet = $this->lineAt($content, $line);
 
         if ($isSin) {
@@ -221,7 +244,7 @@ SCRIPTURE;
      *
      * @param  list<string>  $atoms
      */
-    private function message(int $count, array $atoms): string
+    private function message(int $count, array $atoms, bool $isSin): string
     {
         $head = sprintf(
             'This type unions %d members — a value worn as several shapes is under-modelled and pushes "what is this really?" onto every caller.',
@@ -240,7 +263,11 @@ SCRIPTURE;
             return $head . ' Every member is a scalar — model it as a `ScalarUnion` (one present scalar, dispatched with `match()`).';
         }
 
-        return $head . ' If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). If it is always present but one-of-N types, model it as a `Union` sum type (or a named value object). Or pick one type.';
+        if ($isSin) {
+            return $head . ' It includes null, so it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). If the rest is several shapes, that is `Option<Union<…>>` or a value object.';
+        }
+
+        return $head . ' It is always present (no null) but one-of-N types — that is ad-hoc polymorphism. If the members share behaviour, model it as a `Union` sum type or a named value object; if they should be one type, pick one. (Add a `null` member and it becomes value-or-nothing → `Option`.)';
     }
 
     /**

@@ -37,12 +37,36 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertCount(0, $judgment->warnings);
     }
 
-    public function test_all_scalar_union_suggests_scalar_union(): void
+    public function test_all_scalar_union_warns_and_suggests_scalar_union(): void
     {
+        // No null → polymorphism → warning (not a blocking sin), still steered
+        // to ScalarUnion.
         $judgment = $this->judge('class A { public function m(string | int | float $x): void {} }');
 
+        $this->assertCount(0, $judgment->sins);
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('ScalarUnion', $judgment->warnings[0]->message);
+    }
+
+    public function test_null_free_polymorphic_union_is_a_warning_not_a_sin(): void
+    {
+        // issue #26: an always-present one-of-N union (here the pipe-spec DSL
+        // `string | object | array`) is ad-hoc polymorphism, not value-or-nothing
+        // — a warning, never a blocking sin.
+        $judgment = $this->judge('class Pipeline { public function pipe(string | object | array $p): void {} }');
+
+        $this->assertCount(0, $judgment->sins);
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('polymorphism', $judgment->warnings[0]->message);
+    }
+
+    public function test_null_bearing_wide_union_is_still_a_sin(): void
+    {
+        // Value-or-nothing keeps the blocking sin.
+        $judgment = $this->judge('class A { public function m(array | string | null $x = null): void {} }');
+
         $this->assertCount(1, $judgment->sins);
-        $this->assertStringContainsString('ScalarUnion', $judgment->sins[0]->message);
+        $this->assertStringContainsString('Option', $judgment->sins[0]->message);
     }
 
     public function test_nullable_scalar_union_suggests_scalar_option(): void
