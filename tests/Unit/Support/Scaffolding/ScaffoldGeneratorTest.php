@@ -127,6 +127,15 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('public function resolveInstanceOf(mixed $input, string $type): ?object', $resolver);
         $this->assertStringContainsString('@param  class-string<T>  $type', $resolver);
 
+        // ResolverDecorator base: domain resolvers extend it; it owns the
+        // plumbing (add/resolve) and has NO make() (subclasses construct).
+        $decorator = file_get_contents($this->dir . '/Resolvers/ResolverDecorator.php');
+        $this->assertStringContainsString('abstract class ResolverDecorator', $decorator);
+        $this->assertStringContainsString('final protected function add(callable $entry): static', $decorator);
+        $this->assertStringContainsString('public function resolve(mixed $input): mixed', $decorator);
+        $this->assertStringContainsString('public function resolveInstanceOf(mixed $input, string $type): ?object', $decorator);
+        $this->assertStringNotContainsString('new static()', $decorator);
+
         // Transform path is typed end-to-end too.
         $transform = file_get_contents($this->dir . '/Resolvers/Transforms/Transform.php');
         $this->assertStringContainsString('@template-covariant TOut', $transform);

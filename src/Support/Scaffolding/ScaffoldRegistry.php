@@ -61,6 +61,14 @@ final class ScaffoldRegistry
                 subNamespace: 'Resolvers',
             ),
             new Scaffold(
+                name: 'resolver-decorator',
+                className: 'ResolverDecorator',
+                stubFile: 'ResolverDecorator.stub',
+                introducedIn: '1.77.0',
+                purpose: 'Base for a domain resolver — add domain methods, not kernel passthroughs.',
+                subNamespace: 'Resolvers',
+            ),
+            new Scaffold(
                 name: 'resolve-strategy',
                 className: 'ResolveStrategy',
                 stubFile: 'ResolveStrategy.stub',

@@ -406,7 +406,7 @@ SCRIPTURE;
                 $warnings[] = $this->warningAt(
                     $stripPrefixEntries[0],
                     sprintf(
-                        'This resolver has %d entries shaped `HasPrefix::of(P)->transform(StripPrefix::of(P))` — the prefix P is declared TWICE per entry (the predicate and the transform), and the two can silently drift. Wrap the kernel in a domain Resolver decorator (e.g. `WireTypeTokenResolver`) exposing a builder that declares P once and forwards to the kernel — `->stripPrefix(self::LIST_PREFIX, self::listOf(...))` building `HasPrefix::of(P)->transform(StripPrefix::of(P))->then(factory)` internally. Reads as the domain operation, not the mechanism.',
+                        'This resolver has %d entries shaped `HasPrefix::of(P)->transform(StripPrefix::of(P))` — the prefix P is declared TWICE per entry (the predicate and the transform), and the two can silently drift. Extend the `ResolverDecorator` base and add ONE domain method that declares P once — `->stripPrefix(self::LIST_PREFIX, self::listOf(...))` building `HasPrefix::of(P)->transform(StripPrefix::of(P))->then(factory)` internally via `$this->add(...)`. Add DOMAIN methods only; do NOT re-expose the kernel with generic `equals()`/`when()` passthroughs (use the Resolver kernel directly for those).',
                         count($stripPrefixEntries),
                     ),
                     null,
