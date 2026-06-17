@@ -163,6 +163,10 @@ return [
                 Backend\PreferDefaultFallbackProphet::class => [
                     // 'presence_prefixes' => ['has', 'contains', 'includes', 'exists'],
                 ],
+                Backend\NoOptionToNullProphet::class => [
+                    // Option accessor methods whose null default is the smell:
+                    // 'methods' => ['getOr'],
+                ],
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [
                     'null_objects' => [

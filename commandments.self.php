@@ -78,6 +78,7 @@ return [
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
+                Backend\NoOptionToNullProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class,
                 Backend\LongDocblockProphet::class,
