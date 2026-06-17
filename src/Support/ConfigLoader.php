@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Exceptions\ConfigurationException;
+
 /**
  * Loads configuration from a PHP file for standalone CLI usage.
  */
@@ -17,13 +19,13 @@ class ConfigLoader
     public static function load(string $path): array
     {
         if (!file_exists($path)) {
-            throw new \RuntimeException("Config file not found: {$path}");
+            throw ConfigurationException::fileNotFound($path);
         }
 
         $config = require $path;
 
         if (!is_array($config)) {
-            throw new \RuntimeException("Config file must return an array: {$path}");
+            throw ConfigurationException::notAnArray($path);
         }
 
         return array_merge(self::defaults(), $config);
