@@ -33,7 +33,7 @@ final class CommitHookInstaller
 
     public function install(string $basePath, bool $force = false): string
     {
-        return $this->writeHook($basePath, 'pre-commit', $this->block(), self::BEGIN, self::END, $force);
+        return $this->writeHook($basePath, GitHook::PreCommit, $this->block(), self::BEGIN, self::END, $force);
     }
 
     /**
@@ -42,7 +42,7 @@ final class CommitHookInstaller
      */
     public function installPostCommit(string $basePath, bool $force = false): string
     {
-        return $this->writeHook($basePath, 'post-commit', $this->postCommitBlock(), self::POST_BEGIN, self::POST_END, $force);
+        return $this->writeHook($basePath, GitHook::PostCommit, $this->postCommitBlock(), self::POST_BEGIN, self::POST_END, $force);
     }
 
     /**
@@ -50,10 +50,10 @@ final class CommitHookInstaller
      */
     public function installCommitMsg(string $basePath, bool $force = false): string
     {
-        return $this->writeHook($basePath, 'commit-msg', $this->commitMsgBlock(), self::MSG_BEGIN, self::MSG_END, $force);
+        return $this->writeHook($basePath, GitHook::CommitMsg, $this->commitMsgBlock(), self::MSG_BEGIN, self::MSG_END, $force);
     }
 
-    private function writeHook(string $basePath, string $name, string $block, string $begin, string $end, bool $force): string
+    private function writeHook(string $basePath, GitHook $hook, string $block, string $begin, string $end, bool $force): string
     {
         $gitDir = $basePath . '/.git';
 
@@ -67,7 +67,7 @@ final class CommitHookInstaller
             @mkdir($hooksDir, 0755, true);
         }
 
-        $hookPath = $hooksDir . '/' . $name;
+        $hookPath = $hooksDir . '/' . $hook->value;
 
         if (! is_file($hookPath)) {
             if (@file_put_contents($hookPath, "#!/usr/bin/env sh\n\n" . $block . T_String::NEWLINE) === false) {
