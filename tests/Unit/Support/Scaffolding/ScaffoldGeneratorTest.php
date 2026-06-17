@@ -39,6 +39,35 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('namespace Acme\\Support;', file_get_contents($this->dir . '/Option.php'));
     }
 
+    public function test_compare_self_declares_singular_helpers_instance_only(): void
+    {
+        // Regression guard (issue #6): a static `Enum::equals($x, Enum::Case)`
+        // against a known case is a sin — the rule mandates the case-anchored
+        // instance form `Enum::Case->equals($x)`. If the trait also declared
+        // `@method static bool equals(...)`, PHPStan resolves the case-arrow
+        // call to the 2-arg static signature and errors on every anchored call.
+        // So the singular family must be instance-only; only `*Any` is static.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $trait = file_get_contents($this->dir . '/CompareSelf.php');
+
+        // Instance singular helpers ARE declared.
+        $this->assertStringContainsString('@method bool equals(mixed $value)', $trait);
+        $this->assertStringContainsString('@method bool notEquals(mixed $value)', $trait);
+
+        // Static singular helpers must NOT be declared (they would shadow the
+        // instance form for `Enum::Case->equals($x)`).
+        $this->assertStringNotContainsString('@method static bool equals(', $trait);
+        $this->assertStringNotContainsString('@method static bool notEquals(', $trait);
+        $this->assertStringNotContainsString('@method static bool equalsIgnoreType(', $trait);
+        $this->assertStringNotContainsString('@method static bool notEqualsIgnoreType(', $trait);
+
+        // The set helpers still carry a static declaration — they are never
+        // case-anchored, so there is no ambiguity.
+        $this->assertStringContainsString('@method static bool equalsAny(mixed $value, self ...$cases)', $trait);
+        $this->assertStringContainsString('@method static bool notEqualsAny(mixed $value, self ...$cases)', $trait);
+    }
+
     public function test_is_idempotent_and_skips_existing(): void
     {
         $gen = ScaffoldGenerator::packaged();
