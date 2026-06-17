@@ -14,6 +14,8 @@ use JesseGall\CodeCommandments\Results\RepentInput;
 use JesseGall\CodeCommandments\Results\Tier;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\ParentConnectingVisitor;
 use PhpParser\ParserFactory;
 
 /**
@@ -144,7 +146,12 @@ it asks for them:
         --input cases=input,output
 
 It generates `enum SocketDirection: string { case Input = 'input'; … }` in the
-file's namespace and retypes the field. To REUSE an existing enum instead, pass
+file's namespace and retypes the field — AND rewrites every same-file usage it
+can reach: the default value, `$this->field === '…'` comparisons (→ the enum
+case), and `$this->field` read where a string is required (a `.` concat, or
+returned — directly or through `?:`/`??` — from a `: string` method) gains
+`->value`. Cross-file readers in OTHER files remain the dev's job. To REUSE an
+existing enum instead, pass
 `--input enum-class=App\Enums\WorkflowRunStatus` (retype only, no creation; the
 FQCN is imported for you). Use `--input field=<name>` to pick which field when a
 file has more than one.
@@ -298,7 +305,7 @@ SCRIPTURE;
         // Reuse path: retype to an existing enum, create nothing.
         if ($reuse !== '') {
             $short = $this->shortClassName($reuse);
-            $content = $this->applyRetype($content, $target, $short, $this->caseMapForReuse($reuse));
+            $content = $this->applyRetype($content, $ast, $target, $short, $this->caseMapForReuse($reuse));
 
             $penance = ["Retyped \${$target['name']} to existing enum {$short}"];
 
@@ -332,11 +339,11 @@ SCRIPTURE;
             $caseMap[$value] = $this->caseName($value);
         }
 
-        $content = $this->applyRetype($content, $target, $short, $caseMap);
+        $content = $this->applyRetype($content, $ast, $target, $short, $caseMap);
 
         return RepentanceResult::absolved(
             $content,
-            ["Created enum {$short} ({$enumPath}) and retyped \${$target['name']}"],
+            ["Created enum {$short} ({$enumPath}) and retyped \${$target['name']} (and its same-file readers)"],
             createdFiles: [$enumPath => $enumContent],
         );
     }
@@ -348,10 +355,11 @@ SCRIPTURE;
      * a bare string literal that matches a case becomes that case. Edits are
      * applied right-to-left so byte offsets stay valid.
      *
+     * @param  array<Node>  $ast
      * @param  array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool, default: ?Node}  $target
      * @param  array<string, string>  $caseMap  case value → case name
      */
-    private function applyRetype(string $content, array $target, string $short, array $caseMap): string
+    private function applyRetype(string $content, array $ast, array $target, string $short, array $caseMap): string
     {
         $typeNode = $target['typeNode'];
 
@@ -367,6 +375,10 @@ SCRIPTURE;
             $edits[] = $defaultEdit;
         }
 
+        // Convert every same-file reader of $this-><field> that the single-file
+        // rewrite can reach (cross-file readers remain the dev's job).
+        $edits = [...$edits, ...$this->readerEdits($ast, $target, $short, $caseMap)];
+
         usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
 
         foreach ($edits as $edit) {
@@ -374,6 +386,136 @@ SCRIPTURE;
         }
 
         return $content;
+    }
+
+    /**
+     * Edits that convert in-file `$this-><field>` usages to match its new enum
+     * type, deterministically:
+     *  - `$this->f === '<caseValue>'` / `!==`     → `… === Short::Case`
+     *  - `$this->f = '<caseValue>'`               → `$this->f = Short::Case`
+     *  - `$this->f` where a string is required    → `$this->f->value`
+     *    (a `.` concat operand, or returned — directly or through `?:` / `??`
+     *    — from a method whose return type mentions `string`)
+     *
+     * @param  array<Node>  $ast
+     * @param  array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool, default: ?Node}  $target
+     * @param  array<string, string>  $caseMap
+     * @return list<array{start: int, end: int, text: string}>
+     */
+    private function readerEdits(array $ast, array $target, string $short, array $caseMap): array
+    {
+        $traverser = new NodeTraverser;
+        $traverser->addVisitor(new ParentConnectingVisitor);
+        $traverser->traverse($ast);
+
+        $field = $target['name'];
+        $edits = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Expr\PropertyFetch::class) as $fetch) {
+            if (! $this->isThisProperty($fetch, $field)) {
+                continue;
+            }
+
+            $parent = $fetch->getAttribute('parent');
+
+            // Comparison against a string literal → compare against the case.
+            if (($parent instanceof Node\Expr\BinaryOp\Identical || $parent instanceof Node\Expr\BinaryOp\NotIdentical)) {
+                $other = $parent->left === $fetch ? $parent->right : $parent->left;
+
+                if ($other instanceof Node\Scalar\String_) {
+                    $edits[] = ['start' => $other->getStartFilePos(), 'end' => $other->getEndFilePos(), 'text' => $short . '::' . $this->caseFor($other->value, $caseMap)];
+                }
+
+                continue;
+            }
+
+            // Assignment of a string literal → assign the case.
+            if ($parent instanceof Node\Expr\Assign && $parent->var === $fetch && $parent->expr instanceof Node\Scalar\String_) {
+                $expr = $parent->expr;
+                $edits[] = ['start' => $expr->getStartFilePos(), 'end' => $expr->getEndFilePos(), 'text' => $short . '::' . $this->caseFor($expr->value, $caseMap)];
+
+                continue;
+            }
+
+            // Used where a string is required → unwrap with ->value.
+            if ($this->needsStringValue($fetch)) {
+                $edits[] = ['start' => $fetch->getEndFilePos() + 1, 'end' => $fetch->getEndFilePos(), 'text' => '->value'];
+            }
+        }
+
+        return $edits;
+    }
+
+    private function isThisProperty(Node\Expr\PropertyFetch $fetch, string $field): bool
+    {
+        return $fetch->var instanceof Node\Expr\Variable
+            && $fetch->var->name === 'this'
+            && $fetch->name instanceof Node\Identifier
+            && $fetch->name->toString() === $field;
+    }
+
+    /**
+     * Whether this expression sits in a position that requires a string: a `.`
+     * concat operand, or a value returned (directly or through `?:`/`??`) from a
+     * function whose return type mentions `string`.
+     */
+    private function needsStringValue(Node $node): bool
+    {
+        while (true) {
+            $parent = $node->getAttribute('parent');
+
+            if ($parent === null) {
+                return false;
+            }
+
+            if ($parent instanceof Node\Expr\BinaryOp\Concat) {
+                return true;
+            }
+
+            // Pass through value-producing branches of `?:` / `??`.
+            if (($parent instanceof Node\Expr\Ternary && ($parent->if === $node || $parent->else === $node))
+                || ($parent instanceof Node\Expr\BinaryOp\Coalesce && ($parent->left === $node || $parent->right === $node))) {
+                $node = $parent;
+
+                continue;
+            }
+
+            if ($parent instanceof Node\Stmt\Return_) {
+                return $this->enclosingReturnsString($parent);
+            }
+
+            return false;
+        }
+    }
+
+    private function enclosingReturnsString(Node $node): bool
+    {
+        while ($node = $node->getAttribute('parent')) {
+            if ($node instanceof Node\FunctionLike) {
+                return $this->typeMentionsString($node->getReturnType());
+            }
+        }
+
+        return false;
+    }
+
+    private function typeMentionsString(?Node $type): bool
+    {
+        if ($type instanceof Node\NullableType) {
+            $type = $type->type;
+        }
+
+        if ($type instanceof Node\UnionType) {
+            foreach ($type->types as $member) {
+                if ($member instanceof Node\Identifier && strtolower($member->toString()) === 'string') {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $type instanceof Node\Identifier && strtolower($type->toString()) === 'string';
     }
 
     /**
@@ -402,16 +544,27 @@ SCRIPTURE;
             ];
         }
 
-        // A bare string literal that matches a case → `Short::CaseName`.
-        if ($default instanceof Node\Scalar\String_ && isset($caseMap[$default->value])) {
+        // A bare string literal default → `Short::CaseName`.
+        if ($default instanceof Node\Scalar\String_) {
             return [
                 'start' => $default->getStartFilePos(),
                 'end' => $default->getEndFilePos(),
-                'text' => $short . '::' . $caseMap[$default->value],
+                'text' => $short . '::' . $this->caseFor($default->value, $caseMap),
             ];
         }
 
         return null;
+    }
+
+    /**
+     * The case name for a backing value: the mapped name when known, else the
+     * studly-cased value (the common backed-enum convention).
+     *
+     * @param  array<string, string>  $caseMap
+     */
+    private function caseFor(string $value, array $caseMap): string
+    {
+        return $caseMap[$value] ?? $this->caseName($value);
     }
 
     /**
