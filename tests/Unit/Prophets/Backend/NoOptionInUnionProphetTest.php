@@ -67,6 +67,33 @@ class NoOptionInUnionProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_flags_a_docblock_union_with_option(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class A
+        {
+            /** @return Option<string>|null */
+            public function find() {}
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
+    public function test_does_not_flag_a_union_inside_the_option_generic(): void
+    {
+        // Option<string|int> — the union lives INSIDE the generic, which is fine.
+        $judgment = $this->judge(<<<'PHP'
+        class A
+        {
+            /** @return Option<string|int> */
+            public function find(): Option { return Option::none(); }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_flag_a_plain_nullable_without_option(): void
     {
         $judgment = $this->judge(<<<'PHP'
