@@ -9,8 +9,12 @@ namespace JesseGall\CodeCommandments\Scanners;
  */
 class PhpFileScanner extends GenericFileScanner
 {
-    public function scan(string $path, array $extensions = [], array $excludePaths = []): iterable
-    {
+    public function scan(
+        string|array $path,
+        array $extensions = [],
+        array $excludePaths = [],
+        bool $honorDefaultExcludes = true,
+    ): iterable {
         // Default to PHP files if no extensions specified
         if (empty($extensions)) {
             $extensions = ['php'];
@@ -23,6 +27,6 @@ class PhpFileScanner extends GenericFileScanner
             '.phpstorm.meta.php',
         ];
 
-        return parent::scan($path, $extensions, array_merge($excludePaths, $defaultExcludes));
+        return parent::scan($path, $extensions, array_merge($excludePaths, $defaultExcludes), $honorDefaultExcludes);
     }
 }

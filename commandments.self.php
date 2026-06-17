@@ -1,0 +1,102 @@
+<?php
+
+/*
+|------------------------------------------------------------------------------
+| Self-judgment — code-commandments judging its own source.
+|------------------------------------------------------------------------------
+|
+| Dogfooding: run the prophets against this package's own `src/`. Standalone,
+| so it uses plain __DIR__ paths (no Laravel app helpers). Backend only — the
+| package has no frontend. Run it with:
+|
+|     php bin/commandments judge -c commandments.self.php
+|     php bin/commandments judge -c commandments.self.php --next   # one at a time
+|
+| Scoped to src/, so tests/, vendor/, stubs/, bin/, config/ and workbench/ are
+| all outside the scan. Laravel/Spatie-specific prophets that don't apply stay
+| silent (their supported() is false, or there's simply no matching code).
+|
+*/
+
+use JesseGall\CodeCommandments\Prophets\Backend;
+
+return [
+
+    'scrolls' => [
+        'backend' => [
+            'path' => __DIR__ . '/src',
+            'extensions' => ['php'],
+            'exclude' => [
+                // Belt-and-suspenders — already outside src/, listed for intent.
+                'tests',
+                'vendor',
+                'stubs',
+                'workbench',
+            ],
+            'prophets' => [
+                Backend\NoRawRequestProphet::class,
+                Backend\NoJsonResponseProphet::class,
+                Backend\NoDirectRequestInputProphet::class,
+                Backend\NoEventDispatchProphet::class,
+                Backend\NoRecordThatOutsideAggregateProphet::class,
+                Backend\NoValidatedMethodProphet::class,
+                Backend\NoInlineValidationProphet::class,
+                Backend\TypeScriptAttributeProphet::class,
+                Backend\ReadonlyDataPropertiesProphet::class,
+                Backend\FormRequestTypedGettersProphet::class,
+                Backend\HiddenAttributeProphet::class,
+                Backend\ControllerPrivateMethodsProphet::class,
+                Backend\KebabCaseRoutesProphet::class,
+                Backend\ConstructorDependencyInjectionProphet::class,
+                Backend\NoInlineBootLogicProphet::class,
+                Backend\ComputedPropertyMustHookProphet::class,
+                Backend\QueryModelsThroughQueryMethodProphet::class,
+                Backend\NoRequestDataPassthroughProphet::class,
+                Backend\NoAuthUserInDataClassesProphet::class,
+                Backend\LongMethodProphet::class,
+                Backend\NoRawLiteralProphet::class,
+                Backend\NoArrayStringIndexingProphet::class,
+                Backend\NoArrayBagProphet::class,
+                Backend\NoManualHydrationProphet::class,
+                Backend\NoRepeatedHydrationProphet::class,
+                Backend\PreferDataCollectionOfProphet::class,
+                Backend\ExplicitDataFactoryProphet::class,
+                Backend\DataClassFromArrayOnlyProphet::class,
+                Backend\PreferNamedExceptionsProphet::class,
+                Backend\PreferSprintfProphet::class,
+                Backend\PreferOptionOverNullProphet::class,
+                Backend\StringsThatShouldBeEnumsProphet::class,
+                Backend\RepeatedFallbackProphet::class,
+                Backend\PreferEnumCaseGroupsProphet::class,
+                Backend\PreferStaticOverInvokableConstructProphet::class,
+                Backend\NoConditionalArraySpreadProphet::class,
+                Backend\PreferTypeMethodOverInlineDispatchProphet::class,
+                Backend\ResolverPatternProphet::class,
+                Backend\DuplicateCodeProphet::class,
+                Backend\PreferDataTransformersProphet::class,
+                Backend\PreferDefaultFallbackProphet::class,
+                Backend\NoContainerResolutionProphet::class,
+                Backend\PreferNullObjectDefaultsProphet::class,
+                Backend\LongDocblockProphet::class,
+                Backend\SuggestCompareSelfTraitProphet::class,
+            ],
+        ],
+    ],
+
+    'confession' => [
+        'tablet_path' => __DIR__ . '/.commandments/confessions.json',
+    ],
+
+    'scaffold' => [
+        'auto' => false,
+        'namespace' => 'JesseGall\\CodeCommandments\\Support',
+        'path' => __DIR__ . '/src/Support',
+        'except' => [],
+    ],
+
+    'report' => [
+        'repo' => 'jessegall/code-commandments',
+    ],
+
+    'node_path' => null,
+];

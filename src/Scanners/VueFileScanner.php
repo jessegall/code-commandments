@@ -9,8 +9,12 @@ namespace JesseGall\CodeCommandments\Scanners;
  */
 class VueFileScanner extends GenericFileScanner
 {
-    public function scan(string $path, array $extensions = [], array $excludePaths = []): iterable
-    {
+    public function scan(
+        string|array $path,
+        array $extensions = [],
+        array $excludePaths = [],
+        bool $honorDefaultExcludes = true,
+    ): iterable {
         // Default to frontend file extensions if none specified
         if (empty($extensions)) {
             $extensions = ['vue', 'ts', 'js', 'tsx', 'jsx'];
@@ -28,6 +32,6 @@ class VueFileScanner extends GenericFileScanner
             'shims-vue.d.ts',
         ];
 
-        return parent::scan($path, $extensions, array_merge($excludePaths, $defaultExcludes));
+        return parent::scan($path, $extensions, array_merge($excludePaths, $defaultExcludes), $honorDefaultExcludes);
     }
 }
