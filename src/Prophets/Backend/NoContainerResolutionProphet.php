@@ -365,7 +365,7 @@ SCRIPTURE;
             '%s — inject %s via the constructor of %s instead.',
             $callShape,
             $targetLabel,
-            $context['short'] !== null ? $context['short'] : 'the containing class',
+            $context['short'] ?? 'the containing class',
         );
 
         $message .= ' ' . $this->originHint($context['fqcn']);

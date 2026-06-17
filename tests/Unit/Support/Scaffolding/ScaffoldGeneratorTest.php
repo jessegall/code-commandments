@@ -36,7 +36,10 @@ class ScaffoldGeneratorTest extends TestCase
 
         $this->assertFileExists($this->dir . '/Option.php');
         $this->assertFileExists($this->dir . '/NullCallable.php');
-        $this->assertStringContainsString('namespace Acme\\Support;', file_get_contents($this->dir . '/Option.php'));
+        $option = file_get_contents($this->dir . '/Option.php');
+        $this->assertStringContainsString('namespace Acme\\Support;', $option);
+        // The coalescing constructor — first non-null candidate, else none.
+        $this->assertStringContainsString('public static function coalesce(mixed ...$candidates): self', $option);
     }
 
     public function test_compare_self_declares_singular_helpers_instance_only(): void
