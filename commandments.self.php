@@ -80,6 +80,8 @@ return [
                 Backend\PreferDefaultFallbackProphet::class,
                 Backend\NoOptionToNullProphet::class,
                 Backend\NoOptionOveruseProphet::class,
+                Backend\NoCompactProphet::class,
+                Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class,
                 Backend\LongDocblockProphet::class,
