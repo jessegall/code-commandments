@@ -77,8 +77,10 @@ class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements Param
             )
             ->whenUnsure(
                 'Ask "is the set of valid values finite and known?" If yes, it is an '
-                . 'enum — create a purpose-specific one and type the field as it. If '
-                . 'the value is genuinely open, leave it.'
+                . 'enum. Reuse an existing enum only if the field is genuinely the '
+                . 'SAME concept (typically its value already comes from that enum) — '
+                . 'not just because values overlap; otherwise create a new, '
+                . 'purpose-specific one. If the value is genuinely open, leave it.'
             );
     }
 
@@ -108,6 +110,30 @@ which too often carries a class-string) whose name ends in a closed-set noun
 
 It is an ADVISORY warning, not a sin: the name is a softer signal than a
 literal. A genuinely open `string` that merely shares the name should be left.
+
+REUSE AN EXISTING ENUM, OR CREATE A NEW ONE?
+
+  Reuse one ONLY when the field is genuinely the SAME concept — not merely when
+  the values happen to coincide. Two enums can share the strings `'active'` /
+  `'archived'` and still mean different things; reusing the wrong one couples
+  unrelated concerns and breaks the moment one set evolves. Shared values are
+  NOT the same type.
+
+  - Reuse — the field IS that concept, usually because its VALUE ALREADY COMES
+    FROM that enum:
+        Field::$type            → SchemaFieldType   (a schema field's type IS one)
+        WorkflowAiMessageData::$role → AiRole        (hydrated from an AiRole value)
+    The strongest tell is the source: if the value is produced by something
+    already typed as `EnumX`, the field is an `EnumX`.
+
+  - Create a new, purpose-specific enum — the DEFAULT, and what `repent` does.
+    A socket's `$direction` (input/output) is NOT a sort `Direction` (asc/desc)
+    even if both could spell `'asc'`-ish tokens; give it its own
+    `SocketDirection`. When in doubt, a new enum named for THIS field's concept
+    is safer than forcing the value into an unrelated one.
+
+  (Reuse is a human judgement; the auto-fix only ever CREATES a new enum, so it
+  never silently couples you to the wrong existing one.)
 
 [AUTO-FIXABLE, needs input] — `repent` can create the enum and retype the
 field, but it cannot guess the class name or the cases, so it asks for them:
