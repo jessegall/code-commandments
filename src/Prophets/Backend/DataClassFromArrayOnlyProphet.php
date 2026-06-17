@@ -130,15 +130,33 @@ SCRIPTURE;
             }
 
             $name = $class->name?->toString() ?? 'class';
-            $message = "{$name} is a Data class without access to the {$traitShort} trait (not on it or any ancestor).";
-            $suggestion = "Add `use {$traitShort};` to the class (and import {$this->traitFqcn()}). Run `commandments repent` to fix automatically.";
             $line = $class->getStartLine();
             $snippet = $this->lineAt($content, $line);
 
+            // A class whose own ::from() factories pass a non-array is NOT
+            // safely auto-fixable: adding the trait makes its array-assert throw
+            // at runtime (issue #14). Flag it, but route the agent to migrate
+            // those call sites first instead of promising a build-breaking fix.
+            if ($this->hasUnsafeSelfFrom($class)) {
+                $message = "{$name} is a Data class without the {$traitShort} trait, but its own static factories call ::from() on a non-array — adding the trait now would make those throw at runtime.";
+                $suggestion = "First migrate the `self::from(\$object)` call sites to `self::from(\$object->toArray())` (see ExplicitDataFactoryProphet); once ::from() is array-only, `commandments repent` can add the trait. NOT auto-fixable yet.";
+
+                if ($isSin) {
+                    $sins[] = $this->sinAt($line, $message, $snippet, $suggestion, $name, false);
+                } else {
+                    $warnings[] = $this->warningAt($line, $message . ' ' . $suggestion, $snippet, $name, false);
+                }
+
+                continue;
+            }
+
+            $message = "{$name} is a Data class without access to the {$traitShort} trait (not on it or any ancestor).";
+            $suggestion = "Add `use {$traitShort};` to the class (and import {$this->traitFqcn()}). Run `commandments repent` to fix automatically.";
+
             if ($isSin) {
-                $sins[] = $this->sinAt($line, $message, $snippet, $suggestion, $name);
+                $sins[] = $this->sinAt($line, $message, $snippet, $suggestion, $name, true);
             } else {
-                $warnings[] = $this->warningAt($line, $message . ' ' . $suggestion, $snippet, $name);
+                $warnings[] = $this->warningAt($line, $message . ' ' . $suggestion, $snippet, $name, true);
             }
         }
 
@@ -173,6 +191,13 @@ SCRIPTURE;
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
             if (! $this->extendsDataBase($class, $uses, $namespace) || $this->usesTrait($class, $traitShort)) {
+                continue;
+            }
+
+            // Do NOT add the trait to a class whose own ::from() factories pass a
+            // non-array — the trait's runtime assert would throw and break the
+            // build (issue #14). Those call sites must be migrated first.
+            if ($this->hasUnsafeSelfFrom($class)) {
                 continue;
             }
 
@@ -296,6 +321,103 @@ SCRIPTURE;
         }
 
         return $this->resolve($class->extends, $uses, $namespace) === $this->baseFqcn();
+    }
+
+    /**
+     * Whether the class has a same-class `self::from()/static::from()/Own::from()`
+     * call whose argument is NOT provably an array — the case the FromArrayOnly
+     * trait's runtime assert would reject. Array literals, `->toArray()/->all()`,
+     * and `array`-typed parameters are treated as safe; objects, property
+     * fetches and untyped variables are treated as unsafe (issue #14).
+     */
+    private function hasUnsafeSelfFrom(Node\Stmt\Class_ $class): bool
+    {
+        $ownName = $class->name?->toString();
+        $nodeFinder = new NodeFinder;
+
+        foreach ($class->getMethods() as $method) {
+            if ($method->stmts === null) {
+                continue;
+            }
+
+            $arrayParams = $this->arrayTypedParams($method);
+
+            foreach ($nodeFinder->findInstanceOf($method->stmts, Node\Expr\StaticCall::class) as $call) {
+                if (! $this->isSelfFromCall($call, $ownName)) {
+                    continue;
+                }
+
+                $arg = ($call->args[0] ?? null) instanceof Node\Arg ? $call->args[0]->value : null;
+
+                if ($arg === null || $this->isArrayish($arg, $arrayParams)) {
+                    continue;
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isSelfFromCall(Node\Expr\StaticCall $call, ?string $ownName): bool
+    {
+        if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'from'
+            || ! $call->class instanceof Node\Name
+        ) {
+            return false;
+        }
+
+        $target = $call->class->getLast();
+
+        return in_array($target, ['self', 'static'], true) || ($ownName !== null && $target === $ownName);
+    }
+
+    /**
+     * Names of the method's parameters that are typed `array` (so `from($param)`
+     * is array-safe).
+     *
+     * @return array<string, true>
+     */
+    private function arrayTypedParams(Node\Stmt\ClassMethod $method): array
+    {
+        $names = [];
+
+        foreach ($method->params as $param) {
+            $type = $param->type;
+
+            if ($type instanceof Node\NullableType) {
+                $type = $type->type;
+            }
+
+            if ($type instanceof Node\Identifier && $type->toString() === 'array'
+                && $param->var instanceof Node\Expr\Variable && is_string($param->var->name)
+            ) {
+                $names[$param->var->name] = true;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * @param  array<string, true>  $arrayParams
+     */
+    private function isArrayish(Node $arg, array $arrayParams): bool
+    {
+        if ($arg instanceof Node\Expr\Array_) {
+            return true;
+        }
+
+        if ($arg instanceof Node\Expr\MethodCall && $arg->name instanceof Node\Identifier) {
+            return in_array($arg->name->toString(), ['toArray', 'all'], true);
+        }
+
+        if ($arg instanceof Node\Expr\Variable && is_string($arg->name)) {
+            return isset($arrayParams[$arg->name]);
+        }
+
+        return false;
     }
 
     private function usesTrait(Node\Stmt\Class_ $class, string $traitShort): bool

@@ -77,6 +77,47 @@ class DataClassFromArrayOnlyProphetTest extends TestCase
         $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
     }
 
+    public function test_class_with_self_from_object_is_flagged_not_auto_fixable(): void
+    {
+        // Issue #14: a Data class whose own factory passes a non-array to
+        // ::from() must NOT be advertised as auto-fixable — adding the trait
+        // would make its runtime array-assert throw.
+        $j = $this->judge('use Spatie\\LaravelData\\Data; final class HttpNodeConfig extends Data { public static function fromNode($node): self { return self::from($node->staticInputs); } }');
+
+        $this->assertTrue($j->isFallen());
+        $this->assertFalse($j->sins[0]->autoFixable);
+        $this->assertStringContainsString('non-array', $j->sins[0]->message);
+    }
+
+    public function test_repent_skips_a_class_with_self_from_object(): void
+    {
+        // Issue #14: repent must not add the trait here — doing so broke 84
+        // tests with 'from() expects an array'. Leave it for the agent to
+        // migrate the ::from() call sites first.
+        $src = "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nfinal class HttpNodeConfig extends Data\n{\n    public static function fromNode(\$node): self\n    {\n        return self::from(\$node->staticInputs);\n    }\n}\n";
+
+        $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
+    }
+
+    public function test_repent_still_fixes_a_class_whose_from_takes_an_array_param(): void
+    {
+        // from($arrayParam) is array-safe — the trait can be added.
+        $src = "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nfinal class BarData extends Data\n{\n    public static function fromArrayData(array \$data): self\n    {\n        return self::from(\$data);\n    }\n}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('use FromArrayOnly;', $result->newContent);
+    }
+
+    public function test_repent_still_fixes_a_class_whose_from_uses_to_array(): void
+    {
+        // from($x->toArray()) is array-safe too.
+        $src = "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nfinal class FooData extends Data\n{\n    public static function fromNode(\$node): self\n    {\n        return self::from(\$node->staticInputs->toArray());\n    }\n}\n";
+
+        $this->assertTrue($this->prophet->repent('/x.php', $src)->absolved);
+    }
+
     public function test_can_repent_php_only(): void
     {
         $this->assertTrue($this->prophet->canRepent('/x.php'));
