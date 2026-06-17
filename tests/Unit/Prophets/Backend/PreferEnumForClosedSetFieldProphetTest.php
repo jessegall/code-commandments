@@ -184,17 +184,20 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertStringContainsString('create-enum-class', (string) $result->failureReason);
     }
 
-    public function test_repent_refuses_a_non_data_class(): void
+    public function test_repent_converts_non_data_in_file_with_cross_file_checklist(): void
     {
-        // issue #28(1): a plain class has no ::from() string↔enum bridge, so
-        // retyping would break its string assignments/comparisons — refuse.
-        $code = "<?php\nclass WorkflowTimelineStep { public string \$status; }";
-        $this->prophet->setRepentInput(['create-enum-class' => 'RunStatus', 'cases' => 'running,done']);
+        // A plain class is now converted IN-FILE (property + same-file readers),
+        // with a precise cross-file checklist in the penance for the rest.
+        $code = "<?php\nclass WorkflowTimelineStep {\n public string \$status = 'running';\n public function done(): bool { return \$this->status === 'completed'; }\n}";
+        $this->prophet->setRepentInput(['create-enum-class' => 'RunStatus', 'cases' => 'running,completed']);
 
         $result = $this->prophet->repent('/x.php', $code);
 
-        $this->assertFalse($result->absolved);
-        $this->assertStringContainsString('non-Spatie-Data', (string) $result->failureReason);
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public RunStatus $status = RunStatus::Running', $result->newContent);
+        $this->assertStringContainsString('$this->status === RunStatus::Completed', $result->newContent);
+        // A cross-file checklist is handed back.
+        $this->assertNotEmpty(array_filter($result->penance, static fn (string $p): bool => str_contains($p, 'CROSS-FILE')));
     }
 
     public function test_repent_reuses_an_existing_enum(): void
@@ -341,13 +344,14 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertStringContainsString('public string $direction', $result->newContent);
     }
 
-    public function test_non_data_class_finding_is_not_autofixable_and_says_manual(): void
+    public function test_non_data_class_finding_is_autofixable_in_file(): void
     {
         $judgment = $this->judge('class WorkflowTimelineStep { public string $status; }');
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertFalse($judgment->warnings[0]->autoFixable);
-        $this->assertStringContainsString('NOT a Spatie Data class', $judgment->warnings[0]->message);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
+        $this->assertStringContainsString('IN-FILE', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('cross-file', $judgment->warnings[0]->message);
     }
 
     public function test_data_class_finding_is_autofixable(): void
