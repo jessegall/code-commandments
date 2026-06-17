@@ -52,4 +52,20 @@ abstract class Predicate
         return fn (mixed $value): mixed => ($this)($value) ? $make($value) : null;
     }
 
+    /**
+     * Transform the matched input before the factory sees it — so the factory
+     * stays a first-class callable. `$transform` is any callable; reusable ones
+     * extend {@see Transform} (e.g. `StripPrefix::of('list:')`):
+     *
+     *     HasPrefix::of('list:')
+     *         ->transform(StripPrefix::of('list:'))
+     *         ->when(WireType::listOf(...));
+     *
+     * @param  callable(mixed): mixed  $transform
+     */
+    public function transform(callable $transform): PredicateEntry
+    {
+        return new PredicateEntry($this, $transform);
+    }
+
 }

@@ -77,6 +77,25 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertStringContainsString('$this->fieldCandidate(...)', $judgment->warnings[0]->message);
     }
 
+    public function test_flags_prefix_substr_inside_when(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class C
+        {
+            public function r($x)
+            {
+                return Resolver::firstResultWins(
+                    HasPrefix::of('list:')->when(static fn (string $t) => self::listOf(substr($t, strlen('list:')))),
+                )->resolve($x);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('transform', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('StripPrefix', $judgment->warnings[0]->message);
+    }
+
     public function test_does_not_flag_named_predicate_entries(): void
     {
         $judgment = $this->judge(<<<'PHP'
