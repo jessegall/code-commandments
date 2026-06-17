@@ -21,7 +21,7 @@ class ResolverPatternProphetTest extends TestCase
     public function test_flags_a_skip_or_match_chain_predicate_in_a_resolver(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver
+        class WireTypeResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -40,7 +40,7 @@ class ResolverPatternProphetTest extends TestCase
     public function test_flags_explicit_bool_matcher_in_a_resolver(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class ThingResolver
+        class ThingResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -60,7 +60,7 @@ class ResolverPatternProphetTest extends TestCase
         // in_array(self::SCALARS) reads a type's constants -> domain-bound, and
         // is not a kernel shape -> resolver's own folder.
         $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver
+        class WireTypeResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -78,7 +78,7 @@ class ResolverPatternProphetTest extends TestCase
     public function test_generic_predicate_points_at_the_shared_folder(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class WireTypeResolver
+        class WireTypeResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -97,7 +97,7 @@ class ResolverPatternProphetTest extends TestCase
         // A null/instanceof/str_starts_with test maps to an existing kernel
         // Predicate — reuse it, don't create a new class.
         $judgment = $this->judge(<<<'PHP'
-        class TokenResolver
+        class TokenResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -117,7 +117,7 @@ class ResolverPatternProphetTest extends TestCase
     {
         // Both branches are values — a map, not a skip-or-match predicate.
         $judgment = $this->judge(<<<'PHP'
-        class ThingResolver
+        class ThingResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -154,7 +154,7 @@ class ResolverPatternProphetTest extends TestCase
         // The null branch is present, but the condition is a plain truthiness
         // check, not a predicate worth extracting.
         $judgment = $this->judge(<<<'PHP'
-        class ThingResolver
+        class ThingResolver extends Resolver
         {
             public function resolvers(): array
             {
@@ -190,52 +190,59 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
     }
 
-    public function test_flags_if_guard_predicate_in_resolver(): void
+    public function test_does_not_flag_one_off_helper_booleans_in_a_named_only_resolver(): void
     {
+        // A *Resolver-named service that does NOT extend the base is not a chain
+        // resolver — its helper booleans must not be policed (that led agents to
+        // wrap every `$x === null` in a predicate object).
         $judgment = $this->judge(<<<'PHP'
-        class VisibilityResolver
+        class ConnectCandidateResolver
         {
-            public function resolve($rule)
+            public function compatible($source, $target): bool
             {
-                if ($rule === null) { return true; }
-                if (is_array($rule)) { return $this->fromArray($rule); }
-                return null;
+                if ($source === null) { return true; }
+                return $source === $target;
             }
         }
         PHP);
 
-        $this->assertCount(2, $judgment->warnings);
+        $this->assertTrue($judgment->isRighteous());
     }
 
-    public function test_flags_match_true_arm_predicate_in_resolver(): void
+    public function test_flags_a_scattered_predicate_invocation(): void
     {
+        // Instantiating a Predicate and invoking it inline for a single check.
         $judgment = $this->judge(<<<'PHP'
-        class VerdictResolver
+        use App\Support\Resolvers\Predicates\IsNull;
+
+        class Service
         {
-            public function resolve($input, $sourceType): bool
+            public function go($source): bool
             {
-                return match (true) {
-                    $input->type === Wire::MIXED || $sourceType === null => true,
-                    default => false,
-                };
+                return (new IsNull())($source);
             }
         }
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Wire::MIXED', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('instantiated and invoked inline', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('IsNull', $judgment->warnings[0]->message);
     }
 
-    public function test_does_not_flag_var_equals_var_comparison(): void
+    public function test_does_not_flag_a_predicate_used_as_a_chain_entry(): void
     {
-        // Two runtime values — not a reusable named predicate.
+        // `new IsNull()->when(...)` is a chain entry (method call), not an
+        // inline invocation — that is the CORRECT usage.
         $judgment = $this->judge(<<<'PHP'
-        class NodeResolver
+        use App\Support\Resolvers\Predicates\IsNull;
+
+        class WireTypeResolver extends Resolver
         {
-            public function resolve($node, $sourceNodeId)
+            protected function resolvers(): iterable
             {
-                if ($node->id === $sourceNodeId) { return $node; }
-                return null;
+                return [
+                    new IsNull()->when(fn () => WireType::mixed()),
+                ];
             }
         }
         PHP);
