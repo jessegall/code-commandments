@@ -39,9 +39,11 @@ final class ScaffoldGenerator
                 continue;
             }
 
+            $sub = $scaffold->subNamespace !== '' ? '\\' . trim($scaffold->subNamespace, '\\') : '';
+
             $results[] = [
                 'name' => $scaffold->name,
-                'class' => $namespace . '\\' . $scaffold->className,
+                'class' => $namespace . $sub . '\\' . $scaffold->className,
                 'status' => $this->write($scaffold, $namespace, $path, $force),
             ];
         }
