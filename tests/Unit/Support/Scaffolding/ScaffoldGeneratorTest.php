@@ -71,6 +71,25 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringNotContainsString('self ...$cases', $trait);
     }
 
+    public function test_generates_sub_namespaced_classes_into_a_subdirectory(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        // Predicates carry subNamespace `Resolvers\Predicates`.
+        $isNull = $this->dir . '/Resolvers/Predicates/IsNull.php';
+        $this->assertFileExists($isNull);
+        $this->assertStringContainsString('namespace Acme\\Support\\Resolvers\\Predicates;', file_get_contents($isNull));
+
+        // The Resolver base carries subNamespace `Resolvers`.
+        $resolver = $this->dir . '/Resolvers/Resolver.php';
+        $this->assertFileExists($resolver);
+        $this->assertStringContainsString('namespace Acme\\Support\\Resolvers;', file_get_contents($resolver));
+
+        // IsNull extends Predicate from the same namespace — no cross-namespace import needed.
+        $this->assertStringContainsString('extends Predicate', file_get_contents($isNull));
+        $this->assertFileExists($this->dir . '/Resolvers/Predicates/Predicate.php');
+    }
+
     public function test_force_refreshes_a_relocated_class_in_place(): void
     {
         // Generate fresh, then simulate a consumer relocating CompareSelf into

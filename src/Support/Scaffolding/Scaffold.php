@@ -17,5 +17,10 @@ final class Scaffold
         public readonly string $stubFile,
         public readonly string $introducedIn,
         public readonly string $purpose,
+        /**
+         * Namespace segment under the consumer's scaffold namespace this class
+         * lives in (e.g. `Resolvers\Predicates`). Empty = the flat root.
+         */
+        public readonly string $subNamespace = '',
     ) {}
 }
