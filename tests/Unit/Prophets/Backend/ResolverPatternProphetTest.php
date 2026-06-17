@@ -441,7 +441,7 @@ class ResolverPatternProphetTest extends TestCase
 
         $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
         $this->assertStringContainsString('declared TWICE per entry', $messages);
-        $this->assertStringContainsString('Resolver decorator', $messages);
+        $this->assertStringContainsString('ResolverDecorator', $messages);
     }
 
     public function test_does_not_flag_a_single_strip_prefix_entry(): void
