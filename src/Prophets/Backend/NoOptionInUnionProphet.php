@@ -72,15 +72,18 @@ Bad:
     Option | array | string | null $isVisibleRule = null,
     public function find(): Option | null { … }
 
-Good — the Option is the whole type; the inner shape lives in the generic:
+Good — KEEP the Option; move the inner shape into the generic:
     /** @var Option<string> */
     Option $elementType,
 
     /** @return Option<array|string> */
     public function rule(): Option { … }
 
-    // or, if you don't actually want an Option here, use a plain nullable:
-    public function find(): ?Thing { … }
+DO NOT "fix" this by deleting the Option and widening to a raw union —
+`Option | array | string | null`  →  `array | string | null` is BACKWARDS
+(now it's an un-modelled value-or-nothing AND a fat union). The answer is
+`Option<array|string>`: the `null` becomes the Option's absence, the rest its
+generic. (A plain `?Thing` is only right when you never wanted an Option here.)
 
 WHAT FIRES — `Option` appearing in a PHP union type (`Option | …`) or a nullable
 type (`?Option`), in a parameter, return, or property type.
@@ -142,7 +145,7 @@ SCRIPTURE;
                 continue;
             }
 
-            if (preg_match('/@(?:param|return|var)\s+(\S+)/', $text, $m) && $this->docTypeUnionsOption($m[1], $optionShort)) {
+            if (preg_match('/@(?:param|return|var)\s+(.+)$/', $text, $m) && $this->docTypeUnionsOption($this->cleanDocType($m[1]), $optionShort)) {
                 $warnings[] = $this->warn($line, $content);
             }
         }
@@ -159,6 +162,18 @@ SCRIPTURE;
      * after stripping generics — so `Option<string>|null` and `?Option` fire,
      * but `Option<string|int>` (the union lives inside the generic) does not.
      */
+    /**
+     * The type portion of a docblock tag value: drop the variable name and any
+     * trailing description, and strip whitespace (so a space inside a generic —
+     * `Option<array<string, int>>` — does not truncate the type).
+     */
+    private function cleanDocType(string $rest): string
+    {
+        $type = preg_replace('/\$\w+.*$/', '', $rest) ?? $rest;
+
+        return preg_replace('/\s+/', '', $type) ?? $type;
+    }
+
     private function docTypeUnionsOption(string $type, string $optionShort): bool
     {
         $stripped = $type;
@@ -188,7 +203,7 @@ SCRIPTURE;
     {
         return $this->warningAt(
             $line,
-            'A type unions `Option` with another type or null — Option already encodes value-or-nothing, so `Option | …` / `?Option` is a contradiction (the caller would check the union AND the Option). Make it a bare `Option` and move the alternatives into its generic (`Option<string>`); or, if you want a plain nullable, drop the Option and use `?T`.',
+            'A type unions `Option` with another type or null — Option already encodes value-or-nothing, so `Option | …` / `?Option` is a contradiction. The fix is a BARE `Option` with the alternatives moved INSIDE its generic — `Option<array|string>`. Do NOT "fix" it by deleting the Option and falling back to a raw `array|string|null` union: that is the wrong direction. Option is the right model for value-or-nothing — keep it, just stop unioning it.',
             $this->lineAt($content, $line),
             'option-in-union',
         );
