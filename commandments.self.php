@@ -84,6 +84,7 @@ return [
                 Backend\WideUnionTypeProphet::class,
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,
+                Backend\PreferEnumForClosedSetFieldProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,

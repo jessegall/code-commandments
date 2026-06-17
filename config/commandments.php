@@ -179,6 +179,9 @@ return [
                 ],
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,
+                Backend\PreferEnumForClosedSetFieldProphet::class => [
+                    // 'names' => ['direction', 'status', 'kind', 'mode', 'type'],
+                ],
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],
