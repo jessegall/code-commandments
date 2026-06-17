@@ -48,7 +48,9 @@ class WideUnionTypeProphet extends PhpCommandment
             ->leaveWhen(
                 'It is a genuinely open scalar value (a config primitive) where any '
                 . 'modelling would be artificial — and even then, prefer wrapping the '
-                . 'absence in an Option.'
+                . 'absence in an Option. Also exempt inside an `#[Attribute]` class, '
+                . 'where constructor args must be constant expressions (an Option '
+                . 'cannot live there).'
             )
             ->whenUnsure(
                 'If the union includes null, it is value-or-nothing → `Option<rest>`. '
@@ -92,10 +94,12 @@ TOP-LEVEL union has >= {$warnAt} members (a union INSIDE a generic, like
 `Option<array|string>`, does not count — that is correctly modelled).
 
 WHAT DOES NOT — a simple nullable in EITHER syntax (`?T` AND `T | null` are the
-same type, both exempt), a union nested inside a generic, or — when the warning
-band is disabled — a union below the sin threshold. A 3+ union that includes
-null is NOT a simple nullable: it still wraps two-or-more real shapes, so it
-fires (and the null says the fix is `Option<rest>`).
+same type, both exempt), a union nested inside a generic, a union inside an
+`#[Attribute]` class (its constructor args must be constant expressions, so an
+Option/Union can never live there — the suggestion is unactionable), or — when
+the warning band is disabled — a union below the sin threshold. A 3+ union that
+includes null is NOT a simple nullable: it still wraps two-or-more real shapes,
+so it fires (and the null says the fix is `Option<rest>`).
 
 Configure via:
 
@@ -121,6 +125,11 @@ SCRIPTURE;
         $warnings = [];
         $flaggedLines = [];
 
+        // An attribute class's constructor arguments must be constant
+        // expressions — `Option::some(...)` is not one, and `#[Attr(Option...)]`
+        // is impossible — so the Option/Union suggestion is unactionable there.
+        $attributeRanges = $this->attributeClassRanges($ast);
+
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
             // `T | null` is a simple nullable — semantically identical to `?T`,
             // which is exempt. Flagging one syntax but not the other is
@@ -135,6 +144,11 @@ SCRIPTURE;
 
             if ($count >= $floor) {
                 $line = $union->getStartLine();
+
+                if ($this->withinRange($line, $attributeRanges)) {
+                    continue;
+                }
+
                 $flaggedLines[$line] = true;
                 $this->emit($line, $count, $this->nativeAtoms($union), $content, $count >= $sinAt, $sins, $warnings);
             }
@@ -146,6 +160,10 @@ SCRIPTURE;
             $line = $index + 1;
 
             if (isset($flaggedLines[$line])) {
+                continue;
+            }
+
+            if ($this->withinRange($line, $attributeRanges)) {
                 continue;
             }
 
@@ -288,6 +306,48 @@ SCRIPTURE;
         }
 
         return count($atoms);
+    }
+
+    /**
+     * The line ranges (start, end) of every `#[Attribute]`-marked class in the
+     * file. A finding inside one of these is exempt — attribute constructor
+     * arguments must be constant expressions, so an Option/Union can never live
+     * there and the suggestion is unactionable.
+     *
+     * @param  array<Node>  $ast
+     * @return list<array{int, int}>
+     */
+    private function attributeClassRanges(array $ast): array
+    {
+        $ranges = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            foreach ($class->attrGroups as $group) {
+                foreach ($group->attrs as $attr) {
+                    if (strtolower($attr->name->getLast()) === 'attribute') {
+                        $ranges[] = [$class->getStartLine(), $class->getEndLine()];
+
+                        continue 3;
+                    }
+                }
+            }
+        }
+
+        return $ranges;
+    }
+
+    /**
+     * @param  list<array{int, int}>  $ranges
+     */
+    private function withinRange(int $line, array $ranges): bool
+    {
+        foreach ($ranges as [$start, $end]) {
+            if ($line >= $start && $line <= $end) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
