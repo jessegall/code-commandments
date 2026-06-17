@@ -135,16 +135,27 @@ REUSE AN EXISTING ENUM, OR CREATE A NEW ONE?
   (Reuse is a human judgement; the auto-fix only ever CREATES a new enum, so it
   never silently couples you to the wrong existing one.)
 
-[AUTO-FIXABLE, needs input] — `repent` can create the enum and retype the
-field, but it cannot guess the class name or the cases, so it asks for them:
+[AUTO-FIXABLE on Spatie Data classes, needs input] — `repent` can create the
+enum and retype the field, but it cannot guess the class name or the cases, so
+it asks for them:
 
     repent --prophet=PreferEnumForClosedSetField --file=path/to/Data.php \
         --input create-enum-class=SocketDirection \
         --input cases=input,output
 
 It generates `enum SocketDirection: string { case Input = 'input'; … }` in the
-file's namespace and retypes the field to it. (Use `--input field=<name>` to
-pick which field when a file has more than one.)
+file's namespace and retypes the field. To REUSE an existing enum instead, pass
+`--input enum-class=App\Enums\WorkflowRunStatus` (retype only, no creation; the
+FQCN is imported for you). Use `--input field=<name>` to pick which field when a
+file has more than one.
+
+The auto-fix is SAFE ONLY on a Spatie Data subclass, because `::from()` bridges
+string↔enum on the way in and out — so the construction/serialization literals
+need no rewrite. On a PLAIN class there is no bridge: retyping would break the
+field's `$this->x = '…'` assignments and `$x === '…'` comparisons (here and at
+call sites in other files). So on a non-Data class the finding is reported but
+NOT marked auto-fixable, and `repent` refuses it — convert those by hand,
+changing every literal to the enum case at each read/write.
 
 WHAT FIRES — a `string` / `?string` typed property or promoted ctor property
 whose name matches the configured closed-set list at a word boundary.
@@ -160,6 +171,7 @@ Configure via:
 
     Backend\PreferEnumForClosedSetFieldProphet::class => [
         'names' => ['direction', 'status', 'kind', 'mode', 'type', /* … */],
+        'data_base_suffix' => 'Data',  // a parent ending in this → safe to auto-fix
     ],
 SCRIPTURE;
     }
@@ -177,19 +189,42 @@ SCRIPTURE;
         foreach ($this->collectFields($ast) as $field) {
             $enum = ucfirst($field['noun']);
 
+            $head = sprintf(
+                'The string field `$%s` reads like a closed set (a %s). Stringly-typed closed sets bypass static analysis, IDE refactors, and exhaustive `match`. If its values are a known finite set, model it as a purpose-specific enum (e.g. `enum %s: string { case … }`) and type `$%s` as it.',
+                $field['name'],
+                $field['noun'],
+                $enum,
+                $field['name'],
+            );
+
+            if ($field['isData']) {
+                // Spatie Data: ::from() bridges string↔enum both ways, so the
+                // retype is a safe, complete auto-fix.
+                $tail = sprintf(
+                    ' Auto-fixable: `repent --input create-enum-class=%s --input cases=…` creates the enum and retypes the field (or `--input enum-class=ExistingEnum` to reuse one). If it is genuinely open free text, leave it.',
+                    $enum,
+                );
+                $autoFixable = true;
+            } else {
+                // Plain class: no string↔enum bridge. Retyping alone would break
+                // the field's string assignments (`$this->%s = '…'`) and `===`
+                // comparisons, here and at call sites in other files — so this is
+                // a HAND fix, not a mechanical one.
+                $tail = sprintf(
+                    ' This is NOT a Spatie Data class, so the auto-fix does not apply: retyping `$%s` would break its string assignments and `===` comparisons (here and at call sites). Convert by hand — change every `$this->%s = \'…\'` and `$x->%s === \'…\'` to the enum case. If it is genuinely open free text, leave it.',
+                    $field['name'],
+                    $field['name'],
+                    $field['name'],
+                );
+                $autoFixable = false;
+            }
+
             $warnings[] = $this->warningAt(
                 $field['line'],
-                sprintf(
-                    'The string field `$%s` reads like a closed set (a %s). Stringly-typed closed sets bypass static analysis, IDE refactors, and exhaustive `match`. If its values are a known finite set, create a purpose-specific enum (e.g. `enum %s: string { case … }`) and type `$%s` as it — auto-fixable: `repent --input create-enum-class=%s --input cases=…` generates the enum and retypes the field. If it is genuinely open free text, leave it.',
-                    $field['name'],
-                    $field['noun'],
-                    $enum,
-                    $field['name'],
-                    $enum,
-                ),
+                $head . $tail,
                 null,
                 "closed-set-field:{$field['name']}",
-                true,
+                $autoFixable,
             );
         }
 
@@ -203,9 +238,10 @@ SCRIPTURE;
     public function repentInputs(): array
     {
         return [
-            RepentInput::required('create-enum-class', 'Name of the enum class to create', 'SocketDirection'),
-            RepentInput::required('cases', 'Comma-separated case values for the enum', 'input,output'),
-            RepentInput::optional('field', 'Which field to convert (required when the file has more than one)', 'direction'),
+            RepentInput::optional('create-enum-class', 'Name of a NEW enum to create (pair with cases). Omit if reusing one.', 'SocketDirection'),
+            RepentInput::optional('cases', 'Comma-separated case values for the NEW enum (pair with create-enum-class)', 'input,output'),
+            RepentInput::optional('enum-class', 'OR reuse an EXISTING enum (retype only, no creation) — short name or FQCN', 'App\\Enums\\WorkflowRunStatus'),
+            RepentInput::optional('field', 'Which field to convert (when the file has more than one)', 'status'),
         ];
     }
 
@@ -237,13 +273,6 @@ SCRIPTURE;
             return RepentanceResult::unchanged();
         }
 
-        $className = trim($this->repentInput['create-enum-class'] ?? '');
-        $casesRaw = trim($this->repentInput['cases'] ?? '');
-
-        if ($className === '' || $casesRaw === '') {
-            return RepentanceResult::unrepentant('Needs --input create-enum-class=<Class> and --input cases=<a,b,…>');
-        }
-
         $target = $this->pickField($fields);
 
         if ($target === null) {
@@ -252,7 +281,42 @@ SCRIPTURE;
             return RepentanceResult::unrepentant("More than one closed-set field here ({$names}) — pick one with --input field=<name>");
         }
 
-        $short = $this->shortClassName($className);
+        // Safety: only Spatie Data classes have the ::from() string↔enum bridge.
+        // On a plain class, retyping would break the field's string assignments
+        // and `===` comparisons (here and at call sites in other files), which
+        // this single-file rewrite cannot reach — so refuse rather than break.
+        if (! $target['isData']) {
+            return RepentanceResult::unrepentant(
+                "\${$target['name']} is on a non-Spatie-Data class; retyping would break its string assignments and `===` comparisons (here and at call sites). Convert by hand — change each literal to the enum case at every read/write."
+            );
+        }
+
+        $reuse = trim($this->repentInput['enum-class'] ?? '');
+        $createName = trim($this->repentInput['create-enum-class'] ?? '');
+        $casesRaw = trim($this->repentInput['cases'] ?? '');
+
+        // Reuse path: retype to an existing enum, create nothing.
+        if ($reuse !== '') {
+            $short = $this->shortClassName($reuse);
+            $content = $this->retype($content, $target, $short);
+
+            $penance = ["Retyped \${$target['name']} to existing enum {$short}"];
+
+            if (str_contains($reuse, '\\')) {
+                $content = $this->ensureUse($content, ltrim($reuse, '\\'));
+            }
+
+            return RepentanceResult::absolved($content, $penance);
+        }
+
+        // Create path: generate a new enum, then retype.
+        if ($createName === '' || $casesRaw === '') {
+            return RepentanceResult::unrepentant(
+                'Provide either --input enum-class=<ExistingEnum> (reuse) or --input create-enum-class=<New> --input cases=<a,b,…> (create).'
+            );
+        }
+
+        $short = $this->shortClassName($createName);
         $cases = $this->parseCases($casesRaw);
 
         if ($cases === []) {
@@ -262,13 +326,7 @@ SCRIPTURE;
         $namespace = $this->namespaceOf($ast);
         $enumContent = $this->renderEnum($namespace, $short, $cases);
         $enumPath = dirname($filePath) . '/' . $short . '.php';
-
-        // Retype the field: `string`/`?string` → `Short`/`?Short`.
-        $typeNode = $target['typeNode'];
-        $newType = ($target['nullable'] ? '?' : '') . $short;
-        $start = $typeNode->getStartFilePos();
-        $end = $typeNode->getEndFilePos();
-        $content = substr($content, 0, $start) . $newType . substr($content, $end + 1);
+        $content = $this->retype($content, $target, $short);
 
         return RepentanceResult::absolved(
             $content,
@@ -278,10 +336,48 @@ SCRIPTURE;
     }
 
     /**
-     * The `string`-typed, closed-set-named data fields in the file.
+     * Splice the field's type node to the enum (`string` → `Short`,
+     * `?string` → `?Short`).
+     *
+     * @param  array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool}  $target
+     */
+    private function retype(string $content, array $target, string $short): string
+    {
+        $typeNode = $target['typeNode'];
+        $newType = ($target['nullable'] ? '?' : '') . $short;
+        $start = $typeNode->getStartFilePos();
+        $end = $typeNode->getEndFilePos();
+
+        return substr($content, 0, $start) . $newType . substr($content, $end + 1);
+    }
+
+    /**
+     * Add `use <fqcn>;` after the namespace declaration unless already imported.
+     */
+    private function ensureUse(string $content, string $fqcn): string
+    {
+        if (preg_match('/^\s*use\s+' . preg_quote($fqcn, '/') . '\s*;/m', $content) === 1) {
+            return $content;
+        }
+
+        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
+            return $content;
+        }
+
+        $insertAt = $m[0][1] + strlen($m[0][0]);
+
+        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
+    }
+
+    /**
+     * The `string`-typed, closed-set-named data fields in the file, each tagged
+     * with whether its declaring class is a Spatie Data subclass — because the
+     * auto-fix is only SAFE there (Data's `::from()` bridges string↔enum, so the
+     * literals at construction/serialization need no rewrite; a plain class has
+     * no such bridge and its string assignments/comparisons would break).
      *
      * @param  array<Node>  $ast
-     * @return list<array{name: string, line: int, noun: string, typeNode: Node, nullable: bool}>
+     * @return list<array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool}>
      */
     private function collectFields(array $ast): array
     {
@@ -291,34 +387,39 @@ SCRIPTURE;
             return [];
         }
 
-        $finder = new NodeFinder;
         $fields = [];
 
-        // Promoted constructor properties (declared data fields). A field that
-        // carries an attribute is skipped: an attribute (`#[Input]`, `#[Pick*]`,
-        // a container/framework binding) signals hydration that hands the field
-        // a raw STRING regardless of the declared type — the Laravel container
-        // does not cast string→BackedEnum the way Spatie Data ::from() does — so
-        // retyping it to an enum would throw a TypeError at runtime.
-        foreach ($finder->findInstanceOf($ast, Node\Param::class) as $param) {
-            if ($param->flags === 0
-                || $param->attrGroups !== []
-                || ! $param->var instanceof Node\Expr\Variable
-                || ! is_string($param->var->name)) {
-                continue;
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            $isData = $this->extendsDataBase($class);
+
+            // Promoted constructor properties. A field carrying an attribute is
+            // skipped: an attribute (`#[Input]`, `#[Pick*]`, a container binding)
+            // signals hydration that hands it a raw STRING regardless of the
+            // declared type, so an enum retype would throw a TypeError.
+            $constructor = $class->getMethod('__construct');
+
+            if ($constructor !== null) {
+                foreach ($constructor->params as $param) {
+                    if ($param->flags === 0
+                        || $param->attrGroups !== []
+                        || ! $param->var instanceof Node\Expr\Variable
+                        || ! is_string($param->var->name)) {
+                        continue;
+                    }
+
+                    $this->addField($fields, $param->type, $param->var->name, $param->getStartLine(), $names, $isData);
+                }
             }
 
-            $this->addField($fields, $param->type, $param->var->name, $param->getStartLine(), $names);
-        }
+            // Class properties (same attribute exemption).
+            foreach ($class->getProperties() as $property) {
+                if ($property->attrGroups !== []) {
+                    continue;
+                }
 
-        // Class properties (same attribute exemption).
-        foreach ($finder->findInstanceOf($ast, Node\Stmt\Property::class) as $property) {
-            if ($property->attrGroups !== []) {
-                continue;
-            }
-
-            foreach ($property->props as $prop) {
-                $this->addField($fields, $property->type, $prop->name->toString(), $prop->getStartLine(), $names);
+                foreach ($property->props as $prop) {
+                    $this->addField($fields, $property->type, $prop->name->toString(), $prop->getStartLine(), $names, $isData);
+                }
             }
         }
 
@@ -326,9 +427,9 @@ SCRIPTURE;
     }
 
     /**
-     * @param  list<array{name: string, line: int, noun: string, typeNode: Node, nullable: bool}>  $fields
+     * @param  list<array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool}>  $fields
      */
-    private function addField(array &$fields, ?Node $type, string $name, int $line, array $names): void
+    private function addField(array &$fields, ?Node $type, string $name, int $line, array $names, bool $isData): void
     {
         if (! $this->isStringType($type)) {
             return;
@@ -348,7 +449,24 @@ SCRIPTURE;
             'noun' => $noun,
             'typeNode' => $type,
             'nullable' => $type instanceof Node\NullableType,
+            'isData' => $isData,
         ];
+    }
+
+    /**
+     * Whether the class extends a Spatie-Data-style base — heuristically, a
+     * parent whose short name ends in `Data` (`Data`, `BaseData`, …). That is
+     * where `::from()` bridges string↔enum, making the retype safe.
+     */
+    private function extendsDataBase(Node\Stmt\Class_ $class): bool
+    {
+        if (! $class->extends instanceof Node\Name) {
+            return false;
+        }
+
+        $suffix = (string) $this->config('data_base_suffix', 'Data');
+
+        return str_ends_with($class->extends->getLast(), $suffix);
     }
 
     private function isStringType(?Node $type): bool

@@ -55,19 +55,29 @@ final class NextFindingPresenter
         if ($autoFixable && $repentInputs !== null && $repentInputs !== []) {
             $lines[] = T_String::empty();
             $lines[] = 'This is AUTO-FIXABLE, but it NEEDS INPUT — DO NOT fix it by hand. Run:';
-            $lines[] = sprintf('  %s repent --prophet=%s --file=%s \\', $binary, $finding->prophetShort, $finding->relativePath);
 
-            $flags = [];
-            foreach ($repentInputs as $spec) {
-                $example = $spec->example !== '' ? $spec->example : '<value>';
-                $flags[] = sprintf('--input %s=%s', $spec->name, $example);
+            // The example carries only REQUIRED inputs — optional/either-or
+            // inputs would make one combined command line contradictory.
+            $required = array_values(array_filter($repentInputs, static fn (RepentInput $spec): bool => $spec->required));
+            $base = sprintf('  %s repent --prophet=%s --file=%s', $binary, $finding->prophetShort, $finding->relativePath);
+
+            if ($required !== []) {
+                $flags = [];
+                foreach ($required as $spec) {
+                    $example = $spec->example !== '' ? $spec->example : '<value>';
+                    $flags[] = sprintf('--input %s=%s', $spec->name, $example);
+                }
+                $lines[] = $base . ' \\';
+                $lines[] = '      ' . implode(' ', $flags);
+            } else {
+                $lines[] = $base . ' --input <name>=<value> …';
             }
-            $lines[] = '      ' . implode(' ', $flags);
 
             $lines[] = T_String::empty();
             $lines[] = '  Inputs:';
             foreach ($repentInputs as $spec) {
-                $lines[] = sprintf('    %s%s — %s', $spec->name, $spec->required ? ' (required)' : ' (optional)', $spec->description);
+                $example = $spec->example !== '' ? "  e.g. {$spec->name}={$spec->example}" : T_String::empty();
+                $lines[] = sprintf('    %s%s — %s%s', $spec->name, $spec->required ? ' (required)' : ' (optional)', $spec->description, $example);
             }
 
             $lines[] = T_String::empty();
