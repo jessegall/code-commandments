@@ -14,6 +14,15 @@ namespace {{ namespace }};
 final class IsNull extends Predicate
 {
 
+    private function __construct() {}
+
+    public static function make(): self
+    {
+        static $instance = null;
+
+        return $instance ??= new self();
+    }
+
     public function __invoke(mixed $value): bool
     {
         return $value === null;
