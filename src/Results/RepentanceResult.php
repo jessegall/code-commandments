@@ -15,6 +15,7 @@ final class RepentanceResult
      * @param array<string> $penance Description of what was done to seek absolution
      * @param string|null $blessing Path to backup file (if created)
      * @param string|null $failureReason Why absolution failed (if not absolved)
+     * @param array<string, string> $createdFiles New files to write (absolute path => content), e.g. a generated enum class
      */
     public function __construct(
         public readonly bool $absolved,
@@ -22,6 +23,7 @@ final class RepentanceResult
         public readonly array $penance = [],
         public readonly ?string $blessing = null,
         public readonly ?string $failureReason = null,
+        public readonly array $createdFiles = [],
     ) {}
 
     /**
@@ -30,14 +32,16 @@ final class RepentanceResult
      * @param string $newContent The fixed content
      * @param array<string> $penance What was done
      * @param string|null $blessing Backup path
+     * @param array<string, string> $createdFiles New files to write (absolute path => content)
      */
-    public static function absolved(string $newContent, array $penance = [], ?string $blessing = null): self
+    public static function absolved(string $newContent, array $penance = [], ?string $blessing = null, array $createdFiles = []): self
     {
         return new self(
             absolved: true,
             newContent: $newContent,
             penance: $penance,
             blessing: $blessing,
+            createdFiles: $createdFiles,
         );
     }
 
