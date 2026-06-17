@@ -52,6 +52,32 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_flag_a_spelled_out_nullable(): void
+    {
+        // `T | null` is the same type as `?T` — a simple nullable. Flagging one
+        // syntax but not the other is inconsistent (issue #24). The reported
+        // code: `paletteFor(WorkflowType | null $type)`.
+        $judgment = $this->judge('class A { public function paletteFor(WorkflowType | null $type): array { return []; } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_a_spelled_out_nullable_in_docblock(): void
+    {
+        $judgment = $this->judge('class A { /** @param WorkflowType|null $type */ public function paletteFor($type): array { return []; } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_three_member_union_with_null_still_fires(): void
+    {
+        // A simple nullable is width-1-plus-null; this is width-2-plus-null —
+        // still under-modelled, so the null exemption must NOT swallow it.
+        $judgment = $this->judge('class A { public function m(array | string | null $x = null): void {} }');
+
+        $this->assertCount(1, $judgment->sins);
+    }
+
     public function test_does_not_flag_a_union_inside_a_generic(): void
     {
         $judgment = $this->judge('class A { /** @return Option<array|string> */ public function m(): Option { return Option::none(); } }');
