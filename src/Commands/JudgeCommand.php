@@ -50,6 +50,9 @@ class JudgeCommand extends Command
     /** @var array<string, array<string, array{line: int|null, message: string}>> */
     private array $prophetFileDetails = [];
 
+    /** @var array<string, bool> prophetClass => any finding actually auto-fixable */
+    private array $prophetAutoFixable = [];
+
     public function handle(
         ProphetRegistry $registry,
         ScrollManager $manager,
@@ -208,7 +211,8 @@ class JudgeCommand extends Command
         $finding = $ordered[0];
         $prophet = new $finding->prophetClass();
         $absolvable = $finding->isWarning() || $prophet->requiresConfession();
-        $autoFixable = $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter;
+        // Per-finding flag: a SinRepenter prophet may emit non-fixable findings.
+        $autoFixable = $finding->autoFixable;
 
         foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable, $autoFixable) as $line) {
             $this->output->writeln($line);
@@ -294,7 +298,8 @@ class JudgeCommand extends Command
                 }
 
                 $fileSins++;
-                $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message);
+                $resolvedAutoFixable = $sin->autoFixable ?? is_a($prophetClass, SinRepenter::class, true);
+                $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message, $resolvedAutoFixable);
             }
 
             // Process warnings
@@ -334,9 +339,10 @@ class JudgeCommand extends Command
     /**
      * Track a sin for statistics.
      */
-    private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message): void
+    private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message, bool $autoFixable = false): void
     {
         $this->prophetSinCounts[$prophetClass] = ($this->prophetSinCounts[$prophetClass] ?? 0) + 1;
+        $this->prophetAutoFixable[$prophetClass] = ($this->prophetAutoFixable[$prophetClass] ?? false) || $autoFixable;
         $this->prophetFileDetails[$prophetClass][$relativePath][] = [
             'line' => $line,
             'message' => $message,
@@ -381,8 +387,7 @@ class JudgeCommand extends Command
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
-                $prophet = new $prophetClass();
-                $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
+                $autoFixable = ($this->prophetAutoFixable[$prophetClass] ?? false) ? ' [AUTO-FIXABLE]' : '';
 
                 $this->output->writeln("- {$shortName} ({$count}){$autoFixable}");
 

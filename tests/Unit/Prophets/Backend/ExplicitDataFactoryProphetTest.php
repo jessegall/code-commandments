@@ -103,6 +103,29 @@ class ExplicitDataFactoryProphetTest extends TestCase
         $this->assertStringContainsString('field-by-field', $j->warnings[0]->message);
     }
 
+    public function test_field_by_field_new_self_finding_is_not_auto_fixable(): void
+    {
+        // Issue #9: `new self(field: …)` is hand hydration — repent cannot
+        // rewrite it, so the finding must NOT advertise itself auto-fixable
+        // (or `judge --next` / the summary send the agent to a no-op repent).
+        $this->prophet->configure(['severity' => 'sin']);
+
+        $j = $this->judge('class SongData extends \Spatie\LaravelData\Data { public static function fromSong(\App\Song $s): self { return new self(title: $s->title); } }');
+
+        $this->assertTrue($j->isFallen());
+        $this->assertFalse($j->sins[0]->autoFixable, 'field-by-field new self() is not mechanically fixable');
+    }
+
+    public function test_bare_new_self_finding_is_auto_fixable(): void
+    {
+        $this->prophet->configure(['severity' => 'sin']);
+
+        $j = $this->judge('class SongData extends \Spatie\LaravelData\Data { public static function def(): self { return new self(); } }');
+
+        $this->assertTrue($j->isFallen());
+        $this->assertTrue($j->sins[0]->autoFixable, 'bare new self() rewrites to ::make()');
+    }
+
     public function test_flags_empty_from_and_bare_new_self_toward_make(): void
     {
         $j = $this->judge('class SongData extends \Spatie\LaravelData\Data { public static function blank(): self { return self::from([]); } public static function def(): self { return new self(); } }');

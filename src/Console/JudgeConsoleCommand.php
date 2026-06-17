@@ -39,6 +39,9 @@ class JudgeConsoleCommand extends Command
     /** @var array<string, array<string, array<array{line: int|null, message: string}>>> */
     private array $prophetFileDetails = [];
 
+    /** @var array<string, bool> prophetClass => any finding actually auto-fixable */
+    private array $prophetAutoFixable = [];
+
     protected function configure(): void
     {
         $this
@@ -221,7 +224,10 @@ class JudgeConsoleCommand extends Command
         $finding = $ordered[0];
         $prophet = new $finding->prophetClass();
         $absolvable = $finding->isWarning() || $prophet->requiresConfession();
-        $autoFixable = $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter;
+        // Honour the per-finding flag — a SinRepenter prophet may emit findings
+        // that are NOT mechanically fixable (e.g. hand-hydration), and labelling
+        // those [AUTO-FIXABLE] sends the agent to a no-op `repent`.
+        $autoFixable = $finding->autoFixable;
 
         foreach (NextFindingPresenter::lines($finding, count($ordered), 'commandments', $absolvable, $autoFixable) as $line) {
             $output->writeln($line);
@@ -292,7 +298,8 @@ class JudgeConsoleCommand extends Command
                 }
 
                 $fileSins++;
-                $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message);
+                $resolvedAutoFixable = $sin->autoFixable ?? is_a($prophetClass, SinRepenter::class, true);
+                $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message, $resolvedAutoFixable);
             }
 
             foreach ($judgment->warnings as $warning) {
@@ -327,9 +334,13 @@ class JudgeConsoleCommand extends Command
         }
     }
 
-    private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message): void
+    private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message, bool $autoFixable = false): void
     {
         $this->prophetSinCounts[$prophetClass] = ($this->prophetSinCounts[$prophetClass] ?? 0) + 1;
+        // A prophet is only [AUTO-FIXABLE] in the summary when at least one of
+        // its findings actually is — an all-non-fixable prophet (every finding
+        // hand-fixed) must not promise a mechanical fix.
+        $this->prophetAutoFixable[$prophetClass] = ($this->prophetAutoFixable[$prophetClass] ?? false) || $autoFixable;
         $this->prophetFileDetails[$prophetClass][$relativePath][] = [
             'line' => $line,
             'message' => $message,
@@ -405,8 +416,7 @@ class JudgeConsoleCommand extends Command
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
-                $prophet = new $prophetClass();
-                $autoFixable = $prophet instanceof SinRepenter ? ' [AUTO-FIXABLE]' : '';
+                $autoFixable = ($this->prophetAutoFixable[$prophetClass] ?? false) ? ' [AUTO-FIXABLE]' : '';
 
                 $output->writeln("- {$shortName} ({$count}){$autoFixable}");
 
