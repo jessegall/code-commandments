@@ -124,6 +124,10 @@ SCRIPTURE;
         $warnings = [];
 
         foreach ($finder->findInstanceOf($ast, Expr\MethodCall::class) as $call) {
+            if ($call->isFirstClassCallable()) {
+                continue;
+            }
+
             $receiver = $call->var;
             $name = $call->name instanceof Node\Identifier ? $call->name->toString() : null;
 
@@ -135,6 +139,10 @@ SCRIPTURE;
         }
 
         foreach ($finder->findInstanceOf($ast, Expr\StaticCall::class) as $call) {
+            if ($call->isFirstClassCallable()) {
+                continue;
+            }
+
             $receiver = $call->class instanceof Node\Name ? $call->class : null;
             $name = $call->name instanceof Node\Identifier ? $call->name->toString() : null;
 
@@ -225,7 +233,13 @@ SCRIPTURE;
             $cond = $cond->expr;
         }
 
-        return $cond instanceof Expr\MethodCall ? $cond : null;
+        // A first-class callable guard (`$x->has(...)`) has no real args to
+        // inspect and would assert on getArgs().
+        if ($cond instanceof Expr\MethodCall && ! $cond->isFirstClassCallable()) {
+            return $cond;
+        }
+
+        return null;
     }
 
     private function isPresenceName(Node\Identifier|Expr $name): bool

@@ -233,6 +233,12 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 continue;
             }
 
+            // A first-class callable (`->equals(...)`) carries no real args and
+            // would assert on getArgs(); it is not a comparison to rewrite (#18).
+            if ($call->isFirstClassCallable()) {
+                continue;
+            }
+
             $args = $call->getArgs();
 
             // The singular helpers take exactly (subject, case). Named or

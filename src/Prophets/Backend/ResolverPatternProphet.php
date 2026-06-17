@@ -234,6 +234,7 @@ SCRIPTURE;
             if (! $call->class instanceof Node\Name || $call->class->getLast() !== 'Resolver'
                 || ! $call->name instanceof Node\Identifier
                 || ! in_array($call->name->toString(), ['using', 'firstResultWins', 'collect'], true)
+                || $call->isFirstClassCallable()
             ) {
                 continue;
             }
@@ -305,6 +306,7 @@ SCRIPTURE;
     {
         if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'then'
             || ! $this->rootsInHasPrefix($call->var)
+            || $call->isFirstClassCallable()
         ) {
             return false;
         }
@@ -347,6 +349,14 @@ SCRIPTURE;
     private function forwardedCallable(Expr\ArrowFunction $arrow): ?string
     {
         $body = $arrow->expr;
+
+        // A first-class callable body (`fn () => $this->x(...)`) has no real args
+        // to forward and would assert on getArgs().
+        if (($body instanceof Expr\MethodCall || $body instanceof Expr\StaticCall || $body instanceof Expr\FuncCall)
+            && $body->isFirstClassCallable()
+        ) {
+            return null;
+        }
 
         $args = match (true) {
             $body instanceof Expr\MethodCall, $body instanceof Expr\StaticCall, $body instanceof Expr\FuncCall => $body->getArgs(),

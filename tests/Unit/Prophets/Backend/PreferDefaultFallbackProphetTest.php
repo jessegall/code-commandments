@@ -128,6 +128,28 @@ class PreferDefaultFallbackProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_crash_on_first_class_callables(): void
+    {
+        // Issue #18: getArgs() asserts on a first-class callable. A method/static
+        // call in FCC form (`$x->m(...)` / `Foo::bar(...)`) must be skipped, not
+        // crash the prophet.
+        $judgment = $this->judge(<<<'PHP'
+        class Mapper
+        {
+            public function run(array $nodes): array
+            {
+                $a = array_map($this->transform(...), $nodes);
+                $b = array_filter($a, $this->keep(...));
+                $c = Comparator::compare(...);
+
+                return $b;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());

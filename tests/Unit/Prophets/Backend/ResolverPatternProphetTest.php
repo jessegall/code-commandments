@@ -376,6 +376,27 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertStringContainsString('composite Predicate', $judgment->warnings[0]->message);
     }
 
+    public function test_does_not_crash_on_first_class_callables(): void
+    {
+        // Issue #18: getArgs() asserts on a first-class callable. A forwarding
+        // arrow whose body is an FCC, and a Resolver call in FCC form, must be
+        // handled, not crash.
+        $judgment = $this->judge(<<<'PHP'
+        class Mapper
+        {
+            public function run(array $nodes): array
+            {
+                $a = array_map($this->transform(...), $nodes);
+                $r = Resolver::firstResultWins(fn () => $this->keep(...));
+
+                return $a;
+            }
+        }
+        PHP);
+
+        $this->assertNotNull($judgment);
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());
