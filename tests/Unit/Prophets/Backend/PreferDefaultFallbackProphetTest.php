@@ -150,6 +150,24 @@ class PreferDefaultFallbackProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_crash_on_a_first_class_callable_inside_a_nested_call(): void
+    {
+        // Issue #22: an FCC method call nested inside another call —
+        // implode($glue, array_map($this->stringify(...), $values)) — crashed
+        // the --staged pre-commit path before the getArgs() guard.
+        $judgment = $this->judge(<<<'PHP'
+        class JoinNode
+        {
+            public function join(array $values, string $glue): string
+            {
+                return implode($glue, array_map($this->stringify(...), $values));
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());
