@@ -24,4 +24,25 @@ class Serialiser
     {
         return ['a' => $x->a, 'b' => $x->b, 'c' => $x->c];
     }
+
+    // Reads >= 3 properties to DRIVE validation, returns error strings — not a
+    // serialiser (#16). The output array's values do not derive from $foo.
+    public function validate(FooData $foo): array
+    {
+        $errors = [];
+
+        if ($foo->name === '') {
+            $errors[] = "Field 'name' is required.";
+        }
+
+        if ($foo->type === '') {
+            $errors[] = "Field 'type' must be set.";
+        }
+
+        if ($foo->required && $foo->name === '') {
+            $errors[] = 'A required field needs a name.';
+        }
+
+        return $errors;
+    }
 }

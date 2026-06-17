@@ -62,6 +62,24 @@ class PreferDataTransformersProphetTest extends TestCase
         $this->assertStringNotContainsString('notData()', $messages);
     }
 
+    public function test_does_not_flag_a_validator_that_reads_props_but_returns_error_strings(): void
+    {
+        // Issue #16: validate() reads >= 3 properties of the Data object to
+        // drive validation and returns a list of error strings — the output
+        // array's values do not derive from the properties, so it is NOT a
+        // hand-rolled serialiser and must not be flagged.
+        $results = $this->manager->judgeScroll('test');
+
+        $messages = implode("\n", array_map(
+            fn (Warning $w) => $w->message,
+            $this->warningsFor($results, $this->fixtureDir . '/Serialiser.php'),
+        ));
+
+        $this->assertStringNotContainsString('validate()', $messages);
+        // The genuine serialiser is still flagged — guard against over-correction.
+        $this->assertStringContainsString('serialise()', $messages);
+    }
+
     public function test_stays_silent_without_an_index(): void
     {
         $prophet = new PreferDataTransformersProphet;
