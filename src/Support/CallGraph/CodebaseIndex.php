@@ -43,6 +43,9 @@ final class CodebaseIndex
      */
     private const ENUM_GROUP_MIN_FLOOR = 2;
 
+    /** Smallest method body (printed lines) the index fingerprints for duplicate detection. */
+    private const DUPLICATE_MIN_LINES = 4;
+
     /** @var array<string, ClassSummary> */
     private array $classes = [];
 
@@ -63,6 +66,9 @@ final class CodebaseIndex
 
     /** @var array<string, list<array{file: string, line: int}>>   key = canonical enum-case-group key */
     private array $enumCaseGroupsByKey = [];
+
+    /** @var array<string, list<array{file: string, class: string, method: string, line: int, lines: int}>>   key = method-body hash */
+    private array $methodBodiesByHash = [];
 
     /**
      * Build from an iterable of file paths. Parse failures are swallowed —
@@ -187,6 +193,18 @@ final class CodebaseIndex
                     $shells,
                     $instance,
                 );
+
+                $body = MethodBodyHash::of($method, self::DUPLICATE_MIN_LINES);
+
+                if ($body !== null) {
+                    $instance->methodBodiesByHash[$body['hash']][] = [
+                        'file' => $shell['file'],
+                        'class' => $fqcn,
+                        'method' => $method->name->toString(),
+                        'line' => $method->getStartLine(),
+                        'lines' => $body['lines'],
+                    ];
+                }
             }
 
             $instance->classes[$fqcn] = new ClassSummary(
@@ -295,6 +313,17 @@ final class CodebaseIndex
     public function enumCaseGroupCount(string $key): int
     {
         return count($this->enumCaseGroupsByKey[$key] ?? []);
+    }
+
+    /**
+     * Every method across the scroll whose body fingerprints to $hash — used
+     * to surface duplicated code fragments.
+     *
+     * @return list<array{file: string, class: string, method: string, line: int, lines: int}>
+     */
+    public function methodBodyOccurrences(string $hash): array
+    {
+        return $this->methodBodiesByHash[$hash] ?? [];
     }
 
     // ────────────────────────────────────────────────────────────────
