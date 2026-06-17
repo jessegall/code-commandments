@@ -80,6 +80,10 @@ Good — value-or-nothing is an Option (the null IS the absence):
     /** @var Option<array|string> */
     Option \$isVisibleRule,
 
+Good — an all-scalar union has a ready-made home:
+    ScalarUnion  \$value,    // string|int|float|bool      (always present)
+    ScalarOption \$value,    // string|int|float|bool|null  (the null is absence)
+
 Good — one concept wearing disguises is a value object:
     VisibilityRule \$isVisibleRule,
 
@@ -132,7 +136,7 @@ SCRIPTURE;
             if ($count >= $floor) {
                 $line = $union->getStartLine();
                 $flaggedLines[$line] = true;
-                $this->emit($line, $count, $content, $count >= $sinAt, $sins, $warnings);
+                $this->emit($line, $count, $this->nativeAtoms($union), $content, $count >= $sinAt, $sins, $warnings);
             }
         }
 
@@ -146,10 +150,11 @@ SCRIPTURE;
             }
 
             if (preg_match('/@(?:param|return|var)\s+(.+)$/', $text, $m)) {
-                $count = $this->topLevelUnionCount($this->cleanDocType($m[1]));
+                $atoms = $this->topLevelAtoms($this->cleanDocType($m[1]));
+                $count = $this->effectiveCount($atoms);
 
                 if ($count >= $floor) {
-                    $this->emit($line, $count, $content, $count >= $sinAt, $sins, $warnings);
+                    $this->emit($line, $count, $atoms, $content, $count >= $sinAt, $sins, $warnings);
                 }
             }
         }
@@ -166,15 +171,13 @@ SCRIPTURE;
     }
 
     /**
+     * @param  list<string>  $atoms  the union's member names (lowercased, null included)
      * @param  list<\JesseGall\CodeCommandments\Results\Sin>  $sins
      * @param  list<\JesseGall\CodeCommandments\Results\Warning>  $warnings
      */
-    private function emit(int $line, int $count, string $content, bool $isSin, array &$sins, array &$warnings): void
+    private function emit(int $line, int $count, array $atoms, string $content, bool $isSin, array &$sins, array &$warnings): void
     {
-        $message = sprintf(
-            'This type unions %d members — a value worn as several shapes is under-modelled and pushes "what is this really?" onto every caller. If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). If it is always present but one-of-N types, model it as a `Union` sum type (or a named value object). Or pick one type.',
-            $count,
-        );
+        $message = $this->message($count, $atoms);
         $snippet = $this->lineAt($content, $line);
 
         if ($isSin) {
@@ -182,6 +185,56 @@ SCRIPTURE;
         } else {
             $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union');
         }
+    }
+
+    /**
+     * The finding message — tailored to the union's shape. An all-scalar union
+     * has a ready-made home: `ScalarUnion` (always present) or `ScalarOption`
+     * (when it also includes null — a nullable scalar, where the null is the
+     * absence). Otherwise fall back to the general Option / Union / value-object
+     * guidance.
+     *
+     * @param  list<string>  $atoms
+     */
+    private function message(int $count, array $atoms): string
+    {
+        $head = sprintf(
+            'This type unions %d members — a value worn as several shapes is under-modelled and pushes "what is this really?" onto every caller.',
+            $count,
+        );
+
+        $hasNull = in_array('null', $atoms, true);
+        $nonNull = array_values(array_filter($atoms, static fn (string $a): bool => $a !== 'null'));
+        $allScalar = $nonNull !== [] && array_diff($nonNull, ['string', 'int', 'float', 'bool']) === [];
+
+        if ($allScalar && $hasNull) {
+            return $head . ' Every present member is a scalar and it includes null — this is a nullable scalar, so its home is `ScalarOption` (a present-or-absent scalar; the null becomes the absence).';
+        }
+
+        if ($allScalar) {
+            return $head . ' Every member is a scalar — model it as a `ScalarUnion` (one present scalar, dispatched with `match()`).';
+        }
+
+        return $head . ' If it includes null it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). If it is always present but one-of-N types, model it as a `Union` sum type (or a named value object). Or pick one type.';
+    }
+
+    /**
+     * A native union's member names, lowercased (intersection / complex members
+     * collapse to a non-scalar placeholder so they never read as scalar).
+     *
+     * @return list<string>
+     */
+    private function nativeAtoms(Node\UnionType $union): array
+    {
+        $atoms = [];
+
+        foreach ($union->types as $type) {
+            $atoms[] = ($type instanceof Node\Identifier || $type instanceof Node\Name)
+                ? strtolower($type->toString())
+                : 'object';
+        }
+
+        return $atoms;
     }
 
     /**
@@ -197,11 +250,13 @@ SCRIPTURE;
     }
 
     /**
-     * The number of TOP-LEVEL members in a docblock union type, after stripping
-     * generics — so `Option<array|string>` is 1, `array<string,int>|string|null`
-     * is 3.
+     * The TOP-LEVEL member names of a docblock union type, lowercased, after
+     * stripping generics — so `Option<array|string>` is `[option]`,
+     * `array<string,int>|string|null` is `[array, string, null]`.
+     *
+     * @return list<string>
      */
-    private function topLevelUnionCount(string $type): int
+    private function topLevelAtoms(string $type): array
     {
         $stripped = $type;
 
@@ -210,16 +265,25 @@ SCRIPTURE;
             $stripped = preg_replace('/<[^<>]*>/', '', $stripped) ?? $stripped;
         } while ($stripped !== $previous);
 
-        // A leading `?` is the idiomatic nullable, not a union member — `?Foo`
-        // counts as 1 (clean), `Foo|null` as 2.
-        $atoms = array_filter(array_map('trim', explode('|', ltrim($stripped, '?'))));
+        // A leading `?` is the idiomatic nullable, not a union member — strip it
+        // so `?Foo` reads as the single member `Foo` (and `Foo|null` as two).
+        $atoms = array_values(array_filter(array_map('trim', explode('|', ltrim($stripped, '?')))));
 
-        // `T | null` (one non-null member + null) is a simple nullable — count
-        // it as 1, exactly like `?T`. A 3+ union with null keeps its full count.
-        $lower = array_map('strtolower', $atoms);
-        $nonNull = array_filter($lower, static fn (string $atom): bool => $atom !== 'null');
+        return array_map('strtolower', $atoms);
+    }
 
-        if (in_array('null', $lower, true) && count($nonNull) === 1) {
+    /**
+     * The effective width of a docblock union: a simple nullable (one non-null
+     * member + null, like `Foo|null`) counts as 1, exactly like `?Foo`. A 3+
+     * union that includes null keeps its full count.
+     *
+     * @param  list<string>  $atoms
+     */
+    private function effectiveCount(array $atoms): int
+    {
+        $nonNull = array_filter($atoms, static fn (string $atom): bool => $atom !== 'null');
+
+        if (in_array('null', $atoms, true) && count($nonNull) === 1) {
             return 1;
         }
 

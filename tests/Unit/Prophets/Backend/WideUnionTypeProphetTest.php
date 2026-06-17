@@ -24,7 +24,8 @@ class WideUnionTypeProphetTest extends TestCase
 
         $this->assertCount(1, $judgment->warnings);
         $this->assertCount(0, $judgment->sins);
-        $this->assertStringContainsString('Option', $judgment->warnings[0]->message);
+        // string | int is an all-scalar union → ScalarUnion is its home.
+        $this->assertStringContainsString('ScalarUnion', $judgment->warnings[0]->message);
     }
 
     public function test_three_plus_member_union_is_a_sin(): void
@@ -34,6 +35,31 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertTrue($judgment->isFallen());
         $this->assertCount(1, $judgment->sins);
         $this->assertCount(0, $judgment->warnings);
+    }
+
+    public function test_all_scalar_union_suggests_scalar_union(): void
+    {
+        $judgment = $this->judge('class A { public function m(string | int | float $x): void {} }');
+
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('ScalarUnion', $judgment->sins[0]->message);
+    }
+
+    public function test_nullable_scalar_union_suggests_scalar_option(): void
+    {
+        $judgment = $this->judge('class A { public function m(string | int | null $x = null): void {} }');
+
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('ScalarOption', $judgment->sins[0]->message);
+    }
+
+    public function test_non_scalar_union_keeps_general_guidance(): void
+    {
+        $judgment = $this->judge('class A { public function m(array | string $x): void {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringNotContainsString('ScalarUnion', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Option', $judgment->warnings[0]->message);
     }
 
     public function test_docblock_three_member_with_spaces_is_a_sin(): void

@@ -46,6 +46,13 @@ final class ScaffoldRegistry
                 purpose: 'A Union constrained to string|int|float|bool — the ready-made scalar sum type.',
             ),
             new Scaffold(
+                name: 'scalar-option',
+                className: 'ScalarOption',
+                stubFile: 'ScalarOption.stub',
+                introducedIn: '1.86.0',
+                purpose: 'Present-or-absent scalar — the Option twin of ScalarUnion (nullable-scalar case).',
+            ),
+            new Scaffold(
                 name: 'null-callable',
                 className: 'NullCallable',
                 stubFile: 'NullCallable.stub',

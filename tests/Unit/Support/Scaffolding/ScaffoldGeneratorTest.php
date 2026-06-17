@@ -105,6 +105,20 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString("return ['string', 'int', 'float', 'bool'];", $scalar);
     }
 
+    public function test_generates_the_scalar_option(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $scalarOption = $this->dir . '/ScalarOption.php';
+        $this->assertFileExists($scalarOption);
+        $src = file_get_contents($scalarOption);
+        $this->assertStringContainsString('namespace Acme\\Support;', $src);
+        // Wraps an Option<scalar> — the present type is constrained natively.
+        $this->assertStringContainsString('final class ScalarOption', $src);
+        $this->assertStringContainsString('public static function some(string|int|float|bool $value): self', $src);
+        $this->assertStringContainsString('public function getOrThrow(): string|int|float|bool', $src);
+    }
+
     public function test_generates_capture_and_wrap_result_factories(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
