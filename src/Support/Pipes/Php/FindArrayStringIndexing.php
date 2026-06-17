@@ -308,108 +308,83 @@ final class FindArrayStringIndexing implements Pipe
     private function describeSource(Node $var, Node $context, array $parents, ?string $namespace): array
     {
         if ($var instanceof Expr\ArrayDimFetch) {
-            return [
-                'kind' => 'nested',
-                'hint' => 'Wrap each level of this tree in its own DTO',
-            ];
+            return ['kind' => 'nested', 'hint' => 'Wrap each level of this tree in its own DTO'];
         }
 
-        if ($var instanceof Expr\PropertyFetch
-            && $var->var instanceof Expr\Variable
-            && $var->var->name === 'this'
-            && $var->name instanceof Node\Identifier
-        ) {
-            $prop = $var->name->toString();
-
-            return [
-                'kind' => 'property',
-                'hint' => "Type the \$this->{$prop} property as a DTO (or array of DTOs)",
-            ];
+        if ($var instanceof Expr\PropertyFetch && $var->var instanceof Expr\Variable && $var->var->name === 'this' && $var->name instanceof Node\Identifier) {
+            return ['kind' => 'property', 'hint' => "Type the \$this->" . $var->name->toString() . " property as a DTO (or array of DTOs)"];
         }
 
-        if ($var instanceof Expr\NullsafePropertyFetch
-            && $var->name instanceof Node\Identifier
-        ) {
-            return [
-                'kind' => 'property',
-                'hint' => 'Type the property as a DTO so ?->prop returns a typed object',
-            ];
+        if ($var instanceof Expr\NullsafePropertyFetch && $var->name instanceof Node\Identifier) {
+            return ['kind' => 'property', 'hint' => 'Type the property as a DTO so ?->prop returns a typed object'];
         }
 
         if ($var instanceof Expr\MethodCall && $var->name instanceof Node\Identifier) {
-            $method = $var->name->toString();
-
-            return [
-                'kind' => 'call',
-                'hint' => "Change ->{$method}() to return a DTO instead of an array",
-            ];
+            return ['kind' => 'call', 'hint' => "Change ->" . $var->name->toString() . "() to return a DTO instead of an array"];
         }
 
         if ($var instanceof Expr\NullsafeMethodCall && $var->name instanceof Node\Identifier) {
-            $method = $var->name->toString();
-
-            return [
-                'kind' => 'call',
-                'hint' => "Change ?->{$method}() to return a DTO instead of an array",
-            ];
+            return ['kind' => 'call', 'hint' => "Change ??->" . $var->name->toString() . "() to return a DTO instead of an array"];
         }
 
         if ($var instanceof Expr\StaticCall && $var->name instanceof Node\Identifier) {
-            $method = $var->name->toString();
-
-            return [
-                'kind' => 'call',
-                'hint' => "Change ::{$method}() to return a DTO instead of an array",
-            ];
+            return ['kind' => 'call', 'hint' => "Change ::" . $var->name->toString() . "() to return a DTO instead of an array"];
         }
 
         if ($var instanceof Expr\FuncCall && $var->name instanceof Node\Name) {
-            $func = $var->name->toString();
-
-            return [
-                'kind' => 'call',
-                'hint' => "Change {$func}() to return a DTO instead of an array",
-            ];
+            return ['kind' => 'call', 'hint' => "Change " . $var->name->toString() . "() to return a DTO instead of an array"];
         }
 
         if ($var instanceof Expr\Variable && is_string($var->name)) {
-            $enclosing = $this->findEnclosingFunctionLike($context, $parents);
-
-            if ($enclosing !== null && $this->variableIsParameter($enclosing, $var->name)) {
-                $traced = $this->traceOrigin($enclosing, $context, $parents, $namespace, $var->name);
-
-                if ($traced !== null) {
-                    return $traced;
-                }
-
-                $funcName = $this->functionLikeLabel($enclosing);
-
-                return [
-                    'kind' => 'param',
-                    'hint' => "Replace the array \${$var->name} parameter of {$funcName} with a typed DTO",
-                ];
-            }
-
-            if ($enclosing !== null) {
-                $assignedFrom = $this->traceAssignmentSource($enclosing, $var->name);
-
-                if ($assignedFrom !== null) {
-                    return [
-                        'kind' => 'call',
-                        'hint' => "Change {$assignedFrom} to return a DTO instead of assigning an array to \${$var->name}",
-                    ];
-                }
-            }
-
-            return [
-                'kind' => 'local',
-                'hint' => "Hydrate \${$var->name} into a DTO at its assignment site",
-            ];
+            return $this->describeVariable($var, $context, $parents, $namespace);
         }
 
         return [
             'kind' => 'other',
             'hint' => 'Wrap this array in a DTO at the point it enters the codebase',
+        ];
+    }
+
+    /**
+     * Describe a variable's source (parameter, local, or assigned).
+     *
+     * @param  array<int, Node>  $parents
+     * @return array{kind: string, hint: string}
+     */
+    private function describeVariable(Expr\Variable $var, Node $context, array $parents, ?string $namespace): array
+    {
+        $varName = $var->name;
+        $enclosing = $this->findEnclosingFunctionLike($context, $parents);
+
+        if ($enclosing !== null && $this->variableIsParameter($enclosing, $varName)) {
+            $traced = $this->traceOrigin($enclosing, $context, $parents, $namespace, $varName);
+
+            if ($traced !== null) {
+                return $traced;
+            }
+
+            $funcName = $this->functionLikeLabel($enclosing);
+
+            return [
+                'kind' => 'param',
+                'hint' => "Replace the array \${$varName} parameter of {$funcName} with a typed DTO",
+            ];
+        }
+
+        if ($enclosing !== null) {
+            $assignedFrom = $this->traceAssignmentSource($enclosing, $varName);
+
+            if ($assignedFrom !== null) {
+                return [
+                    'kind' => 'call',
+                    'hint' => "Change {$assignedFrom} to return a DTO instead of assigning an array to \${$varName}",
+                ];
+            }
+        }
+
+        return [
+            'kind' => 'local',
+            'hint' => "Hydrate \${$varName} into a DTO at its assignment site",
         ];
     }
 
