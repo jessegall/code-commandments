@@ -170,6 +170,13 @@ return [
                 Backend\NoOptionOveruseProphet::class => [
                     // 'option_class' => App\Support\Option::class,
                 ],
+                Backend\NoCompactProphet::class => [
+                    // 'functions' => ['compact', 'extract'],
+                ],
+                Backend\TooManyParametersProphet::class => [
+                    // 'max_parameters' => 6,
+                    // 'include_constructors' => false,
+                ],
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [
                     'null_objects' => [
