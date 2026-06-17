@@ -337,10 +337,12 @@ class JudgeConsoleCommand extends Command
     private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message, bool $autoFixable = false): void
     {
         $this->prophetSinCounts[$prophetClass] = ($this->prophetSinCounts[$prophetClass] ?? 0) + 1;
-        // A prophet is only [AUTO-FIXABLE] in the summary when at least one of
-        // its findings actually is — an all-non-fixable prophet (every finding
-        // hand-fixed) must not promise a mechanical fix.
-        $this->prophetAutoFixable[$prophetClass] = ($this->prophetAutoFixable[$prophetClass] ?? false) || $autoFixable;
+        // Count how many of a prophet's findings are ACTUALLY auto-fixable, so
+        // the summary can distinguish "all mechanical" from "some mechanical"
+        // from "none" — a SinRepenter prophet routinely emits findings it cannot
+        // mechanically fix (e.g. ExplicitDataFactory's from(object) cases), and
+        // promising a no-op `repent` on those wastes the agent's cycle.
+        $this->prophetAutoFixable[$prophetClass] = ($this->prophetAutoFixable[$prophetClass] ?? 0) + ($autoFixable ? 1 : 0);
         $this->prophetFileDetails[$prophetClass][$relativePath][] = [
             'line' => $line,
             'message' => $message,
@@ -416,7 +418,12 @@ class JudgeConsoleCommand extends Command
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
-                $autoFixable = ($this->prophetAutoFixable[$prophetClass] ?? false) ? ' [AUTO-FIXABLE]' : '';
+                $fixable = $this->prophetAutoFixable[$prophetClass] ?? 0;
+                $autoFixable = match (true) {
+                    $fixable <= 0 => '',
+                    $fixable >= $count => ' [AUTO-FIXABLE]',
+                    default => " [{$fixable}/{$count} AUTO-FIXABLE]",
+                };
 
                 $output->writeln("- {$shortName} ({$count}){$autoFixable}");
 
@@ -445,13 +452,10 @@ class JudgeConsoleCommand extends Command
                 $output->writeln('Target a subtree:     commandments judge --path=<dir>   (ignores all excludes)');
             }
 
-            $hasAutoFixable = false;
-            foreach ($this->prophetSinCounts as $prophetClass => $count) {
-                if (new $prophetClass() instanceof SinRepenter) {
-                    $hasAutoFixable = true;
-                    break;
-                }
-            }
+            // Only nudge toward `repent` when at least one finding is genuinely
+            // auto-fixable — not merely because a prophet implements SinRepenter
+            // (it may have emitted only hand-fix findings, where repent no-ops).
+            $hasAutoFixable = array_sum($this->prophetAutoFixable) > 0;
 
             if ($hasAutoFixable) {
                 $output->writeln('');

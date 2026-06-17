@@ -342,7 +342,11 @@ class JudgeCommand extends Command
     private function trackSin(string $prophetClass, string $relativePath, ?int $line, string $message, bool $autoFixable = false): void
     {
         $this->prophetSinCounts[$prophetClass] = ($this->prophetSinCounts[$prophetClass] ?? 0) + 1;
-        $this->prophetAutoFixable[$prophetClass] = ($this->prophetAutoFixable[$prophetClass] ?? false) || $autoFixable;
+        // Count actually-auto-fixable findings so the summary can distinguish
+        // "all mechanical" from "some" from "none" — a SinRepenter prophet often
+        // emits findings it cannot mechanically fix (e.g. ExplicitDataFactory's
+        // from(object)), where promising `repent` would no-op.
+        $this->prophetAutoFixable[$prophetClass] = ($this->prophetAutoFixable[$prophetClass] ?? 0) + ($autoFixable ? 1 : 0);
         $this->prophetFileDetails[$prophetClass][$relativePath][] = [
             'line' => $line,
             'message' => $message,
@@ -387,7 +391,12 @@ class JudgeCommand extends Command
 
             foreach ($this->prophetSinCounts as $prophetClass => $count) {
                 $shortName = class_basename($prophetClass);
-                $autoFixable = ($this->prophetAutoFixable[$prophetClass] ?? false) ? ' [AUTO-FIXABLE]' : '';
+                $fixable = $this->prophetAutoFixable[$prophetClass] ?? 0;
+                $autoFixable = match (true) {
+                    $fixable <= 0 => '',
+                    $fixable >= $count => ' [AUTO-FIXABLE]',
+                    default => " [{$fixable}/{$count} AUTO-FIXABLE]",
+                };
 
                 $this->output->writeln("- {$shortName} ({$count}){$autoFixable}");
 
@@ -416,13 +425,10 @@ class JudgeCommand extends Command
                 $this->output->writeln('Target a subtree:     php artisan commandments:judge --path=<dir>   (ignores all excludes)');
             }
 
-            $hasAutoFixable = false;
-            foreach ($this->prophetSinCounts as $prophetClass => $count) {
-                if (new $prophetClass() instanceof SinRepenter) {
-                    $hasAutoFixable = true;
-                    break;
-                }
-            }
+            // Only nudge toward `repent` when at least one finding is genuinely
+            // auto-fixable — not merely because a prophet implements SinRepenter
+            // (it may have emitted only hand-fix findings, where repent no-ops).
+            $hasAutoFixable = array_sum($this->prophetAutoFixable) > 0;
 
             if ($hasAutoFixable) {
                 $this->output->newLine();
