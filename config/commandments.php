@@ -173,6 +173,10 @@ return [
                 Backend\NoOptionInUnionProphet::class => [
                     // 'option_class' => App\Support\Option::class,
                 ],
+                Backend\WideUnionTypeProphet::class => [
+                    // 'max_types' => 2,
+                    // 'severity' => 'warning',   // or 'sin' to block
+                ],
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],

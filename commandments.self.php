@@ -81,6 +81,7 @@ return [
                 Backend\NoOptionToNullProphet::class,
                 Backend\NoOptionOveruseProphet::class,
                 Backend\NoOptionInUnionProphet::class,
+                Backend\WideUnionTypeProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,
