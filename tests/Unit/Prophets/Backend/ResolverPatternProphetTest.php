@@ -420,6 +420,49 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertStringNotContainsString('inline `->then()` factory closures', $messages);
     }
 
+    public function test_flags_repeated_doubled_strip_prefix_entries(): void
+    {
+        // >= 2 entries declaring the prefix twice (HasPrefix + StripPrefix) ->
+        // suggest a domain Resolver decorator with a stripPrefix() builder.
+        $judgment = $this->judge(<<<'PHP'
+        class WireType
+        {
+            public static function parse(?string $token): self
+            {
+                return Resolver::firstResultWins(
+                    Equals::to(self::MIXED)->then(self::mixed(...)),
+                    HasPrefix::of(self::RESOURCE_PREFIX)->transform(StripPrefix::of(self::RESOURCE_PREFIX))->then(self::resource(...)),
+                    HasPrefix::of(self::LIST_PREFIX)->transform(StripPrefix::of(self::LIST_PREFIX))->then(self::listOf(...)),
+                    HasPrefix::of(self::SCHEMA_PREFIX)->transform(StripPrefix::of(self::SCHEMA_PREFIX))->then(self::schema(...)),
+                )->resolve($token);
+            }
+        }
+        PHP);
+
+        $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
+        $this->assertStringContainsString('declared TWICE per entry', $messages);
+        $this->assertStringContainsString('Resolver decorator', $messages);
+    }
+
+    public function test_does_not_flag_a_single_strip_prefix_entry(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class C
+        {
+            public function go($token)
+            {
+                return Resolver::firstResultWins(
+                    HasPrefix::of('list:')->transform(StripPrefix::of('list:'))->then(fn ($x) => X::of($x)),
+                    IsScalarToken::make()->then(Y::scalar(...)),
+                )->resolve($token);
+            }
+        }
+        PHP);
+
+        $messages = implode("\n", array_map(fn ($w) => $w->message, $judgment->warnings));
+        $this->assertStringNotContainsString('declared TWICE per entry', $messages);
+    }
+
     public function test_does_not_crash_on_first_class_callables(): void
     {
         // Issue #18: getArgs() asserts on a first-class callable. A forwarding

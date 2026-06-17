@@ -266,6 +266,7 @@ SCRIPTURE;
 
             $inline = [];
             $inlineFactories = [];
+            $stripPrefixEntries = [];
 
             foreach ($entries as $arg) {
                 if ($arg->value instanceof Expr\MethodCall && $this->stripsPrefixInThen($arg->value)) {
@@ -284,6 +285,10 @@ SCRIPTURE;
                 // callable; a real adapter doing domain work should be a named
                 // invokable factory class.
                 if ($arg->value instanceof Expr\MethodCall) {
+                    if (($prefix = $this->doubledStripPrefix($arg->value, $printer)) !== null) {
+                        $stripPrefixEntries[] = $arg->value->getStartLine();
+                    }
+
                     $then = $this->thenClosureArg($arg->value);
 
                     if ($then instanceof Expr\ArrowFunction && ($forward = $this->forwardedCallable($then)) !== null) {
@@ -353,7 +358,57 @@ SCRIPTURE;
                     'inline-then-factories',
                 );
             }
+
+            // Repeated `HasPrefix::of(P)->transform(StripPrefix::of(P))` states
+            // the prefix TWICE per entry — error-prone and noisy. Wrap the kernel
+            // in a domain Resolver decorator whose builder declares P once.
+            if (count($stripPrefixEntries) >= 2) {
+                $warnings[] = $this->warningAt(
+                    $stripPrefixEntries[0],
+                    sprintf(
+                        'This resolver has %d entries shaped `HasPrefix::of(P)->transform(StripPrefix::of(P))` — the prefix P is declared TWICE per entry (the predicate and the transform), and the two can silently drift. Wrap the kernel in a domain Resolver decorator (e.g. `WireTypeTokenResolver`) exposing a builder that declares P once and forwards to the kernel — `->stripPrefix(self::LIST_PREFIX, self::listOf(...))` building `HasPrefix::of(P)->transform(StripPrefix::of(P))->then(factory)` internally. Reads as the domain operation, not the mechanism.',
+                        count($stripPrefixEntries),
+                    ),
+                    null,
+                    'doubled-strip-prefix',
+                );
+            }
         }
+    }
+
+    /**
+     * The (printed) prefix of an entry shaped
+     * `HasPrefix::of(P)->transform(StripPrefix::of(P))->…`, when the SAME prefix
+     * P is passed to both `HasPrefix::of()` and `StripPrefix::of()` — else null.
+     */
+    private function doubledStripPrefix(Expr\MethodCall $entry, PrettyPrinter\Standard $printer): ?string
+    {
+        $hasPrefix = null;
+        $stripPrefix = null;
+
+        foreach ((new NodeFinder)->findInstanceOf([$entry], Expr\StaticCall::class) as $call) {
+            if (! $call->class instanceof Node\Name || ! $call->name instanceof Node\Identifier
+                || $call->name->toString() !== 'of' || $call->isFirstClassCallable()
+            ) {
+                continue;
+            }
+
+            $arg = $call->getArgs()[0]->value ?? null;
+
+            if ($arg === null) {
+                continue;
+            }
+
+            $printed = $printer->prettyPrintExpr($arg);
+
+            if ($call->class->getLast() === 'HasPrefix') {
+                $hasPrefix = $printed;
+            } elseif ($call->class->getLast() === 'StripPrefix') {
+                $stripPrefix = $printed;
+            }
+        }
+
+        return $hasPrefix !== null && $hasPrefix === $stripPrefix ? $hasPrefix : null;
     }
 
     /**
