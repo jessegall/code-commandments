@@ -129,22 +129,25 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertNotNull($this->prophet->advisory());
     }
 
-    public function test_declares_required_repent_inputs(): void
+    public function test_declares_its_repent_inputs(): void
     {
-        $inputs = $this->prophet->repentInputs();
-        $byName = [];
-        foreach ($inputs as $spec) {
-            $byName[$spec->name] = $spec;
-        }
+        $names = array_map(static fn ($spec) => $spec->name, $this->prophet->repentInputs());
 
-        $this->assertTrue($byName['create-enum-class']->required);
-        $this->assertTrue($byName['cases']->required);
-        $this->assertFalse($byName['field']->required);
+        // Either-or paths (create vs reuse), so all are optional and validated
+        // at repent time.
+        $this->assertContains('create-enum-class', $names);
+        $this->assertContains('cases', $names);
+        $this->assertContains('enum-class', $names);
+        $this->assertContains('field', $names);
+
+        foreach ($this->prophet->repentInputs() as $spec) {
+            $this->assertFalse($spec->required, "{$spec->name} should be optional");
+        }
     }
 
     public function test_repent_creates_enum_and_retypes_the_field(): void
     {
-        $code = "<?php\nnamespace App\\Data;\nclass NodeSocketData { public function __construct(public string \$direction) {} }";
+        $code = "<?php\nnamespace App\\Data;\nclass NodeSocketData extends Data { public function __construct(public string \$direction) {} }";
         $this->prophet->setRepentInput(['create-enum-class' => 'SocketDirection', 'cases' => 'input,output']);
 
         $result = $this->prophet->repent('/app/Data/NodeSocketData.php', $code);
@@ -163,7 +166,7 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
 
     public function test_repent_preserves_nullability(): void
     {
-        $code = "<?php\nclass A { public function __construct(public ?string \$mode = null) {} }";
+        $code = "<?php\nclass A extends Data { public function __construct(public ?string \$mode = null) {} }";
         $this->prophet->setRepentInput(['create-enum-class' => 'Mode', 'cases' => 'fast,slow']);
 
         $result = $this->prophet->repent('/x.php', $code);
@@ -173,7 +176,7 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
 
     public function test_repent_without_inputs_is_unrepentant(): void
     {
-        $code = "<?php\nclass A { public string \$direction; }";
+        $code = "<?php\nclass A extends Data { public string \$direction; }";
 
         $result = $this->prophet->repent('/x.php', $code);
 
@@ -181,9 +184,37 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertStringContainsString('create-enum-class', (string) $result->failureReason);
     }
 
+    public function test_repent_refuses_a_non_data_class(): void
+    {
+        // issue #28(1): a plain class has no ::from() string↔enum bridge, so
+        // retyping would break its string assignments/comparisons — refuse.
+        $code = "<?php\nclass WorkflowTimelineStep { public string \$status; }";
+        $this->prophet->setRepentInput(['create-enum-class' => 'RunStatus', 'cases' => 'running,done']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertFalse($result->absolved);
+        $this->assertStringContainsString('non-Spatie-Data', (string) $result->failureReason);
+    }
+
+    public function test_repent_reuses_an_existing_enum(): void
+    {
+        // issue #28(2): --input enum-class retypes to an existing enum, no creation.
+        $code = "<?php\nnamespace App;\n\nclass A extends Data { public function __construct(public string \$status) {} }";
+        $this->prophet->setRepentInput(['enum-class' => 'App\\Enums\\WorkflowRunStatus']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public WorkflowRunStatus $status', $result->newContent);
+        // No enum file created (reuse), and the FQCN imported.
+        $this->assertSame([], $result->createdFiles);
+        $this->assertStringContainsString('use App\\Enums\\WorkflowRunStatus;', $result->newContent);
+    }
+
     public function test_repent_is_ambiguous_with_multiple_fields_and_no_field_input(): void
     {
-        $code = "<?php\nclass A { public string \$direction; public string \$status; }";
+        $code = "<?php\nclass A extends Data { public string \$direction; public string \$status; }";
         $this->prophet->setRepentInput(['create-enum-class' => 'X', 'cases' => 'a,b']);
 
         $result = $this->prophet->repent('/x.php', $code);
@@ -194,7 +225,7 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
 
     public function test_repent_targets_the_named_field(): void
     {
-        $code = "<?php\nclass A { public string \$direction; public string \$status; }";
+        $code = "<?php\nclass A extends Data { public string \$direction; public string \$status; }";
         $this->prophet->setRepentInput(['create-enum-class' => 'Status', 'cases' => 'active,archived', 'field' => 'status']);
 
         $result = $this->prophet->repent('/x.php', $code);
@@ -202,6 +233,23 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertTrue($result->absolved);
         $this->assertStringContainsString('public Status $status', $result->newContent);
         $this->assertStringContainsString('public string $direction', $result->newContent);
+    }
+
+    public function test_non_data_class_finding_is_not_autofixable_and_says_manual(): void
+    {
+        $judgment = $this->judge('class WorkflowTimelineStep { public string $status; }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertFalse($judgment->warnings[0]->autoFixable);
+        $this->assertStringContainsString('NOT a Spatie Data class', $judgment->warnings[0]->message);
+    }
+
+    public function test_data_class_finding_is_autofixable(): void
+    {
+        $judgment = $this->judge('class NodeSocketData extends Data { public function __construct(public string $direction) {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
     }
 
     private function judge(string $body): Judgment
