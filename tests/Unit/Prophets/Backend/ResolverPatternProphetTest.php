@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Unit\Prophets\Backend;
 
-use JesseGall\CodeCommandments\Prophets\Backend\PreferExtractedPredicateProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\ResolverPatternProphet;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
-class PreferExtractedPredicateProphetTest extends TestCase
+class ResolverPatternProphetTest extends TestCase
 {
-    private PreferExtractedPredicateProphet $prophet;
+    private ResolverPatternProphet $prophet;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->prophet = new PreferExtractedPredicateProphet;
+        $this->prophet = new ResolverPatternProphet;
     }
 
     public function test_flags_a_skip_or_match_chain_predicate_in_a_resolver(): void
@@ -57,20 +57,21 @@ class PreferExtractedPredicateProphetTest extends TestCase
 
     public function test_domain_bound_predicate_points_at_the_resolvers_own_folder(): void
     {
+        // in_array(self::SCALARS) reads a type's constants -> domain-bound, and
+        // is not a kernel shape -> resolver's own folder.
         $judgment = $this->judge(<<<'PHP'
         class WireTypeResolver
         {
             public function resolvers(): array
             {
                 return [
-                    fn (string $t): ?string => str_starts_with($t, self::LIST_PREFIX) ? $t : null,
+                    fn (string $t): ?string => in_array($t, self::SCALARS, true) ? $t : null,
                 ];
             }
         }
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        // References self::LIST_PREFIX -> domain-bound -> resolver's own folder.
         $this->assertStringContainsString('Resolvers\\WireType\\Predicates', $judgment->warnings[0]->message);
     }
 
@@ -82,13 +83,34 @@ class PreferExtractedPredicateProphetTest extends TestCase
             public function resolvers(): array
             {
                 return [
-                    fn (string $t): ?string => str_starts_with($t, 'list:') ? $t : null,
+                    fn (string $t): ?string => in_array($t, ['a', 'b'], true) ? $t : null,
                 ];
             }
         }
         PHP);
 
-        $this->assertStringContainsString('shared Resolvers\\Predicates', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('shared `Resolvers\\Predicates`', $judgment->warnings[0]->message);
+    }
+
+    public function test_reuses_a_kernel_predicate_when_one_fits(): void
+    {
+        // A null/instanceof/str_starts_with test maps to an existing kernel
+        // Predicate — reuse it, don't create a new class.
+        $judgment = $this->judge(<<<'PHP'
+        class TokenResolver
+        {
+            public function resolvers(): array
+            {
+                return [
+                    fn (?string $t): ?string => str_starts_with((string) $t, 'list:') ? $t : null,
+                ];
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('HasPrefix', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('reuse the kernel', $judgment->warnings[0]->message);
     }
 
     public function test_does_not_flag_a_value_transform_ternary(): void
@@ -278,6 +300,70 @@ class PreferExtractedPredicateProphetTest extends TestCase
         PHP);
 
         $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_sins_an_ugly_resolver_of_inline_closures(): void
+    {
+        // >= 3 chain entries that still inline a predicate closure — the
+        // half-done extraction. A sin, not a nudge.
+        $judgment = $this->judge(<<<'PHP'
+        class WireTypeResolver extends Resolver
+        {
+            protected function resolvers(): iterable
+            {
+                return [
+                    static fn (string $t): ?WireType => $t === WireType::MIXED ? WireType::mixed() : null,
+                    static fn (string $t): ?WireType => str_starts_with($t, 'list:') ? WireType::listOf($t) : null,
+                    static fn (string $t): ?WireType => str_starts_with($t, 'res:') ? WireType::resource($t) : null,
+                    static fn (string $t): ?WireType => in_array($t, ['a','b'], true) ? WireType::scalar($t) : null,
+                ];
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->sins);
+        $this->assertCount(0, $judgment->warnings);
+        $this->assertStringContainsString('inline predicate closures', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_match_true_dispatch_as_a_resolver(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class Registry
+        {
+            public function expand($d): ?NodeDescriptor
+            {
+                return match (true) {
+                    $d->key === InputBagNode::KEY => $this->expandBag($d),
+                    str_starts_with($d->key, 'x') => $this->expandX($d),
+                    in_array($d->key, ['a','b'], true) => $this->expandList($d),
+                    default => null,
+                };
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('dispatch chain', $judgment->warnings[0]->message);
+    }
+
+    public function test_flags_bool_chain_as_a_composite_predicate(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class TypeCompatibility
+        {
+            public function compatible(string $source, string $target): bool
+            {
+                if ($source === 'mixed') { return true; }
+                if (str_starts_with($target, 'list:')) { return false; }
+                if (in_array($source, ['a','b'], true)) { return true; }
+                return false;
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('composite Predicate', $judgment->warnings[0]->message);
     }
 
     public function test_describes_itself(): void
