@@ -84,6 +84,20 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('$value instanceof $this->class', $src);
     }
 
+    public function test_generates_the_union_sum_type(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $union = $this->dir . '/Union.php';
+        $this->assertFileExists($union);
+        $src = file_get_contents($union);
+        $this->assertStringContainsString('namespace Acme\\Support;', $src);
+        $this->assertStringContainsString('final class Union', $src);
+        $this->assertStringContainsString('public static function of(mixed $value): self', $src);
+        $this->assertStringContainsString('public function match(array $handlers): mixed', $src);
+        $this->assertStringContainsString('public function is(string $type): bool', $src);
+    }
+
     public function test_generates_capture_and_wrap_result_factories(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
