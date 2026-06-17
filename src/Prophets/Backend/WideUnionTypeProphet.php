@@ -96,8 +96,10 @@ TOP-LEVEL union has >= {$warnAt} members (a union INSIDE a generic, like
 WHAT DOES NOT — a simple nullable in EITHER syntax (`?T` AND `T | null` are the
 same type, both exempt), a union nested inside a generic, a union inside an
 `#[Attribute]` class (its constructor args must be constant expressions, so an
-Option/Union can never live there — the suggestion is unactionable), or — when
-the warning band is disabled — a union below the sin threshold. A 3+ union that
+Option/Union can never live there — the suggestion is unactionable), a union on
+a method marked `#[\Override]` (the signature is inherited — not yours to
+change), or — when the warning band is disabled — a union below the sin
+threshold. A 3+ union that
 includes null is NOT a simple nullable: it still wraps two-or-more real shapes,
 so it fires (and the null says the fix is `Option<rest>`).
 
@@ -125,10 +127,15 @@ SCRIPTURE;
         $warnings = [];
         $flaggedLines = [];
 
-        // An attribute class's constructor arguments must be constant
-        // expressions — `Option::some(...)` is not one, and `#[Attr(Option...)]`
-        // is impossible — so the Option/Union suggestion is unactionable there.
-        $attributeRanges = $this->attributeClassRanges($ast);
+        // Line regions where a wide union is UNACTIONABLE, so flagging is noise:
+        //  - inside an `#[Attribute]` class (ctor args must be constant
+        //    expressions — an Option/Union cannot live there);
+        //  - on a method marked `#[\Override]` (the signature is inherited from
+        //    an interface/base, so the type is not the author's to change).
+        $exemptRanges = [
+            ...$this->attributeClassRanges($ast),
+            ...$this->overrideMethodRanges($ast),
+        ];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
             // `T | null` is a simple nullable — semantically identical to `?T`,
@@ -145,7 +152,7 @@ SCRIPTURE;
             if ($count >= $floor) {
                 $line = $union->getStartLine();
 
-                if ($this->withinRange($line, $attributeRanges)) {
+                if ($this->withinRange($line, $exemptRanges)) {
                     continue;
                 }
 
@@ -163,7 +170,7 @@ SCRIPTURE;
                 continue;
             }
 
-            if ($this->withinRange($line, $attributeRanges)) {
+            if ($this->withinRange($line, $exemptRanges)) {
                 continue;
             }
 
@@ -326,6 +333,33 @@ SCRIPTURE;
                 foreach ($group->attrs as $attr) {
                     if (strtolower($attr->name->getLast()) === 'attribute') {
                         $ranges[] = [$class->getStartLine(), $class->getEndLine()];
+
+                        continue 3;
+                    }
+                }
+            }
+        }
+
+        return $ranges;
+    }
+
+    /**
+     * The line ranges of every method marked `#[\Override]`. Such a method's
+     * signature is inherited from an interface or base class, so its type is not
+     * the author's to change — flagging a wide union there is unactionable.
+     *
+     * @param  array<Node>  $ast
+     * @return list<array{int, int}>
+     */
+    private function overrideMethodRanges(array $ast): array
+    {
+        $ranges = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\ClassMethod::class) as $method) {
+            foreach ($method->attrGroups as $group) {
+                foreach ($group->attrs as $attr) {
+                    if (strtolower($attr->name->getLast()) === 'override') {
+                        $ranges[] = [$method->getStartLine(), $method->getEndLine()];
 
                         continue 3;
                     }

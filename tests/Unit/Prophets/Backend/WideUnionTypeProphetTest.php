@@ -126,6 +126,24 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertCount(1, $judgment->sins);
     }
 
+    public function test_does_not_flag_a_union_on_an_override_method(): void
+    {
+        // The signature is inherited from an interface/base — not the author's
+        // to change, so the suggestion is unactionable (issue #25 pt 2).
+        $judgment = $this->judge(
+            'class A extends Base { #[\Override] public function morph(): array | string | null { return null; } }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_flags_a_union_on_a_non_override_method(): void
+    {
+        $judgment = $this->judge('class A { public function morph(): array | string | null { return null; } }');
+
+        $this->assertCount(1, $judgment->sins);
+    }
+
     public function test_does_not_flag_a_union_inside_a_generic(): void
     {
         $judgment = $this->judge('class A { /** @return Option<array|string> */ public function m(): Option { return Option::none(); } }');
