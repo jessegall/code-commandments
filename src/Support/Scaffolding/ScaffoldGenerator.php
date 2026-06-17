@@ -82,17 +82,28 @@ final class ScaffoldGenerator
             return self::STATUS_REWRITTEN;
         }
 
-        $target = rtrim($path, '/') . '/' . $scaffold->className . '.php';
+        // A class may declare a sub-namespace (e.g. `Resolvers\Predicates`),
+        // which becomes both a directory under the scaffold path and a suffix
+        // on the namespace.
+        $targetDir = rtrim($path, '/');
+        $targetNamespace = $namespace;
+
+        if ($scaffold->subNamespace !== '') {
+            $targetDir .= '/' . str_replace('\\', '/', trim($scaffold->subNamespace, '\\'));
+            $targetNamespace .= '\\' . trim($scaffold->subNamespace, '\\');
+        }
+
+        $target = $targetDir . '/' . $scaffold->className . '.php';
         $exists = is_file($target);
 
         if ($exists && ! $force) {
             return self::STATUS_SKIPPED;
         }
 
-        $contents = str_replace('{{ namespace }}', $namespace, $stub);
+        $contents = str_replace('{{ namespace }}', $targetNamespace, $stub);
 
-        if (! is_dir($path)) {
-            @mkdir($path, 0755, true);
+        if (! is_dir($targetDir)) {
+            @mkdir($targetDir, 0755, true);
         }
 
         if (@file_put_contents($target, $contents) === false) {
