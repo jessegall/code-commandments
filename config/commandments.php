@@ -174,8 +174,8 @@ return [
                     // 'option_class' => App\Support\Option::class,
                 ],
                 Backend\WideUnionTypeProphet::class => [
-                    // 'max_types' => 2,
-                    // 'severity' => 'warning',   // or 'sin' to block
+                    // 'warn_at_types' => 2,   // 0 (or warnings_enabled => false) disables warnings
+                    // 'sin_at_types'  => 3,
                 ],
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
