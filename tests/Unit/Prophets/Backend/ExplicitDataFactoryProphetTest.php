@@ -103,6 +103,32 @@ class ExplicitDataFactoryProphetTest extends TestCase
         $this->assertStringContainsString('field-by-field', $j->warnings[0]->message);
     }
 
+    public function test_does_not_flag_from_on_a_non_data_class(): void
+    {
+        // Issue #10: a domain `Unpacker::from(Model): array` is not a Spatie
+        // Data factory — there is no magic object dispatch to make explicit.
+        $j = $this->judge('class C { public function go($instance): mixed { return \App\EloquentModelUnpacker::from($instance); } }');
+
+        $this->assertTrue($j->isRighteous(), 'from() on a non-Data class must not be flagged');
+    }
+
+    public function test_does_not_flag_self_from_object_in_a_non_data_class(): void
+    {
+        // `self::from($obj)` where the class is not a Data class is some other
+        // contract's from(), not Spatie hydration.
+        $j = $this->judge('class Unpacker { public static function build($m): array { return self::from($m); } }');
+
+        $this->assertTrue($j->isRighteous());
+    }
+
+    public function test_still_flags_from_object_on_a_data_suffixed_class(): void
+    {
+        // The external target looks like a Data class (suffix) — still flagged.
+        $j = $this->judge('class C { public function go(\App\Song $song): mixed { return \App\SongData::from($song); } }');
+
+        $this->assertTrue($j->hasWarnings());
+    }
+
     public function test_field_by_field_new_self_finding_is_not_auto_fixable(): void
     {
         // Issue #9: `new self(field: …)` is hand hydration — repent cannot
