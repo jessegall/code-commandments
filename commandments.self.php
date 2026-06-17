@@ -80,6 +80,7 @@ return [
                 Backend\PreferDefaultFallbackProphet::class,
                 Backend\NoOptionToNullProphet::class,
                 Backend\NoOptionOveruseProphet::class,
+                Backend\NoOptionInUnionProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,
