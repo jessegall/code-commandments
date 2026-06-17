@@ -6,11 +6,14 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 
 /**
  * Flag a type union by width — 2 members warn, 3+ sin (configurable). `array |
@@ -21,11 +24,17 @@ use PhpParser\NodeFinder;
  * small value object or a single type.
  */
 #[IntroducedIn('1.81.0')]
-class WideUnionTypeProphet extends PhpCommandment
+class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepenter
 {
     private const DEFAULT_WARN_AT = 2;
 
     private const DEFAULT_SIN_AT = 3;
+
+    /** Builtin union members that map cleanly to a php-types `T` case. */
+    private const T_MAP = [
+        'array' => 'Array', 'string' => 'String', 'int' => 'Int', 'float' => 'Float',
+        'bool' => 'Bool', 'object' => 'Object', 'iterable' => 'Iterable', 'callable' => 'Callable',
+    ];
 
     public function description(): string
     {
@@ -117,7 +126,15 @@ Configure via:
     Backend\WideUnionTypeProphet::class => [
         'warn_at_types' => {$warnAt},   // 0 (or warnings_enabled => false) disables warnings
         'sin_at_types'  => {$sinAt},
+        'support_namespace' => 'App\\\\Support',  // where Union & UnionCast live, for the auto-fix imports
     ],
+
+AUTO-FIX — a null-free union on a Spatie Data property whose every member is a
+builtin (array/string/int/…) is mechanically fixable: `repent` retypes it to
+`Union` and adds `#[WithCastAndTransformer(UnionCast::class, allowed: [T::…])]`,
+reading the allowed types straight from the union (no input needed). Set
+`support_namespace` so the `Union`/`UnionCast` imports are added for you. A union
+with a class member (`Money | string`) or with `null` is left for the human.
 SCRIPTURE;
     }
 
@@ -146,6 +163,10 @@ SCRIPTURE;
             ...$this->overrideMethodRanges($ast),
         ];
 
+        // Null-free union properties on a Spatie Data class can be rewritten to a
+        // UnionCast-backed `Union` — keyed by union node id → its `T` members.
+        $fixable = $this->fixableUnionFields($ast);
+
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
             // `T | null` is a simple nullable — semantically identical to `?T`,
             // which is exempt. Flagging one syntax but not the other is
@@ -166,7 +187,7 @@ SCRIPTURE;
                 }
 
                 $flaggedLines[$line] = true;
-                $this->emit($line, $count, $this->nativeAtoms($union), $content, $warnAt, $sinAt, $sins, $warnings);
+                $this->emit($line, $count, $this->nativeAtoms($union), $content, $warnAt, $sinAt, $sins, $warnings, $fixable[spl_object_id($union)]['members'] ?? null);
             }
         }
 
@@ -213,8 +234,9 @@ SCRIPTURE;
      * @param  list<string>  $atoms  the union's member names (lowercased, null included)
      * @param  list<\JesseGall\CodeCommandments\Results\Sin>  $sins
      * @param  list<\JesseGall\CodeCommandments\Results\Warning>  $warnings
+     * @param  list<string>|null  $fixableMembers  `T` case names when this union is an auto-fixable Data property
      */
-    private function emit(int $line, int $count, array $atoms, string $content, int $warnAt, int $sinAt, array &$sins, array &$warnings): void
+    private function emit(int $line, int $count, array $atoms, string $content, int $warnAt, int $sinAt, array &$sins, array &$warnings, ?array $fixableMembers = null): void
     {
         $hasNull = in_array('null', $atoms, true);
         $isSin = $hasNull && $count >= $sinAt;
@@ -225,14 +247,31 @@ SCRIPTURE;
             return;
         }
 
-        $message = $this->message($count, $atoms, $isSin);
         $snippet = $this->lineAt($content, $line);
 
         if ($isSin) {
-            $sins[] = $this->sinAt($line, $message, $snippet, null, 'wide-union');
-        } else {
-            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union');
+            $sins[] = $this->sinAt($line, $this->message($count, $atoms, true), $snippet, null, 'wide-union');
+
+            return;
         }
+
+        // A null-free union on a Spatie Data property is mechanically fixable —
+        // rewrite to a `UnionCast`-backed `Union`. The members are right there in
+        // the type, so no input is needed.
+        if ($fixableMembers !== null) {
+            $allowed = implode(', ', array_map(static fn (string $m): string => 'T::' . $m, $fixableMembers));
+            $message = $this->message($count, $atoms, false)
+                . sprintf(
+                    ' Auto-fixable on this Spatie Data property → `repent` rewrites it to `#[WithCastAndTransformer(UnionCast::class, allowed: [%s])] public Union $…` (the Union sum type, enforced at hydration).',
+                    $allowed,
+                );
+
+            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union', true);
+
+            return;
+        }
+
+        $warnings[] = $this->warningAt($line, $this->message($count, $atoms, false), $snippet, 'wide-union');
     }
 
     /**
@@ -461,5 +500,169 @@ SCRIPTURE;
         $lines = explode("\n", $content);
 
         return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+    }
+
+    // --- Auto-fix: rewrite a null-free union Data property into a Union ---------
+
+    public function repentInputs(): array
+    {
+        // The allowed types are read straight from the union, so no input.
+        return [];
+    }
+
+    public function setRepentInput(array $values): void
+    {
+        // No inputs to receive.
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return str_ends_with($filePath, '.php');
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $fixable = $this->fixableUnionFields($ast);
+
+        if ($fixable === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        $edits = [];
+        $penance = [];
+
+        foreach ($fixable as $info) {
+            $type = $info['typeNode'];
+            $owner = $info['owner'];
+
+            // Retype the union to `Union`.
+            $edits[] = ['start' => $type->getStartFilePos(), 'end' => $type->getEndFilePos(), 'text' => 'Union'];
+
+            // Insert the cast attribute on its own line above the property.
+            $allowed = implode(', ', array_map(static fn (string $m): string => 'T::' . $m, $info['members']));
+            $indent = $this->indentAt($content, $owner->getStartFilePos());
+            $attribute = "#[WithCastAndTransformer(UnionCast::class, allowed: [{$allowed}])]\n{$indent}";
+            $edits[] = ['start' => $owner->getStartFilePos(), 'end' => $owner->getStartFilePos() - 1, 'text' => $attribute];
+
+            $penance[] = "Modelled a wide union as a UnionCast-backed Union (allowed: [{$allowed}])";
+        }
+
+        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        // Imports. T and the Spatie attribute are known; Union/UnionCast live in
+        // the configured support namespace (best effort — skipped if unset).
+        $content = $this->ensureUse($content, 'JesseGall\\PhpTypes\\T');
+        $content = $this->ensureUse($content, 'Spatie\\LaravelData\\Attributes\\WithCastAndTransformer');
+
+        $support = trim((string) $this->config('support_namespace', ''), '\\');
+
+        if ($support !== '') {
+            $content = $this->ensureUse($content, "{$support}\\Union");
+            $content = $this->ensureUse($content, "{$support}\\UnionCast");
+        } else {
+            $penance[] = 'Ensure `Union` and `UnionCast` are imported (set support_namespace in config to auto-import)';
+        }
+
+        return RepentanceResult::absolved($content, $penance);
+    }
+
+    /**
+     * Null-free union properties on a Spatie Data class whose every member maps
+     * to a `T` case — keyed by union-node id.
+     *
+     * @param  array<Node>  $ast
+     * @return array<int, array{owner: Node, typeNode: Node\UnionType, members: list<string>}>
+     */
+    private function fixableUnionFields(array $ast): array
+    {
+        $map = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if (! $class->extends instanceof Node\Name || ! str_ends_with($class->extends->getLast(), 'Data')) {
+                continue;
+            }
+
+            $constructor = $class->getMethod('__construct');
+
+            if ($constructor !== null) {
+                foreach ($constructor->params as $param) {
+                    if ($param->flags !== 0 && $param->attrGroups === []) {
+                        $this->addFixable($map, $param->type, $param);
+                    }
+                }
+            }
+
+            foreach ($class->getProperties() as $property) {
+                if ($property->attrGroups === []) {
+                    $this->addFixable($map, $property->type, $property);
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<int, array{owner: Node, typeNode: Node\UnionType, members: list<string>}>  $map
+     */
+    private function addFixable(array &$map, ?Node $type, Node $owner): void
+    {
+        if (! $type instanceof Node\UnionType || count($type->types) < 2) {
+            return;
+        }
+
+        $members = [];
+
+        foreach ($type->types as $member) {
+            // A class member (Node\Name) or `null` makes this not a clean,
+            // null-free, builtin-only union — leave it to the human.
+            if (! $member instanceof Node\Identifier || ! isset(self::T_MAP[strtolower($member->toString())])) {
+                return;
+            }
+
+            $members[] = self::T_MAP[strtolower($member->toString())];
+        }
+
+        $map[spl_object_id($type)] = ['owner' => $owner, 'typeNode' => $type, 'members' => $members];
+    }
+
+    /**
+     * The leading whitespace of the line containing the given byte offset.
+     */
+    private function indentAt(string $content, int $pos): string
+    {
+        $lineStart = strrpos(substr($content, 0, $pos), "\n");
+        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+
+        return preg_replace('/\S.*$/s', '', substr($content, $lineStart, $pos - $lineStart)) ?? '';
+    }
+
+    private function ensureUse(string $content, string $fqcn): string
+    {
+        if (preg_match('/^\s*use\s+' . preg_quote($fqcn, '/') . '\s*;/m', $content) === 1) {
+            return $content;
+        }
+
+        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
+            return $content;
+        }
+
+        $insertAt = $m[0][1] + strlen($m[0][0]);
+
+        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
     }
 }
