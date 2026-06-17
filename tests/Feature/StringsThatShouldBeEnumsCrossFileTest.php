@@ -138,6 +138,21 @@ class StringsThatShouldBeEnumsCrossFileTest extends TestCase
         $this->assertFalse($judgment->isFallen(), 'Enum-only files should never be flagged.');
     }
 
+    public function test_does_not_flag_a_generic_bag_accessor_key(): void
+    {
+        // Issue #7: ValueBag::asFloat(string $key) is a typed accessor over an
+        // open string-keyed bag. Its handful of call-site literals are a sample,
+        // not a closed set — the key space is open, so it must not be flagged.
+        $results = $this->manager->judgeScroll('test');
+
+        $valueBagFile = $this->fixtureDir . '/ValueBag.php';
+
+        $this->assertNull(
+            $this->firstSinFor($results, $valueBagFile),
+            'A typed bag accessor key (asFloat($key)) must not be treated as a closed set.',
+        );
+    }
+
     private function firstSinFor(\Illuminate\Support\Collection $results, string $file): ?Sin
     {
         if (! $results->has($file)) {
