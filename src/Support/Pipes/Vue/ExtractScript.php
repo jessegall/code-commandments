@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Pipes\Vue;
 
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Extract the script section from a Vue SFC.
@@ -31,7 +32,7 @@ final class ExtractScript implements Pipe
             return null;
         }
 
-        $attributes = $matches[1][0] ?? '';
+        $attributes = $matches[1][0] ?? T_String::empty();
         $scriptContent = $matches[2][0];
         $start = $matches[2][1];
 

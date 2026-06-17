@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Installs (idempotently) a git pre-commit hook that blocks a commit when
  * the prophets find sins in the changed files. Warnings alone never block —
@@ -68,7 +70,7 @@ final class CommitHookInstaller
         $hookPath = $hooksDir . '/' . $name;
 
         if (! is_file($hookPath)) {
-            if (@file_put_contents($hookPath, "#!/usr/bin/env sh\n\n" . $block . "\n") === false) {
+            if (@file_put_contents($hookPath, "#!/usr/bin/env sh\n\n" . $block . T_String::NEWLINE) === false) {
                 return self::STATUS_WRITE_FAILED;
             }
 
@@ -100,7 +102,7 @@ final class CommitHookInstaller
         }
 
         // Append our block to the user's existing hook.
-        if (@file_put_contents($hookPath, rtrim($existing, "\n") . "\n\n" . $block . "\n") === false) {
+        if (@file_put_contents($hookPath, rtrim($existing, T_String::NEWLINE) . T_String::PARAGRAPH . $block . T_String::NEWLINE) === false) {
             return self::STATUS_WRITE_FAILED;
         }
 

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Vue;
 
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\TextHelper;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Context object for Vue SFC analysis pipelines.
@@ -108,7 +109,7 @@ final class VueContext
         $sectionContent = $this->getSectionContent();
 
         if ($sectionContent === null) {
-            return '';
+            return T_String::empty();
         }
 
         return TextHelper::getSnippet($sectionContent, $offset, $length);

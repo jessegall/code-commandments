@@ -11,6 +11,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 class RepentConsoleCommand extends Command
 {
@@ -117,7 +118,7 @@ class RepentConsoleCommand extends Command
                     }
 
                     $result = $prophet->repent($filePath, $content);
-                    $relativePath = str_replace(Environment::basePath() . '/', '', $filePath);
+                    $relativePath = str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
 
                     if ($result->absolved && $result->newContent !== null) {
                         if (!$dryRun) {
@@ -126,7 +127,7 @@ class RepentConsoleCommand extends Command
                         $this->fixedFiles[$prophetName][] = $relativePath;
                         $totalFixed++;
                     } elseif (!$result->absolved) {
-                        $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : '');
+                        $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : T_String::empty());
                         $totalFailed++;
                     }
                 }
@@ -148,7 +149,7 @@ class RepentConsoleCommand extends Command
 
         if ($totalFixed > 0) {
             $output->writeln("{$action}: {$totalFixed} sins");
-            $output->writeln('');
+            $output->writeln(T_String::empty());
 
             foreach ($this->fixedFiles as $prophet => $files) {
                 $output->writeln("{$prophet}:");
@@ -159,9 +160,9 @@ class RepentConsoleCommand extends Command
         }
 
         if ($totalFailed > 0) {
-            $output->writeln('');
+            $output->writeln(T_String::empty());
             $output->writeln("FAILED (manual fix required): {$totalFailed}");
-            $output->writeln('');
+            $output->writeln(T_String::empty());
 
             foreach ($this->failedFiles as $prophet => $files) {
                 $output->writeln("{$prophet}:");
@@ -172,7 +173,7 @@ class RepentConsoleCommand extends Command
         }
 
         if ($dryRun) {
-            $output->writeln('');
+            $output->writeln(T_String::empty());
             $output->writeln('Run without --dry-run to apply fixes.');
         }
 

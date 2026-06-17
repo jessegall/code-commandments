@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Static holder for the base path.
  * Set by the Laravel ServiceProvider or the standalone CLI.
@@ -17,10 +19,10 @@ class Environment
         self::$basePath = rtrim($path, '/');
     }
 
-    public static function basePath(string $path = ''): string
+    public static function basePath(string $path = T_String::EMPTY): string
     {
         $base = self::$basePath ?? getcwd();
 
-        return $path !== '' ? $base . '/' . $path : $base;
+        return T_String::isNotEmpty($path) ? $base . '/' . $path : $base;
     }
 }

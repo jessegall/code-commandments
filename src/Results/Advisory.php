@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Results;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * The applicability rubric for an advisory (warning-emitting) prophet.
  *
@@ -26,9 +28,9 @@ namespace JesseGall\CodeCommandments\Results;
 final class Advisory
 {
     public function __construct(
-        public readonly string $applyWhen = '',
-        public readonly string $leaveWhen = '',
-        public readonly string $whenUnsure = '',
+        public readonly string $applyWhen = T_String::EMPTY,
+        public readonly string $leaveWhen = T_String::EMPTY,
+        public readonly string $whenUnsure = T_String::EMPTY,
     ) {}
 
     public static function make(): self
@@ -56,9 +58,9 @@ final class Advisory
      */
     public function isComplete(): bool
     {
-        return $this->applyWhen !== ''
-            && $this->leaveWhen !== ''
-            && $this->whenUnsure !== '';
+        return T_String::isNotEmpty($this->applyWhen)
+            && T_String::isNotEmpty($this->leaveWhen)
+            && T_String::isNotEmpty($this->whenUnsure);
     }
 
     /**
@@ -70,15 +72,15 @@ final class Advisory
     {
         $lines = [];
 
-        if ($this->applyWhen !== '') {
+        if (T_String::isNotEmpty($this->applyWhen)) {
             $lines[] = 'APPLY WHEN:  ' . $this->applyWhen;
         }
 
-        if ($this->leaveWhen !== '') {
+        if (T_String::isNotEmpty($this->leaveWhen)) {
             $lines[] = 'LEAVE WHEN:  ' . $this->leaveWhen;
         }
 
-        if ($this->whenUnsure !== '') {
+        if (T_String::isNotEmpty($this->whenUnsure)) {
             $lines[] = 'IF UNSURE:   ' . $this->whenUnsure;
         }
 

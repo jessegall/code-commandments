@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Reporting;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * A local record of the prophet reports THIS project has filed, so a consumer
  * can be told when one of their reports has been resolved upstream (and that
@@ -73,7 +75,7 @@ final class ReportLedger
     {
         file_put_contents(
             $this->path(),
-            json_encode(['reports' => array_values($reports)], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
+            json_encode(['reports' => array_values($reports)], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . T_String::NEWLINE,
         );
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Reporting;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Files a prophet false-positive / wrong-rule report as a GitHub issue on the
  * package repo, so a later session can pick it up and fix the prophet.
@@ -23,17 +25,30 @@ final class IssueReporter
     public function build(string $prophet, ?string $file, ?int $line, string $reason, ?string $snippet): array
     {
         $short = $this->shortProphet($prophet);
-        $location = $file !== null ? $file . ($line !== null ? ':' . $line : '') : '(no file given)';
+        $location = $file !== null ? $file . ($line !== null ? ':' . $line : T_String::empty()) : '(no file given)';
 
         $title = "[prophet-report] {$short}: " . $this->summarise($reason);
 
         $body = "**Reported automatically by a code-commandments agent.**\n\n"
             . "| | |\n|---|---|\n"
-            . "| Prophet | `{$prophet}` |\n"
-            . "| Location | `{$location}` |\n\n"
-            . "### What's wrong\n\n{$reason}\n\n";
+            . sprintf(
+                '| Prophet | `%s` |%s',
+                $prophet,
+                T_String::NEWLINE,
+            )
+            . sprintf(
+                '| Location | `%s` |%s',
+                $location,
+                T_String::PARAGRAPH,
+            )
+            . sprintf(
+                '### What\'s wrong%s%s%s',
+                T_String::PARAGRAPH,
+                $reason,
+                T_String::PARAGRAPH,
+            );
 
-        if ($snippet !== null && trim($snippet) !== '') {
+        if ($snippet !== null && T_String::isNotBlank($snippet)) {
             $body .= "### Flagged code\n\n```php\n" . trim($snippet) . "\n```\n\n";
         }
 
@@ -55,7 +70,12 @@ final class IssueReporter
             return [
                 'ok' => false,
                 'message' => "The `gh` CLI is not available. File this manually at "
-                    . "https://github.com/{$this->repo}/issues/new with title:\n{$issue['title']}",
+                    . sprintf(
+                        'https://github.com/%s/issues/new with title:%s%s',
+                        $this->repo,
+                        T_String::NEWLINE,
+                        $issue['title'],
+                    ),
                 'url' => null,
                 'number' => null,
             ];
@@ -69,7 +89,7 @@ final class IssueReporter
             . ' 2>&1';
 
         exec($cmd, $output, $code);
-        $out = trim(implode("\n", $output));
+        $out = trim(implode(T_String::NEWLINE, $output));
 
         if ($code !== 0) {
             // Retry without the label (it may not exist on the repo).
@@ -80,7 +100,7 @@ final class IssueReporter
                 . ' 2>&1';
 
             exec($cmdNoLabel, $retry, $retryCode);
-            $out = trim(implode("\n", $retry));
+            $out = trim(implode(T_String::NEWLINE, $retry));
 
             if ($retryCode !== 0) {
                 return ['ok' => false, 'message' => "gh issue create failed: {$out}", 'url' => null, 'number' => null];
@@ -131,7 +151,7 @@ final class IssueReporter
 
     private function summarise(string $reason): string
     {
-        $first = trim(strtok($reason, "\n") ?: $reason);
+        $first = trim(strtok($reason, T_String::NEWLINE) ?: $reason);
 
         return mb_strlen($first) > 80 ? mb_substr($first, 0, 77) . '…' : $first;
     }

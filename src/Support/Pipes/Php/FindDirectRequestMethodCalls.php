@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find method calls on request objects that should use typed FormRequest getters instead.
@@ -71,7 +72,7 @@ final class FindDirectRequestMethodCalls implements Pipe
 
                         $matches[] = new MatchResult(
                             name: $methodName,
-                            pattern: '',
+                            pattern: T_String::empty(),
                             match: $methodName,
                             line: $line,
                             offset: null,
@@ -258,8 +259,8 @@ final class FindDirectRequestMethodCalls implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Scanners;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Support\PathExcludeMatcher;
 use Symfony\Component\Finder\Finder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Generic file scanner using Symfony Finder.
@@ -47,7 +48,7 @@ class GenericFileScanner implements FileScanner
             foreach ($excludePaths as $excludePath) {
                 $normalized = $this->normalizeExclude((string) $excludePath, $validPaths);
 
-                if ($normalized === '' || ! $this->looksLikeDirectory($normalized)) {
+                if (T_String::isEmpty($normalized) || ! $this->looksLikeDirectory($normalized)) {
                     continue;
                 }
 
@@ -94,7 +95,7 @@ class GenericFileScanner implements FileScanner
     {
         $excludePath = rtrim($excludePath, '/\\');
 
-        if ($excludePath === '' || ! $this->isAbsolute($excludePath)) {
+        if (T_String::isEmpty($excludePath) || ! $this->isAbsolute($excludePath)) {
             return $excludePath;
         }
 
@@ -102,7 +103,7 @@ class GenericFileScanner implements FileScanner
             $root = rtrim($root, '/\\');
 
             if ($excludePath === $root) {
-                return '';
+                return T_String::empty();
             }
 
             if (str_starts_with($excludePath, $root . '/')
@@ -116,7 +117,7 @@ class GenericFileScanner implements FileScanner
 
     private function isAbsolute(string $path): bool
     {
-        if ($path === '') {
+        if (T_String::isEmpty($path)) {
             return false;
         }
 

@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Auto-fix sins that can be automatically resolved.
@@ -113,7 +114,7 @@ class RepentCommand extends Command
                     }
 
                     $result = $prophet->repent($filePath, $content);
-                    $relativePath = str_replace(Environment::basePath() . '/', '', $filePath);
+                    $relativePath = str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
 
                     if ($result->absolved && $result->newContent !== null) {
                         if (!$dryRun) {
@@ -122,7 +123,7 @@ class RepentCommand extends Command
                         $this->fixedFiles[$prophetName][] = $relativePath;
                         $totalFixed++;
                     } elseif (!$result->absolved) {
-                        $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : '');
+                        $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : T_String::empty());
                         $totalFailed++;
                     }
                 }

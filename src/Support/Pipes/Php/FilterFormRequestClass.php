@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Filter to only FormRequest classes.
@@ -27,7 +28,7 @@ final class FilterFormRequestClass implements Pipe
     private function isFormRequestClass(Node\Stmt\Class_ $class): bool
     {
         // Check class name ends with Request
-        $className = $class->name?->toString() ?? '';
+        $className = $class->name?->toString() ?? T_String::empty();
         if (str_ends_with($className, 'Request') && $className !== 'Request') {
             return true;
         }

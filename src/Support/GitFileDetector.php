@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Detects files that have been changed in git.
  */
@@ -102,8 +104,8 @@ final class GitFileDetector
 
         $files = [];
 
-        foreach (explode("\n", trim($output)) as $submodulePath) {
-            if ($submodulePath === '') {
+        foreach (explode(T_String::NEWLINE, trim($output)) as $submodulePath) {
+            if (T_String::isEmpty($submodulePath)) {
                 continue;
             }
 
@@ -128,8 +130,8 @@ final class GitFileDetector
             return [];
         }
 
-        return Pipeline::from(explode("\n", trim($output)))
-            ->filter(fn ($file) => $file !== '')
+        return Pipeline::from(explode(T_String::NEWLINE, trim($output)))
+            ->filter(fn ($file) => T_String::isNotEmpty($file))
             ->map(fn ($file) => $repoPath . '/' . $file)
             ->toArray();
     }

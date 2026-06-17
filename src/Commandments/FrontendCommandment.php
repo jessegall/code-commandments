@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Commandments;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Base class for frontend file commandments (Vue, TypeScript, JavaScript).
  * Uses regex-based analysis for most cases, with Node.js AST scripts for complex fixes.
@@ -24,7 +26,7 @@ abstract class FrontendCommandment extends BaseCommandment
     {
         // Match <script> or <script setup> or <script lang="ts"> etc.
         if (preg_match('/<script(\s+[^>]*)?>(.+?)<\/script>/s', $content, $matches, PREG_OFFSET_CAPTURE)) {
-            $attributes = $matches[1][0] ?? '';
+            $attributes = $matches[1][0] ?? T_String::empty();
             $scriptContent = $matches[2][0];
             $start = $matches[2][1];
 
@@ -113,7 +115,7 @@ abstract class FrontendCommandment extends BaseCommandment
     protected function extractStyle(string $content): ?array
     {
         if (preg_match('/<style(\s+[^>]*)?>(.+?)<\/style>/s', $content, $matches, PREG_OFFSET_CAPTURE)) {
-            $attributes = $matches[1][0] ?? '';
+            $attributes = $matches[1][0] ?? T_String::empty();
 
             $lang = null;
             if (preg_match('/lang=["\'](\w+)["\']/', $attributes, $langMatch)) {
@@ -220,6 +222,6 @@ abstract class FrontendCommandment extends BaseCommandment
      */
     protected function countLines(string $content): int
     {
-        return substr_count($content, "\n") + 1;
+        return substr_count($content, T_String::NEWLINE) + 1;
     }
 }

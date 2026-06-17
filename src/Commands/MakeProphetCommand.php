@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Summon a new prophet into existence.
@@ -122,7 +123,7 @@ class MakeProphetCommand extends Command
     protected function generateDescription(string $name): string
     {
         // Convert ThouShaltNotUseDdProphet to "Thou shalt not use dd"
-        $name = Str::replaceLast('Prophet', '', $name);
+        $name = Str::replaceLast('Prophet', T_String::empty(), $name);
         $name = Str::snake($name, ' ');
         $name = ucfirst($name);
 

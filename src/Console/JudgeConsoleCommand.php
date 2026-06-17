@@ -19,6 +19,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 class JudgeConsoleCommand extends Command
 {
@@ -273,7 +274,7 @@ class JudgeConsoleCommand extends Command
         ?string $prophetFilter,
         bool $shouldAbsolve
     ): void {
-        $relativePath = str_replace(Environment::basePath() . '/', '', $filePath);
+        $relativePath = str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
         $fileSins = 0;
         $fileWarnings = 0;
 
@@ -376,9 +377,9 @@ class JudgeConsoleCommand extends Command
         }
 
         $total = count($failures);
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln("<comment>PROPHET ERRORS: {$total} (these prophets crashed and were skipped)</comment>");
-        $output->writeln('');
+        $output->writeln(T_String::empty());
 
         foreach ($grouped as $prophetClass => $prophetFailures) {
             $shortName = class_basename($prophetClass);
@@ -386,13 +387,13 @@ class JudgeConsoleCommand extends Command
             $output->writeln("- {$shortName} ({$count})");
 
             foreach ($prophetFailures as $failure) {
-                $relative = str_replace(Environment::basePath() . '/', '', $failure->filePath);
+                $relative = str_replace(Environment::basePath() . '/', T_String::empty(), $failure->filePath);
                 $output->writeln("    {$relative}");
                 $output->writeln("      " . get_class($failure->error) . ': ' . $failure->error->getMessage());
             }
         }
 
-        $output->writeln('');
+        $output->writeln(T_String::empty());
     }
 
     private function showResults(OutputInterface $output, ?string $prophetFilter = null, bool $gitMode = false, bool $hadFailures = false): int
@@ -406,13 +407,13 @@ class JudgeConsoleCommand extends Command
         }
 
         $isDetailedView = $prophetFilter !== null;
-        $gitFlag = $gitMode ? ' --git' : '';
+        $gitFlag = $gitMode ? ' --git' : T_String::empty();
 
         if ($this->totalSins > 0) {
             $output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
-            $output->writeln('');
+            $output->writeln(T_String::empty());
             $output->writeln('DO NOT COMMIT: Fix all sins before committing.');
-            $output->writeln('');
+            $output->writeln(T_String::empty());
 
             arsort($this->prophetSinCounts);
 
@@ -420,7 +421,7 @@ class JudgeConsoleCommand extends Command
                 $shortName = class_basename($prophetClass);
                 $fixable = $this->prophetAutoFixable[$prophetClass] ?? 0;
                 $autoFixable = match (true) {
-                    $fixable <= 0 => '',
+                    $fixable <= 0 => T_String::empty(),
                     $fixable >= $count => ' [AUTO-FIXABLE]',
                     default => " [{$fixable}/{$count} AUTO-FIXABLE]",
                 };
@@ -430,7 +431,7 @@ class JudgeConsoleCommand extends Command
                 if ($isDetailedView) {
                     foreach ($this->prophetFileDetails[$prophetClass] ?? [] as $file => $sins) {
                         foreach ($sins as $sin) {
-                            $line = $sin['line'] ? ":{$sin['line']}" : '';
+                            $line = $sin['line'] ? ":{$sin['line']}" : T_String::empty();
                             $output->writeln("  {$file}{$line}");
                             $output->writeln("    {$sin['message']}");
                         }
@@ -439,16 +440,16 @@ class JudgeConsoleCommand extends Command
             }
 
             if (!$isDetailedView) {
-                $output->writeln('');
+                $output->writeln(T_String::empty());
                 $output->writeln('GUIDED FIX (recommended): walk findings one at a time, full rule shown');
                 $output->writeln('inline, nothing to scroll past or skip:');
                 $output->writeln("  commandments judge --next{$gitFlag}");
-                $output->writeln('');
+                $output->writeln(T_String::empty());
                 $output->writeln('Or fix each sin type manually:');
                 $output->writeln("  1. Read the rule:    commandments scripture --prophet=NAME");
                 $output->writeln("  2. See the files:    commandments judge --prophet=NAME{$gitFlag}");
                 $output->writeln('  3. Fix all violations following the detailed description exactly');
-                $output->writeln('');
+                $output->writeln(T_String::empty());
                 $output->writeln('Target a subtree:     commandments judge --path=<dir>   (ignores all excludes)');
             }
 
@@ -458,7 +459,7 @@ class JudgeConsoleCommand extends Command
             $hasAutoFixable = array_sum($this->prophetAutoFixable) > 0;
 
             if ($hasAutoFixable) {
-                $output->writeln('');
+                $output->writeln(T_String::empty());
                 $output->writeln('[AUTO-FIXABLE] sins are mechanical — DO NOT fix them by hand. Run:');
                 $output->writeln("  commandments repent{$gitFlag}");
                 $output->writeln('  (repent rewrites them reliably via AST; hand-fixing wastes effort and risks mistakes.)');
@@ -466,14 +467,14 @@ class JudgeConsoleCommand extends Command
         }
 
         if ($this->totalWarnings > 0 && !empty($this->manualVerificationFiles)) {
-            $output->writeln('');
+            $output->writeln(T_String::empty());
             $output->writeln("WARNINGS: {$this->totalWarnings} requiring manual review");
-            $output->writeln('');
+            $output->writeln(T_String::empty());
 
             if ($isDetailedView) {
                 foreach ($this->manualVerificationFiles as $file => $issues) {
                     foreach ($issues as $issue) {
-                        $line = $issue['line'] ? ":{$issue['line']}" : '';
+                        $line = $issue['line'] ? ":{$issue['line']}" : T_String::empty();
                         $output->writeln("  {$file}{$line}");
                         $output->writeln("    {$issue['message']}");
                     }
@@ -482,7 +483,7 @@ class JudgeConsoleCommand extends Command
                 $warningProphets = [];
                 foreach ($this->manualVerificationFiles as $file => $issues) {
                     foreach ($issues as $issue) {
-                        $filterName = str_replace('Prophet', '', $issue['prophet']);
+                        $filterName = str_replace('Prophet', T_String::empty(), $issue['prophet']);
                         $warningProphets[$filterName] = ($warningProphets[$filterName] ?? 0) + 1;
                     }
                 }
@@ -491,12 +492,12 @@ class JudgeConsoleCommand extends Command
                     $output->writeln("- {$filterName}Prophet ({$count})");
                 }
 
-                $output->writeln('');
+                $output->writeln(T_String::empty());
                 $output->writeln('Warnings are ADVISORY — each one carries an APPLY-WHEN / LEAVE-WHEN');
                 $output->writeln('rubric. You must not leave any untouched. Walk them one at a time');
                 $output->writeln('(rubric + full rule shown inline):');
                 $output->writeln("  commandments judge --next{$gitFlag}");
-                $output->writeln('');
+                $output->writeln(T_String::empty());
                 $output->writeln('For each: fix it, OR — if the rubric says it does not apply here —');
                 $output->writeln('absolve it WITH A REASON:');
                 $output->writeln('  commandments absolve --fingerprint=<hash> --reason="why it does not apply"');

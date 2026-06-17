@@ -9,6 +9,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 class ScriptureConsoleCommand extends Command
 {
@@ -42,9 +43,9 @@ class ScriptureConsoleCommand extends Command
         }
 
         $output->writeln('CODE COMMANDMENTS');
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln('IMPORTANT: Never commit code with sins. Fix all violations first.');
-        $output->writeln('');
+        $output->writeln(T_String::empty());
 
         foreach ($scrolls as $scroll) {
             if (!$registry->hasScroll($scroll)) {
@@ -56,24 +57,24 @@ class ScriptureConsoleCommand extends Command
             $prophets = $registry->getProphets($scroll);
 
             foreach ($prophets as $prophet) {
-                $className = str_replace('Prophet', '', class_basename($prophet));
+                $className = str_replace('Prophet', T_String::empty(), class_basename($prophet));
                 $canRepent = $prophet instanceof SinRepenter;
 
-                $badge = $canRepent ? ' [AUTO-FIXABLE]' : '';
+                $badge = $canRepent ? ' [AUTO-FIXABLE]' : T_String::empty();
 
                 $output->writeln("- {$className}{$badge}: {$prophet->description()}");
 
                 if ($detailed) {
                     $detailedDesc = $prophet->detailedDescription();
-                    $lines = explode("\n", $detailedDesc);
+                    $lines = explode(T_String::NEWLINE, $detailedDesc);
                     foreach ($lines as $line) {
                         $output->writeln("  {$line}");
                     }
-                    $output->writeln('');
+                    $output->writeln(T_String::empty());
                 }
             }
 
-            $output->writeln('');
+            $output->writeln(T_String::empty());
         }
 
         $output->writeln('Check violations: commandments judge --next --git');
@@ -95,18 +96,18 @@ class ScriptureConsoleCommand extends Command
 
         $prophet = $found['prophet'];
         $className = class_basename($prophet);
-        $shortName = str_replace('Prophet', '', $className);
+        $shortName = str_replace('Prophet', T_String::empty(), $className);
         $canRepent = $prophet instanceof SinRepenter;
 
         $output->writeln(strtoupper($shortName));
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln('REQUIREMENT: ' . $prophet->description());
         if ($canRepent) {
             $output->writeln('[AUTO-FIXABLE with: commandments repent]');
         }
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln('You MUST follow this rule exactly as described below:');
-        $output->writeln('');
+        $output->writeln(T_String::empty());
 
         $detailedDesc = $prophet->detailedDescription();
         $output->writeln($detailedDesc);

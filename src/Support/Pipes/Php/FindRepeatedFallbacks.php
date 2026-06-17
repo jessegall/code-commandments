@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find fallback expressions (`??`, `?:`, full-ternary null/isset/empty checks)
@@ -99,7 +100,7 @@ final class FindRepeatedFallbacks implements Pipe
 
             $matches[] = new MatchResult(
                 name: $parts['op'],
-                pattern: '',
+                pattern: T_String::empty(),
                 match: $this->source($input->content, $node),
                 line: $line,
                 offset: null,
@@ -260,7 +261,7 @@ final class FindRepeatedFallbacks implements Pipe
     {
         $first = array_shift($names);
 
-        return $first . implode('', array_map(static fn (string $n) => ucfirst($n), $names));
+        return $first . implode(T_String::empty(), array_map(static fn (string $n) => ucfirst($n), $names));
     }
 
     /**
@@ -299,8 +300,8 @@ final class FindRepeatedFallbacks implements Pipe
 
     private function snippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

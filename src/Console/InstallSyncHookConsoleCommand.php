@@ -11,6 +11,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Install a git post-merge hook that runs `sync --after=previous` whenever
@@ -61,7 +62,7 @@ class InstallSyncHookConsoleCommand extends Command
         @chmod($hookPath, 0755);
 
         $relative = str_starts_with($hookPath, $basePath)
-            ? ltrim(str_replace($basePath, '', $hookPath), '/')
+            ? ltrim(str_replace($basePath, T_String::empty(), $hookPath), '/')
             : $hookPath;
 
         $output->writeln("Installed git post-merge hook at {$relative}");
@@ -69,7 +70,7 @@ class InstallSyncHookConsoleCommand extends Command
         $this->installComposerScript($basePath, $output);
         $this->recordBaselineVersion($basePath, $output);
 
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln('Now every <info>git pull</info> and <info>composer update</info> will run sync automatically.');
 
         return Command::SUCCESS;

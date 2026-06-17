@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Support\Absolver;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Absolve a single finding by fingerprint, with a required reason.
@@ -49,7 +50,7 @@ class AbsolveCommand extends Command
 
         $fingerprint = $this->option('fingerprint');
 
-        if (! is_string($fingerprint) || trim($fingerprint) === '') {
+        if (! is_string($fingerprint) || T_String::isBlank($fingerprint)) {
             $this->error('--fingerprint is required (copy it from judge --next).');
 
             return self::FAILURE;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Helper methods for text/content analysis.
  */
@@ -14,7 +16,7 @@ final class TextHelper
      */
     public static function getLineNumber(string $content, int $offset): int
     {
-        return substr_count(substr($content, 0, $offset), "\n") + 1;
+        return substr_count(substr($content, 0, $offset), T_String::NEWLINE) + 1;
     }
 
     /**

@@ -17,6 +17,7 @@ use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter;
 use ReflectionEnum;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Flag raw string literals that are really enum cases in disguise.
@@ -258,7 +259,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                                 line: $param->getStartLine(),
                                 content: $this->getSnippet($input->content, $param->getStartLine()),
                                 shortName: $this->suggestEnumName($paramName),
-                                fqcn: '',
+                                fqcn: T_String::empty(),
                                 literals: $literals,
                                 subject: "\${$paramName}",
                                 requiresImport: false,
@@ -326,7 +327,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
             $matches[] = new MatchResult(
                 name: 'literal_array_closed_set',
-                pattern: '',
+                pattern: T_String::empty(),
                 match: "in_array(\${$identifier}, [" . implode(', ', $literals) . '])',
                 line: $call->getStartLine(),
                 offset: null,
@@ -337,7 +338,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                     'enum_fqcn' => $info['fqcn'],
                     'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                    'requires_import' => $importedAlias === null ? '1' : '',
+                    'requires_import' => $importedAlias === null ? '1' : T_String::empty(),
                 ],
             );
         }
@@ -384,7 +385,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
             $matches[] = new MatchResult(
                 name: 'control_flow_closed_set',
-                pattern: '',
+                pattern: T_String::empty(),
                 match: "{$kind} on \${$identifier}: " . implode(', ', $literals),
                 line: $node->getStartLine(),
                 offset: null,
@@ -396,7 +397,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                     'enum_fqcn' => $info['fqcn'],
                     'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                    'requires_import' => $importedAlias === null ? '1' : '',
+                    'requires_import' => $importedAlias === null ? '1' : T_String::empty(),
                 ],
             );
         }
@@ -720,7 +721,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
         $content = @file_get_contents($file);
 
-        if ($content === false || $content === '') {
+        if ($content === false || T_String::isEmpty($content)) {
             return null;
         }
 
@@ -786,7 +787,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
     {
         foreach ($ast as $node) {
             if ($node instanceof Node\Stmt\Namespace_) {
-                $ns = $node->name?->toString() ?? '';
+                $ns = $node->name?->toString() ?? T_String::empty();
 
                 if ($ns !== $namespace) {
                     continue;
@@ -797,7 +798,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                         return $stmt;
                     }
                 }
-            } elseif ($node instanceof Node\Stmt\Enum_ && $namespace === '' && $node->name?->toString() === $short) {
+            } elseif ($node instanceof Node\Stmt\Enum_ && T_String::isEmpty($namespace) && $node->name?->toString() === $short) {
                 return $node;
             }
         }
@@ -956,7 +957,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
             return implode('\\', $parts);
         }
 
-        if ($namespace !== null && $namespace !== '') {
+        if ($namespace !== null && T_String::isNotEmpty($namespace)) {
             return $namespace . '\\' . $name->toString();
         }
 
@@ -1077,9 +1078,9 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 
     private function makeMatch(
@@ -1095,7 +1096,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
     ): MatchResult {
         return new MatchResult(
             name: $name,
-            pattern: '',
+            pattern: T_String::empty(),
             match: "'{$value}' ≈ {$shortName}::{$caseName}",
             line: $line,
             offset: null,
@@ -1106,7 +1107,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 'enum_short' => $shortName,
                 'enum_fqcn' => $fqcn,
                 'case' => $caseName,
-                'requires_import' => $requiresImport ? '1' : '',
+                'requires_import' => $requiresImport ? '1' : T_String::empty(),
             ],
         );
     }
@@ -1130,7 +1131,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
         return new MatchResult(
             name: $matchedEnum ? 'param_closed_set_matched_enum' : 'param_closed_set',
-            pattern: '',
+            pattern: T_String::empty(),
             match: $matchedEnum
                 ? "{$subject} ≈ {$shortName} (" . implode(', ', $literals) . ')'
                 : "{$subject} closed set: " . implode(', ', $literals),
@@ -1143,8 +1144,8 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 'enum_short' => $shortName,
                 'enum_fqcn' => $fqcn,
                 'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                'requires_import' => $requiresImport ? '1' : '',
-                'matched_enum' => $matchedEnum ? '1' : '',
+                'requires_import' => $requiresImport ? '1' : T_String::empty(),
+                'matched_enum' => $matchedEnum ? '1' : T_String::empty(),
             ],
         );
     }
@@ -1443,7 +1444,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
         }
 
         $shortName = $class->name->toString();
-        $fqcn = $namespace !== null && $namespace !== ''
+        $fqcn = $namespace !== null && T_String::isNotEmpty($namespace)
             ? $namespace . '\\' . $shortName
             : $shortName;
 
@@ -1462,7 +1463,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
      */
     private function looksLikeCaseName(string $value): bool
     {
-        if ($value === '' || strlen($value) > 64) {
+        if (T_String::isEmpty($value) || strlen($value) > 64) {
             return false;
         }
 
@@ -1476,7 +1477,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
     {
         $clean = trim($paramName, '_');
 
-        if ($clean === '') {
+        if (T_String::isEmpty($clean)) {
             return 'Kind';
         }
 

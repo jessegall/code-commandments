@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Scaffolding;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Stamps the package's support-class stubs into the consumer's namespace,
  * rewriting the namespace to the configured one. Idempotent: an existing
@@ -39,7 +41,7 @@ final class ScaffoldGenerator
                 continue;
             }
 
-            $sub = $scaffold->subNamespace !== '' ? '\\' . trim($scaffold->subNamespace, '\\') : '';
+            $sub = T_String::isNotEmpty($scaffold->subNamespace) ? '\\' . trim($scaffold->subNamespace, '\\') : T_String::empty();
 
             $results[] = [
                 'name' => $scaffold->name,
@@ -90,7 +92,7 @@ final class ScaffoldGenerator
         $targetDir = rtrim($path, '/');
         $targetNamespace = $namespace;
 
-        if ($scaffold->subNamespace !== '') {
+        if (T_String::isNotEmpty($scaffold->subNamespace)) {
             $targetDir .= '/' . str_replace('\\', '/', trim($scaffold->subNamespace, '\\'));
             $targetNamespace .= '\\' . trim($scaffold->subNamespace, '\\');
         }

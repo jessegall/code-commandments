@@ -12,6 +12,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find call sites of the shape `(new X(...))(...)`.
@@ -95,7 +96,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
 
             $staticNames = $info['statics'];
             $staticHints = $staticNames === []
-                ? ''
+                ? T_String::empty()
                 : implode(', ', array_map(
                     static fn (string $n) => $shortName . '::' . $n . '()',
                     $staticNames,
@@ -103,7 +104,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
 
             $matches[] = new MatchResult(
                 name: 'invokable_construct',
-                pattern: '',
+                pattern: T_String::empty(),
                 match: '(new ' . $shortName . '(...))(...)',
                 line: $line,
                 offset: null,
@@ -138,7 +139,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
             return implode('\\', $parts);
         }
 
-        if ($namespace !== null && $namespace !== '') {
+        if ($namespace !== null && T_String::isNotEmpty($namespace)) {
             return $namespace . '\\' . $name->toString();
         }
 
@@ -211,7 +212,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
 
         $content = @file_get_contents($file);
 
-        if ($content === false || $content === '') {
+        if ($content === false || T_String::isEmpty($content)) {
             return ['file' => $file, 'statics' => []];
         }
 
@@ -248,7 +249,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
     {
         foreach ($ast as $node) {
             if ($node instanceof Node\Stmt\Namespace_) {
-                $ns = $node->name?->toString() ?? '';
+                $ns = $node->name?->toString() ?? T_String::empty();
 
                 if ($ns !== $namespace) {
                     continue;
@@ -259,7 +260,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
                         return $stmt;
                     }
                 }
-            } elseif ($node instanceof Node\Stmt\Class_ && $namespace === '' && $node->name?->toString() === $short) {
+            } elseif ($node instanceof Node\Stmt\Class_ && T_String::isEmpty($namespace) && $node->name?->toString() === $short) {
                 return $node;
             }
         }
@@ -338,8 +339,8 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

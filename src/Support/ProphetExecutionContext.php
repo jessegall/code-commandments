@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * Tracks which prophet is running against which file, so a shutdown
  * handler can point at the culprit if the PHP engine hits a
@@ -43,9 +45,9 @@ final class ProphetExecutionContext
                 return;
             }
 
-            fwrite(STDERR, "\n");
-            fwrite(STDERR, "[commandments] PHP fatal error while running prophet: " . self::$currentProphet . "\n");
-            fwrite(STDERR, "[commandments] While judging file: " . self::$currentFile . "\n");
+            fwrite(STDERR, T_String::NEWLINE);
+            fwrite(STDERR, "[commandments] PHP fatal error while running prophet: " . self::$currentProphet . T_String::NEWLINE);
+            fwrite(STDERR, "[commandments] While judging file: " . self::$currentFile . T_String::NEWLINE);
             fwrite(STDERR, "[commandments] The prophet likely autoloaded a consumer class that has a fatal-level issue.\n");
             fwrite(STDERR, "[commandments] Fix the consumer class, or exclude it from this prophet.\n");
         });

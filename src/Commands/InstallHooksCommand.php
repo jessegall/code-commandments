@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
+use JesseGall\PhpTypes\T_Json;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Install Claude Code hooks for the commandments.
@@ -33,7 +35,7 @@ class InstallHooksCommand extends Command
         $existingSettings = [];
         if (file_exists($settingsFile)) {
             $content = file_get_contents($settingsFile);
-            $existingSettings = json_decode($content ?: '{}', true) ?? [];
+            $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
         }
 
         // Merge our hook entries into any existing hooks WITHOUT clobbering
@@ -49,7 +51,7 @@ class InstallHooksCommand extends Command
 
         // Write settings file
         $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents($settingsFile, $json."\n");
+        file_put_contents($settingsFile, $json.T_String::NEWLINE);
 
         $this->output->writeln('Hooks installed to .claude/settings.json');
 
@@ -259,7 +261,7 @@ INSTRUCTIONS;
                 return;
             }
 
-            $content .= "\n\n".$section;
+            $content .= T_String::PARAGRAPH.$section;
             file_put_contents($claudeMdPath, $content);
             $this->output->writeln('Added section to CLAUDE.md');
         } else {

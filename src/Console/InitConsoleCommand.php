@@ -12,6 +12,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use JesseGall\PhpTypes\T_Json;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * One-command setup for standalone (non-Laravel) projects.
@@ -39,7 +41,7 @@ class InitConsoleCommand extends Command
         $this->createClaudeMd($basePath, $output);
         $this->installCommitHook($basePath, $force, $output);
 
-        $output->writeln('');
+        $output->writeln(T_String::empty());
         $output->writeln('Done! Next steps:');
 
         if ($autoDetect) {
@@ -210,7 +212,7 @@ class InitConsoleCommand extends Command
         $existingSettings = [];
         if (file_exists($settingsFile)) {
             $content = file_get_contents($settingsFile);
-            $existingSettings = json_decode($content ?: '{}', true) ?? [];
+            $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
         }
 
         $ourHooks = [
@@ -319,7 +321,7 @@ INSTRUCTIONS;
         }
 
         $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents($settingsFile, $json . "\n");
+        file_put_contents($settingsFile, $json . T_String::NEWLINE);
         $output->writeln('Created .claude/settings.json with hooks');
     }
 
@@ -394,7 +396,7 @@ MARKDOWN;
                 return;
             }
 
-            $content .= "\n\n" . $section;
+            $content .= T_String::PARAGRAPH . $section;
             file_put_contents($claudeMdPath, $content);
             $output->writeln('Added Code Commandments section to CLAUDE.md');
         } else {

@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find static method calls on Eloquent models that should use ::query() instead.
@@ -64,7 +65,7 @@ final class FindDirectStaticModelCalls implements Pipe
 
             $matches[] = new MatchResult(
                 name: $methodName,
-                pattern: '',
+                pattern: T_String::empty(),
                 match: $methodName,
                 line: $line,
                 offset: null,
@@ -110,8 +111,8 @@ final class FindDirectStaticModelCalls implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Filter to only Laravel controllers.
@@ -27,7 +28,7 @@ final class FilterLaravelController implements Pipe
     private function isController(Node\Stmt\Class_ $class): bool
     {
         // Check class name ends with Controller
-        $className = $class->name?->toString() ?? '';
+        $className = $class->name?->toString() ?? T_String::empty();
         if (str_ends_with($className, 'Controller')) {
             return true;
         }

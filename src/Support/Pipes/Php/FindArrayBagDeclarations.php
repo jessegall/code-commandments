@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find declarations that pass an `array<string, mixed>` bag around —
@@ -155,7 +156,7 @@ final class FindArrayBagDeclarations implements Pipe
             return;
         }
 
-        $doc = $method->getDocComment()?->getText() ?? '';
+        $doc = $method->getDocComment()?->getText() ?? T_String::empty();
 
         foreach ($this->bagParamAnnotationsIn($doc) as $paramName => $annotation) {
             $param = $this->findParam($method, $paramName);
@@ -237,7 +238,7 @@ final class FindArrayBagDeclarations implements Pipe
     ): MatchResult {
         return new MatchResult(
             name: $name,
-            pattern: '',
+            pattern: T_String::empty(),
             match: $annotation,
             line: $line,
             offset: null,
@@ -321,7 +322,7 @@ final class FindArrayBagDeclarations implements Pipe
     private function typeToken(string $text): string
     {
         $depth = 0;
-        $token = '';
+        $token = T_String::empty();
 
         foreach (str_split($text) as $char) {
             if ($char === '<' || $char === '{' || $char === '(') {
@@ -347,7 +348,7 @@ final class FindArrayBagDeclarations implements Pipe
     {
         $branches = [];
         $depth = 0;
-        $current = '';
+        $current = T_String::empty();
 
         foreach (str_split($type) as $char) {
             if ($char === '<' || $char === '{' || $char === '(') {
@@ -356,7 +357,7 @@ final class FindArrayBagDeclarations implements Pipe
                 $depth--;
             } elseif ($char === '|' && $depth === 0) {
                 $branches[] = trim($current);
-                $current = '';
+                $current = T_String::empty();
 
                 continue;
             }
@@ -500,15 +501,15 @@ final class FindArrayBagDeclarations implements Pipe
      */
     private function suggestedClassName(string $name, string $kind): string
     {
-        $studly = str_replace(' ', '', ucwords(str_replace(['_', '-'], ' ', $name)));
+        $studly = str_replace(' ', T_String::empty(), ucwords(str_replace(['_', '-'], ' ', $name)));
 
         return $kind === 'return' ? $studly . 'Bag' : $studly;
     }
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

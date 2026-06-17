@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Reveal the commandments.
@@ -50,16 +51,16 @@ class ScriptureCommand extends Command
             $prophets = $registry->getProphets($scroll);
 
             foreach ($prophets as $prophet) {
-                $className = str_replace('Prophet', '', class_basename($prophet));
+                $className = str_replace('Prophet', T_String::empty(), class_basename($prophet));
                 $canRepent = $prophet instanceof SinRepenter;
 
-                $badge = $canRepent ? ' [AUTO-FIXABLE]' : '';
+                $badge = $canRepent ? ' [AUTO-FIXABLE]' : T_String::empty();
 
                 $this->output->writeln("- {$className}{$badge}: {$prophet->description()}");
 
                 if ($detailed) {
                     $detailedDesc = $prophet->detailedDescription();
-                    $lines = explode("\n", $detailedDesc);
+                    $lines = explode(T_String::NEWLINE, $detailedDesc);
                     foreach ($lines as $line) {
                         $this->output->writeln("  {$line}");
                     }
@@ -91,7 +92,7 @@ class ScriptureCommand extends Command
 
         $prophet = $found['prophet'];
         $className = class_basename($prophet);
-        $shortName = str_replace('Prophet', '', $className);
+        $shortName = str_replace('Prophet', T_String::empty(), $className);
         $canRepent = $prophet instanceof SinRepenter;
 
         $this->output->writeln(strtoupper($shortName));

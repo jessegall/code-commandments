@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Scaffolding;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * A support class the package can stamp into the consumer's namespace — the
  * building blocks the prophets recommend (Option, FromArrayOnly, …) so an
@@ -21,6 +23,6 @@ final class Scaffold
          * Namespace segment under the consumer's scaffold namespace this class
          * lives in (e.g. `Resolvers\Predicates`). Empty = the flat root.
          */
-        public readonly string $subNamespace = '',
+        public readonly string $subNamespace = T_String::EMPTY,
     ) {}
 }

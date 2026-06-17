@@ -12,6 +12,8 @@ use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
+use JesseGall\PhpTypes\T_Json;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find raw empty literals and empty checks that should travel through named
@@ -100,7 +102,7 @@ final class FindRawLiterals implements Pipe
         foreach ($findings as $finding) {
             $matches[] = new MatchResult(
                 name: $finding['kind'],
-                pattern: '',
+                pattern: T_String::empty(),
                 match: $finding['literal'],
                 line: $finding['line'],
                 offset: null,
@@ -109,7 +111,7 @@ final class FindRawLiterals implements Pipe
                     'kind' => $finding['kind'],
                     'position' => $finding['position'],
                     'predicate' => $finding['predicate'],
-                    'negate' => $finding['negate'] ? '1' : '',
+                    'negate' => $finding['negate'] ? '1' : T_String::empty(),
                     'var' => $finding['var'],
                     'literal' => $finding['literal'],
                     'helper_class' => $finding['helper_class'],
@@ -212,7 +214,7 @@ final class FindRawLiterals implements Pipe
                     node: $array,
                     content: $content,
                     position: self::isConstPosition($array, $parents) ? 'const' : 'value',
-                    literal: '[]',
+                    literal: T_Json::emptyArray(),
                 );
             }
         }
@@ -378,7 +380,7 @@ final class FindRawLiterals implements Pipe
                 $other = $jsonOperand === $left ? $right : $left;
                 $consumed[spl_object_id($jsonOperand)] = true;
 
-                $isObject = $jsonOperand->value === '{}';
+                $isObject = T_Json::isEmptyObject($jsonOperand->value);
 
                 return self::comparisonFinding(
                     kind: $isObject ? 'json_object_compare' : 'json_array_compare',
@@ -470,20 +472,20 @@ final class FindRawLiterals implements Pipe
 
         // Always on — empty string and the JSON literals.
         $kind = match ($value) {
-            '' => 'string_literal',
-            '{}' => 'json_object_literal',
-            '[]' => 'json_array_literal',
+            T_String::empty() => 'string_literal',
+            T_Json::emptyObject() => 'json_object_literal',
+            T_Json::emptyArray() => 'json_array_literal',
             default => null,
         };
 
         if ($kind === null && $options['whitespace']) {
             $kind = match ($value) {
-                "\n" => 'newline',
-                "\n\n" => 'paragraph',
-                "\t" => 'tab',
-                "\r" => 'carriage_return',
-                "\r\n" => 'crlf',
-                "\0" => 'null_byte',
+                T_String::NEWLINE => 'newline',
+                T_String::PARAGRAPH => 'paragraph',
+                T_String::TAB => 'tab',
+                T_String::CARRIAGE_RETURN => 'carriage_return',
+                T_String::CRLF => 'crlf',
+                T_String::NULL_BYTE => 'null_byte',
                 default => null,
             };
         }
@@ -538,11 +540,11 @@ final class FindRawLiterals implements Pipe
             'end' => (int) $node->getEndFilePos(),
             'line' => $node->getStartLine(),
             'position' => $position,
-            'predicate' => '',
+            'predicate' => T_String::empty(),
             'negate' => false,
-            'var' => '',
+            'var' => T_String::empty(),
             'literal' => $literal,
-            'helper_class' => '',
+            'helper_class' => T_String::empty(),
             'fixable' => true,
         ];
     }
@@ -575,7 +577,7 @@ final class FindRawLiterals implements Pipe
             'end' => (int) $expr->getEndFilePos(),
             'line' => $expr->getStartLine(),
             'position' => 'value',
-            'predicate' => '',
+            'predicate' => T_String::empty(),
             'negate' => false,
             'var' => $var,
             'literal' => self::source($content, $expr),
@@ -626,7 +628,7 @@ final class FindRawLiterals implements Pipe
         }
 
         return match ($type) {
-            'T_String' => $node instanceof Scalar\String_ && $node->value === '',
+            'T_String' => $node instanceof Scalar\String_ && T_String::isEmpty($node->value),
             'T_Int' => $node instanceof Scalar\Int_ && $node->value === 0,
             'T_Float' => $node instanceof Scalar\Float_ && $node->value === 0.0,
             'T_Bool' => $node instanceof Expr\ConstFetch && strtolower($node->name->toString()) === 'false',
@@ -645,7 +647,7 @@ final class FindRawLiterals implements Pipe
         string $var,
         string $literal,
         bool $negate = false,
-        string $helperClass = '',
+        string $helperClass = T_String::EMPTY,
     ): array {
         return [
             'kind' => $kind,
@@ -709,12 +711,12 @@ final class FindRawLiterals implements Pipe
 
     private static function emptyStringNode(Node $node): ?Scalar\String_
     {
-        return $node instanceof Scalar\String_ && $node->value === '' ? $node : null;
+        return $node instanceof Scalar\String_ && T_String::isEmpty($node->value) ? $node : null;
     }
 
     private static function jsonNode(Node $node): ?Scalar\String_
     {
-        return $node instanceof Scalar\String_ && in_array($node->value, ['{}', '[]'], true) ? $node : null;
+        return $node instanceof Scalar\String_ && in_array($node->value, [T_Json::emptyObject(), T_Json::emptyArray()], true) ? $node : null;
     }
 
     /**
@@ -901,8 +903,8 @@ final class FindRawLiterals implements Pipe
 
     private function snippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

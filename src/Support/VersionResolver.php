@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support;
 
 use Composer\InstalledVersions;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Resolves the currently-installed package version and the previously
@@ -67,7 +68,7 @@ class VersionResolver
     {
         $path = $this->stateFilePath($basePath);
 
-        return @file_put_contents($path, $version . "\n") !== false;
+        return @file_put_contents($path, $version . T_String::NEWLINE) !== false;
     }
 
     public function stateFilePath(string $basePath): string
@@ -83,7 +84,7 @@ class VersionResolver
     {
         $version = ltrim($version, 'v');
 
-        if ($version === '' || str_starts_with($version, 'dev-') || str_contains($version, '@')) {
+        if (T_String::isEmpty($version) || str_starts_with($version, 'dev-') || str_contains($version, '@')) {
             return null;
         }
 

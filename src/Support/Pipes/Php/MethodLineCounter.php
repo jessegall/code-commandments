@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use PhpToken;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Counts the lines of a method while ignoring lines that contain only comments.
@@ -30,7 +31,7 @@ final class MethodLineCounter
             }
 
             $startTokenLine = $token->line;
-            $endTokenLine = $startTokenLine + substr_count($token->text, "\n");
+            $endTokenLine = $startTokenLine + substr_count($token->text, T_String::NEWLINE);
 
             $bucket = $token->is([T_COMMENT, T_DOC_COMMENT]) ? 'comment' : 'code';
 

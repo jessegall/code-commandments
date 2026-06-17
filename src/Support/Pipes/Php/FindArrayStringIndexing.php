@@ -14,6 +14,7 @@ use PhpParser\Node\Scalar;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find array subscript accesses that use a statically-known string key on a
@@ -149,7 +150,7 @@ final class FindArrayStringIndexing implements Pipe
 
             $matches[] = new MatchResult(
                 name: $keyDisplay,
-                pattern: '',
+                pattern: T_String::empty(),
                 match: $dedupeKey,
                 line: $line,
                 offset: null,
@@ -253,7 +254,7 @@ final class FindArrayStringIndexing implements Pipe
 
             $matches[] = new MatchResult(
                 name: $keyDisplay,
-                pattern: '',
+                pattern: T_String::empty(),
                 match: $via . '(' . $varSnippet . ', ' . $keyDisplay . ')',
                 line: $line,
                 offset: null,
@@ -441,7 +442,7 @@ final class FindArrayStringIndexing implements Pipe
         }
 
         $shortName = $classNode->name->toString();
-        $classFqcn = $namespace !== null && $namespace !== ''
+        $classFqcn = $namespace !== null && T_String::isNotEmpty($namespace)
             ? $namespace . '\\' . $shortName
             : $shortName;
 
@@ -459,7 +460,7 @@ final class FindArrayStringIndexing implements Pipe
                 $trace->originClassFqcn,
                 $trace->originMethod,
                 $trace->hops,
-                $trace->hops === 1 ? '' : 's',
+                $trace->hops === 1 ? T_String::empty() : 's',
                 $trace->reason,
             ),
         ];
@@ -1057,8 +1058,8 @@ final class FindArrayStringIndexing implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

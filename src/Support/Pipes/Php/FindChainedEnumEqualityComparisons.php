@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Find enum equality comparisons where a subject is compared against case(s)
@@ -268,7 +269,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
 
             $caseName = $caseFetch->name->toString();
 
-            if ($caseName === '' || strtolower($caseName) === 'class') {
+            if (T_String::isEmpty($caseName) || strtolower($caseName) === 'class') {
                 continue;
             }
 
@@ -493,7 +494,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
 
                 $caseName = $caseFetch->name->toString();
 
-                if ($caseName === '' || strtolower($caseName) === 'class') {
+                if (T_String::isEmpty($caseName) || strtolower($caseName) === 'class') {
                     continue;
                 }
 
@@ -626,7 +627,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
 
             $caseName = $caseFetch->name->toString();
 
-            if ($caseName === '' || strtolower($caseName) === 'class') {
+            if (T_String::isEmpty($caseName) || strtolower($caseName) === 'class') {
                 return null;
             }
 
@@ -699,7 +700,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
 
         return new MatchResult(
             name: 'enum_equality_chain',
-            pattern: '',
+            pattern: T_String::empty(),
             match: $analysis['lhsSource'] . ' ' . $op . ' ' . implode('/', $analysis['cases']),
             line: $line,
             offset: null,
@@ -726,7 +727,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
      */
     private function renderClassRef(Node\Name $name): string
     {
-        return ($name->isFullyQualified() ? '\\' : '') . $name->toString();
+        return ($name->isFullyQualified() ? '\\' : T_String::empty()) . $name->toString();
     }
 
     private function isExcluded(string $resolvedFqcn, string $shortName): bool
@@ -765,7 +766,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
             return implode('\\', $parts);
         }
 
-        if ($namespace !== null && $namespace !== '') {
+        if ($namespace !== null && T_String::isNotEmpty($namespace)) {
             return $namespace . '\\' . $name->toString();
         }
 
@@ -846,8 +847,8 @@ final class FindChainedEnumEqualityComparisons implements Pipe
 
     private function getSnippet(string $content, int $line): string
     {
-        $lines = explode("\n", $content);
+        $lines = explode(T_String::NEWLINE, $content);
 
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }
