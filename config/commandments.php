@@ -156,6 +156,10 @@ return [
                 Backend\DuplicateCodeProphet::class => [
                     // 'min_lines' => 5,
                 ],
+                Backend\PreferDataTransformersProphet::class => [
+                    // 'data_base' => 'Spatie\\LaravelData\\Data',
+                    // 'min_reads' => 3,
+                ],
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [
                     'null_objects' => [
