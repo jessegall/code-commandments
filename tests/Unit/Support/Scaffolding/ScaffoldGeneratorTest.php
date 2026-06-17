@@ -68,6 +68,42 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('@method static bool notEqualsAny(mixed $value, self ...$cases)', $trait);
     }
 
+    public function test_force_refreshes_a_relocated_class_in_place(): void
+    {
+        // Generate fresh, then simulate a consumer relocating CompareSelf into
+        // a `Enums` sub-namespace (a common tidy-up). A forced re-scaffold must
+        // refresh THAT file in place — preserving its namespace — not write a
+        // stale duplicate at the flat path.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $flat = $this->dir . '/CompareSelf.php';
+        $this->assertFileExists($flat);
+
+        $enumsDir = $this->dir . '/Enums';
+        @mkdir($enumsDir, 0755, true);
+        $relocated = $enumsDir . '/CompareSelf.php';
+        rename($flat, $relocated);
+        file_put_contents(
+            $relocated,
+            str_replace('namespace Acme\\Support;', 'namespace Acme\\Support\\Enums;', file_get_contents($relocated)),
+        );
+
+        // Tamper with the relocated file so we can prove it was rewritten.
+        file_put_contents($relocated, str_replace('@method bool equals(mixed $value)', '// stale', file_get_contents($relocated)));
+
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, force: true);
+
+        // No duplicate created at the flat path.
+        $this->assertFileDoesNotExist($flat);
+
+        $refreshed = file_get_contents($relocated);
+        // Rewritten with current stub content…
+        $this->assertStringContainsString('@method bool equals(mixed $value)', $refreshed);
+        $this->assertStringNotContainsString('// stale', $refreshed);
+        // …while preserving the relocated namespace.
+        $this->assertStringContainsString('namespace Acme\\Support\\Enums;', $refreshed);
+    }
+
     public function test_is_idempotent_and_skips_existing(): void
     {
         $gen = ScaffoldGenerator::packaged();

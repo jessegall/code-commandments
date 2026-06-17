@@ -57,6 +57,31 @@ final class ScaffoldGenerator
             return self::STATUS_MISSING_STUB;
         }
 
+        $stub = (string) file_get_contents($stubPath);
+
+        // A consumer may have relocated a generated class into a sub-namespace
+        // (e.g. `Support\Enums\CompareSelf`). Find it by its generated marker
+        // wherever it lives under the scaffold path and refresh it IN PLACE,
+        // preserving the namespace it was moved to — otherwise a re-scaffold
+        // would silently write a stale duplicate at the flat path and the
+        // consumer's real class would never receive the fix.
+        $existing = $this->locateExisting($scaffold->className, $path);
+
+        if ($existing !== null) {
+            if (! $force) {
+                return self::STATUS_SKIPPED;
+            }
+
+            $existingNamespace = $this->namespaceOf($existing) ?? $namespace;
+            $contents = str_replace('{{ namespace }}', $existingNamespace, $stub);
+
+            if (@file_put_contents($existing, $contents) === false) {
+                return self::STATUS_SKIPPED;
+            }
+
+            return self::STATUS_REWRITTEN;
+        }
+
         $target = rtrim($path, '/') . '/' . $scaffold->className . '.php';
         $exists = is_file($target);
 
@@ -64,7 +89,7 @@ final class ScaffoldGenerator
             return self::STATUS_SKIPPED;
         }
 
-        $contents = str_replace('{{ namespace }}', $namespace, (string) file_get_contents($stubPath));
+        $contents = str_replace('{{ namespace }}', $namespace, $stub);
 
         if (! is_dir($path)) {
             @mkdir($path, 0755, true);
@@ -75,5 +100,66 @@ final class ScaffoldGenerator
         }
 
         return $exists ? self::STATUS_REWRITTEN : self::STATUS_CREATED;
+    }
+
+    /**
+     * Find an already-generated copy of $className anywhere under $path,
+     * identified by the generated marker (so a consumer's hand-relocated copy
+     * is matched, not just the flat default path). Returns its absolute path
+     * or null.
+     */
+    private function locateExisting(string $className, string $path): ?string
+    {
+        if (! is_dir($path)) {
+            return null;
+        }
+
+        // Built from parts so this source file does not itself carry the
+        // literal marker (which would make the scroll judge skip it).
+        $marker = '@code-commandments' . '-generated';
+        $needle = $className . '.php';
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+
+        foreach ($iterator as $file) {
+            if (! $file instanceof \SplFileInfo || $file->getFilename() !== $needle) {
+                continue;
+            }
+
+            $real = $file->getRealPath();
+
+            if ($real === false) {
+                continue;
+            }
+
+            $contents = @file_get_contents($real);
+
+            if ($contents !== false && str_contains($contents, $marker)) {
+                return $real;
+            }
+        }
+
+        return null;
+    }
+
+    private function namespaceOf(string $file): ?string
+    {
+        $contents = @file_get_contents($file);
+
+        if ($contents === false) {
+            return null;
+        }
+
+        if (preg_match('/^\s*namespace\s+([^;]+);/m', $contents, $m) === 1) {
+            return trim($m[1]);
+        }
+
+        return null;
     }
 }
