@@ -179,6 +179,7 @@ Configure via:
     Backend\PreferEnumForClosedSetFieldProphet::class => [
         'names' => ['direction', 'status', 'kind', 'mode', 'type', /* … */],
         'data_base_suffix' => 'Data',  // a parent ending in this → safe to auto-fix
+        'compare_self_trait' => 'App\\Support\\Enums\\CompareSelf',  // reused enums using it → emit Case->equals($x)
     ],
 SCRIPTURE;
     }
@@ -305,7 +306,10 @@ SCRIPTURE;
         // Reuse path: retype to an existing enum, create nothing.
         if ($reuse !== '') {
             $short = $this->shortClassName($reuse);
-            $content = $this->applyRetype($content, $ast, $target, $short, $this->caseMapForReuse($reuse));
+            // A freshly created enum never uses CompareSelf, but a reused one
+            // might — emit the `Case->equals($x)` form then, so the rewrite does
+            // not leave a SuggestCompareSelfTrait finding behind.
+            $content = $this->applyRetype($content, $ast, $target, $short, $this->caseMapForReuse($reuse), $this->enumUsesCompareSelf($reuse));
 
             $penance = ["Retyped \${$target['name']} to existing enum {$short}"];
 
@@ -339,7 +343,7 @@ SCRIPTURE;
             $caseMap[$value] = $this->caseName($value);
         }
 
-        $content = $this->applyRetype($content, $ast, $target, $short, $caseMap);
+        $content = $this->applyRetype($content, $ast, $target, $short, $caseMap, false);
 
         return RepentanceResult::absolved(
             $content,
@@ -359,7 +363,7 @@ SCRIPTURE;
      * @param  array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool, default: ?Node}  $target
      * @param  array<string, string>  $caseMap  case value → case name
      */
-    private function applyRetype(string $content, array $ast, array $target, string $short, array $caseMap): string
+    private function applyRetype(string $content, array $ast, array $target, string $short, array $caseMap, bool $usesCompareSelf): string
     {
         $typeNode = $target['typeNode'];
 
@@ -377,7 +381,7 @@ SCRIPTURE;
 
         // Convert every same-file reader of $this-><field> that the single-file
         // rewrite can reach (cross-file readers remain the dev's job).
-        $edits = [...$edits, ...$this->readerEdits($ast, $target, $short, $caseMap)];
+        $edits = [...$edits, ...$this->readerEdits($content, $ast, $target, $short, $caseMap, $usesCompareSelf)];
 
         usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
 
@@ -402,7 +406,7 @@ SCRIPTURE;
      * @param  array<string, string>  $caseMap
      * @return list<array{start: int, end: int, text: string}>
      */
-    private function readerEdits(array $ast, array $target, string $short, array $caseMap): array
+    private function readerEdits(string $content, array $ast, array $target, string $short, array $caseMap, bool $usesCompareSelf): array
     {
         $traverser = new NodeTraverser;
         $traverser->addVisitor(new ParentConnectingVisitor);
@@ -423,7 +427,17 @@ SCRIPTURE;
                 $other = $parent->left === $fetch ? $parent->right : $parent->left;
 
                 if ($other instanceof Node\Scalar\String_) {
-                    $edits[] = ['start' => $other->getStartFilePos(), 'end' => $other->getEndFilePos(), 'text' => $short . '::' . $this->caseFor($other->value, $caseMap)];
+                    $case = $this->caseFor($other->value, $caseMap);
+
+                    if ($usesCompareSelf) {
+                        // Emit the case-anchored form SuggestCompareSelfTrait wants,
+                        // so the rewrite is self-consistent.
+                        $fieldSource = substr($content, $fetch->getStartFilePos(), $fetch->getEndFilePos() - $fetch->getStartFilePos() + 1);
+                        $not = $parent instanceof Node\Expr\BinaryOp\NotIdentical ? '! ' : '';
+                        $edits[] = ['start' => $parent->getStartFilePos(), 'end' => $parent->getEndFilePos(), 'text' => "{$not}{$short}::{$case}->equals({$fieldSource})"];
+                    } else {
+                        $edits[] = ['start' => $other->getStartFilePos(), 'end' => $other->getEndFilePos(), 'text' => "{$short}::{$case}"];
+                    }
                 }
 
                 continue;
@@ -565,6 +579,32 @@ SCRIPTURE;
     private function caseFor(string $value, array $caseMap): string
     {
         return $caseMap[$value] ?? $this->caseName($value);
+    }
+
+    /**
+     * Whether the reused enum uses the CompareSelf trait — so the comparison
+     * rewrite should emit `Case->equals($x)` (what SuggestCompareSelfTrait wants)
+     * instead of `$x === Case`. Best effort: only when the FQCN is autoloadable.
+     */
+    private function enumUsesCompareSelf(string $reuse): bool
+    {
+        $fqcn = ltrim($reuse, '\\');
+
+        if (! str_contains($fqcn, '\\') || ! enum_exists($fqcn)) {
+            return false;
+        }
+
+        $configured = ltrim((string) $this->config('compare_self_trait', 'App\\Support\\Enums\\CompareSelf'), '\\');
+
+        foreach ((new \ReflectionClass($fqcn))->getTraitNames() as $trait) {
+            $trait = ltrim($trait, '\\');
+
+            if ($trait === $configured || str_ends_with($trait, '\\CompareSelf')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

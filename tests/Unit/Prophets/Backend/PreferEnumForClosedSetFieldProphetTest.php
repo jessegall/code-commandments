@@ -277,6 +277,34 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
     }
 
+    public function test_repent_emits_compareself_form_for_a_compareself_enum(): void
+    {
+        // issue #31: when the reused enum uses CompareSelf, the comparison must
+        // become `Case->equals($x)` — not `$x === Case`, which SuggestCompareSelfTrait
+        // would immediately flag.
+        $enum = \JesseGall\CodeCommandments\Tests\Fixtures\EnumWithCompareSelf::class;
+        $code = "<?php\nclass Field extends Data {\n public function __construct(public string \$type = 'array') {}\n public function w(): string { return \$this->type === 'array' ? 'a' : \$this->type; }\n}";
+        $this->prophet->setRepentInput(['enum-class' => $enum, 'field' => 'type']);
+
+        $fixed = $this->prophet->repent('/x.php', $code)->newContent;
+
+        $this->assertStringContainsString('EnumWithCompareSelf::Array->equals($this->type)', $fixed);
+        $this->assertStringNotContainsString("\$this->type === ", $fixed);
+        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
+    }
+
+    public function test_repent_keeps_identical_form_for_a_plain_enum(): void
+    {
+        $enum = \JesseGall\CodeCommandments\Tests\Fixtures\PlainEnumNoCompareSelf::class;
+        $code = "<?php\nclass Field extends Data {\n public function __construct(public string \$type = 'array') {}\n public function w(): bool { return \$this->type === 'array'; }\n}";
+        $this->prophet->setRepentInput(['enum-class' => $enum, 'field' => 'type']);
+
+        $fixed = $this->prophet->repent('/x.php', $code)->newContent;
+
+        $this->assertStringContainsString('$this->type === PlainEnumNoCompareSelf::Array', $fixed);
+        $this->assertStringNotContainsString('->equals(', $fixed);
+    }
+
     public function test_repent_does_not_unwrap_non_string_readers(): void
     {
         // A reader where the enum itself is fine (e.g. returned from an enum-typed
