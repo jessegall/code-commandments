@@ -197,6 +197,49 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertCount(1, $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | int | null \$x = null): void {} }")->sins);
     }
 
+    public function test_data_property_union_is_autofixable(): void
+    {
+        $judgment = $this->judge('class NodeSocketData extends Data { public function __construct(public array | string $isVisibleRule) {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
+        $this->assertStringContainsString('UnionCast', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('T::Array, T::String', $judgment->warnings[0]->message);
+    }
+
+    public function test_repent_rewrites_a_data_union_property(): void
+    {
+        $prophet = (new WideUnionTypeProphet)->configure(['support_namespace' => 'App\\Support']);
+        $code = "<?php\nnamespace App\\Data;\n\nuse App\\Data\\Data;\n\nclass NodeSocketData extends Data\n{\n    public function __construct(\n        public array | string \$isVisibleRule,\n    ) {}\n}";
+
+        $result = $prophet->repent('/x.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('#[WithCastAndTransformer(UnionCast::class, allowed: [T::Array, T::String])]', $result->newContent);
+        $this->assertStringContainsString('public Union $isVisibleRule', $result->newContent);
+        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T;', $result->newContent);
+        $this->assertStringContainsString('use App\\Support\\UnionCast;', $result->newContent);
+        // Result must parse.
+        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($result->newContent));
+    }
+
+    public function test_non_data_union_is_not_autofixable(): void
+    {
+        $judgment = $this->judge('class Plain { public array | string $x; }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertNotTrue($judgment->warnings[0]->autoFixable);
+    }
+
+    public function test_class_member_union_is_not_autofixable(): void
+    {
+        // Money is a class, not a builtin T case — leave it to the human.
+        $judgment = $this->judge('class A extends Data { public function __construct(public Money | string $x) {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertNotTrue($judgment->warnings[0]->autoFixable);
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());
