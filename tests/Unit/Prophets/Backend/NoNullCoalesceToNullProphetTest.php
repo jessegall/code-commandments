@@ -22,8 +22,8 @@ class NoNullCoalesceToNullProphetTest extends TestCase
     {
         $judgment = $this->judge('$name = $row->label() ?? null;');
 
-        $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('no-op', $judgment->warnings[0]->message);
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('no-op', $judgment->sins[0]->message);
     }
 
     public function test_strips_noop_coalesce_to_null(): void
@@ -48,7 +48,7 @@ class NoNullCoalesceToNullProphetTest extends TestCase
     {
         $code = 'foreach ($obj?->getItems() ?? null as $item) {}';
         $judgment = $this->judge($code);
-        $this->assertCount(1, $judgment->warnings);
+        $this->assertCount(1, $judgment->sins);
 
         $fixed = $this->repent($code);
         $this->assertStringContainsString('?? [] as $item', $fixed);
@@ -59,7 +59,7 @@ class NoNullCoalesceToNullProphetTest extends TestCase
     {
         $code = 'foreach ($obj?->getItems() as $item) {}';
         $judgment = $this->judge($code);
-        $this->assertCount(1, $judgment->warnings);
+        $this->assertCount(1, $judgment->sins);
 
         $fixed = $this->repent($code);
         $this->assertStringContainsString('$obj?->getItems() ?? [] as $item', $fixed);
@@ -71,7 +71,7 @@ class NoNullCoalesceToNullProphetTest extends TestCase
             'class A { public function run($obj): void { foreach ($obj?->getItems() as $i) { echo $i; } } }'
         );
 
-        $this->assertStringContainsString('early return', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('early return', $judgment->sins[0]->message);
     }
 
     public function test_suggests_if_wrap_when_work_follows_the_loop(): void
@@ -80,7 +80,7 @@ class NoNullCoalesceToNullProphetTest extends TestCase
             'class A { public function run($obj): void { foreach ($obj?->getItems() as $i) { echo $i; } $this->after(); } }'
         );
 
-        $this->assertStringContainsString('wrap the loop', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('wrap the loop', $judgment->sins[0]->message);
     }
 
     public function test_does_not_flag_array_access_coalesce_to_null(): void
@@ -103,7 +103,7 @@ class NoNullCoalesceToNullProphetTest extends TestCase
         // A call return is always defined → `?? null` truly is a no-op.
         $judgment = $this->judge('$x = $this->load() ?? null;');
 
-        $this->assertCount(1, $judgment->warnings);
+        $this->assertCount(1, $judgment->sins);
     }
 
     public function test_does_not_flag_a_real_fallback(): void

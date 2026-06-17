@@ -120,23 +120,24 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $warnings = [];
+        $sins = [];
 
         foreach ($this->findings($ast, $content) as $finding) {
-            $warnings[] = $this->warningAt(
+            $sins[] = $this->sinAt(
                 $finding['line'],
                 $finding['message'],
                 $finding['snippet'],
+                null,
                 $finding['symbol'],
                 true,
             );
         }
 
-        if ($warnings === []) {
+        if ($sins === []) {
             return $this->righteous();
         }
 
-        return Judgment::withWarnings($warnings);
+        return $this->fallen($sins);
     }
 
     public function canRepent(string $filePath): bool
