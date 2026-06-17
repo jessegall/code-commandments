@@ -298,7 +298,7 @@ SCRIPTURE;
         // Reuse path: retype to an existing enum, create nothing.
         if ($reuse !== '') {
             $short = $this->shortClassName($reuse);
-            $content = $this->retype($content, $target, $short);
+            $content = $this->applyRetype($content, $target, $short, $this->caseMapForReuse($reuse));
 
             $penance = ["Retyped \${$target['name']} to existing enum {$short}"];
 
@@ -326,7 +326,13 @@ SCRIPTURE;
         $namespace = $this->namespaceOf($ast);
         $enumContent = $this->renderEnum($namespace, $short, $cases);
         $enumPath = dirname($filePath) . '/' . $short . '.php';
-        $content = $this->retype($content, $target, $short);
+
+        $caseMap = [];
+        foreach ($cases as $value) {
+            $caseMap[$value] = $this->caseName($value);
+        }
+
+        $content = $this->applyRetype($content, $target, $short, $caseMap);
 
         return RepentanceResult::absolved(
             $content,
@@ -336,19 +342,101 @@ SCRIPTURE;
     }
 
     /**
-     * Splice the field's type node to the enum (`string` → `Short`,
-     * `?string` → `?Short`).
+     * Splice the field's type node to the enum (`string` → `Short`, `?string` →
+     * `?Short`) AND convert its default, if any — a `string` default on an
+     * enum-typed property is a fatal. `EnumX::Case->value` loses its `->value`;
+     * a bare string literal that matches a case becomes that case. Edits are
+     * applied right-to-left so byte offsets stay valid.
      *
-     * @param  array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool}  $target
+     * @param  array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool, default: ?Node}  $target
+     * @param  array<string, string>  $caseMap  case value → case name
      */
-    private function retype(string $content, array $target, string $short): string
+    private function applyRetype(string $content, array $target, string $short, array $caseMap): string
     {
         $typeNode = $target['typeNode'];
-        $newType = ($target['nullable'] ? '?' : '') . $short;
-        $start = $typeNode->getStartFilePos();
-        $end = $typeNode->getEndFilePos();
 
-        return substr($content, 0, $start) . $newType . substr($content, $end + 1);
+        $edits = [[
+            'start' => $typeNode->getStartFilePos(),
+            'end' => $typeNode->getEndFilePos(),
+            'text' => ($target['nullable'] ? '?' : '') . $short,
+        ]];
+
+        $defaultEdit = $this->defaultEdit($target['default'], $short, $caseMap);
+
+        if ($defaultEdit !== null) {
+            $edits[] = $defaultEdit;
+        }
+
+        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        return $content;
+    }
+
+    /**
+     * The edit that converts a `string` default into an enum case so it matches
+     * the now-enum-typed property — or null when there is no convertible default.
+     *
+     * @param  array<string, string>  $caseMap
+     * @return array{start: int, end: int, text: string}|null
+     */
+    private function defaultEdit(?Node $default, string $short, array $caseMap): ?array
+    {
+        if ($default === null) {
+            return null;
+        }
+
+        // `EnumX::Case->value` → `Short::Case` (the property is now `Short`).
+        if ($default instanceof Node\Expr\PropertyFetch
+            && $default->name instanceof Node\Identifier
+            && strtolower($default->name->toString()) === 'value'
+            && $default->var instanceof Node\Expr\ClassConstFetch
+            && $default->var->name instanceof Node\Identifier) {
+            return [
+                'start' => $default->getStartFilePos(),
+                'end' => $default->getEndFilePos(),
+                'text' => $short . '::' . $default->var->name->toString(),
+            ];
+        }
+
+        // A bare string literal that matches a case → `Short::CaseName`.
+        if ($default instanceof Node\Scalar\String_ && isset($caseMap[$default->value])) {
+            return [
+                'start' => $default->getStartFilePos(),
+                'end' => $default->getEndFilePos(),
+                'text' => $short . '::' . $caseMap[$default->value],
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Case value → case name, by reflecting a reusable backed enum (best effort;
+     * only when the FQCN is given and autoloadable).
+     *
+     * @return array<string, string>
+     */
+    private function caseMapForReuse(string $reuse): array
+    {
+        $fqcn = ltrim($reuse, '\\');
+
+        if (! str_contains($fqcn, '\\') || ! enum_exists($fqcn)) {
+            return [];
+        }
+
+        $map = [];
+
+        foreach ($fqcn::cases() as $case) {
+            if ($case instanceof \BackedEnum) {
+                $map[(string) $case->value] = $case->name;
+            }
+        }
+
+        return $map;
     }
 
     /**
@@ -407,7 +495,7 @@ SCRIPTURE;
                         continue;
                     }
 
-                    $this->addField($fields, $param->type, $param->var->name, $param->getStartLine(), $names, $isData);
+                    $this->addField($fields, $param->type, $param->var->name, $param->getStartLine(), $names, $isData, $param->default);
                 }
             }
 
@@ -418,7 +506,7 @@ SCRIPTURE;
                 }
 
                 foreach ($property->props as $prop) {
-                    $this->addField($fields, $property->type, $prop->name->toString(), $prop->getStartLine(), $names, $isData);
+                    $this->addField($fields, $property->type, $prop->name->toString(), $prop->getStartLine(), $names, $isData, $prop->default);
                 }
             }
         }
@@ -427,9 +515,9 @@ SCRIPTURE;
     }
 
     /**
-     * @param  list<array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool}>  $fields
+     * @param  list<array{name: string, line: int, noun: string, typeNode: Node, nullable: bool, isData: bool, default: ?Node}>  $fields
      */
-    private function addField(array &$fields, ?Node $type, string $name, int $line, array $names, bool $isData): void
+    private function addField(array &$fields, ?Node $type, string $name, int $line, array $names, bool $isData, ?Node $default = null): void
     {
         if (! $this->isStringType($type)) {
             return;
@@ -450,6 +538,7 @@ SCRIPTURE;
             'typeNode' => $type,
             'nullable' => $type instanceof Node\NullableType,
             'isData' => $isData,
+            'default' => $default,
         ];
     }
 
