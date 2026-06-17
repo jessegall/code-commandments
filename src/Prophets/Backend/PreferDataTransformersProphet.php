@@ -107,12 +107,15 @@ transformer in `config/data.php` (a whole type), or a cast — see the Spatie
 Laravel Data "transformers" docs. The fix is a design move (where each rule
 lives), so it is NOT auto-fixed.
 
-WHAT FIRES — a method that reads >= `min_reads` (default 3) distinct
-properties of ONE parameter whose type is a `Spatie\LaravelData\Data`
-subclass (resolved through the codebase index) and returns an array.
+WHAT FIRES — a method where >= `min_reads` (default 3) distinct properties of
+ONE parameter whose type is a `Spatie\LaravelData\Data` subclass (resolved
+through the codebase index) flow into the VALUES of an array the method
+returns — a property->value serialisation map.
 
-WHAT DOES NOT — fewer property reads, a parameter that is not a Data class,
-or (a cross-file rule) anything when no codebase index could be built.
+WHAT DOES NOT — fewer mapped properties, a parameter that is not a Data class,
+property reads that only drive logic (a validator reading `$field->type` in a
+condition and returning error strings is NOT a serialiser), or (a cross-file
+rule) anything when no codebase index could be built.
 
 Configuration:
 
@@ -156,7 +159,12 @@ SCRIPTURE;
                     }
 
                     [$varName, $short] = $candidate;
-                    $reads = $this->distinctPropertyReads($finder, $method, $varName);
+                    // Only a genuine SERIALISER counts: the Data object's
+                    // properties must flow into the VALUES of the output array
+                    // (a property->value map). A validator/domain method that
+                    // merely reads props to drive logic and returns error
+                    // strings or computed values is not hand-mapping (#16).
+                    $reads = $this->propertiesFeedingArrayOutput($finder, $method, $varName);
 
                     if ($reads >= $minReads) {
                         $warnings[] = $this->warningAt(
@@ -248,18 +256,66 @@ SCRIPTURE;
         return false;
     }
 
-    private function distinctPropertyReads(NodeFinder $finder, Node\Stmt\ClassMethod $method, string $varName): int
+    /**
+     * Count the DISTINCT properties of $varName whose reads flow into the VALUES
+     * of an array the method returns — i.e. a property->value serialisation map.
+     * Reads that only appear in conditions, or feed error/computed values, do
+     * not count, so validators and domain methods are not misclassified (#16).
+     */
+    private function propertiesFeedingArrayOutput(NodeFinder $finder, Node\Stmt\ClassMethod $method, string $varName): int
     {
+        $stmts = $method->stmts ?? [];
+
+        // Local variables that are returned (`return $out;`) — array literals or
+        // element assignments into these also count as output.
+        $returnedVars = [];
+
+        foreach ($finder->findInstanceOf($stmts, Node\Stmt\Return_::class) as $return) {
+            if ($return->expr instanceof Expr\Variable && is_string($return->expr->name)) {
+                $returnedVars[$return->expr->name] = true;
+            }
+        }
+
+        /** @var array<Node> $containers Output value-carrying nodes. */
+        $containers = [];
+
+        // Directly returned array literals: `return [ ... ];`
+        foreach ($finder->findInstanceOf($stmts, Node\Stmt\Return_::class) as $return) {
+            if ($return->expr instanceof Expr\Array_) {
+                $containers[] = $return->expr;
+            }
+        }
+
+        foreach ($finder->findInstanceOf($stmts, Expr\Assign::class) as $assign) {
+            // `$out = [ ... ];` where $out is returned.
+            if ($assign->var instanceof Expr\Variable && is_string($assign->var->name)
+                && isset($returnedVars[$assign->var->name]) && $assign->expr instanceof Expr\Array_
+            ) {
+                $containers[] = $assign->expr;
+            }
+
+            // `$out[...] = <expr>;` / `$out[] = <expr>;` where $out is returned.
+            if ($assign->var instanceof Expr\ArrayDimFetch
+                && $assign->var->var instanceof Expr\Variable
+                && is_string($assign->var->var->name)
+                && isset($returnedVars[$assign->var->var->name])
+            ) {
+                $containers[] = $assign->expr;
+            }
+        }
+
         $props = [];
 
-        /** @var array<Expr\PropertyFetch> $fetches */
-        $fetches = $finder->findInstanceOf($method->stmts, Expr\PropertyFetch::class);
+        foreach ($containers as $container) {
+            /** @var array<Expr\PropertyFetch> $fetches */
+            $fetches = $finder->findInstanceOf([$container], Expr\PropertyFetch::class);
 
-        foreach ($fetches as $fetch) {
-            if ($fetch->var instanceof Expr\Variable && $fetch->var->name === $varName
-                && $fetch->name instanceof Node\Identifier
-            ) {
-                $props[$fetch->name->toString()] = true;
+            foreach ($fetches as $fetch) {
+                if ($fetch->var instanceof Expr\Variable && $fetch->var->name === $varName
+                    && $fetch->name instanceof Node\Identifier
+                ) {
+                    $props[$fetch->name->toString()] = true;
+                }
             }
         }
 
