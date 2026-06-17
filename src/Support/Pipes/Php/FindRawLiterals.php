@@ -139,21 +139,51 @@ final class FindRawLiterals implements Pipe
             'sentinel_floats' => false,
         ], $options);
 
-        $nodeFinder = new NodeFinder;
-
         // Files that DEFINE a type helper hold the canonical literal — skip them.
-        foreach ($nodeFinder->findInstanceOf($ast, Node\Stmt\ClassLike::class) as $classLike) {
-            if ($classLike->name !== null && in_array($classLike->name->toString(), self::TYPE_CLASS_NAMES, true)) {
-                return [];
-            }
+        if (self::isTypeHelperFile($ast)) {
+            return [];
         }
 
+        $nodeFinder = new NodeFinder;
         $parents = self::buildParentMap($ast);
         $findings = [];
         $consumed = [];
 
-        // Pass 1 — comparisons. These consume their literal operands so the
-        // literal pass does not double-report them.
+        self::findComparisonLiterals($ast, $nodeFinder, $content, $findings, $consumed);
+        self::findStringLiterals($ast, $nodeFinder, $content, $parents, $options, $findings, $consumed);
+        self::findMatrixLiterals($ast, $nodeFinder, $content, $parents, $findings, $consumed);
+        self::findEmptyArrayLiterals($ast, $nodeFinder, $content, $parents, $options, $findings, $consumed);
+        self::findSentinelInts($ast, $nodeFinder, $content, $parents, $options, $findings, $consumed);
+        self::findSentinelFloats($ast, $nodeFinder, $content, $parents, $options, $findings, $consumed);
+        self::findCoalesceLiterals($ast, $nodeFinder, $content, $findings);
+
+        return self::dedupeFindings($findings);
+    }
+
+    /**
+     * Check if file defines a type helper class.
+     */
+    private static function isTypeHelperFile(array $ast): bool
+    {
+        $nodeFinder = new NodeFinder;
+
+        foreach ($nodeFinder->findInstanceOf($ast, Node\Stmt\ClassLike::class) as $classLike) {
+            if ($classLike->name !== null && in_array($classLike->name->toString(), self::TYPE_CLASS_NAMES, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Pass 1: Find comparison literals and mark consumed.
+     *
+     * @param  array<int, true>  $consumed
+     * @param  list<array>  $findings
+     */
+    private static function findComparisonLiterals(array $ast, NodeFinder $nodeFinder, string $content, array &$findings, array &$consumed): void
+    {
         $comparisons = $nodeFinder->find($ast, static fn (Node $n): bool => self::isComparison($n));
 
         foreach ($comparisons as $cmp) {
@@ -164,8 +194,16 @@ final class FindRawLiterals implements Pipe
                 $findings[] = $finding;
             }
         }
+    }
 
-        // Pass 2 — bare literals not already consumed by a comparison.
+    /**
+     * Pass 2: Find bare string literals not consumed by comparisons.
+     *
+     * @param  array<int, true>  $consumed
+     * @param  list<array>  $findings
+     */
+    private static function findStringLiterals(array $ast, NodeFinder $nodeFinder, string $content, array $parents, array $options, array &$findings, array &$consumed): void
+    {
         foreach ($nodeFinder->findInstanceOf($ast, Scalar\String_::class) as $string) {
             if (isset($consumed[spl_object_id($string)])) {
                 continue;
@@ -177,11 +215,16 @@ final class FindRawLiterals implements Pipe
                 $findings[] = $finding;
             }
         }
+    }
 
-        // Pass 3 — the nested-array seed `[[]]`. Always on: it is a
-        // distinctive, low-noise literal (a stack/grid started with one empty
-        // inner array). Marks the inner `[]` consumed so it is not separately
-        // rewritten.
+    /**
+     * Pass 3: Find matrix seeds `[[]]`.
+     *
+     * @param  array<int, true>  $consumed
+     * @param  list<array>  $findings
+     */
+    private static function findMatrixLiterals(array $ast, NodeFinder $nodeFinder, string $content, array $parents, array &$findings, array &$consumed): void
+    {
         foreach ($nodeFinder->findInstanceOf($ast, Expr\Array_::class) as $array) {
             if (isset($consumed[spl_object_id($array)]) || ! self::isMatrixSeed($array)) {
                 continue;
@@ -201,74 +244,105 @@ final class FindRawLiterals implements Pipe
                 literal: self::source($content, $array),
             );
         }
+    }
 
-        // Pass 4 — bare empty array literals `[]`, opt-in.
-        if ($options['empty_array']) {
-            foreach ($nodeFinder->findInstanceOf($ast, Expr\Array_::class) as $array) {
-                if ($array->items !== [] || isset($consumed[spl_object_id($array)])) {
-                    continue;
-                }
-
-                $findings[] = self::finding(
-                    kind: 'array_literal',
-                    node: $array,
-                    content: $content,
-                    position: self::isConstPosition($array, $parents) ? 'const' : 'value',
-                    literal: T_Json::emptyArray(),
-                );
-            }
+    /**
+     * Pass 4: Find empty array literals `[]`, opt-in.
+     *
+     * @param  array<int, true>  $consumed
+     * @param  list<array>  $findings
+     */
+    private static function findEmptyArrayLiterals(array $ast, NodeFinder $nodeFinder, string $content, array $parents, array $options, array &$findings, array &$consumed): void
+    {
+        if (! $options['empty_array']) {
+            return;
         }
 
-        // Pass 5 — sentinel integers 0 / 1 / -1, opt-in. `-1` is a UnaryMinus
-        // wrapping `1`; flag it whole and consume the inner `1`.
-        if ($options['sentinel_ints']) {
-            foreach ($nodeFinder->findInstanceOf($ast, Expr\UnaryMinus::class) as $neg) {
-                if (! $neg->expr instanceof Scalar\Int_ || $neg->expr->value !== 1 || self::inDeclare($neg, $parents)) {
-                    continue;
-                }
-
-                $consumed[spl_object_id($neg->expr)] = true;
-                $findings[] = self::finding('int_minus_one', $neg, $content, 'value', '-1');
+        foreach ($nodeFinder->findInstanceOf($ast, Expr\Array_::class) as $array) {
+            if ($array->items !== [] || isset($consumed[spl_object_id($array)])) {
+                continue;
             }
 
-            foreach ($nodeFinder->findInstanceOf($ast, Scalar\Int_::class) as $int) {
-                if (isset($consumed[spl_object_id($int)]) || ! in_array($int->value, [0, 1], true) || self::inDeclare($int, $parents)) {
-                    continue;
-                }
+            $findings[] = self::finding(
+                kind: 'array_literal',
+                node: $array,
+                content: $content,
+                position: self::isConstPosition($array, $parents) ? 'const' : 'value',
+                literal: T_Json::emptyArray(),
+            );
+        }
+    }
 
-                $findings[] = self::finding(
-                    kind: $int->value === 0 ? 'int_zero' : 'int_one',
-                    node: $int,
-                    content: $content,
-                    position: 'value',
-                    literal: (string) $int->value,
-                );
-            }
+    /**
+     * Pass 5: Find sentinel integers 0 / 1 / -1, opt-in.
+     *
+     * @param  array<int, true>  $consumed
+     * @param  list<array>  $findings
+     */
+    private static function findSentinelInts(array $ast, NodeFinder $nodeFinder, string $content, array $parents, array $options, array &$findings, array &$consumed): void
+    {
+        if (! $options['sentinel_ints']) {
+            return;
         }
 
-        // Pass 6 — the float zero `0.0`, opt-in.
-        if ($options['sentinel_floats']) {
-            foreach ($nodeFinder->findInstanceOf($ast, Scalar\Float_::class) as $float) {
-                if (isset($consumed[spl_object_id($float)]) || $float->value !== 0.0 || self::inDeclare($float, $parents)) {
-                    continue;
-                }
-
-                $findings[] = self::finding(
-                    kind: 'float_zero',
-                    node: $float,
-                    content: $content,
-                    position: 'value',
-                    literal: self::source($content, $float),
-                );
+        foreach ($nodeFinder->findInstanceOf($ast, Expr\UnaryMinus::class) as $neg) {
+            if (! $neg->expr instanceof Scalar\Int_ || $neg->expr->value !== 1 || self::inDeclare($neg, $parents)) {
+                continue;
             }
+
+            $consumed[spl_object_id($neg->expr)] = true;
+            $findings[] = self::finding('int_minus_one', $neg, $content, 'value', '-1');
         }
 
-        // Pass 7 — cast over a null-coalesce, with the fallback carried as the
-        // helper's $default so behaviour is preserved for ANY fallback:
-        //   (string)($x ?? '')             -> T_String::coalesce($x)
-        //   (string)($x ?? T_String::COMMA)-> T_String::coalesce($x, T_String::COMMA)
-        //   (int)($x ?? 0)                 -> T_Int::coalesce($x)
-        //   $x ?? T_Array::empty()         -> T_Array::coalesce($x)
+        foreach ($nodeFinder->findInstanceOf($ast, Scalar\Int_::class) as $int) {
+            if (isset($consumed[spl_object_id($int)]) || ! in_array($int->value, [0, 1], true) || self::inDeclare($int, $parents)) {
+                continue;
+            }
+
+            $findings[] = self::finding(
+                kind: $int->value === 0 ? 'int_zero' : 'int_one',
+                node: $int,
+                content: $content,
+                position: 'value',
+                literal: (string) $int->value,
+            );
+        }
+    }
+
+    /**
+     * Pass 6: Find sentinel float 0.0, opt-in.
+     *
+     * @param  array<int, true>  $consumed
+     * @param  list<array>  $findings
+     */
+    private static function findSentinelFloats(array $ast, NodeFinder $nodeFinder, string $content, array $parents, array $options, array &$findings, array &$consumed): void
+    {
+        if (! $options['sentinel_floats']) {
+            return;
+        }
+
+        foreach ($nodeFinder->findInstanceOf($ast, Scalar\Float_::class) as $float) {
+            if (isset($consumed[spl_object_id($float)]) || $float->value !== 0.0 || self::inDeclare($float, $parents)) {
+                continue;
+            }
+
+            $findings[] = self::finding(
+                kind: 'float_zero',
+                node: $float,
+                content: $content,
+                position: 'value',
+                literal: self::source($content, $float),
+            );
+        }
+    }
+
+    /**
+     * Pass 7 & 8: Find coalesce literals (cast and array).
+     *
+     * @param  list<array>  $findings
+     */
+    private static function findCoalesceLiterals(array $ast, NodeFinder $nodeFinder, string $content, array &$findings): void
+    {
         $castTypes = [
             Expr\Cast\String_::class => 'T_String',
             Expr\Cast\Int_::class => 'T_Int',
@@ -286,19 +360,23 @@ final class FindRawLiterals implements Pipe
             $findings[] = self::coalesceFinding($cast, $cast->expr->left, $cast->expr->right, $type, $content);
         }
 
-        // The array coalesce has no cast to disclose its type, so only the
-        // explicit empty-array fallback is recognised (avoids flagging every
-        // `$x ?? [...]` with an arbitrary default).
         foreach ($nodeFinder->findInstanceOf($ast, Expr\BinaryOp\Coalesce::class) as $coalesce) {
             if (self::coalesceEmptyMatches($coalesce->right, 'T_Array')) {
                 $findings[] = self::coalesceFinding($coalesce, $coalesce->left, null, 'T_Array', $content);
             }
         }
+    }
 
+    /**
+     * Dedupe and sort findings, dropping nested ranges.
+     *
+     * @param  list<array>  $findings
+     * @return list<array>
+     */
+    private static function dedupeFindings(array $findings): array
+    {
         usort($findings, static fn ($a, $b) => ($a['start'] <=> $b['start']) ?: ($b['end'] <=> $a['end']));
 
-        // Drop findings nested inside another (e.g. the `''` inside
-        // `trim('') === ''`) so an auto-fix never rewrites overlapping ranges.
         $result = [];
         $lastEnd = -1;
 
