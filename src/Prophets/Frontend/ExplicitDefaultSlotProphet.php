@@ -77,18 +77,38 @@ SCRIPTURE;
                 $namedSlotCount = preg_match_all('/<template\s+#(?!default)[a-zA-Z]/', $templateContent);
                 $hasExplicitDefault = preg_match('/<template\s+#default/', $templateContent);
 
-                if ($namedSlotCount >= 1 && !$hasExplicitDefault) {
-                    if (preg_match('/>\s*[^<\s]/', $templateContent)) {
-                        return $this->warningAt(
-                            1,
-                            'Using named slot(s) with implicit default content',
-                            'Use explicit <template #default> when using more than one slot'
-                        );
-                    }
+                // Only flag REAL default content sitting as a SIBLING of a named
+                // slot — non-whitespace text right after a named slot's closing
+                // </template>. Text INSIDE a slot's own content, and whitespace
+                // between/around named slots, is not implicit default (#21).
+                if ($namedSlotCount >= 1 && !$hasExplicitDefault && $this->hasSiblingDefaultContent($templateContent)) {
+                    return $this->warningAt(
+                        1,
+                        'Using named slot(s) with implicit default content',
+                        'Use explicit <template #default> when using more than one slot'
+                    );
                 }
 
                 return null;
             })
             ->judge();
+    }
+
+    /**
+     * Whether the template has non-whitespace default content as a SIBLING of a
+     * named slot — i.e. raw text immediately after a named slot's closing
+     * </template>, or raw text directly before a named slot opens. Content
+     * inside a slot's own body, and inter-slot whitespace, do not count.
+     */
+    private function hasSiblingDefaultContent(string $template): bool
+    {
+        // Text right after a named slot closes: `</template>  Some text`.
+        if (preg_match('/<\/template>\s*[^<\s]/', $template)) {
+            return true;
+        }
+
+        // Raw text directly before a named slot opens, as a direct child:
+        // `<Component>  Some text  <template #name>` (no element in between).
+        return (bool) preg_match('/>\s*[^<\s][^<]*?<template\s+#(?!default)[a-zA-Z]/', $template);
     }
 }
