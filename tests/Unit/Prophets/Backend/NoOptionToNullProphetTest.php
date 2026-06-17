@@ -35,7 +35,56 @@ class NoOptionToNullProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('getOr(null)', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('null default', $judgment->warnings[0]->message);
+    }
+
+    public function test_flags_null_laundered_through_a_variable(): void
+    {
+        // The dodge: wrap null in a local so it's not the literal arg.
+        $judgment = $this->judge(<<<'PHP'
+        class Resolver
+        {
+            public function go($port)
+            {
+                $default = null;
+
+                return $this->inputByName($port)->getOr($default);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
+    public function test_flags_null_via_coalesce_and_ternary(): void
+    {
+        $coalesce = $this->judge(<<<'PHP'
+        class A { public function go($p) { return $this->opt($p)->getOr($x ?? null); } }
+        PHP);
+        $ternary = $this->judge(<<<'PHP'
+        class B { public function go($p, $cond) { return $this->opt($p)->getOr($cond ? $y : null); } }
+        PHP);
+
+        $this->assertCount(1, $coalesce->warnings);
+        $this->assertCount(1, $ternary->warnings);
+    }
+
+    public function test_does_not_flag_a_variable_that_holds_a_real_value(): void
+    {
+        // $default is assigned a real value — getOr($default) is a genuine fallback.
+        $judgment = $this->judge(<<<'PHP'
+        class Resolver
+        {
+            public function go($port)
+            {
+                $default = Input::empty();
+
+                return $this->inputByName($port)->getOr($default);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
     }
 
     public function test_does_not_flag_get_or_with_a_real_default(): void
