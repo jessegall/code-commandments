@@ -124,11 +124,64 @@ SCRIPTURE;
             }
         }
 
+        $flaggedLines = [];
+
+        foreach ($warnings as $warning) {
+            if ($warning->line !== null) {
+                $flaggedLines[$warning->line] = true;
+            }
+        }
+
+        // Docblock pass — the same contradiction in `@param`/`@return`/`@var`
+        // (`Option<string>|null`, `?Option`), which the native-type pass cannot
+        // see when the PHP type is a bare `Option` but the docblock unions it.
+        foreach (explode("\n", $content) as $index => $text) {
+            $line = $index + 1;
+
+            if (isset($flaggedLines[$line])) {
+                continue;
+            }
+
+            if (preg_match('/@(?:param|return|var)\s+(\S+)/', $text, $m) && $this->docTypeUnionsOption($m[1], $optionShort)) {
+                $warnings[] = $this->warn($line, $content);
+            }
+        }
+
         if ($warnings === []) {
             return $this->righteous();
         }
 
         return Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Whether a docblock type string unions/nullables `Option` at the TOP level,
+     * after stripping generics — so `Option<string>|null` and `?Option` fire,
+     * but `Option<string|int>` (the union lives inside the generic) does not.
+     */
+    private function docTypeUnionsOption(string $type, string $optionShort): bool
+    {
+        $stripped = $type;
+
+        do {
+            $previous = $stripped;
+            $stripped = preg_replace('/<[^<>]*>/', '', $stripped) ?? $stripped;
+        } while ($stripped !== $previous);
+
+        $nullable = str_starts_with($stripped, '?');
+        $atoms = array_values(array_filter(array_map('trim', explode('|', ltrim($stripped, '?')))));
+
+        $hasOption = false;
+
+        foreach ($atoms as $atom) {
+            $parts = explode('\\', ltrim($atom, '\\'));
+
+            if ((end($parts) ?: $atom) === $optionShort) {
+                $hasOption = true;
+            }
+        }
+
+        return $hasOption && (count($atoms) > 1 || $nullable);
     }
 
     private function warn(int $line, string $content): \JesseGall\CodeCommandments\Results\Warning
