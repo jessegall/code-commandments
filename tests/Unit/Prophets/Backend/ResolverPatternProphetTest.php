@@ -255,6 +255,51 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertStringContainsString('Resolver::firstResultWins', $judgment->warnings[0]->message);
     }
 
+    public function test_does_not_nominate_a_validity_gate_with_a_shared_fallback(): void
+    {
+        // Issue #17: the guards all early-return the SAME fallback expression —
+        // a validity gate, not three distinct predicate->factory alternatives.
+        $judgment = $this->judge(<<<'PHP'
+        class TriggerEventFactory
+        {
+            public function create(?string $eventKey, ValueBag $payload): object
+            {
+                if ($eventKey === null) { return $this->stdClass($payload); }
+                if (! class_exists($eventKey)) { return $this->stdClass($payload); }
+                if (! is_subclass_of($eventKey, Event::class)) { return $this->stdClass($payload); }
+                return $this->build($eventKey, $payload);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_nominate_a_reflection_procedure_with_try_catch(): void
+    {
+        // Issue #17: a procedure that transforms/throws inside a try/catch is
+        // the scripture's documented carve-out — not a dispatch chain.
+        $judgment = $this->judge(<<<'PHP'
+        class TriggerEventFactory
+        {
+            public function create(?string $eventKey, ValueBag $payload): object
+            {
+                if ($eventKey === null) { return $this->stdClass($payload); }
+                if (! class_exists($eventKey)) { return $this->fallback($payload); }
+                if (! is_subclass_of($eventKey, Event::class)) { return $this->other($payload); }
+                try {
+                    $ref = new \ReflectionClass($eventKey);
+                    return $ref->newInstanceArgs($payload->all());
+                } catch (\Throwable $e) {
+                    return $this->stdClass($payload);
+                }
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_nominate_when_fewer_than_three_guards(): void
     {
         $judgment = $this->judge(<<<'PHP'
