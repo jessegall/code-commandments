@@ -167,8 +167,15 @@ SCRIPTURE;
             }
 
             // Skip when this dispatch lives inside the very enum it dispatches
-            // on — that is exactly where the method belongs.
-            if (($insideEnum[spl_object_id($node)] ?? null) === $enum['fqcn']) {
+            // on — that per-case method IS the prescribed fix. This covers both
+            // `match ($this) { WireCategory::Mixed => … }` (arms resolve to the
+            // enum) and `match ($this) { self::Mixed => … }` (arms resolve to a
+            // `self` pseudo-FQCN, which always refers to the enclosing enum).
+            $insideFqcn = $insideEnum[spl_object_id($node)] ?? null;
+
+            if ($insideFqcn !== null
+                && ($insideFqcn === $enum['fqcn'] || in_array($enum['short'], ['self', 'static'], true))
+            ) {
                 continue;
             }
 
