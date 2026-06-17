@@ -148,6 +148,30 @@ final class ScaffoldRegistry
                 purpose: 'Predicate: value === expected (Equals::to(...)).',
                 subNamespace: 'Resolvers\\Predicates',
             ),
+            new Scaffold(
+                name: 'predicate-entry',
+                className: 'PredicateEntry',
+                stubFile: 'PredicateEntry.stub',
+                introducedIn: '1.66.0',
+                purpose: 'A predicate + a matched-value transform; Predicate::transform()->when().',
+                subNamespace: 'Resolvers\\Predicates',
+            ),
+            new Scaffold(
+                name: 'transform',
+                className: 'Transform',
+                stubFile: 'Transform.stub',
+                introducedIn: '1.66.0',
+                purpose: 'Base for a matched-value transform (Predicate::transform()).',
+                subNamespace: 'Resolvers\\Transforms',
+            ),
+            new Scaffold(
+                name: 'transform-strip-prefix',
+                className: 'StripPrefix',
+                stubFile: 'StripPrefix.stub',
+                introducedIn: '1.66.0',
+                purpose: 'Transform: drop a known prefix (StripPrefix::of(...)).',
+                subNamespace: 'Resolvers\\Transforms',
+            ),
         ];
     }
 }

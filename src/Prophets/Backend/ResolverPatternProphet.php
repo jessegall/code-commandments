@@ -105,14 +105,18 @@ produce one type. COMPOSE a Resolver and delegate:
     {
         return Resolver::firstResultWins(
             IsNull::make()->when(WireType::mixed(...)),
-            HasPrefix::of('resource:')->when(WireType::resource(...)),
-            HasPrefix::of('list:')->when(WireType::listOf(...)),
+            HasPrefix::of('resource:')->transform(StripPrefix::of('resource:'))->when(WireType::resource(...)),
+            HasPrefix::of('list:')->transform(StripPrefix::of('list:'))->when(WireType::listOf(...)),
             IsScalarToken::make()->when(WireType::scalar(...)),   // domain predicate
         )->resolve($token) ?? self::classRef($token);
     }
 
 Each entry is a NAMED Predicate paired with a result factory via `->when()` —
-never an inline test. `Resolver::collect(...)` gathers ALL matches (a list)
+never an inline test. To pre-process the matched input, add a transform:
+`->transform($t)->when(Factory(...))` runs `$t` on the value before the
+factory, so the factory stays a first-class callable (no `substr(...)` inside
+a closure). `$t` is any callable; reusable ones extend `Transform`
+(`StripPrefix::of('list:')`). `Resolver::collect(...)` gathers ALL matches (a list)
 instead of the first; any other combine rule is a `ResolveStrategy` passed to
 `Resolver::using($strategy, ...entries)`.
 
@@ -240,6 +244,17 @@ SCRIPTURE;
             $inline = [];
 
             foreach ($entries as $arg) {
+                if ($arg->value instanceof Expr\MethodCall && $this->stripsPrefixInWhen($arg->value)) {
+                    $warnings[] = $this->warningAt(
+                        $arg->value->getStartLine(),
+                        'Resolver entry strips its prefix with `substr(..., strlen(...))` inside `->when()` — move it to a transform: `HasPrefix::of(PREFIX)->transform(StripPrefix::of(PREFIX))->when(Factory(...))`, so the factory receives the stripped remainder and stays a first-class callable.',
+                        null,
+                        'prefix-substr',
+                    );
+
+                    continue;
+                }
+
                 if (! $arg->value instanceof Expr\ArrowFunction) {
                     continue;
                 }
@@ -278,6 +293,49 @@ SCRIPTURE;
                 }
             }
         }
+    }
+
+    /**
+     * Whether a chain entry is `HasPrefix::of(...)->when(fn (...) => …substr…)`
+     * — stripping the prefix by hand inside the factory, which `whenStripped()`
+     * does for you.
+     */
+    private function stripsPrefixInWhen(Expr\MethodCall $call): bool
+    {
+        if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'when'
+            || ! $this->rootsInHasPrefix($call->var)
+        ) {
+            return false;
+        }
+
+        $args = $call->getArgs();
+
+        if ($args === [] || ! $args[0]->value instanceof Expr\ArrowFunction) {
+            return false;
+        }
+
+        $finder = new NodeFinder;
+
+        foreach ($finder->findInstanceOf([$args[0]->value->expr], Expr\FuncCall::class) as $fc) {
+            if ($fc->name instanceof Node\Name && strtolower($fc->name->toString()) === 'substr') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function rootsInHasPrefix(Node $expr): bool
+    {
+        if ($expr instanceof Expr\StaticCall && $expr->class instanceof Node\Name) {
+            return $expr->class->getLast() === 'HasPrefix';
+        }
+
+        if ($expr instanceof Expr\MethodCall) {
+            return $this->rootsInHasPrefix($expr->var);
+        }
+
+        return false;
     }
 
     /**
