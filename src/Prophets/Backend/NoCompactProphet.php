@@ -20,7 +20,7 @@ use PhpParser\NodeFinder;
  * `extract($arr)` does the reverse, spraying unpredictable locals into scope.
  * Pass data explicitly instead.
  */
-#[IntroducedIn('1.78.0')]
+#[IntroducedIn('1.79.0')]
 class NoCompactProphet extends PhpCommandment
 {
     public function description(): string
