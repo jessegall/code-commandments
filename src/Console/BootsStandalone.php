@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Console;
 
 use Illuminate\Filesystem\Filesystem;
+use JesseGall\CodeCommandments\Exceptions\ConfigurationException;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
@@ -25,9 +26,7 @@ trait BootsStandalone
         $resolvedPath = ConfigLoader::resolve($configPath, $basePath);
 
         if ($resolvedPath === null) {
-            throw new \RuntimeException(
-                'No configuration file found. Create a commandments.php in your project root or pass --config=path.'
-            );
+            throw ConfigurationException::noneFound();
         }
 
         $config = ConfigLoader::load($resolvedPath);
