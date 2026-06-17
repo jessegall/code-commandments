@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
+use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\ProphetFailure;
 use JesseGall\CodeCommandments\Support\Environment;
@@ -229,8 +230,9 @@ class JudgeConsoleCommand extends Command
         // that are NOT mechanically fixable (e.g. hand-hydration), and labelling
         // those [AUTO-FIXABLE] sends the agent to a no-op `repent`.
         $autoFixable = $finding->autoFixable;
+        $repentInputs = ($autoFixable && $prophet instanceof ParameterizedRepenter) ? $prophet->repentInputs() : null;
 
-        foreach (NextFindingPresenter::lines($finding, count($ordered), 'commandments', $absolvable, $autoFixable) as $line) {
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'commandments', $absolvable, $autoFixable, $repentInputs) as $line) {
             $output->writeln($line);
         }
 

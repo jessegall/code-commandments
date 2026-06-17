@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
+use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\FindingCollector;
@@ -214,8 +215,9 @@ class JudgeCommand extends Command
         $absolvable = $finding->isWarning() || $prophet->requiresConfession();
         // Per-finding flag: a SinRepenter prophet may emit non-fixable findings.
         $autoFixable = $finding->autoFixable;
+        $repentInputs = ($autoFixable && $prophet instanceof ParameterizedRepenter) ? $prophet->repentInputs() : null;
 
-        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable, $autoFixable) as $line) {
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable, $autoFixable, $repentInputs) as $line) {
             $this->output->writeln($line);
         }
 

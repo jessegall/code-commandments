@@ -78,6 +78,34 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_flag_an_attributed_promoted_param(): void
+    {
+        // issue #27: #[Input] etc. params are container-hydrated with a raw
+        // string — retyping to a BackedEnum throws a TypeError, so exempt them.
+        $judgment = $this->judge(
+            'class ResourceFilter { public function __construct('
+            . '#[Input(options: ResourceFilterOperator::class)] '
+            . 'public readonly string $operator = "=") {} }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_an_attributed_property(): void
+    {
+        $judgment = $this->judge('class A { #[Input] public string $status; }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_still_flags_an_attribute_free_promoted_prop(): void
+    {
+        // The Spatie Data case stays valid — no hydration attribute.
+        $judgment = $this->judge('class NodeSocketData extends Data { public function __construct(public string $direction) {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
     public function test_does_not_flag_a_plain_method_parameter(): void
     {
         // Only data FIELDS (properties + promoted ctor props). A transient method
