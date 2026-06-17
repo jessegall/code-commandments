@@ -58,7 +58,7 @@ class ResolverPatternProphet extends PhpCommandment
             ->whenUnsure(
                 'Read the full rule below — the goal is the resolver + Predicate '
                 . 'structure: a Resolver of NAMED Predicates, reusing the kernel '
-                . '(`IsNull`/`IsEnum`/`HasPrefix`) and creating domain Predicates '
+                . '(`IsNull`/`IsEnum`/`HasClass`/`HasPrefix`) and creating domain Predicates '
                 . 'for type-specific tests. A resolver of inline closures is a sin.'
             );
     }
@@ -80,7 +80,7 @@ chain and NOT a resolver of inline closures. Each test becomes a class you
 name, reuse, and compose. Run `scaffold` for the kernel under
 `Support\Resolvers`: a composable `Resolver`, `ResolveStrategy`
 (`FirstResultWins`, `CollectResults`), and a `Predicate` kernel (`IsNull`,
-`IsEnum`, `HasPrefix`, `Equals`, `AllOf`/`AnyOf`/`Negated`).
+`IsEnum`, `HasClass`, `HasPrefix`, `Equals`, `AllOf`/`AnyOf`/`Negated`).
 
 When you fix a finding here, do the WHOLE job — a resolver whose entries are
 still inline `fn (...) => test ? … : null` is a SIN, not progress.
@@ -134,8 +134,9 @@ A composed resolver's entries must be NAMED Predicates. Give each inline test
 a class:
 
   - REUSE THE KERNEL when one fits: `$x === null` → `IsNull::make()`;
-    `$x instanceof SomeEnum` → `IsEnum::for(...)`; `str_starts_with(...)` →
-    `HasPrefix::of(...)`. Do not re-create these.
+    `$x instanceof SomeEnum` → `IsEnum::for(...)`; `$x instanceof SomeClass`
+    (dispatch on an object's type) → `HasClass::of(SomeClass::class)`;
+    `str_starts_with(...)` → `HasPrefix::of(...)`. Do not re-create these.
   - GENERIC but not in the kernel → add it to the SHARED
     `Support\Resolvers\Predicates\`.
   - DOMAIN-BOUND (reads a type's constants — `self::SCALARS`, `WireType::MIXED`)
@@ -584,9 +585,10 @@ SCRIPTURE;
             return 'IsNull';
         }
 
-        // `$x instanceof SomeEnum`
+        // `$x instanceof SomeType` — `IsEnum::for(...)` when the type is an enum,
+        // `HasClass::of(...)` when dispatching on an object's class/interface.
         if ($expr instanceof Expr\Instanceof_) {
-            return 'IsEnum::for(...)';
+            return 'IsEnum::for(...)/HasClass::of(...)';
         }
 
         // `str_starts_with($x, PREFIX)`

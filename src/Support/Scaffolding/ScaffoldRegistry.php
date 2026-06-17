@@ -149,6 +149,14 @@ final class ScaffoldRegistry
                 subNamespace: 'Resolvers\\Predicates',
             ),
             new Scaffold(
+                name: 'predicate-has-class',
+                className: 'HasClass',
+                stubFile: 'HasClass.stub',
+                introducedIn: '1.67.0',
+                purpose: 'Predicate: value is an instance of a class/interface (HasClass::of(...)).',
+                subNamespace: 'Resolvers\\Predicates',
+            ),
+            new Scaffold(
                 name: 'predicate-entry',
                 className: 'PredicateEntry',
                 stubFile: 'PredicateEntry.stub',

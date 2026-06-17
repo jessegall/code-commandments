@@ -71,6 +71,19 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringNotContainsString('self ...$cases', $trait);
     }
 
+    public function test_generates_has_class_predicate(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $hasClass = $this->dir . '/Resolvers/Predicates/HasClass.php';
+        $this->assertFileExists($hasClass);
+        $src = file_get_contents($hasClass);
+        $this->assertStringContainsString('namespace Acme\\Support\\Resolvers\\Predicates;', $src);
+        $this->assertStringContainsString('final class HasClass extends Predicate', $src);
+        $this->assertStringContainsString('public static function of(string $class): self', $src);
+        $this->assertStringContainsString('$value instanceof $this->class', $src);
+    }
+
     public function test_generated_kernel_is_phpstan_clean(): void
     {
         // Regression guard (issue #13): the generated resolver/predicate kernel
