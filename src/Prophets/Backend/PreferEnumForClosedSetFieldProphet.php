@@ -156,13 +156,16 @@ existing enum instead, pass
 FQCN is imported for you). Use `--input field=<name>` to pick which field when a
 file has more than one.
 
-The auto-fix is SAFE ONLY on a Spatie Data subclass, because `::from()` bridges
-string↔enum on the way in and out — so the construction/serialization literals
-need no rewrite. On a PLAIN class there is no bridge: retyping would break the
-field's `$this->x = '…'` assignments and `$x === '…'` comparisons (here and at
-call sites in other files). So on a non-Data class the finding is reported but
-NOT marked auto-fixable, and `repent` refuses it — convert those by hand,
-changing every literal to the enum case at each read/write.
+The auto-fix always converts THIS file in full — the property, its default, and
+every same-file `$this->field` read/compare/assign. On a Spatie Data subclass
+that is the whole job: `::from()` bridges string↔enum at the boundary, so
+cross-file construction/serialization literals keep working untouched. On a
+PLAIN class there is no bridge — cross-file usages (`new X('…')` args and
+`$x->field` reads/compares in OTHER files) genuinely need editing, and a
+single-file rewrite cannot reach them safely (resolving an arbitrary
+`$x->field` to this class needs full type inference). So for a non-Data class
+`repent` converts this file AND hands back a precise CHECKLIST of the cross-file
+usages to finish by hand — it never silently rewrites another file's `->field`.
 
 WHAT FIRES — a `string` / `?string` typed property or promoted ctor property
 whose name matches the configured closed-set list at a word boundary.
@@ -205,6 +208,8 @@ SCRIPTURE;
                 $field['name'],
             );
 
+            $autoFixable = true;
+
             if ($field['isData']) {
                 // Spatie Data: ::from() bridges string↔enum both ways, so the
                 // retype is a safe, complete auto-fix.
@@ -212,19 +217,16 @@ SCRIPTURE;
                     ' Auto-fixable: `repent --input create-enum-class=%s --input cases=…` creates the enum and retypes the field (or `--input enum-class=ExistingEnum` to reuse one). If it is genuinely open free text, leave it.',
                     $enum,
                 );
-                $autoFixable = true;
             } else {
-                // Plain class: no string↔enum bridge. Retyping alone would break
-                // the field's string assignments (`$this->%s = '…'`) and `===`
-                // comparisons, here and at call sites in other files — so this is
-                // a HAND fix, not a mechanical one.
+                // Plain class: no ::from() bridge. The auto-fix converts this
+                // whole file (property, default, same-file reads/compares), but
+                // cross-file usages cannot be reached — `repent` returns a precise
+                // checklist for those.
                 $tail = sprintf(
-                    ' This is NOT a Spatie Data class, so the auto-fix does not apply: retyping `$%s` would break its string assignments and `===` comparisons (here and at call sites). Convert by hand — change every `$this->%s = \'…\'` and `$x->%s === \'…\'` to the enum case. If it is genuinely open free text, leave it.',
-                    $field['name'],
-                    $field['name'],
+                    ' Auto-fixable IN-FILE: `repent --input create-enum-class=%s --input cases=…` (or `--input enum-class=Existing`) converts this file fully; since this is not a Spatie Data class, `repent` also prints a checklist of cross-file usages (`new …(\'…\')`, `$x->%s` in other files) to finish by hand. If it is genuinely open free text, leave it.',
+                    $enum,
                     $field['name'],
                 );
-                $autoFixable = false;
             }
 
             $warnings[] = $this->warningAt(
@@ -289,15 +291,11 @@ SCRIPTURE;
             return RepentanceResult::unrepentant("More than one closed-set field here ({$names}) — pick one with --input field=<name>");
         }
 
-        // Safety: only Spatie Data classes have the ::from() string↔enum bridge.
-        // On a plain class, retyping would break the field's string assignments
-        // and `===` comparisons (here and at call sites in other files), which
-        // this single-file rewrite cannot reach — so refuse rather than break.
-        if (! $target['isData']) {
-            return RepentanceResult::unrepentant(
-                "\${$target['name']} is on a non-Spatie-Data class; retyping would break its string assignments and `===` comparisons (here and at call sites). Convert by hand — change each literal to the enum case at every read/write."
-            );
-        }
+        // On a Spatie Data class, ::from() bridges string↔enum, so cross-file
+        // usages need no rewrite. On a plain class they do — but the single-file
+        // pass can't reach OTHER files, so we convert everything in THIS file and
+        // hand back a precise cross-file checklist instead of silently breaking.
+        $crossFile = $target['isData'] ? [] : [$this->crossFileChecklist($target['name'])];
 
         $reuse = trim($this->repentInput['enum-class'] ?? '');
         $createName = trim($this->repentInput['create-enum-class'] ?? '');
@@ -311,7 +309,7 @@ SCRIPTURE;
             // not leave a SuggestCompareSelfTrait finding behind.
             $content = $this->applyRetype($content, $ast, $target, $short, $this->caseMapForReuse($reuse), $this->enumUsesCompareSelf($reuse));
 
-            $penance = ["Retyped \${$target['name']} to existing enum {$short}"];
+            $penance = ["Retyped \${$target['name']} to existing enum {$short} (and its same-file usages)", ...$crossFile];
 
             if (str_contains($reuse, '\\')) {
                 $content = $this->ensureUse($content, ltrim($reuse, '\\'));
@@ -347,8 +345,22 @@ SCRIPTURE;
 
         return RepentanceResult::absolved(
             $content,
-            ["Created enum {$short} ({$enumPath}) and retyped \${$target['name']} (and its same-file readers)"],
+            ["Created enum {$short} ({$enumPath}) and retyped \${$target['name']} (and its same-file readers)", ...$crossFile],
             createdFiles: [$enumPath => $enumContent],
+        );
+    }
+
+    /**
+     * A precise, actionable checklist for the cross-file usages a single-file
+     * rewrite cannot safely reach on a non-Data class.
+     */
+    private function crossFileChecklist(string $field): string
+    {
+        return sprintf(
+            'CROSS-FILE (not auto-converted — no Spatie Data ::from() bridge here): convert usages of $%s in OTHER files by hand. Construction args `new …(\'<value>\')` and `$x->%s` reads/comparisons → the enum case (string literal) or `->value` (where a string is read). Grep `->%s` and the class\'s constructor calls.',
+            $field,
+            $field,
+            $field,
         );
     }
 
