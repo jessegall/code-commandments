@@ -45,9 +45,11 @@ class NoOptionToNullProphet extends PhpCommandment
                 . '(`?->`, `=== null`) — discarding the Option entirely.'
             )
             ->leaveWhen(
-                'The value is genuinely handed to an external API whose contract '
-                . 'is `?T` at a boundary and there is no Option-aware path. Rare — '
-                . 'prefer map()/each()/getOrThrow().'
+                'The value-or-null is CARRIED straight to a sink that accepts null '
+                . '— a nullable call argument / DTO field, a `return` matching the '
+                . 'method\'s own `?T` contract, or a resolver factory arrow whose '
+                . 'null means "no match". Those are not null-checks; the prophet '
+                . 'already skips those positions. The smell is unwrap-THEN-check.'
             )
             ->whenUnsure(
                 'If you find yourself null-checking the result, use map()/each()/'
@@ -85,7 +87,15 @@ a ternary with a null branch, or a local variable whose every assignment is null
 (`$d = null; …->getOr($d)`). Laundering the null does not make it a real default.
 
 WHAT DOES NOT — `getOr($realDefault)` with a genuine fallback, `getOrThrow()`,
-`map()`, `each()`. Configure the method name(s) if your Option accessor differs:
+`map()`, `each()`, AND carry-into-nullable positions where the value-or-null is
+handed straight to a sink that accepts null rather than null-checked:
+
+    new OutputSocket(isVisibleRule: $rule->getOr(null));   // nullable arg — carry
+    return $this->find($x)->getOr(null);                   // method's own ?T contract
+    IsX::make()->then(fn () => $this->build($x)->getOr(null));  // factory: null = no match
+
+The smell is unwrap-THEN-null-check (`$x = …->getOr(null); if ($x === null)`),
+not unwrap-and-hand-off. Configure the method name(s) if your accessor differs:
 
     Backend\NoOptionToNullProphet::class => [
         'methods' => ['getOr'],
@@ -130,6 +140,15 @@ SCRIPTURE;
                 continue;
             }
 
+            // Carry-into-nullable is legitimate: handing the value-or-null
+            // straight to a sink that accepts null — a (nullable) call argument,
+            // a `return` (the method's own ?T contract), or a resolver factory
+            // arrow body (`fn () => …->getOr(null)`, where null = "no match").
+            // The smell is unwrap-THEN-null-check, not unwrap-and-hand-off (#23).
+            if ($this->isCarryPosition($call, $parents)) {
+                continue;
+            }
+
             $method = $call->name->toString();
             $warnings[] = $this->warningAt(
                 $call->getStartLine(),
@@ -148,6 +167,25 @@ SCRIPTURE;
         }
 
         return Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Whether the call sits in a "carry" position — its value-or-null result is
+     * handed straight to a sink that accepts null, rather than null-checked.
+     * Those are legitimate: a call argument, a `return` expression, or an arrow
+     * function body (a resolver factory whose null means "no match").
+     *
+     * @param  array<int, Node>  $parents
+     */
+    private function isCarryPosition(Expr\MethodCall $call, array $parents): bool
+    {
+        $parent = $parents[spl_object_id($call)] ?? null;
+
+        if ($parent instanceof Node\Arg || $parent instanceof Node\Stmt\Return_) {
+            return true;
+        }
+
+        return $parent instanceof Expr\ArrowFunction && $parent->expr === $call;
     }
 
     /**

@@ -47,8 +47,9 @@ class NoOptionToNullProphetTest extends TestCase
             public function go($port)
             {
                 $default = null;
+                $input = $this->inputByName($port)->getOr($default);
 
-                return $this->inputByName($port)->getOr($default);
+                return $input?->type();
             }
         }
         PHP);
@@ -59,10 +60,10 @@ class NoOptionToNullProphetTest extends TestCase
     public function test_flags_null_via_coalesce_and_ternary(): void
     {
         $coalesce = $this->judge(<<<'PHP'
-        class A { public function go($p) { return $this->opt($p)->getOr($x ?? null); } }
+        class A { public function go($p) { $v = $this->opt($p)->getOr($x ?? null); return $v?->x(); } }
         PHP);
         $ternary = $this->judge(<<<'PHP'
-        class B { public function go($p, $cond) { return $this->opt($p)->getOr($cond ? $y : null); } }
+        class B { public function go($p, $cond) { $v = $this->opt($p)->getOr($cond ? $y : null); return $v?->x(); } }
         PHP);
 
         $this->assertCount(1, $coalesce->warnings);
@@ -112,6 +113,59 @@ class NoOptionToNullProphetTest extends TestCase
                 $a = $this->inputByName($port)->getOrThrow();
                 $b = $this->inputByName($port)->map(fn ($i) => $i->socketType());
                 $this->inputByName($port)->each(fn ($i) => $i->go());
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_carry_into_a_nullable_argument(): void
+    {
+        // #23: the value-or-null is handed to a (nullable) constructor arg —
+        // a carry, not a null-check.
+        $judgment = $this->judge(<<<'PHP'
+        class Reflector
+        {
+            public function build($attr)
+            {
+                return new OutputSocket(
+                    isVisibleRule: $this->normaliseVisibilityRule($attr)->getOr(null),
+                );
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_carry_via_return(): void
+    {
+        // The method's own contract is ?T — returning getOr(null) is the boundary.
+        $judgment = $this->judge(<<<'PHP'
+        class C
+        {
+            public function elementType($attr): ?string
+            {
+                return $this->resolveElementType($attr)->getOr(null);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_resolver_factory_arrow(): void
+    {
+        // firstResultWins entries must return T|null (null = no match).
+        $judgment = $this->judge(<<<'PHP'
+        class C
+        {
+            public function resolvers()
+            {
+                return Resolver::firstResultWins(
+                    IsX::make()->then(fn ($r) => $this->build($r)->getOr(null)),
+                );
             }
         }
         PHP);
