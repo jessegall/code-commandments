@@ -34,22 +34,23 @@ class PreferExtractedPredicateProphet extends PhpCommandment
 
     public function description(): string
     {
-        return 'Extract inline predicates in a resolver into named Predicate classes';
+        return 'Promote first-match dispatch chains to resolvers and extract their predicates';
     }
 
     public function advisory(): Advisory
     {
         return Advisory::make()
             ->applyWhen(
-                'A resolver chain inlines a boolean test as a closure — '
-                . '`fn ($x) => str_starts_with($x, …) ? … : null`, an `instanceof`, '
-                . 'a membership test — instead of a named Predicate. The test is a '
-                . 'concept in disguise and is usually repeated across resolvers.'
+                'Either: a method is a first-match dispatch chain (>= 3 predicate '
+                . 'guards each returning a constructed value of one type, plus a '
+                . 'fallback) — a resolver in disguise; OR an existing resolver '
+                . 'inlines a boolean test (`str_starts_with`, `instanceof`, a '
+                . 'membership test) instead of a named Predicate.'
             )
             ->leaveWhen(
-                'The test is a genuine one-off with no reuse and reads clearly '
-                . 'inline, or it is not really a predicate (it transforms rather '
-                . 'than answers yes/no).'
+                'The branches are not pure dispatch (they transform, throw, or '
+                . 'return mixed shapes), or the inline test is a genuine one-off '
+                . 'with no reuse that reads clearly where it is.'
             )
             ->whenUnsure(
                 'If you can name the test (`HasPrefix`, `IsScalarToken`), extract '
@@ -67,9 +68,31 @@ class PreferExtractedPredicateProphet extends PhpCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-A resolver should read as a list of NAMED predicates, not a pile of inline
-boolean closures. An inline test is a concept in disguise — give it a name
-and a class, then reuse and compose it.
+This prophet covers the whole resolver story in two modes.
+
+MODE 1 — NOMINATE a resolver. A method that is a first-match dispatch chain
+is a resolver in disguise:
+
+    public static function parse(?string $token): self
+    {
+        if ($token === null)                       { return self::mixed(); }
+        if (str_starts_with($token, 'resource:'))  { return self::resource(...); }
+        if (str_starts_with($token, 'list:'))      { return self::listOf(...); }
+        if (in_array($token, self::SCALARS, true)) { return self::scalar($token); }
+        return self::classRef($token);
+    }
+
+Every branch constructs the same type by a predicate test → extract it to a
+Resolver (`Resolvers\WireType\WireTypeResolver`) whose `resolvers()` return
+the value or null (first non-null wins), each guard becoming a named
+Predicate. Fires only when >= 3 guards each return a construction of ONE
+class and EVERY return in the method is such a construction — a method that
+transforms, throws, or returns mixed shapes is not pure dispatch.
+
+MODE 2 — EXTRACT predicates from an existing resolver. A resolver should read
+as a list of NAMED predicates, not a pile of inline boolean closures. An
+inline test is a concept in disguise — give it a name and a class, then
+reuse and compose it.
 
 Bad — the predicate is buried in the chain:
 
@@ -131,23 +154,30 @@ SCRIPTURE;
         $classes = $finder->findInstanceOf($ast, Node\Stmt\Class_::class);
 
         foreach ($classes as $class) {
-            if (! $this->isResolverClass($class)) {
+            if ($this->isResolverClass($class)) {
+                // Already a resolver — extract its inline predicates.
+                $baseName = $this->resolverBaseName($class);
+                $seen = [];
+
+                foreach ($this->predicateExpressions($finder, $class) as [$expr, $line]) {
+                    $printed = $printer->prettyPrintExpr($expr);
+                    $key = $line . ':' . $printed;
+
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+
+                    $seen[$key] = true;
+                    $warnings[] = $this->warningAt($line, $this->messageFor($expr, $printed, $baseName, $finder), null, 'inline-predicate');
+                }
+
                 continue;
             }
 
-            $baseName = $this->resolverBaseName($class);
-            $seen = [];
-
-            foreach ($this->predicateExpressions($finder, $class) as [$expr, $line]) {
-                $printed = $printer->prettyPrintExpr($expr);
-                $key = $line . ':' . $printed;
-
-                if (isset($seen[$key])) {
-                    continue;
-                }
-
-                $seen[$key] = true;
-                $warnings[] = $this->warningAt($line, $this->messageFor($expr, $printed, $baseName, $finder), null, 'inline-predicate');
+            // Not a resolver yet — nominate one when a method is a first-match
+            // dispatch chain (a resolver in disguise).
+            foreach ($this->dispatchChainMethods($finder, $class) as $chain) {
+                $warnings[] = $this->warningAt($chain['line'], $this->nominateMessage($chain), null, 'resolver-in-disguise');
             }
         }
 
@@ -171,6 +201,131 @@ SCRIPTURE;
             $this->truncate($printed),
             $home,
         );
+    }
+
+    /**
+     * @param  array{method: string, type: string, guards: int, resolver: string}  $chain
+     */
+    private function nominateMessage(array $chain): string
+    {
+        return sprintf(
+            '%s() is a first-match dispatch chain — %d predicate guards each returning a constructed value, plus a fallback. That is a resolver in disguise: extract it to a Resolver (e.g. `Resolvers\\%s\\%sResolver`) whose resolvers() return the value or null (first non-null wins), with each guard a named Predicate (generic → shared `Resolvers\\Predicates`, type-specific → the resolver\'s own `Predicates`).',
+            $chain['method'],
+            $chain['guards'],
+            $chain['resolver'],
+            $chain['resolver'],
+        );
+    }
+
+    /**
+     * Methods that are a first-match dispatch chain — a resolver in disguise.
+     *
+     * @return list<array{method: string, type: string, guards: int, resolver: string, line: int}>
+     */
+    private function dispatchChainMethods(NodeFinder $finder, Node\Stmt\Class_ $class): array
+    {
+        $out = [];
+
+        foreach ($class->getMethods() as $method) {
+            if ($method->stmts === null) {
+                continue;
+            }
+
+            $chain = $this->asDispatchChain($finder, $method);
+
+            if ($chain === null) {
+                continue;
+            }
+
+            // Name the suggested resolver after the produced type — the class
+            // itself when it builds `self`, otherwise the constructed class.
+            $produced = in_array($chain['type'], ['self', 'static'], true)
+                ? ($class->name?->toString() ?? 'Type')
+                : $chain['type'];
+
+            $out[] = [...$chain, 'resolver' => $produced, 'line' => $method->getStartLine()];
+        }
+
+        return $out;
+    }
+
+    /**
+     * A method qualifies when EVERY return constructs a value of one class and
+     * at least three of those returns are predicate-guarded — i.e. the method
+     * maps its input to one of several constructions by a first-match test.
+     *
+     * @return array{method: string, type: string, guards: int}|null
+     */
+    private function asDispatchChain(NodeFinder $finder, Node\Stmt\ClassMethod $method): ?array
+    {
+        /** @var array<Node\Stmt\Return_> $returns */
+        $returns = $finder->findInstanceOf($method->stmts, Node\Stmt\Return_::class);
+
+        if (count($returns) < 4) {
+            return null; // >= 3 guards + a fallback
+        }
+
+        $type = null;
+
+        foreach ($returns as $return) {
+            if ($return->expr === null) {
+                return null;
+            }
+
+            $constructed = $this->constructionTargetClass($return->expr);
+
+            if ($constructed === null) {
+                return null; // a non-construction return — not a pure dispatch
+            }
+
+            $type ??= $constructed;
+
+            if ($type !== $constructed) {
+                return null; // mixed constructed types
+            }
+        }
+
+        $guards = 0;
+
+        /** @var array<Node\Stmt\If_> $ifs */
+        $ifs = $finder->findInstanceOf($method->stmts, Node\Stmt\If_::class);
+
+        foreach ($ifs as $if) {
+            if ($if->else !== null || $if->elseifs !== [] || ! $this->isPredicateExpr($if->cond)) {
+                continue;
+            }
+
+            if (count($if->stmts) === 1
+                && $if->stmts[0] instanceof Node\Stmt\Return_
+                && $if->stmts[0]->expr !== null
+                && $this->constructionTargetClass($if->stmts[0]->expr) === $type
+            ) {
+                $guards++;
+            }
+        }
+
+        if ($guards < 3) {
+            return null;
+        }
+
+        return ['method' => $method->name->toString(), 'type' => $type, 'guards' => $guards];
+    }
+
+    /**
+     * The short class name a `Type::factory(...)` / `new Type(...)` constructs,
+     * or null when the expression is not a construction.
+     */
+    private function constructionTargetClass(Expr $expr): ?string
+    {
+        if ($expr instanceof Expr\StaticCall && $expr->class instanceof Node\Name) {
+            return $expr->class->getLast();
+        }
+
+        if ($expr instanceof Expr\New_ && $expr->class instanceof Node\Name) {
+            return $expr->class->getLast();
+        }
+
+        return null;
     }
 
     /**

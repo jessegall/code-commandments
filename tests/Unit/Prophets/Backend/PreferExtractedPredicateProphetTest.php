@@ -221,6 +221,65 @@ class PreferExtractedPredicateProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_nominates_a_resolver_for_a_first_match_dispatch_chain(): void
+    {
+        // A value object with a parse() that is a chain of predicate guards each
+        // returning a constructed value — a resolver in disguise.
+        $judgment = $this->judge(<<<'PHP'
+        class WireType
+        {
+            public static function parse(?string $token): self
+            {
+                if ($token === null) { return self::mixed(); }
+                if (str_starts_with($token, 'resource:')) { return self::resource($token); }
+                if (str_starts_with($token, 'list:')) { return self::listOf($token); }
+                if (in_array($token, ['string', 'int'], true)) { return self::scalar($token); }
+                return self::classRef($token);
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('first-match dispatch chain', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Resolvers\\WireType\\WireTypeResolver', $judgment->warnings[0]->message);
+    }
+
+    public function test_does_not_nominate_when_fewer_than_three_guards(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        class WireType
+        {
+            public static function parse(?string $token): self
+            {
+                if ($token === null) { return self::mixed(); }
+                if (str_starts_with($token, 'list:')) { return self::listOf($token); }
+                return self::classRef($token);
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_nominate_when_returns_are_not_all_constructions(): void
+    {
+        // One branch returns a plain value, not a construction — not pure dispatch.
+        $judgment = $this->judge(<<<'PHP'
+        class Thing
+        {
+            public function pick(?string $token): mixed
+            {
+                if ($token === null) { return self::a(); }
+                if (str_starts_with($token, 'x')) { return self::b(); }
+                if (str_contains($token, 'y')) { return self::c(); }
+                return $token;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());
