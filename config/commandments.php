@@ -153,6 +153,9 @@ return [
                 Backend\NoConditionalArraySpreadProphet::class,
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
                 Backend\ResolverPatternProphet::class,
+                Backend\DuplicateCodeProphet::class => [
+                    // 'min_lines' => 5,
+                ],
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class => [
                     'null_objects' => [
