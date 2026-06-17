@@ -79,10 +79,12 @@ SCRIPTURE;
         $templateContent = $ctx->getSectionContent();
         $matches = [];
 
-        // Look for type assertions in bindings
-        preg_match_all('/:[a-z-]+="[^"]*\s+as\s+[A-Za-z]+/', $templateContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        // Bindings: :prop="…" / v-bind:prop="…" / v-…="…". Inspect the value with
+        // string literals stripped, so an `as` inside quoted content (e.g.
+        // 'Copy outcome as JSON') is not mistaken for a type assertion (#20).
+        preg_match_all('/(?::|v-)[A-Za-z0-9_:.-]+="([^"]*)"/', $templateContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
         foreach ($found as $match) {
-            if (!str_contains($match[0][0], 'as const')) {
+            if ($this->hasTypeAssertion($match[1][0])) {
                 $matches[] = new MatchResult(
                     name: 'type_assertion_binding',
                     pattern: '',
@@ -98,15 +100,17 @@ SCRIPTURE;
             }
         }
 
-        // Look for type assertions in slot template bindings
-        preg_match_all('/<template\s+#[a-z-]+="[^"]*\s+as\s+[A-Za-z]+/', $templateContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        // Slot template bindings: <template #slot="…">.
+        preg_match_all('/<template\s+#[A-Za-z0-9_:.-]+="([^"]*)"/', $templateContent, $found, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
         foreach ($found as $match) {
-            $matchText = $match[0][0];
-            if (!str_contains($matchText, 'as const') && !preg_match('/}:\s*\{/', $matchText)) {
+            $value = $match[1][0];
+
+            // `#slot="{ data }: { data: Type }"` is a type annotation, not an assertion.
+            if ($this->hasTypeAssertion($value) && !preg_match('/}\s*:\s*\{/', $value)) {
                 $matches[] = new MatchResult(
                     name: 'type_assertion_slot',
                     pattern: '',
-                    match: $matchText,
+                    match: $match[0][0],
                     line: $ctx->getLineFromOffset($match[0][1]),
                     offset: $match[0][1],
                     content: null,
@@ -119,5 +123,23 @@ SCRIPTURE;
         }
 
         return $matches;
+    }
+
+    /**
+     * Whether a binding expression contains a TypeScript type assertion (`expr
+     * as Type`), ignoring any `as` that appears inside a string literal and the
+     * always-allowed `as const`.
+     */
+    private function hasTypeAssertion(string $expression): bool
+    {
+        // Remove single-quoted and template-literal string content (the binding
+        // value is double-quoted, so its own strings use ' or `).
+        $stripped = preg_replace(['/\'[^\']*\'/', '/`[^`]*`/'], ' ', $expression) ?? $expression;
+
+        // An assertion is `<value> as <TypeStart>` — `as` preceded by a value
+        // token and followed by an identifier/uppercase type. `as const` is fine.
+        $withoutConst = preg_replace('/\bas\s+const\b/', ' ', $stripped) ?? $stripped;
+
+        return (bool) preg_match('/[A-Za-z0-9_$)\]]\s+as\s+[A-Za-z_]/', $withoutConst);
     }
 }
