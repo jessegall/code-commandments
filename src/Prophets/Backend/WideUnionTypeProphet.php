@@ -87,8 +87,11 @@ WHAT FIRES — a native type or a `@param`/`@return`/`@var` docblock type whose
 TOP-LEVEL union has >= {$warnAt} members (a union INSIDE a generic, like
 `Option<array|string>`, does not count — that is correctly modelled).
 
-WHAT DOES NOT — a simple nullable (`?T`), a union nested inside a generic, or —
-when the warning band is disabled — a union below the sin threshold.
+WHAT DOES NOT — a simple nullable in EITHER syntax (`?T` AND `T | null` are the
+same type, both exempt), a union nested inside a generic, or — when the warning
+band is disabled — a union below the sin threshold. A 3+ union that includes
+null is NOT a simple nullable: it still wraps two-or-more real shapes, so it
+fires (and the null says the fix is `Option<rest>`).
 
 Configure via:
 
@@ -115,6 +118,15 @@ SCRIPTURE;
         $flaggedLines = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
+            // `T | null` is a simple nullable — semantically identical to `?T`,
+            // which is exempt. Flagging one syntax but not the other is
+            // inconsistent (and punishes any house style that mandates the
+            // spelled-out form). A 3+ union that includes null is different: it
+            // still wraps two-or-more real shapes, so it stays flagged.
+            if ($this->isSimpleNullableNative($union)) {
+                continue;
+            }
+
             $count = count($union->types);
 
             if ($count >= $floor) {
@@ -202,7 +214,36 @@ SCRIPTURE;
         // counts as 1 (clean), `Foo|null` as 2.
         $atoms = array_filter(array_map('trim', explode('|', ltrim($stripped, '?'))));
 
+        // `T | null` (one non-null member + null) is a simple nullable — count
+        // it as 1, exactly like `?T`. A 3+ union with null keeps its full count.
+        $lower = array_map('strtolower', $atoms);
+        $nonNull = array_filter($lower, static fn (string $atom): bool => $atom !== 'null');
+
+        if (in_array('null', $lower, true) && count($nonNull) === 1) {
+            return 1;
+        }
+
         return count($atoms);
+    }
+
+    /**
+     * Whether a native union is a simple nullable — exactly two members, one of
+     * which is `null` (`T | null`). The spelled-out twin of `?T`.
+     */
+    private function isSimpleNullableNative(Node\UnionType $union): bool
+    {
+        if (count($union->types) !== 2) {
+            return false;
+        }
+
+        foreach ($union->types as $type) {
+            if (($type instanceof Node\Identifier || $type instanceof Node\Name)
+                && strtolower($type->toString()) === 'null') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
