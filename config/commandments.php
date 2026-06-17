@@ -178,6 +178,7 @@ return [
                     // 'sin_at_types'  => 3,
                 ],
                 Backend\PreferNullCoalescingProphet::class,
+                Backend\NoNullCoalesceToNullProphet::class,
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],
