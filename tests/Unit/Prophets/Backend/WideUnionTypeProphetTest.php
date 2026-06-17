@@ -104,6 +104,28 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertCount(1, $judgment->sins);
     }
 
+    public function test_does_not_flag_a_union_inside_an_attribute_class(): void
+    {
+        // Attribute ctor args must be constant expressions — an Option/Union can
+        // never live there, so the suggestion is unactionable (issue #25 pt 1).
+        $judgment = $this->judge(
+            '#[\Attribute(\Attribute::TARGET_PROPERTY)] '
+            . 'class ContextInput { public function __construct('
+            . 'public array | string | null $options = null, '
+            . 'public string | int $id = 0) {} }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_flags_a_wide_union_in_a_plain_class_not_an_attribute(): void
+    {
+        // The same shape outside an attribute class still fires.
+        $judgment = $this->judge('class Plain { public function __construct(public array | string | null $options = null) {} }');
+
+        $this->assertCount(1, $judgment->sins);
+    }
+
     public function test_does_not_flag_a_union_inside_a_generic(): void
     {
         $judgment = $this->judge('class A { /** @return Option<array|string> */ public function m(): Option { return Option::none(); } }');
