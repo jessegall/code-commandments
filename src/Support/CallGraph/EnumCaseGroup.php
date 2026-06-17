@@ -129,6 +129,13 @@ final class EnumCaseGroup
             return false;
         }
 
+        // A first-class callable (`in_array(...)`) carries only a
+        // VariadicPlaceholder, so getArgs() would assert — and it is never a
+        // membership test (#18).
+        if ($call->isFirstClassCallable()) {
+            return false;
+        }
+
         // in_array($needle, $haystack) and array_search($needle, $haystack)
         // both carry the array as the 2nd positional argument.
         $args = $call->getArgs();
