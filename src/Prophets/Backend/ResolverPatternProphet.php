@@ -141,6 +141,42 @@ factory class under `Support\Resolvers\Factories` otherwise:
 The kernel ships two ready-made result factories there: `Capture::make()`
 (identity — return the value unchanged) and `Wrap::make()` (`$v => [$v]`).
 
+LAYOUT — a big chain reads like a dispatch TABLE, so let it breathe. Once an
+entry wraps (a `->and()` and/or a `->then()` on their own lines) or there are
+many entries, give EACH entry its own block and a blank line between them, so
+the predicate→factory pairs line up and scan top-to-bottom. Each factory is a
+named first-class callable (an injected expander), each predicate is named:
+
+    public function expand(DescriptorExpansionRequest $request): NodeDescriptor
+    {
+        $expanded = Resolver::firstResultWins(
+
+            DescriptorKeyIs::of(InputBagNode::KEY)
+                ->then($this->inputBag->expand(...)),
+
+            HasItemShape::make()->and(GraphPresent::make())
+                ->then($this->forEach->expand(...)),
+
+            DescriptorKeyMatches::of(NodeKey::Unpack)
+                ->and(GraphPresent::make())
+                ->then($this->unpack->expand(...)),
+
+            DescriptorTypeIs::of(NodeType::Trigger)
+                ->and(DefinesInputFields::make())
+                ->then($this->payloadTrigger->expand(...)),
+
+            DescriptorKeyIs::of(AgentNode::KEY)
+                ->then($this->agent->expand(...)),
+
+        )->resolve($request);
+
+        return $expanded instanceof NodeDescriptor ? $expanded : $request->descriptor;
+    }
+
+A short chain (two or three single-line entries) does NOT need the blank-line
+spacing — keep that compact. The spacing earns its keep only once entries wrap
+or the list is long.
+
 MODE 2 — BOOLEAN CHAIN → COMPOSITE PREDICATE
 --------------------------------------------
 A >= 3-guard method returning `bool` is a composite Predicate. Build it from
