@@ -23,8 +23,12 @@ namespace {{ namespace }};
  * declared INSTANCE-only on purpose. A static `Status::equals($x, Status::A)`
  * against a known case is the wrong form — anchor on the case instead — so it
  * is intentionally NOT type-blessed (and code-commandments flags it as a sin).
- * Only the `*Any` set helpers carry a `@method static` declaration. Runtime
- * still forwards every shape through __call / __callStatic.
+ * Only the `*Any` set helpers carry a `@method static` declaration, and their
+ * case parameters are typed `\UnitEnum` rather than `self`: `self` in a trait
+ * `@method` resolves to the trait, not the using enum, so it would reject the
+ * very cases you pass. `\UnitEnum` accepts any enum case and type-checks both
+ * the instance and static call shapes. Runtime still forwards every shape
+ * through __call / __callStatic.
  *
  * IgnoreType compares loosely against the backing value (or case name for pure
  * enums). Each call resolves to a typed EqualityOperator that applies itself;
@@ -40,10 +44,10 @@ namespace {{ namespace }};
  * @method bool notEqualsIgnoreType(mixed $value)
  * @method bool equalsAnyIgnoreType(mixed ...$values)
  * @method bool notEqualsAnyIgnoreType(mixed ...$values)
- * @method static bool equalsAny(mixed $value, self ...$cases)
- * @method static bool notEqualsAny(mixed $value, self ...$cases)
- * @method static bool equalsAnyIgnoreType(mixed $value, self ...$cases)
- * @method static bool notEqualsAnyIgnoreType(mixed $value, self ...$cases)
+ * @method static bool equalsAny(mixed $value, \UnitEnum ...$cases)
+ * @method static bool notEqualsAny(mixed $value, \UnitEnum ...$cases)
+ * @method static bool equalsAnyIgnoreType(mixed $value, \UnitEnum ...$cases)
+ * @method static bool notEqualsAnyIgnoreType(mixed $value, \UnitEnum ...$cases)
  */
 trait CompareSelf
 {

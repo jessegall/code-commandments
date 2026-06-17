@@ -62,10 +62,13 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringNotContainsString('@method static bool equalsIgnoreType(', $trait);
         $this->assertStringNotContainsString('@method static bool notEqualsIgnoreType(', $trait);
 
-        // The set helpers still carry a static declaration — they are never
-        // case-anchored, so there is no ambiguity.
-        $this->assertStringContainsString('@method static bool equalsAny(mixed $value, self ...$cases)', $trait);
-        $this->assertStringContainsString('@method static bool notEqualsAny(mixed $value, self ...$cases)', $trait);
+        // The set helpers carry a static declaration, and their variadic case
+        // parameters are typed \UnitEnum, not self (issue #8): `self` in a trait
+        // @method resolves to the trait, not the using enum, and would reject
+        // the cases passed. \UnitEnum type-checks both instance and static use.
+        $this->assertStringContainsString('@method static bool equalsAny(mixed $value, \UnitEnum ...$cases)', $trait);
+        $this->assertStringContainsString('@method static bool notEqualsAny(mixed $value, \UnitEnum ...$cases)', $trait);
+        $this->assertStringNotContainsString('self ...$cases', $trait);
     }
 
     public function test_force_refreshes_a_relocated_class_in_place(): void
