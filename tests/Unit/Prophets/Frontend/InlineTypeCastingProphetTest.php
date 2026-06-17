@@ -33,6 +33,22 @@ VUE;
         $this->assertTrue($judgment->hasWarnings());
     }
 
+    public function test_does_not_flag_the_word_as_inside_a_string_literal(): void
+    {
+        // Issue #20: the `as` is English inside the quoted string, not a TS
+        // type assertion.
+        $content = <<<'VUE'
+        <script setup lang="ts">
+        </script>
+
+        <template>
+          <button :title="copiedJustNow ? 'Copied!' : 'Copy outcome as JSON'">x</button>
+        </template>
+        VUE;
+
+        $this->assertTrue($this->prophet->judge('/test/Component.vue', $content)->isRighteous());
+    }
+
     public function test_detects_type_assertion_in_prop(): void
     {
         $content = <<<'VUE'
