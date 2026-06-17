@@ -53,6 +53,13 @@ final class ScaffoldRegistry
                 purpose: 'Present-or-absent scalar — the Option twin of ScalarUnion (nullable-scalar case).',
             ),
             new Scaffold(
+                name: 'union-cast',
+                className: 'UnionCast',
+                stubFile: 'UnionCast.stub',
+                introducedIn: '1.93.0',
+                purpose: 'Spatie Data cast+transformer: hydrate a permitted value into a Union, declared via #[WithCast(UnionCast, allowed: [T::…])].',
+            ),
+            new Scaffold(
                 name: 'null-callable',
                 className: 'NullCallable',
                 stubFile: 'NullCallable.stub',

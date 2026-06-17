@@ -108,6 +108,21 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString("return ['string', 'int', 'float', 'bool'];", $scalar);
     }
 
+    public function test_generates_the_union_cast(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $cast = $this->dir . '/UnionCast.php';
+        $this->assertFileExists($cast);
+        $src = file_get_contents($cast);
+        $this->assertStringContainsString('namespace Acme\\Support;', $src);
+        $this->assertStringContainsString('final class UnionCast implements Cast, Transformer', $src);
+        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T;', $src);
+        // References Union (same namespace) and the allow-list check.
+        $this->assertStringContainsString('return Union::of($value);', $src);
+        $this->assertStringContainsString('T::any($value, ...$this->allowed)', $src);
+    }
+
     public function test_generates_the_scalar_option(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
