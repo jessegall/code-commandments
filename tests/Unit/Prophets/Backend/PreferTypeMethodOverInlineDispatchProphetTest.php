@@ -87,6 +87,34 @@ class PreferTypeMethodOverInlineDispatchProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_flag_match_this_with_self_cases_inside_the_enum(): void
+    {
+        // Issue #11: `match ($this) { self::Mixed => … }` inside the enum IS the
+        // per-case method the rule asks for — the cases resolve to a `self`
+        // pseudo-FQCN, so the own-file skip must catch them too.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        enum WireCategory
+        {
+            case Mixed;
+            case ListOf;
+            case Resource;
+
+            public function token(): string
+            {
+                return match ($this) {
+                    self::Mixed => 'mixed',
+                    self::ListOf => 'list',
+                    self::Resource => 'resource',
+                };
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_flag_match_true_guard(): void
     {
         $judgment = $this->judge(<<<'PHP'
