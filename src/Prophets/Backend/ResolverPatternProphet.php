@@ -679,6 +679,15 @@ SCRIPTURE;
             return ['method' => $method->name->toString(), 'type' => 'bool', 'guards' => $guards, 'kind' => 'composite_predicate'];
         }
 
+        // Carve-out (#17): a first-match dispatch chain produces DISTINCT results
+        // per branch. When the guards all early-return the SAME expression (a
+        // shared fallback / validity gate, not predicate->factory alternatives),
+        // or the body is a procedure that transforms/throws (a try/catch), it is
+        // not a resolver — forcing it into one would obscure the gate logic.
+        if ($this->hasTryCatch($method) || $this->distinctGuardReturns($finder, $method) < 2) {
+            return null;
+        }
+
         // Anchor the produced type: the declared return type, or — when none —
         // the construction class shared by every return (the stricter signal).
         $type = $returnType !== null && ! in_array(strtolower($returnType), ['void', 'never', 'mixed'], true)
@@ -723,6 +732,52 @@ SCRIPTURE;
         }
 
         return $guards;
+    }
+
+    /**
+     * Whether the method body contains a try/catch — a marker of a procedure
+     * that transforms / throws, the scripture's documented carve-out (#17).
+     */
+    private function hasTryCatch(Node\Stmt\ClassMethod $method): bool
+    {
+        return (new NodeFinder)->findFirstInstanceOf($method->stmts ?? [], Node\Stmt\TryCatch::class) !== null;
+    }
+
+    /**
+     * The number of DISTINCT expressions the predicate guards return — `if (pred)
+     * { return X }` guards and `match (true) { pred => X }` arms. A genuine
+     * dispatch chain produces a different result per branch; guards that all
+     * return the SAME fallback are a validity gate, not a resolver (#17).
+     */
+    private function distinctGuardReturns(NodeFinder $finder, Node\Stmt\ClassMethod $method): int
+    {
+        $printer = new PrettyPrinter\Standard;
+        $exprs = [];
+
+        foreach ($finder->findInstanceOf($method->stmts, Node\Stmt\If_::class) as $if) {
+            if ($if->else === null && $if->elseifs === [] && $this->isPredicateExpr($if->cond)
+                && count($if->stmts) === 1 && $if->stmts[0] instanceof Node\Stmt\Return_
+                && $if->stmts[0]->expr !== null
+            ) {
+                $exprs[$printer->prettyPrintExpr($if->stmts[0]->expr)] = true;
+            }
+        }
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\Match_::class) as $match) {
+            if (! $this->isTrueConst($match->cond)) {
+                continue;
+            }
+
+            foreach ($match->arms as $arm) {
+                foreach ($arm->conds ?? [] as $cond) {
+                    if ($this->isPredicateExpr($cond)) {
+                        $exprs[$printer->prettyPrintExpr($arm->body)] = true;
+                    }
+                }
+            }
+        }
+
+        return count($exprs);
     }
 
     /**
