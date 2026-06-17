@@ -90,6 +90,21 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertFileExists($this->dir . '/Resolvers/Predicates/Predicate.php');
     }
 
+    public function test_result_class_name_includes_the_sub_namespace(): void
+    {
+        $results = ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $byName = [];
+        foreach ($results as $r) {
+            $byName[$r['name']] = $r['class'];
+        }
+
+        $this->assertSame('Acme\\Support\\Resolvers\\Predicates\\IsNull', $byName['predicate-is-null'] ?? null);
+        $this->assertSame('Acme\\Support\\Resolvers\\Resolver', $byName['resolver'] ?? null);
+        // A flat scaffold is unaffected.
+        $this->assertSame('Acme\\Support\\Option', $byName['option'] ?? null);
+    }
+
     public function test_force_refreshes_a_relocated_class_in_place(): void
     {
         // Generate fresh, then simulate a consumer relocating CompareSelf into
