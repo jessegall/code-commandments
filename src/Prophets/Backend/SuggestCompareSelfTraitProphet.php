@@ -125,6 +125,12 @@ Comparisons inside `toArray`, `jsonSerialize`, `render`, or inside a
 `JsonResource` / `Resource` / `Response` class are left alone — those
 are wire-format boundaries where literal-shaped logic is the contract.
 
+A `=== Enum::Case` (or `!==`) that is a load-bearing NARROWING GUARD — the
+sole condition of an `if` that bails (`continue` / `return` / `throw` /
+`break`) — is also left alone: PHPStan narrows the enum through `===` but
+NOT through the trait's `equals()`, so converting it would break a later
+exhaustive `match`.
+
 Configuration:
 
     SuggestCompareSelfTraitProphet::class => [

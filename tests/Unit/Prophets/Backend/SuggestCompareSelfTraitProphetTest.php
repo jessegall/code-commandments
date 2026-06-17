@@ -366,6 +366,86 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         $this->assertStringContainsString('Bar::Y->equals($x)', $messages);
     }
 
+    public function test_ignores_a_narrowing_guard_before_an_exhaustive_match(): void
+    {
+        // Issue #12: `if ($x === Case) continue;` is a load-bearing narrowing
+        // guard — PHPStan narrows through ===, not equals(). Leave it.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Source {
+            use CompareSelf;
+            case A;
+            case B;
+        }
+
+        class Pipe {
+            public function go(array $ports): void {
+                foreach ($ports as $port) {
+                    if ($port->source === Source::A) {
+                        continue;
+                    }
+                }
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_ignores_a_narrowing_guard_with_return(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Source {
+            use CompareSelf;
+            case A;
+        }
+
+        class Pipe {
+            public function go($port): mixed {
+                if ($port->source === Source::A) {
+                    return null;
+                }
+                return $port;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_still_flags_a_non_bail_if_body(): void
+    {
+        // The if body is NOT a bail (it does work) — no narrowing depends on it,
+        // so the comparison is still flagged.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Source {
+            use CompareSelf;
+            case A;
+        }
+
+        class Pipe {
+            public function go($port): void {
+                if ($port->source === Source::A) {
+                    $this->log('a');
+                }
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
     public function test_ignores_match_expression(): void
     {
         $judgment = $this->judge(<<<'PHP'

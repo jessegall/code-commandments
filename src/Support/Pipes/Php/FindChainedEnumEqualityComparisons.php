@@ -350,6 +350,31 @@ final class FindChainedEnumEqualityComparisons implements Pipe
     }
 
     /**
+     * Whether the comparison is the SOLE condition of an `if` guard whose body
+     * just bails out — `if ($x === Enum::Case) { continue; }`. PHPStan narrows
+     * the enum through such a guard; `equals()` would not, breaking a later
+     * exhaustive `match`. So these stay `===`.
+     *
+     * @param  array<int, Node>  $parentMap
+     */
+    private function isNarrowingGuard(Node $node, array $parentMap): bool
+    {
+        $parent = $parentMap[spl_object_id($node)] ?? null;
+
+        if (! $parent instanceof Node\Stmt\If_ || $parent->cond !== $node
+            || $parent->elseifs !== [] || $parent->else !== null
+            || count($parent->stmts) !== 1
+        ) {
+            return false;
+        }
+
+        return $parent->stmts[0] instanceof Node\Stmt\Continue_
+            || $parent->stmts[0] instanceof Node\Stmt\Return_
+            || $parent->stmts[0] instanceof Node\Stmt\Throw_
+            || $parent->stmts[0] instanceof Node\Stmt\Break_;
+    }
+
+    /**
      * Validate that every element of the array is an enum-case fetch of the same
      * enum, and return the chain analysis shape.
      *
@@ -436,6 +461,16 @@ final class FindChainedEnumEqualityComparisons implements Pipe
                 }
 
                 if ($this->isInsideWireFormatScope($node, $parentMap)) {
+                    continue;
+                }
+
+                // A `=== Enum::Case` (or `!==`) that is a load-bearing narrowing
+                // guard — the sole condition of an `if` whose body just bails
+                // (continue/return/throw/break) — must stay `===`: PHPStan
+                // narrows the enum through `===` but NOT through the trait's
+                // `equals()`, so converting it breaks a following exhaustive
+                // match.
+                if ($this->isNarrowingGuard($node, $parentMap)) {
                     continue;
                 }
 
