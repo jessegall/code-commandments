@@ -84,6 +84,33 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('$value instanceof $this->class', $src);
     }
 
+    public function test_generated_kernel_is_generic_and_uses_then(): void
+    {
+        // The resolver kernel threads PHPStan generics so resolve() infers what
+        // the then() factories return instead of mixed. Guard the load-bearing
+        // markers and the then() rename (when() is gone).
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $predicate = file_get_contents($this->dir . '/Resolvers/Predicates/Predicate.php');
+        $this->assertStringContainsString('@template-covariant TIn', $predicate);
+        $this->assertStringContainsString('public function then(callable $make): callable', $predicate);
+        $this->assertStringContainsString('@param  callable(TIn): TOut  $make', $predicate);
+        // when() must be gone — then() is the only name.
+        $this->assertStringNotContainsString('public function when(', $predicate);
+
+        $resolver = file_get_contents($this->dir . '/Resolvers/Resolver.php');
+        $this->assertStringContainsString('@template TResult', $resolver);
+        $this->assertStringContainsString('@return self<T|null>', $resolver);
+        $this->assertStringContainsString('@return self<list<T>>', $resolver);
+        $this->assertStringContainsString('@return TResult', $resolver);
+
+        // Transform path is typed end-to-end too.
+        $transform = file_get_contents($this->dir . '/Resolvers/Transforms/Transform.php');
+        $this->assertStringContainsString('@template-covariant TOut', $transform);
+        $stripPrefix = file_get_contents($this->dir . '/Resolvers/Transforms/StripPrefix.php');
+        $this->assertStringContainsString('@extends Transform<string>', $stripPrefix);
+    }
+
     public function test_generated_kernel_is_phpstan_clean(): void
     {
         // Regression guard (issue #13): the generated resolver/predicate kernel
@@ -104,7 +131,13 @@ class ScaffoldGeneratorTest extends TestCase
         foreach (['Resolvers/Resolver.php', 'Resolvers/Predicates/Predicate.php', 'Resolvers/Predicates/PredicateEntry.php', 'Resolvers/Strategies/ResolveStrategy.php'] as $rel) {
             $src = file_get_contents($this->dir . '/' . $rel);
             foreach (explode("\n", $src) as $line) {
-                if (str_contains($line, '@param') && str_contains($line, 'callable(mixed): mixed')) {
+                // A bare `callable(mixed): mixed` *factory* @param is the problem
+                // (it rejects `fn(string $t): X`). The same shape on a resolver
+                // *entry* collection ($resolvers — array/iterable/variadic of the
+                // already-built fn(mixed): mixed entries) is correct and
+                // PHPStan-clean, so don't flag those.
+                $isEntryCollection = str_contains($line, '$resolvers');
+                if (str_contains($line, '@param') && str_contains($line, 'callable(mixed): mixed') && ! $isEntryCollection) {
                     $this->fail("$rel still has a contravariant callable(mixed): mixed @param: " . trim($line));
                 }
             }

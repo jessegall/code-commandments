@@ -85,7 +85,7 @@ class ResolverPatternProphetTest extends TestCase
             public function r($x)
             {
                 return Resolver::firstResultWins(
-                    HasPrefix::of('list:')->when(static fn (string $t) => self::listOf(substr($t, strlen('list:')))),
+                    HasPrefix::of('list:')->then(static fn (string $t) => self::listOf(substr($t, strlen('list:')))),
                 )->resolve($x);
             }
         }
@@ -104,8 +104,8 @@ class ResolverPatternProphetTest extends TestCase
             public function r($x)
             {
                 return Resolver::firstResultWins(
-                    IsNull::make()->when(fn () => 'a'),
-                    HasPrefix::of('list:')->when(fn ($t) => 'b'),
+                    IsNull::make()->then(fn () => 'a'),
+                    HasPrefix::of('list:')->then(fn ($t) => 'b'),
                 )->resolve($x);
             }
         }
@@ -213,7 +213,7 @@ class ResolverPatternProphetTest extends TestCase
 
     public function test_does_not_flag_a_predicate_used_as_a_chain_entry(): void
     {
-        // `new IsNull()->when(...)` is a chain entry (method call), not an
+        // `new IsNull()->then(...)` is a chain entry (method call), not an
         // inline invocation — that is the CORRECT usage.
         $judgment = $this->judge(<<<'PHP'
         use App\Support\Resolvers\Predicates\IsNull;
@@ -223,7 +223,7 @@ class ResolverPatternProphetTest extends TestCase
             protected function resolvers(): iterable
             {
                 return [
-                    new IsNull()->when(fn () => WireType::mixed()),
+                    new IsNull()->then(fn () => WireType::mixed()),
                 ];
             }
         }

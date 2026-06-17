@@ -104,16 +104,16 @@ produce one type. COMPOSE a Resolver and delegate:
     public static function parse(?string $token): self
     {
         return Resolver::firstResultWins(
-            IsNull::make()->when(WireType::mixed(...)),
-            HasPrefix::of('resource:')->transform(StripPrefix::of('resource:'))->when(WireType::resource(...)),
-            HasPrefix::of('list:')->transform(StripPrefix::of('list:'))->when(WireType::listOf(...)),
-            IsScalarToken::make()->when(WireType::scalar(...)),   // domain predicate
+            IsNull::make()->then(WireType::mixed(...)),
+            HasPrefix::of('resource:')->transform(StripPrefix::of('resource:'))->then(WireType::resource(...)),
+            HasPrefix::of('list:')->transform(StripPrefix::of('list:'))->then(WireType::listOf(...)),
+            IsScalarToken::make()->then(WireType::scalar(...)),   // domain predicate
         )->resolve($token) ?? self::classRef($token);
     }
 
-Each entry is a NAMED Predicate paired with a result factory via `->when()` —
+Each entry is a NAMED Predicate paired with a result factory via `->then()` —
 never an inline test. To pre-process the matched input, add a transform:
-`->transform($t)->when(Factory(...))` runs `$t` on the value before the
+`->transform($t)->then(Factory(...))` runs `$t` on the value before the
 factory, so the factory stays a first-class callable (no `substr(...)` inside
 a closure). `$t` is any callable; reusable ones extend `Transform`
 (`StripPrefix::of('list:')`). `Resolver::collect(...)` gathers ALL matches (a list)
@@ -158,7 +158,7 @@ THE SIN — an UGLY resolver
 --------------------------
 `Resolver::firstResultWins(fn (...) => test ? … : null, …)` with >= 3 inline
 predicate closures is the original chain with extra boilerplate. SIN: make
-each entry a named Predicate `->when(factory)`.
+each entry a named Predicate `->then(factory)`.
 
 WHAT DOES NOT FIRE — a value-mapping ternary, a bare `var === var`, a method
 that transforms / throws / returns unrelated shapes, a predicate passed as a
@@ -245,10 +245,10 @@ SCRIPTURE;
             $inline = [];
 
             foreach ($entries as $arg) {
-                if ($arg->value instanceof Expr\MethodCall && $this->stripsPrefixInWhen($arg->value)) {
+                if ($arg->value instanceof Expr\MethodCall && $this->stripsPrefixInThen($arg->value)) {
                     $warnings[] = $this->warningAt(
                         $arg->value->getStartLine(),
-                        'Resolver entry strips its prefix with `substr(..., strlen(...))` inside `->when()` — move it to a transform: `HasPrefix::of(PREFIX)->transform(StripPrefix::of(PREFIX))->when(Factory(...))`, so the factory receives the stripped remainder and stays a first-class callable.',
+                        'Resolver entry strips its prefix with `substr(..., strlen(...))` inside `->then()` — move it to a transform: `HasPrefix::of(PREFIX)->transform(StripPrefix::of(PREFIX))->then(Factory(...))`, so the factory receives the stripped remainder and stays a first-class callable.',
                         null,
                         'prefix-substr',
                     );
@@ -276,7 +276,7 @@ SCRIPTURE;
                 $sins[] = $this->sinAt(
                     $inline[0][0],
                     sprintf(
-                        'This composed resolver is %d inline predicate closures — `Resolver::…(fn (...) => test ? … : null, …)` is the original chain with extra boilerplate. Make each entry a NAMED Predicate paired with a factory (reuse `IsNull`/`IsEnum`/`HasPrefix`; create a domain Predicate otherwise): `HasPrefix::of(…)->when(Factory::make(...))`.',
+                        'This composed resolver is %d inline predicate closures — `Resolver::…(fn (...) => test ? … : null, …)` is the original chain with extra boilerplate. Make each entry a NAMED Predicate paired with a factory (reuse `IsNull`/`IsEnum`/`HasPrefix`; create a domain Predicate otherwise): `HasPrefix::of(…)->then(Factory::make(...))`.',
                         count($inline),
                     ),
                     null,
@@ -287,7 +287,7 @@ SCRIPTURE;
                 foreach ($inline as [$line, $printed]) {
                     $warnings[] = $this->warningAt(
                         $line,
-                        sprintf('Resolver entry `%s` inlines a predicate — make it a named Predicate paired with a factory (`Predicate->when(...)`).', $this->truncate($printed)),
+                        sprintf('Resolver entry `%s` inlines a predicate — make it a named Predicate paired with a factory (`Predicate->then(...)`).', $this->truncate($printed)),
                         null,
                         'inline-predicate',
                     );
@@ -297,13 +297,13 @@ SCRIPTURE;
     }
 
     /**
-     * Whether a chain entry is `HasPrefix::of(...)->when(fn (...) => …substr…)`
-     * — stripping the prefix by hand inside the factory, which `whenStripped()`
-     * does for you.
+     * Whether a chain entry is `HasPrefix::of(...)->then(fn (...) => …substr…)`
+     * — stripping the prefix by hand inside the factory, which a
+     * `->transform(StripPrefix::of(...))` does for you.
      */
-    private function stripsPrefixInWhen(Expr\MethodCall $call): bool
+    private function stripsPrefixInThen(Expr\MethodCall $call): bool
     {
-        if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'when'
+        if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'then'
             || ! $this->rootsInHasPrefix($call->var)
         ) {
             return false;
@@ -615,7 +615,7 @@ SCRIPTURE;
         }
 
         return sprintf(
-            '%s() is a first-match dispatch chain — %d predicate guards each producing a %s. That is a resolver in disguise: compose it with `Resolver::firstResultWins(...)` (or `Resolver::collect(...)` to gather all matches), each guard becoming a NAMED Predicate paired with a factory via `->when(...)` — reuse `IsNull`/`IsEnum`/`HasPrefix`, create domain Predicates for type-specific tests. Do NOT compose it from inline `fn (...) => test ? … : null` closures — that is the same chain with extra boilerplate.',
+            '%s() is a first-match dispatch chain — %d predicate guards each producing a %s. That is a resolver in disguise: compose it with `Resolver::firstResultWins(...)` (or `Resolver::collect(...)` to gather all matches), each guard becoming a NAMED Predicate paired with a factory via `->then(...)` — reuse `IsNull`/`IsEnum`/`HasPrefix`, create domain Predicates for type-specific tests. Do NOT compose it from inline `fn (...) => test ? … : null` closures — that is the same chain with extra boilerplate.',
             $chain['method'],
             $chain['guards'],
             $chain['type'],
