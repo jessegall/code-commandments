@@ -53,7 +53,10 @@ return [
                 Backend\QueryModelsThroughQueryMethodProphet::class,
                 Backend\NoRequestDataPassthroughProphet::class,
                 Backend\NoAuthUserInDataClassesProphet::class,
-                Backend\LongMethodProphet::class,
+                Backend\LongMethodProphet::class => [
+                    // Parser/AST code runs longer than app code — 80 lines here.
+                    'max_method_lines' => 80,
+                ],
                 Backend\NoRawLiteralProphet::class,
                 Backend\NoArrayStringIndexingProphet::class,
                 Backend\NoArrayBagProphet::class,
