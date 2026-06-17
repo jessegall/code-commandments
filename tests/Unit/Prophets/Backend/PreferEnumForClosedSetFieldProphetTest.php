@@ -212,6 +212,43 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertStringContainsString('use App\\Enums\\WorkflowRunStatus;', $result->newContent);
     }
 
+    public function test_repent_converts_an_enum_value_default_on_reuse(): void
+    {
+        // issue #29: a `Enum::Case->value` default must lose `->value`, else it
+        // is a string default on an enum-typed property → PHP fatal.
+        $code = "<?php\nnamespace App;\n\nclass Field extends Data { public function __construct(public string \$type = SchemaFieldType::String->value) {} }";
+        $this->prophet->setRepentInput(['enum-class' => 'SchemaFieldType']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public SchemaFieldType $type = SchemaFieldType::String', $result->newContent);
+        $this->assertStringNotContainsString('->value', $result->newContent);
+    }
+
+    public function test_repent_converts_a_bare_string_default_on_create(): void
+    {
+        // A default that matches a created case becomes that case.
+        $code = "<?php\nclass A extends Data { public function __construct(public string \$status = 'active') {} }";
+        $this->prophet->setRepentInput(['create-enum-class' => 'Status', 'cases' => 'active,archived']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public Status $status = Status::Active', $result->newContent);
+    }
+
+    public function test_repent_result_parses_after_default_conversion(): void
+    {
+        $code = "<?php\nnamespace App;\n\nclass Field extends Data { public function __construct(public string \$type = SchemaFieldType::String->value) {} }";
+        $this->prophet->setRepentInput(['enum-class' => 'SchemaFieldType']);
+
+        $fixed = $this->prophet->repent('/x.php', $code)->newContent;
+
+        // The rewritten file must be syntactically valid PHP.
+        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
+    }
+
     public function test_repent_is_ambiguous_with_multiple_fields_and_no_field_input(): void
     {
         $code = "<?php\nclass A extends Data { public string \$direction; public string \$status; }";
