@@ -71,6 +71,9 @@ final class CodebaseIndex
     /** @var array<string, list<array{file: string, class: string, method: string, line: int, lines: int}>>   key = method-body hash */
     private array $methodBodiesByHash = [];
 
+    /** @var array<string, list<array{file: string, class: string, method: string, line: int, lines: int}>>   key = leading-fragment hash */
+    private array $methodFragmentsByHash = [];
+
     /**
      * Build from an iterable of file paths. Parse failures are swallowed —
      * partial indices are still useful.
@@ -234,6 +237,16 @@ final class CodebaseIndex
                         'lines' => $body['lines'],
                     ];
                 }
+
+                foreach (MethodBodyHash::leadingFragments($method, self::DUPLICATE_MIN_LINES) as $fragment) {
+                    $instance->methodFragmentsByHash[$fragment['hash']][] = [
+                        'file' => $shell['file'],
+                        'class' => $fqcn,
+                        'method' => $method->name->toString(),
+                        'line' => $method->getStartLine(),
+                        'lines' => $fragment['lines'],
+                    ];
+                }
             }
 
             $instance->classes[$fqcn] = new ClassSummary(
@@ -351,6 +364,18 @@ final class CodebaseIndex
     public function methodBodyOccurrences(string $hash): array
     {
         return $this->methodBodiesByHash[$hash] ?? [];
+    }
+
+    /**
+     * Every method across the scroll one of whose LEADING statement-run
+     * prefixes fingerprints to $hash — used to surface a shared preamble
+     * duplicated across two methods that then diverge.
+     *
+     * @return list<array{file: string, class: string, method: string, line: int, lines: int}>
+     */
+    public function methodFragmentOccurrences(string $hash): array
+    {
+        return $this->methodFragmentsByHash[$hash] ?? [];
     }
 
     // ────────────────────────────────────────────────────────────────

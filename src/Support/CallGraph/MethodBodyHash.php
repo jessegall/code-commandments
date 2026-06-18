@@ -45,6 +45,46 @@ final class MethodBodyHash
     }
 
     /**
+     * Fingerprints of each LEADING statement-run prefix of the body
+     * (`statements[0..k]` for `k` below the full count) whose printed length is
+     * at least $minLines. This lets the duplicate detector catch a shared
+     * PREAMBLE between two methods that then diverge — not only whole-body
+     * matches. The full body is excluded here (that is {@see self::of()}).
+     *
+     * @return list<array{hash: string, lines: int}>
+     */
+    public static function leadingFragments(Node\Stmt\ClassMethod $method, int $minLines): array
+    {
+        $stmts = $method->stmts;
+
+        if ($stmts === null || count($stmts) < 2) {
+            return [];
+        }
+
+        $printer = new PrettyPrinter\Standard;
+        $fragments = [];
+        $count = count($stmts);
+
+        for ($k = 1; $k < $count; $k++) {
+            $code = trim($printer->prettyPrint(array_slice($stmts, 0, $k)));
+
+            if (T_String::isEmpty($code)) {
+                continue;
+            }
+
+            $lines = substr_count($code, T_String::NEWLINE) + 1;
+
+            if ($lines < $minLines) {
+                continue;
+            }
+
+            $fragments[] = ['hash' => md5(self::canonicalise($code)), 'lines' => $lines];
+        }
+
+        return $fragments;
+    }
+
+    /**
      * Rename local variables to positional placeholders by first occurrence,
      * leaving `$this` alone — so two bodies that differ only in variable names
      * fingerprint identically.
