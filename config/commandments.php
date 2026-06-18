@@ -157,6 +157,7 @@ return [
                 Backend\NoFacadesInServicesProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
+                Backend\PreferCoercionHelperProphet::class,
                 Backend\ResolverPatternProphet::class,
                 Backend\DuplicateCodeProphet::class => [
                     // 'min_lines' => 5,
