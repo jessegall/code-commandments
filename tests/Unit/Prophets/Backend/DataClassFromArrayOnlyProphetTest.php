@@ -163,4 +163,25 @@ class DataClassFromArrayOnlyProphetTest extends TestCase
 
         shell_exec('rm -rf ' . escapeshellarg($dir));
     }
+
+    public function test_base_is_exempt_when_a_subclass_depends_on_magic(): void
+    {
+        // #49: the array-only trait is inherited downward — a #[LoadRelation]
+        // subclass needs the magic from(Model), so adding the trait to the base
+        // would fatal at runtime. The base must be exempt, not flagged.
+        $dir = sys_get_temp_dir() . '/cc-dcfao-magic-' . uniqid();
+        mkdir($dir);
+
+        $basePath = $dir . '/ShopDetailsData.php';
+        $baseSrc = "<?php\nnamespace App;\nuse Spatie\\LaravelData\\Data;\nclass ShopDetailsData extends Data { public int \$id; }\n";
+        file_put_contents($basePath, $baseSrc);
+        file_put_contents($dir . '/ShopData.php', "<?php\nnamespace App;\nuse Spatie\\LaravelData\\Attributes\\LoadRelation;\nclass ShopData extends ShopDetailsData {\n    #[LoadRelation]\n    public array \$channels = [];\n}\n");
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$basePath, $dir . '/ShopData.php']);
+        $this->prophet->setCodebaseIndex($index);
+
+        $this->assertTrue($this->prophet->judge($basePath, $baseSrc)->isRighteous(), 'A base whose subclass depends on magic from(Model) must be exempt.');
+
+        shell_exec('rm -rf ' . escapeshellarg($dir));
+    }
 }

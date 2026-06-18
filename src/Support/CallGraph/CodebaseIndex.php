@@ -266,6 +266,48 @@ final class CodebaseIndex
         return $this->classes[$fqcn] ?? null;
     }
 
+    /**
+     * Every indexed class, keyed by FQCN — for walks that need to enumerate the
+     * hierarchy (e.g. finding subclasses of a given class).
+     *
+     * @return array<string, ClassSummary>
+     */
+    public function classes(): array
+    {
+        return $this->classes;
+    }
+
+    /**
+     * Every class whose parent chain passes through $fqcn (its subclasses,
+     * transitively).
+     *
+     * @return list<string>  subclass FQCNs
+     */
+    public function subclassesOf(string $fqcn): array
+    {
+        $target = ltrim($fqcn, '\\');
+        $subclasses = [];
+
+        foreach ($this->classes as $candidate => $summary) {
+            $parent = $summary->parent;
+            $depth = 0;
+
+            while ($parent !== null && $depth++ < 16) {
+                $parent = ltrim($parent, '\\');
+
+                if ($parent === $target) {
+                    $subclasses[] = $candidate;
+
+                    break;
+                }
+
+                $parent = $this->classes[$parent]->parent ?? null;
+            }
+        }
+
+        return $subclasses;
+    }
+
     public function enumByFqcn(string $fqcn): ?EnumSummary
     {
         return $this->enumsByFqcn[$fqcn] ?? null;
