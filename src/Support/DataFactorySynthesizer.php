@@ -73,7 +73,68 @@ final class DataFactorySynthesizer
             }
         }
 
+        // #51: heal any factory `fromX(...): Concrete { return static::from(...); }`
+        // — a concrete return type is an incompatible override of an inherited
+        // `: static`, fatal at class-load. The body is already polymorphic, so
+        // normalise the declared type to `static`.
+        $this->normalizeConcreteReturns($ast, $edits, $penance);
+
         return ['edits' => $edits, 'createdFiles' => $createdFiles, 'penance' => $penance];
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @param  list<array{start: int, end: int, text: string}>  $edits
+     * @param  list<string>  $penance
+     */
+    private function normalizeConcreteReturns(array $ast, array &$edits, array &$penance): void
+    {
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            foreach ($class->getMethods() as $method) {
+                if (! $this->isConcreteReturnStaticFromFactory($method)) {
+                    continue;
+                }
+
+                /** @var Node\Name $type */
+                $type = $method->returnType;
+                $edits[] = [
+                    'start' => (int) $type->getStartFilePos(),
+                    'end' => (int) $type->getEndFilePos(),
+                    'text' => 'static',
+                ];
+                $penance[] = sprintf('Normalised %s() return type to `static` (#51: was a concrete override of an inherited `: static`)', $method->name->toString());
+            }
+        }
+    }
+
+    /**
+     * Whether $method is `public static function fromX(...): SomeConcreteClass`
+     * whose body is exactly `return static::from(...);` / `self::from(...)` — a
+     * generated-shape factory whose declared concrete return type should be
+     * `static`.
+     */
+    public function isConcreteReturnStaticFromFactory(Node\Stmt\ClassMethod $method): bool
+    {
+        if (! $method->isStatic() || ! $method->returnType instanceof Node\Name) {
+            return false;
+        }
+
+        // static / self / parent are already correct — only concrete names are the bug.
+        if (in_array(strtolower($method->returnType->toString()), ['static', 'self', 'parent'], true)) {
+            return false;
+        }
+
+        if ($method->stmts === null || count($method->stmts) !== 1 || ! $method->stmts[0] instanceof Node\Stmt\Return_) {
+            return false;
+        }
+
+        $expr = $method->stmts[0]->expr;
+
+        return $expr instanceof Node\Expr\StaticCall
+            && $expr->class instanceof Node\Name
+            && in_array(strtolower($expr->class->toString()), ['static', 'self'], true)
+            && $expr->name instanceof Node\Identifier
+            && strtolower($expr->name->toString()) === 'from';
     }
 
     /**
