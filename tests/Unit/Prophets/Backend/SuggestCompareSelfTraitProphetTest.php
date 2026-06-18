@@ -942,4 +942,60 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);
     }
+
+    // ────────────────────────────────────────────────────────────────
+    // #57: validate the trait actually defines the configured methods
+    // ────────────────────────────────────────────────────────────────
+
+    public function test_does_not_autofix_when_the_trait_lacks_the_configured_method(): void
+    {
+        [$prophet, $file, $src] = $this->indexedTrait('public function is($o): bool { return true; } public function isNot($o): bool { return true; }');
+
+        $judgment = $prophet->judge($file, $src);
+
+        $this->assertTrue($judgment->hasWarnings());
+        $this->assertFalse($judgment->warnings[0]->autoFixable, 'Trait uses is()/isNot(), not notEquals() — must not auto-fix.');
+        $this->assertFalse($prophet->repent($file, $src)->absolved, 'repent must not emit an undefined-method call.');
+
+        @unlink($file);
+        @rmdir(dirname($file));
+    }
+
+    public function test_autofixes_when_the_trait_defines_the_configured_method(): void
+    {
+        [$prophet, $file, $src] = $this->indexedTrait('public function equals($o): bool { return true; } public function notEquals($o): bool { return true; }');
+
+        $judgment = $prophet->judge($file, $src);
+
+        $this->assertTrue($judgment->hasWarnings());
+        $this->assertTrue($judgment->warnings[0]->autoFixable, 'Trait defines notEquals() — safe to auto-fix.');
+        $this->assertTrue($prophet->repent($file, $src)->absolved);
+
+        @unlink($file);
+        @rmdir(dirname($file));
+    }
+
+    /**
+     * @return array{0: SuggestCompareSelfTraitProphet, 1: string, 2: string}
+     */
+    private function indexedTrait(string $traitMethods): array
+    {
+        $dir = sys_get_temp_dir() . '/cc-cself-' . uniqid();
+        @mkdir($dir, 0755, true);
+
+        file_put_contents($dir . '/CompareSelf.php', "<?php\nnamespace App\\Concerns;\ntrait CompareSelf { {$traitMethods} }\n");
+        $file = $dir . '/Stuff.php';
+        $src = "<?php\nnamespace App;\nuse App\\Concerns\\CompareSelf;\nenum ChannelType: string { use CompareSelf; case POS = 'pos'; case WEB = 'web'; }\nclass Page { public function f(ChannelType \$t): bool { return \$t !== ChannelType::POS; } }\n";
+        file_put_contents($file, $src);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/CompareSelf.php', $file]);
+
+        $prophet = new SuggestCompareSelfTraitProphet;
+        $prophet->setCodebaseIndex($index);
+        $prophet->configure(['trait' => 'App\\Concerns\\CompareSelf']);
+
+        @unlink($dir . '/CompareSelf.php');
+
+        return [$prophet, $file, $src];
+    }
 }

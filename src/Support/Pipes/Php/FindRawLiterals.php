@@ -188,7 +188,7 @@ final class FindRawLiterals implements Pipe
 
         foreach ($comparisons as $cmp) {
             /** @var Expr\BinaryOp $cmp */
-            $finding = self::classifyComparison($cmp, $content, $consumed);
+            $finding = self::classifyComparison($cmp, $content, $consumed, $ast);
 
             if ($finding !== null) {
                 $findings[] = $finding;
@@ -396,7 +396,7 @@ final class FindRawLiterals implements Pipe
      * @param  array<int, true>  $consumed
      * @return array{kind: string, start: int, end: int, line: int, position: string, predicate: string, negate: bool, var: string, literal: string, fixable: bool}|null
      */
-    private static function classifyComparison(Expr\BinaryOp $cmp, string $content, array &$consumed): ?array
+    private static function classifyComparison(Expr\BinaryOp $cmp, string $content, array &$consumed, array $ast = []): ?array
     {
         $left = $cmp->left;
         $right = $cmp->right;
@@ -481,6 +481,19 @@ final class FindRawLiterals implements Pipe
                 [$node, $info] = $helper;
                 $other = $node === $left ? $right : $left;
                 [$class, $predicate, $inverse] = $info;
+
+                // #56: T_Int::isZero(int)/T_Float::isZero(float) are strictly
+                // typed — rewriting `$x === T_Int::ZERO` to `T_Int::isZero($x)`
+                // on a mixed/string operand throws a TypeError at runtime. Only
+                // rewrite when the operand is PROVABLY the scalar the helper
+                // takes; otherwise leave the (correct, total) comparison.
+                if (in_array($predicate, ['isZero', 'isNotZero'], true)) {
+                    $required = str_ends_with($class, 'T_Float') ? 'float' : 'int';
+
+                    if (self::resolveOperandType($other, $cmp, $ast) !== $required) {
+                        return null;
+                    }
+                }
 
                 if ($negated && $inverse !== null) {
                     $predicate = $inverse;
@@ -918,6 +931,148 @@ final class FindRawLiterals implements Pipe
         }
 
         return false;
+    }
+
+    /**
+     * The static scalar type of a comparison operand ('int'|'float'|'string'|
+     * 'bool'), resolved from the AST — a cast, a literal, a typed param in the
+     * enclosing function, or a typed `$this` property. Null when it cannot be
+     * proven a scalar (mixed/union/object/unknown).
+     *
+     * @param  array<Node>  $ast
+     */
+    private static function resolveOperandType(Node $operand, Node $cmp, array $ast): ?string
+    {
+        if ($operand instanceof Expr\Cast\Int_) {
+            return 'int';
+        }
+
+        if ($operand instanceof Expr\Cast\Double) {
+            return 'float';
+        }
+
+        if ($operand instanceof Scalar\Int_) {
+            return 'int';
+        }
+
+        if ($operand instanceof Scalar\Float_) {
+            return 'float';
+        }
+
+        if ($operand instanceof Expr\PropertyFetch
+            && $operand->var instanceof Expr\Variable && $operand->var->name === 'this'
+            && $operand->name instanceof Node\Identifier
+        ) {
+            $class = self::enclosingClass($cmp, $ast);
+
+            return $class !== null ? self::primitiveOf(self::classPropertyType($class, $operand->name->toString())) : null;
+        }
+
+        if ($operand instanceof Expr\Variable && is_string($operand->name)) {
+            return self::primitiveOf(self::paramTypeInScope($operand->name, $cmp, $ast));
+        }
+
+        return null;
+    }
+
+    private static function primitiveOf(?Node $type): ?string
+    {
+        if ($type instanceof Node\NullableType) {
+            return null; // ?int means it can be null — not a provable int
+        }
+
+        if ($type instanceof Node\Identifier) {
+            return match (strtolower($type->toString())) {
+                'int', 'integer' => 'int',
+                'float', 'double' => 'float',
+                'string' => 'string',
+                'bool', 'boolean' => 'bool',
+                default => null,
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private static function enclosingClass(Node $node, array $ast): ?Node\Stmt\Class_
+    {
+        $pos = (int) $node->getStartFilePos();
+        $best = null;
+        $bestStart = -1;
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            $start = (int) $class->getStartFilePos();
+
+            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
+                $best = $class;
+                $bestStart = $start;
+            }
+        }
+
+        return $best;
+    }
+
+    private static function classPropertyType(Node\Stmt\Class_ $class, string $property): ?Node
+    {
+        foreach ($class->getProperties() as $prop) {
+            foreach ($prop->props as $declared) {
+                if ($declared->name->toString() === $property) {
+                    return $prop->type;
+                }
+            }
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor !== null) {
+            foreach ($ctor->params as $param) {
+                if ($param->flags !== 0 && $param->var instanceof Expr\Variable && $param->var->name === $property) {
+                    return $param->type;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The type node of param $name in the innermost function-like containing $cmp.
+     *
+     * @param  array<Node>  $ast
+     */
+    private static function paramTypeInScope(string $name, Node $cmp, array $ast): ?Node
+    {
+        $pos = (int) $cmp->getStartFilePos();
+        $finder = new NodeFinder;
+        $best = null;
+        $bestStart = -1;
+
+        $functions = array_merge(
+            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
+            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
+            $finder->findInstanceOf($ast, Expr\Closure::class),
+            $finder->findInstanceOf($ast, Expr\ArrowFunction::class),
+        );
+
+        foreach ($functions as $fn) {
+            $start = (int) $fn->getStartFilePos();
+
+            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
+                continue;
+            }
+
+            foreach ($fn->params as $param) {
+                if ($param->var instanceof Expr\Variable && $param->var->name === $name) {
+                    $best = $param->type;
+                    $bestStart = $start;
+                }
+            }
+        }
+
+        return $best;
     }
 
     private static function source(string $content, Node $node): string
