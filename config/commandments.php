@@ -152,6 +152,7 @@ return [
                 Backend\PreferStaticOverInvokableConstructProphet::class,
                 Backend\NoConditionalArraySpreadProphet::class,
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
+                Backend\FeatureEnvyProphet::class,
                 Backend\ResolverPatternProphet::class,
                 Backend\DuplicateCodeProphet::class => [
                     // 'min_lines' => 5,
