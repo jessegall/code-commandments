@@ -28,7 +28,7 @@ class RepentConsoleCommand extends Command
     {
         $this
             ->setName('repent')
-            ->setDescription('Auto-fix sins that can be automatically resolved')
+            ->setDescription('Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed)')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('scroll', null, InputOption::VALUE_REQUIRED, 'Filter by specific scroll (group)')
             ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Use a specific prophet for repentance')
@@ -122,10 +122,15 @@ class RepentConsoleCommand extends Command
 
                     $parameterized = $prophet instanceof ParameterizedRepenter;
 
-                    // A parameterized fixer may act on advisory warnings too (the
-                    // closed-set-enum fix is a warning) — so it is not skipped just
-                    // because there are no sins. Other repenters keep sins-only.
-                    $hasWork = ! $judgment->isRighteous() || ($parameterized && $judgment->warnings !== []);
+                    // repent acts on auto-fixable findings regardless of severity:
+                    // [AUTO-FIXABLE] declares the rewrite SAFE, which is orthogonal
+                    // to how loud the finding is (sin = blocks, warning = advises).
+                    // So an [AUTO-FIXABLE] warning is repented without forcing a
+                    // severity bump to 'sin'. A parameterized fixer may also act on
+                    // its (non-auto-fixable) advisory warnings given an --input.
+                    $hasWork = ! $judgment->isRighteous()
+                        || $this->hasAutoFixableWarning($judgment)
+                        || ($parameterized && $judgment->warnings !== []);
 
                     if (! $hasWork) {
                         continue;
@@ -181,6 +186,17 @@ class RepentConsoleCommand extends Command
      * @param  array<int, string>  $tokens
      * @return array<string, string>
      */
+    private function hasAutoFixableWarning(\JesseGall\CodeCommandments\Results\Judgment $judgment): bool
+    {
+        foreach ($judgment->warnings as $warning) {
+            if ($warning->autoFixable) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function parseInputs(array $tokens): array
     {
         $values = [];
