@@ -310,6 +310,10 @@ or move on):
     NullCallable, the Predicate kernel, …) raise PHPStan / static-analysis
     errors or do not compile — that is a package defect, report it too (use the
     scaffold class as --prophet, e.g. --prophet=Option).
+  - a PHP-TYPES bug: the `jessegall/php-types` package (T_String, T_Array,
+    T_Json, Option, …) misbehaves — the commandments team also maintains
+    php-types, so report those here too (use the type as --prophet, e.g.
+    --prophet=T_String).
   vendor/bin/commandments report --prophet=NAME --file=PATH --line=N --reason="what is wrong"
 This files a GitHub issue another session picks up and fixes. Reporting is
 part of the job — it is how the prophets improve.
@@ -398,7 +402,7 @@ vendor/bin/commandments report --prophet=NAME --reason="…"  # Report a false p
 vendor/bin/commandments scripture --prophet=NAME  # Full rule for a prophet
 ```
 
-**Hit a prophet problem? Report it yourself, proactively.** A false positive, a rule that does not fit, a prophet bug (tagged [AUTO-FIXABLE] but `repent` no-ops/fails, a crash, a wrong message), OR a **scaffolding bug** (the generated support classes — Option, Union, Resolver, NullCallable, the Predicate kernel — raise PHPStan/static-analysis errors or don't compile) — do not just absolve or work around it: `commandments report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue another session fixes (for a scaffold defect, use the class as `--prophet`, e.g. `--prophet=Option`). **Report is not a dodge** — only a *genuinely* wrong finding qualifies; a rule you simply dislike is not a report, fix the code.
+**Hit a prophet problem? Report it yourself, proactively.** A false positive, a rule that does not fit, a prophet bug (tagged [AUTO-FIXABLE] but `repent` no-ops/fails, a crash, a wrong message), a **scaffolding bug** (the generated support classes — Option, Union, Resolver, NullCallable, the Predicate kernel — raise PHPStan/static-analysis errors or don't compile), OR a **php-types bug** (`jessegall/php-types`: T_String, T_Array, Option, … — the commandments team also maintains php-types) — do not just absolve or work around it: `commandments report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue another session fixes (for a scaffold or php-types defect, use the class as `--prophet`, e.g. `--prophet=Option` or `--prophet=T_String`). **Report is not a dodge** — only a *genuinely* wrong finding qualifies; a rule you simply dislike is not a report, fix the code.
 
 **Reporting a sin absolves it until the issue is answered.** Pass the finding's fingerprint — `commandments report --prophet=NAME --fingerprint=HASH --reason="why"` — and the finding (even a **sin**) goes quiet and **stays quiet across commits** (it survives the post-commit reset, so you can commit; `report` will not file a duplicate). When the issue is answered (`reports --check` at session start detects the close), the absolution **lifts**: a real false positive is gone after `composer update`; a sin closed as "works as intended" **re-blocks** and you must fix it.
 MARKDOWN;
