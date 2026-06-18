@@ -175,6 +175,16 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('! \\is_string($make) && \\is_callable($make)', $predicate);
         // when() must be gone — then() is the only name.
         $this->assertStringNotContainsString('public function when(', $predicate);
+        // and()/or()/not() preserve the input type (#35) — no Predicate<mixed>.
+        $this->assertStringContainsString('@return Predicate<TIn>', $predicate);
+
+        // The combinators are generic so and()/or()/not() keep TIn (#35): the
+        // FIRST predicate drives the template, the rest stay mixed.
+        $allOf = file_get_contents($this->dir . '/Resolvers/Predicates/AllOf.php');
+        $this->assertStringContainsString('@extends Predicate<TIn>', $allOf);
+        $this->assertStringContainsString('@return self<T>', $allOf);
+        $negated = file_get_contents($this->dir . '/Resolvers/Predicates/Negated.php');
+        $this->assertStringContainsString('@extends Predicate<TIn>', $negated);
 
         $resolver = file_get_contents($this->dir . '/Resolvers/Resolver.php');
         $this->assertStringContainsString('@template TResult', $resolver);

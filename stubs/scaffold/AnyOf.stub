@@ -12,7 +12,9 @@ namespace {{ namespace }};
  *
  * @code-commandments-generated
  *
- * @extends Predicate<mixed>
+ * @template TIn
+ *
+ * @extends Predicate<TIn>
  */
 final class AnyOf extends Predicate
 {
@@ -21,19 +23,27 @@ final class AnyOf extends Predicate
     private readonly array $predicates;
 
     /**
-     * @param  Predicate<mixed>  ...$predicates
+     * @param  Predicate<TIn>  $first
+     * @param  Predicate<mixed>  ...$rest
      */
-    private function __construct(Predicate ...$predicates)
+    private function __construct(Predicate $first, Predicate ...$rest)
     {
-        $this->predicates = array_values($predicates);
+        $this->predicates = [$first, ...array_values($rest)];
     }
 
     /**
-     * @param  Predicate<mixed>  ...$predicates
+     * The first predicate drives the input type; the rest stay `mixed`, so
+     * `Predicate<TIn>::or()` preserves TIn without a cast.
+     *
+     * @template T
+     *
+     * @param  Predicate<T>  $first
+     * @param  Predicate<mixed>  ...$rest
+     * @return self<T>
      */
-    public static function of(Predicate ...$predicates): self
+    public static function of(Predicate $first, Predicate ...$rest): self
     {
-        return new self(...$predicates);
+        return new self($first, ...$rest);
     }
 
     public function __invoke(mixed $value): bool

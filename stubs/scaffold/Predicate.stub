@@ -32,8 +32,10 @@ abstract class Predicate
     abstract public function __invoke(mixed $value): bool;
 
     /**
-     * @param  Predicate<mixed>  $other
-     * @return Predicate<mixed>
+     * @template TOther
+     *
+     * @param  Predicate<TOther>  $other
+     * @return Predicate<TIn>
      */
     public function and(Predicate $other): Predicate
     {
@@ -41,8 +43,10 @@ abstract class Predicate
     }
 
     /**
-     * @param  Predicate<mixed>  $other
-     * @return Predicate<mixed>
+     * @template TOther
+     *
+     * @param  Predicate<TOther>  $other
+     * @return Predicate<TIn>
      */
     public function or(Predicate $other): Predicate
     {
@@ -50,7 +54,7 @@ abstract class Predicate
     }
 
     /**
-     * @return Predicate<mixed>
+     * @return Predicate<TIn>
      */
     public function not(): Predicate
     {

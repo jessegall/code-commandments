@@ -12,20 +12,25 @@ namespace {{ namespace }};
  *
  * @code-commandments-generated
  *
- * @extends Predicate<mixed>
+ * @template TIn
+ *
+ * @extends Predicate<TIn>
  */
 final class Negated extends Predicate
 {
 
     /**
-     * @param  Predicate<mixed>  $predicate
+     * @param  Predicate<TIn>  $predicate
      */
     private function __construct(
         private readonly Predicate $predicate,
     ) {}
 
     /**
-     * @param  Predicate<mixed>  $predicate
+     * @template T
+     *
+     * @param  Predicate<T>  $predicate
+     * @return self<T>
      */
     public static function of(Predicate $predicate): self
     {
