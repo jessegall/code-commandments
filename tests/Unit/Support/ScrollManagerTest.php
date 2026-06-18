@@ -325,4 +325,21 @@ class ScrollManagerTest extends TestCase
 
         $this->assertEquals(['path/to/exclude', 'another/path'], $prophet->getExcludedPaths());
     }
+
+    public function test_prepare_codebase_index_injects_into_needs_index_prophets(): void
+    {
+        // Repent runs prophets directly; this is how it gets the cross-file index.
+        $prophet = new class extends \JesseGall\CodeCommandments\Commandments\PhpCommandment implements \JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex {
+            public ?\JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex $injected = null;
+            public function setCodebaseIndex(\JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex $index): void { $this->injected = $index; }
+            public function description(): string { return 'spy'; }
+            public function detailedDescription(): string { return 'spy'; }
+            public function judge(string $f, string $c): \JesseGall\CodeCommandments\Results\Judgment { return $this->righteous(); }
+        };
+
+        $this->registry->setScrollConfig('test', ['path' => __DIR__, 'extensions' => ['php']]);
+        $this->scrollManager->prepareCodebaseIndex('test', [$prophet]);
+
+        $this->assertNotNull($prophet->injected, 'prepareCodebaseIndex must inject the index into NeedsCodebaseIndex prophets.');
+    }
 }
