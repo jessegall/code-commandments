@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Console;
 use Illuminate\Filesystem\Filesystem;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\ReportGuidance;
 use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
 use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
 use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
@@ -85,6 +86,10 @@ class ReportConsoleCommand extends Command
             if ($fingerprint !== null) {
                 $tracker->reportFinding($fingerprint, $reason, $result['number'] ?? null, $repo);
                 $output->writeln('<info>This finding is now absolved until the issue is answered. It survives the post-commit reset; `reports --check` lifts it when the issue closes (a genuine sin then re-blocks).</info>');
+            }
+
+            foreach (ReportGuidance::lines($result['number'] ?? null, $repo) as $line) {
+                $output->writeln($line);
             }
 
             return Command::SUCCESS;
