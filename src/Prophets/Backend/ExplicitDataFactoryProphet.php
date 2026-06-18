@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
@@ -13,6 +14,8 @@ use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\DataFactorySynthesizer;
 use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindImplicitDataFrom;
@@ -20,6 +23,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 
 /**
@@ -29,9 +34,16 @@ use PhpParser\ParserFactory;
  * auto-fixable to ::make().
  */
 #[IntroducedIn('1.40.0')]
-class ExplicitDataFactoryProphet extends PhpCommandment implements SinRepenter
+class ExplicitDataFactoryProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
 {
     private const EMPTY_ARRAY_CALLS = ['T_Array::empty', 'Arr::empty'];
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     public function supported(): bool
     {
@@ -103,9 +115,16 @@ Good — explicit factory, array hydration encapsulated inside the class:
 Enums are unaffected: `Status::from($row->status)` passes a scalar, never an
 object, so the object check never touches it.
 
-Argument types are resolved from the AST (parameter hints, $this, property
-types, new, ->toArray()); when a type cannot be resolved the prophet stays
-silent rather than guess.
+Argument types are resolved from the AST (parameter hints — including inside
+closures/arrow functions — $this, property types, new, ->toArray()); when a
+type cannot be resolved the prophet stays silent rather than guess.
+
+The object dispatch is AUTO-FIXABLE: `repent` rewrites `XData::from($obj)` to
+`XData::from{Type}($obj)` and synthesises the matching factory on XData —
+`public static function from{Type}(\Fqcn\Type $x): static { return
+static::from($x->toArray()); }` — wherever XData is defined, cross-referencing
+the codebase index so the factory lands even when the Data class sits outside
+the scoped/flagged files. An unreachable Data class is left for a human.
 
 Pairs with the generated FromArrayOnly trait, which enforces the same rule at
 runtime (assert) for the cases static analysis cannot see.
@@ -136,10 +155,11 @@ SCRIPTURE;
         $suggestion = $this->suggestionFor($match);
         $symbol = $match->groups['target'] . ':' . $match->groups['kind'];
 
-        // Only the mechanical cases are auto-fixable; field-by-field new self()
-        // and object/toArray from() need a human factory, so do NOT advertise
-        // [AUTO-FIXABLE] there (repent would no-op and waste a cycle).
-        $autoFixable = in_array($match->groups['kind'], ['empty_from', 'new_default'], true);
+        // empty_from / new_default rewrite to ::make(); the object dispatch
+        // (nonarray) is now auto-fixable too — repent synthesises the fromX()
+        // factory (cross-file via the index) and rewrites the call. Field-by-
+        // field new self() (new_mapping) and the toArray bypass still need a human.
+        $autoFixable = in_array($match->groups['kind'], ['empty_from', 'new_default', 'nonarray'], true);
 
         if ($this->config('severity', 'warning') === 'sin') {
             return $this->sinAt($match->line, $message, $match->content, $suggestion, $symbol, $autoFixable);
@@ -186,6 +206,13 @@ SCRIPTURE;
             return sprintf('AUTO-FIXABLE: run repent to rewrite this to %s::make().', $target);
         }
 
+        if ($match->groups['kind'] === 'nonarray') {
+            return sprintf(
+                'AUTO-FIXABLE: run repent to synthesise %s::fromType(Type $x) and rewrite this call to it.',
+                $target,
+            );
+        }
+
         return sprintf(
             'Add an explicit `%s::fromX(Type $x): static` factory that does static::from($x->toArray()), and call that instead.',
             $target,
@@ -215,9 +242,24 @@ SCRIPTURE;
             return RepentanceResult::unrepentant('Unable to parse PHP file');
         }
 
+        // Resolve names (FQCNs + class namespacedName) without replacing the
+        // original nodes, so byte positions stay intact for the edits below
+        // while the synthesizer can read `resolvedName` to qualify types.
+        $traverser = new NodeTraverser;
+        $traverser->addVisitor(new NameResolver(null, ['replaceNodes' => false]));
+        $traverser->traverse($ast);
+
         $nodeFinder = new NodeFinder;
         $edits = [];
         $penance = [];
+        $createdFiles = [];
+
+        // #44: object-typed X::from($obj) -> X::from{Type}($obj) + synthesise the
+        // matching factory on X (in this file or, via the index, wherever X lives).
+        $synth = (new DataFactorySynthesizer)->synthesize($filePath, $content, $ast, $this->index, $this->resolveSuffixes());
+        $edits = array_merge($edits, $synth['edits']);
+        $penance = array_merge($penance, $synth['penance']);
+        $createdFiles = $synth['createdFiles'];
 
         // X::from(<empty array>) -> X::make()
         foreach ($nodeFinder->findInstanceOf($ast, Node\Expr\StaticCall::class) as $call) {
@@ -262,7 +304,7 @@ SCRIPTURE;
             }
         }
 
-        if ($edits === []) {
+        if ($edits === [] && $createdFiles === []) {
             return RepentanceResult::unchanged();
         }
 
@@ -272,7 +314,7 @@ SCRIPTURE;
             $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
         }
 
-        return RepentanceResult::absolved($content, $penance);
+        return RepentanceResult::absolved($content, $penance, createdFiles: $createdFiles);
     }
 
     /**
