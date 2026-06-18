@@ -415,6 +415,7 @@ class JudgeConsoleCommand extends Command
             $output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
             $output->writeln(T_String::empty());
             $output->writeln('DO NOT COMMIT: Fix all sins before committing.');
+            $output->writeln('You own EVERY finding on a file you touched — pre-existing ones included. "I didn\'t cause this" is never a reason to leave a sin.');
             $output->writeln(T_String::empty());
 
             arsort($this->prophetSinCounts);
