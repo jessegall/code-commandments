@@ -292,8 +292,31 @@ final class FindImplicitDataFrom implements Pipe
     private function collectParamTypes(Node\Stmt\ClassMethod $method): array
     {
         $types = [];
+        $this->addParamTypes($method->params, $types);
 
-        foreach ($method->params as $param) {
+        // Also resolve params of nested closures / arrow functions, so a
+        // `Data::from($x)` inside `fn (Foo $x) => Data::from($x)` (or a
+        // `function (Foo $x) {...}`) classifies $x by its hint.
+        $nodeFinder = new NodeFinder;
+
+        foreach ($nodeFinder->findInstanceOf($method->stmts ?? [], Expr\Closure::class) as $closure) {
+            $this->addParamTypes($closure->params, $types);
+        }
+
+        foreach ($nodeFinder->findInstanceOf($method->stmts ?? [], Expr\ArrowFunction::class) as $arrow) {
+            $this->addParamTypes($arrow->params, $types);
+        }
+
+        return $types;
+    }
+
+    /**
+     * @param  array<Node\Param>  $params
+     * @param  array<string, string>  $types
+     */
+    private function addParamTypes(array $params, array &$types): void
+    {
+        foreach ($params as $param) {
             if (! $param->var instanceof Expr\Variable || ! is_string($param->var->name)) {
                 continue;
             }
@@ -304,8 +327,6 @@ final class FindImplicitDataFrom implements Pipe
                 $types[$param->var->name] = $category;
             }
         }
-
-        return $types;
     }
 
     /**

@@ -33,6 +33,21 @@ class ExplicitDataFactoryProphetTest extends TestCase
         $this->assertStringContainsString('non-array (object)', $j->warnings[0]->message);
     }
 
+    public function test_flags_from_arrow_function_param(): void
+    {
+        // #44: parameter hints inside a closure/arrow function must resolve too.
+        $j = $this->judge('class C { public function go(array $songs): array { return array_map(fn (\App\Song $song) => \App\SongData::from($song), $songs); } }');
+        $this->assertTrue($j->hasWarnings());
+        $this->assertStringContainsString('non-array (object)', $j->warnings[0]->message);
+    }
+
+    public function test_flags_from_closure_param(): void
+    {
+        $j = $this->judge('class C { public function go(array $songs): array { return array_map(function (\App\Song $song) { return \App\SongData::from($song); }, $songs); } }');
+        $this->assertTrue($j->hasWarnings());
+        $this->assertStringContainsString('non-array (object)', $j->warnings[0]->message);
+    }
+
     public function test_flags_from_this(): void
     {
         $j = $this->judge('class C { public function go(): mixed { return \App\SongData::from($this); } }');
