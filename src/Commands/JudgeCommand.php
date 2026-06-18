@@ -469,9 +469,10 @@ class JudgeCommand extends Command
                 }
 
                 $this->output->newLine();
-                $this->output->writeln('Warnings are ADVISORY — each one carries an APPLY-WHEN / LEAVE-WHEN');
-                $this->output->writeln('rubric. You must not leave any untouched. Walk them one at a time');
-                $this->output->writeln('(rubric + full rule shown inline):');
+                $this->output->writeln('Each warning carries an APPLY-WHEN / LEAVE-WHEN rubric (use judgment) —');
+                $this->output->writeln('but it is NOT ignorable: a staged commit is BLOCKED until every warning');
+                $this->output->writeln('is resolved (the pre-commit gate runs `judge --staged`). Walk them one');
+                $this->output->writeln('at a time (rubric + full rule shown inline):');
                 $this->output->writeln("  php artisan commandments:judge --next{$gitFlag}");
                 $this->output->newLine();
                 $this->output->writeln('For each: fix it, OR — if the rubric says it does not apply here —');

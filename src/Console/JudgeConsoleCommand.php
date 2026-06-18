@@ -496,9 +496,10 @@ class JudgeConsoleCommand extends Command
                 }
 
                 $output->writeln(T_String::empty());
-                $output->writeln('Warnings are ADVISORY — each one carries an APPLY-WHEN / LEAVE-WHEN');
-                $output->writeln('rubric. You must not leave any untouched. Walk them one at a time');
-                $output->writeln('(rubric + full rule shown inline):');
+                $output->writeln('Each warning carries an APPLY-WHEN / LEAVE-WHEN rubric (use judgment) —');
+                $output->writeln('but it is NOT ignorable: a staged commit is BLOCKED until every warning');
+                $output->writeln('is resolved (the pre-commit gate runs `judge --staged`). Walk them one');
+                $output->writeln('at a time (rubric + full rule shown inline):');
                 $output->writeln("  commandments judge --next{$gitFlag}");
                 $output->writeln(T_String::empty());
                 $output->writeln('For each: fix it, OR — if the rubric says it does not apply here —');
