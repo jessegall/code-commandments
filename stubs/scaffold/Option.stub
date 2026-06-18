@@ -191,6 +191,66 @@ final readonly class Option
     }
 
     /**
+     * $this when present, otherwise the LAZILY-built alternative — the
+     * functional `or`. Turns a `A || B || C` value-or-absent chain into
+     * `attemptA()->orElse(fn () => attemptB())->orElse(fn () => attemptC())`.
+     *
+     * @param  callable(): self<T>  $alternative
+     * @return self<T>
+     */
+    public function orElse(callable $alternative): self
+    {
+        return $this->hasValue ? $this : $alternative();
+    }
+
+    /**
+     * Eager twin of {@see self::orElse()} — $this when present, else $alternative.
+     *
+     * @param  self<T>  $alternative
+     * @return self<T>
+     */
+    public function or(self $alternative): self
+    {
+        return $this->hasValue ? $this : $alternative;
+    }
+
+    /**
+     * $this when already present; otherwise `some($factory())` when $condition
+     * is truthy, else still none. OR-chain sugar that removes a `||` chain:
+     * `someWhen($a, fn () => $v)->orWhen($b, fn () => $v)->orWhen($c, fn () => $v)`.
+     *
+     * @param  callable(): T  $factory
+     * @return self<T>
+     */
+    public function orWhen(mixed $condition, callable $factory): self
+    {
+        return $this->hasValue ? $this : self::someWhen($condition, $factory);
+    }
+
+    /**
+     * $this when it has a value AND $condition is truthy, otherwise none — the
+     * guard/AND side: drops the value when a later condition fails.
+     *
+     * @return self<T>
+     */
+    public function andWhen(mixed $condition): self
+    {
+        return $this->hasValue && $condition ? $this : self::none();
+    }
+
+    /**
+     * none() unless the predicate holds for the value — the value-dependent
+     * twin of {@see self::andWhen()}.
+     *
+     * @param  callable(T): bool  $predicate
+     * @return self<T>
+     */
+    public function filter(callable $predicate): self
+    {
+        return $this->hasValue && $predicate($this->value) ? $this : self::none();
+    }
+
+    /**
      * The factory's option when the condition is TRUTHY, otherwise none. The
      * condition is `mixed` and evaluated for truthiness (like `if`/`? :`), so a
      * `bool|null` or other expression needs no `=== true` coercion at the call
