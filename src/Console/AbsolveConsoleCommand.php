@@ -24,7 +24,7 @@ class AbsolveConsoleCommand extends Command
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint shown by judge --next')
             ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply here (required)')
             ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)')
-            ->addOption('clear', null, InputOption::VALUE_NONE, 'Remove every absolution (used by the post-commit reset so nothing stays hidden)');
+            ->addOption('clear', null, InputOption::VALUE_NONE, 'Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

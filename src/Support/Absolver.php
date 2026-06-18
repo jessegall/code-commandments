@@ -50,10 +50,15 @@ final class Absolver
             );
         }
 
+        // A sin must be fixed, not absolved. The ONE escape is to `report` it as
+        // genuinely wrong: that records a report-linked absolution directly, so a
+        // reported sin is already suppressed and never reaches this path. Manual
+        // `absolve` therefore still refuses a sin — pointing at `report` instead.
         if ($finding->isSin() && ! $this->prophet($finding->prophetClass)->requiresConfession()) {
             return $this->error(
                 "{$finding->prophetShort} is a sin and must be FIXED, not absolved "
-                . "({$finding->location()})."
+                . "({$finding->location()}). If the rule is genuinely wrong, `report` it "
+                . '— that records a report-linked absolution and files an issue.'
             );
         }
 

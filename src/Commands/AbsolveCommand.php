@@ -20,7 +20,7 @@ class AbsolveCommand extends Command
         {--fingerprint= : The finding fingerprint shown by judge --next}
         {--reason= : Why the rule does not apply here (required)}
         {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}
-        {--clear : Remove every absolution (used by the post-commit reset so nothing stays hidden)}';
+        {--clear : Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered}';
 
     protected $description = 'Absolve a single finding by fingerprint, with a required reason';
 
