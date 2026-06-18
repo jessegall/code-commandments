@@ -77,6 +77,10 @@ class ReportCommand extends Command
                 $this->info('This finding is now absolved until the issue is answered. It survives the post-commit reset; `reports --check` lifts it when the issue closes (a genuine sin then re-blocks).');
             }
 
+            foreach (\JesseGall\CodeCommandments\Support\ReportGuidance::lines($result['number'] ?? null, $repo) as $line) {
+                $this->line($line);
+            }
+
             return self::SUCCESS;
         }
 
