@@ -31,6 +31,23 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_String::empty()', $judgment->sins[0]->suggestion);
     }
 
+    public function test_only_rewrites_int_zero_compare_when_the_operand_is_int(): void
+    {
+        // #56: T_Int::isZero(int) is strict — never rewrite `$x === T_Int::ZERO`
+        // to it on a mixed/string operand (TypeError), only on a provably-int one.
+        $src = "<?php\nnamespace App;\nuse JesseGall\\PhpTypes\\T_Int;\nclass C {\n"
+            . " public function m(mixed \$a): bool { return \$a === T_Int::ZERO; }\n"
+            . " public function s(string \$b): bool { return \$b === T_Int::ZERO; }\n"
+            . " public function i(int \$c): bool { return \$c === T_Int::ZERO; }\n"
+            . "}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertStringContainsString('return $a === T_Int::ZERO;', $result->newContent, 'mixed operand left alone');
+        $this->assertStringContainsString('return $b === T_Int::ZERO;', $result->newContent, 'string operand left alone');
+        $this->assertStringContainsString('return T_Int::isZero($c);', $result->newContent, 'int operand rewritten');
+    }
+
     public function test_flags_double_quoted_empty_string(): void
     {
         $judgment = $this->judgeBody('return "";');
@@ -159,8 +176,15 @@ class NoRawLiteralProphetTest extends TestCase
 
     public function test_flags_helper_comparison_for_other_kinds(): void
     {
-        $this->assertStringContainsString('T_Int::isZero($n)', $this->judgeBody('return $n === \JesseGall\PhpTypes\T_Int::ZERO;')->sins[0]->suggestion);
-        $this->assertStringContainsString('T_Float::isZero($f)', $this->judgeBody('return $f === \JesseGall\PhpTypes\T_Float::ZERO;')->sins[0]->suggestion);
+        // #56: the int/float zero predicates are strictly typed, so they only
+        // fire on a provably int/float operand (here, a typed param).
+        $int = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(int \$n): bool { return \$n === \\JesseGall\\PhpTypes\\T_Int::ZERO; } }");
+        $this->assertStringContainsString('T_Int::isZero($n)', $int->sins[0]->suggestion);
+
+        $float = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(float \$f): bool { return \$f === \\JesseGall\\PhpTypes\\T_Float::ZERO; } }");
+        $this->assertStringContainsString('T_Float::isZero($f)', $float->sins[0]->suggestion);
+
+        // bool / json predicates are not type-gated.
         $this->assertStringContainsString('T_Bool::isTrue($b)', $this->judgeBody('return $b === \JesseGall\PhpTypes\T_Bool::TRUE;')->sins[0]->suggestion);
         $this->assertStringContainsString('T_Json::isEmptyObject($j)', $this->judgeBody('return $j === \JesseGall\PhpTypes\T_Json::EMPTY_OBJECT;')->sins[0]->suggestion);
     }

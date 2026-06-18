@@ -6,7 +6,9 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Sin;
@@ -49,13 +51,47 @@ use ReflectionEnum;
  * and excluded enums are all configurable.
  */
 #[IntroducedIn('1.15.0')]
-class SuggestCompareSelfTraitProphet extends PhpCommandment implements SinRepenter
+class SuggestCompareSelfTraitProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
 {
     private const DEFAULT_TRAIT = 'App\\Support\\Enums\\CompareSelf';
     private const EQUALS = 'equals';
     private const EQUALS_ANY = 'equalsAny';
     private const NOT_EQUALS = 'notEquals';
     private const NOT_EQUALS_ANY = 'notEqualsAny';
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
+
+    /**
+     * Whether the configured trait actually defines $method. #57: the trait may
+     * use different names (is()/isNot()) than the configured equals()/notEquals(),
+     * so emitting the call would fatal at runtime. Verified through the index;
+     * when the trait can't be verified (no index, or it lives outside the scroll)
+     * we allow the rewrite rather than over-suppress.
+     */
+    private function traitDefinesMethod(string $traitFqcn, string $method): bool
+    {
+        if ($this->index === null) {
+            return true;
+        }
+
+        // The compare-self helper is usually a TRAIT; fall back to a class for
+        // class-based setups. Unverifiable (outside the scroll) => allow.
+        $methods = $this->index->traitMethodNames($traitFqcn)
+            ?? ($this->index->classByFqcn(ltrim($traitFqcn, '\\'))?->methods !== null
+                ? array_map('strtolower', array_keys($this->index->classByFqcn(ltrim($traitFqcn, '\\'))->methods))
+                : null);
+
+        if ($methods === null) {
+            return true;
+        }
+
+        return in_array(strtolower($method), $methods, true);
+    }
 
     public function description(): string
     {
@@ -182,7 +218,7 @@ SCRIPTURE;
                 $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
 
                 if ($hasTrait === true) {
-                    return $this->primaryWarning($match);
+                    return $this->primaryWarning($match, $traitFqcn);
                 }
 
                 $key = $enumFqcn;
@@ -266,9 +302,11 @@ SCRIPTURE;
         return sprintf('%s::%s(%s)', $classRef, $method, implode(', ', $args));
     }
 
-    private function primaryWarning(MatchResult $match): Warning
+    private function primaryWarning(MatchResult $match, string $traitFqcn): Warning
     {
         $groups = $match->groups;
+        $method = $this->methodFor($groups['op']);
+        $defined = $this->traitDefinesMethod($traitFqcn, $method);
 
         $message = sprintf(
             '%s comparison on %s — use the null-safe `%s`.',
@@ -277,11 +315,22 @@ SCRIPTURE;
             $this->rewrite($groups),
         );
 
+        // #57: the configured trait does not define this method (it uses other
+        // names) — auto-fixing would emit an undefined-method call. Nudge to
+        // configure the *_method names instead of promising a broken rewrite.
+        if (! $defined) {
+            $message .= sprintf(
+                ' (NOT auto-fixable: %s does not define `%s()` — set the `*_method` config to your trait\'s actual method names.)',
+                $this->shortName($traitFqcn),
+                $method,
+            );
+        }
+
         return Warning::at(
             line: $match->line,
             message: $message,
             snippet: $match->content,
-            autoFixable: true,
+            autoFixable: $defined,
         );
     }
 
@@ -383,6 +432,13 @@ SCRIPTURE;
             // existing `Enum::equals(...)` static call already proves the trait
             // is in place, so it is always safe to re-anchor.
             if (! $fromStatic && $this->enumUsesTrait($groups['enum_fqcn'], $traitFqcn, $ast) !== true) {
+                continue;
+            }
+
+            // #57: never emit a call to a method the configured trait does not
+            // define — that fatals at runtime. Leave it for the human (configure
+            // the *_method names).
+            if (! $this->traitDefinesMethod($traitFqcn, $this->methodFor($groups['op']))) {
                 continue;
             }
 
