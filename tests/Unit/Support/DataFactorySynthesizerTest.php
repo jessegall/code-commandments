@@ -214,6 +214,47 @@ class DataFactorySynthesizerTest extends TestCase
         $this->assertFalse($result->absolved, 'A Request argument must not be auto-fixed to a toArray() body.');
     }
 
+    public function test_normalizes_a_concrete_return_factory_to_static(): void
+    {
+        // #51: a generated-shape factory declaring a concrete return type is an
+        // incompatible override of an inherited `: static` — repent rewrites it.
+        $path = $this->write('CustomerDetailedInformationData.php', <<<'PHP'
+        <?php
+        namespace App\Data;
+        class CustomerDetailedInformationData extends CustomerData {
+            public static function fromCustomer(\App\Models\Customer $customer): CustomerDetailedInformationData
+            {
+                return static::from($customer->toArray());
+            }
+        }
+        PHP);
+
+        $result = $this->repent($path);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public static function fromCustomer(\App\Models\Customer $customer): static', $result->newContent);
+        $this->assertStringNotContainsString(': CustomerDetailedInformationData', $result->newContent);
+    }
+
+    public function test_leaves_a_static_return_factory_untouched(): void
+    {
+        $path = $this->write('CustomerData.php', <<<'PHP'
+        <?php
+        namespace App\Data;
+        use Spatie\LaravelData\Data;
+        class CustomerData extends Data {
+            public static function fromCustomer(\App\Models\Customer $customer): static
+            {
+                return static::from($customer->toArray());
+            }
+        }
+        PHP);
+
+        $result = $this->repent($path);
+
+        $this->assertFalse($result->absolved, 'A `: static` factory is already correct — no change.');
+    }
+
     public function test_unreachable_data_class_is_left_untouched(): void
     {
         // No index, and ShopData is not defined in this file — repent cannot place

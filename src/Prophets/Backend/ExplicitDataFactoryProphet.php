@@ -133,6 +133,11 @@ target Data class — or any ancestor — carries `#[LoadRelation]`, `#[MapInput
 from(Model) path), or the argument is a Request (its magic reads ->all()). Those
 need a human to write the right factory.
 
+Generated factories always declare `: static` (correct for `return static::from`
+and consistent across an inheritance chain). A factory that declares a CONCRETE
+return type instead is an incompatible override of an inherited `: static` and
+fatals at class-load — judge flags it and repent normalises it to `static`.
+
 Pairs with the generated FromArrayOnly trait, which enforces the same rule at
 runtime (assert) for the cases static analysis cannot see.
 
@@ -149,11 +154,69 @@ SCRIPTURE;
     {
         $pipe = (new FindImplicitDataFrom)->withDataSuffixes($this->resolveSuffixes());
 
-        return PhpPipeline::make($filePath, $content)
+        $judgment = PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe($pipe)
             ->partitionMatches(fn (MatchResult $match) => $this->translate($match))
             ->judge();
+
+        // #51: also flag a factory `fromX(...): Concrete { return static::from(...); }`
+        // — a concrete return type is an incompatible override of an inherited
+        // `: static` and fatals at class-load. Auto-fixable (repent normalises it).
+        $extra = $this->concreteReturnFindings($content);
+
+        if ($extra === []) {
+            return $judgment;
+        }
+
+        $isSin = $this->config('severity', 'warning') === 'sin';
+
+        return new Judgment(
+            sins: $isSin ? [...$judgment->sins, ...$extra] : $judgment->sins,
+            warnings: $isSin ? $judgment->warnings : [...$judgment->warnings, ...$extra],
+        );
+    }
+
+    /**
+     * Findings for generated-shape factories declaring a concrete return type
+     * where the body is `return static::from(...)` — should be `: static`.
+     *
+     * @return list<Sin|Warning>
+     */
+    private function concreteReturnFindings(string $content): array
+    {
+        $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+
+        if ($ast === null) {
+            return [];
+        }
+
+        $synth = new DataFactorySynthesizer;
+        $findings = [];
+        $isSin = $this->config('severity', 'warning') === 'sin';
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            foreach ($class->getMethods() as $method) {
+                if (! $synth->isConcreteReturnStaticFromFactory($method)) {
+                    continue;
+                }
+
+                $line = $method->getStartLine();
+                $name = $method->name->toString();
+                $message = sprintf(
+                    '%s() declares a concrete return type but its body returns static::from() — a concrete return is an incompatible override of an inherited `: static` (fatal at class-load). Use `: static`.',
+                    $name,
+                );
+                $suggestion = 'AUTO-FIXABLE: run repent to change the return type to `static`.';
+                $symbol = 'concrete-return:' . $name;
+
+                $findings[] = $isSin
+                    ? $this->sinAt($line, $message, null, $suggestion, $symbol, true)
+                    : $this->warningAt($line, $message . ' ' . $suggestion, null, $symbol, true);
+            }
+        }
+
+        return $findings;
     }
 
     private function translate(MatchResult $match): Sin|Warning
