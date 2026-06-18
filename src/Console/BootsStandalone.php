@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Console;
 use Illuminate\Filesystem\Filesystem;
 use JesseGall\CodeCommandments\Exceptions\ConfigurationException;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
+use JesseGall\CodeCommandments\Support\Caching\FindingsCache;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
@@ -52,6 +53,7 @@ trait BootsStandalone
 
         $scanner = new GenericFileScanner();
         $manager = new ScrollManager($registry, $scanner);
+        $manager->setFindingsCache(new FindingsCache(Environment::basePath('.commandments/cache/findings.json'), new Filesystem()));
 
         $tabletPath = $config['confession']['tablet_path']
             ?? Environment::basePath('.commandments/confessions.json');

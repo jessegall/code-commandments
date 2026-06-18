@@ -135,10 +135,10 @@ final class CommitHookInstaller
         # changes (only what is actually being committed). Run `judge --next`
         # to walk and fix them one at a time.
         if [ -x vendor/bin/commandments ]; then
-            vendor/bin/commandments judge --staged
+            vendor/bin/commandments judge --staged --no-cache
             cc_status=\$?
         elif [ -f artisan ]; then
-            php artisan commandments:judge --staged
+            php artisan commandments:judge --staged --no-cache
             cc_status=\$?
         else
             cc_status=0

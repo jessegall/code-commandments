@@ -11,6 +11,8 @@ use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\ProphetFailure;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\Caching\FindingsCache;
+use JesseGall\CodeCommandments\Support\Caching\JudgmentCodec;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\PathExcludeMatcher;
 use Illuminate\Support\Collection;
@@ -25,11 +27,129 @@ class ScrollManager
     /** @var array<ProphetFailure> */
     protected array $failures = [];
 
+    private ?FindingsCache $findingsCache = null;
+
+    private bool $useCache = true;
+
     public function __construct(
         protected ProphetRegistry $registry,
         protected FileScanner $scanner,
     ) {
         ProphetExecutionContext::register();
+    }
+
+    public function setFindingsCache(?FindingsCache $cache): void
+    {
+        $this->findingsCache = $cache;
+    }
+
+    /**
+     * Turn caching off — the pre-commit gate forces a fresh, authoritative judge.
+     */
+    public function setUseCache(bool $useCache): void
+    {
+        $this->useCache = $useCache;
+    }
+
+    /**
+     * The cache for $scroll, activated at the current generation, or null when
+     * caching is disabled. A cached entry is served ONLY when the whole scroll
+     * is byte-identical and the ruleset unchanged (so a hit equals a fresh
+     * judge), keeping cross-file prophets correct.
+     */
+    private function activateCache(string $scroll): ?FindingsCache
+    {
+        if ($this->findingsCache === null || ! $this->useCache) {
+            return null;
+        }
+
+        $this->findingsCache->activate($scroll, $this->generation($scroll));
+
+        return $this->findingsCache;
+    }
+
+    private function generation(string $scroll): string
+    {
+        return sha1($this->rulesetVersion($scroll) . '|' . $this->scrollFingerprint($scroll));
+    }
+
+    private function scrollFingerprint(string $scroll): string
+    {
+        $config = $this->registry->getScrollConfig($scroll);
+        $path = $config['path'] ?? Environment::basePath();
+        $hashes = [];
+
+        foreach ($this->scanner->scan($path, $config['extensions'] ?? [], $config['exclude'] ?? []) as $file) {
+            $real = $file->getRealPath();
+
+            if ($real === false) {
+                continue;
+            }
+
+            $content = @file_get_contents($real);
+
+            if ($content !== false) {
+                $hashes[$real] = sha1($content);
+            }
+        }
+
+        ksort($hashes);
+
+        return sha1(implode('|', array_map(static fn (string $k, string $v): string => $k . ':' . $v, array_keys($hashes), array_values($hashes))));
+    }
+
+    private function rulesetVersion(string $scroll): string
+    {
+        $version = class_exists(\Composer\InstalledVersions::class)
+            ? (\Composer\InstalledVersions::getVersion('jessegall/code-commandments') ?? 'dev')
+            : 'dev';
+
+        $prophets = array_map('strval', $this->registry->getProphets($scroll)->map(static fn ($p): string => get_class($p))->all());
+
+        return sha1($version . '|' . json_encode($this->registry->getScrollConfig($scroll)) . '|' . implode(',', $prophets));
+    }
+
+    /**
+     * Judge one file, serving from / writing to the findings cache. The index is
+     * built lazily via $ensureIndex (only on a cache miss), so a full cache hit
+     * skips the index build entirely.
+     *
+     * @param  iterable<Commandment>  $prophets
+     * @return Collection<string, Judgment>|null
+     */
+    private function cachedOrJudge(string $filePath, iterable $prophets, ?FindingsCache $cache, callable $ensureIndex): ?Collection
+    {
+        if ($cache !== null && $cache->has($filePath)) {
+            $encoded = $cache->get($filePath);
+
+            return $encoded === [] ? null : JudgmentCodec::decode($encoded);
+        }
+
+        $content = file_get_contents($filePath);
+
+        if ($content === false) {
+            return null;
+        }
+
+        $ensureIndex();
+
+        $fileResults = collect();
+
+        foreach ($prophets as $prophet) {
+            if (! $this->isProphetApplicable($prophet, $filePath)) {
+                continue;
+            }
+
+            $judgment = $this->runProphet($prophet, $filePath, $content);
+
+            if ($judgment !== null) {
+                $fileResults->put(get_class($prophet), $judgment);
+            }
+        }
+
+        $cache?->put($filePath, JudgmentCodec::encode($fileResults));
+
+        return $fileResults->isNotEmpty() ? $fileResults : null;
     }
 
     /**
@@ -46,9 +166,17 @@ class ScrollManager
      */
     private const SCAFFOLD_MARKER = '@code-commandments-generated';
 
+    /** The tool's own config file is configuration, not code — never judge it. */
+    private const CONFIG_FILENAME = 'commandments.php';
+
     protected function runProphet(Commandment $prophet, string $filePath, string $content): ?Judgment
     {
         if (str_contains($content, self::SCAFFOLD_MARKER)) {
+            return null;
+        }
+
+        // The consumer's own commandments.php is configuration, not code.
+        if (basename($filePath) === self::CONFIG_FILENAME) {
             return null;
         }
 
@@ -126,8 +254,9 @@ class ScrollManager
         $extensions = $config['extensions'] ?? [];
         $excludePaths = $config['exclude'] ?? [];
 
+        $cache = $this->activateCache($scroll);
         $prophets = $this->registry->getProphets($scroll);
-        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+        $ensureIndex = $this->lazyIndexBuilder($scroll, $prophets);
 
         $results = collect();
 
@@ -138,32 +267,34 @@ class ScrollManager
                 continue;
             }
 
-            $content = file_get_contents($filePath);
+            $fileResults = $this->cachedOrJudge($filePath, $prophets, $cache, $ensureIndex);
 
-            if ($content === false) {
-                continue;
-            }
-
-            $fileResults = collect();
-
-            foreach ($prophets as $prophet) {
-                if (!$this->isProphetApplicable($prophet, $filePath)) {
-                    continue;
-                }
-
-                $judgment = $this->runProphet($prophet, $filePath, $content);
-
-                if ($judgment !== null) {
-                    $fileResults->put(get_class($prophet), $judgment);
-                }
-            }
-
-            if ($fileResults->isNotEmpty()) {
+            if ($fileResults !== null) {
                 $results->put($filePath, $fileResults);
             }
         }
 
+        $cache?->save();
+
         return $results;
+    }
+
+    /**
+     * A closure that builds + injects the codebase index exactly once, on first
+     * call (a cache miss). A full cache hit never calls it, so no index is built.
+     *
+     * @param  iterable<Commandment>  $prophets
+     */
+    private function lazyIndexBuilder(string $scroll, iterable $prophets): callable
+    {
+        $built = false;
+
+        return function () use (&$built, $scroll, $prophets): void {
+            if (! $built) {
+                $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+                $built = true;
+            }
+        };
     }
 
     /**
@@ -179,10 +310,12 @@ class ScrollManager
         $extensions = $config['extensions'] ?? [];
         $excludePaths = $config['exclude'] ?? [];
 
+        $cache = $this->activateCache($scroll);
         $prophets = $this->registry->getProphets($scroll);
         // Build the index from the FULL scroll so cross-file tracing can still
-        // see callers that live outside the --git file set.
-        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+        // see callers that live outside the --git file set — but lazily, so a
+        // full cache hit skips it.
+        $ensureIndex = $this->lazyIndexBuilder($scroll, $prophets);
 
         $results = collect();
 
@@ -208,30 +341,15 @@ class ScrollManager
                 continue;
             }
 
-            $content = file_get_contents($filePath);
+            $realFilePath = realpath($filePath) ?: $filePath;
+            $fileResults = $this->cachedOrJudge($realFilePath, $prophets, $cache, $ensureIndex);
 
-            if ($content === false) {
-                continue;
-            }
-
-            $fileResults = collect();
-
-            foreach ($prophets as $prophet) {
-                if (!$this->isProphetApplicable($prophet, $filePath)) {
-                    continue;
-                }
-
-                $judgment = $this->runProphet($prophet, $filePath, $content);
-
-                if ($judgment !== null) {
-                    $fileResults->put(get_class($prophet), $judgment);
-                }
-            }
-
-            if ($fileResults->isNotEmpty()) {
+            if ($fileResults !== null) {
                 $results->put($filePath, $fileResults);
             }
         }
+
+        $cache?->save();
 
         return $results;
     }
