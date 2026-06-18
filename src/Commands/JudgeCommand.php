@@ -33,6 +33,7 @@ class JudgeCommand extends Command
         {--git : Only judge files that are new or changed in git}
         {--staged : Only judge files staged for commit (what the pre-commit gate uses)}
         {--absolve : Mark files as absolved after confession (manual review)}
+        {--no-cache : Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)}
         {--next : Show exactly one finding at a time (fix or absolve to advance)}';
 
     protected $description = 'Judge the codebase for sins against the commandments';
@@ -60,6 +61,10 @@ class JudgeCommand extends Command
         ScrollManager $manager,
         ConfessionTracker $tracker
     ): int {
+        if ((bool) $this->option('no-cache')) {
+            $manager->setUseCache(false);
+        }
+
         $scrollFilter = $this->option('scroll');
         $prophetFilter = $this->option('prophet');
         $fileFilter = $this->option('file');

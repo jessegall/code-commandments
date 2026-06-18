@@ -102,7 +102,12 @@ final class Absolver
         $blockingSins = [];
 
         foreach ($this->registry->getScrolls() as $scroll) {
-            $results = $this->manager->judgeScroll($scroll);
+            // When scoped (e.g. --scope=staged), judge ONLY those files — far
+            // cheaper than the full scroll, and it shares the findings cache the
+            // preceding `judge --staged` populated.
+            $results = $scopeFiles === null
+                ? $this->manager->judgeScroll($scroll)
+                : $this->manager->judgeFiles($scroll, $scopeFiles);
 
             foreach ($collector->collect($results, null, markSeen: false) as $finding) {
                 if (isset($seen[$finding->fingerprint])) {
