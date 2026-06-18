@@ -36,7 +36,7 @@ class InitConsoleCommand extends Command
         $force = (bool) $input->getOption('force');
         $autoDetect = (bool) $input->getOption('auto-detect');
 
-        $this->createConfig($basePath, $force, $autoDetect, $output);
+        $this->createConfig($basePath, $autoDetect, $output);
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
         $this->installCommitHook($basePath, $force, $output);
@@ -114,12 +114,17 @@ class InitConsoleCommand extends Command
             . escapeshellarg($json) . '; exit 0';
     }
 
-    private function createConfig(string $basePath, bool $force, bool $autoDetect, OutputInterface $output): void
+    private function createConfig(string $basePath, bool $autoDetect, OutputInterface $output): void
     {
         $configPath = $basePath . '/commandments.php';
 
-        if (file_exists($configPath) && !$force) {
-            $output->writeln('commandments.php already exists (use --force to overwrite)');
+        // The config holds the project's scroll + prophet list — NEVER overwrite
+        // an existing one, not even with --force (that flag refreshes the hooks
+        // and CLAUDE.md, not your configuration). Clobbering it would wipe every
+        // prophet you registered. To add newly-shipped prophets to an existing
+        // config, use `sync`, not `init`.
+        if (file_exists($configPath)) {
+            $output->writeln('commandments.php already exists — left untouched (run `sync` to register new prophets).');
 
             return;
         }
