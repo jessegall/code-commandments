@@ -86,7 +86,7 @@ final class Absolver
      * @param  list<string>|null  $scopeFiles
      * @return array{status: string, message: string}
      */
-    public function absolveWarnings(?string $reason, ?array $scopeFiles, bool $untilPush): array
+    public function absolveWarnings(?string $reason, ?array $scopeFiles, bool $untilPush, ?string $prophet = null): array
     {
         if ($reason === null || T_String::isBlank($reason)) {
             return $this->error('A reason is required: --reason="why these warnings are accepted".');
@@ -115,9 +115,16 @@ final class Absolver
                     continue;
                 }
 
+                // Narrow the batch to one prophet (partial, case-insensitive match
+                // on the short name) — but a sin from ANY prophet still hard-refuses
+                // the batch; you can never batch past a sin.
                 if ($finding->isSin()) {
                     $blockingSins[] = $finding;
 
+                    continue;
+                }
+
+                if ($prophet !== null && stripos($finding->prophetShort, $prophet) === false) {
                     continue;
                 }
 

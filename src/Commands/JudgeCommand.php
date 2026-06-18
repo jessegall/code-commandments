@@ -489,6 +489,7 @@ class JudgeCommand extends Command
             $this->output->writeln(T_String::empty());
             $this->output->writeln("DO NOT COMMIT: {$this->totalWarnings} warning(s) on staged files. Fix each, or absolve it with a reason:");
             $this->output->writeln('  php artisan commandments:absolve --fingerprint=<hash> --reason="why it does not apply here"');
+            $this->output->writeln('  many at once? commandments:absolve --warnings --scope=staged --reason="…"  (add --prophet=NAME to scope; --until-push to keep it past the commit until you push)');
         }
 
         $blocks = $this->totalSins > 0 || ($stagedMode && $this->totalWarnings > 0);

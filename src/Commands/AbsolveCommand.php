@@ -23,6 +23,7 @@ class AbsolveCommand extends Command
         {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}
         {--warnings : Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)}
         {--scope= : Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index)}
+        {--prophet= : Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding}
         {--until-push : Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only)}
         {--clear-until-push : Drop every push-scoped (until-push) absolution; used by the pre-push hook}
         {--clear : Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered}';
@@ -65,8 +66,9 @@ class AbsolveCommand extends Command
                 return self::FAILURE;
             }
 
+            $prophet = $this->option('prophet');
             $result = (new Absolver($manager, $registry, $tracker))
-                ->absolveWarnings($this->option('reason'), $scopeFiles, $untilPush);
+                ->absolveWarnings($this->option('reason'), $scopeFiles, $untilPush, is_string($prophet) ? $prophet : null);
 
             $result['status'] === Absolver::STATUS_OK ? $this->info($result['message']) : $this->error($result['message']);
 
