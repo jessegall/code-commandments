@@ -140,7 +140,11 @@ a method marked `#[\Override]` (the signature is inherited — not yours to
 change), the `Arrayable | array` typed-or-raw input contract (both members
 describe the SAME data — one hydrated, one the plain array it serialises to —
 so neither Option nor a Union sum type applies; collapsing it breaks every call
-site), or — when the warning band is disabled — a union below the sin
+site), the Laravel render-or-redirect controller idiom
+(`View | RedirectResponse`, `Response | RedirectResponse`, … — a controller
+action that conditionally renders OR redirects; it is the framework contract,
+not under-modelled polymorphism, and cannot collapse to one type or an Option),
+or — when the warning band is disabled — a union below the sin
 threshold. A 3+ union that
 includes null is NOT a simple nullable: it still wraps two-or-more real shapes,
 so it fires (and the null says the fix is `Option<rest>`).
@@ -207,6 +211,12 @@ SCRIPTURE;
                 continue;
             }
 
+            // `View | RedirectResponse` (render-or-redirect) is the Laravel
+            // controller idiom, not under-modelled polymorphism — exempt it.
+            if ($this->isRenderOrRedirectUnion($this->shortNamesOfNativeUnion($union))) {
+                continue;
+            }
+
             $count = count($union->types);
 
             if ($count >= $floor) {
@@ -243,6 +253,11 @@ SCRIPTURE;
                 sort($shortAtoms);
 
                 if ($shortAtoms === ['array', 'arrayable']) {
+                    continue;
+                }
+
+                // `View|RedirectResponse` render-or-redirect idiom — exempt.
+                if ($this->isRenderOrRedirectUnion($shortAtoms)) {
                     continue;
                 }
 
@@ -375,6 +390,10 @@ SCRIPTURE;
      */
     private function cleanDocType(string $rest): string
     {
+        // Drop a trailing single-line PHPDoc close (`… */`) and anything after,
+        // so `@return View|RedirectResponse */` does not leak `*/` into the
+        // last member name.
+        $rest = preg_replace('#\*/.*$#s', '', $rest) ?? $rest;
         $type = preg_replace('/\$\w+.*$/', '', $rest) ?? $rest;
 
         return preg_replace('/\s+/', '', $type) ?? $type;
@@ -522,6 +541,52 @@ SCRIPTURE;
         sort($names);
 
         return $names === ['array', 'arrayable'];
+    }
+
+    /**
+     * The member short names of a native union, lowercased (a non-name member
+     * collapses to the placeholder `object`).
+     *
+     * @return list<string>
+     */
+    private function shortNamesOfNativeUnion(Node\UnionType $union): array
+    {
+        $names = [];
+
+        foreach ($union->types as $type) {
+            $names[] = match (true) {
+                $type instanceof Node\Name => strtolower($type->getLast()),
+                $type instanceof Node\Identifier => strtolower($type->toString()),
+                default => 'object',
+            };
+        }
+
+        return $names;
+    }
+
+    /**
+     * Whether the union is the Laravel render-or-redirect controller idiom —
+     * exactly two members, one `RedirectResponse` and the other a renderable
+     * (`View`, or any `*Response`: `Response`, `JsonResponse`, …). A controller
+     * action that conditionally renders OR redirects legitimately returns this;
+     * it is the framework contract, not under-modelled polymorphism, and cannot
+     * collapse to one type or an Option. Matched by short name at width 2.
+     *
+     * @param  list<string>  $shortNames  member short names, lowercased
+     */
+    private function isRenderOrRedirectUnion(array $shortNames): bool
+    {
+        if (count($shortNames) !== 2) {
+            return false;
+        }
+
+        if (! in_array('redirectresponse', $shortNames, true)) {
+            return false;
+        }
+
+        $other = $shortNames[0] === 'redirectresponse' ? $shortNames[1] : $shortNames[0];
+
+        return $other === 'view' || str_ends_with($other, 'response');
     }
 
     /**

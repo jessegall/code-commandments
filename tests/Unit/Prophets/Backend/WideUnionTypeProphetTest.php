@@ -164,6 +164,36 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_flag_view_or_redirect_controller_union(): void
+    {
+        // #37: `View | RedirectResponse` is the Laravel render-or-redirect
+        // controller idiom — a framework contract, not under-modelled polymorphism.
+        $judgment = $this->judge('class C { public function show(): \Illuminate\View\View | \Illuminate\Http\RedirectResponse { } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_response_or_redirect_union_by_short_name(): void
+    {
+        $judgment = $this->judge('class C { public function show(): JsonResponse | RedirectResponse { } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_render_or_redirect_union_in_docblock(): void
+    {
+        $judgment = $this->judge('class C { /** @return View|RedirectResponse */ public function show() { return null; } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_render_or_redirect_exemption_does_not_swallow_a_third_member(): void
+    {
+        $judgment = $this->judge('class C { public function show(): View | RedirectResponse | JsonResponse { } }');
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
     public function test_arrayable_array_exemption_does_not_swallow_a_third_member(): void
     {
         // Add a third member and the convenience exemption must NOT apply.
