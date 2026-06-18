@@ -107,18 +107,24 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('public static function first(iterable $items, callable $predicate): self', $option);
     }
 
-    public function test_generated_option_has_flat_map_and_then(): void
+    public function test_generated_option_has_transform_and_then_tap(): void
     {
-        // #50: flatMap()/andThen() chain an Option-returning callback WITHOUT
-        // producing an Option<Option>.
+        // #59/#60: the single-value API reads as plain English — transform()
+        // (value -> value), andThen() (value -> Option), tap() (peek + return
+        // self). No collection-flavoured map()/flatMap()/each() names.
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
 
         $option = file_get_contents($this->dir . '/Option.php');
 
-        $this->assertStringContainsString('public function flatMap(callable $map): self', $option);
-        $this->assertStringContainsString('return $this->hasValue ? $map($this->value) : self::none();', $option);
-        $this->assertStringContainsString('public function andThen(callable $map): self', $option);
-        $this->assertStringContainsString('return $this->flatMap($map);', $option);
+        $this->assertStringContainsString('public function transform(callable $transform): self', $option);
+        $this->assertStringContainsString('public function andThen(callable $andThen): self', $option);
+        $this->assertStringContainsString('return $this->hasValue ? $andThen($this->value) : self::none();', $option);
+        $this->assertStringContainsString('public function tap(callable $callback): self', $option);
+
+        // The old collection-flavoured names are gone.
+        $this->assertStringNotContainsString('function map(', $option);
+        $this->assertStringNotContainsString('function flatMap(', $option);
+        $this->assertStringNotContainsString('function each(', $option);
     }
 
     public function test_generated_option_has_fallback_and_guard_combinators(): void
