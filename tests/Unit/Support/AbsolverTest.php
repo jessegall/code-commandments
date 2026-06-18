@@ -217,6 +217,29 @@ class AbsolverTest extends TestCase
         $this->assertFalse($this->tracker->isFindingAbsolved($warningFingerprint));
     }
 
+    public function test_batch_warnings_prophet_filter_narrows_the_batch(): void
+    {
+        $registry = new ProphetRegistry();
+        $registry->registerMany('warns', [PreferOptionOverNullProphet::class]);
+        $registry->setScrollConfig('warns', [
+            'path' => $this->dir,
+            'extensions' => ['php'],
+            'exclude' => [],
+            'prophets' => [PreferOptionOverNullProphet::class],
+        ]);
+        $manager = new ScrollManager($registry, new GenericFileScanner());
+        $absolver = new Absolver($manager, $registry, $this->tracker);
+
+        // A non-matching prophet name absolves nothing.
+        $miss = $absolver->absolveWarnings('reason', null, false, 'NoSuchProphet');
+        $this->assertStringContainsString('No warnings in scope', $miss['message']);
+
+        // The matching prophet absolves its warning.
+        $hit = $absolver->absolveWarnings('reason', null, false, 'PreferOption');
+        $this->assertSame(Absolver::STATUS_OK, $hit['status']);
+        $this->assertStringContainsString('1 warning', $hit['message']);
+    }
+
     public function test_absolve_all_baselines_warnings_but_not_sins(): void
     {
         $absolver = new Absolver($this->manager, $this->registry, $this->tracker);

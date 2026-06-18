@@ -114,6 +114,11 @@ final class NextFindingPresenter
                 $binary,
                 $finding->fingerprint,
             );
+
+            if ($finding->isWarning()) {
+                $lines[] = sprintf('       · reasoned LEAVE for the whole grind? add --until-push — it survives commits until you push, so you don\'t re-absolve it next commit.');
+                $lines[] = sprintf('       · many coincidental LEAVEs at once? %s absolve --warnings --scope=git --reason="…" (one scan; add --prophet=%s to scope to this rule).', $binary, $finding->prophetShort);
+            }
         } else {
             $lines[] = '  (This is a sin — it cannot be absolved. It must be fixed.)';
             $lines[] = '  You own this even if you did not cause it — it is on a file you touched. "I didn\'t cause this" is never a reason to leave a sin.';

@@ -27,6 +27,7 @@ class AbsolveConsoleCommand extends Command
             ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)')
             ->addOption('warnings', null, InputOption::VALUE_NONE, 'Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)')
             ->addOption('scope', null, InputOption::VALUE_REQUIRED, 'Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index)')
+            ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding')
             ->addOption('until-push', null, InputOption::VALUE_NONE, 'Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only)')
             ->addOption('clear-until-push', null, InputOption::VALUE_NONE, 'Drop every push-scoped (until-push) absolution; used by the pre-push hook')
             ->addOption('clear', null, InputOption::VALUE_NONE, 'Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered');
@@ -59,8 +60,9 @@ class AbsolveConsoleCommand extends Command
                 return Command::FAILURE;
             }
 
+            $prophet = $input->getOption('prophet');
             $result = (new Absolver($manager, $registry, $tracker))
-                ->absolveWarnings($input->getOption('reason'), $scopeFiles, $untilPush);
+                ->absolveWarnings($input->getOption('reason'), $scopeFiles, $untilPush, is_string($prophet) ? $prophet : null);
 
             $tag = $result['status'] === Absolver::STATUS_OK ? 'info' : 'error';
             $output->writeln("<{$tag}>" . $result['message'] . "</{$tag}>");
