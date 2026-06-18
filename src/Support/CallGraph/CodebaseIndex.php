@@ -50,6 +50,9 @@ final class CodebaseIndex
     /** @var array<string, ClassSummary> */
     private array $classes = [];
 
+    /** @var array<string, list<string>>  trait FQCN => lowercased method names */
+    private array $traitMethods = [];
+
     /** @var array<string, EnumSummary>   key = enum FQCN */
     private array $enumsByFqcn = [];
 
@@ -154,6 +157,21 @@ final class CodebaseIndex
 
                 $instance->enumsByFqcn[$summary->fqcn] = $summary;
                 $instance->enumsByShortName[strtolower($summary->short)][] = $summary;
+            }
+
+            foreach (self::findTraits($ast) as [$namespace, $trait]) {
+                if ($trait->name === null) {
+                    continue;
+                }
+
+                $fqcn = ($namespace !== null && $namespace !== '') ? $namespace . '\\' . $trait->name->toString() : $trait->name->toString();
+                $methods = [];
+
+                foreach ($trait->getMethods() as $method) {
+                    $methods[] = strtolower($method->name->toString());
+                }
+
+                $instance->traitMethods[$fqcn] = $methods;
             }
 
             $fallbackFinder = new NodeFinder;
@@ -264,6 +282,17 @@ final class CodebaseIndex
     public function classByFqcn(string $fqcn): ?ClassSummary
     {
         return $this->classes[$fqcn] ?? null;
+    }
+
+    /**
+     * Lowercased method names declared on a trait, or null when the trait isn't
+     * indexed (outside the scroll / not found).
+     *
+     * @return list<string>|null
+     */
+    public function traitMethodNames(string $fqcn): ?array
+    {
+        return $this->traitMethods[ltrim($fqcn, '\\')] ?? null;
     }
 
     /**
@@ -444,6 +473,31 @@ final class CodebaseIndex
                 }
             } elseif ($node instanceof Node\Stmt\Class_) {
                 $out[] = [null, self::collectUseStatements($ast), $node];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @return list<array{0: ?string, 1: Node\Stmt\Trait_}>
+     */
+    private static function findTraits(array $ast): array
+    {
+        $out = [];
+
+        foreach ($ast as $node) {
+            if ($node instanceof Node\Stmt\Namespace_) {
+                $ns = $node->name?->toString();
+
+                foreach ($node->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Trait_) {
+                        $out[] = [$ns, $stmt];
+                    }
+                }
+            } elseif ($node instanceof Node\Stmt\Trait_) {
+                $out[] = [null, $node];
             }
         }
 
