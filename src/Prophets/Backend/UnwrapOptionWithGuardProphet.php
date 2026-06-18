@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use PhpParser\Node;
@@ -19,7 +21,7 @@ use PhpParser\NodeVisitorAbstract;
  * (getOr / map / each). Tell the Option what to do; don't interrogate it.
  */
 #[IntroducedIn('1.115.0')]
-class UnwrapOptionWithGuardProphet extends PhpCommandment
+class UnwrapOptionWithGuardProphet extends PhpCommandment implements SinRepenter
 {
     private const GUARD_METHODS = ['isempty'];
 
@@ -85,6 +87,13 @@ few statements by `$x = $o->getOrThrow()` on the SAME variable.
 WHAT DOES NOT — a guard whose body does more than exit (logging, cleanup), a
 genuine two-way branch that map() can't model, or an unwrap on a different
 variable. Those are judgment calls; absolve with a reason.
+
+AUTO-FIXABLE (the tight shape only): when the guard is `if ($o->isEmpty()) {
+return D; }` immediately followed by `$v = $o->getOrThrow();` and `return E;`,
+`repent` rewrites the three to `return $o->map(fn ($v) => E)->getOr(D);` —
+behavior-preserving. Looser shapes (continue/break/throw guards, intervening
+statements, multi-statement bodies) are left for a human, since the map/each
+transform there is a judgment call.
 SCRIPTURE;
     }
 
@@ -138,6 +147,11 @@ SCRIPTURE;
                     continue;
                 }
 
+                // The tight `guard(return) ; $v = unwrap ; return E` triple is
+                // mechanically rewritable to ->map()->getOr(); looser shapes
+                // (continue/throw guards, intervening statements) are manual.
+                $autoFixable = $this->autoFixableTriple($stmts, $i) !== null;
+
                 $line = $stmts[$i]->getStartLine();
                 $warnings[] = $this->warningAt(
                     $line,
@@ -149,6 +163,7 @@ SCRIPTURE;
                     ),
                     null,
                     'unwrap-option-guard:' . $guardVar,
+                    $autoFixable,
                 );
 
                 break;
@@ -233,5 +248,140 @@ SCRIPTURE;
     private function variableName(Node\Expr $expr): ?string
     {
         return $expr instanceof Node\Expr\Variable && is_string($expr->name) ? $expr->name : null;
+    }
+
+    /**
+     * The mechanically-rewritable triple at index $i:
+     *   if ($o->isEmpty()) { return D; }   // single-return guard, no else
+     *   $v = $o->getOrThrow();             // immediately after
+     *   return E;                          // immediately after
+     * → `return $o->map(fn ($v) => E)->getOr(D);`. Returns the parts, or null.
+     *
+     * @param  array<Node>  $stmts
+     * @return array{opt: string, value: string, default: Node\Expr, result: Node\Expr, start: int, end: int}|null
+     */
+    public function autoFixableTriple(array $stmts, int $i): ?array
+    {
+        if (! isset($stmts[$i], $stmts[$i + 1], $stmts[$i + 2])) {
+            return null;
+        }
+
+        $if = $stmts[$i];
+
+        if (! $if instanceof Node\Stmt\If_ || $if->else !== null || $if->elseifs !== []
+            || count($if->stmts) !== 1 || ! $if->stmts[0] instanceof Node\Stmt\Return_
+            || $if->stmts[0]->expr === null
+        ) {
+            return null;
+        }
+
+        $opt = $this->emptinessReceiver($if->cond);
+
+        if ($opt === null || ! $this->unwrapsVariable($stmts[$i + 1], $opt)) {
+            return null;
+        }
+
+        /** @var Node\Expr\Assign $assign */
+        $assign = $stmts[$i + 1]->expr;
+        $value = $this->variableName($assign->var);
+
+        if ($value === null || ! $stmts[$i + 2] instanceof Node\Stmt\Return_ || $stmts[$i + 2]->expr === null) {
+            return null;
+        }
+
+        return [
+            'opt' => $opt,
+            'value' => $value,
+            'default' => $if->stmts[0]->expr,
+            'result' => $stmts[$i + 2]->expr,
+            'start' => (int) $if->getStartFilePos(),
+            'end' => (int) $stmts[$i + 2]->getEndFilePos(),
+        ];
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $ast = $this->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $edits = [];
+        $penance = [];
+        $prophet = $this;
+
+        $this->traverse($ast, new class($edits, $penance, $content, $prophet) extends NodeVisitorAbstract {
+            /**
+             * @param  list<array{start: int, end: int, text: string}>  $edits
+             * @param  list<string>  $penance
+             */
+            public function __construct(
+                private array &$edits,
+                private array &$penance,
+                private string $content,
+                private UnwrapOptionWithGuardProphet $prophet,
+            ) {}
+
+            public function enterNode(Node $node): ?int
+            {
+                if (! isset($node->stmts) || ! is_array($node->stmts)) {
+                    return null;
+                }
+
+                $count = count($node->stmts);
+
+                for ($i = 0; $i < $count; $i++) {
+                    $triple = $this->prophet->autoFixableTriple($node->stmts, $i);
+
+                    if ($triple === null) {
+                        continue;
+                    }
+
+                    $this->edits[] = [
+                        'start' => $triple['start'],
+                        'end' => $triple['end'],
+                        'text' => sprintf(
+                            'return $%s->map(fn ($%s) => %s)->getOr(%s);',
+                            $triple['opt'],
+                            $triple['value'],
+                            $this->slice($triple['result']),
+                            $this->slice($triple['default']),
+                        ),
+                    ];
+                    $this->penance[] = sprintf('Rewrote $%s isEmpty()-guard + getOrThrow() to ->map()->getOr()', $triple['opt']);
+                }
+
+                return null;
+            }
+
+            private function slice(Node\Expr $expr): string
+            {
+                $start = (int) $expr->getStartFilePos();
+
+                return substr($this->content, $start, (int) $expr->getEndFilePos() - $start + 1);
+            }
+        });
+
+        if ($edits === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        usort($edits, fn ($a, $b) => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        return RepentanceResult::absolved($content, $penance);
     }
 }
