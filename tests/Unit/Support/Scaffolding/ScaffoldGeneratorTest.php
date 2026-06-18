@@ -100,6 +100,11 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('public static function someWhen(mixed $condition, callable $factory): self', $option);
         $this->assertStringContainsString('public static function someWhenNot(mixed $condition, callable $factory): self', $option);
         $this->assertStringContainsString('return $condition ? self::some($factory()) : self::none();', $option);
+
+        // Nullable/lookup factories: make(), find(), first().
+        $this->assertStringContainsString('public static function make(mixed $value): self', $option);
+        $this->assertStringContainsString('public static function find(array $items, int|string $key): self', $option);
+        $this->assertStringContainsString('public static function first(iterable $items, callable $predicate): self', $option);
     }
 
     public function test_generates_the_union_sum_type(): void
