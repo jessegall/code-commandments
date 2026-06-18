@@ -126,6 +126,13 @@ static::from($x->toArray()); }` — wherever XData is defined, cross-referencing
 the codebase index so the factory lands even when the Data class sits outside
 the scoped/flagged files. An unreachable Data class is left for a human.
 
+The auto-fix BAILS (leaves the call for a human, no lossy body) when a
+`static::from($x->toArray())` factory would not be behavior-preserving: the
+target Data class — or any ancestor — carries `#[LoadRelation]`, `#[MapInputName]`,
+`#[MapName]` or `#[Computed]` (toArray() does not reproduce the magic
+from(Model) path), or the argument is a Request (its magic reads ->all()). Those
+need a human to write the right factory.
+
 Pairs with the generated FromArrayOnly trait, which enforces the same rule at
 runtime (assert) for the cases static analysis cannot see.
 

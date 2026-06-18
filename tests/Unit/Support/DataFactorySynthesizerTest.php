@@ -137,6 +137,83 @@ class DataFactorySynthesizerTest extends TestCase
         $this->assertSame(1, substr_count($result->newContent, 'public static function fromShop('));
     }
 
+    public function test_does_not_autofix_a_magic_dependent_data_class(): void
+    {
+        // #47: a #[LoadRelation] class relies on the magic from(Model) path;
+        // static::from($x->toArray()) would silently drop the relation, so the
+        // auto-fix must bail and leave the call for a human.
+        $caller = $this->write('Shop.php', <<<'PHP'
+        <?php
+        namespace App\Models;
+        use App\Data\ShopData;
+        class Shop { public function toData(): ShopData { return ShopData::from($this); } }
+        PHP);
+        $this->write('ShopData.php', <<<'PHP'
+        <?php
+        namespace App\Data;
+        use Spatie\LaravelData\Data;
+        use Spatie\LaravelData\Attributes\LoadRelation;
+        class ShopData extends Data {
+            #[LoadRelation]
+            public array $channels = [];
+        }
+        PHP);
+
+        $index = CodebaseIndex::build([$caller, $this->dir . '/ShopData.php']);
+        $result = $this->repent($caller, $index);
+
+        $this->assertFalse($result->absolved, 'A #[LoadRelation] Data class must not be auto-fixed (lossy toArray()).');
+    }
+
+    public function test_does_not_autofix_a_magic_attribute_on_an_ancestor(): void
+    {
+        // The attribute may live on a parent (ShopData extends ShopDetailsData).
+        $caller = $this->write('Shop.php', <<<'PHP'
+        <?php
+        namespace App\Models;
+        use App\Data\ShopData;
+        class Shop { public function toData(): ShopData { return ShopData::from($this); } }
+        PHP);
+        $this->write('ShopDetailsData.php', <<<'PHP'
+        <?php
+        namespace App\Data;
+        use Spatie\LaravelData\Data;
+        use Spatie\LaravelData\Attributes\LoadRelation;
+        class ShopDetailsData extends Data {
+            #[LoadRelation]
+            public array $channels = [];
+        }
+        PHP);
+        $this->write('ShopData.php', <<<'PHP'
+        <?php
+        namespace App\Data;
+        class ShopData extends ShopDetailsData {}
+        PHP);
+
+        $index = CodebaseIndex::build([$caller, $this->dir . '/ShopDetailsData.php', $this->dir . '/ShopData.php']);
+        $result = $this->repent($caller, $index);
+
+        $this->assertFalse($result->absolved, 'A magic attribute on an ancestor must also block the auto-fix.');
+    }
+
+    public function test_does_not_autofix_a_request_argument(): void
+    {
+        // from($request) magic reads ->all(), not ->toArray().
+        $path = $this->write('Ctrl.php', <<<'PHP'
+        <?php
+        namespace App;
+        use Spatie\LaravelData\Data;
+        class StoreShopRequest {}
+        class ShopData extends Data {
+            public static function make(StoreShopRequest $request): static { return ShopData::from($request); }
+        }
+        PHP);
+
+        $result = $this->repent($path);
+
+        $this->assertFalse($result->absolved, 'A Request argument must not be auto-fixed to a toArray() body.');
+    }
+
     public function test_unreachable_data_class_is_left_untouched(): void
     {
         // No index, and ShopData is not defined in this file — repent cannot place
