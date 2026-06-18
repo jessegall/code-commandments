@@ -114,6 +114,12 @@ final class DataFactorySynthesizer
             return null;
         }
 
+        // A Request's magic from() reads ->all(), not ->toArray() — a generated
+        // toArray() body would be wrong. Leave it for a human.
+        if (str_ends_with($type['short'], 'Request') || str_contains($type['fqcn'], 'Http\\Request')) {
+            return null;
+        }
+
         return [
             'dataFqcn' => $dataFqcn,
             'dataShort' => $dataShort,
@@ -266,6 +272,15 @@ final class DataFactorySynthesizer
             return false;
         }
 
+        // A `static::from($x->toArray())` body is LOSSY for Data classes that
+        // depend on Spatie's magic from(Model): #[LoadRelation] relations,
+        // #[MapInputName]/#[MapName] shape changes, and #[Computed] accessors are
+        // not reproduced by toArray(). Bail (leave the call for a human) rather
+        // than silently lose data at runtime.
+        if ($this->isMagicDependent($class, $dataFqcn, $index)) {
+            return false;
+        }
+
         $existing = $this->methodNames($class);
         $body = '';
 
@@ -298,6 +313,94 @@ final class DataFactorySynthesizer
         $createdFiles[$targetFile] = substr($fileContent, 0, $insertPos) . $body . substr($fileContent, $insertPos);
 
         return true;
+    }
+
+    /**
+     * Whether the Data class (or any ancestor, walked through the index) carries
+     * a Spatie attribute whose behavior a `from($x->toArray())` body cannot
+     * reproduce — so the auto-fix must not generate a lossy factory.
+     */
+    private function isMagicDependent(Node\Stmt\Class_ $class, string $dataFqcn, ?CodebaseIndex $index): bool
+    {
+        if ($this->classHasMagicAttributes($class)) {
+            return true;
+        }
+
+        $parent = $index?->classByFqcn(ltrim($dataFqcn, '\\'))?->parent;
+        $depth = 0;
+
+        while ($parent !== null && $depth++ < 8) {
+            $summary = $index?->classByFqcn(ltrim($parent, '\\'));
+
+            if ($summary === null) {
+                break;
+            }
+
+            $content = @file_get_contents($summary->filePath);
+
+            if (is_string($content)) {
+                $node = $this->findClassNode($content, $this->shortNameOf($parent));
+
+                if ($node !== null && $this->classHasMagicAttributes($node)) {
+                    return true;
+                }
+            }
+
+            $parent = $summary->parent;
+        }
+
+        return false;
+    }
+
+    /** Spatie attributes whose effect toArray() does not reproduce on the from() round-trip. */
+    private const MAGIC_ATTRIBUTES = ['loadrelation', 'mapinputname', 'mapname', 'computed'];
+
+    private function classHasMagicAttributes(Node\Stmt\Class_ $class): bool
+    {
+        foreach ($class->getProperties() as $property) {
+            if ($this->hasMagicAttribute($property->attrGroups)) {
+                return true;
+            }
+        }
+
+        foreach ($class->getMethods() as $method) {
+            if ($this->hasMagicAttribute($method->attrGroups)) {
+                return true;
+            }
+
+            if ($method->name->toString() === '__construct') {
+                foreach ($method->params as $param) {
+                    if ($this->hasMagicAttribute($param->attrGroups)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<Node\AttributeGroup>  $attrGroups
+     */
+    private function hasMagicAttribute(array $attrGroups): bool
+    {
+        foreach ($attrGroups as $group) {
+            foreach ($group->attrs as $attr) {
+                if (in_array(strtolower($attr->name->getLast()), self::MAGIC_ATTRIBUTES, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function shortNameOf(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     private function factorySource(string $typeShort, string $typeFqcn): string
