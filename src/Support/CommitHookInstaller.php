@@ -7,9 +7,10 @@ namespace JesseGall\CodeCommandments\Support;
 use JesseGall\PhpTypes\T_String;
 
 /**
- * Installs (idempotently) a git pre-commit hook that blocks a commit when
- * the prophets find sins in the changed files. Warnings alone never block —
- * `judge --git` exits non-zero only for sins.
+ * Installs (idempotently) a git pre-commit hook that blocks a commit until
+ * every finding on the STAGED files is resolved: sins fixed, and each warning
+ * fixed OR absolved with a reason. `judge --staged` exits non-zero when any
+ * sin OR un-absolved warning remains (absolved findings are filtered out).
  *
  * The hook block is delimited by markers so it can be re-installed or sit
  * alongside an existing pre-commit hook without clobbering it.
@@ -133,8 +134,10 @@ final class CommitHookInstaller
 
         if [ "\$cc_status" -ne 0 ]; then
             echo ""
-            echo "✗ Commit blocked: the prophets found sins in your changes."
-            echo "  Walk and fix them one at a time:  commandments judge --next"
+            echo "✗ Commit blocked: unresolved findings on your staged files."
+            echo "  Every sin AND warning must be fixed, or absolved with a reason."
+            echo "  Walk them one at a time:  commandments judge --next --staged"
+            echo "  Fix it, or absolve:  commandments absolve --fingerprint=<hash> --reason=\"why\""
             echo "  Genuinely wrong finding (false positive / ill-fitting rule / prophet bug)?"
             echo "  Report it, do not work around it:  commandments report --prophet=NAME --reason=..."
             echo "  (Bypass only in a real emergency with: git commit --no-verify)"

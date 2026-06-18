@@ -175,7 +175,7 @@ class JudgeConsoleCommand extends Command
         $failures = $manager->getFailures();
         $this->showFailures($output, $failures);
 
-        $exitCode = $this->showResults($output, $prophetFilter, $gitMode, hadFailures: ! empty($failures));
+        $exitCode = $this->showResults($output, $prophetFilter, $gitMode, hadFailures: ! empty($failures), stagedMode: $stagedMode);
 
         return $exitCode;
     }
@@ -398,7 +398,7 @@ class JudgeConsoleCommand extends Command
         $output->writeln(T_String::empty());
     }
 
-    private function showResults(OutputInterface $output, ?string $prophetFilter = null, bool $gitMode = false, bool $hadFailures = false): int
+    private function showResults(OutputInterface $output, ?string $prophetFilter = null, bool $gitMode = false, bool $hadFailures = false, bool $stagedMode = false): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
             if (! $hadFailures) {
@@ -507,6 +507,18 @@ class JudgeConsoleCommand extends Command
             }
         }
 
-        return $this->totalSins > 0 ? Command::FAILURE : Command::SUCCESS;
+        // The pre-commit gate runs `judge --staged`: a commit is blocked until
+        // every finding on the staged files is resolved — sins fixed, and each
+        // warning fixed OR absolved WITH A REASON (absolved findings are already
+        // filtered out of the counts above). Other modes stay sins-only.
+        if ($stagedMode && $this->totalSins === 0 && $this->totalWarnings > 0) {
+            $output->writeln(T_String::empty());
+            $output->writeln("DO NOT COMMIT: {$this->totalWarnings} warning(s) on staged files. Fix each, or absolve it with a reason:");
+            $output->writeln('  commandments absolve --fingerprint=<hash> --reason="why it does not apply here"');
+        }
+
+        $blocks = $this->totalSins > 0 || ($stagedMode && $this->totalWarnings > 0);
+
+        return $blocks ? Command::FAILURE : Command::SUCCESS;
     }
 }
