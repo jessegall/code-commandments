@@ -141,53 +141,52 @@ final readonly class Option
     }
 
     /**
+     * Transform the present value (value -> value); none stays none. The
+     * single-value twin of {@see self::andThen()}
+     * (value -> Option) — named "transform" rather than the collection-flavoured
+     * "map" because an Option holds a single value.
+     *
      * @template TOut
-     * @param  callable(T): TOut  $map
+     * @param  callable(T): TOut  $transform
      * @return self<TOut>
      */
-    public function map(callable $map): self
+    public function transform(callable $transform): self
     {
-        return $this->hasValue ? self::some($map($this->value)) : self::none();
+        return $this->hasValue ? self::some($transform($this->value)) : self::none();
     }
 
     /**
      * Chain an Option-returning callback, FLATTENING the result — none stays
-     * none; some(T) becomes the callback's own Option<TOut>. Use this instead of
-     * map() when the callback ITSELF returns an Option, so you never produce an
-     * Option<Option> (and never fall back to `getOr(self::none())`).
+     * none; some(T) becomes the callback's own Option<TOut>. The value -> Option
+     * twin of {@see self::transform()} (value -> value); reads as a step in a
+     * chain: `->andThen(fn ($x) => $this->lookup($x))`. Use this when the callback
+     * ITSELF returns an Option, so you never produce an Option<Option>.
      *
      * @template TOut
      *
-     * @param  callable(T): self<TOut>  $map
+     * @param  callable(T): self<TOut>  $andThen
      * @return self<TOut>
      */
-    public function flatMap(callable $map): self
+    public function andThen(callable $andThen): self
     {
-        return $this->hasValue ? $map($this->value) : self::none();
+        return $this->hasValue ? $andThen($this->value) : self::none();
     }
 
     /**
-     * Alias for {@see self::flatMap()} — reads as a step in a chain:
-     * `->andThen(fn ($x) => $this->lookup($x))`.
+     * Run a side effect on the present value and return $this so the chain
+     * continues — the single-value "tap" (Laravel tap()/Collection::tap, Rust
+     * Option::inspect). Does nothing when empty.
      *
-     * @template TOut
-     *
-     * @param  callable(T): self<TOut>  $map
-     * @return self<TOut>
-     */
-    public function andThen(callable $map): self
-    {
-        return $this->flatMap($map);
-    }
-
-    /**
      * @param  callable(T): void  $callback
+     * @return self<T>
      */
-    public function each(callable $callback): void
+    public function tap(callable $callback): self
     {
         if ($this->hasValue) {
             $callback($this->value);
         }
+
+        return $this;
     }
 
     /**
