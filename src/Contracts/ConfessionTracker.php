@@ -49,8 +49,21 @@ interface ConfessionTracker
     public function absolveFinding(string $fingerprint, ?string $reason = null): void;
 
     /**
-     * Check whether a specific finding fingerprint has been absolved —
-     * whether by an ordinary absolution or a report-linked one.
+     * Absolve a single finding for the duration of the grind: the absolution
+     * SURVIVES the post-commit reset and stays until `git push` clears it (the
+     * pre-push hook calls {@see self::clearUntilPushAbsolutions()}). Warnings
+     * only — sins are never sticky.
+     */
+    public function absolveFindingUntilPush(string $fingerprint, ?string $reason = null): void;
+
+    /**
+     * Drop every push-scoped absolution. Returns the number cleared.
+     */
+    public function clearUntilPushAbsolutions(): int;
+
+    /**
+     * Check whether a specific finding fingerprint has been absolved — whether
+     * by an ordinary, a report-linked, or a push-scoped absolution.
      */
     public function isFindingAbsolved(string $fingerprint): bool;
 

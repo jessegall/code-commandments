@@ -171,6 +171,52 @@ class AbsolverTest extends TestCase
         $this->assertStringContainsString('No live finding', $result['message']);
     }
 
+    public function test_batch_warnings_hard_refuses_when_a_sin_is_in_scope(): void
+    {
+        // The fixture has a warning AND a sin. --warnings must refuse outright
+        // and absolve NOTHING — sins are imperative.
+        $warning = $this->findingOfKind('warning');
+
+        $result = (new Absolver($this->manager, $this->registry, $this->tracker))
+            ->absolveWarnings('accepted for now', null, false);
+
+        $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
+        $this->assertStringContainsString('sin(s) in scope', $result['message']);
+        $this->assertStringContainsString('touched NOTHING', $result['message']);
+        $this->assertFalse($this->tracker->isFindingAbsolved($warning->fingerprint), 'No warning may be absolved when a sin is in scope.');
+    }
+
+    public function test_batch_warnings_until_push_absolves_stickily_when_no_sin(): void
+    {
+        // Capture the warning fingerprint before it gets absolved away.
+        $warningFingerprint = $this->findingOfKind('warning')->fingerprint;
+
+        // A registry with only the warning prophet — no sin in scope.
+        $registry = new ProphetRegistry();
+        $registry->registerMany('warns', [PreferOptionOverNullProphet::class]);
+        $registry->setScrollConfig('warns', [
+            'path' => $this->dir,
+            'extensions' => ['php'],
+            'exclude' => [],
+            'prophets' => [PreferOptionOverNullProphet::class],
+        ]);
+        $manager = new ScrollManager($registry, new GenericFileScanner());
+
+        $result = (new Absolver($manager, $registry, $this->tracker))
+            ->absolveWarnings('reasoned LEAVE for this grind', null, true);
+
+        $this->assertSame(Absolver::STATUS_OK, $result['status']);
+        $this->assertStringContainsString('until push', $result['message']);
+
+        // Sticky: it survives the post-commit reset.
+        $this->tracker->clearFindingAbsolutions();
+        $this->assertTrue($this->tracker->isFindingAbsolved($warningFingerprint));
+
+        // ...and clears at push.
+        $this->tracker->clearUntilPushAbsolutions();
+        $this->assertFalse($this->tracker->isFindingAbsolved($warningFingerprint));
+    }
+
     public function test_absolve_all_baselines_warnings_but_not_sins(): void
     {
         $absolver = new Absolver($this->manager, $this->registry, $this->tracker);

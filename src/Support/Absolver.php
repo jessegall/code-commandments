@@ -35,7 +35,7 @@ final class Absolver
     /**
      * @return array{status: string, message: string}
      */
-    public function absolve(string $fingerprint, ?string $reason): array
+    public function absolve(string $fingerprint, ?string $reason, bool $untilPush = false): array
     {
         if ($reason === null || T_String::isBlank($reason)) {
             return $this->error('A reason is required: --reason="why this rule does not apply here".');
@@ -62,11 +62,102 @@ final class Absolver
             );
         }
 
-        $this->tracker->absolveFinding($fingerprint, $reason);
+        if ($untilPush) {
+            $this->tracker->absolveFindingUntilPush($fingerprint, $reason);
+        } else {
+            $this->tracker->absolveFinding($fingerprint, $reason);
+        }
+
+        $scope = $untilPush ? ' until push' : '';
 
         return [
             'status' => self::STATUS_OK,
-            'message' => "Absolved {$finding->prophetShort} at {$finding->location()} — \"{$reason}\".",
+            'message' => "Absolved{$scope} {$finding->prophetShort} at {$finding->location()} — \"{$reason}\".",
+        ];
+    }
+
+    /**
+     * Batch-absolve every live WARNING under one shared reason. Hard-refuses if
+     * ANY sin is in scope — it errors and absolves NOTHING (sins are imperative
+     * and can never be batch-dismissed). `$scopeFiles` (absolute paths) limits
+     * the batch to a changed/staged subset; null means the whole queue. When
+     * `$untilPush` the absolutions survive the post-commit reset until push.
+     *
+     * @param  list<string>|null  $scopeFiles
+     * @return array{status: string, message: string}
+     */
+    public function absolveWarnings(?string $reason, ?array $scopeFiles, bool $untilPush): array
+    {
+        if ($reason === null || T_String::isBlank($reason)) {
+            return $this->error('A reason is required: --reason="why these warnings are accepted".');
+        }
+
+        $scope = $scopeFiles === null
+            ? null
+            : array_flip(array_filter(array_map(static fn (string $f): string => realpath($f) ?: $f, $scopeFiles)));
+
+        $collector = new FindingCollector($this->tracker);
+        $seen = [];
+        $warnings = [];
+        $blockingSins = [];
+
+        foreach ($this->registry->getScrolls() as $scroll) {
+            $results = $this->manager->judgeScroll($scroll);
+
+            foreach ($collector->collect($results, null, markSeen: false) as $finding) {
+                if (isset($seen[$finding->fingerprint])) {
+                    continue;
+                }
+
+                $seen[$finding->fingerprint] = true;
+
+                if ($scope !== null && ! isset($scope[realpath($finding->filePath) ?: $finding->filePath])) {
+                    continue;
+                }
+
+                if ($finding->isSin()) {
+                    $blockingSins[] = $finding;
+
+                    continue;
+                }
+
+                $warnings[] = $finding;
+            }
+        }
+
+        // Refuse the whole batch if any sin is in scope — absolve nothing.
+        if ($blockingSins !== []) {
+            $first = $blockingSins[0];
+
+            return $this->error(sprintf(
+                '%d sin(s) in scope — fix them first (e.g. %s at %s). Batch absolve touched NOTHING; '
+                . 'sins are imperative and can never be batch-dismissed.',
+                count($blockingSins),
+                $first->prophetShort,
+                $first->location(),
+            ));
+        }
+
+        if ($warnings === []) {
+            return [
+                'status' => self::STATUS_OK,
+                'message' => 'No warnings in scope — nothing to absolve.',
+            ];
+        }
+
+        foreach ($warnings as $finding) {
+            if ($untilPush) {
+                $this->tracker->absolveFindingUntilPush($finding->fingerprint, $reason);
+            } else {
+                $this->tracker->absolveFinding($finding->fingerprint, $reason);
+            }
+        }
+
+        $lifetime = $untilPush ? ' until push' : '';
+
+        return [
+            'status' => self::STATUS_OK,
+            'message' => sprintf('Absolved %d warning(s)%s — "%s".', count($warnings), $lifetime, $reason),
         ];
     }
 
