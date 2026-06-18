@@ -107,6 +107,20 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('public static function first(iterable $items, callable $predicate): self', $option);
     }
 
+    public function test_generated_option_has_flat_map_and_then(): void
+    {
+        // #50: flatMap()/andThen() chain an Option-returning callback WITHOUT
+        // producing an Option<Option>.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString('public function flatMap(callable $map): self', $option);
+        $this->assertStringContainsString('return $this->hasValue ? $map($this->value) : self::none();', $option);
+        $this->assertStringContainsString('public function andThen(callable $map): self', $option);
+        $this->assertStringContainsString('return $this->flatMap($map);', $option);
+    }
+
     public function test_auto_refresh_stamps_a_do_not_edit_banner(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, force: true, except: [], autoRefresh: true);

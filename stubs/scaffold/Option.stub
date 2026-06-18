@@ -151,6 +151,36 @@ final readonly class Option
     }
 
     /**
+     * Chain an Option-returning callback, FLATTENING the result — none stays
+     * none; some(T) becomes the callback's own Option<TOut>. Use this instead of
+     * map() when the callback ITSELF returns an Option, so you never produce an
+     * Option<Option> (and never fall back to `getOr(self::none())`).
+     *
+     * @template TOut
+     *
+     * @param  callable(T): self<TOut>  $map
+     * @return self<TOut>
+     */
+    public function flatMap(callable $map): self
+    {
+        return $this->hasValue ? $map($this->value) : self::none();
+    }
+
+    /**
+     * Alias for {@see self::flatMap()} — reads as a step in a chain:
+     * `->andThen(fn ($x) => $this->lookup($x))`.
+     *
+     * @template TOut
+     *
+     * @param  callable(T): self<TOut>  $map
+     * @return self<TOut>
+     */
+    public function andThen(callable $map): self
+    {
+        return $this->flatMap($map);
+    }
+
+    /**
      * @param  callable(T): void  $callback
      */
     public function each(callable $callback): void
