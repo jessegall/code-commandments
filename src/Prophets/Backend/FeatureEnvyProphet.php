@@ -55,6 +55,13 @@ class FeatureEnvyProphet extends PhpCommandment implements NeedsCodebaseIndex
 
     private const SERIALIZER_METHODS = ['toarray', 'jsonserialize', '__tostring', '__construct'];
 
+    /**
+     * Reading a value through one of these is a serialization boundary, not a
+     * reach into internals — `array_map(…, $bag->toArray())` processes the bag's
+     * exported form, so it is not feature envy.
+     */
+    private const SERIALIZER_ACCESS = ['toarray', 'jsonserialize', 'tojson', '__tostring'];
+
     private ?CodebaseIndex $index = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
@@ -121,9 +128,13 @@ and B is not the current class). Querying `$this`'s OWN collection is fine.
 
 WHAT DOES NOT — querying your own data (`$this->outputs`); an owner that is a
 vendor/framework type (not in the index, so it cannot be extended); a single
-scalar read (`$b->name`); serialization (`toArray`/`jsonSerialize`); and the
-case where THIS class is the rightful home of the algorithm (a dedicated
-resolver/visitor). Those last ones are judgment calls — absolve with a reason.
+scalar read (`$b->name`); a query over a SERIALIZATION boundary
+(`array_map(…, $bag->toArray())` / `jsonSerialize()` — the exported form, not
+internals); a `*Data` DTO MAPPER (`array_map(fn => SocketData::from($s),
+$d->sockets)` — moving it onto the domain owner would invert the dependency
+onto the presentation type); and the case where THIS class is the rightful home
+of the algorithm (a dedicated resolver/visitor). Those last ones are judgment
+calls — absolve with a reason.
 
 Distinct from DuplicateCode: this fires on a SINGLE misplaced query, before any
 twin exists. The duplication is just the loudest instance of the same smell.
@@ -319,9 +330,21 @@ SCRIPTURE;
 
             $owner = $this->ownerOfCollectionAccess($call->args[$collectionArg]->value, $paramOwners, $propertyOwners);
 
-            if ($owner !== null) {
-                return ['owner' => $owner, 'access' => $this->describeAccess($call->args[$collectionArg]->value)];
+            if ($owner === null) {
+                continue;
             }
+
+            // `array_map(fn ($x) => SomeData::from($x), $owner->coll)` is a DTO
+            // MAPPER, not feature envy — the map produces a presentation type, so
+            // it belongs on the mapper, not the (domain) owner. Exempt.
+            if (strtolower($call->name->getLast()) === 'array_map'
+                && $call->args[0] instanceof Node\Arg
+                && $this->mapsToDto($call->args[0]->value)
+            ) {
+                continue;
+            }
+
+            return ['owner' => $owner, 'access' => $this->describeAccess($call->args[$collectionArg]->value)];
         }
 
         // `Option::first($owner->coll, …)`, `Arr::first($owner->coll, …)`, etc.
@@ -345,6 +368,41 @@ SCRIPTURE;
     }
 
     /**
+     * Whether a map callback's result is a `*Data` DTO construction — a
+     * static `SomeData::from(...)`/`SomeData::collect(...)` or `new SomeData(...)`.
+     * Such an `array_map` is a presentation mapper, not feature envy.
+     */
+    private function mapsToDto(Expr $callback): bool
+    {
+        $result = match (true) {
+            $callback instanceof Expr\ArrowFunction => $callback->expr,
+            $callback instanceof Expr\Closure => $this->closureReturn($callback),
+            default => null,
+        };
+
+        if ($result instanceof Expr\StaticCall && $result->class instanceof Node\Name) {
+            return str_ends_with($result->class->getLast(), 'Data');
+        }
+
+        if ($result instanceof Expr\New_ && $result->class instanceof Node\Name) {
+            return str_ends_with($result->class->getLast(), 'Data');
+        }
+
+        return false;
+    }
+
+    private function closureReturn(Expr\Closure $closure): ?Expr
+    {
+        foreach ($closure->stmts as $statement) {
+            if ($statement instanceof Node\Stmt\Return_) {
+                return $statement->expr;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * When $expr is `$owner->member` or `$owner->member()` and `$owner` is a
      * foreign project-owned subject, the owner's FQCN; otherwise null.
      *
@@ -354,6 +412,15 @@ SCRIPTURE;
     private function ownerOfCollectionAccess(Expr $expr, array $paramOwners, array $propertyOwners): ?string
     {
         if (! $expr instanceof Expr\PropertyFetch && ! $expr instanceof Expr\MethodCall) {
+            return null;
+        }
+
+        // Reading through a serialization boundary (`$x->toArray()`,
+        // `$x->jsonSerialize()`) is not a reach into internals — exempt.
+        if ($expr instanceof Expr\MethodCall
+            && $expr->name instanceof Node\Identifier
+            && in_array(strtolower($expr->name->toString()), self::SERIALIZER_ACCESS, true)
+        ) {
             return null;
         }
 
