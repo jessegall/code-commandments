@@ -51,6 +51,24 @@ class DuplicateCodeProphetTest extends TestCase
         $this->assertStringContainsString('expandRoots', $beta->message);
     }
 
+    public function test_flags_a_shared_preamble_between_two_diverging_methods(): void
+    {
+        // #36: GammaResolver::resolve and DeltaResolver::resolve share a leading
+        // preamble (nodeById -> isEmpty guard -> getOrThrow -> findOutput ->
+        // isControlHandle guard) then diverge — whole-body hashes differ, but the
+        // duplicated prefix must still be caught.
+        $results = $this->manager->judgeScroll('test');
+
+        $gamma = $this->firstWarningFor($results, $this->fixtureDir . '/GammaResolver.php');
+        $this->assertNotNull($gamma, 'GammaResolver::resolve shares a preamble with DeltaResolver — flag it.');
+        $this->assertStringContainsString('Duplicated preamble', $gamma->message);
+        $this->assertStringContainsString('resolve', $gamma->message);
+
+        $delta = $this->firstWarningFor($results, $this->fixtureDir . '/DeltaResolver.php');
+        $this->assertNotNull($delta, 'DeltaResolver::resolve is the other copy — flag it too.');
+        $this->assertStringContainsString('Duplicated preamble', $delta->message);
+    }
+
     public function test_does_not_flag_a_unique_method(): void
     {
         $results = $this->manager->judgeScroll('test');
