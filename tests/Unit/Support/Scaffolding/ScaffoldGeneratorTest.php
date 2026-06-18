@@ -121,6 +121,22 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('return $this->flatMap($map);', $option);
     }
 
+    public function test_generated_option_has_fallback_and_guard_combinators(): void
+    {
+        // #52: orElse/or/orWhen/andWhen/filter remove ||/&& chains from call sites.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString('public function orElse(callable $alternative): self', $option);
+        $this->assertStringContainsString('return $this->hasValue ? $this : $alternative();', $option);
+        $this->assertStringContainsString('public function or(self $alternative): self', $option);
+        $this->assertStringContainsString('public function orWhen(mixed $condition, callable $factory): self', $option);
+        $this->assertStringContainsString('public function andWhen(mixed $condition): self', $option);
+        $this->assertStringContainsString('return $this->hasValue && $condition ? $this : self::none();', $option);
+        $this->assertStringContainsString('public function filter(callable $predicate): self', $option);
+    }
+
     public function test_auto_refresh_stamps_a_do_not_edit_banner(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, force: true, except: [], autoRefresh: true);
