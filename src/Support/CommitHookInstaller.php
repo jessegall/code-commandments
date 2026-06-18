@@ -140,6 +140,7 @@ final class CommitHookInstaller
             echo "  Fix it, or absolve:  commandments absolve --fingerprint=<hash> --reason=\"why\""
             echo "  Genuinely wrong finding (false positive / ill-fitting rule / prophet bug)?"
             echo "  Report it, do not work around it:  commandments report --prophet=NAME --reason=..."
+            echo "  (Bypass only in a real emergency with: git commit --no-verify)"
             exit 1
         fi
         {$end}
