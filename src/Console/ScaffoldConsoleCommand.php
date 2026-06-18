@@ -21,7 +21,8 @@ class ScaffoldConsoleCommand extends Command
             ->setName('scaffold')
             ->setDescription('Generate recommended support classes (Option, FromArrayOnly, …) into your namespace')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
-            ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing support classes');
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing support classes')
+            ->addOption('auto', null, InputOption::VALUE_NONE, 'Refresh only when scaffold.auto_refresh is enabled (session-start hook); otherwise do nothing');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -40,12 +41,22 @@ class ScaffoldConsoleCommand extends Command
         $config = ConfigLoader::load($resolved);
         $scaffold = $config['scaffold'] ?? [];
 
+        // Auto-refresh implies force + the do-not-edit banner.
+        $autoRefresh = (bool) ($scaffold['auto_refresh'] ?? false);
+
+        // The `--auto` hook is a no-op unless auto-refresh is on.
+        if ((bool) $input->getOption('auto') && ! $autoRefresh) {
+            return Command::SUCCESS;
+        }
+
         $namespace = $scaffold['namespace'] ?? 'App\\Support';
         $path = $scaffold['path'] ?? ($basePath . '/app/Support');
         $except = $scaffold['except'] ?? [];
 
+        $force = $autoRefresh || (bool) $input->getOption('force');
+
         $results = ScaffoldGenerator::packaged()
-            ->generate($namespace, $path, (bool) $input->getOption('force'), $except);
+            ->generate($namespace, $path, $force, $except, $autoRefresh);
 
         $created = ScaffoldReporter::report($results, fn (string $line) => $output->writeln($line));
 

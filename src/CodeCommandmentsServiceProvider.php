@@ -97,8 +97,21 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
     protected function registerProphetsFromConfig(ProphetRegistry $registry): void
     {
         $scrolls = config('commandments.scrolls', []);
+        $scaffold = config('commandments.scaffold', []);
+
+        // When scaffold auto-refresh is on, the generated support classes are
+        // regenerated automatically — judging them is pointless (and the
+        // findings can't be fixed since they'd be overwritten), so exclude the
+        // scaffold path from every scroll.
+        $autoRefreshPath = ! empty($scaffold['auto_refresh']) && is_string($scaffold['path'] ?? null) && $scaffold['path'] !== ''
+            ? $scaffold['path']
+            : null;
 
         foreach ($scrolls as $scrollName => $scrollConfig) {
+            if ($autoRefreshPath !== null) {
+                $scrollConfig['exclude'] = [...($scrollConfig['exclude'] ?? []), $autoRefreshPath];
+            }
+
             $prophets = $scrollConfig['prophets'] ?? [];
 
             $registry->registerMany($scrollName, $prophets);

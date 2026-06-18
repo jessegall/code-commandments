@@ -33,7 +33,18 @@ trait BootsStandalone
 
         $registry = new ProphetRegistry();
 
+        // When scaffold auto-refresh is on, the generated support classes are
+        // regenerated automatically, so exclude their path from judging.
+        $scaffold = $config['scaffold'] ?? [];
+        $autoRefreshPath = ! empty($scaffold['auto_refresh']) && is_string($scaffold['path'] ?? null) && $scaffold['path'] !== ''
+            ? $scaffold['path']
+            : null;
+
         foreach ($config['scrolls'] ?? [] as $scrollName => $scrollConfig) {
+            if ($autoRefreshPath !== null) {
+                $scrollConfig['exclude'] = [...($scrollConfig['exclude'] ?? []), $autoRefreshPath];
+            }
+
             $prophets = $scrollConfig['prophets'] ?? [];
             $registry->registerMany($scrollName, $prophets);
             $registry->setScrollConfig($scrollName, $scrollConfig);
