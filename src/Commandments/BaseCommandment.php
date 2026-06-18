@@ -98,6 +98,14 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        return [];
+    }
+
+    /**
      * Get paths that should be excluded from this commandment.
      *
      * @return array<string>

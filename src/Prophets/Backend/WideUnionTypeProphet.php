@@ -46,6 +46,27 @@ class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepent
         return Tier::Convention;
     }
 
+    /**
+     * The Union/Option primitives this prophet recommends legitimately hold a
+     * union internally, so they must never flag themselves. Resolved from the
+     * configured `support_namespace` (where the scaffold generates them).
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        $namespace = trim((string) $this->config('support_namespace', 'App\\Support'), '\\');
+
+        if ($namespace === '') {
+            return [];
+        }
+
+        return array_map(
+            static fn (string $name): string => $namespace . '\\' . $name,
+            ['Union', 'ScalarUnion', 'UnionCast', 'Option', 'ScalarOption'],
+        );
+    }
+
     public function advisory(): Advisory
     {
         return Advisory::make()

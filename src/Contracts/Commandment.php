@@ -50,6 +50,18 @@ interface Commandment
     public function detailedDescription(): string;
 
     /**
+     * Fully-qualified class names this commandment must never judge — the very
+     * primitives it recommends as the fix (its configured `Option` / `Union` /
+     * etc.). A file that DECLARES one of these classes is skipped for this
+     * prophet, so the rule never flags its own sanctioned solution. Matched by
+     * FQCN (read from config), so a domain class that merely shares the short
+     * name (e.g. `App\Models\Option`) is still judged.
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array;
+
+    /**
      * Judge a file for transgressions against this commandment.
      */
     public function judge(string $filePath, string $content): Judgment;
