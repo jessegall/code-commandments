@@ -116,6 +116,7 @@ final class NextFindingPresenter
             );
         } else {
             $lines[] = '  (This is a sin — it cannot be absolved. It must be fixed.)';
+            $lines[] = '  You own this even if you did not cause it — it is on a file you touched. "I didn\'t cause this" is never a reason to leave a sin.';
         }
 
         $lines[] = T_String::empty();
