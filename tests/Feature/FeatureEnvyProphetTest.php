@@ -83,6 +83,29 @@ class FeatureEnvyProphetTest extends TestCase
         }
     }
 
+    public function test_does_not_flag_a_data_mapper_array_map(): void
+    {
+        // array_map(fn => *Data::from(...), $foreign->coll) is a presentation
+        // mapper — moving it onto the domain owner would invert the dependency.
+        $results = $this->manager->judgeScroll('test');
+        $messages = array_map(static fn (Warning $w): string => $w->message, $this->warningsFor($results, $this->fixtureDir . '/EnvyResolver.php'));
+
+        foreach ($messages as $message) {
+            $this->assertStringNotContainsString('toDtos', $message);
+        }
+    }
+
+    public function test_does_not_flag_a_query_over_a_serialization_boundary(): void
+    {
+        // array_map(…, $foreign->toArray()) reads the exported form, not internals.
+        $results = $this->manager->judgeScroll('test');
+        $messages = array_map(static fn (Warning $w): string => $w->message, $this->warningsFor($results, $this->fixtureDir . '/EnvyResolver.php'));
+
+        foreach ($messages as $message) {
+            $this->assertStringNotContainsString('summarise', $message);
+        }
+    }
+
     public function test_stays_silent_without_an_index(): void
     {
         $prophet = new FeatureEnvyProphet;

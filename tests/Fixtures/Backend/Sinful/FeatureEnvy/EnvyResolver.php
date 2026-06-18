@@ -28,4 +28,18 @@ class EnvyResolver
 
         return $value . '!';
     }
+
+    public function toDtos(NodeDescriptor $descriptor): array
+    {
+        // array_map building *Data DTOs from the foreign collection is a
+        // presentation MAPPER, not feature envy — must NOT be flagged.
+        return array_map(static fn (object $o): object => OutputSocketData::fromSocket($o), $descriptor->outputs);
+    }
+
+    public function summarise(NodeDescriptor $descriptor): array
+    {
+        // Reading $descriptor->toArray() is a serialization boundary, not a
+        // reach into internals — must NOT be flagged.
+        return array_map(static fn (mixed $v): string => (string) $v, $descriptor->toArray());
+    }
 }
