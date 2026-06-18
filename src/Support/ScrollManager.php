@@ -428,6 +428,19 @@ class ScrollManager
     /**
      * Build a codebase index for every PHP file in a scroll.
      */
+    /**
+     * Build the full-scroll codebase index and inject it into every
+     * `NeedsCodebaseIndex` prophet in $prophets. Repent runs prophets directly
+     * (not via judgeScroll), so it must call this for cross-file auto-fixes
+     * (e.g. ExplicitDataFactory's factory synthesis) to resolve.
+     *
+     * @param  iterable<Commandment>  $prophets
+     */
+    public function prepareCodebaseIndex(string $scroll, iterable $prophets): void
+    {
+        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+    }
+
     protected function buildCodebaseIndex(string $scroll): CodebaseIndex
     {
         $config = $this->registry->getScrollConfig($scroll);

@@ -74,6 +74,10 @@ class RepentCommand extends Command
 
             $prophets = $registry->getProphets($scroll);
 
+            // Cross-file auto-fixes need the full-scroll index; repent runs
+            // prophets directly, so inject it the way judgeScroll does.
+            $manager->prepareCodebaseIndex($scroll, $prophets);
+
             foreach ($prophets as $prophet) {
                 if (!$prophet instanceof SinRepenter) {
                     continue;
