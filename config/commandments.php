@@ -154,6 +154,9 @@ return [
                 Backend\NoConditionalArraySpreadProphet::class,
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
                 Backend\FeatureEnvyProphet::class,
+                Backend\NoFacadesInServicesProphet::class,
+                Backend\UnwrapOptionWithGuardProphet::class,
+                Backend\DemeterEndpointReachProphet::class,
                 Backend\ResolverPatternProphet::class,
                 Backend\DuplicateCodeProphet::class => [
                     // 'min_lines' => 5,
