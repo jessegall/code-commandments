@@ -67,6 +67,29 @@ class DemeterEndpointReachProphetTest extends TestCase
         $this->assertStringContainsString('WorkflowEdge already exposes intent methods', $j->warnings[0]->message);
     }
 
+    public function test_flags_reach_through_a_foreach_bound_collection_element(): void
+    {
+        // The dominant shape: foreach ($this->edges as $edge) { $edge->to->nodeId === … }.
+        // $edge's type comes from the collection's docblock element type.
+        $j = $this->judgeGraph(<<<'PHP'
+        <?php
+        namespace App;
+        class Graph {
+            /** @param WorkflowEdge[] $edges */
+            public function __construct(private array $edges) {}
+            public function has(string $nodeId): bool {
+                foreach ($this->edges as $edge) {
+                    if ($edge->to->nodeId === $nodeId) { return true; }
+                }
+                return false;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($j->hasWarnings());
+        $this->assertStringContainsString('WorkflowEdge already exposes intent methods', $j->warnings[0]->message);
+    }
+
     public function test_does_not_flag_a_single_hop(): void
     {
         $j = $this->judgeGraph(<<<'PHP'
