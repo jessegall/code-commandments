@@ -786,7 +786,12 @@ final class FindArrayStringIndexing implements Pipe
                     $doc = $node->getDocComment();
 
                     if ($doc !== null) {
-                        $names = $this->parseDictVarNames($doc->getText(), 'param');
+                        // Params describe INBOUND data, so a shape there is an
+                        // honest contract — both dict types and shapes count.
+                        $names = array_merge(
+                            $this->parseDictTypeVarNames($doc->getText(), 'param'),
+                            $this->parseShapeVarNames($doc->getText(), 'param'),
+                        );
 
                         if (! empty($names)) {
                             $id = spl_object_id($node);
@@ -813,7 +818,24 @@ final class FindArrayStringIndexing implements Pipe
                     $doc = $node->getDocComment();
 
                     if ($doc !== null) {
-                        $names = $this->parseDictVarNames($doc->getText(), 'var');
+                        $dictNames = $this->parseDictTypeVarNames($doc->getText(), 'var');
+                        $shapeNames = $this->parseShapeVarNames($doc->getText(), 'var');
+
+                        // A `@var array{...}` shape does NOT bless a record you
+                        // construct right here: `/** @var array{...} $x */ $x = [...]`
+                        // is the dodge — annotating a literal you build instead of
+                        // introducing a DTO. Genuine dictionaries (array<string, T>)
+                        // building a homogeneous literal stay exempt.
+                        $builtName = $this->assignedArrayLiteralVar($node);
+
+                        if ($builtName !== null) {
+                            $shapeNames = array_values(array_filter(
+                                $shapeNames,
+                                static fn (string $name): bool => $name !== $builtName,
+                            ));
+                        }
+
+                        $names = array_merge($dictNames, $shapeNames);
 
                         if (! empty($names)) {
                             $scopeId = $this->findEnclosingFunctionId($node);
@@ -842,18 +864,31 @@ final class FindArrayStringIndexing implements Pipe
             }
 
             /**
+             * Names tagged with a genuine dictionary type `array<string, T>`.
+             *
              * @return list<string>
              */
-            private function parseDictVarNames(string $text, string $tag): array
+            private function parseDictTypeVarNames(string $text, string $tag): array
             {
-                $names = [];
                 $tag = preg_quote($tag, '/');
-
                 $pattern = '/@' . $tag . '\s+' . $this->dictTypePattern() . '\s+\$(\w+)/i';
 
                 if (preg_match_all($pattern, $text, $matches)) {
-                    $names = $matches[1];
+                    return $matches[1];
                 }
+
+                return [];
+            }
+
+            /**
+             * Names tagged with a concrete-typed exact shape `array{...}`.
+             *
+             * @return list<string>
+             */
+            private function parseShapeVarNames(string $text, string $tag): array
+            {
+                $names = [];
+                $tag = preg_quote($tag, '/');
 
                 $shape = FindArrayStringIndexing::arrayShapePattern();
                 $pattern = '/@' . $tag . '\s+(' . $shape . ')\s+\$(\w+)/i';
@@ -867,6 +902,27 @@ final class FindArrayStringIndexing implements Pipe
                 }
 
                 return $names;
+            }
+
+            /**
+             * The variable name when this statement assigns an array LITERAL to
+             * it (`$x = [...]`) — i.e. a record built right here. Returns null
+             * for anything else. Used to refuse blessing a shape annotation that
+             * sits on a literal the author is constructing.
+             */
+            private function assignedArrayLiteralVar(Node\Stmt\Expression $node): ?string
+            {
+                $expr = $node->expr;
+
+                if ($expr instanceof Expr\Assign
+                    && $expr->var instanceof Expr\Variable
+                    && is_string($expr->var->name)
+                    && $expr->expr instanceof Expr\Array_
+                ) {
+                    return $expr->var->name;
+                }
+
+                return null;
             }
 
             private function hasDictVarTag(string $text): bool

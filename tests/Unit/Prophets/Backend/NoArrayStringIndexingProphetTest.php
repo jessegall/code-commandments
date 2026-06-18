@@ -863,6 +863,42 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
     }
 
+    public function test_flags_inline_var_shape_on_built_array_literal(): void
+    {
+        // The dodge: annotate a record you BUILD here with an exact shape
+        // instead of introducing a DTO. The shape must not bless the literal.
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            public function build(): string {
+                /** @var array{financialStatus: string, lineItems: list<mixed>} $payload */
+                $payload = ['financialStatus' => 'PAID', 'lineItems' => []];
+                return $payload['financialStatus'];
+            }
+        }
+        PHP;
+        $this->assertFallen($this->prophet->judge('/x.php', $content), 1);
+    }
+
+    public function test_respects_inline_var_dict_on_built_literal(): void
+    {
+        // A genuine homogeneous dictionary you build is a real map, not a
+        // record in disguise — a concrete dict type still opts out.
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        class L {
+            public function rates(): int {
+                /** @var array<string, int> $prices */
+                $prices = ['usd' => 1, 'eur' => 2];
+                return $prices['usd'];
+            }
+        }
+        PHP;
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
     public function test_respects_property_array_shape(): void
     {
         $content = <<<'PHP'

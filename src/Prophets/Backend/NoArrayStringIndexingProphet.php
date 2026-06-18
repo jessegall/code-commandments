@@ -85,14 +85,26 @@ the values differ per key, which means the keys are a fixed known set
 — that's a record wearing a dictionary's clothes. Name the value type
 or build the DTO.
 
-Exact array shapes are also accepted as typed: when you declare
-`@param array{nodes: list<mixed>, edges: list<mixed>} $graph` or
-`@var array{0: string, 1: int} $pair`, the shape is known and accesses
-into it are not flagged. Prefer a real DTO where the structure lives
-longer than one normalisation step, but a shape annotation is an
-honest contract and counts. A shape must declare at least one concrete
-value type — `array{name?: mixed, type?: mixed}` is `array<string,
-mixed>` in shape clothing and does NOT opt out.
+Exact array shapes are also accepted as typed when they describe
+INBOUND data: `@param array{nodes: list<mixed>, edges: list<mixed>}
+$graph` on a parameter, or a `@var array{...}` on data you received,
+names a known shape and accesses into it are not flagged. Prefer a real
+DTO where the structure lives longer than one normalisation step, but a
+shape annotation on inbound data is an honest contract and counts. A
+shape must declare at least one concrete value type — `array{name?:
+mixed, type?: mixed}` is `array<string, mixed>` in shape clothing and
+does NOT opt out.
+
+A shape annotation does NOT bless a record you BUILD. Writing
+`/** @var array{...} $payload */ $payload = ['key' => ...];` — slapping
+a shape on an array literal you construct right here — is a dodge, not a
+contract: you are hand-rolling a typed record as an array instead of a
+DTO. The prophet DETECTS this: an `array{...}` annotation on a variable
+that is assigned an array literal in the same statement is ignored, and
+accesses into it are flagged as the same sin. Build the DTO / value
+object and return THAT. (A genuine dictionary you build —
+`@var array<string, Money> $prices = [...]` with a concrete homogeneous
+value type — stays righteous; it is a real map, not a record.)
 
 Wrapper helpers (`config()`, `Arr::get()`, `data_get()`, etc.) signal
 "this is dynamic lookup" — but ONLY when the lookup actually is dynamic.
