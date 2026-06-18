@@ -317,6 +317,26 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_nominate_a_reflection_introspection_helper(): void
+    {
+        // #34: a >=3-guard helper that introspects a Reflection* value is
+        // infrastructure glue, not a reusable domain Predicate.
+        $judgment = $this->judge(<<<'PHP'
+        class SocketReflector
+        {
+            public function propertyAllowsNull(\ReflectionType $type): bool
+            {
+                if ($type instanceof \ReflectionNamedType && $type->allowsNull()) { return true; }
+                if ($type instanceof \ReflectionUnionType) { return true; }
+                if (! $type instanceof \ReflectionNamedType) { return true; }
+                return false;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_nominate_a_reflection_procedure_with_try_catch(): void
     {
         // Issue #17: a procedure that transforms/throws inside a try/catch is
