@@ -104,6 +104,16 @@ WHAT FIRES:
 WHAT DOES NOT:
   - a `match (true)`/guard, or arms over mixed/non-enum subjects;
   - a `match`/`switch` INSIDE the enum's own file — that is the destination;
+  - STRATEGY DISPATCH — arms that call the enclosing object's own methods
+    (`Effect::Retype => $this->retypeInput()`). The behaviour lives on the
+    caller; moving it onto the enum would invert the dependency (enum ->
+    caller), so this is exempt;
+  - CROSS-TYPE MAPPING — every arm produces a case/const of a DIFFERENT type
+    (a domain enum translated to a presentation enum: `RunStatus::Ok =>
+    LogLevel::Info`). A method on the matched enum would couple it to that
+    other type; the map is a translation, not the enum's own behaviour. (Scalar
+    labels — `St::A => 'a'` — are NOT exempt: `label()`/`weight()` belong on
+    the enum.);
   - the ternary form on an ENUM constant — `$x === Enum::Case ? …` is the
     CompareSelf rule's territory (it routes through `equals`), so this rule
     only takes the ternary for NON-enum type constants (value classes).
@@ -179,6 +189,24 @@ SCRIPTURE;
                 continue;
             }
 
+            // STRATEGY DISPATCH — arms call the enclosing object's own methods
+            // (`=> $this->handle(...)`). Pushing these onto the enum would force
+            // the enum to depend on its caller (inverted layering), so this is
+            // not "behaviour that belongs on the enum". Exempt.
+            if ($this->armsDispatchToThis($node, $finder)) {
+                continue;
+            }
+
+            // CROSS-TYPE MAPPING — every arm produces a case/const of a DIFFERENT
+            // type (e.g. a domain enum mapped to a presentation enum). A method
+            // on the matched enum would make it depend on that other type; the
+            // map is a translation, not the enum's own behaviour. (Scalar labels
+            // — string/int — are NOT exempt: `label()`/`weight()` do belong on
+            // the enum.) Exempt.
+            if ($this->armsMapToForeignType($node, $uses, $namespace, $enum['fqcn'])) {
+                continue;
+            }
+
             $subject = $printer->prettyPrintExpr($node->cond);
 
             $warnings[] = $this->warningAt(
@@ -197,6 +225,113 @@ SCRIPTURE;
                 'inline-dispatch:' . $enum['fqcn'],
             );
         }
+    }
+
+    /**
+     * Whether any arm body calls a method on `$this` — strategy dispatch to the
+     * enclosing object's own behaviour, which must not be pushed onto the enum.
+     */
+    private function armsDispatchToThis(Node $node, NodeFinder $finder): bool
+    {
+        foreach ($this->armBodies($node) as $body) {
+            $hit = $finder->findFirst($body, static fn (Node $n): bool =>
+                $n instanceof Expr\MethodCall
+                && $n->var instanceof Expr\Variable
+                && $n->var->name === 'this');
+
+            if ($hit !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether every arm produces a class-constant / enum-case of a type OTHER
+     * than the matched enum — a cross-type translation, not the enum's own
+     * behaviour. A scalar result (string/int label) or any non-constant result
+     * (closure, call, throw) makes this false, so the canonical
+     * `label()`/`evaluate()` cases stay flagged.
+     *
+     * @param  array<string, string>  $uses
+     */
+    private function armsMapToForeignType(Node $node, array $uses, ?string $namespace, string $matchedFqcn): bool
+    {
+        $results = $this->armResultExprs($node);
+
+        if ($results === []) {
+            return false;
+        }
+
+        $sawForeign = false;
+
+        foreach ($results as $expr) {
+            if (! $expr instanceof Expr\ClassConstFetch || ! $expr->class instanceof Node\Name) {
+                return false;
+            }
+
+            if ($this->resolveFqcn($expr->class, $uses, $namespace) === $matchedFqcn) {
+                return false;
+            }
+
+            $sawForeign = true;
+        }
+
+        return $sawForeign;
+    }
+
+    /**
+     * The statement/expression bodies of a match/switch's arms (for scanning).
+     *
+     * @return list<Node>
+     */
+    private function armBodies(Node $node): array
+    {
+        if ($node instanceof Expr\Match_) {
+            return array_map(static fn (Node\MatchArm $arm): Node => $arm->body, $node->arms);
+        }
+
+        if ($node instanceof Node\Stmt\Switch_) {
+            $bodies = [];
+
+            foreach ($node->cases as $case) {
+                foreach ($case->stmts as $stmt) {
+                    $bodies[] = $stmt;
+                }
+            }
+
+            return $bodies;
+        }
+
+        return [];
+    }
+
+    /**
+     * The result expressions each arm produces: a match arm's body, or the
+     * `return` expression of a switch case.
+     *
+     * @return list<Expr>
+     */
+    private function armResultExprs(Node $node): array
+    {
+        if ($node instanceof Expr\Match_) {
+            return array_map(static fn (Node\MatchArm $arm): Expr => $arm->body, $node->arms);
+        }
+
+        $exprs = [];
+
+        if ($node instanceof Node\Stmt\Switch_) {
+            foreach ($node->cases as $case) {
+                foreach ($case->stmts as $stmt) {
+                    if ($stmt instanceof Node\Stmt\Return_ && $stmt->expr !== null) {
+                        $exprs[] = $stmt->expr;
+                    }
+                }
+            }
+        }
+
+        return $exprs;
     }
 
     /**

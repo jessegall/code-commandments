@@ -43,6 +43,75 @@ class PreferTypeMethodOverInlineDispatchProphetTest extends TestCase
         $this->assertStringContainsString('Op', $judgment->warnings[0]->message);
     }
 
+    public function test_does_not_flag_arms_that_dispatch_to_this_methods(): void
+    {
+        // #33: strategy dispatch — arms call the caller's own methods. Pushing
+        // these onto the enum would invert layering (enum -> caller).
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        enum Effect { case Retype; case Close; }
+
+        class Pipe {
+            public function apply(Effect $e): mixed {
+                return match ($e) {
+                    Effect::Retype => $this->retypeInput(),
+                    Effect::Close => $this->closeSucceeded(),
+                };
+            }
+            private function retypeInput(): int { return 1; }
+            private function closeSucceeded(): int { return 2; }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_cross_type_enum_mapping(): void
+    {
+        // #33: a domain enum mapped to a DIFFERENT (presentation) enum. A method
+        // on the matched enum would make it depend on the other type.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        enum RunStatus { case Ok; case Failed; }
+        enum LogLevel { case Info; case Error; }
+
+        class Outcome {
+            public function level(RunStatus $s): LogLevel {
+                return match ($s) {
+                    RunStatus::Ok => LogLevel::Info,
+                    RunStatus::Failed => LogLevel::Error,
+                };
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_still_flags_scalar_label_mapping(): void
+    {
+        // The canonical case stays flagged: mapping to scalar labels is exactly
+        // the `label()`-on-the-enum case, NOT a cross-type translation.
+        $judgment = $this->judge(<<<'PHP'
+        namespace App;
+
+        enum St { case A; case B; }
+
+        class Presenter {
+            public function label(St $s): string {
+                return match ($s) {
+                    St::A => 'a',
+                    St::B => 'b',
+                };
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
     public function test_flags_switch_dispatching_per_enum_case(): void
     {
         $judgment = $this->judge(<<<'PHP'
