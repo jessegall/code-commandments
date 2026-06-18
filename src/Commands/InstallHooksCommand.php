@@ -111,6 +111,16 @@ class InstallHooksCommand extends Command
             CommitHookInstaller::STATUS_NOT_GIT => null,
             CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/commit-msg — check permissions.'),
         };
+
+        $push = $installer->installPrePush(base_path(), $force);
+
+        match ($push) {
+            CommitHookInstaller::STATUS_INSTALLED => $this->output->writeln('Installed git pre-push reset (clears until-push absolutions) at .git/hooks/pre-push'),
+            CommitHookInstaller::STATUS_APPENDED => $this->output->writeln('Appended the pre-push reset to your existing .git/hooks/pre-push'),
+            CommitHookInstaller::STATUS_ALREADY_PRESENT => $this->output->writeln('Pre-push reset already installed — use --force to refresh it'),
+            CommitHookInstaller::STATUS_NOT_GIT => null,
+            CommitHookInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .git/hooks/pre-push — check permissions.'),
+        };
     }
 
     /**

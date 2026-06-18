@@ -39,6 +39,17 @@ class JsonConfessionTracker implements ConfessionTracker
     protected array $reported = [];
 
     /**
+     * Push-scoped (sticky) finding absolutions keyed by content fingerprint.
+     * Like `$reported`, these SURVIVE the post-commit reset — a reasoned-LEAVE
+     * warning absolved during an active grind stays quiet across intermediate
+     * commits until `git push` clears it (the pre-push hook calls
+     * `clearUntilPushAbsolutions()`). Warnings only; sins are never sticky.
+     *
+     * @var array<string, array{absolved_at: string, reason: string|null}>
+     */
+    protected array $untilPush = [];
+
+    /**
      * Fingerprints encountered live during this run (not persisted).
      *
      * @var array<string, true>
@@ -139,7 +150,39 @@ class JsonConfessionTracker implements ConfessionTracker
     {
         $this->load();
 
-        return isset($this->findings[$fingerprint]) || isset($this->reported[$fingerprint]);
+        return isset($this->findings[$fingerprint])
+            || isset($this->reported[$fingerprint])
+            || isset($this->untilPush[$fingerprint]);
+    }
+
+    public function absolveFindingUntilPush(string $fingerprint, ?string $reason = null): void
+    {
+        $this->load();
+
+        $this->untilPush[$fingerprint] = [
+            'absolved_at' => date('c'),
+            'reason' => $reason,
+        ];
+
+        $this->save();
+    }
+
+    /**
+     * Drop every push-scoped absolution (called by the pre-push hook). Returns
+     * the number cleared.
+     */
+    public function clearUntilPushAbsolutions(): int
+    {
+        $this->load();
+
+        $count = count($this->untilPush);
+
+        if ($count > 0) {
+            $this->untilPush = [];
+            $this->save();
+        }
+
+        return $count;
     }
 
     public function reportFinding(string $fingerprint, ?string $reason = null, ?int $issue = null, ?string $repo = null): void
@@ -194,10 +237,11 @@ class JsonConfessionTracker implements ConfessionTracker
 
         $count = count($this->findings);
 
-        // Report-linked absolutions ($this->reported) are deliberately NOT
-        // cleared here: a reported finding stays absolved until its upstream
-        // issue is answered (then `reports --check` releases it), so the
-        // post-commit reset must leave them in place.
+        // Report-linked ($this->reported) and push-scoped ($this->untilPush)
+        // absolutions are deliberately NOT cleared here: a reported finding
+        // stays absolved until its issue is answered, and an until-push finding
+        // until `git push` (the pre-push hook), so the post-commit reset must
+        // leave both in place.
         if ($count > 0) {
             $this->findings = [];
             $this->save();
@@ -270,6 +314,8 @@ class JsonConfessionTracker implements ConfessionTracker
     {
         $this->absolutions = [];
         $this->findings = [];
+        $this->reported = [];
+        $this->untilPush = [];
         $this->save();
     }
 
@@ -293,6 +339,7 @@ class JsonConfessionTracker implements ConfessionTracker
                 $this->absolutions = $data['files'] ?? [];
                 $this->findings = $data['findings'] ?? [];
                 $this->reported = $data['reported'] ?? [];
+                $this->untilPush = $data['until_push'] ?? [];
             } else {
                 // Legacy flat format: the whole document is the file map.
                 $this->absolutions = $data;
@@ -319,6 +366,7 @@ class JsonConfessionTracker implements ConfessionTracker
                 'files' => $this->absolutions,
                 'findings' => $this->findings,
                 'reported' => $this->reported,
+                'until_push' => $this->untilPush,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
     }

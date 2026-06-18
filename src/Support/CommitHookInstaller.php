@@ -32,6 +32,9 @@ final class CommitHookInstaller
     private const MSG_BEGIN = '# >>> code-commandments commit-msg guard >>>';
     private const MSG_END = '# <<< code-commandments commit-msg guard <<<';
 
+    private const PUSH_BEGIN = '# >>> code-commandments pre-push reset >>>';
+    private const PUSH_END = '# <<< code-commandments pre-push reset <<<';
+
     public function install(string $basePath, bool $force = false): string
     {
         return $this->writeHook($basePath, GitHook::PreCommit, $this->block(), self::BEGIN, self::END, $force);
@@ -52,6 +55,15 @@ final class CommitHookInstaller
     public function installCommitMsg(string $basePath, bool $force = false): string
     {
         return $this->writeHook($basePath, GitHook::CommitMsg, $this->commitMsgBlock(), self::MSG_BEGIN, self::MSG_END, $force);
+    }
+
+    /**
+     * Install the pre-push hook that drops push-scoped (until-push) absolutions,
+     * so a sticky LEAVE never silently outlives the grind it was scoped to.
+     */
+    public function installPrePush(string $basePath, bool $force = false): string
+    {
+        return $this->writeHook($basePath, GitHook::PrePush, $this->prePushBlock(), self::PUSH_BEGIN, self::PUSH_END, $force);
     }
 
     private function writeHook(string $basePath, GitHook $hook, string $block, string $begin, string $end, bool $force): string
@@ -160,6 +172,24 @@ final class CommitHookInstaller
             vendor/bin/commandments absolve --clear >/dev/null 2>&1
         elif [ -f artisan ]; then
             php artisan commandments:absolve --clear >/dev/null 2>&1
+        fi
+        {$end}
+        HOOK;
+    }
+
+    private function prePushBlock(): string
+    {
+        $begin = self::PUSH_BEGIN;
+        $end = self::PUSH_END;
+
+        return <<<HOOK
+        {$begin}
+        # Drop push-scoped (until-push) absolutions before the push lands, so a
+        # sticky LEAVE never outlives the grind it was scoped to.
+        if [ -x vendor/bin/commandments ]; then
+            vendor/bin/commandments absolve --clear-until-push >/dev/null 2>&1
+        elif [ -f artisan ]; then
+            php artisan commandments:absolve --clear-until-push >/dev/null 2>&1
         fi
         {$end}
         HOOK;

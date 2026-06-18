@@ -13,4 +13,5 @@ enum GitHook: string
     case PreCommit = 'pre-commit';
     case PostCommit = 'post-commit';
     case CommitMsg = 'commit-msg';
+    case PrePush = 'pre-push';
 }

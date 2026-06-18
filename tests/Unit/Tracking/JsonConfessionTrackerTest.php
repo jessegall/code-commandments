@@ -116,6 +116,28 @@ class JsonConfessionTrackerTest extends TestCase
         $this->assertTrue($fresh->isFindingReported('reported'));
     }
 
+    public function test_until_push_absolution_survives_the_post_commit_clear_but_clears_at_push(): void
+    {
+        $tracker = $this->tracker();
+        $tracker->absolveFinding('ordinary');
+        $tracker->absolveFindingUntilPush('sticky', 'reasoned LEAVE during the grind');
+
+        // The post-commit reset drops the ordinary one, keeps the sticky one.
+        $cleared = $tracker->clearFindingAbsolutions();
+        $this->assertSame(1, $cleared);
+
+        $afterCommit = $this->tracker();
+        $this->assertFalse($afterCommit->isFindingAbsolved('ordinary'));
+        $this->assertTrue($afterCommit->isFindingAbsolved('sticky'));
+
+        // The pre-push reset drops the sticky one.
+        $pushCleared = $afterCommit->clearUntilPushAbsolutions();
+        $this->assertSame(1, $pushCleared);
+
+        $afterPush = $this->tracker();
+        $this->assertFalse($afterPush->isFindingAbsolved('sticky'));
+    }
+
     public function test_reported_absolution_is_not_garbage_collected_when_unseen(): void
     {
         // GC drops unseen ORDINARY absolutions; a reported one must persist even
