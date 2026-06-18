@@ -275,6 +275,48 @@ class ResolverPatternProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_nominate_multi_input_sufficiency_guards(): void
+    {
+        // #34: each guard tests a different relationship between TWO inputs
+        // (source + target). That is sequential sufficiency, not one-input
+        // first-match dispatch — a Resolver over a single input can't model it.
+        $judgment = $this->judge(<<<'PHP'
+        class TypeCompatibility
+        {
+            public function compatible(Type $source, Type $target): bool
+            {
+                if ($source->isAny() || $target->isAny()) { return true; }
+                if ($source->name === $target->name) { return true; }
+                if ($source->isList() && $target->isList()) { return true; }
+                return false;
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_nominate_an_instance_procedure_calling_this(): void
+    {
+        // #34: sequential validation that dispatches to the object's own
+        // methods (`$this->checkElements`). The prescribed resolver uses named
+        // static factories / Predicates, not `$this->` collaborators.
+        $judgment = $this->judge(<<<'PHP'
+        class SchemaContractValidator
+        {
+            public function checkValue(Field $field, mixed $value): array
+            {
+                if ($field->many === true) { return ['not a list']; }
+                if ($field->required === true) { return ['missing']; }
+                if ($field->nested === true) { return $this->checkElements($value); }
+                return [];
+            }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_nominate_a_reflection_procedure_with_try_catch(): void
     {
         // Issue #17: a procedure that transforms/throws inside a try/catch is
@@ -360,13 +402,13 @@ class ResolverPatternProphetTest extends TestCase
     public function test_flags_bool_chain_as_a_composite_predicate(): void
     {
         $judgment = $this->judge(<<<'PHP'
-        class TypeCompatibility
+        class TypeCheck
         {
-            public function compatible(string $source, string $target): bool
+            public function isExotic(string $token): bool
             {
-                if ($source === 'mixed') { return true; }
-                if (str_starts_with($target, 'list:')) { return false; }
-                if (in_array($source, ['a','b'], true)) { return true; }
+                if ($token === 'mixed') { return true; }
+                if (str_starts_with($token, 'list:')) { return false; }
+                if (in_array($token, ['a','b'], true)) { return true; }
                 return false;
             }
         }

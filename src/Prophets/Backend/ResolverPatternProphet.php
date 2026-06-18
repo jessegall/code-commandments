@@ -226,6 +226,15 @@ that transforms / throws / returns unrelated shapes, a predicate passed as a
 callback argument (`Option::first($xs, new IsX())`), and a `match` on an enum
 subject (PreferTypeMethodOverInlineDispatch's rule).
 
+MULTI-INPUT methods are exempt. A Resolver (and a composite Predicate)
+dispatches ONE input. When the guards reference two or more of the method's
+parameters — across their conditions AND their results — it is sequential
+multi-input logic, not first-match dispatch over a single value:
+`compatible($source, $target)` tests relationships between a pair;
+`checkValue($field, $value)` guards on `$field` then validates `$value` via
+`$this->checkElements($value)`. A single-input dispatch references only its one
+parameter (`expand($d)` → per-branch `$this->expandBag($d)`) and still fires.
+
 Configuration:
 
     Backend\ResolverPatternProphet::class => [
@@ -887,6 +896,18 @@ SCRIPTURE;
             return null;
         }
 
+        // A Resolver (and a composite Predicate) dispatches ONE input. When the
+        // guards span two or more of the method's parameters — across their
+        // conditions AND their results — it is multi-input sequential logic, not
+        // first-match dispatch over a single value (#34): `compatible($source,
+        // $target)` tests relationships between a pair; `checkValue($field,
+        // $value)` guards on `$field` then validates `$value`. A single-input
+        // dispatch (`expand($d)` → `$this->expandBag($d)` per branch) references
+        // only its one parameter and stays flagged.
+        if ($this->guardsSpanMultipleParams($finder, $method)) {
+            return null;
+        }
+
         $returnType = $this->declaredReturnType($method);
 
         // A bool producer is a composite Predicate (compose from the kernel),
@@ -957,6 +978,81 @@ SCRIPTURE;
     private function hasTryCatch(Node\Stmt\ClassMethod $method): bool
     {
         return (new NodeFinder)->findFirstInstanceOf($method->stmts ?? [], Node\Stmt\TryCatch::class) !== null;
+    }
+
+    /**
+     * The predicate-guard expressions of a method — each `if (pred) { return X }`
+     * contributes its condition AND its returned X; each `match (true) { pred =>
+     * X }` arm contributes its condition AND its body X. Scanning both is what
+     * lets a guard on one parameter whose RESULT uses another (`checkValue`:
+     * guard `$field`, return `$this->checkElements($value)`) read as multi-input.
+     *
+     * @return list<Expr>
+     */
+    private function guardExprs(NodeFinder $finder, Node\Stmt\ClassMethod $method): array
+    {
+        $exprs = [];
+
+        foreach ($finder->findInstanceOf($method->stmts, Node\Stmt\If_::class) as $if) {
+            if ($if->else === null && $if->elseifs === [] && $this->isPredicateExpr($if->cond)
+                && count($if->stmts) === 1 && $if->stmts[0] instanceof Node\Stmt\Return_
+            ) {
+                $exprs[] = $if->cond;
+
+                if ($if->stmts[0]->expr !== null) {
+                    $exprs[] = $if->stmts[0]->expr;
+                }
+            }
+        }
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\Match_::class) as $match) {
+            if (! $this->isTrueConst($match->cond)) {
+                continue;
+            }
+
+            foreach ($match->arms as $arm) {
+                foreach ($arm->conds ?? [] as $cond) {
+                    if ($this->isPredicateExpr($cond)) {
+                        $exprs[] = $cond;
+                        $exprs[] = $arm->body;
+                    }
+                }
+            }
+        }
+
+        return $exprs;
+    }
+
+    /**
+     * Whether the guards reference two or more of the method's parameters —
+     * across their conditions and results — i.e. multi-input sequential logic,
+     * not one-input first-match dispatch (#34).
+     */
+    private function guardsSpanMultipleParams(NodeFinder $finder, Node\Stmt\ClassMethod $method): bool
+    {
+        $params = [];
+
+        foreach ($method->params as $param) {
+            if ($param->var instanceof Expr\Variable && is_string($param->var->name)) {
+                $params[$param->var->name] = true;
+            }
+        }
+
+        if (count($params) < 2) {
+            return false;
+        }
+
+        $seen = [];
+
+        foreach ($this->guardExprs($finder, $method) as $expr) {
+            foreach ($finder->findInstanceOf([$expr], Expr\Variable::class) as $var) {
+                if (is_string($var->name) && isset($params[$var->name])) {
+                    $seen[$var->name] = true;
+                }
+            }
+        }
+
+        return count($seen) >= 2;
     }
 
     /**
