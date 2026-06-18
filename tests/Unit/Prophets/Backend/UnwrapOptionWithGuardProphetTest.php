@@ -66,14 +66,14 @@ class UnwrapOptionWithGuardProphetTest extends TestCase
         $this->assertFalse($j->warnings[0]->autoFixable);
     }
 
-    public function test_repent_rewrites_the_safe_triple_to_map_get_or(): void
+    public function test_repent_rewrites_the_safe_triple_to_transform_get_or(): void
     {
         $src = "<?php\nnamespace App;\nclass C {\n public function a(\$node): mixed { if (\$node->isEmpty()) { return ControlSockets::OUT; } \$d = \$node->getOrThrow(); return \$this->wrap(\$d); }\n}\n";
 
         $result = $this->prophet->repent('/x.php', $src);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('return $node->map(fn ($d) => $this->wrap($d))->getOr(ControlSockets::OUT);', $result->newContent);
+        $this->assertStringContainsString('return $node->transform(fn ($d) => $this->wrap($d))->getOr(ControlSockets::OUT);', $result->newContent);
         $this->assertStringNotContainsString('getOrThrow', $result->newContent);
     }
 

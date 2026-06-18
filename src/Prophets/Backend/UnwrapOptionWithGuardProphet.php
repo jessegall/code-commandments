@@ -18,7 +18,7 @@ use PhpParser\NodeVisitorAbstract;
 /**
  * Flag `if ($o->isEmpty()) { return …; } $x = $o->getOrThrow();` — ask-then-
  * unwrap on an Option that re-implements the combinators Option already ships
- * (getOr / map / each). Tell the Option what to do; don't interrogate it.
+ * (getOr / transform / tap). Tell the Option what to do; don't interrogate it.
  */
 #[IntroducedIn('1.115.0')]
 class UnwrapOptionWithGuardProphet extends PhpCommandment implements SinRepenter
@@ -34,7 +34,7 @@ class UnwrapOptionWithGuardProphet extends PhpCommandment implements SinRepenter
 
     public function description(): string
     {
-        return 'Do not guard-then-unwrap an Option — use getOr()/map()/each() instead of isEmpty() + getOrThrow()';
+        return 'Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow()';
     }
 
     protected function defaultTier(): Tier
@@ -45,15 +45,15 @@ class UnwrapOptionWithGuardProphet extends PhpCommandment implements SinRepenter
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('An `if ($o->isEmpty()) { return/continue/throw; }` guard is immediately followed by `$x = $o->getOrThrow();` — branching on emptiness and re-unwrapping by hand, which is exactly what Option::getOr()/map()/each() express.')
-            ->leaveWhen('the guard body does real work beyond an early exit (logs, side effects), the two branches genuinely diverge in a way map() cannot express, or the guard and unwrap act on different variables.')
-            ->whenUnsure('if the method just needs the value-or-a-default, use getOr($default); if it transforms the value, use map(); if it runs a side effect, use each() — only keep the manual guard when both branches do substantial, different work.');
+            ->applyWhen('An `if ($o->isEmpty()) { return/continue/throw; }` guard is immediately followed by `$x = $o->getOrThrow();` — branching on emptiness and re-unwrapping by hand, which is exactly what Option::getOr()/transform()/tap() express.')
+            ->leaveWhen('the guard body does real work beyond an early exit (logs, side effects), the two branches genuinely diverge in a way transform() cannot express, or the guard and unwrap act on different variables.')
+            ->whenUnsure('if the method just needs the value-or-a-default, use getOr($default); if it transforms the value, use transform(); if it runs a side effect, use tap() — only keep the manual guard when both branches do substantial, different work.');
     }
 
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-Option ships getOr(), map() and each() precisely so callers never have to ask
+Option ships getOr(), transform() and tap() precisely so callers never have to ask
 "are you empty?" and then unwrap. The shape
 
     if ($node->isEmpty()) {
@@ -72,27 +72,27 @@ Bad — ask, branch, unwrap:
 
     return $this->wrap($resource);
 
-Good — map over the value:
-    return $option->map(fn ($resource) => $this->wrap($resource));
+Good — transform the value:
+    return $option->transform(fn ($resource) => $this->wrap($resource));
 
 Other shapes:
 - default fallback:  $x = $opt->isEmpty() ? $default : $opt->getOrThrow();  →  $opt->getOr($default)
-- side effect only:  if ($opt->isEmpty()) return; $x = $opt->getOrThrow(); $this->log($x);  →  $opt->each(fn ($x) => $this->log($x))
-- inside a loop:     if ($opt->isEmpty()) { continue; } $x = $opt->getOrThrow();  →  $opt->each(fn ($x) => …) (or filter the collection upstream)
+- side effect only:  if ($opt->isEmpty()) return; $x = $opt->getOrThrow(); $this->log($x);  →  $opt->tap(fn ($x) => $this->log($x))
+- inside a loop:     if ($opt->isEmpty()) { continue; } $x = $opt->getOrThrow();  →  $opt->tap(fn ($x) => …) (or filter the collection upstream)
 
 WHAT FIRES — an `if ($o->isEmpty())` (or `if (! $o->hasValue())`) whose body is a
 SINGLE early exit (return / continue / break / throw, no else), followed within a
 few statements by `$x = $o->getOrThrow()` on the SAME variable.
 
 WHAT DOES NOT — a guard whose body does more than exit (logging, cleanup), a
-genuine two-way branch that map() can't model, or an unwrap on a different
+genuine two-way branch that transform() can't model, or an unwrap on a different
 variable. Those are judgment calls; absolve with a reason.
 
 AUTO-FIXABLE (the tight shape only): when the guard is `if ($o->isEmpty()) {
 return D; }` immediately followed by `$v = $o->getOrThrow();` and `return E;`,
-`repent` rewrites the three to `return $o->map(fn ($v) => E)->getOr(D);` —
+`repent` rewrites the three to `return $o->transform(fn ($v) => E)->getOr(D);` —
 behavior-preserving. Looser shapes (continue/break/throw guards, intervening
-statements, multi-statement bodies) are left for a human, since the map/each
+statements, multi-statement bodies) are left for a human, since the transform/tap
 transform there is a judgment call.
 SCRIPTURE;
     }
@@ -148,7 +148,7 @@ SCRIPTURE;
                 }
 
                 // The tight `guard(return) ; $v = unwrap ; return E` triple is
-                // mechanically rewritable to ->map()->getOr(); looser shapes
+                // mechanically rewritable to ->transform()->getOr(); looser shapes
                 // (continue/throw guards, intervening statements) are manual.
                 $autoFixable = $this->autoFixableTriple($stmts, $i) !== null;
 
@@ -156,7 +156,7 @@ SCRIPTURE;
                 $warnings[] = $this->warningAt(
                     $line,
                     sprintf(
-                        '`if ($%s->isEmpty()) { … } $x = $%s->getOrThrow();` asks-then-unwraps an Option — use $%s->getOr($default), ->map(fn ($x) => …) or ->each(fn ($x) => …) instead.',
+                        '`if ($%s->isEmpty()) { … } $x = $%s->getOrThrow();` asks-then-unwraps an Option — use $%s->getOr($default), ->transform(fn ($x) => …) or ->tap(fn ($x) => …) instead.',
                         $guardVar,
                         $guardVar,
                         $guardVar,
@@ -255,7 +255,7 @@ SCRIPTURE;
      *   if ($o->isEmpty()) { return D; }   // single-return guard, no else
      *   $v = $o->getOrThrow();             // immediately after
      *   return E;                          // immediately after
-     * → `return $o->map(fn ($v) => E)->getOr(D);`. Returns the parts, or null.
+     * → `return $o->transform(fn ($v) => E)->getOr(D);`. Returns the parts, or null.
      *
      * @param  array<Node>  $stmts
      * @return array{opt: string, value: string, default: Node\Expr, result: Node\Expr, start: int, end: int}|null
@@ -351,14 +351,14 @@ SCRIPTURE;
                         'start' => $triple['start'],
                         'end' => $triple['end'],
                         'text' => sprintf(
-                            'return $%s->map(fn ($%s) => %s)->getOr(%s);',
+                            'return $%s->transform(fn ($%s) => %s)->getOr(%s);',
                             $triple['opt'],
                             $triple['value'],
                             $this->slice($triple['result']),
                             $this->slice($triple['default']),
                         ),
                     ];
-                    $this->penance[] = sprintf('Rewrote $%s isEmpty()-guard + getOrThrow() to ->map()->getOr()', $triple['opt']);
+                    $this->penance[] = sprintf('Rewrote $%s isEmpty()-guard + getOrThrow() to ->transform()->getOr()', $triple['opt']);
                 }
 
                 return null;
