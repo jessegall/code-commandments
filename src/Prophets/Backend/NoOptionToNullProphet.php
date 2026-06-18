@@ -31,6 +31,19 @@ class NoOptionToNullProphet extends PhpCommandment
         return 'Do not unwrap an Option back to null with getOr(null)';
     }
 
+    /**
+     * Never flag the configured Option primitive itself — it defines the very
+     * accessor methods this prophet watches.
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        $class = ltrim((string) ($this->config('option_class') ?: 'App\\Support\\Option'), '\\');
+
+        return $class === '' ? [] : [$class];
+    }
+
     protected function defaultTier(): Tier
     {
         return Tier::Convention;

@@ -41,6 +41,18 @@ class NoOptionOveruseProphet extends PhpCommandment
         return 'Do not use Option as ceremony where there is no absence to model';
     }
 
+    /**
+     * Never flag the configured Option primitive itself.
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        $class = ltrim((string) $this->config('option_class', self::DEFAULT_OPTION_CLASS), '\\');
+
+        return $class === '' ? [] : [$class];
+    }
+
     protected function defaultTier(): Tier
     {
         return Tier::Convention;

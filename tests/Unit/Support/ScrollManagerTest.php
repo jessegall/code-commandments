@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 use JesseGall\CodeCommandments\Tests\Fixtures\Prophets\ExcludingTestProphet;
 use JesseGall\CodeCommandments\Tests\Fixtures\Prophets\ExcludingTestProphet2;
+use JesseGall\CodeCommandments\Tests\Fixtures\Prophets\ExemptingTestProphet;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
 class ScrollManagerTest extends TestCase
@@ -87,6 +88,53 @@ class ScrollManagerTest extends TestCase
 
             $this->assertTrue($results->isEmpty());
             $this->assertFalse(ExcludingTestProphet::$wasJudged);
+        } finally {
+            @unlink($file);
+            @rmdir($dir);
+        }
+    }
+
+    public function test_prophet_does_not_judge_a_file_declaring_its_exempt_class(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc_exempt_' . uniqid();
+        mkdir($dir);
+
+        ExemptingTestProphet::resetState();
+        $this->registry->register('test', ExemptingTestProphet::class);
+        $this->registry->setScrollConfig('test', ['path' => $dir, 'extensions' => ['php']]);
+
+        // This file declares the prophet's exempt primitive — must be skipped.
+        $file = $dir . '/Option.php';
+        file_put_contents($file, "<?php\nnamespace App\\Support;\nfinal class Option {}\n");
+
+        try {
+            $results = $this->scrollManager->judgeFile('test', $file);
+
+            $this->assertTrue($results->isEmpty());
+            $this->assertFalse(ExemptingTestProphet::$wasJudged);
+        } finally {
+            @unlink($file);
+            @rmdir($dir);
+        }
+    }
+
+    public function test_prophet_still_judges_a_domain_class_sharing_the_short_name(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc_exempt_' . uniqid();
+        mkdir($dir);
+
+        ExemptingTestProphet::resetState();
+        $this->registry->register('test', ExemptingTestProphet::class);
+        $this->registry->setScrollConfig('test', ['path' => $dir, 'extensions' => ['php']]);
+
+        // Same short name, DIFFERENT namespace — a real domain class. Judged.
+        $file = $dir . '/Option.php';
+        file_put_contents($file, "<?php\nnamespace App\\Models;\nclass Option {}\n");
+
+        try {
+            $this->scrollManager->judgeFile('test', $file);
+
+            $this->assertTrue(ExemptingTestProphet::$wasJudged);
         } finally {
             @unlink($file);
             @rmdir($dir);

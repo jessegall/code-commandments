@@ -18,6 +18,26 @@ class WideUnionTypeProphetTest extends TestCase
         $this->prophet = new WideUnionTypeProphet;
     }
 
+    public function test_exempts_its_own_union_and_option_primitives(): void
+    {
+        // The Union/Option primitives this prophet recommends live in the
+        // configured support_namespace and must never flag themselves.
+        $exempt = $this->prophet->exemptClasses();
+
+        $this->assertContains('App\\Support\\Union', $exempt);
+        $this->assertContains('App\\Support\\ScalarUnion', $exempt);
+        $this->assertContains('App\\Support\\UnionCast', $exempt);
+        $this->assertContains('App\\Support\\Option', $exempt);
+    }
+
+    public function test_exempt_classes_follow_configured_support_namespace(): void
+    {
+        $this->prophet->configure(['support_namespace' => 'Acme\\Primitives']);
+
+        $this->assertContains('Acme\\Primitives\\Union', $this->prophet->exemptClasses());
+        $this->assertNotContains('App\\Support\\Union', $this->prophet->exemptClasses());
+    }
+
     public function test_two_member_union_is_a_warning(): void
     {
         $judgment = $this->judge('class A { public function m(string | int $x): void {} }');

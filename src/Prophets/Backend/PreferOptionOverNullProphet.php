@@ -49,6 +49,20 @@ class PreferOptionOverNullProphet extends PhpCommandment implements NeedsCodebas
         return 'Do not return null from decision methods — return an Option or a Null Object';
     }
 
+    /**
+     * Never flag the configured Option primitive itself — it is the recommended
+     * fix, and it legitimately deals in null/absence internally. FQCN-matched,
+     * so a domain class sharing the short name is still judged.
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        $class = ltrim((string) ($this->config('option_class') ?: 'App\\Support\\Option'), '\\');
+
+        return $class === '' ? [] : [$class];
+    }
+
     public function advisory(): Advisory
     {
         return Advisory::make()

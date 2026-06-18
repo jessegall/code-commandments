@@ -30,6 +30,18 @@ class NoOptionInUnionProphet extends PhpCommandment
         return 'Do not union Option with other types or null — Option is the whole type';
     }
 
+    /**
+     * Never flag the configured Option primitive itself.
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        $class = ltrim((string) $this->config('option_class', self::DEFAULT_OPTION_CLASS), '\\');
+
+        return $class === '' ? [] : [$class];
+    }
+
     protected function defaultTier(): Tier
     {
         return Tier::Convention;

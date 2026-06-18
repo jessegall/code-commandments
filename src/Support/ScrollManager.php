@@ -52,6 +52,14 @@ class ScrollManager
             return null;
         }
 
+        // Never let a prophet flag the very primitive it recommends: if this
+        // file declares one of the prophet's configured exempt classes (its
+        // Option / Union / etc.), skip it. FQCN-matched, so a domain class that
+        // merely shares the short name is still judged.
+        if ($this->declaresExemptClass($content, $prophet->exemptClasses())) {
+            return null;
+        }
+
         ProphetExecutionContext::enter(get_class($prophet), $filePath);
 
         try {
@@ -63,6 +71,47 @@ class ScrollManager
         } finally {
             ProphetExecutionContext::leave();
         }
+    }
+
+    /**
+     * Whether the file declares any of the given fully-qualified class names.
+     * Combines the file's `namespace` with each `class`/`interface`/`enum`/
+     * `trait` declaration and matches by FQCN (case-insensitively, ignoring a
+     * leading backslash), so `App\Models\Option` never matches a configured
+     * `App\Support\Option`.
+     *
+     * @param  list<class-string>  $fqcns
+     */
+    protected function declaresExemptClass(string $content, array $fqcns): bool
+    {
+        if ($fqcns === []) {
+            return false;
+        }
+
+        $namespace = '';
+
+        if (preg_match('/^\s*namespace\s+([^;{]+)\s*[;{]/m', $content, $m) === 1) {
+            $namespace = trim($m[1]);
+        }
+
+        if (preg_match_all('/^\s*(?:final\s+|abstract\s+|readonly\s+)*(?:class|interface|enum|trait)\s+(\w+)/mi', $content, $matches) === 0) {
+            return false;
+        }
+
+        $declared = [];
+
+        foreach ($matches[1] as $name) {
+            $fqcn = $namespace === '' ? $name : $namespace . '\\' . $name;
+            $declared[strtolower(ltrim($fqcn, '\\'))] = true;
+        }
+
+        foreach ($fqcns as $fqcn) {
+            if (isset($declared[strtolower(ltrim($fqcn, '\\'))])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
