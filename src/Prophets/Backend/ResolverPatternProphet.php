@@ -235,6 +235,10 @@ multi-input logic, not first-match dispatch over a single value:
 `$this->checkElements($value)`. A single-input dispatch references only its one
 parameter (`expand($d)` → per-branch `$this->expandBag($d)`) and still fires.
 
+REFLECTION helpers are exempt too — a method that introspects a `Reflection*`
+value (`propertyAllowsNull(ReflectionType $t)`) is infrastructure glue, not a
+reusable domain Predicate worth extracting.
+
 Configuration:
 
     Backend\ResolverPatternProphet::class => [
@@ -908,6 +912,13 @@ SCRIPTURE;
             return null;
         }
 
+        // REFLECTION introspection helpers (`propertyAllowsNull(ReflectionType
+        // $t)`) test the shape of a Reflection* object — infrastructure glue,
+        // not a reusable domain Predicate/Resolver worth extracting (#34).
+        if ($this->operatesOnReflection($method)) {
+            return null;
+        }
+
         $returnType = $this->declaredReturnType($method);
 
         // A bool producer is a composite Predicate (compose from the kernel),
@@ -1053,6 +1064,32 @@ SCRIPTURE;
         }
 
         return count($seen) >= 2;
+    }
+
+    /**
+     * Whether the method introspects a Reflection* value — any parameter typed
+     * as a `Reflection…` class. Such helpers are infrastructure, not domain
+     * predicates/resolvers (#34).
+     */
+    private function operatesOnReflection(Node\Stmt\ClassMethod $method): bool
+    {
+        foreach ($method->params as $param) {
+            $type = $param->type;
+
+            if ($type instanceof Node\NullableType) {
+                $type = $type->type;
+            }
+
+            $name = $type instanceof Node\Name
+                ? $type->getLast()
+                : ($type instanceof Node\Identifier ? $type->toString() : null);
+
+            if ($name !== null && str_starts_with($name, 'Reflection')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
