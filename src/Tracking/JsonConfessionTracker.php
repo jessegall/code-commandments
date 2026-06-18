@@ -27,6 +27,18 @@ class JsonConfessionTracker implements ConfessionTracker
     protected array $findings = [];
 
     /**
+     * Report-linked finding absolutions keyed by content fingerprint. Unlike
+     * `$findings`, these SURVIVE the post-commit reset: a finding the agent
+     * reported as wrong (false positive / wrong rule / prophet bug) stays
+     * absolved until the upstream issue is answered, at which point
+     * `reports --check` releases it. Each entry remembers its issue so the
+     * release can be tied to that issue closing.
+     *
+     * @var array<string, array{reported_at: string, reason: string|null, issue: int|null, repo: string|null}>
+     */
+    protected array $reported = [];
+
+    /**
      * Fingerprints encountered live during this run (not persisted).
      *
      * @var array<string, true>
@@ -127,7 +139,48 @@ class JsonConfessionTracker implements ConfessionTracker
     {
         $this->load();
 
-        return isset($this->findings[$fingerprint]);
+        return isset($this->findings[$fingerprint]) || isset($this->reported[$fingerprint]);
+    }
+
+    public function reportFinding(string $fingerprint, ?string $reason = null, ?int $issue = null, ?string $repo = null): void
+    {
+        $this->load();
+
+        $this->reported[$fingerprint] = [
+            'reported_at' => date('c'),
+            'reason' => $reason,
+            'issue' => $issue,
+            'repo' => $repo,
+        ];
+
+        $this->save();
+    }
+
+    public function isFindingReported(string $fingerprint): bool
+    {
+        $this->load();
+
+        return isset($this->reported[$fingerprint]);
+    }
+
+    public function releaseReportedFinding(string $fingerprint): void
+    {
+        $this->load();
+
+        if (isset($this->reported[$fingerprint])) {
+            unset($this->reported[$fingerprint]);
+            $this->save();
+        }
+    }
+
+    /**
+     * @return array<string, array{reported_at: string, reason: string|null, issue: int|null, repo: string|null}>
+     */
+    public function reportedFindings(): array
+    {
+        $this->load();
+
+        return $this->reported;
     }
 
     public function markFindingSeen(string $fingerprint): void
@@ -141,6 +194,10 @@ class JsonConfessionTracker implements ConfessionTracker
 
         $count = count($this->findings);
 
+        // Report-linked absolutions ($this->reported) are deliberately NOT
+        // cleared here: a reported finding stays absolved until its upstream
+        // issue is answered (then `reports --check` releases it), so the
+        // post-commit reset must leave them in place.
         if ($count > 0) {
             $this->findings = [];
             $this->save();
@@ -232,9 +289,10 @@ class JsonConfessionTracker implements ConfessionTracker
             $content = $this->filesystem->get($this->tabletPath);
             $data = json_decode($content, true) ?? [];
 
-            if (array_key_exists('files', $data) || array_key_exists('findings', $data)) {
+            if (array_key_exists('files', $data) || array_key_exists('findings', $data) || array_key_exists('reported', $data)) {
                 $this->absolutions = $data['files'] ?? [];
                 $this->findings = $data['findings'] ?? [];
+                $this->reported = $data['reported'] ?? [];
             } else {
                 // Legacy flat format: the whole document is the file map.
                 $this->absolutions = $data;
@@ -260,6 +318,7 @@ class JsonConfessionTracker implements ConfessionTracker
             json_encode([
                 'files' => $this->absolutions,
                 'findings' => $this->findings,
+                'reported' => $this->reported,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
     }

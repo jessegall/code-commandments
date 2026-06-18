@@ -49,9 +49,37 @@ interface ConfessionTracker
     public function absolveFinding(string $fingerprint, ?string $reason = null): void;
 
     /**
-     * Check whether a specific finding fingerprint has been absolved.
+     * Check whether a specific finding fingerprint has been absolved —
+     * whether by an ordinary absolution or a report-linked one.
      */
     public function isFindingAbsolved(string $fingerprint): bool;
+
+    /**
+     * Record a report-linked absolution: the finding was reported as wrong
+     * (false positive / wrong rule / prophet bug) and stays absolved until the
+     * upstream issue is answered. Unlike an ordinary finding absolution this
+     * SURVIVES the post-commit reset; it is released by `releaseReportedFinding`
+     * when `reports --check` sees the issue close.
+     */
+    public function reportFinding(string $fingerprint, ?string $reason = null, ?int $issue = null, ?string $repo = null): void;
+
+    /**
+     * Whether a finding fingerprint has a report-linked absolution.
+     */
+    public function isFindingReported(string $fingerprint): bool;
+
+    /**
+     * Drop a report-linked absolution so the finding resurfaces (called when
+     * the upstream issue is answered — fixed or closed as wontfix).
+     */
+    public function releaseReportedFinding(string $fingerprint): void;
+
+    /**
+     * Every report-linked absolution, keyed by fingerprint.
+     *
+     * @return array<string, array{reported_at: string, reason: string|null, issue: int|null, repo: string|null}>
+     */
+    public function reportedFindings(): array;
 
     /**
      * Record that a finding fingerprint was encountered live in this run.
