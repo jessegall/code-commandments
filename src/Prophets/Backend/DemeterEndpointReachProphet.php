@@ -131,6 +131,7 @@ SCRIPTURE;
 
         $ownFqcn = $namespace !== null && $namespace !== '' ? $namespace . '\\' . $class->name->toString() : $class->name->toString();
         $propertyOwners = $this->propertyOwners($class, $uses, $namespace, $ownFqcn);
+        $classElements = $this->collectionElementTypes($class, $uses, $namespace, $ownFqcn);
 
         foreach ($class->getMethods() as $method) {
             if ($method->stmts === null) {
@@ -138,7 +139,11 @@ SCRIPTURE;
             }
 
             $paramOwners = $this->paramOwners($method, $uses, $namespace, $ownFqcn);
-            $owners = $paramOwners + $propertyOwners;
+            // foreach ($this->edges as $edge) / foreach ($edges as $edge): bind the
+            // loop variable to its collection's element type so reach-throughs
+            // inside the loop resolve.
+            $elements = $classElements + $this->paramCollectionElementTypes($method, $uses, $namespace, $ownFqcn);
+            $owners = $this->foreachBoundOwners($method, $elements) + $paramOwners + $propertyOwners;
 
             foreach ($this->comparisonOperands($method->stmts) as $operand) {
                 $reach = $this->endpointReach($operand, $owners);
@@ -296,6 +301,156 @@ SCRIPTURE;
         }
 
         return null;
+    }
+
+    /**
+     * Bind foreach loop variables to their collection's element type.
+     *
+     * @param  array<string, string>  $elements  source key ("this->edges" / "edges") => element FQCN
+     * @return array<string, string>  loop var name => element FQCN
+     */
+    private function foreachBoundOwners(Node\Stmt\ClassMethod $method, array $elements): array
+    {
+        $owners = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($method->stmts ?? [], Node\Stmt\Foreach_::class) as $loop) {
+            $source = $this->rootName($loop->expr);
+            $var = $loop->valueVar instanceof Expr\Variable && is_string($loop->valueVar->name) ? $loop->valueVar->name : null;
+
+            if ($source !== null && $var !== null && isset($elements[$source])) {
+                $owners[$var] = $elements[$source];
+            }
+        }
+
+        return $owners;
+    }
+
+    /**
+     * Collection element types declared on the class — `@var Foo[]` / `@var
+     * Collection<Foo>` properties and `@param DataCollection<int, Foo>` promoted
+     * constructor params — keyed by their `$this->prop` source.
+     *
+     * @param  array<string, string>  $uses
+     * @return array<string, string>  "this->prop" => element FQCN
+     */
+    private function collectionElementTypes(Node\Stmt\Class_ $class, array $uses, ?string $namespace, string $ownFqcn): array
+    {
+        $map = [];
+
+        foreach ($class->getProperties() as $property) {
+            $element = $this->elementOwner($this->docVarType($property->getDocComment()?->getText()), $uses, $namespace, $ownFqcn);
+
+            foreach ($property->props as $prop) {
+                if ($element !== null) {
+                    $map['this->' . $prop->name->toString()] = $element;
+                }
+            }
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor !== null) {
+            $doc = $ctor->getDocComment()?->getText();
+
+            foreach ($ctor->params as $param) {
+                if ($param->flags === 0 || ! $param->var instanceof Expr\Variable || ! is_string($param->var->name)) {
+                    continue;
+                }
+
+                $element = $this->elementOwner($this->docParamType($doc, $param->var->name), $uses, $namespace, $ownFqcn);
+
+                if ($element !== null) {
+                    $map['this->' . $param->var->name] = $element;
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Collection element types of the method's own params (`@param Foo[] $xs`),
+     * keyed by the param name.
+     *
+     * @param  array<string, string>  $uses
+     * @return array<string, string>  param name => element FQCN
+     */
+    private function paramCollectionElementTypes(Node\Stmt\ClassMethod $method, array $uses, ?string $namespace, string $ownFqcn): array
+    {
+        $doc = $method->getDocComment()?->getText();
+        $map = [];
+
+        foreach ($method->params as $param) {
+            if (! $param->var instanceof Expr\Variable || ! is_string($param->var->name)) {
+                continue;
+            }
+
+            $element = $this->elementOwner($this->docParamType($doc, $param->var->name), $uses, $namespace, $ownFqcn);
+
+            if ($element !== null) {
+                $map[$param->var->name] = $element;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * The element type string of a `@var Type` tag (with balanced generics or a
+     * trailing `[]`), or null.
+     */
+    private function docVarType(?string $doc): ?string
+    {
+        if ($doc === null || preg_match('/@var\s+([\\\\A-Za-z0-9_]+(?:<[^>]+>)?(?:\[\])?)/', $doc, $m) !== 1) {
+            return null;
+        }
+
+        return $m[1];
+    }
+
+    /**
+     * The type string of a `@param Type $name` tag for the named param, or null.
+     */
+    private function docParamType(?string $doc, string $name): ?string
+    {
+        if ($doc === null || preg_match('/@param\s+([\\\\A-Za-z0-9_]+(?:<[^>]+>)?(?:\[\])?)\s+\$' . preg_quote($name, '/') . '\b/', $doc, $m) !== 1) {
+            return null;
+        }
+
+        return $m[1];
+    }
+
+    /**
+     * Resolve a collection type string's element to an owned-class FQCN, else null.
+     *
+     * @param  array<string, string>  $uses
+     */
+    private function elementOwner(?string $typeStr, array $uses, ?string $namespace, string $ownFqcn): ?string
+    {
+        if ($typeStr === null) {
+            return null;
+        }
+
+        $element = null;
+
+        if (preg_match('/<([^>]+)>/', $typeStr, $m) === 1) {
+            $parts = array_map('trim', explode(',', $m[1]));
+            $element = end($parts) ?: null;
+        } elseif (str_ends_with($typeStr, '[]')) {
+            $element = substr($typeStr, 0, -2);
+        }
+
+        if ($element === null || $element === '') {
+            return null;
+        }
+
+        $fqcn = $this->resolveName(ltrim($element, '\\'), $uses, $namespace);
+
+        if ($fqcn === $ownFqcn || $this->index?->classByFqcn($fqcn) === null) {
+            return null;
+        }
+
+        return $fqcn;
     }
 
     /**
