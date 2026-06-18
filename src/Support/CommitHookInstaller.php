@@ -135,6 +135,8 @@ final class CommitHookInstaller
             echo ""
             echo "✗ Commit blocked: the prophets found sins in your changes."
             echo "  Walk and fix them one at a time:  commandments judge --next"
+            echo "  Genuinely wrong finding (false positive / ill-fitting rule / prophet bug)?"
+            echo "  Report it, do not work around it:  commandments report --prophet=NAME --reason=..."
             echo "  (Bypass only in a real emergency with: git commit --no-verify)"
             exit 1
         fi
