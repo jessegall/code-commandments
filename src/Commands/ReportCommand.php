@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
+use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
 use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
 use JesseGall\PhpTypes\T_String;
@@ -19,11 +20,12 @@ class ReportCommand extends Command
         {--reason= : What is wrong (false positive / wrong rule / unclear)}
         {--file= : File where it was flagged}
         {--line= : Line number}
+        {--fingerprint= : The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered}
         {--repo= : GitHub repo (owner/name) to file the issue on}';
 
     protected $description = 'Report a prophet false-positive or wrong rule as a GitHub issue';
 
-    public function handle(): int
+    public function handle(ConfessionTracker $tracker): int
     {
         $prophet = $this->option('prophet');
         $reason = $this->option('reason');
@@ -36,8 +38,21 @@ class ReportCommand extends Command
 
         $file = $this->option('file');
         $line = $this->option('line') !== null ? (int) $this->option('line') : null;
+        $fingerprint = is_string($this->option('fingerprint')) && T_String::isNotBlank($this->option('fingerprint'))
+            ? $this->option('fingerprint')
+            : null;
         $repo = $this->option('repo')
             ?: config('commandments.report.repo', 'jessegall/code-commandments');
+
+        // Dedup: never file the same finding twice. If this fingerprint was
+        // already reported, reuse that issue and keep the finding absolved.
+        if ($fingerprint !== null && $tracker->isFindingReported($fingerprint)) {
+            $existing = $tracker->reportedFindings()[$fingerprint] ?? [];
+            $issueRef = isset($existing['issue']) ? "issue #{$existing['issue']}" : 'an existing issue';
+            $this->info("Already reported as {$issueRef} — not filing a duplicate. The finding stays absolved until that issue is answered.");
+
+            return self::SUCCESS;
+        }
 
         $reporter = new IssueReporter($repo);
         $issue = $reporter->build($prophet, $file, $line, $reason, $this->snippet($file, $line));
@@ -55,6 +70,11 @@ class ReportCommand extends Command
                     $reason,
                     date('c'),
                 );
+            }
+
+            if ($fingerprint !== null) {
+                $tracker->reportFinding($fingerprint, $reason, $result['number'] ?? null, $repo);
+                $this->info('This finding is now absolved until the issue is answered. It survives the post-commit reset; `reports --check` lifts it when the issue closes (a genuine sin then re-blocks).');
             }
 
             return self::SUCCESS;

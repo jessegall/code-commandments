@@ -228,9 +228,29 @@ or move on):
   - a wrong/ill-fitting rule;
   - a prophet BUG: tagged [AUTO-FIXABLE] but `repent` no-ops or fails, a crash,
     a misleading or incorrect message, a bad auto-fix.
+  - a SCAFFOLDING bug: the generated support classes (Option, Union, Resolver,
+    NullCallable, the Predicate kernel, …) raise PHPStan / static-analysis
+    errors or do not compile — that is a package defect, report it too (use the
+    scaffold class as --prophet, e.g. --prophet=Option).
   php artisan commandments:report --prophet=NAME --file=PATH --line=N --reason="what is wrong"
 This files a GitHub issue another session picks up and fixes. Reporting is
 part of the job — it is how the prophets improve.
+
+REPORT IS NOT A DODGE. Report only a GENUINELY wrong finding — a false
+positive, an ill-fitting rule, or a prophet bug. A rule you understand but
+would rather not follow is NOT a report: fix the code. "I disagree" is not
+"the prophet is wrong."
+
+REPORTING A SIN ABSOLVES IT — until the issue is answered. Pass the finding's
+fingerprint so the report records a report-linked absolution:
+  php artisan commandments:report --prophet=NAME --fingerprint=HASH --reason="why it is wrong"
+The flagged finding (even a SIN) then goes quiet and STAYS quiet across commits
+— it survives the post-commit reset, so you can commit. `report` dedups: it
+will not file the same finding twice. When the issue is answered, the
+absolution lifts (session-start `reports --check` detects the close): a real
+false positive is gone after `composer update`; a sin closed as "works as
+intended" RE-BLOCKS, and you must fix it. So a wrong report self-corrects — it
+buys quiet now, not a permanent pass.
 
 COMMANDS:
   php artisan commandments:judge --git        # Check changed files
@@ -328,7 +348,15 @@ php artisan commandments:report --prophet=NAME --reason="…"  # Report a false 
 php artisan commandments:scripture --prophet=NAME  # Full rule for a prophet
 ```
 
-**Hit a prophet problem? Report it yourself, proactively.** A false positive, a rule that does not fit, OR a prophet bug (tagged [AUTO-FIXABLE] but `repent` no-ops/fails, a crash, a wrong message) — do not just absolve or work around it: `commandments:report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue another session fixes.
+**Hit a prophet problem? Report it yourself, proactively.** A false positive, a rule that does not fit, a prophet bug (tagged [AUTO-FIXABLE] but `repent` no-ops/fails, a crash, a wrong message), OR a **scaffolding bug** (the generated support classes — Option, Union, Resolver, NullCallable, the Predicate kernel — raise PHPStan/static-analysis errors or don't compile) — do not just absolve or work around it: `commandments:report --prophet=NAME --file=PATH --line=N --reason="why"` files a GitHub issue another session fixes (for a scaffold defect, use the class as `--prophet`, e.g. `--prophet=Option`). **Report is not a dodge** — only a *genuinely* wrong finding qualifies; a rule you simply dislike is not a report, fix the code.
+
+**Reporting a sin absolves it until the issue is answered.** Pass the finding's fingerprint and the report records a report-linked absolution:
+
+```bash
+commandments:report --prophet=NAME --fingerprint=HASH --reason="why it is wrong"
+```
+
+The finding (even a **sin**) goes quiet and **stays quiet across commits** — it survives the post-commit reset, so you can commit, and `report` will not file a duplicate. When the issue is answered (`reports --check` runs at session start and detects the close), the absolution **lifts**: a real false positive is gone after `composer update`; a sin closed as "works as intended" **re-blocks** and you must fix it. A wrong report buys quiet now, not a permanent pass.
 MARKDOWN;
     }
 }

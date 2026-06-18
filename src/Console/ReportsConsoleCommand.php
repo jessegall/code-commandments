@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
+use Illuminate\Filesystem\Filesystem;
+use JesseGall\CodeCommandments\Support\ConfigLoader;
+use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
+use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -93,7 +97,60 @@ class ReportsConsoleCommand extends Command
             $output->writeln('Run `composer update jessegall/code-commandments` and re-run judge — the finding you reported should be gone.');
         }
 
+        $this->releaseAnsweredReports($output);
+
         return Command::SUCCESS;
+    }
+
+    /**
+     * Lift any report-linked absolution whose upstream issue is now CLOSED, so
+     * the finding resurfaces: gone if it was a real false positive (the prophet
+     * was fixed), or re-blocking if the issue was closed as wontfix (a genuine
+     * sin the agent must now handle). Self-contained — keyed off each reported
+     * finding's own issue, independent of the ledger's notify bookkeeping.
+     */
+    private function releaseAnsweredReports(OutputInterface $output): void
+    {
+        $tracker = $this->tracker();
+        $released = [];
+
+        foreach ($tracker->reportedFindings() as $fingerprint => $entry) {
+            $issue = $entry['issue'] ?? null;
+            $repo = $entry['repo'] ?? null;
+
+            if ($issue === null || ! is_string($repo) || T_String::isEmpty($repo)) {
+                continue;
+            }
+
+            if ($this->issueState($repo, (int) $issue) === 'CLOSED') {
+                $tracker->releaseReportedFinding($fingerprint);
+                $released[(int) $issue] = true;
+            }
+        }
+
+        if ($released !== []) {
+            $issues = implode(', ', array_map(static fn (int $n): string => '#' . $n, array_keys($released)));
+            $output->writeln("Report-linked absolution(s) lifted — issue(s) {$issues} answered. Re-run judge: a genuine sin re-blocks; a real false positive is gone after `composer update`.");
+        }
+    }
+
+    private function tracker(): JsonConfessionTracker
+    {
+        $basePath = getcwd() ?: '.';
+        Environment::setBasePath($basePath);
+
+        $tabletPath = Environment::basePath('.commandments/confessions.json');
+        $resolved = ConfigLoader::resolve(null, $basePath);
+
+        if ($resolved !== null) {
+            $configured = ConfigLoader::load($resolved)['confession']['tablet_path'] ?? null;
+
+            if (is_string($configured) && T_String::isNotEmpty($configured)) {
+                $tabletPath = $configured;
+            }
+        }
+
+        return new JsonConfessionTracker($tabletPath, new Filesystem());
     }
 
     private function issueState(string $repo, int $number): ?string
