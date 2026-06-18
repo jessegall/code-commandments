@@ -388,6 +388,7 @@ class JudgeCommand extends Command
             $this->output->writeln("SINS: {$this->totalSins} in {$this->totalFiles} files");
             $this->output->newLine();
             $this->output->writeln('DO NOT COMMIT: Fix all sins before committing.');
+            $this->output->writeln('You own EVERY finding on a file you touched — pre-existing ones included. "I didn\'t cause this" is never a reason to leave a sin.');
             $this->output->newLine();
 
             arsort($this->prophetSinCounts);
