@@ -352,48 +352,9 @@ final class DataFactorySynthesizer
         return false;
     }
 
-    /** Spatie attributes whose effect toArray() does not reproduce on the from() round-trip. */
-    private const MAGIC_ATTRIBUTES = ['loadrelation', 'mapinputname', 'mapname', 'computed'];
-
     private function classHasMagicAttributes(Node\Stmt\Class_ $class): bool
     {
-        foreach ($class->getProperties() as $property) {
-            if ($this->hasMagicAttribute($property->attrGroups)) {
-                return true;
-            }
-        }
-
-        foreach ($class->getMethods() as $method) {
-            if ($this->hasMagicAttribute($method->attrGroups)) {
-                return true;
-            }
-
-            if ($method->name->toString() === '__construct') {
-                foreach ($method->params as $param) {
-                    if ($this->hasMagicAttribute($param->attrGroups)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param  array<Node\AttributeGroup>  $attrGroups
-     */
-    private function hasMagicAttribute(array $attrGroups): bool
-    {
-        foreach ($attrGroups as $group) {
-            foreach ($group->attrs as $attr) {
-                if (in_array(strtolower($attr->name->getLast()), self::MAGIC_ATTRIBUTES, true)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return SpatieDataMagic::classHasMagicAttribute($class);
     }
 
     private function shortNameOf(string $fqcn): string

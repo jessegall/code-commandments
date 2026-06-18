@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\PackageDetector;
+use JesseGall\CodeCommandments\Support\SpatieDataMagic;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
@@ -107,6 +108,13 @@ Generate the trait with `commandments:scaffold`. Configure via:
 Note: the trait asserts from()-takes-an-array at runtime. If your code still
 has ::from(object) call sites (see ExplicitDataFactoryProphet), set severity
 to 'warning' and fix those first, or the assert will fire in dev/test.
+
+EXEMPT: a class whose hierarchy depends on Spatie's magic from(Model) — it OR
+any subclass that would inherit the trait carries #[LoadRelation], #[MapInputName],
+#[MapName] or #[Computed] — is skipped entirely. Such a class legitimately needs
+from(Model), so ExplicitDataFactory won't convert its ::from() sites and this rule
+must not add the array-only assert (it would fatal). The two prophets stay coupled:
+a Data class gets EITHER (trait + every object ::from() converted) OR neither.
 SCRIPTURE;
     }
 
@@ -126,6 +134,15 @@ SCRIPTURE;
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
             if (! $this->lacksTraitAccess($class, $uses, $namespace)) {
+                continue;
+            }
+
+            // A class whose hierarchy depends on Spatie's magic from(Model)
+            // (#[LoadRelation]/#[MapInputName]/#[MapName]/#[Computed] on itself
+            // OR any subclass that would inherit the trait) CANNOT be array-only —
+            // ExplicitDataFactory rightly won't convert its object ::from() sites
+            // (#47), so adding the runtime assert would fatal (#49). Exempt it.
+            if ($this->dependsOnMagic($class, $namespace)) {
                 continue;
             }
 
@@ -191,6 +208,13 @@ SCRIPTURE;
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
             if (! $this->extendsDataBase($class, $uses, $namespace) || $this->usesTrait($class, $traitShort)) {
+                continue;
+            }
+
+            // Never add the array-only trait to a magic-dependent hierarchy (#49)
+            // — it (or a subclass inheriting the trait) needs the magic from(Model)
+            // path, so the assert would fatal at runtime.
+            if ($this->dependsOnMagic($class, $namespace)) {
                 continue;
             }
 
@@ -330,6 +354,63 @@ SCRIPTURE;
      * and `array`-typed parameters are treated as safe; objects, property
      * fetches and untyped variables are treated as unsafe (issue #14).
      */
+    /**
+     * Whether the class — or any subclass that would inherit the array-only
+     * trait — depends on Spatie's magic from(Model) path
+     * (#[LoadRelation]/#[MapInputName]/#[MapName]/#[Computed]). Such a class
+     * cannot be array-only; adding the trait would fatal at runtime (#49).
+     */
+    private function dependsOnMagic(Node\Stmt\Class_ $class, ?string $namespace): bool
+    {
+        if (SpatieDataMagic::classHasMagicAttribute($class)) {
+            return true;
+        }
+
+        if ($this->index === null || $class->name === null) {
+            return false;
+        }
+
+        $fqcn = $namespace !== null && $namespace !== ''
+            ? $namespace . '\\' . $class->name->toString()
+            : $class->name->toString();
+
+        foreach ($this->index->subclassesOf($fqcn) as $subFqcn) {
+            $summary = $this->index->classByFqcn(ltrim($subFqcn, '\\'));
+
+            if ($summary === null) {
+                continue;
+            }
+
+            $content = @file_get_contents($summary->filePath);
+
+            if (! is_string($content)) {
+                continue;
+            }
+
+            $node = $this->findClass($this->parseAst($content) ?? [], $this->shortName($subFqcn));
+
+            if ($node !== null && SpatieDataMagic::classHasMagicAttribute($node)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function findClass(array $ast, string $short): ?Node\Stmt\Class_
+    {
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($class->name?->toString() === $short) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
     private function hasUnsafeSelfFrom(Node\Stmt\Class_ $class): bool
     {
         $ownName = $class->name?->toString();
