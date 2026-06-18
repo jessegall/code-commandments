@@ -263,8 +263,10 @@ class InitConsoleCommand extends Command
             $settings['instructions'] = <<<'INSTRUCTIONS'
 This project uses Code Commandments to enforce coding standards.
 
-IMPORTANT: Never commit code with sins. The git pre-commit hook will BLOCK
-any commit while sins remain.
+IMPORTANT: The git pre-commit hook (`judge --staged`) BLOCKS a commit until
+every finding on the staged files is resolved — sins fixed, and each warning
+fixed OR absolved with a reason. Warnings carry a rubric (use judgment) but are
+NOT ignorable at commit time.
 
 THE GUIDED WORKFLOW (use this): run `vendor/bin/commandments judge --next --git`.
 Scope to YOUR changes with --git so you are not handed the repo's pre-existing
@@ -287,9 +289,9 @@ Be a gentleman: leave every file you touch righteous.
 
 REQUIRED: Always read the rule before fixing. `judge --next` prints the
 rubric inline; for the full scripture run
-`vendor/bin/commandments scripture --prophet=NAME`. Warnings are ADVISORY —
-each carries an APPLY-WHEN / LEAVE-WHEN rubric. Use judgment, but never leave
-one untouched: fix or absolve every one.
+`vendor/bin/commandments scripture --prophet=NAME`. Each warning carries an
+APPLY-WHEN / LEAVE-WHEN rubric — use judgment — but a staged commit is BLOCKED
+until every one is fixed or absolved with a reason. Never leave one untouched.
 
 PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
   1. Implement ONE phase.
@@ -354,7 +356,7 @@ INSTRUCTIONS;
 
 This project enforces coding standards via the Code Commandments package.
 
-**IMPORTANT: Never commit code with sins. A git pre-commit hook will BLOCK any commit while sins remain.**
+**IMPORTANT: The git pre-commit hook (`judge --staged`) BLOCKS a commit until every finding on the staged files is resolved — sins fixed, and each warning fixed OR absolved with a reason. Warnings carry an APPLY-WHEN / LEAVE-WHEN rubric (use judgment), but they are NOT ignorable at commit time.**
 
 **REQUIRED: Always read the rule before fixing. `judge --next` shows the rubric inline; `commandments scripture --prophet=NAME` shows the full scripture. The detailed description is the authoritative specification — follow it exactly.**
 
