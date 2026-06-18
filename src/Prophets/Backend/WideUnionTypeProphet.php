@@ -116,7 +116,10 @@ same type, both exempt), a union nested inside a generic, a union inside an
 `#[Attribute]` class (its constructor args must be constant expressions, so an
 Option/Union can never live there — the suggestion is unactionable), a union on
 a method marked `#[\Override]` (the signature is inherited — not yours to
-change), or — when the warning band is disabled — a union below the sin
+change), the `Arrayable | array` typed-or-raw input contract (both members
+describe the SAME data — one hydrated, one the plain array it serialises to —
+so neither Option nor a Union sum type applies; collapsing it breaks every call
+site), or — when the warning band is disabled — a union below the sin
 threshold. A 3+ union that
 includes null is NOT a simple nullable: it still wraps two-or-more real shapes,
 so it fires (and the null says the fix is `Option<rest>`).
@@ -177,6 +180,12 @@ SCRIPTURE;
                 continue;
             }
 
+            // `Arrayable | array` is the typed-or-raw input contract, not an
+            // under-modelled value — exempt it.
+            if ($this->isArrayableConvenienceUnion($union)) {
+                continue;
+            }
+
             $count = count($union->types);
 
             if ($count >= $floor) {
@@ -206,6 +215,16 @@ SCRIPTURE;
 
             if (preg_match('/@(?:param|return|var)\s+(.+)$/', $text, $m)) {
                 $atoms = $this->topLevelAtoms($this->cleanDocType($m[1]));
+
+                // `Arrayable|array` typed-or-raw contract — exempt (see native pass).
+                $shortAtoms = array_map(static fn (string $a): string => (string) (strrchr($a, '\\') ?: '\\' . $a), $atoms);
+                $shortAtoms = array_map(static fn (string $a): string => ltrim($a, '\\'), $shortAtoms);
+                sort($shortAtoms);
+
+                if ($shortAtoms === ['array', 'arrayable']) {
+                    continue;
+                }
+
                 $count = $this->effectiveCount($atoms);
 
                 if ($count >= $floor) {
@@ -448,6 +467,40 @@ SCRIPTURE;
         }
 
         return false;
+    }
+
+    /**
+     * Whether the union is the `Arrayable | array` convenience contract — the
+     * canonical "typed-or-raw" input idiom (Spatie Data and Eloquent models
+     * implement `Arrayable`, so a setter accepts either the object or the plain
+     * array it serialises to). It is not value-or-nothing and not ad-hoc
+     * polymorphism — both members describe the SAME data, one hydrated and one
+     * raw — so neither Option nor a Union sum type applies. Collapsing it would
+     * break every call site, so it is exempt. Matched by short name (any
+     * `Arrayable` interface) and only at width 2 — add `null` or a third member
+     * and the normal rules resume.
+     */
+    private function isArrayableConvenienceUnion(Node\UnionType $union): bool
+    {
+        if (count($union->types) !== 2) {
+            return false;
+        }
+
+        $names = [];
+
+        foreach ($union->types as $type) {
+            if ($type instanceof Node\Name) {
+                $names[] = strtolower($type->getLast());
+            } elseif ($type instanceof Node\Identifier) {
+                $names[] = strtolower($type->toString());
+            } else {
+                return false;
+            }
+        }
+
+        sort($names);
+
+        return $names === ['array', 'arrayable'];
     }
 
     /**

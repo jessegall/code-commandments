@@ -119,6 +119,39 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_flag_arrayable_array_convenience_union(): void
+    {
+        // `Arrayable | array` is the typed-or-raw input contract (Spatie Data
+        // implements Arrayable; callers pass the object or its plain array) —
+        // not value-or-nothing, not polymorphism. Issue #32: the reported code
+        // `link(Arrayable | array $data = T_Array::EMPTY)`.
+        $judgment = $this->judge('class A { public function link(\Illuminate\Contracts\Support\Arrayable | array $data = []): void {} }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_arrayable_array_union_by_short_name(): void
+    {
+        $judgment = $this->judge('class A { public function link(Arrayable | array $data = []): void {} }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_arrayable_array_convenience_union_in_docblock(): void
+    {
+        $judgment = $this->judge('class A { /** @param Arrayable|array $data */ public function link($data = []): void {} }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_arrayable_array_exemption_does_not_swallow_a_third_member(): void
+    {
+        // Add a third member and the convenience exemption must NOT apply.
+        $judgment = $this->judge('class A { public function link(Arrayable | array | string $data = []): void {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
     public function test_three_member_union_with_null_still_fires(): void
     {
         // A simple nullable is width-1-plus-null; this is width-2-plus-null —
