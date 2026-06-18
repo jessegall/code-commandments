@@ -165,7 +165,7 @@ class JudgeCommand extends Command
             $tracker->gcUnseenFindings();
         }
 
-        return $this->showResults($prophetFilter, $gitMode);
+        return $this->showResults($prophetFilter, $gitMode, $stagedMode);
     }
 
     /**
@@ -373,7 +373,7 @@ class JudgeCommand extends Command
     /**
      * Show final results.
      */
-    private function showResults(?string $prophetFilter = null, bool $gitMode = false): int
+    private function showResults(?string $prophetFilter = null, bool $gitMode = false, bool $stagedMode = false): int
     {
         if ($this->totalSins === 0 && $this->totalWarnings === 0) {
             $this->output->writeln('Righteous: No sins found.');
@@ -480,6 +480,18 @@ class JudgeCommand extends Command
             }
         }
 
-        return $this->totalSins > 0 ? self::FAILURE : self::SUCCESS;
+        // Pre-commit gate (`judge --staged`): block until every staged finding
+        // is resolved — sins fixed, warnings fixed OR absolved with a reason
+        // (absolved findings are already filtered from the counts). Other modes
+        // stay sins-only.
+        if ($stagedMode && $this->totalSins === 0 && $this->totalWarnings > 0) {
+            $this->output->writeln(T_String::empty());
+            $this->output->writeln("DO NOT COMMIT: {$this->totalWarnings} warning(s) on staged files. Fix each, or absolve it with a reason:");
+            $this->output->writeln('  php artisan commandments:absolve --fingerprint=<hash> --reason="why it does not apply here"');
+        }
+
+        $blocks = $this->totalSins > 0 || ($stagedMode && $this->totalWarnings > 0);
+
+        return $blocks ? self::FAILURE : self::SUCCESS;
     }
 }
