@@ -24,7 +24,7 @@ final class ReportGuidance
             '',
             "<comment>Close the loop on #{$number} — don't wait for a human to relay the resolution:</comment>",
             '  • Long waits (issues can take days): it resurfaces at your next session start via `commandments reports --check` — report-linked absolutions auto-lift when the issue closes.',
-            "  • Active session: poll  gh issue view {$number} --repo {$repo} --json state,stateReason -q '.state'  every few minutes; when CLOSED, act, then stop polling. (A poll-loop dies with the session, so for multi-day waits lean on `reports --check` too.)",
+            "  • Active session: START A POLL LOOP — schedule a recurring wake-up (e.g. every ~5 min) that runs  gh issue view {$number} --repo {$repo} --json state,stateReason -q '.state'  ; on CLOSED, do the follow-up below and then STOP the loop. (The loop dies with the session, so for multi-day waits rely on `reports --check` too — keep both.)",
             '  • On close, branch by HOW it was resolved:',
             '      – feature / scaffold / php-types request → `composer update jessegall/code-commandments` (re-scaffold if stubs changed), then IMPLEMENT the new API at the call sites that motivated the report.',
             "      – a sin you reported as a false positive, closed \"works as intended\" → the absolution LIFTS and the finding re-blocks: FIX THE CODE, do not work around it.",
