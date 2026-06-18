@@ -58,21 +58,31 @@ abstract class Predicate
     }
 
     /**
-     * A resolver chain entry: when this predicate holds for the input, build
-     * the result via $make; otherwise null (so the chain falls through).
+     * A resolver chain entry: when this predicate holds for the input, produce
+     * the result from $make; otherwise null (so the chain falls through).
      *
-     * Reads as a sequence — match, THEN produce:
+     * $make is either a FACTORY callable (called with the matched input, for a
+     * computed result) or a BARE VALUE (a scalar/enum/constant that needs no
+     * computation — returned as-is, no closure wrapper). Reads as a sequence —
+     * match, THEN produce:
      *
-     *     HasPrefix::of('list:')->then(WireType::listOf(...));
+     *     HasPrefix::of('list:')->then(WireType::listOf(...));   // factory
      *     Equals::to(SocketType::Bag)->then(fn () => BagSocket::class);
+     *     Equals::to(ControlSockets::DONE)->then(self::ORDER_DONE); // bare scalar
+     *
+     * Only genuine callables (Closures, [obj, method], invokables) are called;
+     * a string/scalar is treated as the value itself, so `then(Foo::class)`
+     * yields the class-string, it does not call it.
      *
      * @template TOut
-     * @param  callable(TIn): TOut  $make
+     * @param  (callable(TIn): TOut)|TOut  $make
      * @return callable(mixed): (TOut|null)
      */
-    public function then(callable $make): callable
+    public function then(mixed $make): callable
     {
-        return fn (mixed $value): mixed => ($this)($value) ? $make($value) : null;
+        return fn (mixed $value): mixed => ($this)($value)
+            ? ($make instanceof \Closure || (! \is_string($make) && \is_callable($make)) ? $make($value) : $make)
+            : null;
     }
 
     /**
