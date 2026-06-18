@@ -18,8 +18,9 @@ class ReportGuidanceTest extends TestCase
     {
         $text = implode("\n", ReportGuidance::lines(42, 'jessegall/code-commandments'));
 
-        // Watch: both the durable reports --check path and an active poll.
+        // Watch: both the durable reports --check path and an active poll LOOP.
         $this->assertStringContainsString('reports --check', $text);
+        $this->assertStringContainsString('START A POLL LOOP', $text);
         $this->assertStringContainsString('gh issue view 42 --repo jessegall/code-commandments', $text);
 
         // Branch on resolution type.
