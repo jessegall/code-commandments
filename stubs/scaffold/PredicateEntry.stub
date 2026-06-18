@@ -32,17 +32,20 @@ final class PredicateEntry
     }
 
     /**
-     * Match, transform, THEN produce — the factory receives the transformed
-     * value (so it stays a first-class callable).
+     * Match, transform, THEN produce. $make is either a FACTORY callable (it
+     * receives the transformed value) or a BARE VALUE (a scalar/enum/constant
+     * returned as-is, no closure wrapper). Only genuine callables (Closures,
+     * [obj, method], invokables) are called; a string/scalar is the value
+     * itself.
      *
      * @template TOut
-     * @param  callable(TMid): TOut  $make
+     * @param  (callable(TMid): TOut)|TOut  $make
      * @return callable(mixed): (TOut|null)
      */
-    public function then(callable $make): callable
+    public function then(mixed $make): callable
     {
         return fn (mixed $value): mixed => ($this->predicate)($value)
-            ? $make(($this->transform)($value))
+            ? ($make instanceof \Closure || (! \is_string($make) && \is_callable($make)) ? $make(($this->transform)($value)) : $make)
             : null;
     }
 

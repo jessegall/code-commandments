@@ -166,8 +166,13 @@ class ScaffoldGeneratorTest extends TestCase
 
         $predicate = file_get_contents($this->dir . '/Resolvers/Predicates/Predicate.php');
         $this->assertStringContainsString('@template-covariant TIn', $predicate);
-        $this->assertStringContainsString('public function then(callable $make): callable', $predicate);
-        $this->assertStringContainsString('@param  callable(TIn): TOut  $make', $predicate);
+        // then() takes a factory callable OR a bare scalar/constant result.
+        $this->assertStringContainsString('public function then(mixed $make): callable', $predicate);
+        $this->assertStringContainsString('@param  (callable(TIn): TOut)|TOut  $make', $predicate);
+        // A bare scalar/constant is returned as-is; only genuine callables are
+        // invoked — so `then(self::ORDER_DONE)` needs no closure wrapper.
+        $this->assertStringContainsString('$make instanceof \\Closure', $predicate);
+        $this->assertStringContainsString('! \\is_string($make) && \\is_callable($make)', $predicate);
         // when() must be gone — then() is the only name.
         $this->assertStringNotContainsString('public function when(', $predicate);
 
