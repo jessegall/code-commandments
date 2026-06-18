@@ -87,6 +87,21 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('$value instanceof $this->class', $src);
     }
 
+    public function test_generated_option_has_ergonomic_when_helpers(): void
+    {
+        // #40 + #41: when()/whenNot() take mixed (truthiness, no `=== true`);
+        // someWhen()/someWhenNot() wrap the factory's bare value in some().
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString('public static function when(mixed $condition, callable $factory): self', $option);
+        $this->assertStringContainsString('public static function whenNot(mixed $condition, callable $factory): self', $option);
+        $this->assertStringContainsString('public static function someWhen(mixed $condition, callable $factory): self', $option);
+        $this->assertStringContainsString('public static function someWhenNot(mixed $condition, callable $factory): self', $option);
+        $this->assertStringContainsString('return $condition ? self::some($factory()) : self::none();', $option);
+    }
+
     public function test_generates_the_union_sum_type(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);

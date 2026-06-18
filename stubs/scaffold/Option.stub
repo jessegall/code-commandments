@@ -110,4 +110,63 @@ final readonly class Option
             $callback($this->value);
         }
     }
+
+    /**
+     * The factory's option when the condition is TRUTHY, otherwise none. The
+     * condition is `mixed` and evaluated for truthiness (like `if`/`? :`), so a
+     * `bool|null` or other expression needs no `=== true` coercion at the call
+     * site. The factory returns an already-built Option (use {@see self::someWhen()}
+     * to wrap a bare value).
+     *
+     * @template TWhen
+     *
+     * @param  callable(): self<TWhen>  $factory
+     * @return self<TWhen>
+     */
+    public static function when(mixed $condition, callable $factory): self
+    {
+        return $condition ? $factory() : self::none();
+    }
+
+    /**
+     * The factory's option unless the condition is truthy, otherwise none.
+     *
+     * @template TWhenNot
+     *
+     * @param  callable(): self<TWhenNot>  $factory
+     * @return self<TWhenNot>
+     */
+    public static function whenNot(mixed $condition, callable $factory): self
+    {
+        return $condition ? self::none() : $factory();
+    }
+
+    /**
+     * `some($factory())` when the condition is truthy, otherwise none — the
+     * value-wrapping form: the factory returns the bare value T and this wraps
+     * it, so the call site stays `someWhen($cond, fn () => $value)` with no
+     * `Option::some(...)` boilerplate.
+     *
+     * @template TWhen
+     *
+     * @param  callable(): TWhen  $factory
+     * @return self<TWhen>
+     */
+    public static function someWhen(mixed $condition, callable $factory): self
+    {
+        return $condition ? self::some($factory()) : self::none();
+    }
+
+    /**
+     * `some($factory())` unless the condition is truthy, otherwise none.
+     *
+     * @template TWhen
+     *
+     * @param  callable(): TWhen  $factory
+     * @return self<TWhen>
+     */
+    public static function someWhenNot(mixed $condition, callable $factory): self
+    {
+        return $condition ? self::none() : self::some($factory());
+    }
 }
