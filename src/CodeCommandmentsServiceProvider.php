@@ -53,10 +53,17 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(ScrollManager::class, function ($app) {
-            return new ScrollManager(
+            $manager = new ScrollManager(
                 $app->make(ProphetRegistry::class),
                 $app->make(FileScanner::class)
             );
+
+            $manager->setFindingsCache(new \JesseGall\CodeCommandments\Support\Caching\FindingsCache(
+                base_path('.commandments/cache/findings.json'),
+                new \Illuminate\Filesystem\Filesystem(),
+            ));
+
+            return $manager;
         });
     }
 

@@ -58,12 +58,17 @@ class JudgeConsoleCommand extends Command
             ->addOption('git', null, InputOption::VALUE_NONE, 'Only judge files that are new or changed in git')
             ->addOption('staged', null, InputOption::VALUE_NONE, 'Only judge files staged for commit (what the pre-commit gate uses)')
             ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession')
+            ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)')
             ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
+
+        if ((bool) $input->getOption('no-cache')) {
+            $manager->setUseCache(false);
+        }
 
         $scrollFilter = $input->getOption('scroll');
         $prophetFilter = $input->getOption('prophet');
