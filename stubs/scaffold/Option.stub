@@ -38,6 +38,55 @@ final readonly class Option
     }
 
     /**
+     * Lift a nullable value into an Option — none when null, otherwise some. The
+     * single-value twin of {@see self::coalesce()}.
+     *
+     * @template TValue
+     *
+     * @param  TValue|null  $value
+     * @return self<TValue>
+     */
+    public static function make(mixed $value): self
+    {
+        return $value === null ? self::none() : self::some($value);
+    }
+
+    /**
+     * The value at $key, or none when the key is absent or null — a dictionary
+     * lookup that returns an Option instead of a nullable.
+     *
+     * @template TValue
+     *
+     * @param  array<array-key, TValue|null>  $items
+     * @param  array-key  $key
+     * @return self<TValue>
+     */
+    public static function find(array $items, int|string $key): self
+    {
+        return self::make($items[$key] ?? null);
+    }
+
+    /**
+     * Some of the first item matching the predicate, or none.
+     *
+     * @template TValue
+     *
+     * @param  iterable<TValue>  $items
+     * @param  callable(TValue): bool  $predicate
+     * @return self<TValue>
+     */
+    public static function first(iterable $items, callable $predicate): self
+    {
+        foreach ($items as $item) {
+            if ($predicate($item)) {
+                return self::some($item);
+            }
+        }
+
+        return self::none();
+    }
+
+    /**
      * Some of the FIRST non-null candidate; none if every candidate is null. The
      * coalescing constructor — `Option::coalesce($value, $fallback)` is "value,
      * else fallback, else absent" (mirrors `??`, but a trailing null collapses
