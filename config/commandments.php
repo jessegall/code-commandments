@@ -293,6 +293,13 @@ return [
         'namespace' => 'App\\Support',
         'path' => app_path('Support'),
         'except' => [],
+
+        // Auto-refresh: treat the generated support classes as fully tool-owned.
+        // When true, `scaffold` always force-overwrites them and stamps each
+        // with a loud DO-NOT-EDIT banner; the scaffold path is excluded from
+        // judging (the prophets never flag generated code); and a session-start
+        // hook keeps them current. Turn off to hand-edit them.
+        'auto_refresh' => false,
     ],
 
     /*

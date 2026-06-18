@@ -107,6 +107,29 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('public static function first(iterable $items, callable $predicate): self', $option);
     }
 
+    public function test_auto_refresh_stamps_a_do_not_edit_banner(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, force: true, except: [], autoRefresh: true);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString('AUTO-GENERATED — DO NOT EDIT', $option);
+        $this->assertStringContainsString('scaffold.auto_refresh is ON', $option);
+        $this->assertStringNotContainsString('safe to edit', $option);
+        // The generated marker must stay so judging still skips it.
+        $this->assertStringContainsString('@code-commandments-generated', $option);
+    }
+
+    public function test_default_generation_keeps_the_safe_to_edit_header(): void
+    {
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString('safe to edit', $option);
+        $this->assertStringNotContainsString('DO NOT EDIT', $option);
+    }
+
     public function test_generates_the_union_sum_type(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);

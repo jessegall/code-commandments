@@ -232,6 +232,10 @@ class InitConsoleCommand extends Command
                             'type' => 'command',
                             'command' => 'vendor/bin/commandments reports --check 2>/dev/null || true',
                         ],
+                        [
+                            'type' => 'command',
+                            'command' => 'vendor/bin/commandments scaffold --auto 2>/dev/null || true',
+                        ],
                     ],
                 ],
             ],
