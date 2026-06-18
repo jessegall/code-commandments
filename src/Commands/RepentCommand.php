@@ -27,7 +27,7 @@ class RepentCommand extends Command
         {--input=* : Input for a parameterized fixer, repeatable: --input key=value}
         {--dry-run : Show what would be fixed without making changes}';
 
-    protected $description = 'Auto-fix sins that can be automatically resolved';
+    protected $description = 'Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed)';
 
     /** @var array<string, array<string>> */
     private array $fixedFiles = [];
@@ -118,9 +118,14 @@ class RepentCommand extends Command
 
                     $parameterized = $prophet instanceof ParameterizedRepenter;
 
-                    // A parameterized fixer may act on advisory warnings too, so
-                    // it is not skipped just because there are no sins.
-                    $hasWork = ! $judgment->isRighteous() || ($parameterized && $judgment->warnings !== []);
+                    // repent acts on auto-fixable findings regardless of severity:
+                    // [AUTO-FIXABLE] declares the rewrite SAFE (orthogonal to sin vs
+                    // warning), so an [AUTO-FIXABLE] warning is repented without a
+                    // severity bump. A parameterized fixer may also act on its
+                    // advisory warnings given an --input.
+                    $hasWork = ! $judgment->isRighteous()
+                        || $this->hasAutoFixableWarning($judgment)
+                        || ($parameterized && $judgment->warnings !== []);
 
                     if (! $hasWork) {
                         continue;
@@ -176,6 +181,17 @@ class RepentCommand extends Command
      * @param  array<int, string>  $tokens
      * @return array<string, string>
      */
+    private function hasAutoFixableWarning(\JesseGall\CodeCommandments\Results\Judgment $judgment): bool
+    {
+        foreach ($judgment->warnings as $warning) {
+            if ($warning->autoFixable) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function parseInputs(array $tokens): array
     {
         $values = [];
