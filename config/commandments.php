@@ -160,6 +160,7 @@ return [
                 Backend\FeatureEnvyProphet::class,
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
+                Backend\NoInlineParamDocProphet::class,
                 Backend\NoFacadesInServicesProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
                 Backend\PreferAndThenProphet::class,
