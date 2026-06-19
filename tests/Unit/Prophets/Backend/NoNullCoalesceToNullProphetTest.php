@@ -44,43 +44,25 @@ class NoNullCoalesceToNullProphetTest extends TestCase
         $this->assertStringNotContainsString('?? null', $fixed);
     }
 
-    public function test_flags_foreach_coalesce_null_and_fixes_to_empty_array(): void
+    public function test_leaves_a_foreach_coalesce_null_alone(): void
     {
+        // The foreach guard behaviour was removed — defaulting a nullable array
+        // is PreferTypeCoalesce's job, and a `?? []` guard for a non-array
+        // iterable is the developer's call. We must NOT strip the `?? null` here
+        // and expose an unguarded nullable foreach.
         $code = 'foreach ($obj?->getItems() ?? null as $item) {}';
-        $judgment = $this->judge($code);
-        $this->assertCount(1, $judgment->sins);
 
-        $fixed = $this->repent($code);
-        $this->assertStringContainsString('?? [] as $item', $fixed);
-        $this->assertStringNotContainsString('?? null', $fixed);
+        $this->assertTrue($this->judge($code)->isRighteous());
+        // repent makes no change (empty newContent) — it neither strips the
+        // `?? null` nor adds a `?? []` guard.
+        $this->assertStringNotContainsString('?? []', $this->repent($code));
     }
 
-    public function test_flags_foreach_over_bare_nullsafe_and_adds_empty_array(): void
+    public function test_does_not_guard_a_bare_nullsafe_foreach(): void
     {
         $code = 'foreach ($obj?->getItems() as $item) {}';
-        $judgment = $this->judge($code);
-        $this->assertCount(1, $judgment->sins);
 
-        $fixed = $this->repent($code);
-        $this->assertStringContainsString('$obj?->getItems() ?? [] as $item', $fixed);
-    }
-
-    public function test_suggests_early_return_when_loop_is_last_statement(): void
-    {
-        $judgment = $this->judge(
-            'class A { public function run($obj): void { foreach ($obj?->getItems() as $i) { echo $i; } } }'
-        );
-
-        $this->assertStringContainsString('early return', $judgment->sins[0]->message);
-    }
-
-    public function test_suggests_if_wrap_when_work_follows_the_loop(): void
-    {
-        $judgment = $this->judge(
-            'class A { public function run($obj): void { foreach ($obj?->getItems() as $i) { echo $i; } $this->after(); } }'
-        );
-
-        $this->assertStringContainsString('wrap the loop', $judgment->sins[0]->message);
+        $this->assertTrue($this->judge($code)->isRighteous());
     }
 
     public function test_does_not_flag_array_access_coalesce_to_null(): void
