@@ -357,11 +357,16 @@ final class FindRawLiterals implements Pipe
                 continue;
             }
 
+            // #79: don't coalesce a value the helper's `?T` parameter rejects.
+            if (! self::coalesceValueFits($cast->expr->left, $type, $ast)) {
+                continue;
+            }
+
             $findings[] = self::coalesceFinding($cast, $cast->expr->left, $cast->expr->right, $type, $content);
         }
 
         foreach ($nodeFinder->findInstanceOf($ast, Expr\BinaryOp\Coalesce::class) as $coalesce) {
-            if (self::coalesceEmptyMatches($coalesce->right, 'T_Array')) {
+            if (self::coalesceEmptyMatches($coalesce->right, 'T_Array') && self::coalesceValueFits($coalesce->left, 'T_Array', $ast)) {
                 $findings[] = self::coalesceFinding($coalesce, $coalesce->left, null, 'T_Array', $content);
             }
         }
@@ -434,6 +439,10 @@ final class FindRawLiterals implements Pipe
 
                 if ($isBlank) {
                     /** @var Expr\FuncCall $other */
+                    if (! self::operandFitsHelper($other->args[0]->value, 'T_String', 'isBlank', $ast)) {
+                        return null;
+                    }
+
                     return self::comparisonFinding(
                         kind: 'trim_compare',
                         cmp: $cmp,
@@ -442,6 +451,12 @@ final class FindRawLiterals implements Pipe
                         var: self::source($content, $other->args[0]->value),
                         literal: self::source($content, $emptyOperand),
                     );
+                }
+
+                // #79: T_String::isEmpty(string) — never rewrite `$x === ''` on a
+                // nullable/mixed/object operand (TypeError). Only when provably string.
+                if (! self::operandFitsHelper($other, 'T_String', 'isEmpty', $ast)) {
+                    return null;
                 }
 
                 return self::comparisonFinding(
@@ -456,6 +471,12 @@ final class FindRawLiterals implements Pipe
 
             if ($jsonOperand !== null) {
                 $other = $jsonOperand === $left ? $right : $left;
+
+                // #79: T_Json::isEmpty*(string) — only when the operand is a string.
+                if (! self::operandFitsHelper($other, 'T_Json', 'isEmptyObject', $ast)) {
+                    return null;
+                }
+
                 $consumed[spl_object_id($jsonOperand)] = true;
 
                 $isObject = T_Json::isEmptyObject($jsonOperand->value);
@@ -482,17 +503,12 @@ final class FindRawLiterals implements Pipe
                 $other = $node === $left ? $right : $left;
                 [$class, $predicate, $inverse] = $info;
 
-                // #56: T_Int::isZero(int)/T_Float::isZero(float) are strictly
-                // typed — rewriting `$x === T_Int::ZERO` to `T_Int::isZero($x)`
-                // on a mixed/string operand throws a TypeError at runtime. Only
-                // rewrite when the operand is PROVABLY the scalar the helper
-                // takes; otherwise leave the (correct, total) comparison.
-                if (in_array($predicate, ['isZero', 'isNotZero'], true)) {
-                    $required = str_ends_with($class, 'T_Float') ? 'float' : 'int';
-
-                    if (self::resolveOperandType($other, $cmp, $ast) !== $required) {
-                        return null;
-                    }
+                // #56/#79: the predicate's helper is strictly typed — rewriting
+                // `$x === T_Int::ZERO` / `$x === T_Array::empty()` on an operand of
+                // the wrong type throws a TypeError. Only rewrite when the operand
+                // is PROVABLY the type the helper takes; else leave the comparison.
+                if (! self::operandFitsHelper($other, self::shortHelper($class), $predicate, $ast)) {
+                    return null;
                 }
 
                 if ($negated && $inverse !== null) {
@@ -529,6 +545,11 @@ final class FindRawLiterals implements Pipe
             $predicate = self::lengthPredicate($cmp, self::lengthCall($left) !== null, $intValue);
 
             if ($predicate === null) {
+                return null;
+            }
+
+            // #79: strlen($x) === 0 -> T_String::isEmpty($x) needs a string $x.
+            if (! self::operandFitsHelper($lenCall->args[0]->value, 'T_String', $predicate, $ast)) {
                 return null;
             }
 
@@ -944,64 +965,147 @@ final class FindRawLiterals implements Pipe
     }
 
     /**
-     * The static scalar type of a comparison operand ('int'|'float'|'string'|
-     * 'bool'), resolved from the AST — a cast, a literal, a typed param in the
-     * enclosing function, or a typed `$this` property. Null when it cannot be
-     * proven a scalar (mixed/union/object/unknown).
+     * The static type of an operand, resolved from the AST — a cast, a literal, a
+     * typed param in the enclosing function, or a typed `$this` property — as
+     * `['type' => 'int'|'float'|'string'|'bool'|'array'|'object'|'mixed', 'nullable'
+     * => bool]`, or null when it cannot be resolved at all. `nullable` is true for
+     * `?T` and for `mixed` (which includes null).
      *
      * @param  array<Node>  $ast
+     * @return array{type: string, nullable: bool}|null
      */
-    private static function resolveOperandType(Node $operand, Node $cmp, array $ast): ?string
+    private static function resolveOperandKind(Node $operand, array $ast): ?array
     {
-        if ($operand instanceof Expr\Cast\Int_) {
-            return 'int';
-        }
+        $scalar = match (true) {
+            $operand instanceof Expr\Cast\Int_, $operand instanceof Scalar\Int_ => 'int',
+            $operand instanceof Expr\Cast\Double, $operand instanceof Scalar\Float_ => 'float',
+            $operand instanceof Expr\Cast\String_, $operand instanceof Scalar\String_ => 'string',
+            $operand instanceof Expr\Cast\Array_, $operand instanceof Expr\Array_ => 'array',
+            $operand instanceof Expr\New_ => 'object',
+            default => null,
+        };
 
-        if ($operand instanceof Expr\Cast\Double) {
-            return 'float';
-        }
-
-        if ($operand instanceof Scalar\Int_) {
-            return 'int';
-        }
-
-        if ($operand instanceof Scalar\Float_) {
-            return 'float';
+        if ($scalar !== null) {
+            return ['type' => $scalar, 'nullable' => false];
         }
 
         if ($operand instanceof Expr\PropertyFetch
             && $operand->var instanceof Expr\Variable && $operand->var->name === 'this'
             && $operand->name instanceof Node\Identifier
         ) {
-            $class = self::enclosingClass($cmp, $ast);
+            $class = self::enclosingClass($operand, $ast);
 
-            return $class !== null ? self::primitiveOf(self::classPropertyType($class, $operand->name->toString())) : null;
+            return $class !== null ? self::typeKindOf(self::classPropertyType($class, $operand->name->toString())) : null;
         }
 
         if ($operand instanceof Expr\Variable && is_string($operand->name)) {
-            return self::primitiveOf(self::paramTypeInScope($operand->name, $cmp, $ast));
+            return self::typeKindOf(self::paramTypeInScope($operand->name, $operand, $ast));
         }
 
         return null;
     }
 
-    private static function primitiveOf(?Node $type): ?string
+    /**
+     * @return array{type: string, nullable: bool}|null
+     */
+    private static function typeKindOf(?Node $type): ?array
     {
+        $nullable = false;
+
         if ($type instanceof Node\NullableType) {
-            return null; // ?int means it can be null — not a provable int
+            $nullable = true;
+            $type = $type->type;
         }
 
         if ($type instanceof Node\Identifier) {
-            return match (strtolower($type->toString())) {
+            $base = match (strtolower($type->toString())) {
                 'int', 'integer' => 'int',
                 'float', 'double' => 'float',
                 'string' => 'string',
                 'bool', 'boolean' => 'bool',
-                default => null,
+                'array' => 'array',
+                'mixed' => 'mixed',
+                'null' => 'null',
+                default => 'object', // object / iterable / callable / a class-like
             };
+
+            return ['type' => $base, 'nullable' => $nullable || in_array($base, ['mixed', 'null'], true)];
         }
 
-        return null;
+        return $type instanceof Node\Name ? ['type' => 'object', 'nullable' => $nullable] : null;
+    }
+
+    /**
+     * The operand (value) type a `T_*` helper's signature requires. `T_String::coalesce`
+     * takes `mixed`, so it has no value constraint (its DEFAULT is guarded
+     * separately); everything else demands its scalar/array.
+     */
+    private static function helperRequiredOperandType(string $helperClass, string $predicate): ?string
+    {
+        return match ($helperClass) {
+            'T_String' => $predicate === 'coalesce' ? null : 'string',
+            'T_Json' => 'string',
+            'T_Array' => 'array',
+            'T_Int' => 'int',
+            'T_Float' => 'float',
+            'T_Bool' => 'bool',
+            default => null,
+        };
+    }
+
+    /**
+     * #79: the single operand guard for the COMPARISON helpers (isEmpty/isZero/…),
+     * whose parameter is a NON-null scalar. The rewrite fires unless the operand's
+     * resolved type provably mismatches — a different base type OR nullable (a
+     * `?string`/`mixed` would let `null` reach `isEmpty(string)`). An UNRESOLVED
+     * operand is allowed (no evidence of mismatch — preserves coverage).
+     *
+     * @param  array<Node>  $ast
+     */
+    private static function operandFitsHelper(Node $operand, string $helperClass, string $predicate, array $ast): bool
+    {
+        $required = self::helperRequiredOperandType($helperClass, $predicate);
+
+        if ($required === null) {
+            return true;
+        }
+
+        $kind = self::resolveOperandKind($operand, $ast);
+
+        if ($kind === null) {
+            return true;
+        }
+
+        return $kind['type'] === $required && ! $kind['nullable'];
+    }
+
+    /**
+     * #79: the operand guard for `T_*::coalesce`, whose value parameter IS nullable
+     * (`?array`/`?int`). So a nullable operand is fine here; the rewrite is only
+     * withheld when the operand provably has a DIFFERENT base type — e.g. a
+     * `DataCollection`/object handed to `T_Array::coalesce(?array)`.
+     *
+     * @param  array<Node>  $ast
+     */
+    private static function coalesceValueFits(Node $operand, string $helperClass, array $ast): bool
+    {
+        $required = self::helperRequiredOperandType($helperClass, 'coalesce');
+
+        if ($required === null) {
+            return true;
+        }
+
+        $kind = self::resolveOperandKind($operand, $ast);
+
+        return $kind === null || $kind['type'] === $required;
+    }
+
+    private static function shortHelper(string $class): string
+    {
+        $class = ltrim($class, '\\');
+        $pos = strrpos($class, '\\');
+
+        return $pos === false ? $class : substr($class, $pos + 1);
     }
 
     /**
