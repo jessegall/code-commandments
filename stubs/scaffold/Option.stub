@@ -119,15 +119,28 @@ final readonly class Option
     }
 
     /**
+     * The present value, or throw on absence. Pass a `\Closure(): \Throwable` to
+     * raise a DOMAIN exception built only on the empty path (the idiomatic form —
+     * no allocation on the happy path); a bare `\Throwable` is accepted for a
+     * trivial, cheap exception but is constructed eagerly at the call site. With
+     * no argument it throws a generic `\LogicException` (backward-compatible).
+     *
+     * @param  \Throwable|\Closure(): \Throwable|null  $error
      * @return T
+     *
+     * @throws \Throwable
      */
-    public function getOrThrow(): mixed
+    public function getOrThrow(\Throwable|\Closure|null $error = null): mixed
     {
-        if (! $this->hasValue) {
-            throw new \LogicException('Option is empty');
+        if ($this->hasValue) {
+            return $this->value;
         }
 
-        return $this->value;
+        throw match (true) {
+            $error instanceof \Closure => $error(),
+            $error instanceof \Throwable => $error,
+            default => new \LogicException('Option is empty'),
+        };
     }
 
     /**

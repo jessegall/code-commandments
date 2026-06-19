@@ -55,9 +55,14 @@ final class ScalarOption
         return $this->option->isEmpty();
     }
 
-    public function getOrThrow(): string|int|float|bool
+    /**
+     * @param  \Throwable|\Closure(): \Throwable|null  $error
+     *
+     * @throws \Throwable
+     */
+    public function getOrThrow(\Throwable|\Closure|null $error = null): string|int|float|bool
     {
-        return $this->option->getOrThrow();
+        return $this->option->getOrThrow($error);
     }
 
     /**
