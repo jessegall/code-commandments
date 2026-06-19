@@ -91,13 +91,24 @@ print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
     composer --working-dir="$dir" require --dev "$PACKAGE:$caret" --no-update --no-scripts --no-interaction >/dev/null 2>&1
   fi
 
-  # 2. Register newly-shipped prophets + (auto-)refresh scaffold. Idempotent;
+  # 2. Register newly-shipped prophets into commandments.php. Idempotent;
   #    a consumer whose post-update-cmd already ran this just no-ops.
   echo "  → commandments sync --after=previous"
   if [ -x "$dir/vendor/bin/commandments" ]; then
     ( cd "$dir" && vendor/bin/commandments sync --after=previous ) || true
   elif [ -f "$dir/artisan" ]; then
     ( cd "$dir" && php artisan commandments:sync --after=previous ) || true
+  fi
+
+  # 2b. Refresh auto-managed scaffold files (Option, etc.) when their stubs
+  #     changed — `sync` only CREATES missing files, it does not overwrite an
+  #     existing scaffold class. `scaffold --auto` regenerates exactly the
+  #     consumers that opted into scaffold.auto_refresh; a no-op for the rest.
+  echo "  → commandments scaffold --auto"
+  if [ -x "$dir/vendor/bin/commandments" ]; then
+    ( cd "$dir" && vendor/bin/commandments scaffold --auto ) || true
+  elif [ -f "$dir/artisan" ]; then
+    ( cd "$dir" && php artisan commandments:scaffold --auto ) || true
   fi
 
   # 3. Collect ONLY the paths this bump owns: composer.json, the commandments
