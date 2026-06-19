@@ -20,8 +20,13 @@ if [ -z "$numbers" ]; then
   exit 0
 fi
 
+# Render body + comments via --json/--jq. The human-readable `gh issue view
+# --comments` prints NOTHING in a non-interactive (no-TTY) shell — exactly where
+# this script runs — so we format the JSON ourselves to guarantee comments show.
 for n in $numbers; do
   echo "════════════════════════════ #$n ════════════════════════════"
-  gh issue view "$n" --repo "$REPO" --comments
+  gh issue view "$n" --repo "$REPO" \
+    --json number,title,state,author,createdAt,body,comments \
+    --jq '"#\(.number)  \(.title)\nstate: \(.state)  •  @\(.author.login)  •  \(.createdAt)\n\n\(.body)\n\n── COMMENTS (\(.comments | length)) ──" + (.comments | map("\n\n@\(.author.login) (\(.createdAt)):\n\(.body)") | join(""))'
   echo
 done

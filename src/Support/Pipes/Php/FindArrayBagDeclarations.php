@@ -167,6 +167,16 @@ final class FindArrayBagDeclarations implements Pipe
 
             $promoted = $methodName === '__construct' && $param->flags !== 0;
 
+            // #104: a parameter whose ONLY use is being forwarded to a
+            // `*::from(...)` call is a hydration boundary — it is handed straight
+            // to a typed constructor (a Spatie Data class via static::from(), or
+            // the FromArrayOnly::forArray()/fromX() delegate), not a bag that
+            // gets indexed. The array is being GIVEN a type, which is the rule's
+            // own remedy — so do not flag it.
+            if (! $promoted && $this->isFromHydrationParam($method, $paramName)) {
+                continue;
+            }
+
             $matches[] = $this->match(
                 kind: $promoted
                     ? ($isDataClass ? 'data_property' : 'property')
@@ -194,6 +204,50 @@ final class FindArrayBagDeclarations implements Pipe
                 content: $content,
             );
         }
+    }
+
+    /**
+     * Whether $paramName's ONLY use in the method body is being passed to a
+     * `*::from(...)` static call (self/static/parent/Class::from). Such a
+     * parameter is a hydration boundary — handed straight to a typed constructor
+     * (a Spatie Data class, or the FromArrayOnly trait's forArray/fromX
+     * delegate) — not an array bag that gets indexed. (#104)
+     */
+    private function isFromHydrationParam(Node\Stmt\ClassMethod $method, string $paramName): bool
+    {
+        if ($method->stmts === null) {
+            return false;
+        }
+
+        $finder = new NodeFinder;
+
+        /** @var array<int, true> $forwarded */
+        $forwarded = [];
+
+        foreach ($finder->findInstanceOf($method->stmts, Node\Expr\StaticCall::class) as $call) {
+            if (! $call->name instanceof Node\Identifier || strtolower($call->name->toString()) !== 'from') {
+                continue;
+            }
+
+            foreach ($call->getArgs() as $arg) {
+                if ($arg->value instanceof Node\Expr\Variable && $arg->value->name === $paramName) {
+                    $forwarded[spl_object_id($arg->value)] = true;
+                }
+            }
+        }
+
+        if ($forwarded === []) {
+            return false;
+        }
+
+        // Every occurrence of the variable must be one of those forwarded args.
+        foreach ($finder->findInstanceOf($method->stmts, Node\Expr\Variable::class) as $var) {
+            if ($var->name === $paramName && ! isset($forwarded[spl_object_id($var)])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
