@@ -492,7 +492,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_70 prophets._
+_71 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -550,6 +550,7 @@ _70 prophets._
 | `PreferOptionOverNullProphet` | — | Do not return null from decision methods — return an Option or a Null Object |
 | `PreferSprintfProphet` | Yes | Prefer sprintf() over string interpolation — separate the template from its values |
 | `PreferStaticOverInvokableConstructProphet` | — | Prefer a static factory over (new X(...))(...) for project-owned classes |
+| `PreferTotalOverNullableProphet` | — | Make a method total or throw when every caller already de-nulls its nullable return |
 | `PreferTypeMethodOverInlineDispatchProphet` | — | Move per-case dispatch and type-constant mappings onto the type, not inline at the call site |
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |

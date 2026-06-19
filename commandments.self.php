@@ -83,6 +83,7 @@ return [
                 Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\BehaviouralEnumDispatchProphet::class,
                 Backend\ThrowOnUnhandledCaseProphet::class,
+                Backend\PreferTotalOverNullableProphet::class,
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,

@@ -164,6 +164,7 @@ return [
                 Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\BehaviouralEnumDispatchProphet::class,
                 Backend\ThrowOnUnhandledCaseProphet::class,
+                Backend\PreferTotalOverNullableProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,
