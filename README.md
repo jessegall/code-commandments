@@ -492,7 +492,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_71 prophets._
+_72 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -531,6 +531,7 @@ _71 prophets._
 | `NoRawRequestProphet` | — | Use FormRequest classes instead of raw Request in controllers |
 | `NoRecordThatOutsideAggregateProphet` | — | Only call recordThat() inside Aggregate classes |
 | `NoRedundantDefaultArgumentProphet` | Yes | Do not pass an argument equal to the parameter default — the default is already applied |
+| `NoRedundantOrElseWrapProphet` | Yes | Do not manually wrap an orElse alternative in Option::some()/make() |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
