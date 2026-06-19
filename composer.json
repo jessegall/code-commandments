@@ -28,12 +28,16 @@
     "scripts": {
         "judge:self": "php bin/commandments judge -c commandments.self.php",
         "judge:self:next": "php bin/commandments judge -c commandments.self.php --next",
-        "reports": "bash scripts/prophet-reports.sh"
+        "reports": "bash scripts/prophet-reports.sh",
+        "readme": "php scripts/generate-readme.php",
+        "readme:check": "php scripts/generate-readme.php --check"
     },
     "scripts-descriptions": {
         "judge:self": "Run the prophets against this package's own src/ (dogfooding).",
         "judge:self:next": "Walk the package's own findings one at a time.",
-        "reports": "List every open [prophet-report] issue WITH all comments — always read comments when triaging."
+        "reports": "List every open [prophet-report] issue WITH all comments — always read comments when triaging.",
+        "readme": "Regenerate the auto-generated README sections (prophet + command tables) from the source classes.",
+        "readme:check": "Fail if the auto-generated README sections are stale (run in the pre-commit hook / CI)."
     },
     "autoload": {
         "psr-4": {
