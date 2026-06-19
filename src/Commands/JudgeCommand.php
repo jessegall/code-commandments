@@ -8,10 +8,12 @@ use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\FindingCollector;
 use JesseGall\CodeCommandments\Support\FindingQueue;
 use JesseGall\CodeCommandments\Support\Fingerprint;
+use JesseGall\CodeCommandments\Support\RootCauseResolver;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
 use JesseGall\CodeCommandments\Support\Output\NextFindingPresenter;
 use JesseGall\CodeCommandments\Support\Pipeline;
@@ -220,7 +222,21 @@ class JudgeCommand extends Command
             return self::SUCCESS;
         }
 
-        $finding = $ordered[0];
+        // Lazily annotate ONLY the finding about to be presented with its
+        // root-cause hint — so a filtered run surfaces "fix the cause first"
+        // even though the cause prophet didn't run, at zero cost to the rest.
+        $activeProphets = [];
+        foreach ($scrolls as $scroll) {
+            if ($registry->hasScroll($scroll)) {
+                $activeProphets += $manager->activeProphetClasses($scroll);
+            }
+        }
+
+        $resolver = new RootCauseResolver(
+            fn (string $filePath): ?CodebaseIndex => $manager->codebaseIndexForFile($filePath),
+        );
+
+        $finding = $resolver->annotate($ordered[0], $activeProphets);
         $prophet = new $finding->prophetClass();
         $absolvable = $finding->isWarning() || $prophet->requiresConfession();
         // Per-finding flag: a SinRepenter prophet may emit non-fixable findings.

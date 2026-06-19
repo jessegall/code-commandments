@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use JesseGall\CodeCommandments\Support\RegistryShape;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
@@ -62,12 +63,19 @@ final class FindNullableValueReturns implements Pipe
         foreach ($classLikes as $classLike) {
             $ownName = $classLike->name?->toString();
 
+            // A registry-shaped class launders a miss through `return $store[$k]
+            // ?? null` — a passthrough that still DECIDES nothingness. Count that
+            // shape as null-deciding only inside such a getter (elsewhere a
+            // `?? null` is a legitimate optional carry, left alone).
+            $shape = $classLike instanceof Node\Stmt\Class_ ? RegistryShape::detect($classLike) : null;
+
             foreach ($classLike->getMethods() as $method) {
                 if ($this->isExcluded($method)) {
                     continue;
                 }
 
-                $counts = $this->countOwnReturns($method);
+                $countCoalesceNull = $shape !== null && $shape->readsStore($method);
+                $counts = $this->countOwnReturns($method, $countCoalesceNull);
 
                 if ($counts['null'] < 1 || $counts['value'] < 1) {
                     continue;
@@ -136,7 +144,7 @@ final class FindNullableValueReturns implements Pipe
      *
      * @return array{null: int, value: int}
      */
-    private function countOwnReturns(Stmt\ClassMethod $method): array
+    private function countOwnReturns(Stmt\ClassMethod $method, bool $countCoalesceNull = false): array
     {
         $returns = [];
 
@@ -197,10 +205,51 @@ final class FindNullableValueReturns implements Pipe
                 }
             }
 
+            // `return match (...) { … default => null }` with >= 2 non-null value
+            // arms — the body decides nothingness via the default arm.
+            if ($return->expr instanceof Expr\Match_ && $this->matchDecidesNull($return->expr)) {
+                $null++;
+                $value++;
+
+                continue;
+            }
+
+            // `return <expr> ?? null` inside a registry-shaped getter — the
+            // passthrough still hands back null for a miss.
+            if ($countCoalesceNull
+                && $return->expr instanceof Expr\BinaryOp\Coalesce
+                && $this->isNull($return->expr->right)
+            ) {
+                $null++;
+                $value++;
+
+                continue;
+            }
+
             $value++;
         }
 
         return ['null' => $null, 'value' => $value];
+    }
+
+    /**
+     * Whether a `match` expression decides nothingness: >= 1 arm bodies null and
+     * >= 2 arm bodies a real value (a closed-set dispatch with a null fallthrough).
+     */
+    private function matchDecidesNull(Expr\Match_ $match): bool
+    {
+        $nullArms = 0;
+        $valueArms = 0;
+
+        foreach ($match->arms as $arm) {
+            if ($this->isNull($arm->body)) {
+                $nullArms++;
+            } else {
+                $valueArms++;
+            }
+        }
+
+        return $nullArms >= 1 && $valueArms >= 2;
     }
 
     private function isNull(Expr $expr): bool

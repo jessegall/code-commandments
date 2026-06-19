@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Account;
+
+final class User
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+    ) {}
+
+    public function displayName(): string
+    {
+        return $this->name;
+    }
+}
