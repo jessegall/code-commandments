@@ -145,6 +145,7 @@ Absolve a single finding by fingerprint, with a required reason.
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to config file |
 | `--fingerprint` | `<value>` | The finding fingerprint shown by judge --next |
+| `--at` | `<value>` | Target a finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; combine with --prophet to disambiguate ties |
 | `--reason` | `<value>` | Why the rule does not apply here (required) |
 | `--all` | — | Baseline the queue: absolve every current advisory finding at once (sins still block) |
 | `--warnings` | — | Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing) |
@@ -216,6 +217,7 @@ Report a prophet false-positive or wrong rule as a GitHub issue.
 | `--file` | `<value>` | File where it was flagged |
 | `--line` | `<value>` | Line number |
 | `--fingerprint` | `<value>` | The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered |
+| `--at` | `<value>` | Target the finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; records the report-linked absolution and infers --prophet/--file/--line. Combine with --prophet to disambiguate ties |
 | `--repo` | `<value>` | GitHub repo (owner/name) to file the issue on |
 
 ### `reports`

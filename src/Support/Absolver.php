@@ -220,6 +220,81 @@ final class Absolver
         return ['absolved' => $absolved, 'blocking_sins' => $blockingSins];
     }
 
+    /**
+     * Parse a `path:line` / `path:from-to` locator (as judge prints it). Null
+     * when malformed. `strrpos` on ':' tolerates a Windows drive prefix.
+     *
+     * @return array{path: string, from: int, to: int}|null
+     */
+    public static function parseLocator(string $at): ?array
+    {
+        $pos = strrpos($at, ':');
+
+        if ($pos === false || $pos === 0) {
+            return null;
+        }
+
+        $path = substr($at, 0, $pos);
+        $range = substr($at, $pos + 1);
+
+        if (preg_match('/^(\d+)(?:-(\d+))?$/', $range, $m) !== 1) {
+            return null;
+        }
+
+        $from = (int) $m[1];
+        $to = isset($m[2]) ? (int) $m[2] : $from;
+
+        return ['path' => $path, 'from' => min($from, $to), 'to' => max($from, $to)];
+    }
+
+    /**
+     * Every live finding at $path whose line falls in [$from, $to] (inclusive),
+     * optionally narrowed by a partial, case-insensitive prophet short-name
+     * match. The `path:line` locator `judge` prints is the natural handle — this
+     * resolves it back to the finding(s) so `--at` need not know a fingerprint.
+     * Deduped by fingerprint.
+     *
+     * @return list<Finding>
+     */
+    public function findingsAt(string $path, int $from, int $to, ?string $prophet): array
+    {
+        $needle = ltrim(str_replace('\\', '/', trim($path)), './');
+        $collector = new FindingCollector($this->tracker);
+        $seen = [];
+        $matches = [];
+
+        foreach ($this->registry->getScrolls() as $scroll) {
+            foreach ($collector->collect($this->manager->judgeScroll($scroll), null, markSeen: false) as $finding) {
+                if (isset($seen[$finding->fingerprint])) {
+                    continue;
+                }
+
+                $seen[$finding->fingerprint] = true;
+
+                $rel = ltrim(str_replace('\\', '/', $finding->relativePath), './');
+                $abs = str_replace('\\', '/', $finding->filePath);
+
+                if ($rel !== $needle && ! str_ends_with($rel, '/' . $needle) && ! str_ends_with($abs, '/' . $needle)) {
+                    continue;
+                }
+
+                $line = $finding->line ?? 0;
+
+                if ($line < $from || $line > $to) {
+                    continue;
+                }
+
+                if ($prophet !== null && stripos($finding->prophetShort, $prophet) === false) {
+                    continue;
+                }
+
+                $matches[] = $finding;
+            }
+        }
+
+        return $matches;
+    }
+
     private function locate(string $fingerprint): ?Finding
     {
         $collector = new FindingCollector($this->tracker);

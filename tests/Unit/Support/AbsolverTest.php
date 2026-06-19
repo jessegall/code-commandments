@@ -240,6 +240,73 @@ class AbsolverTest extends TestCase
         $this->assertStringContainsString('1 warning', $hit['message']);
     }
 
+    public function test_parse_locator_handles_line_and_range(): void
+    {
+        $this->assertSame(['path' => 'src/Foo.php', 'from' => 32, 'to' => 32], Absolver::parseLocator('src/Foo.php:32'));
+        $this->assertSame(['path' => 'src/Foo.php', 'from' => 10, 'to' => 20], Absolver::parseLocator('src/Foo.php:10-20'));
+        $this->assertSame(['path' => 'src/Foo.php', 'from' => 10, 'to' => 20], Absolver::parseLocator('src/Foo.php:20-10'));
+        $this->assertNull(Absolver::parseLocator('src/Foo.php'));
+        $this->assertNull(Absolver::parseLocator('src/Foo.php:abc'));
+    }
+
+    public function test_findings_at_resolves_a_locator_to_its_finding(): void
+    {
+        $sin = $this->findingOfKind('sin');
+        $absolver = new Absolver($this->manager, $this->registry, $this->tracker);
+
+        $matches = $absolver->findingsAt($sin->relativePath, (int) $sin->line, (int) $sin->line, null);
+
+        $fingerprints = array_map(static fn (Finding $f): string => $f->fingerprint, $matches);
+        $this->assertContains($sin->fingerprint, $fingerprints);
+    }
+
+    public function test_findings_at_filters_by_prophet(): void
+    {
+        $warning = $this->findingOfKind('warning');
+        $absolver = new Absolver($this->manager, $this->registry, $this->tracker);
+
+        // The warning's own prophet matches; an unrelated name does not.
+        $this->assertNotEmpty($absolver->findingsAt($warning->relativePath, (int) $warning->line, (int) $warning->line, 'PreferOption'));
+        $this->assertEmpty($absolver->findingsAt($warning->relativePath, (int) $warning->line, (int) $warning->line, 'NoSuchProphet'));
+    }
+
+    public function test_findings_at_returns_nothing_off_line(): void
+    {
+        $sin = $this->findingOfKind('sin');
+        $absolver = new Absolver($this->manager, $this->registry, $this->tracker);
+
+        $this->assertEmpty($absolver->findingsAt($sin->relativePath, 9999, 9999, null));
+    }
+
+    public function test_at_absolution_is_line_shift_stable_and_self_heals(): void
+    {
+        // --at stores NO line number: it resolves to the content-based
+        // fingerprint, so the absolution survives a pure line shift (unchanged
+        // code) and only goes stale when the flagged code itself changes.
+        $warning = $this->findingOfKind('warning');
+        $absolver = new Absolver($this->manager, $this->registry, $this->tracker);
+
+        $resolved = $absolver->findingsAt($warning->relativePath, (int) $warning->line, (int) $warning->line, null);
+        $fingerprint = $resolved[0]->fingerprint;
+        $absolver->absolve($fingerprint, 'internal helper, callers are local');
+        $this->assertTrue($this->tracker->isFindingAbsolved($fingerprint));
+
+        // Shift every line down (blank lines after <?php) without touching the
+        // flagged code — the absolution must survive (no stale line stored).
+        $path = $this->dir . '/ServiceController.php';
+        file_put_contents($path, str_replace("<?php\n", "<?php\n\n\n\n", (string) file_get_contents($path)));
+
+        $warningStillHidden = true;
+
+        foreach ($this->findings() as $finding) {
+            if ($finding->kind === 'warning' && $finding->prophetShort === $warning->prophetShort) {
+                $warningStillHidden = false;
+            }
+        }
+
+        $this->assertTrue($warningStillHidden, 'A pure line shift must not re-surface the absolved finding.');
+    }
+
     public function test_absolve_all_baselines_warnings_but_not_sins(): void
     {
         $absolver = new Absolver($this->manager, $this->registry, $this->tracker);

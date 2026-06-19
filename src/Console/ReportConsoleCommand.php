@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
-use Illuminate\Filesystem\Filesystem;
+use JesseGall\CodeCommandments\Support\Absolver;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\ReportGuidance;
 use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
 use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
-use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -19,6 +18,8 @@ use JesseGall\PhpTypes\T_String;
 
 class ReportConsoleCommand extends Command
 {
+    use BootsStandalone;
+
     private const DEFAULT_REPO = 'jessegall/code-commandments';
 
     protected function configure(): void
@@ -32,6 +33,7 @@ class ReportConsoleCommand extends Command
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'File where it was flagged')
             ->addOption('line', null, InputOption::VALUE_REQUIRED, 'Line number')
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered')
+            ->addOption('at', null, InputOption::VALUE_REQUIRED, 'Target the finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; records the report-linked absolution and infers --prophet/--file/--line. Combine with --prophet to disambiguate ties')
             ->addOption('repo', null, InputOption::VALUE_REQUIRED, 'GitHub repo (owner/name) to file the issue on');
     }
 
@@ -39,21 +41,64 @@ class ReportConsoleCommand extends Command
     {
         $prophet = $input->getOption('prophet');
         $reason = $input->getOption('reason');
+        $file = $input->getOption('file');
+        $line = $input->getOption('line') !== null ? (int) $input->getOption('line') : null;
+        $fingerprint = is_string($input->getOption('fingerprint')) && T_String::isNotBlank($input->getOption('fingerprint'))
+            ? $input->getOption('fingerprint')
+            : null;
+        $snippetPath = is_string($file) ? $file : null;
+        $at = $input->getOption('at');
+        $repo = $input->getOption('repo') ?: $this->repoFromConfig($input->getOption('config'));
+
+        [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
+
+        // --at=path:line[-to]: resolve the locator to the finding, recording the
+        // report-linked absolution and inferring --prophet/--file/--line from it.
+        if ($fingerprint === null && is_string($at) && T_String::isNotBlank($at)) {
+            $loc = Absolver::parseLocator($at);
+
+            if ($loc === null) {
+                $output->writeln('<error>--at must be path:line or path:from-to (e.g. --at=src/Foo.php:32).</error>');
+
+                return Command::FAILURE;
+            }
+
+            $filter = is_string($prophet) && $prophet !== '' ? $prophet : null;
+            $unique = [];
+
+            foreach ((new Absolver($manager, $registry, $tracker))->findingsAt($loc['path'], $loc['from'], $loc['to'], $filter) as $finding) {
+                $unique[$finding->fingerprint] = $finding;
+            }
+
+            if ($unique === []) {
+                $output->writeln("<error>No live finding at {$at}" . ($filter !== null ? " for a prophet matching '{$filter}'" : '') . '. Run judge --next to see current findings.</error>');
+
+                return Command::FAILURE;
+            }
+
+            if (count($unique) > 1) {
+                $output->writeln("<error>Multiple findings at {$at} — narrow with --prophet=NAME:</error>");
+
+                foreach ($unique as $finding) {
+                    $output->writeln("  - {$finding->prophetShort} ({$finding->location()})");
+                }
+
+                return Command::FAILURE;
+            }
+
+            $finding = array_values($unique)[0];
+            $fingerprint = $finding->fingerprint;
+            $prophet = is_string($prophet) && $prophet !== '' ? $prophet : $finding->prophetShort;
+            $file ??= $finding->relativePath;
+            $line ??= $finding->line;
+            $snippetPath = $finding->filePath;
+        }
 
         if (! is_string($prophet) || T_String::isBlank($prophet) || ! is_string($reason) || T_String::isBlank($reason)) {
             $output->writeln('<error>--prophet and --reason are required.</error>');
 
             return Command::FAILURE;
         }
-
-        $file = $input->getOption('file');
-        $line = $input->getOption('line') !== null ? (int) $input->getOption('line') : null;
-        $fingerprint = is_string($input->getOption('fingerprint')) && T_String::isNotBlank($input->getOption('fingerprint'))
-            ? $input->getOption('fingerprint')
-            : null;
-        $repo = $input->getOption('repo') ?: $this->repoFromConfig($input->getOption('config'));
-
-        $tracker = $this->tracker($input->getOption('config'));
 
         // Dedup: never file the same finding twice. If this fingerprint was
         // already reported, reuse that issue and keep the finding absolved.
@@ -66,7 +111,7 @@ class ReportConsoleCommand extends Command
         }
 
         $reporter = new IssueReporter($repo);
-        $issue = $reporter->build($prophet, $file, $line, $reason, $this->snippet($file, $line));
+        $issue = $reporter->build($prophet, $file, $line, $reason, $this->snippet($snippetPath, $line));
         $result = $reporter->send($issue);
 
         if ($result['ok']) {
@@ -86,6 +131,8 @@ class ReportConsoleCommand extends Command
             if ($fingerprint !== null) {
                 $tracker->reportFinding($fingerprint, $reason, $result['number'] ?? null, $repo);
                 $output->writeln('<info>This finding is now absolved until the issue is answered. It survives the post-commit reset; `reports --check` lifts it when the issue closes (a genuine sin then re-blocks).</info>');
+            } else {
+                $output->writeln('<comment>NOTE: no finding locator was given (--at=path:line or --fingerprint), so NO absolution was recorded — this finding still blocks. Re-run with --at=path:line (copy it from judge) to quiet it until the issue is answered.</comment>');
             }
 
             foreach (ReportGuidance::lines($result['number'] ?? null, $repo) as $line) {
@@ -98,25 +145,6 @@ class ReportConsoleCommand extends Command
         $output->writeln('<comment>' . $result['message'] . '</comment>');
 
         return Command::FAILURE;
-    }
-
-    private function tracker(?string $configPath): JsonConfessionTracker
-    {
-        $basePath = getcwd() ?: '.';
-        Environment::setBasePath($basePath);
-
-        $tabletPath = Environment::basePath('.commandments/confessions.json');
-        $resolved = ConfigLoader::resolve($configPath, $basePath);
-
-        if ($resolved !== null) {
-            $configured = ConfigLoader::load($resolved)['confession']['tablet_path'] ?? null;
-
-            if (is_string($configured) && T_String::isNotEmpty($configured)) {
-                $tabletPath = $configured;
-            }
-        }
-
-        return new JsonConfessionTracker($tabletPath, new Filesystem());
     }
 
     private function repoFromConfig(?string $configPath): string

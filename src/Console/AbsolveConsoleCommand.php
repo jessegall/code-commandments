@@ -23,6 +23,7 @@ class AbsolveConsoleCommand extends Command
             ->setDescription('Absolve a single finding by fingerprint, with a required reason')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint shown by judge --next')
+            ->addOption('at', null, InputOption::VALUE_REQUIRED, 'Target a finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; combine with --prophet to disambiguate ties')
             ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply here (required)')
             ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)')
             ->addOption('warnings', null, InputOption::VALUE_NONE, 'Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)')
@@ -82,16 +83,27 @@ class AbsolveConsoleCommand extends Command
             return Command::SUCCESS;
         }
 
+        $absolver = new Absolver($manager, $registry, $tracker);
         $fingerprint = $input->getOption('fingerprint');
+        $at = $input->getOption('at');
+
+        if ((! is_string($fingerprint) || T_String::isBlank($fingerprint)) && is_string($at) && T_String::isNotBlank($at)) {
+            $resolved = $this->resolveAt($absolver, $at, $input->getOption('prophet'), $output);
+
+            if ($resolved === null) {
+                return Command::FAILURE;
+            }
+
+            $fingerprint = $resolved;
+        }
 
         if (! is_string($fingerprint) || T_String::isBlank($fingerprint)) {
-            $output->writeln('<error>--fingerprint is required (copy it from judge --next).</error>');
+            $output->writeln('<error>Pass --fingerprint=<hash> or --at=path:line (copy either from judge --next).</error>');
 
             return Command::FAILURE;
         }
 
-        $result = (new Absolver($manager, $registry, $tracker))
-            ->absolve(trim($fingerprint), $input->getOption('reason'), $untilPush);
+        $result = $absolver->absolve(trim($fingerprint), $input->getOption('reason'), $untilPush);
 
         if ($result['status'] === Absolver::STATUS_OK) {
             $output->writeln('<info>' . $result['message'] . '</info>');
@@ -102,6 +114,48 @@ class AbsolveConsoleCommand extends Command
         $output->writeln('<error>' . $result['message'] . '</error>');
 
         return Command::FAILURE;
+    }
+
+    /**
+     * Resolve a `--at=path:line[-to]` locator to a single finding fingerprint
+     * (the content-based hash the live finding carries right now), or null with
+     * an error printed. Stores no line number — the absolution that follows is
+     * keyed by the fingerprint, so it self-heals when the file changes.
+     */
+    private function resolveAt(Absolver $absolver, string $at, mixed $prophet, OutputInterface $output): ?string
+    {
+        $loc = Absolver::parseLocator($at);
+
+        if ($loc === null) {
+            $output->writeln('<error>--at must be path:line or path:from-to (e.g. --at=src/Foo.php:32).</error>');
+
+            return null;
+        }
+
+        $filter = is_string($prophet) && $prophet !== '' ? $prophet : null;
+        $unique = [];
+
+        foreach ($absolver->findingsAt($loc['path'], $loc['from'], $loc['to'], $filter) as $finding) {
+            $unique[$finding->fingerprint] = $finding;
+        }
+
+        if ($unique === []) {
+            $output->writeln("<error>No live finding at {$at}" . ($filter !== null ? " for a prophet matching '{$filter}'" : '') . '. Run judge --next to see current findings.</error>');
+
+            return null;
+        }
+
+        if (count($unique) > 1) {
+            $output->writeln("<error>Multiple findings at {$at} — narrow with --prophet=NAME:</error>");
+
+            foreach ($unique as $finding) {
+                $output->writeln("  - {$finding->prophetShort} ({$finding->location()})");
+            }
+
+            return null;
+        }
+
+        return array_values($unique)[0]->fingerprint;
     }
 
     /**
