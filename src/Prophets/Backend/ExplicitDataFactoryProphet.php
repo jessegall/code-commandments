@@ -53,7 +53,7 @@ class ExplicitDataFactoryProphet extends PhpCommandment implements SinRepenter, 
 
     public function description(): string
     {
-        return 'Keep Data construction explicit — from() takes an array; map objects in named fromX() factories';
+        return 'Keep Data construction explicit — from() takes an array; map objects in named forX() factories';
     }
 
     public function advisory(): Advisory
@@ -69,8 +69,9 @@ class ExplicitDataFactoryProphet extends PhpCommandment implements SinRepenter, 
                 . 'the type cannot be resolved, in which case this prophet stays silent.'
             )
             ->whenUnsure(
-                'Add an explicit `fromX(Type $x): static` factory that does '
-                . 'static::from($x->toArray()); call that from the outside.'
+                'Add an explicit `forX(Type $x): static` factory that does '
+                . 'static::from($x->toArray()); call that from the outside. Use a '
+                . '`for` prefix, never `from` (reserved for Spatie\'s magic ::from()).'
             );
     }
 
@@ -97,21 +98,26 @@ Bad — toArray bypass at a call site (the conversion belongs in a factory):
     $data = SongData::from($song->toArray());
 
 Bad — hand construction in a factory:
-    public static function fromSong(Song $song): self
+    public static function forSong(Song $song): self
     {
         return new self(title: $song->title, artist: $song->artist);
     }
 
 Good — explicit factory, array hydration encapsulated inside the class:
-    public static function fromSong(Song $song): self
+    public static function forSong(Song $song): self
     {
         return static::from($song->toArray());
         // or: return static::from(['title' => $song->title, ...]);
     }
 
-    // call sites stay explicit:
-    $data = SongData::fromSong($song);
-    $data = SongData::from(['title' => 'x', 'artist' => 'y']);   // array → fine
+    // call sites stay explicit (never an external ::from()):
+    $data = SongData::forSong($song);
+    $data = SongData::forArray(['title' => 'x', 'artist' => 'y']);   // explicit array entry
+
+Factories use a `for` prefix, NEVER `from`: the `from` prefix is reserved for
+Spatie's magic ::from(), and a same-typed `from*` factory makes ::from() recurse
+→ segfault (see NoExternalDataFrom). External call sites use the named `forX()`
+factories or `forArray([...])` — never a bare `SomeData::from(...)`.
 
 Enums are unaffected: `Status::from($row->status)` passes a scalar, never an
 object, so the object check never touches it.
@@ -121,8 +127,8 @@ closures/arrow functions — $this, property types, new, ->toArray()); when a
 type cannot be resolved the prophet stays silent rather than guess.
 
 The object dispatch is AUTO-FIXABLE: `repent` rewrites `XData::from($obj)` to
-`XData::from{Type}($obj)` and synthesises the matching factory on XData —
-`public static function from{Type}(\Fqcn\Type $x): static { return
+`XData::for{Type}($obj)` and synthesises the matching factory on XData —
+`public static function for{Type}(\Fqcn\Type $x): static { return
 static::from($x->toArray()); }` — wherever XData is defined, cross-referencing
 the codebase index so the factory lands even when the Data class sits outside
 the scoped/flagged files. An unreachable Data class is left for a human.
@@ -288,13 +294,13 @@ SCRIPTURE;
 
         if ($match->groups['kind'] === 'nonarray') {
             return sprintf(
-                'AUTO-FIXABLE: run repent to synthesise %s::fromType(Type $x) and rewrite this call to it.',
+                'AUTO-FIXABLE: run repent to synthesise %s::forType(Type $x) and rewrite this call to it.',
                 $target,
             );
         }
 
         return sprintf(
-            'Add an explicit `%s::fromX(Type $x): static` factory that does static::from($x->toArray()), and call that instead.',
+            'Add an explicit `%s::forX(Type $x): static` factory that does static::from($x->toArray()), and call that instead (use a `for` prefix, never `from`).',
             $target,
         );
     }

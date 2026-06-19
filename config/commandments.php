@@ -102,6 +102,10 @@ return [
                     // 'trait_class' => App\Support\FromArrayOnly::class,
                     // 'base_class'  => Spatie\LaravelData\Data::class,
                 ],
+                Backend\NoExternalDataFromProphet::class => [
+                    // 'data_suffixes' => ['Data'],
+                    // 'severity' => 'sin',   // or 'warning'
+                ],
                 Backend\NoRedundantDefaultArgumentProphet::class,
                 Backend\PreferNamedExceptionsProphet::class => [
                     // Exception classes that may be thrown inline:

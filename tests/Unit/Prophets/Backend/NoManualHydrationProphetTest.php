@@ -572,7 +572,7 @@ class NoManualHydrationProphetTest extends TestCase
         $this->assertStringContainsString('label', $judgment->sins[0]->message);
     }
 
-    public function test_suggestion_mentions_spatie_data_and_from(): void
+    public function test_suggestion_mentions_spatie_data_and_explicit_entry(): void
     {
         $judgment = $this->judgeClass(<<<'PHP'
         public static function fromArray(array $row): self {
@@ -582,7 +582,7 @@ class NoManualHydrationProphetTest extends TestCase
 
         $this->assertFallen($judgment, 1);
         $this->assertStringContainsString('Spatie\LaravelData\Data', $judgment->sins[0]->suggestion);
-        $this->assertStringContainsString('::from($row)', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('::forArray($row)', $judgment->sins[0]->suggestion);
     }
 
     public function test_respects_min_key_reads_config(): void

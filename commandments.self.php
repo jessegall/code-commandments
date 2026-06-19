@@ -65,6 +65,7 @@ return [
                 Backend\PreferDataCollectionOfProphet::class,
                 Backend\ExplicitDataFactoryProphet::class,
                 Backend\DataClassFromArrayOnlyProphet::class,
+                Backend\NoExternalDataFromProphet::class,
                 Backend\PreferNamedExceptionsProphet::class,
                 Backend\PreferSprintfProphet::class,
                 Backend\PreferOptionOverNullProphet::class,

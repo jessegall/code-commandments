@@ -59,13 +59,15 @@ Bad:
 
 Good:
     final class FieldSpec extends Data {
+        use FromArrayOnly;
+
         public function __construct(
             public readonly string $name,
             public readonly string|null $label = null,
         ) {}
     }
 
-    $spec = FieldSpec::from($row);              // one row
+    $spec = FieldSpec::forArray($row);           // one row (explicit entry — not ::from())
     $specs = FieldSpec::collect($rows);          // list of rows
 
 HOW SPATIE DATA REPLACES YOUR MANUAL CODE — read before writing any:
@@ -82,8 +84,10 @@ HOW SPATIE DATA REPLACES YOUR MANUAL CODE — read before writing any:
   - Genuinely dynamic values stay mixed: public mixed $default = null
     is fine — mixed is for values that ARE anything, not for skipping
     the type.
-  - Custom coercion for ONE field: add a magic fromX creation method or
-    a Cast — never a hand-written constructor wrapper for the whole class.
+  - Custom coercion for ONE field: add a Cast (Spatie's per-field hook) —
+    never a hand-written constructor wrapper for the whole class, and never
+    a `from`-prefixed method (the `from` prefix is reserved for Spatie's
+    magic ::from() and can recurse → segfault; see NoExternalDataFrom).
   - Tolerant decoding of untrusted input (LLM output, webhooks): make
     every property nullable with a default, hydrate, THEN validate the
     typed object. Wrap ::from() in try/catch when rejection is expected.
@@ -223,7 +227,7 @@ SCRIPTURE;
                 $groups['target'],
                 $groups['source'],
             ),
-            default => 'Extend Spatie\LaravelData\Data and use ::from($row) / ::collect($rows) — '
+            default => 'Extend Spatie\LaravelData\Data and hydrate via ::collect($rows) or the explicit ::forArray($row) entry (not external ::from()) — '
                 . 'Data auto-maps keys, coerces declared property types, and hydrates nested Data objects. '
                 . 'Use #[MapInputName(...)] for key renames and nullable properties with defaults for tolerant decoding.',
         };

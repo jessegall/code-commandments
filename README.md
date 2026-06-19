@@ -492,7 +492,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_72 prophets._
+_73 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -503,7 +503,7 @@ _72 prophets._
 | `DataClassFromArrayOnlyProphet` | Yes | Every Data class must use the FromArrayOnly trait |
 | `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x-&gt;endpoint-&gt;field to branch (Law of Demeter) |
 | `DuplicateCodeProphet` | — | Extract duplicated code fragments instead of copy-pasting a method body |
-| `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named fromX() factories |
+| `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named forX() factories |
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
 | `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |
 | `HiddenAttributeProphet` | — | Add #[Hidden] to properties with #[FromContainer] or #[FromSession] |
@@ -518,6 +518,7 @@ _72 prophets._
 | `NoContainerResolutionProphet` | — | Prefer constructor injection over container resolution (app(), resolve(), App::make()) |
 | `NoDirectRequestInputProphet` | — | Use typed FormRequest getters instead of direct request data access |
 | `NoEventDispatchProphet` | — | Use event() helper instead of Event::dispatch() or static dispatch |
+| `NoExternalDataFromProphet` | Yes | Keep Spatie ::from() inside the Data class — no custom from* factories, no external ::from() |
 | `NoFacadesInServicesProphet` | — | Do not call Laravel facades in services — inject the underlying contract via the constructor |
 | `NoInlineBootLogicProphet` | — | Model boot hooks should only dispatch events, not contain business logic |
 | `NoInlineValidationProphet` | — | Move validation to FormRequest instead of inline $request-&gt;validate() |

@@ -41,7 +41,7 @@ Bad:
     // In controller:
     public function create(EditorRequest $request): Response
     {
-        return Inertia::render('Editor', EditorPage::from([
+        return Inertia::render('Editor', EditorPage::forArray([
             'templateId' => $template->id,
             'previewColumns' => $request->getPreviewColumns(),
             'previewLimit' => $request->getPreviewLimit(),
@@ -52,7 +52,7 @@ Good:
     // In controller:
     public function create(EditorRequest $request): Response
     {
-        return Inertia::render('Editor', EditorPage::from([
+        return Inertia::render('Editor', EditorPage::forArray([
             'templateId' => $template->id,
         ]));
     }

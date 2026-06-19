@@ -32,4 +32,16 @@ trait FromArrayOnly
     {
         return static::from();
     }
+
+    /**
+     * Explicit, non-magic public array entry point. Use this from OUTSIDE the
+     * class instead of the magic `::from([...])` — the `for` prefix is never a
+     * `from{Type}` dispatch target, so it cannot recurse into a factory.
+     *
+     * @param  array<array-key, mixed>  $payload
+     */
+    public static function forArray(array $payload): static
+    {
+        return static::from($payload);
+    }
 }

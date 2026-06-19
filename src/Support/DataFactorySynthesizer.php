@@ -11,12 +11,17 @@ use PhpParser\ParserFactory;
 
 /**
  * Auto-fixes object-typed `XData::from($obj)` magic dispatch: it rewrites the
- * call to `XData::from{Type}($obj)` and synthesises the matching factory
+ * call to `XData::for{Type}($obj)` and synthesises the matching factory
  *
- *     public static function from{Type}(\Fqcn\Type $x): static
+ *     public static function for{Type}(\Fqcn\Type $x): static
  *     {
  *         return static::from($x->toArray());
  *     }
+ *
+ * The factory uses a `for` prefix (never `from`): the `from` prefix is reserved
+ * for Spatie's magic ::from(), and a same-typed `from*` factory makes ::from()
+ * recurse → segfault (see NoExternalDataFromProphet). The synthesised body's
+ * `static::from(...)` is in-class, so it stays legal.
  *
  * on `XData`. The factory lands wherever `XData` is defined — the SAME file
  * (folded into the call-site edits) or ANY OTHER file, located through the
@@ -67,9 +72,9 @@ final class DataFactorySynthesizer
                 $edits[] = [
                     'start' => (int) $site['call']->name->getStartFilePos(),
                     'end' => (int) $site['call']->name->getEndFilePos(),
-                    'text' => 'from' . $site['typeShort'],
+                    'text' => 'for' . $site['typeShort'],
                 ];
-                $penance[] = sprintf('Rewrote %s::from(object) to ::from%s()', $need['short'], $site['typeShort']);
+                $penance[] = sprintf('Rewrote %s::from(object) to ::for%s()', $need['short'], $site['typeShort']);
             }
         }
 
@@ -346,7 +351,7 @@ final class DataFactorySynthesizer
         $body = '';
 
         foreach ($need['types'] as $typeShort => $typeFqcn) {
-            $factoryName = 'from' . $typeShort;
+            $factoryName = 'for' . $typeShort;
 
             if (in_array(strtolower($factoryName), $existing, true)) {
                 continue;
@@ -430,7 +435,7 @@ final class DataFactorySynthesizer
         $param = lcfirst($typeShort);
 
         return sprintf(
-            "\n    public static function from%s(%s \$%s): static\n    {\n        return static::from(\$%s->toArray());\n    }\n",
+            "\n    public static function for%s(%s \$%s): static\n    {\n        return static::from(\$%s->toArray());\n    }\n",
             $typeShort,
             $typeFqcn,
             $param,
