@@ -31,7 +31,7 @@ class PreferCoercionHelperProphetTest extends TestCase
         ');
 
         $this->assertCount(2, $j->warnings);
-        $this->assertStringContainsString('intOr', $j->warnings[0]->message);
+        $this->assertStringContainsString('T_Int::coerce', $j->warnings[0]->message);
     }
 
     public function test_finds_a_cast_wrapped_in_another_call(): void

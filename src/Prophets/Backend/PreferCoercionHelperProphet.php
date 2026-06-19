@@ -41,9 +41,9 @@ class PreferCoercionHelperProphet extends PhpCommandment
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('The SAME coerce-or-default shape — a type-guard ternary like `is_numeric($x) ? (int) $x : $default` — is hand-rolled in two or more methods of one class. The cast + fallback should be a single named helper (intOr/floatOr/boolOr/stringOr…).')
+            ->applyWhen('The SAME coerce-or-default shape — a type-guard ternary like `is_numeric($x) ? (int) $x : $default` — is hand-rolled in two or more methods of one class. Route it through the validated php-types helper `T_Int::coerce($x, $default)` (T_String/T_Float/T_Bool) — it guards the type and falls back, never blind-casts.')
             ->leaveWhen('the coercion appears only once (no duplication to hoist), or each site genuinely differs (different guard, cast, or shape) so a shared helper would not fit.')
-            ->whenUnsure('if you already have a `stringOr()`-style accessor, add the int/float/bool/list sibling and route the repeated sites through it; if it is a lone coercion, leave it inline.');
+            ->whenUnsure('replace the repeated ternary with `T_String::coerce()`/`T_Int::coerce()`/…; a per-class `stringOr()`-style helper just re-duplicates the body across classes (and trips DuplicateCode) — the `T_*::coerce()` home ends that. A lone coercion can stay inline.');
     }
 
     public function detailedDescription(): string
@@ -69,23 +69,27 @@ Bad — the same coercion inline in every method:
         return is_numeric($v) ? (int) $v : 1_048_576;   // same shape again
     }
 
-Good — one named helper, every site routes through it:
-    public function maxInputTokens(): int { return $this->intOr('….max_input_tokens', 80_000); }
-    public function maxBodyBytes(): int  { return $this->intOr('….max_body_bytes', 1_048_576); }
-
-    private function intOr(string $key, int $default): int
+Good — the validated php-types helper, every site routes through it:
+    public function maxInputTokens(): int
     {
-        $v = $this->config->get($key, $default);
-
-        return is_numeric($v) ? (int) $v : $default;
+        return T_Int::coerce($this->config->get('….max_input_tokens'), 80_000);
     }
+    public function maxBodyBytes(): int
+    {
+        return T_Int::coerce($this->config->get('….max_body_bytes'), 1_048_576);
+    }
+
+`T_Int::coerce()` (and T_String/T_Float/T_Bool) guards the type and falls back —
+`coerce("abc", $d)` is `$d`, never `0` — unlike `coalesce()`, which blind-casts.
+A per-class `intOr()` helper would just re-duplicate the same body across every
+config/accessor class (and then trip DuplicateCode); the `T_*::coerce()` home
+ends that.
 
 WHAT FIRES — a ternary whose condition type-guards a variable `$v` (`is_numeric`,
 `is_string`, `is_array`, … possibly inside `&&`/`!`) and whose branches coerce
 that same `$v` (`(int)$v`/`(float)$v`/`(string)$v`/`(bool)$v`, or keep `$v`)
 against a default — when the SAME shape (guard + cast kind) appears 2+ times in
-one class. Sibling to the `stringOr`/`stringList` helpers such classes already
-have.
+one class.
 
 WHAT DOES NOT — a single occurrence (no duplication), differing shapes, or a
 plain `?? / ?:` fallback chain (that is RepeatedFallback's job — this rule is
@@ -249,15 +253,14 @@ SCRIPTURE;
             : sprintf('%s($x) ? (%s) $x : default', $predicate, $cast);
 
         $helper = match ($cast) {
-            'int' => 'intOr($key, $default)',
-            'float' => 'floatOr($key, $default)',
-            'string' => 'stringOr($key, $default)',
-            'bool' => 'boolOr($key, $default)',
-            default => 'a typed accessor (e.g. stringOr()/stringOrNull())',
+            'int' => 'T_Int::coerce($x, $default)',
+            'float' => 'T_Float::coerce($x, $default)',
+            'bool' => 'T_Bool::coerce($x, $default)',
+            default => 'T_String::coerce($x, $default)', // string / keep (is_string ? $x)
         };
 
         return sprintf(
-            'This `%s` coercion appears %d× in %s — extract a named helper (%s) so the cast and fallback live in one place.',
+            'This `%s` coercion appears %d× in %s — replace it with the validated php-types helper `%s` (it guards the type and falls back, never blind-casts garbage), so the cast and fallback live in one canonical place instead of a per-class helper that just re-duplicates.',
             $rendered,
             $count,
             $class,
