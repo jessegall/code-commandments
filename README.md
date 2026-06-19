@@ -526,7 +526,7 @@ _75 prophets._
 | `NoInlineValidationProphet` | — | Move validation to FormRequest instead of inline $request-&gt;validate() |
 | `NoJsonResponseProphet` | — | Use Inertia responses instead of JSON in web controllers |
 | `NoManualHydrationProphet` | — | Do not hand-roll array-to-object hydration — extend Spatie Data and use ::from() |
-| `NoNullCoalesceToNullProphet` | Yes | Drop the no-op `?? null`; guard a nullable foreach with `?? []` |
+| `NoNullCoalesceToNullProphet` | Yes | Drop the no-op `?? null` — it returns the left side unchanged |
 | `NoOptionInUnionProphet` | — | Do not union Option with other types or null — Option is the whole type |
 | `NoOptionOveruseProphet` | — | Do not use Option as ceremony where there is no absence to model |
 | `NoOptionToNullProphet` | Yes | Do not unwrap an Option back to null with getOr(null) |
