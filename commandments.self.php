@@ -82,6 +82,7 @@ return [
                 Backend\PushGenericToSourceProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\BehaviouralEnumDispatchProphet::class,
+                Backend\ThrowOnUnhandledCaseProphet::class,
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
