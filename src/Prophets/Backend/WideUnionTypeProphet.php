@@ -355,18 +355,21 @@ SCRIPTURE;
             return;
         }
 
-        // A null-free union on a Spatie Data property is mechanically fixable —
-        // rewrite to a `UnionCast`-backed `Union`. The members are right there in
-        // the type, so no input is needed.
+        // A null-free union on a Spatie Data property CAN be modelled as a
+        // `UnionCast`-backed `Union` — but #77: this changes the property's
+        // runtime type, so every reader that uses it as its raw member type
+        // (a string / array body) breaks. It is a SUGGESTION, not a blind
+        // auto-fix: the human applies it and updates the readers.
         if ($fixableMembers !== null) {
             $allowed = implode(', ', array_map(static fn (string $m): string => 'T::' . $m, $fixableMembers));
             $message = $this->message($count, $atoms, false)
                 . sprintf(
-                    ' Auto-fixable on this Spatie Data property → `repent` rewrites it to `#[WithCastAndTransformer(UnionCast::class, allowed: [%s])] public Union $…` (the Union sum type, enforced at hydration).',
+                    ' On this Spatie Data property, model it as a `#[WithCastAndTransformer(UnionCast::class, allowed: [%s])] public Union $…` (the Union sum type, enforced at hydration). NOT auto-fixable: it changes the property\'s runtime type, so update every reader that uses it as a raw %s.',
                     $allowed,
+                    implode('/', $atoms),
                 );
 
-            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union', true);
+            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union');
 
             return;
         }
@@ -860,9 +863,10 @@ SCRIPTURE;
             return RepentanceResult::unrepentant('Unable to parse PHP file');
         }
 
-        $fixable = $this->fixableUnionFields($ast);
-
-        // #62: null-free class unions that share a narrow interface — retype to it.
+        // #62: the ONLY auto-fix is narrowing a class union to its shared
+        // interface. #77: the Spatie-Data `UnionCast`-backed `Union` rewrite is
+        // NOT auto-applied — it changes the property's runtime type and breaks
+        // every reader of the raw member values (it stays an advisory suggestion).
         $namespace = $this->fileNamespace($ast);
         $uses = $this->fileUses($ast);
         $interfaceFixes = [];
@@ -875,7 +879,7 @@ SCRIPTURE;
             }
         }
 
-        if ($fixable === [] && $interfaceFixes === []) {
+        if ($interfaceFixes === []) {
             return RepentanceResult::unchanged();
         }
 
@@ -888,22 +892,6 @@ SCRIPTURE;
             $edits[] = ['start' => $type->getStartFilePos(), 'end' => $type->getEndFilePos(), 'text' => $fix['interface']['short']];
             $penance[] = "Narrowed a class union to its shared interface {$fix['interface']['short']}";
             $interfaceImports[] = $fix['interface']['fqcn'];
-        }
-
-        foreach ($fixable as $info) {
-            $type = $info['typeNode'];
-            $owner = $info['owner'];
-
-            // Retype the union to `Union`.
-            $edits[] = ['start' => $type->getStartFilePos(), 'end' => $type->getEndFilePos(), 'text' => 'Union'];
-
-            // Insert the cast attribute on its own line above the property.
-            $allowed = implode(', ', array_map(static fn (string $m): string => 'T::' . $m, $info['members']));
-            $indent = $this->indentAt($content, $owner->getStartFilePos());
-            $attribute = "#[WithCastAndTransformer(UnionCast::class, allowed: [{$allowed}])]\n{$indent}";
-            $edits[] = ['start' => $owner->getStartFilePos(), 'end' => $owner->getStartFilePos() - 1, 'text' => $attribute];
-
-            $penance[] = "Modelled a wide union as a UnionCast-backed Union (allowed: [{$allowed}])";
         }
 
         usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
@@ -921,24 +909,6 @@ SCRIPTURE;
             if ($interfaceNs !== ($namespace ?? null)) {
                 $content = $this->ensureUse($content, $interfaceFqcn);
             }
-        }
-
-        if ($fixable === []) {
-            return RepentanceResult::absolved($content, $penance);
-        }
-
-        // Imports. T and the Spatie attribute are known; Union/UnionCast live in
-        // the configured support namespace (best effort — skipped if unset).
-        $content = $this->ensureUse($content, 'JesseGall\\PhpTypes\\T');
-        $content = $this->ensureUse($content, 'Spatie\\LaravelData\\Attributes\\WithCastAndTransformer');
-
-        $support = trim((string) $this->config('support_namespace', ''), '\\');
-
-        if ($support !== '') {
-            $content = $this->ensureUse($content, "{$support}\\Union");
-            $content = $this->ensureUse($content, "{$support}\\UnionCast");
-        } else {
-            $penance[] = 'Ensure `Union` and `UnionCast` are imported (set support_namespace in config to auto-import)';
         }
 
         return RepentanceResult::absolved($content, $penance);
