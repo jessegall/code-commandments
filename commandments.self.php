@@ -88,6 +88,7 @@ return [
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
+                Backend\NoInlineParamDocProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
                 Backend\NoOptionToNullProphet::class,
