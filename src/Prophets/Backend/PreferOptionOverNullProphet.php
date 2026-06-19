@@ -30,6 +30,14 @@ class PreferOptionOverNullProphet extends PhpCommandment implements NeedsCodebas
 {
     private const DEFAULT_EXCLUDED_METHODS = ['try*', '__*'];
 
+    /**
+     * Framework hook method names whose signature is the framework's, not the
+     * author's — exempt when the class has a vendor ancestor (#94). Command/Job
+     * `handle`, Spatie Data `morph`, Eloquent/provider `boot`/`booted`/`register`/
+     * `casts`.
+     */
+    private const DEFAULT_FRAMEWORK_METHODS = ['handle', 'morph', 'boot', 'booted', 'register', 'casts'];
+
     private const DEFAULT_MIN_CALLERS = 2;
 
     private ?CodebaseIndex $index = null;
@@ -269,6 +277,13 @@ SCRIPTURE;
 
     private function translate(MatchResult $match): Sin|Warning|null
     {
+        // #94: a framework-locked signature — a recognized framework hook
+        // (handle/morph/…) on a class with a VENDOR ancestor — isn't ours to
+        // change to Option; the framework calls it and dictates the return type.
+        if ($this->isFrameworkLocked($match)) {
+            return null;
+        }
+
         $callers = $this->callerInfoFor($match);
 
         // Measure & suppress: when the index can resolve how many call sites
@@ -421,5 +436,65 @@ SCRIPTURE;
         $parts = explode('\\', $fqcn);
 
         return end($parts) ?: $fqcn;
+    }
+
+    /**
+     * #94: whether the flagged method's signature is dictated by a framework, so
+     * returning Option would break the contract. True when its name is a known
+     * framework hook (configurable `framework_methods`) AND the declaring class
+     * has a VENDOR ancestor — a parent in the `extends` chain that is NOT a
+     * project class (so its signature is inherited from outside the codebase:
+     * `Illuminate\Console\Command::handle`, a Spatie Data `morph`, …). Without an
+     * index the ancestry can't be checked, so the hook name alone exempts it
+     * (conservative — these names are framework-specific).
+     */
+    private function isFrameworkLocked(MatchResult $match): bool
+    {
+        $name = $match->groups['method_name'] ?? '';
+
+        if (! in_array($name, $this->frameworkMethods(), true)) {
+            return false;
+        }
+
+        $classFqcn = ltrim((string) ($match->groups['class_fqcn'] ?? ''), '\\');
+
+        if ($this->index === null || $classFqcn === '') {
+            return true;
+        }
+
+        return $this->hasVendorAncestor($classFqcn);
+    }
+
+    /**
+     * Whether $classFqcn's parent chain leads to a class the index does NOT know
+     * — i.e. a vendor/framework base outside the scanned codebase.
+     */
+    private function hasVendorAncestor(string $classFqcn): bool
+    {
+        $summary = $this->index?->classByFqcn($classFqcn);
+        $depth = 0;
+
+        while ($summary !== null && $summary->parent !== null && $depth++ < 16) {
+            $parent = ltrim($summary->parent, '\\');
+            $parentSummary = $this->index?->classByFqcn($parent);
+
+            if ($parentSummary === null) {
+                return true; // parent declared but not in the index → vendor base
+            }
+
+            $summary = $parentSummary;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function frameworkMethods(): array
+    {
+        $methods = $this->config('framework_methods', self::DEFAULT_FRAMEWORK_METHODS);
+
+        return is_array($methods) && $methods !== [] ? array_values(array_map('strval', $methods)) : self::DEFAULT_FRAMEWORK_METHODS;
     }
 }
