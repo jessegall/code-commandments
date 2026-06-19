@@ -6,13 +6,16 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 
 /**
  * Flag a coerce-or-default ternary — `is_numeric($x) ? (int) $x : $default` —
@@ -21,7 +24,7 @@ use PhpParser\NodeFinder;
  * classes already tend to have), so the coercion rule lives in a single place.
  */
 #[IntroducedIn('1.116.0')]
-class PreferCoercionHelperProphet extends PhpCommandment
+class PreferCoercionHelperProphet extends PhpCommandment implements SinRepenter
 {
     private const TYPE_PREDICATES = [
         'is_numeric', 'is_string', 'is_int', 'is_integer',
@@ -94,6 +97,13 @@ one class.
 WHAT DOES NOT — a single occurrence (no duplication), differing shapes, or a
 plain `?? / ?:` fallback chain (that is RepeatedFallback's job — this rule is
 specifically type-guarded COERCION).
+
+[AUTO-FIXABLE] for the EXACT-semantic shapes: `repent` rewrites
+`is_numeric($x) ? (int|float) $x : D` to `T_Int/T_Float::coerce($x, D)` and
+`is_scalar($x) ? (string) $x : D` to `T_String::coerce($x, D)` (a `null` fallback
+→ `coerceOrNull($x)`), adding the `use` import. It LEAVES `is_string`-guarded
+sites (coerce accepts any scalar — broader), a fallback that is a computed
+alternative rather than a default, and a coercion wrapped in more work.
 SCRIPTURE;
     }
 
@@ -152,6 +162,7 @@ SCRIPTURE;
                 $this->messageFor($occ['shape'], $occ['cast'], $counts[$occ['shape']], $class->name?->toString() ?? 'this class'),
                 $this->getLineSnippet($content, $occ['ternary']->getStartLine()),
                 'prefer-coercion:' . $occ['shape'] . ':' . $occ['method'],
+                $this->autofixPlan($occ['ternary']) !== null,
             );
         }
     }
@@ -242,6 +253,219 @@ SCRIPTURE;
         }
 
         return null;
+    }
+
+    /**
+     * The mechanical-rewrite plan for a coercion ternary, or null when it is not
+     * safely auto-fixable (#90). Only the EXACT-semantic shapes are auto-fixed —
+     * `is_numeric ? (int|float)` ↔ T_Int/T_Float::coerce, `is_scalar ? (string)`
+     * ↔ T_String::coerce — and only when the fallback is a plain default (not a
+     * computed alternative). `is_string`-guarded sites stay advisory: T_String
+     * ::coerce accepts any scalar (is_scalar), broader than `is_string`.
+     *
+     * @return array{helper: string, method: string, var: Expr\Variable, default: ?Expr}|null
+     */
+    private function autofixPlan(Expr\Ternary $ternary): ?array
+    {
+        if ($ternary->if === null) {
+            return null;
+        }
+
+        $guard = $this->guardedVariable($ternary->cond);
+
+        if ($guard === null) {
+            return null;
+        }
+
+        // Identify the coercing branch and the fallback (the other branch).
+        $castBranch = null;
+        $fallback = null;
+        $cast = null;
+
+        foreach ([[$ternary->if, $ternary->else], [$ternary->else, $ternary->if]] as [$candidate, $other]) {
+            $c = $this->castOfVariable($candidate, $guard['var']);
+
+            if ($c !== null) {
+                $castBranch = $candidate;
+                $fallback = $other;
+                $cast = $c;
+                break;
+            }
+        }
+
+        if ($castBranch === null || $fallback === null) {
+            return null;
+        }
+
+        // The coercing branch must be JUST the cast/keep of $var — not wrapped in
+        // more computation (e.g. `max(0, (int) $x)`), or coerce() would drop it.
+        if (! $this->isBareCoercion($castBranch, $guard['var'])) {
+            return null;
+        }
+
+        // Exact-semantic guard+cast pairs only.
+        $helper = match ([$guard['predicate'], $cast]) {
+            ['is_numeric', 'int'] => 'T_Int',
+            ['is_numeric', 'float'] => 'T_Float',
+            ['is_scalar', 'string'] => 'T_String',
+            default => null,
+        };
+
+        if ($helper === null) {
+            return null;
+        }
+
+        // The fallback must be a plain default, not a computed alternative
+        // (`(string) json_encode($x)`): no call may appear in it.
+        if ($this->containsCall($fallback)) {
+            return null;
+        }
+
+        $isNullDefault = $fallback instanceof Expr\ConstFetch
+            && $fallback->name instanceof Node\Name
+            && strtolower($fallback->name->toString()) === 'null';
+
+        return [
+            'helper' => $helper,
+            'method' => $isNullDefault ? 'coerceOrNull' : 'coerce',
+            'var' => $castBranch instanceof Expr\Variable ? $castBranch : $this->varNode($guard['var'], $castBranch),
+            'default' => $isNullDefault ? null : $fallback,
+        ];
+    }
+
+    private function isBareCoercion(Expr $branch, string $var): bool
+    {
+        if ($branch instanceof Expr\Variable && $branch->name === $var) {
+            return true;
+        }
+
+        return ($branch instanceof Expr\Cast)
+            && $branch->expr instanceof Expr\Variable && $branch->expr->name === $var;
+    }
+
+    private function varNode(string $var, Expr $branch): Expr\Variable
+    {
+        if ($branch instanceof Expr\Cast && $branch->expr instanceof Expr\Variable) {
+            return $branch->expr;
+        }
+
+        return new Expr\Variable($var);
+    }
+
+    private function containsCall(Expr $expr): bool
+    {
+        return (new NodeFinder)->findFirst([$expr], static fn (Node $n): bool =>
+            $n instanceof Expr\FuncCall
+            || $n instanceof Expr\MethodCall
+            || $n instanceof Expr\StaticCall
+            || $n instanceof Expr\NullsafeMethodCall
+            || $n instanceof Expr\New_) !== null;
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $finder = new NodeFinder;
+        $min = $this->minOccurrences();
+        $edits = [];
+        $penance = [];
+        $imports = [];
+
+        // Mirror judge's gating: only rewrite a shape that recurs >= min times in
+        // its class (so repent never touches what judge left righteous).
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            $counts = [];
+            $plans = [];
+
+            foreach ($class->getMethods() as $method) {
+                if ($method->stmts === null) {
+                    continue;
+                }
+
+                foreach ($finder->findInstanceOf($method->stmts, Expr\Ternary::class) as $ternary) {
+                    $coercion = $this->coercion($ternary);
+
+                    if ($coercion === null) {
+                        continue;
+                    }
+
+                    $counts[$coercion['shape']] = ($counts[$coercion['shape']] ?? 0) + 1;
+
+                    $plan = $this->autofixPlan($ternary);
+
+                    if ($plan !== null) {
+                        $plans[] = ['ternary' => $ternary, 'plan' => $plan, 'shape' => $coercion['shape']];
+                    }
+                }
+            }
+
+            foreach ($plans as $entry) {
+                if (($counts[$entry['shape']] ?? 0) < $min) {
+                    continue;
+                }
+
+                $ternary = $entry['ternary'];
+                $plan = $entry['plan'];
+                $varSrc = substr($content, (int) $plan['var']->getStartFilePos(), (int) $plan['var']->getEndFilePos() - (int) $plan['var']->getStartFilePos() + 1);
+
+                $args = $varSrc;
+
+                if ($plan['method'] === 'coerce' && $plan['default'] !== null) {
+                    $args .= ', ' . substr($content, (int) $plan['default']->getStartFilePos(), (int) $plan['default']->getEndFilePos() - (int) $plan['default']->getStartFilePos() + 1);
+                }
+
+                $replacement = sprintf('%s::%s(%s)', $plan['helper'], $plan['method'], $args);
+
+                $edits[] = ['start' => (int) $ternary->getStartFilePos(), 'end' => (int) $ternary->getEndFilePos(), 'text' => $replacement];
+                $penance[] = sprintf('Replaced a coercion ternary with %s::%s()', $plan['helper'], $plan['method']);
+                $imports['JesseGall\\PhpTypes\\' . $plan['helper']] = true;
+            }
+        }
+
+        if ($edits === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        foreach (array_keys($imports) as $fqcn) {
+            $content = $this->ensureUse($content, $fqcn);
+        }
+
+        return RepentanceResult::absolved($content, $penance);
+    }
+
+    private function ensureUse(string $content, string $fqcn): string
+    {
+        if (preg_match('/^\s*use\s+' . preg_quote($fqcn, '/') . '\s*;/m', $content) === 1) {
+            return $content;
+        }
+
+        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
+            return $content;
+        }
+
+        $insertAt = $m[0][1] + strlen($m[0][0]);
+
+        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
     }
 
     private function messageFor(string $shape, string $cast, int $count, string $class): string
