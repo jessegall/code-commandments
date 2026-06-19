@@ -6,11 +6,16 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallConsumptionCensus;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\RegistryLeak;
+use JesseGall\CodeCommandments\Support\RegistryShape;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
@@ -29,8 +34,18 @@ use PhpParser\ParserFactory;
  * nullable array is PreferTypeCoalesce's job via `T_Array::coalesce()`).
  */
 #[IntroducedIn('1.90.0')]
-class NoNullCoalesceToNullProphet extends PhpCommandment implements SinRepenter
+class NoNullCoalesceToNullProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
 {
+    private ?CodebaseIndex $index = null;
+
+    private ?CallConsumptionCensus $census = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+        $this->census = null;
+    }
+
     public function description(): string
     {
         return 'Drop the no-op `?? null` — it returns the left side unchanged';
@@ -97,8 +112,25 @@ SCRIPTURE;
         }
 
         $sins = [];
+        $warnings = [];
 
         foreach ($this->findings($ast, $content) as $finding) {
+            // A genuine no-op (`call() ?? null`) is a sin. The registry-shape
+            // case is a HEURISTIC (the class merely looks like a registry), so it
+            // is an auto-fixable WARNING — non-blocking, yet still guarded by the
+            // repent root-cause check until the registry contract is fixed.
+            if ($finding['symbol'] === 'coalesce-null-registry') {
+                $warnings[] = $this->warningAt(
+                    $finding['line'],
+                    $finding['message'],
+                    $finding['snippet'],
+                    $finding['symbol'],
+                    true,
+                );
+
+                continue;
+            }
+
             $sins[] = $this->sinAt(
                 $finding['line'],
                 $finding['message'],
@@ -109,11 +141,11 @@ SCRIPTURE;
             );
         }
 
-        if ($sins === []) {
+        if ($sins === [] && $warnings === []) {
             return $this->righteous();
         }
 
-        return $this->fallen($sins);
+        return new Judgment(sins: $sins, warnings: $warnings);
     }
 
     public function canRepent(string $filePath): bool
@@ -179,24 +211,106 @@ SCRIPTURE;
             }
         }
 
+        // `return $this->store[$key] ?? null` inside a markerless-registry leaky
+        // getter launders a registry miss into null. Normally a `$arr[$k] ?? null`
+        // is load-bearing (suppresses a notice) and left alone — but on the exact
+        // getters RegistryReturnContract flags, it is the auto-fixable symptom the
+        // repent guard withholds until the registry contract is fixed.
+        $registryLaundering = $this->registryLaunderingCoalesces($ast);
+
         foreach ($finder->findInstanceOf($ast, Coalesce::class) as $coalesce) {
             if (! $this->isNullLiteral($coalesce->right) || isset($foreachCoalesce[spl_object_id($coalesce)])) {
                 continue;
             }
 
+            $isRegistry = isset($registryLaundering[spl_object_id($coalesce)]);
+
             // `?? null` is only a no-op when the left side is GUARANTEED to be
             // defined. On an array access / property / bare variable, `??`
             // suppresses the undefined-key / uninitialized-property notice — so
             // `$arr[$k] ?? null` and `$obj->prop ?? null` are NOT no-ops and must
-            // be left alone.
-            if (! $this->isAlwaysDefined($coalesce->left)) {
+            // be left alone (unless it is a registry-laundering getter).
+            if (! $this->isAlwaysDefined($coalesce->left) && ! $isRegistry) {
                 continue;
             }
 
-            $findings[] = $this->noopCoalesceFinding($coalesce, $content);
+            $findings[] = $this->noopCoalesceFinding($coalesce, $content, $isRegistry);
         }
 
         return $findings;
+    }
+
+    /**
+     * Coalesce nodes that are `$this->store[$key] ?? null` inside a leaky
+     * registry getter (the exact set RegistryReturnContract's markerless warning
+     * fires on), keyed by spl_object_id.
+     *
+     * @param  array<Node>  $ast
+     * @return array<int, true>
+     */
+    private function registryLaunderingCoalesces(array $ast): array
+    {
+        $finder = new NodeFinder;
+        $census = $this->index !== null ? ($this->census ??= new CallConsumptionCensus($this->index)) : null;
+        $set = [];
+
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            $shape = RegistryShape::detect($class);
+
+            if ($shape === null) {
+                continue;
+            }
+
+            $fqcn = $this->classFqcn($class, $ast);
+            $storeProps = $shape->storeProperties();
+
+            foreach ($class->getMethods() as $method) {
+                if ($method->stmts === null
+                    || ! RegistryLeak::isLeakyNullableGetter($class, $shape, $method, $fqcn, $census)
+                ) {
+                    continue;
+                }
+
+                foreach ($finder->findInstanceOf($method->stmts, Coalesce::class) as $coalesce) {
+                    if ($this->isNullLiteral($coalesce->right) && $this->isStorePropFetch($coalesce->left, $storeProps)) {
+                        $set[spl_object_id($coalesce)] = true;
+                    }
+                }
+            }
+        }
+
+        return $set;
+    }
+
+    /**
+     * @param  list<string>  $storeProps
+     */
+    private function isStorePropFetch(Expr $expr, array $storeProps): bool
+    {
+        return $expr instanceof Expr\ArrayDimFetch
+            && $expr->var instanceof Expr\PropertyFetch
+            && $expr->var->var instanceof Expr\Variable
+            && $expr->var->var->name === 'this'
+            && $expr->var->name instanceof Node\Identifier
+            && in_array($expr->var->name->toString(), $storeProps, true);
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function classFqcn(Node\Stmt\Class_ $class, array $ast): ?string
+    {
+        if ($class->name === null) {
+            return null;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
+            $namespace = $ns->name?->toString();
+
+            return $namespace !== null && $namespace !== '' ? $namespace . '\\' . $class->name->toString() : $class->name->toString();
+        }
+
+        return $class->name->toString();
     }
 
     /**
@@ -204,20 +318,25 @@ SCRIPTURE;
      *
      * @return array{line: int, message: string, snippet: string, symbol: string, penance: string, edit: array{start: int, end: int, text: string}}
      */
-    private function noopCoalesceFinding(Coalesce $coalesce, string $content): array
+    private function noopCoalesceFinding(Coalesce $coalesce, string $content, bool $isRegistry = false): array
     {
         $line = $coalesce->getStartLine();
+        $left = $this->sourceOf($coalesce->left, $content);
+
+        $message = $isRegistry
+            ? '`?? null` here launders a registry miss into null on a class you `register`/store into — a miss is a wiring bug, not a valid "no value". Fix the registry contract (return T and throw, with a `has()` companion), do not just drop the `?? null` (which would expose the raw `' . $left . '`).'
+            : '`?? null` is a no-op — coalescing to null returns the left side unchanged, so this is exactly `' . $left . '`. Drop the `?? null`.';
 
         return [
             'line' => $line,
-            'message' => '`?? null` is a no-op — coalescing to null returns the left side unchanged, so this is exactly `' . $this->sourceOf($coalesce->left, $content) . '`. Drop the `?? null`.',
+            'message' => $message,
             'snippet' => $this->lineAt($content, $line),
-            'symbol' => 'coalesce-null',
+            'symbol' => $isRegistry ? 'coalesce-null-registry' : 'coalesce-null',
             'penance' => 'Removed no-op `?? null`',
             'edit' => [
                 'start' => $coalesce->getStartFilePos(),
                 'end' => $coalesce->getEndFilePos(),
-                'text' => $this->sourceOf($coalesce->left, $content),
+                'text' => $left,
             ],
         ];
     }

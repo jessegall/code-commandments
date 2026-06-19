@@ -67,6 +67,20 @@ final class ScaffoldRegistry
                 purpose: 'Null Object for a callable/Closure slot.',
             ),
             new Scaffold(
+                name: 'registry',
+                className: 'Registry',
+                stubFile: 'Registry.stub',
+                introducedIn: '2.0.0',
+                purpose: 'Keyed registry base — register items then look them up; find() returns Option, get() returns the item or throws.',
+            ),
+            new Scaffold(
+                name: 'registry-entry-not-found-exception',
+                className: 'RegistryEntryNotFoundException',
+                stubFile: 'RegistryEntryNotFoundException.stub',
+                introducedIn: '2.0.0',
+                purpose: 'Named exception thrown by the Registry base get() when a key was never registered.',
+            ),
+            new Scaffold(
                 name: 'equality-operator',
                 className: 'EqualityOperator',
                 stubFile: 'EqualityOperator.stub',

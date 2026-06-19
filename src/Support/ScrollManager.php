@@ -33,6 +33,15 @@ class ScrollManager
 
     private ?string $prophetFilter = null;
 
+    /**
+     * Codebase indexes built this run, keyed by scroll — so the lazy builder,
+     * repent's prepareCodebaseIndex, and the root-cause resolver all reuse one
+     * instance per scroll instead of rebuilding (a full parse of every file).
+     *
+     * @var array<string, CodebaseIndex>
+     */
+    private array $builtIndexes = [];
+
     public function __construct(
         protected ProphetRegistry $registry,
         protected FileScanner $scanner,
@@ -63,6 +72,58 @@ class ScrollManager
     public function setProphetFilter(?string $filter): void
     {
         $this->prophetFilter = ($filter !== null && $filter !== '') ? $filter : null;
+    }
+
+    /**
+     * The fully-qualified class names of the prophets that actually RUN for a
+     * scroll under the current `--prophet` filter (the "active set"). The
+     * root-cause resolver uses this to know which causes were filtered OUT and
+     * therefore need triggering for the hint.
+     *
+     * @return array<class-string, true>
+     */
+    public function activeProphetClasses(string $scroll): array
+    {
+        $set = [];
+
+        foreach ($this->prophetsFor($scroll) as $prophet) {
+            $set[get_class($prophet)] = true;
+        }
+
+        return $set;
+    }
+
+    /**
+     * The codebase index for a scroll, built once and memoized for the run.
+     * Routing every index consumer through here guarantees a single build per
+     * scroll (the parse of every file is the most expensive operation in the
+     * tool).
+     */
+    public function codebaseIndexFor(string $scroll): CodebaseIndex
+    {
+        return $this->builtIndexes[$scroll] ??= $this->buildCodebaseIndex($scroll);
+    }
+
+    /**
+     * The codebase index of the scroll that OWNS $filePath (the first scroll
+     * whose configured path is a prefix of the file), or null when no scroll
+     * claims it. Used by the root-cause resolver to give a triggered,
+     * index-needing cause prophet the right cross-file view.
+     */
+    public function codebaseIndexForFile(string $filePath): ?CodebaseIndex
+    {
+        $real = realpath($filePath) ?: $filePath;
+
+        foreach ($this->registry->getScrolls() as $scroll) {
+            $config = $this->registry->getScrollConfig($scroll);
+            $path = realpath($config['path'] ?? Environment::basePath());
+
+            if ($path !== false && str_starts_with($real, $path)) {
+                return $this->codebaseIndexFor($scroll);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -326,7 +387,7 @@ class ScrollManager
 
         return function () use (&$built, $scroll, $prophets): void {
             if (! $built) {
-                $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+                $this->injectCodebaseIndex($prophets, $this->codebaseIndexFor($scroll));
                 $built = true;
             }
         };
@@ -404,7 +465,7 @@ class ScrollManager
         $prophets = $this->prophetsFor($scroll);
         // Build the index from the FULL scroll (not the narrowed path) so
         // upstream callers outside the targeted subtree still resolve.
-        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+        $this->injectCodebaseIndex($prophets, $this->codebaseIndexFor($scroll));
 
         $results = collect();
 
@@ -473,7 +534,7 @@ class ScrollManager
         }
 
         $prophets = $this->prophetsFor($scroll);
-        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+        $this->injectCodebaseIndex($prophets, $this->codebaseIndexFor($scroll));
 
         $results = collect();
 
@@ -591,7 +652,7 @@ class ScrollManager
      */
     public function prepareCodebaseIndex(string $scroll, iterable $prophets): void
     {
-        $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
+        $this->injectCodebaseIndex($prophets, $this->codebaseIndexFor($scroll));
     }
 
     protected function buildCodebaseIndex(string $scroll): CodebaseIndex
