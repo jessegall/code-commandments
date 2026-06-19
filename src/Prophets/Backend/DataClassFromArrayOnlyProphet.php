@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\DataFromSiteCensus;
 use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\SpatieDataMagic;
 use PhpParser\Node;
@@ -37,6 +38,30 @@ class DataClassFromArrayOnlyProphet extends PhpCommandment implements SinRepente
     public function setCodebaseIndex(CodebaseIndex $index): void
     {
         $this->index = $index;
+    }
+
+    /**
+     * #64: whether class $shortName has an object `::from()` call site in ANY
+     * file (not just its own) — in which case the array-only trait must be
+     * withheld, since the assert would fatal on that object call.
+     */
+    private function hasCrossFileObjectFrom(string $shortName): bool
+    {
+        if ($this->index === null || $shortName === '') {
+            return false;
+        }
+
+        return isset(DataFromSiteCensus::objectFromShortNames($this->index, $this->dataSuffixes())[$shortName]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function dataSuffixes(): array
+    {
+        $suffixes = $this->config('data_suffixes', ['Data']);
+
+        return is_array($suffixes) && $suffixes !== [] ? array_values($suffixes) : ['Data'];
     }
 
     public function supported(): bool
@@ -150,11 +175,12 @@ SCRIPTURE;
             $line = $class->getStartLine();
             $snippet = $this->lineAt($content, $line);
 
-            // A class whose own ::from() factories pass a non-array is NOT
-            // safely auto-fixable: adding the trait makes its array-assert throw
-            // at runtime (issue #14). Flag it, but route the agent to migrate
-            // those call sites first instead of promising a build-breaking fix.
-            if ($this->hasUnsafeSelfFrom($class)) {
+            // A class whose ::from() is handed a non-array — its OWN factories
+            // (issue #14) OR a call site in ANY other file (#64, via the
+            // cross-file census) — is NOT safely auto-fixable: adding the trait
+            // makes its array-assert throw at runtime. Flag it, but route the
+            // agent to migrate those call sites first.
+            if ($this->hasUnsafeSelfFrom($class) || $this->hasCrossFileObjectFrom($name)) {
                 $message = "{$name} is a Data class without the {$traitShort} trait, but its own static factories call ::from() on a non-array — adding the trait now would make those throw at runtime.";
                 $suggestion = "First migrate the `self::from(\$object)` call sites to `self::from(\$object->toArray())` (see ExplicitDataFactoryProphet); once ::from() is array-only, `commandments repent` can add the trait. NOT auto-fixable yet.";
 
@@ -218,10 +244,11 @@ SCRIPTURE;
                 continue;
             }
 
-            // Do NOT add the trait to a class whose own ::from() factories pass a
-            // non-array — the trait's runtime assert would throw and break the
-            // build (issue #14). Those call sites must be migrated first.
-            if ($this->hasUnsafeSelfFrom($class)) {
+            // Do NOT add the trait to a class whose ::from() is handed a
+            // non-array — its own factories (issue #14) OR a call site in any
+            // other file (#64) — the trait's runtime assert would throw. Those
+            // call sites must be migrated first.
+            if ($this->hasUnsafeSelfFrom($class) || $this->hasCrossFileObjectFrom($class->name?->toString() ?? '')) {
                 continue;
             }
 
