@@ -109,6 +109,83 @@ class PreferTotalOverNullableProphetTest extends TestCase
         }')->hasWarnings());
     }
 
+    public function test_scalar_empty_identity_suggests_the_zero_value(): void
+    {
+        // ?string with an empty identity ('') — fires even though the caller
+        // TOLERATES the absence (?? 'x'), because the empty value removes the hedge.
+        $judgment = $this->judge('class C {
+            private function label(): ?string { return $this->l; }
+            public function a() { return $this->label() ?? "x"; }
+        }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString("''", $judgment->warnings[0]->message);
+        $this->assertStringContainsString('empty identity', $judgment->warnings[0]->message);
+    }
+
+    public function test_array_empty_identity(): void
+    {
+        $judgment = $this->judge('class C {
+            private function rows(): ?array { return $this->r; }
+            public function a() { foreach ($this->rows() ?? [] as $x) {} }
+        }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('[]', $judgment->warnings[0]->message);
+    }
+
+    public function test_fluent_subclass_empty_identity_in_file(): void
+    {
+        $judgment = $this->judge('class ValueBag extends \Illuminate\Support\Fluent {}
+        class C {
+            private function decode(): ?ValueBag { return $this->v; }
+            public function a() { return $this->decode()?->get("x"); }
+        }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('new ValueBag', $judgment->warnings[0]->message);
+    }
+
+    public function test_class_with_static_empty_identity(): void
+    {
+        $judgment = $this->judge('class Money { public static function empty(): self { return new self; } }
+        class C {
+            private function total(): ?Money { return $this->m; }
+            public function a() { return $this->total() ?? throw new \RuntimeException("x"); }
+        }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('Money::empty()', $judgment->warnings[0]->message);
+    }
+
+    public function test_option_with_empty_identity_inner_via_docblock(): void
+    {
+        $judgment = $this->judge('class ValueBag extends \Illuminate\Support\Fluent {}
+        class C {
+            /** @return Option<ValueBag> */
+            private function decode(): Option { return $this->v; }
+            public function a() { return $this->decode()->getOr(new ValueBag); }
+        }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('new ValueBag', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('Option<T>', $judgment->warnings[0]->message);
+    }
+
+    public function test_no_empty_identity_keeps_strict_trigger(): void
+    {
+        // A class with a required-arg constructor, not Fluent, no empty()/make():
+        // no empty identity → the strict "every caller de-nulls" trigger applies,
+        // so a tolerant caller means NO finding.
+        $judgment = $this->judge('class Node { public function __construct(public int $id) {} }
+        class C {
+            private function root(): ?Node { return $this->r; }
+            public function a() { return $this->root() ?? $this->fallback(); }
+        }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());
