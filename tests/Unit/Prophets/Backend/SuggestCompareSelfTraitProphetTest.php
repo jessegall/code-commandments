@@ -1016,6 +1016,40 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         @rmdir($dir);
     }
 
+    public function test_does_not_rewrite_a_mixed_operand_or_one_compared_to_a_literal(): void
+    {
+        // #71: equals(?Enum) TypeErrors on mixed/string. Leave the === when the
+        // operand is `mixed`, or when the SAME operand is also compared to a
+        // scalar literal nearby (a strong "this is not the enum" signal).
+        $dir = sys_get_temp_dir() . '/cc-cself71-' . uniqid();
+        @mkdir($dir, 0755, true);
+
+        file_put_contents($dir . '/Trait.php', "<?php\nnamespace App\\Enums;\ntrait ComparesSelf { public function equals(?ChannelType \$o): bool { return \$this === \$o; } }\n");
+        $file = $dir . '/Svc.php';
+        $src = "<?php\nnamespace App;\nuse App\\Enums\\ComparesSelf;\nuse Illuminate\\Support\\Arr;\n"
+            . "enum ChannelType: string { use ComparesSelf; case POS = 'pos'; case WEB = 'web'; }\n"
+            . "class Svc {\n"
+            . " public function looksLikePos(array \$data): bool { \$channel = Arr::get(\$data, 'channel'); return \$channel === ChannelType::POS || \$channel === 'pos'; }\n"
+            . " public function m(mixed \$x): bool { return \$x === ChannelType::POS; }\n"
+            . " public function c(ChannelType \$t): bool { return \$t === ChannelType::POS; }\n"
+            . "}\n";
+        file_put_contents($file, $src);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/Trait.php', $file]);
+        $prophet = new SuggestCompareSelfTraitProphet;
+        $prophet->setCodebaseIndex($index);
+        $prophet->configure(['trait' => 'App\\Enums\\ComparesSelf']);
+
+        $repented = $prophet->repent($file, $src)->newContent;
+        $this->assertStringContainsString("\$channel === ChannelType::POS || \$channel === 'pos'", $repented, 'literal-compared operand left alone');
+        $this->assertStringContainsString('return $x === ChannelType::POS;', $repented, 'mixed operand left alone');
+        $this->assertStringContainsString('ChannelType::POS->equals($t)', $repented, 'enum operand rewritten');
+
+        @unlink($dir . '/Trait.php');
+        @unlink($file);
+        @rmdir($dir);
+    }
+
     private function indexedTrait(string $traitMethods): array
     {
         $dir = sys_get_temp_dir() . '/cc-cself-' . uniqid();

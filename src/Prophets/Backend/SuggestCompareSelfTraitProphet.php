@@ -269,7 +269,83 @@ SCRIPTURE;
 
         $operand = $this->nonEnumOperand($cmp, $finder);
 
-        return $operand !== null && $this->scalarTypeOfOperand($operand, $start, $ast, $finder, $uses, $namespace) !== null;
+        if ($operand === null) {
+            return false;
+        }
+
+        // Provably a scalar / mixed type (param, property, literal, cast)…
+        if ($this->scalarTypeOfOperand($operand, $start, $ast, $finder, $uses, $namespace) !== null) {
+            return true;
+        }
+
+        // …or the SAME operand is compared to a scalar literal in this scope
+        // (`$channel === ChannelType::POS || $channel === 'pos'`). You never
+        // compare an enum instance to a string/int literal, so the value is the
+        // backing scalar — #71 (the Arr::get()-as-mixed case).
+        return $this->comparedToScalarLiteralNearby($operand, $start, $ast, $finder);
+    }
+
+    private function comparedToScalarLiteralNearby(Node $operand, int $pos, array $ast, NodeFinder $finder): bool
+    {
+        $fn = $this->enclosingFunctionNode($pos, $ast, $finder);
+        $scope = $fn !== null ? [$fn] : $ast;
+
+        foreach ($finder->find($scope, static fn (Node $n): bool =>
+            $n instanceof Node\Expr\BinaryOp\Identical
+            || $n instanceof Node\Expr\BinaryOp\NotIdentical
+            || $n instanceof Node\Expr\BinaryOp\Equal
+            || $n instanceof Node\Expr\BinaryOp\NotEqual
+        ) as $bin) {
+            foreach ([[$bin->left, $bin->right], [$bin->right, $bin->left]] as [$a, $b]) {
+                if (($b instanceof Node\Scalar\String_ || $b instanceof Node\Scalar\Int_) && $this->sameOperand($a, $operand)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function sameOperand(Node $a, Node $b): bool
+    {
+        if ($a instanceof Node\Expr\Variable && $b instanceof Node\Expr\Variable) {
+            return $a->name === $b->name;
+        }
+
+        if ($a instanceof Node\Expr\PropertyFetch && $b instanceof Node\Expr\PropertyFetch
+            && $a->name instanceof Node\Identifier && $b->name instanceof Node\Identifier
+            && $a->name->toString() === $b->name->toString()
+        ) {
+            return $this->sameOperand($a->var, $b->var);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function enclosingFunctionNode(int $pos, array $ast, NodeFinder $finder): ?Node
+    {
+        $best = null;
+        $bestStart = -1;
+
+        $functions = array_merge(
+            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
+            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
+            $finder->findInstanceOf($ast, Node\Expr\Closure::class),
+        );
+
+        foreach ($functions as $fn) {
+            $start = (int) $fn->getStartFilePos();
+
+            if ($start <= $pos && (int) $fn->getEndFilePos() >= $pos && $start > $bestStart) {
+                $best = $fn;
+                $bestStart = $start;
+            }
+        }
+
+        return $best;
     }
 
     private function nonEnumOperand(Node $cmp, NodeFinder $finder): ?Node
@@ -369,7 +445,8 @@ SCRIPTURE;
         if ($type instanceof Node\Identifier) {
             $lower = strtolower($type->toString());
 
-            return in_array($lower, ['string', 'int', 'float', 'bool'], true) ? $lower : null;
+            // `mixed` counts: equals(?Enum) would TypeError on a non-enum value (#71).
+            return in_array($lower, ['string', 'int', 'float', 'bool', 'mixed'], true) ? $lower : null;
         }
 
         return null;
@@ -452,7 +529,7 @@ SCRIPTURE;
                 if ($declared->name->toString() === $property) {
                     $type = $prop->type instanceof Node\NullableType ? $prop->type->type : $prop->type;
 
-                    return $type instanceof Node\Identifier && in_array(strtolower($type->toString()), ['string', 'int', 'float', 'bool'], true)
+                    return $type instanceof Node\Identifier && in_array(strtolower($type->toString()), ['string', 'int', 'float', 'bool', 'mixed'], true)
                         ? strtolower($type->toString())
                         : null;
                 }
