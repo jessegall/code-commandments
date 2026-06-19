@@ -111,11 +111,11 @@ class PreferTotalOverNullableProphetTest extends TestCase
 
     public function test_scalar_empty_identity_suggests_the_zero_value(): void
     {
-        // ?string with an empty identity ('') — fires even though the caller
-        // TOLERATES the absence (?? 'x'), because the empty value removes the hedge.
+        // ?string whose every caller de-nulls (?? throw) → fires; because '' is
+        // its empty identity, the remedy adds "return the empty value ('')".
         $judgment = $this->judge('class C {
             private function label(): ?string { return $this->l; }
-            public function a() { return $this->label() ?? "x"; }
+            public function a() { return $this->label() ?? throw new \RuntimeException("x"); }
         }');
 
         $this->assertCount(1, $judgment->warnings);
@@ -127,7 +127,7 @@ class PreferTotalOverNullableProphetTest extends TestCase
     {
         $judgment = $this->judge('class C {
             private function rows(): ?array { return $this->r; }
-            public function a() { foreach ($this->rows() ?? [] as $x) {} }
+            public function a() { return $this->rows() ?? throw new \RuntimeException("x"); }
         }');
 
         $this->assertCount(1, $judgment->warnings);
@@ -139,7 +139,7 @@ class PreferTotalOverNullableProphetTest extends TestCase
         $judgment = $this->judge('class ValueBag extends \Illuminate\Support\Fluent {}
         class C {
             private function decode(): ?ValueBag { return $this->v; }
-            public function a() { return $this->decode()?->get("x"); }
+            public function a() { return $this->decode()->get("x"); }
         }');
 
         $this->assertCount(1, $judgment->warnings);
@@ -164,12 +164,32 @@ class PreferTotalOverNullableProphetTest extends TestCase
         class C {
             /** @return Option<ValueBag> */
             private function decode(): Option { return $this->v; }
-            public function a() { return $this->decode()->getOr(new ValueBag); }
+            public function a() { return $this->decode()->getOrThrow(); }
         }');
 
         $this->assertCount(1, $judgment->warnings);
         $this->assertStringContainsString('new ValueBag', $judgment->warnings[0]->message);
         $this->assertStringContainsString('Option<T>', $judgment->warnings[0]->message);
+    }
+
+    public function test_does_not_fire_on_empty_identity_when_caller_handles_absence(): void
+    {
+        // #115: an Option<string> (string has empty identity '') consumed via
+        // ->transform(...)->getOr($default) — the caller HANDLES the miss, so the
+        // nullability is earned. Must NOT fire (and '' would be a wrong path).
+        $righteous = $this->judge('class C {
+            /** @return Option<string> */
+            private function viteConfigPath(): Option { return $this->p; }
+            public function a(): bool { return $this->viteConfigPath()->transform(fn (string $p) => str_contains($p, "x"))->getOr(false); }
+        }');
+        $this->assertTrue($righteous->isRighteous());
+
+        // Plain ->getOr($default) likewise handles absence.
+        $plain = $this->judge('class C {
+            private function label(): ?string { return $this->l; }
+            public function a(): string { return $this->label() ?? "fallback"; }
+        }');
+        $this->assertTrue($plain->isRighteous());
     }
 
     public function test_no_empty_identity_keeps_strict_trigger(): void
