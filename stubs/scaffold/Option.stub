@@ -169,7 +169,18 @@ final readonly class Option
      */
     public function andThen(callable $andThen): self
     {
-        return $this->hasValue ? $andThen($this->value) : self::none();
+        if (! $this->hasValue) {
+            return self::none();
+        }
+
+        $result = $andThen($this->value);
+
+        // The generic enforces this at PHPStan level-max; the assert catches a
+        // forgotten wrap (a bare value) in dev/test for projects without static
+        // analysis. assert() is a no-op in production (zend.assertions=-1).
+        assert($result instanceof self, 'andThen callback must return an Option');
+
+        return $result;
     }
 
     /**
@@ -199,7 +210,17 @@ final readonly class Option
      */
     public function orElse(callable $alternative): self
     {
-        return $this->hasValue ? $this : $alternative();
+        if ($this->hasValue) {
+            return $this;
+        }
+
+        $result = $alternative();
+
+        // Same as andThen: PHPStan enforces `self<T>`, the assert catches a bare
+        // value at runtime in dev/test. No-op in production.
+        assert($result instanceof self, 'orElse alternative must return an Option');
+
+        return $result;
     }
 
     /**
