@@ -184,4 +184,36 @@ class NoOptionToNullProphetTest extends TestCase
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);
     }
+
+    // ── #68: guarded auto-fix of the unwrap-then-null-check sub-pattern ──
+
+    public function test_repent_collapses_unwrap_then_null_check(): void
+    {
+        $src = "<?php\nclass C {\n public function m(\$opt): void {\n  \$x = \$opt->getOr(null);\n  if (\$x !== null) { \$t = 1; }\n }\n public function n(\$opt): void {\n  \$y = \$opt->getOr(null);\n  if (\$y === null) { return; }\n }\n}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('if ($opt->hasValue()) {', $result->newContent);
+        $this->assertStringContainsString('if ($opt->isEmpty()) {', $result->newContent);
+        $this->assertStringNotContainsString('getOr(null)', $result->newContent);
+        $this->assertStringNotContainsString('$x =', $result->newContent);
+    }
+
+    public function test_repent_leaves_a_value_used_beyond_the_null_test(): void
+    {
+        // The trap: the unwrapped value is ALSO passed on — dropping it would
+        // lose the value. Must not auto-fix.
+        $src = "<?php\nclass C {\n public function m(\$opt): void {\n  \$x = \$opt->getOr(null);\n  if (\$x !== null) { \$t = 1; }\n  options(\$x);\n }\n}\n";
+
+        $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
+    }
+
+    public function test_repent_leaves_a_call_receiver(): void
+    {
+        // Inlining a CALL receiver would re-evaluate it — not safe to drop the local.
+        $src = "<?php\nclass C {\n public function m(): void {\n  \$x = \$this->e->valuesFor(1)->getOr(null);\n  if (\$x !== null) { \$t = 1; }\n }\n}\n";
+
+        $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
+    }
 }

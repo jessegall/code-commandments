@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -21,7 +23,7 @@ use PhpParser\NodeFinder;
  * default to `->getOr($default)`.
  */
 #[IntroducedIn('1.74.0')]
-class NoOptionToNullProphet extends PhpCommandment
+class NoOptionToNullProphet extends PhpCommandment implements SinRepenter
 {
     /** @var list<string> Option accessor methods whose null default is the smell. */
     private const DEFAULT_METHODS = ['getOr'];
@@ -163,6 +165,14 @@ SCRIPTURE;
             }
 
             $method = $call->name->toString();
+
+            // #68: the SAFE auto-fixable sub-pattern — `$x = $opt->getOr(null);
+            // if ($x === null) …` where $x is used SOLELY in the null test. Then
+            // repent drops the local and rewrites the test to ->isEmpty()/
+            // ->hasValue(). Any other use of $x (passed on, returned) makes it a
+            // cascade — advisory only.
+            $autoFixable = $this->unwrapNullCheckPattern($call, $parents, $nullLocalsCache) !== null;
+
             $warnings[] = $this->warningAt(
                 $call->getStartLine(),
                 sprintf(
@@ -172,6 +182,7 @@ SCRIPTURE;
                 ),
                 $this->lineAt($content, $call->getStartLine()),
                 'option-to-null:' . $method,
+                $autoFixable,
             );
         }
 
@@ -199,6 +210,177 @@ SCRIPTURE;
         }
 
         return $parent instanceof Expr\ArrowFunction && $parent->expr === $call;
+    }
+
+    /**
+     * The safe #68 auto-fix shape: a `$x = OPT->getOr(<null>);` assignment whose
+     * variable is used SOLELY in `$x === null` / `$x !== null` tests, AND whose
+     * Option receiver OPT is side-effect-free (so inlining it does not re-run a
+     * call). Any OTHER use of $x (passed on, returned, a `?->` chain) makes it a
+     * cascade — advisory, never auto-fixed. Returns the parts to rewrite, or null.
+     *
+     * @param  array<int, Node>  $parents
+     * @param  array<int, array<string, true>>  $nullLocalsCache
+     * @return array{stmt: Node\Stmt\Expression, receiver: Expr, name: string, comparisons: list<array{node: Expr\BinaryOp, negated: bool}>}|null
+     */
+    private function unwrapNullCheckPattern(Expr\MethodCall $call, array $parents, array &$nullLocalsCache): ?array
+    {
+        $assign = $parents[spl_object_id($call)] ?? null;
+
+        if (! $assign instanceof Expr\Assign || $assign->expr !== $call
+            || ! $assign->var instanceof Expr\Variable || ! is_string($assign->var->name)
+        ) {
+            return null;
+        }
+
+        $stmt = $parents[spl_object_id($assign)] ?? null;
+
+        if (! $stmt instanceof Node\Stmt\Expression) {
+            return null;
+        }
+
+        if (! $this->isSideEffectFree($call->var)) {
+            return null; // a call receiver would be re-evaluated when inlined
+        }
+
+        $args = $call->getArgs();
+
+        if (count($args) !== 1) {
+            return null;
+        }
+
+        $fn = $this->enclosingFunction($call, $parents);
+
+        if (! $this->resolvesToNull($args[0]->value, $this->nullOnlyLocals($fn, $nullLocalsCache))) {
+            return null;
+        }
+
+        $name = $assign->var->name;
+        $scope = $fn ?? $stmt;
+        $comparisons = [];
+
+        foreach ((new NodeFinder)->findInstanceOf([$scope], Expr\Variable::class) as $var) {
+            if ($var->name !== $name || $var === $assign->var) {
+                continue;
+            }
+
+            $cmp = $this->nullComparisonOf($var, $parents);
+
+            if ($cmp === null) {
+                return null; // used somewhere other than a null test — a cascade
+            }
+
+            $comparisons[spl_object_id($cmp['node'])] = $cmp;
+        }
+
+        if ($comparisons === []) {
+            return null;
+        }
+
+        return ['stmt' => $stmt, 'receiver' => $call->var, 'name' => $name, 'comparisons' => array_values($comparisons)];
+    }
+
+    private function isSideEffectFree(Expr $expr): bool
+    {
+        if ($expr instanceof Expr\Variable) {
+            return true;
+        }
+
+        if ($expr instanceof Expr\PropertyFetch || $expr instanceof Expr\NullsafePropertyFetch) {
+            return $this->isSideEffectFree($expr->var);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<int, Node>  $parents
+     * @return array{node: Expr\BinaryOp, negated: bool}|null
+     */
+    private function nullComparisonOf(Expr\Variable $var, array $parents): ?array
+    {
+        $parent = $parents[spl_object_id($var)] ?? null;
+
+        if (! $parent instanceof Expr\BinaryOp\Identical && ! $parent instanceof Expr\BinaryOp\NotIdentical) {
+            return null;
+        }
+
+        $other = $parent->left === $var ? $parent->right : $parent->left;
+
+        if (! $this->isNullLiteral($other)) {
+            return null;
+        }
+
+        return ['node' => $parent, 'negated' => $parent instanceof Expr\BinaryOp\NotIdentical];
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $ast = $this->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $methods = $this->methods();
+        $parents = [];
+        $this->buildParentMap($ast, null, $parents);
+        $nullLocalsCache = [];
+        $edits = [];
+        $penance = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Expr\MethodCall::class) as $call) {
+            if (! $call->name instanceof Node\Identifier || ! in_array($call->name->toString(), $methods, true) || $call->isFirstClassCallable()) {
+                continue;
+            }
+
+            $pattern = $this->unwrapNullCheckPattern($call, $parents, $nullLocalsCache);
+
+            if ($pattern === null) {
+                continue;
+            }
+
+            $receiverSrc = substr($content, (int) $pattern['receiver']->getStartFilePos(), (int) $pattern['receiver']->getEndFilePos() - (int) $pattern['receiver']->getStartFilePos() + 1);
+
+            // Drop the whole `$x = …->getOr(null);` line.
+            $stmt = $pattern['stmt'];
+            $newlineBefore = strrpos(substr($content, 0, (int) $stmt->getStartFilePos()), "\n");
+            $lineStart = $newlineBefore === false ? 0 : $newlineBefore + 1;
+            $newlineAfter = strpos($content, "\n", (int) $stmt->getEndFilePos());
+            $removeEnd = $newlineAfter === false ? strlen($content) - 1 : $newlineAfter;
+            $edits[] = ['start' => $lineStart, 'end' => $removeEnd, 'text' => ''];
+
+            foreach ($pattern['comparisons'] as $cmp) {
+                $edits[] = [
+                    'start' => (int) $cmp['node']->getStartFilePos(),
+                    'end' => (int) $cmp['node']->getEndFilePos(),
+                    'text' => $receiverSrc . ($cmp['negated'] ? '->hasValue()' : '->isEmpty()'),
+                ];
+            }
+
+            $penance[] = sprintf('Dropped $%s = …->getOr(null) and rewrote its null check to %s->isEmpty()/->hasValue()', $pattern['name'], $receiverSrc);
+        }
+
+        if ($edits === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        return RepentanceResult::absolved($content, $penance);
     }
 
     /**
