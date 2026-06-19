@@ -699,6 +699,17 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             return 'prop:' . $expr->var->name . '->' . $expr->name->toString();
         }
 
+        // `$this->accessor()?->…` — a (private) nullable accessor whose result
+        // every caller de-nulls inline. Type resolution gates which actually
+        // qualify (a same-class private nullable method).
+        if ($expr instanceof Expr\MethodCall
+            && $expr->var instanceof Expr\Variable
+            && is_string($expr->var->name)
+            && $expr->name instanceof Node\Identifier
+        ) {
+            return 'call:' . $expr->var->name . '->' . $expr->name->toString();
+        }
+
         return null;
     }
 
@@ -727,6 +738,48 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             && $class !== null
         ) {
             return $this->findPropertyType($expr->name->toString(), $class);
+        }
+
+        // `$this->accessor()` — resolve a same-class PRIVATE nullable accessor so
+        // a helper every caller de-nulls inline (`$this->x()?->m() ?? $default`)
+        // suggests a total Null Object return.
+        if ($expr instanceof Expr\MethodCall
+            && $expr->var instanceof Expr\Variable
+            && $expr->var->name === 'this'
+            && $expr->name instanceof Node\Identifier
+            && $class !== null
+        ) {
+            return $this->resolveSelfAccessorType($expr->name->toString(), $class);
+        }
+
+        return null;
+    }
+
+    /**
+     * The nullable return type of a same-class PRIVATE accessor, or null. The
+     * `= null default` smell becomes "returns null" — modelled as hasNullDefault
+     * so Pattern B's gate reads it as a willing-to-do-nothing source.
+     *
+     * @return array{typeName: string, nullable: bool, hasNullDefault: bool}|null
+     */
+    private function resolveSelfAccessorType(string $method, Stmt\Class_ $class): ?array
+    {
+        foreach ($class->getMethods() as $candidate) {
+            if ($candidate->name->toString() !== $method) {
+                continue;
+            }
+
+            if (! $candidate->isPrivate()) {
+                return null;
+            }
+
+            $info = $this->extractNullableTypeInfo($candidate->returnType);
+
+            if ($info === null || ! $info['nullable']) {
+                return null;
+            }
+
+            return ['typeName' => $info['typeName'], 'nullable' => true, 'hasNullDefault' => true];
         }
 
         return null;
