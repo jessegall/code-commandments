@@ -92,6 +92,7 @@ return [
                 Backend\NoOptionOveruseProphet::class,
                 Backend\NoOptionInUnionProphet::class,
                 Backend\NoRedundantOrElseWrapProphet::class,
+                Backend\PreferOptionChainOverGuardProphet::class,
                 Backend\WideUnionTypeProphet::class,
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,

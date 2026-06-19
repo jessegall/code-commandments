@@ -492,7 +492,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_73 prophets._
+_74 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -549,6 +549,7 @@ _73 prophets._
 | `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
 | `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
 | `PreferNullObjectDefaultsProphet` | Yes | Prefer Null Object defaults over nullable params normalized in the body |
+| `PreferOptionChainOverGuardProphet` | — | Prefer an Option chain over an imperative isEmpty() guard — transform()-&gt;orElse()-&gt;getOrThrow() |
 | `PreferOptionOverNullProphet` | — | Do not return null from decision methods — return an Option or a Null Object |
 | `PreferSprintfProphet` | Yes | Prefer sprintf() over string interpolation — separate the template from its values |
 | `PreferStaticOverInvokableConstructProphet` | — | Prefer a static factory over (new X(...))(...) for project-owned classes |

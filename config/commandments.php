@@ -197,6 +197,7 @@ return [
                     // 'option_class' => App\Support\Option::class,
                     // 'methods' => ['orElse'],
                 ],
+                Backend\PreferOptionChainOverGuardProphet::class,
                 Backend\WideUnionTypeProphet::class => [
                     // 'warn_at_types' => 2,   // 0 (or warnings_enabled => false) disables warnings
                     // 'sin_at_types'  => 3,
