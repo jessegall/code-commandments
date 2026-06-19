@@ -10,7 +10,11 @@ use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\CallConsumptionCensus;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\RegistryLeak;
+use JesseGall\CodeCommandments\Support\RegistryShape;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
@@ -43,9 +47,12 @@ class RegistryReturnContractProphet extends PhpCommandment implements NeedsCodeb
 
     private ?CodebaseIndex $index = null;
 
+    private ?CallConsumptionCensus $census = null;
+
     public function setCodebaseIndex(CodebaseIndex $index): void
     {
         $this->index = $index;
+        $this->census = null; // rebuild against the new index
     }
 
     public function description(): string
@@ -124,32 +131,90 @@ SCRIPTURE;
         }
 
         $sins = [];
+        $warnings = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            if (! $this->isRegistry($class, $ast)) {
+            // MARKED registry → the imperative sin path (Option OR nullable getters).
+            if ($this->isRegistry($class, $ast)) {
+                foreach ($class->getMethods() as $method) {
+                    $kind = $this->leakyGetter($method);
+
+                    if ($kind === null) {
+                        continue;
+                    }
+
+                    $name = $method->name->toString();
+                    $sins[] = $this->sinAt(
+                        $method->getStartLine(),
+                        sprintf('Registry getter %s() returns %s. If a miss is a wiring bug, return T and throw, with a `has%s()` companion. If a miss is a genuine, handled outcome (callers branch on null / `?->` / `?? default`), this is a FINDER, not a registry getter — rename it (`find*`/`try*`/`*ForX`/`*OrNull`) or drop the marker. Resolve by hand: retyping to throw changes runtime behaviour, so it is deliberately not auto-fixed.', $name, $kind === 'option' ? 'an Option' : 'a nullable', ucfirst($name)),
+                        $this->lineAt($content, $method->getStartLine()),
+                        null,
+                        'registry-return:' . $name,
+                        false,
+                    );
+                }
+
+                continue;
+            }
+
+            // UNMARKED but registry-SHAPED → advisory WARNING path. A heuristic
+            // (the author didn't opt in with a marker), so it never blocks — but a
+            // warning still drives the root-cause precedence/guard. Raw `?T` only:
+            // a getter already returning Option has opted into genuine absence, so
+            // it is left alone (protects a real Option<T> resolver/registry).
+            $shape = RegistryShape::detect($class);
+
+            if ($shape === null) {
                 continue;
             }
 
             foreach ($class->getMethods() as $method) {
-                $kind = $this->leakyGetter($method);
+                $warning = $this->markerlessWarning($class, $shape, $method, $ast, $content);
 
-                if ($kind === null) {
-                    continue;
+                if ($warning !== null) {
+                    $warnings[] = $warning;
                 }
-
-                $name = $method->name->toString();
-                $sins[] = $this->sinAt(
-                    $method->getStartLine(),
-                    sprintf('Registry getter %s() returns %s. If a miss is a wiring bug, return T and throw, with a `has%s()` companion. If a miss is a genuine, handled outcome (callers branch on null / `?->` / `?? default`), this is a FINDER, not a registry getter — rename it (`find*`/`try*`/`*ForX`/`*OrNull`) or drop the marker. Resolve by hand: retyping to throw changes runtime behaviour, so it is deliberately not auto-fixed.', $name, $kind === 'option' ? 'an Option' : 'a nullable', ucfirst($name)),
-                    $this->lineAt($content, $method->getStartLine()),
-                    null,
-                    'registry-return:' . $name,
-                    false,
-                );
             }
         }
 
-        return $sins === [] ? $this->righteous() : $this->fallen($sins);
+        if ($sins === [] && $warnings === []) {
+            return $this->righteous();
+        }
+
+        return new Judgment(sins: $sins, warnings: $warnings);
+    }
+
+    /**
+     * The markerless (shape-detected) registry warning for one method, or null.
+     * Delegates the firing decision to the shared {@see RegistryLeak} predicate
+     * so the registry-scoped NoNullCoalesceToNull auto-fix flags the exact same
+     * getters (keeping the auto-fix downstream of this cause).
+     *
+     * @param  array<Node>  $ast
+     */
+    private function markerlessWarning(Node\Stmt\Class_ $class, RegistryShape $shape, Node\Stmt\ClassMethod $method, array $ast, string $content): ?Warning
+    {
+        if (! RegistryLeak::isLeakyNullableGetter($class, $shape, $method, $this->classFqcn($class, $ast), $this->census())) {
+            return null;
+        }
+
+        $name = $method->name->toString();
+
+        return $this->warningAt(
+            $method->getStartLine(),
+            sprintf('%s() returns a nullable on a class with the registry shape (you `register`/store into it, then look up). A miss is a wiring bug, not a valid "no value": return T and throw — with a `has%s()` companion / a named exception — or, if absence is genuine, model it as an Option at the source. (Heuristic: no `Registry` marker; mark the class or extend a base for full enforcement.)', $name, ucfirst($name)),
+            $this->lineAt($content, $method->getStartLine()),
+            'registry-return-shape:' . $name,
+        );
+    }
+
+    private function census(): ?CallConsumptionCensus
+    {
+        if ($this->index === null) {
+            return null;
+        }
+
+        return $this->census ??= new CallConsumptionCensus($this->index);
     }
 
     /**
