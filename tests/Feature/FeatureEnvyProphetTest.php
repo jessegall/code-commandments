@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use JesseGall\CodeCommandments\Prophets\Backend\FeatureEnvyProphet;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 use JesseGall\CodeCommandments\Tests\TestCase;
@@ -130,6 +131,43 @@ class FeatureEnvyProphetTest extends TestCase
     }
 
     // ── #61: false-positive refinements ──────────────────────────────────
+
+    public function test_does_not_warn_on_a_call_to_an_unindexed_method(): void
+    {
+        // Regression: resolving a call's @return generic must not emit an
+        // "Undefined array key" warning when the method isn't in the class's
+        // method map (a `?->` after an array access does not suppress it).
+        $dir = sys_get_temp_dir() . '/cc-fe-' . uniqid();
+        @mkdir($dir, 0755, true);
+        $ns = 'JesseGall\\CodeCommandments\\Tests\\Fixtures\\Backend\\Sinful\\FeatureEnvy';
+
+        file_put_contents("$dir/Bag.php", "<?php\nnamespace {$ns};\nclass Bag { public array \$items = []; }\n");
+        file_put_contents("$dir/Svc.php", "<?php\nnamespace {$ns};\nclass Svc { public function m(Bag \$bag) { \$x = \$bag->get('k'); \$y = \$bag->toArray(); return [\$x, \$y]; } }\n");
+
+        $index = CodebaseIndex::build(glob("$dir/*.php") ?: []);
+        $prophet = new FeatureEnvyProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $errors = [];
+        set_error_handler(static function (int $no, string $str) use (&$errors): bool {
+            $errors[] = $str;
+
+            return true;
+        });
+
+        try {
+            $prophet->judge("$dir/Svc.php", file_get_contents("$dir/Svc.php"));
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $errors, 'No PHP warnings should be emitted.');
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
 
     public function test_flags_a_query_over_an_unwrapped_option_chain(): void
     {
