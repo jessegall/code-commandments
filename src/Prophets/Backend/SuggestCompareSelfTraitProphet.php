@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Sin;
@@ -192,11 +193,13 @@ SCRIPTURE;
             ->pipe(ExtractUseStatements::class)
             ->pipe($pipe);
 
-        $ast = $pipeline->getContext()->ast;
+        $ast = $pipeline->getContext()->ast ?? [];
+        $uses = $this->extractUses($ast);
+        $namespace = $this->extractNamespace($ast);
         $seenAdoptionHint = [];
 
         return $pipeline
-            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $ast, &$seenAdoptionHint): Sin|Warning|null {
+            ->partitionMatches(function (MatchResult $match) use ($traitFqcn, $ast, $uses, $namespace, &$seenAdoptionHint): Sin|Warning|null {
                 $enumFqcn = $match->groups['enum_fqcn'];
 
                 // `$x === Foo::BAR` is only enum-case equality when Foo is an
@@ -204,6 +207,12 @@ SCRIPTURE;
                 // constants (and bogus `self::` resolutions on non-enums) are
                 // plain constant comparisons — never flag them.
                 if (! $this->isEnum($enumFqcn, $ast)) {
+                    return null;
+                }
+
+                // #66: the other operand is the enum's BACKING scalar, not an enum
+                // instance — `equals(?Enum)` would TypeError on it. Leave the `===`.
+                if ($this->operandIsBackingScalar($match->groups['start'] ?? '', $ast, $uses, $namespace)) {
                     return null;
                 }
 
@@ -232,6 +241,254 @@ SCRIPTURE;
                 return $this->adoptionHint($match, $traitFqcn);
             })
             ->judge();
+    }
+
+    /**
+     * #66: whether the non-enum operand of the comparison rooted at $startPos is
+     * a SCALAR (the enum's backing value) rather than an enum instance. The
+     * generated `equals(?Enum)` is typed for the enum, so rewriting a string/int
+     * operand to it TypeErrors — such comparisons must be left as `===`.
+     *
+     * @param  array<Node>  $ast
+     * @param  array<string, string>  $uses
+     */
+    private function operandIsBackingScalar(string $startPos, array $ast, array $uses, ?string $namespace): bool
+    {
+        $finder = new NodeFinder;
+        $start = (int) $startPos;
+        $cmp = null;
+
+        foreach ($finder->find($ast, static fn (Node $n): bool => $n instanceof Node\Expr\BinaryOp && (int) $n->getStartFilePos() === $start) as $node) {
+            $cmp = $node;
+            break;
+        }
+
+        if ($cmp === null) {
+            return false;
+        }
+
+        $operand = $this->nonEnumOperand($cmp, $finder);
+
+        return $operand !== null && $this->scalarTypeOfOperand($operand, $start, $ast, $finder, $uses, $namespace) !== null;
+    }
+
+    private function nonEnumOperand(Node $cmp, NodeFinder $finder): ?Node
+    {
+        foreach ($finder->find([$cmp], static fn (Node $n): bool =>
+            $n instanceof Node\Expr\BinaryOp\Identical
+            || $n instanceof Node\Expr\BinaryOp\NotIdentical
+            || $n instanceof Node\Expr\BinaryOp\Equal
+            || $n instanceof Node\Expr\BinaryOp\NotEqual
+        ) as $bin) {
+            $leftEnum = $bin->left instanceof Node\Expr\ClassConstFetch;
+            $rightEnum = $bin->right instanceof Node\Expr\ClassConstFetch;
+
+            if ($leftEnum && ! $rightEnum) {
+                return $bin->right;
+            }
+
+            if ($rightEnum && ! $leftEnum) {
+                return $bin->left;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The scalar type of $operand ('string'/'int'/…), or null when it is not
+     * provably a scalar (an enum instance, an object, or unresolved).
+     *
+     * @param  array<Node>  $ast
+     * @param  array<string, string>  $uses
+     */
+    private function scalarTypeOfOperand(Node $operand, int $pos, array $ast, NodeFinder $finder, array $uses, ?string $namespace): ?string
+    {
+        if ($operand instanceof Node\Scalar\String_) {
+            return 'string';
+        }
+
+        if ($operand instanceof Node\Scalar\Int_) {
+            return 'int';
+        }
+
+        if ($operand instanceof Node\Expr\Cast\String_) {
+            return 'string';
+        }
+
+        if ($operand instanceof Node\Expr\Cast\Int_) {
+            return 'int';
+        }
+
+        if ($operand instanceof Node\Expr\PropertyFetch
+            && $operand->var instanceof Node\Expr\Variable
+            && $operand->name instanceof Node\Identifier
+        ) {
+            $prop = $operand->name->toString();
+
+            // `$this->prop` — read the scalar property type from the enclosing class.
+            if ($operand->var->name === 'this') {
+                $class = $this->enclosingClass($pos, $ast, $finder);
+
+                return $class !== null ? $this->classScalarPropertyType($class, $prop) : null;
+            }
+
+            // `$x->prop` — resolve $x's (object) param type, then the property's
+            // scalar type via the index.
+            if (is_string($operand->var->name)) {
+                $ownerType = $this->objectParamFqcn($operand->var->name, $pos, $ast, $finder, $uses, $namespace);
+                $summary = $ownerType !== null ? $this->index?->classByFqcn($ownerType) : null;
+
+                return $summary->scalarPropertyTypes[$prop] ?? null;
+            }
+        }
+
+        if ($operand instanceof Node\Expr\Variable && is_string($operand->name)) {
+            $type = $this->scalarParamType($operand->name, $pos, $ast, $finder);
+
+            return $type;
+        }
+
+        return null;
+    }
+
+    /**
+     * The lowercased scalar type of param $name in the innermost function-like
+     * containing $pos, or null when it is not a scalar.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function scalarParamType(string $name, int $pos, array $ast, NodeFinder $finder): ?string
+    {
+        $type = $this->paramTypeNode($name, $pos, $ast, $finder);
+
+        if ($type instanceof Node\NullableType) {
+            $type = $type->type;
+        }
+
+        if ($type instanceof Node\Identifier) {
+            $lower = strtolower($type->toString());
+
+            return in_array($lower, ['string', 'int', 'float', 'bool'], true) ? $lower : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * The resolved FQCN of param $name when it is an OBJECT type, else null.
+     *
+     * @param  array<Node>  $ast
+     * @param  array<string, string>  $uses
+     */
+    private function objectParamFqcn(string $name, int $pos, array $ast, NodeFinder $finder, array $uses, ?string $namespace): ?string
+    {
+        $type = $this->paramTypeNode($name, $pos, $ast, $finder);
+
+        if ($type instanceof Node\NullableType) {
+            $type = $type->type;
+        }
+
+        return $type instanceof Node\Name ? ltrim(NameResolver::resolve($type->toString(), $uses, $namespace), '\\') : null;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function paramTypeNode(string $name, int $pos, array $ast, NodeFinder $finder): ?Node
+    {
+        $best = null;
+        $bestStart = -1;
+
+        $functions = array_merge(
+            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
+            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
+            $finder->findInstanceOf($ast, Node\Expr\Closure::class),
+            $finder->findInstanceOf($ast, Node\Expr\ArrowFunction::class),
+        );
+
+        foreach ($functions as $fn) {
+            $start = (int) $fn->getStartFilePos();
+
+            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
+                continue;
+            }
+
+            foreach ($fn->params as $param) {
+                if ($param->var instanceof Node\Expr\Variable && $param->var->name === $name && $param->type !== null) {
+                    $best = $param->type;
+                    $bestStart = $start;
+                }
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function enclosingClass(int $pos, array $ast, NodeFinder $finder): ?Node\Stmt\Class_
+    {
+        $best = null;
+        $bestStart = -1;
+
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            $start = (int) $class->getStartFilePos();
+
+            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
+                $best = $class;
+                $bestStart = $start;
+            }
+        }
+
+        return $best;
+    }
+
+    private function classScalarPropertyType(Node\Stmt\Class_ $class, string $property): ?string
+    {
+        foreach ($class->getProperties() as $prop) {
+            foreach ($prop->props as $declared) {
+                if ($declared->name->toString() === $property) {
+                    $type = $prop->type instanceof Node\NullableType ? $prop->type->type : $prop->type;
+
+                    return $type instanceof Node\Identifier && in_array(strtolower($type->toString()), ['string', 'int', 'float', 'bool'], true)
+                        ? strtolower($type->toString())
+                        : null;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @return array<string, string>  alias => FQCN
+     */
+    private function extractUses(array $ast): array
+    {
+        $uses = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
+            foreach ($use->uses as $u) {
+                $uses[$u->getAlias()->toString()] = $u->name->toString();
+            }
+        }
+
+        return $uses;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function extractNamespace(array $ast): ?string
+    {
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
+            return $ns->name?->toString();
+        }
+
+        return null;
     }
 
     private function buildPipe(int $minChain): FindChainedEnumEqualityComparisons
@@ -419,6 +676,8 @@ SCRIPTURE;
             return RepentanceResult::unrepentant('Unable to parse PHP file');
         }
 
+        $uses = $this->extractUses($ast);
+        $namespace = $this->extractNamespace($ast);
         $edits = [];
         $penance = [];
 
@@ -432,6 +691,12 @@ SCRIPTURE;
             // existing `Enum::equals(...)` static call already proves the trait
             // is in place, so it is always safe to re-anchor.
             if (! $fromStatic && $this->enumUsesTrait($groups['enum_fqcn'], $traitFqcn, $ast) !== true) {
+                continue;
+            }
+
+            // #66: the operand is the enum's backing scalar — `equals(?Enum)`
+            // would TypeError on it. Leave the `===`.
+            if (! $fromStatic && $this->operandIsBackingScalar($groups['start'] ?? '', $ast, $uses, $namespace)) {
                 continue;
             }
 

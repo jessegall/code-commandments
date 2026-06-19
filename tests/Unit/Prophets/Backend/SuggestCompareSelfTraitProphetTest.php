@@ -978,6 +978,44 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     /**
      * @return array{0: SuggestCompareSelfTraitProphet, 1: string, 2: string}
      */
+    public function test_does_not_rewrite_when_the_operand_is_the_backing_scalar(): void
+    {
+        // #66: equals(?Enum) TypeErrors on a string/int. Leave `===` when the
+        // operand is the backing value (a string param or a string property),
+        // but still rewrite when it is the enum itself.
+        $dir = sys_get_temp_dir() . '/cc-cself66-' . uniqid();
+        @mkdir($dir, 0755, true);
+
+        file_put_contents($dir . '/Trait.php', "<?php\nnamespace App\\Enums;\ntrait ComparesSelf { public function equals(?ChannelType \$o): bool { return \$this === \$o; } }\n");
+        $file = $dir . '/Svc.php';
+        $src = "<?php\nnamespace App;\nuse App\\Enums\\ComparesSelf;\n"
+            . "enum ChannelType: string { use ComparesSelf; case POS = 'pos'; case WEB = 'web'; }\n"
+            . "class ShopChannel { public string \$type = ''; }\n"
+            . "class Svc {\n"
+            . " public function a(string \$channel): bool { return \$channel === ChannelType::POS; }\n"
+            . " public function b(ShopChannel \$shopChannel): bool { return \$shopChannel->type === ChannelType::WEB; }\n"
+            . " public function c(ChannelType \$t): bool { return \$t === ChannelType::POS; }\n"
+            . "}\n";
+        file_put_contents($file, $src);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/Trait.php', $file]);
+        $prophet = new SuggestCompareSelfTraitProphet;
+        $prophet->setCodebaseIndex($index);
+        $prophet->configure(['trait' => 'App\\Enums\\ComparesSelf']);
+
+        $judgment = $prophet->judge($file, $src);
+        $this->assertCount(1, $judgment->warnings, 'Only the enum-typed operand (c) is flagged.');
+
+        $repented = $prophet->repent($file, $src)->newContent;
+        $this->assertStringContainsString('return $channel === ChannelType::POS;', $repented, 'string param left alone');
+        $this->assertStringContainsString('return $shopChannel->type === ChannelType::WEB;', $repented, 'string property left alone');
+        $this->assertStringContainsString('ChannelType::POS->equals($t)', $repented, 'enum operand rewritten');
+
+        @unlink($dir . '/Trait.php');
+        @unlink($file);
+        @rmdir($dir);
+    }
+
     private function indexedTrait(string $traitMethods): array
     {
         $dir = sys_get_temp_dir() . '/cc-cself-' . uniqid();

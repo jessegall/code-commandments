@@ -276,6 +276,7 @@ final class CodebaseIndex
                 filePath: $shell['file'],
                 traits: self::collectTraits($shell['classNode'], $shell['uses'], $shell['namespace']),
                 interfaces: self::collectInterfaces($shell['classNode'], $shell['uses'], $shell['namespace']),
+                scalarPropertyTypes: self::collectScalarPropertyTypes($shell['classNode']),
             );
         }
     }
@@ -808,6 +809,46 @@ final class CodebaseIndex
                 }
 
                 $types[$param->var->name] = NameResolver::resolve($typeName, $uses, $namespace);
+            }
+        }
+
+        return $types;
+    }
+
+    /**
+     * Property name => scalar type (string/int/float/bool/…) for the properties
+     * that {@see collectPropertyTypes()} skips — so a reader can tell a scalar
+     * property (an enum's backing value) from an object one.
+     *
+     * @return array<string, string>
+     */
+    private static function collectScalarPropertyTypes(Node\Stmt\Class_ $class): array
+    {
+        $types = [];
+
+        foreach ($class->getProperties() as $prop) {
+            $typeName = $prop->type !== null ? NameResolver::typeName($prop->type) : null;
+
+            if ($typeName !== null && self::isScalar($typeName)) {
+                foreach ($prop->props as $propProp) {
+                    $types[$propProp->name->toString()] = strtolower($typeName);
+                }
+            }
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor !== null) {
+            foreach ($ctor->params as $param) {
+                if ($param->flags === 0 || $param->type === null || ! $param->var instanceof Expr\Variable || ! is_string($param->var->name)) {
+                    continue;
+                }
+
+                $typeName = NameResolver::typeName($param->type);
+
+                if ($typeName !== null && self::isScalar($typeName)) {
+                    $types[$param->var->name] = strtolower($typeName);
+                }
             }
         }
 
