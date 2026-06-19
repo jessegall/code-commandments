@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_78 prophets._
+_79 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -540,6 +540,7 @@ _78 prophets._
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
+| `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
 | `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |
 | `PreferCollectionPipelineProphet` | — | Prefer a Collection chain over nested array_* compositions (they read inside-out) |
