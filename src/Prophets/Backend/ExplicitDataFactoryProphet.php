@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\DataFactorySynthesizer;
+use JesseGall\CodeCommandments\Support\DataFromSiteCensus;
 use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindImplicitDataFrom;
@@ -231,6 +232,15 @@ SCRIPTURE;
         // field new self() (new_mapping) and the toArray bypass still need a human.
         $autoFixable = in_array($match->groups['kind'], ['empty_from', 'new_default', 'nonarray'], true);
 
+        // #65: empty_from -> ::make() only works when the class keeps the
+        // FromArrayOnly trait; if it has an object ::from() site the trait (and
+        // make()) is withheld, so the rewrite is not auto-fixable here either.
+        if ($match->groups['kind'] === 'empty_from' && $this->index !== null
+            && isset(DataFromSiteCensus::objectFromShortNames($this->index, $this->resolveSuffixes())[$match->groups['target']])
+        ) {
+            $autoFixable = false;
+        }
+
         if ($this->config('severity', 'warning') === 'sin') {
             return $this->sinAt($match->line, $message, $match->content, $suggestion, $symbol, $autoFixable);
         }
@@ -331,13 +341,24 @@ SCRIPTURE;
         $penance = array_merge($penance, $synth['penance']);
         $createdFiles = $synth['createdFiles'];
 
-        // X::from(<empty array>) -> X::make()
+        // X::from(<empty array>) -> X::make(). #65: make() comes from the
+        // FromArrayOnly trait, which DataClassFromArrayOnly withholds from any
+        // class that still has an object ::from() site. Rewriting to ::make()
+        // there would call an undefined method, so gate on the SAME census.
+        $objectFrom = $this->index !== null
+            ? DataFromSiteCensus::objectFromShortNames($this->index, $this->resolveSuffixes())
+            : [];
+
         foreach ($nodeFinder->findInstanceOf($ast, Node\Expr\StaticCall::class) as $call) {
             if (! $call->name instanceof Node\Identifier || $call->name->toString() !== 'from'
                 || ! $call->class instanceof Node\Name || count($call->args) !== 1
                 || ! $call->args[0] instanceof Node\Arg || ! $this->isEmptyArray($call->args[0]->value)
             ) {
                 continue;
+            }
+
+            if (isset($objectFrom[$call->class->getLast()])) {
+                continue; // the trait (and make()) is withheld from this class
             }
 
             $edits[] = $this->replace($call, $call->class->getLast() . '::make()');

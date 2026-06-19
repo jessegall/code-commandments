@@ -245,6 +245,16 @@ final class FindImplicitDataFrom implements Pipe
             return 'array';
         }
 
+        // `request()` returns the Request object — `Data::from(request())` is an
+        // object dispatch (#64), just like `Data::from($request)`.
+        if ($arg instanceof Expr\FuncCall
+            && $arg->name instanceof Node\Name
+            && strtolower($arg->name->toString()) === 'request'
+            && $arg->args === []
+        ) {
+            return 'object';
+        }
+
         if ($arg instanceof Expr\New_) {
             return 'object';
         }
