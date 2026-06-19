@@ -15,12 +15,22 @@ use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 
 /**
  * Flag `new ValueBag($v ?? [])` / `new ValueBag(T_Array::coalesce($v))` — a value
- * object built from a nullable / shape-guarded value with the null-handling and
+ * object built from a nullable / shape-guarded ARRAY with the null-handling and
  * `@var` shape assertion inline at the call site. Suggest a total
  * `ValueBag::coalesce($value)` factory that owns that logic once.
+ *
+ * "Is X a value object I can hoist a coalesce factory onto?" is answered by REAL
+ * detection, not a class-name list: X must be ARRAY-CONSTRUCTIBLE — its effective
+ * constructor's first parameter accepts an array. That is resolved by reflection
+ * (which sees the whole inheritance chain, incl. vendor bases like Fluent /
+ * Collection whose `$attributes = []` ctor is untyped-with-array-default), with
+ * an AST fallback for classes that are not autoloadable. Spatie Data classes have
+ * typed promoted params (not an array ctor), so they are correctly excluded.
  *
  * The value-object analogue of PreferTypeCoalesce (#106, the T_* scalars) and the
  * producer side of PreferTotalOverNullable (#108).
@@ -28,9 +38,6 @@ use PhpParser\NodeFinder;
 #[IntroducedIn('1.145.0')]
 class PreferCoalesceFactoryProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
-    /** Base-class markers that make a class a coalescible value object. */
-    private const VALUE_BASES = ['Fluent', 'Data', 'Collection'];
-
     private ?CodebaseIndex $index = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
@@ -51,15 +58,15 @@ class PreferCoalesceFactoryProphet extends PhpCommandment implements NeedsCodeba
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('A value object / Fluent bag / collection is constructed from a null-coalescing or shape-guarding argument inline — `new Bag($v ?? [])`, `new Bag(T_Array::coalesce($v))`, `new Bag(is_array($v) ? $v : [])`. The null-handling (and the `@var` shape assertion) is repeated at the call site.')
-            ->leaveWhen('the value is already correctly typed (no `??` / shape guard) — `new Bag($alreadyArray)` has no ceremony to hoist; or the class is not a value object (a service/handler taking a nullable array config is not this smell).')
+            ->applyWhen('An array-constructible value object (a class whose constructor takes an array — a Fluent bag, a collection, your own `__construct(array $x)`) is built from a null-coalescing or shape-guarding argument inline: `new Bag($v ?? [])`, `new Bag(T_Array::coalesce($v))`, `new Bag(is_array($v) ? $v : [])`.')
+            ->leaveWhen('the value is already a correctly-typed array (no `??` / shape guard) — `new Bag($alreadyArray)` has no ceremony to hoist; or the class is not array-constructible (its constructor does not take an array), so it is not this pattern.')
             ->whenUnsure('add a total `static coalesce(mixed $value): static` factory on the class that does the null/shape handling once (`is_array($value) ? $value : T_Array::empty()`), and replace call sites with `Bag::coalesce($v)`.');
     }
 
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-Constructing a value object from a nullable or loosely-typed value spreads the
+Constructing a value object from a nullable or loosely-typed array spreads the
 same null-guard and shape assertion across every call site. A total static
 `::coalesce()` factory owns that logic once, so callers read as one expression.
 
@@ -90,13 +97,15 @@ max level because a decoded array is `array<array-key, mixed>`, not
 `array<string, mixed>`. The `coalesce()` factory is the one place the
 `@var array<string, mixed>` assertion belongs.
 
-WHAT FIRES — `new X(<arg>)` (or `X::make(<arg>)`) where X is a value object (a
-Fluent / Collection / Data subclass, resolved in-file or via the index) and the
-argument is a coalescing / shape guard: `$v ?? []`, `$v ?? T_*::EMPTY`,
-`T_*::coalesce($v)`, or `is_array($v) ? $v : []`.
+WHAT FIRES — `new X(<arg>)` (or `X::make(<arg>)`) where X is ARRAY-CONSTRUCTIBLE
+(its effective constructor's first parameter accepts an array — detected by
+reflection over the full inheritance chain, AST as a fallback) and the argument
+is an array coalescing / shape guard: `$v ?? []`, `$v ?? T_Array::EMPTY`,
+`T_Array::coalesce($v)`, or `is_array($v) ? $v : []`.
 
-WHAT DOES NOT — construction from an already-typed value (no guard), or a class
-that is not a value object. Advisory: adding the factory is a design call.
+WHAT DOES NOT — construction from an already-typed array (no guard); a class whose
+constructor does not take an array (a service, or a Spatie Data with typed promoted
+params); or an unresolvable class. Advisory: adding the factory is a design call.
 SCRIPTURE;
     }
 
@@ -108,15 +117,17 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        // Resolve names so `new X` / `extends` carry their FQCN for reflection
+        // and the index lookup.
+        (new NodeTraverser(new NameResolver(null, ['replaceNodes' => false])))->traverse($ast);
+
         $finder = new NodeFinder;
         $warnings = [];
 
         foreach ($finder->findInstanceOf($ast, Expr\New_::class) as $new) {
-            if (! $new->class instanceof Node\Name) {
-                continue;
+            if ($new->class instanceof Node\Name) {
+                $this->inspect($new->class, $new->getArgs(), $new->getStartLine(), $content, $ast, $finder, $warnings);
             }
-
-            $this->inspect($new->class, $new->getArgs(), $new->getStartLine(), $content, $ast, $finder, $warnings);
         }
 
         // X::make(<arg>) — the named-constructor twin.
@@ -139,116 +150,212 @@ SCRIPTURE;
      */
     private function inspect(Node\Name $class, array $args, int $line, string $content, array $ast, NodeFinder $finder, array &$warnings): void
     {
-        if (count($args) !== 1 || $args[0]->unpack || ! $this->isCoalescingArg($args[0]->value)) {
+        if (count($args) !== 1 || $args[0]->unpack || ! $this->isArrayCoalescingArg($args[0]->value)) {
             return;
         }
 
         $short = $class->getLast();
 
-        if (in_array(strtolower($short), ['self', 'static', 'parent'], true) || ! $this->isValueObject($class, $short, $ast, $finder)) {
+        if (in_array(strtolower($short), ['self', 'static', 'parent'], true) || ! $this->isArrayConstructible($class, $ast, $finder, 0)) {
             return;
         }
 
         $warnings[] = $this->warningAt(
             $line,
-            sprintf('`%s` is built from a null-coalescing / shape-guarded value inline — add a total `%s::coalesce($value)` factory that owns the null/shape handling once, and call `%s::coalesce($v)`.', $short, $short, $short),
+            sprintf('`%s` is built from a null-coalescing / shape-guarded array inline — add a total `%s::coalesce($value)` factory that owns the null/shape handling once, and call `%s::coalesce($v)`.', $short, $short, $short),
             $this->lineAt($content, $line),
             'coalesce-factory:' . $short,
         );
     }
 
     /**
-     * Whether $arg is a null-coalescing / shape-guard construction argument:
-     * `$v ?? <empty>`, `T_*::coalesce(...)`, or `is_array($v) ? $v : <empty>`.
+     * Whether $arg coalesces/guards a value into an ARRAY: `$v ?? []`,
+     * `$v ?? T_Array::EMPTY`, `T_Array::coalesce($v)`, or `is_array($v) ? $v : []`.
      */
-    private function isCoalescingArg(Expr $arg): bool
+    private function isArrayCoalescingArg(Expr $arg): bool
     {
         if ($arg instanceof Expr\BinaryOp\Coalesce) {
-            return $this->isEmptyish($arg->right);
+            return $this->isEmptyArray($arg->right);
         }
 
         if ($arg instanceof Expr\StaticCall
             && $arg->class instanceof Node\Name
+            && $arg->class->getLast() === 'T_Array'
             && $arg->name instanceof Node\Identifier
             && strtolower($arg->name->toString()) === 'coalesce'
-            && str_starts_with($arg->class->getLast(), 'T_')
         ) {
             return true;
         }
 
-        if ($arg instanceof Expr\Ternary
+        return $arg instanceof Expr\Ternary
             && $arg->else instanceof Expr
-            && $this->isEmptyish($arg->else)
+            && $this->isEmptyArray($arg->else)
             && $arg->cond instanceof Expr\FuncCall
             && $arg->cond->name instanceof Node\Name
-            && in_array(strtolower($arg->cond->name->toString()), ['is_array', 'is_string', 'is_int', 'is_iterable'], true)
-        ) {
-            return true;
-        }
-
-        return false;
+            && strtolower($arg->cond->name->toString()) === 'is_array';
     }
 
-    /**
-     * An "empty" default literal: `[]`/`''`/`0`/`0.0`/`false` or a
-     * `T_*::EMPTY`/`ZERO`/`FALSE` constant.
-     */
-    private function isEmptyish(Expr $expr): bool
+    private function isEmptyArray(Expr $expr): bool
     {
         if ($expr instanceof Expr\Array_) {
             return $expr->items === [];
         }
 
-        if ($expr instanceof Node\Scalar\String_) {
-            return $expr->value === '';
-        }
-
-        if ($expr instanceof Node\Scalar\Int_) {
-            return $expr->value === 0;
-        }
-
-        if ($expr instanceof Node\Scalar\Float_) {
-            return $expr->value === 0.0;
-        }
-
-        if ($expr instanceof Expr\ConstFetch) {
-            return strtolower($expr->name->toString()) === 'false';
-        }
-
-        if ($expr instanceof Expr\ClassConstFetch
+        return $expr instanceof Expr\ClassConstFetch
             && $expr->class instanceof Node\Name
+            && $expr->class->getLast() === 'T_Array'
             && $expr->name instanceof Node\Identifier
-        ) {
-            return str_starts_with($expr->class->getLast(), 'T_')
-                && in_array($expr->name->toString(), ['EMPTY', 'ZERO', 'FALSE'], true);
+            && $expr->name->toString() === 'EMPTY';
+    }
+
+    /**
+     * Whether X's EFFECTIVE constructor takes an array as its first parameter.
+     * Reflection resolves the whole inheritance chain (incl. vendor bases like
+     * Fluent / Collection). AST is the fallback when the class is not loadable.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function isArrayConstructible(Node\Name $class, array $ast, NodeFinder $finder, int $depth): bool
+    {
+        $reflected = $this->reflectArrayConstructible($this->fqcn($class));
+
+        if ($reflected !== null) {
+            return $reflected;
+        }
+
+        if ($depth > 10) {
+            return false;
+        }
+
+        $node = $this->findClassNode($class, $class->getLast(), $ast, $finder);
+
+        if ($node === null) {
+            return false;
+        }
+
+        $ctor = $node->getMethod('__construct');
+
+        if ($ctor !== null) {
+            return $this->astParamAcceptsArray($ctor->params);
+        }
+
+        // No own constructor — follow `extends`: reflect the parent (a loadable
+        // vendor base resolves here), else keep walking the AST chain.
+        if (! $node->extends instanceof Node\Name) {
+            return false;
+        }
+
+        return $this->isArrayConstructible($node->extends, $ast, $finder, $depth + 1);
+    }
+
+    /**
+     * Reflection verdict on whether $fqcn's effective constructor's first param
+     * accepts an array. Null when the class is not loadable (defer to AST).
+     */
+    private function reflectArrayConstructible(string $fqcn): ?bool
+    {
+        if ($fqcn === '' || ! class_exists($fqcn)) {
+            return null;
+        }
+
+        try {
+            $ctor = (new \ReflectionClass($fqcn))->getConstructor();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($ctor === null) {
+            return false;
+        }
+
+        $params = $ctor->getParameters();
+
+        return $params !== [] && $this->reflectionParamAcceptsArray($params[0]);
+    }
+
+    private function reflectionParamAcceptsArray(\ReflectionParameter $param): bool
+    {
+        $type = $param->getType();
+
+        if ($type instanceof \ReflectionNamedType && $this->isArrayTypeName($type->getName())) {
+            return true;
+        }
+
+        if ($type instanceof \ReflectionUnionType) {
+            foreach ($type->getTypes() as $member) {
+                if ($member instanceof \ReflectionNamedType && $this->isArrayTypeName($member->getName())) {
+                    return true;
+                }
+            }
+        }
+
+        // Untyped / nullable param with an array default — how Fluent / Collection
+        // declare `$attributes = []`.
+        if (($type === null || $type->allowsNull()) && $param->isDefaultValueAvailable()) {
+            try {
+                return is_array($param->getDefaultValue());
+            } catch (\Throwable) {
+                return false;
+            }
         }
 
         return false;
     }
 
     /**
-     * Whether $short is a value object — a class extending a Fluent / Collection /
-     * Data base, resolved from this file or the codebase index.
-     *
-     * @param  array<Node>  $ast
+     * @param  list<Node\Param>  $params
      */
-    private function isValueObject(Node\Name $class, string $short, array $ast, NodeFinder $finder): bool
+    private function astParamAcceptsArray(array $params): bool
     {
-        $node = $this->findClassNode($class, $short, $ast, $finder);
-
-        if ($node === null || ! $node->extends instanceof Node\Name) {
+        if ($params === []) {
             return false;
         }
 
-        $parent = $node->extends->getLast();
+        $param = $params[0];
 
-        foreach (self::VALUE_BASES as $base) {
-            if ($parent === $base || str_ends_with($parent, $base)) {
-                return true;
+        if ($this->astTypeIsArrayish($param->type)) {
+            return true;
+        }
+
+        // Untyped first param with an array default (`$attributes = []`).
+        return $param->type === null && $param->default instanceof Expr\Array_;
+    }
+
+    private function astTypeIsArrayish(?Node $type): bool
+    {
+        if ($type instanceof Node\NullableType) {
+            return $this->astTypeIsArrayish($type->type);
+        }
+
+        if ($type instanceof Node\Identifier) {
+            return $this->isArrayTypeName($type->toString());
+        }
+
+        if ($type instanceof Node\UnionType) {
+            foreach ($type->types as $member) {
+                if ($member instanceof Node\Identifier && $this->isArrayTypeName($member->toString())) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    private function isArrayTypeName(string $name): bool
+    {
+        return in_array(strtolower($name), ['array', 'iterable'], true);
+    }
+
+    private function fqcn(Node\Name $name): string
+    {
+        $resolved = $name->getAttribute('resolvedName');
+
+        if ($resolved instanceof Node\Name) {
+            return $resolved->toString();
+        }
+
+        return $name->isFullyQualified() ? ltrim($name->toString(), '\\') : $name->toString();
     }
 
     /**
@@ -262,10 +369,9 @@ SCRIPTURE;
             }
         }
 
-        $resolved = $class->getAttribute('resolvedName');
-        $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : ($class->isFullyQualified() ? ltrim($class->toString(), '\\') : null);
+        $fqcn = $this->fqcn($class);
 
-        if ($fqcn === null || $this->index === null) {
+        if ($this->index === null || $fqcn === '') {
             return null;
         }
 
@@ -286,6 +392,8 @@ SCRIPTURE;
         if ($fileAst === null) {
             return null;
         }
+
+        (new NodeTraverser(new NameResolver(null, ['replaceNodes' => false])))->traverse($fileAst);
 
         foreach ((new NodeFinder)->findInstanceOf($fileAst, Node\Stmt\Class_::class) as $node) {
             if ($node->name?->toString() === $short) {
