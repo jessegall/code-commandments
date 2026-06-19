@@ -157,6 +157,7 @@ return [
                 Backend\NoFacadesInServicesProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
                 Backend\PreferAndThenProphet::class,
+                Backend\PreferEmptyOverNullProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,
