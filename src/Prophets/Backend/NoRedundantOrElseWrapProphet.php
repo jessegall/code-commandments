@@ -197,7 +197,8 @@ SCRIPTURE;
                 continue;
             }
 
-            $wrap = $this->redundantWrap($args[0]->value, $wrapShortName);
+            $alternative = $args[0]->value;
+            $wrap = $this->redundantWrap($alternative, $wrapShortName);
 
             if ($wrap === null) {
                 continue;
@@ -213,6 +214,15 @@ SCRIPTURE;
                 'end' => (int) $wrap->getEndFilePos(),
                 'text' => substr($content, $innerStart, $innerEnd - $innerStart + 1),
             ];
+
+            // #101: the closure declared `: Option` because it used to RETURN an
+            // Option. Unwrapped, it returns the bare value, so that hint is now a
+            // type lie (`fn (): Option => $intReturningCall()`). Drop it.
+            $returnTypeEdit = $this->returnTypeRemoval($alternative, $content);
+
+            if ($returnTypeEdit !== null) {
+                $edits[] = $returnTypeEdit;
+            }
 
             $penance[] = sprintf('Unwrapped %s::%s(...) inside ->%s(...) — orElse lifts the bare value itself', $wrapShortName, $wrap->name->toString(), $call->name->toString());
         }
@@ -260,6 +270,35 @@ SCRIPTURE;
         }
 
         return $returned;
+    }
+
+    /**
+     * The edit that strips an arrow/closure's explicit return-type hint (the
+     * `: Option` between the parameter list and `=>`/`{`), or null when the
+     * callback declares no return type. Removes from the `:` through the type.
+     *
+     * @return array{start: int, end: int, text: string}|null
+     */
+    private function returnTypeRemoval(Expr $alternative, string $content): ?array
+    {
+        if (! $alternative instanceof Expr\ArrowFunction && ! $alternative instanceof Expr\Closure) {
+            return null;
+        }
+
+        $returnType = $alternative->returnType;
+
+        if ($returnType === null) {
+            return null;
+        }
+
+        $typeStart = (int) $returnType->getStartFilePos();
+        $colon = strrpos(substr($content, 0, $typeStart), ':');
+
+        if ($colon === false) {
+            return null;
+        }
+
+        return ['start' => $colon, 'end' => (int) $returnType->getEndFilePos(), 'text' => ''];
     }
 
     /**
