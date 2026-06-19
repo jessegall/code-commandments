@@ -6,11 +6,14 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
@@ -24,11 +27,37 @@ use PhpParser\ParserFactory;
  * small value object or a single type.
  */
 #[IntroducedIn('1.81.0')]
-class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepenter
+class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepenter, NeedsCodebaseIndex
 {
     private const DEFAULT_WARN_AT = 2;
 
     private const DEFAULT_SIN_AT = 3;
+
+    /** At/below this implementer-count an interface is "narrow" enough to narrow TO. */
+    private const DEFAULT_NARROW_CAP = 6;
+
+    /**
+     * Interfaces too BROAD to narrow a union to — retyping `A | B` to one of
+     * these silently WIDENS the type and loses precision (#62 critical caveat).
+     * Matched by short name; framework contract namespaces are refused wholesale.
+     */
+    private const OVER_BROAD_INTERFACES = [
+        'stringable', 'jsonserializable', 'serializable', 'countable',
+        'iteratoraggregate', 'iterator', 'traversable', 'arrayaccess',
+        'arrayable', 'jsonable', 'responsable', 'htmlable', 'renderable',
+    ];
+
+    private const OVER_BROAD_NAMESPACES = [
+        'Spatie\\LaravelData\\Contracts\\',
+        'Illuminate\\Contracts\\',
+    ];
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     /** Builtin union members that map cleanly to a php-types `T` case. */
     private const T_MAP = [
@@ -205,6 +234,11 @@ SCRIPTURE;
         // UnionCast-backed `Union` — keyed by union node id → its `T` members.
         $fixable = $this->fixableUnionFields($ast);
 
+        // For the #62 shared-interface narrowing, resolve member FQCNs against
+        // the file's namespace + imports.
+        $namespace = $this->fileNamespace($ast);
+        $uses = $this->fileUses($ast);
+
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
             // `T | null` is a simple nullable — semantically identical to `?T`,
             // which is exempt. Flagging one syntax but not the other is
@@ -237,7 +271,7 @@ SCRIPTURE;
                 }
 
                 $flaggedLines[$line] = true;
-                $this->emit($line, $count, $this->nativeAtoms($union), $content, $warnAt, $sinAt, $sins, $warnings, $fixable[spl_object_id($union)]['members'] ?? null);
+                $this->emit($line, $count, $this->nativeAtoms($union), $content, $warnAt, $sinAt, $sins, $warnings, $fixable[spl_object_id($union)]['members'] ?? null, $this->narrowCommonInterface($union, $uses, $namespace));
             }
         }
 
@@ -300,8 +334,9 @@ SCRIPTURE;
      * @param  list<\JesseGall\CodeCommandments\Results\Sin>  $sins
      * @param  list<\JesseGall\CodeCommandments\Results\Warning>  $warnings
      * @param  list<string>|null  $fixableMembers  `T` case names when this union is an auto-fixable Data property
+     * @param  array{fqcn: string, short: string}|null  $narrowInterface  the shared interface to narrow a class union to (#62)
      */
-    private function emit(int $line, int $count, array $atoms, string $content, int $warnAt, int $sinAt, array &$sins, array &$warnings, ?array $fixableMembers = null): void
+    private function emit(int $line, int $count, array $atoms, string $content, int $warnAt, int $sinAt, array &$sins, array &$warnings, ?array $fixableMembers = null, ?array $narrowInterface = null): void
     {
         $hasNull = in_array('null', $atoms, true);
         $isSin = $hasNull && $count >= $sinAt;
@@ -329,6 +364,21 @@ SCRIPTURE;
                 . sprintf(
                     ' Auto-fixable on this Spatie Data property → `repent` rewrites it to `#[WithCastAndTransformer(UnionCast::class, allowed: [%s])] public Union $…` (the Union sum type, enforced at hydration).',
                     $allowed,
+                );
+
+            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union', true);
+
+            return;
+        }
+
+        // #62: the members are project-owned classes that share a NARROW
+        // interface — retyping to it collapses the union with zero wrapping.
+        if ($narrowInterface !== null) {
+            $message = $this->message($count, $atoms, false)
+                . sprintf(
+                    ' These members all implement the narrow shared interface `%s` — retype to it. AUTO-FIXABLE: `repent` narrows the union to `%s`.',
+                    $narrowInterface['short'],
+                    $narrowInterface['short'],
                 );
 
             $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union', true);
@@ -372,6 +422,135 @@ SCRIPTURE;
         }
 
         return $head . ' It is always present (no null) but one-of-N types — that is ad-hoc polymorphism. If the members are CLASSES that are one concept (a leaf vs a nested group), give them a shared interface they all implement (introduce one if absent) and type as that — the `instanceof A || instanceof B` chains collapse to one; if they merely share behaviour, a `Union` sum type or a named value object; if they should be one type, pick one. (Add a `null` member and it becomes value-or-nothing → `Option`.)';
+    }
+
+    /**
+     * For a null-free union of project-owned CLASSES, the NARROW interface they
+     * all share (sealed/marker-like — implemented by few classes, never a
+     * framework-broad contract), or null. Retyping `A | B` to it is the clean
+     * fix (#62); over-broad interfaces are refused so the type is never widened.
+     *
+     * @param  array<string, string>  $uses
+     * @return array{fqcn: string, short: string}|null
+     */
+    private function narrowCommonInterface(Node\UnionType $union, array $uses, ?string $namespace): ?array
+    {
+        if ($this->index === null) {
+            return null;
+        }
+
+        $members = $this->classMemberFqcns($union, $uses, $namespace);
+
+        if (count($members) < 2) {
+            return null;
+        }
+
+        $common = $this->index->interfacesOf($members[0]);
+
+        foreach (array_slice($members, 1) as $fqcn) {
+            $common = array_values(array_intersect($common, $this->index->interfacesOf($fqcn)));
+        }
+
+        $cap = (int) $this->config('narrow_cap', self::DEFAULT_NARROW_CAP);
+        $best = null;
+        $bestCount = PHP_INT_MAX;
+
+        foreach ($common as $interface) {
+            if ($this->isOverBroad($interface)) {
+                continue;
+            }
+
+            $implementers = count($this->index->implementersOf($interface));
+
+            // 0 implementers means the index is missing it; only narrow to an
+            // interface whose implementer-set is genuinely tight.
+            if ($implementers > 0 && $implementers <= $cap && $implementers < $bestCount) {
+                $best = $interface;
+                $bestCount = $implementers;
+            }
+        }
+
+        return $best === null ? null : ['fqcn' => $best, 'short' => $this->shortFqcn($best)];
+    }
+
+    /**
+     * Resolved FQCNs of a union's members IFF EVERY member is a project-owned
+     * class (a native member is a `Node\Identifier`, not `Node\Name`, so any
+     * scalar/null member short-circuits this to an empty list).
+     *
+     * @param  array<string, string>  $uses
+     * @return list<string>
+     */
+    private function classMemberFqcns(Node\UnionType $union, array $uses, ?string $namespace): array
+    {
+        $fqcns = [];
+
+        foreach ($union->types as $type) {
+            if (! $type instanceof Node\Name) {
+                return [];
+            }
+
+            $fqcn = ltrim(NameResolver::resolve($type->toString(), $uses, $namespace), '\\');
+
+            if ($this->index?->classByFqcn($fqcn) === null) {
+                return []; // vendor / unknown — cannot analyse the hierarchy
+            }
+
+            $fqcns[] = $fqcn;
+        }
+
+        return $fqcns;
+    }
+
+    private function isOverBroad(string $interfaceFqcn): bool
+    {
+        if (in_array(strtolower($this->shortFqcn($interfaceFqcn)), self::OVER_BROAD_INTERFACES, true)) {
+            return true;
+        }
+
+        foreach (self::OVER_BROAD_NAMESPACES as $prefix) {
+            if (str_starts_with(ltrim($interfaceFqcn, '\\'), $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function shortFqcn(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function fileNamespace(array $ast): ?string
+    {
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
+            return $ns->name?->toString();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @return array<string, string>  alias => FQCN
+     */
+    private function fileUses(array $ast): array
+    {
+        $uses = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
+            foreach ($use->uses as $u) {
+                $uses[$u->getAlias()->toString()] = $u->name->toString();
+            }
+        }
+
+        return $uses;
     }
 
     /**
@@ -683,12 +862,33 @@ SCRIPTURE;
 
         $fixable = $this->fixableUnionFields($ast);
 
-        if ($fixable === []) {
+        // #62: null-free class unions that share a narrow interface — retype to it.
+        $namespace = $this->fileNamespace($ast);
+        $uses = $this->fileUses($ast);
+        $interfaceFixes = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
+            $narrow = $this->narrowCommonInterface($union, $uses, $namespace);
+
+            if ($narrow !== null) {
+                $interfaceFixes[] = ['typeNode' => $union, 'interface' => $narrow];
+            }
+        }
+
+        if ($fixable === [] && $interfaceFixes === []) {
             return RepentanceResult::unchanged();
         }
 
         $edits = [];
         $penance = [];
+        $interfaceImports = [];
+
+        foreach ($interfaceFixes as $fix) {
+            $type = $fix['typeNode'];
+            $edits[] = ['start' => $type->getStartFilePos(), 'end' => $type->getEndFilePos(), 'text' => $fix['interface']['short']];
+            $penance[] = "Narrowed a class union to its shared interface {$fix['interface']['short']}";
+            $interfaceImports[] = $fix['interface']['fqcn'];
+        }
 
         foreach ($fixable as $info) {
             $type = $info['typeNode'];
@@ -710,6 +910,21 @@ SCRIPTURE;
 
         foreach ($edits as $edit) {
             $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        // #62: import each narrow interface so its short name resolves — unless it
+        // already lives in the file's own namespace (where the short name resolves
+        // with no import). ensureUse itself skips an already-present import.
+        foreach (array_unique($interfaceImports) as $interfaceFqcn) {
+            $interfaceNs = ($pos = strrpos($interfaceFqcn, '\\')) !== false ? substr($interfaceFqcn, 0, $pos) : null;
+
+            if ($interfaceNs !== ($namespace ?? null)) {
+                $content = $this->ensureUse($content, $interfaceFqcn);
+            }
+        }
+
+        if ($fixable === []) {
+            return RepentanceResult::absolved($content, $penance);
         }
 
         // Imports. T and the Spatie attribute are known; Union/UnionCast live in
