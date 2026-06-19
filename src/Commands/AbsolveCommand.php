@@ -19,6 +19,7 @@ class AbsolveCommand extends Command
 {
     protected $signature = 'commandments:absolve
         {--fingerprint= : The finding fingerprint shown by judge --next}
+        {--at= : Target a finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; combine with --prophet to disambiguate ties}
         {--reason= : Why the rule does not apply here (required)}
         {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}
         {--warnings : Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)}
@@ -87,16 +88,28 @@ class AbsolveCommand extends Command
             return self::SUCCESS;
         }
 
+        $absolver = new Absolver($manager, $registry, $tracker);
         $fingerprint = $this->option('fingerprint');
+        $at = $this->option('at');
+
+        // Resolve --at=path:line[-to] to a fingerprint (the locator judge prints).
+        if ((! is_string($fingerprint) || T_String::isBlank($fingerprint)) && is_string($at) && T_String::isNotBlank($at)) {
+            $resolved = $this->resolveAt($absolver, $at);
+
+            if ($resolved === null) {
+                return self::FAILURE;
+            }
+
+            $fingerprint = $resolved;
+        }
 
         if (! is_string($fingerprint) || T_String::isBlank($fingerprint)) {
-            $this->error('--fingerprint is required (copy it from judge --next).');
+            $this->error('Pass --fingerprint=<hash> or --at=path:line (copy either from judge --next).');
 
             return self::FAILURE;
         }
 
-        $result = (new Absolver($manager, $registry, $tracker))
-            ->absolve(trim($fingerprint), $this->option('reason'), $untilPush);
+        $result = $absolver->absolve(trim($fingerprint), $this->option('reason'), $untilPush);
 
         if ($result['status'] === Absolver::STATUS_OK) {
             $this->info($result['message']);
@@ -107,5 +120,48 @@ class AbsolveCommand extends Command
         $this->error($result['message']);
 
         return self::FAILURE;
+    }
+
+    /**
+     * Resolve a `--at=path:line[-to]` locator to a single finding fingerprint,
+     * printing an error (and returning null) when it is malformed, matches
+     * nothing, or is ambiguous (narrow with --prophet).
+     */
+    private function resolveAt(Absolver $absolver, string $at): ?string
+    {
+        $loc = Absolver::parseLocator($at);
+
+        if ($loc === null) {
+            $this->error('--at must be path:line or path:from-to (e.g. --at=src/Foo.php:32).');
+
+            return null;
+        }
+
+        $prophet = $this->option('prophet');
+        $prophetFilter = is_string($prophet) && $prophet !== '' ? $prophet : null;
+
+        $unique = [];
+
+        foreach ($absolver->findingsAt($loc['path'], $loc['from'], $loc['to'], $prophetFilter) as $finding) {
+            $unique[$finding->fingerprint] = $finding;
+        }
+
+        if ($unique === []) {
+            $this->error("No live finding at {$at}" . ($prophetFilter !== null ? " for a prophet matching '{$prophetFilter}'" : '') . '. Run judge --next to see current findings.');
+
+            return null;
+        }
+
+        if (count($unique) > 1) {
+            $this->error("Multiple findings at {$at} — narrow with --prophet=NAME:");
+
+            foreach ($unique as $finding) {
+                $this->line("  - {$finding->prophetShort} ({$finding->location()})");
+            }
+
+            return null;
+        }
+
+        return array_values($unique)[0]->fingerprint;
     }
 }
