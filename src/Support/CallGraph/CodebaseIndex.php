@@ -933,7 +933,30 @@ final class CodebaseIndex
             assignments: $assignments,
             filePath: $shell['file'],
             line: $method->getStartLine(),
+            returnInnerType: self::returnInnerType($method, $shell['uses'], $shell['namespace']),
         );
+    }
+
+    /**
+     * The resolved FQCN of the single generic in a `@return Wrapper<Inner>`
+     * docblock (e.g. `@return Option<NodeDescriptor>` -> the NodeDescriptor
+     * FQCN). Powers unwrap-chain owner resolution (`$opt->getOrThrow()->m()`).
+     *
+     * @param  array<string, string>  $uses
+     */
+    private static function returnInnerType(Node\Stmt\ClassMethod $method, array $uses, ?string $namespace): ?string
+    {
+        $doc = $method->getDocComment();
+
+        if ($doc === null) {
+            return null;
+        }
+
+        if (preg_match('/@return\s+[\\\\\w]+<\s*([\\\\\w]+)\s*>/', $doc->getText(), $m) !== 1) {
+            return null;
+        }
+
+        return NameResolver::resolve($m[1], $uses, $namespace);
     }
 
     /**

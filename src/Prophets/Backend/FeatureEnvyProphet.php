@@ -199,7 +199,12 @@ SCRIPTURE;
                 continue;
             }
 
-            $envy = $this->firstForeignQuery($method, $paramOwners, $propertyOwners);
+            // #75: locals assigned from an `Option<T>`-returning call, keyed to
+            // the type you get when you unwrap them — so a query over
+            // `$opt->getOrThrow()->coll()` resolves its owner.
+            $unwrapOwners = $this->localUnwrapOwners($method, $paramOwners, $propertyOwners);
+
+            $envy = $this->firstForeignQuery($method, $paramOwners, $propertyOwners, $unwrapOwners);
 
             if ($envy !== null) {
                 $warnings[] = $this->warningAt(
@@ -309,7 +314,7 @@ SCRIPTURE;
      * @param  array<string, string>  $propertyOwners
      * @return array{owner: string, access: string}|null
      */
-    private function firstForeignQuery(Node\Stmt\ClassMethod $method, array $paramOwners, array $propertyOwners): ?array
+    private function firstForeignQuery(Node\Stmt\ClassMethod $method, array $paramOwners, array $propertyOwners, array $unwrapOwners = []): ?array
     {
         $finder = new NodeFinder;
 
@@ -328,7 +333,7 @@ SCRIPTURE;
                 continue;
             }
 
-            $owner = $this->ownerOfCollectionAccess($call->args[$collectionArg]->value, $paramOwners, $propertyOwners);
+            $owner = $this->ownerOfCollectionAccess($call->args[$collectionArg]->value, $paramOwners, $propertyOwners, $unwrapOwners);
 
             if ($owner === null) {
                 continue;
@@ -357,7 +362,7 @@ SCRIPTURE;
                 continue;
             }
 
-            $owner = $this->ownerOfCollectionAccess($call->args[0]->value, $paramOwners, $propertyOwners);
+            $owner = $this->ownerOfCollectionAccess($call->args[0]->value, $paramOwners, $propertyOwners, $unwrapOwners);
 
             if ($owner !== null) {
                 return ['owner' => $owner, 'access' => $this->describeAccess($call->args[0]->value)];
@@ -409,7 +414,7 @@ SCRIPTURE;
      * @param  array<string, string>  $paramOwners
      * @param  array<string, string>  $propertyOwners
      */
-    private function ownerOfCollectionAccess(Expr $expr, array $paramOwners, array $propertyOwners): ?string
+    private function ownerOfCollectionAccess(Expr $expr, array $paramOwners, array $propertyOwners, array $unwrapOwners = []): ?string
     {
         if (! $expr instanceof Expr\PropertyFetch && ! $expr instanceof Expr\MethodCall) {
             return null;
@@ -464,7 +469,95 @@ SCRIPTURE;
             return $propertyOwners[$root->name->toString()] ?? null;
         }
 
+        // #75: `$opt->getOrThrow()->member` — the collection is reached by
+        // UNWRAPPING an Option<T>. $opt's unwrapped owner type comes from the
+        // `Option<T>`-returning call it was assigned from (resolved via the index
+        // return-generic). A query over it is still feature envy on T.
+        if ($root instanceof Expr\MethodCall
+            && $root->name instanceof Node\Identifier
+            && in_array($root->name->toString(), $this->unwrapMethods(), true)
+            && $root->args === []
+            && $root->var instanceof Expr\Variable
+            && is_string($root->var->name)
+        ) {
+            return $unwrapOwners[$root->var->name] ?? null;
+        }
+
         return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function unwrapMethods(): array
+    {
+        $methods = $this->config('unwrap_methods', ['getOrThrow', 'getOrFail', 'unwrap']);
+
+        return is_array($methods) && $methods !== [] ? array_values(array_map('strval', $methods)) : ['getOrThrow', 'getOrFail', 'unwrap'];
+    }
+
+    /**
+     * Local vars assigned from an `Option<T>`-returning call, mapped to T's FQCN
+     * (the type you get when you unwrap them) — for the #75 unwrap-chain query.
+     *
+     * @param  array<string, string>  $paramOwners
+     * @param  array<string, string>  $propertyOwners
+     * @return array<string, string>
+     */
+    private function localUnwrapOwners(Node\Stmt\ClassMethod $method, array $paramOwners, array $propertyOwners): array
+    {
+        if ($this->index === null || $method->stmts === null) {
+            return [];
+        }
+
+        $owners = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($method->stmts, Expr\Assign::class) as $assign) {
+            if (! $assign->var instanceof Expr\Variable || ! is_string($assign->var->name)) {
+                continue;
+            }
+
+            $inner = $this->returnInnerTypeOfCall($assign->expr, $paramOwners, $propertyOwners);
+
+            if ($inner !== null && $this->index->classByFqcn(ltrim($inner, '\\')) !== null) {
+                $owners[$assign->var->name] = $inner;
+            }
+        }
+
+        return $owners;
+    }
+
+    /**
+     * The `@return Wrapper<T>` inner FQCN of the method $expr calls, when $expr is
+     * `$obj->method(...)` and $obj resolves to a project type.
+     *
+     * @param  array<string, string>  $paramOwners
+     * @param  array<string, string>  $propertyOwners
+     */
+    private function returnInnerTypeOfCall(Expr $expr, array $paramOwners, array $propertyOwners): ?string
+    {
+        if (! $expr instanceof Expr\MethodCall || ! $expr->name instanceof Node\Identifier) {
+            return null;
+        }
+
+        $ownerType = null;
+
+        if ($expr->var instanceof Expr\Variable && is_string($expr->var->name)) {
+            $ownerType = $paramOwners[$expr->var->name] ?? null;
+        } elseif ($expr->var instanceof Expr\PropertyFetch
+            && $expr->var->var instanceof Expr\Variable && $expr->var->var->name === 'this'
+            && $expr->var->name instanceof Node\Identifier
+        ) {
+            $ownerType = $propertyOwners[$expr->var->name->toString()] ?? null;
+        }
+
+        if ($ownerType === null) {
+            return null;
+        }
+
+        $summary = $this->index?->classByFqcn(ltrim($ownerType, '\\'));
+
+        return $summary?->methods[$expr->name->toString()]?->returnInnerType;
     }
 
     private function describeAccess(Expr $expr): string
