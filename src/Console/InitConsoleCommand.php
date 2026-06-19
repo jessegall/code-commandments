@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
+use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
@@ -40,6 +41,7 @@ class InitConsoleCommand extends Command
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
         $this->installCommitHook($basePath, $force, $output);
+        $this->ensureGitignore($basePath, $output);
 
         $output->writeln(T_String::empty());
         $output->writeln('Done! Next steps:');
@@ -53,6 +55,19 @@ class InitConsoleCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function ensureGitignore(string $basePath, OutputInterface $output): void
+    {
+        $status = (new GitignoreInstaller())->ensure($basePath);
+
+        match ($status) {
+            GitignoreInstaller::STATUS_INSTALLED => $output->writeln('Created .gitignore with code-commandments state entries'),
+            GitignoreInstaller::STATUS_APPENDED => $output->writeln('Added code-commandments state entries to .gitignore'),
+            GitignoreInstaller::STATUS_UPDATED => $output->writeln('Refreshed code-commandments state entries in .gitignore'),
+            GitignoreInstaller::STATUS_ALREADY_PRESENT => $output->writeln('.gitignore already ignores code-commandments state'),
+            GitignoreInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .gitignore — check permissions.'),
+        };
     }
 
     private function installCommitHook(string $basePath, bool $force, OutputInterface $output): void
