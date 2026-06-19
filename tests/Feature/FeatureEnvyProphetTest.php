@@ -132,6 +132,36 @@ class FeatureEnvyProphetTest extends TestCase
 
     // ── #61: false-positive refinements ──────────────────────────────────
 
+    public function test_flags_a_foreach_search_over_a_foreign_collection(): void
+    {
+        // #95: `foreach ($descriptor->outputs as $o) { if (…) return $o; }` is a
+        // SEARCH over another object's collection — a query that belongs on it
+        // (NodeDescriptor::findOutput). A plain foreach doing own work is not.
+        $dir = sys_get_temp_dir() . '/cc-fe95-' . uniqid();
+        @mkdir($dir, 0755, true);
+        $dir = realpath($dir);
+        $ns = 'JesseGall\\CodeCommandments\\Tests\\Fixtures\\Backend\\Sinful\\FeatureEnvy';
+
+        file_put_contents("$dir/NodeDescriptor.php", "<?php\nnamespace {$ns};\nclass NodeDescriptor { public array \$outputs = []; }\n");
+        file_put_contents("$dir/Registry.php", "<?php\nnamespace {$ns};\nclass Registry {\n public function findOutputSocket(NodeDescriptor \$descriptor, string \$portName) {\n  foreach (\$descriptor->outputs as \$output) {\n   if (\$output->name === \$portName) { return \$output; }\n  }\n  return null;\n }\n}\n");
+        file_put_contents("$dir/Worker.php", "<?php\nnamespace {$ns};\nclass Worker {\n public function run(NodeDescriptor \$descriptor) { foreach (\$descriptor->outputs as \$o) { \$this->p(\$o); } }\n public function p(\$x) {}\n}\n");
+
+        $registry = new ProphetRegistry;
+        $manager = new ScrollManager($registry, new GenericFileScanner);
+        $registry->registerMany('t', [FeatureEnvyProphet::class => []]);
+        $registry->setScrollConfig('t', ['path' => $dir, 'extensions' => ['php']]);
+
+        $results = $manager->judgeScroll('t');
+
+        $this->assertNotEmpty($this->warningsFor($results, "$dir/Registry.php"), 'a foreach search over a foreign collection is feature envy.');
+        $this->assertEmpty($this->warningsFor($results, "$dir/Worker.php"), 'a plain foreach doing own work is not.');
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
+
     public function test_does_not_warn_on_a_call_to_an_unindexed_method(): void
     {
         // Regression: resolving a call's @return generic must not emit an
