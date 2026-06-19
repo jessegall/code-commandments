@@ -7,10 +7,8 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
-use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
-use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
@@ -34,7 +32,7 @@ use Throwable;
  * intentionally not implemented — that is where false positives breed.
  */
 #[IntroducedIn('1.125.0')]
-class RegistryReturnContractProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
+class RegistryReturnContractProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
     private const DEFAULT_MARKERS = ['Registry'];
 
@@ -64,7 +62,7 @@ class RegistryReturnContractProphet extends PhpCommandment implements SinRepente
     {
         return Advisory::make()
             ->applyWhen('A PUBLIC getter on a class marked as a `Registry` (a base class named `Registry` or extending one, a `Registry` interface, or a `#[Registry]` attribute) returns `Option<T>` or `T | null`. A registry is a total lookup — a miss is a wiring bug, so it should return T or throw, with a `has()` companion.')
-            ->leaveWhen('the method NAME announces nullability is normal — `find*`, `search*`, `try*`, `lookup*`, `*OrNull`, `*OrDefault` — those are genuine value-or-nothing lookups, not the registry contract.')
+            ->leaveWhen('the method NAME announces nullability is normal — `find*`, `search*`, `try*`, `lookup*`, `*OrNull`, `*OrDefault`, or a `<thing>For<Other>` directional lookup (`keyForClass`, `classForKey`) — those are genuine value-or-nothing finders, not the registry contract.')
             ->whenUnsure('if a miss means "you asked for something that was never registered" (a bug), return T and throw; if a miss is an expected, branched-on outcome (a cache, a finder), it is not a registry getter — rename it or drop the marker.');
     }
 
@@ -104,14 +102,16 @@ class named `Registry` or extending one, an interface named `Registry`, or
 `#[Registry]`) whose return type is `Option<T>`, `?T`, or `T | null`.
 
 WHAT DOES NOT — a finder-named getter (`find*`/`search*`/`try*`/`lookup*`/
-`*OrNull`/`*OrDefault`: a `findByEmail(): ?User` is supposed to miss), a
+`*OrNull`/`*OrDefault`, or a `<thing>For<Other>` directional lookup like
+`keyForClass`/`classForKey`: the absence is a real, handled outcome), a
 non-public method, a `bool` `has()`/`is()`, or an `Option` used only INTERNALLY
 (a private memo field). The marker is the opt-in, so there is no "is this really
 a registry" guessing.
 
-[AUTO-FIXABLE] for a single-return getter: `repent` retypes it to T and wraps the
-return (`->getOrThrow()` for an Option, `?? throw` for a nullable). Add the
-`has()` companion by hand.
+NOT auto-fixable — retyping a maybe-getter to throw CHANGES RUNTIME BEHAVIOUR
+(callers handling the miss would suddenly throw). Resolve by hand: if a miss is a
+wiring bug, return T and throw with a `has()` companion; if a miss is expected,
+it is a finder — rename it (`find*`/`*ForX`/…) or drop the marker.
 SCRIPTURE;
     }
 
@@ -140,11 +140,11 @@ SCRIPTURE;
                 $name = $method->name->toString();
                 $sins[] = $this->sinAt(
                     $method->getStartLine(),
-                    sprintf('Registry getter %s() returns %s — a registry returns the item or throws. Retype it to T (throw on a miss) and add a `has%s()` companion.', $name, $kind === 'option' ? 'an Option' : 'a nullable', ucfirst($name)),
+                    sprintf('Registry getter %s() returns %s. If a miss is a wiring bug, return T and throw, with a `has%s()` companion. If a miss is a genuine, handled outcome (callers branch on null / `?->` / `?? default`), this is a FINDER, not a registry getter — rename it (`find*`/`try*`/`*ForX`/`*OrNull`) or drop the marker. Resolve by hand: retyping to throw changes runtime behaviour, so it is deliberately not auto-fixed.', $name, $kind === 'option' ? 'an Option' : 'a nullable', ucfirst($name)),
                     $this->lineAt($content, $method->getStartLine()),
                     null,
                     'registry-return:' . $name,
-                    $this->isAutoFixable($method, $kind),
+                    false,
                 );
             }
         }
@@ -342,150 +342,15 @@ SCRIPTURE;
             }
         }
 
-        return str_ends_with($lower, 'ornull') || str_ends_with($lower, 'ordefault');
-    }
-
-    /**
-     * Auto-fixable only for a single-return getter whose target type T is known:
-     * a nullable (T is the non-null native type) or an `Option<T>` with a
-     * `@return Option<T>` docblock.
-     */
-    private function isAutoFixable(Node\Stmt\ClassMethod $method, string $kind): bool
-    {
-        if ($this->singleReturn($method) === null) {
-            return false;
+        if (str_ends_with($lower, 'ornull') || str_ends_with($lower, 'ordefault')) {
+            return true;
         }
 
-        return $kind === 'nullable'
-            ? $this->nonNullNativeType($method->returnType) !== null
-            : $this->optionInnerType($method) !== null;
-    }
-
-    public function canRepent(string $filePath): bool
-    {
-        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
-    }
-
-    public function repent(string $filePath, string $content): RepentanceResult
-    {
-        if (! $this->canRepent($filePath)) {
-            return RepentanceResult::unchanged();
-        }
-
-        $ast = $this->parse($content);
-
-        if ($ast === null) {
-            return RepentanceResult::unrepentant('Unable to parse PHP file');
-        }
-
-        $exception = (string) $this->config('miss_exception', '\\RuntimeException');
-        $unwrap = (string) $this->config('unwrap_method', 'getOrThrow');
-        $edits = [];
-        $penance = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            if (! $this->isRegistry($class, $ast)) {
-                continue;
-            }
-
-            foreach ($class->getMethods() as $method) {
-                $kind = $this->leakyGetter($method);
-
-                if ($kind === null || ! $this->isAutoFixable($method, $kind)) {
-                    continue;
-                }
-
-                $return = $this->singleReturn($method);
-                $type = $method->returnType;
-
-                if ($return === null || $return->expr === null || $type === null) {
-                    continue;
-                }
-
-                $target = $kind === 'nullable' ? $this->nonNullNativeType($type) : $this->optionInnerType($method);
-
-                // Retype to T.
-                $edits[] = ['start' => (int) $type->getStartFilePos(), 'end' => (int) $type->getEndFilePos(), 'text' => (string) $target];
-
-                // Wrap the returned expression. A trailing `?? null` is stripped
-                // so we get `$x[$k] ?? throw`, not `$x[$k] ?? null ?? throw`.
-                $expr = $return->expr;
-
-                if ($kind === 'nullable'
-                    && $expr instanceof Node\Expr\BinaryOp\Coalesce
-                    && $expr->right instanceof Node\Expr\ConstFetch
-                    && strtolower($expr->right->name->toString()) === 'null'
-                ) {
-                    $expr = $expr->left;
-                }
-
-                $exprSrc = substr($content, (int) $expr->getStartFilePos(), (int) $expr->getEndFilePos() - (int) $expr->getStartFilePos() + 1);
-                $wrapped = $kind === 'option'
-                    ? sprintf('(%s)->%s()', $exprSrc, $unwrap)
-                    : sprintf('%s ?? throw new %s(%s)', $exprSrc, $exception, var_export(sprintf('%s: no entry for the requested key', $method->name->toString()), true));
-
-                $edits[] = ['start' => (int) $return->expr->getStartFilePos(), 'end' => (int) $return->expr->getEndFilePos(), 'text' => $wrapped];
-
-                $penance[] = sprintf('Retyped %s() to %s and made it return-or-throw (add a has%s() companion by hand)', $method->name->toString(), $target, ucfirst($method->name->toString()));
-            }
-        }
-
-        if ($edits === []) {
-            return RepentanceResult::unchanged();
-        }
-
-        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
-
-        foreach ($edits as $edit) {
-            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
-        }
-
-        return RepentanceResult::absolved($content, $penance);
-    }
-
-    private function singleReturn(Node\Stmt\ClassMethod $method): ?Node\Stmt\Return_
-    {
-        if ($method->stmts === null) {
-            return null;
-        }
-
-        $returns = (new NodeFinder)->findInstanceOf($method->stmts, Node\Stmt\Return_::class);
-
-        return count($returns) === 1 ? $returns[0] : null;
-    }
-
-    private function nonNullNativeType(?Node $type): ?string
-    {
-        if ($type instanceof Node\NullableType) {
-            $type = $type->type;
-        } elseif ($type instanceof Node\UnionType) {
-            $members = array_values(array_filter($type->types, static fn (Node $m): bool => ! ($m instanceof Node\Identifier && strtolower($m->toString()) === 'null')));
-
-            if (count($members) !== 1) {
-                return null;
-            }
-
-            $type = $members[0];
-        } else {
-            return null;
-        }
-
-        if ($type instanceof Node\Identifier) {
-            return $type->toString();
-        }
-
-        return $type instanceof Node\Name ? $type->toString() : null;
-    }
-
-    private function optionInnerType(Node\Stmt\ClassMethod $method): ?string
-    {
-        $doc = $method->getDocComment();
-
-        if ($doc === null) {
-            return null;
-        }
-
-        return preg_match('/@return\s+[\\\\\w]+<\s*([\\\\\w]+)\s*>/', $doc->getText(), $m) === 1 ? $m[1] : null;
+        // #114: a `<thing>For<Other>` directional lookup (keyForClass,
+        // classForKey, slugForToken, resourceTypeForModel) is a finder — "the X
+        // for Y, if any" — whose absence is a real, handled outcome, not a
+        // registry's must-exist get(). Treat it like find*/try*.
+        return preg_match('/[a-z0-9]For[A-Z]/', $name) === 1;
     }
 
     /**
