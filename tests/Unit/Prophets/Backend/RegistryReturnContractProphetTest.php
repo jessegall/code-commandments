@@ -37,7 +37,7 @@ class RegistryReturnContractProphetTest extends TestCase
     {
         // #103: the idiomatic abstract-base convention — `class FooRegistry
         // extends Registry` — carries the marker via the base class name.
-        $judgment = $this->judge('class TriggerRegistry extends Registry { public function classForKey(string $k): Option { return $this->find($k); } }');
+        $judgment = $this->judge('class TriggerRegistry extends Registry { public function pipeline(string $k): Option { return $this->resolve($k); } }');
 
         $this->assertCount(1, $judgment->sins);
         $this->assertStringContainsString('returns an Option', $judgment->sins[0]->message);
@@ -77,28 +77,23 @@ class RegistryReturnContractProphetTest extends TestCase
         $this->assertTrue($this->judge('class R implements Registry { public function has(string $k): bool { return true; } }')->isRighteous());
     }
 
-    public function test_repent_retypes_and_wraps_an_option_getter(): void
+    public function test_leaves_directional_for_lookups(): void
     {
-        $src = "<?php\nclass R implements Registry {\n /** @return Option<PipelineSpec> */\n public function pipeline(string \$c): Option { return \$this->resolve(\$c); }\n}\n";
-
-        $result = $this->prophet->repent('/x.php', $src);
-
-        $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('public function pipeline(string $c): PipelineSpec', $result->newContent);
-        $this->assertStringContainsString('return ($this->resolve($c))->getOrThrow();', $result->newContent);
+        // #114: a `<thing>For<Other>` reverse/directional lookup is a finder —
+        // its miss is a real, handled outcome — not a registry must-exist getter.
+        $this->assertTrue($this->judge('class R implements Registry { public function keyForClass(string $c): ?string { return $this->keys[$c] ?? null; } }')->isRighteous());
+        $this->assertTrue($this->judge('class R implements Registry { public function classForKey(string $k): Option { return $this->byKey($k); } }')->isRighteous());
+        $this->assertTrue($this->judge('class R implements Registry { public function resourceTypeForModel(string $m): ?string { return null; } }')->isRighteous());
     }
 
-    public function test_repent_retypes_and_throws_for_a_nullable_getter(): void
+    public function test_is_not_auto_fixable(): void
     {
-        $src = "<?php\nclass R implements Registry {\n public function tag(string \$k): ?Tag { return \$this->tags[\$k] ?? null; }\n}\n";
+        // #114: retyping a maybe-getter to throw changes runtime behaviour, so
+        // the sin is deliberately NOT auto-fixed — it must be resolved by hand.
+        $judgment = $this->judge('class R implements Registry { public function pipeline(string $c): Option { return $this->resolve($c); } }');
 
-        $result = $this->prophet->repent('/x.php', $src);
-
-        $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('public function tag(string $k): Tag', $result->newContent);
-        $this->assertStringContainsString('?? throw new \\RuntimeException(', $result->newContent);
-        $this->assertStringNotContainsString('?? null ??', $result->newContent);
-        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($result->newContent));
+        $this->assertCount(1, $judgment->sins);
+        $this->assertFalse($judgment->sins[0]->autoFixable);
     }
 
     private function judge(string $body): Judgment

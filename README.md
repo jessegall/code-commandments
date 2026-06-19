@@ -565,7 +565,7 @@ _79 prophets._
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
 | `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |
-| `RegistryReturnContractProphet` | Yes | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
+| `RegistryReturnContractProphet` | — | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
 | `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
 | `ResolverPatternProphet` | — | Drive first-match dispatch and predicate code into the resolver + Predicate pattern |
