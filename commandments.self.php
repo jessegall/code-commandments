@@ -86,6 +86,8 @@ return [
                 Backend\ThrowOnUnhandledCaseProphet::class,
                 Backend\PreferTotalOverNullableProphet::class,
                 Backend\DuplicateCodeProphet::class,
+                Backend\PreferCollectionPipelineProphet::class,
+                Backend\PreferFirstClassCallableProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
                 Backend\NoOptionToNullProphet::class,

@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_75 prophets._
+_77 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -541,12 +541,14 @@ _75 prophets._
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
 | `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |
+| `PreferCollectionPipelineProphet` | — | Prefer a Collection chain over nested array_* compositions (they read inside-out) |
 | `PreferDataCollectionOfProphet` | — | Do not hand-roll a Data collection with ::from() in a loop — use #[DataCollectionOf] / ::collect() |
 | `PreferDataTransformersProphet` | — | Serialize Data objects through -&gt;toArray()/transformers, not a hand-rolled mapping |
 | `PreferDefaultFallbackProphet` | — | Move a call-site presence-check-then-fallback into the callee as a default parameter |
 | `PreferEmptyOverNullProphet` | — | Return an empty collection/bag instead of null — an empty instance is the absence |
 | `PreferEnumCaseGroupsProphet` | — | Name reused subsets of an enum on the enum — do not re-inline the same case-group |
 | `PreferEnumForClosedSetFieldProphet` | Yes | Suggest an enum for a string field whose name denotes a closed set |
+| `PreferFirstClassCallableProphet` | — | A forwarding closure should be a first-class callable — fn ($x) =&gt; f($x) is f(...) |
 | `PreferNamedBranchFactoryProphet` | — | Extract a non-trivial -&gt;then() branch factory into a named *Factory method returning callable |
 | `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
 | `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
