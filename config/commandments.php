@@ -159,6 +159,7 @@ return [
                 Backend\PreferAndThenProphet::class,
                 Backend\PreferEmptyOverNullProphet::class,
                 Backend\RegistryReturnContractProphet::class,
+                Backend\ResolverNamingHonestyProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,

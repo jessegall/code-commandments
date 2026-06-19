@@ -78,6 +78,7 @@ return [
                 Backend\NoConditionalArraySpreadProphet::class,
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
                 Backend\ResolverPatternProphet::class,
+                Backend\ResolverNamingHonestyProphet::class,
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
