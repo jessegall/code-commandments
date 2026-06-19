@@ -163,6 +163,7 @@ return [
                 Backend\PushGenericToSourceProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\BehaviouralEnumDispatchProphet::class,
+                Backend\ThrowOnUnhandledCaseProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,
