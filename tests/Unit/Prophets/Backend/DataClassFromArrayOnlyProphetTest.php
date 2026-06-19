@@ -24,6 +24,15 @@ class DataClassFromArrayOnlyProphetTest extends TestCase
         return $this->prophet->judge('/x.php', "<?php\nnamespace App\\Data;\n{$body}\n");
     }
 
+    public function test_does_not_flag_abstract_or_property_morphable_data(): void
+    {
+        // #87: an abstract Data base is never instantiated directly, and a
+        // PropertyMorphableData class's ::from() is intentionally the morphing
+        // one — the FromArrayOnly override would break instantiation/morph.
+        $this->assertTrue($this->judge('use Spatie\\LaravelData\\Data; abstract class BasePartial extends Data { public string $x; }')->isRighteous());
+        $this->assertTrue($this->judge('use Spatie\\LaravelData\\Data; use Spatie\\LaravelData\\Contracts\\PropertyMorphableData; class PosSettings extends Data implements PropertyMorphableData { public string $x; }')->isRighteous());
+    }
+
     public function test_flags_data_class_without_trait(): void
     {
         $j = $this->judge('use Spatie\\LaravelData\\Data; final class SongData extends Data { public string $title; }');
