@@ -162,6 +162,37 @@ class FeatureEnvyProphetTest extends TestCase
         @rmdir($dir);
     }
 
+    public function test_does_not_flag_a_public_collection_accessor(): void
+    {
+        // #113: asking a collaborator for its items via its public list API
+        // (`->values()`, `->all()`, `->keys()`) and mapping the result at the
+        // call site is tell-don't-ask, not envy. Reaching the array PROPERTY
+        // (`->items`) is still envy.
+        $dir = sys_get_temp_dir() . '/cc-fe113-' . uniqid();
+        @mkdir($dir, 0755, true);
+        $dir = realpath($dir);
+        $ns = 'JesseGall\\CodeCommandments\\Tests\\Fixtures\\Backend\\Sinful\\FeatureEnvy';
+
+        file_put_contents("$dir/Registry.php", "<?php\nnamespace {$ns};\nclass Registry {\n public array \$items = [];\n public function all(): array { return \$this->items; }\n public function values(): array { return array_values(\$this->all()); }\n}\n");
+        file_put_contents("$dir/ListCommand.php", "<?php\nnamespace {$ns};\nclass ListCommand {\n public function handle(Registry \$registry): array {\n  return array_map(static fn (\$t) => \$t, \$registry->values());\n }\n}\n");
+        file_put_contents("$dir/PeekCommand.php", "<?php\nnamespace {$ns};\nclass PeekCommand {\n public function handle(Registry \$registry): array {\n  return array_map(static fn (\$t) => \$t, \$registry->items);\n }\n}\n");
+
+        $registry = new ProphetRegistry;
+        $manager = new ScrollManager($registry, new GenericFileScanner);
+        $registry->registerMany('t', [FeatureEnvyProphet::class => []]);
+        $registry->setScrollConfig('t', ['path' => $dir, 'extensions' => ['php']]);
+
+        $results = $manager->judgeScroll('t');
+
+        $this->assertEmpty($this->warningsFor($results, "$dir/ListCommand.php"), 'mapping a public ->values() accessor is tell-don\'t-ask, not envy.');
+        $this->assertNotEmpty($this->warningsFor($results, "$dir/PeekCommand.php"), 'reaching the array property ->items is still envy.');
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
+
     public function test_does_not_warn_on_a_call_to_an_unindexed_method(): void
     {
         // Regression: resolving a call's @return generic must not emit an

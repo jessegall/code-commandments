@@ -62,6 +62,15 @@ class FeatureEnvyProphet extends PhpCommandment implements NeedsCodebaseIndex
      */
     private const SERIALIZER_ACCESS = ['toarray', 'jsonserialize', 'tojson', '__tostring'];
 
+    /**
+     * Public collection LIST accessors. Asking a collaborator for its items via
+     * its public list API (`->all()`, `->values()`, `->keys()`) is tell-don't-ask
+     * — the same status as `->toArray()` — NOT a reach into internals. Reaching a
+     * private array PROPERTY (`$x->items`) is still envy. Mapping the result at
+     * the call site is presentation, which rightly lives at the call site. (#113)
+     */
+    private const COLLECTION_ACCESS = ['all', 'values', 'keys'];
+
     private ?CodebaseIndex $index = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
@@ -451,10 +460,12 @@ SCRIPTURE;
         }
 
         // Reading through a serialization boundary (`$x->toArray()`,
-        // `$x->jsonSerialize()`) is not a reach into internals — exempt.
+        // `$x->jsonSerialize()`) or a public collection list-accessor (`$x->all()`,
+        // `$x->values()`, `$x->keys()`) is not a reach into internals — exempt.
+        // (A no-arg public accessor only; a parameterised query is handled below.)
         if ($expr instanceof Expr\MethodCall
             && $expr->name instanceof Node\Identifier
-            && in_array(strtolower($expr->name->toString()), self::SERIALIZER_ACCESS, true)
+            && in_array(strtolower($expr->name->toString()), [...self::SERIALIZER_ACCESS, ...self::COLLECTION_ACCESS], true)
         ) {
             return null;
         }
