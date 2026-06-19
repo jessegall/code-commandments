@@ -157,6 +157,21 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('@param  callable(): self<T>  $alternative', $option);
     }
 
+    public function test_generated_option_get_or_throw_accepts_a_custom_exception(): void
+    {
+        // #85: getOrThrow(\Throwable|\Closure|null) — a lazy factory for a domain
+        // exception (built only on the empty path), an eager instance, or the
+        // backward-compatible generic LogicException with no arg.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString('public function getOrThrow(\Throwable|\Closure|null $error = null): mixed', $option);
+        $this->assertStringContainsString('$error instanceof \Closure => $error(),', $option);
+        $this->assertStringContainsString('$error instanceof \Throwable => $error,', $option);
+        $this->assertStringContainsString("default => new \\LogicException('Option is empty'),", $option);
+    }
+
     public function test_auto_refresh_stamps_a_do_not_edit_banner(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, force: true, except: [], autoRefresh: true);
@@ -227,7 +242,7 @@ class ScaffoldGeneratorTest extends TestCase
         // Wraps an Option<scalar> — the present type is constrained natively.
         $this->assertStringContainsString('final class ScalarOption', $src);
         $this->assertStringContainsString('public static function some(string|int|float|bool $value): self', $src);
-        $this->assertStringContainsString('public function getOrThrow(): string|int|float|bool', $src);
+        $this->assertStringContainsString('public function getOrThrow(\Throwable|\Closure|null $error = null): string|int|float|bool', $src);
     }
 
     public function test_generates_capture_and_wrap_result_factories(): void
