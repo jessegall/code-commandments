@@ -67,6 +67,11 @@ class JudgeCommand extends Command
 
         $scrollFilter = $this->option('scroll');
         $prophetFilter = $this->option('prophet');
+
+        // A `--prophet` filter narrows which prophets actually RUN, not just what
+        // is reported — so an unrelated prophet is never invoked.
+        $manager->setProphetFilter($prophetFilter);
+
         $fileFilter = $this->option('file');
         $filesFilter = $this->option('files')
             ? Pipeline::from(explode(',', $this->option('files')))

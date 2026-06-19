@@ -31,6 +31,8 @@ class ScrollManager
 
     private bool $useCache = true;
 
+    private ?string $prophetFilter = null;
+
     public function __construct(
         protected ProphetRegistry $registry,
         protected FileScanner $scanner,
@@ -52,6 +54,37 @@ class ScrollManager
     }
 
     /**
+     * Run ONLY prophets whose short name contains $filter (partial, case-
+     * insensitive — the same match `--prophet` uses for reporting). A focused
+     * run does not invoke the other prophets at all, so an unrelated prophet's
+     * bug can't surface; and it never touches the findings cache (its partial
+     * results would poison a later full judge).
+     */
+    public function setProphetFilter(?string $filter): void
+    {
+        $this->prophetFilter = ($filter !== null && $filter !== '') ? $filter : null;
+    }
+
+    /**
+     * The scroll's prophets, narrowed to the active `--prophet` filter.
+     *
+     * @return \Illuminate\Support\Collection<int, \JesseGall\CodeCommandments\Contracts\Commandment>
+     */
+    private function prophetsFor(string $scroll): Collection
+    {
+        $prophets = $this->registry->getProphets($scroll);
+
+        if ($this->prophetFilter === null) {
+            return $prophets;
+        }
+
+        $filter = strtolower($this->prophetFilter);
+
+        return $prophets->filter(static fn ($prophet): bool =>
+            str_contains(strtolower(class_basename(get_class($prophet))), $filter))->values();
+    }
+
+    /**
      * The cache for $scroll, activated at the current generation, or null when
      * caching is disabled. A cached entry is served ONLY when the whole scroll
      * is byte-identical and the ruleset unchanged (so a hit equals a fresh
@@ -59,7 +92,9 @@ class ScrollManager
      */
     private function activateCache(string $scroll): ?FindingsCache
     {
-        if ($this->findingsCache === null || ! $this->useCache) {
+        // A focused (`--prophet`) run produces partial findings — never read or
+        // write the shared cache from it, or a later full judge serves them.
+        if ($this->findingsCache === null || ! $this->useCache || $this->prophetFilter !== null) {
             return null;
         }
 
@@ -255,7 +290,7 @@ class ScrollManager
         $excludePaths = $config['exclude'] ?? [];
 
         $cache = $this->activateCache($scroll);
-        $prophets = $this->registry->getProphets($scroll);
+        $prophets = $this->prophetsFor($scroll);
         $ensureIndex = $this->lazyIndexBuilder($scroll, $prophets);
 
         $results = collect();
@@ -311,7 +346,7 @@ class ScrollManager
         $excludePaths = $config['exclude'] ?? [];
 
         $cache = $this->activateCache($scroll);
-        $prophets = $this->registry->getProphets($scroll);
+        $prophets = $this->prophetsFor($scroll);
         // Build the index from the FULL scroll so cross-file tracing can still
         // see callers that live outside the --git file set — but lazily, so a
         // full cache hit skips it.
@@ -366,7 +401,7 @@ class ScrollManager
         $config = $this->registry->getScrollConfig($scroll);
         $extensions = $config['extensions'] ?? [];
 
-        $prophets = $this->registry->getProphets($scroll);
+        $prophets = $this->prophetsFor($scroll);
         // Build the index from the FULL scroll (not the narrowed path) so
         // upstream callers outside the targeted subtree still resolve.
         $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
@@ -437,7 +472,7 @@ class ScrollManager
             return collect();
         }
 
-        $prophets = $this->registry->getProphets($scroll);
+        $prophets = $this->prophetsFor($scroll);
         $this->injectCodebaseIndex($prophets, $this->buildCodebaseIndex($scroll));
 
         $results = collect();

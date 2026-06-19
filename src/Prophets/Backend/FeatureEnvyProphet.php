@@ -557,7 +557,12 @@ SCRIPTURE;
 
         $summary = $this->index?->classByFqcn(ltrim($ownerType, '\\'));
 
-        return $summary?->methods[$expr->name->toString()]?->returnInnerType;
+        // `?->` null-safes the receiver but NOT the array-key lookup — a missing
+        // method key would emit an "Undefined array key" warning. `?? null`
+        // suppresses that (and a null $summary short-circuits the `?->`).
+        $method = $summary?->methods[$expr->name->toString()] ?? null;
+
+        return $method?->returnInnerType;
     }
 
     private function describeAccess(Expr $expr): string
