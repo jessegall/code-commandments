@@ -114,73 +114,150 @@ vendor/bin/commandments scripture
 
 ## Commands
 
-All commands are available via both Laravel artisan and the standalone CLI:
+Every command is available via both Laravel artisan
+(`php artisan commandments:<cmd>`) and the standalone CLI
+(`vendor/bin/commandments <cmd>`). The standalone CLI also accepts
+`--config=<path>` to point at a custom config file.
 
-| Laravel | Standalone |
-|---------|-----------|
-| `php artisan commandments:judge` | `vendor/bin/commandments judge` |
-| `php artisan commandments:repent` | `vendor/bin/commandments repent` |
-| `php artisan commandments:scripture` | `vendor/bin/commandments scripture` |
+<!-- The tables below are AUTO-GENERATED from the console command definitions by
+     `composer readme` — do not edit by hand. -->
 
-The standalone CLI also accepts `--config=path` to specify a custom config file location.
+<!-- AUTOGEN:COMMANDS:START -->
 
-### Judge the Codebase
+| Command | Purpose |
+|---|---|
+| [`absolve`](#absolve) | Absolve a single finding by fingerprint, with a required reason |
+| [`init`](#init) | Initialize code commandments for a standalone project |
+| [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
+| [`judge`](#judge) | Judge the codebase for sins against the commandments |
+| [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
+| [`report`](#report) | Report a prophet false-positive or wrong rule as a GitHub issue |
+| [`reports`](#reports) | Show the status of prophet reports this project filed (resolved upstream yet?) |
+| [`scaffold`](#scaffold) | Generate recommended support classes (Option, FromArrayOnly, …) into your namespace |
+| [`scripture`](#scripture) | List all commandments and their descriptions |
+| [`sync`](#sync) | Add newly available prophets to your config file |
 
-```bash
-# Judge all scrolls
-php artisan commandments:judge
+### `absolve`
 
-# Judge a specific scroll
-php artisan commandments:judge --scroll=backend
+Absolve a single finding by fingerprint, with a required reason.
 
-# Judge with a specific prophet
-php artisan commandments:judge --prophet=NoRawRequest
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--fingerprint` | `<value>` | The finding fingerprint shown by judge --next |
+| `--reason` | `<value>` | Why the rule does not apply here (required) |
+| `--all` | — | Baseline the queue: absolve every current advisory finding at once (sins still block) |
+| `--warnings` | — | Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing) |
+| `--scope` | `<value>` | Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index) |
+| `--prophet` | `<value>` | Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding |
+| `--until-push` | — | Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only) |
+| `--clear-until-push` | — | Drop every push-scoped (until-push) absolution; used by the pre-push hook |
+| `--clear` | — | Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered |
 
-# Judge a specific file
-php artisan commandments:judge --file=app/Http/Controllers/UserController.php
+### `init`
 
-# Judge multiple specific files (comma-separated)
-php artisan commandments:judge --files=app/Models/User.php,app/Services/AuthService.php
+Initialize code commandments for a standalone project.
 
-# Only judge files changed in git
-php artisan commandments:judge --git
+| Flag | Argument | Description |
+|---|---|---|
+| `--force` | — | Overwrite existing files |
+| `--auto-detect` | — | Auto-detect projects and generate config |
 
-# Target a specific directory, bypassing every exclude
-# (both default `vendor`/`node_modules`/... AND scroll-configured excludes)
-php artisan commandments:judge --path=app/Http/Controllers
+### `install-sync-hook`
 
-# Mark files as absolved after manual review
-php artisan commandments:judge --absolve
-```
+Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes.
 
-### Seek Absolution (Auto-fix)
+| Flag | Argument | Description |
+|---|---|---|
+| `--force` | — | Overwrite an existing post-merge hook |
 
-```bash
-# Auto-fix all sins that can be absolved
-php artisan commandments:repent
+### `judge`
 
-# Preview what would be fixed
-php artisan commandments:repent --dry-run
+Judge the codebase for sins against the commandments.
 
-# Fix a specific file
-php artisan commandments:repent --file=app/Http/Controllers/UserController.php
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--scroll` | `<value>` | Filter by specific scroll (group) |
+| `--prophet` | `<value>` | Summon a specific prophet by name |
+| `--file` | `<value>` | Judge a specific file |
+| `--files` | `<value>` | Judge specific files (comma-separated) |
+| `--path` | `<value>` | Override the scroll path and target a specific directory (bypasses all excludes — use to scan subtrees regardless of config) |
+| `--git` | — | Only judge files that are new or changed in git |
+| `--staged` | — | Only judge files staged for commit (what the pre-commit gate uses) |
+| `--absolve` | — | Mark files as absolved after confession |
+| `--no-cache` | — | Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative) |
+| `--next` | — | Show exactly one finding at a time (fix or absolve to advance) |
 
-# Fix multiple specific files (comma-separated)
-php artisan commandments:repent --files=app/Models/User.php,app/Services/AuthService.php
-```
+### `repent`
 
-### Read the Scripture (List Commandments)
+Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed).
 
-```bash
-# List all prophets
-php artisan commandments:scripture
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--scroll` | `<value>` | Filter by specific scroll (group) |
+| `--prophet` | `<value>` | Use a specific prophet for repentance |
+| `--file` | `<value>` | Repent sins in a specific file |
+| `--files` | `<value>` | Repent sins in specific files (comma-separated) |
+| `--git` | — | Only repent files that are new or changed in git |
+| `--input` | `<value>` | Input for a parameterized fixer, repeatable: --input key=value |
+| `--dry-run` | — | Show what would be fixed without making changes |
 
-# List with detailed descriptions and examples
-php artisan commandments:scripture --detailed
+### `report`
 
-# List prophets from a specific scroll
-php artisan commandments:scripture --scroll=frontend
-```
+Report a prophet false-positive or wrong rule as a GitHub issue.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--prophet` | `<value>` | The prophet that misbehaved (name or class) |
+| `--reason` | `<value>` | What is wrong (false positive / wrong rule / unclear) |
+| `--file` | `<value>` | File where it was flagged |
+| `--line` | `<value>` | Line number |
+| `--fingerprint` | `<value>` | The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered |
+| `--repo` | `<value>` | GitHub repo (owner/name) to file the issue on |
+
+### `reports`
+
+Show the status of prophet reports this project filed (resolved upstream yet?).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--check` | — | Quiet hook mode: print only newly-resolved reports |
+
+### `scaffold`
+
+Generate recommended support classes (Option, FromArrayOnly, …) into your namespace.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--force` | — | Overwrite existing support classes |
+| `--auto` | — | Refresh only when scaffold.auto_refresh is enabled (session-start hook); otherwise do nothing |
+
+### `scripture`
+
+List all commandments and their descriptions.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--scroll` | `<value>` | Filter by specific scroll (group) |
+| `--prophet` | `<value>` | Show details for a specific prophet |
+| `--detailed` | — | Show full descriptions with examples |
+
+### `sync`
+
+Add newly available prophets to your config file.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--after` | `<value>` | Only add prophets introduced after this version (e.g. 1.4.0). Pass `previous` to use the last synced version automatically. Prophets you removed before upgrading stay removed. |
+| `--dry-run` | — | Show what would be added without modifying the file |
+
+<!-- AUTOGEN:COMMANDS:END -->
 
 ### Summon a New Prophet (Laravel only)
 
@@ -408,56 +485,124 @@ Frontend\StyleOverridesProphet::class => [
 
 ## Built-in Prophets
 
+<!-- The tables below are AUTO-GENERATED from each prophet's `description()` by
+     `composer readme` — do not edit by hand. Add a prophet and it appears here. -->
+
+<!-- AUTOGEN:PROPHETS:START -->
+
 ### Backend (PHP)
 
-1. **NoRawRequestProphet** - Thou shalt not access raw request data
-2. **NoJsonResponseProphet** - Thou shalt not return raw JSON responses
-3. **NoDirectRequestInputProphet** - Thou shalt not access request data directly in controllers
-4. **NoEventDispatchProphet** - Thou shalt use event() helper for dispatching
-5. **NoRecordThatOutsideAggregateProphet** - Thou shalt not use recordThat() outside aggregates
-6. **NoValidatedMethodProphet** - Thou shalt not use validated() method
-7. **NoInlineValidationProphet** - Thou shalt not use inline validation
-8. **TypeScriptAttributeProphet** - Thou shalt use #[TypeScript] on Resources
-9. **ReadonlyDataPropertiesProphet** - Thou shalt not declare readonly properties in Data class body
-10. **FormRequestTypedGettersProphet** - Thou shalt use typed getters in FormRequest
-11. **HiddenAttributeProphet** - Thou shalt hide sensitive model attributes
-12. **ControllerPrivateMethodsProphet** - Thou shalt not have too many private methods in controllers
-13. **KebabCaseRoutesProphet** - Thou shalt use kebab-case for route URIs
-14. **ConstructorDependencyInjectionProphet** - Thou shalt inject dependencies via constructor
-15. **NoInlineBootLogicProphet** - Thou shalt not inline boot logic
-16. **ComputedPropertyMustHookProphet** - Thou shalt hook computed properties
-17. **QueryModelsThroughQueryMethodProphet** - Thou shalt query models through ::query()
-18. **NoAuthUserInDataClassesProphet** - Thou shalt use #[FromAuthenticatedUser] attribute
+_69 prophets._
 
-### Frontend (Vue/TypeScript)
+| Prophet | Auto-fix | What it enforces |
+|---|---|---|
+| `BehaviouralEnumDispatchProphet` | — | Extract a wide behavioural per-enum-case dispatch into strategy objects + a registration map |
+| `ComputedPropertyMustHookProphet` | — | Computed properties must use property hooks instead of constructor assignment |
+| `ConstructorDependencyInjectionProphet` | — | Move service dependencies from controller methods to constructor |
+| `ControllerPrivateMethodsProphet` | — | Extract private methods to service classes when controller exceeds limit |
+| `DataClassFromArrayOnlyProphet` | Yes | Every Data class must use the FromArrayOnly trait |
+| `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x->endpoint->field to branch (Law of Demeter) |
+| `DuplicateCodeProphet` | — | Extract duplicated code fragments instead of copy-pasting a method body |
+| `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named fromX() factories |
+| `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
+| `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |
+| `HiddenAttributeProphet` | — | Add #[Hidden] to properties with #[FromContainer] or #[FromSession] |
+| `KebabCaseRoutesProphet` | — | Route URIs must use kebab-case |
+| `LongDocblockProphet` | — | Keep docblocks to one short narrative sentence above the @-tag block |
+| `LongMethodProphet` | — | Keep methods short and focused on a single responsibility |
+| `NoArrayBagProphet` | — | Do not pass array<string, mixed> bags around — give the bag a Fluent value class |
+| `NoArrayStringIndexingProphet` | — | Prefer typed DTOs over string-indexed arrays for structured data |
+| `NoAuthUserInDataClassesProphet` | — | Use #[FromAuthenticatedUser] attribute instead of auth()->user() in Data classes |
+| `NoCompactProphet` | — | Do not bridge variables and arrays by name with compact()/extract() |
+| `NoConditionalArraySpreadProphet` | — | Assemble conditional array shapes with a builder, not a spread of a ternary with an empty arm |
+| `NoContainerResolutionProphet` | — | Prefer constructor injection over container resolution (app(), resolve(), App::make()) |
+| `NoDirectRequestInputProphet` | — | Use typed FormRequest getters instead of direct request data access |
+| `NoEventDispatchProphet` | — | Use event() helper instead of Event::dispatch() or static dispatch |
+| `NoFacadesInServicesProphet` | — | Do not call Laravel facades in services — inject the underlying contract via the constructor |
+| `NoInlineBootLogicProphet` | — | Model boot hooks should only dispatch events, not contain business logic |
+| `NoInlineValidationProphet` | — | Move validation to FormRequest instead of inline $request->validate() |
+| `NoJsonResponseProphet` | — | Use Inertia responses instead of JSON in web controllers |
+| `NoManualHydrationProphet` | — | Do not hand-roll array-to-object hydration — extend Spatie Data and use ::from() |
+| `NoNullCoalesceToNullProphet` | Yes | Drop the no-op `?? null`; guard a nullable foreach with `?? []` |
+| `NoOptionInUnionProphet` | — | Do not union Option with other types or null — Option is the whole type |
+| `NoOptionOveruseProphet` | — | Do not use Option as ceremony where there is no absence to model |
+| `NoOptionToNullProphet` | Yes | Do not unwrap an Option back to null with getOr(null) |
+| `NoRawLiteralProphet` | Yes | Do not write raw magic literals (empties, newlines, …) — name them with T_String / T_Json / T_Array / T_Int |
+| `NoRawRequestProphet` | — | Use FormRequest classes instead of raw Request in controllers |
+| `NoRecordThatOutsideAggregateProphet` | — | Only call recordThat() inside Aggregate classes |
+| `NoRedundantDefaultArgumentProphet` | Yes | Do not pass an argument equal to the parameter default — the default is already applied |
+| `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
+| `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
+| `NoValidatedMethodProphet` | — | Use typed getters instead of $request->validated() |
+| `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()->getOr(Option::none()) — do not flatten an Option<Option> by hand |
+| `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
+| `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |
+| `PreferDataCollectionOfProphet` | — | Do not hand-roll a Data collection with ::from() in a loop — use #[DataCollectionOf] / ::collect() |
+| `PreferDataTransformersProphet` | — | Serialize Data objects through ->toArray()/transformers, not a hand-rolled mapping |
+| `PreferDefaultFallbackProphet` | — | Move a call-site presence-check-then-fallback into the callee as a default parameter |
+| `PreferEmptyOverNullProphet` | — | Return an empty collection/bag instead of null — an empty instance is the absence |
+| `PreferEnumCaseGroupsProphet` | — | Name reused subsets of an enum on the enum — do not re-inline the same case-group |
+| `PreferEnumForClosedSetFieldProphet` | Yes | Suggest an enum for a string field whose name denotes a closed set |
+| `PreferNamedBranchFactoryProphet` | — | Extract a non-trivial ->then() branch factory into a named *Factory method returning callable |
+| `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
+| `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
+| `PreferNullObjectDefaultsProphet` | Yes | Prefer Null Object defaults over nullable params normalized in the body |
+| `PreferOptionOverNullProphet` | — | Do not return null from decision methods — return an Option or a Null Object |
+| `PreferSprintfProphet` | Yes | Prefer sprintf() over string interpolation — separate the template from its values |
+| `PreferStaticOverInvokableConstructProphet` | — | Prefer a static factory over (new X(...))(...) for project-owned classes |
+| `PreferTypeMethodOverInlineDispatchProphet` | — | Move per-case dispatch and type-constant mappings onto the type, not inline at the call site |
+| `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
+| `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
+| `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |
+| `RegistryReturnContractProphet` | Yes | A registry returns the item or throws — not Option<T> or T \| null (with a has() companion) |
+| `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
+| `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
+| `ResolverPatternProphet` | — | Drive first-match dispatch and predicate code into the resolver + Predicate pattern |
+| `ShortClosureProphet` | — | Keep anonymous functions short — extract a big closure to a named private method |
+| `StringsThatShouldBeEnumsProphet` | — | Use enum cases instead of raw string literals for closed-set values |
+| `SuggestCompareSelfTraitProphet` | Yes | Use a CompareSelf-style trait helper instead of chained enum equality comparisons |
+| `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
+| `TypeScriptAttributeProphet` | — | Add #[TypeScript] attribute to all Data classes |
+| `UnwrapOptionWithGuardProphet` | Yes | Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow() |
+| `WideUnionTypeProphet` | Yes | Avoid wide type unions — model value-or-nothing as an Option |
 
-1. **NoFetchAxiosProphet** - Thou shalt not use fetch() or axios directly
-2. **TemplateVForProphet** - Thou shalt wrap v-for in template elements
-3. **TemplateVIfProphet** - Thou shalt wrap v-if/v-else in template elements
-4. **RouterHardcodedUrlsProphet** - Thou shalt not hardcode URLs in router calls
-5. **WayfinderRoutesProphet** - Thou shalt not hardcode URLs in href attributes
-6. **CompositionApiProphet** - Thou shalt use Composition API
-7. **ArrowFunctionAssignmentsProphet** - Thou shalt use named function declarations
-8. **SwitchCaseProphet** - Thou shalt not use switch statements
-9. **LongVueFilesProphet** - Thou shalt keep Vue files concise
-10. **LongTsFilesProphet** - Thou shalt keep TypeScript files concise
-11. **RepeatingPatternsProphet** - Thou shalt not repeat template patterns
-12. **ScriptFirstProphet** - Thou shalt put script before template
-13. **PropsTypeScriptProphet** - Thou shalt type props with TypeScript
-14. **EmitsTypeScriptProphet** - Thou shalt type emits with TypeScript
-15. **InlineEmitTransformProphet** - Thou shalt not transform data in emit handlers
-16. **InlineTypeCastingProphet** - Thou shalt not type cast in templates
-17. **WatchIfPatternProphet** - Thou shalt not use watch with if conditions
-18. **PageDataAccessProphet** - Thou shalt use typed page props
-19. **DeepNestingProphet** - Thou shalt not deeply nest template elements
-20. **StyleOverridesProphet** - Thou shalt not override child component styles
-21. **ExplicitDefaultSlotProphet** - Thou shalt use explicit default slots
-22. **MultipleSlotDefinitionsProphet** - Thou shalt type slots with defineSlots
-23. **ConditionalArrayBuildingProphet** - Consider disabled flags pattern for array building
-24. **SwitchCheckboxVModelProphet** - Thou shalt use v-model on Switch/Checkbox
-25. **LoopsWithIndexedStateProphet** - Review indexed state in loops (requires confession)
-26. **ContentLikePropsProphet** - Review content-like props (requires confession)
-27. **InlineDialogProphet** - Review inline dialog definitions (requires confession)
+### Frontend (Vue / TypeScript)
+
+_29 prophets._
+
+| Prophet | Auto-fix | What it enforces |
+|---|---|---|
+| `ArrowFunctionAssignmentsProphet` | — | Prefer named function declarations over arrow function assignments |
+| `CompositionApiProphet` | — | Use <script setup> Composition API instead of Options API |
+| `ConditionalArrayBuildingProphet` | — | Consider disabled flags pattern instead of conditional array building |
+| `ContentLikePropsProphet` | — | Consider using slots instead of content-like props |
+| `DeepNestingProphet` | — | Avoid deeply nested templates - consider extracting components |
+| `EmitsTypeScriptProphet` | — | Use TypeScript interface for defineEmits instead of runtime declaration |
+| `ExplicitDefaultSlotProphet` | — | Use explicit <template #default> when using named slots |
+| `InlineDialogProphet` | — | Extract inline dialog definitions to separate components |
+| `InlineEmitTransformProphet` | — | Avoid inline emit handlers with transformation logic in templates |
+| `InlineMarkupProphet` | — | Avoid excessive native HTML markup - extract components instead |
+| `InlineTypeCastingProphet` | — | Avoid inline type casting in template bindings |
+| `KebabCasePropsProphet` | Yes | Props should be bound using kebab-case in templates |
+| `LongTsFilesProphet` | — | TypeScript files in components should be under 200 lines |
+| `LongVueFilesProphet` | — | Keep Vue files under 200 lines by extracting components |
+| `LoopsWithIndexedStateProphet` | — | Extract loop items with indexed state to separate components |
+| `MultipleSlotDefinitionsProphet` | — | Components with slots must use defineSlots for type safety |
+| `NoFetchAxiosProphet` | — | Use Inertia requests instead of fetch/axios |
+| `PageDataAccessProphet` | — | Page components should use PageData indexed access for prop types |
+| `PropsTypeScriptProphet` | — | Use TypeScript interface for defineProps instead of runtime declaration |
+| `RepeatingPatternsProphet` | — | Detect repeating patterns that could be extracted into reusable components or composables |
+| `RouterHardcodedUrlsProphet` | — | Never hardcode URLs in router calls |
+| `ScriptFirstProphet` | — | Thou shalt put script before template |
+| `StyleOverridesProphet` | — | Avoid style/class overrides on base components - use semantic props instead |
+| `SwitchCaseProphet` | — | Use SwitchCase component instead of v-if chains comparing the same variable |
+| `SwitchCheckboxVModelProphet` | — | Use v-model for Switch/Checkbox components, not v-model:checked or :checked |
+| `TemplateVForProphet` | Yes | Use <template v-for> wrapper instead of v-for on elements |
+| `TemplateVIfProphet` | Yes | Thou shalt wrap v-if/v-else in template elements |
+| `WatchIfPatternProphet` | — | Use whenever() instead of watch() with if condition |
+| `WayfinderRoutesProphet` | — | Never hardcode URLs in href attributes |
+
+<!-- AUTOGEN:PROPHETS:END -->
 
 ## Creating Custom Prophets
 
