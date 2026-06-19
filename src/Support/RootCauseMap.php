@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support;
 
 use JesseGall\CodeCommandments\Prophets\Backend\NoNullCoalesceToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoOptionToNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoSwallowedNotFoundProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferEmptyOverNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullObjectDefaultsProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
@@ -54,9 +55,6 @@ final class RootCauseMap
     /**
      * The declared cause => symptoms relation.
      *
-     * NOTE: `NoSwallowedNotFoundProphet` joins as a fourth cause once it exists
-     * (it is created in a later build phase); the map stays the source of truth.
-     *
      * @return array<class-string, list<class-string>>
      */
     public static function relations(): array
@@ -65,6 +63,7 @@ final class RootCauseMap
             ThrowOnUnhandledCaseProphet::class => self::ABSENCE_SYMPTOMS,
             PreferTotalOverNullableProphet::class => self::ABSENCE_SYMPTOMS,
             RegistryReturnContractProphet::class => self::ABSENCE_SYMPTOMS,
+            NoSwallowedNotFoundProphet::class => self::ABSENCE_SYMPTOMS,
         ];
     }
 
