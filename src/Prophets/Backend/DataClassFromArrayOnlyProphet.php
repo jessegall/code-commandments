@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\DataFromSiteCensus;
+use JesseGall\CodeCommandments\Support\FromArrayOnlyPolicy;
 use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\SpatieDataMagic;
 use PhpParser\Node;
@@ -52,6 +53,20 @@ class DataClassFromArrayOnlyProphet extends PhpCommandment implements SinRepente
         }
 
         return isset(DataFromSiteCensus::objectFromShortNames($this->index, $this->dataSuffixes())[$shortName]);
+    }
+
+    /**
+     * #80: whether class $shortName has POSITIVE proof — a provable-array `::from()`
+     * site somewhere. Only then is it safe to add the trait. Without an index
+     * (a bare unit test) the gate is skipped so existing behaviour is preserved.
+     */
+    private function hasArrayProof(string $shortName): bool
+    {
+        if ($this->index === null) {
+            return true;
+        }
+
+        return $shortName !== '' && isset(FromArrayOnlyPolicy::arrayProvenShortNames($this->index, $this->dataSuffixes())[$shortName]);
     }
 
     /**
@@ -193,6 +208,14 @@ SCRIPTURE;
                 continue;
             }
 
+            // #80: FAIL-SAFE — only add the trait with POSITIVE proof that a
+            // `::from()` site passes an array. A class with no visible `::from()`
+            // (a Blade / Inertia / view-hydrated class) cannot be proven safe, so
+            // the trait is withheld rather than added optimistically.
+            if (! $this->hasArrayProof($name)) {
+                continue;
+            }
+
             $message = "{$name} is a Data class without access to the {$traitShort} trait (not on it or any ancestor).";
             $suggestion = "Add `use {$traitShort};` to the class (and import {$this->traitFqcn()}). Run `commandments repent` to fix automatically.";
 
@@ -249,6 +272,12 @@ SCRIPTURE;
             // other file (#64) — the trait's runtime assert would throw. Those
             // call sites must be migrated first.
             if ($this->hasUnsafeSelfFrom($class) || $this->hasCrossFileObjectFrom($class->name?->toString() ?? '')) {
+                continue;
+            }
+
+            // #80: positive proof required — never add the trait to a class with
+            // no provable-array ::from() site (a framework/view-hydrated class).
+            if (! $this->hasArrayProof($class->name?->toString() ?? '')) {
                 continue;
             }
 
