@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_74 prophets._
+_75 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -556,6 +556,7 @@ _74 prophets._
 | `PreferSprintfProphet` | Yes | Prefer sprintf() over string interpolation — separate the template from its values |
 | `PreferStaticOverInvokableConstructProphet` | — | Prefer a static factory over (new X(...))(...) for project-owned classes |
 | `PreferTotalOverNullableProphet` | — | Make a method total or throw when every caller already de-nulls its nullable return |
+| `PreferTypeCoalesceProphet` | Yes | Prefer T_*::coalesce() over `?? &lt;empty literal&gt;` on a nullable typed value |
 | `PreferTypeMethodOverInlineDispatchProphet` | — | Move per-case dispatch and type-constant mappings onto the type, not inline at the call site |
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
