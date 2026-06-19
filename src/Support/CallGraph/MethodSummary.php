@@ -31,6 +31,8 @@ final readonly class MethodSummary
         public array $assignments,
         public string $filePath,
         public int $line,
+        /** Resolved FQCN of the single generic in a `@return Wrapper<T>` docblock (e.g. Option<NodeDescriptor>), else null. */
+        public ?string $returnInnerType = null,
     ) {}
 
     public function hasParam(string $name): bool

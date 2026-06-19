@@ -131,6 +131,37 @@ class FeatureEnvyProphetTest extends TestCase
 
     // ── #61: false-positive refinements ──────────────────────────────────
 
+    public function test_flags_a_query_over_an_unwrapped_option_chain(): void
+    {
+        // #75: the collection owner is reached by unwrapping an Option<T> —
+        // `$opt->getOrThrow()->controlHandleNames()`. Resolve T (NodeDescriptor)
+        // from the `@return Option<NodeDescriptor>`-typed call $opt came from.
+        $dir = sys_get_temp_dir() . '/cc-envy75-' . uniqid();
+        @mkdir($dir, 0755, true);
+        $dir = realpath($dir);
+        $ns = 'JesseGall\\CodeCommandments\\Tests\\Fixtures\\Backend\\Sinful\\FeatureEnvy';
+
+        file_put_contents("$dir/NodeDescriptor.php", "<?php\nnamespace {$ns};\nclass NodeDescriptor { public array \$names = []; public function controlHandleNames(): array { return \$this->names; } }\n");
+        file_put_contents("$dir/Graph.php", "<?php\nnamespace {$ns};\nclass Option { public function getOrThrow() { return null; } }\nclass WorkflowGraph {\n /** @return Option<NodeDescriptor> */\n public function nodeById(int \$id): Option { return new Option(); }\n}\n");
+        file_put_contents("$dir/Edges.php", "<?php\nnamespace {$ns};\nclass Edges {\n public function isControlEdge(WorkflowGraph \$graph, int \$id, string \$port): bool {\n  \$option = \$graph->nodeById(\$id);\n  return in_array(\$port, \$option->getOrThrow()->controlHandleNames(), true);\n }\n}\n");
+
+        $registry = new ProphetRegistry;
+        $manager = new ScrollManager($registry, new GenericFileScanner);
+        $registry->registerMany('t', [FeatureEnvyProphet::class => []]);
+        $registry->setScrollConfig('t', ['path' => $dir, 'extensions' => ['php']]);
+
+        $results = $manager->judgeScroll('t');
+        $warnings = $this->warningsFor($results, "$dir/Edges.php");
+
+        $this->assertNotEmpty($warnings, 'query over an unwrapped Option chain is still feature envy on the inner type.');
+        $this->assertStringContainsString('NodeDescriptor', $warnings[0]->message);
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
+
     public function test_does_not_flag_api_calls_injected_deps_or_form_requests(): void
     {
         $dir = sys_get_temp_dir() . '/cc-envy-' . uniqid();
