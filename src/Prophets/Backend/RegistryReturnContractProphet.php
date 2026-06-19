@@ -19,8 +19,9 @@ use PhpParser\ParserFactory;
 use Throwable;
 
 /**
- * Enforce the registry contract on a class that opts in via a marker (an
- * interface named `Registry`, or a `#[Registry]` attribute): a registry returns
+ * Enforce the registry contract on a class that opts in via a marker (a base
+ * class named `Registry` or extending one, an interface named `Registry`, or a
+ * `#[Registry]` attribute): a registry returns
  * the requested item or THROWS — it does not hand back `Option<T>` or `T | null`.
  *
  * A registry is a TOTAL lookup over a known keyspace; asking for an unregistered
@@ -62,7 +63,7 @@ class RegistryReturnContractProphet extends PhpCommandment implements SinRepente
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('A PUBLIC getter on a class marked as a `Registry` (a `Registry` interface or `#[Registry]` attribute) returns `Option<T>` or `T | null`. A registry is a total lookup — a miss is a wiring bug, so it should return T or throw, with a `has()` companion.')
+            ->applyWhen('A PUBLIC getter on a class marked as a `Registry` (a base class named `Registry` or extending one, a `Registry` interface, or a `#[Registry]` attribute) returns `Option<T>` or `T | null`. A registry is a total lookup — a miss is a wiring bug, so it should return T or throw, with a `has()` companion.')
             ->leaveWhen('the method NAME announces nullability is normal — `find*`, `search*`, `try*`, `lookup*`, `*OrNull`, `*OrDefault` — those are genuine value-or-nothing lookups, not the registry contract.')
             ->whenUnsure('if a miss means "you asked for something that was never registered" (a bug), return T and throw; if a miss is an expected, branched-on outcome (a cache, a finder), it is not a registry getter — rename it or drop the marker.');
     }
@@ -98,9 +99,9 @@ The internal `Option` memo stays — it just stops leaking across the public
 boundary, so callers read "is it there? then get it" and the throw lives where
 the keyspace knowledge does.
 
-WHAT FIRES — a PUBLIC method on a class carrying the `Registry` marker (an
-interface named `Registry`, or `#[Registry]`) whose return type is `Option<T>`,
-`?T`, or `T | null`.
+WHAT FIRES — a PUBLIC method on a class carrying the `Registry` marker (a base
+class named `Registry` or extending one, an interface named `Registry`, or
+`#[Registry]`) whose return type is `Option<T>`, `?T`, or `T | null`.
 
 WHAT DOES NOT — a finder-named getter (`find*`/`search*`/`try*`/`lookup*`/
 `*OrNull`/`*OrDefault`: a `findByEmail(): ?User` is supposed to miss), a
@@ -164,8 +165,15 @@ SCRIPTURE;
     {
         $markers = $this->markers();
 
-        // The class's OWN attribute or implements clause (works without an index).
-        if ($this->classCarriesMarker($class, $markers)) {
+        // Single-file markers (no index needed): the class's own attribute or
+        // implements clause; the class IS the marker base (e.g. `abstract class
+        // Registry`); or it directly `extends` a class named after a marker
+        // (`class FooRegistry extends Registry`) — the idiomatic abstract-base
+        // convention that #103 showed went entirely undetected.
+        if ($this->classCarriesMarker($class, $markers)
+            || ($class->name !== null && in_array($class->name->toString(), $markers, true))
+            || ($class->extends instanceof Node\Name && in_array($class->extends->getLast(), $markers, true))
+        ) {
             return true;
         }
 
@@ -193,6 +201,12 @@ SCRIPTURE;
         $depth = 0;
 
         while ($cursor !== null && $depth++ < 16) {
+            // A transitive ANCESTOR named after a marker (e.g. extends a base
+            // `Registry` several levels up, possibly in another file).
+            if (in_array(self::shortName($cursor), $markers, true)) {
+                return true;
+            }
+
             $summary = $this->index->classByFqcn(ltrim($cursor, '\\'));
 
             if ($summary === null) {
