@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_79 prophets._
+_82 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -538,6 +538,7 @@ _79 prophets._
 | `NoRedundantOrElseWrapProphet` | Yes | Do not manually wrap an orElse alternative in Option::some()/make() |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
+| `NoSwallowedNotFoundProphet` | — | Do not catch a not-found exception just to swallow it into null/false/[] — let it throw |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
 | `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
@@ -565,6 +566,8 @@ _79 prophets._
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
 | `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |
+| `RegistryNamingHonestyProphet` | — | A class shaped like a registry (register + keyed store + lookup) should be named *Registry and extend a base |
+| `RegistryPatternProphet` | — | When several classes hand-roll the registry shape, extract a shared base (scaffold one) |
 | `RegistryReturnContractProphet` | — | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
 | `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
