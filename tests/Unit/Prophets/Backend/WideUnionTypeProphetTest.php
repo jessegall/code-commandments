@@ -290,30 +290,26 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertCount(1, $prophet->judge('/x.php', "<?php\nclass A { public function m(array | string | int | null \$x = null): void {} }")->sins);
     }
 
-    public function test_data_property_union_is_autofixable(): void
+    public function test_data_property_union_suggests_union_but_is_not_autofixable(): void
     {
+        // #77: the UnionCast/Union rewrite changes the property's runtime type and
+        // breaks readers — it is a SUGGESTION (advisory), never a blind auto-fix.
         $judgment = $this->judge('class NodeSocketData extends Data { public function __construct(public array | string $isVisibleRule) {} }');
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertTrue($judgment->warnings[0]->autoFixable);
+        $this->assertNotTrue($judgment->warnings[0]->autoFixable);
         $this->assertStringContainsString('UnionCast', $judgment->warnings[0]->message);
-        $this->assertStringContainsString('T::Array, T::String', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('NOT auto-fixable', $judgment->warnings[0]->message);
     }
 
-    public function test_repent_rewrites_a_data_union_property(): void
+    public function test_repent_does_not_rewrite_a_data_union_property(): void
     {
+        // #77: never auto-apply the UnionCast rewrite (it was producing
+        // non-compiling, behaviour-breaking edits — missing imports + type change).
         $prophet = (new WideUnionTypeProphet)->configure(['support_namespace' => 'App\\Support']);
         $code = "<?php\nnamespace App\\Data;\n\nuse App\\Data\\Data;\n\nclass NodeSocketData extends Data\n{\n    public function __construct(\n        public array | string \$isVisibleRule,\n    ) {}\n}";
 
-        $result = $prophet->repent('/x.php', $code);
-
-        $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('#[WithCastAndTransformer(UnionCast::class, allowed: [T::Array, T::String])]', $result->newContent);
-        $this->assertStringContainsString('public Union $isVisibleRule', $result->newContent);
-        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T;', $result->newContent);
-        $this->assertStringContainsString('use App\\Support\\UnionCast;', $result->newContent);
-        // Result must parse.
-        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($result->newContent));
+        $this->assertFalse($prophet->repent('/x.php', $code)->absolved);
     }
 
     public function test_non_data_union_is_not_autofixable(): void
