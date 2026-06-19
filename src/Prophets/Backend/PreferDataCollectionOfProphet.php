@@ -90,8 +90,10 @@ Good — let the framework hydrate the collection:
     return Field::collect($entries);
 
 Only a straight `::from` is flagged. A custom mapper —
-`array_map(fn ($p) => NodePortData::fromInputPort($p), $ports)` — is genuine
+`array_map(fn ($p) => NodePortData::forInputPort($p), $ports)` — is genuine
 per-element transformation, not collection hydration, and is left alone.
+(Use a `for*` prefix, never `from*`: the `from` prefix is reserved for
+Spatie's magic ::from() — see NoExternalDataFrom.)
 
 Configure via:
 
