@@ -81,6 +81,7 @@ return [
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,
+                Backend\BehaviouralEnumDispatchProphet::class,
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
