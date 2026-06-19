@@ -65,9 +65,36 @@ class PreferCoalesceFactoryProphetTest extends TestCase
         class C { public function a(array $v) { return new ValueBag($v); } }')->isRighteous());
     }
 
+    public function test_flags_own_array_constructor_without_a_known_base(): void
+    {
+        // Real detection: no Fluent/Collection base — just a class whose own
+        // constructor's first param is an array.
+        $j = $this->judge('class Bag { public function __construct(array $items) {} }
+        class C { public function a($v) { return new Bag($v ?? []); } }');
+
+        $this->assertCount(1, $j->warnings);
+    }
+
+    public function test_flags_untyped_array_default_constructor(): void
+    {
+        // Fluent/Collection shape: untyped first param with an array default.
+        $j = $this->judge('class Bag { public function __construct($items = []) {} }
+        class C { public function a($v) { return new Bag($v ?? []); } }');
+
+        $this->assertCount(1, $j->warnings);
+    }
+
+    public function test_ignores_a_non_array_constructor(): void
+    {
+        // Constructor takes a string, not an array — not this pattern (this is
+        // why a hardcoded "value base" list was wrong; we check the real ctor).
+        $this->assertTrue($this->judge('class PhoneNumber { public function __construct(string $e164) {} }
+        class C { public function a($v) { return new PhoneNumber($v ?? []); } }')->isRighteous());
+    }
+
     public function test_ignores_non_value_object_class(): void
     {
-        // A service taking a nullable array config is not this smell.
+        // A service with no constructor is not array-constructible.
         $this->assertTrue($this->judge('class Service {}
         class C { public function a($v) { return new Service($v ?? []); } }')->isRighteous());
     }
