@@ -657,8 +657,11 @@ final class FindRawLiterals implements Pipe
 
         // A non-empty fallback is carried through as coalesce()'s $default so the
         // rewrite preserves it; the type's own empty value is the default, so it
-        // is omitted to keep `coalesce($x)` clean.
-        if ($right !== null && ! self::coalesceEmptyMatches($right, $type)) {
+        // is omitted to keep `coalesce($x)` clean. A literal `null` fallback is
+        // also omitted: this is a cast context (`(string)($x ?? null)`), where
+        // null becomes the type's empty — and coalesce()'s $default is typed
+        // non-null, so passing null would be a TypeError (#67).
+        if ($right !== null && ! self::coalesceEmptyMatches($right, $type) && ! self::isNullConst($right)) {
             $var .= ', ' . self::source($content, $right);
         }
 
@@ -691,6 +694,13 @@ final class FindRawLiterals implements Pipe
             && $left->var instanceof Expr\Variable
             && $left->var->name === 'this'
             && $left->name instanceof Node\Identifier;
+    }
+
+    private static function isNullConst(Node $node): bool
+    {
+        return $node instanceof Expr\ConstFetch
+            && $node->name instanceof Node\Name
+            && strtolower($node->name->toString()) === 'null';
     }
 
     private static function coalesceEmptyMatches(Node $node, string $type): bool
