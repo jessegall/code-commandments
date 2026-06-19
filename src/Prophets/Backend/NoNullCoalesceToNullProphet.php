@@ -26,11 +26,13 @@ use PhpParser\ParserFactory;
  *
  *   2. `foreach (NULLABLE as ...)` over a value that can be null is a latent
  *      TypeError, and `?? null` "guards" it by iterating null — which still
- *      throws. The fix is `?? []`: an empty array iterates zero times, which is
- *      exactly skipping the loop when the value is absent.
+ *      throws. The fix is to make it iterate nothing when absent. For a nullable
+ *      ARRAY that is `T_Array::coalesce($x)` (PreferTypeCoalesce owns this); the
+ *      type-agnostic `?? []` is the guard only for a nullable NON-array iterable
+ *      (a Collection / Generator), where `coalesce()` does not apply.
  *
  * Both are auto-fixable: the no-op `?? null` is stripped; a nullable foreach
- * iterable gets `?? []`.
+ * iterable is guarded so it iterates zero times when absent.
  */
 #[IntroducedIn('1.90.0')]
 class NoNullCoalesceToNullProphet extends PhpCommandment implements SinRepenter
