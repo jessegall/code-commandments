@@ -40,6 +40,32 @@ class PreferEmptyOverNullProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
     }
 
+    public function test_suppresses_a_return_whose_caller_distinguishes_null(): void
+    {
+        // #89: a caller that branches on the null (=== null / !== null / assign-
+        // then-null-test) genuinely distinguishes ABSENT from EMPTY — suppress.
+        // A caller that only iterates / `?? []` still fires (the true win).
+        $dir = sys_get_temp_dir() . '/cc-pen89-' . uniqid();
+        @mkdir($dir, 0755, true);
+
+        file_put_contents("$dir/C.php", "<?php\nnamespace App;\nclass C { public function viteEntries(): array | null { return null; } public function rows(): array | null { return null; } }\n");
+        file_put_contents("$dir/Caller.php", "<?php\nnamespace App;\nclass Caller { public function a(C \$c) { return \$c->viteEntries() !== null; } public function b(C \$c) { foreach (\$c->rows() ?? [] as \$r) {} } }\n");
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build(glob("$dir/*.php") ?: []);
+        $prophet = new PreferEmptyOverNullProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $symbols = array_map(static fn ($w): string => (string) $w->symbol, $prophet->judge("$dir/C.php", file_get_contents("$dir/C.php"))->warnings);
+
+        $this->assertContains('prefer-empty:return:rows', $symbols, 'rows() is only iterated → still fires.');
+        $this->assertNotContains('prefer-empty:return:viteEntries', $symbols, 'viteEntries() is null-tested by a caller → suppressed.');
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
+
     public function test_does_not_flag_a_private_lazy_init_memo_property(): void
     {
         // #86: a private nullable collection property is an internal lazy-init

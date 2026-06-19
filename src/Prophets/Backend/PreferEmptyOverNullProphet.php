@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
+use JesseGall\CodeCommandments\Support\NullDistinguishedCallCensus;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 
@@ -117,12 +118,22 @@ SCRIPTURE;
 
         $namespace = $this->fileNamespace($ast);
         $uses = $this->fileUses($ast);
+        $nullDistinguished = $this->index !== null
+            ? NullDistinguishedCallCensus::methodNames($this->index)
+            : [];
         $warnings = [];
 
         foreach ($this->nullableCollectionTypes($ast) as $found) {
             $inner = $this->collectionInnerType($found['type'], $uses, $namespace);
 
             if ($inner === null) {
+                continue;
+            }
+
+            // #89: a caller branches on the null — it genuinely distinguishes
+            // ABSENT from EMPTY (the prophet's own LEAVE-WHEN), so collapsing
+            // null -> [] would change behaviour. Honour the exclusion.
+            if (isset($found['method']) && isset($nullDistinguished[$found['method']])) {
                 continue;
             }
 
@@ -152,7 +163,7 @@ SCRIPTURE;
 
         foreach ($finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class) as $method) {
             if ($method->returnType !== null && $this->isNullableUnion($method->returnType)) {
-                $out[] = ['type' => $method->returnType, 'label' => 'The return type of ' . $method->name->toString() . '()', 'symbol' => 'return:' . $method->name->toString()];
+                $out[] = ['type' => $method->returnType, 'label' => 'The return type of ' . $method->name->toString() . '()', 'symbol' => 'return:' . $method->name->toString(), 'method' => $method->name->toString()];
             }
         }
 
