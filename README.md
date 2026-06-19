@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_79 prophets._
+_80 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -538,6 +538,7 @@ _79 prophets._
 | `NoRedundantOrElseWrapProphet` | Yes | Do not manually wrap an orElse alternative in Option::some()/make() |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
+| `NoSwallowedNotFoundProphet` | — | Do not catch a not-found exception just to swallow it into null/false/[] — let it throw |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
 | `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
