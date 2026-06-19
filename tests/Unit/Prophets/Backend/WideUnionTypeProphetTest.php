@@ -106,6 +106,16 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertStringContainsString('Option', $judgment->warnings[0]->message);
     }
 
+    public function test_class_union_suggests_a_shared_interface(): void
+    {
+        // #62: a null-free union of classes that are one concept — the cleanest
+        // remedy is a shared interface, not only Option / Union-wrapping.
+        $judgment = $this->judge('class A { public function m(ResourceFilterCondition | ResourceFilterGroup $node): void {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('shared interface', $judgment->warnings[0]->message);
+    }
+
     public function test_docblock_three_member_with_spaces_is_a_sin(): void
     {
         // The space inside array<string, int> must not truncate the type.
