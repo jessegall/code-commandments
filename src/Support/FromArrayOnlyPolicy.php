@@ -80,4 +80,18 @@ final class FromArrayOnlyPolicy
 
         return self::$cache[$key] = $unsafe;
     }
+
+    /**
+     * Short names of Data classes with POSITIVE proof — at least one provable-array
+     * `::from()` site. #80: the trait may be added ONLY for a class that is array-
+     * proven AND not trait-unsafe, so a class with no visible `::from()` site (a
+     * framework / Blade / Inertia-hydrated class) never gets it optimistically.
+     *
+     * @param  list<string>  $suffixes
+     * @return array<string, true>
+     */
+    public static function arrayProvenShortNames(CodebaseIndex $index, array $suffixes): array
+    {
+        return DataFromSiteCensus::arrayProvenShortNames($index, $suffixes);
+    }
 }

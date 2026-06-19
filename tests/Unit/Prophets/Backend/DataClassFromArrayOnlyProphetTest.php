@@ -154,8 +154,10 @@ class DataClassFromArrayOnlyProphetTest extends TestCase
         $subPath = $dir . '/SongData.php';
         $subSrc = "<?php\nnamespace App;\nfinal class SongData extends BaseData { public string \$title; }\n";
         file_put_contents($subPath, $subSrc);
+        // #80: positive proof — a provable-array ::from() site somewhere.
+        file_put_contents($dir . '/Caller.php', "<?php\nnamespace App;\nclass Caller { public function m(array \$a) { return SongData::from(\$a); } }\n");
 
-        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/BaseData.php', $subPath]);
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([$dir . '/BaseData.php', $subPath, $dir . '/Caller.php']);
         $this->prophet->setCodebaseIndex($index);
 
         // No ancestor provides the trait → the subclass lacks access → flagged.

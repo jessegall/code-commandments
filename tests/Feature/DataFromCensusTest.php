@@ -85,6 +85,26 @@ class DataFromCensusTest extends TestCase
         $this->assertStringContainsString('CleanData::make()', $out, 'clean class still gets make().');
     }
 
+    public function test_trait_withheld_when_a_class_has_no_visible_from_site(): void
+    {
+        // #80: fail-safe positive proof. A class with NO visible ::from() site (a
+        // Blade/Inertia view-hydrated class) cannot be proven array-safe, so the
+        // trait is withheld; a class with a provable-array ::from() still gets it.
+        $filters = $this->write('ProductTableFilters.php', "<?php\nnamespace App\\View;\nuse Spatie\\LaravelData\\Data;\nclass ProductTableFilters extends Data { public function __construct(public string \$q = '') {} }\n");
+        $clean = $this->write('CleanData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass CleanData extends Data { public function __construct(public int \$id) {} }\n");
+        $this->write('Caller.php', "<?php\nnamespace App\\Http;\nuse App\\Data\\CleanData;\nclass Ctrl { public function c(array \$a) { return CleanData::from(\$a); } }\n");
+
+        $index = CodebaseIndex::build(glob($this->dir . '/*.php') ?: []);
+        $prophet = new DataClassFromArrayOnlyProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $this->assertStringNotContainsString('FromArrayOnly', (string) $prophet->repent($filters, file_get_contents($filters))->newContent, 'no visible ::from() → no proof → trait withheld.');
+
+        $added = $prophet->repent($clean, file_get_contents($clean));
+        $this->assertTrue($added->absolved, 'a provable-array ::from() site → trait added.');
+        $this->assertStringContainsString('FromArrayOnly', (string) $added->newContent);
+    }
+
     public function test_trait_withheld_fail_safe_for_request_and_unresolved_from_args(): void
     {
         // #74: fail-safe. The trait is withheld unless EVERY ::from() site is

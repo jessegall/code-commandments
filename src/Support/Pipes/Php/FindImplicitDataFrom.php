@@ -200,9 +200,17 @@ final class FindImplicitDataFrom implements Pipe
         // #70/#74: census mode is FAIL-SAFE — any from() (self OR external) that
         // is not PROVABLY an array (a scalar, or an UNRESOLVED arg like a method
         // result) is trait-unsafe, so the trait is withheld unless every site is
-        // provably array. `array`/`empty`/`toarray` stay safe.
+        // provably array.
         if ($this->censusMode && in_array($kind, ['scalar', 'unknown'], true)) {
             return ['kind' => 'nonarray', 'target' => $isInside ? ($ownName ?? 'self') : $target];
+        }
+
+        // #80: census mode also records PROVABLE-array sites (an array literal /
+        // typed array param / toArray()), so the trait is added only with positive
+        // proof that some site passes an array — never on zero visible sites (a
+        // framework/view-hydrated class).
+        if ($this->censusMode && in_array($kind, ['array', 'toarray'], true)) {
+            return ['kind' => 'array_from', 'target' => $isInside ? ($ownName ?? 'self') : $target];
         }
 
         if ($kind === 'toarray' && ! $isInside) {
