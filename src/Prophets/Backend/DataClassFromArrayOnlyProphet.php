@@ -173,6 +173,10 @@ SCRIPTURE;
         $warnings = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($this->isUninstantiableData($class)) {
+                continue;
+            }
+
             if (! $this->lacksTraitAccess($class, $uses, $namespace)) {
                 continue;
             }
@@ -256,6 +260,10 @@ SCRIPTURE;
         $penance = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($this->isUninstantiableData($class)) {
+                continue;
+            }
+
             if (! $this->extendsDataBase($class, $uses, $namespace) || $this->usesTrait($class, $traitShort)) {
                 continue;
             }
@@ -321,6 +329,31 @@ SCRIPTURE;
      *
      * @param  array<string, string>  $uses
      */
+    /**
+     * #87: classes that must NEVER receive the trait because the override would
+     * break instantiation/morphing:
+     *  - an ABSTRACT class is never `new`-ed directly; FromArrayOnly::from() calls
+     *    parent::from(), defeating the polymorphic morph and making Spatie try to
+     *    instantiate the abstract base; and
+     *  - a `PropertyMorphableData` class whose `::from()` is INTENTIONALLY the
+     *    morphing one (it resolves to a concrete subclass) — the override would
+     *    short-circuit the morph.
+     */
+    private function isUninstantiableData(Node\Stmt\Class_ $class): bool
+    {
+        if ($class->isAbstract()) {
+            return true;
+        }
+
+        foreach ($class->implements as $interface) {
+            if ($interface->getLast() === 'PropertyMorphableData') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function lacksTraitAccess(Node\Stmt\Class_ $class, array $uses, ?string $namespace): bool
     {
         if (! $class->extends instanceof Node\Name) {
