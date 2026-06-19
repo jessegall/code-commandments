@@ -344,4 +344,68 @@ class WideUnionTypeProphetTest extends TestCase
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);
     }
+
+    // ── #62: narrow-to-a-shared-interface (index-backed) ─────────────────
+
+    public function test_flags_and_auto_fixes_a_class_union_with_a_narrow_shared_interface(): void
+    {
+        [$prophet, $file, $src] = $this->indexedUnion('ResourceFilterCondition | ResourceFilterGroup', sharedInterface: true);
+
+        $judgment = $prophet->judge($file, $src);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('narrow shared interface `ResourceFilterNode`', $judgment->warnings[0]->message);
+        $this->assertTrue($judgment->warnings[0]->autoFixable);
+
+        $result = $prophet->repent($file, $src);
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('apply(ResourceFilterNode $node)', $result->newContent);
+        $this->assertStringNotContainsString('ResourceFilterCondition | ResourceFilterGroup', $result->newContent);
+    }
+
+    public function test_refuses_to_narrow_to_an_over_broad_interface(): void
+    {
+        // Both members implement only Stringable — narrowing to it would WIDEN
+        // the type. Must NOT suggest the interface and must NOT auto-fix.
+        [$prophet, $file, $src] = $this->indexedUnion('Foo | Bar', sharedInterface: false);
+
+        $judgment = $prophet->judge($file, $src);
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringNotContainsString('narrow shared interface', $judgment->warnings[0]->message);
+        $this->assertNotTrue($judgment->warnings[0]->autoFixable);
+        $this->assertFalse($prophet->repent($file, $src)->absolved);
+    }
+
+    /**
+     * @return array{0: WideUnionTypeProphet, 1: string, 2: string}
+     */
+    private function indexedUnion(string $union, bool $sharedInterface): array
+    {
+        $dir = sys_get_temp_dir() . '/cc-union-' . uniqid();
+        @mkdir($dir, 0755, true);
+        $dir = realpath($dir);
+        $ns = 'App\\Filters';
+
+        if ($sharedInterface) {
+            file_put_contents("$dir/Node.php", "<?php\nnamespace {$ns};\ninterface ResourceFilterNode {}\n");
+            file_put_contents("$dir/Cond.php", "<?php\nnamespace {$ns};\nclass ResourceFilterCondition implements ResourceFilterNode {}\n");
+            file_put_contents("$dir/Grp.php", "<?php\nnamespace {$ns};\nclass ResourceFilterGroup implements ResourceFilterNode {}\n");
+        } else {
+            file_put_contents("$dir/Foo.php", "<?php\nnamespace {$ns};\nclass Foo implements \\Stringable { public function __toString(): string { return ''; } }\n");
+            file_put_contents("$dir/Bar.php", "<?php\nnamespace {$ns};\nclass Bar implements \\Stringable { public function __toString(): string { return ''; } }\n");
+        }
+
+        $file = "$dir/Filter.php";
+        $src = "<?php\nnamespace {$ns};\nclass Filter { public function apply({$union} \$node): void {} }\n";
+        file_put_contents($file, $src);
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build(glob("$dir/*.php") ?: []);
+
+        $prophet = new WideUnionTypeProphet;
+        $prophet->setCodebaseIndex($index);
+        $prophet->configure(['warn_at' => 2]);
+
+        return [$prophet, $file, $src];
+    }
 }

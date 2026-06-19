@@ -275,6 +275,7 @@ final class CodebaseIndex
                 methods: $methods,
                 filePath: $shell['file'],
                 traits: self::collectTraits($shell['classNode'], $shell['uses'], $shell['namespace']),
+                interfaces: self::collectInterfaces($shell['classNode'], $shell['uses'], $shell['namespace']),
             );
         }
     }
@@ -304,6 +305,57 @@ final class CodebaseIndex
     public function classes(): array
     {
         return $this->classes;
+    }
+
+    /**
+     * Resolved FQCNs of every interface $fqcn implements — directly and inherited
+     * through its parent chain.
+     *
+     * @return list<string>
+     */
+    public function interfacesOf(string $fqcn): array
+    {
+        $cursor = ltrim($fqcn, '\\');
+        $seen = [];
+        $interfaces = [];
+        $depth = 0;
+
+        while ($cursor !== null && ! isset($seen[$cursor]) && $depth++ < 16) {
+            $seen[$cursor] = true;
+            $summary = $this->classes[$cursor] ?? null;
+
+            if ($summary === null) {
+                break;
+            }
+
+            foreach ($summary->interfaces as $interface) {
+                $interfaces[ltrim($interface, '\\')] = true;
+            }
+
+            $cursor = $summary->parent !== null ? ltrim($summary->parent, '\\') : null;
+        }
+
+        return array_keys($interfaces);
+    }
+
+    /**
+     * Every indexed class that implements $interfaceFqcn (directly or inherited)
+     * — its implementer-set, used to judge how NARROW an interface is.
+     *
+     * @return list<string>
+     */
+    public function implementersOf(string $interfaceFqcn): array
+    {
+        $needle = ltrim($interfaceFqcn, '\\');
+        $implementers = [];
+
+        foreach (array_keys($this->classes) as $fqcn) {
+            if (in_array($needle, $this->interfacesOf($fqcn), true)) {
+                $implementers[] = $fqcn;
+            }
+        }
+
+        return $implementers;
     }
 
     /**
@@ -783,6 +835,23 @@ final class CodebaseIndex
         }
 
         return $traits;
+    }
+
+    /**
+     * Resolved FQCNs of every interface the class directly implements.
+     *
+     * @param  array<string, string>  $uses
+     * @return list<string>
+     */
+    private static function collectInterfaces(Node\Stmt\Class_ $class, array $uses, ?string $namespace): array
+    {
+        $interfaces = [];
+
+        foreach ($class->implements as $implement) {
+            $interfaces[] = NameResolver::resolve($implement->toString(), $uses, $namespace);
+        }
+
+        return $interfaces;
     }
 
     private static function isScalar(string $type): bool
