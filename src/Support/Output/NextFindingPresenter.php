@@ -122,6 +122,15 @@ final class NextFindingPresenter
         } else {
             $lines[] = '  (This is a sin — it cannot be absolved. It must be fixed.)';
             $lines[] = '  You own this even if you did not cause it — it is on a file you touched. "I didn\'t cause this" is never a reason to leave a sin.';
+            $lines[] = '  2. OR, if you believe the rule is genuinely WRONG, report it — that files an issue AND quiets this finding until the issue is answered:';
+            $lines[] = sprintf(
+                '       %s report --prophet=%s %s --reason="why it is wrong"',
+                $binary,
+                $finding->prophetShort,
+                $finding->line !== null
+                    ? '--at=' . $finding->relativePath . ':' . $finding->line
+                    : '--file=' . $finding->relativePath,
+            );
         }
 
         $lines[] = T_String::empty();
