@@ -23,7 +23,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  */
 final class DataFromSiteCensus
 {
-    /** @var array<string, array<string, true>> cacheKey => shortName => true */
+    /** @var array<string, array{object: array<string, true>, array: array<string, true>}> */
     private static array $cache = [];
 
     /**
@@ -33,6 +33,29 @@ final class DataFromSiteCensus
      * @return array<string, true>
      */
     public static function objectFromShortNames(CodebaseIndex $index, array $suffixes): array
+    {
+        return self::scan($index, $suffixes)['object'];
+    }
+
+    /**
+     * Short class names with at least one PROVABLE-array `::from()` site (an array
+     * literal / typed-array param / toArray()) — the positive proof #80 requires
+     * before the trait may be added. A class with NO visible `::from()` site (a
+     * framework/view-hydrated class) is absent here and so stays trait-less.
+     *
+     * @param  list<string>  $suffixes
+     * @return array<string, true>
+     */
+    public static function arrayProvenShortNames(CodebaseIndex $index, array $suffixes): array
+    {
+        return self::scan($index, $suffixes)['array'];
+    }
+
+    /**
+     * @param  list<string>  $suffixes
+     * @return array{object: array<string, true>, array: array<string, true>}
+     */
+    private static function scan(CodebaseIndex $index, array $suffixes): array
     {
         $files = [];
 
@@ -51,7 +74,8 @@ final class DataFromSiteCensus
             return self::$cache[$key];
         }
 
-        $names = [];
+        $object = [];
+        $array = [];
         $pipe = (new FindImplicitDataFrom)->withDataSuffixes($suffixes)->inCensusMode();
 
         foreach ($paths as $file) {
@@ -67,12 +91,17 @@ final class DataFromSiteCensus
                 ->getContext();
 
             foreach ($context->matches as $match) {
-                if (($match->groups['kind'] ?? '') === 'nonarray') {
-                    $names[$match->groups['target']] = true;
+                $kind = $match->groups['kind'] ?? '';
+                $target = $match->groups['target'] ?? '';
+
+                if ($kind === 'nonarray') {
+                    $object[$target] = true;
+                } elseif (in_array($kind, ['array_from', 'empty_from', 'toarray_outside'], true)) {
+                    $array[$target] = true;
                 }
             }
         }
 
-        return self::$cache[$key] = $names;
+        return self::$cache[$key] = ['object' => $object, 'array' => $array];
     }
 }
