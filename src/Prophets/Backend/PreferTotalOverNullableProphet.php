@@ -72,7 +72,7 @@ class PreferTotalOverNullableProphet extends PhpCommandment implements NeedsCode
         return Advisory::make()
             ->applyWhen('A PRIVATE method returns `?T` / `T | null` / `Option<T>`, but every call site immediately requires the value — `?? throw`, `->getOrThrow()`/`->unwrap()`, or a blind `->` dereference. The absence is never handled, so the nullability is unearned.')
             ->leaveWhen('any caller genuinely handles the absence — branches on null, supplies a real `?? $default`, uses `?->`, or passes it on as optional. Then the absence is real: keep it (as `Option<T>`, not raw null).')
-            ->whenUnsure('if T has an empty IDENTITY (a Fluent bag, a scalar, a no-arg/`::empty()` class), return that empty value — null/Option is partiality the type already represents. Otherwise, if no caller tolerates "no value", make the method TOTAL (Null Object / exhaustive match) or THROW a named exception at the source — the contract honest once, not re-asserted at every call site.');
+            ->whenUnsure('only when NO caller tolerates "no value": make the method TOTAL or THROW at the source. If T has an empty IDENTITY (a Fluent bag, scalar, no-arg/`::empty()` class) AND that empty value is a valid domain value, returning it is the total form; if the empty value would be wrong (e.g. `\'\'` for a path), throw instead.');
     }
 
     public function detailedDescription(): string
@@ -120,15 +120,18 @@ Empty identities: `array`→`[]`, `string`→`''`, `int`/`float`→`0`/`0.0`,
 `new T` / `T::empty()`.
 
 WHAT FIRES — a PRIVATE method whose return is `?T` / `T | null` / `Option<T>`,
-with >= 1 in-class call site, AND either (a) T has an empty identity (then it
-fires even if a caller tolerates the absence — the empty value removes the hedge
-entirely), OR (b) EVERY call site de-nulls the result (`$this->m() ?? throw …`,
-`->getOrThrow()`/`->unwrap()`, or a blind `->` deref).
+with >= 1 in-class call site, where EVERY call site de-nulls the result
+(`$this->m() ?? throw …`, `->getOrThrow()`/`->unwrap()`, or a blind `->` deref).
+When T ALSO has an empty identity (a Fluent bag, scalar, no-arg/`::empty()`
+class), the remedy adds "return the empty T" alongside "or throw".
 
-WHAT DOES NOT — for a type with NO empty identity, any caller that handles the
-absence (a `?? $realDefault`, a `?->` chain, a `=== null` branch, passing it on)
-keeps the nullable earned. A non-private method (callers may live elsewhere).
-Advisory: return-empty / totalise / throw is a design decision.
+WHAT DOES NOT — ANY caller that handles the absence keeps the nullable earned:
+a `?? $realDefault`, a `?->` chain, a `=== null` branch, passing it on, OR an
+Option consumed with `->getOr($default)` / `->transform(...)->getOr(...)` (a
+default IS handling the miss — even for an empty-identity type, where returning
+the empty value may be a wrong domain value, e.g. `''` for a path). A non-private
+method (callers may live elsewhere). Advisory: return-empty / totalise / throw
+is a design decision.
 SCRIPTURE;
     }
 
@@ -164,17 +167,22 @@ SCRIPTURE;
                     continue;
                 }
 
-                // When the return type T has an empty IDENTITY (a Fluent bag, a
-                // scalar, a no-arg/`::empty()` class), null/Option is partiality
-                // the type can already represent — worth totalising even if a
-                // caller tolerates the absence (#108). Otherwise keep the strict
-                // "every caller de-nulls" trigger (totalise-or-throw is the only
-                // honest move there).
-                $identity = $this->emptyIdentity($method, $ast, $finder);
-
-                if ($identity === null && ! $this->everyCallDeNulls($calls, $kind, $parents)) {
+                // The trigger is ALWAYS "every caller de-nulls" — if ANY caller
+                // handles the absence (`?? $default`, `?->`, an Option
+                // `->getOr($default)`/`->transform(...)->getOr(...)`, a `=== null`
+                // branch), the nullability is earned, keep it. (#115: do NOT fire
+                // on an empty-identity type whose caller already handles absence —
+                // e.g. `viteConfigPath(): Option<string>` consumed via
+                // `->transform(...)->getOr(false)`; returning `''` would also be a
+                // wrong "empty identity" for a path.)
+                if (! $this->everyCallDeNulls($calls, $kind, $parents)) {
                     continue;
                 }
+
+                // The empty identity (a Fluent bag, scalar, no-arg/`::empty()`
+                // class) only ENRICHES the remedy — "return the empty T" alongside
+                // "or throw" — it does not widen the trigger (#108).
+                $identity = $this->emptyIdentity($method, $ast, $finder);
 
                 $line = $method->getStartLine();
                 $warnings[] = $this->warningAt(
