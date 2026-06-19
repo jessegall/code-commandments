@@ -135,6 +135,11 @@ class ScaffoldGeneratorTest extends TestCase
         $option = file_get_contents($this->dir . '/Option.php');
 
         $this->assertStringContainsString('public function orElse(callable $alternative): self', $option);
+        // #111: the immutable Option is covariant (T only in output positions),
+        // so Option<string> is an Option<mixed> — without this, ~90 call sites
+        // PHPStan-fail. or()/orWhen() use a method-level TOther to keep T out of
+        // contravariant positions.
+        $this->assertStringContainsString('@template-covariant T', $option);
         $this->assertStringContainsString('public function or(self $alternative): self', $option);
         $this->assertStringContainsString('public function orWhen(mixed $condition, callable $factory): self', $option);
         $this->assertStringContainsString('public function andWhen(mixed $condition): self', $option);
