@@ -158,6 +158,8 @@ return [
                 Backend\NoConditionalArraySpreadProphet::class,
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
                 Backend\FeatureEnvyProphet::class,
+                Backend\PreferCollectionPipelineProphet::class,
+                Backend\PreferFirstClassCallableProphet::class,
                 Backend\NoFacadesInServicesProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
                 Backend\PreferAndThenProphet::class,
