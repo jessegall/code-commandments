@@ -66,6 +66,25 @@ class DataFromCensusTest extends TestCase
         $this->assertStringContainsString('FromArrayOnly', (string) $added->newContent);
     }
 
+    public function test_make_withheld_when_class_has_an_unresolved_self_from(): void
+    {
+        // #70: a class whose own static factory calls self::from(<unresolved>)
+        // has the trait withheld (hasUnsafeSelfFrom). The make() rewrite must
+        // agree — census mode treats an unresolved self ::from() as trait-unsafe.
+        $this->write('SmtpSettingsData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass SmtpSettingsData extends Data { public function __construct(public string \$host) {} public static function fromRaw(\$raw): self { return self::from(\$raw); } }\n");
+        $this->write('CleanData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass CleanData extends Data { public function __construct(public string \$x) {} }\n");
+        $ctrl = $this->write('Ctrl.php', "<?php\nnamespace App\\Http;\nuse App\\Data\\SmtpSettingsData;\nuse App\\Data\\CleanData;\nclass Ctrl { public function a() { return SmtpSettingsData::from([]); } public function b() { return CleanData::from([]); } }\n");
+
+        $index = CodebaseIndex::build(glob($this->dir . '/*.php') ?: []);
+        $prophet = new ExplicitDataFactoryProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $out = (string) ($prophet->repent($ctrl, file_get_contents($ctrl))->newContent ?? file_get_contents($ctrl));
+
+        $this->assertStringContainsString('SmtpSettingsData::from([])', $out, 'unresolved self::from → trait withheld → leave from([]).');
+        $this->assertStringContainsString('CleanData::make()', $out, 'clean class still gets make().');
+    }
+
     public function test_from_empty_not_rewritten_to_make_when_trait_is_withheld(): void
     {
         $this->write('SmtpSettingsData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass SmtpSettingsData extends Data { public function __construct(public string \$host) {} }\n");

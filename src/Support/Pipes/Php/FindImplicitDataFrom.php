@@ -60,6 +60,22 @@ final class FindImplicitDataFrom implements Pipe
     private array $dataSuffixes = ['Data'];
 
     /**
+     * Census mode: a SELF `::from()` whose arg is not provably array (object,
+     * scalar, OR unresolved) counts as `nonarray`. Mirrors DataClassFromArrayOnly's
+     * hasUnsafeSelfFrom so the trait-withholding and the from([])->make() rewrite
+     * agree on the same classes (#70). Off for normal judging (which only flags
+     * provable objects).
+     */
+    private bool $censusMode = false;
+
+    public function inCensusMode(bool $on = true): self
+    {
+        $this->censusMode = $on;
+
+        return $this;
+    }
+
+    /**
      * @param  list<string>  $suffixes
      */
     public function withDataSuffixes(array $suffixes): self
@@ -173,6 +189,13 @@ final class FindImplicitDataFrom implements Pipe
 
         if ($kind === 'object') {
             return ['kind' => 'nonarray', 'target' => $isInside ? ($ownName ?? 'self') : $target];
+        }
+
+        // #70: in census mode, a SELF from() that is not provably array — including
+        // an UNRESOLVED arg — is trait-unsafe (matches hasUnsafeSelfFrom), so the
+        // make() rewrite is withheld for the same classes the trait is.
+        if ($this->censusMode && $isInside && in_array($kind, ['scalar', 'unknown'], true)) {
+            return ['kind' => 'nonarray', 'target' => $ownName ?? 'self'];
         }
 
         if ($kind === 'toarray' && ! $isInside) {
