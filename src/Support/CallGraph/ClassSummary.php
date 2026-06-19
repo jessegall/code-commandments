@@ -19,6 +19,7 @@ final readonly class ClassSummary
      * @param  array<string, MethodSummary>  $methods
      * @param  list<string>  $traits  resolved FQCNs of traits this class uses
      * @param  list<string>  $interfaces  resolved FQCNs of interfaces this class directly implements
+     * @param  array<string, string>  $scalarPropertyTypes  propName => scalar type (string/int/float/bool/…)
      */
     public function __construct(
         public string $fqcn,
@@ -29,5 +30,6 @@ final readonly class ClassSummary
         public string $filePath,
         public array $traits = [],
         public array $interfaces = [],
+        public array $scalarPropertyTypes = [],
     ) {}
 }
