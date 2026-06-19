@@ -79,6 +79,7 @@ return [
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
                 Backend\ResolverPatternProphet::class,
                 Backend\ResolverNamingHonestyProphet::class,
+                Backend\PushGenericToSourceProphet::class,
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,

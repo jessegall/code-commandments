@@ -33,6 +33,10 @@ final readonly class MethodSummary
         public int $line,
         /** Resolved FQCN of the single generic in a `@return Wrapper<T>` docblock (e.g. Option<NodeDescriptor>), else null. */
         public ?string $returnInnerType = null,
+        /** The native return type's short name (`Option`, `array`, `mixed`, …), or null when untyped. */
+        public ?string $returnTypeName = null,
+        /** Whether the `@return` docblock carries a generic parameter (`Wrapper<T>`). */
+        public bool $returnDocIsParameterized = false,
     ) {}
 
     public function hasParam(string $name): bool

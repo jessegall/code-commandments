@@ -160,6 +160,7 @@ return [
                 Backend\PreferEmptyOverNullProphet::class,
                 Backend\RegistryReturnContractProphet::class,
                 Backend\ResolverNamingHonestyProphet::class,
+                Backend\PushGenericToSourceProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,
