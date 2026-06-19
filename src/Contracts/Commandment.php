@@ -45,6 +45,21 @@ interface Commandment
     public function supersedes(): array;
 
     /**
+     * Prophet classes that are the likely ROOT CAUSE of this commandment's
+     * findings. When such a finding is produced, the engine may check whether
+     * one of these causes applies in the same region — to defer to it, annotate
+     * the symptom with a root-cause hint (even under `--prophet=` filtering, when
+     * the cause prophet did not run), or block an auto-fix that would launder the
+     * cause. The inverse, symptom-side declaration of `supersedes()`.
+     *
+     * Declared centrally in {@see \JesseGall\CodeCommandments\Support\RootCauseMap}
+     * — do not hand-author both directions on a prophet.
+     *
+     * @return list<class-string>
+     */
+    public function rootCauses(): array;
+
+    /**
      * Get the full scripture (detailed explanation) of this commandment.
      */
     public function detailedDescription(): string;
