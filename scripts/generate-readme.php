@@ -148,7 +148,11 @@ function commandsSection(): string
 
 function escapeCell(string $text): string
 {
-    return str_replace(['|', "\n"], ['\\|', ' '], trim($text));
+    // Escape `|` (column separator), newlines, AND angle brackets — a literal
+    // `<script setup>` / `<template v-for>` in a description is otherwise parsed
+    // as a real HTML tag by the markdown renderer, swallowing the rest of the
+    // table.
+    return str_replace(['|', "\n", '<', '>'], ['\\|', ' ', '&lt;', '&gt;'], trim($text));
 }
 
 function anchor(string $name): string
