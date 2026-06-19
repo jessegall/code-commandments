@@ -128,4 +128,46 @@ class FeatureEnvyProphetTest extends TestCase
 
         return $judgment === null ? [] : array_values($judgment->warnings);
     }
+
+    // ── #61: false-positive refinements ──────────────────────────────────
+
+    public function test_does_not_flag_api_calls_injected_deps_or_form_requests(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc-envy-' . uniqid();
+        @mkdir($dir, 0755, true);
+        $dir = realpath($dir);   // judgeScroll keys results by realpath
+        $ns = 'JesseGall\\CodeCommandments\\Tests\\Fixtures\\Backend\\Sinful\\FeatureEnvy';
+
+        // Owner types — project-owned (in the index).
+        file_put_contents("$dir/WorkflowGraph.php", "<?php\nnamespace {$ns};\nclass WorkflowGraph {}\n");
+        file_put_contents("$dir/SchemaInferrer.php", "<?php\nnamespace {$ns};\nclass SchemaInferrer {}\n");
+        file_put_contents("$dir/StoreRequest.php", "<?php\nnamespace {$ns};\nclass StoreRequest {}\n");
+        file_put_contents("$dir/Descriptor.php", "<?php\nnamespace {$ns};\nclass Descriptor { public array \$outputs = []; }\n");
+
+        // (A) query over a foreign method WITH ARGS — the object's query API.
+        file_put_contents("$dir/Emitter.php", "<?php\nnamespace {$ns};\nclass Emitter { public function wire(WorkflowGraph \$graph, \$id, \$port) { return Option::first(\$graph->edgesIntoSocket(\$id, \$port), fn (\$e) => \$e); } }\n");
+        // (B) method on an injected dependency — delegation.
+        file_put_contents("$dir/Ctrl.php", "<?php\nnamespace {$ns};\nclass Ctrl { public function __construct(private SchemaInferrer \$inferrer) {} public function infer() { return Option::first(\$this->inferrer->infer(), fn (\$x) => \$x); } }\n");
+        // (C) FormRequest typed getter — what the toolkit itself requires.
+        file_put_contents("$dir/Ctrl2.php", "<?php\nnamespace {$ns};\nclass Ctrl2 { public function store(StoreRequest \$request) { return Option::first(\$request->fieldSpecs(), fn (\$s) => \$s); } }\n");
+        // CONTROL — a raw property read on a foreign param is still envy.
+        file_put_contents("$dir/Wirer.php", "<?php\nnamespace {$ns};\nclass Wirer { public function wire(Descriptor \$descriptor) { return Option::first(\$descriptor->outputs, fn (\$o) => \$o); } }\n");
+
+        $registry = new ProphetRegistry;
+        $manager = new ScrollManager($registry, new GenericFileScanner);
+        $registry->registerMany('t', [FeatureEnvyProphet::class => []]);
+        $registry->setScrollConfig('t', ['path' => $dir, 'extensions' => ['php']]);
+
+        $results = $manager->judgeScroll('t');
+
+        $this->assertEmpty($this->warningsFor($results, "$dir/Emitter.php"), '(A) a parameterised query method is the API, not envy.');
+        $this->assertEmpty($this->warningsFor($results, "$dir/Ctrl.php"), '(B) delegating to an injected dependency is not envy.');
+        $this->assertEmpty($this->warningsFor($results, "$dir/Ctrl2.php"), '(C) a FormRequest typed getter is required, not envy.');
+        $this->assertNotEmpty($this->warningsFor($results, "$dir/Wirer.php"), 'CONTROL: a raw property read on a foreign param IS still envy.');
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
 }
