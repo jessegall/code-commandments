@@ -75,4 +75,31 @@ class RegistryReturnContractProphetTest extends TestCase
     {
         return $this->prophet->judge('/x.php', "<?php\nnamespace App;\ninterface Registry {}\n" . $body);
     }
+
+    public function test_resolves_the_marker_transitively_through_an_ancestor(): void
+    {
+        // #84: a subclass of a base that carries the marker (interface OR
+        // #[Registry] attribute) is a registry too — the marker need not be on
+        // every leaf.
+        $dir = sys_get_temp_dir() . '/cc-reg84-' . uniqid();
+        @mkdir($dir, 0755, true);
+
+        file_put_contents("$dir/Base.php", "<?php\nnamespace App;\ninterface Registry {}\nabstract class KeyedRegistry implements Registry {}\n");
+        $sub = "$dir/ResourceRegistry.php";
+        file_put_contents($sub, "<?php\nnamespace App;\nfinal class ResourceRegistry extends KeyedRegistry { public function pipeline(string \$k): Option { return \$this->r(\$k); } }\n");
+        $plain = "$dir/Plain.php";
+        file_put_contents($plain, "<?php\nnamespace App;\nfinal class Plain { public function pipeline(string \$k): Option { return \$this->r(\$k); } }\n");
+
+        $index = \JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build(glob("$dir/*.php") ?: []);
+        $prophet = new RegistryReturnContractProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $this->assertTrue($prophet->judge($sub, file_get_contents($sub))->isFallen(), 'subclass of a marked base is a registry.');
+        $this->assertTrue($prophet->judge($plain, file_get_contents($plain))->isRighteous(), 'unmarked class is not.');
+
+        foreach (glob("$dir/*.php") ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
 }
