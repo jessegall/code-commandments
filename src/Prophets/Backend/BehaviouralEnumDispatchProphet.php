@@ -50,7 +50,7 @@ class BehaviouralEnumDispatchProphet extends PhpCommandment
         return Advisory::make()
             ->applyWhen('A wide `match`/`switch` (≥ 5 arms, configurable) dispatches per case of ONE closed-set enum, and each arm is BEHAVIOUR — it calls methods / branches inline / delegates to a collaborator — not a bare constant or value.')
             ->leaveWhen('the arms map to constants/values (that belongs ON the enum as a method — PreferTypeMethodOverInlineDispatch), there are only a few arms (inline is more readable than N files), the dispatch is already a method call on the type, or the arms share no common shape so a strategy interface would not fit.')
-            ->whenUnsure('if adding a case means widening this match (and a sibling one) every time, and each arm is real logic with collaborators, extract one strategy object per case behind an `apply(...)`-style interface and dispatch via a map keyed by the enum. If the arms are just values, push a method onto the enum instead.');
+            ->whenUnsure('if adding a case means widening this match (and a sibling one) every time, and each arm is real logic with collaborators, extract one strategy object per case behind an `apply(...)`-style interface, and home the registration in a dedicated injected provider (`for($key): Strategy`) — not an inline map method on this class. If the arms are just values, push a method onto the enum instead.');
     }
 
     public function detailedDescription(): string
@@ -74,17 +74,40 @@ Bad — a wide behavioural match (and a sibling one in `default`):
         };
     }
 
-Good — one applicator per case behind an interface, dispatched via a map:
+Good — one applicator per case behind an interface, registered in a DEDICATED
+injected provider (not an inline map method — that just reshapes the wide table
+in place, leaving the construction + every strategy's deps on the original class):
     interface SocketEffectApplicator {
         public function apply(NodeDescriptor $d, SocketEffect $rule, PickedValue $p): NodeDescriptor;
     }
     final class ResourceTokenEffect implements SocketEffectApplicator { /* one effect's rewrite */ }
     // … one class per case …
 
+    final class SocketEffectApplicators            // the registration lives HERE
+    {
+        /** @var array<string, SocketEffectApplicator> */
+        private readonly array $applicators;
+        public function __construct(SchemaTypeRegistry $objects) {
+            $this->applicators = [
+                PickEffect::ResourceToken->value => new ResourceTokenEffect,
+                PickEffect::SchemaToken->value   => new SchemaTokenEffect($objects),
+                // …
+            ];
+        }
+        public function for(PickEffect $e): SocketEffectApplicator { return $this->applicators[$e->value]; }
+    }
+
+    // original class: inject the provider, delegate — owns no map, no strategy deps:
     private function applyEffect(NodeDescriptor $d, SocketEffect $rule, PickedValue $p): NodeDescriptor
     {
-        return $this->effectApplicators()[$rule->effect->value]->apply($d, $rule, $p);
+        return $this->effectApplicators->for($rule->effect)->apply($d, $rule, $p);
     }
+
+NAMING — the provider is a TOTAL keyed lookup (`for($key): Strategy`,
+return-or-throw over the closed keyspace). Name it for that: `XApplicators` /
+`XStrategies` / a neutral `XMap`. NOT `*Resolver` (that is first-match kernel
+dispatch — ResolverNamingHonesty would flag it) and NOT `*Factory` (overstates if
+it hands back shared stateless strategies rather than building per call).
 
 WHAT FIRES — a `match`/`switch` whose arms label ≥ 5 cases of ONE closed-set enum,
 where the arm bodies are BEHAVIOUR: they call methods (`$this->…()`, `$x->…()`),
@@ -163,7 +186,7 @@ SCRIPTURE;
     {
         $warnings[] = $this->warningAt(
             $line,
-            sprintf('This wide per-case dispatch on `%s` is behaviour, not a value map — consider one strategy object per case behind an `apply(...)`-style interface, dispatched via a registration map keyed by the enum, so adding a case is a new class + one map entry instead of widening this match.', $enum),
+            sprintf('This wide per-case dispatch on `%s` is behaviour, not a value map — consider one strategy object per case behind an `apply(...)`-style interface, so adding a case is a new class + one map entry instead of widening this match. Put the case→strategy registration in a DEDICATED injected provider class exposing a single `for($key): Strategy` lookup (a `%sApplicators`/`%sStrategies`/`%sMap` — NOT a `*Resolver`, which is first-match dispatch, nor a `*Factory`) — don\'t leave an inline map/builder method on this class, which only reshapes the wide dispatch in place.', $enum, $enum, $enum, $enum),
             $this->lineAt($content, $line),
             'behavioural-enum-dispatch:' . $enum,
         );
