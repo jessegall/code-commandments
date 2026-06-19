@@ -32,6 +32,10 @@ class BehaviouralEnumDispatchProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
         $this->assertStringContainsString('strategy object', $judgment->warnings[0]->message);
         $this->assertStringContainsString('NodeKind', $judgment->warnings[0]->message);
+        // #92: steer to a dedicated injected provider (for($key): Strategy), not
+        // an inline map, and away from *Resolver/*Factory naming.
+        $this->assertStringContainsString('for($key): Strategy', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('NOT a `*Resolver`', $judgment->warnings[0]->message);
     }
 
     public function test_leaves_a_value_only_map_to_prefer_type_method(): void
