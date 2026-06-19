@@ -162,6 +162,7 @@ return [
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,
+                Backend\BehaviouralEnumDispatchProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,
