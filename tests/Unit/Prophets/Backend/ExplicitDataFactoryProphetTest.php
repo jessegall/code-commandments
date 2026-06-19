@@ -193,6 +193,17 @@ class ExplicitDataFactoryProphetTest extends TestCase
         $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
     }
 
+    public function test_flags_from_on_a_fluent_model_method(): void
+    {
+        // #58: `$user->append('x')` returns the model, so from() builds from an
+        // object — must be flagged (else #49's gating adds FromArrayOnly and the
+        // un-converted call site hits the runtime assert).
+        $j = $this->judge('class UserData extends \Spatie\LaravelData\Data {} class Page { public function r($u) { return UserData::from($u->append("hasCashierPin")); } }');
+
+        $this->assertTrue($j->hasWarnings());
+        $this->assertStringContainsString('non-array (object)', $j->warnings[0]->message);
+    }
+
     public function test_copy_wither_spread_is_exempt(): void
     {
         $j = $this->judge('class SongData extends \Spatie\LaravelData\Data { public static function with(array $changes): self { return new self(...$changes); } }');
