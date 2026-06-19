@@ -131,7 +131,90 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             }
         }
 
+        // Pattern B, class scope: a PRIVATE nullable accessor whose result is
+        // de-nulled via `?->` across the class (e.g. `$this->activeDiscount()?->
+        // applyTo(...) ?? $x` in one method and `...?->label() ?? $y` in another).
+        // The accesses live in different methods, so the per-method pass misses
+        // them — count them at the class level and suggest a total Null Object.
+        foreach ($nodeFinder->findInstanceOf($input->ast, Stmt\Class_::class) as $class) {
+            assert($class instanceof Stmt\Class_);
+
+            foreach ($this->detectAccessorChains($class, $input->content) as $match) {
+                $matches[] = $match;
+            }
+        }
+
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * @return iterable<MatchResult>
+     */
+    private function detectAccessorChains(Stmt\Class_ $class, string $content): iterable
+    {
+        $finder = new NodeFinder;
+
+        foreach ($class->getMethods() as $accessor) {
+            if (! $accessor->isPrivate()) {
+                continue;
+            }
+
+            $typeInfo = $this->extractNullableTypeInfo($accessor->returnType);
+
+            if ($typeInfo === null || ! $typeInfo['nullable']) {
+                continue;
+            }
+
+            if (in_array($typeInfo['typeName'], self::PATTERN_B_TYPE_WHITELIST, true)
+                || in_array($typeInfo['typeName'], self::SPATIE_DATA_WHITELIST, true)
+            ) {
+                continue;
+            }
+
+            $name = $accessor->name->toString();
+            $count = 0;
+            $firstLine = null;
+
+            $nullsafes = $finder->find($class->stmts, static fn (Node $n): bool =>
+                $n instanceof Expr\NullsafeMethodCall || $n instanceof Expr\NullsafePropertyFetch);
+
+            foreach ($nullsafes as $node) {
+                assert($node instanceof Expr\NullsafeMethodCall || $node instanceof Expr\NullsafePropertyFetch);
+                $receiver = $node->var;
+
+                if ($receiver instanceof Expr\MethodCall
+                    && $receiver->var instanceof Expr\Variable
+                    && $receiver->var->name === 'this'
+                    && $receiver->name instanceof Node\Identifier
+                    && $receiver->name->toString() === $name
+                ) {
+                    $count++;
+                    $firstLine ??= $node->getStartLine();
+                }
+            }
+
+            if ($count < $this->minNullsafeAccesses || $firstLine === null) {
+                continue;
+            }
+
+            $mapKey = $this->resolveMapKey($typeInfo['typeName']);
+
+            yield new MatchResult(
+                name: 'pattern_b',
+                pattern: T_String::empty(),
+                match: '$this->' . $name . '()',
+                line: $firstLine,
+                offset: null,
+                content: $this->getSnippet($content, $firstLine),
+                groups: [
+                    'subject' => '$this->' . $name . '()',
+                    'method' => $name,
+                    'type_name' => $typeInfo['typeName'],
+                    'access_count' => (string) $count,
+                    'null_object_fqcn' => $mapKey !== null ? $this->nullObjectMap[$mapKey] : T_String::empty(),
+                ],
+            );
+        }
     }
 
     /**
@@ -699,17 +782,6 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             return 'prop:' . $expr->var->name . '->' . $expr->name->toString();
         }
 
-        // `$this->accessor()?->…` — a (private) nullable accessor whose result
-        // every caller de-nulls inline. Type resolution gates which actually
-        // qualify (a same-class private nullable method).
-        if ($expr instanceof Expr\MethodCall
-            && $expr->var instanceof Expr\Variable
-            && is_string($expr->var->name)
-            && $expr->name instanceof Node\Identifier
-        ) {
-            return 'call:' . $expr->var->name . '->' . $expr->name->toString();
-        }
-
         return null;
     }
 
@@ -738,48 +810,6 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             && $class !== null
         ) {
             return $this->findPropertyType($expr->name->toString(), $class);
-        }
-
-        // `$this->accessor()` — resolve a same-class PRIVATE nullable accessor so
-        // a helper every caller de-nulls inline (`$this->x()?->m() ?? $default`)
-        // suggests a total Null Object return.
-        if ($expr instanceof Expr\MethodCall
-            && $expr->var instanceof Expr\Variable
-            && $expr->var->name === 'this'
-            && $expr->name instanceof Node\Identifier
-            && $class !== null
-        ) {
-            return $this->resolveSelfAccessorType($expr->name->toString(), $class);
-        }
-
-        return null;
-    }
-
-    /**
-     * The nullable return type of a same-class PRIVATE accessor, or null. The
-     * `= null default` smell becomes "returns null" — modelled as hasNullDefault
-     * so Pattern B's gate reads it as a willing-to-do-nothing source.
-     *
-     * @return array{typeName: string, nullable: bool, hasNullDefault: bool}|null
-     */
-    private function resolveSelfAccessorType(string $method, Stmt\Class_ $class): ?array
-    {
-        foreach ($class->getMethods() as $candidate) {
-            if ($candidate->name->toString() !== $method) {
-                continue;
-            }
-
-            if (! $candidate->isPrivate()) {
-                return null;
-            }
-
-            $info = $this->extractNullableTypeInfo($candidate->returnType);
-
-            if ($info === null || ! $info['nullable']) {
-                return null;
-            }
-
-            return ['typeName' => $info['typeName'], 'nullable' => true, 'hasNullDefault' => true];
         }
 
         return null;
