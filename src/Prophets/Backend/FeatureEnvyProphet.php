@@ -369,7 +369,37 @@ SCRIPTURE;
             }
         }
 
+        // #95: `foreach ($owner->coll as $x) { if (cond) { return …; } }` — a
+        // SEARCH over another object's collection that derives a value (find the
+        // matching element). Unlike a plain `foreach` doing your own work per
+        // item, a search-and-return is a query that belongs ON the owner.
+        foreach ($finder->findInstanceOf($method->stmts, Node\Stmt\Foreach_::class) as $foreach) {
+            $owner = $this->ownerOfCollectionAccess($foreach->expr, $paramOwners, $propertyOwners, $unwrapOwners);
+
+            if ($owner !== null && $this->foreachSearchesAndReturns($foreach, $finder)) {
+                return ['owner' => $owner, 'access' => $this->describeAccess($foreach->expr)];
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * Whether a foreach body is a SEARCH that returns a derived value — an `if`
+     * guarding a `return <expr>` (`if ($x->name === $needle) { return $x; }`),
+     * the signature of "find the matching element" rather than process each.
+     */
+    private function foreachSearchesAndReturns(Node\Stmt\Foreach_ $foreach, NodeFinder $finder): bool
+    {
+        foreach ($finder->findInstanceOf($foreach->stmts, Node\Stmt\If_::class) as $if) {
+            foreach ($finder->findInstanceOf($if->stmts, Node\Stmt\Return_::class) as $return) {
+                if ($return->expr !== null) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
