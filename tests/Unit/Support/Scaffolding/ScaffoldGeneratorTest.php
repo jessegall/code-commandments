@@ -142,19 +142,20 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('public function filter(callable $predicate): self', $option);
     }
 
-    public function test_generated_option_guards_and_then_and_or_else_at_runtime(): void
+    public function test_generated_option_guards_and_then_and_auto_wraps_or_else(): void
     {
-        // #63(B): andThen()/orElse() assert their callback returns an Option, so
-        // a forgotten wrap is caught in dev/test even without PHPStan.
-        // #63(C): orElse's param generic stays `callable(): self<T>` (same T) —
-        // a regen must never loosen the same-inner-type guarantee.
+        // #63(B): andThen() still asserts its callback returns an Option (the
+        // flatten contract), so a forgotten wrap is caught in dev/test.
+        // orElse() instead LIFTS a bare value into an Option (a plain value ->
+        // some, null -> none), so callers need no Option::some(...) wrap — a
+        // regen must keep both behaviours.
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
 
         $option = file_get_contents($this->dir . '/Option.php');
 
         $this->assertStringContainsString("assert(\$result instanceof self, 'andThen callback must return an Option')", $option);
-        $this->assertStringContainsString("assert(\$result instanceof self, 'orElse alternative must return an Option')", $option);
-        $this->assertStringContainsString('@param  callable(): self<T>  $alternative', $option);
+        $this->assertStringContainsString('return $result instanceof self ? $result : self::make($result);', $option);
+        $this->assertStringContainsString('@param  callable(): (self<TOut>|TOut|null)  $alternative', $option);
     }
 
     public function test_generated_option_get_or_throw_accepts_a_custom_exception(): void
