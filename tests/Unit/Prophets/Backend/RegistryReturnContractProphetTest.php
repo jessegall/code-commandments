@@ -33,6 +33,36 @@ class RegistryReturnContractProphetTest extends TestCase
         $this->assertCount(1, $judgment->sins);
     }
 
+    public function test_flags_a_getter_on_a_class_extending_a_registry_base(): void
+    {
+        // #103: the idiomatic abstract-base convention — `class FooRegistry
+        // extends Registry` — carries the marker via the base class name.
+        $judgment = $this->judge('class TriggerRegistry extends Registry { public function classForKey(string $k): Option { return $this->find($k); } }');
+
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('returns an Option', $judgment->sins[0]->message);
+    }
+
+    public function test_flags_a_getter_on_the_registry_base_class_itself(): void
+    {
+        // #103: a class literally named `Registry` (the abstract base) is a
+        // registry — its own non-finder Option getters fire.
+        $judgment = $this->judge('abstract class Registry { public function first(callable $p): Option { return Option::none(); } }');
+
+        $this->assertCount(1, $judgment->sins);
+    }
+
+    public function test_leaves_finder_getters_on_a_registry_base_subclass(): void
+    {
+        // find* stays exempt even via the base-class marker.
+        $this->assertTrue($this->judge('class FooRegistry extends Registry { public function find(string $k): Option { return Option::none(); } }')->isRighteous());
+    }
+
+    public function test_ignores_a_class_extending_an_unrelated_base(): void
+    {
+        $this->assertTrue($this->judge('class FooService extends BaseService { public function thing(string $k): Option { return Option::none(); } }')->isRighteous());
+    }
+
     public function test_leaves_finder_named_getters(): void
     {
         $this->assertTrue($this->judge('class R implements Registry { public function findByEmail(string $e): ?User { return null; } }')->isRighteous());
