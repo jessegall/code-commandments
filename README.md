@@ -501,7 +501,7 @@ _69 prophets._
 | `ConstructorDependencyInjectionProphet` | — | Move service dependencies from controller methods to constructor |
 | `ControllerPrivateMethodsProphet` | — | Extract private methods to service classes when controller exceeds limit |
 | `DataClassFromArrayOnlyProphet` | Yes | Every Data class must use the FromArrayOnly trait |
-| `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x->endpoint->field to branch (Law of Demeter) |
+| `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x-&gt;endpoint-&gt;field to branch (Law of Demeter) |
 | `DuplicateCodeProphet` | — | Extract duplicated code fragments instead of copy-pasting a method body |
 | `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named fromX() factories |
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
@@ -510,9 +510,9 @@ _69 prophets._
 | `KebabCaseRoutesProphet` | — | Route URIs must use kebab-case |
 | `LongDocblockProphet` | — | Keep docblocks to one short narrative sentence above the @-tag block |
 | `LongMethodProphet` | — | Keep methods short and focused on a single responsibility |
-| `NoArrayBagProphet` | — | Do not pass array<string, mixed> bags around — give the bag a Fluent value class |
+| `NoArrayBagProphet` | — | Do not pass array&lt;string, mixed&gt; bags around — give the bag a Fluent value class |
 | `NoArrayStringIndexingProphet` | — | Prefer typed DTOs over string-indexed arrays for structured data |
-| `NoAuthUserInDataClassesProphet` | — | Use #[FromAuthenticatedUser] attribute instead of auth()->user() in Data classes |
+| `NoAuthUserInDataClassesProphet` | — | Use #[FromAuthenticatedUser] attribute instead of auth()-&gt;user() in Data classes |
 | `NoCompactProphet` | — | Do not bridge variables and arrays by name with compact()/extract() |
 | `NoConditionalArraySpreadProphet` | — | Assemble conditional array shapes with a builder, not a spread of a ternary with an empty arm |
 | `NoContainerResolutionProphet` | — | Prefer constructor injection over container resolution (app(), resolve(), App::make()) |
@@ -520,7 +520,7 @@ _69 prophets._
 | `NoEventDispatchProphet` | — | Use event() helper instead of Event::dispatch() or static dispatch |
 | `NoFacadesInServicesProphet` | — | Do not call Laravel facades in services — inject the underlying contract via the constructor |
 | `NoInlineBootLogicProphet` | — | Model boot hooks should only dispatch events, not contain business logic |
-| `NoInlineValidationProphet` | — | Move validation to FormRequest instead of inline $request->validate() |
+| `NoInlineValidationProphet` | — | Move validation to FormRequest instead of inline $request-&gt;validate() |
 | `NoJsonResponseProphet` | — | Use Inertia responses instead of JSON in web controllers |
 | `NoManualHydrationProphet` | — | Do not hand-roll array-to-object hydration — extend Spatie Data and use ::from() |
 | `NoNullCoalesceToNullProphet` | Yes | Drop the no-op `?? null`; guard a nullable foreach with `?? []` |
@@ -533,17 +533,17 @@ _69 prophets._
 | `NoRedundantDefaultArgumentProphet` | Yes | Do not pass an argument equal to the parameter default — the default is already applied |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
-| `NoValidatedMethodProphet` | — | Use typed getters instead of $request->validated() |
-| `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()->getOr(Option::none()) — do not flatten an Option<Option> by hand |
+| `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
+| `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
 | `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |
 | `PreferDataCollectionOfProphet` | — | Do not hand-roll a Data collection with ::from() in a loop — use #[DataCollectionOf] / ::collect() |
-| `PreferDataTransformersProphet` | — | Serialize Data objects through ->toArray()/transformers, not a hand-rolled mapping |
+| `PreferDataTransformersProphet` | — | Serialize Data objects through -&gt;toArray()/transformers, not a hand-rolled mapping |
 | `PreferDefaultFallbackProphet` | — | Move a call-site presence-check-then-fallback into the callee as a default parameter |
 | `PreferEmptyOverNullProphet` | — | Return an empty collection/bag instead of null — an empty instance is the absence |
 | `PreferEnumCaseGroupsProphet` | — | Name reused subsets of an enum on the enum — do not re-inline the same case-group |
 | `PreferEnumForClosedSetFieldProphet` | Yes | Suggest an enum for a string field whose name denotes a closed set |
-| `PreferNamedBranchFactoryProphet` | — | Extract a non-trivial ->then() branch factory into a named *Factory method returning callable |
+| `PreferNamedBranchFactoryProphet` | — | Extract a non-trivial -&gt;then() branch factory into a named *Factory method returning callable |
 | `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
 | `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
 | `PreferNullObjectDefaultsProphet` | Yes | Prefer Null Object defaults over nullable params normalized in the body |
@@ -554,7 +554,7 @@ _69 prophets._
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
 | `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |
-| `RegistryReturnContractProphet` | Yes | A registry returns the item or throws — not Option<T> or T \| null (with a has() companion) |
+| `RegistryReturnContractProphet` | Yes | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
 | `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
 | `ResolverPatternProphet` | — | Drive first-match dispatch and predicate code into the resolver + Predicate pattern |
@@ -573,12 +573,12 @@ _29 prophets._
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
 | `ArrowFunctionAssignmentsProphet` | — | Prefer named function declarations over arrow function assignments |
-| `CompositionApiProphet` | — | Use <script setup> Composition API instead of Options API |
+| `CompositionApiProphet` | — | Use &lt;script setup&gt; Composition API instead of Options API |
 | `ConditionalArrayBuildingProphet` | — | Consider disabled flags pattern instead of conditional array building |
 | `ContentLikePropsProphet` | — | Consider using slots instead of content-like props |
 | `DeepNestingProphet` | — | Avoid deeply nested templates - consider extracting components |
 | `EmitsTypeScriptProphet` | — | Use TypeScript interface for defineEmits instead of runtime declaration |
-| `ExplicitDefaultSlotProphet` | — | Use explicit <template #default> when using named slots |
+| `ExplicitDefaultSlotProphet` | — | Use explicit &lt;template #default&gt; when using named slots |
 | `InlineDialogProphet` | — | Extract inline dialog definitions to separate components |
 | `InlineEmitTransformProphet` | — | Avoid inline emit handlers with transformation logic in templates |
 | `InlineMarkupProphet` | — | Avoid excessive native HTML markup - extract components instead |
@@ -597,7 +597,7 @@ _29 prophets._
 | `StyleOverridesProphet` | — | Avoid style/class overrides on base components - use semantic props instead |
 | `SwitchCaseProphet` | — | Use SwitchCase component instead of v-if chains comparing the same variable |
 | `SwitchCheckboxVModelProphet` | — | Use v-model for Switch/Checkbox components, not v-model:checked or :checked |
-| `TemplateVForProphet` | Yes | Use <template v-for> wrapper instead of v-for on elements |
+| `TemplateVForProphet` | Yes | Use &lt;template v-for&gt; wrapper instead of v-for on elements |
 | `TemplateVIfProphet` | Yes | Thou shalt wrap v-if/v-else in template elements |
 | `WatchIfPatternProphet` | — | Use whenever() instead of watch() with if condition |
 | `WayfinderRoutesProphet` | — | Never hardcode URLs in href attributes |
