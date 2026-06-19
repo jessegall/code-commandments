@@ -6,12 +6,16 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 
 /**
  * Flag a nullable return whose absence is never actually tolerated (#98 H2): a
@@ -32,10 +36,26 @@ use PhpParser\NodeFinder;
  * Advisory, never a sin; not auto-fixable (totalising is a design call).
  */
 #[IntroducedIn('1.134.0')]
-class PreferTotalOverNullableProphet extends PhpCommandment
+class PreferTotalOverNullableProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
     /** Option de-null methods — calling one treats absence as impossible. */
     private const UNWRAP_METHODS = ['getorthrow', 'getorfail', 'unwrap'];
+
+    /** Scalar return types and the empty identity to return instead of null. */
+    private const SCALAR_IDENTITY = [
+        'array' => '[]',
+        'string' => "''",
+        'int' => '0',
+        'float' => '0.0',
+        'bool' => 'false',
+    ];
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     public function description(): string
     {
@@ -52,7 +72,7 @@ class PreferTotalOverNullableProphet extends PhpCommandment
         return Advisory::make()
             ->applyWhen('A PRIVATE method returns `?T` / `T | null` / `Option<T>`, but every call site immediately requires the value — `?? throw`, `->getOrThrow()`/`->unwrap()`, or a blind `->` dereference. The absence is never handled, so the nullability is unearned.')
             ->leaveWhen('any caller genuinely handles the absence — branches on null, supplies a real `?? $default`, uses `?->`, or passes it on as optional. Then the absence is real: keep it (as `Option<T>`, not raw null).')
-            ->whenUnsure('if no caller ever tolerates "no value", make the method TOTAL (return a Null Object / an exhaustive match) or THROW a named exception at the source — declare the contract honestly once, not re-asserted at every call site.');
+            ->whenUnsure('if T has an empty IDENTITY (a Fluent bag, a scalar, a no-arg/`::empty()` class), return that empty value — null/Option is partiality the type already represents. Otherwise, if no caller tolerates "no value", make the method TOTAL (Null Object / exhaustive match) or THROW a named exception at the source — the contract honest once, not re-asserted at every call site.');
     }
 
     public function detailedDescription(): string
@@ -77,15 +97,38 @@ Good — make the contract honest once, at the source:
         return $this->root ?? throw EmptyTreeException::create();
     }
 
-WHAT FIRES — a PRIVATE method (so all callers are in this class) whose return type
-is `?T` / `T | null` / an `Option`, with >= 1 in-class call site, where EVERY call
-site de-nulls the result: `$this->m() ?? throw …`, `$this->m()->getOrThrow()` /
-`->unwrap()`, or `$this->m()->member` (a non-nullsafe deref).
+THE EMPTY-IDENTITY CASE — when T has a natural ZERO value, the honest total form
+is NOT throw, it is "return the empty T". `Option<T>` is NOT a fix here — it is
+the same partiality wearing a nicer coat, and it gets waved through review
+*because* it looks like the blessed pattern:
 
-WHAT DOES NOT — any caller that handles the absence: a `?? $realDefault`, a `?->`
-nullsafe chain, a `=== null` branch, assigning it without dereferencing, or
-passing it on. A non-private method (callers may live elsewhere — not provable).
-Advisory: totalise or throw is a design decision.
+    // ❌ nullable — null is not a real outcome; an unreadable file just has no data
+    private function decode(string $p): ?ValueBag { … return null; }
+    // ❌ Option — same partiality; every caller still un-hedges (->getOrThrow()/->getOr(new ValueBag))
+    /** @return Option<ValueBag> */
+    private function decode(string $p): Option { … return Option::none(); }
+
+    // ✅ total — ValueBag (a Fluent bag) has an empty identity: "no data" IS an empty bag
+    public function decode(string $p): ValueBag
+    {
+        return is_file($p) ? ValueBag::fromJson(...) : new ValueBag;
+    }
+    // caller: $this->decode($p)->get('x')   — no null check, no Option ceremony
+
+Empty identities: `array`→`[]`, `string`→`''`, `int`/`float`→`0`/`0.0`,
+`bool`→`false`, a `Fluent`/Collection subclass or a no-arg/`::empty()` class →
+`new T` / `T::empty()`.
+
+WHAT FIRES — a PRIVATE method whose return is `?T` / `T | null` / `Option<T>`,
+with >= 1 in-class call site, AND either (a) T has an empty identity (then it
+fires even if a caller tolerates the absence — the empty value removes the hedge
+entirely), OR (b) EVERY call site de-nulls the result (`$this->m() ?? throw …`,
+`->getOrThrow()`/`->unwrap()`, or a blind `->` deref).
+
+WHAT DOES NOT — for a type with NO empty identity, any caller that handles the
+absence (a `?? $realDefault`, a `?->` chain, a `=== null` branch, passing it on)
+keeps the nullable earned. A non-private method (callers may live elsewhere).
+Advisory: return-empty / totalise / throw is a design decision.
 SCRIPTURE;
     }
 
@@ -96,6 +139,11 @@ SCRIPTURE;
         if ($ast === null) {
             return $this->righteous();
         }
+
+        // Resolve names in place (without replacing nodes, so byte positions and
+        // node identities used elsewhere stay intact) so a class return type
+        // carries its FQCN for the codebase-index empty-identity lookup.
+        (new NodeTraverser(new NameResolver(null, ['replaceNodes' => false])))->traverse($ast);
 
         $finder = new NodeFinder;
         $parents = [];
@@ -112,14 +160,26 @@ SCRIPTURE;
 
                 $calls = $this->callsTo($class, $method->name->toString(), $finder);
 
-                if ($calls === [] || ! $this->everyCallDeNulls($calls, $kind, $parents)) {
+                if ($calls === []) {
+                    continue;
+                }
+
+                // When the return type T has an empty IDENTITY (a Fluent bag, a
+                // scalar, a no-arg/`::empty()` class), null/Option is partiality
+                // the type can already represent — worth totalising even if a
+                // caller tolerates the absence (#108). Otherwise keep the strict
+                // "every caller de-nulls" trigger (totalise-or-throw is the only
+                // honest move there).
+                $identity = $this->emptyIdentity($method, $ast, $finder);
+
+                if ($identity === null && ! $this->everyCallDeNulls($calls, $kind, $parents)) {
                     continue;
                 }
 
                 $line = $method->getStartLine();
                 $warnings[] = $this->warningAt(
                     $line,
-                    sprintf('%s() returns a nullable, but every call site immediately requires the value (`?? throw` / `->getOrThrow()` / a blind `->` deref) — the absence is never handled. Make it total (a Null Object / exhaustive match) or throw a named exception at the source, so the contract is honest once instead of re-asserted at every caller.', $method->name->toString()),
+                    $this->messageFor($method->name->toString(), $kind, $identity),
                     $this->lineAt($content, $line),
                     'unearned-nullable:' . $method->name->toString(),
                 );
@@ -127,6 +187,211 @@ SCRIPTURE;
         }
 
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * @param  'nullable'|'option'  $kind
+     */
+    private function messageFor(string $method, string $kind, ?string $identity): string
+    {
+        $hedge = $kind === 'option' ? 'an Option<T>' : 'a nullable';
+
+        if ($identity !== null) {
+            return sprintf(
+                '%s() returns %s, but T has an empty identity — null/none is partiality the type can already represent. Return the empty value (`%s`) when absence is benign, or throw a named exception at the source when it is a bug. Wrapping it in %s just makes every caller un-hedge a state the type owns.',
+                $method,
+                $hedge,
+                $identity,
+                $kind === 'option' ? 'Option' : 'a nullable',
+            );
+        }
+
+        return sprintf(
+            '%s() returns %s, but every call site immediately requires the value (`?? throw` / `->getOrThrow()` / a blind `->` deref) — the absence is never handled. Make it total (a Null Object / exhaustive match) or throw a named exception at the source, so the contract is honest once instead of re-asserted at every caller.',
+            $method,
+            $hedge,
+        );
+    }
+
+    /**
+     * The empty identity to return instead of null/none — `[]`/`''`/`0`/`0.0`/
+     * `false` for a scalar, `new T` / `T::empty()` for a class that has one, or
+     * null when the type has no derivable empty identity (→ totalise-or-throw).
+     *
+     * @param  array<Node>  $ast
+     */
+    private function emptyIdentity(Node\Stmt\ClassMethod $method, array $ast, NodeFinder $finder): ?string
+    {
+        $inner = $this->innerReturnType($method);
+
+        if ($inner === null) {
+            return null;
+        }
+
+        if ($inner instanceof Node\Identifier) {
+            return self::SCALAR_IDENTITY[strtolower($inner->toString())] ?? null;
+        }
+
+        // A class name: scalar pseudo-types may also arrive as a Name.
+        $short = $inner->getLast();
+
+        if (isset(self::SCALAR_IDENTITY[strtolower($short)])) {
+            return self::SCALAR_IDENTITY[strtolower($short)];
+        }
+
+        return $this->classEmptyIdentity($inner, $short, $ast, $finder);
+    }
+
+    /**
+     * The non-null inner type of the return: the inner of `?T` / `T | null`, or
+     * the `Inner` of an `@return Option<Inner>` docblock. Null when not derivable.
+     */
+    private function innerReturnType(Node\Stmt\ClassMethod $method): Node\Identifier|Node\Name|null
+    {
+        $type = $method->returnType;
+
+        if ($type instanceof Node\NullableType) {
+            return $type->type instanceof Node\Identifier || $type->type instanceof Node\Name ? $type->type : null;
+        }
+
+        if ($type instanceof Node\UnionType) {
+            foreach ($type->types as $member) {
+                if (($member instanceof Node\Identifier || $member instanceof Node\Name)
+                    && strtolower($member->toString()) !== 'null'
+                ) {
+                    return $member;
+                }
+            }
+
+            return null;
+        }
+
+        // Option<Inner> — the inner type lives in the @return docblock.
+        if ($type instanceof Node\Name && str_ends_with($type->getLast(), 'Option')) {
+            $doc = $method->getDocComment()?->getText();
+
+            if ($doc !== null && preg_match('/@return\s+\\\\?[A-Za-z0-9_\\\\]*Option<\s*\\\\?([A-Za-z0-9_\\\\]+)\s*>/', $doc, $m) === 1) {
+                $innerName = $m[1];
+
+                // A scalar pseudo-type → Identifier; anything else is a class Name
+                // (so classEmptyIdentity resolves it, in-file or via the index).
+                return isset(self::SCALAR_IDENTITY[strtolower($innerName)])
+                    ? new Node\Identifier($innerName)
+                    : new Node\Name($innerName);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the class type has an empty identity: it extends a Fluent /
+     * Collection base, exposes a static `empty()` / no-arg `make()`, or is
+     * constructible with no arguments. Resolved from the same file or the
+     * codebase index. Returns `new <Short>` / `<Short>::empty()` / `::make()`.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function classEmptyIdentity(Node\Name $name, string $short, array $ast, NodeFinder $finder): ?string
+    {
+        $class = $this->findClassNode($name, $short, $ast, $finder);
+
+        if ($class === null) {
+            return null;
+        }
+
+        if ($class->extends instanceof Node\Name) {
+            $parent = $class->extends->getLast();
+
+            if ($parent === 'Fluent' || str_ends_with($parent, 'Collection')) {
+                return 'new ' . $short;
+            }
+        }
+
+        foreach ($class->getMethods() as $m) {
+            if (! $m->isStatic() || ! $m->isPublic()) {
+                continue;
+            }
+
+            $mName = strtolower($m->name->toString());
+
+            if ($mName === 'empty') {
+                return $short . '::empty()';
+            }
+
+            if ($mName === 'make' && $this->requiredParamCount($m) === 0) {
+                return $short . '::make()';
+            }
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor === null || $this->requiredParamCount($ctor) === 0) {
+            return 'new ' . $short;
+        }
+
+        return null;
+    }
+
+    /**
+     * The class node for a return type — defined in this file, or located via the
+     * codebase index by FQCN (resolved name) and parsed.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function findClassNode(Node\Name $name, string $short, array $ast, NodeFinder $finder): ?Node\Stmt\Class_
+    {
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($class->name?->toString() === $short) {
+                return $class;
+            }
+        }
+
+        $resolved = $name->getAttribute('resolvedName');
+        $fqcn = $resolved instanceof Node\Name ? $resolved->toString() : ($name->isFullyQualified() ? ltrim($name->toString(), '\\') : null);
+
+        if ($fqcn === null || $this->index === null) {
+            return null;
+        }
+
+        $summary = $this->index->classByFqcn(ltrim($fqcn, '\\'));
+
+        if ($summary === null) {
+            return null;
+        }
+
+        $content = @file_get_contents($summary->filePath);
+
+        if (! is_string($content)) {
+            return null;
+        }
+
+        $classAst = $this->parse($content);
+
+        if ($classAst === null) {
+            return null;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($classAst, Node\Stmt\Class_::class) as $class) {
+            if ($class->name?->toString() === $short) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
+    private function requiredParamCount(Node\Stmt\ClassMethod $method): int
+    {
+        $required = 0;
+
+        foreach ($method->params as $param) {
+            if ($param->default === null && ! $param->variadic) {
+                $required++;
+            }
+        }
+
+        return $required;
     }
 
     /**
