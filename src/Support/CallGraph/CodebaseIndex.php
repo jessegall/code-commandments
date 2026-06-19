@@ -1273,6 +1273,7 @@ final class CodebaseIndex
             callerMethod: $callerMethod,
             callerFile: $shell['file'],
             line: $call->getStartLine(),
+            startFilePos: $call->getStartFilePos(),
         );
     }
 

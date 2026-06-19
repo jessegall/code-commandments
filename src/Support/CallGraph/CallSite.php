@@ -30,5 +30,11 @@ final readonly class CallSite
         public string $callerMethod,
         public string $callerFile,
         public int $line,
+        /**
+         * Byte offset of the call node in its file, so a cross-file consumer can
+         * re-locate the exact call (even when several share a line). -1 when the
+         * position is unavailable.
+         */
+        public int $startFilePos = -1,
     ) {}
 }
