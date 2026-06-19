@@ -651,6 +651,53 @@ class NoArrayBagProphetTest extends TestCase
         $this->assertStringContainsString('dataCastUsing', $this->prophet->detailedDescription());
     }
 
+    public function test_exempts_a_data_class_array_hydration_factory(): void
+    {
+        // #104: forArray(array<string,mixed> $d) whose only use is self::from($d)
+        // is a hydration boundary (the array is being given the Data type), not a
+        // bag in flight.
+        $judgment = $this->prophet->judge('/x.php', <<<'PHP'
+        <?php
+        use Spatie\LaravelData\Data;
+        final class Thing extends Data {
+            public function __construct(public readonly string $a) {}
+            /** @param array<string, mixed> $data */
+            public static function forArray(array $data): self { return self::from($data); }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_exempts_the_from_array_only_trait_delegate(): void
+    {
+        // #104: the FromArrayOnly::forArray() delegate forwards straight to
+        // static::from() — same hydration boundary, in a trait.
+        $judgment = $this->prophet->judge('/x.php', <<<'PHP'
+        <?php
+        trait FromArrayOnly {
+            /** @param array<array-key, mixed> $payload */
+            public static function forArray(array $payload): static { return static::from($payload); }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_still_flags_a_param_indexed_as_a_bag(): void
+    {
+        // A param that is actually consumed as a bag stays flagged.
+        $judgment = $this->prophet->judge('/x.php', <<<'PHP'
+        <?php
+        final class S {
+            /** @param array<string, mixed> $opts */
+            public static function forArray(array $opts): self { $x = $opts['k'] ?? null; return self::from($opts); }
+        }
+        PHP);
+
+        $this->assertFalse($judgment->isRighteous());
+    }
+
     // ────────────────────────────────────────────────────────────────
     // Helpers
     // ────────────────────────────────────────────────────────────────
