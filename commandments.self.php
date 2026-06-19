@@ -70,6 +70,7 @@ return [
                 Backend\PreferOptionOverNullProphet::class,
                 Backend\PreferAndThenProphet::class,
                 Backend\PreferEmptyOverNullProphet::class,
+                Backend\RegistryReturnContractProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\RepeatedFallbackProphet::class,
                 Backend\PreferEnumCaseGroupsProphet::class,
