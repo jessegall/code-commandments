@@ -492,7 +492,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_69 prophets._
+_70 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -561,6 +561,7 @@ _69 prophets._
 | `ShortClosureProphet` | — | Keep anonymous functions short — extract a big closure to a named private method |
 | `StringsThatShouldBeEnumsProphet` | — | Use enum cases instead of raw string literals for closed-set values |
 | `SuggestCompareSelfTraitProphet` | Yes | Use a CompareSelf-style trait helper instead of chained enum equality comparisons |
+| `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
 | `TypeScriptAttributeProphet` | — | Add #[TypeScript] attribute to all Data classes |
 | `UnwrapOptionWithGuardProphet` | Yes | Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow() |
