@@ -85,6 +85,28 @@ class DataFromCensusTest extends TestCase
         $this->assertStringContainsString('CleanData::make()', $out, 'clean class still gets make().');
     }
 
+    public function test_trait_withheld_fail_safe_for_request_and_unresolved_from_args(): void
+    {
+        // #74: fail-safe. The trait is withheld unless EVERY ::from() site is
+        // provably an array — request() (object) and an unresolved variable both
+        // withhold it, even on a non-`Data`-suffixed Data class (…Payload).
+        $payload = $this->write('AddVariantPayload.php', "<?php\nnamespace App\\Payloads;\nuse Spatie\\LaravelData\\Data;\nclass AddVariantPayload extends Data { public function __construct(public int \$id) {} }\n");
+        $woo = $this->write('WooProduct.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass WooProduct extends Data { public function __construct(public int \$id) {} }\n");
+        $clean = $this->write('CleanData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass CleanData extends Data { public function __construct(public int \$id) {} }\n");
+        $this->write('Callers.php', "<?php\nnamespace App\\Http;\nuse App\\Payloads\\AddVariantPayload;\nuse App\\Data\\WooProduct;\nuse App\\Data\\CleanData;\nclass Ctrl {\n public function a() { return AddVariantPayload::from(request()); }\n public function b(\$product) { return WooProduct::from(\$product); }\n public function c(array \$arr) { return CleanData::from(\$arr); }\n}\n");
+
+        $index = CodebaseIndex::build(glob($this->dir . '/*.php') ?: []);
+        $prophet = new DataClassFromArrayOnlyProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $this->assertStringNotContainsString('FromArrayOnly', (string) $prophet->repent($payload, file_get_contents($payload))->newContent, 'from(request()) → withheld (Payload suffix is no excuse).');
+        $this->assertStringNotContainsString('FromArrayOnly', (string) $prophet->repent($woo, file_get_contents($woo))->newContent, 'from($unresolved) → withheld (fail-safe).');
+
+        $cleanResult = $prophet->repent($clean, file_get_contents($clean));
+        $this->assertTrue($cleanResult->absolved, 'from(array $arr) is provably array → trait added.');
+        $this->assertStringContainsString('FromArrayOnly', (string) $cleanResult->newContent);
+    }
+
     public function test_make_withheld_when_class_depends_on_spatie_magic(): void
     {
         // #72: a class with a Spatie magic attribute (#[Computed]/#[MapName]/…)
