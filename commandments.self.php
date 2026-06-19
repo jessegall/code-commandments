@@ -69,6 +69,7 @@ return [
                 Backend\PreferSprintfProphet::class,
                 Backend\PreferOptionOverNullProphet::class,
                 Backend\PreferAndThenProphet::class,
+                Backend\PreferEmptyOverNullProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\RepeatedFallbackProphet::class,
                 Backend\PreferEnumCaseGroupsProphet::class,
