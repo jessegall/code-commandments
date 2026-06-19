@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_80 prophets._
+_82 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -566,6 +566,8 @@ _80 prophets._
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
 | `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |
+| `RegistryNamingHonestyProphet` | — | A class shaped like a registry (register + keyed store + lookup) should be named *Registry and extend a base |
+| `RegistryPatternProphet` | — | When several classes hand-roll the registry shape, extract a shared base (scaffold one) |
 | `RegistryReturnContractProphet` | — | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
 | `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
