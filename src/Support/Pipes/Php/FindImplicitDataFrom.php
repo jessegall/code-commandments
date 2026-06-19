@@ -177,7 +177,13 @@ final class FindImplicitDataFrom implements Pipe
         // rule is about. A same-class call counts only when THIS class is a
         // Data class; an external target must look like one (configured suffix,
         // default `Data`). A domain `Unpacker::from(Model): array` is neither.
-        if ($isInside ? ! $isDataClass : ! $this->matchesDataSuffix($target)) {
+        // In CENSUS mode the suffix filter is dropped for external targets (#74):
+        // the consumer (DataClassFromArrayOnly) only queries the census for
+        // classes it already knows are Data classes, so a `…Payload`-suffixed
+        // Data class must not be invisible just because of its name.
+        $recognised = $isInside ? $isDataClass : ($this->censusMode || $this->matchesDataSuffix($target));
+
+        if (! $recognised) {
             return null;
         }
 
@@ -191,11 +197,12 @@ final class FindImplicitDataFrom implements Pipe
             return ['kind' => 'nonarray', 'target' => $isInside ? ($ownName ?? 'self') : $target];
         }
 
-        // #70: in census mode, a SELF from() that is not provably array — including
-        // an UNRESOLVED arg — is trait-unsafe (matches hasUnsafeSelfFrom), so the
-        // make() rewrite is withheld for the same classes the trait is.
-        if ($this->censusMode && $isInside && in_array($kind, ['scalar', 'unknown'], true)) {
-            return ['kind' => 'nonarray', 'target' => $ownName ?? 'self'];
+        // #70/#74: census mode is FAIL-SAFE — any from() (self OR external) that
+        // is not PROVABLY an array (a scalar, or an UNRESOLVED arg like a method
+        // result) is trait-unsafe, so the trait is withheld unless every site is
+        // provably array. `array`/`empty`/`toarray` stay safe.
+        if ($this->censusMode && in_array($kind, ['scalar', 'unknown'], true)) {
+            return ['kind' => 'nonarray', 'target' => $isInside ? ($ownName ?? 'self') : $target];
         }
 
         if ($kind === 'toarray' && ! $isInside) {
