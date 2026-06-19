@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
+use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
+use JesseGall\CodeCommandments\Results\Finding;
+use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
+use JesseGall\CodeCommandments\Support\RootCauseResolver;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 use JesseGall\PhpTypes\T_String;
 
@@ -34,6 +39,9 @@ class RepentCommand extends Command
 
     /** @var array<string, array<string>> */
     private array $failedFiles = [];
+
+    /** @var array<string, array<string>> prophet => files skipped to avoid laundering a root cause */
+    private array $skippedFiles = [];
 
     public function handle(
         ProphetRegistry $registry,
@@ -66,6 +74,7 @@ class RepentCommand extends Command
 
         $totalFixed = 0;
         $totalFailed = 0;
+        $totalSkipped = 0;
 
         foreach ($scrolls as $scroll) {
             if (!$registry->hasScroll($scroll)) {
@@ -133,6 +142,19 @@ class RepentCommand extends Command
 
                     $relativePath = str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
 
+                    // Auto-fix guard: never launder a symptom whose ROOT CAUSE is
+                    // still unresolved in the same region. Skip the file and tell
+                    // the agent to fix the cause first; `judge --next` will then
+                    // re-surface the cause with its hint.
+                    $blockingCause = null;
+
+                    if ($this->hasUnresolvedRootCause($prophet, $judgment, $filePath, $manager, $blockingCause)) {
+                        $this->skippedFiles[$prophetName][] = $relativePath . ' (fix ' . $blockingCause . ' first)';
+                        $totalSkipped++;
+
+                        continue;
+                    }
+
                     if ($parameterized) {
                         $missing = $this->missingInputs($prophet, $repentInput);
 
@@ -172,7 +194,98 @@ class RepentCommand extends Command
             }
         }
 
-        return $this->showResults($totalFixed, $totalFailed, $dryRun);
+        return $this->showResults($totalFixed, $totalFailed, $totalSkipped, $dryRun);
+    }
+
+    /**
+     * Whether auto-fixing $prophet on this file would launder a still-unresolved
+     * root cause: any auto-fixable finding sits within the defer window of a
+     * finding from one of $prophet's declared root-cause prophets. The cause
+     * prophets are run on the file directly (with the scroll index) via the same
+     * resolver the `judge --next` hint uses, so the guard holds even though
+     * `repent` never runs the cause prophets itself.
+     */
+    private function hasUnresolvedRootCause(
+        Commandment $prophet,
+        Judgment $judgment,
+        string $filePath,
+        ScrollManager $manager,
+        ?string &$blockingCause,
+    ): bool {
+        if ($prophet->rootCauses() === []) {
+            return false;
+        }
+
+        $lines = $this->autoFixableLines($prophet, $judgment);
+
+        if ($lines === []) {
+            return false;
+        }
+
+        // Fresh resolver per file: its cause-judgment memo must not survive a
+        // prior prophet's rewrite of this same file (content changes mid-run).
+        $resolver = new RootCauseResolver(
+            fn (string $path): ?CodebaseIndex => $manager->codebaseIndexForFile($path),
+        );
+
+        foreach ($lines as $line) {
+            $probe = new Finding(
+                prophetClass: get_class($prophet),
+                prophetShort: class_basename($prophet),
+                filePath: $filePath,
+                relativePath: $filePath,
+                kind: 'sin',
+                line: $line,
+                message: T_String::empty(),
+                snippet: null,
+                suggestion: null,
+                symbol: null,
+                advisory: null,
+                tier: $prophet->tier(),
+                supersedes: [],
+                fingerprint: T_String::empty(),
+                autoFixable: true,
+                rootCauses: $prophet->rootCauses(),
+            );
+
+            // active = [] → treat every cause as filtered-out, so all are checked.
+            $annotated = $resolver->annotate($probe, []);
+
+            if ($annotated->rootCauseHint !== null) {
+                $blockingCause = $annotated->rootCauseHint->causeShort;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Line numbers of the findings $prophet would actually auto-fix on this file.
+     *
+     * @return list<int>
+     */
+    private function autoFixableLines(
+        Commandment $prophet,
+        Judgment $judgment,
+    ): array {
+        $repairable = $prophet instanceof SinRepenter;
+        $lines = [];
+
+        foreach ($judgment->sins as $sin) {
+            if (($sin->autoFixable ?? $repairable) && $sin->line !== null) {
+                $lines[] = $sin->line;
+            }
+        }
+
+        foreach ($judgment->warnings as $warning) {
+            if (($warning->autoFixable ?? $repairable) && $warning->line !== null) {
+                $lines[] = $warning->line;
+            }
+        }
+
+        return $lines;
     }
 
     /**
@@ -241,9 +354,9 @@ class RepentCommand extends Command
         $this->output->writeln(T_String::empty());
     }
 
-    private function showResults(int $totalFixed, int $totalFailed, bool $dryRun): int
+    private function showResults(int $totalFixed, int $totalFailed, int $totalSkipped, bool $dryRun): int
     {
-        if ($totalFixed === 0 && $totalFailed === 0) {
+        if ($totalFixed === 0 && $totalFailed === 0 && $totalSkipped === 0) {
             $this->output->writeln('No sins to fix. Code is righteous.');
 
             return self::SUCCESS;
@@ -274,6 +387,24 @@ class RepentCommand extends Command
                     $this->output->writeln("  {$file}");
                 }
             }
+        }
+
+        if ($totalSkipped > 0) {
+            $this->output->newLine();
+            $this->output->writeln("SKIPPED (root cause unresolved — fixing now would HIDE a bug): {$totalSkipped}");
+            $this->output->newLine();
+
+            foreach ($this->skippedFiles as $prophet => $files) {
+                $this->output->writeln("{$prophet}:");
+                foreach ($files as $file) {
+                    $this->output->writeln("  {$file}");
+                }
+            }
+
+            $this->output->newLine();
+            $this->output->writeln('These auto-fixes were withheld so an invariant violation is not laundered into');
+            $this->output->writeln('a default/Option. Fix the named root cause, then re-run repent — or walk it with');
+            $this->output->writeln('`judge --next` (it surfaces the cause with a fix-this-first hint).');
         }
 
         if ($dryRun) {
