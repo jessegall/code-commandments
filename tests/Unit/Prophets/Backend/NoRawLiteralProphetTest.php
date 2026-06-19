@@ -31,6 +31,28 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_String::empty()', $judgment->sins[0]->suggestion);
     }
 
+    public function test_t_helper_rewrites_are_type_checked_against_the_operand(): void
+    {
+        // #79: one operand guard at the rewrite site — never hand a T_* helper a
+        // value its signature rejects (nullable/object/wrong-type), but keep
+        // rewriting unresolved operands (no evidence of mismatch).
+        $repent = function (string $body): string {
+            $src = "<?php\nclass C {\n{$body}\n}\n";
+
+            return (string) ($this->prophet->repent('/x.php', $src)->newContent ?? $src);
+        };
+
+        // nullable -> T_String::isEmpty(string) would TypeError: leave it.
+        $this->assertStringContainsString('return $x === "";', $repent(' public function a(?string $x): bool { return $x === ""; }'));
+        // a DataCollection -> T_Array::coalesce(?array) would TypeError: leave it.
+        $this->assertStringContainsString('return $this->c ?? [];', $repent(' public \Spatie\LaravelData\DataCollection $c; public function b(): array { return $this->c ?? []; }'));
+
+        // provably-string operand: still rewritten.
+        $this->assertStringContainsString('T_String::isEmpty($x)', $repent(' public function c(string $x): bool { return $x === ""; }'));
+        // unresolved operand: still rewritten (coverage preserved).
+        $this->assertStringContainsString('T_String::isEmpty($x)', $repent(' public function d($x): bool { return $x === ""; }'));
+    }
+
     public function test_coalesce_rewrite_drops_a_null_default_but_keeps_a_real_one(): void
     {
         // #67: `(string)($x ?? null)` -> coalesce($x ?? null) — never `, null`,
