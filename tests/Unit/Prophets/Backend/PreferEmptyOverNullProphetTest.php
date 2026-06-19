@@ -40,6 +40,15 @@ class PreferEmptyOverNullProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
     }
 
+    public function test_does_not_flag_a_private_lazy_init_memo_property(): void
+    {
+        // #86: a private nullable collection property is an internal lazy-init
+        // memo where null ("not loaded") and [] ("loaded, empty") differ — leave
+        // it. Public/protected collection properties are still the API contract.
+        $this->assertTrue($this->judge('class R { private array | null $resources = null; }')->isRighteous());
+        $this->assertCount(1, $this->judge('class R { public array | null $items = null; }')->warnings);
+    }
+
     public function test_does_not_flag_scalar_or_single_object_nullable(): void
     {
         // Scalar / single-object absence is PreferOptionOverNull's Option case.

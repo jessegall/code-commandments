@@ -157,6 +157,16 @@ SCRIPTURE;
         }
 
         foreach ($finder->findInstanceOf($ast, Node\Stmt\Property::class) as $property) {
+            // #86: a PRIVATE nullable collection property is almost always an
+            // internal lazy-init memo (`private array|null $resources = null;`
+            // resolved with `??=`), where null = "not loaded yet" and [] =
+            // "loaded but empty" genuinely differ. That is the rule's own
+            // distinguish-absent-from-empty LEAVE-WHEN — skip private fields and
+            // judge only the API surface (return types + public/protected props).
+            if ($property->isPrivate()) {
+                continue;
+            }
+
             if ($property->type !== null && $this->isNullableUnion($property->type)) {
                 $name = $property->props[0]->name->toString() ?? 'property';
                 $out[] = ['type' => $property->type, 'label' => 'The property $' . $name, 'symbol' => 'prop:' . $name];
