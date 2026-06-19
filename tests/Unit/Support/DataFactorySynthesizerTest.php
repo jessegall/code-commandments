@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
 /**
- * #44: repent should synthesise the fromX() factory for object-typed
+ * #44: repent should synthesise the forX() factory for object-typed
  * `XData::from($obj)` and rewrite the call — including cross-file, via the index.
  */
 class DataFactorySynthesizerTest extends TestCase
@@ -64,8 +64,8 @@ class DataFactorySynthesizerTest extends TestCase
         $result = $this->repent($path);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('ShopData::fromShop($this)', $result->newContent);
-        $this->assertStringContainsString('public static function fromShop(\App\Shop $shop): static', $result->newContent);
+        $this->assertStringContainsString('ShopData::forShop($this)', $result->newContent);
+        $this->assertStringContainsString('public static function forShop(\App\Shop $shop): static', $result->newContent);
         $this->assertStringContainsString('return static::from($shop->toArray());', $result->newContent);
         $this->assertSame([], $result->createdFiles);
     }
@@ -89,9 +89,9 @@ class DataFactorySynthesizerTest extends TestCase
         $result = $this->repent($caller, $index);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('ShopData::fromShop($this)', $result->newContent);
+        $this->assertStringContainsString('ShopData::forShop($this)', $result->newContent);
         $this->assertArrayHasKey($dataFile, $result->createdFiles);
-        $this->assertStringContainsString('public static function fromShop(\App\Models\Shop $shop): static', $result->createdFiles[$dataFile]);
+        $this->assertStringContainsString('public static function forShop(\App\Models\Shop $shop): static', $result->createdFiles[$dataFile]);
     }
 
     public function test_resolves_param_property_new_and_closure(): void
@@ -113,8 +113,8 @@ class DataFactorySynthesizerTest extends TestCase
 
         $this->assertTrue($result->absolved);
         // One factory, deduped across the param/new/closure sites (all type Shop).
-        $this->assertSame(1, substr_count($result->newContent, 'public static function fromShop('));
-        $this->assertSame(3, substr_count($result->newContent, 'ShopData::fromShop('));
+        $this->assertSame(1, substr_count($result->newContent, 'public static function forShop('));
+        $this->assertSame(3, substr_count($result->newContent, 'ShopData::forShop('));
     }
 
     public function test_is_idempotent_when_factory_already_exists(): void
@@ -125,16 +125,16 @@ class DataFactorySynthesizerTest extends TestCase
         use Spatie\LaravelData\Data;
         class Shop {}
         class ShopData extends Data {
-            public static function fromShop(Shop $shop): static { return static::from([]); }
+            public static function forShop(Shop $shop): static { return static::from([]); }
             public static function go(Shop $shop): static { return ShopData::from($shop); }
         }
         PHP);
 
         $result = $this->repent($path);
 
-        // The call is rewritten, but no second fromShop() is generated.
-        $this->assertStringContainsString('ShopData::fromShop($shop)', $result->newContent);
-        $this->assertSame(1, substr_count($result->newContent, 'public static function fromShop('));
+        // The call is rewritten, but no second forShop() is generated.
+        $this->assertStringContainsString('ShopData::forShop($shop)', $result->newContent);
+        $this->assertSame(1, substr_count($result->newContent, 'public static function forShop('));
     }
 
     public function test_does_not_autofix_a_magic_dependent_data_class(): void
