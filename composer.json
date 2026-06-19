@@ -27,11 +27,13 @@
     },
     "scripts": {
         "judge:self": "php bin/commandments judge -c commandments.self.php",
-        "judge:self:next": "php bin/commandments judge -c commandments.self.php --next"
+        "judge:self:next": "php bin/commandments judge -c commandments.self.php --next",
+        "reports": "bash scripts/prophet-reports.sh"
     },
     "scripts-descriptions": {
         "judge:self": "Run the prophets against this package's own src/ (dogfooding).",
-        "judge:self:next": "Walk the package's own findings one at a time."
+        "judge:self:next": "Walk the package's own findings one at a time.",
+        "reports": "List every open [prophet-report] issue WITH all comments — always read comments when triaging."
     },
     "autoload": {
         "psr-4": {
