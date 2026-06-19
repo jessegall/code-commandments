@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
+use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\PhpTypes\T_Json;
 use JesseGall\PhpTypes\T_String;
@@ -62,6 +63,10 @@ class InstallHooksCommand extends Command
         // (clears absolutions so nothing stays silently hidden).
         $this->installCommitHook();
 
+        // Keep the generated tracking state (.commandments/, report ledger,
+        // sync baseline) out of version control.
+        $this->ensureGitignore();
+
         $this->output->newLine();
         $this->output->writeln('Hooks will:');
         $this->output->writeln('- Show commandments on session start');
@@ -71,6 +76,19 @@ class InstallHooksCommand extends Command
         $this->output->writeln('- Clear absolutions after each commit (post-commit hook)');
 
         return self::SUCCESS;
+    }
+
+    private function ensureGitignore(): void
+    {
+        $status = (new GitignoreInstaller())->ensure(base_path());
+
+        match ($status) {
+            GitignoreInstaller::STATUS_INSTALLED => $this->output->writeln('Created .gitignore with code-commandments state entries'),
+            GitignoreInstaller::STATUS_APPENDED => $this->output->writeln('Added code-commandments state entries to .gitignore'),
+            GitignoreInstaller::STATUS_UPDATED => $this->output->writeln('Refreshed code-commandments state entries in .gitignore'),
+            GitignoreInstaller::STATUS_ALREADY_PRESENT => $this->output->writeln('.gitignore already ignores code-commandments state'),
+            GitignoreInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write .gitignore — check permissions.'),
+        };
     }
 
     private function installCommitHook(): void
