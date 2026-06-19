@@ -52,7 +52,7 @@ final class DataFromSiteCensus
         }
 
         $names = [];
-        $pipe = (new FindImplicitDataFrom)->withDataSuffixes($suffixes);
+        $pipe = (new FindImplicitDataFrom)->withDataSuffixes($suffixes)->inCensusMode();
 
         foreach ($paths as $file) {
             $content = @file_get_contents($file);
