@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
+use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use PhpParser\Node;
@@ -21,7 +23,7 @@ use PhpParser\NodeFinder;
  * which keeps the parameter list uncluttered and gathers the types in one place.
  */
 #[IntroducedIn('1.144.0')]
-class NoInlineParamDocProphet extends PhpCommandment
+class NoInlineParamDocProphet extends PhpCommandment implements SinRepenter
 {
     public function description(): string
     {
@@ -72,8 +74,10 @@ WHAT FIRES — a parameter whose attached docblock is an inline `/** @var ... */
 type annotation, on any function/method/closure.
 
 WHAT DOES NOT — a parameter with no docblock, or a plain explanatory comment that
-is not a `@var` type. Advisory: this is a readability/convention nudge, not a
-correctness bug.
+is not a `@var` type.
+
+[AUTO-FIXABLE] — `repent` deletes each inline `/** @var T */` and adds the matching
+`@param T $name` to the function's docblock (creating one if absent).
 SCRIPTURE;
     }
 
@@ -132,11 +136,151 @@ SCRIPTURE;
                     ),
                     $this->lineAt($content, $param->getStartLine()),
                     'inline-param-doc:' . $name,
+                    true,
                 );
             }
         }
 
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    public function canRepent(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'php';
+    }
+
+    public function repent(string $filePath, string $content): RepentanceResult
+    {
+        if (! $this->canRepent($filePath)) {
+            return RepentanceResult::unchanged();
+        }
+
+        $ast = $this->parse($content);
+
+        if ($ast === null) {
+            return RepentanceResult::unrepentant('Unable to parse PHP file');
+        }
+
+        $finder = new NodeFinder;
+
+        /** @var list<array{start: int, end: int, text: string}> $edits */
+        $edits = [];
+        $penance = [];
+
+        $functionLikes = array_merge(
+            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
+            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
+            $finder->findInstanceOf($ast, Expr\Closure::class),
+        );
+
+        foreach ($functionLikes as $function) {
+            /** @var list<array{type: string, name: string}> $moved */
+            $moved = [];
+
+            foreach ($function->params as $param) {
+                $doc = $param->getDocComment();
+
+                if ($doc === null) {
+                    continue;
+                }
+
+                $type = $this->varType($doc->getText());
+                $name = $param->var instanceof Expr\Variable && is_string($param->var->name) ? $param->var->name : null;
+
+                if ($type === null || $name === null) {
+                    continue;
+                }
+
+                $moved[] = ['type' => $type, 'name' => $name];
+                $edits[] = $this->removeCommentLine($doc->getStartFilePos(), $doc->getEndFilePos(), $content);
+            }
+
+            if ($moved === []) {
+                continue;
+            }
+
+            $edits[] = $this->writeParamTags($function, $moved, $content);
+            $penance[] = sprintf('Moved %d inline /** @var */ param doc(s) to @param on the docblock', count($moved));
+        }
+
+        if ($edits === []) {
+            return RepentanceResult::unchanged();
+        }
+
+        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
+
+        foreach ($edits as $edit) {
+            $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        return RepentanceResult::absolved($content, $penance);
+    }
+
+    /**
+     * Delete the whole line(s) the inline comment occupies (leading indentation
+     * and trailing newline included), so the parameter moves up cleanly.
+     *
+     * @return array{start: int, end: int, text: string}
+     */
+    private function removeCommentLine(int $commentStart, int $commentEnd, string $content): array
+    {
+        $before = strrpos(substr($content, 0, $commentStart), "\n");
+        $lineStart = $before === false ? 0 : $before + 1;
+
+        $after = strpos($content, "\n", $commentEnd);
+        $removeEnd = $after === false ? strlen($content) - 1 : $after;
+
+        return ['start' => $lineStart, 'end' => $removeEnd, 'text' => ''];
+    }
+
+    /**
+     * Build the edit that adds `@param` lines to $function's docblock — extending
+     * an existing docblock (before its closing `*\/`) or creating a new one above
+     * the function.
+     *
+     * @param  Node\Stmt\ClassMethod|Node\Stmt\Function_|Expr\Closure  $function
+     * @param  list<array{type: string, name: string}>  $moved
+     * @return array{start: int, end: int, text: string}
+     */
+    private function writeParamTags(Node $function, array $moved, string $content): array
+    {
+        $existing = $function->getDocComment();
+
+        if ($existing !== null) {
+            $indent = $this->indentBefore($existing->getStartFilePos(), $content);
+            $text = $existing->getText();
+            $closePos = $existing->getStartFilePos() + (int) strrpos($text, '*/');
+
+            $insert = '';
+
+            foreach ($moved as $param) {
+                $insert .= '* @param ' . $param['type'] . ' $' . $param['name'] . "\n" . $indent . ' ';
+            }
+
+            // Insert before the closing `*/`, which sits at `{indent} */`.
+            return ['start' => $closePos, 'end' => $closePos - 1, 'text' => $insert];
+        }
+
+        $indent = $this->indentBefore($function->getStartFilePos(), $content);
+        $block = '/**' . "\n";
+
+        foreach ($moved as $param) {
+            $block .= $indent . ' * @param ' . $param['type'] . ' $' . $param['name'] . "\n";
+        }
+
+        $block .= $indent . ' */' . "\n" . $indent;
+        $start = (int) $function->getStartFilePos();
+
+        return ['start' => $start, 'end' => $start - 1, 'text' => $block];
+    }
+
+    private function indentBefore(int $pos, string $content): string
+    {
+        $lineStart = strrpos(substr($content, 0, $pos), "\n");
+        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+        $indent = substr($content, $lineStart, $pos - $lineStart);
+
+        return trim($indent) === '' ? $indent : '';
     }
 
     /**

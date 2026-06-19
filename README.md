@@ -523,7 +523,7 @@ _78 prophets._
 | `NoExternalDataFromProphet` | Yes | Keep Spatie ::from() inside the Data class — no custom from* factories, no external ::from() |
 | `NoFacadesInServicesProphet` | — | Do not call Laravel facades in services — inject the underlying contract via the constructor |
 | `NoInlineBootLogicProphet` | — | Model boot hooks should only dispatch events, not contain business logic |
-| `NoInlineParamDocProphet` | — | Declare a parameter type with @param on the function docblock, not an inline /** @var */ |
+| `NoInlineParamDocProphet` | Yes | Declare a parameter type with @param on the function docblock, not an inline /** @var */ |
 | `NoInlineValidationProphet` | — | Move validation to FormRequest instead of inline $request-&gt;validate() |
 | `NoJsonResponseProphet` | — | Use Inertia responses instead of JSON in web controllers |
 | `NoManualHydrationProphet` | — | Do not hand-roll array-to-object hydration — extend Spatie Data and use ::from() |
