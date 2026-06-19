@@ -161,6 +161,7 @@ return [
                 Backend\RegistryReturnContractProphet::class,
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
+                Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,

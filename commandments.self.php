@@ -80,6 +80,7 @@ return [
                 Backend\ResolverPatternProphet::class,
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
+                Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
