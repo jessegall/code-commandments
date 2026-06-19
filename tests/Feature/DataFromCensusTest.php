@@ -85,6 +85,25 @@ class DataFromCensusTest extends TestCase
         $this->assertStringContainsString('CleanData::make()', $out, 'clean class still gets make().');
     }
 
+    public function test_make_withheld_when_class_depends_on_spatie_magic(): void
+    {
+        // #72: a class with a Spatie magic attribute (#[Computed]/#[MapName]/…)
+        // needs the magic from(Model) path, so DataClassFromArrayOnly withholds
+        // the trait. The make() rewrite must agree (the real SmtpSettingsData case).
+        $this->write('SmtpSettingsData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nuse Spatie\\LaravelData\\Attributes\\Computed;\nclass SmtpSettingsData extends Data { #[Computed] public bool \$isConfigured; public function __construct(public bool \$enabled = false) {} }\n");
+        $this->write('CleanData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass CleanData extends Data { public function __construct(public string \$x = '') {} }\n");
+        $ctrl = $this->write('Ctrl.php', "<?php\nnamespace App\\Http;\nuse App\\Data\\SmtpSettingsData;\nuse App\\Data\\CleanData;\nclass Ctrl { public function a() { return SmtpSettingsData::from([]); } public function b() { return CleanData::from([]); } }\n");
+
+        $index = CodebaseIndex::build(glob($this->dir . '/*.php') ?: []);
+        $prophet = new ExplicitDataFactoryProphet;
+        $prophet->setCodebaseIndex($index);
+
+        $out = (string) ($prophet->repent($ctrl, file_get_contents($ctrl))->newContent ?? file_get_contents($ctrl));
+
+        $this->assertStringContainsString('SmtpSettingsData::from([])', $out, 'magic-dependent class → trait withheld → leave from([]).');
+        $this->assertStringContainsString('CleanData::make()', $out, 'clean class still gets make().');
+    }
+
     public function test_from_empty_not_rewritten_to_make_when_trait_is_withheld(): void
     {
         $this->write('SmtpSettingsData.php', "<?php\nnamespace App\\Data;\nuse Spatie\\LaravelData\\Data;\nclass SmtpSettingsData extends Data { public function __construct(public string \$host) {} }\n");

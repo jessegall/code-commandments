@@ -16,7 +16,7 @@ use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\DataFactorySynthesizer;
-use JesseGall\CodeCommandments\Support\DataFromSiteCensus;
+use JesseGall\CodeCommandments\Support\FromArrayOnlyPolicy;
 use JesseGall\CodeCommandments\Support\PackageDetector;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindImplicitDataFrom;
@@ -236,7 +236,7 @@ SCRIPTURE;
         // FromArrayOnly trait; if it has an object ::from() site the trait (and
         // make()) is withheld, so the rewrite is not auto-fixable here either.
         if ($match->groups['kind'] === 'empty_from' && $this->index !== null
-            && isset(DataFromSiteCensus::objectFromShortNames($this->index, $this->resolveSuffixes())[$match->groups['target']])
+            && isset(FromArrayOnlyPolicy::traitUnsafeShortNames($this->index, $this->resolveSuffixes())[$match->groups['target']])
         ) {
             $autoFixable = false;
         }
@@ -345,8 +345,8 @@ SCRIPTURE;
         // FromArrayOnly trait, which DataClassFromArrayOnly withholds from any
         // class that still has an object ::from() site. Rewriting to ::make()
         // there would call an undefined method, so gate on the SAME census.
-        $objectFrom = $this->index !== null
-            ? DataFromSiteCensus::objectFromShortNames($this->index, $this->resolveSuffixes())
+        $traitUnsafe = $this->index !== null
+            ? FromArrayOnlyPolicy::traitUnsafeShortNames($this->index, $this->resolveSuffixes())
             : [];
 
         foreach ($nodeFinder->findInstanceOf($ast, Node\Expr\StaticCall::class) as $call) {
@@ -357,7 +357,7 @@ SCRIPTURE;
                 continue;
             }
 
-            if (isset($objectFrom[$call->class->getLast()])) {
+            if (isset($traitUnsafe[$call->class->getLast()])) {
                 continue; // the trait (and make()) is withheld from this class
             }
 
