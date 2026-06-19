@@ -189,6 +189,10 @@ return [
                 Backend\NoOptionInUnionProphet::class => [
                     // 'option_class' => App\Support\Option::class,
                 ],
+                Backend\NoRedundantOrElseWrapProphet::class => [
+                    // 'option_class' => App\Support\Option::class,
+                    // 'methods' => ['orElse'],
+                ],
                 Backend\WideUnionTypeProphet::class => [
                     // 'warn_at_types' => 2,   // 0 (or warnings_enabled => false) disables warnings
                     // 'sin_at_types'  => 3,

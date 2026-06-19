@@ -218,8 +218,15 @@ final readonly class Option
      * functional `or`. Turns a `A || B || C` value-or-absent chain into
      * `attemptA()->orElse(fn () => attemptB())->orElse(fn () => attemptC())`.
      *
-     * @param  callable(): self<T>  $alternative
-     * @return self<T>
+     * The alternative may return either an Option or a bare value: a bare value
+     * is lifted with {@see self::make()} (null -> none), so you never need to
+     * wrap it yourself — `->orElse(fn () => $fallback)`, not
+     * `->orElse(fn () => Option::some($fallback))`.
+     *
+     * @template TOut
+     *
+     * @param  callable(): (self<TOut>|TOut|null)  $alternative
+     * @return self<T>|self<TOut>
      */
     public function orElse(callable $alternative): self
     {
@@ -229,11 +236,9 @@ final readonly class Option
 
         $result = $alternative();
 
-        // Same as andThen: PHPStan enforces `self<T>`, the assert catches a bare
-        // value at runtime in dev/test. No-op in production.
-        assert($result instanceof self, 'orElse alternative must return an Option');
-
-        return $result;
+        // A bare value is lifted into an Option (null -> none), so callers can
+        // return the alternative directly without an Option::some(...) wrap.
+        return $result instanceof self ? $result : self::make($result);
     }
 
     /**
