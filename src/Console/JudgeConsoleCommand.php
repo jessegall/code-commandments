@@ -72,6 +72,11 @@ class JudgeConsoleCommand extends Command
 
         $scrollFilter = $input->getOption('scroll');
         $prophetFilter = $input->getOption('prophet');
+
+        // A `--prophet` filter narrows which prophets actually RUN (not just which
+        // findings are reported), so an unrelated prophet is never invoked.
+        $manager->setProphetFilter($prophetFilter);
+
         $fileFilter = $input->getOption('file');
         $filesFilter = $input->getOption('files')
             ? array_map('trim', explode(',', $input->getOption('files')))
