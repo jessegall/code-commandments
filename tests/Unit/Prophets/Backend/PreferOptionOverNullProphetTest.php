@@ -729,6 +729,30 @@ class PreferOptionOverNullProphetTest extends TestCase
         $this->assertHasWarnings($judgment, 1);
     }
 
+    public function test_leaves_a_framework_locked_signature(): void
+    {
+        // #94: handle() on a class with a vendor (Illuminate Command) ancestor is
+        // framework-invoked — its return type isn't ours to change to Option.
+        $this->prophet->configure(['min_callers' => 0]);
+
+        $command = $this->judgeWithIndex("<?php\nnamespace App;\nclass MakeFooCommand extends \\Illuminate\\Console\\Command {\n public function handle(): bool | null { if (\$this->x()) { return false; } return null; }\n public function x() { return true; }\n}\n");
+        $this->assertFalse($command->hasWarnings(), 'handle() on a vendor Command base is framework-locked.');
+
+        $morph = $this->judgeWithIndex("<?php\nnamespace App;\nclass InputSocket extends \\Spatie\\LaravelData\\Data {\n public static function morph(array \$p): string | null { if (\$p) { return self::class; } return null; }\n}\n");
+        $this->assertFalse($morph->hasWarnings(), 'spatie Data morph() is framework-locked.');
+    }
+
+    public function test_still_flags_a_project_owned_handle(): void
+    {
+        // A `handle()` whose class extends a PROJECT base (no vendor ancestor) is
+        // ours to change — still flagged.
+        $this->prophet->configure(['min_callers' => 0]);
+
+        $judgment = $this->judgeWithIndex("<?php\nnamespace App;\nclass Base {}\nclass MyHandler extends Base {\n public function handle(): string | null { if (\$this->x()) { return 'a'; } return null; }\n public function x() { return true; }\n}\n");
+
+        $this->assertTrue($judgment->hasWarnings());
+    }
+
     private function judgeWithIndex(string $fileContent): Judgment
     {
         $dir = sys_get_temp_dir() . '/cc-prefer-' . uniqid();
