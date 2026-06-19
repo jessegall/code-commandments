@@ -37,6 +37,15 @@ final class FindRawLiterals implements Pipe
      */
     private const TRIM_FUNCTIONS = ['trim', 'ltrim', 'rtrim', 'mb_trim'];
 
+    /** Builtins that provably RETURN a string, so an `=== ''` over them is safe to rewrite. */
+    private const STRING_RETURNING_FUNCTIONS = [
+        'trim', 'ltrim', 'rtrim', 'mb_trim', 'strtolower', 'strtoupper', 'mb_strtolower',
+        'mb_strtoupper', 'ucfirst', 'lcfirst', 'ucwords', 'sprintf', 'vsprintf', 'substr',
+        'mb_substr', 'str_replace', 'str_ireplace', 'preg_replace', 'str_pad', 'str_repeat',
+        'implode', 'join', 'strval', 'number_format', 'nl2br', 'htmlspecialchars',
+        'htmlentities', 'wordwrap', 'json_encode', 'basename', 'dirname',
+    ];
+
     /**
      * Short names of the type helpers themselves — files defining them hold
      * the one true `''` and must not be flagged.
@@ -439,10 +448,7 @@ final class FindRawLiterals implements Pipe
 
                 if ($isBlank) {
                     /** @var Expr\FuncCall $other */
-                    if (! self::operandFitsHelper($other->args[0]->value, 'T_String', 'isBlank', $ast)) {
-                        return null;
-                    }
-
+                    // No type guard: `trim($x)` already requires `$x` to be a string.
                     return self::comparisonFinding(
                         kind: 'trim_compare',
                         cmp: $cmp,
@@ -548,10 +554,9 @@ final class FindRawLiterals implements Pipe
                 return null;
             }
 
-            // #79: strlen($x) === 0 -> T_String::isEmpty($x) needs a string $x.
-            if (! self::operandFitsHelper($lenCall->args[0]->value, 'T_String', $predicate, $ast)) {
-                return null;
-            }
+            // No type guard: `strlen($x)` already requires `$x` to be a string, so
+            // `T_String::isEmpty($x)` is self-evidently safe whatever $x's declared
+            // type (same for the `trim($x)` blank check above).
 
             return self::comparisonFinding(
                 kind: 'strlen_compare',
@@ -979,7 +984,8 @@ final class FindRawLiterals implements Pipe
         $scalar = match (true) {
             $operand instanceof Expr\Cast\Int_, $operand instanceof Scalar\Int_ => 'int',
             $operand instanceof Expr\Cast\Double, $operand instanceof Scalar\Float_ => 'float',
-            $operand instanceof Expr\Cast\String_, $operand instanceof Scalar\String_ => 'string',
+            $operand instanceof Expr\Cast\String_, $operand instanceof Scalar\String_,
+            $operand instanceof Expr\BinaryOp\Concat => 'string',
             $operand instanceof Expr\Cast\Array_, $operand instanceof Expr\Array_ => 'array',
             $operand instanceof Expr\New_ => 'object',
             default => null,
@@ -987,6 +993,15 @@ final class FindRawLiterals implements Pipe
 
         if ($scalar !== null) {
             return ['type' => $scalar, 'nullable' => false];
+        }
+
+        // Calls to known string-returning builtins (`trim($x)`, `sprintf(...)`, …)
+        // are provably string, so an `=== ''` over them is still safe to rewrite.
+        if ($operand instanceof Expr\FuncCall
+            && $operand->name instanceof Node\Name
+            && in_array(strtolower($operand->name->getLast()), self::STRING_RETURNING_FUNCTIONS, true)
+        ) {
+            return ['type' => 'string', 'nullable' => false];
         }
 
         if ($operand instanceof Expr\PropertyFetch
@@ -1054,11 +1069,13 @@ final class FindRawLiterals implements Pipe
     }
 
     /**
-     * #79: the single operand guard for the COMPARISON helpers (isEmpty/isZero/…),
-     * whose parameter is a NON-null scalar. The rewrite fires unless the operand's
-     * resolved type provably mismatches — a different base type OR nullable (a
-     * `?string`/`mixed` would let `null` reach `isEmpty(string)`). An UNRESOLVED
-     * operand is allowed (no evidence of mismatch — preserves coverage).
+     * #79/#83: the single operand guard for the COMPARISON helpers (isEmpty/
+     * isZero/…), whose parameter is a NON-null scalar. STRICT — the rewrite fires
+     * ONLY when the operand is PROVABLY that exact, non-nullable type. An operand
+     * that is nullable/mixed/object/a different type — OR that cannot be resolved
+     * at all (an untyped local, a method result like `$this->input()`, another
+     * object's property) — is left untouched, so the helper is never handed a
+     * value its signature rejects.
      *
      * @param  array<Node>  $ast
      */
@@ -1072,18 +1089,15 @@ final class FindRawLiterals implements Pipe
 
         $kind = self::resolveOperandKind($operand, $ast);
 
-        if ($kind === null) {
-            return true;
-        }
-
-        return $kind['type'] === $required && ! $kind['nullable'];
+        return $kind !== null && $kind['type'] === $required && ! $kind['nullable'];
     }
 
     /**
-     * #79: the operand guard for `T_*::coalesce`, whose value parameter IS nullable
-     * (`?array`/`?int`). So a nullable operand is fine here; the rewrite is only
-     * withheld when the operand provably has a DIFFERENT base type — e.g. a
-     * `DataCollection`/object handed to `T_Array::coalesce(?array)`.
+     * #79/#83: the operand guard for `T_*::coalesce`, whose value parameter IS
+     * nullable (`?array`/`?int`). STRICT — a nullable operand is fine, but the
+     * rewrite fires ONLY when the operand's base type is PROVABLY the required one.
+     * An unresolved operand (e.g. a model's `@property DataCollection` reached
+     * through `$other->prop`) is left, since it cannot be proven `?array`.
      *
      * @param  array<Node>  $ast
      */
@@ -1097,7 +1111,7 @@ final class FindRawLiterals implements Pipe
 
         $kind = self::resolveOperandKind($operand, $ast);
 
-        return $kind === null || $kind['type'] === $required;
+        return $kind !== null && $kind['type'] === $required;
     }
 
     private static function shortHelper(string $class): string

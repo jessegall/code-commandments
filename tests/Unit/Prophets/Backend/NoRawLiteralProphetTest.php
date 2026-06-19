@@ -33,9 +33,10 @@ class NoRawLiteralProphetTest extends TestCase
 
     public function test_t_helper_rewrites_are_type_checked_against_the_operand(): void
     {
-        // #79: one operand guard at the rewrite site — never hand a T_* helper a
-        // value its signature rejects (nullable/object/wrong-type), but keep
-        // rewriting unresolved operands (no evidence of mismatch).
+        // #79/#83: one STRICT operand guard at the rewrite site — a T_* helper is
+        // rewritten ONLY when the operand is provably its exact type; nullable /
+        // object / a different type / UNRESOLVED operands are all left untouched,
+        // so the helper is never handed a value its signature rejects.
         $repent = function (string $body): string {
             $src = "<?php\nclass C {\n{$body}\n}\n";
 
@@ -46,11 +47,11 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('return $x === "";', $repent(' public function a(?string $x): bool { return $x === ""; }'));
         // a DataCollection -> T_Array::coalesce(?array) would TypeError: leave it.
         $this->assertStringContainsString('return $this->c ?? [];', $repent(' public \Spatie\LaravelData\DataCollection $c; public function b(): array { return $this->c ?? []; }'));
+        // an unresolved operand (untyped local / method result) — left, fail-safe.
+        $this->assertStringContainsString('return $x === "";', $repent(' public function d($x): bool { return $x === ""; }'));
 
-        // provably-string operand: still rewritten.
+        // provably-string operand: rewritten.
         $this->assertStringContainsString('T_String::isEmpty($x)', $repent(' public function c(string $x): bool { return $x === ""; }'));
-        // unresolved operand: still rewritten (coverage preserved).
-        $this->assertStringContainsString('T_String::isEmpty($x)', $repent(' public function d($x): bool { return $x === ""; }'));
     }
 
     public function test_coalesce_rewrite_drops_a_null_default_but_keeps_a_real_one(): void
@@ -195,18 +196,18 @@ class NoRawLiteralProphetTest extends TestCase
 
     public function test_flags_comparison_against_t_array_empty_factory(): void
     {
-        $judgment = $this->judgeBody('return $added === \JesseGall\PhpTypes\T_Array::empty() ? 1 : 2;');
+        $judgment = $this->judgeBody('return $this->items === \JesseGall\PhpTypes\T_Array::empty() ? 1 : 2;');
 
         $this->assertFallen($judgment, 1);
-        $this->assertStringContainsString('T_Array::isEmpty($added)', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Array::isEmpty($this->items)', $judgment->sins[0]->suggestion);
     }
 
     public function test_flags_comparison_against_t_array_empty_constant(): void
     {
-        $judgment = $this->judgeBody('return $added === \JesseGall\PhpTypes\T_Array::EMPTY ? 1 : 2;');
+        $judgment = $this->judgeBody('return $this->items === \JesseGall\PhpTypes\T_Array::EMPTY ? 1 : 2;');
 
         $this->assertFallen($judgment, 1);
-        $this->assertStringContainsString('T_Array::isEmpty($added)', $judgment->sins[0]->suggestion);
+        $this->assertStringContainsString('T_Array::isEmpty($this->items)', $judgment->sins[0]->suggestion);
     }
 
     public function test_flags_helper_comparison_for_other_kinds(): void
@@ -219,20 +220,28 @@ class NoRawLiteralProphetTest extends TestCase
         $float = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(float \$f): bool { return \$f === \\JesseGall\\PhpTypes\\T_Float::ZERO; } }");
         $this->assertStringContainsString('T_Float::isZero($f)', $float->sins[0]->suggestion);
 
-        // bool / json predicates are not type-gated.
-        $this->assertStringContainsString('T_Bool::isTrue($b)', $this->judgeBody('return $b === \JesseGall\PhpTypes\T_Bool::TRUE;')->sins[0]->suggestion);
-        $this->assertStringContainsString('T_Json::isEmptyObject($j)', $this->judgeBody('return $j === \JesseGall\PhpTypes\T_Json::EMPTY_OBJECT;')->sins[0]->suggestion);
+        // #83: bool / json predicates are type-gated too — only on a provably
+        // bool / string operand (a typed param here).
+        $bool = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(bool \$b): bool { return \$b === \\JesseGall\\PhpTypes\\T_Bool::TRUE; } }");
+        $this->assertStringContainsString('T_Bool::isTrue($b)', $bool->sins[0]->suggestion);
+
+        $json = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(string \$j): bool { return \$j === \\JesseGall\\PhpTypes\\T_Json::EMPTY_OBJECT; } }");
+        $this->assertStringContainsString('T_Json::isEmptyObject($j)', $json->sins[0]->suggestion);
     }
 
     public function test_helper_comparison_negation_uses_inverse_predicate(): void
     {
-        $this->assertStringContainsString('T_Array::isNotEmpty($a)', $this->judgeBody('return $a !== \JesseGall\PhpTypes\T_Array::empty();')->sins[0]->suggestion);
-        $this->assertStringContainsString('T_Bool::isFalse($b)', $this->judgeBody('return $b !== \JesseGall\PhpTypes\T_Bool::TRUE;')->sins[0]->suggestion);
+        $array = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(array \$a): bool { return \$a !== \\JesseGall\\PhpTypes\\T_Array::empty(); } }");
+        $this->assertStringContainsString('T_Array::isNotEmpty($a)', $array->sins[0]->suggestion);
+
+        $bool = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(bool \$b): bool { return \$b !== \\JesseGall\\PhpTypes\\T_Bool::TRUE; } }");
+        $this->assertStringContainsString('T_Bool::isFalse($b)', $bool->sins[0]->suggestion);
     }
 
     public function test_helper_comparison_negation_without_inverse_uses_bang(): void
     {
-        $this->assertStringContainsString('! T_Json::isEmptyObject($j)', $this->judgeBody('return $j !== \JesseGall\PhpTypes\T_Json::EMPTY_OBJECT;')->sins[0]->suggestion);
+        $json = $this->prophet->judge('/x.php', "<?php\nclass C { public function m(string \$j): bool { return \$j !== \\JesseGall\\PhpTypes\\T_Json::EMPTY_OBJECT; } }");
+        $this->assertStringContainsString('! T_Json::isEmptyObject($j)', $json->sins[0]->suggestion);
     }
 
     public function test_repent_rewrites_helper_comparison(): void
@@ -653,17 +662,16 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_String::coalesce($x, T_String::COMMA)', $result->newContent);
     }
 
-    public function test_coalesce_autofix_preserves_isset_semantics_on_array_access(): void
+    public function test_coalesce_leaves_an_array_element_of_unprovable_type(): void
     {
-        // Regression: `$arr[$k] ?? T_Array::empty()` must NOT become
-        // `T_Array::coalesce($arr[$k])` (eager eval throws on a missing key).
-        // It must keep the isset suppression via `?? null`.
+        // #83: `$arr[$k]` is a native-array ELEMENT — statically `mixed`, so it
+        // cannot be proven `?array`. T_Array::coalesce(?array) would TypeError on a
+        // non-array element, so the rewrite is withheld (fail-safe), keeping the
+        // original `?? T_Array::empty()`.
         $src = "<?php\nnamespace App;\nuse JesseGall\\PhpTypes\\T_Array;\nfinal class Spec {\n    public function a(array \$arr, \$k): array { return \$arr[\$k] ?? T_Array::empty(); }\n}\n";
         $result = $this->prophet->repent('/x.php', $src);
 
-        $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('T_Array::coalesce($arr[$k] ?? null)', $result->newContent);
-        $this->assertStringNotContainsString('coalesce($arr[$k])', $result->newContent);
+        $this->assertStringNotContainsString('T_Array::coalesce', (string) ($result->newContent ?? $src));
     }
 
     private function judgeBody(string $body): Judgment
@@ -673,10 +681,16 @@ class NoRawLiteralProphetTest extends TestCase
 
     private function wrap(string $members): string
     {
+        // Typed operand properties so the #79/#83 strict guard can resolve them
+        // ($this->name is provably a string, $this->items provably an array, …).
         return <<<PHP
         <?php
         namespace App;
         final class Spec {
+            public string \$name;
+            public string \$payload;
+            public int \$count;
+            public array \$items;
             {$members}
         }
         PHP;
