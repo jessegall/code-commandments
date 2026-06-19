@@ -31,6 +31,19 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_String::empty()', $judgment->sins[0]->suggestion);
     }
 
+    public function test_coalesce_rewrite_drops_a_null_default_but_keeps_a_real_one(): void
+    {
+        // #67: `(string)($x ?? null)` -> coalesce($x ?? null) — never `, null`,
+        // since coalesce()'s $default is typed non-null (the cast makes null the
+        // type's empty anyway). A real default is still carried through.
+        $nullable = $this->prophet->repent('/x.php', "<?php\nreturn (string)(\$raw['label'] ?? null);\n");
+        $this->assertStringContainsString("T_String::coalesce(\$raw['label'] ?? null);", $nullable->newContent);
+        $this->assertStringNotContainsString(', null)', $nullable->newContent);
+
+        $withDefault = $this->prophet->repent('/x.php', "<?php\nreturn (string)(\$x ?? 'fallback');\n");
+        $this->assertStringContainsString("T_String::coalesce(\$x, 'fallback');", $withDefault->newContent);
+    }
+
     public function test_only_rewrites_int_zero_compare_when_the_operand_is_int(): void
     {
         // #56: T_Int::isZero(int) is strict — never rewrite `$x === T_Int::ZERO`
