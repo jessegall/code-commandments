@@ -8,6 +8,9 @@ use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Finding;
 use JesseGall\CodeCommandments\Results\RootCauseHint;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use PhpParser\Node;
+use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 use Throwable;
 
 /**
@@ -33,6 +36,9 @@ final class RootCauseResolver
 
     /** @var array<string, ?string> memo: file => content */
     private array $contentCache = [];
+
+    /** @var array<string, list<array{start: int, end: int}>> memo: file => method line ranges */
+    private array $methodRangeCache = [];
 
     /**
      * @param  callable(string): ?CodebaseIndex  $indexProvider  file path => index (lazy)
@@ -79,13 +85,79 @@ final class RootCauseResolver
 
     private function causeFiresInRegion(string $cause, Finding $finding): bool
     {
+        // Prefer the symptom's enclosing METHOD as the region — two registry
+        // getters 11 lines apart (an invariant getById next to a genuine
+        // findByEmail) must NOT be conflated by a coarse line window. Fall back
+        // to the line window only when the symptom isn't inside a method.
+        $range = $this->enclosingMethodRange($finding->filePath, $finding->line);
+
         foreach ($this->causeLines($cause, $finding->filePath) as $line) {
+            if ($line === null) {
+                return true; // a whole-file cause
+            }
+
+            if ($range !== null) {
+                if ($line >= $range['start'] && $line <= $range['end']) {
+                    return true;
+                }
+
+                continue;
+            }
+
             if ($this->inRegion($finding->line, $line)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * The [start, end] line range of the method enclosing $line in $filePath, or
+     * null when $line is not inside a method body.
+     *
+     * @return array{start: int, end: int}|null
+     */
+    private function enclosingMethodRange(string $filePath, ?int $line): ?array
+    {
+        if ($line === null) {
+            return null;
+        }
+
+        foreach ($this->methodRanges($filePath) as $range) {
+            if ($line >= $range['start'] && $line <= $range['end']) {
+                return $range;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<array{start: int, end: int}>
+     */
+    private function methodRanges(string $filePath): array
+    {
+        if (isset($this->methodRangeCache[$filePath])) {
+            return $this->methodRangeCache[$filePath];
+        }
+
+        $ranges = [];
+        $content = $this->content($filePath);
+
+        if ($content !== null) {
+            try {
+                $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+
+                foreach ((new NodeFinder)->findInstanceOf($ast ?? [], Node\Stmt\ClassMethod::class) as $method) {
+                    $ranges[] = ['start' => $method->getStartLine(), 'end' => $method->getEndLine()];
+                }
+            } catch (Throwable) {
+                $ranges = [];
+            }
+        }
+
+        return $this->methodRangeCache[$filePath] = $ranges;
     }
 
     /**

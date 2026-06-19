@@ -15,33 +15,28 @@ use JesseGall\CodeCommandments\Tests\TestCase;
  */
 class RepentGuardTest extends TestCase
 {
+    // A registry-shaped class whose getById() both launders the miss
+    // (`?? null`, the auto-fixable NoNullCoalesceToNull symptom) AND is the
+    // RegistryReturnContract root cause — same method, so the guard must withhold
+    // the auto-fix until the contract is fixed.
     private const FIXTURE = <<<'PHP'
 <?php
 
 namespace RcGuard;
 
-enum Status: string
+final class UserDirectory
 {
-    case Open = 'open';
-    case Paid = 'paid';
+    /** @var array<int, User> */
+    private array $byId = [];
 
-    public function priority(): ?int
+    public function add(int $id, User $user): void
     {
-        return match ($this) {
-            self::Open => 1,
-            self::Paid => 2,
-            default => null,
-        };
+        $this->byId[$id] = $user;
     }
 
-    public function compute(): int
+    public function getById(int $id): ?User
     {
-        return 5;
-    }
-
-    public function laundered(): ?int
-    {
-        return $this->compute() ?? null;
+        return $this->byId[$id] ?? null;
     }
 }
 PHP;
@@ -54,7 +49,7 @@ PHP;
     {
         $this->dir = sys_get_temp_dir() . '/rc-guard-' . uniqid();
         @mkdir($this->dir, 0777, true);
-        $this->file = $this->dir . '/Status.php';
+        $this->file = $this->dir . '/UserDirectory.php';
         file_put_contents($this->file, self::FIXTURE);
 
         $app['config']->set('commandments.scrolls', [
@@ -88,6 +83,6 @@ PHP;
 
         // The `?? null` was NOT stripped — the laundering path stayed closed.
         $this->assertSame($before, $after);
-        $this->assertStringContainsString('$this->compute() ?? null', $after);
+        $this->assertStringContainsString('$this->byId[$id] ?? null', $after);
     }
 }
