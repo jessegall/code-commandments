@@ -156,6 +156,7 @@ return [
                 Backend\FeatureEnvyProphet::class,
                 Backend\NoFacadesInServicesProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
+                Backend\PreferAndThenProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
                 Backend\ShortClosureProphet::class,

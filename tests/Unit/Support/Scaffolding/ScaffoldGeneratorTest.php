@@ -118,7 +118,7 @@ class ScaffoldGeneratorTest extends TestCase
 
         $this->assertStringContainsString('public function transform(callable $transform): self', $option);
         $this->assertStringContainsString('public function andThen(callable $andThen): self', $option);
-        $this->assertStringContainsString('return $this->hasValue ? $andThen($this->value) : self::none();', $option);
+        $this->assertStringContainsString('$result = $andThen($this->value);', $option);
         $this->assertStringContainsString('public function tap(callable $callback): self', $option);
 
         // The old collection-flavoured names are gone.
@@ -135,12 +135,26 @@ class ScaffoldGeneratorTest extends TestCase
         $option = file_get_contents($this->dir . '/Option.php');
 
         $this->assertStringContainsString('public function orElse(callable $alternative): self', $option);
-        $this->assertStringContainsString('return $this->hasValue ? $this : $alternative();', $option);
         $this->assertStringContainsString('public function or(self $alternative): self', $option);
         $this->assertStringContainsString('public function orWhen(mixed $condition, callable $factory): self', $option);
         $this->assertStringContainsString('public function andWhen(mixed $condition): self', $option);
         $this->assertStringContainsString('return $this->hasValue && $condition ? $this : self::none();', $option);
         $this->assertStringContainsString('public function filter(callable $predicate): self', $option);
+    }
+
+    public function test_generated_option_guards_and_then_and_or_else_at_runtime(): void
+    {
+        // #63(B): andThen()/orElse() assert their callback returns an Option, so
+        // a forgotten wrap is caught in dev/test even without PHPStan.
+        // #63(C): orElse's param generic stays `callable(): self<T>` (same T) —
+        // a regen must never loosen the same-inner-type guarantee.
+        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
+
+        $option = file_get_contents($this->dir . '/Option.php');
+
+        $this->assertStringContainsString("assert(\$result instanceof self, 'andThen callback must return an Option')", $option);
+        $this->assertStringContainsString("assert(\$result instanceof self, 'orElse alternative must return an Option')", $option);
+        $this->assertStringContainsString('@param  callable(): self<T>  $alternative', $option);
     }
 
     public function test_auto_refresh_stamps_a_do_not_edit_banner(): void
