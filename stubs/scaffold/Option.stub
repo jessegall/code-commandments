@@ -10,10 +10,13 @@ namespace {{ namespace }};
  *
  * @code-commandments-generated
  *
- * @template T
+ * @template-covariant T
  */
 final readonly class Option
 {
+    /**
+     * @param  T  $value
+     */
     private function __construct(
         private mixed $value,
         private bool $hasValue,
@@ -21,6 +24,7 @@ final readonly class Option
 
     /**
      * @template TValue
+     *
      * @param  TValue  $value
      * @return self<TValue>
      */
@@ -244,8 +248,10 @@ final readonly class Option
     /**
      * Eager twin of {@see self::orElse()} — $this when present, else $alternative.
      *
-     * @param  self<T>  $alternative
-     * @return self<T>
+     * @template TOther
+     *
+     * @param  self<TOther>  $alternative
+     * @return self<T>|self<TOther>
      */
     public function or(self $alternative): self
     {
@@ -257,8 +263,10 @@ final readonly class Option
      * is truthy, else still none. OR-chain sugar that removes a `||` chain:
      * `someWhen($a, fn () => $v)->orWhen($b, fn () => $v)->orWhen($c, fn () => $v)`.
      *
-     * @param  callable(): T  $factory
-     * @return self<T>
+     * @template TOther
+     *
+     * @param  callable(): TOther  $factory
+     * @return self<T>|self<TOther>
      */
     public function orWhen(mixed $condition, callable $factory): self
     {
