@@ -68,11 +68,27 @@ for raw in "${CONSUMERS[@]}"; do
   dir="$(cd "$dir" && pwd)"
 
   # 1. Pull the latest version. It lives in require-dev, so keep it there.
+  #    --no-scripts: skip the consumer's own post-update hooks (e.g. artisan
+  #    package:discover), which can fail for environment reasons unrelated to
+  #    this bump (a missing redis, an unbootable app). We run the commandments
+  #    sync ourselves below, so scaffolding still happens.
   echo "  → composer require --dev $PACKAGE (latest)"
-  if ! composer --working-dir="$dir" require --dev "$PACKAGE" --no-interaction; then
+  if ! composer --working-dir="$dir" require --dev "$PACKAGE" --no-scripts --no-interaction; then
     echo "  ✗ composer require failed — skipping commit for this consumer."
     failures=$((failures+1))
     continue
+  fi
+
+  # Composer sometimes writes a "*" constraint instead of a caret; pin it to
+  # ^MAJOR.MINOR of the version it actually resolved to.
+  ver="$(LOCK="$dir/composer.lock" python3 -c 'import json, os
+d = json.load(open(os.environ["LOCK"]))
+pk = [p for p in d.get("packages", []) + d.get("packages-dev", []) if p["name"] == "jessegall/code-commandments"]
+print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
+  if [ -n "$ver" ]; then
+    caret="^$(echo "$ver" | cut -d. -f1-2)"
+    echo "  → pin constraint to $caret"
+    composer --working-dir="$dir" require --dev "$PACKAGE:$caret" --no-update --no-scripts --no-interaction >/dev/null 2>&1
   fi
 
   # 2. Register newly-shipped prophets + (auto-)refresh scaffold. Idempotent;
@@ -84,26 +100,32 @@ for raw in "${CONSUMERS[@]}"; do
     ( cd "$dir" && php artisan commandments:sync --after=previous ) || true
   fi
 
-  # 3. Stage ONLY composer.json, the commandments config, and scaffold files.
-  git -C "$dir" add -- composer.json 2>/dev/null
-  [ -f "$dir/commandments.php" ]        && git -C "$dir" add -- commandments.php
-  [ -f "$dir/config/commandments.php" ] && git -C "$dir" add -- config/commandments.php
-
-  # Generated scaffold files carry the marker; stage every one (git ignores
-  # the unchanged ones, so only real updates land in the commit).
+  # 3. Collect ONLY the paths this bump owns: composer.json, the commandments
+  #    config, and the generated scaffold files (identified by their marker).
+  paths=( composer.json )
+  [ -f "$dir/commandments.php" ]        && paths+=( commandments.php )
+  [ -f "$dir/config/commandments.php" ] && paths+=( config/commandments.php )
   while IFS= read -r f; do
-    [ -n "$f" ] && git -C "$dir" add -- "$f"
+    [ -n "$f" ] && paths+=( "$f" )
   done < <(cd "$dir" && grep -rl --include='*.php' "$MARKER" . \
-            --exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null)
+            --exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.claude 2>/dev/null)
 
-  # 4. Commit (only if something staged), bypassing the pre-commit gate.
-  if git -C "$dir" diff --cached --quiet; then
+  # Stage our paths (so new scaffold files are tracked), then bail if none of
+  # them actually changed.
+  git -C "$dir" add -- "${paths[@]}" 2>/dev/null
+
+  if git -C "$dir" diff --cached --quiet -- "${paths[@]}"; then
     echo "  • Nothing changed — already up to date. No commit."
     continue
   fi
 
-  echo "  → git commit --no-verify"
-  if git -C "$dir" commit --no-verify -m "chore: bump $PACKAGE to latest + re-sync prophets/scaffold"; then
+  # 4. Commit ONLY our paths via pathspec, so the commit never sweeps up other
+  #    work the developer happens to have staged. --no-verify bypasses the
+  #    consumer's pre-commit gate for this maintenance commit.
+  echo "  → git commit --no-verify (scoped to bump paths)"
+  if git -C "$dir" commit --no-verify \
+       -m "chore: bump $PACKAGE to latest + re-sync prophets/scaffold" \
+       -- "${paths[@]}"; then
     echo "  ✓ Committed."
   else
     echo "  ✗ Commit failed."
