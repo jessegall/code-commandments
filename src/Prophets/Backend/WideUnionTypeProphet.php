@@ -84,7 +84,9 @@ class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepent
             )
             ->whenUnsure(
                 'If the union includes null, it is value-or-nothing → `Option<rest>`. '
-                . 'If several shapes are really one concept, make a value object. '
+                . 'If the members are classes that are one concept, give them a shared '
+                . 'interface they all implement (introduce one if absent) and type as '
+                . 'that. If several shapes are really one concept, make a value object. '
                 . 'If it is two shapes that should be one, pick one.'
             );
     }
@@ -107,10 +109,14 @@ several disguises. The rule graduates by the strongest signal — does it includ
     PHP unions are FOR; consider a `Union` sum type / value object, advisory)
   - any union of {$warnAt}+ members below those bars → WARNING
 
-A null-free union is never a blocking sin: when every shape is always present
-and they share no interface, a union is a legitimate way to spell polymorphism.
-The blocker is reserved for the value-or-nothing case, where `Option` is the
-clear answer.
+A null-free union is never a blocking sin: when every shape is always present, a
+union is one way to spell polymorphism. But when the members are CLASSES that are
+really ONE CONCEPT (a leaf condition vs a nested group), the cleanest fix is a
+shared interface they all implement, typed as that interface — zero wrapping, and
+the `instanceof A || instanceof B` chains collapse to one. "They share no
+interface" is a reason to consider INTRODUCING one, not to leave the union. The
+blocker is reserved for the value-or-nothing case, where `Option` is the clear
+answer.
 
 Bad:
     Option | array | string | null \$isVisibleRule = null,   // (and a contradiction)
@@ -127,6 +133,10 @@ Good — an all-scalar union has a ready-made home:
 
 Good — one concept wearing disguises is a value object:
     VisibilityRule \$isVisibleRule,
+
+Good — a class union that is one concept is a shared interface:
+    ResourceFilterNode \$node,   // ResourceFilterCondition | ResourceFilterGroup,
+                                 // both implement ResourceFilterNode — no wrapping
 
 WHAT FIRES — a native type or a `@param`/`@return`/`@var` docblock type whose
 TOP-LEVEL union has >= {$warnAt} members (a union INSIDE a generic, like
@@ -361,7 +371,7 @@ SCRIPTURE;
             return $head . ' It includes null, so it is value-or-nothing → `Option<rest>` (the null becomes the Option\'s absence). If the rest is several shapes, that is `Option<Union<…>>` or a value object.';
         }
 
-        return $head . ' It is always present (no null) but one-of-N types — that is ad-hoc polymorphism. If the members share behaviour, model it as a `Union` sum type or a named value object; if they should be one type, pick one. (Add a `null` member and it becomes value-or-nothing → `Option`.)';
+        return $head . ' It is always present (no null) but one-of-N types — that is ad-hoc polymorphism. If the members are CLASSES that are one concept (a leaf vs a nested group), give them a shared interface they all implement (introduce one if absent) and type as that — the `instanceof A || instanceof B` chains collapse to one; if they merely share behaviour, a `Union` sum type or a named value object; if they should be one type, pick one. (Add a `null` member and it becomes value-or-nothing → `Option`.)';
     }
 
     /**
