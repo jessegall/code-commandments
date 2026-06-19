@@ -38,6 +38,34 @@ class BehaviouralEnumDispatchProphetTest extends TestCase
         $this->assertStringContainsString('NOT a `*Resolver`', $judgment->warnings[0]->message);
     }
 
+    public function test_flags_a_nullable_enum_subject_with_a_null_arm(): void
+    {
+        // #93: a nullable-enum subject (Enum::tryFrom / detect()->getOr(null))
+        // paired with a `null =>` arm — the null arm is skipped, the >= 5 enum
+        // cases still qualify.
+        $judgment = $this->judge('class C { public function find($key) { return match (DescriptorKey::detect($key)->getOr(null)) {
+            DescriptorKey::Trigger => $this->makeTrigger($key),
+            DescriptorKey::Pipe => $this->lazyPipe($key),
+            DescriptorKey::Pipeline => $this->lazyPipeline($key),
+            DescriptorKey::Workflow => $this->lazyWorkflow($key),
+            DescriptorKey::Input, DescriptorKey::Output => Option::some($this->makeSub($key)),
+            DescriptorKey::Stop => Option::some($this->makeStop()),
+            null => Option::none(),
+        }; } }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('DescriptorKey', $judgment->warnings[0]->message);
+    }
+
+    public function test_a_null_arm_does_not_count_toward_the_threshold(): void
+    {
+        // 4 enum cases + a null arm is still below the default 5 — the null arm
+        // is not per-case behaviour.
+        $this->assertTrue($this->judge('class C { public function r($t, $d) { return match ($t) {
+            PipeType::A => $d->a(), PipeType::B => $d->b(), PipeType::C => $d->c(), PipeType::D => $d->d(), null => $d->none(),
+        }; } }')->isRighteous());
+    }
+
     public function test_leaves_a_value_only_map_to_prefer_type_method(): void
     {
         $this->assertTrue($this->judge('class C { public function n($c) { return match ($c) {

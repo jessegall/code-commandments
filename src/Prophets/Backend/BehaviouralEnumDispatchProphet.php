@@ -142,9 +142,12 @@ SCRIPTURE;
         $warnings = [];
 
         foreach ($finder->findInstanceOf($ast, Expr\Match_::class) as $match) {
-            $enum = $this->dispatchedEnum($this->armConditions($match));
+            $conds = $this->armConditions($match);
+            $enum = $this->dispatchedEnum($conds);
 
-            if ($enum === null || $this->armCount($match) < $minArms) {
+            // Count only the ENUM-CASE arms toward the threshold — a `null`/`default`
+            // arm (the "unmatched"/nullable-enum case) is not per-case behaviour.
+            if ($enum === null || $this->enumCaseCount($conds) < $minArms) {
                 continue;
             }
 
@@ -159,7 +162,7 @@ SCRIPTURE;
             $conds = array_values(array_filter(array_map(static fn (Node\Stmt\Case_ $c): ?Expr => $c->cond, $switch->cases)));
             $enum = $this->dispatchedEnum($conds);
 
-            if ($enum === null || count($conds) < $minArms) {
+            if ($enum === null || $this->enumCaseCount($conds) < $minArms) {
                 continue;
             }
 
@@ -193,8 +196,12 @@ SCRIPTURE;
     }
 
     /**
-     * The short name of the single enum all $conds label cases of (>= 2 distinct
-     * `Enum::Case` of the SAME enum), or null when the subject is not one enum.
+     * The short name of the single enum all the ENUM-CASE arms label (>= 2
+     * distinct `Enum::Case` of the SAME enum), or null when the subject is not
+     * one enum. A `null =>` arm (#93: the nullable-enum/unmatched case, produced
+     * by `Enum::tryFrom(...)` / `detect(...)->getOr(null)`) is SKIPPED, not a
+     * disqualifier — the subject's own type is irrelevant; the case labels
+     * identify the enum.
      *
      * @param  list<Expr>  $conds
      */
@@ -204,10 +211,14 @@ SCRIPTURE;
         $cases = 0;
 
         foreach ($conds as $cond) {
+            if ($this->isNullConst($cond)) {
+                continue; // the `null =>` / unmatched arm — not a case
+            }
+
             if (! $cond instanceof Expr\ClassConstFetch || ! $cond->class instanceof Node\Name
                 || ! $cond->name instanceof Node\Identifier
             ) {
-                return null; // a non-enum-case arm (a literal, a guard) — not a closed-set enum map
+                return null; // a non-enum-case literal/guard — not a closed-set enum map
             }
 
             $short = $cond->class->getLast();
@@ -221,6 +232,24 @@ SCRIPTURE;
         }
 
         return ($enum !== null && $cases >= 2) ? $enum : null;
+    }
+
+    /**
+     * The number of ENUM-CASE arm conditions (excluding a `null` arm), for the
+     * threshold so it reflects real per-case behaviour.
+     *
+     * @param  list<Expr>  $conds
+     */
+    private function enumCaseCount(array $conds): int
+    {
+        return count(array_filter($conds, fn (Expr $c): bool => ! $this->isNullConst($c)));
+    }
+
+    private function isNullConst(Expr $expr): bool
+    {
+        return $expr instanceof Expr\ConstFetch
+            && $expr->name instanceof Node\Name
+            && strtolower($expr->name->toString()) === 'null';
     }
 
     /**
@@ -240,11 +269,6 @@ SCRIPTURE;
         }
 
         return $conds;
-    }
-
-    private function armCount(Expr\Match_ $match): int
-    {
-        return count($match->arms);
     }
 
     /**
