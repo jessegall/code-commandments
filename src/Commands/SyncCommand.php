@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\ConfigSyncer;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\VersionResolver;
 use JesseGall\PhpTypes\T_String;
 
@@ -23,6 +24,25 @@ class SyncCommand extends Command
         {--dry-run : Show what would be added without modifying the file}';
 
     protected $description = 'Add newly available prophets to your config file';
+
+    /**
+     * Keep the generated tracking state out of version control. Runs on every
+     * sync — including the automatic post-merge sync after a package update —
+     * so a consumer's .gitignore picks up newly-tracked state files. Stays
+     * quiet when nothing changed to avoid noise on routine updates.
+     */
+    private function ensureGitignore(): void
+    {
+        $status = (new GitignoreInstaller())->ensure(base_path());
+
+        match ($status) {
+            GitignoreInstaller::STATUS_INSTALLED => $this->line('Created .gitignore with code-commandments state entries'),
+            GitignoreInstaller::STATUS_APPENDED => $this->line('Added code-commandments state entries to .gitignore'),
+            GitignoreInstaller::STATUS_UPDATED => $this->line('Refreshed code-commandments state entries in .gitignore'),
+            GitignoreInstaller::STATUS_WRITE_FAILED => $this->warn('Failed to write .gitignore — check permissions.'),
+            GitignoreInstaller::STATUS_ALREADY_PRESENT => null,
+        };
+    }
 
     private function autoScaffold(): void
     {
@@ -61,6 +81,7 @@ class SyncCommand extends Command
 
         if (! $this->option('dry-run')) {
             $this->autoScaffold();
+            $this->ensureGitignore();
         }
 
         $after = $this->option('after');
