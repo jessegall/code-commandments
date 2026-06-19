@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\RootCauseMap;
 use JesseGall\CodeCommandments\Support\TextHelper;
 
 /**
@@ -87,14 +88,27 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
-     * Prophet classes whose findings this commandment supersedes. Empty by
-     * default; override where fixing this rule dissolves another's symptom.
+     * Prophet classes whose findings this commandment supersedes. Derived from
+     * {@see RootCauseMap} (a cause defers its symptoms) so the two directions
+     * stay in lock-step; override only for relationships outside the map.
      *
      * @return list<class-string>
      */
     public function supersedes(): array
     {
-        return [];
+        return RootCauseMap::symptomsOf(static::class);
+    }
+
+    /**
+     * Prophet classes that are the likely root cause of this commandment's
+     * findings. Derived from {@see RootCauseMap} (the symptom-side inverse of
+     * `supersedes()`); override only for relationships outside the map.
+     *
+     * @return list<class-string>
+     */
+    public function rootCauses(): array
+    {
+        return RootCauseMap::causesOf(static::class);
     }
 
     /**

@@ -53,6 +53,7 @@ final class FindingCollector
                 $tier = $prophet->tier();
                 $advisory = $prophet->advisory();
                 $supersedes = $prophet->supersedes();
+                $rootCauses = $prophet->rootCauses();
                 $repairable = $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter;
                 $short = class_basename($prophetClass);
 
@@ -83,6 +84,7 @@ final class FindingCollector
                         supersedes: $supersedes,
                         fingerprint: $fingerprint,
                         autoFixable: $sin->autoFixable ?? $repairable,
+                        rootCauses: $rootCauses,
                     );
                 }
 
@@ -113,6 +115,7 @@ final class FindingCollector
                         supersedes: $supersedes,
                         fingerprint: $fingerprint,
                         autoFixable: $warning->autoFixable ?? $repairable,
+                        rootCauses: $rootCauses,
                     );
                 }
             }

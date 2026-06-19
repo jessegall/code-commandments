@@ -18,6 +18,7 @@ final class Finding
     /**
      * @param  'sin'|'warning'  $kind
      * @param  list<string>  $supersedes  prophet classes whose findings this one defers
+     * @param  list<string>  $rootCauses  prophet classes that may be this finding's root cause
      */
     public function __construct(
         public readonly string $prophetClass,
@@ -35,7 +36,44 @@ final class Finding
         public readonly array $supersedes,
         public readonly string $fingerprint,
         public readonly bool $autoFixable = false,
+        public readonly array $rootCauses = [],
+        /** Set by the root-cause resolver when an unresolved in-region cause is found. */
+        public readonly ?RootCauseHint $rootCauseHint = null,
+        /**
+         * True when the resolver ran the root-cause check and found NONE — a
+         * confirmed genuine absence (the symptom's own suggestion is correct).
+         */
+        public readonly bool $rootCauseChecked = false,
     ) {}
+
+    /**
+     * A copy carrying the resolved root-cause annotation. `$hint` non-null marks
+     * an unresolved in-region cause; `$hint` null + `$checked` true marks a
+     * confirmed genuine absence.
+     */
+    public function withRootCauseHint(?RootCauseHint $hint, bool $checked = true): self
+    {
+        return new self(
+            prophetClass: $this->prophetClass,
+            prophetShort: $this->prophetShort,
+            filePath: $this->filePath,
+            relativePath: $this->relativePath,
+            kind: $this->kind,
+            line: $this->line,
+            message: $this->message,
+            snippet: $this->snippet,
+            suggestion: $this->suggestion,
+            symbol: $this->symbol,
+            advisory: $this->advisory,
+            tier: $this->tier,
+            supersedes: $this->supersedes,
+            fingerprint: $this->fingerprint,
+            autoFixable: $this->autoFixable,
+            rootCauses: $this->rootCauses,
+            rootCauseHint: $hint,
+            rootCauseChecked: $checked,
+        );
+    }
 
     public function isSin(): bool
     {

@@ -27,9 +27,10 @@ final class FindingQueue
     /**
      * Findings within this many lines of a superseding finding (same file)
      * are treated as the same region and deferred. A null line on either
-     * side is treated as "whole file".
+     * side is treated as "whole file". Public so the root-cause resolver and
+     * the repent guard scope their in-region checks to the same window.
      */
-    private const DEFER_WINDOW = 60;
+    public const DEFER_WINDOW = 60;
 
     /**
      * @param  list<Finding>  $findings
@@ -37,10 +38,25 @@ final class FindingQueue
      */
     public static function order(array $findings): array
     {
-        $kept = array_values(array_filter(
-            $findings,
-            static fn (Finding $f) => ! self::isSuperseded($f, $findings),
-        ));
+        // Bucket by file first: a finding can only be superseded by another in
+        // the SAME file, so the O(n^2) supersede scan runs per-file instead of
+        // across the whole result set (matters now that every cause prophet
+        // carries a non-empty supersedes list).
+        $byPath = [];
+
+        foreach ($findings as $finding) {
+            $byPath[$finding->relativePath][] = $finding;
+        }
+
+        $kept = [];
+
+        foreach ($byPath as $fileFindings) {
+            foreach ($fileFindings as $finding) {
+                if (! self::isSuperseded($finding, $fileFindings)) {
+                    $kept[] = $finding;
+                }
+            }
+        }
 
         usort($kept, static function (Finding $a, Finding $b): int {
             // Auto-fixable findings first — one `repent` clears them all, so
