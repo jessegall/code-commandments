@@ -207,11 +207,11 @@ SCRIPTURE;
                 continue; // calling its own class by name — same as self::
             }
 
-            $autoFixable = $magic && $this->singleArrayArg($call);
+            $autoFixable = $magic && $this->autoFixableArg($call, $ast);
 
             $message = $magic
                 ? ($autoFixable
-                    ? sprintf('`%s::from([...])` calls Spatie\'s magic `::from()` from outside the Data class. Use the explicit `%s::forArray([...])` entry point instead.', $target, $target)
+                    ? sprintf('`%s::from(...)` calls Spatie\'s magic `::from()` from outside the Data class. Use the explicit `%s::forArray(...)` entry point instead.', $target, $target)
                     : sprintf('`%s::from(...)` calls Spatie\'s magic object dispatch from outside the Data class. Add an explicit `%s::forX(Type $x): static` factory (`static::from($x->toArray())` inside the class) and call that.', $target, $target))
                 : sprintf('`%s::%s(...)` calls a reserved-`from`-prefix factory from outside the Data class — that factory should be renamed to a `for*` prefix (see its definition).', $target, $method);
 
@@ -262,7 +262,7 @@ SCRIPTURE;
                 || $call->name->toString() !== 'from'
                 || ! $call->class instanceof Node\Name
                 || $call->isFirstClassCallable()
-                || ! $this->singleArrayArg($call)
+                || ! $this->autoFixableArg($call, $ast)
             ) {
                 continue;
             }
@@ -314,11 +314,79 @@ SCRIPTURE;
         return (bool) preg_match('/^from[A-Z0-9]/', $name);
     }
 
-    private function singleArrayArg(Expr\StaticCall $call): bool
+    /**
+     * Whether the single `from(...)` argument can be safely rewritten to
+     * `forArray(...)` — i.e. it is an array: an array literal, or a variable
+     * declared `array`/`?array` in the enclosing function. An object argument is
+     * NOT auto-fixed here — that is ExplicitDataFactory's job (it synthesises a
+     * forX() factory). An unresolved type is left for a human.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function autoFixableArg(Expr\StaticCall $call, array $ast): bool
     {
         $args = $call->getArgs();
 
-        return count($args) === 1 && ! $args[0]->unpack && $args[0]->value instanceof Expr\Array_;
+        if (count($args) !== 1 || $args[0]->unpack) {
+            return false;
+        }
+
+        $value = $args[0]->value;
+
+        if ($value instanceof Expr\Array_) {
+            return true;
+        }
+
+        return $value instanceof Expr\Variable
+            && is_string($value->name)
+            && $this->isArrayType($this->paramTypeInScope($value->name, $call, $ast));
+    }
+
+    private function isArrayType(?Node $type): bool
+    {
+        if ($type instanceof Node\NullableType) {
+            return $this->isArrayType($type->type);
+        }
+
+        return $type instanceof Node\Identifier && strtolower($type->toString()) === 'array';
+    }
+
+    /**
+     * The declared type of parameter $name in the innermost function-like
+     * (method / closure / arrow fn) that contains $call, or null.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function paramTypeInScope(string $name, Expr\StaticCall $call, array $ast): ?Node
+    {
+        $finder = new NodeFinder;
+        $pos = (int) $call->getStartFilePos();
+        $best = null;
+        $bestStart = -1;
+
+        $functionLikes = array_merge(
+            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
+            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
+            $finder->findInstanceOf($ast, Expr\Closure::class),
+            $finder->findInstanceOf($ast, Expr\ArrowFunction::class),
+        );
+
+        foreach ($functionLikes as $fn) {
+            $start = (int) $fn->getStartFilePos();
+
+            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
+                continue;
+            }
+
+            foreach ($fn->params as $param) {
+                if ($param->var instanceof Expr\Variable && $param->var->name === $name) {
+                    $best = $param->type;
+                    $bestStart = $start;
+                }
+            }
+        }
+
+        return $best;
     }
 
     /**

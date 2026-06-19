@@ -109,6 +109,35 @@ class NoExternalDataFromProphetTest extends TestCase
         $this->assertStringNotContainsString('NodeData::from(', $result->newContent);
     }
 
+    public function test_autofixes_external_from_with_an_array_typed_variable(): void
+    {
+        // #107: a variable declared `array`/`?array` is safely rewritable too,
+        // not just an array literal.
+        $j = $this->judge('class NodeData extends \Spatie\LaravelData\Data {} class Cmd { public function h(array $raw) { return NodeData::from($raw); } }');
+
+        $this->assertCount(1, $j->sins);
+        $this->assertTrue($j->sins[0]->autoFixable);
+        $this->assertStringContainsString('forArray', $j->sins[0]->message);
+
+        $src = '<?php class NodeData extends \Spatie\LaravelData\Data {} class Cmd { public function h(?array $raw) { return NodeData::from($raw); } }';
+        $result = $this->prophet->repent('/x.php', $src);
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('NodeData::forArray($raw)', $result->newContent);
+    }
+
+    public function test_does_not_autofix_an_object_typed_variable(): void
+    {
+        // An object arg is ExplicitDataFactory's domain (forX factory) — not a
+        // forArray rewrite. Flagged, but not auto-fixable here, and repent leaves it.
+        $j = $this->judge('class NodeData extends \Spatie\LaravelData\Data {} class Cmd { public function h(\App\Node $node) { return NodeData::from($node); } }');
+
+        $this->assertCount(1, $j->sins);
+        $this->assertFalse($j->sins[0]->autoFixable);
+
+        $src = '<?php class NodeData extends \Spatie\LaravelData\Data {} class Cmd { public function h(\App\Node $node) { return NodeData::from($node); } }';
+        $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
+    }
+
     public function test_repent_leaves_object_from_untouched(): void
     {
         $src = '<?php class NodeData extends \Spatie\LaravelData\Data {} class Cmd { public function h($o) { return NodeData::from($o); } }';
