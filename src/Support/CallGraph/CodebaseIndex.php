@@ -934,7 +934,35 @@ final class CodebaseIndex
             filePath: $shell['file'],
             line: $method->getStartLine(),
             returnInnerType: self::returnInnerType($method, $shell['uses'], $shell['namespace']),
+            returnTypeName: self::returnTypeName($method),
+            returnDocIsParameterized: self::returnDocIsParameterized($method),
         );
+    }
+
+    /**
+     * The short name of the method's native return type (`Option`, `array`,
+     * `mixed`, …); null when untyped or a union/intersection/nullable-complex.
+     */
+    private static function returnTypeName(Node\Stmt\ClassMethod $method): ?string
+    {
+        $type = $method->returnType;
+
+        if ($type instanceof Node\NullableType) {
+            $type = $type->type;
+        }
+
+        if ($type instanceof Node\Identifier) {
+            return strtolower($type->toString());
+        }
+
+        return $type instanceof Node\Name ? $type->getLast() : null;
+    }
+
+    private static function returnDocIsParameterized(Node\Stmt\ClassMethod $method): bool
+    {
+        $doc = $method->getDocComment();
+
+        return $doc !== null && preg_match('/@return\s+[\\\\\w]+<[^>]+>/', $doc->getText()) === 1;
     }
 
     /**
