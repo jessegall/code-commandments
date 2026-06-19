@@ -34,6 +34,19 @@ final class FindImplicitDataFrom implements Pipe
 {
     private const ARRAY_RETURNING_METHODS = ['toArray', 'all', 'jsonSerialize'];
 
+    /**
+     * Eloquent model methods that decorate and RETURN the model ($this / a fresh
+     * instance). `Data::from($user->append('x'))` therefore builds from an
+     * object, not an array — #58. Without this the call site is classified
+     * 'unknown' and missed, so #49's gating wrongly adds FromArrayOnly.
+     */
+    private const MODEL_FLUENT_METHODS = [
+        'append', 'setAppends', 'load', 'loadMissing', 'loadCount', 'loadMorph',
+        'setRelation', 'setRelations', 'unsetRelation', 'withoutRelations',
+        'makeVisible', 'makeHidden', 'fresh', 'refresh', 'fill', 'forceFill',
+        'setAttribute',
+    ];
+
     private const ARRAY_BUILTINS = [
         'array_map', 'array_merge', 'array_filter', 'array_values', 'array_keys',
         'array_combine', 'array_column', 'array_diff', 'array_intersect', 'compact',
@@ -213,6 +226,16 @@ final class FindImplicitDataFrom implements Pipe
             && in_array($arg->name->toString(), self::ARRAY_RETURNING_METHODS, true)
         ) {
             return 'toarray';
+        }
+
+        // A fluent model method returns the model — `Data::from($user->append(…))`
+        // builds from an object (#58), so it needs an explicit factory just like
+        // `Data::from($user)`.
+        if (($arg instanceof Expr\MethodCall || $arg instanceof Expr\NullsafeMethodCall)
+            && $arg->name instanceof Node\Identifier
+            && in_array($arg->name->toString(), self::MODEL_FLUENT_METHODS, true)
+        ) {
+            return 'object';
         }
 
         if ($arg instanceof Expr\FuncCall
