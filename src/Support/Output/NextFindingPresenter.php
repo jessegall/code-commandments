@@ -47,9 +47,26 @@ final class NextFindingPresenter
             }
         }
 
-        if ($finding->suggestion !== null && T_String::isNotBlank($finding->suggestion)) {
+        // Root-cause hint: an unresolved invariant cause sits in this region, so
+        // the symptom above is a laundering trap. Shout it in the house imperative
+        // voice AND suppress the symptom's own suggestion (it is wrong here).
+        if ($finding->rootCauseHint !== null) {
+            $hint = $finding->rootCauseHint;
+            $lines[] = T_String::empty();
+            $lines[] = '  ROOT CAUSE — FIX THIS FIRST. Do NOT act on the finding above:';
+            $lines[] = '    This absence is an INVARIANT VIOLATION in disguise, not a genuine absence.';
+            $lines[] = '    DO NOT wrap it in Option / a Null Object / a default — that makes the bug permanent and invisible.';
+            $lines[] = '    Fix the cause: ' . $hint->reason . '.';
+            $lines[] = sprintf('    Read it:  %s scripture --prophet=%s', $binary, $hint->causeShort);
+        } elseif ($finding->suggestion !== null && T_String::isNotBlank($finding->suggestion)) {
             $lines[] = T_String::empty();
             $lines[] = '  → ' . $finding->suggestion;
+
+            // The resolver ran the root-cause check and found NONE: a confirmed
+            // genuine absence, so the suggestion above really is the right fix.
+            if ($finding->rootCauseChecked) {
+                $lines[] = '  CHECKED: no invariant cause in-region — this is a genuine absence, so the fix above is correct.';
+            }
         }
 
         if ($autoFixable && $repentInputs !== null && $repentInputs !== []) {
