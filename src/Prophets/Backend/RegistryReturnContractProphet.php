@@ -6,13 +6,17 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
+use Throwable;
 
 /**
  * Enforce the registry contract on a class that opts in via a marker (an
@@ -29,7 +33,7 @@ use PhpParser\NodeFinder;
  * intentionally not implemented — that is where false positives breed.
  */
 #[IntroducedIn('1.125.0')]
-class RegistryReturnContractProphet extends PhpCommandment implements SinRepenter
+class RegistryReturnContractProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
 {
     private const DEFAULT_MARKERS = ['Registry'];
 
@@ -37,6 +41,13 @@ class RegistryReturnContractProphet extends PhpCommandment implements SinRepente
 
     /** Getter names that ANNOUNCE nullability is normal — left even on a registry. */
     private const FINDER_PREFIXES = ['find', 'search', 'try', 'lookup'];
+
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     public function description(): string
     {
@@ -114,7 +125,7 @@ SCRIPTURE;
         $sins = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            if (! $this->isRegistry($class)) {
+            if (! $this->isRegistry($class, $ast)) {
                 continue;
             }
 
@@ -140,10 +151,69 @@ SCRIPTURE;
         return $sins === [] ? $this->righteous() : $this->fallen($sins);
     }
 
-    private function isRegistry(Node\Stmt\Class_ $class): bool
+    /**
+     * #84: resolve the marker TRANSITIVELY — a class is a registry if it (or any
+     * ancestor) carries the marker interface or `#[Registry]` attribute. The
+     * idiomatic shape is one abstract base marked once, with N concrete
+     * subclasses; forcing the marker onto every leaf is the boilerplate a base
+     * exists to remove.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function isRegistry(Node\Stmt\Class_ $class, array $ast): bool
     {
         $markers = $this->markers();
 
+        // The class's OWN attribute or implements clause (works without an index).
+        if ($this->classCarriesMarker($class, $markers)) {
+            return true;
+        }
+
+        if ($this->index === null) {
+            return false;
+        }
+
+        $fqcn = $this->classFqcn($class, $ast);
+
+        if ($fqcn === null) {
+            return false;
+        }
+
+        // A marker interface inherited through ANY ancestor (interfacesOf walks
+        // the parent chain + each level's interfaces).
+        foreach ($this->index->interfacesOf($fqcn) as $interface) {
+            if (in_array(self::shortName($interface), $markers, true)) {
+                return true;
+            }
+        }
+
+        // A `#[Registry]` attribute on an ANCESTOR class (attributes don't inherit
+        // at runtime, but a base marker is the author's intent — honour it).
+        $cursor = $this->index->classByFqcn($fqcn)?->parent;
+        $depth = 0;
+
+        while ($cursor !== null && $depth++ < 16) {
+            $summary = $this->index->classByFqcn(ltrim($cursor, '\\'));
+
+            if ($summary === null) {
+                break;
+            }
+
+            if ($this->fileClassHasMarkerAttribute($summary->filePath, self::shortName($cursor), $markers)) {
+                return true;
+            }
+
+            $cursor = $summary->parent;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<string>  $markers
+     */
+    private function classCarriesMarker(Node\Stmt\Class_ $class, array $markers): bool
+    {
         foreach ($class->attrGroups as $group) {
             foreach ($group->attrs as $attr) {
                 if (in_array($attr->name->getLast(), $markers, true)) {
@@ -154,6 +224,54 @@ SCRIPTURE;
 
         foreach ($class->implements as $interface) {
             if (in_array($interface->getLast(), $markers, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     */
+    private function classFqcn(Node\Stmt\Class_ $class, array $ast): ?string
+    {
+        if ($class->name === null) {
+            return null;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
+            $namespace = $ns->name?->toString();
+
+            return $namespace !== null && $namespace !== '' ? $namespace . '\\' . $class->name->toString() : $class->name->toString();
+        }
+
+        return $class->name->toString();
+    }
+
+    /**
+     * @param  list<string>  $markers
+     */
+    private function fileClassHasMarkerAttribute(string $filePath, string $shortName, array $markers): bool
+    {
+        $content = @file_get_contents($filePath);
+
+        if ($content === false) {
+            return false;
+        }
+
+        try {
+            $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($content);
+        } catch (Throwable) {
+            return false;
+        }
+
+        if ($ast === null) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($class->name?->toString() === $shortName && $this->classCarriesMarker($class, $markers)) {
                 return true;
             }
         }
@@ -252,7 +370,7 @@ SCRIPTURE;
         $penance = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            if (! $this->isRegistry($class)) {
+            if (! $this->isRegistry($class, $ast)) {
                 continue;
             }
 
