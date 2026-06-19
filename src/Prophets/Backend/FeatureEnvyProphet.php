@@ -424,11 +424,28 @@ SCRIPTURE;
             return null;
         }
 
+        // #61(A): a foreign method call WITH ARGUMENTS is a parameterised query —
+        // the object's public behaviour/query API (`$graph->edgesIntoSocket($id,
+        // $port)`), not a reach into a raw collection. Calling the API is the
+        // intended design; only raw property / no-arg getter reads are envy.
+        if ($expr instanceof Expr\MethodCall && $expr->args !== []) {
+            return null;
+        }
+
         $root = $expr->var;
 
         // `$param->member`
         if ($root instanceof Expr\Variable && is_string($root->name)) {
-            return $paramOwners[$root->name] ?? null;
+            $owner = $paramOwners[$root->name] ?? null;
+
+            // #61(C): reading a FormRequest's typed getter (`$request->fieldSpecs()`)
+            // is what this toolkit's own FormRequestTypedGetters / NoDirectRequestInput
+            // REQUIRE controllers to do — flagging it would be self-contradictory.
+            if ($owner !== null && str_ends_with($this->shortName($owner), 'Request')) {
+                return null;
+            }
+
+            return $owner;
         }
 
         // `$this->prop->member`
@@ -437,6 +454,13 @@ SCRIPTURE;
             && $root->var->name === 'this'
             && $root->name instanceof Node\Identifier
         ) {
+            // #61(B): a method call on your own constructor-injected collaborator
+            // (`$this->inferrer->infer()`) is delegation, not envy — only a RAW
+            // read of its data (a property) reaches into internals.
+            if ($expr instanceof Expr\MethodCall) {
+                return null;
+            }
+
             return $propertyOwners[$root->name->toString()] ?? null;
         }
 
