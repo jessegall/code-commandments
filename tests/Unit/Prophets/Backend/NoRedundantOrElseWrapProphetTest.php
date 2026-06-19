@@ -166,6 +166,54 @@ class NoRedundantOrElseWrapProphetTest extends TestCase
         $this->assertStringNotContainsString('Option::make', $result->newContent);
     }
 
+    public function test_repent_strips_stale_closure_return_type_hint(): void
+    {
+        // #101: unwrapping must also drop the closure's `: Option` hint, else the
+        // closure declares a type its bare body no longer returns (a type lie).
+        $src = "<?php\nclass C {\n public function m(\$o, \$id) {\n  return \$o->orElse(fn (): Option => Option::some(\$this->respondError(\$id)))->getOrThrow();\n }\n}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('->orElse(fn () => $this->respondError($id))->getOrThrow()', $result->newContent);
+        $this->assertStringNotContainsString(': Option', $result->newContent);
+        $this->assertStringNotContainsString('Option::some', $result->newContent);
+    }
+
+    public function test_repent_strips_nullable_return_type_hint(): void
+    {
+        $src = "<?php\nclass C {\n public function m(\$o, \$id) {\n  return \$o->orElse(fn (): ?Option => Option::make(\$id))->getOrThrow();\n }\n}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('->orElse(fn () => $id)->getOrThrow()', $result->newContent);
+        $this->assertStringNotContainsString('Option', $result->newContent);
+    }
+
+    public function test_repent_strips_return_type_on_closure(): void
+    {
+        $src = "<?php\nclass C {\n public function m(\$o, \$id) {\n  return \$o->orElse(function () use (\$id): Option { return Option::some(\$id); })->getOrThrow();\n }\n}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('function () use ($id) {', $result->newContent);
+        $this->assertStringContainsString('return $id;', $result->newContent);
+        $this->assertStringNotContainsString(': Option', $result->newContent);
+    }
+
+    public function test_repent_keeps_untyped_closure_intact(): void
+    {
+        // No return-type hint to begin with — only the wrap is removed.
+        $src = "<?php\nclass C {\n public function m(\$o, \$id) {\n  return \$o->orElse(fn () => Option::some(\$id))->getOrThrow();\n }\n}\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('->orElse(fn () => $id)->getOrThrow()', $result->newContent);
+    }
+
     public function test_repent_leaves_none_untouched(): void
     {
         $src = "<?php\nclass C {\n public function m(\$o) {\n  return \$o->orElse(fn () => Option::none())->getOrThrow();\n }\n}\n";
