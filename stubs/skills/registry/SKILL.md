@@ -31,7 +31,10 @@ Pull this skill when you are about to write or review any of:
   contract is legible and enforceable; → read `reference/naming.md`;
 - a subclass of the `Registry` base that overrides `all()` to read its OWN store
   without `parent::all()` — that severs the inherited `register()`/`registerMany()`
-  (they write a store nothing reads); → read `reference/base-class.md`.
+  (they write a store nothing reads); → read `reference/base-class.md`;
+- deciding WHERE to fill a registry with its entries — hydrate it once in a service
+  provider, `singleton`-bound and config-driven, not in the constructor or scattered
+  across the app; → read `reference/hydration.md`.
 
 This is the positive twin of the **registry prophet family** below — when one of
 them fires, it points back here.
@@ -42,6 +45,7 @@ them fires, it points back here.
 |---|---|
 | `reference/contract.md` | The return contract: `has()` → `bool`, `get()` → `T` or throw; why a registry NEVER returns `Option<T>` (always the sin, any name) and a `?T` getter is a leak unless it is a named NULLABLE finder (`find*`/`try*`/`*OrNull`/`keyForClass`) where absence is a genuine handled outcome. |
 | `reference/base-class.md` | Extending the scaffolded `{{ namespace }}\Registry` base instead of hand-rolling register/has/get — and the bypass trap: overriding `all()` to read your own store without `parent::all()` leaves the inherited mutators dead. |
+| `reference/hydration.md` | WHERE to register entries: bind the registry `singleton` and hydrate it once in a **service provider**, iterating the config that declares the members (config-driven, one wiring site, lazy factories) — not in the constructor, not scattered across the app. |
 | `reference/naming.md` | Naming honesty: when a register-and-look-up class earns `*Registry` (vs `*Map`/`*Catalog` for a discovered store, `*Resolver`/`*Factory` for compute-on-demand), and why the marker is the opt-in to strict enforcement. |
 
 ## Backs (prophet family)
