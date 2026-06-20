@@ -336,6 +336,25 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertNotNull($this->prophet->advisory());
     }
 
+    public function test_exempts_a_callable_polyform_union(): void
+    {
+        // #139: a callable mixed with a value/class-string has no common supertype
+        // to narrow to — a deliberate poly-form (lazy-or-eager, predicate). Exempt.
+        $native = $this->judge('class A { public function d(\Closure | object $x): void {} }');
+        $this->assertTrue($native->isRighteous(), 'Closure|object lazy-or-eager must be exempt');
+
+        $docblock = $this->judge("class A {\n/** @return bool|\\Closure|class-string */\npublic function c() { return true; } }");
+        $this->assertTrue($docblock->isRighteous(), 'bool|Closure|class-string predicate must be exempt');
+    }
+
+    public function test_a_null_bearing_callable_union_still_fires(): void
+    {
+        // null present ⇒ value-or-nothing (→ Option), never a poly-form exemption.
+        $judgment = $this->judge('class A { public function e(): \Closure | array | null { return null; } }');
+
+        $this->assertGreaterThan(0, count($judgment->sins) + count($judgment->warnings));
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);
