@@ -617,9 +617,15 @@ SCRIPTURE;
     {
         $stripped = $type;
 
+        // Collapse NESTED type syntax before splitting on `|` — a pipe inside
+        // generics `<…>` or an array-shape `{…}` is not a top-level union member
+        // separator. `array{0: int, 2: string|null}` is ONE atom (`array`), not a
+        // `string`-vs-`null` union (#148). (Callable `(…)` is left intact so the
+        // poly-form `Closure(…): T` detection still sees its `closure(` head.)
         do {
             $previous = $stripped;
             $stripped = preg_replace('/<[^<>]*>/', '', $stripped) ?? $stripped;
+            $stripped = preg_replace('/\{[^{}]*\}/', '', $stripped) ?? $stripped;
         } while ($stripped !== $previous);
 
         // A leading `?` is the idiomatic nullable, not a union member — strip it
