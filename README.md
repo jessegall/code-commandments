@@ -557,7 +557,7 @@ _84 prophets._
 | `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
 | `PreferNullObjectDefaultsProphet` | Yes | Prefer Null Object defaults over nullable params normalized in the body |
 | `PreferOptionChainOverGuardProphet` | — | Prefer an Option chain over an imperative isEmpty() guard — transform()-&gt;orElse()-&gt;getOrThrow() |
-| `PreferOptionFactoryProphet` | — | Build an Option with a factory (make/find/when), not a hand-rolled some()/none() branch |
+| `PreferOptionFactoryProphet` | — | Build an Option with a factory (make/find/someWhen), not a hand-rolled some()/none() branch |
 | `PreferOptionOverNullProphet` | — | Do not return null from decision methods — return an Option or a Null Object |
 | `PreferSprintfProphet` | Yes | Prefer sprintf() over string interpolation — separate the template from its values |
 | `PreferStaticOverInvokableConstructProphet` | — | Prefer a static factory over (new X(...))(...) for project-owned classes |
