@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_84 prophets._
+_85 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -575,6 +575,7 @@ _84 prophets._
 | `PreferTotalOverNullableProphet` | — | Make a method total or throw when every caller already de-nulls its nullable return |
 | `PreferTypeCoalesceProphet` | Yes | Prefer T_*::coalesce() over `?? &lt;empty literal&gt;` on a nullable typed value |
 | `PreferTypeMethodOverInlineDispatchProphet` | — | Move per-case dispatch and type-constant mappings onto the type, not inline at the call site |
+| `PreferYieldOverAccumulatorProphet` | — | Prefer returning / yielding typed results over threading a write-only accumulator parameter through a class |
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
 | `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |

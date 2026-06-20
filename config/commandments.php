@@ -207,6 +207,9 @@ return [
                 ],
                 Backend\PreferOptionChainOverGuardProphet::class,
                 Backend\PreferCoalesceFactoryProphet::class,
+                Backend\PreferYieldOverAccumulatorProphet::class => [
+                    // 'min_methods' => 3,   // fire only when >= N methods thread the same collector param
+                ],
                 Backend\WideUnionTypeProphet::class => [
                     // 'warn_at_types' => 2,   // 0 (or warnings_enabled => false) disables warnings
                     // 'sin_at_types'  => 3,
