@@ -105,6 +105,37 @@ PHP);
         $this->assertTrue($this->judge('public function f($c, $v): Option { return $c ? Option::some($v) : Option::some($v); }')->isRighteous());
     }
 
+    public function test_does_not_flag_a_type_narrowing_ternary(): void
+    {
+        // #152: when the condition narrows the value's type, `someWhen($cond, fn () =>
+        // $v)` evaluates the closure OUTSIDE the narrowing — the Option widens and a
+        // declared Option<Narrow> fails. `Option::make($cond ? $v : null)` is the only
+        // narrowing-safe form, so leave it. Covers instanceof, is_*, a nullsafe guard,
+        // and a compound `!== null && …`.
+        $instanceof = $this->judge('public function f($r): Option { return Option::make($r instanceof Foo ? $r : null); }');
+        $this->assertTrue($instanceof->isRighteous(), 'instanceof make-ternary preserves narrowing — leave it');
+
+        $isString = $this->judge('public function f($r): Option { return $r instanceof Foo ? Option::some($r) : Option::none(); }');
+        $this->assertTrue($isString->isRighteous(), 'instanceof some/none also narrows — someWhen would drop it');
+
+        $nullsafe = $this->judge('public function f($id): Option { return $this->i?->has($id) === true ? Option::some($this->i->node($id)) : Option::none(); }');
+        $this->assertTrue($nullsafe->isRighteous(), 'a nullsafe guard narrows the subject the closure cannot see');
+
+        $compoundNull = $this->judge('public function f(): Option { return Option::make($this->m !== null && strlen($this->m) > 0 ? $this->m : null); }');
+        $this->assertTrue($compoundNull->isRighteous(), 'a compound `!== null && …` cannot be reproduced by make($x) or someWhen');
+    }
+
+    public function test_still_flags_a_pure_null_check_and_a_non_narrowing_ternary(): void
+    {
+        // A PURE null check is narrowing-safe via make($x) — keep nudging it.
+        $nullCheck = $this->judge('public function f($x): Option { return $x !== null ? Option::some($x) : Option::none(); }');
+        $this->assertCount(1, $nullCheck->warnings);
+
+        // A plain (non-narrowing) predicate is safe via someWhen — keep nudging it.
+        $plain = $this->judge('public function f($id): Option { return Option::make($this->reg->has($id) ? $this->reg->get($id) : null); }');
+        $this->assertCount(1, $plain->warnings);
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n\nnamespace App;\n\nclass C {\n{$body}\n}\n");

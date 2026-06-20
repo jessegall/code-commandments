@@ -131,7 +131,7 @@ SCRIPTURE;
 
             $match = $this->matchSomeNone($ternary->if, $ternary->else);
 
-            if ($match !== null) {
+            if ($match !== null && ! $this->condNarrowsType($ternary->cond)) {
                 $warnings[] = $this->warn($ternary->getStartLine(), $ternary->cond, $match, $content);
             }
         }
@@ -150,7 +150,7 @@ SCRIPTURE;
 
             $match = $this->matchSomeNone($then, $else);
 
-            if ($match !== null) {
+            if ($match !== null && ! $this->condNarrowsType($if->cond)) {
                 $warnings[] = $this->warn($if->getStartLine(), $if->cond, $match, $content);
             }
         }
@@ -184,6 +184,16 @@ SCRIPTURE;
                 continue; // neither branch is null — not a present/absent decision
             }
 
+            // `Option::make($x instanceof Foo ? $x : null)` is ALREADY the correct,
+            // narrowing-preserving form: PHPStan narrows $x inside the ternary's true
+            // branch, so the Option keeps the narrow type. The suggested
+            // `someWhen($cond, fn () => $x)` evaluates the closure OUTSIDE that
+            // narrowing, widening the result and breaking the declared `Option<Narrow>`
+            // (#152). Leave a type-narrowing condition alone.
+            if ($this->condNarrowsType($ternary->cond)) {
+                continue;
+            }
+
             $warnings[] = $this->warningAt(
                 $call->getStartLine(),
                 sprintf('Wraps a `? … : null` ternary in `%s::make()` — that re-hand-rolls the present/absent decision inside the factory. Use the conditional factory directly: `%s`.', $this->optionShort(), $this->suggestion($value, $ternary->cond, $someOnFalse, $content)),
@@ -193,6 +203,56 @@ SCRIPTURE;
         }
 
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Whether a present/absent CONDITION narrows the value's TYPE — an `instanceof`
+     * or an `is_*()` type-guard (a conjunct, or negated, counts). When it does, the
+     * Option factory rewrite `someWhen($cond, fn () => $v)` cannot preserve the
+     * narrowing (the closure runs OUTSIDE the condition's narrowing scope), so the
+     * Option's type widens and a declared `Option<Narrow>` fails. Only `Option::make(
+     * $cond ? $v : null)` preserves it — leave such ternaries alone (#152).
+     */
+    private function condNarrowsType(Expr $cond): bool
+    {
+        $finder = new NodeFinder;
+
+        // `instanceof`, or a nullsafe access (`?->`) anywhere in the condition,
+        // narrows a subject the someWhen closure then runs without — it drops the
+        // narrowing. (`$x?->has() === true` makes `$x` non-null in the branch.)
+        if ($finder->findFirstInstanceOf($cond, Expr\Instanceof_::class) !== null
+            || $finder->findFirstInstanceOf($cond, Expr\NullsafeMethodCall::class) !== null
+            || $finder->findFirstInstanceOf($cond, Expr\NullsafePropertyFetch::class) !== null
+        ) {
+            return true;
+        }
+
+        // An `is_*()` type-guard anywhere narrows.
+        foreach ($finder->findInstanceOf($cond, Expr\FuncCall::class) as $fc) {
+            if ($fc->name instanceof Node\Name && in_array(strtolower(ltrim($fc->name->toString(), '\\')), [
+                'is_string', 'is_int', 'is_integer', 'is_float', 'is_double', 'is_bool',
+                'is_array', 'is_object', 'is_callable', 'is_iterable', 'is_scalar',
+                'is_numeric', 'is_a', 'is_countable', 'is_null',
+            ], true)) {
+                return true;
+            }
+        }
+
+        // A COMPOUND condition (`… && …`) that includes a null guard: the suggestion
+        // becomes `someWhen` (make($x) cannot capture the OTHER conjunct), and
+        // someWhen drops the null narrowing. A PURE `$x !== null` is NOT a compound,
+        // so it stays flaggable (→ `Option::make($x)`, which preserves narrowing).
+        if ($cond instanceof Expr\BinaryOp\BooleanAnd || $cond instanceof Expr\BinaryOp\LogicalAnd) {
+            foreach ($finder->findInstanceOf($cond, Expr\BinaryOp::class) as $bin) {
+                if (($bin instanceof Expr\BinaryOp\Identical || $bin instanceof Expr\BinaryOp\NotIdentical)
+                    && ($this->isNullLiteral($bin->left) || $this->isNullLiteral($bin->right))
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
