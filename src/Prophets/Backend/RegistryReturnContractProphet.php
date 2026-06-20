@@ -43,7 +43,7 @@ class RegistryReturnContractProphet extends PhpCommandment implements NeedsCodeb
     private const DEFAULT_OPTION_CLASSES = ['Option'];
 
     /** Getter names that ANNOUNCE nullability is normal — left even on a registry. */
-    private const FINDER_PREFIXES = ['find', 'search', 'try', 'lookup'];
+    private const FINDER_PREFIXES = ['find', 'search', 'try', 'lookup', 'first'];
 
     private ?CodebaseIndex $index = null;
 
@@ -371,6 +371,13 @@ SCRIPTURE;
         $name = $method->name->toString();
 
         if ($this->isFinderName($name) || str_starts_with($name, '__')) {
+            return null;
+        }
+
+        // A predicate SCAN (a getter that takes a callable/Closure) is inherently
+        // value-or-nothing — like `search*`, returning Option is correct, throwing
+        // would be wrong. Not a key lookup, so not the registry contract.
+        if (RegistryLeak::hasPredicateParam($method)) {
             return null;
         }
 

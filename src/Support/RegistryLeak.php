@@ -22,7 +22,7 @@ use PhpParser\Node;
  */
 final class RegistryLeak
 {
-    private const FINDER_PREFIXES = ['find', 'search', 'try', 'lookup'];
+    private const FINDER_PREFIXES = ['find', 'search', 'try', 'lookup', 'first'];
 
     public static function isLeakyNullableGetter(
         Node\Stmt\Class_ $class,
@@ -37,7 +37,7 @@ final class RegistryLeak
 
         $name = $method->name->toString();
 
-        if (str_starts_with($name, '__')) {
+        if (str_starts_with($name, '__') || self::hasPredicateParam($method)) {
             return false;
         }
 
@@ -70,6 +70,28 @@ final class RegistryLeak
                 if ($member instanceof Node\Identifier && strtolower($member->toString()) === 'null') {
                     return true;
                 }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the method takes a `callable`/`Closure` parameter — a predicate
+     * SCAN (`first(callable)`, `firstWhere(...)`) is value-or-nothing by nature,
+     * like a finder, so Option/`?T` is the correct return, not return-or-throw.
+     */
+    public static function hasPredicateParam(Node\Stmt\ClassMethod $method): bool
+    {
+        foreach ($method->params as $param) {
+            $type = $param->type;
+
+            if ($type instanceof Node\Identifier && strtolower($type->toString()) === 'callable') {
+                return true;
+            }
+
+            if ($type instanceof Node\Name && $type->getLast() === 'Closure') {
+                return true;
             }
         }
 
