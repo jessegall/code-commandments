@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_97 prophets._
+_98 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -603,6 +603,7 @@ _97 prophets._
 | `SuggestCompareSelfTraitProphet` | Yes | Use a CompareSelf-style trait helper instead of chained enum equality comparisons |
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
+| `TranslationKeyCongruenceProphet` | — | A __()/trans() key must exist in a lang file — a missing key renders as the key string |
 | `TypeScriptAttributeProphet` | — | Add #[TypeScript] attribute to all Data classes |
 | `UnwrapOptionWithGuardProphet` | Yes | Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow() |
 | `WideUnionTypeProphet` | Yes | Avoid wide type unions — model value-or-nothing as an Option |
