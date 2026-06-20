@@ -28,6 +28,38 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
         $this->assertStringContainsString('Direction', $judgment->warnings[0]->message);
     }
 
+    public function test_does_not_flag_a_field_whose_values_come_from_class_constants(): void
+    {
+        // #137: $type holds an OPEN wire-type token space modelled by a value class
+        // (WireType::MIXED/STRING + dynamic `resource:<x>` forms). Its values are
+        // sourced from class constants, so it is already modelled — not a fresh
+        // closed set to mint a new enum for.
+        $judgment = $this->judge(<<<'PHP'
+class InputSocket extends Data {
+    public function __construct(public readonly string $type) {}
+    public static function make(string $type = WireType::MIXED): self { return self::from(['type' => $type]); }
+    public static function text(): self { return self::from(['type' => WireType::STRING]); }
+}
+PHP);
+
+        $this->assertTrue($judgment->isRighteous(), '$type backed by WireType:: constants must not be flagged');
+    }
+
+    public function test_does_not_flag_a_field_defaulted_to_a_class_constant(): void
+    {
+        $judgment = $this->judge('class A { public function __construct(public string $mode = Mode::FAST) {} }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_a_field_assigned_a_class_string(): void
+    {
+        // `::class` backing is a class-string — open by nature (the advisory says so).
+        $judgment = $this->judge('class A extends Data { public function __construct(public string $type) {} public static function for(): self { return self::from(["type" => Foo::class]); } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_flags_a_camelcase_suffix_at_a_word_boundary(): void
     {
         $judgment = $this->judge('class A { public function __construct(public string $sortDirection) {} }');
