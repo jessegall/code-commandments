@@ -46,6 +46,20 @@ class ConfigReadIndexTest extends TestCase
         $this->assertSame(['services.stripe.key', 'services.stripe.secret'], $siblings);
     }
 
+    public function test_marks_env_backed_leaves(): void
+    {
+        $root = $this->tempProject([
+            'config/cache.php' => "<?php\nreturn ['ttl' => env('CACHE_TTL'), 'store' => 'redis', 'nested' => ['key' => env('K')]];\n",
+        ]);
+
+        $index = ConfigReadIndex::forFile($root . '/src/Foo.php');
+
+        $this->assertTrue($index->isEnvBacked('cache.ttl'));
+        $this->assertTrue($index->isEnvBacked('cache.nested.key'));
+        $this->assertFalse($index->isEnvBacked('cache.store'), 'a literal leaf is not env-backed');
+        $this->assertFalse($index->isEnvBacked('cache.missing'));
+    }
+
     public function test_is_empty_without_a_config_dir(): void
     {
         $this->assertTrue(ConfigReadIndex::forFile(sys_get_temp_dir() . '/nowhere-' . uniqid() . '/x.php')->isEmpty());
