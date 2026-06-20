@@ -242,8 +242,9 @@ class JudgeCommand extends Command
         // Per-finding flag: a SinRepenter prophet may emit non-fixable findings.
         $autoFixable = $finding->autoFixable;
         $repentInputs = ($autoFixable && $prophet instanceof ParameterizedRepenter) ? $prophet->repentInputs() : null;
+        $skillSlug = $prophet->skill();
 
-        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable, $autoFixable, $repentInputs) as $line) {
+        foreach (NextFindingPresenter::lines($finding, count($ordered), 'php artisan commandments', $absolvable, $autoFixable, $repentInputs, $skillSlug) as $line) {
             $this->output->writeln($line);
         }
 

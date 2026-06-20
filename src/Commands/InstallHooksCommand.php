@@ -59,6 +59,10 @@ class InstallHooksCommand extends Command
         // Create/update CLAUDE.md
         $this->createClaudeMd();
 
+        // Install the on-demand "how to do it right" skills into
+        // .claude/skills/commandments/ alongside the hooks + CLAUDE.md.
+        $this->installSkills();
+
         // Install the git pre-commit gate (blocks sins) and post-commit reset
         // (clears absolutions so nothing stays silently hidden).
         $this->installCommitHook();
@@ -78,9 +82,33 @@ class InstallHooksCommand extends Command
         return self::SUCCESS;
     }
 
+    private function installSkills(): void
+    {
+        $config = config('commandments.skills', []);
+        $autoRefresh = (bool) ($config['auto_refresh'] ?? false);
+
+        $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
+            config('commandments.scaffold.namespace', 'App\\Support'),
+            base_path('.claude/skills/commandments'),
+            $autoRefresh || (bool) $this->option('force'),
+            $config['except'] ?? [],
+            $autoRefresh,
+        );
+
+        $installed = \JesseGall\CodeCommandments\Support\Skills\SkillReporter::report(
+            $results,
+            fn (string $line) => $this->output->writeln($line),
+        );
+
+        $this->output->writeln($installed > 0
+            ? "Installed {$installed} skill(s) into .claude/skills/commandments/"
+            : 'Skills already present in .claude/skills/commandments/');
+    }
+
     private function ensureGitignore(): void
     {
-        $status = (new GitignoreInstaller())->ensure(base_path());
+        $ignoreSkills = (bool) config('commandments.skills.auto_refresh', false);
+        $status = (new GitignoreInstaller())->ensure(base_path(), $ignoreSkills);
 
         match ($status) {
             GitignoreInstaller::STATUS_INSTALLED => $this->output->writeln('Created .gitignore with code-commandments state entries'),
@@ -161,6 +189,10 @@ class InstallHooksCommand extends Command
                         [
                             'type' => 'command',
                             'command' => 'php artisan commandments:scaffold --auto 2>/dev/null || true',
+                        ],
+                        [
+                            'type' => 'command',
+                            'command' => 'php artisan commandments:install-skills --auto 2>/dev/null || true',
                         ],
                     ],
                 ],

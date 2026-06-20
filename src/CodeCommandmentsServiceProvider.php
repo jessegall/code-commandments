@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Commands\ReportCommand;
 use JesseGall\CodeCommandments\Commands\ReportsCommand;
 use JesseGall\CodeCommandments\Commands\ScaffoldCommand;
 use JesseGall\CodeCommandments\Commands\InstallHooksCommand;
+use JesseGall\CodeCommandments\Commands\InstallSkillsCommand;
 use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
 use JesseGall\CodeCommandments\Commands\JudgeCommand;
 use JesseGall\CodeCommandments\Commands\MakeProphetCommand;
@@ -85,6 +86,13 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 __DIR__ . '/../stubs/scaffold' => base_path('stubs/commandments/scaffold'),
             ], 'commandments-scaffold');
 
+            // Raw skill stubs, for those who prefer the native vendor:publish
+            // flow over `commandments:install-skills` (note: this does NOT
+            // rewrite the namespace nor land under .claude/ — the command does).
+            $this->publishes([
+                __DIR__ . '/../stubs/skills' => base_path('stubs/commandments/skills'),
+            ], 'commandments-skills');
+
             $this->commands([
                 JudgeCommand::class,
                 AbsolveCommand::class,
@@ -95,6 +103,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 ReportsCommand::class,
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
+                InstallSkillsCommand::class,
                 InstallSyncHookCommand::class,
                 SyncCommand::class,
             ]);
