@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_89 prophets._
+_90 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -561,6 +561,7 @@ _89 prophets._
 | `PreferDataCollectionOfProphet` | — | Do not hand-roll a Data collection with ::from() in a loop — use #[DataCollectionOf] / ::collect() |
 | `PreferDataTransformersProphet` | — | Serialize Data objects through -&gt;toArray()/transformers, not a hand-rolled mapping |
 | `PreferDefaultFallbackProphet` | — | Move a call-site presence-check-then-fallback into the callee as a default parameter |
+| `PreferDefaultOverNullableProphet` | — | Prefer a $default parameter over a nullable/Option when every caller substitutes a fixed fallback |
 | `PreferEmptyOverNullProphet` | — | Return an empty collection/bag instead of null — an empty instance is the absence |
 | `PreferEnumCaseGroupsProphet` | — | Name reused subsets of an enum on the enum — do not re-inline the same case-group |
 | `PreferEnumForClosedSetFieldProphet` | Yes | Suggest an enum for a string field whose name denotes a closed set |
