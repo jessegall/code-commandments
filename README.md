@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_101 prophets._
+_102 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -522,6 +522,7 @@ _101 prophets._
 | `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named forX() factories |
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
 | `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |
+| `HardcodedLiteralShouldBeConfigProphet` | — | A literal hardcoded into a consumer that reads it from config elsewhere should read from config too |
 | `HiddenAttributeProphet` | — | Add #[Hidden] to properties with #[FromContainer] or #[FromSession] |
 | `KebabCaseRoutesProphet` | — | Route URIs must use kebab-case |
 | `LongDocblockProphet` | — | Keep docblocks to one short narrative sentence above the @-tag block |
