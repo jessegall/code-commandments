@@ -123,7 +123,7 @@ final class NextFindingPresenter
         $lines[] = sprintf('  %s scripture --prophet=%s', $binary, $finding->prophetShort);
 
         if ($skillSlug !== null) {
-            $lines[] = sprintf('  Deep dive: read the .claude/skills/commandments/%s skill', $skillSlug);
+            $lines[] = sprintf('  Deep dive: read the `commandments-%s` skill (.claude/skills/commandments-%s/)', $skillSlug, $skillSlug);
         }
 
         $lines[] = T_String::empty();
