@@ -113,6 +113,7 @@ return [
                 Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\PreferConfigDrivenRegistryProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
+                Backend\RegistryPurityProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,

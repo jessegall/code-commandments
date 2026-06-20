@@ -256,6 +256,7 @@ return [
                 Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\PreferConfigDrivenRegistryProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
+                Backend\RegistryPurityProphet::class,
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],

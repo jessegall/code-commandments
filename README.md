@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_90 prophets._
+_91 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -587,6 +587,7 @@ _90 prophets._
 | `RegistryBaseBypassProphet` | — | A Registry subclass that overrides all() to a private store leaves inherited register() dead |
 | `RegistryNamingHonestyProphet` | — | A class shaped like a registry (register + keyed store + lookup) should be named *Registry and extend a base |
 | `RegistryPatternProphet` | — | When several classes hand-roll the registry shape, extract a shared base (scaffold one) |
+| `RegistryPurityProphet` | — | A registry stays a pure keyed store of its target type — resolution/query methods belong on a collaborator |
 | `RegistryReturnContractProphet` | — | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
 | `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
