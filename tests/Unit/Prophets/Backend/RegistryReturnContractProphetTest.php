@@ -52,25 +52,32 @@ class RegistryReturnContractProphetTest extends TestCase
         $this->assertCount(1, $judgment->sins);
     }
 
-    public function test_leaves_predicate_scan_getters_on_a_registry(): void
+    public function test_an_option_return_is_a_sin_even_for_a_predicate_scan(): void
     {
-        // #119: a getter that takes a callable/Closure is a predicate SCAN
-        // (value-or-nothing, like search*), not a key lookup — Option is correct,
-        // so it must NOT be flagged even on the base registry.
-        $this->assertTrue(
-            $this->judge('abstract class Registry { public function first(callable $p): Option { return Option::none(); } }')->isRighteous(),
-            'first(callable): Option is a scan and must not fire the registry contract',
+        // A registry must NOT hand an Option across its boundary — not even from a
+        // predicate scan. An Option return is the sin regardless of shape.
+        $this->assertCount(
+            1,
+            $this->judge('abstract class Registry { public function first(callable $p): Option { return Option::none(); } }')->sins,
+            'first(callable): Option must fire — a registry never returns an Option',
         );
 
+        // A NULLABLE predicate scan still announces genuine value-or-nothing → exempt.
         $this->assertTrue(
-            $this->judge('class FooRegistry extends Registry { public function firstWhere(\Closure $p): Option { return Option::none(); } }')->isRighteous(),
+            $this->judge('class FooRegistry extends Registry { public function firstWhere(\Closure $p): ?Foo { return null; } }')->isRighteous(),
         );
     }
 
-    public function test_leaves_finder_getters_on_a_registry_base_subclass(): void
+    public function test_an_option_finder_on_a_registry_subclass_is_a_sin_but_nullable_is_exempt(): void
     {
-        // find* stays exempt even via the base-class marker.
-        $this->assertTrue($this->judge('class FooRegistry extends Registry { public function find(string $k): Option { return Option::none(); } }')->isRighteous());
+        // find(): Option is the sin regardless of the finder name — renaming won't help.
+        $this->assertCount(
+            1,
+            $this->judge('class FooRegistry extends Registry { public function find(string $k): Option { return Option::none(); } }')->sins,
+        );
+
+        // A NULLABLE find* stays exempt via the base-class marker.
+        $this->assertTrue($this->judge('class BarRegistry extends Registry { public function find(string $k): ?Foo { return null; } }')->isRighteous());
     }
 
     public function test_ignores_a_class_extending_an_unrelated_base(): void
@@ -92,13 +99,16 @@ class RegistryReturnContractProphetTest extends TestCase
         $this->assertTrue($this->judge('class R implements Registry { public function has(string $k): bool { return true; } }')->isRighteous());
     }
 
-    public function test_leaves_directional_for_lookups(): void
+    public function test_leaves_nullable_directional_for_lookups_but_option_fires(): void
     {
-        // #114: a `<thing>For<Other>` reverse/directional lookup is a finder —
-        // its miss is a real, handled outcome — not a registry must-exist getter.
+        // #114: a NULLABLE `<thing>For<Other>` reverse/directional lookup is a finder
+        // — its miss is a real, handled outcome — not a registry must-exist getter.
         $this->assertTrue($this->judge('class R implements Registry { public function keyForClass(string $c): ?string { return $this->keys[$c] ?? null; } }')->isRighteous());
-        $this->assertTrue($this->judge('class R implements Registry { public function classForKey(string $k): Option { return $this->byKey($k); } }')->isRighteous());
         $this->assertTrue($this->judge('class R implements Registry { public function resourceTypeForModel(string $m): ?string { return null; } }')->isRighteous());
+
+        // …but an Option directional lookup still fires — a registry never hands out
+        // an Option, finder name or not.
+        $this->assertCount(1, $this->judge('class R implements Registry { public function classForKey(string $k): Option { return $this->byKey($k); } }')->sins);
     }
 
     public function test_is_not_auto_fixable(): void
