@@ -255,6 +255,7 @@ return [
                 Backend\PreferNativeEnumProphet::class,
                 Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\PreferConfigDrivenRegistryProphet::class,
+                Backend\PreferDefaultOverNullableProphet::class,
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],
