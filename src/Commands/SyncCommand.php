@@ -80,7 +80,7 @@ class SyncCommand extends Command
 
         $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
             config('commandments.scaffold.namespace', 'App\\Support'),
-            base_path('.claude/skills/commandments'),
+            base_path('.claude/skills'),
             (bool) ($skills['auto_refresh'] ?? false),
             $skills['except'] ?? [],
             (bool) ($skills['auto_refresh'] ?? false),

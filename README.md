@@ -128,7 +128,7 @@ Every command is available via both Laravel artisan
 |---|---|
 | [`absolve`](#absolve) | Absolve a single finding by fingerprint, with a required reason |
 | [`init`](#init) | Initialize code commandments for a standalone project |
-| [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/commandments/ |
+| [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/ |
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
 | [`judge`](#judge) | Judge the codebase for sins against the commandments |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
@@ -167,7 +167,7 @@ Initialize code commandments for a standalone project.
 
 ### `install-skills`
 
-Install the Code Commandments skills into .claude/skills/commandments/.
+Install the Code Commandments skills into .claude/skills/.
 
 | Flag | Argument | Description |
 |---|---|---|

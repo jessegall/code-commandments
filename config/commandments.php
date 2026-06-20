@@ -345,7 +345,7 @@ return [
     |
     | The on-demand "how to do it right" Claude Code skills — one per
     | architectural subject (option, registry, enums, …) — installed under
-    | `.claude/skills/commandments/<subject>/`. They pair with the prophets
+    | `.claude/skills/commandments-<subject>/`. They pair with the prophets
     | (enforce) and the scripture (terse always-on rule); a prophet finding
     | points back at its skill. New skills shipped by a package upgrade install
     | automatically on `sync` unless `auto` is false. Existing files are never
