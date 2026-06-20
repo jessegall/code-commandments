@@ -355,6 +355,19 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertGreaterThan(0, count($judgment->sins) + count($judgment->warnings));
     }
 
+    public function test_does_not_split_a_union_nested_in_an_array_shape(): void
+    {
+        // #148: a `|` inside an `array{…}` shape (or generics) is NOT a top-level
+        // union separator — `array{2: string|null}` is one atom (`array`), not a
+        // string-vs-null union. The whole @return is a single array shape.
+        $tuple = $this->judge("class A {\n/** @return array{0: int, 1: string, 2: string|null} */\npublic function m(): array { return []; } }");
+        $this->assertTrue($tuple->isRighteous(), 'a union nested in an array shape must not be flagged');
+
+        // A top-level union that HAS an array-shape member is still a real union.
+        $topLevel = $this->judge('class A { /** @param array{x: int}|string|null $p */ public function n($p): void {} }');
+        $this->assertGreaterThan(0, count($topLevel->sins) + count($topLevel->warnings));
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);
