@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_86 prophets._
+_87 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -566,6 +566,7 @@ _86 prophets._
 | `PreferFirstClassCallableProphet` | — | A forwarding closure should be a first-class callable — fn ($x) =&gt; f($x) is f(...) |
 | `PreferNamedBranchFactoryProphet` | — | Extract a non-trivial -&gt;then() branch factory into a named *Factory method returning callable |
 | `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
+| `PreferNativeEnumProphet` | — | Prefer a native enum over a hand-rolled constant class |
 | `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
 | `PreferNullObjectDefaultsProphet` | Yes | Prefer Null Object defaults over nullable params normalized in the body |
 | `PreferOptionChainOverGuardProphet` | — | Prefer an Option chain over an imperative isEmpty() guard — transform()-&gt;orElse()-&gt;getOrThrow() |
