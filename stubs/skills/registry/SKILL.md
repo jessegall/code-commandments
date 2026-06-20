@@ -1,6 +1,6 @@
 ---
 name: commandments-registry
-description: How to build a registry right — register into a keyed store, then look up by a typed contract (`find()` → Option, `has()` → bool, `get()` → the item or THROWS). Read before writing or reviewing a class you `register`/`add`/`put` into, any `*Registry` getter, or a class extending the scaffolded `Registry` base.
+description: How to build a registry right — register into a keyed store, then look up by a typed contract (`has()` → bool, `get()` → the item or THROWS; never `Option`/`?T`). Read before writing or reviewing a class you `register`/`add`/`put` into, any `*Registry` getter, or a class extending the scaffolded `Registry` base.
 ---
 
 # Registry — register, then look up by a typed contract
@@ -9,10 +9,11 @@ description: How to build a registry right — register into a keyed store, then
 
 A registry is a class you PUT things into and LOOK things up from over a known
 keyspace ("give me the pipeline for this class"). It owns a keyed store and
-answers a fixed trio: `find()` → maybe, `has()` → bool, `get()` → the item or
-**throws** (a miss is a wiring bug, not a value-or-nothing outcome). The job is
-to extend ONE shared base so that contract lives — and is enforced — in one
-place, instead of hand-rolling and drifting it across every registry.
+answers a fixed contract: `has()` → bool, `get()` → the item or **throws** (a miss
+is a wiring bug). It NEVER hands back an `Option`/`null` for callers to unwrap — ask
+`has()`, then `get()`. The job is to extend ONE shared base so that contract lives —
+and is enforced — in one place, instead of hand-rolling and drifting it across every
+registry.
 
 ## When to use this skill
 
@@ -39,8 +40,8 @@ them fires, it points back here.
 
 | Read | When you are dealing with |
 |---|---|
-| `reference/contract.md` | The return contract: `find()` → `Option<T>`, `has()` → `bool`, `get()` → `T` or throw; why a marked-registry getter returning `Option` / `?T` is a leak, and the finder / `<thing>For<other>` exemptions (`find*`/`try*`/`*OrNull`/`keyForClass`) where absence is a genuine handled outcome. |
-| `reference/base-class.md` | Extending the scaffolded `{{ namespace }}\Registry` base instead of hand-rolling register/find/get — and the bypass trap: overriding `all()` to read your own store without `parent::all()` leaves the inherited mutators dead. |
+| `reference/contract.md` | The return contract: `has()` → `bool`, `get()` → `T` or throw; why a registry NEVER returns `Option<T>` (always the sin, any name) and a `?T` getter is a leak unless it is a named NULLABLE finder (`find*`/`try*`/`*OrNull`/`keyForClass`) where absence is a genuine handled outcome. |
+| `reference/base-class.md` | Extending the scaffolded `{{ namespace }}\Registry` base instead of hand-rolling register/has/get — and the bypass trap: overriding `all()` to read your own store without `parent::all()` leaves the inherited mutators dead. |
 | `reference/naming.md` | Naming honesty: when a register-and-look-up class earns `*Registry` (vs `*Map`/`*Catalog` for a discovered store, `*Resolver`/`*Factory` for compute-on-demand), and why the marker is the opt-in to strict enforcement. |
 
 ## Backs (prophet family)
