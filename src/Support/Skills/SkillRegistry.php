@@ -58,6 +58,7 @@ final class SkillRegistry
                 introducedIn: '2.5.0',
                 purpose: 'The registry contract (register / find->Option / has / get->throws / all); extend the scaffolded Registry base instead of overriding all() and bypassing the store; when to name it *Registry and the finder exemptions; role-vs-behaviour coherence (a *Registry/*Data/*Resolver should not host a second engine).',
                 prophets: [
+                    'EagerRegistry',
                     'RegistryReturnContract',
                     'RegistryNamingHonesty',
                     'RegistryPattern',

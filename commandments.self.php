@@ -73,6 +73,7 @@ return [
                 Backend\PreferAndThenProphet::class,
                 Backend\PreferEmptyOverNullProphet::class,
                 Backend\RegistryReturnContractProphet::class,
+                Backend\EagerRegistryProphet::class,
                 Backend\RegistryNamingHonestyProphet::class,
                 Backend\RegistryPatternProphet::class,
                 Backend\RegistryBaseBypassProphet::class,
