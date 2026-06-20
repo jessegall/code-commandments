@@ -132,6 +132,16 @@ SCRIPTURE;
                 continue;
             }
 
+            // A composition containing an `array_filter(..., <type-narrowing
+            // predicate>)` (e.g. `is_array(...)`) must stay procedural: array_filter
+            // with a type-guard narrows the element type in static analysis
+            // (`list<mixed>` → `list<array>`), but `Collection::filter()` does NOT
+            // narrow — the chain would widen the result back and break the declared
+            // `list<T>` return (#146). Leave it.
+            if ($this->hasTypeNarrowingFilter($call)) {
+                continue;
+            }
+
             $line = $call->getStartLine();
             $warnings[] = $this->warningAt(
                 $line,
@@ -142,6 +152,81 @@ SCRIPTURE;
         }
 
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Whether the composition contains an `array_filter(..., P)` whose predicate P
+     * is a TYPE-NARROWING callable — a first-class/string `is_array`/`is_string`/…
+     * reference, or a closure/arrow whose result is an `is_*()` check or an
+     * `instanceof`. Such a filter narrows the element type for static analysis;
+     * `Collection::filter()` does not, so the chain rewrite is unsafe (#146).
+     */
+    private function hasTypeNarrowingFilter(Expr\FuncCall $root): bool
+    {
+        foreach ((new NodeFinder)->findInstanceOf($root, Expr\FuncCall::class) as $fc) {
+            if (! $fc->name instanceof Node\Name || strtolower($fc->name->toString()) !== 'array_filter') {
+                continue;
+            }
+
+            $args = $fc->getArgs();
+
+            if (count($args) >= 2 && $this->isTypeNarrowingPredicate($args[1]->value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isTypeNarrowingPredicate(Expr $predicate): bool
+    {
+        if ($predicate instanceof Expr\FuncCall && $predicate->name instanceof Node\Name) {
+            return $this->isNarrowingFunction($predicate->name->toString());
+        }
+
+        if ($predicate instanceof Node\Scalar\String_) {
+            return $this->isNarrowingFunction($predicate->value);
+        }
+
+        if ($predicate instanceof Expr\ArrowFunction) {
+            return $this->exprIsTypeCheck($predicate->expr);
+        }
+
+        if ($predicate instanceof Expr\Closure) {
+            foreach ((new NodeFinder)->findInstanceOf($predicate->stmts, Node\Stmt\Return_::class) as $return) {
+                if ($return->expr !== null && $this->exprIsTypeCheck($return->expr)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function exprIsTypeCheck(Expr $expr): bool
+    {
+        // A type-guard CONJUNCT narrows too: `is_string($e) && $e !== ''` narrows
+        // $e to string in static analysis (PHPStan narrows on `&&`, not `||`).
+        if ($expr instanceof Expr\BinaryOp\BooleanAnd || $expr instanceof Expr\BinaryOp\LogicalAnd) {
+            return $this->exprIsTypeCheck($expr->left) || $this->exprIsTypeCheck($expr->right);
+        }
+
+        if ($expr instanceof Expr\Instanceof_) {
+            return true;
+        }
+
+        return $expr instanceof Expr\FuncCall
+            && $expr->name instanceof Node\Name
+            && $this->isNarrowingFunction($expr->name->toString());
+    }
+
+    private function isNarrowingFunction(string $name): bool
+    {
+        return in_array(strtolower(ltrim($name, '\\')), [
+            'is_array', 'is_string', 'is_int', 'is_integer', 'is_float', 'is_double',
+            'is_bool', 'is_numeric', 'is_object', 'is_callable', 'is_iterable',
+            'is_scalar', 'is_a', 'is_countable',
+        ], true);
     }
 
     private function pipelineName(Expr\FuncCall $call): ?string

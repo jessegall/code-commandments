@@ -20,10 +20,23 @@ class PreferCollectionPipelineProphetTest extends TestCase
 
     public function test_flags_array_values_array_map(): void
     {
-        $j = $this->judge('return array_values(array_map(fn ($r) => $r, array_filter($rows, fn ($r) => is_array($r))));');
+        // A value-predicate filter (not a type-guard) — the nest reads inside-out
+        // and the Collection rewrite is safe, so it fires. (A type-narrowing filter
+        // is exempt — see test_exempts_a_type_narrowing_filter_nest.)
+        $j = $this->judge('return array_values(array_map(fn ($r) => $r, array_filter($rows, fn ($r) => $r->active)));');
 
         $this->assertCount(1, $j->warnings);
         $this->assertStringContainsString('Collection chain', $j->warnings[0]->message);
+    }
+
+    public function test_exempts_a_type_narrowing_filter_nest(): void
+    {
+        // #146: array_filter with a type-guard narrows the element type, which
+        // Collection::filter() does not — the rewrite would break the declared
+        // list<T>. Covers first-class callables and compound `is_*($x) && …` guards.
+        $this->assertTrue($this->judge('return array_values(array_filter($raw, is_array(...)));')->isRighteous());
+        $this->assertTrue($this->judge('return array_values(array_filter($e, static fn ($x) => is_string($x) && $x !== ""));')->isRighteous());
+        $this->assertTrue($this->judge('$o = array_map(fn ($x) => $x, array_filter($raw, fn ($x) => $x instanceof Foo));')->isRighteous());
     }
 
     public function test_flags_map_over_filter(): void
