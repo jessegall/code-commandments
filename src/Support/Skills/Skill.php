@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Skills;
 
 /**
  * A Claude Code skill the package can stamp into the consumer's
- * `.claude/skills/commandments/<slug>/` tree — the on-demand "how to do it
+ * `.claude/skills/commandments-<slug>/` tree — the on-demand "how to do it
  * right" playbook for one architectural subject. The literal twin of
  * {@see \JesseGall\CodeCommandments\Support\Scaffolding\Scaffold}: each Skill
  * names a packaged stub directory (a `SKILL.md` plus a `reference/` folder)

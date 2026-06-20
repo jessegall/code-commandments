@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Support\Skills;
 
 /**
  * Stamps the package's skill stubs into the consumer's
- * `.claude/skills/commandments/<slug>/` tree, rewriting the example namespace
+ * `.claude/skills/commandments-<slug>/` tree, rewriting the example namespace
  * to the configured scaffold namespace so a skill's examples are exactly the
  * code `scaffold` generates. The literal twin of
  * {@see \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator}.
@@ -33,8 +33,8 @@ final class SkillInstaller
     }
 
     /**
-     * Install every catalogued skill into $targetRoot
-     * (`.claude/skills/commandments`), rewriting `{{ namespace }}` to
+     * Install every catalogued skill into $targetRoot (`.claude/skills`), as a
+     * flat `commandments-<slug>/` dir per skill, rewriting `{{ namespace }}` to
      * $namespace.
      *
      * @param  list<string>  $except  skill slugs to skip
@@ -44,6 +44,12 @@ final class SkillInstaller
     {
         $namespace = trim($namespace, '\\');
         $results = [];
+
+        // Self-heal the pre-flat layout: older versions nested every skill under a
+        // single `.claude/skills/commandments/` group dir, which Claude Code never
+        // discovered (it scans flat — `.claude/skills/<name>/SKILL.md`). Remove that
+        // dead group dir so a re-install migrates cleanly to the flat layout (#132).
+        $this->clearLegacyGroupDir($targetRoot);
 
         foreach (SkillRegistry::all() as $skill) {
             if (in_array($skill->slug, $except, true)) {
@@ -57,6 +63,42 @@ final class SkillInstaller
     }
 
     /**
+     * Remove the dead pre-flat group dir (`<root>/commandments/`) if it is exactly
+     * that — a directory with no SKILL.md of its own that nests a known skill slug.
+     * Guarded so it never deletes a legitimately-named flat skill.
+     */
+    private function clearLegacyGroupDir(string $targetRoot): void
+    {
+        $legacy = rtrim($targetRoot, '/') . '/commandments';
+
+        if (! is_dir($legacy) || is_file($legacy . '/SKILL.md')) {
+            return;
+        }
+
+        foreach (SkillRegistry::all() as $skill) {
+            if (is_file($legacy . '/' . $skill->slug . '/SKILL.md')) {
+                $this->deleteTree($legacy);
+
+                return;
+            }
+        }
+    }
+
+    private function deleteTree(string $dir): void
+    {
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($items as $item) {
+            $item->isDir() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
+        }
+
+        @rmdir($dir);
+    }
+
+    /**
      * @return array{slug: string, status: string, files: int}
      */
     private function writeSkill(Skill $skill, string $namespace, string $targetRoot, bool $force, bool $autoRefresh): array
@@ -67,7 +109,10 @@ final class SkillInstaller
             return ['slug' => $skill->slug, 'status' => self::STATUS_MISSING_STUB, 'files' => 0];
         }
 
-        $targetDir = rtrim($targetRoot, '/') . '/' . $skill->slug;
+        // Flat layout: each skill is a directory DIRECTLY under .claude/skills/,
+        // named for its frontmatter `name:` (commandments-<slug>) so Claude Code
+        // discovers + registers it. NOT nested under a group dir (#132).
+        $targetDir = rtrim($targetRoot, '/') . '/' . $skill->skillName();
 
         $created = 0;
         $rewritten = 0;

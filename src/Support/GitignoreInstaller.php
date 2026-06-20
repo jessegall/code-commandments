@@ -46,7 +46,7 @@ final class GitignoreInstaller
      * auto-refresh is off the skills are committed like CLAUDE.md, so the entry
      * is omitted (and removed in place on a re-assert).
      */
-    private const SKILLS_ENTRY = '.claude/skills/commandments/';
+    private const SKILLS_ENTRY = '.claude/skills/commandments-*/';
 
     public function ensure(string $basePath, bool $ignoreSkills = false): string
     {

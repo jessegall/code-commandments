@@ -19,7 +19,7 @@ class InstallSkillsConsoleCommand extends Command
     {
         $this
             ->setName('install-skills')
-            ->setDescription('Install the Code Commandments skills into .claude/skills/commandments/')
+            ->setDescription('Install the Code Commandments skills into .claude/skills/')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing skill files')
             ->addOption('auto', null, InputOption::VALUE_NONE, 'Refresh only when skills.auto_refresh is enabled (session-start hook); otherwise do nothing');
@@ -52,7 +52,7 @@ class InstallSkillsConsoleCommand extends Command
         // Skill examples use the consumer's scaffold namespace.
         $namespace = $config['scaffold']['namespace'] ?? 'App\\Support';
         $except = $skills['except'] ?? [];
-        $targetRoot = $basePath . '/.claude/skills/commandments';
+        $targetRoot = $basePath . '/.claude/skills';
 
         $force = $autoRefresh || (bool) $input->getOption('force');
 
@@ -62,7 +62,7 @@ class InstallSkillsConsoleCommand extends Command
         $installed = SkillReporter::report($results, fn (string $line) => $output->writeln($line));
 
         $output->writeln($installed > 0
-            ? "<info>Installed {$installed} skill(s) into .claude/skills/commandments/.</info>"
+            ? "<info>Installed {$installed} skill(s) into .claude/skills/.</info>"
             : 'All skills already present — nothing to install.');
 
         return Command::SUCCESS;
