@@ -113,6 +113,7 @@ return [
                 Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\PreferConfigDrivenRegistryProphet::class,
                 Backend\ConfigKeyContractProphet::class,
+                Backend\MixedConfigValueUsedTypedProphet::class,
                 Backend\StringMatchMirrorsEnumProphet::class,
                 Backend\PassThroughDependencyProphet::class,
                 Backend\MigrationModelDriftProphet::class,

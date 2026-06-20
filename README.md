@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_96 prophets._
+_97 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -526,6 +526,7 @@ _96 prophets._
 | `LongDocblockProphet` | — | Keep docblocks to one short narrative sentence above the @-tag block |
 | `LongMethodProphet` | — | Keep methods short and focused on a single responsibility |
 | `MigrationModelDriftProphet` | — | A typed migration column (json/bool/datetime/decimal) must have a matching model cast |
+| `MixedConfigValueUsedTypedProphet` | — | An env()-backed config value strict-compared to a number is always false — cast it first |
 | `NoArrayBagProphet` | — | Do not pass array&lt;string, mixed&gt; bags around — give the bag a Fluent value class |
 | `NoArrayStringIndexingProphet` | — | Prefer typed DTOs over string-indexed arrays for structured data |
 | `NoAuthUserInDataClassesProphet` | — | Use #[FromAuthenticatedUser] attribute instead of auth()-&gt;user() in Data classes |
