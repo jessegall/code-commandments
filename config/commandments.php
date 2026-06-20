@@ -337,6 +337,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Skills
+    |--------------------------------------------------------------------------
+    |
+    | The on-demand "how to do it right" Claude Code skills — one per
+    | architectural subject (option, registry, enums, …) — installed under
+    | `.claude/skills/commandments/<subject>/`. They pair with the prophets
+    | (enforce) and the scripture (terse always-on rule); a prophet finding
+    | points back at its skill. New skills shipped by a package upgrade install
+    | automatically on `sync` unless `auto` is false. Existing files are never
+    | overwritten (run `commandments:install-skills --force` to refresh). Skill
+    | examples use your `scaffold.namespace` so they match the generated code.
+    | Add subject slugs to `except` to opt out of specific ones.
+    |
+    */
+
+    'skills' => [
+        'auto' => true,
+        'except' => [],
+
+        // Auto-refresh: treat the installed skills as fully tool-owned. When
+        // true, `install-skills` always force-overwrites them and stamps each
+        // with a loud DO-NOT-EDIT banner; the skills path is added to
+        // `.gitignore` (regenerated, not committed); and a session-start hook
+        // keeps them current. Leave false to commit them like CLAUDE.md.
+        'auto_refresh' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Reporting
     |--------------------------------------------------------------------------
     |

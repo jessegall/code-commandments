@@ -40,10 +40,18 @@ final class GitignoreInstaller
         '.commandments-last-synced',
     ];
 
-    public function ensure(string $basePath): string
+    /**
+     * The installed skills tree, ignored ONLY when skills are tool-owned
+     * (skills.auto_refresh is on — they are regenerated, not committed). When
+     * auto-refresh is off the skills are committed like CLAUDE.md, so the entry
+     * is omitted (and removed in place on a re-assert).
+     */
+    private const SKILLS_ENTRY = '.claude/skills/commandments/';
+
+    public function ensure(string $basePath, bool $ignoreSkills = false): string
     {
         $path = rtrim($basePath, '/') . '/.gitignore';
-        $block = $this->block();
+        $block = $this->block($ignoreSkills);
 
         if (! is_file($path)) {
             if (@file_put_contents($path, $block . T_String::NEWLINE) === false) {
@@ -81,14 +89,20 @@ final class GitignoreInstaller
         return self::STATUS_APPENDED;
     }
 
-    private function block(): string
+    private function block(bool $ignoreSkills = false): string
     {
-        $entries = implode(T_String::NEWLINE, self::ENTRIES);
+        $entries = self::ENTRIES;
+
+        // The skills tree is ignored only when it is tool-owned (auto-refresh);
+        // otherwise it is committed like CLAUDE.md, so the entry is omitted.
+        if ($ignoreSkills) {
+            $entries[] = self::SKILLS_ENTRY;
+        }
 
         return self::BEGIN . T_String::NEWLINE
             . '# Local runtime/tracking state — absolutions, finding cache, report' . T_String::NEWLINE
             . '# ledger, sync baseline. Per-developer; never commit.' . T_String::NEWLINE
-            . $entries . T_String::NEWLINE
+            . implode(T_String::NEWLINE, $entries) . T_String::NEWLINE
             . self::END;
     }
 }
