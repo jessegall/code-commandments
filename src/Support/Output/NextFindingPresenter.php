@@ -21,9 +21,10 @@ final class NextFindingPresenter
 {
     /**
      * @param  list<RepentInput>|null  $repentInputs  declared inputs when the fixer is parameterized
+     * @param  ?string  $skillSlug  the subject skill that teaches this finding's rule (deep-dive pointer), or null
      * @return list<string>
      */
-    public static function lines(Finding $finding, int $totalRemaining, string $binary, bool $absolvable, bool $autoFixable = false, ?array $repentInputs = null): array
+    public static function lines(Finding $finding, int $totalRemaining, string $binary, bool $absolvable, bool $autoFixable = false, ?array $repentInputs = null, ?string $skillSlug = null): array
     {
         $kind = $finding->isSin() ? '✗ SIN' : '⚠ WARNING';
 
@@ -120,6 +121,11 @@ final class NextFindingPresenter
         $lines[] = T_String::empty();
         $lines[] = 'READ THE FULL RULE BEFORE TOUCHING THIS:';
         $lines[] = sprintf('  %s scripture --prophet=%s', $binary, $finding->prophetShort);
+
+        if ($skillSlug !== null) {
+            $lines[] = sprintf('  Deep dive: read the .claude/skills/commandments/%s skill', $skillSlug);
+        }
+
         $lines[] = T_String::empty();
         $lines[] = 'Then do exactly ONE of these — there is no skip:';
         $lines[] = '  1. Fix it, then run:  ' . $binary . ' judge --next';
