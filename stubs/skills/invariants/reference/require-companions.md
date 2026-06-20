@@ -40,7 +40,7 @@ return $this->users->getById($authenticatedUserId)->displayName();
 ### Also good — if the absence is REAL, model it at the source (don't catch-to-discard)
 ```php
 return $this->users->find($email)            // Option<User>
-    ->map(fn (User $u) => $u->displayName())
+    ->transform(fn (User $u) => $u->displayName())
     ->getOr('not found');
 ```
 
@@ -53,7 +53,7 @@ throw), `find()` when it may legitimately miss (consume the Option).
 | Situation | Reach for |
 |---|---|
 | The key was already established to exist (authenticated id, foreign key, required template) | `get()` / `getById()` / `…OrFail()` — let the miss throw |
-| The key may legitimately be absent (optional lookup, probe, best-effort) | `find()` → `Option<T>`, consumed with `->map(...)->getOr(...)` |
+| The key may legitimately be absent (optional lookup, probe, best-effort) | `find()` → `Option<T>`, consumed with `->transform(...)->getOr(...)` |
 | You're tempted to `try { get… } catch (…NotFound) { return null; }` | Stop — switch to `find()` and return the Option from the source instead |
 | The catch does real recovery (retry, fallback fetch, log + rethrow, map to a domain exception) | Keep it — that is handling, not swallowing |
 
