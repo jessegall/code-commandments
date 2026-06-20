@@ -46,7 +46,7 @@ class UnwrapOptionWithGuardProphet extends PhpCommandment implements SinRepenter
     {
         return Advisory::make()
             ->applyWhen('An `if ($o->isEmpty()) { return/continue/throw; }` guard is immediately followed by `$x = $o->getOrThrow();` — branching on emptiness and re-unwrapping by hand, which is exactly what Option::getOr()/transform()/tap() express.')
-            ->leaveWhen('the guard body does real work beyond an early exit (logs, side effects), the two branches genuinely diverge in a way transform() cannot express, or the guard and unwrap act on different variables.')
+            ->leaveWhen('the guard body does real work beyond an early exit (logs, side effects); the empty branch returns a COMPUTED alternative (an instance method call like `return $this->fallbackFor($x)`) rather than a trivial default — the two absence outcomes then differ and getOr() would evaluate it eagerly; the two branches genuinely diverge in a way transform() cannot express; or the guard and unwrap act on different variables.')
             ->whenUnsure('if the method just needs the value-or-a-default, use getOr($default); if it transforms the value, use transform(); if it runs a side effect, use tap() — only keep the manual guard when both branches do substantial, different work.');
     }
 
@@ -84,9 +84,13 @@ WHAT FIRES — an `if ($o->isEmpty())` (or `if (! $o->hasValue())`) whose body i
 SINGLE early exit (return / continue / break / throw, no else), followed within a
 few statements by `$x = $o->getOrThrow()` on the SAME variable.
 
-WHAT DOES NOT — a guard whose body does more than exit (logging, cleanup), a
-genuine two-way branch that transform() can't model, or an unwrap on a different
-variable. Those are judgment calls; absolve with a reason.
+WHAT DOES NOT — a guard whose body does more than exit (logging, cleanup); a guard
+whose empty branch returns a COMPUTED alternative (`if ($o->isEmpty()) { return
+$this->fallbackFor($x); }`) rather than a trivial default, since the two absence
+outcomes then differ and the present branch can itself be none() with a distinct
+meaning — combinators can't express that, and getOr() would evaluate the alternative
+eagerly; a genuine two-way branch that transform() can't model; or an unwrap on a
+different variable. Those are judgment calls; absolve with a reason.
 
 AUTO-FIXABLE (the tight shape only): when the guard is `if ($o->isEmpty()) {
 return D; }` immediately followed by `$v = $o->getOrThrow();` and `return E;`,
@@ -185,7 +189,24 @@ SCRIPTURE;
             return null;
         }
 
+        // Divergent guard clause: the empty branch returns a COMPUTED alternative (an
+        // instance method call — e.g. `return $this->triggerSourceFor($node, $graph)`),
+        // not a trivial default. The two absence outcomes then differ, and the
+        // present branch can itself yield none() with distinct meaning — exactly what
+        // the combinators (getOr/orElse/transform) cannot express, since getOr would
+        // also evaluate the alternative EAGERLY. Leave it for a human.
+        if ($this->returnsComputedAlternative($stmt->stmts[0])) {
+            return null;
+        }
+
         return $this->emptinessReceiver($stmt->cond);
+    }
+
+    /** Whether the guard's single early exit is `return <instance method call>` — a computed alternative, not a default. */
+    private function returnsComputedAlternative(Node\Stmt $stmt): bool
+    {
+        return $stmt instanceof Node\Stmt\Return_
+            && ($stmt->expr instanceof Node\Expr\MethodCall || $stmt->expr instanceof Node\Expr\NullsafeMethodCall);
     }
 
     /**
@@ -271,6 +292,7 @@ SCRIPTURE;
         if (! $if instanceof Node\Stmt\If_ || $if->else !== null || $if->elseifs !== []
             || count($if->stmts) !== 1 || ! $if->stmts[0] instanceof Node\Stmt\Return_
             || $if->stmts[0]->expr === null
+            || $this->returnsComputedAlternative($if->stmts[0])
         ) {
             return null;
         }

@@ -47,6 +47,30 @@ class UnwrapOptionWithGuardProphetTest extends TestCase
         $this->assertFalse($j->hasWarnings());
     }
 
+    /**
+     * #165: a divergent early-return guard whose empty branch returns a COMPUTED
+     * alternative (an instance method call) — the two absence outcomes differ and the
+     * present branch can itself be none() with a distinct meaning, which getOr()/
+     * orElse() cannot express. Must NOT fire.
+     */
+    public function test_does_not_flag_a_guard_returning_a_computed_alternative(): void
+    {
+        $j = $this->judge('public function controlSourceFor($node, $dataSource, $graph) { if ($dataSource->isEmpty()) { return $this->triggerSourceFor($node, $graph); } $source = $dataSource->getOrThrow(); return $graph->nodeById($source->nodeId); }');
+        $this->assertFalse($j->hasWarnings());
+    }
+
+    public function test_does_not_flag_a_guard_returning_a_nullsafe_computed_alternative(): void
+    {
+        $j = $this->judge('public function a($opt) { if ($opt->isEmpty()) { return $this?->fallback(); } $x = $opt->getOrThrow(); return $x; }');
+        $this->assertFalse($j->hasWarnings());
+    }
+
+    public function test_still_flags_a_static_sentinel_default_like_option_none(): void
+    {
+        $j = $this->judge('public function a($opt) { if ($opt->isEmpty()) { return Option::none(); } $x = $opt->getOrThrow(); return $x; }');
+        $this->assertTrue($j->hasWarnings(), 'a static sentinel default is a trivial default, still flaggable');
+    }
+
     public function test_does_not_flag_a_two_way_branch(): void
     {
         $j = $this->judge('public function a($opt): mixed { if ($opt->isEmpty()) { return 1; } else { return 2; } }');
