@@ -114,6 +114,7 @@ return [
                 Backend\PreferConfigDrivenRegistryProphet::class,
                 Backend\ConfigKeyContractProphet::class,
                 Backend\StringMatchMirrorsEnumProphet::class,
+                Backend\PassThroughDependencyProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
                 Backend\RegistryPurityProphet::class,
                 Backend\NoCompactProphet::class,
