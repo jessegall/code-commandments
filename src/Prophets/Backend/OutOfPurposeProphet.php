@@ -9,7 +9,9 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\Archetype;
 use JesseGall\CodeCommandments\Support\RegistryShape;
+use JesseGall\CodeCommandments\Support\RoleInference;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
@@ -544,12 +546,25 @@ SCRIPTURE;
     }
 
     /**
-     * The roles a class carries, keyed by role name. A role matches when ANY of
-     * its markers (name suffix / base fragment / interface fragment / attribute)
-     * matches. A class can carry more than one role; the first incoherent one is
-     * reported.
+     * The roles a class carries, keyed by role name.
      *
-     * @return array<string, array{markers: array, forbidden: list<string>, forbidden_namespaces: list<string>, second_job: string, cut: string}>
+     * TIER A (declared) — a role matches when ANY of its markers (name suffix /
+     * base fragment / interface fragment / attribute) matches. A class can carry
+     * more than one role; the first incoherent one is reported.
+     *
+     * TIER B (inferred, #135) — when the class declares NO `registry` marker but
+     * its SHAPE fingerprints as an encapsulated keyed store ({@see RoleInference}
+     * → {@see Archetype::StoreRegistry}: a keyed array written by a public mutator
+     * AND read back by lookups on the same prop), it is given the `registry` role
+     * structurally. This makes the registry incoherence checks (reflection /
+     * forbidden collaborator / foreign verb clusters) fire on an UNMARKED store —
+     * closing the #119 gap where a `ResourceRegistry` slipped because the marker
+     * path needed a `*Registry`-style name. The store SHAPE alone is never a
+     * finding: the incoherence trigger still needs a second engine, so a plain
+     * unmarked store stays quiet. Tier B never re-adds a role already matched by a
+     * Tier-A marker (that would just relabel it).
+     *
+     * @return array<string, array{markers: array, forbidden: list<string>, forbidden_namespaces: list<string>, second_job: string, cut: string, inferred?: bool}>
      */
     private function rolesOf(Node\Stmt\Class_ $class): array
     {
@@ -561,7 +576,28 @@ SCRIPTURE;
             }
         }
 
+        // Tier B: an UNMARKED class that structurally fingerprints as a store is
+        // given the registry role so the registry incoherence checks apply.
+        if (! isset($matched['registry']) && $this->inferredStore($class)) {
+            $registry = $this->roles()['registry'] ?? null;
+
+            if ($registry !== null) {
+                $registry['inferred'] = true;
+                $matched['registry'] = $registry;
+            }
+        }
+
         return $matched;
+    }
+
+    /**
+     * Whether the class fingerprints as an encapsulated keyed store by its strong
+     * Tier-B shape alone (#135) — markerless, framework-agnostic. The single gate
+     * for promoting an UNMARKED class into the registry role.
+     */
+    private function inferredStore(Node\Stmt\Class_ $class): bool
+    {
+        return RoleInference::infer($class)->archetype() === Archetype::StoreRegistry;
     }
 
     /**
