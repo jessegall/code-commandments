@@ -34,6 +34,32 @@ class PreferFirstClassCallableProphetTest extends TestCase
         $this->assertStringContainsString('trim(...)', $j->warnings[0]->message);
     }
 
+    public function test_flags_the_reported_static_typed_variable_receiver_case(): void
+    {
+        // #128 — the static modifier + typed param/return + a VARIABLE receiver
+        // ($resource->m, not $this->m) must still be flagged with the right callable.
+        $j = $this->judge('$items->transform(static fn (mixed $instance): string => $resource->describeInstance($instance));');
+
+        $this->assertCount(1, $j->warnings);
+        $this->assertStringContainsString('$resource->describeInstance(...)', $j->warnings[0]->message);
+    }
+
+    public function test_findings_stay_advisory_never_auto_fixable(): void
+    {
+        // #128 — this prophet deliberately does NOT auto-fix: the closure -> first-
+        // class-callable swap can change behaviour when the higher-order caller
+        // passes extra args the target would now receive (e.g. Collection::map's
+        // $key), an arity check that needs the target's signature. So its findings
+        // must NEVER carry autoFixable === true, and it must not be a SinRepenter —
+        // otherwise `judge --next` prints a [AUTO-FIXABLE] tag + "run repent" that
+        // no repenter backs (the bug reported against a stale consumer version).
+        $j = $this->judge('$x->map(fn ($s) => trim($s));');
+
+        $this->assertNotEmpty($j->warnings);
+        $this->assertNotSame(true, $j->warnings[0]->autoFixable, 'PreferFirstClassCallable findings must stay advisory.');
+        $this->assertNotInstanceOf(\JesseGall\CodeCommandments\Contracts\SinRepenter::class, $this->prophet);
+    }
+
     public function test_flags_instance_method_forward(): void
     {
         $j = $this->judge('$x->each(fn ($u) => $this->render($u));');
