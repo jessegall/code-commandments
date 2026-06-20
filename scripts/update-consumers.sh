@@ -123,13 +123,19 @@ print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
     composer --working-dir="$dir" require --dev "$PACKAGE:$caret" --no-update --no-scripts --no-interaction >/dev/null 2>&1
   fi
 
-  # 2. Register newly-shipped prophets into commandments.php. Idempotent;
-  #    a consumer whose post-update-cmd already ran this just no-ops.
+  # 2. Register newly-shipped prophets into commandments.php. ALWAYS runs, and a
+  #    failure (or a missing runner) is surfaced LOUDLY — never swallowed with
+  #    `|| true`. A silent skip here is exactly how "package updated but the new
+  #    prophets were never registered" happens.
   echo "  → commandments sync --after=previous"
   if [ -x "$dir/vendor/bin/commandments" ]; then
-    ( cd "$dir" && vendor/bin/commandments sync --after=previous ) || true
+    ( cd "$dir" && vendor/bin/commandments sync --after=previous ) \
+      || echo "  ‼ WARNING: sync FAILED in $dir — new prophets may NOT be registered. Re-run: ( cd $dir && vendor/bin/commandments sync )"
   elif [ -f "$dir/artisan" ]; then
-    ( cd "$dir" && php artisan commandments:sync --after=previous ) || true
+    ( cd "$dir" && php artisan commandments:sync --after=previous ) \
+      || echo "  ‼ WARNING: sync FAILED in $dir — new prophets may NOT be registered. Re-run: ( cd $dir && php artisan commandments:sync )"
+  else
+    echo "  ‼ WARNING: no commandments runner (vendor/bin/commandments or artisan) in $dir — prophets were NOT synced!"
   fi
 
   # 2b. Refresh auto-managed scaffold files (Option, etc.) when their stubs
