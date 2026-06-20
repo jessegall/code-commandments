@@ -685,6 +685,16 @@ SCRIPTURE;
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
             $isData = $this->extendsDataBase($class);
 
+            // A field whose values are sourced from class CONSTANTS anywhere in the
+            // class (`type: WireType::MIXED`, `$type = Foo::BAR`, `'type' => Foo::X`,
+            // `Foo::class`) is already modelled by that class — it is NOT a bare
+            // closed set to mint a NEW enum for. Either that class is the enum-to-be
+            // (a different concern) or it is a value class with an OPEN token space
+            // (e.g. a wire-type carrying `resource:<x>` forms — #137); `::class`
+            // backing is a class-string, which the advisory already calls open.
+            // Suppress the field either way.
+            $constBacked = $this->classConstBackedFieldNames($class);
+
             // Promoted constructor properties. A field carrying an attribute is
             // skipped: an attribute (`#[Input]`, `#[Pick*]`, a container binding)
             // signals hydration that hands it a raw STRING regardless of the
@@ -696,7 +706,8 @@ SCRIPTURE;
                     if ($param->flags === 0
                         || $param->attrGroups !== []
                         || ! $param->var instanceof Node\Expr\Variable
-                        || ! is_string($param->var->name)) {
+                        || ! is_string($param->var->name)
+                        || in_array($param->var->name, $constBacked, true)) {
                         continue;
                     }
 
@@ -711,12 +722,73 @@ SCRIPTURE;
                 }
 
                 foreach ($property->props as $prop) {
+                    if (in_array($prop->name->toString(), $constBacked, true)) {
+                        continue;
+                    }
+
                     $this->addField($fields, $property->type, $prop->name->toString(), $prop->getStartLine(), $names, $isData, $prop->default);
                 }
             }
         }
 
         return $fields;
+    }
+
+    /**
+     * Field names whose VALUES are sourced from class constants anywhere in the
+     * class — a named argument `field: Foo::BAR`, an array entry `'field' => Foo::X`,
+     * a param/property default `Foo::BAR`, or an assignment `$this->field = Foo::X`
+     * (`::class` included — that is a class-string). Such a field is already modelled
+     * by that class, so it is not a fresh closed set to enum-ify.
+     *
+     * @return list<string>
+     */
+    private function classConstBackedFieldNames(Node\Stmt\Class_ $class): array
+    {
+        $names = [];
+        $finder = new NodeFinder;
+
+        // named args: `field: Foo::BAR`
+        foreach ($finder->findInstanceOf($class, Node\Arg::class) as $arg) {
+            if ($arg->name instanceof Node\Identifier && $arg->value instanceof Node\Expr\ClassConstFetch) {
+                $names[] = $arg->name->toString();
+            }
+        }
+
+        // array entries: `'field' => Foo::BAR`
+        foreach ($finder->findInstanceOf($class, Node\Expr\ArrayItem::class) as $item) {
+            if ($item->key instanceof Node\Scalar\String_ && $item->value instanceof Node\Expr\ClassConstFetch) {
+                $names[] = $item->key->value;
+            }
+        }
+
+        // assignments: `$this->field = Foo::BAR`
+        foreach ($finder->findInstanceOf($class, Node\Expr\Assign::class) as $assign) {
+            if ($assign->var instanceof Node\Expr\PropertyFetch
+                && $assign->var->name instanceof Node\Identifier
+                && $assign->expr instanceof Node\Expr\ClassConstFetch) {
+                $names[] = $assign->var->name->toString();
+            }
+        }
+
+        // param / property defaults: `$field = Foo::BAR`
+        foreach ($finder->findInstanceOf($class, Node\Param::class) as $param) {
+            if ($param->default instanceof Node\Expr\ClassConstFetch
+                && $param->var instanceof Node\Expr\Variable
+                && is_string($param->var->name)) {
+                $names[] = $param->var->name;
+            }
+        }
+
+        foreach ($class->getProperties() as $property) {
+            foreach ($property->props as $prop) {
+                if ($prop->default instanceof Node\Expr\ClassConstFetch) {
+                    $names[] = $prop->name->toString();
+                }
+            }
+        }
+
+        return array_values(array_unique($names));
     }
 
     /**
