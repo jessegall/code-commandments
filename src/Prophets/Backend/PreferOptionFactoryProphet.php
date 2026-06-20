@@ -26,13 +26,16 @@ use PhpParser\NodeFinder;
  *         : Option::none();
  *
  *     // factory
- *     return Option::when($this->reg->has($id), fn () => $this->reg->node($id)->descriptor);
+ *     return Option::someWhen($this->reg->has($id), fn () => $this->reg->node($id)->descriptor);
  *
  * The suggested factory follows the shape of the branch:
  *   - a null-check (`$x !== null ? some($x) : none()`)        → `Option::make($x)`
  *   - a key probe (`isset($a[$k]) ? some($a[$k]) : none()`)   → `Option::find($a, $k)`
- *   - any other condition                                     → `Option::when($cond, fn () => $v)`
- *     (`whenNot` when `some` is on the false branch).
+ *   - any other condition                                     → `Option::someWhen($cond, fn () => $v)`
+ *     (`someWhenNot` when `some` is on the false branch).
+ *
+ * NB: `someWhen` (not `when`) — `when($c, $f)` returns `$f()` verbatim (the factory
+ * must itself return an Option), whereas `someWhen` wraps it in `some()`.
  *
  * Advisory, never a sin — collapsing to a factory is a readability call.
  */
@@ -43,7 +46,7 @@ class PreferOptionFactoryProphet extends PhpCommandment
 
     public function description(): string
     {
-        return 'Build an Option with a factory (make/find/when), not a hand-rolled some()/none() branch';
+        return 'Build an Option with a factory (make/find/someWhen), not a hand-rolled some()/none() branch';
     }
 
     protected function defaultTier(): Tier
@@ -67,9 +70,9 @@ class PreferOptionFactoryProphet extends PhpCommandment
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('A ternary or `if/else` returns `Option::some($v)` on one side and `Option::none()` on the other — it hand-rolls the present/absent construction the Option factories (`make`/`find`/`when`/`whenNot`) already express in one named call.')
+            ->applyWhen('A ternary or `if/else` returns `Option::some($v)` on one side and `Option::none()` on the other — it hand-rolls the present/absent construction the Option factories (`make`/`find`/`someWhen`/`someWhenNot`) already express in one named call.')
             ->leaveWhen('the two branches do real, differing work beyond `some`/`none` (each wraps a different value, or one branch has side effects), so there is no single factory that captures it; or the `some`/`none` are not adjacent branches of one decision.')
-            ->whenUnsure('reach for the factory whose shape matches: `make($x)` for `$x !== null`, `find($a, $k)` for `isset($a[$k])`, otherwise `when($cond, fn () => $v)` (`whenNot` when `some` is the false branch).');
+            ->whenUnsure('reach for the factory whose shape matches: `make($x)` for `$x !== null`, `find($a, $k)` for `isset($a[$k])`, otherwise `someWhen($cond, fn () => $v)` (`someWhenNot` when `some` is the false branch). Use `someWhen`, NOT `when` — `when` returns the factory result raw, not wrapped in `some()`.');
     }
 
     public function detailedDescription(): string
@@ -84,8 +87,8 @@ Bad — hand-rolled across a ternary (or if/else):
         : Option::none();
 
 Good — the factory whose shape matches the branch:
-    // a plain condition
-    return Option::when($this->reg->has($id), fn () => $this->reg->node($id)->descriptor);
+    // a plain condition  ->  someWhen() (wraps the factory result in some())
+    return Option::someWhen($this->reg->has($id), fn () => $this->reg->node($id)->descriptor);
 
     // a null check  ->  make() (lifts a nullable: null => none, else some)
     return Option::make($value);                  // was: $value !== null ? Option::some($value) : Option::none()
@@ -93,8 +96,11 @@ Good — the factory whose shape matches the branch:
     // a key probe   ->  find()
     return Option::find($this->items, $key);      // was: isset($this->items[$key]) ? Option::some($this->items[$key]) : Option::none()
 
-    // some on the FALSE branch -> whenNot()
-    return Option::whenNot($isHidden, fn () => $value);
+    // some on the FALSE branch -> someWhenNot()
+    return Option::someWhenNot($isHidden, fn () => $value);
+
+Note: someWhen, NOT when. `when($c, $f)` returns `$f()` verbatim — the factory must
+already return an Option; `someWhen($c, $f)` wraps it: `$c ? some($f()) : none()`.
 
 WHAT FIRES — a `?:` ternary, or an `if (…) { return Option::some($v); } else {
 return Option::none(); }`, whose two outcomes are exactly `Option::some(...)` and
@@ -273,7 +279,10 @@ SCRIPTURE;
             }
         }
 
-        $factory = $someOnFalse ? 'whenNot' : 'when';
+        // someWhen wraps the factory result in some(); plain when() returns the
+        // factory result verbatim (so it would hand back the RAW value, not an
+        // Option). `$cond ? some($v) : none()` is exactly someWhen/someWhenNot.
+        $factory = $someOnFalse ? 'someWhenNot' : 'someWhen';
 
         return sprintf('%s::%s(%s, fn () => %s)', $option, $factory, $this->src($cond, $content), $argSrc);
     }
