@@ -1,67 +1,66 @@
 # The registry return contract
 
 A registry has ONE job: you `register`/`add`/`put` items into a keyed store, then
-look them up. The contract that makes lookups legible is fixed:
+look them up. Keep it to a small, total contract:
 
 | Method | Returns | Meaning |
 |---|---|---|
-| `register($key, $item)` / `add` / `put` | `void` | Put an item in the store. |
+| `register($key, $item)` / `add` / `put` | `void` / `static` | Put an item in the store. |
 | `has($key)` | `bool` | Is there an item for this key? |
-| `find($key)` | `Option<T>` | Look up where absence is a normal, handled outcome. |
-| `get($key)` | `T` (or **throws**) | Look up where absence is a programming error — the key is an invariant. |
+| `get($key)` | `T` (or **throws**) | The item for this key — a miss is a wiring bug, so it throws a named exception. |
 | `all()` / `values()` | `array<T>` / collection | The whole store. |
+| `unregister($key)` | `void` / `static` | (optional) Remove an item. |
 
-The discriminator between `find()` and `get()` is **whose fault is a miss**:
+A registry **never hands absence across its boundary**. There is no `find(): Option`
+and no `get(): ?T`: you ask `has()`, then `get()`. The decision "what if it is
+missing?" belongs either to the registry (it throws) or to the caller's own `has()`
+check — not to an `Option`/`null` that every call site has to unwrap.
 
-- `find($key): Option<T>` — the caller is *probing*; a miss is expected and the
-  caller folds it (`->transform(...)->getOr($default)`, `->getOrThrow()`).
-- `get($key): T` — the key is supposed to exist; a miss is a bug, so it **throws**
-  a named exception (`{{ namespace }}\RegistryEntryNotFoundException::for($key)`),
-  not `null`. Returning `null` here just defers the crash to a worse place.
+## The sin — leaking absence out of a registry
 
-## The leak — a marked registry getter returning `?T` / `Option` where it should throw
+Once a class is a *marked* registry (it extends `{{ namespace }}\Registry`, is named
+`*Registry`, implements a `Registry` interface, or carries `#[Registry]`),
+`RegistryReturnContract` enforces this:
 
-Once a class is a *marked* registry (it extends `{{ namespace }}\Registry` or is
-named `*Registry`), `RegistryReturnContract` enforces the contract. A getter that
-**returns `T|null` / `?T`** when its job is "give me the item for this key" is a
-leak — it pushes the absence decision onto every call site instead of owning it:
+- **An `Option<T>` return is ALWAYS the sin** — `find()`, `first()`, a predicate
+  scan, any name. A registry does not hand an `Option` out for callers to unwrap,
+  and renaming to `find*` does NOT help.
+- **A `?T` / `T|null` getter is the sin too**, UNLESS the method NAME announces a
+  miss is normal (a finder — see exemptions). A plain `get(): ?T` is a leak: return
+  `T` and throw.
 
 ```php
-// BAD — a marked registry that hands back null; every caller now re-checks
-public function get(string $key): ?Handler
-{
-    return $this->handlers[$key] ?? null;
-}
+// BAD — leaks an Option for every caller to unwrap
+public function find(string $key): Option { return Option::find($this->handlers, $key); }
 
-// GOOD — find() for the probe, get() for the invariant
-public function find(string $key): Option            // absence is normal
-{
-    return Option::find($this->handlers, $key);
-}
+// BAD — a plain getter that hands back null
+public function get(string $key): ?Handler { return $this->handlers[$key] ?? null; }
 
-public function get(string $key): Handler             // absence is a bug
+// GOOD — ask, then get; a miss is a wiring bug, so it throws a named exception
+public function has(string $key): bool { return isset($this->handlers[$key]); }
+
+public function get(string $key): Handler
 {
-    return $this->find($key)->getOrThrow(
-        fn () => RegistryEntryNotFoundException::for($key),
-    );
+    return $this->handlers[$key]
+        ?? throw RegistryEntryNotFoundException::forKey($key);
 }
 ```
 
-## Exemptions — where a `?T` / `Option` getter is honest, not a leak
+An `Option` memo used INSIDE the registry is fine — it just must not be the public
+return type.
 
-`RegistryReturnContract` deliberately leaves these alone, because absence really
-is a genuine handled outcome (not an invariant):
+## Exemptions — a NULLABLE finder, never an Option
 
-- **Finder-named getters** — `find*`, `search*`, `try*`, `lookup*`, `*OrNull`,
-  `*OrDefault`. The name announces "this may legitimately return nothing."
-- **`<thing>For<other>` directional lookups** — `keyForClass($fqcn)`,
-  `routeForName($n)`: a derive-the-mapping query, not a store fetch; nothing to
-  throw.
-- **A predicate scan** — `first(callable $p): Option` is value-or-nothing by
-  nature (like `search*`), not a key lookup.
+`RegistryReturnContract` leaves exactly one shape alone: a **nullable** (`?T`) getter
+whose NAME announces that absence is a normal, handled outcome —
 
-If your getter is one of these, returning `Option<T>` is correct. If it is a
-plain `get($key)` whose key should exist, return `T` and throw on a miss.
+- finder names: `find*`, `search*`, `try*`, `lookup*`, `*OrNull`, `*OrDefault`;
+- `<thing>For<other>` directional lookups: `keyForClass($fqcn)`, `routeForName($n)`
+  — a derive-the-mapping query, nothing to throw.
+
+Even then, prefer `has()` + `get()` — a finder is a convenience, not the contract.
+And note the asymmetry: a finder NAME excuses a `?T` return, **never** an `Option<T>`
+one. `find(): Option` on a registry is the sin regardless of name.
 
 Enforced by **RegistryReturnContract**.
 Read it: `commandments scripture --prophet=RegistryReturnContract`.
