@@ -116,6 +116,7 @@ return [
                 Backend\StringMatchMirrorsEnumProphet::class,
                 Backend\PassThroughDependencyProphet::class,
                 Backend\MigrationModelDriftProphet::class,
+                Backend\DeadProducerProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
                 Backend\RegistryPurityProphet::class,
                 Backend\NoCompactProphet::class,
