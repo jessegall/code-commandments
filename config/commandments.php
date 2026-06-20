@@ -255,6 +255,7 @@ return [
                 Backend\PreferNativeEnumProphet::class,
                 Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\PreferConfigDrivenRegistryProphet::class,
+                Backend\ConfigKeyContractProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
                 Backend\RegistryPurityProphet::class,
                 Backend\NoCompactProphet::class => [
