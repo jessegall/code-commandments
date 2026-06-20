@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\RootCauseMap;
+use JesseGall\CodeCommandments\Support\Skills\SkillRegistry;
 use JesseGall\CodeCommandments\Support\TextHelper;
 
 /**
@@ -109,6 +110,18 @@ abstract class BaseCommandment implements Commandment
     public function rootCauses(): array
     {
         return RootCauseMap::causesOf(static::class);
+    }
+
+    /**
+     * The slug of the Claude Code skill that teaches this prophet's subject —
+     * the on-demand "how to do it right" playbook a finding points at ("deep
+     * dive"). Derived from {@see SkillRegistry} (the inverse of each skill's
+     * prophet family) so the catalogue and the pointer never drift; returns
+     * null when no skill backs this prophet.
+     */
+    public function skill(): ?string
+    {
+        return SkillRegistry::slugForProphet(static::class);
     }
 
     /**
