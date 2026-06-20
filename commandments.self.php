@@ -120,6 +120,8 @@ return [
                 Backend\MigrationModelDriftProphet::class,
                 Backend\TranslationKeyCongruenceProphet::class,
                 Backend\DeadProducerProphet::class,
+                Backend\TaintedInputToSinkProphet::class,
+                Backend\SecretToLogOrResponseProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
                 Backend\RegistryPurityProphet::class,
                 Backend\NoCompactProphet::class,

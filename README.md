@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_99 prophets._
+_101 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -598,10 +598,12 @@ _99 prophets._
 | `RepeatedFallbackProphet` | — | Do not copy-paste a fallback chain — hoist a repeated `?? / ?:` into a named static factory |
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
 | `ResolverPatternProphet` | — | Drive first-match dispatch and predicate code into the resolver + Predicate pattern |
+| `SecretToLogOrResponseProphet` | — | SECURITY: a secret (config token/password, -&gt;password) must not be logged or dumped unredacted |
 | `ShortClosureProphet` | — | Keep anonymous functions short — extract a big closure to a named private method |
 | `StringMatchMirrorsEnumProphet` | — | A match/switch over strings that mirror an enum's cases should dispatch on the enum |
 | `StringsThatShouldBeEnumsProphet` | — | Use enum cases instead of raw string literals for closed-set values |
 | `SuggestCompareSelfTraitProphet` | Yes | Use a CompareSelf-style trait helper instead of chained enum equality comparisons |
+| `TaintedInputToSinkProphet` | — | SECURITY: request input must not reach raw SQL / exec / unserialize without sanitization |
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
 | `TranslationKeyCongruenceProphet` | — | A __()/trans() key must exist in a lang file — a missing key renders as the key string |
