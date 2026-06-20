@@ -1,10 +1,11 @@
 # Extend the scaffolded `Registry` base — and don't defeat its store
 
 `commandments:scaffold` generates `{{ namespace }}\Registry`, an abstract base
-that already implements the whole contract (`register`/`registerMany`/`all`/
-`values`/`find(): Option`/`get(): T` throwing `RegistryEntryNotFoundException`/
-`first()`) over one protected store. **Extend it instead of hand-rolling
-register/find/get** — then the contract lives, and is enforced, in one place:
+that already implements the whole contract (`register`/`registerMany`/`has(): bool`/
+`get(): T` throwing `RegistryEntryNotFoundException`/`all()`/`values()`) over one
+protected store — and deliberately ships NO `find(): Option`. **Extend it instead of
+hand-rolling register/has/get** — then the contract lives, and is enforced, in one
+place:
 
 ```php
 // GOOD — the contract is inherited; you only declare the value type
@@ -23,8 +24,8 @@ usually leaks — see `reference/contract.md`). If two or more classes hand-roll
 
 ## The bypass trap — overriding `all()` to read your own store
 
-The base's mechanism is one store: `register()` writes it, `all()`/`find()`/
-`get()` read it. Override `all()` to read a **different** (private) store without
+The base's mechanism is one store: `register()` writes it, `has()`/`get()`/
+`all()` read it. Override `all()` to read a **different** (private) store without
 calling `parent::all()`, and you sever that mechanism — the inherited
 `register()`/`registerMany()` still write the base store, but nothing reads it, so
 **calling them is a silent no-op**:
