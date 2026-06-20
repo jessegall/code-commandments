@@ -69,7 +69,7 @@ class InitConsoleCommand extends Command
 
         $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
             $config['scaffold']['namespace'] ?? 'App\\Support',
-            $basePath . '/.claude/skills/commandments',
+            $basePath . '/.claude/skills',
             $autoRefresh || $force,
             $skills['except'] ?? [],
             $autoRefresh,
@@ -81,8 +81,8 @@ class InitConsoleCommand extends Command
         );
 
         $output->writeln($installed > 0
-            ? "Installed {$installed} skill(s) into .claude/skills/commandments/"
-            : 'Skills already present in .claude/skills/commandments/');
+            ? "Installed {$installed} skill(s) into .claude/skills/"
+            : 'Skills already present in .claude/skills/');
     }
 
     private function ensureGitignore(string $basePath, OutputInterface $output): void
