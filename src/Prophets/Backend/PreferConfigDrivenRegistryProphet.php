@@ -54,17 +54,21 @@ class PreferConfigDrivenRegistryProphet extends PhpCommandment
                 . 'plus every match/dispatch over the enum.'
             )
             ->leaveWhen(
-                'the set is genuinely CLOSED and not meant to be config-extensible (the '
-                . 'config map just happens to mirror a fixed enum, e.g. per-case display '
-                . 'labels or settings), OR the enum is the intentional source of truth and '
-                . 'the config is keyed BY it for per-member settings. This is advisory — '
-                . 'confirm the intent before refactoring.'
+                'ONLY when the config map is NOT registering these members — it '
+                . 'coincidentally shares their keys for a different purpose (e.g. per-member '
+                . 'display labels / settings keyed BY an enum that is the genuine source of '
+                . 'truth). NOTE: "each member needs an implementation class / some code to '
+                . 'add" is NOT a leave-reason — that per-member code (the case, the match '
+                . 'arm, the per-member method) IS the hardcoded wiring the registry removes; '
+                . 'the class stays, the duplication goes. Needing code != a fixed set.'
             )
             ->whenUnsure(
-                'if adding a member should be a config edit alone, drive it from a '
-                . 'config-backed REGISTRY: iterate the config map and register an entry '
-                . 'per key (a factory / value), and resolve through that registry instead '
-                . 'of a hardcoded enum + match. If the set is truly fixed, keep the enum.'
+                'default to DOING it (this is advisory only because intent cannot always be '
+                . 'proven from the code — not because it is optional): drive the set from a '
+                . 'config-backed REGISTRY — iterate the config map, register a factory/value '
+                . 'per key, and resolve through the registry instead of a hardcoded enum + '
+                . 'match. Leave it only if the config map is genuinely not registering these '
+                . 'members (a coincidental key overlap).'
             );
     }
 
@@ -134,10 +138,15 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $enum->getStartLine(),
                 sprintf(
-                    'Enum `%s` hardcodes the same set that config registers at `%s` (%s). The config already declares this set as DATA, so adding a member means editing BOTH the config and this enum (plus every match/dispatch over it). If the set is meant to be config-extensible, drive it from a config-backed REGISTRY (iterate the config map, register an entry per key) instead of hardcoding the cases. Advisory — confirm the set is meant to grow before refactoring.',
-                    $enum->name->toString(),
+                    "CONFIG↔CODE DUPLICATION — the same set is declared in TWO places:\n"
+                    . "  • config registers it as DATA at `%s` (keys: %s)\n"
+                    . "  • enum `%s` (this file) hardcodes it as cases: %s\n"
+                    . "These are the SAME set. Adding a member therefore means editing BOTH the config AND this enum, plus every match/dispatch over the enum. Default stance: this SHOULD be a config-driven registry — iterate the config map and register a factory/value per key, then resolve through the registry instead of the hardcoded enum + match.\n"
+                    . "WHY this is flagged (not the agent's call to wave off): the config file IS the registry of this set; the enum re-declares it, so the two drift independently. NOTE: \"each member needs its own class / some code to add\" is NOT a reason to leave it — that per-member code (the enum case, the match arm, the per-member method) IS the duplicated wiring a registry removes; the implementation class stays, the duplication goes. Leave it ONLY if the config map is not actually registering these members (a coincidental key overlap, e.g. per-member display labels keyed by a fixed enum).",
                     $map['path'],
                     implode(', ', $map['keys']),
+                    $enum->name->toString(),
+                    $this->caseMapping($enum),
                 ),
                 null,
                 'config-mirrored-enum:' . $enum->name->toString(),
@@ -168,5 +177,26 @@ SCRIPTURE;
         }
 
         return $tokens;
+    }
+
+    /**
+     * A readable display of the enum's cases for the message — `Name = 'value'` for a
+     * backed case, else `Name` — so the warning shows the code side of the duplication.
+     */
+    private function caseMapping(Node\Stmt\Enum_ $enum): string
+    {
+        $parts = [];
+
+        foreach ($enum->stmts as $stmt) {
+            if (! $stmt instanceof Node\Stmt\EnumCase) {
+                continue;
+            }
+
+            $parts[] = $stmt->expr instanceof Node\Scalar\String_
+                ? sprintf("%s = '%s'", $stmt->name->toString(), $stmt->expr->value)
+                : $stmt->name->toString();
+        }
+
+        return implode(', ', $parts);
     }
 }
