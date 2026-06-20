@@ -68,9 +68,9 @@ class RegistryReturnContractProphet extends PhpCommandment implements NeedsCodeb
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('A PUBLIC getter on a class marked as a `Registry` (a base class named `Registry` or extending one, a `Registry` interface, or a `#[Registry]` attribute) returns `Option<T>` or `T | null`. A registry is a total lookup — a miss is a wiring bug, so it should return T or throw, with a `has()` companion.')
-            ->leaveWhen('the method NAME announces nullability is normal — `find*`, `search*`, `try*`, `lookup*`, `*OrNull`, `*OrDefault`, or a `<thing>For<Other>` directional lookup (`keyForClass`, `classForKey`) — those are genuine value-or-nothing finders, not the registry contract.')
-            ->whenUnsure('if a miss means "you asked for something that was never registered" (a bug), return T and throw; if a miss is an expected, branched-on outcome (a cache, a finder), it is not a registry getter — rename it or drop the marker.');
+            ->applyWhen('A PUBLIC method on a class marked as a `Registry` (a base class named `Registry` or extending one, a `Registry` interface, or a `#[Registry]` attribute) returns an `Option<T>` — ALWAYS — or returns `T | null` / `?T` and is not a finder. A registry is a simple total keyed store ("register THIS with THAT key, then get it / ask if it is there"), so it must not hand absence across its boundary for callers to unwrap.')
+            ->leaveWhen('the return is a NULLABLE (`?T`) AND the method NAME announces nullability is normal — `find*`, `search*`, `try*`, `lookup*`, `*OrNull`, `*OrDefault`, or a `<thing>For<Other>` directional lookup (`keyForClass`, `classForKey`). NOTE: a finder name does NOT excuse an `Option<T>` return on a registry — an Option getter is the sin regardless of name; rename will not help.')
+            ->whenUnsure('keep registries simple: expose `register`, `get(): T` (throw a named exception on a miss), `has(): bool` (and maybe `unregister`). If you are returning an Option/nullable to let callers branch on a miss, that resolution belongs OUTSIDE the registry — get-or-throw at the boundary, or model the genuine optionality at the source.');
     }
 
     public function detailedDescription(): string
@@ -106,14 +106,17 @@ the keyspace knowledge does.
 
 WHAT FIRES — a PUBLIC method on a class carrying the `Registry` marker (a base
 class named `Registry` or extending one, an interface named `Registry`, or
-`#[Registry]`) whose return type is `Option<T>`, `?T`, or `T | null`.
+`#[Registry]`) that returns an `Option<T>` (ALWAYS — `find*`/`first*`/predicate
+scans included) OR returns `?T` / `T | null` and is not a finder. A registry is a
+simple keyed store; handing an Option/maybe out for callers to unwrap is not part
+of "register / get / has".
 
-WHAT DOES NOT — a finder-named getter (`find*`/`search*`/`try*`/`lookup*`/
-`*OrNull`/`*OrDefault`, or a `<thing>For<Other>` directional lookup like
-`keyForClass`/`classForKey`: the absence is a real, handled outcome), a
-non-public method, a `bool` `has()`/`is()`, or an `Option` used only INTERNALLY
-(a private memo field). The marker is the opt-in, so there is no "is this really
-a registry" guessing.
+WHAT DOES NOT — a NULLABLE (`?T`) finder-named getter (`find*`/`search*`/`try*`/
+`lookup*`/`*OrNull`/`*OrDefault`, or a `<thing>For<Other>` directional lookup like
+`keyForClass`/`classForKey`: a real, handled outcome), a non-public method, a
+`bool` `has()`/`is()`, or an `Option` used only INTERNALLY (a private memo field).
+A finder NAME does NOT excuse an `Option<T>` return — `find(): Option` on a
+registry still fires. The marker is the opt-in, so there is no guessing.
 
 NOT auto-fixable — retyping a maybe-getter to throw CHANGES RUNTIME BEHAVIOUR
 (callers handling the miss would suddenly throw). Resolve by hand: if a miss is a
@@ -144,9 +147,12 @@ SCRIPTURE;
                     }
 
                     $name = $method->name->toString();
+                    $message = $kind === 'option'
+                        ? sprintf('Registry method %s() returns an Option. A registry is a simple total keyed store — "register THIS with THAT key, then get it or ask if it is there". It must NOT hand an Option across its boundary for every caller to unwrap: expose `get(): T` (throw a named exception on a miss) and `has(): bool`. Renaming to `find*`/`first*` does NOT help — an Option-returning method on a registry is the sin. Resolve by hand: retyping to throw changes runtime behaviour, so it is deliberately not auto-fixed.', $name)
+                        : sprintf('Registry getter %s() returns a nullable. If a miss is a wiring bug, return T and throw, with a `has%s()` companion. If a miss is a genuine, handled outcome (callers branch on null / `?->` / `?? default`), this is a FINDER, not a registry getter — rename it (`find*`/`try*`/`*ForX`/`*OrNull`) or drop the marker. Resolve by hand: retyping to throw changes runtime behaviour, so it is deliberately not auto-fixed.', $name, ucfirst($name));
                     $sins[] = $this->sinAt(
                         $method->getStartLine(),
-                        sprintf('Registry getter %s() returns %s. If a miss is a wiring bug, return T and throw, with a `has%s()` companion. If a miss is a genuine, handled outcome (callers branch on null / `?->` / `?? default`), this is a FINDER, not a registry getter — rename it (`find*`/`try*`/`*ForX`/`*OrNull`) or drop the marker. Resolve by hand: retyping to throw changes runtime behaviour, so it is deliberately not auto-fixed.', $name, $kind === 'option' ? 'an Option' : 'a nullable', ucfirst($name)),
+                        $message,
                         $this->lineAt($content, $method->getStartLine()),
                         null,
                         'registry-return:' . $name,
@@ -360,7 +366,11 @@ SCRIPTURE;
 
     /**
      * 'option' / 'nullable' when $method is a public getter leaking absence, else
-     * null (finder names, non-public, and non-leaky returns are exempt).
+     * null. An OPTION return is flagged UNCONDITIONALLY (no finder-name or
+     * predicate-scan escape) — a registry is a simple total keyed store and must
+     * never hand an Option across its boundary. A NULLABLE return keeps the
+     * finder/predicate exemptions (a `find*`/`*ForX`/predicate-scan nullable is a
+     * genuine value-or-nothing finder).
      */
     private function leakyGetter(Node\Stmt\ClassMethod $method): ?string
     {
@@ -370,18 +380,26 @@ SCRIPTURE;
 
         $name = $method->name->toString();
 
-        if ($this->isFinderName($name) || str_starts_with($name, '__')) {
-            return null;
-        }
-
-        // A predicate SCAN (a getter that takes a callable/Closure) is inherently
-        // value-or-nothing — like `search*`, returning Option is correct, throwing
-        // would be wrong. Not a key lookup, so not the registry contract.
-        if (RegistryLeak::hasPredicateParam($method)) {
+        if (str_starts_with($name, '__')) {
             return null;
         }
 
         $type = $method->returnType;
+
+        // ANY public method returning an Option<T> is a registry-contract sin — a
+        // registry is "register THIS with THAT key, get it back, ask if it's there"
+        // (register / get-or-throw / has), so it must not hand an Option out for
+        // every caller to unwrap. No finder-name or predicate-scan escape here:
+        // `find(): Option` / `first(callable): Option` belong as `get()`/`has()`.
+        if ($type instanceof Node\Name && in_array($type->getLast(), $this->optionClasses(), true)) {
+            return 'option';
+        }
+
+        // A NULLABLE getter still gets the finder/predicate exemptions: a `find*`/
+        // `try*`/`*ForX` name, or a predicate scan, announces genuine value-or-nothing.
+        if ($this->isFinderName($name) || RegistryLeak::hasPredicateParam($method)) {
+            return null;
+        }
 
         if ($type instanceof Node\NullableType) {
             return 'nullable';
@@ -393,12 +411,6 @@ SCRIPTURE;
                     return 'nullable';
                 }
             }
-
-            return null;
-        }
-
-        if ($type instanceof Node\Name && in_array($type->getLast(), $this->optionClasses(), true)) {
-            return 'option';
         }
 
         return null;
