@@ -96,13 +96,17 @@ PHP);
         $this->assertStringContainsString('ReflectionEnum', $judgment->warnings[0]->message);
     }
 
-    public function test_flags_a_data_dto_with_an_assembler_cluster(): void
+    public function test_does_not_flag_a_standalone_builder_cluster(): void
     {
-        // A DTO that is a genuine assembler — a cluster of builder methods.
+        // A self-resolving view-model DTO (an Inertia `*Page` Data) legitimately
+        // hosts a cluster of build*/load* methods that produce its OWN presentation
+        // props (Lazy closures, #[Computed]) WITHOUT pulling in any service. The
+        // standalone-cluster signal over-fired on every such page — without an
+        // injected service it is NOT an out-of-purpose assembler. Quiet now.
         $judgment = $this->judge(<<<'PHP'
 use Spatie\LaravelData\Data;
 
-class OutcomeData extends Data
+class WarehouseShowPage extends Data
 {
     public string $id;
     public function buildSummary(): array { return []; }
@@ -111,9 +115,32 @@ class OutcomeData extends Data
 }
 PHP);
 
-        $this->assertCount(1, $judgment->warnings);
-        $this->assertSame('out-of-purpose:data:OutcomeData', $judgment->warnings[0]->symbol);
-        $this->assertStringContainsString('assembler cluster', $judgment->warnings[0]->message);
+        $this->assertTrue(
+            $judgment->isRighteous(),
+            'a standalone builder cluster with no injected service must not fire',
+        );
+    }
+
+    public function test_does_not_treat_an_enum_param_as_an_injected_service(): void
+    {
+        // An enum-typed ctor param is value-object STATE, not an injected service —
+        // even paired with a builder that uses it (the WorkflowsIndexPage tab FP).
+        // Uses a real enum so the reflection `enum_exists` exclusion is exercised.
+        $judgment = $this->judge(<<<'PHP'
+use Spatie\LaravelData\Data;
+use JesseGall\CodeCommandments\Support\Archetype;
+
+class WorkflowsIndexPage extends Data
+{
+    public function __construct(private Archetype $tab) {}
+    public function buildRows(): array { return [$this->tab]; }
+}
+PHP);
+
+        $this->assertTrue(
+            $judgment->isRighteous(),
+            'an enum param is value-object state, not an injected service',
+        );
     }
 
     public function test_flags_a_data_dto_that_injects_a_service_to_assemble_itself(): void
