@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
+use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
@@ -40,6 +41,7 @@ class InitConsoleCommand extends Command
         $this->createConfig($basePath, $autoDetect, $output);
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
+        $this->installSkills($basePath, $force, $output);
         $this->installCommitHook($basePath, $force, $output);
         $this->ensureGitignore($basePath, $output);
 
@@ -57,9 +59,39 @@ class InitConsoleCommand extends Command
         return Command::SUCCESS;
     }
 
+    private function installSkills(string $basePath, bool $force, OutputInterface $output): void
+    {
+        $resolved = ConfigLoader::resolve(null, $basePath);
+        $config = $resolved !== null ? ConfigLoader::load($resolved) : [];
+
+        $skills = $config['skills'] ?? [];
+        $autoRefresh = (bool) ($skills['auto_refresh'] ?? false);
+
+        $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
+            $config['scaffold']['namespace'] ?? 'App\\Support',
+            $basePath . '/.claude/skills/commandments',
+            $autoRefresh || $force,
+            $skills['except'] ?? [],
+            $autoRefresh,
+        );
+
+        $installed = \JesseGall\CodeCommandments\Support\Skills\SkillReporter::report(
+            $results,
+            fn (string $line) => $output->writeln($line),
+        );
+
+        $output->writeln($installed > 0
+            ? "Installed {$installed} skill(s) into .claude/skills/commandments/"
+            : 'Skills already present in .claude/skills/commandments/');
+    }
+
     private function ensureGitignore(string $basePath, OutputInterface $output): void
     {
-        $status = (new GitignoreInstaller())->ensure($basePath);
+        $resolved = ConfigLoader::resolve(null, $basePath);
+        $config = $resolved !== null ? ConfigLoader::load($resolved) : [];
+        $ignoreSkills = (bool) ($config['skills']['auto_refresh'] ?? false);
+
+        $status = (new GitignoreInstaller())->ensure($basePath, $ignoreSkills);
 
         match ($status) {
             GitignoreInstaller::STATUS_INSTALLED => $output->writeln('Created .gitignore with code-commandments state entries'),
@@ -260,6 +292,10 @@ class InitConsoleCommand extends Command
                         [
                             'type' => 'command',
                             'command' => 'vendor/bin/commandments scaffold --auto 2>/dev/null || true',
+                        ],
+                        [
+                            'type' => 'command',
+                            'command' => 'vendor/bin/commandments install-skills --auto 2>/dev/null || true',
                         ],
                     ],
                 ],

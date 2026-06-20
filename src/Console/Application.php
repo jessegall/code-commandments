@@ -16,6 +16,7 @@ class Application extends SymfonyApplication
         $this->add(new AbsolveConsoleCommand());
         $this->add(new RepentConsoleCommand());
         $this->add(new ScaffoldConsoleCommand());
+        $this->add(new InstallSkillsConsoleCommand());
         $this->add(new ReportConsoleCommand());
         $this->add(new ReportsConsoleCommand());
         $this->add(new ScriptureConsoleCommand());

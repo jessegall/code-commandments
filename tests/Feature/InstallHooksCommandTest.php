@@ -8,6 +8,19 @@ use JesseGall\CodeCommandments\Tests\TestCase;
 
 class InstallHooksCommandTest extends TestCase
 {
+    /**
+     * `install-hooks` now installs the skills under .claude/skills/commandments/,
+     * so .claude has a nested tree — a shallow glob/unlink/rmdir can't remove it.
+     */
+    private function removeClaudeDir(): void
+    {
+        $claudeDir = base_path('.claude');
+
+        if (is_dir($claudeDir)) {
+            shell_exec('rm -rf ' . escapeshellarg($claudeDir));
+        }
+    }
+
     public function test_install_hooks_command_runs(): void
     {
         $this->artisan('commandments:install-hooks')
@@ -19,10 +32,7 @@ class InstallHooksCommandTest extends TestCase
         $claudeDir = base_path('.claude');
 
         // Remove if exists
-        if (is_dir($claudeDir)) {
-            array_map('unlink', glob("{$claudeDir}/*") ?: []);
-            rmdir($claudeDir);
-        }
+        $this->removeClaudeDir();
 
         $this->artisan('commandments:install-hooks')
             ->assertSuccessful();
@@ -30,8 +40,7 @@ class InstallHooksCommandTest extends TestCase
         $this->assertDirectoryExists($claudeDir);
 
         // Cleanup
-        array_map('unlink', glob("{$claudeDir}/*") ?: []);
-        rmdir($claudeDir);
+        $this->removeClaudeDir();
     }
 
     public function test_install_hooks_creates_settings_file(): void
@@ -55,14 +64,12 @@ class InstallHooksCommandTest extends TestCase
         $this->assertArrayHasKey('Stop', $content['hooks']);
 
         // Cleanup
-        unlink($settingsFile);
-        rmdir(base_path('.claude'));
+        $this->removeClaudeDir();
     }
 
     public function test_install_hooks_creates_claude_md(): void
     {
         $claudeMdPath = base_path('CLAUDE.md');
-        $claudeDir = base_path('.claude');
 
         // Remove if exists
         if (file_exists($claudeMdPath)) {
@@ -70,10 +77,7 @@ class InstallHooksCommandTest extends TestCase
         }
 
         // Clean up .claude directory from previous tests to avoid confirmation prompt
-        if (is_dir($claudeDir)) {
-            array_map('unlink', glob("{$claudeDir}/*") ?: []);
-            rmdir($claudeDir);
-        }
+        $this->removeClaudeDir();
 
         $this->artisan('commandments:install-hooks')
             ->assertSuccessful();
@@ -83,9 +87,6 @@ class InstallHooksCommandTest extends TestCase
 
         // Cleanup
         unlink($claudeMdPath);
-        if (is_dir(base_path('.claude'))) {
-            array_map('unlink', glob(base_path('.claude').'/*') ?: []);
-            rmdir(base_path('.claude'));
-        }
+        $this->removeClaudeDir();
     }
 }
