@@ -47,9 +47,24 @@ class RegistryReturnContractProphetTest extends TestCase
     {
         // #103: a class literally named `Registry` (the abstract base) is a
         // registry — its own non-finder Option getters fire.
-        $judgment = $this->judge('abstract class Registry { public function first(callable $p): Option { return Option::none(); } }');
+        $judgment = $this->judge('abstract class Registry { public function pipeline(string $k): Option { return $this->resolve($k); } }');
 
         $this->assertCount(1, $judgment->sins);
+    }
+
+    public function test_leaves_predicate_scan_getters_on_a_registry(): void
+    {
+        // #119: a getter that takes a callable/Closure is a predicate SCAN
+        // (value-or-nothing, like search*), not a key lookup — Option is correct,
+        // so it must NOT be flagged even on the base registry.
+        $this->assertTrue(
+            $this->judge('abstract class Registry { public function first(callable $p): Option { return Option::none(); } }')->isRighteous(),
+            'first(callable): Option is a scan and must not fire the registry contract',
+        );
+
+        $this->assertTrue(
+            $this->judge('class FooRegistry extends Registry { public function firstWhere(\Closure $p): Option { return Option::none(); } }')->isRighteous(),
+        );
     }
 
     public function test_leaves_finder_getters_on_a_registry_base_subclass(): void
