@@ -17,7 +17,7 @@ class SkillRegistryTest extends TestCase
 {
     private const STUB_DIR = __DIR__ . '/../../stubs/skills';
 
-    /** The 9 backend subjects v1 ships (frontend/Vue is deferred to v2). */
+    /** The backend subjects shipped (frontend/Vue is deferred). */
     private const EXPECTED_SLUGS = [
         'option',
         'invariants',
@@ -28,14 +28,15 @@ class SkillRegistryTest extends TestCase
         'resolvers',
         'coalesce-factories',
         'immutable-data',
+        'value-flow',
     ];
 
-    public function test_catalogue_is_the_nine_backend_subjects(): void
+    public function test_catalogue_is_the_backend_subjects(): void
     {
         $slugs = array_map(fn (Skill $s) => $s->slug, SkillRegistry::all());
 
-        $this->assertCount(9, $slugs, 'v1 is backend-only: exactly 9 skills.');
-        $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the v1 spec.');
+        $this->assertCount(10, $slugs, 'backend skills.');
+        $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the spec.');
     }
 
     public function test_every_skill_has_a_packaged_stub_directory_with_a_skill_md(): void
