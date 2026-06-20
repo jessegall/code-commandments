@@ -259,6 +259,7 @@ return [
                 Backend\MixedConfigValueUsedTypedProphet::class,
                 Backend\StringMatchMirrorsEnumProphet::class,
                 Backend\PassThroughDependencyProphet::class,
+                Backend\DataClumpToValueObjectProphet::class,
                 Backend\MigrationModelDriftProphet::class,
                 Backend\TranslationKeyCongruenceProphet::class,
                 Backend\DeadProducerProphet::class,
