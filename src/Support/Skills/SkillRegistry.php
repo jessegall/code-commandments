@@ -131,12 +131,17 @@ final class SkillRegistry
             new Skill(
                 slug: 'value-flow',
                 introducedIn: '2.19.0',
-                purpose: 'Reason about where a value comes from and goes ACROSS artifacts, not one node in isolation: a hardcoded set that is ALSO declared as config data (make it a config-driven registry), a config() read whose key the config tree does not declare, a string match that mirrors an enum, a model attribute that drifts from its migration column type, a dependency only forwarded to one collaborator, a private producer whose result is always discarded.',
+                purpose: 'Reason about where a value comes from and goes ACROSS artifacts, not one node in isolation: a hardcoded set that is ALSO declared as config data (make it a config-driven registry), a config()/translation key the declaration tree does not contain, an env-backed config value strict-compared to a number, a string match that mirrors an enum, a model attribute that drifts from its migration column type, request input reaching raw SQL/exec, a secret reaching a log, values that always travel together (a data clump), a dependency only forwarded to one collaborator, a private producer whose result is always discarded.',
                 prophets: [
                     'PreferConfigDrivenRegistry',
                     'ConfigKeyContract',
+                    'TranslationKeyCongruence',
+                    'MixedConfigValueUsedTyped',
                     'StringMatchMirrorsEnum',
                     'MigrationModelDrift',
+                    'TaintedInputToSink',
+                    'SecretToLogOrResponse',
+                    'DataClumpToValueObject',
                     'PassThroughDependency',
                     'DeadProducer',
                 ],
