@@ -260,6 +260,7 @@ return [
                 Backend\StringMatchMirrorsEnumProphet::class,
                 Backend\PassThroughDependencyProphet::class,
                 Backend\MigrationModelDriftProphet::class,
+                Backend\TranslationKeyCongruenceProphet::class,
                 Backend\DeadProducerProphet::class,
                 Backend\PreferDefaultOverNullableProphet::class,
                 Backend\RegistryPurityProphet::class,
