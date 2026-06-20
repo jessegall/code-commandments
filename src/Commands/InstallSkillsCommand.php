@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Support\Skills\SkillReporter;
 
 /**
  * Publish the Code Commandments skills — the on-demand "how to do it right"
- * playbooks — into the consumer's `.claude/skills/commandments/`. Mirrors
+ * playbooks — into the consumer's `.claude/skills/`. Mirrors
  * `commandments:scaffold`'s --auto refresh hook (auto-managed files with a
  * do-not-edit banner) so they stay current on a package upgrade.
  */
@@ -20,7 +20,7 @@ class InstallSkillsCommand extends Command
         {--force : Overwrite existing skill files}
         {--auto : Refresh only when skills.auto_refresh is enabled (used by the session-start hook); otherwise do nothing}';
 
-    protected $description = 'Install the Code Commandments skills into .claude/skills/commandments/';
+    protected $description = 'Install the Code Commandments skills into .claude/skills/';
 
     public function handle(): int
     {
@@ -39,7 +39,7 @@ class InstallSkillsCommand extends Command
         // generated support classes.
         $namespace = config('commandments.scaffold.namespace', 'App\\Support');
         $except = $config['except'] ?? [];
-        $targetRoot = base_path('.claude/skills/commandments');
+        $targetRoot = base_path('.claude/skills');
 
         $force = $autoRefresh || (bool) $this->option('force');
 
@@ -49,7 +49,7 @@ class InstallSkillsCommand extends Command
         $installed = SkillReporter::report($results, fn (string $line) => $this->line($line));
 
         $this->info($installed > 0
-            ? "Installed {$installed} skill(s) into .claude/skills/commandments/."
+            ? "Installed {$installed} skill(s) into .claude/skills/."
             : 'All skills already present — nothing to install.');
 
         return self::SUCCESS;

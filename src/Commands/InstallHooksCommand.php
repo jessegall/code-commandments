@@ -60,7 +60,7 @@ class InstallHooksCommand extends Command
         $this->createClaudeMd();
 
         // Install the on-demand "how to do it right" skills into
-        // .claude/skills/commandments/ alongside the hooks + CLAUDE.md.
+        // .claude/skills/ alongside the hooks + CLAUDE.md.
         $this->installSkills();
 
         // Install the git pre-commit gate (blocks sins) and post-commit reset
@@ -89,7 +89,7 @@ class InstallHooksCommand extends Command
 
         $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
             config('commandments.scaffold.namespace', 'App\\Support'),
-            base_path('.claude/skills/commandments'),
+            base_path('.claude/skills'),
             $autoRefresh || (bool) $this->option('force'),
             $config['except'] ?? [],
             $autoRefresh,
@@ -101,8 +101,8 @@ class InstallHooksCommand extends Command
         );
 
         $this->output->writeln($installed > 0
-            ? "Installed {$installed} skill(s) into .claude/skills/commandments/"
-            : 'Skills already present in .claude/skills/commandments/');
+            ? "Installed {$installed} skill(s) into .claude/skills/"
+            : 'Skills already present in .claude/skills/');
     }
 
     private function ensureGitignore(): void
