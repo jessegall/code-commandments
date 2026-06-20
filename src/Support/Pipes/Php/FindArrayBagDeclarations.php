@@ -279,7 +279,39 @@ final class FindArrayBagDeclarations implements Pipe
             }
         }
 
+        // A `json_decode($x, true)` result is a string-keyed mixed bag too: a method
+        // that decodes JSON to an associative array and returns it under an
+        // `array<string, mixed>` contract is a bag ORIGIN even with no array literal
+        // in the body (e.g. `readJson(): array { return json_decode(...) ?: []; }`).
+        foreach ($finder->findInstanceOf($method->stmts, Expr\FuncCall::class) as $call) {
+            if ($call->name instanceof Node\Name
+                && strtolower($call->name->toString()) === 'json_decode'
+                && $this->decodesToAssoc($call)
+            ) {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    /** Whether a `json_decode(...)` call requests an ASSOCIATIVE array (the `$associative`/2nd arg is `true`). */
+    private function decodesToAssoc(Expr\FuncCall $call): bool
+    {
+        foreach ($call->getArgs() as $arg) {
+            if ($arg->name instanceof Node\Identifier && strtolower($arg->name->toString()) === 'associative') {
+                return $this->isTrueLiteral($arg->value);
+            }
+        }
+
+        $args = $call->getArgs();
+
+        return isset($args[1]) && ! $args[1]->name instanceof Node\Identifier && $this->isTrueLiteral($args[1]->value);
+    }
+
+    private function isTrueLiteral(Node\Expr $expr): bool
+    {
+        return $expr instanceof Expr\ConstFetch && strtolower($expr->name->toString()) === 'true';
     }
 
     private function match(
