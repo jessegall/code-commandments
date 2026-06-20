@@ -261,6 +261,15 @@ SCRIPTURE;
                 continue;
             }
 
+            // A union mixing incompatible TYPE CATEGORIES (a callable form, a
+            // class-string, or a scalar with an array) has no common supertype to
+            // narrow to — it is a deliberate poly-form contract (closure-or-value,
+            // predicate `bool|closure|class-string`, token-or-structure `string|array`),
+            // not under-modelled class polymorphism. Exempt it (#139).
+            if ($this->isPolyFormUnion($this->shortNamesOfNativeUnion($union))) {
+                continue;
+            }
+
             $count = count($union->types);
 
             if ($count >= $floor) {
@@ -302,6 +311,12 @@ SCRIPTURE;
 
                 // `View|RedirectResponse` render-or-redirect idiom — exempt.
                 if ($this->isRenderOrRedirectUnion($shortAtoms)) {
+                    continue;
+                }
+
+                // Poly-form contract (callable/class-string/scalar-or-array) — no
+                // common supertype to narrow to — exempt (#139). Mirrors the native pass.
+                if ($this->isPolyFormUnion($shortAtoms)) {
                     continue;
                 }
 
@@ -779,6 +794,47 @@ SCRIPTURE;
         $other = $shortNames[0] === 'redirectresponse' ? $shortNames[1] : $shortNames[0];
 
         return $other === 'view' || str_ends_with($other, 'response');
+    }
+
+    /**
+     * A deliberate POLY-FORM contract — a union whose members span incompatible
+     * type CATEGORIES, so there is no common supertype to narrow them to (which is
+     * the only fix this prophet offers). These are intentional multi-form APIs, not
+     * under-modelled class polymorphism, and collapsing them would remove the
+     * affordance (#139):
+     *   - any member is a CALLABLE form (`closure`, `callable`, a `Closure(...): T`
+     *     / `callable(...)` docblock type) — closure-or-value (lazy-or-eager) or a
+     *     predicate `bool | closure | class-string`;
+     *   - any member is a `class-string` / `callable-string` selector.
+     *
+     * (`string | array` is deliberately NOT exempted: unlike a callable, it CAN be
+     * modelled — a `Union` value object / normalisation — so it stays the prophet's
+     * advisory nudge; absolve the genuinely-intentional token-or-structure ones.)
+     *
+     * @param  list<string>  $shortNames  member short names, lowercased
+     */
+    private function isPolyFormUnion(array $shortNames): bool
+    {
+        // A null-bearing union is value-or-nothing (→ `Option<rest>`, the prophet's
+        // primary high-confidence fix) — NEVER a poly-form exemption, even when the
+        // rest mixes categories (`closure | null` stays value-or-nothing).
+        if (in_array('null', $shortNames, true)) {
+            return false;
+        }
+
+        foreach ($shortNames as $name) {
+            $bare = ltrim($name, '(');
+
+            if (in_array($bare, ['closure', 'callable'], true)
+                || str_starts_with($bare, 'closure(')
+                || str_starts_with($bare, 'callable(')
+                || str_starts_with($bare, 'class-string')
+                || str_starts_with($bare, 'callable-string')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
