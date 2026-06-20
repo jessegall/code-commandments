@@ -18,8 +18,11 @@ class TooManyParametersProphetTest extends TestCase
         $this->prophet = new TooManyParametersProphet;
     }
 
-    public function test_flags_a_factory_with_too_many_parameters(): void
+    public function test_does_not_flag_a_construction_factory(): void
     {
+        // #138: a value object's typed named-argument factory legitimately lists its
+        // own fields — like its (exempt) constructor. Returns self/static + builds an
+        // instance (`static::from`) => exempt.
         $judgment = $this->judge(<<<'PHP'
         class A
         {
@@ -27,6 +30,41 @@ class TooManyParametersProphetTest extends TestCase
             {
                 return static::from([]);
             }
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous(), 'a self-constructing factory must be exempt');
+    }
+
+    public function test_does_not_flag_a_factory_that_builds_a_sibling_or_dynamic_type(): void
+    {
+        // #138: socket-style factories return a related type / construct via a
+        // dynamic `$class::from` — still construction factories.
+        $sibling = $this->judge(<<<'PHP'
+        class A
+        {
+            public static function value($a, $b, $c, $d, $e, $f, $g): DataSocket { return DataSocket::make($a); }
+        }
+        PHP);
+        $this->assertTrue($sibling->isRighteous());
+
+        $dynamic = $this->judge(<<<'PHP'
+        class A
+        {
+            public static function forContextAttribute($a, $b, $c, $d, $e, $f, $g): self { $class = self::pick(); return $class::from([]); }
+        }
+        PHP);
+        $this->assertTrue($dynamic->isRighteous());
+    }
+
+    public function test_flags_a_long_param_method_that_is_not_construction(): void
+    {
+        // The genuine smell still fires: a worker that returns void/scalar and does
+        // not build an object — its long list IS missing structure.
+        $judgment = $this->judge(<<<'PHP'
+        class A
+        {
+            public static function compute($a, $b, $c, $d, $e, $f, $g): int { return $a + $b; }
         }
         PHP);
 
