@@ -252,6 +252,7 @@ return [
                 Backend\PreferEnumForClosedSetFieldProphet::class => [
                     // 'names' => ['direction', 'status', 'kind', 'mode', 'type'],
                 ],
+                Backend\PreferNativeEnumProphet::class,
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],
