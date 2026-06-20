@@ -77,6 +77,12 @@ final class RoleInference
             return new self(Archetype::ManualEnum, null);
         }
 
+        // SINGLETON: a private/protected ctor + a public static accessor that caches
+        // the sole instance in a static property (`self::$instance ??= new self()`).
+        if (self::isSingleton($class)) {
+            return new self(Archetype::Singleton, null);
+        }
+
         // Provenance of the class's plain (non-store) state.
         $writes = self::stateWrites($class);
 
@@ -236,6 +242,52 @@ final class RoleInference
         $last = $new->class->getLast();
 
         return in_array(strtolower($last), ['self', 'static'], true) || $last === $className;
+    }
+
+    /**
+     * Whether the class is a SINGLETON: a non-public constructor (instances are not
+     * freely constructible) PLUS a public static accessor that caches the sole
+     * instance in a STATIC property of the class — `self::$instance = new self(...)`
+     * or `self::$instance ??= new self(...)`. The static-property cache of `new
+     * self` is the unambiguous singleton signal; the private ctor confirms there is
+     * no other way in.
+     */
+    private static function isSingleton(Node\Stmt\Class_ $class): bool
+    {
+        if ($class->name === null) {
+            return false;
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor === null || ! ($ctor->isPrivate() || $ctor->isProtected())) {
+            return false;
+        }
+
+        $className = $class->name->toString();
+        $finder = new NodeFinder;
+
+        foreach ($class->getMethods() as $method) {
+            if (! $method->isPublic() || ! $method->isStatic() || $method->stmts === null) {
+                continue;
+            }
+
+            $assigns = array_merge(
+                $finder->findInstanceOf($method->stmts, Expr\Assign::class),
+                $finder->findInstanceOf($method->stmts, Expr\AssignOp\Coalesce::class),
+            );
+
+            foreach ($assigns as $assign) {
+                if ($assign->var instanceof Expr\StaticPropertyFetch
+                    && $assign->expr instanceof Expr\New_
+                    && self::newOfOwnType($assign->expr, $className)
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
