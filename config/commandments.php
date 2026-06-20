@@ -170,6 +170,37 @@ return [
                 Backend\RegistryNamingHonestyProphet::class,
                 Backend\RegistryPatternProphet::class,
                 Backend\RegistryBaseBypassProphet::class,
+                Backend\OutOfPurposeProphet::class => [
+                    // Role-vs-behaviour incoherence: a class with a role MARKER
+                    // (*Registry/*Data/*Resolver) whose body shows a STRUCTURAL
+                    // second-engine signal for that role. The backbone is generic
+                    // (reflection via the native `Reflection*` family, RegistryShape
+                    // store-shape, DTO assembler clusters, constructor service
+                    // injection, verb-cluster diversity) — it works on plain PHP.
+                    // The `forbidden`/`forbidden_namespaces` below are OPTIONAL
+                    // framework-specific sharpeners, never the sole trigger.
+                    // Override the catalogue wholesale via `roles`:
+                    // 'roles' => [
+                    //     'registry' => [
+                    //         'markers' => [
+                    //             'suffix'    => ['Registry', 'Map', 'Catalog'],
+                    //             'base'      => ['Registry'],
+                    //             'interface' => ['Registry'],
+                    //             'attribute' => ['Registry'],
+                    //         ],
+                    //         // OPTIONAL sharpeners — reflection fires generically even with these empty.
+                    //         'forbidden'            => ['DOMDocument', 'PDO'],
+                    //         'forbidden_namespaces' => ['Spatie\\StructureDiscoverer', 'Illuminate\\Database'],
+                    //         'verbs'                => ['register', 'find', 'get', 'has', 'all'], // own vocabulary, excluded from the verb-cluster signal
+                    //         'second_job'           => 'reflection/discovery or I/O',
+                    //         'cut'                  => 'Extract it into a *Reflector collaborator; keep the registry a store + lookup.',
+                    //     ],
+                    // ],
+                    // 'min_verb_families'  => 2,                      // secondary signal threshold (>= 2)
+                    // 'exempt_bases'       => ['ServiceProvider'],
+                    // 'exempt_suffixes'    => ['ServiceProvider'],
+                    // 'exempt_attributes'  => ['OutOfPurposeExempt'],
+                ],
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,

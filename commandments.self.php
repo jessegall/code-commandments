@@ -76,6 +76,7 @@ return [
                 Backend\RegistryNamingHonestyProphet::class,
                 Backend\RegistryPatternProphet::class,
                 Backend\RegistryBaseBypassProphet::class,
+                Backend\OutOfPurposeProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\RepeatedFallbackProphet::class,
                 Backend\PreferEnumCaseGroupsProphet::class,

@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_85 prophets._
+_86 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -551,6 +551,7 @@ _85 prophets._
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
 | `NoSwallowedNotFoundProphet` | — | Do not catch a not-found exception just to swallow it into null/false/[] — let it throw |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
+| `OutOfPurposeProphet` | — | A class with a role marker (*Registry/*Data/*Resolver) whose body shows a structural second-engine signal (reflection in a registry, an assembler cluster in a DTO, a store in a resolver) is doing a second job — extract it |
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
 | `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
