@@ -131,6 +131,7 @@ return [
                     // 'exclude_methods' => ['try*', '__*'],
                     // 'severity' => 'warning', // or 'sin'
                 ],
+                Backend\PreferOptionFactoryProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\RepeatedFallbackProphet::class => [
                     // How many identical occurrences before it's flagged:

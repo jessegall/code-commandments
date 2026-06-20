@@ -69,6 +69,7 @@ return [
                 Backend\PreferNamedExceptionsProphet::class,
                 Backend\PreferSprintfProphet::class,
                 Backend\PreferOptionOverNullProphet::class,
+                Backend\PreferOptionFactoryProphet::class,
                 Backend\PreferAndThenProphet::class,
                 Backend\PreferEmptyOverNullProphet::class,
                 Backend\RegistryReturnContractProphet::class,
