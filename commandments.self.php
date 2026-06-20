@@ -112,6 +112,7 @@ return [
                 Backend\PreferNativeEnumProphet::class,
                 Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\PreferConfigDrivenRegistryProphet::class,
+                Backend\PreferDefaultOverNullableProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,
