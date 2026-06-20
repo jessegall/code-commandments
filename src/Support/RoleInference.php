@@ -70,6 +70,13 @@ final class RoleInference
             return new self(Archetype::Memo, $memoProp);
         }
 
+        // MANUAL ENUM (pre-8.1 idiom): a private/protected ctor + a closed set of
+        // parameterless static "case" factories. More specific than ImmutableValue
+        // (a manual enum IS an immutable value, but a CLOSED one), so check first.
+        if (self::isManualEnum($class)) {
+            return new self(Archetype::ManualEnum, null);
+        }
+
         // Provenance of the class's plain (non-store) state.
         $writes = self::stateWrites($class);
 
@@ -151,6 +158,84 @@ final class RoleInference
         $remaining = array_keys($coalesced);
 
         return $remaining[0] ?? null;
+    }
+
+    /**
+     * Whether the class is a hand-rolled enum (the pre-8.1 idiom): a NON-public
+     * constructor (private/protected — instances are not freely constructible) PLUS
+     * a closed set (>= 2) of parameterless public static "case" factories that each
+     * build and return an instance of the class (`public static function active():
+     * self { return new self(...); }`). Requiring `new self/static/Class` in the
+     * body distinguishes a real case-factory from a singleton accessor or a
+     * `null`/default factory; requiring NO parameters distinguishes the fixed cases
+     * of a closed set from a parameterised value-object factory (`from(int $x)`).
+     */
+    private static function isManualEnum(Node\Stmt\Class_ $class): bool
+    {
+        if ($class->name === null) {
+            return false;
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor === null || ! ($ctor->isPrivate() || $ctor->isProtected())) {
+            return false;
+        }
+
+        $className = $class->name->toString();
+        $finder = new NodeFinder;
+        $cases = 0;
+
+        foreach ($class->getMethods() as $method) {
+            if (! $method->isPublic() || ! $method->isStatic() || $method->params !== [] || $method->stmts === null) {
+                continue;
+            }
+
+            if (! self::returnsOwnType($method->returnType, $className)) {
+                continue;
+            }
+
+            foreach ($finder->findInstanceOf($method->stmts, Expr\New_::class) as $new) {
+                if (self::newOfOwnType($new, $className)) {
+                    $cases++;
+
+                    break;
+                }
+            }
+        }
+
+        return $cases >= 2;
+    }
+
+    /** Whether a declared return type is `self`/`static` or the class's own name. */
+    private static function returnsOwnType(?Node $type, string $className): bool
+    {
+        if ($type instanceof Node\NullableType) {
+            $type = $type->type;
+        }
+
+        // `self`/`static` are Node\Name in php-parser (not Identifier); a class
+        // name is also a Node\Name. (Identifier covers the rare parser variant.)
+        if ($type instanceof Node\Name) {
+            $last = $type->getLast();
+
+            return in_array(strtolower($last), ['self', 'static'], true) || $last === $className;
+        }
+
+        return $type instanceof Node\Identifier
+            && in_array(strtolower($type->toString()), ['self', 'static'], true);
+    }
+
+    /** Whether a `new …` builds the class's own type (`new self/static/ClassName`). */
+    private static function newOfOwnType(Expr\New_ $new, string $className): bool
+    {
+        if (! $new->class instanceof Node\Name) {
+            return false;
+        }
+
+        $last = $new->class->getLast();
+
+        return in_array(strtolower($last), ['self', 'static'], true) || $last === $className;
     }
 
     /**
