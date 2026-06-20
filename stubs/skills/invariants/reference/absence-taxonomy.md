@@ -66,7 +66,7 @@ public function findByEmail(string $email): Option
 ```
 
 Here the `none` is reachable from valid input, so kind 1 holds: keep the Option,
-let the caller `->map(...)->getOr(...)`.
+let the caller `->transform(...)->getOr(...)`.
 
 ## When to reach for "fail loud" (kind 3)
 
