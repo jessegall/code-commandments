@@ -110,6 +110,7 @@ return [
                 Backend\PreferTypeCoalesceProphet::class,
                 Backend\PreferEnumForClosedSetFieldProphet::class,
                 Backend\PreferNativeEnumProphet::class,
+                Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,

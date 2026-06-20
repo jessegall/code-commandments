@@ -253,6 +253,7 @@ return [
                     // 'names' => ['direction', 'status', 'kind', 'mode', 'type'],
                 ],
                 Backend\PreferNativeEnumProphet::class,
+                Backend\PreferInjectionOverSingletonProphet::class,
                 Backend\NoCompactProphet::class => [
                     // 'functions' => ['compact', 'extract'],
                 ],
