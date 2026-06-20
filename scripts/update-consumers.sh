@@ -10,7 +10,17 @@
 #
 #   COMMANDMENTS_CONSUMERS=../smart-farmers-pos,../workflows
 #
-# Paths are resolved relative to the package root. See .env.example.
+# Paths are resolved relative to the package root. See .env.example. If no list is
+# configured, the script AUTO-DETECTS sibling repos that require the package on the
+# current major (older-major pins and dev-branch scratch repos are skipped).
+#
+# Safety guarantees (so a bump can never touch the developer's own work):
+#   • stays on each consumer's current branch — never checks out / switches;
+#   • commits ONLY its own paths via explicit pathspec (composer.json/lock when
+#     tracked, commandments.php, .commandments-last-synced, generated scaffold) —
+#     a bare commit could sweep the developer's pre-staged WIP, this never does;
+#   • skips the commit entirely when none of those paths changed;
+#   • never pushes — review and push yourself.
 #
 # Usage: scripts/update-consumers.sh        (or: composer update-consumers)
 set -uo pipefail
@@ -19,22 +29,44 @@ PKG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="jessegall/code-commandments"
 MARKER='@code-commandments-generated'
 
-# --- Load consumer list from .env -------------------------------------------
+# --- Auto-detect sibling consumers ------------------------------------------
+# Fallback when no .env list is configured: scan sibling repos for a composer.json
+# that requires the package, on the CURRENT major (older-major pins and dev-branch
+# scratch repos are skipped, never silently bumped across a breaking boundary).
+detect_consumers() {
+  local latest_major out="" d constraint locked cmaj
+  latest_major="$(composer show "$PACKAGE" --available 2>/dev/null | grep -oE 'versions : v?[0-9]+' | head -1 | grep -oE '[0-9]+')"
+  for d in "$PKG_ROOT"/../*/; do
+    d="${d%/}"
+    [ -f "$d/composer.json" ] && [ -d "$d/.git" ] || continue
+    [ "$(cd "$d" 2>/dev/null && pwd)" = "$PKG_ROOT" ] && continue
+    constraint="$(php -r '$j=json_decode(file_get_contents($argv[1]),true)?:[]; foreach(["require","require-dev"] as $k){ if(isset($j[$k][$argv[2]])){ echo $j[$k][$argv[2]]; exit; } }' "$d/composer.json" "$PACKAGE" 2>/dev/null)"
+    [ -z "$constraint" ] && continue
+    locked="$(LOCK="$d/composer.lock" php -r '$f=getenv("LOCK"); if(!is_file($f))exit; $l=json_decode(file_get_contents($f),true)?:[]; foreach(array_merge($l["packages"]??[],$l["packages-dev"]??[]) as $p){ if($p["name"]==="'"$PACKAGE"'"){ echo $p["version"]; exit; } }' 2>/dev/null)"
+    [[ "$locked" == dev-* ]] && continue
+    cmaj="$(echo "$constraint" | grep -oE '[0-9]+' | head -1)"
+    [ -n "$latest_major" ] && [ -n "$cmaj" ] && [ "$cmaj" != "$latest_major" ] && continue
+    out="${out:+$out,}../$(basename "$d")"
+  done
+  echo "$out"
+}
+
+# --- Load consumer list: .env if configured, else auto-detect ----------------
 ENV_FILE="$PKG_ROOT/.env"
-if [ ! -f "$ENV_FILE" ]; then
-  echo "✗ No .env found at $ENV_FILE"
-  echo "  Create one (see .env.example):"
-  echo "    COMMANDMENTS_CONSUMERS=../smart-farmers-pos,../workflows"
-  exit 1
+CONSUMERS_RAW=""
+if [ -f "$ENV_FILE" ]; then
+  CONSUMERS_RAW="$(grep -E '^[[:space:]]*COMMANDMENTS_CONSUMERS[[:space:]]*=' "$ENV_FILE" \
+    | tail -n1 | cut -d= -f2- | tr -d \'\" )"
 fi
 
-# Read only the variable we care about; strip surrounding quotes/whitespace.
-CONSUMERS_RAW="$(grep -E '^[[:space:]]*COMMANDMENTS_CONSUMERS[[:space:]]*=' "$ENV_FILE" \
-  | tail -n1 | cut -d= -f2- | tr -d \'\" )"
-
 if [ -z "${CONSUMERS_RAW// /}" ]; then
-  echo "✗ COMMANDMENTS_CONSUMERS is empty or missing in $ENV_FILE"
-  exit 1
+  echo "• No COMMANDMENTS_CONSUMERS configured — auto-detecting sibling consumers…"
+  CONSUMERS_RAW="$(detect_consumers)"
+  if [ -z "${CONSUMERS_RAW// /}" ]; then
+    echo "✗ No sibling repo requires $PACKAGE on the current major. Nothing to do."
+    exit 1
+  fi
+  echo "  detected: $CONSUMERS_RAW"
 fi
 
 IFS=',' read -r -a CONSUMERS <<< "$CONSUMERS_RAW"
@@ -114,6 +146,11 @@ print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
   # 3. Collect ONLY the paths this bump owns: composer.json, the commandments
   #    config, and the generated scaffold files (identified by their marker).
   paths=( composer.json )
+  # composer.lock + .commandments-last-synced — only when git-TRACKED. workflows
+  # gitignores its lock (it's a library); some consumers ignore the synced marker.
+  # Adding a gitignored path to the pathspec would make `git commit --` error.
+  git -C "$dir" ls-files --error-unmatch composer.lock            >/dev/null 2>&1 && paths+=( composer.lock )
+  git -C "$dir" ls-files --error-unmatch .commandments-last-synced >/dev/null 2>&1 && paths+=( .commandments-last-synced )
   [ -f "$dir/commandments.php" ]        && paths+=( commandments.php )
   [ -f "$dir/config/commandments.php" ] && paths+=( config/commandments.php )
   while IFS= read -r f; do
