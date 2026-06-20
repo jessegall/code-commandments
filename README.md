@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_92 prophets._
+_93 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -594,6 +594,7 @@ _92 prophets._
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
 | `ResolverPatternProphet` | — | Drive first-match dispatch and predicate code into the resolver + Predicate pattern |
 | `ShortClosureProphet` | — | Keep anonymous functions short — extract a big closure to a named private method |
+| `StringMatchMirrorsEnumProphet` | — | A match/switch over strings that mirror an enum's cases should dispatch on the enum |
 | `StringsThatShouldBeEnumsProphet` | — | Use enum cases instead of raw string literals for closed-set values |
 | `SuggestCompareSelfTraitProphet` | Yes | Use a CompareSelf-style trait helper instead of chained enum equality comparisons |
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
