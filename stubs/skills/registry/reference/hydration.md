@@ -50,6 +50,25 @@ Now `GatewayRegistry::get('stripe')` works everywhere, the member set is config
 - **Lazy values.** Register a `fn () => $app->make($class)` factory, not an eager
   instance, so members are constructed on first `get()`, not at boot.
 
+## Read-only after boot
+
+Hydration happens once, at boot. Every lookup thereafter is a **dumb read** — it
+never writes or builds the store:
+
+- **No lazy hydration.** `public function all() { return $this->items ??= $this->build(); }`
+  builds the store on first read. Hydrate at boot instead; `all()` just returns
+  `$this->items`.
+- **No populate-on-miss.** `return $this->items[$k] ??= $this->make($k);` creates and
+  caches on a miss — that is a *cache/factory*, not a registry. Register everything at
+  boot; `get()` resolves-or-throws, never creates.
+- **No discovery/reflection in a lookup.** `Discover::in(...)` / `new ReflectionClass`
+  inside `get()`/`all()` belongs in a separate `*Discovery`/`*Reflector` collaborator
+  that the boot path uses to produce the entries it registers.
+
+A class that builds, memoises-on-miss, or reflects on read is a cache/factory wearing
+a registry's name — name it honestly (`*Cache`/`*Factory`), or make it a real,
+eagerly-hydrated registry.
+
 ## Anti-patterns
 
 - **Hydrating in the constructor** (`new Registry()` that fills `$this->items` from
@@ -60,4 +79,6 @@ Now `GatewayRegistry::get('stripe')` works everywhere, the member set is config
   longer legible in one place and drifts. Move them into the provider.
 
 Pairs with **PreferConfigDrivenRegistry** (a hardcoded set that config already
-declares → hydrate a registry in a provider instead).
+declares → hydrate a registry in a provider instead) and enforced by
+**EagerRegistry** (a registry lookup that writes/builds the store → lazy hydration /
+populate-on-miss).
