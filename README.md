@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_88 prophets._
+_89 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -557,6 +557,7 @@ _88 prophets._
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
 | `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |
 | `PreferCollectionPipelineProphet` | — | Prefer a Collection chain over nested array_* compositions (they read inside-out) |
+| `PreferConfigDrivenRegistryProphet` | — | An enum whose cases mirror a config-registered set should be driven by a config registry |
 | `PreferDataCollectionOfProphet` | — | Do not hand-roll a Data collection with ::from() in a loop — use #[DataCollectionOf] / ::collect() |
 | `PreferDataTransformersProphet` | — | Serialize Data objects through -&gt;toArray()/transformers, not a hand-rolled mapping |
 | `PreferDefaultFallbackProphet` | — | Move a call-site presence-check-then-fallback into the callee as a default parameter |
