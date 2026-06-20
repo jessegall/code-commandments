@@ -168,6 +168,7 @@ return [
                 Backend\RegistryReturnContractProphet::class,
                 Backend\RegistryNamingHonestyProphet::class,
                 Backend\RegistryPatternProphet::class,
+                Backend\RegistryBaseBypassProphet::class,
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,
