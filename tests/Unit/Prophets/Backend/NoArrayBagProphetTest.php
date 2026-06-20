@@ -198,6 +198,43 @@ class NoArrayBagProphetTest extends TestCase
         $this->assertStringContainsString('Fluent', $judgment->sins[0]->suggestion);
     }
 
+    public function test_flags_a_json_decode_bag_return(): void
+    {
+        // A JSON reader that decodes to an ASSOC array and returns it under an
+        // array<string, mixed> contract is a bag ORIGIN — even with no array literal
+        // in the body. It belongs in a Fluent value bag (e.g. ValueBag), not a raw
+        // array (the readJson regression).
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function readJson(string $path): array {
+            $decoded = json_decode(file_get_contents($path), true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+        PHP);
+
+        $this->assertFallen($judgment, 1);
+        $this->assertStringContainsString('readJson() returns a raw array<string, mixed> bag', $judgment->sins[0]->message);
+    }
+
+    public function test_does_not_flag_a_non_associative_json_decode_return(): void
+    {
+        // json_decode WITHOUT associative:true yields an object, not a string-keyed
+        // bag — no literal, no assoc decode → not a bag origin.
+        $judgment = $this->judgeClass(<<<'PHP'
+        /**
+         * @return array<string, mixed>
+         */
+        public function readObjects(string $path): array {
+            return (array) json_decode(file_get_contents($path));
+        }
+        PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     public function test_does_not_flag_dynamic_dictionary_return(): void
     {
         // Keys are computed at runtime (reflection) — a genuine dictionary,
