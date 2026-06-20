@@ -137,6 +137,7 @@ final class SkillRegistry
                     'ConfigKeyContract',
                     'TranslationKeyCongruence',
                     'MixedConfigValueUsedTyped',
+                'HardcodedLiteralShouldBeConfig',
                     'StringMatchMirrorsEnum',
                     'MigrationModelDrift',
                     'TaintedInputToSink',

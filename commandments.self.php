@@ -114,6 +114,7 @@ return [
                 Backend\PreferConfigDrivenRegistryProphet::class,
                 Backend\ConfigKeyContractProphet::class,
                 Backend\MixedConfigValueUsedTypedProphet::class,
+                Backend\HardcodedLiteralShouldBeConfigProphet::class,
                 Backend\StringMatchMirrorsEnumProphet::class,
                 Backend\PassThroughDependencyProphet::class,
                 Backend\DataClumpToValueObjectProphet::class,

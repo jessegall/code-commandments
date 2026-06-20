@@ -35,11 +35,13 @@ final class ConfigReadIndex
      * @param  array<string, true>  $paths      every declared dotted path (nodes + leaves), lowercased
      * @param  array<string, true>  $topLevels  the parsed config-file basenames (owned namespaces), lowercased
      * @param  array<string, true>  $envLeaves  leaf paths whose value is an `env(...)` call (untyped at runtime), lowercased
+     * @param  array<string, string|false>  $leafValues  literal string leaf VALUE → its dotted path (false when >1 path declares it — ambiguous)
      */
     private function __construct(
         private readonly array $paths,
         private readonly array $topLevels,
         private readonly array $envLeaves = [],
+        private readonly array $leafValues = [],
     ) {}
 
     /**
@@ -51,7 +53,7 @@ final class ConfigReadIndex
         $configDir = self::locateConfigDir($filePath);
 
         if ($configDir === null) {
-            return new self([], [], []);
+            return new self([], [], [], []);
         }
 
         return self::$cache[$configDir] ??= self::parseDir($configDir);
@@ -88,6 +90,17 @@ final class ConfigReadIndex
     public function isEnvBacked(string $dottedPath): bool
     {
         return isset($this->envLeaves[strtolower($dottedPath)]);
+    }
+
+    /**
+     * The unique config path declaring this literal string value, or null when no
+     * config leaf has it (or more than one does — ambiguous).
+     */
+    public function pathForValue(string $value): ?string
+    {
+        $path = $this->leafValues[$value] ?? null;
+
+        return is_string($path) ? $path : null;
     }
 
     /**
@@ -137,6 +150,7 @@ final class ConfigReadIndex
         $paths = [];
         $topLevels = [];
         $envLeaves = [];
+        $leafValues = [];
 
         foreach (glob($configDir . '/*.php') ?: [] as $file) {
             try {
@@ -157,17 +171,18 @@ final class ConfigReadIndex
 
             $base = basename($file, '.php');
             $topLevels[strtolower($base)] = true;
-            self::collect($return->expr, $base, $paths, $envLeaves);
+            self::collect($return->expr, $base, $paths, $envLeaves, $leafValues);
         }
 
-        return new self($paths, $topLevels, $envLeaves);
+        return new self($paths, $topLevels, $envLeaves, $leafValues);
     }
 
     /**
      * @param  array<string, true>  $paths
      * @param  array<string, true>  $envLeaves
+     * @param  array<string, string|false>  $leafValues
      */
-    private static function collect(Node\Expr\Array_ $array, string $prefix, array &$paths, array &$envLeaves): void
+    private static function collect(Node\Expr\Array_ $array, string $prefix, array &$paths, array &$envLeaves, array &$leafValues): void
     {
         foreach ($array->items as $item) {
             if (! $item instanceof Node\Expr\ArrayItem || ! $item->key instanceof Node\Scalar\String_) {
@@ -178,9 +193,12 @@ final class ConfigReadIndex
             $paths[strtolower($path)] = true;
 
             if ($item->value instanceof Node\Expr\Array_) {
-                self::collect($item->value, $path, $paths, $envLeaves);
+                self::collect($item->value, $path, $paths, $envLeaves, $leafValues);
             } elseif (self::isEnvCall($item->value)) {
                 $envLeaves[strtolower($path)] = true;
+            } elseif ($item->value instanceof Node\Scalar\String_) {
+                $value = $item->value->value;
+                $leafValues[$value] = array_key_exists($value, $leafValues) ? false : $path;
             }
         }
     }
