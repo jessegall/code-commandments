@@ -115,6 +115,18 @@ class FeatureEnvyProphetTest extends TestCase
         $this->assertTrue($prophet->judge($this->fixtureDir . '/EnvyResolver.php', $content)->isRighteous());
     }
 
+    public function test_does_not_flag_a_data_from_source_factory(): void
+    {
+        // #142: a Data class's own static from-source factory MAPS a source object
+        // into itself — reading the source's fields is mapping, not feature envy.
+        $results = $this->manager->judgeScroll('test');
+
+        $this->assertEmpty(
+            $this->warningsFor($results, $this->fixtureDir . '/FromSourceDataMapper.php'),
+            "a Data class's static from-source factory must not be flagged as feature envy.",
+        );
+    }
+
     /**
      * @param  Collection<string, mixed>  $results
      * @return list<Warning>

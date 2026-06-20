@@ -198,6 +198,7 @@ SCRIPTURE;
         foreach ($class->getMethods() as $method) {
             if ($method->stmts === null
                 || in_array(strtolower($method->name->toString()), self::SERIALIZER_METHODS, true)
+                || $this->isFromSourceFactory($method, $class->name->toString())
             ) {
                 continue;
             }
@@ -224,6 +225,38 @@ SCRIPTURE;
                 );
             }
         }
+    }
+
+    /**
+     * A static named constructor that returns `self`/`static`/its own class — a
+     * FROM-SOURCE FACTORY (`SomeData::forDescriptor(NodeDescriptor $d): self`). Its
+     * job is to MAP an external source into this type, so reading the source's
+     * fields is intrinsic mapping, not envy — moving it onto the source would
+     * invert the convention and couple the source to this DTO (#142). Mirrors the
+     * DTO-mapper case the scripture already endorses.
+     */
+    private function isFromSourceFactory(Node\Stmt\ClassMethod $method, string $className): bool
+    {
+        if (! $method->isStatic()) {
+            return false;
+        }
+
+        $type = $method->returnType;
+
+        if ($type instanceof Node\NullableType) {
+            $type = $type->type;
+        }
+
+        if ($type instanceof Node\Identifier) {
+            return in_array(strtolower($type->toString()), ['self', 'static'], true);
+        }
+
+        if ($type instanceof Node\Name) {
+            return $type->getLast() === $className
+                || in_array(strtolower($type->getLast()), ['self', 'static'], true);
+        }
+
+        return false;
     }
 
     /**
