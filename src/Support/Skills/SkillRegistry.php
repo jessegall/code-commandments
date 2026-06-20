@@ -128,6 +128,19 @@ final class SkillRegistry
                     'PreferDataCollectionOf',
                 ],
             ),
+            new Skill(
+                slug: 'value-flow',
+                introducedIn: '2.19.0',
+                purpose: 'Reason about where a value comes from and goes ACROSS artifacts, not one node in isolation: a hardcoded set that is ALSO declared as config data (make it a config-driven registry), a config() read whose key the config tree does not declare, a string match that mirrors an enum, a model attribute that drifts from its migration column type, a dependency only forwarded to one collaborator, a private producer whose result is always discarded.',
+                prophets: [
+                    'PreferConfigDrivenRegistry',
+                    'ConfigKeyContract',
+                    'StringMatchMirrorsEnum',
+                    'MigrationModelDrift',
+                    'PassThroughDependency',
+                    'DeadProducer',
+                ],
+            ),
         ];
     }
 
