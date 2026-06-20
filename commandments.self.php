@@ -102,6 +102,7 @@ return [
                 Backend\NoRedundantOrElseWrapProphet::class,
                 Backend\PreferOptionChainOverGuardProphet::class,
                 Backend\PreferCoalesceFactoryProphet::class,
+                Backend\PreferYieldOverAccumulatorProphet::class,
                 Backend\WideUnionTypeProphet::class,
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,
