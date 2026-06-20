@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_95 prophets._
+_96 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -515,6 +515,7 @@ _95 prophets._
 | `ConstructorDependencyInjectionProphet` | — | Move service dependencies from controller methods to constructor |
 | `ControllerPrivateMethodsProphet` | — | Extract private methods to service classes when controller exceeds limit |
 | `DataClassFromArrayOnlyProphet` | Yes | Every Data class must use the FromArrayOnly trait |
+| `DeadProducerProphet` | — | A private method that returns a value nobody uses should be void (or its callers should use the result) |
 | `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x-&gt;endpoint-&gt;field to branch (Law of Demeter) |
 | `DuplicateCodeProphet` | — | Extract duplicated code fragments instead of copy-pasting a method body |
 | `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named forX() factories |
