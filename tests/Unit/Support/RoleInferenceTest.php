@@ -226,6 +226,37 @@ PHP);
         $this->assertNotSame(Archetype::ManualEnum, $role->archetype());
     }
 
+    // -------- Singleton (private ctor + static self-cache) --------
+
+    public function test_classifies_a_static_self_cache_with_private_ctor_as_singleton(): void
+    {
+        $role = $this->infer(<<<'PHP'
+<?php
+final class Config {
+    private static ?self $instance = null;
+    private function __construct() {}
+    public static function getInstance(): self { return self::$instance ??= new self(); }
+}
+PHP);
+
+        $this->assertSame(Archetype::Singleton, $role->archetype());
+    }
+
+    public function test_a_static_cache_of_other_values_is_not_a_singleton(): void
+    {
+        // Caching OTHER values keyed by argument is a memo, not a singleton.
+        $role = $this->infer(<<<'PHP'
+<?php
+class Resolver {
+    private static array $cache = [];
+    private function __construct() {}
+    public static function get(string $key) { return self::$cache[$key] ??= strlen($key); }
+}
+PHP);
+
+        $this->assertNotSame(Archetype::Singleton, $role->archetype());
+    }
+
     // -------- Unknown (no confident structural signal) --------
 
     public function test_a_stateless_helper_is_unknown(): void

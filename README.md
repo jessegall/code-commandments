@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_87 prophets._
+_88 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -564,6 +564,7 @@ _87 prophets._
 | `PreferEnumCaseGroupsProphet` | — | Name reused subsets of an enum on the enum — do not re-inline the same case-group |
 | `PreferEnumForClosedSetFieldProphet` | Yes | Suggest an enum for a string field whose name denotes a closed set |
 | `PreferFirstClassCallableProphet` | — | A forwarding closure should be a first-class callable — fn ($x) =&gt; f($x) is f(...) |
+| `PreferInjectionOverSingletonProphet` | — | Prefer dependency injection over a hand-rolled singleton |
 | `PreferNamedBranchFactoryProphet` | — | Extract a non-trivial -&gt;then() branch factory into a named *Factory method returning callable |
 | `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
 | `PreferNativeEnumProphet` | — | Prefer a native enum over a hand-rolled constant class |

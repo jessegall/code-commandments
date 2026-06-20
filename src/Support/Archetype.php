@@ -46,6 +46,14 @@ enum Archetype: string
      */
     case ManualEnum = 'manual_enum';
 
+    /**
+     * A singleton: a private/protected constructor plus a public static accessor
+     * that lazily constructs and caches the sole instance in a STATIC property of
+     * the class (`self::$instance ??= new self()`). Global mutable state — a hidden
+     * dependency that should be injected instead.
+     */
+    case Singleton = 'singleton';
+
     /** No confident structural classification. */
     case Unknown = 'unknown';
 }
