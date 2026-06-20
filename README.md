@@ -494,7 +494,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_82 prophets._
+_83 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -566,6 +566,7 @@ _82 prophets._
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
 | `ReadonlyDataPropertiesProphet` | — | Remove readonly from Data properties with value-injecting attributes like #[WithCast] |
+| `RegistryBaseBypassProphet` | — | A Registry subclass that overrides all() to a private store leaves inherited register() dead |
 | `RegistryNamingHonestyProphet` | — | A class shaped like a registry (register + keyed store + lookup) should be named *Registry and extend a base |
 | `RegistryPatternProphet` | — | When several classes hand-roll the registry shape, extract a shared base (scaffold one) |
 | `RegistryReturnContractProphet` | — | A registry returns the item or throws — not Option&lt;T&gt; or T \| null (with a has() companion) |
