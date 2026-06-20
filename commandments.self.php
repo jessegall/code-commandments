@@ -109,6 +109,7 @@ return [
                 Backend\NoNullCoalesceToNullProphet::class,
                 Backend\PreferTypeCoalesceProphet::class,
                 Backend\PreferEnumForClosedSetFieldProphet::class,
+                Backend\PreferNativeEnumProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,

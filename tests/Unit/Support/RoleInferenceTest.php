@@ -192,6 +192,40 @@ PHP);
         $this->assertNotSame(Archetype::MutableBag, $role->archetype());
     }
 
+    // -------- Manual enum (closed set of static cases) --------
+
+    public function test_classifies_a_private_ctor_with_static_cases_as_manual_enum(): void
+    {
+        // A non-public ctor + >= 2 parameterless static factories each building an
+        // instance — the pre-8.1 enum idiom. More specific than ImmutableValue.
+        $role = $this->infer(<<<'PHP'
+<?php
+final class Suit {
+    private function __construct(public readonly string $value) {}
+    public static function hearts(): self { return new self('H'); }
+    public static function spades(): self { return new self('S'); }
+}
+PHP);
+
+        $this->assertSame(Archetype::ManualEnum, $role->archetype());
+    }
+
+    public function test_a_value_object_with_a_parameterised_factory_is_not_a_manual_enum(): void
+    {
+        // An open value type (a parameterised factory) is an immutable VALUE, not a
+        // closed enumeration — must not be classified ManualEnum.
+        $role = $this->infer(<<<'PHP'
+<?php
+final class Money {
+    private function __construct(public int $cents) {}
+    public static function zero(): self { return new self(0); }
+    public static function fromCents(int $cents): self { return new self($cents); }
+}
+PHP);
+
+        $this->assertNotSame(Archetype::ManualEnum, $role->archetype());
+    }
+
     // -------- Unknown (no confident structural signal) --------
 
     public function test_a_stateless_helper_is_unknown(): void

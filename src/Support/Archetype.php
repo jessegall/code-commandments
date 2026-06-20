@@ -37,6 +37,15 @@ enum Archetype: string
      */
     case Memo = 'memo';
 
+    /**
+     * A hand-rolled enum (the pre-8.1 idiom): a private/protected constructor
+     * (instances are not freely constructible) plus a CLOSED SET of parameterless
+     * public static "case" methods that each build and return a fixed instance
+     * (`public static function active(): self { return new self(...); }`). PHP 8.1+
+     * native `enum` expresses this with less code, real type safety, and `cases()`.
+     */
+    case ManualEnum = 'manual_enum';
+
     /** No confident structural classification. */
     case Unknown = 'unknown';
 }
