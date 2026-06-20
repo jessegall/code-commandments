@@ -161,16 +161,14 @@ class OutOfPurposeProphet extends PhpCommandment
     private const REFLECTION_PREFIX = 'Reflection';
 
     /**
-     * Builder-method verb families that, when CLUSTERED on a DTO, mark it as a
-     * genuine ASSEMBLER rather than a payload. A lone `build()` is fine; >= 2
-     * distinct families (or >= MIN_ASSEMBLER_METHODS methods across them) is an
-     * assembly engine the DTO has no business hosting. GENERIC — these are the
-     * universal vocabulary of construction, not framework-specific.
+     * Builder-method verb families. A `*Data` DTO fires only when ONE of these
+     * methods ACTUALLY USES a constructor-injected SERVICE (it pulls a
+     * collaborator in to build itself — a factory's job). A bare cluster of these
+     * methods that touch no injected engine is on-purpose (a view-model building
+     * its own props) and does NOT fire. GENERIC — these are the universal
+     * vocabulary of construction, not framework-specific.
      */
     private const ASSEMBLER_VERBS = ['make', 'build', 'assemble', 'hydrate', 'load', 'compile'];
-
-    /** Min assembler-cluster methods before the DTO assembler signal can fire. */
-    private const MIN_ASSEMBLER_METHODS = 2;
 
     /**
      * Base short-name fragments that exempt a class outright: a service provider
@@ -230,9 +228,9 @@ class OutOfPurposeProphet extends PhpCommandment
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('A class carries a ROLE marker (name suffix / base class / interface / attribute — `*Registry`, `*Data`/DTO, `*Resolver`/`*Factory`) AND its body shows a STRUCTURAL second-engine signal for that role: a `*Registry` that reflects (any `Reflection*` class) or reaches for a configured forbidden collaborator (DOM/PDO/discovery/HTTP/DB), or whose methods spread across >= 2 foreign verb engines; a `Data` DTO that is a genuine ASSEMBLER (a cluster of make*/build*/assemble*/hydrate*/load*/compile* methods, optionally plus a constructor-injected service); a `*Resolver`/`*Factory` that owns a `register()`+keyed-array store. The role declares one job and the body is a second engine.')
-            ->leaveWhen('the class is a `ServiceProvider` (binding/const lists are legitimately import-heavy), a fluent builder/DSL whose builder IS its executor (methods return `self`/`$this`, e.g. a `Pipeline`), it is opted out via config `exclude` or a `#[OutOfPurposeExempt]` attribute, it is a pure-payload DTO that merely references/returns a type (NOT an assembler), a focused pipe/analyzer whose single job genuinely IS reflection/parsing, OR it has NO recognised role marker (nothing to be incoherent with).')
-            ->whenUnsure('ask what the ROLE promises and whether the body keeps that promise. A registry stores + looks up — it does not reflect, scan, parse, or do I/O. A DTO is a payload — it does not assemble itself with a builder engine. Merely referencing one service is NOT a second engine; the smell is a builder CLUSTER. If the structural signal is real, extract it into a dedicated collaborator and keep the role coherent; the finding names the cut.');
+            ->applyWhen('A class carries a ROLE marker (name suffix / base class / interface / attribute — `*Registry`, `*Data`/DTO, `*Resolver`/`*Factory`) AND its body shows a STRUCTURAL second-engine signal for that role: a `*Registry` that reflects (any `Reflection*` class) or reaches INLINE for a configured forbidden collaborator (DOM/PDO/discovery/HTTP/DB), or whose methods spread across >= 2 foreign verb engines; a `Data` DTO that pulls a constructor-injected SERVICE in and ACTUALLY USES it inside a make*/build*/assemble*/hydrate*/load*/compile* method (a factory over an injected engine); a `*Resolver`/`*Factory` that owns a real REGISTRATION store (a public mutator writes `$this->store[$k] = $param` from a method parameter — a registry, not a resolver). The role declares one job and the body is a second engine.')
+            ->leaveWhen('the class is a `ServiceProvider` (binding/const lists are legitimately import-heavy), a fluent builder/DSL whose builder IS its executor (methods return `self`/`$this`, e.g. a `Pipeline`), it is opted out via config `exclude` or a `#[OutOfPurposeExempt]` attribute, it is a pure-payload DTO that merely references/returns a type or a view-model that builds its OWN props with build*/load* methods touching no injected engine (NOT an assembler over a service), a `*Data` whose only injected ctor params are enums / payload collections (`DataCollection` / value-object holders — value-object state, not services), a resolver whose keyed writes only memoize a COMPUTED value (`$this->cache[$k] = $this->build($k)` — a cache, not a store), a class that merely TYPE-HINTS a forbidden class (a closure-param/return type, never used inline), a focused pipe/analyzer whose single job genuinely IS reflection/parsing, OR it has NO recognised role marker (nothing to be incoherent with).')
+            ->whenUnsure('ask what the ROLE promises and whether the body keeps that promise. A registry stores + looks up — it does not reflect, scan, parse, or do I/O. A DTO is a payload — it does not pull a service in to assemble itself. A view-model building its own presentation props is fine; the smell is a builder that REACHES an injected collaborator. A memo (`$this->cache[$k] ??= compute()`) is on-purpose for a resolver; a register-store that assigns a PARAMETER is not. If the structural signal is real, extract it into a dedicated collaborator and keep the role coherent; the finding names the cut.');
     }
 
     public function detailedDescription(): string
@@ -310,8 +308,8 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $imports = $this->collectImports($ast);
         $warnings = [];
+        $aliases = $this->collectImportAliases($ast);
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
             if ($class->name === null || $class->isAbstract()) {
@@ -328,9 +326,15 @@ SCRIPTURE;
                 continue; // no role marker → nothing to be incoherent with
             }
 
-            // Collaborators this class actually reaches for: the `use` imports,
-            // plus inline `new X` / `X::` references (which may be unqualified).
-            $collaborators = array_merge($imports, $this->inlineReferences($class));
+            // Collaborators this class actually REACHES FOR — inline `new X` /
+            // `X::` references only (which may be unqualified), each resolved to
+            // its FQ name via the file's `use` aliases so a namespace-prefix
+            // forbidden match still works. A type-hint-only import (e.g. a
+            // closure-param/return type-hint on a value object) is NOT a reach-for
+            // and must never count; only INLINE construction/static access does,
+            // so a registry that merely TYPES a forbidden class in a signature
+            // stays quiet.
+            $collaborators = $this->resolveAliases($this->inlineReferences($class), $aliases);
 
             foreach ($roles as $roleName => $role) {
                 $finding = $this->incoherence($class, $roleName, $role, $collaborators);
@@ -384,42 +388,125 @@ SCRIPTURE;
     }
 
     /**
-     * A resolver/factory whose "second job" is a STORE it owns — not an import.
-     * Detected name-free via {@see RegistryShape}.
+     * A resolver/factory whose "second job" is a registration STORE it owns — not
+     * an import. The shape ({@see RegistryShape}) is necessary but NOT sufficient:
+     * a MEMO/cache has the same write-then-read shape (`$this->cache[$k] =
+     * $this->build($k)`) yet is on-purpose for a resolver. The discriminator is
+     * the RHS of the keyed write: a real registration store assigns a method
+     * PARAMETER value (`register($k, $item)` → `$this->store[$k] = $item`); a memo
+     * assigns a COMPUTED value (a method call, a ternary, a `??=`). Only the
+     * former is "a registry, not a resolver".
      */
     private function resolverIncoherence(Node\Stmt\Class_ $class): ?string
     {
-        return RegistryShape::detect($class) !== null
+        if (RegistryShape::detect($class) === null) {
+            return null;
+        }
+
+        return $this->ownsRegistrationStore($class)
             ? 'owns a `register`/keyed-array store'
             : null;
     }
 
     /**
-     * A DTO is out of purpose only when it is a genuine ASSEMBLER — a STRUCTURAL
-     * signal, not a single import. Two shapes qualify:
-     *   (a) a CLUSTER of builder methods (>= MIN_ASSEMBLER_METHODS of
-     *       the make, build, assemble, hydrate, load, compile prefixes), or
-     *   (b) a constructor-injected SERVICE dep AND at least one builder method —
-     *       a DTO that pulls a service in to assemble itself.
-     * A pure payload that merely references/returns a type does NOT fire.
+     * Whether a PUBLIC mutator writes its keyed store DIRECTLY from a method
+     * PARAMETER (`$this->store[$k] = $item` where `$item` is one of the method's
+     * params) — the registration signal. A class whose ONLY keyed writes assign a
+     * computed expression (a method call / ternary / `??= compute()`) is a
+     * cache/memo, not a registration store, and does NOT qualify. GENERIC — pure
+     * AST, no name list.
      */
-    private function dataIncoherence(Node\Stmt\Class_ $class): ?string
+    private function ownsRegistrationStore(Node\Stmt\Class_ $class): bool
     {
-        $builders = $this->assemblerMethods($class);
-        $service = $this->injectedService($class);
+        $finder = new NodeFinder;
 
-        if (count($builders) >= self::MIN_ASSEMBLER_METHODS) {
-            return sprintf(
-                'hosts an assembler cluster (%s)',
-                implode(', ', array_map(static fn (string $b): string => $b . '()', array_slice($builders, 0, 3))),
-            );
+        foreach ($class->getMethods() as $method) {
+            if (! $method->isPublic() || $method->isStatic() || $method->stmts === null) {
+                continue;
+            }
+
+            $params = [];
+
+            foreach ($method->params as $param) {
+                if ($param->var instanceof Expr\Variable && is_string($param->var->name)) {
+                    $params[$param->var->name] = true;
+                }
+            }
+
+            if ($params === []) {
+                continue;
+            }
+
+            foreach ($finder->findInstanceOf($method->stmts, Expr\Assign::class) as $assign) {
+                if (! $assign->var instanceof Expr\ArrayDimFetch || $this->thisProp($assign->var) === null) {
+                    continue;
+                }
+
+                if ($assign->expr instanceof Expr\Variable
+                    && is_string($assign->expr->name)
+                    && isset($params[$assign->expr->name])
+                ) {
+                    return true;
+                }
+            }
         }
 
-        if ($service !== null && $builders !== []) {
-            return sprintf('injects the service `%s` to assemble itself via %s()', $service, $builders[0]);
+        return false;
+    }
+
+    /**
+     * The store property name a `$this->prop[...]` dim-fetch targets, or null when
+     * the node is not a keyed fetch off a `$this->` property.
+     */
+    private function thisProp(Expr\ArrayDimFetch $node): ?string
+    {
+        $var = $node->var;
+
+        if ($var instanceof Expr\PropertyFetch
+            && $var->var instanceof Expr\Variable
+            && $var->var->name === 'this'
+            && $var->name instanceof Node\Identifier
+        ) {
+            return $var->name->toString();
         }
 
         return null;
+    }
+
+    /**
+     * A DTO is out of purpose only when it is a genuine ASSEMBLER that pulls a
+     * COLLABORATOR in to build itself — a STRUCTURAL signal, sharp and low-FP:
+     * a constructor-injected genuine SERVICE dep AND a builder method that
+     * ACTUALLY USES that service (`$this->service->…` inside a make/build/…
+     * method). That is a DTO doing a factory's job over an injected engine.
+     *
+     * A bare CLUSTER of builder methods is NO LONGER a finding on its own: a
+     * presentation/view-model DTO legitimately hosts a cluster of build/load*
+     * methods that produce its OWN props (Lazy closures, #[Computed]) without any
+     * injected engine — the standalone cluster signal over-fired on those. A
+     * pure payload that merely references/returns a type does NOT fire either.
+     */
+    private function dataIncoherence(Node\Stmt\Class_ $class): ?string
+    {
+        $service = $this->injectedService($class);
+
+        if ($service === null) {
+            return null;
+        }
+
+        // A genuine injected SERVICE (after injectedService excludes enums, payload
+        // collections, and framework-populated params) AND a builder method that
+        // ACTUALLY CONSUMES it (`$this->service->…` inside a make*/build*/… method)
+        // is the "DTO orchestrates its own assembly" smell. Requiring real use is
+        // what separates a true assembler from a self-resolving view-model that just
+        // holds a dep for a prop hook (the WarehouseShowPage FP).
+        $builder = $this->builderUsingProperty($class, $service['property']);
+
+        if ($builder === null) {
+            return null;
+        }
+
+        return sprintf('injects the service `%s` to assemble itself via %s()', $service['type'], $builder);
     }
 
     /**
@@ -461,11 +548,12 @@ SCRIPTURE;
 
     /**
      * The first native-PHP reflection collaborator (the generic `Reflection*`
-     * short-name family) the class reaches for, or null. This is the
+     * short-name family) the class reaches for INLINE, or null. This is the
      * framework-agnostic backbone for the registry role — it catches
-     * `ReflectionClass`, `ReflectionMethod`, `ReflectionEnum`, … whether imported
-     * or used inline as `new \ReflectionClass(...)`, with no class list to keep up
-     * to date and no Laravel/Spatie dependency.
+     * `ReflectionClass`, `ReflectionMethod`, `ReflectionEnum`, … used inline as
+     * `new ReflectionClass(...)` / `\ReflectionClass::...`, with no class list to
+     * keep up to date and no Laravel/Spatie dependency. A type-hint-only import is
+     * NOT a reach-for and is excluded upstream (only inline refs are passed in).
      *
      * @param  list<string>  $collaborators
      */
@@ -484,10 +572,12 @@ SCRIPTURE;
 
     /**
      * The first forbidden collaborator (by short name or namespace prefix) the
-     * class reaches for, or null. These are OPTIONAL framework-specific defaults,
-     * config-overridable away — the generic backbone is {@see reflectionCollaborator}.
-     * Compared against both the FQ import and its short name so an unqualified
-     * `new DOMDocument` is caught too.
+     * class reaches for INLINE, or null. These are OPTIONAL framework-specific
+     * defaults, config-overridable away — the generic backbone is
+     * {@see reflectionCollaborator}. Compared against both the alias-resolved FQ
+     * name and its short name so an unqualified `new DOMDocument` is caught too.
+     * Only INLINE references are passed in, so a type-hint-only import (a
+     * closure-param/return type on a value object) never matches.
      *
      * @param  array{forbidden: list<string>, forbidden_namespaces: list<string>}  $role
      * @param  list<string>  $collaborators
@@ -513,36 +603,6 @@ SCRIPTURE;
         }
 
         return null;
-    }
-
-    /**
-     * The class's ASSEMBLER methods: public/private methods whose verb prefix is
-     * one of the builder families (make/build/assemble/hydrate/load/compile). A
-     * DTO with a cluster of these is an assembly engine, not a payload. GENERIC —
-     * pure verb-prefix matching, no framework knowledge. Returns the method names,
-     * declaration order.
-     *
-     * @return list<string>
-     */
-    private function assemblerMethods(Node\Stmt\Class_ $class): array
-    {
-        $found = [];
-
-        foreach ($class->getMethods() as $method) {
-            $name = $method->name->toString();
-
-            if (str_starts_with($name, '__')) {
-                continue;
-            }
-
-            $prefix = $this->verbPrefix($name);
-
-            if ($prefix !== null && in_array(strtolower($prefix), self::ASSEMBLER_VERBS, true)) {
-                $found[] = $name;
-            }
-        }
-
-        return $found;
     }
 
     /**
@@ -597,7 +657,13 @@ SCRIPTURE;
      */
     private function inferredStore(Node\Stmt\Class_ $class): bool
     {
-        return RoleInference::infer($class)->archetype() === Archetype::StoreRegistry;
+        // The store fingerprint alone also matches a MEMO/CACHE (`$this->cache[$k] =
+        // $this->compute()`), which is NOT a registration store — it stores values it
+        // DERIVED, not values registered from outside. Require a real registration
+        // mutator (a public method whose keyed write assigns a PARAMETER) so a cache
+        // /memoizing resolver is not promoted into the registry role.
+        return RoleInference::infer($class)->archetype() === Archetype::StoreRegistry
+            && $this->ownsRegistrationStore($class);
     }
 
     /**
@@ -648,17 +714,21 @@ SCRIPTURE;
 
     /**
      * A constructor-injected SERVICE dependency, defined STRUCTURALLY (not by a
-     * name list): a constructor param typed as a single class that is
+     * name list): a PROMOTED constructor param typed as a single class that is
      *   - NOT a scalar / pseudo-type,
-     *   - NOT a value-object payload (another `*Data`),
+     *   - NOT a value-object payload (another `*Data`, an enum, or a payload
+     *     collection — a DataCollection / Traversable / ArrayAccess / Collection
+     *     holding value objects; resolved via reflection with an AST fallback),
      *   - NOT readonly (a readonly promoted param is value-object state, not a
      *     collaborator), and
      *   - has NO default (an injected service is required, not configured).
      * Such a param is a collaborator the DTO pulls in to assemble itself. Returns
-     * the type short name or null. This is purely AST-driven — no `*Service`
-     * suffix list.
+     * `['type' => shortName, 'property' => promotedPropName]` or null. This is
+     * purely AST/type-driven — no `*Service` suffix list.
+     *
+     * @return array{type: string, property: string}|null
      */
-    private function injectedService(Node\Stmt\Class_ $class): ?string
+    private function injectedService(Node\Stmt\Class_ $class): ?array
     {
         $ctor = null;
 
@@ -675,6 +745,13 @@ SCRIPTURE;
         }
 
         foreach ($ctor->params as $param) {
+            // Only a PROMOTED param becomes class state the builders can reach
+            // via `$this->prop`; a plain ctor arg is local and cannot be the
+            // service a builder uses. (flags != 0 ⇒ a visibility/readonly modifier.)
+            if ($param->flags === 0 || ! $param->var instanceof Expr\Variable || ! is_string($param->var->name)) {
+                continue;
+            }
+
             $type = $param->type;
 
             // Unwrap a nullable/single-name; skip unions and scalars.
@@ -692,8 +769,10 @@ SCRIPTURE;
                 continue;
             }
 
-            // A nested value-object payload (another *Data) is fine.
-            if (str_ends_with($short, 'Data')) {
+            // A nested value-object payload (another *Data), an enum (value-object
+            // state, NOT a service), or a payload collection (DataCollection /
+            // Traversable / ArrayAccess / Collection of value objects) is fine.
+            if (str_ends_with($short, 'Data') || $this->isValueObjectParamType($type)) {
                 continue;
             }
 
@@ -703,7 +782,114 @@ SCRIPTURE;
                 continue;
             }
 
-            return $short;
+            return ['type' => $short, 'property' => $param->var->name];
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether a constructor param's type is value-object state rather than a
+     * service collaborator: an ENUM, or a PAYLOAD COLLECTION (Spatie
+     * DataCollection or a Traversable / ArrayAccess / Collection-shaped holder of
+     * value objects). Resolved GENERICALLY via reflection (`class_exists` +
+     * `ReflectionClass` over the inheritance/interface chain) with an AST/name
+     * fallback for unloadable types — never a hardcoded class list (the
+     * `DataCollection` short-name and `Collection`/`Traversable`/`ArrayAccess`
+     * interface names are the universal shape, not a framework whitelist).
+     */
+    private function isValueObjectParamType(Node\Name $type): bool
+    {
+        $fqcn = $this->typeFqcn($type);
+        $short = $type->getLast();
+
+        if (class_exists($fqcn) || interface_exists($fqcn) || enum_exists($fqcn)) {
+            try {
+                $reflection = new \ReflectionClass($fqcn);
+            } catch (\Throwable) {
+                return $this->isValueObjectByName($short);
+            }
+
+            if ($reflection->isEnum()) {
+                return true;
+            }
+
+            foreach (['Traversable', 'ArrayAccess', 'IteratorAggregate', 'Iterator'] as $iface) {
+                if ($reflection->implementsInterface($iface)) {
+                    return true;
+                }
+            }
+
+            // A `*Collection` / `*DataCollection` value-object holder that is not
+            // loadable as Traversable still reads as a payload collection by name.
+            return $this->isValueObjectByName($reflection->getShortName());
+        }
+
+        // Unloadable (test fixture / unscanned) — fall back to the name shape.
+        return $this->isValueObjectByName($short);
+    }
+
+    /**
+     * Name-shape fallback for {@see isValueObjectParamType} when the type is not
+     * loadable: a `DataCollection` or any `*Collection` short name is a payload
+     * collection. This is the LAST-resort fallback for unscanned code, not the
+     * primary classifier (reflection is preferred above).
+     */
+    private function isValueObjectByName(string $short): bool
+    {
+        return $short === 'DataCollection' || str_ends_with($short, 'Collection');
+    }
+
+    /**
+     * The fully-qualified name of a type node — prefers the name-resolver's
+     * resolvedName attribute, falls back to the literal (FQ or as-written).
+     */
+    private function typeFqcn(Node\Name $type): string
+    {
+        $resolved = $type->getAttribute('resolvedName');
+
+        if ($resolved instanceof Node\Name) {
+            return ltrim($resolved->toString(), '\\');
+        }
+
+        return ltrim($type->toString(), '\\');
+    }
+
+    /**
+     * The first builder method (an assembler-verb prefix: make/build/assemble/
+     * hydrate/load/compile) that ACTUALLY USES the injected service property
+     * (`$this->prop` anywhere in its body), or null. This is the sharp half of the
+     * data-role trigger: a DTO that pulls a service in AND consumes it inside a
+     * builder is doing a factory's job; a builder that ignores the prop (or a dep
+     * held only for a `#[Computed]`/prop hook, as in a view-model) is not.
+     * GENERIC — pure AST.
+     */
+    private function builderUsingProperty(Node\Stmt\Class_ $class, string $property): ?string
+    {
+        $finder = new NodeFinder;
+
+        foreach ($class->getMethods() as $method) {
+            $name = $method->name->toString();
+
+            if (str_starts_with($name, '__') || $method->stmts === null) {
+                continue;
+            }
+
+            $prefix = $this->verbPrefix($name);
+
+            if ($prefix === null || ! in_array(strtolower($prefix), self::ASSEMBLER_VERBS, true)) {
+                continue;
+            }
+
+            foreach ($finder->findInstanceOf($method->stmts, Expr\PropertyFetch::class) as $fetch) {
+                if ($fetch->var instanceof Expr\Variable
+                    && $fetch->var->name === 'this'
+                    && $fetch->name instanceof Node\Identifier
+                    && $fetch->name->toString() === $property
+                ) {
+                    return $name;
+                }
+            }
         }
 
         return null;
@@ -914,36 +1100,11 @@ SCRIPTURE;
     }
 
     /**
-     * The fully-qualified names imported by `use` statements in the file.
-     *
-     * @param  array<Node>  $ast
-     * @return list<string>
-     */
-    private function collectImports(array $ast): array
-    {
-        $imports = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $useUse) {
-                $imports[] = $useUse->name->toString();
-            }
-        }
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\GroupUse::class) as $group) {
-            $prefix = $group->prefix->toString();
-
-            foreach ($group->uses as $useUse) {
-                $imports[] = $prefix . '\\' . $useUse->name->toString();
-            }
-        }
-
-        return $imports;
-    }
-
-    /**
-     * Class names referenced inline via `new X(...)` or `X::...` — caught in
-     * addition to imports so an unqualified `new ReflectionClass(...)` (or a
-     * `\ReflectionClass::...`) registers even when not imported.
+     * Class names referenced inline via `new X(...)` or `X::...` — the only
+     * "reach-for" signal the collaborator checks count, so a type-hint-only
+     * import (a closure-param/return type) never registers as a collaborator.
+     * An unqualified `new ReflectionClass(...)` (or a `\ReflectionClass::...`)
+     * registers even when not imported.
      *
      * @return list<string>
      */
@@ -971,6 +1132,77 @@ SCRIPTURE;
         }
 
         return $names;
+    }
+
+    /**
+     * The file's `use` aliases as `short-alias => fully-qualified` — used to
+     * resolve an inline reference written with its short name (`Discover::in()`)
+     * back to the imported FQ class (`Spatie\StructureDiscoverer\Discover`) so a
+     * namespace-prefix forbidden match still works WITHOUT counting the import
+     * itself as a reach-for (only the inline use is).
+     *
+     * @param  array<Node>  $ast
+     * @return array<string, string>
+     */
+    private function collectImportAliases(array $ast): array
+    {
+        $aliases = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
+            foreach ($use->uses as $useUse) {
+                $fqcn = $useUse->name->toString();
+                $aliases[$useUse->getAlias()->toString()] = $fqcn;
+            }
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\GroupUse::class) as $group) {
+            $prefix = $group->prefix->toString();
+
+            foreach ($group->uses as $useUse) {
+                $fqcn = $prefix . '\\' . $useUse->name->toString();
+                $aliases[$useUse->getAlias()->toString()] = $fqcn;
+            }
+        }
+
+        return $aliases;
+    }
+
+    /**
+     * Resolve each inline reference to its FQ name via the file's `use` aliases:
+     * a fully-qualified name (`\ReflectionClass`) is kept as-is; an
+     * unqualified/aliased name whose first segment matches an alias is rewritten
+     * to the imported FQ (`Discover` → `Spatie\StructureDiscoverer\Discover`);
+     * anything else is left as written.
+     *
+     * @param  list<string>  $references
+     * @param  array<string, string>  $aliases
+     * @return list<string>
+     */
+    private function resolveAliases(array $references, array $aliases): array
+    {
+        $resolved = [];
+
+        foreach ($references as $reference) {
+            if (str_starts_with($reference, '\\')) {
+                $resolved[] = ltrim($reference, '\\');
+
+                continue;
+            }
+
+            $segments = explode('\\', $reference);
+            $first = $segments[0];
+
+            if (isset($aliases[$first])) {
+                $segments[0] = $aliases[$first];
+                $resolved[] = implode('\\', $segments);
+
+                continue;
+            }
+
+            $resolved[] = $reference;
+        }
+
+        return $resolved;
     }
 
     private function roleLabel(string $roleName): string
