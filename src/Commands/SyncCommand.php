@@ -33,7 +33,8 @@ class SyncCommand extends Command
      */
     private function ensureGitignore(): void
     {
-        $status = (new GitignoreInstaller())->ensure(base_path());
+        $ignoreSkills = (bool) config('commandments.skills.auto_refresh', false);
+        $status = (new GitignoreInstaller())->ensure(base_path(), $ignoreSkills);
 
         match ($status) {
             GitignoreInstaller::STATUS_INSTALLED => $this->line('Created .gitignore with code-commandments state entries'),
@@ -69,6 +70,32 @@ class SyncCommand extends Command
         }
     }
 
+    private function autoSkills(): void
+    {
+        $skills = config('commandments.skills', []);
+
+        if (($skills['auto'] ?? true) === false) {
+            return;
+        }
+
+        $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
+            config('commandments.scaffold.namespace', 'App\\Support'),
+            base_path('.claude/skills/commandments'),
+            (bool) ($skills['auto_refresh'] ?? false),
+            $skills['except'] ?? [],
+            (bool) ($skills['auto_refresh'] ?? false),
+        );
+
+        $installed = \JesseGall\CodeCommandments\Support\Skills\SkillReporter::report(
+            $results,
+            fn (string $line) => $this->line($line),
+        );
+
+        if ($installed > 0) {
+            $this->info("Installed {$installed} new skill(s).");
+        }
+    }
+
     public function handle(): int
     {
         $configPath = config_path('commandments.php');
@@ -81,6 +108,7 @@ class SyncCommand extends Command
 
         if (! $this->option('dry-run')) {
             $this->autoScaffold();
+            $this->autoSkills();
             $this->ensureGitignore();
         }
 

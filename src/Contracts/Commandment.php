@@ -65,6 +65,14 @@ interface Commandment
     public function detailedDescription(): string;
 
     /**
+     * The slug of the Claude Code skill that teaches this prophet's subject —
+     * the on-demand "how to do it right" playbook a finding points at, or null
+     * when no skill backs it. Derived from the skill catalogue, so the pointer
+     * and the catalogue never drift.
+     */
+    public function skill(): ?string;
+
+    /**
      * Fully-qualified class names this commandment must never judge — the very
      * primitives it recommends as the fix (its configured `Option` / `Union` /
      * etc.). A file that DECLARES one of these classes is skipped for this
