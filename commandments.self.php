@@ -111,6 +111,7 @@ return [
                 Backend\PreferEnumForClosedSetFieldProphet::class,
                 Backend\PreferNativeEnumProphet::class,
                 Backend\PreferInjectionOverSingletonProphet::class,
+                Backend\PreferConfigDrivenRegistryProphet::class,
                 Backend\NoCompactProphet::class,
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,
