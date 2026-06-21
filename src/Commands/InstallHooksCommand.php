@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
+use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\PhpTypes\T_Json;
 use JesseGall\PhpTypes\T_String;
 
@@ -63,6 +64,10 @@ class InstallHooksCommand extends Command
         // .claude/skills/ alongside the hooks + CLAUDE.md.
         $this->installSkills();
 
+        // Install the opt-in plan-loop hook scripts when enabled (the settings
+        // entries above are already gated on the same flag).
+        $this->installPlanLoopScripts();
+
         // Install the git pre-commit gate (blocks sins) and post-commit reset
         // (clears absolutions so nothing stays silently hidden).
         $this->installCommitHook();
@@ -103,6 +108,19 @@ class InstallHooksCommand extends Command
         $this->output->writeln($installed > 0
             ? "Installed {$installed} skill(s) into .claude/skills/"
             : 'Skills already present in .claude/skills/');
+    }
+
+    private function installPlanLoopScripts(): void
+    {
+        if (! (bool) config('commandments.hooks.plan_loop', false)) {
+            return;
+        }
+
+        $status = PlanLoopHookSuite::install(base_path());
+
+        $this->output->writeln($status === PlanLoopHookSuite::STATUS_INSTALLED
+            ? 'Installed the plan-loop hook scripts into .claude/hooks/'
+            : 'Failed to write the plan-loop hook scripts — check permissions.');
     }
 
     private function ensureGitignore(): void
@@ -174,7 +192,9 @@ class InstallHooksCommand extends Command
      */
     private function buildHooksConfig(): array
     {
-        return [
+        $planLoop = (bool) config('commandments.hooks.plan_loop', false);
+
+        $config = [
             'SessionStart' => [
                 [
                     'hooks' => [
@@ -219,6 +239,17 @@ class InstallHooksCommand extends Command
                 ],
             ],
         ];
+
+        // Opt-in plan-loop suite: drives an approved plan to completion. When on,
+        // phase-committed.sh supersedes the inline post-commit reminder (it does
+        // the sin-resolver nudge AND the plan-progress memory).
+        if ($planLoop) {
+            $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
+            $config['Stop'][] = PlanLoopHookSuite::stopEntry();
+            $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
+        }
+
+        return $config;
     }
 
     /**

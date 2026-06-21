@@ -435,6 +435,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Claude Code Hooks
+    |--------------------------------------------------------------------------
+    |
+    | Optional hook suites the package installs into `.claude/`. The base hooks
+    | (session-start scripture, stop-judge, post-commit reminder) are always
+    | installed by `install-hooks`/`init`.
+    |
+    | plan_loop (OFF by default): an autonomous-continuation harness. When true,
+    | `install-hooks`/`init` ship six scripts into `.claude/hooks/` and wire a
+    | PreToolUse guard + a Stop auto-continue loop + an ExitPlanMode arm + a
+    | post-commit plan-progress-memory step. It drives an APPROVED plan to
+    | completion and refuses to idle-stop (with a 200-continuation backstop and a
+    | `plan-release.sh` escape). Leave OFF unless you want self-driving sessions.
+    |
+    */
+
+    'hooks' => [
+        'plan_loop' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Node.js Settings
     |--------------------------------------------------------------------------
     |

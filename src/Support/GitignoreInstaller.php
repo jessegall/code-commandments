@@ -38,6 +38,7 @@ final class GitignoreInstaller
         '.commandments/',
         '.commandments-reports.json',
         '.commandments-last-synced',
+        '.claude/plan-active',
     ];
 
     /**

@@ -45,6 +45,23 @@ class SyncCommand extends Command
         };
     }
 
+    /**
+     * Refresh the opt-in plan-loop hook scripts on upgrade (when enabled), so a
+     * package update ships fixed/added scripts via the post-merge sync hook. The
+     * settings.json wiring is install-hooks/init's job; sync only refreshes the
+     * scripts the wiring points at.
+     */
+    private function syncPlanLoopScripts(): void
+    {
+        if (! (bool) config('commandments.hooks.plan_loop', false)) {
+            return;
+        }
+
+        if (\JesseGall\CodeCommandments\Support\PlanLoopHookSuite::install(base_path()) === \JesseGall\CodeCommandments\Support\PlanLoopHookSuite::STATUS_INSTALLED) {
+            $this->line('Refreshed the plan-loop hook scripts in .claude/hooks/');
+        }
+    }
+
     private function autoScaffold(): void
     {
         $scaffold = config('commandments.scaffold', []);
@@ -110,6 +127,7 @@ class SyncCommand extends Command
             $this->autoScaffold();
             $this->autoSkills();
             $this->ensureGitignore();
+            $this->syncPlanLoopScripts();
         }
 
         $after = $this->option('after');

@@ -38,4 +38,12 @@ return [
     'confession' => [
         'tablet_path' => __DIR__ . '/.commandments/confessions.json',
     ],
+
+    // Optional autonomous plan-loop hook suite (OFF by default). When true,
+    // `init`/`sync` ship the plan-loop scripts into .claude/hooks/ and wire a
+    // Stop auto-continue loop that drives an APPROVED plan to completion. Only
+    // enable it if you want self-driving sessions.
+    'hooks' => [
+        'plan_loop' => false,
+    ],
 ];

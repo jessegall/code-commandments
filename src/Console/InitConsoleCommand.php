@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Support\ConfigGenerator;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
+use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,6 +43,7 @@ class InitConsoleCommand extends Command
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
         $this->installSkills($basePath, $force, $output);
+        $this->installPlanLoopScripts($basePath, $output);
         $this->installCommitHook($basePath, $force, $output);
         $this->ensureGitignore($basePath, $output);
 
@@ -262,6 +264,27 @@ class InitConsoleCommand extends Command
         return null;
     }
 
+    private function planLoopEnabled(string $basePath): bool
+    {
+        $resolved = ConfigLoader::resolve(null, $basePath);
+        $config = $resolved !== null ? ConfigLoader::load($resolved) : [];
+
+        return PlanLoopHookSuite::enabled($config);
+    }
+
+    private function installPlanLoopScripts(string $basePath, OutputInterface $output): void
+    {
+        if (! $this->planLoopEnabled($basePath)) {
+            return;
+        }
+
+        $status = PlanLoopHookSuite::install($basePath);
+
+        $output->writeln($status === PlanLoopHookSuite::STATUS_INSTALLED
+            ? 'Installed the plan-loop hook scripts into .claude/hooks/'
+            : 'Failed to write the plan-loop hook scripts — check permissions.');
+    }
+
     private function createClaudeHooks(string $basePath, bool $force, OutputInterface $output): void
     {
         $claudeDir = $basePath . '/.claude';
@@ -322,6 +345,14 @@ class InitConsoleCommand extends Command
                 ],
             ],
         ];
+
+        // Opt-in plan-loop suite (commandments.hooks.plan_loop): when on,
+        // phase-committed.sh supersedes the inline post-commit reminder.
+        if ($this->planLoopEnabled($basePath)) {
+            $ourHooks['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
+            $ourHooks['Stop'][] = PlanLoopHookSuite::stopEntry();
+            $ourHooks['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
+        }
 
         // Merge our entries into any existing hooks WITHOUT clobbering entries
         // the user added under the same event (idempotent, additive).
