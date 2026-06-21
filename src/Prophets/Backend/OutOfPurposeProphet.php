@@ -135,6 +135,30 @@ class OutOfPurposeProphet extends PhpCommandment
             'second_job' => 'assembling/hydrating itself (a builder/assembler engine, not a payload)',
             'cut' => 'Move the assembly into a dedicated factory/assembler and keep the DTO a pure payload constructed via ::from().',
         ],
+        'set' => [
+            'markers' => [
+                'suffix' => ['Set'],
+                'base' => ['Set'],
+                'interface' => ['Set'],
+                'attribute' => ['Set'],
+            ],
+            // A set is a membership store + iteration. Like a registry, it must not
+            // reflect, discover, or do I/O on the side — that is a second engine.
+            // Reflection is caught GENERICALLY (the Reflection* family) even with
+            // this list empty; these are OPTIONAL framework-specific sharpeners.
+            'forbidden' => [
+                'DOMDocument', 'PDO',
+            ],
+            'forbidden_namespaces' => [
+                'Spatie\\StructureDiscoverer',
+                'Illuminate\\Http',
+                'Illuminate\\Database',
+                'GuzzleHttp',
+            ],
+            'verbs' => ['add', 'all', 'values', 'has', 'contains', 'count', 'each', 'map', 'filter', 'remove', 'forget', 'clear', 'first', 'keys', 'merge', 'with'],
+            'second_job' => 'reflection/compilation/discovery or I/O',
+            'cut' => 'Extract it into a dedicated collaborator (e.g. a *Discoverer / *Reflector) and keep the set a membership store + iteration.',
+        ],
         'resolver' => [
             'markers' => [
                 'suffix' => ['Resolver', 'Factory'],
@@ -1209,6 +1233,7 @@ SCRIPTURE;
     {
         return match ($roleName) {
             'registry' => '*Registry',
+            'set' => '*Set',
             'data' => '*Data DTO',
             'resolver' => '*Resolver/*Factory',
             default => $roleName,

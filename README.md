@@ -505,7 +505,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_104 prophets._
+_106 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -602,6 +602,8 @@ _104 prophets._
 | `ResolverNamingHonestyProphet` | — | A *Resolver should do first-match dispatch (ideally via the kernel) — otherwise rename off the suffix |
 | `ResolverPatternProphet` | — | Drive first-match dispatch and predicate code into the resolver + Predicate pattern |
 | `SecretToLogOrResponseProphet` | — | SECURITY: a secret (config token/password, -&gt;password) must not be logged or dumped unredacted |
+| `SetNamingHonestyProphet` | — | A class shaped like a set (add + iterate, no keyed lookup) should be named *Set and extend a base |
+| `SetReturnContractProphet` | — | A set is a total, iterate-only collection — has(): bool, no Option/nullable leak, and no keyed get(string) lookup (that is a registry) |
 | `ShortClosureProphet` | — | Keep anonymous functions short — extract a big closure to a named private method |
 | `StringMatchMirrorsEnumProphet` | — | A match/switch over strings that mirror an enum's cases should dispatch on the enum |
 | `StringsThatShouldBeEnumsProphet` | — | Use enum cases instead of raw string literals for closed-set values |

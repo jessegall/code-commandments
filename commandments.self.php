@@ -77,6 +77,8 @@ return [
                 Backend\RegistryNamingHonestyProphet::class,
                 Backend\RegistryPatternProphet::class,
                 Backend\RegistryBaseBypassProphet::class,
+                Backend\SetNamingHonestyProphet::class,
+                Backend\SetReturnContractProphet::class,
                 Backend\OutOfPurposeProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\RepeatedFallbackProphet::class,
