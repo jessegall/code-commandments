@@ -39,6 +39,32 @@ public function register(): void
 Now `GatewayRegistry::get('stripe')` works everywhere, the member set is config
 (add a gateway = one config line + the class), and there is exactly one wiring site.
 
+## Hydrating after boot (when the entries aren't available yet)
+
+Sometimes the entries can only be produced once the whole app has booted — other
+providers must have registered first, or discovery needs the booted container. Do it
+in `boot()` via `$this->app->booted(...)`, which runs after every provider has
+booted. It is still EAGER and one-shot — just deferred to the booted moment, NOT a
+lazy build on first `get()`:
+
+```php
+public function boot(): void
+{
+    // Runs once, after the application has finished booting.
+    $this->app->booted(function () {
+        $registry = $this->app->make(NodeRegistry::class);
+
+        // Discovery/reflection lives in a collaborator; the registry just gets fed.
+        $registry->registerMany(
+            $this->app->make(NodeDiscovery::class)->scan(),
+        );
+    });
+}
+```
+
+Boot is preferred; `booted()` is the escape hatch when you genuinely need the booted
+app. Both are eager registration — the lookup (`get`/`all`) still never builds.
+
 ## Why the service provider
 
 - **One wiring site.** Every member is registered in one place that runs up front (at
