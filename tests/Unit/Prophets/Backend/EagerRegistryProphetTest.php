@@ -24,7 +24,7 @@ class EagerRegistryProphetTest extends TestCase
 
         $this->assertTrue($j->hasWarnings());
         $this->assertSame('eager-registry:all', $j->warnings[0]->symbol);
-        $this->assertStringContainsString('eagerly hydrated', $j->warnings[0]->message);
+        $this->assertStringContainsString('registered eagerly', $j->warnings[0]->message);
     }
 
     public function test_flags_populate_on_miss(): void
@@ -50,6 +50,35 @@ class EagerRegistryProphetTest extends TestCase
     {
         $j = $this->judge('<?php namespace App; class ThingRegistry { private $items = []; public function register($k,$v){ $this->items[$k]=$v; } public function get($k){ return $this->items[$k] ?? throw new \Exception($k); } public function has($k): bool { return isset($this->items[$k]); } public function all(): array { return $this->items; } }');
         $this->assertTrue($j->isRighteous());
+    }
+
+    public function test_does_not_flag_lazy_value_instantiation_of_a_registered_key(): void
+    {
+        // Membership is fixed at boot in $this->classes; get() defers only object
+        // CONSTRUCTION via the container and memoises it. Legitimate (issue #187).
+        $j = $this->judge('<?php namespace App; class NodeRegistry { private array $classes = []; private array $instances = []; public function __construct(private $container){} public function get(string $k){ return $this->instances[$k] ??= $this->container->make($this->classes[$k]); } }');
+        $this->assertTrue($j->isRighteous(), 'container value-instantiation of a registered key is allowed');
+    }
+
+    public function test_does_not_flag_lazy_instantiation_via_new_in_a_loop(): void
+    {
+        $j = $this->judge('<?php namespace App; class NodeRegistry { private array $classes = []; private array $instances = []; public function all(): array { foreach ($this->classes as $k => $class) { $this->instances[$k] ??= new $class(); } return $this->instances; } }');
+        $this->assertTrue($j->isRighteous(), 'new-ing already-registered class-strings is value-instantiation');
+    }
+
+    public function test_still_flags_self_make_populate_on_miss(): void
+    {
+        // A bare $this->make($k) self-call is ambiguous (could discover) — stays flagged.
+        $j = $this->judge('<?php namespace App; class ThingRegistry { private $items = []; public function for(string $k) { return $this->items[$k] ??= $this->make($k); } private function make($k) {} }');
+        $this->assertTrue($j->hasWarnings());
+    }
+
+    public function test_still_flags_lazy_value_instantiation_when_method_also_discovers(): void
+    {
+        // Even with a container make memo, a discovery self-call in the same lookup
+        // means membership is built on read → flagged.
+        $j = $this->judge('<?php namespace App; class NodeRegistry { private array $classes = []; private array $instances = []; public function __construct(private $container){} public function all(): array { $this->classes = $this->discover(); foreach ($this->classes as $k => $class) { $this->instances[$k] ??= $this->container->make($class); } return $this->instances; } private function discover(){ return []; } }');
+        $this->assertTrue($j->hasWarnings(), 'discovery on read is still membership-build');
     }
 
     public function test_does_not_flag_a_cache_that_does_not_claim_the_registry_name(): void
