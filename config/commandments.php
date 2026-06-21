@@ -162,6 +162,7 @@ return [
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
                 Backend\NoInlineParamDocProphet::class,
+                Backend\ConstantsAndPropertiesFirstProphet::class,
                 Backend\NoFacadesInServicesProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
                 Backend\PreferAndThenProphet::class,

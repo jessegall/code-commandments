@@ -505,13 +505,14 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_103 prophets._
+_104 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
 | `BehaviouralEnumDispatchProphet` | — | Extract a wide behavioural per-enum-case dispatch into strategy objects + a registration map |
 | `ComputedPropertyMustHookProphet` | — | Computed properties must use property hooks instead of constructor assignment |
 | `ConfigKeyContractProphet` | — | A config() read must target a declared config key — a missing path is a silent null |
+| `ConstantsAndPropertiesFirstProphet` | Yes | Declare all constants and properties at the top of the class, before any methods |
 | `ConstructorDependencyInjectionProphet` | — | Move service dependencies from controller methods to constructor |
 | `ControllerPrivateMethodsProphet` | — | Extract private methods to service classes when controller exceeds limit |
 | `DataClassFromArrayOnlyProphet` | Yes | Every Data class must use the FromArrayOnly trait |
