@@ -14,8 +14,9 @@ use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 
 /**
- * A registry is **boot-hydrated, read-only**: its store is filled once (the
- * constructor / mutators, called from a service provider) and its lookups are dumb
+ * A registry is **eagerly hydrated, read-only**: its store is filled once up front —
+ * at boot, or once the app has booted if needed (the constructor / mutators, called
+ * from a service provider) — and its lookups are dumb
  * reads. Flag a registry whose LOOKUP method WRITES or BUILDS the backing store —
  * lazy hydration (`$this->items ??= $this->build()`) or populate-on-miss
  * (`$this->items[$k] ??= $this->make($k)`). A class that builds/memoises on read is a
@@ -41,7 +42,7 @@ class EagerRegistryProphet extends PhpCommandment
 
     public function description(): string
     {
-        return 'A registry is boot-hydrated + read-only — lookups must not lazily build or populate-on-miss';
+        return 'A registry is eagerly hydrated + read-only — lookups must not lazily build or populate-on-miss';
     }
 
     protected function defaultTier(): Tier
@@ -65,8 +66,9 @@ class EagerRegistryProphet extends PhpCommandment
                 . 'collaborator the boot path calls, not the lookup.'
             )
             ->whenUnsure(
-                'hydrate the registry once at boot — a service provider calls '
-                . '`registerMany($discovered)` — and make lookups dumb reads (`return '
+                'hydrate the registry once up front — preferably at boot, or once the app '
+                . 'has booted if needed (a service provider calls '
+                . '`registerMany($discovered)`) — and make lookups dumb reads (`return '
                 . '$this->items`, resolve-or-throw). Move discovery/reflection into a '
                 . '`*Discovery`/`*Reflector` collaborator. See the registry skill (hydration).'
             );
@@ -75,8 +77,9 @@ class EagerRegistryProphet extends PhpCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-A registry maps a key to a registered value. It is hydrated ONCE at boot (a service
-provider calls register()/registerMany()) and read-only thereafter — lookups never
+A registry maps a key to a registered value. It is hydrated ONCE up front — at boot,
+or just after the app has booted if needed (a service provider calls register()/
+registerMany()) — and read-only thereafter — lookups never
 mutate or build the store. A "registry" that builds on first read, or creates+caches
 entries on a miss, is a cache or factory in disguise.
 
@@ -90,7 +93,7 @@ Bad — populate-on-miss:
         return $this->items[$key] ??= $this->make($key);     // creates+caches on read
     }
 
-Good — hydrate at boot, lookups are dumb reads:
+Good — hydrate eagerly up front, lookups are dumb reads:
     // ServiceProvider::boot(): $registry->registerMany($discovery->scan());
     public function all(): array { return $this->items; }
 
@@ -132,7 +135,7 @@ SCRIPTURE;
                     $warnings[] = $this->warningAt(
                         $method->getStartLine(),
                         sprintf(
-                            'Registry lookup `%s()` %s — a registry is boot-hydrated and read-only, so this is lazy hydration / populate-on-miss (a cache/factory wearing a registry\'s name). Hydrate the store once at boot (a service provider calling registerMany()), make lookups dumb reads, and move any discovery/reflection into a separate collaborator.',
+                            'Registry lookup `%s()` %s — a registry is eagerly hydrated and read-only, so this is lazy hydration / populate-on-miss (a cache/factory wearing a registry\'s name). Hydrate the store once up front — at boot, or after the app has booted if needed (a service provider calling registerMany()) — make lookups dumb reads, and move any discovery/reflection into a separate collaborator.',
                             $method->name->toString(),
                             $reason,
                         ),
