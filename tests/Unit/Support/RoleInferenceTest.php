@@ -275,6 +275,37 @@ PHP);
         $this->assertFalse($role->isStore());
     }
 
+    public function test_classifies_an_add_and_iterate_collection_as_a_set(): void
+    {
+        $role = $this->infer(<<<'PHP'
+<?php
+class EmitterSet {
+    private array $items = [];
+    public function add(object $e): void { $this->items[] = $e; }
+    public function all(): array { return $this->items; }
+}
+PHP);
+
+        $this->assertSame(Archetype::SetCollection, $role->archetype());
+        $this->assertTrue($role->isSet());
+        $this->assertFalse($role->isStore());
+    }
+
+    public function test_a_keyed_store_is_a_registry_not_a_set(): void
+    {
+        $role = $this->infer(<<<'PHP'
+<?php
+class ThingRegistry {
+    private array $items = [];
+    public function register(string $k, $v): void { $this->items[$k] = $v; }
+    public function get(string $k) { return $this->items[$k]; }
+}
+PHP);
+
+        $this->assertSame(Archetype::StoreRegistry, $role->archetype());
+        $this->assertFalse($role->isSet());
+    }
+
     private function infer(string $code): RoleInference
     {
         $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($code);

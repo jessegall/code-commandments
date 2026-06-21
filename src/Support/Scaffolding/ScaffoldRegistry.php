@@ -81,6 +81,13 @@ final class ScaffoldRegistry
                 purpose: 'Named exception thrown by the Registry base get() when a key was never registered.',
             ),
             new Scaffold(
+                name: 'set',
+                className: 'Set',
+                stubFile: 'Set.stub',
+                introducedIn: '2.28.0',
+                purpose: 'Unkeyed iterate-only collection base — add items, test membership (has), iterate (all/values); no keyed get() and no Option/nullable leak.',
+            ),
+            new Scaffold(
                 name: 'equality-operator',
                 className: 'EqualityOperator',
                 stubFile: 'EqualityOperator.stub',

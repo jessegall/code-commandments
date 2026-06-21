@@ -22,6 +22,7 @@ class SkillRegistryTest extends TestCase
         'option',
         'invariants',
         'registry',
+        'set',
         'null-object',
         'enums',
         'named-exceptions',
@@ -35,7 +36,7 @@ class SkillRegistryTest extends TestCase
     {
         $slugs = array_map(fn (Skill $s) => $s->slug, SkillRegistry::all());
 
-        $this->assertCount(10, $slugs, 'backend skills.');
+        $this->assertCount(11, $slugs, 'backend skills.');
         $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the spec.');
     }
 

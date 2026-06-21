@@ -20,6 +20,15 @@ enum Archetype: string
     case StoreRegistry = 'store_registry';
 
     /**
+     * An unkeyed, iterate-only collection (a Set): items are ADDED (append or
+     * keyed-for-dedup) and only read in BULK (`all`/`values`/iterate) with a
+     * membership test, but never looked up BY KEY as a value (the full
+     * {@see SetShape}). A registry answers "the value for this key"; a set answers
+     * "is this in, and what is in it".
+     */
+    case SetCollection = 'set_collection';
+
+    /**
      * A mutable bag / config object: a property written DIRECTLY by a public
      * setter (`$this->prop = …`), not funnelled through a keyed store.
      */

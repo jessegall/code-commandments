@@ -61,6 +61,17 @@ final class RoleInference
             return new self(Archetype::StoreRegistry, $shape->storeProperties()[0] ?? null);
         }
 
+        // SET: an unkeyed, iterate-only collection — items ADDED (append or
+        // keyed-for-dedup) and read in BULK, with NO keyed value lookup
+        // ({@see SetShape}). Checked before memo: a dedup set written via `??=`
+        // would otherwise read as a memo, but a set is iterated in bulk and never
+        // looked up by key, which the shape distinguishes.
+        $set = SetShape::detect($class);
+
+        if ($set !== null) {
+            return new self(Archetype::SetCollection, $set->storeProperties()[0] ?? null);
+        }
+
         // MEMO/CACHE: a keyed array touched ONLY as `[$k] ??= compute()` (a
         // lazy populate-on-read), with no other public mutator funnelling into
         // it. A memo is not a store you register into — it fills itself.
@@ -118,6 +129,16 @@ final class RoleInference
     public function isStore(): bool
     {
         return $this->archetype === Archetype::StoreRegistry;
+    }
+
+    /**
+     * Whether the class is structurally an unkeyed, iterate-only collection (a
+     * Set) by its shape alone — items added + iterated in bulk, no keyed value
+     * lookup.
+     */
+    public function isSet(): bool
+    {
+        return $this->archetype === Archetype::SetCollection;
     }
 
     /** The detected keyed store/memo property name, or null. */
