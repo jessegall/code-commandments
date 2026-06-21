@@ -95,6 +95,54 @@ PHP);
         $this->assertNull(RegistryShape::detect($class));
     }
 
+    public function test_dedup_set_with_membership_test_is_not_registry_shape(): void
+    {
+        // A Set keys a map purely for dedup and only TESTS membership (isset) +
+        // iterates — there is no keyed VALUE lookup, so it must not read as a
+        // registry (issue #188 false positive).
+        $class = $this->classNode(<<<'PHP'
+<?php
+class EmitterSet {
+    private array $items = [];
+    public function add(object $e): void { if (! isset($this->items[$e::class])) { $this->items[$e::class] = $e; } }
+    public function has(string $c): bool { return isset($this->items[$c]); }
+    public function all(): array { return array_values($this->items); }
+}
+PHP);
+
+        $this->assertNull(RegistryShape::detect($class));
+    }
+
+    public function test_dedup_set_via_coalesce_assign_is_not_registry_shape(): void
+    {
+        $class = $this->classNode(<<<'PHP'
+<?php
+class EmitterSet {
+    private array $items = [];
+    public function add(object $e): void { $this->items[$e::class] ??= $e; }
+    public function all(): array { return array_values($this->items); }
+}
+PHP);
+
+        $this->assertNull(RegistryShape::detect($class));
+    }
+
+    public function test_genuine_keyed_value_lookup_still_detected_alongside_a_membership_test(): void
+    {
+        // has() tests membership, but get() retrieves a VALUE by key — still a registry.
+        $class = $this->classNode(<<<'PHP'
+<?php
+class ThingRegistry {
+    private array $items = [];
+    public function register(string $k, $v): void { $this->items[$k] = $v; }
+    public function has(string $k): bool { return isset($this->items[$k]); }
+    public function get(string $k) { return $this->items[$k]; }
+}
+PHP);
+
+        $this->assertNotNull(RegistryShape::detect($class));
+    }
+
     private function classNode(string $code): Node\Stmt\Class_
     {
         $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($code);

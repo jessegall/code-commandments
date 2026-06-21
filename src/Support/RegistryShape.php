@@ -44,15 +44,11 @@ final class RegistryShape
 
         $finder = new NodeFinder;
 
-        // Assignment targets, so a write `$this->store[$k] = …` isn't also
-        // mistaken for a lookup read of the same node.
-        $writeTargets = new SplObjectStorage;
-
-        foreach ($finder->findInstanceOf($class->stmts, Expr\Assign::class) as $assign) {
-            if ($assign->var instanceof Expr\ArrayDimFetch) {
-                $writeTargets->offsetSet($assign->var, true);
-            }
-        }
+        // Keyed `$this->store[$k]` fetches that are NOT value lookups: assignment
+        // targets (`= / ??= / =&`) and key-existence tests (`isset`/`unset`). A
+        // registry's defining read retrieves a VALUE by key — testing or removing
+        // membership is what a Set does, and must not, on its own, read as a lookup.
+        $notLookups = self::nonLookupFetches($class->stmts, $finder);
 
         // "You put things in": a public, non-static method writes `$this->P[$k] = …`.
         $publicWritten = [];
@@ -79,7 +75,7 @@ final class RegistryShape
         $read = [];
 
         foreach ($finder->findInstanceOf($class->stmts, Expr\ArrayDimFetch::class) as $dim) {
-            if ($writeTargets->offsetExists($dim)) {
+            if ($notLookups->offsetExists($dim)) {
                 continue;
             }
 
@@ -114,16 +110,10 @@ final class RegistryShape
         }
 
         $finder = new NodeFinder;
-        $writeTargets = new SplObjectStorage;
-
-        foreach ($finder->findInstanceOf($method->stmts, Expr\Assign::class) as $assign) {
-            if ($assign->var instanceof Expr\ArrayDimFetch) {
-                $writeTargets->offsetSet($assign->var, true);
-            }
-        }
+        $notLookups = self::nonLookupFetches($method->stmts, $finder);
 
         foreach ($finder->findInstanceOf($method->stmts, Expr\ArrayDimFetch::class) as $dim) {
-            if ($writeTargets->offsetExists($dim)) {
+            if ($notLookups->offsetExists($dim)) {
                 continue;
             }
 
@@ -135,6 +125,48 @@ final class RegistryShape
         }
 
         return false;
+    }
+
+    /**
+     * The `$this->store[$k]` fetches in $stmts that are NOT value lookups, so they
+     * can be excluded when deciding whether a method/class reads the store: the LHS
+     * of a plain keyed write (`$this->store[$k] = …`), and the operand of a
+     * key-existence test (`isset()`) or removal (`unset()`). Retrieving a value by
+     * key is a lookup; writing, testing, or removing membership is not.
+     *
+     * (A populate-on-miss `$this->store[$k] ??= …` is deliberately NOT excluded —
+     * its read-then-maybe-write LHS is the lookup signal that distinguishes a
+     * store/memo from a write-only collection.)
+     *
+     * @param  array<Node>  $stmts
+     */
+    private static function nonLookupFetches(array $stmts, NodeFinder $finder): SplObjectStorage
+    {
+        $excluded = new SplObjectStorage;
+
+        foreach ($finder->findInstanceOf($stmts, Expr\Assign::class) as $assign) {
+            if ($assign->var instanceof Expr\ArrayDimFetch) {
+                $excluded->offsetSet($assign->var, true);
+            }
+        }
+
+        foreach ($finder->findInstanceOf($stmts, Expr\Isset_::class) as $isset) {
+            foreach ($isset->vars as $var) {
+                if ($var instanceof Expr\ArrayDimFetch) {
+                    $excluded->offsetSet($var, true);
+                }
+            }
+        }
+
+        foreach ($finder->findInstanceOf($stmts, Node\Stmt\Unset_::class) as $unset) {
+            foreach ($unset->vars as $var) {
+                if ($var instanceof Expr\ArrayDimFetch) {
+                    $excluded->offsetSet($var, true);
+                }
+            }
+        }
+
+        return $excluded;
     }
 
     /**
