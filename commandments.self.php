@@ -96,6 +96,7 @@ return [
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
                 Backend\NoInlineParamDocProphet::class,
+                Backend\ConstantsAndPropertiesFirstProphet::class,
                 Backend\PreferDataTransformersProphet::class,
                 Backend\PreferDefaultFallbackProphet::class,
                 Backend\NoOptionToNullProphet::class,
