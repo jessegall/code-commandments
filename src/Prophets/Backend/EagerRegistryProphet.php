@@ -14,13 +14,18 @@ use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 
 /**
- * A registry is **eagerly hydrated, read-only**: its store is filled once up front —
- * at boot, or once the app has booted if needed (the constructor / mutators, called
- * from a service provider) — and its lookups are dumb
- * reads. Flag a registry whose LOOKUP method WRITES or BUILDS the backing store —
- * lazy hydration (`$this->items ??= $this->build()`) or populate-on-miss
- * (`$this->items[$k] ??= $this->make($k)`). A class that builds/memoises on read is a
- * cache or factory wearing a registry's name, not a registry.
+ * A registry's **membership is eagerly registered, read-only**: which keys it holds
+ * is fixed once up front — at boot, or once the app has booted if needed (the
+ * constructor / mutators, called from a service provider) — and its lookups never
+ * change that set. Flag a registry whose LOOKUP method DISCOVERS or BUILDS its
+ * membership on read — lazy hydration (`$this->items ??= $this->build()`),
+ * discovery/reflection/IO, or registering on the fly. A class that decides what it
+ * contains at read time is registering at runtime instead of in a service provider.
+ *
+ * Lazy VALUE instantiation is allowed: deferring only object construction for an
+ * already-registered key — `$this->instances[$k] ??= $this->container->make($this->classes[$k])`
+ * — keeps the key set fixed at boot and merely materialises the value on demand
+ * (the pattern that avoids building objects at package:discover / boot time).
  *
  * Decisive AST signal: the store is written INSIDE a read method. Role via the
  * `Registry` CLAIM (a base/name ending `Registry`, a `Registry` interface, or a
@@ -77,34 +82,45 @@ class EagerRegistryProphet extends PhpCommandment
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-A registry maps a key to a registered value. It is hydrated ONCE up front — at boot,
-or just after the app has booted if needed (a service provider calls register()/
-registerMany()) — and read-only thereafter — lookups never
-mutate or build the store. A "registry" that builds on first read, or creates+caches
-entries on a miss, is a cache or factory in disguise.
+A registry maps a key to a registered value. Its MEMBERSHIP — which keys exist — is
+registered ONCE up front: at boot, or just after the app has booted if needed (a
+service provider calls register()/registerMany()). Lookups never discover, build, or
+register membership. A "registry" that decides what it contains on first read is
+registering at runtime instead of in a service provider.
 
-Bad — the lookup builds the store on first access:
+Bad — the lookup discovers/builds its membership on first access:
     public function all(): array {
         return $this->items ??= $this->discoverAndBuild();   // reflection/discovery on READ
     }
 
-Bad — populate-on-miss:
-    public function for(string $key): Thing {
-        return $this->items[$key] ??= $this->make($key);     // creates+caches on read
+Bad — registering on the fly inside a lookup:
+    public function get(string $key): Thing {
+        if (! isset($this->items[$key])) {
+            $this->register($key, $this->discover($key));     // membership grows at read time
+        }
+        return $this->items[$key];
     }
 
-Good — hydrate eagerly up front, lookups are dumb reads:
+Good — register membership eagerly up front, lookups are dumb reads:
     // ServiceProvider::boot(): $registry->registerMany($discovery->scan());
     public function all(): array { return $this->items; }
 
-WHAT FIRES — a registry-role class whose lookup method (`all`/`get`/`find`/`has`/a
-by-key getter) writes the store (`$this->p = …`, `[$k] =`, `??=`), calls a self
-mutator (`$this->register(...)`), or builds/discovers (a `build*`/`discover*` call,
-`Discover::…`, reflection).
+Good — defer only VALUE construction for an already-registered key (allowed):
+    public function get(string $key): Thing {
+        // keys fixed at boot in $this->classes; only the object is built lazily
+        return $this->instances[$key] ??= $this->container->make($this->classes[$key]);
+    }
 
-WHAT DOES NOT — the store is written only in the ctor/mutators; a class that does not
-claim the registry role/name; discovery in a separate collaborator. Advisory (a
-WARNING); not auto-fixable.
+WHAT FIRES — a registry-role class whose lookup method (`all`/`get`/`find`/`has`/a
+by-key getter) builds/discovers its membership: assigns the whole store
+(`$this->p = …`, `??=`), writes a keyed slot to anything other than a constructed
+value, calls a self mutator (`$this->register(...)`), or runs discovery (a
+`build*`/`discover*` self-call, `Discover::…`, reflection).
+
+WHAT DOES NOT — membership written only in the ctor/mutators; lazy VALUE
+instantiation of an already-registered key (`$this->instances[$k] ??= $container->make(...)`
+/ `= new …`); a class that does not claim the registry role/name; discovery in a
+separate collaborator. Advisory (a WARNING); not auto-fixable.
 SCRIPTURE;
     }
 
@@ -135,7 +151,7 @@ SCRIPTURE;
                     $warnings[] = $this->warningAt(
                         $method->getStartLine(),
                         sprintf(
-                            'Registry lookup `%s()` %s — a registry is eagerly hydrated and read-only, so this is lazy hydration / populate-on-miss (a cache/factory wearing a registry\'s name). Hydrate the store once up front — at boot, or after the app has booted if needed (a service provider calling registerMany()) — make lookups dumb reads, and move any discovery/reflection into a separate collaborator.',
+                            'Registry lookup `%s()` %s — a registry\'s membership is registered eagerly and read-only, so this discovers/builds membership at read time (registering at runtime instead of in a service provider). Register membership once up front — at boot, or after the app has booted if needed (a service provider calling registerMany()) — and make lookups dumb reads; move any discovery/reflection into a separate collaborator. (Deferring only VALUE construction for an already-registered key, e.g. `$this->instances[$k] ??= $container->make($this->classes[$k])`, is fine.)',
                             $method->name->toString(),
                             $reason,
                         ),
@@ -212,13 +228,11 @@ SCRIPTURE;
     /** A short reason if the lookup writes/builds the store, else null. */
     private function mutatesStore(Node\Stmt\ClassMethod $method, NodeFinder $finder): ?string
     {
-        foreach ($finder->find((array) $method->stmts, fn (Node $n) => $n instanceof Expr\Assign || $n instanceof Expr\AssignOp || $n instanceof Expr\AssignRef) as $assign) {
-            /** @var Expr\Assign|Expr\AssignOp|Expr\AssignRef $assign */
-            if ($this->isThisPropertyTarget($assign->var)) {
-                return 'writes the backing store ($this->… =)';
-            }
-        }
-
+        // Membership-build signals first — discovery/reflection/IO or self-mutators
+        // determine WHAT keys the store holds on read. This is the real anti-pattern
+        // (registering / discovering at runtime instead of eagerly in a service
+        // provider) and must win over any lazy value-instantiation memo in the same
+        // method.
         foreach ($finder->findInstanceOf((array) $method->stmts, Expr\MethodCall::class) as $call) {
             if (! $call->var instanceof Expr\Variable || $call->var->name !== 'this' || ! $call->name instanceof Node\Identifier) {
                 continue;
@@ -247,7 +261,71 @@ SCRIPTURE;
             }
         }
 
+        // Store writes. A keyed populate-on-miss that only INSTANTIATES a value for
+        // an already-registered key — `$this->instances[$k] ??= $this->container->make($this->classes[$k])`
+        // or `... = new $this->classes[$k]()` — is legitimate lazy instantiation:
+        // the key set was fixed at boot, only object construction is deferred. Any
+        // other store write mutates membership on read and is flagged.
+        foreach ($finder->find((array) $method->stmts, fn (Node $n) => $n instanceof Expr\Assign || $n instanceof Expr\AssignOp || $n instanceof Expr\AssignRef) as $assign) {
+            /** @var Expr\Assign|Expr\AssignOp|Expr\AssignRef $assign */
+            if (! $this->isThisPropertyTarget($assign->var)) {
+                continue;
+            }
+
+            if ($this->isLazyValueInstantiation($assign)) {
+                continue;
+            }
+
+            return 'writes the backing store ($this->… =)';
+        }
+
         return null;
+    }
+
+    /**
+     * A keyed memo write whose value is CONSTRUCTED for an already-registered key,
+     * not discovered: `$this->instances[$k] ??= $container->make(...)` / `= new …`.
+     * Keys stay fixed; only the object is built lazily — the legitimate case the
+     * doctrine permits, distinct from membership discovery on read.
+     */
+    private function isLazyValueInstantiation(Expr\Assign|Expr\AssignOp|Expr\AssignRef $assign): bool
+    {
+        if (! $assign instanceof Expr\Assign && ! $assign instanceof Expr\AssignOp\Coalesce) {
+            return false;
+        }
+
+        // Must target a single keyed slot ($this->prop[$k]); a whole-store write
+        // ($this->prop = …) replaces membership and is never value-instantiation.
+        if (! $assign->var instanceof Expr\ArrayDimFetch) {
+            return false;
+        }
+
+        return $this->isValueConstruction($assign->expr);
+    }
+
+    /**
+     * The expression builds ONE object value: `new …` or a `make`/`makeWith`/
+     * `resolve`/`instantiate` call on a container — NOT `$this->make()`/`$this->build()`
+     * (a self-call that could discover membership; left to the membership-build checks).
+     */
+    private function isValueConstruction(Expr $expr): bool
+    {
+        if ($expr instanceof Expr\New_) {
+            return true;
+        }
+
+        if ($expr instanceof Expr\MethodCall
+            && $expr->name instanceof Node\Identifier
+            && ! ($expr->var instanceof Expr\Variable && $expr->var->name === 'this')
+        ) {
+            return in_array(strtolower($expr->name->toString()), ['make', 'makewith', 'resolve', 'instantiate'], true);
+        }
+
+        if ($expr instanceof Expr\StaticCall && $expr->name instanceof Node\Identifier) {
+            return in_array(strtolower($expr->name->toString()), ['make', 'makewith', 'resolve', 'instantiate'], true);
+        }
+
+        return false;
     }
 
     private function isThisPropertyTarget(Node $var): bool

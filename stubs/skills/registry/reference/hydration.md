@@ -79,26 +79,46 @@ app. Both are eager registration — the lookup (`get`/`all`) still never builds
 - **Lazy values.** Register a `fn () => $app->make($class)` factory, not an eager
   instance, so members are constructed on first `get()`, not at boot.
 
-## Read-only once hydrated
+## Membership eager, values may be lazy
 
-Hydration happens once, up front — preferably at boot, or just after the application
-has booted if the data is only available then. **When** it happens is flexible; that
-it is EAGER (registered up front, not built on first read) is the rule. Every lookup
-thereafter is a **dumb read** — it never writes or builds the store:
+The rule is about **membership** — *which keys exist*. That is registered once, up
+front (at boot, or just after the app has booted if the data is only available then),
+and a lookup never changes it. **Constructing the VALUE** behind a registered key,
+on the other hand, may be deferred — that is the whole point of registering
+`fn () => $app->make($class)` factories.
 
-- **No lazy hydration.** `public function all() { return $this->items ??= $this->build(); }`
-  builds the store on first read. Hydrate eagerly up front instead; `all()` just
-  returns `$this->items`.
-- **No populate-on-miss.** `return $this->items[$k] ??= $this->make($k);` creates and
-  caches on a miss — that is a *cache/factory*, not a registry. Register everything up
-  front; `get()` resolves-or-throws, never creates.
+Every lookup is a **dumb read of membership** — it never discovers, builds, or
+registers keys:
+
+- **No lazy membership hydration.** `public function all() { return $this->items ??= $this->build(); }`
+  builds the set on first read. Register membership eagerly up front instead; `all()`
+  just returns `$this->items`.
+- **No registering on the fly.** Growing the key set inside a lookup —
+  `if (! isset($this->items[$k])) $this->register($k, $this->discover($k));` — is
+  registering at runtime instead of in a service provider. Register everything up
+  front; `get()` resolves-or-throws, never registers.
 - **No discovery/reflection in a lookup.** `Discover::in(...)` / `new ReflectionClass`
   inside `get()`/`all()` belongs in a separate `*Discovery`/`*Reflector` collaborator
   that the boot path uses to produce the entries it registers.
 
-A class that builds, memoises-on-miss, or reflects on read is a cache/factory wearing
-a registry's name — name it honestly (`*Cache`/`*Factory`), or make it a real,
-eagerly-hydrated registry.
+**Allowed — lazy value instantiation of an already-registered key.** Deferring only
+object construction, with membership fixed at boot, is legitimate and is NOT flagged:
+
+```php
+// $this->classes was filled eagerly at boot; only the object is built on demand.
+public function get(string $key): Node {
+    return $this->instances[$key] ??= $this->container->make($this->classes[$key]);
+}
+```
+
+This is exactly how a registry avoids building objects (e.g. spatie/laravel-data DTOs)
+at `package:discover`/boot time: the key set is known up front, the value is
+materialised on first `get()`. The smell is when the *key set* — not the value — is
+decided on read.
+
+A class that discovers or grows its membership on read is registering at runtime; move
+that discovery into the boot path. (A class that builds its whole contents from its own
+`discover()` is a *catalog*, not a registry — name it honestly: `*Catalog`/`*Map`.)
 
 ## Anti-patterns
 
@@ -111,5 +131,6 @@ eagerly-hydrated registry.
 
 Pairs with **PreferConfigDrivenRegistry** (a hardcoded set that config already
 declares → hydrate a registry in a provider instead) and enforced by
-**EagerRegistry** (a registry lookup that writes/builds the store → lazy hydration /
-populate-on-miss).
+**EagerRegistry** (a registry lookup that discovers/builds/registers its membership on
+read → register it eagerly in a service provider instead; deferring only value
+construction for an already-registered key is fine).
