@@ -56,6 +56,25 @@ PHP));
         $this->assertNull($shape, 'a keyed value lookup is a registry, not a set');
     }
 
+    public function test_does_not_detect_a_keyed_registration_store_without_a_forward_getter(): void
+    {
+        // #190: a keyed store registered BY an external key param (register($k,$v))
+        // with keyed membership + a reverse lookup, whose forward per-key read was
+        // extracted elsewhere, is a Registry — NOT a set — even with no get(string).
+        $shape = SetShape::detect($this->classNode(<<<'PHP'
+<?php
+class DefinitionRegistry {
+    private array $pipes = [];
+    public function registerPipe(string $class, $def): void { $this->pipes[$class] = $def; }
+    public function hasPipe(string $class): bool { return isset($this->pipes[$class]); }
+    public function classForKey(string $key): ?string { return null; }
+    public function all(): array { return array_values($this->pipes); }
+}
+PHP));
+
+        $this->assertNull($shape, 'register-by-key is a Registry, not a set (issue #190)');
+    }
+
     public function test_does_not_detect_a_memo(): void
     {
         $shape = SetShape::detect($this->classNode(<<<'PHP'

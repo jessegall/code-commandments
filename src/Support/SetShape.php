@@ -61,6 +61,8 @@ final class SetShape
                 continue;
             }
 
+            $params = self::paramNames($method);
+
             foreach ($finder->find($method->stmts, static fn (Node $n): bool => $n instanceof Expr\Assign || $n instanceof Expr\AssignOp\Coalesce) as $assign) {
                 /** @var Expr\Assign|Expr\AssignOp\Coalesce $assign */
                 if (! $assign->var instanceof Expr\ArrayDimFetch) {
@@ -69,9 +71,22 @@ final class SetShape
 
                 $prop = self::thisProp($assign->var);
 
-                if ($prop !== null) {
-                    $written[$prop] = true;
+                if ($prop === null) {
+                    continue;
                 }
+
+                // REGISTRATION STORE, not a set: the key is an external method
+                // PARAMETER (`register($key, $value)` → `$this->store[$key] = …`).
+                // That is a keyed store looked up by a lookup key, not a Set keyed
+                // by an item's own identity (`$this->items[$item::class] = $item`,
+                // where the key is derived from the value). Bail out.
+                $dim = $assign->var->dim;
+
+                if ($dim instanceof Expr\Variable && is_string($dim->name) && isset($params[$dim->name])) {
+                    return null;
+                }
+
+                $written[$prop] = true;
             }
         }
 
@@ -219,6 +234,24 @@ final class SetShape
     private static function thisProp(Expr\ArrayDimFetch $node): ?string
     {
         return self::propName($node->var);
+    }
+
+    /**
+     * The names of a method's parameters (for spotting a register-by-key write).
+     *
+     * @return array<string, true>
+     */
+    private static function paramNames(Node\Stmt\ClassMethod $method): array
+    {
+        $names = [];
+
+        foreach ($method->params as $param) {
+            if ($param->var instanceof Expr\Variable && is_string($param->var->name)) {
+                $names[$param->var->name] = true;
+            }
+        }
+
+        return $names;
     }
 
     /** The `prop` of a `$this->prop` property-fetch, or null. */
