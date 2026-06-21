@@ -331,6 +331,10 @@ class InitConsoleCommand extends Command
                             'type' => 'command',
                             'command' => 'vendor/bin/commandments install-skills --auto 2>/dev/null || true',
                         ],
+                        [
+                            'type' => 'command',
+                            'command' => 'vendor/bin/commandments skills 2>/dev/null || true',
+                        ],
                     ],
                 ],
             ],
