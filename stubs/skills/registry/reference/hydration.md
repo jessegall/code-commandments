@@ -6,8 +6,11 @@ not scattered `register()` calls across the app.
 
 ## The pattern
 
-Bind the registry as a singleton and hydrate it once at boot, iterating the config
-that declares the members:
+Bind the registry as a singleton and hydrate it once, up front — preferably at boot
+(a service provider's `register()`/`boot()`), iterating the config that declares the
+members. If a registry genuinely needs data only available later, hydrating it once
+*after the application has booted* is fine too — the rule is that registration is
+EAGER and in one place, not the exact moment:
 
 ```php
 // config/billing.php  — the members live as DATA
@@ -38,9 +41,9 @@ Now `GatewayRegistry::get('stripe')` works everywhere, the member set is config
 
 ## Why the service provider
 
-- **One wiring site.** Every member is registered in one place that runs at boot, so
-  the registry's contents are legible and change in one spot — not re-derived per
-  caller or hidden in a constructor.
+- **One wiring site.** Every member is registered in one place that runs up front (at
+  boot, or once the app has booted), so the registry's contents are legible and change
+  in one spot — not re-derived per caller or hidden in a constructor.
 - **Config-driven.** The member set lives as DATA in config; the provider just walks
   it. Adding a member is a config edit, not a code change to the registry. This is the
   positive form of what `PreferConfigDrivenRegistry` flags — an enum/match that
@@ -50,17 +53,19 @@ Now `GatewayRegistry::get('stripe')` works everywhere, the member set is config
 - **Lazy values.** Register a `fn () => $app->make($class)` factory, not an eager
   instance, so members are constructed on first `get()`, not at boot.
 
-## Read-only after boot
+## Read-only once hydrated
 
-Hydration happens once, at boot. Every lookup thereafter is a **dumb read** — it
-never writes or builds the store:
+Hydration happens once, up front — preferably at boot, or just after the application
+has booted if the data is only available then. **When** it happens is flexible; that
+it is EAGER (registered up front, not built on first read) is the rule. Every lookup
+thereafter is a **dumb read** — it never writes or builds the store:
 
 - **No lazy hydration.** `public function all() { return $this->items ??= $this->build(); }`
-  builds the store on first read. Hydrate at boot instead; `all()` just returns
-  `$this->items`.
+  builds the store on first read. Hydrate eagerly up front instead; `all()` just
+  returns `$this->items`.
 - **No populate-on-miss.** `return $this->items[$k] ??= $this->make($k);` creates and
-  caches on a miss — that is a *cache/factory*, not a registry. Register everything at
-  boot; `get()` resolves-or-throws, never creates.
+  caches on a miss — that is a *cache/factory*, not a registry. Register everything up
+  front; `get()` resolves-or-throws, never creates.
 - **No discovery/reflection in a lookup.** `Discover::in(...)` / `new ReflectionClass`
   inside `get()`/`all()` belongs in a separate `*Discovery`/`*Reflector` collaborator
   that the boot path uses to produce the entries it registers.
