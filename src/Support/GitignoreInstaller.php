@@ -39,6 +39,7 @@ final class GitignoreInstaller
         '.commandments-reports.json',
         '.commandments-last-synced',
         '.claude/plan-active',
+        'HANDOFF.md',
     ];
 
     /**

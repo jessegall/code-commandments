@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
+use JesseGall\CodeCommandments\Support\HandoffHelper;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
@@ -43,6 +44,7 @@ class InitConsoleCommand extends Command
         $this->createClaudeHooks($basePath, $force, $output);
         $this->createClaudeMd($basePath, $output);
         $this->installSkills($basePath, $force, $output);
+        $this->installHandoffHelper($basePath, $output);
         $this->installPlanLoopScripts($basePath, $output);
         $this->installCommitHook($basePath, $force, $output);
         $this->ensureGitignore($basePath, $output);
@@ -262,6 +264,15 @@ class InitConsoleCommand extends Command
         }
 
         return null;
+    }
+
+    private function installHandoffHelper(string $basePath, OutputInterface $output): void
+    {
+        $status = HandoffHelper::install($basePath);
+
+        $output->writeln($status === HandoffHelper::STATUS_INSTALLED
+            ? 'Installed the handoff helper at .claude/hooks/handoff.sh'
+            : 'Failed to write the handoff helper — check permissions.');
     }
 
     private function planLoopEnabled(string $basePath): bool

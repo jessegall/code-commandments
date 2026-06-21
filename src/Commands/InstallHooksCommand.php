@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
+use JesseGall\CodeCommandments\Support\HandoffHelper;
 use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\PhpTypes\T_Json;
@@ -68,6 +69,10 @@ class InstallHooksCommand extends Command
         // entries above are already gated on the same flag).
         $this->installPlanLoopScripts();
 
+        // Install the always-on handoff helper (a manual `handoff.sh` the model
+        // runs to scaffold HANDOFF.md).
+        $this->installHandoffHelper();
+
         // Install the git pre-commit gate (blocks sins) and post-commit reset
         // (clears absolutions so nothing stays silently hidden).
         $this->installCommitHook();
@@ -108,6 +113,15 @@ class InstallHooksCommand extends Command
         $this->output->writeln($installed > 0
             ? "Installed {$installed} skill(s) into .claude/skills/"
             : 'Skills already present in .claude/skills/');
+    }
+
+    private function installHandoffHelper(): void
+    {
+        $status = HandoffHelper::install(base_path());
+
+        $this->output->writeln($status === HandoffHelper::STATUS_INSTALLED
+            ? 'Installed the handoff helper at .claude/hooks/handoff.sh'
+            : 'Failed to write the handoff helper — check permissions.');
     }
 
     private function installPlanLoopScripts(): void

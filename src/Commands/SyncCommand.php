@@ -51,6 +51,24 @@ class SyncCommand extends Command
      * settings.json wiring is install-hooks/init's job; sync only refreshes the
      * scripts the wiring points at.
      */
+    /**
+     * Refresh the always-on handoff helper on upgrade so consumers pick up
+     * fixes to handoff.sh via the post-merge sync hook.
+     */
+    private function syncHandoffHelper(): void
+    {
+        // Only when the consumer already uses the package's Claude hooks (a
+        // .claude/hooks dir exists) — a routine sync shouldn't create it for a
+        // CLI-only consumer, but should keep/seed the helper for hook users.
+        if (! is_dir(base_path('.claude/hooks'))) {
+            return;
+        }
+
+        if (\JesseGall\CodeCommandments\Support\HandoffHelper::install(base_path()) === \JesseGall\CodeCommandments\Support\HandoffHelper::STATUS_INSTALLED) {
+            $this->line('Refreshed the handoff helper at .claude/hooks/handoff.sh');
+        }
+    }
+
     private function syncPlanLoopScripts(): void
     {
         if (! (bool) config('commandments.hooks.plan_loop', false)) {
@@ -127,6 +145,7 @@ class SyncCommand extends Command
             $this->autoScaffold();
             $this->autoSkills();
             $this->ensureGitignore();
+            $this->syncHandoffHelper();
             $this->syncPlanLoopScripts();
         }
 
