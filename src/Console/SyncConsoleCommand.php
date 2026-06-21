@@ -109,6 +109,24 @@ class SyncConsoleCommand extends Command
         };
     }
 
+    /**
+     * Refresh the opt-in plan-loop hook scripts on upgrade (when enabled in
+     * config). Mirrors the artisan SyncCommand; only refreshes the scripts, not
+     * the settings.json wiring (that is init's job).
+     */
+    private function syncPlanLoopScripts(string $configPath, string $basePath, OutputInterface $output): void
+    {
+        $config = ConfigLoader::load($configPath);
+
+        if (! \JesseGall\CodeCommandments\Support\PlanLoopHookSuite::enabled($config)) {
+            return;
+        }
+
+        if (\JesseGall\CodeCommandments\Support\PlanLoopHookSuite::install($basePath) === \JesseGall\CodeCommandments\Support\PlanLoopHookSuite::STATUS_INSTALLED) {
+            $output->writeln('Refreshed the plan-loop hook scripts in .claude/hooks/');
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $basePath = getcwd();
@@ -126,6 +144,7 @@ class SyncConsoleCommand extends Command
             $this->autoScaffold($configPath, $basePath, $output);
             $this->autoSkills($configPath, $basePath, $output);
             $this->ensureGitignore($configPath, $basePath, $output);
+            $this->syncPlanLoopScripts($configPath, $basePath, $output);
         }
 
         $after = $input->getOption('after');
