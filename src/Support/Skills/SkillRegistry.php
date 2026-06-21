@@ -67,6 +67,15 @@ final class SkillRegistry
                 ],
             ),
             new Skill(
+                slug: 'set',
+                introducedIn: '2.28.0',
+                purpose: 'The set contract (add / has -> bool / all / values), an unkeyed iterate-only collection; Set vs Registry (membership + iteration vs keyed value lookup); name it *Set and extend the scaffolded Set base; a keyed get(string) on a set means you wanted a registry.',
+                prophets: [
+                    'SetNamingHonesty',
+                    'SetReturnContract',
+                ],
+            ),
+            new Skill(
                 slug: 'null-object',
                 introducedIn: '2.5.0',
                 purpose: 'When a Null Object / empty instance (empty collection, NullCallable) beats an Option or a null default; Null Object vs Option decision and the no-op-behaviour patterns.',

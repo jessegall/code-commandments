@@ -569,6 +569,38 @@ PHP);
         $this->assertStringContainsString('ReflectionClass', $judgment->warnings[0]->message);
     }
 
+    public function test_flags_a_set_that_reflects_on_the_side(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+final class NodeSet
+{
+    private array $items = [];
+    public function add(object $node): void { $this->items[] = $node; }
+    public function all(): array { return $this->items; }
+    public function describe(object $node): array { return (new \ReflectionClass($node))->getMethods(); }
+}
+PHP);
+
+        $this->assertTrue($judgment->hasWarnings());
+        $this->assertStringContainsString('*Set', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('ReflectionClass', $judgment->warnings[0]->message);
+    }
+
+    public function test_does_not_flag_a_plain_set(): void
+    {
+        $judgment = $this->judge(<<<'PHP'
+final class NodeSet
+{
+    private array $items = [];
+    public function add(object $node): void { $this->items[] = $node; }
+    public function has(object $node): bool { return in_array($node, $this->items, true); }
+    public function all(): array { return $this->items; }
+}
+PHP);
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n\nnamespace App;\n\n{$body}\n");

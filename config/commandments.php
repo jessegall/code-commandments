@@ -172,6 +172,8 @@ return [
                 Backend\RegistryNamingHonestyProphet::class,
                 Backend\RegistryPatternProphet::class,
                 Backend\RegistryBaseBypassProphet::class,
+                Backend\SetNamingHonestyProphet::class,
+                Backend\SetReturnContractProphet::class,
                 Backend\OutOfPurposeProphet::class => [
                     // Role-vs-behaviour incoherence: a class with a role MARKER
                     // (*Registry/*Data/*Resolver) whose body shows a STRUCTURAL
