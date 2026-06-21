@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Commands\ReportsCommand;
 use JesseGall\CodeCommandments\Commands\ScaffoldCommand;
 use JesseGall\CodeCommandments\Commands\InstallHooksCommand;
 use JesseGall\CodeCommandments\Commands\InstallSkillsCommand;
+use JesseGall\CodeCommandments\Commands\SkillsCommand;
 use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
 use JesseGall\CodeCommandments\Commands\JudgeCommand;
 use JesseGall\CodeCommandments\Commands\MakeProphetCommand;
@@ -104,6 +105,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
                 InstallSkillsCommand::class,
+                SkillsCommand::class,
                 InstallSyncHookCommand::class,
                 SyncCommand::class,
             ]);
