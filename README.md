@@ -519,7 +519,7 @@ _103 prophets._
 | `DeadProducerProphet` | — | A private method that returns a value nobody uses should be void (or its callers should use the result) |
 | `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x-&gt;endpoint-&gt;field to branch (Law of Demeter) |
 | `DuplicateCodeProphet` | — | Extract duplicated code fragments instead of copy-pasting a method body |
-| `EagerRegistryProphet` | — | A registry is boot-hydrated + read-only — lookups must not lazily build or populate-on-miss |
+| `EagerRegistryProphet` | — | A registry is eagerly hydrated + read-only — lookups must not lazily build or populate-on-miss |
 | `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named forX() factories |
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
 | `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |
