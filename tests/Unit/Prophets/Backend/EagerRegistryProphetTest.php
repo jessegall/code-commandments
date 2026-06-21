@@ -24,7 +24,7 @@ class EagerRegistryProphetTest extends TestCase
 
         $this->assertTrue($j->hasWarnings());
         $this->assertSame('eager-registry:all', $j->warnings[0]->symbol);
-        $this->assertStringContainsString('boot-hydrated', $j->warnings[0]->message);
+        $this->assertStringContainsString('eagerly hydrated', $j->warnings[0]->message);
     }
 
     public function test_flags_populate_on_miss(): void
