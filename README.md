@@ -136,6 +136,7 @@ Every command is available via both Laravel artisan
 | [`reports`](#reports) | Show the status of prophet reports this project filed (resolved upstream yet?) |
 | [`scaffold`](#scaffold) | Generate recommended support classes (Option, FromArrayOnly, …) into your namespace |
 | [`scripture`](#scripture) | List all commandments and their descriptions |
+| [`skills`](#skills) | List the available Code Commandments skills (what they teach + where to read) |
 | [`sync`](#sync) | Add newly available prophets to your config file |
 
 ### `absolve`
@@ -259,6 +260,10 @@ List all commandments and their descriptions.
 | `--scroll` | `<value>` | Filter by specific scroll (group) |
 | `--prophet` | `<value>` | Show details for a specific prophet |
 | `--detailed` | — | Show full descriptions with examples |
+
+### `skills`
+
+List the available Code Commandments skills (what they teach + where to read).
 
 ### `sync`
 
