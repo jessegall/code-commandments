@@ -174,10 +174,14 @@ print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
   fi
 
   # 4. Commit ONLY our paths via pathspec, so the commit never sweeps up other
-  #    work the developer happens to have staged. --no-verify bypasses the
-  #    consumer's pre-commit gate for this maintenance commit.
-  echo "  → git commit --no-verify (scoped to bump paths)"
-  if git -C "$dir" commit --no-verify \
+  #    work the developer happens to have staged. Disable ALL git hooks for this
+  #    maintenance commit via `core.hooksPath=/dev/null` — `--no-verify` alone
+  #    skips pre-commit/commit-msg but NOT post-commit, and the consumer's
+  #    post-commit hook runs `absolve --clear`, which would wipe a working
+  #    agent's confessions/absolutions mid-task. Bypassing every hook keeps the
+  #    agent's state intact while we sync underneath them.
+  echo "  → git commit (all hooks bypassed, scoped to bump paths)"
+  if git -C "$dir" -c core.hooksPath=/dev/null commit --no-verify \
        -m "chore: bump $PACKAGE to latest + re-sync prophets/scaffold" \
        -- "${paths[@]}"; then
     echo "  ✓ Committed."
