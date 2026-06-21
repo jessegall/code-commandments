@@ -114,6 +114,22 @@ class SyncConsoleCommand extends Command
      * config). Mirrors the artisan SyncCommand; only refreshes the scripts, not
      * the settings.json wiring (that is init's job).
      */
+    /**
+     * Install/refresh the always-on handoff helper on upgrade, but only for a
+     * consumer that already uses the package's Claude hooks (a .claude/hooks dir
+     * exists) — a routine sync shouldn't create it for a CLI-only consumer.
+     */
+    private function syncHandoffHelper(string $basePath, OutputInterface $output): void
+    {
+        if (! is_dir($basePath . '/.claude/hooks')) {
+            return;
+        }
+
+        if (\JesseGall\CodeCommandments\Support\HandoffHelper::install($basePath) === \JesseGall\CodeCommandments\Support\HandoffHelper::STATUS_INSTALLED) {
+            $output->writeln('Refreshed the handoff helper at .claude/hooks/handoff.sh');
+        }
+    }
+
     private function syncPlanLoopScripts(string $configPath, string $basePath, OutputInterface $output): void
     {
         $config = ConfigLoader::load($configPath);
@@ -144,6 +160,7 @@ class SyncConsoleCommand extends Command
             $this->autoScaffold($configPath, $basePath, $output);
             $this->autoSkills($configPath, $basePath, $output);
             $this->ensureGitignore($configPath, $basePath, $output);
+            $this->syncHandoffHelper($basePath, $output);
             $this->syncPlanLoopScripts($configPath, $basePath, $output);
         }
 
