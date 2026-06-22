@@ -164,6 +164,16 @@ class SyncConsoleCommand extends Command
         }
     }
 
+    /**
+     * Re-assert the package-owned CLAUDE.md section on every update (replace-only).
+     */
+    private function reassertClaudeMd(string $basePath, OutputInterface $output): void
+    {
+        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert($basePath, \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STANDALONE) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
+            $output->writeln('Refreshed the Code Commandments section in CLAUDE.md');
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $basePath = getcwd();
@@ -184,6 +194,7 @@ class SyncConsoleCommand extends Command
             $this->syncHandoffHelper($basePath, $output);
             $this->syncPlanLoopScripts($configPath, $basePath, $output);
             $this->reassertHookWiring($configPath, $basePath, $output);
+            $this->reassertClaudeMd($basePath, $output);
         }
 
         $after = $input->getOption('after');
