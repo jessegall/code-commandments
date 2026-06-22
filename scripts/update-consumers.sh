@@ -1,33 +1,31 @@
 #!/usr/bin/env bash
 #
 # Bump jessegall/code-commandments to the latest version in each registered
-# consumer project, re-sync prophets + scaffold, and commit ONLY the resulting
-# composer.json, commandments.php (root or config/), and the generated scaffold
-# files. The commit uses --no-verify so the consumer's own pre-commit gate does
-# not block this maintenance commit.
+# consumer project — nothing more. `composer require` does the whole job:
+#
+#   • it updates AND pins the constraint to ^latest automatically; and
+#   • it fires the consumer's `post-update-cmd` — the `sync --after=previous`
+#     that `install-sync-hook` wired in — which re-asserts everything a bump must
+#     propagate: new prophets, scaffold, skills, the settings.json hook wiring,
+#     and the CLAUDE.md section. (sync is idempotent; runs only when needed.)
+#
+# So there is no separate pin / sync / scaffold step here, and NO commit: the
+# resulting changes are left in each consumer's working tree for you to review,
+# commit, and push yourself (never pushed from here).
 #
 # Consumers are registered in this package's .env (NOT committed):
 #
 #   CONSUMERS=../app-b,../app-a
 #
-# Paths are resolved relative to the package root. See .env.example. If no list is
-# configured, the script AUTO-DETECTS sibling repos that require the package on the
-# current major (older-major pins and dev-branch scratch repos are skipped).
-#
-# Safety guarantees (so a bump can never touch the developer's own work):
-#   • stays on each consumer's current branch — never checks out / switches;
-#   • commits ONLY its own paths via explicit pathspec (composer.json/lock when
-#     tracked, commandments.php, .commandments-last-synced, generated scaffold) —
-#     a bare commit could sweep the developer's pre-staged WIP, this never does;
-#   • skips the commit entirely when none of those paths changed;
-#   • never pushes — review and push yourself.
+# Paths resolve relative to the package root (see .env.example). With no list
+# configured, sibling repos that require the package on the current major are
+# auto-detected (older-major pins and dev-branch scratch repos are skipped).
 #
 # Usage: scripts/update-consumers.sh        (or: composer update-consumers)
 set -uo pipefail
 
 PKG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="jessegall/code-commandments"
-MARKER='@code-commandments-generated'
 
 # --- Auto-detect sibling consumers ------------------------------------------
 # Fallback when no .env list is configured: scan sibling repos for a composer.json
@@ -77,7 +75,6 @@ for raw in "${CONSUMERS[@]}"; do
   rel="$(echo "$raw" | xargs)"   # trim surrounding whitespace
   [ -z "$rel" ] && continue
 
-  # Resolve relative to the package root.
   case "$rel" in
     /*) dir="$rel" ;;
     *)  dir="$PKG_ROOT/$rel" ;;
@@ -91,117 +88,15 @@ for raw in "${CONSUMERS[@]}"; do
     continue
   fi
 
-  if [ ! -d "$dir/.git" ]; then
-    echo "  ✗ Not a git repository: $dir — skipping."
-    failures=$((failures+1))
-    continue
-  fi
-
   dir="$(cd "$dir" && pwd)"
 
-  # 1. Pull the latest version. It lives in require-dev, so keep it there.
-  #    --no-scripts: skip the consumer's own post-update hooks (e.g. artisan
-  #    package:discover), which can fail for environment reasons unrelated to
-  #    this bump (a missing redis, an unbootable app). We run the commandments
-  #    sync ourselves below, so scaffolding still happens.
+  # Pull the latest version (kept in require-dev). composer require pins ^latest
+  # AND fires the consumer's post-update-cmd, which runs `sync --after=previous` —
+  # that re-asserts prophets, scaffold, skills, hook wiring, and the CLAUDE.md
+  # section. Nothing else to do here; the changes are left for you to review.
   echo "  → composer require --dev $PACKAGE (latest)"
-  if ! composer --working-dir="$dir" require --dev "$PACKAGE" --no-scripts --no-interaction; then
-    echo "  ✗ composer require failed — skipping commit for this consumer."
-    failures=$((failures+1))
-    continue
-  fi
-
-  # Composer sometimes writes a "*" constraint instead of a caret; pin it to
-  # ^MAJOR.MINOR of the version it actually resolved to.
-  ver="$(LOCK="$dir/composer.lock" python3 -c 'import json, os
-d = json.load(open(os.environ["LOCK"]))
-pk = [p for p in d.get("packages", []) + d.get("packages-dev", []) if p["name"] == "jessegall/code-commandments"]
-print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
-  if [ -n "$ver" ]; then
-    caret="^$(echo "$ver" | cut -d. -f1-2)"
-    echo "  → pin constraint to $caret"
-    composer --working-dir="$dir" require --dev "$PACKAGE:$caret" --no-update --no-scripts --no-interaction >/dev/null 2>&1
-  fi
-
-  # 2. Register newly-shipped prophets into commandments.php. ALWAYS runs, and a
-  #    failure (or a missing runner) is surfaced LOUDLY — never swallowed with
-  #    `|| true`. A silent skip here is exactly how "package updated but the new
-  #    prophets were never registered" happens.
-  echo "  → commandments sync --after=previous"
-  if [ -x "$dir/vendor/bin/commandments" ]; then
-    ( cd "$dir" && vendor/bin/commandments sync --after=previous ) \
-      || echo "  ‼ WARNING: sync FAILED in $dir — new prophets may NOT be registered. Re-run: ( cd $dir && vendor/bin/commandments sync )"
-  elif [ -f "$dir/artisan" ]; then
-    ( cd "$dir" && php artisan commandments:sync --after=previous ) \
-      || echo "  ‼ WARNING: sync FAILED in $dir — new prophets may NOT be registered. Re-run: ( cd $dir && php artisan commandments:sync )"
-  else
-    echo "  ‼ WARNING: no commandments runner (vendor/bin/commandments or artisan) in $dir — prophets were NOT synced!"
-  fi
-
-  # 2b. Refresh auto-managed scaffold files (Option, etc.) when their stubs
-  #     changed — `sync` only CREATES missing files, it does not overwrite an
-  #     existing scaffold class. `scaffold --auto` regenerates exactly the
-  #     consumers that opted into scaffold.auto_refresh; a no-op for the rest.
-  echo "  → commandments scaffold --auto"
-  if [ -x "$dir/vendor/bin/commandments" ]; then
-    ( cd "$dir" && vendor/bin/commandments scaffold --auto ) || true
-  elif [ -f "$dir/artisan" ]; then
-    ( cd "$dir" && php artisan commandments:scaffold --auto ) || true
-  fi
-
-  # 3. Collect ONLY the paths this bump owns: composer.json, the commandments
-  #    config, and the generated scaffold files (identified by their marker).
-  paths=( composer.json )
-  # composer.lock + .commandments-last-synced — only when git-TRACKED. workflows
-  # gitignores its lock (it's a library); some consumers ignore the synced marker.
-  # Adding a gitignored path to the pathspec would make `git commit --` error.
-  git -C "$dir" ls-files --error-unmatch composer.lock            >/dev/null 2>&1 && paths+=( composer.lock )
-  git -C "$dir" ls-files --error-unmatch .commandments-last-synced >/dev/null 2>&1 && paths+=( .commandments-last-synced )
-  [ -f "$dir/commandments.php" ]        && paths+=( commandments.php )
-  [ -f "$dir/config/commandments.php" ] && paths+=( config/commandments.php )
-  # Package-owned CLAUDE.md content that `sync` re-asserts (the CLAUDE.md section,
-  # the settings.json hook wiring, the refreshed/added hook scripts). The root
-  # CLAUDE.md + settings.json are staged only when git-TRACKED, so a consumer that
-  # gitignores them never trips `git commit --` on an ignored path. Without this
-  # the refreshed files sit edited-but-uncommitted in the consumer's tree (drift).
-  git -C "$dir" ls-files --error-unmatch CLAUDE.md             >/dev/null 2>&1 && paths+=( CLAUDE.md )
-  git -C "$dir" ls-files --error-unmatch .claude/settings.json >/dev/null 2>&1 && paths+=( .claude/settings.json )
-  # Hook scripts: enumerate ON DISK (not `git ls-files`, which lists only TRACKED
-  # files and would silently drop a brand-new script sync just shipped), skipping
-  # any the consumer gitignores so the commit pathspec can't error.
-  while IFS= read -r f; do
-    [ -z "$f" ] && continue
-    git -C "$dir" check-ignore -q "$f" 2>/dev/null && continue
-    paths+=( "$f" )
-  done < <(cd "$dir" && find .claude/hooks -maxdepth 1 -name '*.sh' 2>/dev/null)
-  while IFS= read -r f; do
-    [ -n "$f" ] && paths+=( "$f" )
-  done < <(cd "$dir" && grep -rl --include='*.php' "$MARKER" . \
-            --exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.claude 2>/dev/null)
-
-  # Stage our paths (so new scaffold files are tracked), then bail if none of
-  # them actually changed.
-  git -C "$dir" add -- "${paths[@]}" 2>/dev/null
-
-  if git -C "$dir" diff --cached --quiet -- "${paths[@]}"; then
-    echo "  • Nothing changed — already up to date. No commit."
-    continue
-  fi
-
-  # 4. Commit ONLY our paths via pathspec, so the commit never sweeps up other
-  #    work the developer happens to have staged. Disable ALL git hooks for this
-  #    maintenance commit via `core.hooksPath=/dev/null` — `--no-verify` alone
-  #    skips pre-commit/commit-msg but NOT post-commit, and the consumer's
-  #    post-commit hook runs `absolve --clear`, which would wipe a working
-  #    agent's confessions/absolutions mid-task. Bypassing every hook keeps the
-  #    agent's state intact while we sync underneath them.
-  echo "  → git commit (all hooks bypassed, scoped to bump paths)"
-  if git -C "$dir" -c core.hooksPath=/dev/null commit --no-verify \
-       -m "chore: bump $PACKAGE to latest + re-sync prophets/scaffold" \
-       -- "${paths[@]}"; then
-    echo "  ✓ Committed."
-  else
-    echo "  ✗ Commit failed."
+  if ! composer --working-dir="$dir" require --dev "$PACKAGE" --no-interaction; then
+    echo "  ✗ composer require failed in $dir."
     failures=$((failures+1))
   fi
 done
@@ -211,4 +106,4 @@ if [ "$failures" -gt 0 ]; then
   echo "Done with $failures failure(s)."
   exit 1
 fi
-echo "Done. All consumers updated."
+echo "Done. Review, commit, and push each consumer yourself."
