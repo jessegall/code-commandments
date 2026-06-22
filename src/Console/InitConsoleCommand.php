@@ -109,58 +109,14 @@ class InitConsoleCommand extends Command
 
     private function installCommitHook(string $basePath, bool $force, OutputInterface $output): void
     {
-        $installer = new CommitHookInstaller();
-
-        $pre = $installer->install($basePath, $force);
-
-        match ($pre) {
-            CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git pre-commit gate at .git/hooks/pre-commit'),
-            CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the pre-commit gate to your existing .git/hooks/pre-commit'),
-            CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Pre-commit gate already installed (use --force to refresh it)'),
-            CommitHookInstaller::STATUS_NOT_GIT => $output->writeln('Not a git repository — skipped the commit hooks.'),
-            CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/pre-commit — check permissions.'),
-        };
-
-        if ($pre === CommitHookInstaller::STATUS_NOT_GIT) {
-            return;
-        }
-
-        $post = $installer->installPostCommit($basePath, $force);
-
-        match ($post) {
-            CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git post-commit reset at .git/hooks/post-commit'),
-            CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the post-commit reset to your existing .git/hooks/post-commit'),
-            CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Post-commit reset already installed (use --force to refresh it)'),
-            CommitHookInstaller::STATUS_NOT_GIT => null,
-            CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/post-commit — check permissions.'),
-        };
-
-        $msg = $installer->installCommitMsg($basePath, $force);
-
-        match ($msg) {
-            CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git commit-msg guard (rejects Co-authored-by) at .git/hooks/commit-msg'),
-            CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the commit-msg guard to your existing .git/hooks/commit-msg'),
-            CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Commit-msg guard already installed (use --force to refresh it)'),
-            CommitHookInstaller::STATUS_NOT_GIT => null,
-            CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/commit-msg — check permissions.'),
-        };
-
-        $push = $installer->installPrePush($basePath, $force);
-
-        match ($push) {
-            CommitHookInstaller::STATUS_INSTALLED => $output->writeln('Installed git pre-push reset (clears until-push absolutions) at .git/hooks/pre-push'),
-            CommitHookInstaller::STATUS_APPENDED => $output->writeln('Appended the pre-push reset to your existing .git/hooks/pre-push'),
-            CommitHookInstaller::STATUS_ALREADY_PRESENT => $output->writeln('Pre-push reset already installed (use --force to refresh it)'),
-            CommitHookInstaller::STATUS_NOT_GIT => null,
-            CommitHookInstaller::STATUS_WRITE_FAILED => $output->writeln('Failed to write .git/hooks/pre-push — check permissions.'),
-        };
+        (new CommitHookInstaller())->installAll(
+            $basePath,
+            $force,
+            fn (string $line) => $output->writeln($line),
+            fn (string $line) => $output->writeln($line),
+        );
     }
 
-    /**
-     * A PostToolUse (Bash) hook command: when the tool call was a git commit,
-     * inject a reminder into Claude's context to re-read the commandments and
-     * resolve every sin before the next phase.
-     */
     private function createConfig(string $basePath, bool $autoDetect, OutputInterface $output): void
     {
         $configPath = $basePath . '/commandments.php';
