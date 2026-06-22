@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Commands;
 use Illuminate\Console\Command;
 use JesseGall\CodeCommandments\Support\ConfigSyncer;
 use JesseGall\CodeCommandments\Support\Environment;
-use JesseGall\CodeCommandments\Support\GitignoreInstaller;
+use JesseGall\CodeCommandments\Support\SyncService;
 use JesseGall\CodeCommandments\Support\VersionResolver;
 use JesseGall\PhpTypes\T_String;
 
@@ -25,142 +25,6 @@ class SyncCommand extends Command
 
     protected $description = 'Add newly available prophets to your config file';
 
-    /**
-     * Keep the generated tracking state out of version control. Runs on every
-     * sync — including the automatic post-merge sync after a package update —
-     * so a consumer's .gitignore picks up newly-tracked state files. Stays
-     * quiet when nothing changed to avoid noise on routine updates.
-     */
-    private function ensureGitignore(): void
-    {
-        $ignoreSkills = (bool) config('commandments.skills.auto_refresh', false);
-        $status = (new GitignoreInstaller())->ensure(base_path(), $ignoreSkills);
-
-        match ($status) {
-            GitignoreInstaller::STATUS_INSTALLED => $this->line('Created .gitignore with code-commandments state entries'),
-            GitignoreInstaller::STATUS_APPENDED => $this->line('Added code-commandments state entries to .gitignore'),
-            GitignoreInstaller::STATUS_UPDATED => $this->line('Refreshed code-commandments state entries in .gitignore'),
-            GitignoreInstaller::STATUS_WRITE_FAILED => $this->warn('Failed to write .gitignore — check permissions.'),
-            GitignoreInstaller::STATUS_ALREADY_PRESENT => null,
-        };
-    }
-
-    /**
-     * Refresh the opt-in plan-loop hook scripts on upgrade (when enabled), so a
-     * package update ships fixed/added scripts via the post-merge sync hook. The
-     * settings.json wiring is install-hooks/init's job; sync only refreshes the
-     * scripts the wiring points at.
-     */
-    /**
-     * Refresh the always-on handoff helper on upgrade so consumers pick up
-     * fixes to handoff.sh via the post-merge sync hook.
-     */
-    private function syncHandoffHelper(): void
-    {
-        // Only when the consumer already uses the package's Claude hooks (a
-        // .claude/hooks dir exists) — a routine sync shouldn't create it for a
-        // CLI-only consumer, but should keep/seed the helper for hook users.
-        if (! is_dir(base_path('.claude/hooks'))) {
-            return;
-        }
-
-        if (\JesseGall\CodeCommandments\Support\HandoffHelper::install(base_path()) === \JesseGall\CodeCommandments\Support\HandoffHelper::STATUS_INSTALLED) {
-            $this->line('Refreshed the handoff helper at .claude/hooks/handoff.sh');
-        }
-    }
-
-    private function syncPlanLoopScripts(): void
-    {
-        if (! (bool) config('commandments.hooks.plan_loop', false)) {
-            return;
-        }
-
-        if (\JesseGall\CodeCommandments\Support\PlanLoopHookSuite::install(base_path()) === \JesseGall\CodeCommandments\Support\PlanLoopHookSuite::STATUS_INSTALLED) {
-            $this->line('Refreshed the plan-loop hook scripts in .claude/hooks/');
-        }
-    }
-
-    /**
-     * Re-assert the Claude settings.json hook WIRING on every update — the same
-     * guarantee skills/scaffold/.gitignore already have. Without this a NEW hook
-     * the package adds (e.g. handoff-detect) never reaches an existing consumer,
-     * because its settings.json was written once at install-hooks time. Idempotent
-     * and additive; only acts when the consumer already has a settings.json.
-     */
-    private function reassertHookWiring(): void
-    {
-        $status = \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::reassert(
-            base_path(),
-            (bool) config('commandments.hooks.plan_loop', false),
-        );
-
-        if ($status === \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STATUS_INSTALLED) {
-            $this->line('Refreshed the Claude hook wiring in .claude/settings.json');
-        }
-    }
-
-    /**
-     * Re-assert the package-owned CLAUDE.md section on every update (replace-only;
-     * never imposes the section on a CLAUDE.md that never had it).
-     */
-    private function reassertClaudeMd(): void
-    {
-        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert(base_path()) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
-            $this->line('Refreshed the Code Commandments section in CLAUDE.md');
-        }
-    }
-
-    private function autoScaffold(): void
-    {
-        $scaffold = config('commandments.scaffold', []);
-
-        if (($scaffold['auto'] ?? true) === false) {
-            return;
-        }
-
-        $results = \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator::packaged()->generate(
-            $scaffold['namespace'] ?? 'App\\Support',
-            $scaffold['path'] ?? app_path('Support'),
-            false,
-            $scaffold['except'] ?? [],
-        );
-
-        $created = \JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter::report(
-            $results,
-            fn (string $line) => $this->line($line),
-        );
-
-        if ($created > 0) {
-            $this->info("Generated {$created} new support class(es).");
-        }
-    }
-
-    private function autoSkills(): void
-    {
-        $skills = config('commandments.skills', []);
-
-        if (($skills['auto'] ?? true) === false) {
-            return;
-        }
-
-        $results = \JesseGall\CodeCommandments\Support\Skills\SkillInstaller::packaged()->install(
-            config('commandments.scaffold.namespace', 'App\\Support'),
-            base_path('.claude/skills'),
-            (bool) ($skills['auto_refresh'] ?? false),
-            $skills['except'] ?? [],
-            (bool) ($skills['auto_refresh'] ?? false),
-        );
-
-        $installed = \JesseGall\CodeCommandments\Support\Skills\SkillReporter::report(
-            $results,
-            fn (string $line) => $this->line($line),
-        );
-
-        if ($installed > 0) {
-            $this->info("Installed {$installed} new skill(s).");
-        }
-    }
-
     public function handle(): int
     {
         $configPath = config_path('commandments.php');
@@ -172,13 +36,9 @@ class SyncCommand extends Command
         }
 
         if (! $this->option('dry-run')) {
-            $this->autoScaffold();
-            $this->autoSkills();
-            $this->ensureGitignore();
-            $this->syncHandoffHelper();
-            $this->syncPlanLoopScripts();
-            $this->reassertHookWiring();
-            $this->reassertClaudeMd();
+            foreach (SyncService::refreshSideEffects(base_path(), config('commandments', [])) as $line) {
+                $this->line($line);
+            }
         }
 
         $after = $this->option('after');
