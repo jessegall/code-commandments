@@ -57,10 +57,17 @@ off), and a NEXT STEPS checklist. Then:
    loop is already armed), AND `.claude/hooks/plan-start.sh` exists:
    `sh .claude/hooks/plan-start.sh`.
 
-5. **Continue from the Next step** — and keep durable state current as you go
-   (refresh the `*-progress` memory each committed phase; rewrite `HANDOFF.md`
-   via `sh .claude/hooks/handoff.sh` before you stop again). Pair with the
-   `handoff` skill for the write side.
+5. **Continue from the Next step** — the handoff's, or (if there is no HANDOFF.md)
+   the `*-progress` memory's NEXT STEP. Keep durable state current as you go:
+   refresh the `*-progress` memory each committed phase, and rewrite `HANDOFF.md`
+   via `sh .claude/hooks/handoff.sh` before any pause/compaction — a handoff is
+   checkpoint insurance and does **NOT** release an active plan loop; keep going
+   unless the plan is DONE or you hit a genuine blocker. Pair with the `handoff`
+   skill for the write side.
+
+6. **When the work is fully done**, remove the handoff as part of the final
+   commit: `git rm HANDOFF.md` (recoverable via history) — never bare-`rm` it, it
+   is the richest resume source.
 
 ## What to read when
 

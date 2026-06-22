@@ -14,11 +14,23 @@ cousin of a running progress note.
 
 ## When to use this skill
 
-- You're stopping mid-task and the next turn/session/person needs to continue.
-- The context is large or about to compact, and the durable state should live in
-  a file, not a fading window.
-- You hit a blocker and are handing back to the user.
-- You're driving an autonomous plan and want a recoverable checkpoint.
+Two kinds of handoff, with OPPOSITE effects on an active plan loop:
+
+**Checkpoint handoffs — the loop stays ARMED, keep going:**
+- The context is large or about to compact, and the durable state should live in a
+  file, not a fading window.
+- You're driving an autonomous plan and want a recoverable checkpoint mid-run.
+
+Writing a checkpoint handoff is insurance — it does **NOT** release the plan loop
+and is **not** a reason to stop. Write it, then continue; `plan-release.sh` will
+refuse a checkpoint/compaction reason.
+
+**Terminal handoffs — you are stopping, release the loop:**
+- You hit a GENUINE blocker (a decision only the user can make, info you can't
+  find/infer, an unrecoverable failure) and are handing back to the user.
+- The work is genuinely done.
+
+For a terminal handoff, release the loop explicitly: `sh .claude/hooks/plan-release.sh "<reason>"`.
 
 ## How
 
