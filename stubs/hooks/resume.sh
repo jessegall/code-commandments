@@ -61,6 +61,6 @@ fi
 printf '## NEXT STEPS (do these now)\n'
 printf '1. READ the whole handoff + plan memory above before acting.\n'
 printf '2. RECONCILE it against the LIVE REPO section — if work already landed or the branch moved, trust the repo.\n'
-printf '3. Create an ACTIVE TODO LIST (TaskCreate) — one item per remaining phase — so the user can follow along.\n'
-printf '4. If a plan is UNFINISHED and the loop is not active, re-arm it: sh .claude/hooks/plan-start.sh\n'
+printf '3. Create an ACTIVE TODO LIST (the TodoWrite tool) — one item per phase — and keep it live (mark each in_progress when you start it, completed when it lands) so the user can follow your progress in the terminal.\n'
+printf '4. If a plan is UNFINISHED and .claude/hooks/plan-start.sh exists, re-arm the loop: sh .claude/hooks/plan-start.sh\n'
 printf '5. Continue from the handoff'\''s "Next step". Refresh HANDOFF.md (sh .claude/hooks/handoff.sh) before you stop again.\n'

@@ -38,14 +38,19 @@ absolve a genuine advisory LEAVE with a reason.
 ## The command (one line)
 
 ```
-vendor/bin/commandments report --prophet=NAME --at=path:line --reason="why this is wrong"
+vendor/bin/commandments report --at=path:line --reason="why this is wrong"
 ```
 
 - `--at=path:line` (the locator `judge` prints) ties the report to the finding so
-  it goes **quiet until answered**, and infers `--prophet`/`--file`/`--line`.
+  it goes **quiet until answered**, and infers `--prophet`/`--file`/`--line` — so
+  you do NOT pass `--prophet` separately. Add `--prophet=NAME` only to disambiguate
+  two findings on the same line.
 - **Without a locator** (`--at` or `--fingerprint`), `report` files the issue but
   records **NO** absolution — the finding still blocks. It says so. Always pass
   `--at`.
+- Reporting a **sin** quiets it until the issue is answered, but a sin is never
+  *absolved* — `absolve` applies only to advisory WARNINGS with a genuine LEAVE
+  reason. A sin is fixed, or reported-if-genuinely-wrong; nothing else clears it.
 
 Then **ALWAYS arm a poll loop in the same breath** — a `report` without a watch
 loop is half-finished (nothing brings the resolution back into THIS session):

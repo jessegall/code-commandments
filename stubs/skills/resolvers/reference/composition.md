@@ -48,6 +48,10 @@ preference:
 | is a bare scalar/enum/constant needing no computation | the value itself: `->then(self::ORDER_DONE)` |
 | does real domain work (a `new`, a multi-arg build) repeated across entries | a NAMED invokable factory class under `{{ namespace }}\Resolvers\Factories` |
 
+> A non-trivial `->then()` branch factory is the same construct
+> **PreferNamedBranchFactory** governs — its canonical home is the
+> `named-exceptions` skill. Extract it to a named factory either way.
+
 ### Bad — 3+ inline domain factory closures
 
 ```php
