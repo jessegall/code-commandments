@@ -108,6 +108,7 @@ return [
                 Backend\PreferOptionChainOverGuardProphet::class,
                 Backend\PreferCoalesceFactoryProphet::class,
                 Backend\PreferYieldOverAccumulatorProphet::class,
+                Backend\EncapsulateModelMutationProphet::class,
                 Backend\WideUnionTypeProphet::class,
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,

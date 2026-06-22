@@ -30,6 +30,7 @@ class SkillRegistryTest extends TestCase
         'coalesce-factories',
         'immutable-data',
         'value-flow',
+        'model-behaviour',
         'reporting',
         'handoff',
     ];
@@ -38,7 +39,7 @@ class SkillRegistryTest extends TestCase
     {
         $slugs = array_map(fn (Skill $s) => $s->slug, SkillRegistry::all());
 
-        $this->assertCount(13, $slugs, 'backend skills.');
+        $this->assertCount(14, $slugs, 'backend skills.');
         $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the spec.');
     }
 

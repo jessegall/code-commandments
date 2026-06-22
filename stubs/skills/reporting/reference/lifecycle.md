@@ -27,10 +27,12 @@ Always pass `--at=path:line` (or `--fingerprint=…`) — without a locator the 
 is filed but the finding is NOT quieted (it keeps blocking). The locator also
 infers `--prophet`/`--file`/`--line` from the finding.
 
-## Poll it actively (optional)
+## Poll it actively (ALWAYS — right after you report)
 
-Session-start `reports --check` already polls on every new session. If you want to
-poll *within* a long session without restarting, set up a loop:
+Session-start `reports --check` only re-checks on a *new* session. A report you
+just filed will sit unseen for the rest of THIS session unless you watch it. So
+**the moment you `report`, arm a poll loop** — this is not optional, it is the
+second half of reporting:
 
 ```
 /loop 15m Run `vendor/bin/commandments reports --check`. If a report-linked
@@ -38,6 +40,10 @@ absolution was lifted, run `composer update jessegall/code-commandments` and
 re-judge the file: a real false positive is gone; a genuine sin now re-blocks and
 must be fixed. If nothing lifted, do nothing.
 ```
+
+A `report` without a poll loop is a half-finished report: you quieted the finding
+but nothing brings the resolution back into this session. Always do both —
+`report …` then `/loop 15m …` — in the same breath.
 
 ## Don't double-file
 
