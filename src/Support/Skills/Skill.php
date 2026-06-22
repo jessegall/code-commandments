@@ -19,12 +19,14 @@ final class Skill
      * @param  string  $introducedIn  package version that first shipped this skill
      * @param  string  $purpose  one-line summary of what the subject teaches
      * @param  list<string>  $prophets  short names of the prophet classes this skill backs (the inverse of which surfaces as the prophet's deep-dive pointer)
+     * @param  bool  $workflow  a command/workflow skill (e.g. reporting) that teaches a CLI flow rather than a prophet family — exempt from the "must back ≥1 prophet" rule
      */
     public function __construct(
         public readonly string $slug,
         public readonly string $introducedIn,
         public readonly string $purpose,
         public readonly array $prophets = [],
+        public readonly bool $workflow = false,
     ) {}
 
     /**

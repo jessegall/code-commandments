@@ -22,13 +22,14 @@ final class ReportGuidance
 
         return [
             '',
-            "<comment>Close the loop on #{$number} — don't wait for a human to relay the resolution:</comment>",
-            '  • Long waits (issues can take days): it resurfaces at your next session start via `commandments reports --check` — report-linked absolutions auto-lift when the issue closes.',
-            "  • Active session: START A POLL LOOP — schedule a recurring wake-up (e.g. every ~5 min) that runs  gh issue view {$number} --repo {$repo} --json state,stateReason -q '.state'  ; on CLOSED, do the follow-up below and then STOP the loop. (The loop dies with the session, so for multi-day waits rely on `reports --check` too — keep both.)",
-            '  • On close, branch by HOW it was resolved:',
-            '      – feature / scaffold / php-types request → `composer update jessegall/code-commandments` (re-scaffold if stubs changed), then IMPLEMENT the new API at the call sites that motivated the report.',
-            "      – a sin you reported as a false positive, closed \"works as intended\" → the absolution LIFTS and the finding re-blocks: FIX THE CODE, do not work around it.",
-            '      – closed as fixed / confirmed false-positive → `composer update` clears it.',
+            "<comment>CLOSE THE LOOP on #{$number} — do not wait for a human to relay the resolution.</comment>",
+            '  1. PASSIVE (always on): `commandments reports --check` runs at every session start and auto-lifts the absolution when the issue closes — so even days later it resurfaces on its own.',
+            '  2. ACTIVE (this session): start a poll loop — paste this:',
+            "       /loop 5m Run: gh issue view {$number} --repo {$repo} --json state -q '.state'. If it prints CLOSED, run `composer update jessegall/code-commandments` then re-judge the reported file and act on the result (below), and STOP the loop. If OPEN, do nothing.",
+            '  3. WHEN IT CLOSES, act by how it was resolved:',
+            '       • fixed / confirmed false positive → `composer update` clears it (re-scaffold if stubs changed).',
+            '       • feature / new API shipped → `composer update`, then USE the new API at the sites that motivated the report.',
+            '       • closed "works as intended" → the absolution lifts and the finding re-blocks: FIX THE CODE, do not work around it.',
         ];
     }
 }
