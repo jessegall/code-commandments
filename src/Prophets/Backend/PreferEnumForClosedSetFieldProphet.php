@@ -6,12 +6,14 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\RepentInput;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -35,8 +37,15 @@ use PhpParser\ParserFactory;
  *         --input create-enum-class=SocketDirection --input cases=input,output
  */
 #[IntroducedIn('1.91.0')]
-class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements ParameterizedRepenter
+class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements ParameterizedRepenter, NeedsCodebaseIndex
 {
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
+
     /**
      * Field name endings that almost always denote a finite, closed set.
      * Matched case-insensitively at a word boundary (camelCase or snake_case),
@@ -153,8 +162,11 @@ returned — directly or through `?:`/`??` — from a `: string` method) gains
 `->value`. Cross-file readers in OTHER files remain the dev's job. To REUSE an
 existing enum instead, pass
 `--input enum-class=App\Enums\WorkflowRunStatus` (retype only, no creation; the
-FQCN is imported for you). Use `--input field=<name>` to pick which field when a
-file has more than one.
+FQCN is imported for you). A bare short name (`--input enum-class=WorkflowRunStatus`)
+is resolved to its FQCN against the codebase index and imported too; if it cannot
+be resolved (no match, or an ambiguous short name) the retype still happens but
+the penance tells you to add the `use` import by hand. Use `--input field=<name>`
+to pick which field when a file has more than one.
 
 The auto-fix always converts THIS file in full — the property, its default, and
 every same-file `$this->field` read/compare/assign. On a Spatie Data subclass
@@ -304,15 +316,28 @@ SCRIPTURE;
         // Reuse path: retype to an existing enum, create nothing.
         if ($reuse !== '') {
             $short = $this->shortClassName($reuse);
+            // Resolve the full FQCN once: a bare short name (`--input
+            // enum-class=EditorActionType`) is resolved against the codebase
+            // index, so both the case-map reflection and the import below see the
+            // real class (#191).
+            $fqcn = $this->resolveReuseFqcn($reuse);
+            $reflectTarget = $fqcn ?? $reuse;
+
             // A freshly created enum never uses CompareSelf, but a reused one
             // might — emit the `Case->equals($x)` form then, so the rewrite does
             // not leave a SuggestCompareSelfTrait finding behind.
-            $content = $this->applyRetype($content, $ast, $target, $short, $this->caseMapForReuse($reuse), $this->enumUsesCompareSelf($reuse));
+            $content = $this->applyRetype($content, $ast, $target, $short, $this->caseMapForReuse($reflectTarget), $this->enumUsesCompareSelf($reflectTarget));
 
             $penance = ["Retyped \${$target['name']} to existing enum {$short} (and its same-file usages)", ...$crossFile];
 
-            if (str_contains($reuse, '\\')) {
-                $content = $this->ensureUse($content, ltrim($reuse, '\\'));
+            // Make the retype REFERENCEABLE: import the enum (FQCN given, or a
+            // short name resolved via the index) so the file is never left
+            // pointing at an unimported class. ensureUse must run AFTER
+            // applyRetype — it shifts byte offsets the AST edits rely on.
+            [$content, $importNote] = $this->ensureReuseImport($content, $ast, $reuse, $fqcn);
+
+            if ($importNote !== null) {
+                $penance[] = $importNote;
             }
 
             return RepentanceResult::absolved($content, $penance);
@@ -660,6 +685,88 @@ SCRIPTURE;
         $insertAt = $m[0][1] + strlen($m[0][0]);
 
         return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
+    }
+
+    /**
+     * The full FQCN for a reuse target: the value itself when an explicit FQCN
+     * was passed, otherwise a bare short name resolved against the codebase
+     * index (only when exactly one enum carries that short name — an ambiguous
+     * or unknown name resolves to null). Null when it cannot be determined.
+     */
+    private function resolveReuseFqcn(string $reuse): ?string
+    {
+        $reuse = ltrim($reuse, '\\');
+
+        if (str_contains($reuse, '\\')) {
+            return $reuse;
+        }
+
+        $matches = $this->index?->enumsByShortName($reuse) ?? [];
+
+        return count($matches) === 1 ? ltrim($matches[0]->fqcn, '\\') : null;
+    }
+
+    /**
+     * Ensure the reused enum is referenceable after the retype, returning the
+     * (possibly) edited content and an optional penance note.
+     *
+     * An explicit or index-resolved FQCN is imported (unless the enum already
+     * lives in this file's namespace or is already imported). A bare short name
+     * that the index can't resolve — no index, no match, or an ambiguous one —
+     * leaves a note telling the dev to add the import by hand, so the file is
+     * never silently left referencing an unimported class (#191).
+     *
+     * @param  array<Node>  $ast
+     * @return array{0: string, 1: ?string}
+     */
+    private function ensureReuseImport(string $content, array $ast, string $reuse, ?string $fqcn): array
+    {
+        $short = $this->shortClassName($reuse);
+
+        // Already imported / aliased in this file → nothing to add.
+        if ($this->isImported($content, $short)) {
+            return [$content, null];
+        }
+
+        if ($fqcn !== null) {
+            // No import needed when the enum lives in this file's own namespace.
+            if ($this->namespacePart($fqcn) === $this->namespaceOf($ast)) {
+                return [$content, null];
+            }
+
+            return [$this->ensureUse($content, $fqcn), null];
+        }
+
+        // A bare short name we could not resolve to a FQCN — never guess one.
+        $matchCount = count($this->index?->enumsByShortName($short) ?? []);
+        $why = $matchCount > 1
+            ? "{$matchCount} enums share the short name — re-run with the full FQCN"
+            : 'it was given as a short name and no matching enum was found in the scanned codebase — re-run with the full FQCN or add the import yourself';
+
+        return [$content, "Add a `use` import for the reused enum `{$short}` by hand: {$why}."];
+    }
+
+    /**
+     * Whether `$short` is already imported (directly or via an `as` alias).
+     */
+    private function isImported(string $content, string $short): bool
+    {
+        $q = preg_quote($short, '/');
+
+        return preg_match('/^\s*use\s+(?:[^;]*\\\\)?' . $q . '\s*;/m', $content) === 1
+            || preg_match('/^\s*use\s+[^;]*\bas\s+' . $q . '\s*;/m', $content) === 1;
+    }
+
+    /**
+     * The namespace portion of a FQCN (`App\Enums\Foo` → `App\Enums`), or null
+     * for a class in the global namespace.
+     */
+    private function namespacePart(string $fqcn): ?string
+    {
+        $fqcn = ltrim($fqcn, '\\');
+        $pos = strrpos($fqcn, '\\');
+
+        return $pos === false ? null : substr($fqcn, 0, $pos);
     }
 
     /**
