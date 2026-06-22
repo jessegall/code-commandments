@@ -66,6 +66,54 @@ final class CommitHookInstaller
         return $this->writeHook($basePath, GitHook::PrePush, $this->prePushBlock(), self::PUSH_BEGIN, self::PUSH_END, $force);
     }
 
+    /**
+     * Install all four git hooks (pre-commit gate, post-commit reset, commit-msg
+     * guard, pre-push reset), emitting one status line each — the shared
+     * orchestration both install-hooks and init use, so the messages can't drift.
+     * Short-circuits when not a git repo.
+     *
+     * @param  callable(string): void  $emit
+     * @param  callable(string): void  $error
+     */
+    public function installAll(string $basePath, bool $force, callable $emit, callable $error): void
+    {
+        match ($this->install($basePath, $force)) {
+            self::STATUS_INSTALLED => $emit('Installed git pre-commit gate at .git/hooks/pre-commit'),
+            self::STATUS_APPENDED => $emit('Appended the pre-commit gate to your existing .git/hooks/pre-commit'),
+            self::STATUS_ALREADY_PRESENT => $emit('Pre-commit gate already installed — use --force to refresh it'),
+            self::STATUS_NOT_GIT => $error('Not a git repository — skipped the commit hooks.'),
+            self::STATUS_WRITE_FAILED => $error('Failed to write .git/hooks/pre-commit — check permissions.'),
+        };
+
+        if (! is_dir(rtrim($basePath, '/') . '/.git')) {
+            return;
+        }
+
+        match ($this->installPostCommit($basePath, $force)) {
+            self::STATUS_INSTALLED => $emit('Installed git post-commit reset at .git/hooks/post-commit'),
+            self::STATUS_APPENDED => $emit('Appended the post-commit reset to your existing .git/hooks/post-commit'),
+            self::STATUS_ALREADY_PRESENT => $emit('Post-commit reset already installed — use --force to refresh it'),
+            self::STATUS_NOT_GIT => null,
+            self::STATUS_WRITE_FAILED => $error('Failed to write .git/hooks/post-commit — check permissions.'),
+        };
+
+        match ($this->installCommitMsg($basePath, $force)) {
+            self::STATUS_INSTALLED => $emit('Installed git commit-msg guard (rejects Co-authored-by) at .git/hooks/commit-msg'),
+            self::STATUS_APPENDED => $emit('Appended the commit-msg guard to your existing .git/hooks/commit-msg'),
+            self::STATUS_ALREADY_PRESENT => $emit('Commit-msg guard already installed — use --force to refresh it'),
+            self::STATUS_NOT_GIT => null,
+            self::STATUS_WRITE_FAILED => $error('Failed to write .git/hooks/commit-msg — check permissions.'),
+        };
+
+        match ($this->installPrePush($basePath, $force)) {
+            self::STATUS_INSTALLED => $emit('Installed git pre-push reset (clears until-push absolutions) at .git/hooks/pre-push'),
+            self::STATUS_APPENDED => $emit('Appended the pre-push reset to your existing .git/hooks/pre-push'),
+            self::STATUS_ALREADY_PRESENT => $emit('Pre-push reset already installed — use --force to refresh it'),
+            self::STATUS_NOT_GIT => null,
+            self::STATUS_WRITE_FAILED => $error('Failed to write .git/hooks/pre-push — check permissions.'),
+        };
+    }
+
     private function writeHook(string $basePath, GitHook $hook, string $block, string $begin, string $end, bool $force): string
     {
         $gitDir = $basePath . '/.git';
