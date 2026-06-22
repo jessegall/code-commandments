@@ -59,7 +59,7 @@ class RegistryPatternProphet extends PhpCommandment implements NeedsCodebaseInde
         return Advisory::make()
             ->applyWhen('Two or more classes in the codebase hand-roll the registry shape (a public keyed-store write + a lookup) WITHOUT extending a shared base — the register/find/get plumbing is copy-pasted across them.')
             ->leaveWhen('there is only one registry, the classes already extend a shared registry base, or their lookup semantics genuinely differ enough that a common base would be a false abstraction.')
-            ->whenUnsure('if you would copy a register/find/get method from one to another, extract a base. `commandments:scaffold` generates a `Registry` base (register/all/find/get) into your support namespace; have each registry extend it (then RegistryReturnContract enforces the contract for free).');
+            ->whenUnsure('if you would copy a register/get method from one to another, extract a base. `commandments:scaffold` generates a `Registry` base (register/registerMany/has/get/all/values) into your support namespace; have each registry extend it (then RegistryReturnContract enforces the contract for free).');
     }
 
     public function detailedDescription(): string
@@ -72,7 +72,7 @@ duplicated plumbing — and each copy is a place the return contract can drift
 When 2+ classes share the registry shape (you `register`/store into a keyed
 property, then look entries up) and none extend a shared base, extract one:
 
-    abstract class Registry { /* register / all / find(): Option / get(): T */ }
+    abstract class Registry { /* register / registerMany / has(): bool / get(): T throws / all / values */ }
     final class ChannelRegistry extends Registry { … }
     final class TemplateRegistry extends Registry { … }
 

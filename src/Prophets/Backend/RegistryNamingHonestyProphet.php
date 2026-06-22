@@ -72,7 +72,7 @@ Honest names for the near misses:
 The fix:
   - rename to `*Registry` so the contract is legible;
   - extend a shared base — `commandments:scaffold` generates a `Registry` base
-    (`register`/`all`/`find(): Option`/`get(): T` throws) into your support
+    (`register`/`registerMany`/`has(): bool`/`get(): T` throws/`all`/`values`) into your support
     namespace, the idiomatic "one abstract base, N concrete registries" shape.
 
 MARKER ASYMMETRY (worth knowing before you mark it): once a class IS marked
