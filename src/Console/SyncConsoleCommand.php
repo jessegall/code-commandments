@@ -143,6 +143,27 @@ class SyncConsoleCommand extends Command
         }
     }
 
+    /**
+     * Re-assert the Claude settings.json hook WIRING on every update so a NEW
+     * hook the package adds reaches existing consumers (the same guarantee
+     * skills/scaffold/.gitignore have). Idempotent; only acts when a settings.json
+     * already exists.
+     */
+    private function reassertHookWiring(string $configPath, string $basePath, OutputInterface $output): void
+    {
+        $config = ConfigLoader::load($configPath);
+
+        $status = \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::reassert(
+            $basePath,
+            \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STANDALONE,
+            \JesseGall\CodeCommandments\Support\PlanLoopHookSuite::enabled($config),
+        );
+
+        if ($status === \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STATUS_INSTALLED) {
+            $output->writeln('Refreshed the Claude hook wiring in .claude/settings.json');
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $basePath = getcwd();
@@ -162,6 +183,7 @@ class SyncConsoleCommand extends Command
             $this->ensureGitignore($configPath, $basePath, $output);
             $this->syncHandoffHelper($basePath, $output);
             $this->syncPlanLoopScripts($configPath, $basePath, $output);
+            $this->reassertHookWiring($configPath, $basePath, $output);
         }
 
         $after = $input->getOption('after');

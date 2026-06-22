@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
+use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HandoffHelper;
-use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
@@ -160,21 +160,6 @@ class InitConsoleCommand extends Command
      * inject a reminder into Claude's context to re-read the commandments and
      * resolve every sin before the next phase.
      */
-    private function postCommitReminderCommand(): string
-    {
-        $message = 'A commit just landed — a phase is complete. Re-read the Code Commandments '
-            . 'section of CLAUDE.md now and act as a sin resolver: run `vendor/bin/commandments judge --next --git` '
-            . 'and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in '
-            . 'files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely '
-            . 'applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to '
-            . 'leave a sin in place.';
-
-        $json = '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"' . $message . '"}}';
-
-        return 'in=$(cat); printf "%s" "$in" | grep -q "git commit" && printf '
-            . escapeshellarg($json) . '; exit 0';
-    }
-
     private function createConfig(string $basePath, bool $autoDetect, OutputInterface $output): void
     {
         $configPath = $basePath . '/commandments.php';
@@ -311,71 +296,16 @@ class InitConsoleCommand extends Command
             $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
         }
 
-        $ourHooks = [
-            'SessionStart' => [
-                [
-                    'hooks' => [
-                        [
-                            'type' => 'command',
-                            'command' => 'vendor/bin/commandments scripture 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'vendor/bin/commandments reports --check 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'vendor/bin/commandments scaffold --auto 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'vendor/bin/commandments install-skills --auto 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'vendor/bin/commandments skills 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'sh .claude/hooks/handoff-detect.sh 2>/dev/null || true',
-                        ],
-                    ],
-                ],
-            ],
-            'Stop' => [
-                [
-                    'hooks' => [
-                        [
-                            'type' => 'command',
-                            'command' => 'vendor/bin/commandments judge --git 2>/dev/null; exit 0',
-                        ],
-                    ],
-                ],
-            ],
-            'PostToolUse' => [
-                [
-                    'matcher' => 'Bash',
-                    'hooks' => [
-                        [
-                            'type' => 'command',
-                            'command' => $this->postCommitReminderCommand(),
-                        ],
-                    ],
-                ],
-            ],
-        ];
-
-        // Opt-in plan-loop suite (commandments.hooks.plan_loop): when on,
-        // phase-committed.sh supersedes the inline post-commit reminder.
-        if ($this->planLoopEnabled($basePath)) {
-            $ourHooks['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
-            $ourHooks['Stop'][] = PlanLoopHookSuite::stopEntry();
-            $ourHooks['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
-        }
-
-        // Merge our entries into any existing hooks WITHOUT clobbering entries
-        // the user added under the same event (idempotent, additive).
-        $hooks = HookConfigMerger::merge($existingSettings['hooks'] ?? [], $ourHooks);
+        // Reconcile to the CURRENT package wiring: replace every package-owned
+        // entry with the latest set while preserving the consumer's custom hooks.
+        // Shared with install-hooks + sync via ClaudeHooksInstaller so the artisan
+        // and vendor/bin wirings can never drift, and an update always lands the
+        // newest wiring.
+        $hooks = ClaudeHooksInstaller::apply(
+            $existingSettings['hooks'] ?? [],
+            ClaudeHooksInstaller::STANDALONE,
+            $this->planLoopEnabled($basePath),
+        );
 
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 

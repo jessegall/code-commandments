@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
+use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HandoffHelper;
-use JesseGall\CodeCommandments\Support\HookConfigMerger;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\PhpTypes\T_Json;
 use JesseGall\PhpTypes\T_String;
@@ -41,9 +41,15 @@ class InstallHooksCommand extends Command
             $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
         }
 
-        // Merge our hook entries into any existing hooks WITHOUT clobbering
-        // entries the user added under the same event (idempotent, additive).
-        $hooks = HookConfigMerger::merge($existingSettings['hooks'] ?? [], $this->buildHooksConfig());
+        // Reconcile to the CURRENT package wiring: replace every package-owned
+        // entry with the latest set (so changed/removed hooks update cleanly) while
+        // preserving every hook the consumer added. Shared with `sync` so an update
+        // always lands the newest wiring.
+        $hooks = ClaudeHooksInstaller::apply(
+            $existingSettings['hooks'] ?? [],
+            ClaudeHooksInstaller::ARTISAN,
+            (bool) config('commandments.hooks.plan_loop', false),
+        );
 
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 
@@ -204,95 +210,6 @@ class InstallHooksCommand extends Command
     /**
      * Build the Claude Code hooks configuration.
      */
-    private function buildHooksConfig(): array
-    {
-        $planLoop = (bool) config('commandments.hooks.plan_loop', false);
-
-        $config = [
-            'SessionStart' => [
-                [
-                    'hooks' => [
-                        [
-                            'type' => 'command',
-                            'command' => 'php artisan commandments:scripture 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'php artisan commandments:reports --check 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'php artisan commandments:scaffold --auto 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'php artisan commandments:install-skills --auto 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'php artisan commandments:skills 2>/dev/null || true',
-                        ],
-                        [
-                            'type' => 'command',
-                            'command' => 'sh .claude/hooks/handoff-detect.sh 2>/dev/null || true',
-                        ],
-                    ],
-                ],
-            ],
-            'Stop' => [
-                [
-                    'hooks' => [
-                        [
-                            'type' => 'command',
-                            'command' => 'php artisan commandments:judge --git 2>/dev/null; exit 0',
-                        ],
-                    ],
-                ],
-            ],
-            'PostToolUse' => [
-                [
-                    'matcher' => 'Bash',
-                    'hooks' => [
-                        [
-                            'type' => 'command',
-                            'command' => $this->postCommitReminderCommand('php artisan commandments'),
-                        ],
-                    ],
-                ],
-            ],
-        ];
-
-        // Opt-in plan-loop suite: drives an approved plan to completion. When on,
-        // phase-committed.sh supersedes the inline post-commit reminder (it does
-        // the sin-resolver nudge AND the plan-progress memory).
-        if ($planLoop) {
-            $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
-            $config['Stop'][] = PlanLoopHookSuite::stopEntry();
-            $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
-        }
-
-        return $config;
-    }
-
-    /**
-     * A PostToolUse (Bash) hook command: when the tool call was a git commit,
-     * inject a reminder into Claude's context to re-read the commandments and
-     * resolve every sin before the next phase.
-     */
-    private function postCommitReminderCommand(string $binary): string
-    {
-        $message = 'A commit just landed — a phase is complete. Re-read the Code Commandments '
-            . 'section of CLAUDE.md now and act as a sin resolver: run `' . $binary . ':judge --next --git` '
-            . 'and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in '
-            . 'files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely '
-            . 'applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to '
-            . 'leave a sin in place.';
-
-        $json = '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"' . $message . '"}}';
-
-        return 'in=$(cat); printf "%s" "$in" | grep -q "git commit" && printf '
-            . escapeshellarg($json) . '; exit 0';
-    }
 
     /**
      * Get Claude instructions for the settings file.

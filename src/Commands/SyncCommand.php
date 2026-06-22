@@ -80,6 +80,26 @@ class SyncCommand extends Command
         }
     }
 
+    /**
+     * Re-assert the Claude settings.json hook WIRING on every update — the same
+     * guarantee skills/scaffold/.gitignore already have. Without this a NEW hook
+     * the package adds (e.g. handoff-detect) never reaches an existing consumer,
+     * because its settings.json was written once at install-hooks time. Idempotent
+     * and additive; only acts when the consumer already has a settings.json.
+     */
+    private function reassertHookWiring(): void
+    {
+        $status = \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::reassert(
+            base_path(),
+            \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::ARTISAN,
+            (bool) config('commandments.hooks.plan_loop', false),
+        );
+
+        if ($status === \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STATUS_INSTALLED) {
+            $this->line('Refreshed the Claude hook wiring in .claude/settings.json');
+        }
+    }
+
     private function autoScaffold(): void
     {
         $scaffold = config('commandments.scaffold', []);
@@ -147,6 +167,7 @@ class SyncCommand extends Command
             $this->ensureGitignore();
             $this->syncHandoffHelper();
             $this->syncPlanLoopScripts();
+            $this->reassertHookWiring();
         }
 
         $after = $this->option('after');
