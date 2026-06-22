@@ -247,6 +247,64 @@ PHP);
         $this->assertStringContainsString('use App\\Enums\\WorkflowRunStatus;', $result->newContent);
     }
 
+    public function test_repent_short_name_reuse_resolves_fqcn_and_imports_via_index(): void
+    {
+        // #191: `--input enum-class=EditorActionType` (a BARE short name) must
+        // resolve to the enum's FQCN via the codebase index and import it — the
+        // file was previously left referencing an unimported class.
+        $this->prophet->setCodebaseIndex(\JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([
+            __DIR__ . '/../../../Fixtures/Enums/EditorActionType.php',
+        ]));
+
+        $code = "<?php\nnamespace App\\Workflow;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$type) {} }";
+        $this->prophet->setRepentInput(['enum-class' => 'EditorActionType']);
+
+        $result = $this->prophet->repent('/app/Workflow/AppliedEditorAction.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public EditorActionType $type', $result->newContent);
+        // The import is added — the bug from #191.
+        $this->assertStringContainsString('use JesseGall\\CodeCommandments\\Tests\\Fixtures\\Enums\\EditorActionType;', $result->newContent);
+        $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($result->newContent));
+    }
+
+    public function test_repent_short_name_reuse_without_resolution_warns_to_add_import(): void
+    {
+        // #191: a short name the index cannot resolve (no index here) must NOT be
+        // silently left unimported — the retype happens but the penance tells the
+        // dev to add the import by hand rather than guessing a FQCN.
+        $code = "<?php\nnamespace App\\Workflow;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$type) {} }";
+        $this->prophet->setRepentInput(['enum-class' => 'EditorActionType']);
+
+        $result = $this->prophet->repent('/app/Workflow/AppliedEditorAction.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public EditorActionType $type', $result->newContent);
+        $this->assertNotEmpty(array_filter(
+            $result->penance,
+            static fn (string $p): bool => str_contains($p, 'use') && str_contains($p, 'EditorActionType'),
+        ));
+    }
+
+    public function test_repent_short_name_reuse_skips_import_when_in_same_namespace(): void
+    {
+        // The reused enum already lives in the file's namespace → no import,
+        // no penance note (it is referenceable as-is).
+        $this->prophet->setCodebaseIndex(\JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex::build([
+            __DIR__ . '/../../../Fixtures/Enums/EditorActionType.php',
+        ]));
+
+        $code = "<?php\nnamespace JesseGall\\CodeCommandments\\Tests\\Fixtures\\Enums;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$type) {} }";
+        $this->prophet->setRepentInput(['enum-class' => 'EditorActionType']);
+
+        $result = $this->prophet->repent('/x.php', $code);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('public EditorActionType $type', $result->newContent);
+        $this->assertStringNotContainsString('use JesseGall', $result->newContent);
+        $this->assertEmpty(array_filter($result->penance, static fn (string $p): bool => str_contains($p, 'Add a `use`')));
+    }
+
     public function test_repent_converts_an_enum_value_default_on_reuse(): void
     {
         // issue #29: a `Enum::Case->value` default must lose `->value`, else it
