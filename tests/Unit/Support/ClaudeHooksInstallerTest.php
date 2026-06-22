@@ -111,6 +111,54 @@ class ClaudeHooksInstallerTest extends TestCase
         $this->assertContains('my-own-thing', $session);
     }
 
+    public function test_apply_is_idempotent_for_every_emitted_command(): void
+    {
+        // Ownership round-trip: apply() over its OWN previous output must add
+        // nothing. If any script the build emits weren't recognized by
+        // isOwnedCommand, re-applying would append a duplicate.
+        foreach ([ClaudeHooksInstaller::ARTISAN, ClaudeHooksInstaller::STANDALONE] as $runner) {
+            foreach ([false, true] as $planLoop) {
+                $first = ClaudeHooksInstaller::apply([], $runner, $planLoop);
+                $second = ClaudeHooksInstaller::apply($first, $runner, $planLoop);
+                $this->assertSame($first, $second, 'apply() must be idempotent (every emitted command owned)');
+            }
+        }
+    }
+
+    public function test_apply_replaces_a_stale_owned_command_without_duplicating(): void
+    {
+        // An old consumer has a renamed/old owned command; apply() drops it and
+        // writes the current set — no stale leftover, no duplicate.
+        $existing = [
+            'SessionStart' => [
+                ['hooks' => [['type' => 'command', 'command' => 'vendor/bin/commandments OLDsubcommand 2>/dev/null || true']]],
+                ['hooks' => [['type' => 'command', 'command' => 'my-own-hook']]],
+            ],
+        ];
+
+        $out = ClaudeHooksInstaller::apply($existing, ClaudeHooksInstaller::STANDALONE, false);
+        $session = $this->commands($out, 'SessionStart');
+
+        $this->assertNotContains('vendor/bin/commandments OLDsubcommand 2>/dev/null || true', $session, 'stale owned command must be dropped');
+        $this->assertContains('my-own-hook', $session, 'consumer hook preserved');
+        $this->assertContains('vendor/bin/commandments scripture 2>/dev/null || true', $session);
+    }
+
+    public function test_plan_loop_session_reset_is_wired_and_owned(): void
+    {
+        $out = ClaudeHooksInstaller::apply([], ClaudeHooksInstaller::STANDALONE, true);
+        $session = $this->commands($out, 'SessionStart');
+        $this->assertContains('sh .claude/hooks/plan-session-reset.sh', $session);
+    }
+
+    public function test_post_merge_hook_script_detects_runner(): void
+    {
+        $body = ClaudeHooksInstaller::postMergeHookScript();
+        $this->assertStringContainsString('if [ -f artisan ]', $body);
+        $this->assertStringContainsString('php artisan commandments:sync --after=previous', $body);
+        $this->assertStringContainsString('vendor/bin/commandments sync --after=previous', $body);
+    }
+
     public function test_reassert_skips_when_no_settings_file(): void
     {
         $this->assertSame(
