@@ -69,8 +69,10 @@ it is a named operation the record should own — if yes, move it there.**
 This skill is the positive mirror of its enforcing prophet — a finding from it
 points back here:
 
-- **EncapsulateModelMutationProphet** — a run of attribute writes on a variable
-  immediately followed by that variable's `save()` (a self-referential counter,
-  an enum state flip, or a multi-field transition) at the call site.
+- **EncapsulateModelMutationProphet** — both halves of the smell: (1) at a CALL
+  SITE, a run of attribute writes on a variable immediately followed by that
+  variable's `save()` (a self-referential counter, an enum state flip, or a
+  multi-field transition); and (2) IN the model, a public behaviour method that
+  changes `$this` attributes but never calls `$this->save()` itself.
 
 Read the exact rule with `commandments:scripture --prophet=EncapsulateModelMutation`.

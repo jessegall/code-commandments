@@ -69,26 +69,27 @@ class EncapsulateModelMutationProphet extends PhpCommandment
     {
         return Advisory::make()
             ->applyWhen(
-                'A call site assigns to one or more of a record\'s OWN attributes '
-                . '(`$order->status = …`) and immediately persists it (`$order->save()`), '
-                . 'and that write represents a meaningful state change — a self-referential '
-                . 'counter increment (`$m->seq = $m->seq + 1`), a closed-set transition '
-                . '(`$m->status = Status::Shipped`), or several related fields set together '
-                . 'before the save. Strongest when the SAME field is mutated the same way in '
-                . 'more than one call site.'
+                'A state transition is split from its persistence. Either (1) a CALL SITE '
+                . 'assigns to a record\'s own attributes (`$order->status = …`) and immediately '
+                . 'persists it (`$order->save()`) — a self-referential counter, a closed-set '
+                . 'transition, or several fields set together; or (2) the record\'s OWN public '
+                . 'behaviour method changes `$this` attributes but never calls `$this->save()`, '
+                . 'so callers still have to persist by hand. Strongest when the same change '
+                . 'recurs across call sites.'
             )
             ->leaveWhen(
                 'A genuine one-off administrative write with no domain meaning and no '
-                . 'duplication — a test factory tweak, a migration / backfill script, a '
-                . 'truly local single use — or the surrounding code is already INSIDE the '
-                . 'record itself (writes through `$this` are not flagged).'
+                . 'duplication — a test factory tweak, a migration / backfill script, a truly '
+                . 'local single use — or a deliberate UNIT-OF-WORK where many in-memory '
+                . 'mutations are intentionally batched into one later `save()` (then the '
+                . 'mutate-only methods are correct).'
             )
             ->whenUnsure(
-                'Ask "does this assignment represent a NAMED operation the record should '
-                . 'own (and might be repeated)?" If yes, extract a behaviour method '
-                . '(`markShipped()`, `incrementSequenceNumber()`) that owns the change and '
-                . 'its invariants — the call site then reads as intent, not mechanics. If '
-                . 'it is a genuine one-off, leave it.'
+                'Ask "does this represent a NAMED operation the record should own end to end?" '
+                . 'If yes, give it a behaviour method (`markShipped()`, `incrementSequenceNumber()`) '
+                . 'that owns BOTH the change and its persistence (`$this->save()`), so the call '
+                . 'site reads as intent and nothing is left half-applied. If it is a genuine '
+                . 'one-off or a batched unit-of-work, leave it.'
             );
     }
 
@@ -122,23 +123,49 @@ Good — one named behaviour method is the single source of truth:
     // both call sites
     $workflow->incrementSequenceNumber();
 
-WHAT FIRES — a run of one-or-more CONSECUTIVE statements that assign to `$x->prop`
-(a property on a plain variable), IMMEDIATELY followed by `$x->save()` on the SAME
-variable. Two sub-signals sharpen the suggestion:
-  * SELF-REFERENTIAL counter — `$m->seq = $m->seq + 1` / `$m->count += 1` → an
-    `increment…()` / `advance…()` method;
-  * CLOSED-SET assignment — `$m->status = SomeEnum::Case` → a `mark…()` /
-    `transitionTo…()` method.
+But moving the mutation onto the record is only HALF the job. If the behaviour
+method changes state without persisting it, the caller still has to remember
+`$model->incrementSequenceNumber(); $model->save();` — the same scatter, one step
+removed:
 
-WHAT DOES NOT — a write through `$this` (you are already inside the record, which
-is exactly where the behaviour method belongs); an assignment NOT immediately
-followed by the same instance's `save()`; a `save()` with no preceding attribute
-write on the same variable. The persist method is `save` by default and
-config-overridable (`persist_methods`), so a different ORM's idiom can anchor it.
+Bad — a named method that forgets to persist:
+    public function incrementSequenceNumber(): void
+    {
+        $this->edit_seq++;          // mutated, but never saved
+    }
 
-It is an ADVISORY warning, not a sin — plenty of legitimate one-off writes exist
-(factories, backfills). It is not auto-fixable: extracting the method requires a
-human-chosen name and a decision about whether it also calls `save()`.
+Good — the method owns the transition end to end:
+    public function incrementSequenceNumber(): void
+    {
+        $this->edit_seq++;
+        $this->save();              // persistence is part of the operation
+    }
+
+WHAT FIRES — two halves of the same principle:
+
+  (1) CALL SITE — a run of one-or-more CONSECUTIVE statements that assign to
+      `$x->prop` (a property on a plain variable), IMMEDIATELY followed by
+      `$x->save()` on the SAME variable. Two sub-signals sharpen the suggestion:
+        * SELF-REFERENTIAL counter — `$m->seq = $m->seq + 1` / `$m->count += 1` /
+          `$m->seq++` → an `increment…()` / `advance…()` method;
+        * CLOSED-SET assignment — `$m->status = SomeEnum::Case` → a `mark…()` /
+          `transitionTo…()` method.
+
+  (2) IN MODEL — a PUBLIC behaviour method on a persistable record (one that has,
+      inherits, or declares a `save()`) that writes `$this` attributes but never
+      calls `$this->save()`. Make the method persist itself.
+
+WHAT DOES NOT — a CALL-SITE assignment not immediately followed by the same
+instance's `save()`; a `save()` with no preceding attribute write; a fluent
+(`return $this`/`self`) builder setter; a private helper composed by a saving
+method; the `save()` method itself; a class with no persistence surface at all.
+The persist method is `save` by default and config-overridable (`persist_methods`),
+so a different ORM's idiom can anchor it.
+
+It is an ADVISORY warning, not a sin — one-off writes (factories, backfills) and
+deliberate unit-of-work batching (many in-memory mutations, one later `save()`)
+are legitimate. It is not auto-fixable: extracting the method requires a
+human-chosen name, and whether a method should self-persist is a design call.
 
 Configure via:
 
@@ -206,7 +233,211 @@ SCRIPTURE;
             }
         }
 
+        // The OTHER half: a record's OWN behaviour method that changes persistent
+        // state but never persists it, so the caller still has to remember save().
+        foreach ($this->unsavedMutationMethods($ast) as $hit) {
+            $warnings[] = $this->warningAt(
+                $hit['line'],
+                $this->methodMessage($hit['class'], $hit['method'], $hit['prop'], $persist[0] ?? 'save'),
+                $this->lineAt($content, $hit['line']),
+                "mutate-without-save:{$hit['class']}::{$hit['method']}",
+            );
+        }
+
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Public mutation methods on a PERSISTABLE record that change `$this`
+     * attributes but never call `$this->save()` — the in-model half of the smell:
+     * the behaviour method is named, but it does not own its persistence, so every
+     * caller must still remember to save. Fluent (`return $this`/`self`) builders
+     * and the persist method itself are exempt.
+     *
+     * @param  array<Node>  $ast
+     * @return list<array{class: string, method: string, prop: string, line: int}>
+     */
+    private function unsavedMutationMethods(array $ast): array
+    {
+        $persist = $this->persistMethods();
+        $hits = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($class->name === null || ! $this->isPersistableRecord($class, $ast, $persist)) {
+                continue;
+            }
+
+            $className = $class->name->toString();
+
+            foreach ($class->getMethods() as $method) {
+                if (! $method->isPublic()
+                    || $method->isStatic()
+                    || $method->isAbstract()
+                    || $method->stmts === null
+                    || str_starts_with($method->name->toString(), '__')
+                    || in_array(strtolower($method->name->toString()), $persist, true)
+                    || $this->isFluent($method)) {
+                    continue;
+                }
+
+                $prop = $this->firstThisAttributeWrite($method);
+
+                if ($prop === null || $this->callsThisPersist($method, $persist)) {
+                    continue;
+                }
+
+                $hits[] = [
+                    'class' => $className,
+                    'method' => $method->name->toString(),
+                    'prop' => $prop,
+                    'line' => $method->getStartLine(),
+                ];
+            }
+        }
+
+        return $hits;
+    }
+
+    /**
+     * Whether the class is a persistable active-record: it has (or inherits) a
+     * `save()` method (reflection, when the class is autoloadable), or — for code
+     * not yet loadable — it DECLARES `save()` or calls `$this->save()` somewhere.
+     *
+     * @param  array<Node>  $ast
+     * @param  list<string>  $persist
+     */
+    private function isPersistableRecord(Node\Stmt\Class_ $class, array $ast, array $persist): bool
+    {
+        $fqcn = $this->fqcnOf($class, $ast);
+
+        if ($fqcn !== null && class_exists($fqcn)) {
+            foreach ($persist as $name) {
+                if (method_exists($fqcn, $name)) {
+                    return true;
+                }
+            }
+        }
+
+        // AST fallback: it declares a persist method, or calls $this->persist anywhere.
+        foreach ($class->getMethods() as $method) {
+            if (in_array(strtolower($method->name->toString()), $persist, true)) {
+                return true;
+            }
+
+            if ($method->stmts !== null && $this->callsThisPersist($method, $persist)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The first `$this->attr` written (assigned, compound-assigned, or in/decremented)
+     * in the method body, or null when the method writes no own attribute.
+     */
+    private function firstThisAttributeWrite(Node\Stmt\ClassMethod $method): ?string
+    {
+        foreach ((new NodeFinder)->find($method->stmts, fn (Node $n): bool => $this->isThisAttributeWrite($n)) as $write) {
+            /** @var Expr\Assign|Expr\AssignOp|Expr\PostInc|Expr\PreInc|Expr\PostDec|Expr\PreDec $write */
+            $target = $write->var;
+
+            if ($target instanceof Expr\PropertyFetch && $target->name instanceof Node\Identifier) {
+                return $target->name->toString();
+            }
+        }
+
+        return null;
+    }
+
+    private function isThisAttributeWrite(Node $node): bool
+    {
+        $target = match (true) {
+            $node instanceof Expr\Assign, $node instanceof Expr\AssignOp,
+            $node instanceof Expr\PostInc, $node instanceof Expr\PreInc,
+            $node instanceof Expr\PostDec, $node instanceof Expr\PreDec => $node->var,
+            default => null,
+        };
+
+        return $target instanceof Expr\PropertyFetch
+            && $target->var instanceof Expr\Variable
+            && $target->var->name === 'this'
+            && $target->name instanceof Node\Identifier;
+    }
+
+    /**
+     * Whether the method calls `$this->save()` (any configured persist method).
+     *
+     * @param  list<string>  $persist
+     */
+    private function callsThisPersist(Node\Stmt\ClassMethod $method, array $persist): bool
+    {
+        foreach ((new NodeFinder)->findInstanceOf($method->stmts ?? [], Expr\MethodCall::class) as $call) {
+            if ($call->var instanceof Expr\Variable
+                && $call->var->name === 'this'
+                && $call->name instanceof Node\Identifier
+                && in_array(strtolower($call->name->toString()), $persist, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the method is a fluent builder — declares a `self`/`static`/`$this`
+     * return type, or returns `$this`. Such mutate-and-return setters are a builder
+     * idiom, not the persist-or-not decision this rule is about.
+     */
+    private function isFluent(Node\Stmt\ClassMethod $method): bool
+    {
+        $return = $method->returnType;
+
+        if ($return instanceof Node\NullableType) {
+            $return = $return->type;
+        }
+
+        if (($return instanceof Node\Identifier || $return instanceof Node\Name)
+            && in_array(strtolower($return->toString()), ['self', 'static', '$this'], true)) {
+            return true;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($method->stmts ?? [], Node\Stmt\Return_::class) as $ret) {
+            if ($ret->expr instanceof Expr\Variable && $ret->expr->name === 'this') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function methodMessage(string $class, string $method, string $prop, string $persist): string
+    {
+        return sprintf(
+            '`%s::%s()` changes the record\'s persistent state (`$this->%s = …`) but never calls `$this->%s()` — the caller must remember to persist, re-scattering the transition the method was meant to own. Make the behaviour method persist itself: call `$this->%s()` at the end (or, for a deliberate unit-of-work that batches one save, leave it).',
+            $class,
+            $method,
+            $prop,
+            $persist,
+            $persist,
+        );
+    }
+
+    /**
+     * The fully-qualified name of a class node, using the file's namespace.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function fqcnOf(Node\Stmt\Class_ $class, array $ast): ?string
+    {
+        if ($class->name === null) {
+            return null;
+        }
+
+        $namespace = (new NodeFinder)->findFirstInstanceOf($ast, Node\Stmt\Namespace_::class);
+        $prefix = $namespace?->name?->toString();
+
+        return $prefix !== null ? $prefix . '\\' . $class->name->toString() : $class->name->toString();
     }
 
     private function message(string $var, string $prop, string $persist, bool $selfRef, bool $enum, bool $multi): string
