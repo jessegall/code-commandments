@@ -61,6 +61,39 @@ final class IssueReporter
     }
 
     /**
+     * Build an ENHANCEMENT issue — a new-prophet / new-feature proposal with no
+     * finding attached (so nothing to absolve). Unlike {@see self::build()} it
+     * requires no prophet/location; it optionally carries a proposed prophet name
+     * and an APPLY/LEAVE rubric for a new-rule proposal.
+     *
+     * @return array{title: string, body: string}
+     */
+    public function buildFeatureRequest(string $reason, ?string $title = null, ?string $proposedProphet = null, ?string $rubric = null): array
+    {
+        $headline = is_string($title) && T_String::isNotBlank($title) ? trim($title) : $this->summarise($reason);
+
+        $body = "**Filed by a code-commandments agent — feature request (no finding attached).**\n\n";
+
+        if (is_string($proposedProphet) && T_String::isNotBlank($proposedProphet)) {
+            $body .= "| | |\n|---|---|\n"
+                . sprintf('| Proposed prophet | `%s` |%s', trim($proposedProphet), T_String::PARAGRAPH);
+        }
+
+        $body .= sprintf('### What / why%s%s%s', T_String::PARAGRAPH, $reason, T_String::PARAGRAPH);
+
+        if (is_string($rubric) && T_String::isNotBlank($rubric)) {
+            $body .= sprintf('### Proposed APPLY / LEAVE rubric%s%s%s', T_String::PARAGRAPH, trim($rubric), T_String::PARAGRAPH);
+        }
+
+        $body .= "### For the maintainer\n\n"
+            . "This is an enhancement / new-rule proposal, not a false-positive report — there is "
+            . "no finding to absolve. Decide whether to implement it (new prophet / command / flag), "
+            . "then close with the resolution.\n";
+
+        return ['title' => "[feature-request] {$headline}", 'body' => $body];
+    }
+
+    /**
      * @param  array{title: string, body: string}  $issue
      * @return array{ok: bool, message: string, url: ?string, number: ?int}
      */

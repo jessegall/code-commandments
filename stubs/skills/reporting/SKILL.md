@@ -59,6 +59,25 @@ re-judge: a real false positive is gone; a genuine sin re-blocks and must be fix
 Session-start `reports --check` also re-checks on every NEW session, so the report
 resolves itself either way — but the loop is what catches it without a restart.
 
+## Proposing a NEW rule or feature (not a wrong finding)
+
+`report` above is for an EXISTING finding that's wrong. When you instead want to
+PROPOSE something new — a new prophet/rule, a CLI enhancement — there is no finding
+to tie to, so use the feature-request mode:
+
+```
+vendor/bin/commandments report --feature-request \
+    --title="Flag anemic model mutations" \
+    --reason="why this rule/feature is worth it" \
+    --proposed-prophet=EncapsulateModelMutation \   # optional, for a new-prophet idea
+    --rubric="APPLY WHEN … / LEAVE WHEN …"           # optional
+```
+
+It needs NO `--prophet`/`--at`/`--fingerprint`, files an `enhancement`-labelled
+issue, and records NO absolution (a proposal has nothing to quiet) — so no poll
+loop is needed either. Use this instead of overloading `--prophet` with a
+non-existent name or bypassing the pipeline with `gh issue create`.
+
 ## Backs
 
 This is the positive twin of the `report` / `reports` commands and the standing
