@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
-use JesseGall\CodeCommandments\Support\Skills\SkillInstaller;
-use JesseGall\CodeCommandments\Support\Skills\SkillReporter;
+use JesseGall\CodeCommandments\Support\SkillInstallService;
 
 /**
  * Publish the Code Commandments skills — the on-demand "how to do it right"
@@ -24,33 +23,13 @@ class InstallSkillsCommand extends Command
 
     public function handle(): int
     {
-        $config = config('commandments.skills', []);
-
-        // Auto-refresh implies force (the files are auto-managed) and stamps each
-        // skill file with a loud do-not-edit banner.
-        $autoRefresh = (bool) ($config['auto_refresh'] ?? false);
-
-        // The `--auto` hook is a no-op unless auto-refresh is on.
-        if ((bool) $this->option('auto') && ! $autoRefresh) {
-            return self::SUCCESS;
-        }
-
-        // Skill examples use the consumer's scaffold namespace so they match the
-        // generated support classes.
-        $namespace = config('commandments.scaffold.namespace', 'App\\Support');
-        $except = $config['except'] ?? [];
-        $targetRoot = base_path('.claude/skills');
-
-        $force = $autoRefresh || (bool) $this->option('force');
-
-        $results = SkillInstaller::packaged()
-            ->install($namespace, $targetRoot, $force, $except, $autoRefresh);
-
-        $installed = SkillReporter::report($results, fn (string $line) => $this->line($line));
-
-        $this->info($installed > 0
-            ? "Installed {$installed} skill(s) into .claude/skills/."
-            : 'All skills already present — nothing to install.');
+        SkillInstallService::install(
+            config('commandments', []),
+            base_path('.claude/skills'),
+            (bool) $this->option('auto'),
+            (bool) $this->option('force'),
+            fn (string $line) => $this->line($line),
+        );
 
         return self::SUCCESS;
     }

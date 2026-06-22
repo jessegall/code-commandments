@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
-use JesseGall\CodeCommandments\Contracts\SinRepenter;
+use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
-use JesseGall\PhpTypes\T_String;
+use JesseGall\CodeCommandments\Support\ScriptureService;
 
 /**
- * Reveal the commandments.
+ * Reveal the commandments. Thin adapter over {@see ScriptureService}.
  */
 class ScriptureCommand extends Command
 {
@@ -23,91 +23,13 @@ class ScriptureCommand extends Command
 
     public function handle(ProphetRegistry $registry): int
     {
-        $scrollFilter = $this->option('scroll');
-        $prophetFilter = $this->option('prophet');
-        $detailed = $this->option('detailed') || $prophetFilter;
-
-        $scrolls = $scrollFilter
-            ? [$scrollFilter]
-            : $registry->getScrolls();
-
-        // If filtering by prophet, find and show just that one
-        if ($prophetFilter) {
-            return $this->showProphetDetails($registry, $prophetFilter);
-        }
-
-        $this->output->writeln('CODE COMMANDMENTS');
-        $this->output->newLine();
-        $this->output->writeln('IMPORTANT: Never commit code with sins. Fix all violations first.');
-        $this->output->newLine();
-
-        foreach ($scrolls as $scroll) {
-            if (!$registry->hasScroll($scroll)) {
-                continue;
-            }
-
-            $this->output->writeln(strtoupper($scroll) . ':');
-
-            $prophets = $registry->getProphets($scroll);
-
-            foreach ($prophets as $prophet) {
-                $className = str_replace('Prophet', T_String::empty(), class_basename($prophet));
-                $canRepent = $prophet instanceof SinRepenter;
-
-                $badge = $canRepent ? ' [AUTO-FIXABLE]' : T_String::empty();
-
-                $this->output->writeln("- {$className}{$badge}: {$prophet->description()}");
-
-                if ($detailed) {
-                    $detailedDesc = $prophet->detailedDescription();
-                    $lines = explode(T_String::NEWLINE, $detailedDesc);
-                    foreach ($lines as $line) {
-                        $this->output->writeln("  {$line}");
-                    }
-                    $this->output->newLine();
-                }
-            }
-
-            $this->output->newLine();
-        }
-
-        $this->output->writeln('Check violations: php artisan commandments:judge --next --git');
-        $this->output->writeln('Auto-fix [AUTO-FIXABLE] sins: php artisan commandments:repent  (do NOT hand-fix these)');
-        $this->output->writeln('Report a false positive OR prophet bug (proactively!): php artisan commandments:report --prophet=NAME --reason="what is wrong"');
-
-        return self::SUCCESS;
-    }
-
-    /**
-     * Show detailed information for a specific prophet.
-     */
-    private function showProphetDetails(ProphetRegistry $registry, string $prophetFilter): int
-    {
-        $found = $registry->findProphet($prophetFilter);
-
-        if (!$found) {
-            $this->output->writeln("Prophet '{$prophetFilter}' not found.");
-            return self::FAILURE;
-        }
-
-        $prophet = $found['prophet'];
-        $className = class_basename($prophet);
-        $shortName = str_replace('Prophet', T_String::empty(), $className);
-        $canRepent = $prophet instanceof SinRepenter;
-
-        $this->output->writeln(strtoupper($shortName));
-        $this->output->newLine();
-        $this->output->writeln('REQUIREMENT: ' . $prophet->description());
-        if ($canRepent) {
-            $this->output->writeln('[AUTO-FIXABLE with: php artisan commandments:repent]');
-        }
-        $this->output->newLine();
-        $this->output->writeln('You MUST follow this rule exactly as described below:');
-        $this->output->newLine();
-
-        $detailedDesc = $prophet->detailedDescription();
-        $this->output->writeln($detailedDesc);
-
-        return self::SUCCESS;
+        return ScriptureService::render(
+            $registry,
+            $this->option('scroll'),
+            $this->option('prophet'),
+            (bool) $this->option('detailed'),
+            ClaudeHooksInstaller::ARTISAN,
+            fn (string $line) => $this->output->writeln($line),
+        ) === ScriptureService::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 }
