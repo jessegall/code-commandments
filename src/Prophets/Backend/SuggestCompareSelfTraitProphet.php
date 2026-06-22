@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\EnumInstanceResolver;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\RepentanceResult;
@@ -123,17 +124,21 @@ A chain must contain at least `min_chain` atoms (default 1 — single
 comparisons are flagged too). Mixed-enum chains, chains with different
 left-hand sides, and `match` expressions are intentionally ignored.
 
-The rewrite is always null-safe and reuses the enum class reference exactly
-as written, so no new `use` import is needed. A SINGLE comparison against
-one known case anchors on the case — the case literal is never null, so
-`Case->equals($x)` is just as null-safe as the static helper and reads
-better. Only multi-case sets keep the static form (there is no single case
-to anchor on):
+The rewrite reuses the enum class reference exactly as written, so no new
+`use` import is needed. It ANCHORS on the instance whenever possible:
 
-    $x === Status::A                      ->  Status::A->equals($x)
-    $x !== Status::A                      ->  Status::A->notEquals($x)
-    $x === Status::A || $x === Status::B  ->  Status::equalsAny($x, Status::A, Status::B)
-    $x !== Status::A && $x !== Status::B  ->  Status::notEqualsAny($x, Status::A, Status::B)
+  - A SINGLE comparison against one known case anchors on the CASE — the case
+    literal is never null, so `Case->equals($x)` is null-safe and reads better.
+  - A multi-case set anchors on the SUBJECT when the subject is provably a
+    non-nullable instance of the enum (a typed param/property): `$x->equalsAny(…)`.
+  - Only when the subject MAY be null or is dynamic/mixed does the multi-case
+    rewrite keep the null-safe STATIC form `Enum::equalsAny($x, …)` — anchoring
+    a non-null subject is preferred (and a static call on a non-null subject is
+    itself re-flagged by AnchorEnumComparisonProphet).
+
+    $x === Status::A                         ->  Status::A->equals($x)
+    $kind === Status::A || $kind === Status::B  ->  $kind->equalsAny(Status::A, Status::B)   // $kind: non-null Status
+    $mixed === Status::A || $mixed === Status::B ->  Status::equalsAny($mixed, Status::A, Status::B)  // subject may be null
 
 Use the STATIC form ONLY when the value being checked against is dynamic
 (neither operand is a literal case). When you already know the case, an
@@ -227,7 +232,7 @@ SCRIPTURE;
                 $hasTrait = $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast);
 
                 if ($hasTrait === true) {
-                    return $this->primaryWarning($match, $traitFqcn);
+                    return $this->primaryWarning($match, $traitFqcn, $ast, $uses, $namespace);
                 }
 
                 $key = $enumFqcn;
@@ -617,7 +622,7 @@ SCRIPTURE;
      *
      * @param  array<string, string>  $groups
      */
-    private function rewrite(array $groups): string
+    private function rewrite(array $groups, ?string $anchorSubject = null): string
     {
         $classRef = $groups['class_ref'];
         $cases = explode(',', $groups['cases']);
@@ -628,25 +633,77 @@ SCRIPTURE;
             return sprintf('%s::%s->%s(%s)', $classRef, $cases[0], $method, $groups['lhs']);
         }
 
-        $args = array_merge(
-            [$groups['lhs']],
-            array_map(static fn (string $c) => $classRef . '::' . $c, $cases),
-        );
+        $caseRefs = array_map(static fn (string $c) => $classRef . '::' . $c, $cases);
+
+        // A subject PROVABLY a non-nullable instance of this enum anchors on the
+        // instance — `$subject->equalsAny(A, B)` — never the static form (which
+        // exists only to tolerate a null/dynamic subject). Otherwise it would be
+        // immediately re-flagged by AnchorEnumComparisonProphet.
+        if ($anchorSubject !== null) {
+            return sprintf('%s->%s(%s)', $anchorSubject, $method, implode(', ', $caseRefs));
+        }
+
+        $args = array_merge([$groups['lhs']], $caseRefs);
 
         return sprintf('%s::%s(%s)', $classRef, $method, implode(', ', $args));
     }
 
-    private function primaryWarning(MatchResult $match, string $traitFqcn): Warning
+    /**
+     * The subject text to anchor a multi-case set comparison on, when the LHS is
+     * PROVABLY a non-nullable instance of the matched enum; null otherwise (keep
+     * the null-safe static form).
+     *
+     * @param  array<string,string>  $groups
+     * @param  array<Node>  $ast
+     * @param  array<string,string>  $uses
+     */
+    private function multiCaseAnchor(array $groups, array $ast, array $uses, ?string $namespace): ?string
+    {
+        $op = $groups['op'] ?? '';
+
+        if ($op !== 'one_of' && $op !== 'not_one_of') {
+            return null;
+        }
+
+        $finder = new NodeFinder;
+        $start = (int) ($groups['start'] ?? -1);
+        $subject = null;
+
+        foreach ($finder->find($ast, static fn (Node $n): bool => $n instanceof Node\Expr\BinaryOp && (int) $n->getStartFilePos() === $start) as $cmp) {
+            $subject = $this->nonEnumOperand($cmp, $finder);
+
+            break;
+        }
+
+        if (! $subject instanceof Node\Expr\Variable && ! $subject instanceof Node\Expr\PropertyFetch) {
+            return null;
+        }
+
+        $type = EnumInstanceResolver::resolve($subject, $start, $ast, $finder, $uses, $namespace);
+
+        if ($type === null || $type[1] === true || ltrim($type[0], '\\') !== ltrim($groups['enum_fqcn'] ?? '', '\\')) {
+            return null;
+        }
+
+        return $groups['lhs'];
+    }
+
+    /**
+     * @param  array<Node>  $ast
+     * @param  array<string,string>  $uses
+     */
+    private function primaryWarning(MatchResult $match, string $traitFqcn, array $ast, array $uses, ?string $namespace): Warning
     {
         $groups = $match->groups;
         $method = $this->methodFor($groups['op']);
         $defined = $this->traitDefinesMethod($traitFqcn, $method);
+        $anchor = $this->multiCaseAnchor($groups, $ast, $uses, $namespace);
 
         $message = sprintf(
-            '%s comparison on %s — use the null-safe `%s`.',
+            '%s comparison on %s — use `%s`.',
             $this->opLabel($groups['op']),
             $groups['enum_short'],
-            $this->rewrite($groups),
+            $this->rewrite($groups, $anchor),
         );
 
         // #57: the configured trait does not define this method (it uses other
@@ -786,7 +843,7 @@ SCRIPTURE;
 
             $start = (int) $groups['start'];
             $end = (int) $groups['end'];
-            $replacement = $this->rewrite($groups);
+            $replacement = $this->rewrite($groups, $this->multiCaseAnchor($groups, $ast, $uses, $namespace));
             $original = substr($content, $start, $end - $start + 1);
 
             $edits[] = ['start' => $start, 'end' => $end, 'text' => $replacement];

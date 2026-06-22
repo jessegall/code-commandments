@@ -52,7 +52,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
 
         $this->assertCount(0, $judgment->sins);
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('NodeKind::equalsAny(', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('$kind->equalsAny(', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
         $this->assertStringContainsString('NodeKind::Input', $judgment->warnings[0]->message);
         $this->assertStringContainsString('NodeKind::Output', $judgment->warnings[0]->message);
@@ -81,7 +81,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Status::notEqualsAny(', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('$status->notEqualsAny(', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('[ADOPT]', $judgment->warnings[0]->message);
     }
 
@@ -107,7 +107,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Foo::equalsAny($kind, Foo::A, Foo::B, Foo::C)', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('$kind->equalsAny(Foo::A, Foo::B, Foo::C)', $judgment->warnings[0]->message);
     }
 
     public function test_handles_property_fetch_lhs(): void
@@ -332,7 +332,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
 
         // One chain warning only — the two atoms are consumed, not re-emitted.
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Foo::equalsAny($kind, Foo::A, Foo::B)', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('$kind->equalsAny(Foo::A, Foo::B)', $judgment->warnings[0]->message);
     }
 
     public function test_mixed_enum_chain_yields_singles_per_enum(): void
@@ -628,7 +628,7 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
         PHP);
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('Foo::isAny(', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('$kind->isAny(', $judgment->warnings[0]->message);
         $this->assertStringNotContainsString('equalsAny', $judgment->warnings[0]->message);
     }
 
@@ -936,6 +936,41 @@ class SuggestCompareSelfTraitProphetTest extends TestCase
     {
         $this->assertNotEmpty($this->prophet->description());
         $this->assertNotEmpty($this->prophet->detailedDescription());
+    }
+
+    public function test_anchors_a_non_null_subject_and_is_not_re_flagged_by_anchor_prophet(): void
+    {
+        $body = <<<'PHP'
+        namespace App;
+
+        use App\Support\Enums\CompareSelf;
+
+        enum Foo {
+            use CompareSelf;
+            case A;
+            case B;
+        }
+
+        class Sieve {
+            public function pick(Foo $kind): bool {
+                return $kind === Foo::A || $kind === Foo::B;
+            }
+        }
+        PHP;
+
+        // The non-null subject anchors on the instance — NOT the static form, which
+        // AnchorEnumComparisonProphet would immediately re-flag.
+        $judgment = $this->judge($body);
+        $this->assertStringContainsString('$kind->equalsAny(Foo::A, Foo::B)', $judgment->warnings[0]->message);
+
+        $result = $this->prophet->repent('/x.php', "<?php\n" . $body);
+        $code = (string) $result->newContent;
+        $this->assertStringContainsString('return $kind->equalsAny(Foo::A, Foo::B);', $code);
+        $this->assertStringNotContainsString('Foo::equalsAny($kind', $code);
+
+        // The repented output is already anchored, so the sibling prophet stays silent.
+        $anchor = new \JesseGall\CodeCommandments\Prophets\Backend\AnchorEnumComparisonProphet;
+        $this->assertCount(0, $anchor->judge('/x.php', $code)->warnings);
     }
 
     private function judge(string $body): Judgment

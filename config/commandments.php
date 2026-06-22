@@ -300,6 +300,10 @@ return [
                     // 'min_chain' => 1,
                     // 'exclude_enums' => [],
                 ],
+                Backend\AnchorEnumComparisonProphet::class => [
+                    'trait' => 'App\\Support\\Enums\\CompareSelf',
+                    // 'any_methods' => ['equalsAny', 'notEqualsAny', 'equalsAnyIgnoreType', 'notEqualsAnyIgnoreType'],
+                ],
             ],
         ],
 
