@@ -81,6 +81,7 @@ return [
                 Backend\SetReturnContractProphet::class,
                 Backend\OutOfPurposeProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
+                Backend\EnumCaseMustBeDocumentedProphet::class,
                 Backend\RepeatedFallbackProphet::class,
                 Backend\PreferEnumCaseGroupsProphet::class,
                 Backend\PreferStaticOverInvokableConstructProphet::class,

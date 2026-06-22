@@ -95,6 +95,7 @@ final class SkillRegistry
                     'PreferEnumCaseGroups',
                     'PreferTypeMethodOverInlineDispatch',
                     'SuggestCompareSelfTrait',
+                    'EnumCaseMustBeDocumented',
                 ],
             ),
             new Skill(
