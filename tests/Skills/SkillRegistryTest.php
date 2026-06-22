@@ -30,13 +30,14 @@ class SkillRegistryTest extends TestCase
         'coalesce-factories',
         'immutable-data',
         'value-flow',
+        'reporting',
     ];
 
     public function test_catalogue_is_the_backend_subjects(): void
     {
         $slugs = array_map(fn (Skill $s) => $s->slug, SkillRegistry::all());
 
-        $this->assertCount(11, $slugs, 'backend skills.');
+        $this->assertCount(12, $slugs, 'backend skills.');
         $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the spec.');
     }
 
@@ -52,6 +53,14 @@ class SkillRegistryTest extends TestCase
     public function test_every_skill_names_a_non_empty_prophet_family(): void
     {
         foreach (SkillRegistry::all() as $skill) {
+            if ($skill->workflow) {
+                // A workflow/command skill (e.g. reporting) teaches a CLI flow,
+                // not a prophet family — it legitimately backs no prophets.
+                $this->assertSame([], $skill->prophets, "Workflow skill {$skill->slug} should not name prophets.");
+
+                continue;
+            }
+
             $this->assertNotEmpty($skill->prophets, "Skill {$skill->slug} backs no prophets.");
         }
     }

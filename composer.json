@@ -30,6 +30,7 @@
         "judge:self:next": "php bin/commandments judge -c commandments.self.php --next",
         "reports": "bash scripts/prophet-reports.sh",
         "issues": "bash scripts/open-issues.sh",
+        "issues:new": "bash scripts/new-issues.sh",
         "update-consumers": "bash scripts/update-consumers.sh",
         "readme": "php scripts/generate-readme.php",
         "readme:check": "php scripts/generate-readme.php --check"
@@ -39,6 +40,7 @@
         "judge:self:next": "Walk the package's own findings one at a time.",
         "reports": "List every open [prophet-report] issue WITH all comments — always read comments when triaging.",
         "issues": "List every open issue WITH its body and all comments — full context for acting on issues.",
+        "issues:new": "Show only NEW open issues since the last check (tracked in .commandments/seen-issues) with body+comments + the response protocol. Use `--seed` to baseline. Drive on a loop: /loop 5m composer issues:new.",
         "update-consumers": "Bump code-commandments to latest in each .env-registered consumer, re-sync/scaffold, and commit (composer.json + commandments.php + scaffold files, --no-verify).",
         "readme": "Regenerate the auto-generated README sections (prophet + command tables) from the source classes.",
         "readme:check": "Fail if the auto-generated README sections are stale (run in the pre-commit hook / CI)."
