@@ -26,9 +26,18 @@ elif [ -f "$root/artisan" ]; then
     gate=$(cd "$root" && php artisan commandments:judge --git 2>/dev/null | tail -40)
 fi
 
-# Active plan loop + its progress memory, if present.
+# Active plan loop marker (continuation count), if armed.
 planactive='no'
 [ -f "$root/.claude/plan-active" ] && planactive="yes (continuations: $(cat "$root/.claude/plan-active" 2>/dev/null))"
+
+# The plan-progress MEMORY file(s) — surfaced whether or not the loop is active.
+# A stalled or released plan still has its progress memory, and a cold context
+# needs it MOST then; gating this on the loop marker (the old bug) hid the plan
+# exactly when handoff matters. The file-based memory lives in the per-project
+# memory dir (CLAUDE.md), encoded as the absolute repo path with '/'→'-'.
+memslug=$(printf '%s' "$root" | sed 's#/#-#g')
+memdir="${CLAUDE_MEMORY_DIR:-$HOME/.claude/projects/$memslug/memory}"
+planfiles=$(ls "$memdir"/*progress*.md 2>/dev/null)
 
 # printf with %s ARGUMENTS keeps gathered output literal — never re-interpreted
 # (a diff/finding containing backticks or $() can't execute).
@@ -38,7 +47,22 @@ planactive='no'
 
     printf '## Snapshot (auto-gathered)\n\n'
     printf -- '- **Branch:** `%s` → upstream `%s`\n' "$branch" "$upstream"
-    printf -- '- **Plan loop active:** %s\n\n' "$planactive"
+    printf -- '- **Plan loop active:** %s\n' "$planactive"
+    if [ -n "$planfiles" ]; then
+        printf -- '- **Plan progress memory:**\n'
+        for f in $planfiles; do printf -- '    - `%s`\n' "$f"; done
+        printf '\n'
+    else
+        printf -- '- **Plan progress memory:** none found in `%s`\n\n' "$memdir"
+    fi
+
+    # The plan-progress memory is the plan itself — include it VERBATIM so a cold
+    # context resumes from it even when the loop was stopped to write this handoff.
+    if [ -n "$planfiles" ]; then
+        for f in $planfiles; do
+            printf '### Plan progress — `%s`\n```\n%s\n```\n\n' "$(basename "$f")" "$(cat "$f" 2>/dev/null)"
+        done
+    fi
 
     printf '### Working tree — `git status --short`\n```\n%s\n```\n\n' "${status:-clean}"
     printf '### Uncommitted diff — `git diff --stat`\n```\n%s\n```\n\n' "${diffstat:-none}"

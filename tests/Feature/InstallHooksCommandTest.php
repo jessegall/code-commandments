@@ -63,6 +63,15 @@ class InstallHooksCommandTest extends TestCase
         $this->assertArrayHasKey('SessionStart', $content['hooks']);
         $this->assertArrayHasKey('Stop', $content['hooks']);
 
+        // The handoff-detect SessionStart hook offers a resume when HANDOFF.md exists.
+        $commands = [];
+        foreach ($content['hooks']['SessionStart'] as $group) {
+            foreach ($group['hooks'] ?? [] as $h) {
+                $commands[] = $h['command'] ?? '';
+            }
+        }
+        $this->assertContains('sh .claude/hooks/handoff-detect.sh 2>/dev/null || true', $commands);
+
         // Cleanup
         $this->removeClaudeDir();
     }

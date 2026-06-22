@@ -232,6 +232,10 @@ class InstallHooksCommand extends Command
                             'type' => 'command',
                             'command' => 'php artisan commandments:skills 2>/dev/null || true',
                         ],
+                        [
+                            'type' => 'command',
+                            'command' => 'sh .claude/hooks/handoff-detect.sh 2>/dev/null || true',
+                        ],
                     ],
                 ],
             ],
