@@ -259,18 +259,20 @@ final readonly class Option
     }
 
     /**
-     * $this when already present; otherwise `some($factory())` when $condition
-     * is truthy, else still none. OR-chain sugar that removes a `||` chain:
+     * $this when already present; otherwise `some($value)` when $condition is
+     * truthy, else still none. OR-chain sugar that removes a `||` chain:
      * `someWhen($a, fn () => $v)->orWhen($b, fn () => $v)->orWhen($c, fn () => $v)`.
+     * Like {@see self::someWhen()}, $value may be a bare value or a factory (a
+     * callable is resolved only if this option is empty AND $condition holds).
      *
      * @template TOther
      *
-     * @param  callable(): TOther  $factory
+     * @param  (callable(): TOther)|TOther  $value
      * @return self<T>|self<TOther>
      */
-    public function orWhen(mixed $condition, callable $factory): self
+    public function orWhen(mixed $condition, mixed $value): self
     {
-        return $this->hasValue ? $this : self::someWhen($condition, $factory);
+        return $this->hasValue ? $this : self::someWhen($condition, $value);
     }
 
     /**
@@ -327,31 +329,46 @@ final readonly class Option
     }
 
     /**
-     * `some($factory())` when the condition is truthy, otherwise none — the
-     * value-wrapping form: the factory returns the bare value T and this wraps
-     * it, so the call site stays `someWhen($cond, fn () => $value)` with no
-     * `Option::some(...)` boilerplate.
+     * `some($value)` when the condition is truthy, otherwise none — the
+     * value-wrapping form, with no `Option::some(...)` boilerplate. The value may
+     * be a BARE value OR a FACTORY: a callable is invoked only when the condition
+     * holds (so an expensive or condition-dependent value is not built when it
+     * won't be used), anything else is wrapped as-is. Both read cleanly:
+     *
+     *     Option::someWhen($cond, $value)            // eager: $value is built either way
+     *     Option::someWhen($cond, fn () => build())  // lazy: build() runs only when $cond
+     *
+     * Use the LAZY (closure) form whenever the value depends on the condition
+     * (e.g. it dereferences something the condition just proved exists) — an eager
+     * value is evaluated before the call and would blow up when the condition is
+     * false.
      *
      * @template TWhen
      *
-     * @param  callable(): TWhen  $factory
+     * @param  (callable(): TWhen)|TWhen  $value
      * @return self<TWhen>
      */
-    public static function someWhen(mixed $condition, callable $factory): self
+    public static function someWhen(mixed $condition, mixed $value): self
     {
-        return $condition ? self::some($factory()) : self::none();
+        if (! $condition) {
+            return self::none();
+        }
+
+        return self::some(is_callable($value) ? $value() : $value);
     }
 
     /**
-     * `some($factory())` unless the condition is truthy, otherwise none.
+     * `some($value)` unless the condition is truthy, otherwise none. Like
+     * {@see self::someWhen()}, $value may be a bare value or a factory (a callable
+     * is resolved only when this branch is taken).
      *
      * @template TWhen
      *
-     * @param  callable(): TWhen  $factory
+     * @param  (callable(): TWhen)|TWhen  $value
      * @return self<TWhen>
      */
-    public static function someWhenNot(mixed $condition, callable $factory): self
+    public static function someWhenNot(mixed $condition, mixed $value): self
     {
-        return $condition ? self::none() : self::some($factory());
+        return self::someWhen(! $condition, $value);
     }
 }
