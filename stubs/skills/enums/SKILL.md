@@ -53,6 +53,7 @@ Enforced by **StringsThatShouldBeEnums** (literal closed sets), **PreferEnumForC
 (value/label dispatch belongs on the enum), **BehaviouralEnumDispatch** (wide
 behavioural dispatch → strategy objects), **PreferEnumCaseGroups** (named subset →
 enum accessor), and **SuggestCompareSelfTrait** (raw `===`/`!==` → the null-safe
-`equals` family). A finding from any of them points back to this skill. For the
-exact rule text run `commandments:scripture --prophet=<NAME>` (e.g.
-`--prophet=SuggestCompareSelfTrait`).
+`equals` family), and **EnumCaseMustBeDocumented** (a SIN — every enum case must
+carry a descriptive doc comment above it explaining what the case represents). A
+finding from any of them points back to this skill. For the exact rule text run
+`commandments:scripture --prophet=<NAME>` (e.g. `--prophet=SuggestCompareSelfTrait`).

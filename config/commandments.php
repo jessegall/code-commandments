@@ -133,6 +133,7 @@ return [
                 ],
                 Backend\PreferOptionFactoryProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
+                Backend\EnumCaseMustBeDocumentedProphet::class,
                 Backend\RepeatedFallbackProphet::class => [
                     // How many identical occurrences before it's flagged:
                     // 'min_occurrences' => 2,
