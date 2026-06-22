@@ -20,12 +20,26 @@ final class HandoffHelper
 {
     public const SCRIPT = 'handoff.sh';
 
+    /** The read/verify counterpart of {@see self::SCRIPT} — assembles a resume briefing. */
+    public const RESUME_SCRIPT = 'resume.sh';
+
+    /** SessionStart hook — offers a resume when a HANDOFF.md is present. */
+    public const DETECT_SCRIPT = 'handoff-detect.sh';
+
+    /**
+     * The helper scripts installed together: the handoff writer, the resume
+     * briefing reader, and the SessionStart detector that offers a resume.
+     *
+     * @var list<string>
+     */
+    public const SCRIPTS = [self::SCRIPT, self::RESUME_SCRIPT, self::DETECT_SCRIPT];
+
     public const STATUS_INSTALLED = 'installed';
     public const STATUS_WRITE_FAILED = 'write_failed';
 
     /**
-     * Copy the packaged helper into `$basePath/.claude/hooks/handoff.sh`
-     * (idempotent, executable).
+     * Copy the packaged helpers (handoff.sh + resume.sh) into
+     * `$basePath/.claude/hooks/` (idempotent, executable).
      */
     public static function install(string $basePath): string
     {
@@ -35,14 +49,16 @@ final class HandoffHelper
             return self::STATUS_WRITE_FAILED;
         }
 
-        $source = dirname(__DIR__, 2) . '/stubs/hooks/' . self::SCRIPT;
-        $contents = @file_get_contents($source);
+        foreach (self::SCRIPTS as $script) {
+            $source = dirname(__DIR__, 2) . '/stubs/hooks/' . $script;
+            $contents = @file_get_contents($source);
 
-        if ($contents === false || @file_put_contents($target . '/' . self::SCRIPT, $contents) === false) {
-            return self::STATUS_WRITE_FAILED;
+            if ($contents === false || @file_put_contents($target . '/' . $script, $contents) === false) {
+                return self::STATUS_WRITE_FAILED;
+            }
+
+            @chmod($target . '/' . $script, 0755);
         }
-
-        @chmod($target . '/' . self::SCRIPT, 0755);
 
         return self::STATUS_INSTALLED;
     }

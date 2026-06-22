@@ -179,6 +179,13 @@ final class SkillRegistry
                 workflow: true,
                 autoload: false,
             ),
+            new Skill(
+                slug: 'resume-from-handoff',
+                introducedIn: '2.39.0',
+                purpose: 'Resume cold from a HANDOFF.md (or a *-progress plan memory): read the whole doc, re-verify the snapshot against the live repo (branch, git status, gate) before trusting it, reconstruct goal/state/next-step, then continue from the Next step — re-arming the plan loop if one was active. The consumer twin of the handoff skill.',
+                workflow: true,
+                autoload: false,
+            ),
         ];
     }
 

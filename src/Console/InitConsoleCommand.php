@@ -335,6 +335,10 @@ class InitConsoleCommand extends Command
                             'type' => 'command',
                             'command' => 'vendor/bin/commandments skills 2>/dev/null || true',
                         ],
+                        [
+                            'type' => 'command',
+                            'command' => 'sh .claude/hooks/handoff-detect.sh 2>/dev/null || true',
+                        ],
                     ],
                 ],
             ],
