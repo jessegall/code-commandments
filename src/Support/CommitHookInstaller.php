@@ -99,9 +99,15 @@ final class CommitHookInstaller
                 return self::STATUS_ALREADY_PRESENT;
             }
 
-            $replaced = (string) preg_replace(
+            // preg_replace_callback (not preg_replace): the block is a literal
+            // payload, and a plain replacement string would interpret `$1` /
+            // `\1` as backreferences — silently eating the `"$1"` in the
+            // commit-msg hook (no capture groups → empty), so the refreshed
+            // guard greps an empty filename and stops blocking. A callback
+            // returns the block verbatim.
+            $replaced = (string) preg_replace_callback(
                 '/' . preg_quote($begin, '/') . '.*?' . preg_quote($end, '/') . '/s',
-                $block,
+                static fn (): string => $block,
                 $existing,
             );
 

@@ -108,6 +108,29 @@ class CommitHookInstallerTest extends TestCase
         @unlink($this->dir . '/clean.txt');
     }
 
+    public function test_force_refresh_preserves_commit_msg_argument(): void
+    {
+        $installer = new CommitHookInstaller();
+        $installer->installCommitMsg($this->dir);
+
+        // Force-refresh an already-installed guard. The replacement path must
+        // not interpret the block's "$1" as a regex backreference (which would
+        // strip it, leaving `grep ... ""` that greps an empty filename and
+        // never blocks).
+        $status = $installer->installCommitMsg($this->dir, force: true);
+        $this->assertSame(CommitHookInstaller::STATUS_INSTALLED, $status);
+
+        $hook = $this->dir . '/.git/hooks/commit-msg';
+        $this->assertStringContainsString('"$1"', file_get_contents($hook));
+
+        // It still blocks a Co-authored-by trailer after the refresh.
+        file_put_contents($this->dir . '/coauthor.txt', "feat: x\n\nCo-Authored-By: Bob <b@x>\n");
+        exec('sh ' . escapeshellarg($hook) . ' ' . escapeshellarg($this->dir . '/coauthor.txt') . ' 2>/dev/null', $o, $blocked);
+        $this->assertSame(1, $blocked, 'Refreshed guard should still block Co-authored-by');
+
+        @unlink($this->dir . '/coauthor.txt');
+    }
+
     public function test_reports_when_not_a_git_repo(): void
     {
         @rmdir($this->dir . '/.git');
