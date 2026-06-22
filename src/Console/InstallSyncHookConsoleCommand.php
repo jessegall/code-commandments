@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
-use JesseGall\CodeCommandments\Support\ComposerScriptInstaller;
 use JesseGall\CodeCommandments\Support\Environment;
-use JesseGall\CodeCommandments\Support\VersionResolver;
+use JesseGall\CodeCommandments\Support\SyncHookInstaller;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use JesseGall\PhpTypes\T_String;
 
 /**
- * Install a git post-merge hook that runs `sync --after=previous` whenever
- * composer.lock changes in an incoming merge (typical team-mate upgrade flow).
+ * Install a git post-merge hook that runs sync when composer.lock changes. Thin
+ * adapter over {@see SyncHookInstaller}.
  */
 class InstallSyncHookConsoleCommand extends Command
 {
@@ -29,104 +27,15 @@ class InstallSyncHookConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd();
+        $basePath = getcwd() ?: '.';
         Environment::setBasePath($basePath);
 
-        $hookPath = $basePath . '/.git/hooks/post-merge';
-        $gitDir = dirname($hookPath);
-
-        if (! is_dir(dirname($gitDir))) {
-            $output->writeln('<error>Not a git repository (no .git directory found).</error>');
-
-            return Command::FAILURE;
-        }
-
-        if (! is_dir($gitDir)) {
-            @mkdir($gitDir, 0755, true);
-        }
-
-        if (is_file($hookPath) && ! $input->getOption('force')) {
-            $output->writeln("<comment>Hook already exists at {$hookPath}. Re-run with --force to overwrite.</comment>");
-
-            return Command::SUCCESS;
-        }
-
-        $content = $this->hookScript();
-
-        if (@file_put_contents($hookPath, $content) === false) {
-            $output->writeln("<error>Failed to write {$hookPath}</error>");
-
-            return Command::FAILURE;
-        }
-
-        @chmod($hookPath, 0755);
-
-        $relative = str_starts_with($hookPath, $basePath)
-            ? ltrim(str_replace($basePath, T_String::empty(), $hookPath), '/')
-            : $hookPath;
-
-        $output->writeln("Installed git post-merge hook at {$relative}");
-
-        $this->installComposerScript($basePath, $output);
-        $this->recordBaselineVersion($basePath, $output);
-
-        $output->writeln(T_String::empty());
-        $output->writeln('Now every <info>git pull</info> and <info>composer update</info> will run sync automatically.');
-
-        return Command::SUCCESS;
-    }
-
-    private function installComposerScript(string $basePath, OutputInterface $output): void
-    {
-        $composerJson = $basePath . '/composer.json';
-        $installer = new ComposerScriptInstaller();
-        $command = 'vendor/bin/commandments sync --after=previous';
-
-        $status = $installer->install($composerJson, 'post-update-cmd', $command);
-
-        match ($status) {
-            ComposerScriptInstaller::STATUS_INSTALLED => $output->writeln(
-                'Added <info>vendor/bin/commandments sync --after=previous</info> to composer.json post-update-cmd'
-            ),
-            ComposerScriptInstaller::STATUS_ALREADY_PRESENT => $output->writeln(
-                'composer.json already has the sync script — skipped'
-            ),
-            ComposerScriptInstaller::STATUS_MISSING_FILE => $output->writeln(
-                '<comment>No composer.json found — skipping composer-script install.</comment>'
-            ),
-            ComposerScriptInstaller::STATUS_INVALID_JSON => $output->writeln(
-                '<error>composer.json is not valid JSON — skipping composer-script install. Add the script manually.</error>'
-            ),
-            ComposerScriptInstaller::STATUS_WRITE_FAILED => $output->writeln(
-                '<error>Failed to write composer.json — check permissions.</error>'
-            ),
-        };
-    }
-
-    private function recordBaselineVersion(string $basePath, OutputInterface $output): void
-    {
-        $resolver = new VersionResolver();
-        $current = $resolver->currentVersion();
-
-        if ($current === null) {
-            $output->writeln(
-                '<comment>Could not resolve installed package version (dev install?) — skipping baseline record.</comment>'
-            );
-
-            return;
-        }
-
-        if ($resolver->recordSyncedVersion($basePath, $current)) {
-            $output->writeln("Recorded baseline sync version <info>{$current}</info> in .commandments-last-synced");
-        } else {
-            $output->writeln('<comment>Failed to write .commandments-last-synced — check permissions.</comment>');
-        }
-    }
-
-    private function hookScript(): string
-    {
-        // Shared with the artisan variant via ClaudeHooksInstaller — ONE
-        // runner-detecting body (artisan-first) so the auto-sync path can't drift.
-        return \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::postMergeHookScript() . "\n";
+        return SyncHookInstaller::install(
+            $basePath,
+            (bool) $input->getOption('force'),
+            'vendor/bin/commandments sync --after=previous',
+            fn (string $line) => $output->writeln($line),
+            fn (string $line) => $output->writeln('<error>' . $line . '</error>'),
+        ) === SyncHookInstaller::SUCCESS ? Command::SUCCESS : Command::FAILURE;
     }
 }
