@@ -13,7 +13,11 @@ printf '%s' "$payload" | grep -q "git commit" || exit 0
 
 root=$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "${CLAUDE_PROJECT_DIR:-.}")
 
-ctx="A commit just landed — a phase is complete. Re-read the Code Commandments section of CLAUDE.md now and act as a sin resolver: run \`vendor/bin/commandments judge --next --git\` and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to leave a sin in place."
+# Resolve the runner the way the rest of the suite does: artisan when this is a
+# Laravel app (published config + provider bindings), else the standalone binary.
+if [ -f "$root/artisan" ]; then run="php artisan commandments:"; else run="vendor/bin/commandments "; fi
+
+ctx="A commit just landed — a phase is complete. Re-read the Code Commandments section of CLAUDE.md now and act as a sin resolver: run \`${run}judge --next --git\` and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to leave a sin in place."
 
 # Only nudge the plan-progress memory while THIS worktree's plan loop is armed,
 # so ordinary non-plan commits stay quiet.
@@ -24,8 +28,9 @@ fi
 if command -v jq >/dev/null 2>&1; then
     jq -nc --arg ctx "$ctx" '{hookSpecificOutput:{hookEventName:"PostToolUse",additionalContext:$ctx}}'
 else
-    # jq absent: emit the always-on sin-resolver nudge only (no special chars).
-    printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"A commit just landed — re-read the Code Commandments and run vendor/bin/commandments judge --next --git, resolving every finding before the next phase."}}'
+    # jq absent: emit the always-on sin-resolver nudge only. The runner goes in via
+    # a printf %s slot; the rest of the body has no % or backslash to reprocess.
+    printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"A commit just landed — re-read the Code Commandments and run %sjudge --next --git, resolving every finding before the next phase."}}' "$run"
 fi
 
 exit 0

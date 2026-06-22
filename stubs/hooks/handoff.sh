@@ -18,12 +18,13 @@ status=$(git -C "$root" status --short 2>/dev/null)
 diffstat=$(git -C "$root" diff --stat 2>/dev/null; git -C "$root" diff --cached --stat 2>/dev/null)
 commits=$(git -C "$root" log --oneline -15 2>/dev/null)
 
-# Commandments gate on the current changes (best-effort; standalone then artisan).
+# Commandments snapshot of the current changes (best-effort; artisan for a Laravel
+# app, else the standalone binary — same runner order as the rest of the suite).
 gate=''
-if [ -x "$root/vendor/bin/commandments" ]; then
-    gate=$(cd "$root" && vendor/bin/commandments judge --git 2>/dev/null | tail -40)
-elif [ -f "$root/artisan" ]; then
+if [ -f "$root/artisan" ]; then
     gate=$(cd "$root" && php artisan commandments:judge --git 2>/dev/null | tail -40)
+elif [ -x "$root/vendor/bin/commandments" ]; then
+    gate=$(cd "$root" && vendor/bin/commandments judge --git 2>/dev/null | tail -40)
 fi
 
 # Active plan loop marker (continuation count), if armed.
@@ -67,7 +68,7 @@ planfiles=$(ls "$memdir"/*progress*.md 2>/dev/null)
     printf '### Working tree — `git status --short`\n```\n%s\n```\n\n' "${status:-clean}"
     printf '### Uncommitted diff — `git diff --stat`\n```\n%s\n```\n\n' "${diffstat:-none}"
     printf '### Recent commits\n```\n%s\n```\n\n' "${commits:-none}"
-    printf '### Commandments gate — `judge --git`\n```\n%s\n```\n\n' "${gate:-(not run / clean)}"
+    printf '### Commandments snapshot — `judge --git`\n```\n%s\n```\n\n' "${gate:-(not run / clean)}"
 
     printf '## Goal\n\n>>> TODO: one or two lines on what this work delivers. <<<\n\n'
     printf '## State\n\n- **Done:** >>> TODO: completed pieces, each with its commit sha. <<<\n- **In progress:** >>> TODO <<<\n- **Remaining (ordered):** >>> TODO <<<\n\n'
