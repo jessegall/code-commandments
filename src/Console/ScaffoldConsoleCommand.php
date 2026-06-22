@@ -6,8 +6,7 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
-use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator;
-use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter;
+use JesseGall\CodeCommandments\Support\ScaffoldService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -38,31 +37,13 @@ class ScaffoldConsoleCommand extends Command
             return Command::FAILURE;
         }
 
-        $config = ConfigLoader::load($resolved);
-        $scaffold = $config['scaffold'] ?? [];
-
-        // Auto-refresh implies force + the do-not-edit banner.
-        $autoRefresh = (bool) ($scaffold['auto_refresh'] ?? false);
-
-        // The `--auto` hook is a no-op unless auto-refresh is on.
-        if ((bool) $input->getOption('auto') && ! $autoRefresh) {
-            return Command::SUCCESS;
-        }
-
-        $namespace = $scaffold['namespace'] ?? 'App\\Support';
-        $path = $scaffold['path'] ?? ($basePath . '/app/Support');
-        $except = $scaffold['except'] ?? [];
-
-        $force = $autoRefresh || (bool) $input->getOption('force');
-
-        $results = ScaffoldGenerator::packaged()
-            ->generate($namespace, $path, $force, $except, $autoRefresh);
-
-        $created = ScaffoldReporter::report($results, fn (string $line) => $output->writeln($line));
-
-        $output->writeln($created > 0
-            ? "<info>Generated {$created} support class(es) into {$namespace}.</info>"
-            : 'All support classes already present — nothing to generate.');
+        ScaffoldService::generate(
+            ConfigLoader::load($resolved)['scaffold'] ?? [],
+            $basePath . '/app/Support',
+            (bool) $input->getOption('auto'),
+            (bool) $input->getOption('force'),
+            fn (string $line) => $output->writeln($line),
+        );
 
         return Command::SUCCESS;
     }

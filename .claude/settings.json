@@ -30,6 +30,14 @@
             "command": "bash .claude/hooks/stop-protocol.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/grind-keep-going.sh"
+          }
+        ]
       }
     ]
   }
