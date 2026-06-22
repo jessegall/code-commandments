@@ -159,6 +159,7 @@ return [
                 Backend\NoConditionalArraySpreadProphet::class,
                 Backend\PreferTypeMethodOverInlineDispatchProphet::class,
                 Backend\FeatureEnvyProphet::class,
+                Backend\EncapsulateModelMutationProphet::class,
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
                 Backend\NoInlineParamDocProphet::class,

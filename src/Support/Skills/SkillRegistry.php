@@ -158,6 +158,14 @@ final class SkillRegistry
                 ],
             ),
             new Skill(
+                slug: 'model-behaviour',
+                introducedIn: '2.34.0',
+                purpose: 'Put state transitions ON the record as intention-revealing behaviour methods instead of poking attributes then calling save() at the call site (the anemic-model / tell-don\'t-ask smell): a counter bumped inline, an enum status assigned then saved, several fields set together before a save — extract markShipped() / incrementSequenceNumber() so the change and its invariants live in one place.',
+                prophets: [
+                    'EncapsulateModelMutation',
+                ],
+            ),
+            new Skill(
                 slug: 'reporting',
                 introducedIn: '2.32.0',
                 purpose: 'When a finding is genuinely WRONG (false positive / wrong rule), report it instead of silently absolving or working around it: `report --prophet=NAME --at=path:line --reason="why"` files a GitHub issue AND quiets the finding until the issue is answered; `reports --check` (runs at session start) lifts it when resolved; then re-judge / `composer update`. A command-flow skill, not a prophet family.',

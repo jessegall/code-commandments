@@ -510,7 +510,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_106 prophets._
+_107 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -526,6 +526,7 @@ _106 prophets._
 | `DemeterEndpointReachProphet` | — | Ask the owner with its intent method instead of reaching through $x-&gt;endpoint-&gt;field to branch (Law of Demeter) |
 | `DuplicateCodeProphet` | — | Extract duplicated code fragments instead of copy-pasting a method body |
 | `EagerRegistryProphet` | — | A registry is eagerly hydrated + read-only — lookups must not lazily build or populate-on-miss |
+| `EncapsulateModelMutationProphet` | — | Flag direct model attribute writes followed by save() — encapsulate the change as a named behaviour method on the model |
 | `ExplicitDataFactoryProphet` | Yes | Keep Data construction explicit — from() takes an array; map objects in named forX() factories |
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
 | `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |

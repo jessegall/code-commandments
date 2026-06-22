@@ -46,8 +46,18 @@ vendor/bin/commandments report --prophet=NAME --at=path:line --reason="why this 
 - **Without a locator** (`--at` or `--fingerprint`), `report` files the issue but
   records **NO** absolution — the finding still blocks. It says so. Always pass
   `--at`.
-- Then keep going. At each session start `reports --check` re-checks the issue; a
-  real false positive is gone after `composer update`, a confirmed sin re-blocks.
+
+Then **ALWAYS arm a poll loop in the same breath** — a `report` without a watch
+loop is half-finished (nothing brings the resolution back into THIS session):
+
+```
+/loop 15m Run `vendor/bin/commandments reports --check`. If a report-linked
+absolution was lifted, run `composer update jessegall/code-commandments` and
+re-judge: a real false positive is gone; a genuine sin re-blocks and must be fixed.
+```
+
+Session-start `reports --check` also re-checks on every NEW session, so the report
+resolves itself either way — but the loop is what catches it without a restart.
 
 ## Backs
 
