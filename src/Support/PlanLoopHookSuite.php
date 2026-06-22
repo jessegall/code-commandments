@@ -38,6 +38,7 @@ final class PlanLoopHookSuite
         'plan-start.sh',
         'plan-release.sh',
         'guard-plan-marker.sh',
+        'plan-session-reset.sh',
     ];
 
     public const STATUS_INSTALLED = 'installed';
@@ -53,6 +54,20 @@ final class PlanLoopHookSuite
         $hooks = $config['hooks'] ?? [];
 
         return is_array($hooks) && (bool) ($hooks['plan_loop'] ?? false);
+    }
+
+    /**
+     * The SessionStart entry — clears a stale plan marker on a genuinely NEW
+     * session so a previous session's plan doesn't silently auto-continue (the
+     * script itself no-ops on resume/compact, preserving an in-flight plan).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function sessionStartEntries(): array
+    {
+        return [
+            ['hooks' => [self::command('sh .claude/hooks/plan-session-reset.sh')]],
+        ];
     }
 
     /**
