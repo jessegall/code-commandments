@@ -20,6 +20,7 @@ final class Skill
      * @param  string  $purpose  one-line summary of what the subject teaches
      * @param  list<string>  $prophets  short names of the prophet classes this skill backs (the inverse of which surfaces as the prophet's deep-dive pointer)
      * @param  bool  $workflow  a command/workflow skill (e.g. reporting) that teaches a CLI flow rather than a prophet family — exempt from the "must back ≥1 prophet" rule
+     * @param  bool  $autoload  whether to surface this skill in the session-start digest ({@see SkillDigest}). Default true; set false for a skill tied to a self-evident command an agent will trigger on its own (e.g. handoff) — still installed + natively discoverable, just not force-injected every session.
      */
     public function __construct(
         public readonly string $slug,
@@ -27,6 +28,7 @@ final class Skill
         public readonly string $purpose,
         public readonly array $prophets = [],
         public readonly bool $workflow = false,
+        public readonly bool $autoload = true,
     ) {}
 
     /**

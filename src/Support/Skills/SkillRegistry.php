@@ -163,6 +163,13 @@ final class SkillRegistry
                 purpose: 'When a finding is genuinely WRONG (false positive / wrong rule), report it instead of silently absolving or working around it: `report --prophet=NAME --at=path:line --reason="why"` files a GitHub issue AND quiets the finding until the issue is answered; `reports --check` (runs at session start) lifts it when resolved; then re-judge / `composer update`. A command-flow skill, not a prophet family.',
                 workflow: true,
             ),
+            new Skill(
+                slug: 'handoff',
+                introducedIn: '2.33.0',
+                purpose: 'Generate a comprehensive HANDOFF.md so a fresh context resumes cold: run `sh .claude/hooks/handoff.sh` (auto-fills the git/gate snapshot), then complete the narrative — goal, done/remaining, next step, decisions, resume notes. A command-flow skill; not force-loaded (the command is self-evident).',
+                workflow: true,
+                autoload: false,
+            ),
         ];
     }
 
