@@ -131,7 +131,7 @@ SCRIPTURE;
 
             $match = $this->matchSomeNone($ternary->if, $ternary->else);
 
-            if ($match !== null && ! $this->condNarrowsType($ternary->cond)) {
+            if ($match !== null && ! $this->narrowingBlocks($ternary->cond, $match['arg'])) {
                 $warnings[] = $this->warn($ternary->getStartLine(), $ternary->cond, $match, $content);
             }
         }
@@ -150,7 +150,7 @@ SCRIPTURE;
 
             $match = $this->matchSomeNone($then, $else);
 
-            if ($match !== null && ! $this->condNarrowsType($if->cond)) {
+            if ($match !== null && ! $this->narrowingBlocks($if->cond, $match['arg'])) {
                 $warnings[] = $this->warn($if->getStartLine(), $if->cond, $match, $content);
             }
         }
@@ -189,8 +189,9 @@ SCRIPTURE;
             // branch, so the Option keeps the narrow type. The suggested
             // `someWhen($cond, fn () => $x)` evaluates the closure OUTSIDE that
             // narrowing, widening the result and breaking the declared `Option<Narrow>`
-            // (#152). Leave a type-narrowing condition alone.
-            if ($this->condNarrowsType($ternary->cond)) {
+            // (#152). Leave it alone ONLY when the wrapped value actually depends on
+            // the narrowed subject; a value independent of the narrowing is safe.
+            if ($this->narrowingBlocks($ternary->cond, $value)) {
                 continue;
             }
 
@@ -253,6 +254,48 @@ SCRIPTURE;
         }
 
         return false;
+    }
+
+    /**
+     * Whether a type-narrowing condition genuinely blocks the `someWhen` rewrite
+     * for THIS value. The closure `fn () => $value` runs outside the condition's
+     * narrowing scope, so the rewrite only widens the type when $value actually
+     * USES the narrowed subject. A value independent of the condition (e.g.
+     * `$payload instanceof X ? Option::some(UiIntent::fitView()) : Option::none()`,
+     * whose value references no variable from the condition) is safe — flag it.
+     */
+    private function narrowingBlocks(Expr $cond, Expr $value): bool
+    {
+        return $this->condNarrowsType($cond) && $this->sharesVariable($cond, $value);
+    }
+
+    /**
+     * Whether two expressions reference at least one variable in common — the
+     * cheap, safe proxy for "$value depends on what the condition narrowed".
+     */
+    private function sharesVariable(Expr $a, Expr $b): bool
+    {
+        $names = array_intersect($this->variableNames($a), $this->variableNames($b));
+
+        return $names !== [];
+    }
+
+    /**
+     * The distinct variable names ($x → 'x') referenced anywhere in an expression.
+     *
+     * @return list<string>
+     */
+    private function variableNames(Expr $expr): array
+    {
+        $names = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($expr, Expr\Variable::class) as $var) {
+            if (is_string($var->name)) {
+                $names[$var->name] = true;
+            }
+        }
+
+        return array_keys($names);
     }
 
     /**
