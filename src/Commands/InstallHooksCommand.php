@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
-use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\ClaudeMdInstaller;
-use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HandoffHelper;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\PhpTypes\T_Json;
 use JesseGall\PhpTypes\T_String;
 
@@ -22,7 +21,7 @@ class InstallHooksCommand extends Command
     protected $signature = 'commandments:install-hooks
         {--force : Overwrite existing hooks configuration}';
 
-    protected $description = 'Install Claude Code hooks for code commandments';
+    protected $description = 'Install Claude Code hooks for code commandments (= `profile phased`)';
 
     public function handle(): int
     {
@@ -35,61 +34,45 @@ class InstallHooksCommand extends Command
             $this->output->writeln('Created .claude directory');
         }
 
-        // Check for existing settings
+        // Seed the settings.json `instructions` block (the profile switch below
+        // merges its hooks INTO this file, preserving the instructions + any
+        // consumer keys). Only added when absent.
         $existingSettings = [];
         if (file_exists($settingsFile)) {
             $content = file_get_contents($settingsFile);
             $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
         }
 
-        // Reconcile to the CURRENT package wiring: replace every package-owned
-        // entry with the latest set (so changed/removed hooks update cleanly) while
-        // preserving every hook the consumer added. Shared with `sync` so an update
-        // always lands the newest wiring.
-        $hooks = ClaudeHooksInstaller::apply(
-            $existingSettings['hooks'] ?? [],
-            base_path(),
-            (bool) config('commandments.hooks.plan_loop', false),
-        );
-
-        $settings = array_merge($existingSettings, ['hooks' => $hooks]);
-
-        // Add instructions if not present
         if (!isset($existingSettings['instructions'])) {
-            $settings['instructions'] = $this->getClaudeInstructions();
+            $existingSettings['instructions'] = $this->getClaudeInstructions();
+            $json = json_encode($existingSettings ?: ['instructions' => $this->getClaudeInstructions()], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            file_put_contents($settingsFile, $json.T_String::NEWLINE);
         }
 
-        // Write settings file
-        $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents($settingsFile, $json.T_String::NEWLINE);
+        // install-hooks IS `profile phased`: the profile owns the Claude hook
+        // wiring, the git hooks (pre-commit gate, post-commit reset, commit-msg
+        // guard, pre-push reset), and the CLAUDE.md section, and records the
+        // selection in .commandments/profile.
+        (new ProfileService(base_path(), config('commandments', [])))->switch(
+            'phased',
+            fn (string $line) => $this->output->writeln($line),
+            fn (string $line) => $this->warn($line),
+        );
 
-        $this->output->writeln('Hooks installed to .claude/settings.json');
-
-        // Create/update CLAUDE.md
-        $this->createClaudeMd();
-
-        // Install the on-demand "how to do it right" skills into
-        // .claude/skills/ alongside the hooks + CLAUDE.md.
+        // Install the on-demand "how to do it right" skills into .claude/skills/.
         $this->installSkills();
 
-        // Install the opt-in plan-loop hook scripts when enabled (the settings
-        // entries above are already gated on the same flag).
+        // Install the opt-in plan-loop hook scripts when enabled.
         $this->installPlanLoopScripts();
 
-        // Install the always-on handoff helper (a manual `handoff.sh` the model
-        // runs to scaffold HANDOFF.md).
+        // Install the always-on handoff helper.
         $this->installHandoffHelper();
 
-        // Install the git pre-commit gate (blocks sins) and post-commit reset
-        // (clears absolutions so nothing stays silently hidden).
-        $this->installCommitHook();
-
-        // Keep the generated tracking state (.commandments/, report ledger,
-        // sync baseline) out of version control.
+        // Keep the generated tracking state out of version control.
         $this->ensureGitignore();
 
         $this->output->newLine();
-        $this->output->writeln('Hooks will:');
+        $this->output->writeln('Profile set to "phased". Hooks will:');
         $this->output->writeln('- Show commandments on session start');
         $this->output->writeln('- Judge changed code after Claude completes work');
 
@@ -101,6 +84,7 @@ class InstallHooksCommand extends Command
 
         $this->output->writeln('- Block git commits while any sins remain (pre-commit hook)');
         $this->output->writeln('- Clear absolutions after each commit (post-commit hook)');
+        $this->output->writeln('Switch modes any time: `php artisan commandments:profile grind` (heads-down) or `disabled`.');
 
         return self::SUCCESS;
     }
@@ -164,20 +148,6 @@ class InstallHooksCommand extends Command
         };
     }
 
-    private function installCommitHook(): void
-    {
-        (new CommitHookInstaller())->installAll(
-            base_path(),
-            (bool) $this->option('force'),
-            fn (string $line) => $this->output->writeln($line),
-            fn (string $line) => $this->warn($line),
-        );
-    }
-
-    /**
-     * Build the Claude Code hooks configuration.
-     */
-
     /**
      * Get Claude instructions for the settings file.
      */
@@ -185,22 +155,4 @@ class InstallHooksCommand extends Command
     {
         return ClaudeMdInstaller::settingsInstructions(base_path());
     }
-
-    /**
-     * Create or update the CLAUDE.md file.
-     */
-    private function createClaudeMd(): void
-    {
-        // Shared with init + sync via ClaudeMdInstaller: a sentinel-fenced section,
-        // spliced (never preg_replace), runner-parameterized so it can't drift.
-        match (ClaudeMdInstaller::install(base_path())) {
-            ClaudeMdInstaller::STATUS_CREATED => $this->output->writeln('Created CLAUDE.md'),
-            ClaudeMdInstaller::STATUS_APPENDED => $this->output->writeln('Added section to CLAUDE.md'),
-            ClaudeMdInstaller::STATUS_REPLACED => $this->output->writeln('Updated CLAUDE.md'),
-            ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $this->warn('CLAUDE.md has merge conflict markers — skipped the Code Commandments section.'),
-            ClaudeMdInstaller::STATUS_WRITE_FAILED => $this->error('Failed to write CLAUDE.md — check permissions.'),
-            default => null,
-        };
-    }
-
 }

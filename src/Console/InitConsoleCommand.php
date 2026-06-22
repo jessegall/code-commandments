@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
-use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\ClaudeMdInstaller;
-use JesseGall\CodeCommandments\Support\CommitHookInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HandoffHelper;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\CodeCommandments\Support\ProjectDetector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,12 +41,19 @@ class InitConsoleCommand extends Command
         $autoDetect = (bool) $input->getOption('auto-detect');
 
         $this->createConfig($basePath, $autoDetect, $output);
-        $this->createClaudeHooks($basePath, $force, $output);
-        $this->createClaudeMd($basePath, $output);
+        $this->seedSettingsInstructions($basePath);
+
+        // init IS `profile phased`: the profile owns the Claude hook wiring, the
+        // git hooks, and the CLAUDE.md section, and records .commandments/profile.
+        (new ProfileService($basePath, $this->loadConfig($basePath)))->switch(
+            'phased',
+            fn (string $line) => $output->writeln($line),
+            fn (string $line) => $output->writeln('<comment>' . $line . '</comment>'),
+        );
+
         $this->installSkills($basePath, $force, $output);
         $this->installHandoffHelper($basePath, $output);
         $this->installPlanLoopScripts($basePath, $output);
-        $this->installCommitHook($basePath, $force, $output);
         $this->ensureGitignore($basePath, $output);
 
         $output->writeln(T_String::empty());
@@ -107,14 +113,40 @@ class InitConsoleCommand extends Command
         };
     }
 
-    private function installCommitHook(string $basePath, bool $force, OutputInterface $output): void
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadConfig(string $basePath): array
     {
-        (new CommitHookInstaller())->installAll(
-            $basePath,
-            $force,
-            fn (string $line) => $output->writeln($line),
-            fn (string $line) => $output->writeln($line),
-        );
+        $resolved = ConfigLoader::resolve(null, $basePath);
+
+        return $resolved !== null ? ConfigLoader::load($resolved) : [];
+    }
+
+    /**
+     * Seed the settings.json `instructions` block before the profile switch merges
+     * its hooks into the file. Only added when absent.
+     */
+    private function seedSettingsInstructions(string $basePath): void
+    {
+        $claudeDir = $basePath . '/.claude';
+        $settingsFile = $claudeDir . '/settings.json';
+
+        if (! is_dir($claudeDir)) {
+            mkdir($claudeDir, 0755, true);
+        }
+
+        $settings = [];
+        if (file_exists($settingsFile)) {
+            $settings = json_decode((string) file_get_contents($settingsFile) ?: T_Json::emptyObject(), true) ?? [];
+        }
+
+        if (isset($settings['instructions'])) {
+            return;
+        }
+
+        $settings['instructions'] = ClaudeMdInstaller::settingsInstructions($basePath);
+        file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . T_String::NEWLINE);
     }
 
     private function createConfig(string $basePath, bool $autoDetect, OutputInterface $output): void
@@ -238,54 +270,4 @@ class InitConsoleCommand extends Command
             : 'Failed to write the plan-loop hook scripts — check permissions.');
     }
 
-    private function createClaudeHooks(string $basePath, bool $force, OutputInterface $output): void
-    {
-        $claudeDir = $basePath . '/.claude';
-        $settingsFile = $claudeDir . '/settings.json';
-
-        if (!is_dir($claudeDir)) {
-            mkdir($claudeDir, 0755, true);
-        }
-
-        $existingSettings = [];
-        if (file_exists($settingsFile)) {
-            $content = file_get_contents($settingsFile);
-            $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
-        }
-
-        // Reconcile to the CURRENT package wiring: replace every package-owned
-        // entry with the latest set while preserving the consumer's custom hooks.
-        // Shared with install-hooks + sync via ClaudeHooksInstaller so the artisan
-        // and vendor/bin wirings can never drift, and an update always lands the
-        // newest wiring.
-        $hooks = ClaudeHooksInstaller::apply(
-            $existingSettings['hooks'] ?? [],
-            $basePath,
-            $this->planLoopEnabled($basePath),
-        );
-
-        $settings = array_merge($existingSettings, ['hooks' => $hooks]);
-
-        if (!isset($existingSettings['instructions'])) {
-            $settings['instructions'] = ClaudeMdInstaller::settingsInstructions($basePath);
-        }
-
-        $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents($settingsFile, $json . T_String::NEWLINE);
-        $output->writeln('Created .claude/settings.json with hooks');
-    }
-
-    private function createClaudeMd(string $basePath, OutputInterface $output): void
-    {
-        // Shared with install-hooks + sync via ClaudeMdInstaller: a sentinel-fenced
-        // section, spliced (never preg_replace), runner-parameterized so it can't drift.
-        match (ClaudeMdInstaller::install($basePath)) {
-            ClaudeMdInstaller::STATUS_CREATED => $output->writeln('Created CLAUDE.md'),
-            ClaudeMdInstaller::STATUS_APPENDED => $output->writeln('Added Code Commandments section to CLAUDE.md'),
-            ClaudeMdInstaller::STATUS_REPLACED => $output->writeln('Updated CLAUDE.md'),
-            ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $output->writeln('<comment>CLAUDE.md has merge conflict markers — skipped the Code Commandments section.</comment>'),
-            ClaudeMdInstaller::STATUS_WRITE_FAILED => $output->writeln('<error>Failed to write CLAUDE.md — check permissions.</error>'),
-            default => null,
-        };
-    }
 }

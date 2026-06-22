@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Commands\SkillsCommand;
 use JesseGall\CodeCommandments\Commands\InstallSyncHookCommand;
 use JesseGall\CodeCommandments\Commands\JudgeCommand;
 use JesseGall\CodeCommandments\Commands\MakeProphetCommand;
+use JesseGall\CodeCommandments\Commands\ProfileCommand;
 use JesseGall\CodeCommandments\Commands\RepentCommand;
 use JesseGall\CodeCommandments\Commands\ScriptureCommand;
 use JesseGall\CodeCommandments\Commands\SyncCommand;
@@ -108,6 +109,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 SkillsCommand::class,
                 InstallSyncHookCommand::class,
                 SyncCommand::class,
+                ProfileCommand::class,
             ]);
         }
     }

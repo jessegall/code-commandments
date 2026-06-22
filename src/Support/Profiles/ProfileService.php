@@ -1,0 +1,486 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Support\Profiles;
+
+use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
+use JesseGall\CodeCommandments\Support\ClaudeMdInstaller;
+use JesseGall\CodeCommandments\Support\CommitHookInstaller;
+use JesseGall\CodeCommandments\Support\Skills\SkillInstaller;
+use JesseGall\CodeCommandments\Support\Skills\SkillRegistry;
+use JesseGall\PhpTypes\T_String;
+
+/**
+ * The one orchestrator behind the `profile` command. Reads/writes the local,
+ * gitignored selection (`.commandments/profile`), resolves the active profile
+ * (with legacy back-compat inference), and APPLIES a profile — installing exactly
+ * its git hooks, Claude hooks, briefing, and CLAUDE.md section while tearing down
+ * whatever the previous profile left, computed from what is actually on disk.
+ *
+ * Switching never touches the confession tracker: absolutions are a commit/push
+ * concern, not a profile concern.
+ */
+final class ProfileService
+{
+    public const SUCCESS = 0;
+    public const FAILURE = 1;
+
+    private const STATE = '.commandments/profile';
+    private const BRIEFED = '.commandments/profile-last-briefed';
+
+    private readonly string $basePath;
+
+    /** @param array<string, mixed> $config the consumer's commandments config */
+    public function __construct(string $basePath, private readonly array $config = [])
+    {
+        $this->basePath = rtrim($basePath, '/');
+    }
+
+    /**
+     * The active profile: the stored selection, else `phased` when a legacy setup
+     * is detected (back-compat — an existing consumer is never silently disabled),
+     * else the default `disabled`.
+     */
+    public function active(): Profile
+    {
+        $name = $this->readState();
+
+        if ($name !== null && ProfileRegistry::has($name)) {
+            return ProfileRegistry::get($name);
+        }
+
+        if ($this->hasLegacySetup()) {
+            return ProfileRegistry::get('phased');
+        }
+
+        return ProfileRegistry::default();
+    }
+
+    /**
+     * Static convenience for the judge / hook read path (no config needed to
+     * resolve scope and severity).
+     */
+    public static function resolve(string $basePath): Profile
+    {
+        return (new self($basePath))->active();
+    }
+
+    /**
+     * The scope a bare `judge` should use — but ONLY from an EXPLICITLY-selected
+     * profile (`.commandments/profile` present). Returns null when there is no
+     * explicit selection, so a legacy consumer (inferred `phased` for hooks'
+     * sake) keeps its historical full-scan `judge` until it opts into a profile.
+     */
+    public static function explicitScope(string $basePath): ?JudgeScope
+    {
+        $name = (new self($basePath))->readState();
+
+        if ($name === null || ! ProfileRegistry::has($name)) {
+            return null;
+        }
+
+        return ProfileRegistry::get($name)->options()->scope;
+    }
+
+    /**
+     * @param  callable(string): void  $emit
+     * @param  callable(string): void  $error
+     */
+    public function switch(string $name, callable $emit, callable $error): int
+    {
+        if (! ProfileRegistry::has($name)) {
+            $error("Unknown profile: {$name}. Available: " . implode(', ', ProfileRegistry::names()));
+
+            return self::FAILURE;
+        }
+
+        $new = ProfileRegistry::get($name);
+
+        $this->apply($new, $emit, $error);
+        $this->writeState($name);
+        // Deliberately do NOT touch the briefed marker here: the drift hook must
+        // still fire (re-index Claude) whether the switch ran inside this session
+        // or from another terminal. The immediate re-brief below covers the former.
+        $this->emitReindex($new, $emit);
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * @param  callable(string): void  $emit
+     */
+    public function list(callable $emit): void
+    {
+        $active = $this->active()->name();
+
+        $emit('Profiles (* = active):');
+        $emit(T_String::empty());
+
+        foreach (ProfileRegistry::all() as $name => $profile) {
+            $marker = $name === $active ? '*' : ' ';
+            $emit("{$marker} {$name} — {$profile->description()}");
+        }
+    }
+
+    /**
+     * @param  callable(string): void  $emit
+     */
+    public function show(callable $emit): void
+    {
+        $profile = $this->active();
+
+        $emit("Active profile: {$profile->name()}");
+        $emit("  {$profile->description()}");
+
+        foreach ($this->contractSummary($profile) as $line) {
+            $emit("  {$line}");
+        }
+    }
+
+    /**
+     * `--brief`: the SessionStart briefing for the active profile. Adopts the
+     * current profile as the briefed baseline so the per-turn drift hook stays quiet
+     * until the profile actually changes.
+     *
+     * @param  callable(string): void  $emit
+     */
+    public function brief(callable $emit): void
+    {
+        $profile = $this->active();
+
+        if (! $profile->options()->briefAgent) {
+            $this->writeBriefed($profile->name());
+
+            return;
+        }
+
+        foreach ($this->briefingLines($profile) as $line) {
+            $emit($line);
+        }
+
+        $this->writeBriefed($profile->name());
+    }
+
+    /**
+     * `--drift-check`: re-index the agent when the active profile differs from the
+     * one it was last briefed on (a change made this session, by hand, or by a
+     * teammate's merge). Silent when there's no drift.
+     *
+     * @param  callable(string): void  $emit
+     */
+    public function driftCheck(callable $emit): void
+    {
+        $profile = $this->active();
+        $current = $profile->name();
+
+        if ($this->readBriefed() === $current) {
+            return;
+        }
+
+        if (! $profile->options()->briefAgent) {
+            // Drifted into a dormant profile — nothing to say, just sync the marker.
+            $this->writeBriefed($current);
+
+            return;
+        }
+
+        $emit("[code-commandments] The active profile is now \"{$current}\". Discard any previous commandments contract and follow this:");
+
+        foreach ($this->contractSummary($profile) as $line) {
+            $emit("  {$line}");
+        }
+
+        $this->writeBriefed($current);
+    }
+
+    /**
+     * Re-assert the ACTIVE profile's bundle on a package update (called by `sync`).
+     * Persists the inferred selection so a legacy consumer becomes explicitly
+     * `phased`, then refreshes that profile's hooks/wiring/docs to the current
+     * version — using REPLACE-ONLY semantics for the docs (never force-feeds a
+     * CLAUDE.md section or a settings.json onto a consumer that doesn't have one).
+     * For a greenfield/`disabled` consumer this removes nothing.
+     *
+     * @param  callable(string): void  $emit
+     * @param  callable(string): void  $error
+     */
+    public function reassert(callable $emit, callable $error): void
+    {
+        $profile = $this->active();
+        $opts = $profile->options();
+
+        if ($this->readState() === null) {
+            $this->writeState($profile->name());
+            $emit("Recorded the active code-commandments profile as \"{$profile->name()}\".");
+        }
+
+        // Git hooks: reconcile to the profile's set (refresh bodies, drop stale
+        // blocks). Quiet when already correct.
+        (new CommitHookInstaller())->applyBlocks($this->basePath, $this->desiredBlocks($opts), $emit, $error);
+
+        // Claude hooks: refresh ONLY when the consumer already has a settings.json
+        // (a routine sync must not impose hooks on a project that never opted in).
+        if (is_file($this->basePath . '/.claude/settings.json')
+            && ClaudeHooksInstaller::writeForProfile($this->basePath, $opts, $this->planLoopEnabled()) === ClaudeHooksInstaller::STATUS_INSTALLED) {
+            $emit('Refreshed the Claude hook wiring in .claude/settings.json');
+        }
+
+        // CLAUDE.md: replace-only for an active profile (never create/append on
+        // sync); for disabled, ensure any owned section is gone.
+        if ($opts->briefAgent) {
+            if (ClaudeMdInstaller::reassert($this->basePath) === ClaudeMdInstaller::STATUS_REPLACED) {
+                $emit('Refreshed the Code Commandments section in CLAUDE.md');
+            }
+        } elseif (ClaudeMdInstaller::remove($this->basePath) === ClaudeMdInstaller::STATUS_REMOVED) {
+            $emit('Removed the Code Commandments section from CLAUDE.md (profile is disabled)');
+        }
+    }
+
+    /**
+     * Install the new profile's bundle and strip what it no longer owns.
+     *
+     * @param  callable(string): void  $emit
+     * @param  callable(string): void  $error
+     */
+    private function apply(Profile $new, callable $emit, callable $error): void
+    {
+        $opts = $new->options();
+
+        (new CommitHookInstaller())->applyBlocks($this->basePath, $this->desiredBlocks($opts), $emit, $error);
+
+        match (ClaudeHooksInstaller::writeForProfile($this->basePath, $opts, $this->planLoopEnabled())) {
+            ClaudeHooksInstaller::STATUS_INSTALLED => $emit('Updated .claude/settings.json hooks for this profile'),
+            ClaudeHooksInstaller::STATUS_WRITE_FAILED => $error('Failed to write .claude/settings.json — check permissions.'),
+            default => null,
+        };
+
+        // The `/commandments-profile` skill is the entry point to switch profiles,
+        // so it stays installed even under `disabled` (you still need a way back on).
+        $this->ensureProfileSkill();
+
+        if ($opts->briefAgent) {
+            match (ClaudeMdInstaller::install($this->basePath)) {
+                ClaudeMdInstaller::STATUS_CREATED => $emit('Created CLAUDE.md with the Code Commandments section'),
+                ClaudeMdInstaller::STATUS_APPENDED => $emit('Added the Code Commandments section to CLAUDE.md'),
+                ClaudeMdInstaller::STATUS_REPLACED => $emit('Updated the Code Commandments section in CLAUDE.md'),
+                ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $error('CLAUDE.md has merge conflict markers — skipped the Code Commandments section.'),
+                ClaudeMdInstaller::STATUS_WRITE_FAILED => $error('Failed to write CLAUDE.md — check permissions.'),
+                default => null,
+            };
+        } else {
+            match (ClaudeMdInstaller::remove($this->basePath)) {
+                ClaudeMdInstaller::STATUS_REMOVED => $emit('Removed the Code Commandments section from CLAUDE.md (agent is now unaware)'),
+                ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $error('CLAUDE.md has merge conflict markers — left the Code Commandments section in place.'),
+                ClaudeMdInstaller::STATUS_WRITE_FAILED => $error('Failed to write CLAUDE.md — check permissions.'),
+                default => null,
+            };
+        }
+    }
+
+    /**
+     * The git hook blocks a profile owns, derived from its options.
+     *
+     * @return list<string>
+     */
+    private function desiredBlocks(ProfileOptions $opts): array
+    {
+        $blocks = [];
+
+        if ($opts->gate === GitGateStage::PreCommit) {
+            $blocks[] = CommitHookInstaller::BLOCK_PRE_COMMIT_GATE;
+        }
+
+        if ($opts->gate === GitGateStage::PrePush) {
+            $blocks[] = CommitHookInstaller::BLOCK_PRE_PUSH_GATE;
+        }
+
+        if ($opts->postCommitReset) {
+            $blocks[] = CommitHookInstaller::BLOCK_POST_COMMIT_RESET;
+        }
+
+        if ($opts->prePushReset) {
+            $blocks[] = CommitHookInstaller::BLOCK_PRE_PUSH_RESET;
+        }
+
+        // The commit-msg guard rides along whenever the package is active at all.
+        if ($opts->briefAgent || $opts->gate !== GitGateStage::None || $opts->perPhaseNudges) {
+            $blocks[] = CommitHookInstaller::BLOCK_COMMIT_MSG_GUARD;
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Install the `commandments-profile` skill (only) — the always-available entry
+     * point for switching profiles. Never clobbers an existing copy.
+     */
+    private function ensureProfileSkill(): void
+    {
+        $namespace = is_array($this->config['scaffold'] ?? null)
+            ? (string) ($this->config['scaffold']['namespace'] ?? 'App\\Support')
+            : 'App\\Support';
+
+        $except = [];
+        foreach (SkillRegistry::all() as $skill) {
+            if ($skill->slug !== 'profile') {
+                $except[] = $skill->slug;
+            }
+        }
+
+        SkillInstaller::packaged()->install($namespace, $this->basePath . '/.claude/skills', false, $except, false);
+    }
+
+    private function planLoopEnabled(): bool
+    {
+        $hooks = $this->config['hooks'] ?? [];
+
+        return is_array($hooks) && (bool) ($hooks['plan_loop'] ?? false);
+    }
+
+    /**
+     * Whether the consumer already ran the legacy install (so absent state must
+     * resolve to `phased`, never `disabled`).
+     */
+    private function hasLegacySetup(): bool
+    {
+        if ((new CommitHookInstaller())->installedBlocks($this->basePath) !== []) {
+            return true;
+        }
+
+        $claudeMd = $this->basePath . '/CLAUDE.md';
+
+        if (! is_file($claudeMd)) {
+            return false;
+        }
+
+        $content = (string) @file_get_contents($claudeMd);
+
+        return str_contains($content, ClaudeMdInstaller::BEGIN)
+            || preg_match('/^## Code Commandments\b/m', $content) === 1;
+    }
+
+    /**
+     * @param  callable(string): void  $emit
+     */
+    private function emitReindex(Profile $new, callable $emit): void
+    {
+        $emit(T_String::empty());
+        $emit("Switched to the \"{$new->name()}\" profile.");
+
+        foreach ($this->contractSummary($new) as $line) {
+            $emit("  {$line}");
+        }
+
+        if ($new->options()->briefAgent) {
+            $emit('(Claude: discard any previous commandments contract and follow the above from now on.)');
+        }
+    }
+
+    /**
+     * A concise, options-derived contract summary — the mid-session re-brief and
+     * the body of `show`. Compaction-proof: self-sufficient without a scripture trip.
+     *
+     * @return list<string>
+     */
+    private function contractSummary(Profile $profile): array
+    {
+        $o = $profile->options();
+
+        $scope = match ($o->scope) {
+            JudgeScope::None => 'the full codebase',
+            JudgeScope::Staged => 'your staged changes',
+            JudgeScope::Branch => "the whole branch's changes",
+        };
+
+        $gate = match ($o->gate) {
+            GitGateStage::None => 'No git gate — nothing blocks commits or pushes.',
+            GitGateStage::PreCommit => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : '') . ' on staged files.',
+            GitGateStage::PrePush => 'Pre-push gate blocks sins across the whole branch (warnings shown, not blocked).',
+        };
+
+        $cadence = match (true) {
+            $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
+            $o->gate === GitGateStage::PrePush => 'Cadence: NO judge/tests between phases — implement the whole plan, then reckon (judge + run tests) once before pushing.',
+            default => 'Cadence: no per-phase nudges.',
+        };
+
+        return [
+            "Bare `judge` scope: {$scope}.",
+            $gate,
+            $o->allowWarnings ? 'Warnings are flagged.' : 'Warnings are silenced (sins only).',
+            $cadence,
+        ];
+    }
+
+    /**
+     * The full SessionStart briefing for a profile (used for the Short/grind body;
+     * Full-briefing profiles get scripture instead).
+     *
+     * @return list<string>
+     */
+    private function briefingLines(Profile $profile): array
+    {
+        $runner = ClaudeHooksInstaller::runnerFor($this->basePath);
+        $r = $runner[0] . $runner[1];
+
+        $lines = [
+            "CODE COMMANDMENTS — profile: {$profile->name()}",
+            T_String::empty(),
+        ];
+
+        foreach ($this->contractSummary($profile) as $line) {
+            $lines[] = $line;
+        }
+
+        if ($profile->options()->gate === GitGateStage::PrePush) {
+            $lines[] = T_String::empty();
+            $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge or tests between phases.';
+            $lines[] = "When the whole plan is done: run `{$r}judge` (fix every sin, review warnings) and your full test suite, then push.";
+            $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins.';
+        }
+
+        return $lines;
+    }
+
+    private function readState(): ?string
+    {
+        return $this->readMarker(self::STATE);
+    }
+
+    private function writeState(string $name): void
+    {
+        $this->writeMarker(self::STATE, $name);
+    }
+
+    private function readBriefed(): ?string
+    {
+        return $this->readMarker(self::BRIEFED);
+    }
+
+    private function writeBriefed(string $name): void
+    {
+        $this->writeMarker(self::BRIEFED, $name);
+    }
+
+    private function readMarker(string $relative): ?string
+    {
+        $path = $this->basePath . '/' . $relative;
+
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $value = trim((string) @file_get_contents($path));
+
+        return $value === '' ? null : $value;
+    }
+
+    private function writeMarker(string $relative, string $value): void
+    {
+        $path = $this->basePath . '/' . $relative;
+
+        @mkdir(dirname($path), 0755, true);
+        @file_put_contents($path, $value . T_String::NEWLINE);
+    }
+}

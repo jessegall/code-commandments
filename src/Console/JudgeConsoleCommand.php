@@ -26,6 +26,7 @@ class JudgeConsoleCommand extends Command
             ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Override the scroll path and target a specific directory (bypasses all excludes — use to scan subtrees regardless of config)')
             ->addOption('git', null, InputOption::VALUE_NONE, 'Only judge files that are new or changed in git')
             ->addOption('staged', null, InputOption::VALUE_NONE, 'Only judge files staged for commit (what the pre-commit gate uses)')
+            ->addOption('branch', null, InputOption::VALUE_NONE, 'Judge everything changed since the branch base, INCLUDING committed work (survives intermediate commits — the grind reckoning)')
             ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession')
             ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)')
             ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)');
@@ -53,6 +54,7 @@ class JudgeConsoleCommand extends Command
             'path' => $input->getOption('path'),
             'git' => (bool) $input->getOption('git'),
             'staged' => (bool) $input->getOption('staged'),
+            'branch' => (bool) $input->getOption('branch'),
             'absolve' => (bool) $input->getOption('absolve'),
             'no_cache' => (bool) $input->getOption('no-cache'),
             'next' => (bool) $input->getOption('next'),

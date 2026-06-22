@@ -131,6 +131,7 @@ Every command is available via both Laravel artisan
 | [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/ |
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
 | [`judge`](#judge) | Judge the codebase for sins against the commandments |
+| [`profile`](#profile) | Show, list, or switch the active code-commandments profile (disabled/grind/phased/sins-only) |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
 | [`report`](#report) | Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue |
 | [`reports`](#reports) | Show the status of prophet reports this project filed (resolved upstream yet?) |
@@ -198,9 +199,20 @@ Judge the codebase for sins against the commandments.
 | `--path` | `<value>` | Override the scroll path and target a specific directory (bypasses all excludes — use to scan subtrees regardless of config) |
 | `--git` | — | Only judge files that are new or changed in git |
 | `--staged` | — | Only judge files staged for commit (what the pre-commit gate uses) |
+| `--branch` | — | Judge everything changed since the branch base, INCLUDING committed work (survives intermediate commits — the grind reckoning) |
 | `--absolve` | — | Mark files as absolved after confession |
 | `--no-cache` | — | Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative) |
 | `--next` | — | Show exactly one finding at a time (fix or absolve to advance) |
+
+### `profile`
+
+Show, list, or switch the active code-commandments profile (disabled/grind/phased/sins-only).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--brief` | — | Print the active profile briefing (session-start hook) |
+| `--drift-check` | — | Re-brief only when the profile changed (per-turn hook) |
 
 ### `repent`
 

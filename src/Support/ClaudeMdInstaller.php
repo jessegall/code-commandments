@@ -35,6 +35,7 @@ final class ClaudeMdInstaller
     public const STATUS_NO_SECTION = 'no_section';
     public const STATUS_SKIPPED_CONFLICT = 'skipped_conflict';
     public const STATUS_WRITE_FAILED = 'write_failed';
+    public const STATUS_REMOVED = 'removed';
 
     /**
      * The full owned block (sentinels + heading + body) for a runner.
@@ -114,6 +115,86 @@ final class ClaudeMdInstaller
         }
 
         return @file_put_contents($path, $replaced) === false ? self::STATUS_WRITE_FAILED : self::STATUS_REPLACED;
+    }
+
+    /**
+     * Remove the package-owned section entirely — the deliberate `profile disabled`
+     * act that makes the agent unaware the package judges. Strips the sentinel-fenced
+     * (or legacy-heading) region and collapses the surrounding blank lines; leaves
+     * the rest of CLAUDE.md untouched. No-op when there is no section.
+     */
+    public static function remove(string $basePath): string
+    {
+        $path = rtrim($basePath, '/') . '/CLAUDE.md';
+
+        if (! is_file($path)) {
+            return self::STATUS_NO_SECTION;
+        }
+
+        $content = (string) @file_get_contents($path);
+
+        if (self::hasConflictMarkers($content)) {
+            return self::STATUS_SKIPPED_CONFLICT;
+        }
+
+        $stripped = self::stripSection($content);
+
+        if ($stripped === null) {
+            return self::STATUS_NO_SECTION;
+        }
+
+        if ($stripped === $content) {
+            return self::STATUS_UNCHANGED;
+        }
+
+        return @file_put_contents($path, $stripped) === false ? self::STATUS_WRITE_FAILED : self::STATUS_REMOVED;
+    }
+
+    /**
+     * Cut the owned region out of $content (sentinel-fenced, else legacy heading),
+     * collapsing the blank lines left behind. Null when there is no owned section.
+     */
+    private static function stripSection(string $content): ?string
+    {
+        $begin = strpos($content, self::BEGIN);
+        $end = strpos($content, self::END);
+
+        if ($begin !== false && $end !== false && $end > $begin) {
+            $end += strlen(self::END);
+
+            return self::join(substr($content, 0, $begin), substr($content, $end));
+        }
+
+        if (preg_match('/^## Code Commandments\b/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
+            return null;
+        }
+
+        $start = $m[0][1];
+        $rest = substr($content, $start + 1);
+
+        if (preg_match('/^## /m', $rest, $m2, PREG_OFFSET_CAPTURE) === 1) {
+            $tail = substr($content, $start + 1 + $m2[0][1]);
+
+            return self::join(substr($content, 0, $start), $tail);
+        }
+
+        return self::join(substr($content, 0, $start), '');
+    }
+
+    /**
+     * Re-join the text before and after the removed section, collapsing the gap to
+     * a single blank line (or a clean EOF).
+     */
+    private static function join(string $before, string $after): string
+    {
+        $before = rtrim($before, "\n");
+        $after = ltrim($after, "\n");
+
+        if ($before === '') {
+            return $after === '' ? '' : $after . "\n";
+        }
+
+        return $after === '' ? $before . "\n" : $before . "\n\n" . $after . "\n";
     }
 
     /**

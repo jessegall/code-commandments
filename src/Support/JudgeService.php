@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Contracts\ParameterizedRepenter;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Output\NextFindingPresenter;
+use JesseGall\CodeCommandments\Support\Profiles\JudgeScope;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\PhpTypes\T_String;
 
 /**
@@ -75,6 +77,7 @@ final class JudgeService
         $filesFilter = $opts['files'] ?? [];
         $gitMode = (bool) ($opts['git'] ?? false);
         $stagedMode = (bool) ($opts['staged'] ?? false);
+        $branchMode = (bool) ($opts['branch'] ?? false);
         $pathFilter = $opts['path'] ?? null;
         $shouldAbsolve = (bool) ($opts['absolve'] ?? false);
 
@@ -83,13 +86,29 @@ final class JudgeService
             ! empty($filesFilter),
             $gitMode,
             $stagedMode,
+            $branchMode,
             $pathFilter !== null,
         ]);
 
         if (count($exclusive) > 1) {
-            ($this->error)('--file, --files, --git, --staged, and --path are mutually exclusive.');
+            ($this->error)('--file, --files, --git, --staged, --branch, and --path are mutually exclusive.');
 
             return self::FAILURE;
+        }
+
+        // The active profile drives behaviour: a bare `judge` (no explicit scope or
+        // file/path filter) looks at exactly what this profile cares about, and the
+        // profile decides whether warnings are emitted at all. Scope only shifts for
+        // an EXPLICITLY-selected profile — a legacy consumer keeps full-scan `judge`.
+        $base = Environment::basePath();
+        $allowWarnings = ProfileService::resolve($base)->options()->allowWarnings;
+
+        if ($fileFilter === null && empty($filesFilter) && ! $gitMode && ! $stagedMode && ! $branchMode && $pathFilter === null) {
+            match (ProfileService::explicitScope($base)) {
+                JudgeScope::Staged => $stagedMode = true,
+                JudgeScope::Branch => $branchMode = true,
+                JudgeScope::None, null => null,
+            };
         }
 
         if ($pathFilter !== null) {
@@ -104,19 +123,25 @@ final class JudgeService
             $pathFilter = $resolvedPath;
         }
 
-        if ($stagedMode) {
-            $gitMode = true;
-        }
+        $scopeIsGitLike = $gitMode || $stagedMode || $branchMode;
 
         $gitFiles = [];
-        if ($gitMode) {
+        if ($scopeIsGitLike) {
             $detector = GitFileDetector::for(Environment::basePath());
-            $gitFiles = $stagedMode ? $detector->getStagedFiles() : $detector->getChangedFiles();
+            $gitFiles = match (true) {
+                $stagedMode => $detector->getStagedFiles(),
+                $branchMode => $detector->getBranchFiles(),
+                default => $detector->getChangedFiles(),
+            };
 
             if (empty($gitFiles)) {
                 return self::SUCCESS;
             }
         }
+
+        // Unify the downstream path: staged/branch/git all judge a git-derived file
+        // list, never a full-scroll scan.
+        $gitMode = $scopeIsGitLike;
 
         $scrolls = $scrollFilter ? [$scrollFilter] : $this->registry->getScrolls();
 
@@ -127,7 +152,7 @@ final class JudgeService
             && $prophetFilter === null;
 
         if ((bool) ($opts['next'] ?? false)) {
-            return $this->runNext($scrolls, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter, $prophetFilter, $fullScan);
+            return $this->runNext($scrolls, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter, $prophetFilter, $fullScan, $allowWarnings);
         }
 
         foreach ($scrolls as $scroll) {
@@ -136,7 +161,7 @@ final class JudgeService
             }
 
             foreach ($this->getResults($scroll, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter) as $filePath => $judgments) {
-                $this->processFileJudgments($filePath, $judgments, $prophetFilter, $shouldAbsolve);
+                $this->processFileJudgments($filePath, $judgments, $prophetFilter, $shouldAbsolve, $allowWarnings);
             }
         }
 
@@ -155,7 +180,7 @@ final class JudgeService
      * @param  array<string>  $filesFilter
      * @param  array<string>  $gitFiles
      */
-    private function runNext(array $scrolls, ?string $fileFilter, array $filesFilter, bool $gitMode, array $gitFiles, ?string $pathFilter, ?string $prophetFilter, bool $fullScan): int
+    private function runNext(array $scrolls, ?string $fileFilter, array $filesFilter, bool $gitMode, array $gitFiles, ?string $pathFilter, ?string $prophetFilter, bool $fullScan, bool $allowWarnings = true): int
     {
         $collector = new FindingCollector($this->tracker);
         $findings = [];
@@ -166,7 +191,7 @@ final class JudgeService
             }
 
             $results = $this->getResults($scroll, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter);
-            $findings = array_merge($findings, $collector->collect($results, $prophetFilter, markSeen: true));
+            $findings = array_merge($findings, $collector->collect($results, $prophetFilter, markSeen: true, allowWarnings: $allowWarnings));
         }
 
         if ($fullScan) {
@@ -235,7 +260,7 @@ final class JudgeService
     /**
      * @param  iterable<string, mixed>  $judgments
      */
-    private function processFileJudgments(string $filePath, $judgments, ?string $prophetFilter, bool $shouldAbsolve): void
+    private function processFileJudgments(string $filePath, $judgments, ?string $prophetFilter, bool $shouldAbsolve, bool $allowWarnings = true): void
     {
         $relativePath = str_replace(Environment::basePath() . '/', T_String::empty(), $filePath);
         $fileSins = 0;
@@ -263,23 +288,26 @@ final class JudgeService
                 $this->trackSin($prophetClass, $relativePath, $sin->line, $sin->message, $resolvedAutoFixable);
             }
 
-            foreach ($judgment->warnings as $warning) {
-                $fingerprint = Fingerprint::of($prophetClass, $relativePath, $warning->symbol, $warning->snippet);
-                $this->tracker->markFindingSeen($fingerprint);
+            // sins-only profile: warnings are never emitted, counted, or seen-marked.
+            if ($allowWarnings) {
+                foreach ($judgment->warnings as $warning) {
+                    $fingerprint = Fingerprint::of($prophetClass, $relativePath, $warning->symbol, $warning->snippet);
+                    $this->tracker->markFindingSeen($fingerprint);
 
-                if ($this->tracker->isFindingAbsolved($fingerprint)) {
-                    continue;
+                    if ($this->tracker->isFindingAbsolved($fingerprint)) {
+                        continue;
+                    }
+
+                    $fileWarnings++;
+                    $this->manualVerificationFiles[$relativePath][] = [
+                        'prophet' => class_basename($prophetClass),
+                        'message' => $warning->message,
+                        'line' => $warning->line,
+                    ];
                 }
-
-                $fileWarnings++;
-                $this->manualVerificationFiles[$relativePath][] = [
-                    'prophet' => class_basename($prophetClass),
-                    'message' => $warning->message,
-                    'line' => $warning->line,
-                ];
             }
 
-            if ($shouldAbsolve && $judgment->hasWarnings()) {
+            if ($allowWarnings && $shouldAbsolve && $judgment->hasWarnings()) {
                 $content = file_get_contents($filePath);
                 if ($content !== false) {
                     $this->tracker->absolve($filePath, $prophetClass, 'Reviewed via commandments:judge --absolve');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator;
 use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter;
 use JesseGall\CodeCommandments\Support\Skills\SkillInstaller;
@@ -43,7 +44,7 @@ final class SyncService
         self::refreshSkills($basePath, $config, $collect);
         self::refreshGitignore($basePath, $config, $collect);
         self::refreshHookScripts($basePath, $config, $collect);
-        self::reassertWiringAndDocs($basePath, $config, $collect);
+        self::reassertActiveProfile($basePath, $config, $collect);
 
         return $lines;
     }
@@ -142,20 +143,20 @@ final class SyncService
     }
 
     /**
-     * Re-assert the settings.json hook WIRING and the CLAUDE.md section to the
-     * current package version (replace-ours / keep-theirs; no-op when absent).
+     * Refresh ONLY the active profile's bundle (git hooks, settings.json wiring,
+     * CLAUDE.md section) to the current package version — and persist the inferred
+     * selection so a legacy consumer becomes an explicit `phased`. A `disabled`
+     * consumer is a no-op that removes nothing; this is what stops a package update
+     * from force-feeding hooks onto every consumer.
      *
      * @param  array<string, mixed>  $config
      * @param  callable(string): void  $emit
      */
-    private static function reassertWiringAndDocs(string $basePath, array $config, callable $emit): void
+    private static function reassertActiveProfile(string $basePath, array $config, callable $emit): void
     {
-        if (ClaudeHooksInstaller::reassert($basePath, PlanLoopHookSuite::enabled($config)) === ClaudeHooksInstaller::STATUS_INSTALLED) {
-            $emit('Refreshed the Claude hook wiring in .claude/settings.json');
-        }
-
-        if (ClaudeMdInstaller::reassert($basePath) === ClaudeMdInstaller::STATUS_REPLACED) {
-            $emit('Refreshed the Code Commandments section in CLAUDE.md');
-        }
+        (new ProfileService($basePath, $config))->reassert(
+            $emit,
+            $emit,
+        );
     }
 }
