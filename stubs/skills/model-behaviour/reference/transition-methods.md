@@ -12,18 +12,40 @@
 The call site should read as a sentence: `$order->markShipped()`, not
 `$order->status = OrderStatus::Shipped; $order->save();`.
 
-## Should the method call `save()`?
+## Should the method call `save()`? — default YES
 
-Both shapes are legitimate — pick one and be consistent:
+**Default to self-persisting.** The behaviour method should mutate *and* persist:
 
-- **Self-persisting** — the method mutates *and* saves. Best when the transition
-  is always a complete, standalone operation (`$user->verify()`).
-- **Mutate-only** — the method only changes in-memory state; the caller decides
-  when to persist (or a unit-of-work / transaction does). Best when several
-  transitions are batched into one `save()`.
+```php
+public function verify(): void
+{
+    $this->verified_at = now();
+    $this->verification_token = null;
+    $this->save();                  // the operation is complete on its own
+}
+```
 
-What you must NOT do is leave the mutation at the call site and the rule on the
-model — that is the half-measure this skill exists to remove.
+If the method only mutates `$this` and leaves persistence to the caller, you have
+not removed the smell — you have moved it one step: every caller still has to
+remember `$model->verify(); $model->save();`, and one of them eventually won't.
+The prophet flags a public model mutator that never calls `$this->save()` for
+exactly this reason.
+
+**The one exception — a deliberate unit-of-work.** When several mutations are
+intentionally batched and persisted once inside an explicit transaction / aggregate
+boundary, mutate-only methods are correct:
+
+```php
+DB::transaction(function () use ($order) {
+    $order->markPaid();        // mutate-only, on purpose
+    $order->assignWarehouse(); // mutate-only, on purpose
+    $order->save();            // one save for the whole transition
+});
+```
+
+That is the only time to leave a mutator unsaved — and it's an advisory, so absolve
+those with a reason. What you must NEVER do is leave the mutation at the call site
+*and* the rule on the model: that is the half-measure this skill exists to remove.
 
 ## Put the invariants WITH the transition
 

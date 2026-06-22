@@ -175,6 +175,102 @@ class EncapsulateModelMutationProphetTest extends TestCase
         $this->assertStringContainsString('increment', $judgment->warnings[0]->message);
     }
 
+    // ---- the IN-MODEL half: methods that mutate $this but don't save ----
+
+    public function test_flags_a_model_method_that_mutates_without_saving(): void
+    {
+        // Persistable (declares save()); a public mutator that forgets to persist.
+        $judgment = $this->judge(
+            'class M { public function save(): bool { return true; }'
+            . ' public function activate(): void { $this->is_active = true; } }'
+        );
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('never calls `$this->save()`', $judgment->warnings[0]->message);
+    }
+
+    public function test_does_not_flag_a_model_method_that_saves_itself(): void
+    {
+        $judgment = $this->judge(
+            'class M { public function save(): bool { return true; }'
+            . ' public function activate(): void { $this->is_active = true; $this->save(); } }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_flags_increment_operator_mutation_without_save(): void
+    {
+        $judgment = $this->judge(
+            'class M { public function save(): bool { return true; }'
+            . ' public function bump(): void { $this->seq++; } }'
+        );
+
+        $this->assertCount(1, $judgment->warnings);
+    }
+
+    public function test_does_not_flag_a_fluent_setter(): void
+    {
+        $judgment = $this->judge(
+            'class M { public function save(): bool { return true; }'
+            . ' public function withToken(string $t): self { $this->token = $t; return $this; } }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_a_private_mutator(): void
+    {
+        $judgment = $this->judge(
+            'class M { public function save(): bool { return true; }'
+            . ' private function bump(): void { $this->seq++; } }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_the_constructor(): void
+    {
+        $judgment = $this->judge(
+            'class M { public function save(): bool { return true; }'
+            . ' public function __construct() { $this->seq = 0; } }'
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_a_non_persistable_class(): void
+    {
+        // No save() anywhere → not an active-record → mutators are just setters.
+        $judgment = $this->judge('class Dto { public function setName(string $n): void { $this->name = $n; } }');
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_persistable_via_a_this_save_call_elsewhere(): void
+    {
+        // The class proves it's persistable by saving in ONE method; another
+        // public mutator that doesn't save is then flagged.
+        $judgment = $this->judge(
+            'class M { public function commit(): void { $this->dirty = false; $this->save(); }'
+            . ' public function touch(): void { $this->seen = true; } }'
+        );
+
+        // commit() saves (ok); touch() does not (flagged).
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertStringContainsString('touch()', $judgment->warnings[0]->message);
+    }
+
+    public function test_flags_the_in_model_fixture(): void
+    {
+        $path = __DIR__ . '/../../../Fixtures/Backend/Sinful/EncapsulateModelMutation/WorkflowModel.php';
+        $judgment = $this->prophet->judge($path, (string) file_get_contents($path));
+
+        // incrementEditSeq, setActive, setWebhookCredentials — not deactivate (saves),
+        // withToken (fluent), bumpInternal (private), save(), or the constructor.
+        $this->assertCount(3, $judgment->warnings);
+    }
+
     public function test_describes_itself(): void
     {
         $this->assertNotEmpty($this->prophet->description());
