@@ -137,6 +137,7 @@ return [
                 Backend\PreferNullObjectDefaultsProphet::class,
                 Backend\LongDocblockProphet::class,
                 Backend\SuggestCompareSelfTraitProphet::class,
+                Backend\AnchorEnumComparisonProphet::class,
             ],
         ],
     ],
