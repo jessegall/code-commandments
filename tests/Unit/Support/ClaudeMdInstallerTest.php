@@ -70,13 +70,13 @@ class ClaudeMdInstallerTest extends TestCase
 
     public function test_reassert_is_no_section_when_file_absent(): void
     {
-        $this->assertSame(ClaudeMdInstaller::STATUS_NO_SECTION, ClaudeMdInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE));
+        $this->assertSame(ClaudeMdInstaller::STATUS_NO_SECTION, ClaudeMdInstaller::reassert($this->dir));
     }
 
     public function test_reassert_is_no_section_when_section_absent(): void
     {
         file_put_contents($this->path(), "# Readme\n\nno commandments here\n");
-        $this->assertSame(ClaudeMdInstaller::STATUS_NO_SECTION, ClaudeMdInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE));
+        $this->assertSame(ClaudeMdInstaller::STATUS_NO_SECTION, ClaudeMdInstaller::reassert($this->dir));
         // Untouched.
         $this->assertStringNotContainsString('Code Commandments', (string) file_get_contents($this->path()));
     }
@@ -84,7 +84,7 @@ class ClaudeMdInstallerTest extends TestCase
     public function test_reassert_replaces_a_stale_section(): void
     {
         file_put_contents($this->path(), "# App\n\n## Code Commandments\nSTALE old wording\n");
-        $this->assertSame(ClaudeMdInstaller::STATUS_REPLACED, ClaudeMdInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE));
+        $this->assertSame(ClaudeMdInstaller::STATUS_REPLACED, ClaudeMdInstaller::reassert($this->dir));
         $md = (string) file_get_contents($this->path());
         $this->assertStringNotContainsString('STALE old wording', $md);
         $this->assertStringContainsString('The guided workflow', $md);
@@ -92,28 +92,28 @@ class ClaudeMdInstallerTest extends TestCase
 
     public function test_reassert_is_idempotent(): void
     {
-        ClaudeMdInstaller::install($this->dir, ClaudeHooksInstaller::STANDALONE);
-        $this->assertSame(ClaudeMdInstaller::STATUS_UNCHANGED, ClaudeMdInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE));
+        ClaudeMdInstaller::install($this->dir);
+        $this->assertSame(ClaudeMdInstaller::STATUS_UNCHANGED, ClaudeMdInstaller::reassert($this->dir));
     }
 
     public function test_reassert_skips_a_file_with_conflict_markers(): void
     {
         file_put_contents($this->path(), "## Code Commandments\nx\n<<<<<<< HEAD\na\n=======\nb\n>>>>>>> other\n");
-        $this->assertSame(ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT, ClaudeMdInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE));
+        $this->assertSame(ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT, ClaudeMdInstaller::reassert($this->dir));
     }
 
     // --- install: create / append / replace ---
 
     public function test_install_creates_when_missing(): void
     {
-        $this->assertSame(ClaudeMdInstaller::STATUS_CREATED, ClaudeMdInstaller::install($this->dir, ClaudeHooksInstaller::STANDALONE));
+        $this->assertSame(ClaudeMdInstaller::STATUS_CREATED, ClaudeMdInstaller::install($this->dir));
         $this->assertStringContainsString('## Code Commandments', (string) file_get_contents($this->path()));
     }
 
     public function test_install_appends_preserving_existing_content(): void
     {
         file_put_contents($this->path(), "# My project\n\nimportant notes\n");
-        $this->assertSame(ClaudeMdInstaller::STATUS_APPENDED, ClaudeMdInstaller::install($this->dir, ClaudeHooksInstaller::STANDALONE));
+        $this->assertSame(ClaudeMdInstaller::STATUS_APPENDED, ClaudeMdInstaller::install($this->dir));
         $md = (string) file_get_contents($this->path());
         $this->assertStringContainsString('important notes', $md);
         $this->assertStringContainsString(ClaudeMdInstaller::BEGIN, $md);
@@ -130,8 +130,11 @@ class ClaudeMdInstallerTest extends TestCase
 
     public function test_settings_instructions_are_identical_modulo_runner(): void
     {
-        $artisan = ClaudeMdInstaller::settingsInstructions(ClaudeHooksInstaller::ARTISAN);
-        $standalone = ClaudeMdInstaller::settingsInstructions(ClaudeHooksInstaller::STANDALONE);
+        $laravel = $this->dir . '/laravel';
+        mkdir($laravel, 0755, true);
+        touch($laravel . '/artisan');
+        $artisan = ClaudeMdInstaller::settingsInstructions($laravel);
+        $standalone = ClaudeMdInstaller::settingsInstructions($this->dir);
 
         // Both carry the fuller REPORT-IS-NOT-A-DODGE wording (audit #16) and the
         // same absolve-reason string (audit #19).

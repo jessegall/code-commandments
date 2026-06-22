@@ -91,7 +91,6 @@ class SyncCommand extends Command
     {
         $status = \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::reassert(
             base_path(),
-            \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::ARTISAN,
             (bool) config('commandments.hooks.plan_loop', false),
         );
 
@@ -106,7 +105,7 @@ class SyncCommand extends Command
      */
     private function reassertClaudeMd(): void
     {
-        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert(base_path(), \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::ARTISAN) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
+        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert(base_path()) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
             $this->line('Refreshed the Code Commandments section in CLAUDE.md');
         }
     }

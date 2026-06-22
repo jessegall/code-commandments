@@ -52,8 +52,10 @@ vendor/bin/commandments report --at=path:line --reason="why this is wrong"
   *absolved* — `absolve` applies only to advisory WARNINGS with a genuine LEAVE
   reason. A sin is fixed, or reported-if-genuinely-wrong; nothing else clears it.
 
-Then **ALWAYS arm a poll loop in the same breath** — a `report` without a watch
-loop is half-finished (nothing brings the resolution back into THIS session):
+Then, **after a wrong-finding report, ALWAYS arm a poll loop in the same breath**
+— a wrong-finding `report` without a watch loop is half-finished (nothing brings
+the resolution back into THIS session). (A `--feature-request` records no
+absolution, so it needs no loop — see below.)
 
 ```
 /loop 15m Run `vendor/bin/commandments reports --check`. If a report-linked

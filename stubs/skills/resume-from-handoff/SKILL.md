@@ -36,7 +36,8 @@ sh .claude/hooks/resume.sh
 ```
 
 It prints, in order: the existing `HANDOFF.md`, a **live re-verification** of the
-repo (current branch, `git status`, recent commits, the commandments gate), the
+repo (current branch, `git status`, recent commits, the commandments snapshot —
+`judge --git`), the
 **plan-progress memory** (the authoritative plan, surfaced even if the loop is
 off), and a NEXT STEPS checklist. Then:
 
@@ -65,8 +66,9 @@ off), and a NEXT STEPS checklist. Then:
    unless the plan is DONE or you hit a genuine blocker. Pair with the `handoff`
    skill for the write side.
 
-6. **When the work is fully done**, remove the handoff as part of the final
-   commit: `git rm HANDOFF.md` (recoverable via history) — never bare-`rm` it, it
+6. **When the work is fully done**, remove the handoff so the next session starts
+   clean: `rm HANDOFF.md`. It is gitignored transient state (there is nothing to
+   `git rm`). Do this only when the work is genuinely complete — while in flight it
    is the richest resume source.
 
 ## What to read when

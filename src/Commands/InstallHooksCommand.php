@@ -48,7 +48,7 @@ class InstallHooksCommand extends Command
         // always lands the newest wiring.
         $hooks = ClaudeHooksInstaller::apply(
             $existingSettings['hooks'] ?? [],
-            ClaudeHooksInstaller::ARTISAN,
+            base_path(),
             (bool) config('commandments.hooks.plan_loop', false),
         );
 
@@ -92,7 +92,13 @@ class InstallHooksCommand extends Command
         $this->output->writeln('Hooks will:');
         $this->output->writeln('- Show commandments on session start');
         $this->output->writeln('- Judge changed code after Claude completes work');
-        $this->output->writeln('- Remind Claude to resolve sins after every commit');
+
+        if ((bool) config('commandments.hooks.plan_loop', false)) {
+            $this->output->writeln('- Drive an approved plan to completion (plan-loop suite) and resolve sins after every commit (phase-committed.sh)');
+        } else {
+            $this->output->writeln('- Remind Claude to resolve sins after every commit');
+        }
+
         $this->output->writeln('- Block git commits while any sins remain (pre-commit hook)');
         $this->output->writeln('- Clear absolutions after each commit (post-commit hook)');
 
@@ -217,7 +223,7 @@ class InstallHooksCommand extends Command
      */
     private function getClaudeInstructions(): string
     {
-        return ClaudeMdInstaller::settingsInstructions(ClaudeHooksInstaller::ARTISAN);
+        return ClaudeMdInstaller::settingsInstructions(base_path());
     }
 
     /**
@@ -227,7 +233,7 @@ class InstallHooksCommand extends Command
     {
         // Shared with init + sync via ClaudeMdInstaller: a sentinel-fenced section,
         // spliced (never preg_replace), runner-parameterized so it can't drift.
-        match (ClaudeMdInstaller::install(base_path(), ClaudeHooksInstaller::ARTISAN)) {
+        match (ClaudeMdInstaller::install(base_path())) {
             ClaudeMdInstaller::STATUS_CREATED => $this->output->writeln('Created CLAUDE.md'),
             ClaudeMdInstaller::STATUS_APPENDED => $this->output->writeln('Added section to CLAUDE.md'),
             ClaudeMdInstaller::STATUS_REPLACED => $this->output->writeln('Updated CLAUDE.md'),
