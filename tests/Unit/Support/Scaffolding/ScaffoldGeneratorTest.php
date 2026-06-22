@@ -90,16 +90,18 @@ class ScaffoldGeneratorTest extends TestCase
     public function test_generated_option_has_ergonomic_when_helpers(): void
     {
         // #40 + #41: when()/whenNot() take mixed (truthiness, no `=== true`);
-        // someWhen()/someWhenNot() wrap the factory's bare value in some().
+        // someWhen()/someWhenNot() wrap a bare value OR resolve a factory.
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
 
         $option = file_get_contents($this->dir . '/Option.php');
 
         $this->assertStringContainsString('public static function when(mixed $condition, callable $factory): self', $option);
         $this->assertStringContainsString('public static function whenNot(mixed $condition, callable $factory): self', $option);
-        $this->assertStringContainsString('public static function someWhen(mixed $condition, callable $factory): self', $option);
-        $this->assertStringContainsString('public static function someWhenNot(mixed $condition, callable $factory): self', $option);
-        $this->assertStringContainsString('return $condition ? self::some($factory()) : self::none();', $option);
+        // someWhen()/someWhenNot() accept a factory OR a bare value (resolved when callable).
+        $this->assertStringContainsString('public static function someWhen(mixed $condition, mixed $value): self', $option);
+        $this->assertStringContainsString('public static function someWhenNot(mixed $condition, mixed $value): self', $option);
+        $this->assertStringContainsString('return self::some(is_callable($value) ? $value() : $value);', $option);
+        $this->assertStringContainsString('return $condition ? $factory() : self::none();', $option);
 
         // Nullable/lookup factories: make(), find(), first().
         $this->assertStringContainsString('public static function make(mixed $value): self', $option);
@@ -141,7 +143,7 @@ class ScaffoldGeneratorTest extends TestCase
         // contravariant positions.
         $this->assertStringContainsString('@template-covariant T', $option);
         $this->assertStringContainsString('public function or(self $alternative): self', $option);
-        $this->assertStringContainsString('public function orWhen(mixed $condition, callable $factory): self', $option);
+        $this->assertStringContainsString('public function orWhen(mixed $condition, mixed $value): self', $option);
         $this->assertStringContainsString('public function andWhen(mixed $condition): self', $option);
         $this->assertStringContainsString('return $this->hasValue && $condition ? $this : self::none();', $option);
         $this->assertStringContainsString('public function filter(callable $predicate): self', $option);
