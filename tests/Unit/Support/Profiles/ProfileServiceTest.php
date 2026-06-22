@@ -75,7 +75,8 @@ class ProfileServiceTest extends TestCase
         $this->assertStringContainsString('commit-msg guard', $this->hook('commit-msg'));
         $this->assertStringNotContainsString('pre-push gate', $this->hook('pre-push'));
         $this->assertStringContainsString('pre-push reset', $this->hook('pre-push'));
-        $this->assertStringContainsString(ClaudeMdInstaller::BEGIN, $this->claudeMd());
+        // Briefing is hook-delivered now — no committed CLAUDE.md section for ANY profile.
+        $this->assertStringNotContainsString(ClaudeMdInstaller::BEGIN, $this->claudeMd());
         $this->assertSame('phased', trim((string) file_get_contents($this->dir . '/.commandments/profile')));
         $this->assertContains('Stop', $this->settingsEvents());
         $this->assertContains('PostToolUse', $this->settingsEvents());
@@ -139,6 +140,38 @@ class ProfileServiceTest extends TestCase
         $this->assertFileExists($this->dir . '/.git/hooks/pre-commit');
         $this->assertStringContainsString('my own hook', $this->hook('pre-commit'));
         $this->assertStringNotContainsString('pre-commit gate', $this->hook('pre-commit'));
+    }
+
+    // --- CLAUDE.md is cleaned for every profile (briefing is hook-delivered) ---
+
+    public function test_phased_strips_a_legacy_claudemd_section_and_keeps_the_rest(): void
+    {
+        file_put_contents(
+            $this->dir . '/CLAUDE.md',
+            "# My App\n\nIntro.\n\n" . ClaudeMdInstaller::BEGIN . "\n## Code Commandments\nold\n" . ClaudeMdInstaller::END . "\n\n## Keep\nmine\n",
+        );
+
+        $this->switch('phased');
+
+        $md = $this->claudeMd();
+        $this->assertStringNotContainsString(ClaudeMdInstaller::BEGIN, $md);
+        $this->assertStringNotContainsString('## Code Commandments', $md);
+        $this->assertStringContainsString('# My App', $md);
+        $this->assertStringContainsString('## Keep', $md);
+    }
+
+    public function test_reassert_cleans_a_legacy_claudemd_section_on_update(): void
+    {
+        // Legacy consumer: a committed CLAUDE.md section + no profile state.
+        file_put_contents($this->dir . '/CLAUDE.md', ClaudeMdInstaller::BEGIN . "\nold\n" . ClaudeMdInstaller::END . "\n");
+        @mkdir($this->dir . '/.git/hooks', 0755, true);
+        file_put_contents($this->dir . '/.git/hooks/pre-commit', "#!/usr/bin/env sh\n# >>> code-commandments pre-commit gate >>>\n# <<< code-commandments pre-commit gate <<<\n");
+
+        $this->service()->reassert(static fn ($l) => null, static fn ($l) => null);
+
+        $this->assertStringNotContainsString(ClaudeMdInstaller::BEGIN, $this->claudeMd());
+        // State persisted to phased BEFORE the marker was stripped.
+        $this->assertSame('phased', trim((string) file_get_contents($this->dir . '/.commandments/profile')));
     }
 
     // --- switching never touches absolutions ---

@@ -226,14 +226,13 @@ final class ProfileService
             $emit('Refreshed the Claude hook wiring in .claude/settings.json');
         }
 
-        // CLAUDE.md: replace-only for an active profile (never create/append on
-        // sync); for disabled, ensure any owned section is gone.
-        if ($opts->briefAgent) {
-            if (ClaudeMdInstaller::reassert($this->basePath) === ClaudeMdInstaller::STATUS_REPLACED) {
-                $emit('Refreshed the Code Commandments section in CLAUDE.md');
-            }
-        } elseif (ClaudeMdInstaller::remove($this->basePath) === ClaudeMdInstaller::STATUS_REMOVED) {
-            $emit('Removed the Code Commandments section from CLAUDE.md (profile is disabled)');
+        // CLAUDE.md cleanup on update: briefing is hook-delivered now, so strip any
+        // legacy `## Code Commandments` section a previous package version left in
+        // the consumer's committed CLAUDE.md. Runs after the inferred state is
+        // persisted above, so a legacy consumer is already resolved to `phased`
+        // before its CLAUDE.md marker (one of the legacy signals) is removed.
+        if (ClaudeMdInstaller::remove($this->basePath) === ClaudeMdInstaller::STATUS_REMOVED) {
+            $emit('Cleaned the legacy Code Commandments section from CLAUDE.md (briefing is now hook-delivered)');
         }
     }
 
@@ -259,23 +258,17 @@ final class ProfileService
         // so it stays installed even under `disabled` (you still need a way back on).
         $this->ensureProfileSkill();
 
-        if ($opts->briefAgent) {
-            match (ClaudeMdInstaller::install($this->basePath)) {
-                ClaudeMdInstaller::STATUS_CREATED => $emit('Created CLAUDE.md with the Code Commandments section'),
-                ClaudeMdInstaller::STATUS_APPENDED => $emit('Added the Code Commandments section to CLAUDE.md'),
-                ClaudeMdInstaller::STATUS_REPLACED => $emit('Updated the Code Commandments section in CLAUDE.md'),
-                ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $error('CLAUDE.md has merge conflict markers — skipped the Code Commandments section.'),
-                ClaudeMdInstaller::STATUS_WRITE_FAILED => $error('Failed to write CLAUDE.md — check permissions.'),
-                default => null,
-            };
-        } else {
-            match (ClaudeMdInstaller::remove($this->basePath)) {
-                ClaudeMdInstaller::STATUS_REMOVED => $emit('Removed the Code Commandments section from CLAUDE.md (agent is now unaware)'),
-                ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $error('CLAUDE.md has merge conflict markers — left the Code Commandments section in place.'),
-                ClaudeMdInstaller::STATUS_WRITE_FAILED => $error('Failed to write CLAUDE.md — check permissions.'),
-                default => null,
-            };
-        }
+        // Briefing is delivered by the local session-start hook (scripture /
+        // `profile --brief`), NOT committed CLAUDE.md — so strip any legacy
+        // `## Code Commandments` section for EVERY profile. This keeps CLAUDE.md
+        // free of commandments knowledge (per-dev profiles never touch a shared,
+        // committed file) and cleans up sections left by older package versions.
+        match (ClaudeMdInstaller::remove($this->basePath)) {
+            ClaudeMdInstaller::STATUS_REMOVED => $emit('Removed the legacy Code Commandments section from CLAUDE.md (briefing now comes from the session-start hook)'),
+            ClaudeMdInstaller::STATUS_SKIPPED_CONFLICT => $error('CLAUDE.md has merge conflict markers — left it untouched.'),
+            ClaudeMdInstaller::STATUS_WRITE_FAILED => $error('Failed to write CLAUDE.md — check permissions.'),
+            default => null,
+        };
     }
 
     /**

@@ -76,26 +76,29 @@ class InstallHooksCommandTest extends TestCase
         $this->removeClaudeDir();
     }
 
-    public function test_install_hooks_creates_claude_md(): void
+    public function test_install_hooks_does_not_write_a_claude_md_section(): void
     {
         $claudeMdPath = base_path('CLAUDE.md');
 
-        // Remove if exists
-        if (file_exists($claudeMdPath)) {
-            unlink($claudeMdPath);
-        }
+        // Seed a CLAUDE.md carrying a legacy section to prove install-hooks strips it
+        // (briefing is hook-delivered now, never committed CLAUDE.md).
+        file_put_contents($claudeMdPath, "# App\n\n" . \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::BEGIN . "\nold\n" . \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::END . "\n");
 
-        // Clean up .claude directory from previous tests to avoid confirmation prompt
         $this->removeClaudeDir();
 
         $this->artisan('commandments:install-hooks')
             ->assertSuccessful();
 
-        $this->assertFileExists($claudeMdPath);
-        $this->assertStringContainsString('Code Commandments', file_get_contents($claudeMdPath));
+        $this->assertStringNotContainsString('## Code Commandments', file_get_contents($claudeMdPath));
+        $this->assertStringNotContainsString(\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::BEGIN, file_get_contents($claudeMdPath));
+
+        // The briefing instead lives in the session-start hook wiring.
+        $settings = json_decode((string) file_get_contents(base_path('.claude/settings.json')), true);
+        $this->assertArrayHasKey('SessionStart', $settings['hooks'] ?? []);
 
         // Cleanup
         unlink($claudeMdPath);
+        @unlink(base_path('.commandments/profile'));
         $this->removeClaudeDir();
     }
 }
