@@ -59,12 +59,20 @@ value-flow finding you can't prove is noise.
 | migration column not cast | add the cast: `casts(): array { return ['meta' => 'array', 'paid' => 'boolean']; }` |
 | dependency only forwarded | inject it at the collaborator; drop the relay parameter |
 | private producer always discarded | return `void` and drop the `return` (keep the side effect), or use the result |
+| translation key absent from the lang tree | fix the key to the declared sibling, or add it to the lang file |
+| `config()`/env value strict-compared to a number | the value is a string at the boundary — cast it, or compare loosely/with the typed config |
+| values that always travel together | introduce a value object that carries the clump as one typed argument |
+| hardcoded literal that is really config | move it to the config file and read it via `config()` |
+| request input reaching raw SQL / `exec` | bind/escape at the sink, or route through a validated typed DTO — never concatenate request input into a sink |
+| secret reaching a log or response | redact it; never log or return a credential/token |
 
 ## Backs (prophet family)
 
 Enforced by **PreferConfigDrivenRegistry**, **ConfigKeyContract**,
-**StringMatchMirrorsEnum**, **MigrationModelDrift**, **PassThroughDependency**,
-**DeadProducer** — all advisory (warnings: human-reviewed). When one fires, it points
-back here.
+**TranslationKeyCongruence**, **MixedConfigValueUsedTyped**,
+**HardcodedLiteralShouldBeConfig**, **StringMatchMirrorsEnum**,
+**MigrationModelDrift**, **TaintedInputToSink**, **SecretToLogOrResponse**,
+**DataClumpToValueObject**, **PassThroughDependency**, **DeadProducer** — all
+advisory (warnings: human-reviewed). When one fires, it points back here.
 
 Read any rule in full: `commandments scripture --prophet=<Name>`.

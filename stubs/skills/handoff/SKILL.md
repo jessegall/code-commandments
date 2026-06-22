@@ -30,8 +30,9 @@ sh .claude/hooks/handoff.sh
 
 It writes `HANDOFF.md` at the repo root with the **mechanical snapshot
 auto-filled** — branch + upstream, `git status`, uncommitted diff stat, recent
-commits, the commandments gate (`judge --git`), and any active plan. Then **you
-complete every `>>> TODO <<<` section** with the narrative:
+commits, the commandments snapshot (`judge --git`), the active-plan marker, AND
+the plan-progress memory included verbatim. Then **you complete every
+`>>> TODO <<<` section** with the narrative:
 
 1. **Goal** — what this work delivers (1–2 lines).
 2. **State** — done (with commit shas) · in progress · remaining (ordered).

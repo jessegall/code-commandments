@@ -14,13 +14,21 @@ either an `Option` or the unwrapped `T`, never a `T|null`.
 | `Option::find($array, $key)` | Looking a value up in a dictionary. | `make($array[$key] ?? null)` |
 | `Option::first($items, $predicate)` | First match in an iterable. | a `foreach` returning `some`/`none` |
 | `Option::coalesce($a, $b, …)` | First non-null of several candidates. | `$a ?? $b ?? … ` then lift |
-| `Option::someWhen($cond, fn () => $v)` | A plain condition decides presence; wrap a bare value. | `$cond ? some($v) : none()` |
-| `Option::someWhenNot($cond, fn () => $v)` | Same, but present on the **false** branch. | `$cond ? none() : some($v)` |
+| `Option::someWhen($cond, $v)` | A plain condition decides presence; wraps a bare value OR a factory. | `$cond ? some($v) : none()` |
+| `Option::someWhenNot($cond, $v)` | Same, but present on the **false** branch. | `$cond ? none() : some($v)` |
 | `Option::when($cond, fn () => $opt)` | The factory already returns an Option. | `$cond ? $opt : none()` |
 
-Use `someWhen`, **not** `when`, to wrap a bare value — `when($c, $f)` returns
-`$f()` verbatim (the factory must already hand back an Option), while
-`someWhen($c, $f)` does the `some()` wrap for you.
+`someWhen`/`someWhenNot` take a bare value OR a factory: a **callable** is invoked
+only when the condition holds (so a value that depends on the condition — or an
+expensive one — isn't built otherwise); anything else is wrapped as-is. Use the
+**eager** form for a value independent of the condition
+(`Option::someWhen($flag, UiIntent::fitView())`); use the **lazy closure** form
+when the value depends on the condition holding — e.g. it dereferences something
+the condition just proved exists (`Option::someWhen($reg->has($id), fn () => $reg->node($id))`).
+
+Use `someWhen`, **not** `when`, to wrap a value — `when($c, $f)` returns `$f()`
+verbatim (the factory must already hand back an Option), while `someWhen` does the
+`some()` wrap for you.
 
 ```php
 use {{ namespace }}\Option;
