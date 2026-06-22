@@ -23,6 +23,12 @@ final class SkillDigest
         ];
 
         foreach (SkillRegistry::all() as $skill) {
+            if (! $skill->autoload) {
+                // A command-triggered skill (e.g. handoff) — installed + natively
+                // discoverable, but not force-injected every session.
+                continue;
+            }
+
             $lines[] = sprintf('- %s — %s', $skill->slug, self::trigger($skill->purpose));
         }
 

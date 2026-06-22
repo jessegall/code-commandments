@@ -18,7 +18,13 @@ class SkillDigestTest extends TestCase
         $this->assertStringContainsString('.claude/skills/commandments-', $digest);
 
         foreach (SkillRegistry::all() as $skill) {
-            $this->assertStringContainsString('- ' . $skill->slug . ' — ', $digest, "digest missing {$skill->slug}");
+            if ($skill->autoload) {
+                $this->assertStringContainsString('- ' . $skill->slug . ' — ', $digest, "digest missing {$skill->slug}");
+            } else {
+                // Command-triggered skills (e.g. handoff) are installed but not
+                // force-surfaced in the session-start digest.
+                $this->assertStringNotContainsString('- ' . $skill->slug . ' — ', $digest, "digest should omit non-autoload {$skill->slug}");
+            }
         }
     }
 
@@ -32,7 +38,8 @@ class SkillDigestTest extends TestCase
             static fn (string $l): bool => str_starts_with($l, '- '),
         ));
 
-        $this->assertCount(count(SkillRegistry::all()), $bodyLines);
+        $autoloaded = array_filter(SkillRegistry::all(), static fn ($s): bool => $s->autoload);
+        $this->assertCount(count($autoloaded), $bodyLines);
 
         foreach ($bodyLines as $line) {
             $this->assertLessThanOrEqual(230, mb_strlen($line), "digest line too long: {$line}");
