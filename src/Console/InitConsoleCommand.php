@@ -304,14 +304,14 @@ class InitConsoleCommand extends Command
         // newest wiring.
         $hooks = ClaudeHooksInstaller::apply(
             $existingSettings['hooks'] ?? [],
-            ClaudeHooksInstaller::STANDALONE,
+            $basePath,
             $this->planLoopEnabled($basePath),
         );
 
         $settings = array_merge($existingSettings, ['hooks' => $hooks]);
 
         if (!isset($existingSettings['instructions'])) {
-            $settings['instructions'] = ClaudeMdInstaller::settingsInstructions(ClaudeHooksInstaller::STANDALONE);
+            $settings['instructions'] = ClaudeMdInstaller::settingsInstructions($basePath);
         }
 
         $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -323,7 +323,7 @@ class InitConsoleCommand extends Command
     {
         // Shared with install-hooks + sync via ClaudeMdInstaller: a sentinel-fenced
         // section, spliced (never preg_replace), runner-parameterized so it can't drift.
-        match (ClaudeMdInstaller::install($basePath, ClaudeHooksInstaller::STANDALONE)) {
+        match (ClaudeMdInstaller::install($basePath)) {
             ClaudeMdInstaller::STATUS_CREATED => $output->writeln('Created CLAUDE.md'),
             ClaudeMdInstaller::STATUS_APPENDED => $output->writeln('Added Code Commandments section to CLAUDE.md'),
             ClaudeMdInstaller::STATUS_REPLACED => $output->writeln('Updated CLAUDE.md'),

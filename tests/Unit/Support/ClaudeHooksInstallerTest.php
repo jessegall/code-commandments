@@ -78,7 +78,7 @@ class ClaudeHooksInstallerTest extends TestCase
             ],
         ]));
 
-        $status = ClaudeHooksInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE, false);
+        $status = ClaudeHooksInstaller::reassert($this->dir, false);
         $this->assertSame(ClaudeHooksInstaller::STATUS_INSTALLED, $status);
 
         $hooks = json_decode((string) file_get_contents($file), true)['hooks'];
@@ -94,8 +94,8 @@ class ClaudeHooksInstallerTest extends TestCase
         $file = $this->dir . '/.claude/settings.json';
         file_put_contents($file, json_encode(['hooks' => []]));
 
-        $this->assertSame(ClaudeHooksInstaller::STATUS_INSTALLED, ClaudeHooksInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE, false));
-        $this->assertSame(ClaudeHooksInstaller::STATUS_UNCHANGED, ClaudeHooksInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE, false));
+        $this->assertSame(ClaudeHooksInstaller::STATUS_INSTALLED, ClaudeHooksInstaller::reassert($this->dir, false));
+        $this->assertSame(ClaudeHooksInstaller::STATUS_UNCHANGED, ClaudeHooksInstaller::reassert($this->dir, false));
     }
 
     public function test_reassert_preserves_user_added_hooks(): void
@@ -105,7 +105,7 @@ class ClaudeHooksInstallerTest extends TestCase
             'hooks' => ['SessionStart' => [['hooks' => [['type' => 'command', 'command' => 'my-own-thing']]]]],
         ]));
 
-        ClaudeHooksInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE, false);
+        ClaudeHooksInstaller::reassert($this->dir, false);
 
         $session = $this->commands(json_decode((string) file_get_contents($file), true)['hooks'], 'SessionStart');
         $this->assertContains('my-own-thing', $session);
@@ -116,13 +116,34 @@ class ClaudeHooksInstallerTest extends TestCase
         // Ownership round-trip: apply() over its OWN previous output must add
         // nothing. If any script the build emits weren't recognized by
         // isOwnedCommand, re-applying would append a duplicate.
-        foreach ([ClaudeHooksInstaller::ARTISAN, ClaudeHooksInstaller::STANDALONE] as $runner) {
+        // A Laravel project (artisan present) and a standalone one.
+        $laravel = $this->dir . '/laravel';
+        $standalone = $this->dir . '/standalone';
+        mkdir($laravel, 0755, true);
+        mkdir($standalone, 0755, true);
+        touch($laravel . '/artisan');
+
+        foreach ([$laravel, $standalone] as $base) {
             foreach ([false, true] as $planLoop) {
-                $first = ClaudeHooksInstaller::apply([], $runner, $planLoop);
-                $second = ClaudeHooksInstaller::apply($first, $runner, $planLoop);
+                $first = ClaudeHooksInstaller::apply([], $base, $planLoop);
+                $second = ClaudeHooksInstaller::apply($first, $base, $planLoop);
                 $this->assertSame($first, $second, 'apply() must be idempotent (every emitted command owned)');
             }
         }
+    }
+
+    public function test_runner_is_detected_from_the_project(): void
+    {
+        $laravel = $this->dir . '/laravel';
+        mkdir($laravel, 0755, true);
+        touch($laravel . '/artisan');
+
+        $this->assertSame(ClaudeHooksInstaller::ARTISAN, ClaudeHooksInstaller::runnerFor($laravel));
+        $this->assertSame(ClaudeHooksInstaller::STANDALONE, ClaudeHooksInstaller::runnerFor($this->dir));
+
+        // A Laravel project's wiring uses artisan no matter which path applies it.
+        $session = $this->commands(ClaudeHooksInstaller::apply([], $laravel, false), 'SessionStart');
+        $this->assertContains('php artisan commandments:scripture 2>/dev/null || true', $session);
     }
 
     public function test_apply_replaces_a_stale_owned_command_without_duplicating(): void
@@ -136,7 +157,7 @@ class ClaudeHooksInstallerTest extends TestCase
             ],
         ];
 
-        $out = ClaudeHooksInstaller::apply($existing, ClaudeHooksInstaller::STANDALONE, false);
+        $out = ClaudeHooksInstaller::apply($existing, $this->dir, false);
         $session = $this->commands($out, 'SessionStart');
 
         $this->assertNotContains('vendor/bin/commandments OLDsubcommand 2>/dev/null || true', $session, 'stale owned command must be dropped');
@@ -146,7 +167,7 @@ class ClaudeHooksInstallerTest extends TestCase
 
     public function test_plan_loop_session_reset_is_wired_and_owned(): void
     {
-        $out = ClaudeHooksInstaller::apply([], ClaudeHooksInstaller::STANDALONE, true);
+        $out = ClaudeHooksInstaller::apply([], $this->dir, true);
         $session = $this->commands($out, 'SessionStart');
         $this->assertContains('sh .claude/hooks/plan-session-reset.sh', $session);
     }
@@ -163,7 +184,7 @@ class ClaudeHooksInstallerTest extends TestCase
     {
         $this->assertSame(
             ClaudeHooksInstaller::STATUS_NO_SETTINGS,
-            ClaudeHooksInstaller::reassert($this->dir, ClaudeHooksInstaller::STANDALONE, false),
+            ClaudeHooksInstaller::reassert($this->dir, false),
         );
         $this->assertFileDoesNotExist($this->dir . '/.claude/settings.json');
     }

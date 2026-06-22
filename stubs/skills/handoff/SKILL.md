@@ -53,7 +53,9 @@ the plan-progress memory included verbatim. Then **you complete every
 5. **Resume notes** — key files, gotchas, how to verify (tests / gate).
 
 `HANDOFF.md` is gitignored (transient working state). Keep it accurate and
-overwrite it as the work moves.
+overwrite it as the work moves — and when the work is fully DONE, delete it
+(`rm HANDOFF.md`) so the next session starts clean and `handoff-detect.sh` doesn't
+offer a resume for finished work. (It is gitignored, so there is nothing to `git rm`.)
 
 ## What to read when
 
