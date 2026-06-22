@@ -159,6 +159,16 @@ print(pk[0]["version"].lstrip("v") if pk else "")' 2>/dev/null)"
   git -C "$dir" ls-files --error-unmatch .commandments-last-synced >/dev/null 2>&1 && paths+=( .commandments-last-synced )
   [ -f "$dir/commandments.php" ]        && paths+=( commandments.php )
   [ -f "$dir/config/commandments.php" ] && paths+=( config/commandments.php )
+  # Package-owned .claude/CLAUDE.md content that `sync` re-asserts (hook wiring,
+  # CLAUDE.md section, refreshed hook scripts) — staged ONLY when git-TRACKED, so
+  # a consumer that gitignores its .claude tree (skills.auto_refresh) never trips
+  # `git commit --` on an ignored path. Without this the refreshed files sit
+  # edited-but-uncommitted in the consumer's tree (drift).
+  git -C "$dir" ls-files --error-unmatch CLAUDE.md             >/dev/null 2>&1 && paths+=( CLAUDE.md )
+  git -C "$dir" ls-files --error-unmatch .claude/settings.json >/dev/null 2>&1 && paths+=( .claude/settings.json )
+  while IFS= read -r f; do
+    [ -n "$f" ] && paths+=( "$f" )
+  done < <(cd "$dir" && git ls-files '.claude/hooks/*.sh' 2>/dev/null)
   while IFS= read -r f; do
     [ -n "$f" ] && paths+=( "$f" )
   done < <(cd "$dir" && grep -rl --include='*.php' "$MARKER" . \
