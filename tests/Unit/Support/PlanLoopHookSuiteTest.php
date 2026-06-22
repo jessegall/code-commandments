@@ -54,6 +54,7 @@ class PlanLoopHookSuiteTest extends TestCase
 
     public function test_settings_entries_reference_the_scripts(): void
     {
+        $this->assertSame('sh .claude/hooks/plan-session-reset.sh', PlanLoopHookSuite::sessionStartEntries()[0]['hooks'][0]['command']);
         $this->assertSame('sh .claude/hooks/guard-plan-marker.sh', PlanLoopHookSuite::preToolUseEntries()[0]['hooks'][0]['command']);
         $this->assertSame('sh .claude/hooks/keep-going.sh', PlanLoopHookSuite::stopEntry()['hooks'][0]['command']);
 
@@ -65,8 +66,9 @@ class PlanLoopHookSuiteTest extends TestCase
 
     public function test_every_referenced_script_is_in_the_suite(): void
     {
-        // The four wired commands must each name a script the installer ships.
+        // Every wired command must name a script the installer ships.
         $wired = [
+            PlanLoopHookSuite::sessionStartEntries()[0]['hooks'][0]['command'],
             PlanLoopHookSuite::preToolUseEntries()[0]['hooks'][0]['command'],
             PlanLoopHookSuite::stopEntry()['hooks'][0]['command'],
             ...array_map(static fn (array $e): string => $e['hooks'][0]['command'], PlanLoopHookSuite::postToolUseEntries()),
@@ -76,5 +78,30 @@ class PlanLoopHookSuiteTest extends TestCase
             $script = basename((string) preg_replace('/^sh \.claude\/hooks\//', '', $command));
             $this->assertContains($script, PlanLoopHookSuite::SCRIPTS, "{$command} points at an unshipped script");
         }
+    }
+
+    public function test_session_reset_clears_marker_only_on_a_new_session(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc-planreset-' . uniqid();
+        mkdir($dir, 0755, true);
+        shell_exec('cd ' . escapeshellarg($dir) . ' && git init -q');
+        PlanLoopHookSuite::install($dir);
+        $script = $dir . '/.claude/hooks/plan-session-reset.sh';
+        $marker = $dir . '/.claude/plan-active';
+
+        $run = function (string $source) use ($script, $dir, $marker): bool {
+            file_put_contents($marker, '0');
+            shell_exec('cd ' . escapeshellarg($dir) . ' && printf ' . escapeshellarg('{"source":"' . $source . '"}') . ' | sh ' . escapeshellarg($script));
+
+            return file_exists($marker);
+        };
+
+        // A brand-new session clears the stale marker…
+        $this->assertFalse($run('startup'), 'startup must clear the marker');
+        // …but a compaction / resume keeps an in-flight plan alive.
+        $this->assertTrue($run('compact'), 'compact must keep the marker');
+        $this->assertTrue($run('resume'), 'resume must keep the marker');
+
+        shell_exec('rm -rf ' . escapeshellarg($dir));
     }
 }
