@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
-use JesseGall\CodeCommandments\Support\Absolver;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
-use JesseGall\CodeCommandments\Support\ReportGuidance;
-use JesseGall\CodeCommandments\Support\Reporting\IssueReporter;
-use JesseGall\CodeCommandments\Support\Reporting\ReportLedger;
+use JesseGall\CodeCommandments\Support\ReportService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -43,153 +40,30 @@ class ReportConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if ($input->getOption('feature-request')) {
-            return $this->handleFeatureRequest($input, $output);
-        }
-
-        $prophet = $input->getOption('prophet');
-        $reason = $input->getOption('reason');
-        $file = $input->getOption('file');
-        $line = $input->getOption('line') !== null ? (int) $input->getOption('line') : null;
-        $fingerprint = is_string($input->getOption('fingerprint')) && T_String::isNotBlank($input->getOption('fingerprint'))
-            ? $input->getOption('fingerprint')
-            : null;
-        $snippetPath = is_string($file) ? $file : null;
-        $at = $input->getOption('at');
-        $repo = $input->getOption('repo') ?: $this->repoFromConfig($input->getOption('config'));
-
+        $basePath = getcwd() ?: '.';
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
 
-        // --at=path:line[-to]: resolve the locator to the finding, recording the
-        // report-linked absolution and inferring --prophet/--file/--line from it.
-        if ($fingerprint === null && is_string($at) && T_String::isNotBlank($at)) {
-            $loc = Absolver::parseLocator($at);
-
-            if ($loc === null) {
-                $output->writeln('<error>--at must be path:line or path:from-to (e.g. --at=src/Foo.php:32).</error>');
-
-                return Command::FAILURE;
-            }
-
-            $filter = is_string($prophet) && $prophet !== '' ? $prophet : null;
-            $unique = [];
-
-            foreach ((new Absolver($manager, $registry, $tracker))->findingsAt($loc['path'], $loc['from'], $loc['to'], $filter) as $finding) {
-                $unique[$finding->fingerprint] = $finding;
-            }
-
-            if ($unique === []) {
-                $output->writeln("<error>No live finding at {$at}" . ($filter !== null ? " for a prophet matching '{$filter}'" : '') . '. Run judge --next to see current findings.</error>');
-
-                return Command::FAILURE;
-            }
-
-            if (count($unique) > 1) {
-                $output->writeln("<error>Multiple findings at {$at} — narrow with --prophet=NAME:</error>");
-
-                foreach ($unique as $finding) {
-                    $output->writeln("  - {$finding->prophetShort} ({$finding->location()})");
-                }
-
-                return Command::FAILURE;
-            }
-
-            $finding = array_values($unique)[0];
-            $fingerprint = $finding->fingerprint;
-            $prophet = is_string($prophet) && $prophet !== '' ? $prophet : $finding->prophetShort;
-            $file ??= $finding->relativePath;
-            $line ??= $finding->line;
-            $snippetPath = $finding->filePath;
-        }
-
-        if (! is_string($prophet) || T_String::isBlank($prophet) || ! is_string($reason) || T_String::isBlank($reason)) {
-            $output->writeln('<error>--prophet and --reason are required.</error>');
-
-            return Command::FAILURE;
-        }
-
-        // Dedup: never file the same finding twice. If this fingerprint was
-        // already reported, reuse that issue and keep the finding absolved.
-        if ($fingerprint !== null && $tracker->isFindingReported($fingerprint)) {
-            $existing = $tracker->reportedFindings()[$fingerprint] ?? [];
-            $issueRef = isset($existing['issue']) ? "issue #{$existing['issue']}" : 'an existing issue';
-            $output->writeln("<info>Already reported as {$issueRef} — not filing a duplicate. The finding stays absolved until that issue is answered.</info>");
-
-            return Command::SUCCESS;
-        }
-
-        $reporter = new IssueReporter($repo);
-        $issue = $reporter->build($prophet, $file, $line, $reason, $this->snippet($snippetPath, $line));
-        $result = $reporter->send($issue);
-
-        if ($result['ok']) {
-            $output->writeln('<info>' . $result['message'] . '</info>');
-
-            if (($result['number'] ?? null) !== null && ($result['url'] ?? null) !== null) {
-                (new ReportLedger(getcwd() ?: '.'))->record(
-                    $result['number'],
-                    $result['url'],
-                    $prophet,
-                    $repo,
-                    $reason,
-                    date('c'),
-                );
-            }
-
-            if ($fingerprint !== null) {
-                $tracker->reportFinding($fingerprint, $reason, $result['number'] ?? null, $repo);
-                $output->writeln('<info>This finding is now absolved until the issue is answered. It survives the post-commit reset; `reports --check` lifts it when the issue closes (a genuine sin then re-blocks).</info>');
-            } else {
-                $output->writeln('<comment>NOTE: no finding locator was given (--at=path:line or --fingerprint), so NO absolution was recorded — this finding still blocks. Re-run with --at=path:line (copy it from judge) to quiet it until the issue is answered.</comment>');
-            }
-
-            foreach (ReportGuidance::lines($result['number'] ?? null, $repo) as $line) {
-                $output->writeln($line);
-            }
-
-            return Command::SUCCESS;
-        }
-
-        $output->writeln('<comment>' . $result['message'] . '</comment>');
-
-        return Command::FAILURE;
-    }
-
-    /**
-     * File an enhancement / new-rule proposal: no finding, no absolution, an
-     * `enhancement`-labelled issue.
-     */
-    private function handleFeatureRequest(InputInterface $input, OutputInterface $output): int
-    {
-        $reason = $input->getOption('reason');
-
-        if (! is_string($reason) || T_String::isBlank($reason)) {
-            $output->writeln('<error>--reason is required (describe the feature / new rule and why). --title is recommended.</error>');
-
-            return Command::FAILURE;
-        }
-
-        $repo = $input->getOption('repo') ?: $this->repoFromConfig($input->getOption('config'));
-
-        $reporter = new IssueReporter($repo);
-        $issue = $reporter->buildFeatureRequest(
-            $reason,
-            $input->getOption('title'),
-            $input->getOption('proposed-prophet'),
-            $input->getOption('rubric'),
-        );
-        $result = $reporter->send($issue, 'enhancement');
-
-        if (! $result['ok']) {
-            $output->writeln('<comment>' . $result['message'] . '</comment>');
-
-            return Command::FAILURE;
-        }
-
-        $output->writeln('<info>' . $result['message'] . '</info>');
-        $output->writeln('Feature request filed — no absolution recorded (a proposal has no finding to quiet).');
-
-        return Command::SUCCESS;
+        return ReportService::file(
+            $manager,
+            $registry,
+            $tracker,
+            [
+                'prophet' => $input->getOption('prophet'),
+                'reason' => $input->getOption('reason'),
+                'file' => $input->getOption('file'),
+                'line' => $input->getOption('line'),
+                'fingerprint' => $input->getOption('fingerprint'),
+                'at' => $input->getOption('at'),
+                'feature_request' => (bool) $input->getOption('feature-request'),
+                'title' => $input->getOption('title'),
+                'proposed_prophet' => $input->getOption('proposed-prophet'),
+                'rubric' => $input->getOption('rubric'),
+            ],
+            $input->getOption('repo') ?: $this->repoFromConfig($input->getOption('config')),
+            $basePath,
+            fn (string $line) => $output->writeln('<info>' . $line . '</info>'),
+            fn (string $line) => $output->writeln('<comment>' . $line . '</comment>'),
+        ) === ReportService::SUCCESS ? Command::SUCCESS : Command::FAILURE;
     }
 
     private function repoFromConfig(?string $configPath): string
@@ -207,16 +81,5 @@ class ReportConsoleCommand extends Command
         }
 
         return self::DEFAULT_REPO;
-    }
-
-    private function snippet(?string $file, ?int $line): ?string
-    {
-        if ($file === null || $line === null || ! is_file($file)) {
-            return null;
-        }
-
-        $lines = explode(T_String::NEWLINE, (string) file_get_contents($file));
-
-        return $lines[$line - 1] ?? null;
     }
 }
