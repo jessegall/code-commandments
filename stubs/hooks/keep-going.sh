@@ -28,7 +28,9 @@ fi
 count=$((count + 1))
 printf '%s' "$count" > "$marker"
 
-msg="The approved plan is not finished yet (auto-continue $count/$cap) — continue implementing the next step now, do NOT stop. Run the commandments gate after each phase and commit. These are NOT reasons to stop: the turn got long, context is growing or about to compact, the next part is error-prone, fresh context would be cleaner, or wanting to checkpoint — keep going. Only for a GENUINE blocker (a decision only the user can make, information you cannot find or infer, or an unrecoverable failure) release the loop: sh .claude/hooks/plan-release.sh \"<reason>\" and explain what you need."
+if [ -f "$root/artisan" ]; then run="php artisan commandments:"; else run="vendor/bin/commandments "; fi
+
+msg="The approved plan is not finished yet (auto-continue $count/$cap) — continue implementing the next step now, do NOT stop. After each phase run the commandments gate (\`${run}judge --git\`), resolve every finding, and commit. These are NOT reasons to stop: the turn got long, context is growing or about to compact, the next part is error-prone, fresh context would be cleaner, or wanting to checkpoint (writing a handoff is checkpoint insurance — it does NOT release the loop) — keep going. Only for a GENUINE blocker (a decision only the user can make, information you cannot find or infer, or an unrecoverable failure) release the loop: sh .claude/hooks/plan-release.sh \"<reason>\" and explain what you need."
 if command -v jq >/dev/null 2>&1; then
     jq -nc --arg r "$msg" '{decision:"block",reason:$r}'
 else

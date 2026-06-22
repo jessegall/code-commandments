@@ -17,10 +17,10 @@ status=$(git -C "$root" status --short 2>/dev/null)
 commits=$(git -C "$root" log --oneline -15 2>/dev/null)
 
 gate=''
-if [ -x "$root/vendor/bin/commandments" ]; then
-    gate=$(cd "$root" && vendor/bin/commandments judge --git 2>/dev/null | tail -40)
-elif [ -f "$root/artisan" ]; then
+if [ -f "$root/artisan" ]; then
     gate=$(cd "$root" && php artisan commandments:judge --git 2>/dev/null | tail -40)
+elif [ -x "$root/vendor/bin/commandments" ]; then
+    gate=$(cd "$root" && vendor/bin/commandments judge --git 2>/dev/null | tail -40)
 fi
 
 # Plan loop marker + plan-progress memory (independent of the loop being armed —
@@ -47,7 +47,7 @@ printf -- '- Branch: `%s` -> upstream `%s`\n' "$branch" "$upstream"
 printf -- '- Plan loop active: %s\n\n' "$planactive"
 printf '### git status --short\n```\n%s\n```\n\n' "${status:-clean}"
 printf '### Recent commits\n```\n%s\n```\n\n' "${commits:-none}"
-printf '### Commandments gate — judge --git\n```\n%s\n```\n\n' "${gate:-(not run / clean)}"
+printf '### Commandments snapshot — judge --git\n```\n%s\n```\n\n' "${gate:-(not run / clean)}"
 
 if [ -n "$planfiles" ]; then
     printf '## Plan-progress memory (the authoritative plan)\n\n'
@@ -62,5 +62,6 @@ printf '## NEXT STEPS (do these now)\n'
 printf '1. READ the whole handoff + plan memory above before acting.\n'
 printf '2. RECONCILE it against the LIVE REPO section — if work already landed or the branch moved, trust the repo.\n'
 printf '3. Create an ACTIVE TODO LIST (the TodoWrite tool) — one item per phase — and keep it live (mark each in_progress when you start it, completed when it lands) so the user can follow your progress in the terminal.\n'
-printf '4. If a plan is UNFINISHED and .claude/hooks/plan-start.sh exists, re-arm the loop: sh .claude/hooks/plan-start.sh\n'
-printf '5. Continue from the handoff'\''s "Next step". Refresh HANDOFF.md (sh .claude/hooks/handoff.sh) before you stop again.\n'
+printf '4. Re-arm the loop ONLY if the plan-progress memory still lists REMAINING phases AND .claude/plan-active is absent AND .claude/hooks/plan-start.sh exists: sh .claude/hooks/plan-start.sh (if the marker exists the loop is already armed).\n'
+printf '5. Continue from the Next step — the handoff'\''s, or if there is no HANDOFF.md the plan-progress memory'\''s NEXT STEP. Refresh HANDOFF.md (sh .claude/hooks/handoff.sh) before any pause/compaction — a handoff is checkpoint insurance and does NOT release the loop; keep going unless the plan is DONE or you hit a genuine blocker.\n'
+printf '6. When the work is fully DONE, remove the handoff as part of the final commit: git rm HANDOFF.md (recoverable via history) — do NOT bare-rm it.\n'

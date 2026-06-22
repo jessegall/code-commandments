@@ -9,6 +9,17 @@ root=$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "${CLAUDE_PROJEC
 mkdir -p "$root/.claude"
 printf '0' > "$root/.claude/plan-active"
 
-cat <<'JSON'
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Plan approved — drive it to completion phase by phase WITHOUT stopping. FIRST, create an ACTIVE TODO LIST (the TodoWrite tool) — one item per phase — and keep it live (mark each in_progress when you start it, completed when it lands) so the user can follow your progress in the terminal. THEN arm the safety-net loop so an API hiccup that merely halts a turn can't strand the plan — run this now: /loop 15m If a plan is active (.claude/plan-active exists) and unfinished, resume it from your plan-progress memory and keep going (run the commandments gate and commit each phase); if the marker is gone, do nothing and let the loop end. After each phase: run the commandments gate (vendor/bin/commandments judge --staged, then --next --git), resolve every sin, commit, then continue. KEEP GOING until the plan is fully implemented. Only stop for a GENUINE blocker: a decision only the user can make, information you cannot find or infer, or an unrecoverable failure. The following are NOT blockers — do NOT stop for them: the turn got long, context is growing or about to compact, the next part is error-prone, it would be cleaner with fresh context, or wanting to checkpoint. To release the loop (plan DONE, or a genuine blocker) run: sh .claude/hooks/plan-release.sh \"<reason>\"  — a non-blocker reason is refused and you must keep going. Do not delete the marker by hand; that is blocked."}}
-JSON
+# Resolve the runner (artisan for a Laravel app, else the standalone binary) and
+# interpolate it into the nudge via jq, so a Laravel consumer isn't told to run a
+# vendor/bin path that does not exist.
+if [ -f "$root/artisan" ]; then run="php artisan commandments:"; else run="vendor/bin/commandments "; fi
+
+ctx="Plan approved — drive it to completion phase by phase WITHOUT stopping. FIRST, create an ACTIVE TODO LIST (the TodoWrite tool) — one item per phase — and keep it live (mark each in_progress when you start it, completed when it lands) so the user can follow your progress in the terminal. THEN arm the safety-net loop so an API hiccup that merely halts a turn can't strand the plan — run this now: /loop 15m \"If a plan is active (.claude/plan-active exists) and unfinished, resume it from your plan-progress memory and keep going — run the commandments gate and commit each phase; if the marker is gone, do nothing and let the loop end.\" After each phase: run the commandments gate (\`${run}judge --git\`), resolve every finding, commit, then continue. KEEP GOING until the plan is fully implemented. Only stop for a GENUINE blocker: a decision only the user can make, information you cannot find or infer, or an unrecoverable failure. These are NOT blockers — do NOT stop for them: the turn got long, context is growing or about to compact, the next part is error-prone, fresh context would be cleaner, or wanting to checkpoint (writing a handoff is checkpoint insurance — it does NOT release the loop). To release the loop (plan DONE, or a genuine blocker) run: sh .claude/hooks/plan-release.sh \"<reason>\" — a non-blocker reason is refused and you must keep going. Do not delete the marker by hand; that is blocked."
+
+if command -v jq >/dev/null 2>&1; then
+    jq -nc --arg ctx "$ctx" '{hookSpecificOutput:{hookEventName:"PostToolUse",additionalContext:$ctx}}'
+else
+    # jq absent: emit a static nudge (the runner goes in via a printf %s slot; the
+    # rest of the body has no % or backslash to reprocess).
+    printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Plan approved — drive it to completion WITHOUT stopping. Create a live TODO list (TodoWrite), arm /loop 15m as a safety net, and after each phase run %sjudge --git, resolve every finding, and commit. A long turn or context compaction is not a blocker; writing a handoff does not release the loop. Release only for a genuine blocker via sh .claude/hooks/plan-release.sh."}}' "$run"
+fi

@@ -30,10 +30,10 @@ esac
 # Otherwise reject the common non-blocker rationalizations and keep looping.
 case "$low" in
     *context*|*compact*|*summar*|*token*|*turn*|*enormous*|*grown*|*grew*|*checkpoint*|*fresh*|*risky*|*later*|*resume*|*pause*|*break*|*tired*|*errorprone*|*error-prone*)
-        echo "REFUSED: \"$reason\" is not a genuine blocker — the plan loop stays ARMED, keep going. Genuine blockers: a decision only the user can make, information you cannot find/infer, or an unrecoverable failure. If the PLAN IS DONE, pass a reason containing 'done' or 'complete'." >&2
+        echo "REFUSED: \"$reason\" is not a genuine blocker — the plan loop stays ARMED, keep going. Writing a handoff for a checkpoint/compaction is fine and does NOT release the loop. Genuine blockers: a decision only the user can make, information you cannot find/infer, or an unrecoverable failure. If the PLAN IS DONE, pass a reason containing 'done' or 'complete'." >&2
         exit 1 ;;
     *'too long'*|*'should check'*|*'come back'*|*'next session'*|*'continue later'*|*'fresh context'*)
-        echo "REFUSED: \"$reason\" is not a genuine blocker — the plan loop stays ARMED, keep going. Genuine blockers: a decision only the user can make, information you cannot find/infer, or an unrecoverable failure. If the PLAN IS DONE, pass a reason containing 'done' or 'complete'." >&2
+        echo "REFUSED: \"$reason\" is not a genuine blocker — the plan loop stays ARMED, keep going. Writing a handoff for a checkpoint/compaction is fine and does NOT release the loop. Genuine blockers: a decision only the user can make, information you cannot find/infer, or an unrecoverable failure. If the PLAN IS DONE, pass a reason containing 'done' or 'complete'." >&2
         exit 1 ;;
 esac
 
