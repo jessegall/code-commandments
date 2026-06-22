@@ -8,15 +8,23 @@ hand-rolling register/has/get** — then the contract lives, and is enforced, in
 place:
 
 ```php
-// GOOD — the contract is inherited; you only declare the value type
+// GOOD — the contract is inherited; optionally NARROW the value type for callers
 final class HandlerRegistry extends Registry
 {
-    protected function type(): string
+    public function register(string $key, Handler $handler): static
     {
-        return Handler::class;
+        return parent::register($key, $handler);
+    }
+
+    public function get(string $key): Handler
+    {
+        return parent::get($key);
     }
 }
 ```
+
+(Or just `final class HandlerRegistry extends Registry {}` — the whole contract is
+already inherited; the overrides above only sharpen the types at the call sites.)
 
 Hand-rolling the same three methods on a bare class re-derives the contract (and
 usually leaks — see `reference/contract.md`). If two or more classes hand-roll it,
