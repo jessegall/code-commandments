@@ -26,19 +26,27 @@ class ReportConsoleCommand extends Command
     {
         $this
             ->setName('report')
-            ->setDescription('Report a prophet false-positive or wrong rule as a GitHub issue')
+            ->setDescription('Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'The prophet that misbehaved (name or class)')
-            ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'What is wrong (false positive / wrong rule / unclear)')
+            ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'What is wrong (false positive / wrong rule / unclear) — or, with --feature-request, what to build and why')
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'File where it was flagged')
             ->addOption('line', null, InputOption::VALUE_REQUIRED, 'Line number')
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered')
             ->addOption('at', null, InputOption::VALUE_REQUIRED, 'Target the finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; records the report-linked absolution and infers --prophet/--file/--line. Combine with --prophet to disambiguate ties')
+            ->addOption('feature-request', null, InputOption::VALUE_NONE, 'File an ENHANCEMENT / new-rule proposal instead of a false-positive report — needs no --prophet/--at/--fingerprint, records no absolution')
+            ->addOption('title', null, InputOption::VALUE_REQUIRED, '(feature-request) Short issue title; defaults to a summary of --reason')
+            ->addOption('proposed-prophet', null, InputOption::VALUE_REQUIRED, '(feature-request) Proposed name for a new prophet you are suggesting')
+            ->addOption('rubric', null, InputOption::VALUE_REQUIRED, '(feature-request) Proposed APPLY/LEAVE rubric for the suggested rule')
             ->addOption('repo', null, InputOption::VALUE_REQUIRED, 'GitHub repo (owner/name) to file the issue on');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if ($input->getOption('feature-request')) {
+            return $this->handleFeatureRequest($input, $output);
+        }
+
         $prophet = $input->getOption('prophet');
         $reason = $input->getOption('reason');
         $file = $input->getOption('file');
@@ -145,6 +153,43 @@ class ReportConsoleCommand extends Command
         $output->writeln('<comment>' . $result['message'] . '</comment>');
 
         return Command::FAILURE;
+    }
+
+    /**
+     * File an enhancement / new-rule proposal: no finding, no absolution, an
+     * `enhancement`-labelled issue.
+     */
+    private function handleFeatureRequest(InputInterface $input, OutputInterface $output): int
+    {
+        $reason = $input->getOption('reason');
+
+        if (! is_string($reason) || T_String::isBlank($reason)) {
+            $output->writeln('<error>--reason is required (describe the feature / new rule and why). --title is recommended.</error>');
+
+            return Command::FAILURE;
+        }
+
+        $repo = $input->getOption('repo') ?: $this->repoFromConfig($input->getOption('config'));
+
+        $reporter = new IssueReporter($repo);
+        $issue = $reporter->buildFeatureRequest(
+            $reason,
+            $input->getOption('title'),
+            $input->getOption('proposed-prophet'),
+            $input->getOption('rubric'),
+        );
+        $result = $reporter->send($issue, 'enhancement');
+
+        if (! $result['ok']) {
+            $output->writeln('<comment>' . $result['message'] . '</comment>');
+
+            return Command::FAILURE;
+        }
+
+        $output->writeln('<info>' . $result['message'] . '</info>');
+        $output->writeln('Feature request filed — no absolution recorded (a proposal has no finding to quiet).');
+
+        return Command::SUCCESS;
     }
 
     private function repoFromConfig(?string $configPath): string

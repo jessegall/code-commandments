@@ -50,4 +50,34 @@ class IssueReporterTest extends TestCase
         $this->assertStringContainsString('(no file given)', $issue['body']);
         $this->assertStringNotContainsString('```php', $issue['body']);
     }
+
+    public function test_builds_a_feature_request_issue(): void
+    {
+        $issue = (new IssueReporter('acme/repo'))->buildFeatureRequest(
+            'Add a prophet that flags direct model attribute writes followed by save().',
+            'Flag anemic model mutations',
+            'EncapsulateModelMutationProphet',
+            "APPLY WHEN: a write ends in ->save().\nLEAVE WHEN: a one-off backfill.",
+        );
+
+        $this->assertSame('[feature-request] Flag anemic model mutations', $issue['title']);
+        $this->assertStringContainsString('feature request (no finding attached)', $issue['body']);
+        $this->assertStringContainsString('| Proposed prophet | `EncapsulateModelMutationProphet` |', $issue['body']);
+        $this->assertStringContainsString('Proposed APPLY / LEAVE rubric', $issue['body']);
+        $this->assertStringContainsString('APPLY WHEN', $issue['body']);
+        $this->assertStringContainsString('For the maintainer', $issue['body']);
+        // No false-positive scaffolding.
+        $this->assertStringNotContainsString('[prophet-report]', $issue['title']);
+        $this->assertStringNotContainsString('For the fixer', $issue['body']);
+    }
+
+    public function test_feature_request_title_defaults_to_reason_summary(): void
+    {
+        $issue = (new IssueReporter('acme/repo'))->buildFeatureRequest('Support a JSON output mode for judge.');
+
+        $this->assertSame('[feature-request] Support a JSON output mode for judge.', $issue['title']);
+        // Optional sections are omitted when not provided.
+        $this->assertStringNotContainsString('Proposed prophet', $issue['body']);
+        $this->assertStringNotContainsString('Proposed APPLY / LEAVE rubric', $issue['body']);
+    }
 }

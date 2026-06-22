@@ -132,7 +132,7 @@ Every command is available via both Laravel artisan
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
 | [`judge`](#judge) | Judge the codebase for sins against the commandments |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
-| [`report`](#report) | Report a prophet false-positive or wrong rule as a GitHub issue |
+| [`report`](#report) | Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue |
 | [`reports`](#reports) | Show the status of prophet reports this project filed (resolved upstream yet?) |
 | [`scaffold`](#scaffold) | Generate recommended support classes (Option, FromArrayOnly, …) into your namespace |
 | [`scripture`](#scripture) | List all commandments and their descriptions |
@@ -219,17 +219,21 @@ Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE]
 
 ### `report`
 
-Report a prophet false-positive or wrong rule as a GitHub issue.
+Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue.
 
 | Flag | Argument | Description |
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to config file |
 | `--prophet` | `<value>` | The prophet that misbehaved (name or class) |
-| `--reason` | `<value>` | What is wrong (false positive / wrong rule / unclear) |
+| `--reason` | `<value>` | What is wrong (false positive / wrong rule / unclear) — or, with --feature-request, what to build and why |
 | `--file` | `<value>` | File where it was flagged |
 | `--line` | `<value>` | Line number |
 | `--fingerprint` | `<value>` | The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered |
 | `--at` | `<value>` | Target the finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; records the report-linked absolution and infers --prophet/--file/--line. Combine with --prophet to disambiguate ties |
+| `--feature-request` | — | File an ENHANCEMENT / new-rule proposal instead of a false-positive report — needs no --prophet/--at/--fingerprint, records no absolution |
+| `--title` | `<value>` | (feature-request) Short issue title; defaults to a summary of --reason |
+| `--proposed-prophet` | `<value>` | (feature-request) Proposed name for a new prophet you are suggesting |
+| `--rubric` | `<value>` | (feature-request) Proposed APPLY/LEAVE rubric for the suggested rule |
 | `--repo` | `<value>` | GitHub repo (owner/name) to file the issue on |
 
 ### `reports`
