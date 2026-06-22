@@ -36,6 +36,21 @@ final class ClaudeHooksInstaller
     public const STANDALONE = ['vendor/bin/commandments', ' '];
 
     /**
+     * The runner a CONSUMER PROJECT uses, decided by the project itself (a
+     * Laravel app — `artisan` present — documents `php artisan commandments:…`;
+     * everything else uses the standalone binary). Detecting from the project,
+     * not from which entry point invoked us, means `php artisan commandments:sync`
+     * and `vendor/bin/commandments sync` produce IDENTICAL output for the same
+     * project — so the wiring never churns between runners.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function runnerFor(string $basePath): array
+    {
+        return is_file(rtrim($basePath, '/') . '/artisan') ? self::ARTISAN : self::STANDALONE;
+    }
+
+    /**
      * The git post-merge hook body — ONE runner-detecting script (artisan for a
      * Laravel app, else the standalone binary) emitted identically by both
      * install-sync-hook variants, so the auto-sync path can't drift and always
@@ -147,11 +162,10 @@ HOOK;
      * (new entries added, existing/hand-added ones preserved). Only acts when a
      * settings.json already exists — a routine sync must not impose Claude hooks
      * on a consumer that never opted into them; first-time wiring stays
-     * install-hooks/init's job.
-     *
-     * @param  array{0: string, 1: string}  $runner  one of self::ARTISAN / self::STANDALONE
+     * install-hooks/init's job. The runner is detected from the project, so the
+     * artisan and standalone entry points yield identical wiring.
      */
-    public static function reassert(string $basePath, array $runner, bool $planLoop): string
+    public static function reassert(string $basePath, bool $planLoop): string
     {
         $file = rtrim($basePath, '/') . '/.claude/settings.json';
 
@@ -166,7 +180,7 @@ HOOK;
         }
 
         $before = $settings['hooks'] ?? [];
-        $after = self::apply($before, $runner, $planLoop);
+        $after = self::apply($before, $basePath, $planLoop);
 
         if ($after === $before) {
             return self::STATUS_UNCHANGED;
@@ -191,11 +205,11 @@ HOOK;
      * init and `sync` apply, so the wiring is always the latest version.
      *
      * @param  array<string, list<array<string, mixed>>>  $existing
-     * @param  array{0: string, 1: string}  $runner  self::ARTISAN / self::STANDALONE
      * @return array<string, list<array<string, mixed>>>
      */
-    public static function apply(array $existing, array $runner, bool $planLoop): array
+    public static function apply(array $existing, string $basePath, bool $planLoop): array
     {
+        $runner = self::runnerFor($basePath);
         $ours = self::build($runner[0], $runner[1], $planLoop);
         $result = $existing;
 

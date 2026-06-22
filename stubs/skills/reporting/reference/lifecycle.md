@@ -20,12 +20,13 @@
 ## File it
 
 ```
-vendor/bin/commandments report --prophet=NAME --at=path:line --reason="why this is wrong"
+vendor/bin/commandments report --at=path:line --reason="why this is wrong"
 ```
 
 Always pass `--at=path:line` (or `--fingerprint=…`) — without a locator the issue
 is filed but the finding is NOT quieted (it keeps blocking). The locator also
-infers `--prophet`/`--file`/`--line` from the finding.
+infers `--prophet`/`--file`/`--line`, so you do NOT pass `--prophet` separately;
+add `--prophet=NAME` only to disambiguate two findings on the same line.
 
 ## Poll it actively (ALWAYS — after a WRONG-FINDING report)
 

@@ -110,11 +110,6 @@ class SyncConsoleCommand extends Command
     }
 
     /**
-     * Refresh the opt-in plan-loop hook scripts on upgrade (when enabled in
-     * config). Mirrors the artisan SyncCommand; only refreshes the scripts, not
-     * the settings.json wiring (that is init's job).
-     */
-    /**
      * Install/refresh the always-on handoff helper on upgrade, but only for a
      * consumer that already uses the package's Claude hooks (a .claude/hooks dir
      * exists) — a routine sync shouldn't create it for a CLI-only consumer.
@@ -155,7 +150,6 @@ class SyncConsoleCommand extends Command
 
         $status = \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::reassert(
             $basePath,
-            \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STANDALONE,
             \JesseGall\CodeCommandments\Support\PlanLoopHookSuite::enabled($config),
         );
 
@@ -169,7 +163,7 @@ class SyncConsoleCommand extends Command
      */
     private function reassertClaudeMd(string $basePath, OutputInterface $output): void
     {
-        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert($basePath, \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STANDALONE) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
+        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert($basePath) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
             $output->writeln('Refreshed the Code Commandments section in CLAUDE.md');
         }
     }

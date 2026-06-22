@@ -47,14 +47,14 @@ final class ClaudeMdInstaller
     }
 
     /**
-     * Create / append / replace the section — the opt-in install moment.
-     *
-     * @param  array{0: string, 1: string}  $runner
+     * Create / append / replace the section — the opt-in install moment. The
+     * runner is detected from the project, so the artisan and standalone entry
+     * points write identical content.
      */
-    public static function install(string $basePath, array $runner): string
+    public static function install(string $basePath): string
     {
         $path = rtrim($basePath, '/') . '/CLAUDE.md';
-        $block = self::section($runner);
+        $block = self::section(ClaudeHooksInstaller::runnerFor($basePath));
 
         if (! is_file($path)) {
             return @file_put_contents($path, $block . "\n") === false
@@ -86,11 +86,10 @@ final class ClaudeMdInstaller
 
     /**
      * Re-assert on update: replace the section in place ONLY when one already
-     * exists; never create or append. No-op (STATUS_NO_SECTION) otherwise.
-     *
-     * @param  array{0: string, 1: string}  $runner
+     * exists; never create or append. No-op (STATUS_NO_SECTION) otherwise. The
+     * runner is detected from the project.
      */
-    public static function reassert(string $basePath, array $runner): string
+    public static function reassert(string $basePath): string
     {
         $path = rtrim($basePath, '/') . '/CLAUDE.md';
 
@@ -104,7 +103,7 @@ final class ClaudeMdInstaller
             return self::STATUS_SKIPPED_CONFLICT;
         }
 
-        $replaced = self::replaceInto($content, self::section($runner));
+        $replaced = self::replaceInto($content, self::section(ClaudeHooksInstaller::runnerFor($basePath)));
 
         if ($replaced === null) {
             return self::STATUS_NO_SECTION;
@@ -164,10 +163,10 @@ final class ClaudeMdInstaller
      * centralized here so the artisan and standalone wirings can't diverge (audit
      * #16 REPORT-IS-NOT-A-DODGE drift, #19 absolve-reason drift).
      *
-     * @param  array{0: string, 1: string}  $runner
      */
-    public static function settingsInstructions(array $runner): string
+    public static function settingsInstructions(string $basePath): string
     {
+        $runner = ClaudeHooksInstaller::runnerFor($basePath);
         $r = $runner[0] . $runner[1];
 
         $judgeNextGit = "{$r}judge --next --git";
@@ -345,6 +344,14 @@ Every commit stays righteous and each phase is reviewable on its own.
 **To propose a NEW rule or feature** (not a wrong finding), use `{$r}report --feature-request --title="…" --reason="…"` — it files an enhancement issue, needs no `--at`, and records no absolution.
 
 **Reporting a wrong finding quiets it until the issue is answered.** Pass the finding's locator — `{$r}report --at=path:line --reason="why"` — and the finding (even a **sin**) goes quiet and **stays quiet across commits** (it survives the post-commit reset, so you can commit; `report` will not file a duplicate). When the issue is answered (`reports --check` at session start detects the close), the absolution **lifts**: a real false positive is gone after `composer update`; a sin closed as "works as intended" **re-blocks** and you must fix it.
+
+### Plan loop (only if `commandments.hooks.plan_loop` is enabled)
+
+When the opt-in plan-loop is on, an approved plan auto-continues phase by phase. The manual controls:
+
+- `sh .claude/hooks/plan-start.sh` — ARM the loop (also done automatically when a plan is approved).
+- `sh .claude/hooks/plan-release.sh "<reason>"` — the ONLY sanctioned way to release it; it REFUSES a non-blocker reason (a long turn, compaction, wanting to checkpoint), so the loop only ends on a genuine blocker or when the plan is DONE.
+- The runtime marker is `.claude/plan-active`. **Never delete it by hand** — `guard-plan-marker.sh` blocks that; release via `plan-release.sh` instead. A genuinely new session clears a stale marker automatically.
 MARKDOWN;
     }
 }
