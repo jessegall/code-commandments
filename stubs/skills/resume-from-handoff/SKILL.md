@@ -14,14 +14,21 @@ snapshot that may be stale** — the repo can have moved since it was written.
 
 ## When to use this skill
 
-- A session starts and `HANDOFF.md` exists at the repo root.
+- A session starts and `HANDOFF.md` exists — **but ask first (see step 0); never
+  auto-resume.**
 - The user says "continue", "resume", "pick up where we left off", or points you
   at a handoff / a `*-progress` plan memory.
 - A plan loop stalled and you're reviving it.
 
 ## How
 
-Run the packaged helper first — it assembles the whole briefing in one command
+0. **ASK FIRST — never auto-resume.** If you reached this because a fresh session
+   found a `HANDOFF.md` (or a `*-progress` memory), do NOT start resuming on your
+   own. Ask the user — "I see a handoff from a previous session — want me to resume
+   from it?" — and proceed only on a yes, or when the user explicitly asked to
+   resume. (This mirrors `handoff-detect.sh`, which offers but never auto-starts.)
+
+Then run the packaged helper — it assembles the whole briefing in one command
 (the read/verify counterpart of `handoff.sh`):
 
 ```
@@ -41,11 +48,14 @@ off), and a NEXT STEPS checklist. Then:
    branch changed, or new commits exist, trust the **repo** — the handoff is a
    hint, the repo is the truth.
 
-3. **Create an ACTIVE TODO LIST** (the TaskCreate tool) — one item per remaining
-   phase — so the user can follow your progress in the terminal.
+3. **Create an ACTIVE TODO LIST** (the TodoWrite tool) — one item per phase — and
+   keep it live (mark each in_progress when you start it, completed when it lands)
+   so the user can follow your progress in the terminal.
 
-4. **Re-arm the plan loop** if a plan is unfinished and the loop is no longer
-   armed: `sh .claude/hooks/plan-start.sh`.
+4. **Re-arm the plan loop** — only when the plan-progress memory still lists
+   REMAINING phases AND `.claude/plan-active` is absent (if the marker exists the
+   loop is already armed), AND `.claude/hooks/plan-start.sh` exists:
+   `sh .claude/hooks/plan-start.sh`.
 
 5. **Continue from the Next step** — and keep durable state current as you go
    (refresh the `*-progress` memory each committed phase; rewrite `HANDOFF.md`
@@ -56,5 +66,5 @@ off), and a NEXT STEPS checklist. Then:
 
 | Read | When |
 |---|---|
-| The repo's `HANDOFF.md` | Always, first — it is the snapshot you're resuming. |
-| The referenced `*-progress` memory | When the handoff names one — it is the authoritative, phase-by-phase plan. |
+| The repo's `HANDOFF.md` | First, **if present**. If there is no HANDOFF.md, resume from the `*-progress` plan memory instead (it has its own NEXT STEP). |
+| The referenced `*-progress` memory | When the handoff names one, or when no HANDOFF.md exists — it is the authoritative, phase-by-phase plan. |

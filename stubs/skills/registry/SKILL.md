@@ -54,8 +54,11 @@ Enforced by **RegistryReturnContract** (a marked registry's getter must return
 `T` or throw, not `Option`/`?T`), **RegistryPattern** (2+ hand-rolled registries
 with no shared base → extract one — `commandments:scaffold` generates it),
 **RegistryNamingHonesty** (a register-and-look-up class whose name hides the
-contract), and **RegistryBaseBypass** (a subclass that overrides `all()` past the
-base store, killing the inherited `register()`). A finding from any of them
-points back to this skill. For the exact rule text run
+contract), **RegistryBaseBypass** (a subclass that overrides `all()` past the
+base store, killing the inherited `register()`), **EagerRegistry** (a registry that
+hydrates all members up front instead of resolving lazily — see
+`reference/hydration.md`), and **OutOfPurpose** (a `*Registry` that also hosts a
+second engine — role-vs-behaviour coherence). A finding from any of them points
+back to this skill. For the exact rule text run
 `commandments:scripture --prophet=<NAME>` (e.g.
 `--prophet=RegistryReturnContract`).

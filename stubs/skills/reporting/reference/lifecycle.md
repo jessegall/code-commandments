@@ -27,12 +27,16 @@ Always pass `--at=path:line` (or `--fingerprint=…`) — without a locator the 
 is filed but the finding is NOT quieted (it keeps blocking). The locator also
 infers `--prophet`/`--file`/`--line` from the finding.
 
-## Poll it actively (ALWAYS — right after you report)
+## Poll it actively (ALWAYS — after a WRONG-FINDING report)
+
+This applies to reports of a wrong finding (the ones that record an absolution). A
+`--feature-request` records no absolution — nothing to quiet, so it needs no poll
+loop; skip this section for those.
 
 Session-start `reports --check` only re-checks on a *new* session. A report you
 just filed will sit unseen for the rest of THIS session unless you watch it. So
-**the moment you `report`, arm a poll loop** — this is not optional, it is the
-second half of reporting:
+**the moment you report a wrong finding, arm a poll loop** — this is not optional,
+it is the second half of reporting:
 
 ```
 /loop 15m Run `vendor/bin/commandments reports --check`. If a report-linked

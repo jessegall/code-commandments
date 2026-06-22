@@ -9,7 +9,7 @@ description: How to do absence right with Option<T> — read before writing or r
 
 `Option<T>` puts a value's presence into the type instead of a null you must
 remember to check. A method returns `Option<T>`, never `T|null`; callers stay
-inside the Option (`map`/`transform`/`each`/`andThen`/`getOr`/`getOrThrow`)
+inside the Option (`transform`/`andThen`/`filter`/`tap`/`getOr`/`getOrThrow`)
 instead of re-deriving "is it there?" at every call site.
 
 ## When to use this skill
