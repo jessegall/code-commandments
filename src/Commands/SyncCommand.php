@@ -100,6 +100,17 @@ class SyncCommand extends Command
         }
     }
 
+    /**
+     * Re-assert the package-owned CLAUDE.md section on every update (replace-only;
+     * never imposes the section on a CLAUDE.md that never had it).
+     */
+    private function reassertClaudeMd(): void
+    {
+        if (\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::reassert(base_path(), \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::ARTISAN) === \JesseGall\CodeCommandments\Support\ClaudeMdInstaller::STATUS_REPLACED) {
+            $this->line('Refreshed the Code Commandments section in CLAUDE.md');
+        }
+    }
+
     private function autoScaffold(): void
     {
         $scaffold = config('commandments.scaffold', []);
@@ -168,6 +179,7 @@ class SyncCommand extends Command
             $this->syncHandoffHelper();
             $this->syncPlanLoopScripts();
             $this->reassertHookWiring();
+            $this->reassertClaudeMd();
         }
 
         $after = $this->option('after');
