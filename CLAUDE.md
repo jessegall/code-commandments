@@ -184,6 +184,14 @@ Never triage from a bare `gh issue view N` (body only).
 - Every commit gets a new semver tag: **patch** for small edits / bug fixes,
   **minor** for new features. **Never bump major** — ask the user first.
 - Push both the commit and the new tag on the same action.
+- **Bypassing the commandments hooks entirely** (e.g. syncing/propagating into a
+  consumer while an agent is actively working there): use
+  `git -c core.hooksPath=/dev/null commit …` (and the same for `push`). Plain
+  `--no-verify` only skips pre-commit/commit-msg — it does NOT skip the
+  **post-commit** reset (`absolve --clear`), which would wipe the working agent's
+  confessions/absolutions mid-task. `core.hooksPath=/dev/null` disables every git
+  hook, so a maintenance commit never disturbs the agent's state.
+  `scripts/update-consumers.sh` uses exactly this.
 
 ## Self-judge is a TEST HARNESS, not a gate (this repo only)
 
