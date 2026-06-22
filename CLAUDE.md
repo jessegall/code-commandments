@@ -173,7 +173,7 @@ frequently live in comments. Pull every open report with its body **and** all
 comments via:
 
 ```bash
-composer reports          # = scripts/prophet-reports.sh — runs `gh issue view N --comments` for each open report
+composer issues           # = scripts/open-issues.sh — every open issue WITH all comments (one command for all triage)
 ```
 
 Never triage from a bare `gh issue view N` (body only).
