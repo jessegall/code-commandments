@@ -34,13 +34,14 @@ class SkillRegistryTest extends TestCase
         'reporting',
         'handoff',
         'resume-from-handoff',
+        'profile',
     ];
 
     public function test_catalogue_is_the_backend_subjects(): void
     {
         $slugs = array_map(fn (Skill $s) => $s->slug, SkillRegistry::all());
 
-        $this->assertCount(15, $slugs, 'backend skills.');
+        $this->assertCount(16, $slugs, 'backend skills.');
         $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the spec.');
     }
 

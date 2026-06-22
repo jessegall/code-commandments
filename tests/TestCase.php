@@ -16,6 +16,17 @@ abstract class TestCase extends Orchestra
         ];
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // The testbench base path is shared across tests; a test that installs a
+        // profile (e.g. install-hooks → `profile phased`) leaves `.commandments/profile`
+        // behind, which would shift a later bare-`judge`'s scope. Reset it so every
+        // test starts from the default (no explicit profile = full-scan judge).
+        @unlink(base_path('.commandments/profile'));
+    }
+
     protected function defineEnvironment($app): void
     {
         $app['config']->set('commandments.scrolls', [

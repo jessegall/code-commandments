@@ -74,6 +74,63 @@ final class GitFileDetector
     }
 
     /**
+     * Get every file changed since this branch diverged from its base —
+     * `merge-base(<base>, HEAD)..HEAD` plus the working tree, index, and
+     * untracked files. Unlike {@see self::getChangedFiles()} (diff vs HEAD), this
+     * INCLUDES already-committed work, so it survives intermediate phase commits.
+     * This is the grind "reckon at the end" scope.
+     *
+     * @return array<string>
+     */
+    public function getBranchFiles(): array
+    {
+        $git = 'git -C ' . escapeshellarg($this->basePath);
+        $base = $this->branchBase();
+
+        $committed = $base === null
+            ? []
+            : $this->parseGitOutput(
+                shell_exec("{$git} diff --name-only --diff-filter=ACMR " . escapeshellarg($base) . '...HEAD 2>/dev/null'),
+                $this->basePath,
+            );
+
+        $files = array_merge($committed, $this->getChangedFilesIn($this->basePath));
+
+        return Pipeline::from($files)
+            ->filter(fn ($file) => is_file($file))
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Resolve the branch's base revision to diff against: the upstream tracking
+     * ref if set, else origin/main, origin/master, main, or master — whichever
+     * resolves. Null when none do (e.g. a fresh repo with no base), in which case
+     * the caller falls back to the working-tree diff alone.
+     */
+    private function branchBase(): ?string
+    {
+        $git = 'git -C ' . escapeshellarg($this->basePath);
+
+        foreach (['@{upstream}', 'origin/main', 'origin/master', 'main', 'master'] as $ref) {
+            $hash = trim((string) shell_exec("{$git} rev-parse --verify --quiet " . escapeshellarg($ref) . ' 2>/dev/null'));
+
+            if ($hash === '') {
+                continue;
+            }
+
+            $base = trim((string) shell_exec("{$git} merge-base " . escapeshellarg($ref) . ' HEAD 2>/dev/null'));
+
+            if ($base !== '') {
+                return $base;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Get changed files for a specific git directory.
      *
      * @return array<string>

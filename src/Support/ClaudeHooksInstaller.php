@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Support\Profiles\Briefing;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileOptions;
 use JesseGall\PhpTypes\T_String;
 
 /**
@@ -139,6 +141,81 @@ HOOK;
     }
 
     /**
+     * Build the hook events a PROFILE owns — every agent-awareness entry (the
+     * SessionStart briefing, the per-turn drift re-index, the per-phase nudges)
+     * is gated on the profile's options, so `disabled` yields an EMPTY owned set
+     * (the agent sees nothing) and each active profile installs exactly its bundle.
+     * Additive sibling of {@see self::build()} — the legacy signature is untouched.
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public static function buildForProfile(string $binary, string $sep, ProfileOptions $opts, bool $planLoop): array
+    {
+        $run = static fn (string $sub, string $tail = ' 2>/dev/null || true'): array => [
+            'type' => 'command',
+            'command' => $binary . $sep . $sub . $tail,
+        ];
+
+        $config = [];
+
+        if ($opts->briefAgent) {
+            $config['SessionStart'] = [
+                [
+                    'hooks' => [
+                        // Full briefing => scripture (lists the configured prophets);
+                        // Short => the concise grind contract from `profile --brief`.
+                        $opts->briefing === Briefing::Full ? $run('scripture') : $run('profile --brief'),
+                        $run('reports --check'),
+                        $run('scaffold --auto'),
+                        $run('install-skills --auto'),
+                        $run('skills'),
+                        ['type' => 'command', 'command' => 'sh .claude/hooks/handoff-detect.sh 2>/dev/null || true'],
+                        // Re-anchor the contract at session start (also sets the drift baseline).
+                        $run('profile --drift-check'),
+                    ],
+                ],
+            ];
+
+            // Per-turn drift re-index: catches a profile change made mid-session by
+            // ANY source (this agent, a hand-edit, a teammate's merge, another terminal).
+            $config['UserPromptSubmit'] = [
+                [
+                    'hooks' => [
+                        $run('profile --drift-check'),
+                    ],
+                ],
+            ];
+        }
+
+        if ($opts->perPhaseNudges) {
+            $config['Stop'] = [
+                [
+                    'hooks' => [
+                        $run('judge --git', ' 2>/dev/null; exit 0'),
+                    ],
+                ],
+            ];
+            $config['PostToolUse'] = [
+                [
+                    'matcher' => 'Bash',
+                    'hooks' => [
+                        ['type' => 'command', 'command' => self::postCommitReminderCommand($binary, $sep)],
+                    ],
+                ],
+            ];
+        }
+
+        if ($planLoop && $opts->briefAgent) {
+            $config['SessionStart'] = [...PlanLoopHookSuite::sessionStartEntries(), ...($config['SessionStart'] ?? [])];
+            $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
+            $config['Stop'] = [...($config['Stop'] ?? []), PlanLoopHookSuite::stopEntry()];
+            $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
+        }
+
+        return $config;
+    }
+
+    /**
      * A PostToolUse (Bash) hook command: when the tool call was a git commit,
      * inject a reminder to re-read the commandments and resolve every sin.
      */
@@ -210,19 +287,104 @@ HOOK;
     public static function apply(array $existing, string $basePath, bool $planLoop): array
     {
         $runner = self::runnerFor($basePath);
-        $ours = self::build($runner[0], $runner[1], $planLoop);
-        $result = $existing;
 
+        return self::mergeOwned($existing, self::build($runner[0], $runner[1], $planLoop));
+    }
+
+    /**
+     * Profile-driven sibling of {@see self::apply()}: reconcile the hooks config to
+     * the ACTIVE profile's owned set. Switching to a quieter profile drops the
+     * entries it no longer owns; switching to `disabled` drops them all — while
+     * every hand-added consumer hook is preserved.
+     *
+     * @param  array<string, list<array<string, mixed>>>  $existing
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public static function applyForProfile(array $existing, string $basePath, ProfileOptions $opts, bool $planLoop): array
+    {
+        $runner = self::runnerFor($basePath);
+
+        return self::mergeOwned($existing, self::buildForProfile($runner[0], $runner[1], $opts, $planLoop));
+    }
+
+    /**
+     * Write the active profile's hooks into `$basePath/.claude/settings.json`,
+     * preserving consumer hooks. Creates the file for an active profile that owns
+     * hooks; for a profile that owns none (disabled), it edits an existing file to
+     * strip our entries but never CREATES one (a dormant package leaves no trace).
+     *
+     * @param  array{0: string, 1: string}  $runner  optional explicit runner; detected otherwise
+     */
+    public static function writeForProfile(string $basePath, ProfileOptions $opts, bool $planLoop): string
+    {
+        $file = rtrim($basePath, '/') . '/.claude/settings.json';
+        $runner = self::runnerFor($basePath);
+        $ours = self::buildForProfile($runner[0], $runner[1], $opts, $planLoop);
+
+        if (! is_file($file)) {
+            if ($ours === []) {
+                return self::STATUS_NO_SETTINGS;
+            }
+
+            @mkdir(dirname($file), 0755, true);
+            $settings = ['hooks' => $ours];
+            $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+            if ($json === false || @file_put_contents($file, $json . T_String::NEWLINE) === false) {
+                return self::STATUS_WRITE_FAILED;
+            }
+
+            return self::STATUS_INSTALLED;
+        }
+
+        $settings = json_decode((string) @file_get_contents($file), true);
+
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+
+        $before = $settings['hooks'] ?? [];
+        $after = self::mergeOwned($before, $ours);
+
+        if ($after === $before) {
+            return self::STATUS_UNCHANGED;
+        }
+
+        if ($after === []) {
+            unset($settings['hooks']);
+        } else {
+            $settings['hooks'] = $after;
+        }
+
+        // An emptied settings object must serialize as `{}`, not `[]`.
+        $json = $settings === [] ? '{}' : json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        if ($json === false || @file_put_contents($file, $json . T_String::NEWLINE) === false) {
+            return self::STATUS_WRITE_FAILED;
+        }
+
+        return self::STATUS_INSTALLED;
+    }
+
+    /**
+     * Replace every package-owned entry with $ours, per event, keeping all
+     * consumer-added entries. Shared by {@see self::apply()} and {@see self::applyForProfile()}.
+     *
+     * @param  array<string, list<array<string, mixed>>>  $existing
+     * @param  array<string, list<array<string, mixed>>>  $ours
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private static function mergeOwned(array $existing, array $ours): array
+    {
+        $result = $existing;
         $events = array_values(array_unique([...array_keys($existing), ...array_keys($ours)]));
 
         foreach ($events as $event) {
-            // Keep only the consumer's own entries; drop everything we own…
             $kept = array_values(array_filter(
                 $existing[$event] ?? [],
                 static fn (array $entry): bool => ! self::entryIsOwned($entry),
             ));
 
-            // …then append our current owned set for this event.
             $merged = [...$kept, ...($ours[$event] ?? [])];
 
             if ($merged === []) {

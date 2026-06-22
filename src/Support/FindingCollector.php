@@ -33,7 +33,7 @@ final class FindingCollector
      * @param  iterable<string, iterable<string, Judgment>>  $results  path => (prophetClass => Judgment)
      * @return list<Finding>
      */
-    public function collect(iterable $results, ?string $prophetFilter = null, bool $markSeen = true): array
+    public function collect(iterable $results, ?string $prophetFilter = null, bool $markSeen = true, bool $allowWarnings = true): array
     {
         $findings = [];
 
@@ -86,6 +86,11 @@ final class FindingCollector
                         autoFixable: $sin->autoFixable ?? $repairable,
                         rootCauses: $rootCauses,
                     );
+                }
+
+                if (! $allowWarnings) {
+                    // sins-only profile: warnings are never surfaced or seen-marked.
+                    continue;
                 }
 
                 foreach ($judgment->warnings as $warning) {

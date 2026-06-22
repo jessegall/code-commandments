@@ -24,5 +24,6 @@ class Application extends SymfonyApplication
         $this->add(new InitConsoleCommand());
         $this->add(new SyncConsoleCommand());
         $this->add(new InstallSyncHookConsoleCommand());
+        $this->add(new ProfileConsoleCommand());
     }
 }

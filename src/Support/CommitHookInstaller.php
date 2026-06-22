@@ -35,6 +35,16 @@ final class CommitHookInstaller
     private const PUSH_BEGIN = '# >>> code-commandments pre-push reset >>>';
     private const PUSH_END = '# <<< code-commandments pre-push reset <<<';
 
+    private const PUSH_GATE_BEGIN = '# >>> code-commandments pre-push gate >>>';
+    private const PUSH_GATE_END = '# <<< code-commandments pre-push gate <<<';
+
+    /** Block ids — the unit a profile installs/strips. @see self::blockSpecs() */
+    public const BLOCK_PRE_COMMIT_GATE = 'pre-commit-gate';
+    public const BLOCK_PRE_PUSH_GATE = 'pre-push-gate';
+    public const BLOCK_POST_COMMIT_RESET = 'post-commit-reset';
+    public const BLOCK_PRE_PUSH_RESET = 'pre-push-reset';
+    public const BLOCK_COMMIT_MSG_GUARD = 'commit-msg-guard';
+
     public function install(string $basePath, bool $force = false): string
     {
         return $this->writeHook($basePath, GitHook::PreCommit, $this->block(), self::BEGIN, self::END, $force);
@@ -265,5 +275,276 @@ final class CommitHookInstaller
         fi
         {$end}
         HOOK;
+    }
+
+    /**
+     * The grind end-gate: blocks the PUSH on sins across the whole branch
+     * (`judge --branch` — changed since the branch base, so it survives the
+     * intermediate phase commits, unlike `--git`/`--staged`). Warnings are still
+     * printed but do not block (a branch-scoped judge gates sins only).
+     */
+    private function prePushGateBlock(): string
+    {
+        $begin = self::PUSH_GATE_BEGIN;
+        $end = self::PUSH_GATE_END;
+
+        return <<<HOOK
+        {$begin}
+        # Blocks the push when code-commandments finds sins anywhere in the
+        # branch's changes (the grind reckoning). Warnings are shown, not blocked.
+        if [ -x vendor/bin/commandments ]; then
+            vendor/bin/commandments judge --branch --no-cache
+            cc_status=\$?
+        elif [ -f artisan ]; then
+            php artisan commandments:judge --branch --no-cache
+            cc_status=\$?
+        else
+            cc_status=0
+        fi
+
+        if [ "\$cc_status" -ne 0 ]; then
+            echo ""
+            echo "✗ Push blocked: unresolved sins in this branch's changes."
+            echo "  Reckon before pushing:  commandments judge --next --branch"
+            echo "  (Bypass only in a real emergency with: git push --no-verify)"
+            exit 1
+        fi
+        {$end}
+        HOOK;
+    }
+
+    /**
+     * The spec for every owned block: id => [hook, begin marker, end marker,
+     * body method]. Declaration order is the CANONICAL in-file order — so when a
+     * file holds two owned blocks (pre-push: gate then reset), the gate is written
+     * first and runs before the reset (judge while until-push absolutions are
+     * still live, then clear them).
+     *
+     * @return array<string, array{0: GitHook, 1: string, 2: string, 3: string}>
+     */
+    private function blockSpecs(): array
+    {
+        return [
+            self::BLOCK_PRE_COMMIT_GATE => [GitHook::PreCommit, self::BEGIN, self::END, 'block'],
+            self::BLOCK_PRE_PUSH_GATE => [GitHook::PrePush, self::PUSH_GATE_BEGIN, self::PUSH_GATE_END, 'prePushGateBlock'],
+            self::BLOCK_PRE_PUSH_RESET => [GitHook::PrePush, self::PUSH_BEGIN, self::PUSH_END, 'prePushBlock'],
+            self::BLOCK_POST_COMMIT_RESET => [GitHook::PostCommit, self::POST_BEGIN, self::POST_END, 'postCommitBlock'],
+            self::BLOCK_COMMIT_MSG_GUARD => [GitHook::CommitMsg, self::MSG_BEGIN, self::MSG_END, 'commitMsgBlock'],
+        ];
+    }
+
+    /**
+     * Reconcile the git hooks to EXACTLY the given set of owned block ids — every
+     * desired block is (re)written in canonical order, every owned block not in the
+     * set is stripped, and a hook file left with no owned block and nothing but a
+     * shebang is removed. Foreign hook content (the consumer's own, or another
+     * tool's) is always preserved. This is the single profile-driven entry point;
+     * teardown is computed from what is ACTUALLY ON DISK, not a remembered profile.
+     *
+     * @param  list<string>  $desiredBlockIds
+     * @param  callable(string): void  $emit
+     * @param  callable(string): void  $error
+     */
+    public function applyBlocks(string $basePath, array $desiredBlockIds, callable $emit, callable $error): void
+    {
+        $gitDir = rtrim($basePath, '/') . '/.git';
+
+        if (! is_dir($gitDir)) {
+            if ($desiredBlockIds !== []) {
+                $error('Not a git repository — skipped the commit hooks.');
+            }
+
+            return;
+        }
+
+        if ($this->hooksPathRedirected($basePath) && $this->setHasBlockingGate($desiredBlockIds)) {
+            $error('git core.hooksPath is redirected away from .git/hooks (husky or similar) — the commandments gate will NOT fire. Wire `commandments judge` into your hook manager manually.');
+        }
+
+        $specs = $this->blockSpecs();
+        $desired = array_values(array_filter($desiredBlockIds, static fn (string $id): bool => isset($specs[$id])));
+
+        // Group desired blocks per hook file, preserving canonical (spec) order.
+        $byFile = [];
+        foreach ($specs as $id => $spec) {
+            if (in_array($id, $desired, true)) {
+                $byFile[$spec[0]->value][] = $id;
+            }
+        }
+
+        // Every file that currently holds an owned block must also be visited, so a
+        // block no longer desired is stripped (and the file possibly removed).
+        $onDiskFiles = [];
+        foreach ($this->installedBlocks($basePath) as $id) {
+            $onDiskFiles[$specs[$id][0]->value] = true;
+        }
+
+        $files = array_values(array_unique([...array_keys($byFile), ...array_keys($onDiskFiles)]));
+
+        foreach ($files as $hookValue) {
+            $this->composeHookFile($basePath, GitHook::from($hookValue), $byFile[$hookValue] ?? [], $emit, $error);
+        }
+    }
+
+    /**
+     * The owned block ids currently present on disk (any of our marker pairs found
+     * in a hook file), in canonical order.
+     *
+     * @return list<string>
+     */
+    public function installedBlocks(string $basePath): array
+    {
+        $hooksDir = rtrim($basePath, '/') . '/.git/hooks';
+        $present = [];
+
+        foreach ($this->blockSpecs() as $id => $spec) {
+            $path = $hooksDir . '/' . $spec[0]->value;
+
+            if (is_file($path) && str_contains((string) @file_get_contents($path), $spec[1])) {
+                $present[] = $id;
+            }
+        }
+
+        return $present;
+    }
+
+    /**
+     * Write a hook file to hold exactly $blockIds (in canonical order) plus any
+     * foreign content, or remove it when nothing of ours and no foreign body remain.
+     *
+     * @param  list<string>  $blockIds
+     * @param  callable(string): void  $emit
+     * @param  callable(string): void  $error
+     */
+    private function composeHookFile(string $basePath, GitHook $hook, array $blockIds, callable $emit, callable $error): void
+    {
+        $specs = $this->blockSpecs();
+        $hooksDir = rtrim($basePath, '/') . '/.git/hooks';
+
+        if (! is_dir($hooksDir)) {
+            @mkdir($hooksDir, 0755, true);
+        }
+
+        $path = $hooksDir . '/' . $hook->value;
+        $existing = is_file($path) ? (string) @file_get_contents($path) : '';
+
+        $foreign = $this->stripOwnedBlocks($existing);
+        $foreignBody = trim(preg_replace('/^#!.*$/m', '', $foreign) ?? '');
+
+        // Order the desired blocks canonically (spec order).
+        $ordered = [];
+        foreach (array_keys($specs) as $id) {
+            if (in_array($id, $blockIds, true)) {
+                $ordered[] = $id;
+            }
+        }
+
+        if ($ordered === []) {
+            if ($foreignBody === '') {
+                if (is_file($path)) {
+                    @unlink($path);
+                    $emit("Removed git {$hook->value} hook (no commandments blocks remain)");
+                }
+
+                return;
+            }
+
+            // Foreign content remains — write it back with our blocks stripped.
+            if (@file_put_contents($path, rtrim($foreign, T_String::NEWLINE) . T_String::NEWLINE) === false) {
+                $error("Failed to write .git/hooks/{$hook->value} — check permissions.");
+
+                return;
+            }
+
+            @chmod($path, 0755);
+            $emit("Stripped commandments block(s) from your existing .git/hooks/{$hook->value}");
+
+            return;
+        }
+
+        $blocks = [];
+        foreach ($ordered as $id) {
+            $method = $specs[$id][3];
+            $blocks[] = $this->{$method}();
+        }
+        $blocksText = implode(T_String::PARAGRAPH, $blocks);
+
+        $new = $foreignBody === ''
+            ? "#!/usr/bin/env sh\n\n" . $blocksText . T_String::NEWLINE
+            : rtrim($foreign, T_String::NEWLINE) . T_String::PARAGRAPH . $blocksText . T_String::NEWLINE;
+
+        if ($new === $existing) {
+            // Already exactly right — stay quiet (keeps `sync` from churning).
+            return;
+        }
+
+        if (@file_put_contents($path, $new) === false) {
+            $error("Failed to write .git/hooks/{$hook->value} — check permissions.");
+
+            return;
+        }
+
+        @chmod($path, 0755);
+        $emit("Wrote git {$hook->value} hook (" . implode(', ', $ordered) . ')');
+    }
+
+    /**
+     * Remove every owned code-commandments block (any marker pair) from $content,
+     * leaving foreign content (and the shebang) intact.
+     */
+    private function stripOwnedBlocks(string $content): string
+    {
+        foreach ($this->allMarkerPairs() as [$begin, $end]) {
+            $content = (string) preg_replace_callback(
+                '/\n*' . preg_quote($begin, '/') . '.*?' . preg_quote($end, '/') . '\n*/s',
+                static fn (): string => T_String::NEWLINE,
+                $content,
+            );
+        }
+
+        return $content;
+    }
+
+    /**
+     * @return list<array{0: string, 1: string}>
+     */
+    private function allMarkerPairs(): array
+    {
+        $pairs = [];
+
+        foreach ($this->blockSpecs() as $spec) {
+            $pairs[] = [$spec[1], $spec[2]];
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @param  list<string>  $blockIds
+     */
+    private function setHasBlockingGate(array $blockIds): bool
+    {
+        return in_array(self::BLOCK_PRE_COMMIT_GATE, $blockIds, true)
+            || in_array(self::BLOCK_PRE_PUSH_GATE, $blockIds, true);
+    }
+
+    /**
+     * Whether git hooks are redirected away from `.git/hooks` (e.g. husky sets
+     * core.hooksPath), in which case our gate would be written to a dead file.
+     */
+    private function hooksPathRedirected(string $basePath): bool
+    {
+        $hooksPath = trim((string) @shell_exec(
+            'git -C ' . escapeshellarg($basePath) . ' config --get core.hooksPath 2>/dev/null',
+        ));
+
+        if ($hooksPath === '') {
+            return false;
+        }
+
+        $resolved = realpath($hooksPath) ?: realpath(rtrim($basePath, '/') . '/' . $hooksPath);
+        $default = realpath(rtrim($basePath, '/') . '/.git/hooks');
+
+        return $resolved !== $default;
     }
 }
