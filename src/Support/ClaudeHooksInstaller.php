@@ -84,6 +84,7 @@ final class ClaudeHooksInstaller
         // Opt-in plan-loop suite: drives an approved plan to completion. When on,
         // phase-committed.sh supersedes the inline post-commit reminder.
         if ($planLoop) {
+            $config['SessionStart'] = [...PlanLoopHookSuite::sessionStartEntries(), ...$config['SessionStart']];
             $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
             $config['Stop'][] = PlanLoopHookSuite::stopEntry();
             $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
@@ -255,5 +256,6 @@ final class ClaudeHooksInstaller
         'keep-going.sh',
         'guard-plan-marker.sh',
         'phase-committed.sh',
+        'plan-session-reset.sh',
     ];
 }
