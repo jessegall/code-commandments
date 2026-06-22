@@ -186,6 +186,13 @@ final class SkillRegistry
                 workflow: true,
                 autoload: false,
             ),
+            new Skill(
+                slug: 'profile',
+                introducedIn: '2.54.0',
+                purpose: 'Switch the code-commandments work profile: `commandments profile grind` (heads-down — no checks between phases, reckon + tests before push), `phased` (face-by-face), `sins-only`, or `disabled` (dormant — no hooks, agent unaware). The skill runs the switch and adopts the new contract. A command-flow skill; not force-loaded.',
+                workflow: true,
+                autoload: false,
+            ),
         ];
     }
 
