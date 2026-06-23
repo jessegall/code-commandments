@@ -237,7 +237,7 @@ SCRIPTURE;
 
         // For the #62 shared-interface narrowing, resolve member FQCNs against
         // the file's namespace + imports.
-        $namespace = $this->fileNamespace($ast);
+        $namespace = FileImports::namespace($ast);
         $uses = FileImports::of($ast);
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
@@ -548,17 +548,6 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function fileNamespace(array $ast): ?string
-    {
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
-            return $ns->name?->toString();
-        }
-
-        return null;
-    }
 
     /**
      * @param  array<Node>  $ast
@@ -922,7 +911,7 @@ SCRIPTURE;
         // interface. #77: the Spatie-Data `UnionCast`-backed `Union` rewrite is
         // NOT auto-applied — it changes the property's runtime type and breaks
         // every reader of the raw member values (it stays an advisory suggestion).
-        $namespace = $this->fileNamespace($ast);
+        $namespace = FileImports::namespace($ast);
         $uses = FileImports::of($ast);
         $interfaceFixes = [];
 

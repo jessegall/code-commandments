@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
@@ -300,7 +301,7 @@ SCRIPTURE;
         ) {
             // $this->prop — the enclosing class's own property.
             if ($expr->var instanceof Node\Expr\Variable && $expr->var->name === 'this') {
-                $class = $this->enclosingClass($context, $ast, $finder);
+                $class = ReceiverTypeResolver::enclosingClass($context, $ast);
 
                 return $class === null ? null : $this->propertyType($class, $expr->name->toString());
             }
@@ -448,27 +449,6 @@ SCRIPTURE;
                     $best = $param->type;
                     $bestStart = $start;
                 }
-            }
-        }
-
-        return $best;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function enclosingClass(Node $node, array $ast, NodeFinder $finder): ?Node\Stmt\Class_
-    {
-        $pos = (int) $node->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-
-        foreach ($finder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            $start = (int) $class->getStartFilePos();
-
-            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $class;
-                $bestStart = $start;
             }
         }
 
