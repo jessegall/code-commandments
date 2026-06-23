@@ -162,7 +162,8 @@ SCRIPTURE;
         $out = [];
 
         foreach ($finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class) as $method) {
-            if ($method->returnType !== null && $this->isNullableUnion($method->returnType)) {
+            if ($method->returnType !== null && $this->isNullableUnion($method->returnType)
+                && ! $this->isStructShapedArray($method->returnType, $method)) {
                 $out[] = ['type' => $method->returnType, 'label' => 'The return type of ' . $method->name->toString() . '()', 'symbol' => 'return:' . $method->name->toString(), 'method' => $method->name->toString()];
             }
         }
@@ -178,7 +179,8 @@ SCRIPTURE;
                 continue;
             }
 
-            if ($property->type !== null && $this->isNullableUnion($property->type)) {
+            if ($property->type !== null && $this->isNullableUnion($property->type)
+                && ! $this->isStructShapedArray($property->type, $property)) {
                 $name = $property->props[0]->name->toString() ?? 'property';
                 $out[] = ['type' => $property->type, 'label' => 'The property $' . $name, 'symbol' => 'prop:' . $name];
             }
@@ -202,6 +204,35 @@ SCRIPTURE;
         }
 
         return false;
+    }
+
+    /**
+     * True when the type is a nullable bare `array` whose docblock declares an
+     * `array{…}` SHAPE — a struct/tuple (e.g. `array{match: string, offset: int}`),
+     * NOT a collection. Such a value has no empty identity: `[]` is not a valid
+     * instance and `null` legitimately means "absent". Steering it to `[]` is
+     * wrong, so it is exempt (the rule's distinguish-absent-from-empty LEAVE-WHEN).
+     */
+    private function isStructShapedArray(Node $type, Node $owner): bool
+    {
+        $members = $type instanceof Node\NullableType
+            ? [$type->type]
+            : array_values(array_filter(
+                $type instanceof Node\UnionType ? $type->types : [],
+                static fn (Node $m): bool => ! ($m instanceof Node\Identifier && strtolower($m->toString()) === 'null'),
+            ));
+
+        if (count($members) !== 1
+            || ! ($members[0] instanceof Node\Identifier)
+            || strtolower($members[0]->toString()) !== 'array') {
+            return false;
+        }
+
+        $doc = $owner->getDocComment();
+
+        // `array{…}` is the shape syntax; `array<…>` / `list<…>` are collections
+        // (an empty instance IS valid) and stay flagged.
+        return $doc !== null && preg_match('/\barray\s*\{/i', $doc->getText()) === 1;
     }
 
     /**
