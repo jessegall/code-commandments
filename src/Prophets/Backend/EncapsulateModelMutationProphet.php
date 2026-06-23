@@ -227,7 +227,7 @@ SCRIPTURE;
                 $warnings[] = $this->warningAt(
                     $stmts[$i]->getStartLine(),
                     $this->message($var, $firstProp, $persistMethod, $selfRef, $enum, $multi),
-                    $this->lineAt($content, $stmts[$i]->getStartLine()),
+                    $this->lineSnippet($content, $stmts[$i]->getStartLine()),
                     "mutate-then-save:\${$var}->{$firstProp}",
                 );
             }
@@ -239,7 +239,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $hit['line'],
                 $this->methodMessage($hit['class'], $hit['method'], $hit['prop'], $persist[0] ?? 'save'),
-                $this->lineAt($content, $hit['line']),
+                $this->lineSnippet($content, $hit['line']),
                 "mutate-without-save:{$hit['class']}::{$hit['method']}",
             );
         }
@@ -662,10 +662,4 @@ SCRIPTURE;
         return $first . implode('', $rest);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

@@ -317,7 +317,7 @@ SCRIPTURE;
                         $first['param'],
                         $count,
                     ),
-                    $this->lineAt($content, $first['line']),
+                    $this->lineSnippet($content, $first['line']),
                     'collecting-parameter:' . $class->name->toString() . ':' . $first['short'],
                 );
             }
@@ -1094,10 +1094,4 @@ SCRIPTURE;
         return is_int($value) && $value >= 1 ? $value : self::DEFAULT_MIN_METHODS;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

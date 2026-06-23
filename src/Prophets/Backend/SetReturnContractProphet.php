@@ -126,7 +126,7 @@ SCRIPTURE;
                 $sins[] = $this->sinAt(
                     $method->getStartLine(),
                     $finding,
-                    $this->lineAt($content, $method->getStartLine()),
+                    $this->lineSnippet($content, $method->getStartLine()),
                     null,
                     'set-return:' . $name,
                     false,
@@ -297,10 +297,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

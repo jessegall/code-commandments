@@ -163,7 +163,7 @@ SCRIPTURE;
         $warnings[] = $this->warningAt(
             $line,
             sprintf('`%s` is built from a null-coalescing / shape-guarded array inline — add a total `%s::coalesce($value)` factory that owns the null/shape handling once, and call `%s::coalesce($v)`.', $short, $short, $short),
-            $this->lineAt($content, $line),
+            $this->lineSnippet($content, $line),
             'coalesce-factory:' . $short,
         );
     }
@@ -404,10 +404,4 @@ SCRIPTURE;
         return null;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

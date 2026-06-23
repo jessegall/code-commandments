@@ -27,6 +27,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindArrayBagDeclarations implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Methods whose array params/returns are boundary signatures —
      * serialization outputs and vendor-interface implementations.
@@ -328,7 +330,7 @@ final class FindArrayBagDeclarations implements Pipe
             match: $annotation,
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [
                 'kind' => $kind,
                 'name' => $name,
@@ -592,10 +594,4 @@ final class FindArrayBagDeclarations implements Pipe
         return $kind === 'return' ? $studly . 'Bag' : $studly;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

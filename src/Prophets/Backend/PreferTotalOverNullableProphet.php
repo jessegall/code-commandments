@@ -188,7 +188,7 @@ SCRIPTURE;
                 $warnings[] = $this->warningAt(
                     $line,
                     $this->messageFor($method->name->toString(), $kind, $identity),
-                    $this->lineAt($content, $line),
+                    $this->lineSnippet($content, $line),
                     'unearned-nullable:' . $method->name->toString(),
                 );
             }
@@ -534,10 +534,4 @@ SCRIPTURE;
         }
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

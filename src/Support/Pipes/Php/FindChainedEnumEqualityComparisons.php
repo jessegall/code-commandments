@@ -41,6 +41,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindChainedEnumEqualityComparisons implements Pipe
 {
+    use ExtractsLineSnippet;
+
     private const WIRE_FORMAT_METHODS = [
         'toArray', 'jsonSerialize', 'render', 'toResponse', 'resolve',
     ];
@@ -723,7 +725,7 @@ final class FindChainedEnumEqualityComparisons implements Pipe
             match: $analysis['lhsSource'] . ' ' . $op . ' ' . implode('/', $analysis['cases']),
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [
                 'op' => $op,
                 'lhs' => $analysis['lhsSource'],
@@ -864,10 +866,4 @@ final class FindChainedEnumEqualityComparisons implements Pipe
         return $parents;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

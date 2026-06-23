@@ -190,7 +190,7 @@ SCRIPTURE;
         $warnings[] = $this->warningAt(
             $line,
             sprintf('This wide per-case dispatch on `%s` is behaviour, not a value map — consider one strategy object per case behind an `apply(...)`-style interface, so adding a case is a new class + one map entry instead of widening this match. Put the case→strategy registration in a DEDICATED injected provider class exposing a single `for($key): Strategy` lookup (a `%sApplicators`/`%sStrategies`/`%sMap` — NOT a `*Resolver`, which is first-match dispatch, nor a `*Factory`) — don\'t leave an inline map/builder method on this class, which only reshapes the wide dispatch in place.', $enum, $enum, $enum, $enum),
-            $this->lineAt($content, $line),
+            $this->lineSnippet($content, $line),
             'behavioural-enum-dispatch:' . $enum,
         );
     }
@@ -319,10 +319,4 @@ SCRIPTURE;
         return $min > 0 ? $min : self::DEFAULT_MIN_ARMS;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

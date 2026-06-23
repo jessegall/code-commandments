@@ -27,6 +27,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindArrayStringIndexing implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Helper functions whose string argument is a path into dynamic data,
      * not a struct field. Accesses inside these calls are legitimate.
@@ -154,7 +156,7 @@ final class FindArrayStringIndexing implements Pipe
                 match: $dedupeKey,
                 line: $line,
                 offset: null,
-                content: $this->getSnippet($input->content, $line),
+                content: $this->lineSnippet($input->content, $line),
                 groups: [
                     'var' => $varSnippet,
                     'key' => $keyDisplay,
@@ -258,7 +260,7 @@ final class FindArrayStringIndexing implements Pipe
                 match: $via . '(' . $varSnippet . ', ' . $keyDisplay . ')',
                 line: $line,
                 offset: null,
-                content: $this->getSnippet($input->content, $line),
+                content: $this->lineSnippet($input->content, $line),
                 groups: [
                     'var' => $varSnippet,
                     'key' => $keyDisplay,
@@ -1087,10 +1089,4 @@ final class FindArrayStringIndexing implements Pipe
         return substr($content, $start, $end - $start + 1);
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

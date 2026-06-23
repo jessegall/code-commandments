@@ -120,7 +120,7 @@ SCRIPTURE;
                 $fn === 'extract'
                     ? '`extract()` sprays array keys into local variables — hidden, unpredictable locals invisible to static analysis. Access the array values explicitly instead.'
                     : '`compact()` assembles an array from variable names passed as strings — rename-unsafe, typo-prone, and a common dodge for hiding hand-rolled hydration behind `from(compact(...))`. Write the array literal `[\'name\' => $name, ...]`, pass named arguments, or hand over the typed object.',
-                $this->lineAt($content, $call->getStartLine()),
+                $this->lineSnippet($content, $call->getStartLine()),
                 'compact:' . $fn,
             );
         }
@@ -144,10 +144,4 @@ SCRIPTURE;
             : ['compact', 'extract'];
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }
