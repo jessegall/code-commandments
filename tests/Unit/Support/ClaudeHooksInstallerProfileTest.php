@@ -37,14 +37,50 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $this->assertSame([], $this->build('disabled'));
     }
 
-    public function test_grind_has_briefing_but_no_per_phase_nudges(): void
+    public function test_grind_has_briefing_and_keep_going_but_no_per_phase_nudges(): void
     {
-        $events = array_keys($this->build('grind'));
+        $cfg = $this->build('grind');
+        $events = array_keys($cfg);
 
         $this->assertContains('SessionStart', $events);
         $this->assertContains('UserPromptSubmit', $events);
-        $this->assertNotContains('Stop', $events);
+        // grind keeps going (Stop = keep-going hook) but has no per-phase PostToolUse nudge.
+        $this->assertContains('Stop', $events);
+        $this->assertStringContainsString('profile-keep-going.sh', json_encode($cfg['Stop']));
         $this->assertNotContains('PostToolUse', $events);
+    }
+
+    public function test_disabled_has_no_keep_going_stop(): void
+    {
+        $this->assertSame([], $this->build('disabled'));
+    }
+
+    public function test_active_profiles_inject_skills_on_entering_plan_mode(): void
+    {
+        foreach (['grind', 'phased', 'sins-only'] as $profile) {
+            $pre = json_encode($this->build($profile)['PreToolUse'] ?? []);
+            $this->assertStringContainsString('EnterPlanMode|ExitPlanMode', $pre, "{$profile} must hook plan mode");
+            $this->assertStringContainsString('skills', $pre);
+        }
+
+        $this->assertArrayNotHasKey('PreToolUse', $this->build('disabled'));
+    }
+
+    public function test_plan_mode_skills_hook_survives_alongside_the_plan_loop(): void
+    {
+        $pre = json_encode($this->build('phased', planLoop: true)['PreToolUse'] ?? []);
+
+        $this->assertStringContainsString('EnterPlanMode|ExitPlanMode', $pre);
+        $this->assertStringContainsString('guard-plan-marker.sh', $pre); // plan-loop entry still there
+    }
+
+    public function test_phased_stop_is_keep_going(): void
+    {
+        $cfg = $this->build('phased');
+
+        $this->assertStringContainsString('profile-keep-going.sh', json_encode($cfg['Stop'] ?? []));
+        // The old informational `judge --git` Stop is gone (keep-going judges + blocks).
+        $this->assertStringNotContainsString('judge --git', json_encode($cfg['Stop'] ?? []));
     }
 
     public function test_phased_has_per_phase_nudges(): void

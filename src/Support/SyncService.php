@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Support\Profiles\ProfileKeepGoingHook;
 use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator;
 use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter;
@@ -134,6 +135,12 @@ final class SyncService
         if (is_dir($basePath . '/.claude/hooks')
             && HandoffHelper::install($basePath) === HandoffHelper::STATUS_INSTALLED) {
             $emit('Refreshed the handoff helpers in .claude/hooks/');
+        }
+
+        // Keep the profile keep-going Stop hook current (only meaningful once a
+        // profile wires it, but refreshing the script is always safe).
+        if (is_dir($basePath . '/.claude/hooks')) {
+            ProfileKeepGoingHook::install($basePath);
         }
 
         if (PlanLoopHookSuite::enabled($config)

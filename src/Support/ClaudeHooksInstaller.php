@@ -185,16 +185,34 @@ HOOK;
                     ],
                 ],
             ];
-        }
 
-        if ($opts->perPhaseNudges) {
-            $config['Stop'] = [
+            // Plan-mode hook: the moment the agent enters OR finalizes a plan, inject
+            // the directive to load + apply the architectural skills, so the plan is
+            // designed around the patterns the prophets enforce (not retrofitted later).
+            $config['PreToolUse'] = [
                 [
+                    'matcher' => 'EnterPlanMode|ExitPlanMode',
                     'hooks' => [
-                        $run('judge --git', ' 2>/dev/null; exit 0'),
+                        ['type' => 'command', 'command' => self::planSkillsReminderCommand($binary, $sep)],
                     ],
                 ],
             ];
+        }
+
+        // Keep-going Stop hook: block stopping until the profile's goal is met. One
+        // script self-resolves the active profile at run time. Supersedes the old
+        // informational `judge --git` Stop (it judges AND blocks).
+        if ($opts->keepGoing) {
+            $config['Stop'] = [
+                [
+                    'hooks' => [
+                        ['type' => 'command', 'command' => 'sh .claude/hooks/profile-keep-going.sh'],
+                    ],
+                ],
+            ];
+        }
+
+        if ($opts->perPhaseNudges) {
             $config['PostToolUse'] = [
                 [
                     'matcher' => 'Bash',
@@ -207,7 +225,8 @@ HOOK;
 
         if ($planLoop && $opts->briefAgent) {
             $config['SessionStart'] = [...PlanLoopHookSuite::sessionStartEntries(), ...($config['SessionStart'] ?? [])];
-            $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
+            // Append (don't clobber) so the plan-mode skills hook survives.
+            $config['PreToolUse'] = [...($config['PreToolUse'] ?? []), ...PlanLoopHookSuite::preToolUseEntries()];
             $config['Stop'] = [...($config['Stop'] ?? []), PlanLoopHookSuite::stopEntry()];
             // grind (no per-phase nudges) keeps the plan-loop DRIVE but drops the
             // per-commit judge nudge — it reckons once at the end, not each phase.
@@ -215,6 +234,21 @@ HOOK;
         }
 
         return $config;
+    }
+
+    /**
+     * A PreToolUse hook (matched to EnterPlanMode/ExitPlanMode): inject the
+     * directive to load + apply the architectural skills, so a plan is designed
+     * around the patterns the prophets enforce rather than retrofitted afterwards.
+     */
+    public static function planSkillsReminderCommand(string $binary, string $sep): string
+    {
+        $r = $binary . $sep;
+        $message = 'PLAN MODE with Code Commandments active. Your plan MUST be designed around the architectural patterns the prophets enforce — retrofitting them after the gate blocks you is wasted work. BEFORE finalizing the plan: run `' . $r . 'skills` and READ the skills your work touches (option, invariants, registry, set, null-object, enums, named-exceptions, resolvers, coalesce-factories, immutable-data, model-behaviour), and `' . $r . 'scripture` for the rules. Bake the patterns INTO the plan: Option over null, the right value objects, registries/sets, named exceptions, total functions, no array-bags. A plan that ignores the commandments will fight them.';
+
+        $json = '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"' . $message . '"}}';
+
+        return 'cat >/dev/null 2>&1; printf ' . escapeshellarg($json) . '; exit 0';
     }
 
     /**
@@ -465,5 +499,6 @@ HOOK;
         'guard-plan-marker.sh',
         'phase-committed.sh',
         'plan-session-reset.sh',
+        'profile-keep-going.sh',
     ];
 }
