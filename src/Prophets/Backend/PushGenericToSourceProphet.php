@@ -11,8 +11,7 @@ use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
-use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
-use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileAst;
 use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -108,8 +107,7 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $namespace = FileImports::namespace($ast);
-        $uses = FileImports::of($ast);
+        $file = FileAst::of($ast);
         $warnings = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Expression::class) as $stmt) {
@@ -144,7 +142,7 @@ SCRIPTURE;
                 continue;
             }
 
-            $callee = $this->resolveCallee($call, $ast, $uses, $namespace, $stmt);
+            $callee = $this->resolveCallee($call, $file, $stmt);
 
             if ($callee === null) {
                 continue;
@@ -207,11 +205,8 @@ SCRIPTURE;
     /**
      * The project-owned method summary the call resolves to, or null (vendor /
      * unresolved receiver / unknown class — all LEAVE-WHENs).
-     *
-     * @param  array<Node>  $ast
-     * @param  array<string, string>  $uses
      */
-    private function resolveCallee(Expr $call, array $ast, array $uses, ?string $namespace, Node $context)
+    private function resolveCallee(Expr $call, FileAst $file, Node $context)
     {
         if ($this->index === null) {
             return null;
@@ -222,10 +217,10 @@ SCRIPTURE;
 
         if ($call instanceof Expr\MethodCall && $call->name instanceof Node\Identifier) {
             $method = $call->name->toString();
-            $classFqcn = ReceiverTypeResolver::resolve($call->var, $ast, $uses, $namespace, $context);
+            $classFqcn = ReceiverTypeResolver::resolve($call->var, $file, $context);
         } elseif ($call instanceof Expr\StaticCall && $call->name instanceof Node\Identifier && $call->class instanceof Node\Name) {
             $method = $call->name->toString();
-            $classFqcn = ltrim(NameResolver::resolve($call->class->toString(), $uses, $namespace), '\\');
+            $classFqcn = $file->resolveType($call->class->toString());
         }
 
         if ($classFqcn === null || $method === null) {
