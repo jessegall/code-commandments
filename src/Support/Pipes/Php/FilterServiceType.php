@@ -21,10 +21,10 @@ final class FilterServiceType implements Pipe
 {
     public function handle(mixed $input): mixed
     {
-        $filtered = array_values(array_filter(
-            $input->parameters,
-            fn ($param) => TypeChecker::isServiceType($param['fqcn'] ?? T_String::empty())
-        ));
+        $filtered = collect($input->parameters)
+            ->filter(fn ($param) => TypeChecker::isServiceType($param['fqcn'] ?? T_String::empty()))
+            ->values()
+            ->all();
 
         return $input->with(parameters: $filtered);
     }

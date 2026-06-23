@@ -24,9 +24,8 @@ final class FilterLongMethod implements Pipe
 
     public function handle(mixed $input): mixed
     {
-        $filtered = array_values(array_filter(
-            $input->methods,
-            function ($methodData) use ($input) {
+        $filtered = collect($input->methods)
+            ->filter(function ($methodData) use ($input) {
                 $method = $methodData['method'];
                 $lineCount = MethodLineCounter::count(
                     $input->content,
@@ -35,8 +34,9 @@ final class FilterLongMethod implements Pipe
                 );
 
                 return $lineCount > $this->maxLines;
-            }
-        ));
+            })
+            ->values()
+            ->all();
 
         return $input->with(methods: $filtered);
     }

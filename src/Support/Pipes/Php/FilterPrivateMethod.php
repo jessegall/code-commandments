@@ -24,9 +24,8 @@ final class FilterPrivateMethod implements Pipe
 
     public function handle(mixed $input): mixed
     {
-        $filtered = array_values(array_filter(
-            $input->methods,
-            function ($methodData) {
+        $filtered = collect($input->methods)
+            ->filter(function ($methodData) {
                 $method = $methodData['method'];
 
                 if (! $method->isPrivate()) {
@@ -41,8 +40,9 @@ final class FilterPrivateMethod implements Pipe
                 }
 
                 return true;
-            }
-        ));
+            })
+            ->values()
+            ->all();
 
         return $input->with(methods: $filtered);
     }
