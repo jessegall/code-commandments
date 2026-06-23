@@ -28,10 +28,10 @@ final class FilterLaravelDataClass implements Pipe
     {
         $useStatements = $input->useStatements ?? [];
 
-        $dataClasses = array_values(array_filter(
-            $input->classes,
-            fn (Node\Stmt\Class_ $class) => $this->isSpatieDataClass($class, $useStatements)
-        ));
+        $dataClasses = collect($input->classes)
+            ->filter(fn (Node\Stmt\Class_ $class) => $this->isSpatieDataClass($class, $useStatements))
+            ->values()
+            ->all();
 
         return $input->with(classes: $dataClasses);
     }

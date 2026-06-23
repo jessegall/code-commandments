@@ -17,10 +17,10 @@ final class FilterLaravelController implements Pipe
 {
     public function handle(mixed $input): mixed
     {
-        $controllers = array_values(array_filter(
-            $input->classes,
-            $this->isController(...)
-        ));
+        $controllers = collect($input->classes)
+            ->filter($this->isController(...))
+            ->values()
+            ->all();
 
         return $input->with(classes: $controllers);
     }

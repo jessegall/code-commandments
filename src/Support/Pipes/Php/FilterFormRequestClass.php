@@ -17,10 +17,10 @@ final class FilterFormRequestClass implements Pipe
 {
     public function handle(mixed $input): mixed
     {
-        $requestClasses = array_values(array_filter(
-            $input->classes,
-            $this->isFormRequestClass(...)
-        ));
+        $requestClasses = collect($input->classes)
+            ->filter($this->isFormRequestClass(...))
+            ->values()
+            ->all();
 
         return $input->with(classes: $requestClasses);
     }

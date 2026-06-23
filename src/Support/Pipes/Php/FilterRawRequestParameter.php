@@ -18,10 +18,10 @@ final class FilterRawRequestParameter implements Pipe
 {
     public function handle(mixed $input): mixed
     {
-        $filtered = array_values(array_filter(
-            $input->parameters,
-            fn ($param) => $this->isRawRequest($param['fqcn'], $param['type'])
-        ));
+        $filtered = collect($input->parameters)
+            ->filter(fn ($param) => $this->isRawRequest($param['fqcn'], $param['type']))
+            ->values()
+            ->all();
 
         return $input->with(parameters: $filtered);
     }
