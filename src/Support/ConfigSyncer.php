@@ -148,31 +148,12 @@ class ConfigSyncer
      */
     private function discoverProphets(string $type): array
     {
-        $dir = __DIR__ . '/../Prophets/' . $type;
-
-        if (! is_dir($dir)) {
-            return [];
-        }
-
         $prophets = [];
-        $files = scandir($dir);
 
-        if ($files === false) {
-            return [];
-        }
-
-        foreach ($files as $file) {
-            if (! str_ends_with($file, 'Prophet.php')) {
-                continue;
-            }
-
-            $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', T_String::empty(), $file);
-            $configOptions = (new ProphetConfigExtractor())->optionsFor($dir . '/' . $file);
-            $introducedIn = $this->extractIntroducedIn($className);
-
+        foreach (ProphetFiles::each($type) as [$className, $filePath]) {
             $prophets[$className] = [
-                'config' => $configOptions,
-                'introduced_in' => $introducedIn,
+                'config' => (new ProphetConfigExtractor())->optionsFor($filePath),
+                'introduced_in' => $this->extractIntroducedIn($className),
             ];
         }
 
