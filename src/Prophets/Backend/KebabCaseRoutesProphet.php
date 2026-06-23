@@ -45,7 +45,7 @@ SCRIPTURE;
     {
         return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! $this->isRouteFile($ctx->filePath))
-            ->pipe(fn (PhpContext $ctx) => $this->findNonKebabRoutes($ctx))
+            ->pipe($this->findNonKebabRoutes(...))
             ->sinsFromMatches(
                 fn (MatchResult $m) => sprintf('Route URI is not kebab-case: "%s" (found: %s)', $m->groups['uri'], implode(', ', $m->groups['badSegments'])),
                 fn (MatchResult $m) => sprintf('Use kebab-case: "%s"', $this->toKebabCase($m->groups['uri']))

@@ -64,7 +64,7 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->mapToSins(fn (VueContext $ctx) => $this->checkScriptOrder($ctx))
+            ->mapToSins($this->checkScriptOrder(...))
             ->judge();
     }
 

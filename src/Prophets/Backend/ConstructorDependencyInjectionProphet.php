@@ -72,7 +72,7 @@ SCRIPTURE;
             ->pipe(ExtractMethodParameters::class)
             ->pipe(FilterServiceType::class)
             ->mapToSins(fn (PhpContext $ctx) => array_map(
-                fn ($param) => $this->createSin($param),
+                $this->createSin(...),
                 $ctx->parameters
             ))
             ->judge();

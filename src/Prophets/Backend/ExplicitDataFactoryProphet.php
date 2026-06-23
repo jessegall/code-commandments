@@ -164,7 +164,7 @@ SCRIPTURE;
         $judgment = PhpPipeline::make($filePath, $content)
             ->pipe(ParsePhpAst::class)
             ->pipe($pipe)
-            ->partitionMatches(fn (MatchResult $match) => $this->translate($match))
+            ->partitionMatches($this->translate(...))
             ->judge();
 
         // #51: also flag a factory `fromX(...): Concrete { return static::from(...); }`

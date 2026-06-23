@@ -211,7 +211,7 @@ final class RepentService
         }
 
         $resolver = new RootCauseResolver(
-            fn (string $path): ?CodebaseIndex => $this->manager->codebaseIndexForFile($path),
+            $this->manager->codebaseIndexForFile(...),
         );
 
         foreach ($lines as $line) {

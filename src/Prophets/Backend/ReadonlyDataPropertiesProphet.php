@@ -81,7 +81,7 @@ SCRIPTURE;
         return PhpPipeline::make($filePath, $content)
             ->onlyDataClasses()
             ->pipe(ExtractUseStatements::class)
-            ->pipe(fn (PhpContext $ctx) => $this->findReadonlyPropertiesWithInjectingAttributes($ctx))
+            ->pipe($this->findReadonlyPropertiesWithInjectingAttributes(...))
             ->mapToSins(fn (PhpContext $ctx) => array_map(
                 fn (MatchResult $match) => $this->sinAt(
                     $match->line,

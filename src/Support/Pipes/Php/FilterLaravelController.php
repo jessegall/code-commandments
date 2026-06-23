@@ -19,7 +19,7 @@ final class FilterLaravelController implements Pipe
     {
         $controllers = array_values(array_filter(
             $input->classes,
-            fn (Node\Stmt\Class_ $class) => $this->isController($class)
+            $this->isController(...)
         ));
 
         return $input->with(classes: $controllers);

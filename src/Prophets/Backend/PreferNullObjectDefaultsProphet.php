@@ -155,7 +155,7 @@ SCRIPTURE;
             ->pipe(ExtractUseStatements::class)
             ->pipe(ExtractClass::class)
             ->pipe($pipe)
-            ->partitionMatches(fn (MatchResult $match) => $this->translate($match))
+            ->partitionMatches($this->translate(...))
             ->judge();
     }
 
