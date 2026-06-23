@@ -150,7 +150,7 @@ class JudgeProfileBehaviourTest extends TestCase
 
         [$code, $out] = $this->judge([]); // bare judge → profile scope (branch)
 
-        $this->assertSame(JudgeService::SUCCESS, $code, 'grind flags warnings but does not block');
+        $this->assertSame(JudgeService::FAILURE, $code, 'grind reckons at the end — the pre-push gate blocks unresolved warnings');
         $this->assertStringContainsString('WARNINGS', $out);
         $this->assertStringContainsString('ProfileMarker', $out);
     }
