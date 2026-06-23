@@ -173,10 +173,10 @@ final class CallConsumptionCensus
         if ($callSite->startFilePos >= 0 && isset($file['byPos'][$callSite->startFilePos])) {
             $node = $file['byPos'][$callSite->startFilePos];
         } else {
-            $sameLine = array_values(array_filter(
-                $file['byLine'][$callSite->line] ?? [],
-                static fn (Expr $n): bool => self::callName($n) === $callSite->calleeMethod,
-            ));
+            $sameLine = collect($file['byLine'][$callSite->line] ?? [])
+                ->filter(static fn (Expr $n): bool => self::callName($n) === $callSite->calleeMethod)
+                ->values()
+                ->all();
 
             if (count($sameLine) === 1) {
                 $node = $sameLine[0];

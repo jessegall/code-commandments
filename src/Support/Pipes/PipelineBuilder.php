@@ -107,7 +107,7 @@ abstract class PipelineBuilder
         }
 
         $this->context = $this->contextWithMatches(
-            array_values(array_filter($this->getMatches(), $callback))
+            collect($this->getMatches())->filter($callback)->values()->all()
         );
 
         return $this;

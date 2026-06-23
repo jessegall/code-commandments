@@ -70,10 +70,10 @@ final class ConfigMapIndex
             return [];
         }
 
-        return array_values(array_filter(
-            $this->maps,
-            static fn (array $map): bool => self::normalise($map['keys']) === $want,
-        ));
+        return collect($this->maps)
+            ->filter(static fn (array $map): bool => self::normalise($map['keys']) === $want)
+            ->values()
+            ->all();
     }
 
     /**
@@ -90,14 +90,12 @@ final class ConfigMapIndex
      */
     private static function normalise(array $keys): array
     {
-        $keys = array_values(array_unique(array_map(
-            strtolower(...),
-            $keys,
-        )));
-
-        sort($keys);
-
-        return $keys;
+        return collect($keys)
+            ->map(strtolower(...))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     private static function locateConfigDir(string $filePath): ?string
