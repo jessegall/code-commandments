@@ -22,8 +22,9 @@
         "symfony/finder": "^6.0|^7.0|^8.0"
     },
     "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
         "phpunit/phpunit": "^10.0|^11.0",
-        "orchestra/testbench": "^8.0|^9.0|^10.0"
+        "spatie/laravel-data": "^4.23"
     },
     "scripts": {
         "judge:self": "php bin/commandments judge -c commandments.self.php",
