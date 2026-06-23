@@ -365,7 +365,12 @@ SCRIPTURE;
         $snippet = $this->lineAt($content, $line);
 
         if ($isSin) {
-            $sins[] = $this->sinAt($line, $this->message($count, $atoms, true), $snippet, null, 'wide-union');
+            // A null-bearing union is never auto-fixable: this prophet's only
+            // mechanical rewrite is narrowing a null-FREE union of project classes
+            // to their shared interface (narrowCommonInterface short-circuits on any
+            // scalar/null member). Marking it [AUTO-FIXABLE] by the SinRepenter
+            // default would send `repent` into an endless no-op loop.
+            $sins[] = $this->sinAt($line, $this->message($count, $atoms, true), $snippet, null, 'wide-union', false);
 
             return;
         }
@@ -384,7 +389,7 @@ SCRIPTURE;
                     implode('/', $atoms),
                 );
 
-            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union');
+            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union', false);
 
             return;
         }
@@ -404,7 +409,7 @@ SCRIPTURE;
             return;
         }
 
-        $warnings[] = $this->warningAt($line, $this->message($count, $atoms, false), $snippet, 'wide-union');
+        $warnings[] = $this->warningAt($line, $this->message($count, $atoms, false), $snippet, 'wide-union', false);
     }
 
     /**
