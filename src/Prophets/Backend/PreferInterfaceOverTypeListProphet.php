@@ -411,7 +411,20 @@ SCRIPTURE;
             $byFunction[$fn?->getStartFilePos() ?? -1][] = $call;
         }
 
-        return array_values(array_filter($byFunction, static fn (array $calls): bool => count($calls) >= 2));
+        // Require >= 2 DISTINCT affixes — `str_ends_with($a, 'Controller') ||
+        // str_ends_with($b, 'Controller')` is ONE type checked on two values, not
+        // a type set. The smell is `…'Bag') || …'Data')` — different kinds.
+        return array_values(array_filter($byFunction, function (array $calls): bool {
+            $distinct = [];
+
+            foreach ($calls as $call) {
+                /** @var Node\Scalar\String_ $literal */
+                $literal = $call->args[1]->value;
+                $distinct[$literal->value] = true;
+            }
+
+            return count($distinct) >= 2;
+        }));
     }
 
     /**
