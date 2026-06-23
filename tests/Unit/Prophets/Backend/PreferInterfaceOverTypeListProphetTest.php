@@ -109,6 +109,21 @@ class PreferInterfaceOverTypeListProphetTest extends TestCase
         $this->assertTrue($this->judge("public function f(\$a, \$b): bool { return \$a instanceof Closure || \$b instanceof Closure; }")->isRighteous());
     }
 
+    public function test_exempt_config_skips_chains_under_an_exempt_namespace(): void
+    {
+        $prophet = (new PreferInterfaceOverTypeListProphet)->configure(['exempt' => ['PhpParser\\Node']]);
+        $src = "<?php\nnamespace App;\nuse PhpParser\\Node;\nuse PhpParser\\Node\\Expr;\n"
+            . "class C { public function f(\$n): bool { return \$n instanceof Node\\Stmt\\Class_ || \$n instanceof Expr\\MethodCall; } }\n";
+
+        // Both types resolve under PhpParser\Node — exempt, so no finding…
+        $this->assertTrue($prophet->judge('/x.php', $src)->isRighteous());
+
+        // …but a chain that includes a NON-exempt type still fires.
+        $mixed = "<?php\nnamespace App;\nuse PhpParser\\Node;\n"
+            . "class C { public function f(\$n): bool { return \$n instanceof Node\\Stmt\\Class_ || \$n instanceof \\App\\Widget; } }\n";
+        $this->assertCount(1, $prophet->judge('/x.php', $mixed)->warnings);
+    }
+
     public function test_leaves_non_type_value_lists(): void
     {
         // extensions, method names, lowercase predicates — legitimate data.
