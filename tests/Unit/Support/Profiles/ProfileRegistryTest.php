@@ -24,7 +24,7 @@ class ProfileRegistryTest extends TestCase
         $this->assertFalse(ProfileRegistry::has('nope'));
     }
 
-    public function test_grind_is_a_cadence_profile_that_still_flags_warnings(): void
+    public function test_grind_is_a_cadence_profile_that_blocks_warnings_at_the_end(): void
     {
         $o = ProfileRegistry::get('grind')->options();
 
@@ -32,8 +32,8 @@ class ProfileRegistryTest extends TestCase
         $this->assertSame(JudgeScope::Branch, $o->scope);
         $this->assertSame(GitGateStage::PrePush, $o->gate);
         $this->assertFalse($o->perPhaseNudges, 'grind has no per-phase checks');
-        // Branch gate blocks sins only (warnings shown, not blocked).
-        $this->assertFalse($o->gateBlocksOnWarnings());
+        // The pre-push reckoning gate blocks sins AND warnings — clean before push.
+        $this->assertTrue($o->gateBlocksOnWarnings());
     }
 
     public function test_phased_gates_on_warnings_at_pre_commit(): void

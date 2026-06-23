@@ -278,10 +278,12 @@ final class CommitHookInstaller
     }
 
     /**
-     * The grind end-gate: blocks the PUSH on sins across the whole branch
-     * (`judge --branch` — changed since the branch base, so it survives the
-     * intermediate phase commits, unlike `--git`/`--staged`). Warnings are still
-     * printed but do not block (a branch-scoped judge gates sins only).
+     * The grind end-gate: blocks the PUSH on unresolved findings across the
+     * active profile's scope (`judge` resolves it — grind: the branch, changed
+     * since the branch base so it survives intermediate phase commits, unlike
+     * `--git`/`--staged`; penance: the whole codebase). Sins AND warnings block:
+     * the reckoning before a push must be clean, so each warning is fixed or
+     * absolved with a reason just like a sin.
      */
     private function prePushGateBlock(): string
     {
@@ -290,9 +292,9 @@ final class CommitHookInstaller
 
         return <<<HOOK
         {$begin}
-        # Blocks the push when code-commandments finds sins in the active profile's
-        # scope (grind: the branch; penance: the whole codebase). A bare `judge`
-        # resolves that scope from the profile. Warnings are shown, not blocked.
+        # Blocks the push when code-commandments finds unresolved findings (sins OR
+        # warnings) in the active profile's scope (grind: the branch; penance: the
+        # whole codebase). A bare `judge` resolves that scope from the profile.
         if [ -x vendor/bin/commandments ]; then
             vendor/bin/commandments judge --no-cache
             cc_status=\$?
@@ -305,7 +307,8 @@ final class CommitHookInstaller
 
         if [ "\$cc_status" -ne 0 ]; then
             echo ""
-            echo "✗ Push blocked: unresolved sins remain in scope."
+            echo "✗ Push blocked: unresolved findings remain in scope."
+            echo "  Every sin AND warning must be fixed, or absolved with a reason."
             echo "  Reckon before pushing:  commandments judge --next"
             echo "  (Bypass only in a real emergency with: git push --no-verify)"
             exit 1

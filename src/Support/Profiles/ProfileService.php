@@ -84,6 +84,23 @@ final class ProfileService
     }
 
     /**
+     * Whether a bare/scoped `judge` should treat WARNINGS as blocking — but ONLY
+     * from an EXPLICITLY-selected profile (mirrors {@see self::explicitScope}). A
+     * legacy consumer (inferred `phased` for hooks' sake) keeps its historical
+     * non-blocking-warnings `judge` until it opts into a profile.
+     */
+    public static function explicitGateBlocksOnWarnings(string $basePath): bool
+    {
+        $name = (new self($basePath))->readState();
+
+        if ($name === null || ! ProfileRegistry::has($name)) {
+            return false;
+        }
+
+        return ProfileRegistry::get($name)->options()->gateBlocksOnWarnings();
+    }
+
+    /**
      * @param  callable(string): void  $emit
      * @param  callable(string): void  $error
      */
@@ -403,17 +420,19 @@ final class ProfileService
 
         $isPenance = GitGateStage::PrePush->equals($o->gate) && JudgeScope::None->equals($o->scope);
 
+        $alsoWarnings = $o->gateBlocksOnWarnings() ? ' and warnings' : T_String::empty();
+
         $gate = match (true) {
             GitGateStage::None->equals($o->gate) => 'No git gate — nothing blocks commits or pushes.',
-            GitGateStage::PreCommit->equals($o->gate) => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : T_String::empty()) . ' on staged files.',
-            $isPenance => 'NO commit gate — commit progress freely. The pre-push gate blocks pushing while ANY sins remain.',
-            default => 'Pre-push gate blocks pushing while the branch has sins (no commit gate; warnings shown, not blocked).',
+            GitGateStage::PreCommit->equals($o->gate) => "Pre-commit gate blocks sins{$alsoWarnings} on staged files.",
+            $isPenance => "NO commit gate — commit progress freely. The pre-push gate blocks pushing while ANY sins{$alsoWarnings} remain.",
+            default => "Pre-push gate blocks pushing while the branch has sins{$alsoWarnings} (no commit gate; reckon once before pushing).",
         };
 
         $cadence = match (true) {
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
             $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`judge --plan`). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
-            GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid.',
+            GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid. Do NOT stop to ask the user to confirm — the plan IS the agreement; execute it end to end. No "this is a big change, shall I continue?", no pausing halfway for approval. Only stop for a genuinely blocking matter the plan does not cover.',
             default => 'Cadence: no per-phase nudges.',
         };
 
@@ -454,12 +473,13 @@ final class ProfileService
             $lines[] = "  {$r}judge --plan      # every finding, ordered (root causes first)";
             $lines[] = "  {$r}repent            # bulk-fix the [AUTO-FIXABLE] ones";
             $lines[] = "  {$r}judge --next      # walk the rest one at a time";
-            $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins remain, and you cannot stop until judge is righteous.';
+            $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins or warnings remain, and you cannot stop until judge is righteous.';
         } elseif (GitGateStage::PrePush->equals($o->gate)) {
             $lines[] = T_String::empty();
             $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge, the test suite, or ANY gate between phases — even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED in grind: running checks mid-grind is the mistake to avoid. Commit each phase freely and keep moving.';
-            $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` (fix every sin, review warnings) and your full test suite ONCE, then push.";
-            $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins.';
+            $lines[] = 'Do NOT stop to ask the user to confirm or re-approve mid-grind. The plan you agreed on IS the authorization — execute it end to end, no "this is a large change, shall I continue?", no pausing halfway for sign-off. Only stop for a genuinely blocking matter the plan does not cover.';
+            $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` (fix every sin, resolve every warning) and your full test suite ONCE, then push.";
+            $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins or warnings (each fixed or absolved with a reason).';
         }
 
         return $lines;

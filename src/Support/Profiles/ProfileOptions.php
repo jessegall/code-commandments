@@ -40,13 +40,16 @@ final class ProfileOptions
     ) {}
 
     /**
-     * The blocking severity is DERIVED, not a separate flag: the staged gate
-     * blocks on sins AND warnings (phased); a branch/git gate blocks on sins
-     * only while still printing warnings (grind). When warnings are suppressed
-     * there is nothing to gate on anyway (sins-only).
+     * The blocking severity is DERIVED, not a separate flag: wherever a profile
+     * shows warnings AND has a blocking gate, that gate blocks on warnings too —
+     * they must be fixed or absolved before it passes. So the staged pre-commit
+     * gate (phased) blocks warnings at the commit, and the branch/full pre-push
+     * gate (grind, penance) blocks them at the push (reckon-at-the-end). When
+     * warnings are suppressed (sins-only) or there is no gate (disabled), there
+     * is nothing to gate on.
      */
     public function gateBlocksOnWarnings(): bool
     {
-        return $this->allowWarnings && JudgeScope::Staged->equals($this->scope);
+        return $this->allowWarnings && ! GitGateStage::None->equals($this->gate);
     }
 }

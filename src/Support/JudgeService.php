@@ -110,13 +110,27 @@ final class JudgeService
         $base = Environment::basePath();
         $allowWarnings = $noProfile ? true : ProfileService::resolve($base)->options()->allowWarnings;
 
+        $profileScopeAdopted = false;
         if (! $noProfile && $fileFilter === null && empty($filesFilter) && ! $gitMode && ! $stagedMode && ! $branchMode && $pathFilter === null) {
-            match (ProfileService::explicitScope($base)) {
+            $explicitScope = ProfileService::explicitScope($base);
+            $profileScopeAdopted = $explicitScope !== null;
+            match ($explicitScope) {
                 JudgeScope::Staged => $stagedMode = true,
                 JudgeScope::Branch => $branchMode = true,
                 JudgeScope::None, null => null,
             };
         }
+
+        // Whether warnings BLOCK (vs. just flag) for this run. The gate is a
+        // profile-scoped reckoning: the phased pre-commit runs `judge --staged`,
+        // the grind/penance pre-push runs a bare `judge` (profile scope). So
+        // warnings block only when the active profile gates on them AND this run
+        // IS that gate scope — a bare profile-scoped judge, or an explicit
+        // `--staged`. An explicit narrow audit (`--path`, `--file`, `--git`) under
+        // the same profile still only flags them, and `--no-profile` never blocks.
+        $warningsBlock = ! $noProfile
+            && ProfileService::explicitGateBlocksOnWarnings($base)
+            && ($stagedMode || $profileScopeAdopted);
 
         if ($pathFilter !== null) {
             $resolvedPath = realpath($pathFilter);
@@ -183,7 +197,7 @@ final class JudgeService
         $failures = $this->manager->getFailures();
         $this->showFailures($failures);
 
-        return $this->showResults($prophetFilter, $gitMode, ! empty($failures), $stagedMode);
+        return $this->showResults($prophetFilter, $gitMode, ! empty($failures), $stagedMode, $warningsBlock);
     }
 
     /**
@@ -447,7 +461,7 @@ final class JudgeService
         ($this->emit)(T_String::empty());
     }
 
-    private function showResults(?string $prophetFilter, bool $gitMode, bool $hadFailures, bool $stagedMode): int
+    private function showResults(?string $prophetFilter, bool $gitMode, bool $hadFailures, bool $stagedMode, bool $warningsBlock = false): int
     {
         $cmd = $this->binary . $this->sep;
 
@@ -545,9 +559,16 @@ final class JudgeService
 
                 ($this->emit)(T_String::empty());
                 ($this->emit)('Each warning carries an APPLY-WHEN / LEAVE-WHEN rubric (use judgment) —');
-                ($this->emit)('but it is NOT ignorable: a staged commit is BLOCKED until every warning');
-                ($this->emit)('is resolved (the pre-commit gate runs `judge --staged`). Walk them one');
-                ($this->emit)('at a time (rubric + full rule shown inline):');
+
+                if ($warningsBlock) {
+                    ($this->emit)('but it is NOT ignorable: the gate is BLOCKED until every warning is');
+                    ($this->emit)('resolved (fixed or absolved with a reason). Walk them one at a time');
+                    ($this->emit)('(rubric + full rule shown inline):');
+                } else {
+                    ($this->emit)('review each and fix or absolve it. Walk them one at a time');
+                    ($this->emit)('(rubric + full rule shown inline):');
+                }
+
                 ($this->emit)("  {$cmd}judge --next{$gitFlag}");
                 ($this->emit)(T_String::empty());
                 ($this->emit)('For each: fix it, OR — if the rubric says it does not apply here —');
@@ -556,14 +577,15 @@ final class JudgeService
             }
         }
 
-        if ($stagedMode && $this->totalSins === 0 && $this->totalWarnings > 0) {
+        if ($warningsBlock && $this->totalSins === 0 && $this->totalWarnings > 0) {
+            $scopeFlag = $stagedMode ? ' --scope=staged' : T_String::empty();
             ($this->emit)(T_String::empty());
-            ($this->emit)("DO NOT COMMIT: {$this->totalWarnings} warning(s) on staged files. Fix each, or absolve it with a reason:");
+            ($this->emit)("UNRESOLVED: {$this->totalWarnings} warning(s) in scope must be fixed or absolved before the gate passes:");
             ($this->emit)("  {$cmd}absolve --fingerprint=<hash> --reason=\"why it does not apply here\"");
-            ($this->emit)("  many at once? {$cmd}absolve --warnings --scope=staged --reason=\"…\"  (add --prophet=NAME to scope; --until-push to keep it past the commit until you push)");
+            ($this->emit)("  many at once? {$cmd}absolve --warnings{$scopeFlag} --reason=\"…\"  (add --prophet=NAME to scope; --until-push to keep it past the commit until you push)");
         }
 
-        $blocks = $this->totalSins > 0 || ($stagedMode && $this->totalWarnings > 0) || $hadFailures;
+        $blocks = $this->totalSins > 0 || ($warningsBlock && $this->totalWarnings > 0) || $hadFailures;
 
         return $blocks ? self::FAILURE : self::SUCCESS;
     }
