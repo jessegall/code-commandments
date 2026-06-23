@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use ReflectionEnum;
 
 /**
@@ -199,7 +200,7 @@ SCRIPTURE;
             ->pipe($pipe);
 
         $ast = $pipeline->getContext()->ast ?? [];
-        $uses = $this->extractUses($ast);
+        $uses = FileImports::of($ast);
         $namespace = $this->extractNamespace($ast);
         $seenAdoptionHint = [];
 
@@ -548,19 +549,6 @@ SCRIPTURE;
      * @param  array<Node>  $ast
      * @return array<string, string>  alias => FQCN
      */
-    private function extractUses(array $ast): array
-    {
-        $uses = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
-    }
-
     /**
      * @param  array<Node>  $ast
      */
@@ -810,7 +798,7 @@ SCRIPTURE;
             return RepentanceResult::unrepentant('Unable to parse PHP file');
         }
 
-        $uses = $this->extractUses($ast);
+        $uses = FileImports::of($ast);
         $namespace = $this->extractNamespace($ast);
         $edits = [];
         $penance = [];

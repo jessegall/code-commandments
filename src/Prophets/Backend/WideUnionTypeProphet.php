@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use PhpParser\ParserFactory;
 
 /**
@@ -237,7 +238,7 @@ SCRIPTURE;
         // For the #62 shared-interface narrowing, resolve member FQCNs against
         // the file's namespace + imports.
         $namespace = $this->fileNamespace($ast);
-        $uses = $this->fileUses($ast);
+        $uses = FileImports::of($ast);
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
             // `T | null` is a simple nullable — semantically identical to `?T`,
@@ -563,19 +564,6 @@ SCRIPTURE;
      * @param  array<Node>  $ast
      * @return array<string, string>  alias => FQCN
      */
-    private function fileUses(array $ast): array
-    {
-        $uses = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
-    }
-
     /**
      * A native union's member names, lowercased (intersection / complex members
      * collapse to a non-scalar placeholder so they never read as scalar).
@@ -935,7 +923,7 @@ SCRIPTURE;
         // NOT auto-applied — it changes the property's runtime type and breaks
         // every reader of the raw member values (it stays an advisory suggestion).
         $namespace = $this->fileNamespace($ast);
-        $uses = $this->fileUses($ast);
+        $uses = FileImports::of($ast);
         $interfaceFixes = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\UnionType::class) as $union) {
