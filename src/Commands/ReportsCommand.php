@@ -24,7 +24,7 @@ class ReportsCommand extends Command
             $tracker,
             base_path(),
             (bool) $this->option('check'),
-            fn (string $line) => $this->line($line),
+            $this->line(...),
         );
 
         return self::SUCCESS;

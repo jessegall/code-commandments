@@ -38,7 +38,7 @@ class ReportsConsoleCommand extends Command
             $this->tracker($basePath),
             $basePath,
             (bool) $input->getOption('check'),
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
         );
 
         return Command::SUCCESS;
