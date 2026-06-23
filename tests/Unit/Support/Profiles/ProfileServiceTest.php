@@ -246,15 +246,22 @@ class ProfileServiceTest extends TestCase
 
     // --- mid-session re-index (drift) ---
 
-    public function test_drift_check_fires_once_after_a_change_then_is_silent(): void
+    public function test_drift_check_restates_the_contract_every_turn(): void
     {
         $this->switch('grind');
 
         $first = $this->driftLines();
         $this->assertNotEmpty($first);
         $this->assertStringContainsString('grind', implode("\n", $first));
+        // First fire after a change uses the louder "discard the previous contract" framing.
+        $this->assertStringContainsString('Discard any previous commandments contract', implode("\n", $first));
 
-        $this->assertSame([], $this->driftLines(), 'drift-check must be silent once briefed');
+        // An unchanged profile still re-states its contract (so the agent can't drift
+        // back to its defaults), but with the terser "still active" framing.
+        $second = $this->driftLines();
+        $this->assertNotEmpty($second, 'drift-check must re-state the contract every turn');
+        $this->assertStringContainsString('still active', implode("\n", $second));
+        $this->assertStringContainsString('grind', implode("\n", $second));
     }
 
     public function test_drift_check_refires_after_switching_profiles(): void
