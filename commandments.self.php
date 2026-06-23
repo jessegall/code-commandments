@@ -145,7 +145,11 @@ return [
                 Backend\NoRedundantDefaultArgumentProphet::class,
                 Backend\PreferCoalesceForProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
-                Backend\PreferInterfaceOverTypeListProphet::class,
+                Backend\PreferInterfaceOverTypeListProphet::class => [
+                    // This package IS an AST analyzer — `$n instanceof Stmt\X ||
+                    // $n instanceof Expr\Y` is normal node dispatch, not a smell.
+                    'exempt' => ['PhpParser\\Node'],
+                ],
                 Backend\ShortClosureProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
             ],
