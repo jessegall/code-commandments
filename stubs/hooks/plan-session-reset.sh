@@ -4,7 +4,7 @@
 # Claude Code fires SessionStart with a "source": startup (a brand-new session),
 # resume (--resume/--continue), compact (auto/manual context compaction), or clear
 # (/clear). A previous session's `.claude/plan-active` marker persists on disk, so
-# a NEW session would have its Stop hook (keep-going.sh) silently auto-continue a
+# a NEW session would have its Stop hook (the active profile's stop-hook.sh) silently auto-continue a
 # plan that is finished or abandoned — tripping the agent. Cross-session
 # resumption is supposed to go through the handoff OFFER (handoff-detect.sh, which
 # asks first), not the loop.
