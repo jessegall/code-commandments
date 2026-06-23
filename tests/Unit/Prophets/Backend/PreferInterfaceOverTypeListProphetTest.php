@@ -82,6 +82,12 @@ class PreferInterfaceOverTypeListProphetTest extends TestCase
         $this->assertTrue($this->judge("public function f(string \$p): bool { return str_ends_with(\$p, '.php') || str_ends_with(\$p, '.js'); }")->isRighteous());
     }
 
+    public function test_leaves_the_same_suffix_on_two_values(): void
+    {
+        // One type ('Controller') checked on two values is NOT a type set.
+        $this->assertTrue($this->judge("public function f(string \$a, string \$b): bool { return str_ends_with(\$a, 'Controller') || str_ends_with(\$b, 'Controller'); }")->isRighteous());
+    }
+
     public function test_flags_an_instanceof_or_chain(): void
     {
         $j = $this->judge("public function f(\$x): bool { return \$x instanceof Collection || \$x instanceof LazyCollection; }");
