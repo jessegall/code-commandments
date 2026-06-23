@@ -12,6 +12,8 @@ use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
@@ -106,8 +108,8 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $namespace = $this->fileNamespace($ast);
-        $uses = $this->fileUses($ast);
+        $namespace = FileImports::namespace($ast);
+        $uses = FileImports::of($ast);
         $warnings = [];
 
         foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Expression::class) as $stmt) {
@@ -220,7 +222,7 @@ SCRIPTURE;
 
         if ($call instanceof Expr\MethodCall && $call->name instanceof Node\Identifier) {
             $method = $call->name->toString();
-            $classFqcn = $this->receiverType($call->var, $ast, $uses, $namespace, $context);
+            $classFqcn = ReceiverTypeResolver::resolve($call->var, $ast, $uses, $namespace, $context);
         } elseif ($call instanceof Expr\StaticCall && $call->name instanceof Node\Identifier && $call->class instanceof Node\Name) {
             $method = $call->name->toString();
             $classFqcn = ltrim(NameResolver::resolve($call->class->toString(), $uses, $namespace), '\\');
@@ -233,34 +235,6 @@ SCRIPTURE;
         $summary = $this->index->classByFqcn($classFqcn);
 
         return $summary?->methods[$method] ?? null;
-    }
-
-    /**
-     * The resolved FQCN of a call receiver — a typed param `$x`, or a typed
-     * `$this->prop` — else null (an unresolved or chained receiver is a LEAVE).
-     *
-     * @param  array<Node>  $ast
-     * @param  array<string, string>  $uses
-     */
-    private function receiverType(Expr $recv, array $ast, array $uses, ?string $namespace, Node $context): ?string
-    {
-        if ($recv instanceof Expr\Variable && is_string($recv->name)) {
-            $type = $this->paramTypeInScope($recv->name, $context, $ast);
-
-            return $type !== null ? ltrim(NameResolver::resolve($type, $uses, $namespace), '\\') : null;
-        }
-
-        if ($recv instanceof Expr\PropertyFetch
-            && $recv->var instanceof Expr\Variable && $recv->var->name === 'this'
-            && $recv->name instanceof Node\Identifier
-        ) {
-            $class = $this->enclosingClass($context, $ast);
-            $type = $class !== null ? $this->propertyType($class, $recv->name->toString()) : null;
-
-            return $type !== null ? ltrim(NameResolver::resolve($type, $uses, $namespace), '\\') : null;
-        }
-
-        return null;
     }
 
     private function calleeIsUnderAnnotated($callee, array $varType): bool
@@ -294,120 +268,10 @@ SCRIPTURE;
         return strtolower($return) === $varType['base'];
     }
 
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function paramTypeInScope(string $name, Node $context, array $ast): ?string
-    {
-        $pos = (int) $context->getStartFilePos();
-        $finder = new NodeFinder;
-        $best = null;
-        $bestStart = -1;
-
-        foreach (array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-        ) as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
-                continue;
-            }
-
-            foreach ($fn->params as $param) {
-                if ($param->var instanceof Expr\Variable && $param->var->name === $name
-                    && $param->type instanceof Node\Name
-                ) {
-                    $best = $param->type->toString();
-                    $bestStart = $start;
-                }
-            }
-        }
-
-        return $best;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function enclosingClass(Node $node, array $ast): ?Node\Stmt\Class_
-    {
-        $pos = (int) $node->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            $start = (int) $class->getStartFilePos();
-
-            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $class;
-                $bestStart = $start;
-            }
-        }
-
-        return $best;
-    }
-
-    private function propertyType(Node\Stmt\Class_ $class, string $property): ?string
-    {
-        foreach ($class->getProperties() as $prop) {
-            foreach ($prop->props as $declared) {
-                if ($declared->name->toString() === $property && $prop->type instanceof Node\Name) {
-                    return $prop->type->toString();
-                }
-            }
-        }
-
-        $ctor = $class->getMethod('__construct');
-
-        if ($ctor !== null) {
-            foreach ($ctor->params as $param) {
-                if ($param->flags !== 0 && $param->var instanceof Expr\Variable
-                    && $param->var->name === $property && $param->type instanceof Node\Name
-                ) {
-                    return $param->type->toString();
-                }
-            }
-        }
-
-        return null;
-    }
-
     private function shortName(string $fqcn): string
     {
         $pos = strrpos($fqcn, '\\');
 
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
-    }
-
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function fileNamespace(array $ast): ?string
-    {
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
-            return $ns->name?->toString();
-        }
-
-        return null;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     * @return array<string, string>
-     */
-    private function fileUses(array $ast): array
-    {
-        $uses = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
     }
 }
