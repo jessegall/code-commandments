@@ -72,8 +72,7 @@ class InitConsoleCommand extends Command
 
     private function installSkills(string $basePath, bool $force, OutputInterface $output): void
     {
-        $resolved = ConfigLoader::resolve(null, $basePath);
-        $config = $resolved !== null ? ConfigLoader::load($resolved) : [];
+        $config = $this->loadConfig($basePath);
 
         $skills = $config['skills'] ?? [];
         $autoRefresh = (bool) ($skills['auto_refresh'] ?? false);
@@ -98,8 +97,7 @@ class InitConsoleCommand extends Command
 
     private function ensureGitignore(string $basePath, OutputInterface $output): void
     {
-        $resolved = ConfigLoader::resolve(null, $basePath);
-        $config = $resolved !== null ? ConfigLoader::load($resolved) : [];
+        $config = $this->loadConfig($basePath);
         $ignoreSkills = (bool) ($config['skills']['auto_refresh'] ?? false);
 
         $status = (new GitignoreInstaller())->ensure($basePath, $ignoreSkills);
@@ -251,8 +249,7 @@ class InitConsoleCommand extends Command
 
     private function planLoopEnabled(string $basePath): bool
     {
-        $resolved = ConfigLoader::resolve(null, $basePath);
-        $config = $resolved !== null ? ConfigLoader::load($resolved) : [];
+        $config = $this->loadConfig($basePath);
 
         return PlanLoopHookSuite::enabled($config);
     }
