@@ -8,8 +8,8 @@ use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
-use PhpParser\Error as ParseError;
 use ReflectionClass;
+use JesseGall\CodeCommandments\Support\AstCache;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 
 /**
@@ -57,15 +57,15 @@ abstract class PhpCommandment extends BaseCommandment
     /**
      * Parse PHP content into AST nodes.
      *
+     * Routed through {@see AstCache} — a per-run, content-addressed memo — so a
+     * file is parsed ONCE per run and shared across every prophet, instead of
+     * each of ~100 prophets re-parsing it.
+     *
      * @return array<Node>|null Returns null if parsing fails
      */
     protected function parse(string $content): ?array
     {
-        try {
-            return $this->getParser()->parse($content);
-        } catch (ParseError) {
-            return null;
-        }
+        return AstCache::parse($content);
     }
 
     /**

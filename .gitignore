@@ -48,3 +48,4 @@ phpcs.xml
 
 # code-commandments self-judgment runtime artifacts
 .commandments/
+.ast-cache/
