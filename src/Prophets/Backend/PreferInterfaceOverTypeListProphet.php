@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
@@ -20,8 +21,14 @@ use PhpParser\NodeFinder;
 #[IntroducedIn('2.71.0')]
 class PreferInterfaceOverTypeListProphet extends PhpCommandment
 {
-    /** Membership tests whose haystack argument we inspect (needle, HAYSTACK, …). */
+    /** Membership tests whose 2nd (haystack) argument we inspect. */
     private const MEMBERSHIP_FUNCS = ['in_array', 'array_search'];
+
+    /** Set ops where ANY array argument may be the type-name list. */
+    private const SET_FUNCS = ['array_intersect', 'array_diff', 'array_intersect_key', 'array_diff_key'];
+
+    /** Suffix/prefix tests — a chain of these on type names is the classic smell. */
+    private const AFFIX_FUNCS = ['str_ends_with', 'str_starts_with'];
 
     public function description(): string
     {
@@ -73,13 +80,19 @@ Good — the types declare what they are; you ask THEM:
     $isEnum = $node instanceof Node\Stmt\Enum_;    // not in_array($name, ['…Enum'])
     $isData = (new ReflectionClass($fqcn))->implementsInterface(SpatieData::class);
 
-WHAT FIRES — a membership test (`in_array($x, …)` / `array_search($x, …)`) whose
-haystack is an array — inline or a class constant — of two or more string
-literals that are TYPE-NAME-SHAPED (PascalCase, or a `\Namespaced\Fqcn`).
+WHAT FIRES — any of these classifications by type NAME:
+  1. a membership test — `in_array($x, …)` / `array_search($x, …)` — whose haystack
+     is an array (inline or a class constant) of two or more TYPE-NAME-shaped
+     elements: string literals (`'Bag'`, `'\Ns\Foo'`) OR `Foo::class` references;
+  2. a set op — `array_intersect`/`array_diff`(`_key`) — against such a list;
+  3. a boolean chain of two or more `str_ends_with`/`str_starts_with` on
+     type-name-shaped affixes (`str_ends_with($n, 'Bag') || str_ends_with($n, 'Data')`).
 
 WHAT DOES NOT — a list of non-type values (extensions, keys, method names,
 lowercase predicates like `is_array`), an associative lookup/metadata map (a
-class => value table is not membership classification), or a single-element list.
+class => value table is not membership classification), a single-element list, or
+a single affix test (one `str_ends_with` is more likely a value check than a
+type classification).
 SCRIPTURE;
     }
 
@@ -91,35 +104,46 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        $finder = new NodeFinder;
         $warnings = [];
 
-        foreach ((new NodeFinder)->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
-            if (! $call->name instanceof Node\Name
-                || ! in_array($call->name->toString(), self::MEMBERSHIP_FUNCS, true)
-            ) {
+        // 1 + 2: a membership / set-op test against a list of type names.
+        foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
+            if (! $call->name instanceof Node\Name) {
                 continue;
             }
 
-            $haystack = $call->args[1] ?? null;
+            $fn = $call->name->toString();
+            $names = null;
 
-            if (! $haystack instanceof Node\Arg) {
-                continue;
+            if (in_array($fn, self::MEMBERSHIP_FUNCS, true) && ($call->args[1] ?? null) instanceof Node\Arg) {
+                $names = $this->typeNameList($call->args[1]->value, $ast);
+            } elseif (in_array($fn, self::SET_FUNCS, true)) {
+                foreach ($call->args as $arg) {
+                    if ($arg instanceof Node\Arg && ($names = $this->typeNameList($arg->value, $ast)) !== null) {
+                        break;
+                    }
+                }
             }
 
-            $names = $this->typeNameList($haystack->value, $ast);
-
-            if ($names === null) {
-                continue;
+            if ($names !== null) {
+                $warnings[] = $this->listWarning($call, $names, $content);
             }
+        }
 
+        // 3: a boolean chain of >= 2 suffix/prefix tests on type names (the
+        // `str_ends_with($n, 'Bag') || str_ends_with($n, 'Data')` smell), grouped
+        // by the function they live in so one chain is one finding.
+        foreach ($this->affixChains($ast, $finder) as $affixes) {
+            $first = $affixes[0];
             $warnings[] = $this->warningAt(
-                $call->getStartLine(),
+                $first->getStartLine(),
                 sprintf(
-                    'Classifying by a hardcoded list of type names (%s) — push the set onto the types: a marker interface they implement (test `$x instanceof Marker` / `is_a()`), or let the AST/reflection answer "is this an X?". A name list both over- and under-fires, and every new type means editing the list.',
-                    $this->renderList($names),
+                    'Classifying a type by its NAME suffix/prefix (%s) — the same "is it one of these kinds?" decision as a name list. Push it onto the types: a marker interface (test `$x instanceof Marker` / `is_a()`), or ask the AST/reflection. A suffix both over-fires (a `ReportData` that is not a Data) and under-fires (a value object that breaks the convention).',
+                    $this->renderAffixes($affixes),
                 ),
-                $this->lineSnippet($content, $call->getStartLine()),
-                'type-name-list:' . implode(',', array_slice($names, 0, 3)),
+                $this->lineSnippet($content, $first->getStartLine()),
+                'type-name-affix:' . $first->getStartLine(),
             );
         }
 
@@ -127,8 +151,25 @@ SCRIPTURE;
     }
 
     /**
-     * If $node is (or references) a sequential array of >= 2 type-name-shaped
-     * string literals, the list of those names; else null.
+     * @param  list<string>  $names
+     */
+    private function listWarning(Expr\FuncCall $call, array $names, string $content): Warning
+    {
+        return $this->warningAt(
+            $call->getStartLine(),
+            sprintf(
+                'Classifying by a hardcoded list of type names (%s) — push the set onto the types: a marker interface they implement (test `$x instanceof Marker` / `is_a($fqcn, Marker::class)`), or let the AST/reflection answer "is this an X?". For vendor types you cannot annotate, check the interface they ALREADY share (e.g. `is_a($fqcn, \\Traversable::class, true)`). A name list both over- and under-fires.',
+                $this->renderList($names),
+            ),
+            $this->lineSnippet($content, $call->getStartLine()),
+            'type-name-list:' . implode(',', array_slice($names, 0, 3)),
+        );
+    }
+
+    /**
+     * If $node is (or references) a sequential array of >= 2 type-name elements
+     * — string literals OR `Foo::class` references — the list of those names;
+     * else null.
      *
      * @param  array<Node>  $ast
      * @return list<string>|null
@@ -146,18 +187,90 @@ SCRIPTURE;
         foreach ($array->items as $item) {
             // An associative entry (`'Foo' => …`) is a lookup map, not a
             // membership list — that is not the smell.
-            if ($item === null || $item->key !== null || ! $item->value instanceof Node\Scalar\String_) {
+            if ($item === null || $item->key !== null) {
                 return null;
             }
 
-            if (! $this->isTypeNameShaped($item->value->value)) {
+            $name = $this->typeName($item->value);
+
+            if ($name === null) {
                 return null;
             }
 
-            $names[] = $item->value->value;
+            $names[] = $name;
         }
 
         return count($names) >= 2 ? $names : null;
+    }
+
+    /**
+     * The type name of an array element — a type-name-shaped string literal, or a
+     * `Foo::class` / `\Ns\Foo::class` reference; else null.
+     */
+    private function typeName(Expr $value): ?string
+    {
+        if ($value instanceof Node\Scalar\String_) {
+            return $this->isTypeNameShaped($value->value) ? $value->value : null;
+        }
+
+        if ($value instanceof Expr\ClassConstFetch
+            && $value->name instanceof Node\Identifier && $value->name->toString() === 'class'
+            && $value->class instanceof Node\Name
+        ) {
+            return $value->class->toString();
+        }
+
+        return null;
+    }
+
+    /**
+     * The suffix/prefix-test chains: per enclosing function, the
+     * `str_ends_with`/`str_starts_with` calls on TYPE-NAME-shaped affixes, when a
+     * function has two or more (one chain = one finding).
+     *
+     * @param  array<Node>  $ast
+     * @return list<list<Expr\FuncCall>>
+     */
+    private function affixChains(array $ast, NodeFinder $finder): array
+    {
+        $byFunction = [];
+
+        foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
+            if (! $call->name instanceof Node\Name
+                || ! in_array($call->name->toString(), self::AFFIX_FUNCS, true)
+            ) {
+                continue;
+            }
+
+            $needle = $call->args[1] ?? null;
+
+            if (! $needle instanceof Node\Arg
+                || ! $needle->value instanceof Node\Scalar\String_
+                || ! $this->isTypeNameShaped($needle->value->value)
+            ) {
+                continue;
+            }
+
+            $fn = ReceiverTypeResolver::enclosingFunction($call, $ast);
+            $byFunction[$fn?->getStartFilePos() ?? -1][] = $call;
+        }
+
+        return array_values(array_filter($byFunction, static fn (array $calls): bool => count($calls) >= 2));
+    }
+
+    /**
+     * @param  list<Expr\FuncCall>  $affixes
+     */
+    private function renderAffixes(array $affixes): string
+    {
+        $rendered = array_map(static function (Expr\FuncCall $c): string {
+            /** @var Node\Scalar\String_ $lit */
+            $lit = $c->args[1]->value;
+
+            return $c->name->toString() . "(…, '" . $lit->value . "')";
+        }, array_slice($affixes, 0, 2));
+
+        return implode(' || ', $rendered) . (count($affixes) > 2 ? ' || …' : '');
     }
 
     /**
@@ -189,10 +302,14 @@ SCRIPTURE;
         return null;
     }
 
-    /** Whether $value looks like a class name: PascalCase, or a namespaced FQCN. */
+    /**
+     * Whether $value looks like a class name — PascalCase or a namespaced FQCN,
+     * and at least 3 chars (so short affixes like `Id` / a bare cap do not fire).
+     */
     private function isTypeNameShaped(string $value): bool
     {
-        return preg_match('/^\\\\?[A-Z][A-Za-z0-9_]*(\\\\[A-Z][A-Za-z0-9_]*)*$/', $value) === 1;
+        return strlen(ltrim($value, '\\')) >= 3
+            && preg_match('/^\\\\?[A-Z][A-Za-z0-9_]*(\\\\[A-Z][A-Za-z0-9_]*)*$/', $value) === 1;
     }
 
     /**

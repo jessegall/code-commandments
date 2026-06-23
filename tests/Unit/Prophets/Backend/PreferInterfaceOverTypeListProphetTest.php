@@ -48,6 +48,40 @@ class PreferInterfaceOverTypeListProphetTest extends TestCase
         $this->assertCount(1, $j->warnings);
     }
 
+    public function test_flags_a_class_const_reference_list(): void
+    {
+        // ::class lists are type lists too (type-safe, but still a hardcoded set).
+        $j = $this->judge("public function f(\$x): bool { return in_array(\$x, [Bag::class, Collection::class, Data::class], true); }");
+
+        $this->assertCount(1, $j->warnings);
+    }
+
+    public function test_flags_array_intersect_against_a_type_list(): void
+    {
+        $j = $this->judge("public function f(array \$xs): array { return array_intersect(\$xs, ['Lazy', 'Optional']); }");
+
+        $this->assertCount(1, $j->warnings);
+    }
+
+    public function test_flags_a_suffix_chain(): void
+    {
+        $j = $this->judge("public function isData(string \$n): bool { return str_ends_with(\$n, 'Bag') || str_ends_with(\$n, 'Data'); }");
+
+        $this->assertCount(1, $j->warnings);
+        $this->assertStringContainsString('suffix/prefix', $j->warnings[0]->message);
+    }
+
+    public function test_leaves_a_single_suffix_test(): void
+    {
+        // One affix is ambiguous (could be a value check) — needs >= 2 in a chain.
+        $this->assertTrue($this->judge("public function f(string \$n): bool { return str_ends_with(\$n, 'Data'); }")->isRighteous());
+    }
+
+    public function test_leaves_non_type_affixes(): void
+    {
+        $this->assertTrue($this->judge("public function f(string \$p): bool { return str_ends_with(\$p, '.php') || str_ends_with(\$p, '.js'); }")->isRighteous());
+    }
+
     public function test_leaves_non_type_value_lists(): void
     {
         // extensions, method names, lowercase predicates — legitimate data.
