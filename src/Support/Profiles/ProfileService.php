@@ -163,9 +163,12 @@ final class ProfileService
     }
 
     /**
-     * `--drift-check`: re-index the agent when the active profile differs from the
-     * one it was last briefed on (a change made this session, by hand, or by a
-     * teammate's merge). Silent when there's no drift.
+     * `--drift-check`: re-assert the active profile's contract EVERY turn so the
+     * agent can't quietly drift back to its trained defaults (per-phase gating,
+     * verifying each step, etc.) as the session-start briefing decays. A profile
+     * *change* (this session, a hand-edit, a teammate's merge) gets the louder
+     * "discard the previous contract" framing; an unchanged profile gets a terse
+     * one-line reminder of the same contract. Silent only for dormant profiles.
      *
      * @param  callable(string): void  $emit
      */
@@ -173,19 +176,18 @@ final class ProfileService
     {
         $profile = $this->active();
         $current = $profile->name();
-
-        if ($this->readBriefed() === $current) {
-            return;
-        }
+        $changed = $this->readBriefed() !== $current;
 
         if (! $profile->options()->briefAgent) {
-            // Drifted into a dormant profile — nothing to say, just sync the marker.
+            // A dormant profile (no briefing) — nothing to say, just sync the marker.
             $this->writeBriefed($current);
 
             return;
         }
 
-        $emit("[code-commandments] The active profile is now \"{$current}\". Discard any previous commandments contract and follow this:");
+        $emit($changed
+            ? "[code-commandments] The active profile is now \"{$current}\". Discard any previous commandments contract and follow this:"
+            : "[code-commandments] Profile \"{$current}\" still active — your standing contract this turn (do NOT drift back to per-phase gating or any default habit it overrides):");
 
         foreach ($this->contractSummary($profile) as $line) {
             $emit("  {$line}");
@@ -411,7 +413,7 @@ final class ProfileService
         $cadence = match (true) {
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
             $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`judge --plan`). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
-            GitGateStage::PrePush->equals($o->gate) => 'Cadence: NO judge/tests between phases — implement the whole plan, then reckon (judge + run tests) once before pushing.',
+            GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid.',
             default => 'Cadence: no per-phase nudges.',
         };
 
@@ -455,8 +457,8 @@ final class ProfileService
             $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins remain, and you cannot stop until judge is righteous.';
         } elseif (GitGateStage::PrePush->equals($o->gate)) {
             $lines[] = T_String::empty();
-            $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge or tests between phases.';
-            $lines[] = "When the whole plan is done: run `{$r}judge` (fix every sin, review warnings) and your full test suite, then push.";
+            $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge, the test suite, or ANY gate between phases — even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED in grind: running checks mid-grind is the mistake to avoid. Commit each phase freely and keep moving.';
+            $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` (fix every sin, review warnings) and your full test suite ONCE, then push.";
             $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins.';
         }
 
