@@ -357,7 +357,7 @@ SCRIPTURE;
         }
 
         $line = $call->getStartLine();
-        $snippet = $this->getLineSnippet($content, $line);
+        $snippet = $this->lineSnippet($content, $line);
         $callShape = $this->renderCallShape($shape, $target);
         $targetLabel = $target['display'] ?? 'a service';
 
@@ -553,10 +553,4 @@ SCRIPTURE;
         return $name === 'Illuminate\\Support\\Facades\\App';
     }
 
-    private function getLineSnippet(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

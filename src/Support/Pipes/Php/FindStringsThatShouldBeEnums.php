@@ -44,6 +44,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindStringsThatShouldBeEnums implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Methods whose string returns are wire-format (JSON responses, arrays
      * going over an API boundary) and where literal values are intentional.
@@ -172,7 +174,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
             $matches[] = $this->makeMatch(
                 name: 'named_arg',
                 line: $arg->getStartLine(),
-                content: $this->getSnippet($input->content, $arg->getStartLine()),
+                content: $this->lineSnippet($input->content, $arg->getStartLine()),
                 shortName: $shortName,
                 fqcn: $info['fqcn'],
                 caseName: $info['cases'][$value] ?? $this->matchCase($info, $value) ?? $value,
@@ -228,7 +230,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                         $matches[] = $this->makeMatch(
                             name: 'param_default',
                             line: $param->getStartLine(),
-                            content: $this->getSnippet($input->content, $param->getStartLine()),
+                            content: $this->lineSnippet($input->content, $param->getStartLine()),
                             shortName: $shortName,
                             fqcn: $info['fqcn'],
                             caseName: $info['cases'][$value] ?? $this->matchCase($info, $value) ?? $value,
@@ -272,7 +274,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
                 $matches[] = $this->makeMatchForClosedSet(
                     line: $param->getStartLine(),
-                    content: $this->getSnippet($input->content, $param->getStartLine()),
+                    content: $this->lineSnippet($input->content, $param->getStartLine()),
                     shortName: $shortName,
                     fqcn: $info['fqcn'],
                     literals: $literals,
@@ -289,7 +291,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
                 $matches[] = $this->makeMatchForClosedSet(
                     line: $param->getStartLine(),
-                    content: $this->getSnippet($input->content, $param->getStartLine()),
+                    content: $this->lineSnippet($input->content, $param->getStartLine()),
                     shortName: $this->suggestEnumName($paramName),
                     fqcn: T_String::empty(),
                     literals: $literals,
@@ -365,7 +367,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 match: "in_array(\${$identifier}, [" . implode(', ', $literals) . '])',
                 line: $call->getStartLine(),
                 offset: null,
-                content: $this->getSnippet($input->content, $call->getStartLine()),
+                content: $this->lineSnippet($input->content, $call->getStartLine()),
                 groups: [
                     'subject' => "\${$identifier}",
                     'enum_short' => $shortName,
@@ -428,7 +430,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 match: "{$kind} on \${$identifier}: " . implode(', ', $literals),
                 line: $node->getStartLine(),
                 offset: null,
-                content: $this->getSnippet($input->content, $node->getStartLine()),
+                content: $this->lineSnippet($input->content, $node->getStartLine()),
                 groups: [
                     'kind' => $kind,
                     'subject' => "\${$identifier}",
@@ -1094,12 +1096,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
         return $parents;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 
     private function makeMatch(
         string $name,

@@ -130,7 +130,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 sprintf('This `match` on `%s` returns null/none only from its `default`/`null` arm while every real case yields a value — the absence can only mean an UNHANDLED case (a forgotten wiring), an invariant violation modelled as absence. Throw a named exception (e.g. `Unhandled%s::for($case)`) or drop the `default` so an added case is a compile-time match error. Reserve Option/null for genuine domain absence.', $enum, $enum),
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'unhandled-case:' . $enum,
             );
         }
@@ -251,10 +251,4 @@ SCRIPTURE;
         return $best;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

@@ -21,6 +21,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindDirectStaticModelCalls implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /** @var array<string> */
     private array $forbiddenMethods;
 
@@ -69,7 +71,7 @@ final class FindDirectStaticModelCalls implements Pipe
                 match: $methodName,
                 line: $line,
                 offset: null,
-                content: $this->getSnippet($input->content, $line),
+                content: $this->lineSnippet($input->content, $line),
                 groups: [$methodName],
             );
         }
@@ -109,10 +111,4 @@ final class FindDirectStaticModelCalls implements Pipe
         return $name;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

@@ -32,6 +32,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindImplicitDataFrom implements Pipe
 {
+    use ExtractsLineSnippet;
+
     private const ARRAY_RETURNING_METHODS = ['toArray', 'all', 'jsonSerialize'];
 
     /**
@@ -529,7 +531,7 @@ final class FindImplicitDataFrom implements Pipe
             match: $target . '::from / ' . $kind,
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [
                 'target' => $target,
                 'kind' => $kind,
@@ -537,10 +539,4 @@ final class FindImplicitDataFrom implements Pipe
         );
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

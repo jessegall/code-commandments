@@ -132,7 +132,7 @@ SCRIPTURE;
                         $this->caughtName($catch),
                         $this->sentinelDescription($catch->stmts),
                     ),
-                    $this->lineAt($content, $line),
+                    $this->lineSnippet($content, $line),
                     'swallowed-notfound:' . $this->symbolFor($catch),
                 );
 
@@ -274,10 +274,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

@@ -24,6 +24,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindAuthUserCalls implements Pipe
 {
+    use ExtractsLineSnippet;
+
     private const AUTH_METHODS = ['user', 'id'];
 
     public function handle(mixed $input): mixed
@@ -170,15 +172,9 @@ final class FindAuthUserCalls implements Pipe
             match: $source . '->' . $methodName . '()',
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [$source, $methodName],
         );
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

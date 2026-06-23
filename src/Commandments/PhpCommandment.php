@@ -10,6 +10,7 @@ use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
 use PhpParser\Error as ParseError;
 use ReflectionClass;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Base class for PHP file commandments.
@@ -289,5 +290,16 @@ abstract class PhpCommandment extends BaseCommandment
         }
 
         return $namespace !== null ? $namespace . '\\' . $className : $className;
+    }
+
+    /**
+     * The trimmed source line at the given 1-based line number, empty when
+     * out of range — the shared home for per-prophet snippet extraction.
+     */
+    protected function lineSnippet(string $content, int $line): string
+    {
+        $lines = explode(T_String::NEWLINE, $content);
+
+        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
     }
 }

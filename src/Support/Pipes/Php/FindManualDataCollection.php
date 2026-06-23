@@ -27,6 +27,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindManualDataCollection implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /** @var list<string> */
     private array $methods = ['from'];
 
@@ -86,7 +88,7 @@ final class FindManualDataCollection implements Pipe
             match: $target . '::from() in a ' . $form,
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [
                 'target' => $target,
                 'form' => $form,
@@ -246,10 +248,4 @@ final class FindManualDataCollection implements Pipe
         return end($parts) ?: $name;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

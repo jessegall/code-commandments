@@ -160,7 +160,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $occ['ternary']->getStartLine(),
                 $this->messageFor($occ['shape'], $occ['cast'], $counts[$occ['shape']], $class->name?->toString() ?? 'this class'),
-                $this->getLineSnippet($content, $occ['ternary']->getStartLine()),
+                $this->lineSnippet($content, $occ['ternary']->getStartLine()),
                 'prefer-coercion:' . $occ['shape'] . ':' . $occ['method'],
                 $this->autofixPlan($occ['ternary']) !== null,
             );
@@ -499,10 +499,4 @@ SCRIPTURE;
         return is_int($min) && $min >= 2 ? $min : 2;
     }
 
-    private function getLineSnippet(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

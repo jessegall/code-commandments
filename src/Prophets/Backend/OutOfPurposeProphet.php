@@ -377,7 +377,7 @@ SCRIPTURE;
                         $role['second_job'],
                         $role['cut'],
                     ),
-                    $this->lineAt($content, $class->getStartLine()),
+                    $this->lineSnippet($content, $class->getStartLine()),
                     'out-of-purpose:' . $roleName . ':' . $name,
                 );
 
@@ -1323,10 +1323,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

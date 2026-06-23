@@ -85,7 +85,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 sprintf('`%s(...)->getOr(%s::none())` flattens an Option<Option> by hand — use `->andThen(...)`.', $match['mapMethod'], $match['noneClass']),
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'prefer-andthen',
                 true,
             );
@@ -208,12 +208,6 @@ SCRIPTURE;
         return null;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 
     private function argsSource(string $content, Node\Expr\MethodCall $call): string
     {

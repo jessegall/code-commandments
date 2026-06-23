@@ -33,6 +33,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindNullableValueReturns implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * @var list<string>
      */
@@ -94,7 +96,7 @@ final class FindNullableValueReturns implements Pipe
                     match: $label,
                     line: $line,
                     offset: null,
-                    content: $this->getSnippet($input->content, $line),
+                    content: $this->lineSnippet($input->content, $line),
                     groups: [
                         'method' => $label,
                         'method_name' => $method->name->toString(),
@@ -321,10 +323,4 @@ final class FindNullableValueReturns implements Pipe
         return ($namespace !== null && T_String::isNotEmpty($namespace) ? $namespace . '\\' : T_String::empty()) . $name->toString();
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

@@ -362,7 +362,7 @@ SCRIPTURE;
             return;
         }
 
-        $snippet = $this->lineAt($content, $line);
+        $snippet = $this->lineSnippet($content, $line);
 
         if ($isSin) {
             // A null-bearing union is never auto-fixable: the only mechanical
@@ -894,12 +894,6 @@ SCRIPTURE;
         return is_numeric($value) ? max(2, (int) $value) : self::DEFAULT_SIN_AT;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 
     // --- Auto-fix: rewrite a null-free union Data property into a Union ---------
 

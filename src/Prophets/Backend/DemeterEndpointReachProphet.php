@@ -175,7 +175,7 @@ SCRIPTURE;
                         $this->shortName($reach['ownerFqcn']),
                         $intent,
                     ),
-                    $this->getLineSnippet($content, $operand->getStartLine()),
+                    $this->lineSnippet($content, $operand->getStartLine()),
                     'demeter-reach:' . $key,
                 );
             }
@@ -579,10 +579,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function getLineSnippet(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

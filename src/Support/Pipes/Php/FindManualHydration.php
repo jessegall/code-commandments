@@ -33,6 +33,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindManualHydration implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Arr:: methods that read a single key from an array.
      */
@@ -92,7 +94,7 @@ final class FindManualHydration implements Pipe
                     match: $label,
                     line: $line,
                     offset: null,
-                    content: $this->getSnippet($input->content, $line),
+                    content: $this->lineSnippet($input->content, $line),
                     groups: [
                         'method' => $label,
                         'kind' => $hydration['kind'],
@@ -473,10 +475,4 @@ final class FindManualHydration implements Pipe
             || str_ends_with($resolved, '\\Arr');
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

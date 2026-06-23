@@ -114,7 +114,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $class->getStartLine(),
                 sprintf('%s is shaped like a registry — you `register`/store into a keyed property, then look entries up — but it is not named `*Registry`/`*Map`/`*Catalog` and carries no `Registry` marker. Name it `*Registry` and extend a shared base (`commandments:scaffold` can generate one), after which RegistryReturnContract enforces its return contract (return T or throw, with a `has()` companion).', $name),
-                $this->lineAt($content, $class->getStartLine()),
+                $this->lineSnippet($content, $class->getStartLine()),
                 'registry-naming:' . $name,
             );
         }
@@ -166,10 +166,4 @@ SCRIPTURE;
             : self::DEFAULT_SUFFIXES;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

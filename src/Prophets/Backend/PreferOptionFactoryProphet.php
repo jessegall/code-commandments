@@ -198,7 +198,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $call->getStartLine(),
                 sprintf('Wraps a `? … : null` ternary in `%s::make()` — that re-hand-rolls the present/absent decision inside the factory. Use the conditional factory directly: `%s`.', $this->optionShort(), $this->suggestion($value, $ternary->cond, $someOnFalse, $content)),
-                $this->lineAt($content, $call->getStartLine()),
+                $this->lineSnippet($content, $call->getStartLine()),
                 'option-make-ternary',
             );
         }
@@ -308,7 +308,7 @@ SCRIPTURE;
         return $this->warningAt(
             $line,
             sprintf('Hand-rolls `%s::some()`/`%s::none()` across a condition — build it with the factory instead: `%s`.', $this->optionShort(), $this->optionShort(), $suggestion),
-            $this->lineAt($content, $line),
+            $this->lineSnippet($content, $line),
             'option-some-none-branch',
         );
     }
@@ -494,10 +494,4 @@ SCRIPTURE;
         return $start >= 0 && $end >= $start ? substr($content, $start, $end - $start + 1) : '';
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

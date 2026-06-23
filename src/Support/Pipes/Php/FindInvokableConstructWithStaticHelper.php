@@ -35,6 +35,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindInvokableConstructWithStaticHelper implements Pipe
 {
+    use ExtractsLineSnippet;
+
     public const CONVENTIONAL_STATIC_NAMES = [
         'for', 'forget', 'flush', 'make', 'resolve', 'create',
     ];
@@ -104,7 +106,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
                 match: '(new ' . $shortName . '(...))(...)',
                 line: $line,
                 offset: null,
-                content: $this->getSnippet($input->content, $line),
+                content: $this->lineSnippet($input->content, $line),
                 groups: [
                     'class' => $shortName,
                     'fqcn' => $fqcn,
@@ -314,10 +316,4 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
         return $out;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }
