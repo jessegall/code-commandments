@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
@@ -1011,13 +1012,13 @@ final class FindRawLiterals implements Pipe
             && $operand->var instanceof Expr\Variable && $operand->var->name === 'this'
             && $operand->name instanceof Node\Identifier
         ) {
-            $class = self::enclosingClass($operand, $ast);
+            $class = ReceiverTypeResolver::enclosingClass($operand, $ast);
 
-            return $class !== null ? self::typeKindOf(self::classPropertyType($class, $operand->name->toString())) : null;
+            return $class !== null ? self::typeKindOf(ReceiverTypeResolver::propertyTypeNode($class, $operand->name->toString())) : null;
         }
 
         if ($operand instanceof Expr\Variable && is_string($operand->name)) {
-            return self::typeKindOf(self::paramTypeInScope($operand->name, $operand, $ast));
+            return self::typeKindOf(ReceiverTypeResolver::paramTypeNode($operand->name, $operand, $ast));
         }
 
         return null;
@@ -1128,83 +1129,6 @@ final class FindRawLiterals implements Pipe
     /**
      * @param  array<Node>  $ast
      */
-    private static function enclosingClass(Node $node, array $ast): ?Node\Stmt\Class_
-    {
-        $pos = (int) $node->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            $start = (int) $class->getStartFilePos();
-
-            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $class;
-                $bestStart = $start;
-            }
-        }
-
-        return $best;
-    }
-
-    private static function classPropertyType(Node\Stmt\Class_ $class, string $property): ?Node
-    {
-        foreach ($class->getProperties() as $prop) {
-            foreach ($prop->props as $declared) {
-                if ($declared->name->toString() === $property) {
-                    return $prop->type;
-                }
-            }
-        }
-
-        $ctor = $class->getMethod('__construct');
-
-        if ($ctor !== null) {
-            foreach ($ctor->params as $param) {
-                if ($param->flags !== 0 && $param->var instanceof Expr\Variable && $param->var->name === $property) {
-                    return $param->type;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * The type node of param $name in the innermost function-like containing $cmp.
-     *
-     * @param  array<Node>  $ast
-     */
-    private static function paramTypeInScope(string $name, Node $cmp, array $ast): ?Node
-    {
-        $pos = (int) $cmp->getStartFilePos();
-        $finder = new NodeFinder;
-        $best = null;
-        $bestStart = -1;
-
-        $functions = array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-            $finder->findInstanceOf($ast, Expr\ArrowFunction::class),
-        );
-
-        foreach ($functions as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
-                continue;
-            }
-
-            foreach ($fn->params as $param) {
-                if ($param->var instanceof Expr\Variable && $param->var->name === $name) {
-                    $best = $param->type;
-                    $bestStart = $start;
-                }
-            }
-        }
-
-        return $best;
-    }
 
     private static function source(string $content, Node $node): string
     {
