@@ -253,6 +253,14 @@ final class ScaffoldRegistry
                 purpose: 'Result factory: wrap the matched value in a single-element list (Wrap::make()).',
                 subNamespace: 'Resolvers\\Factories',
             ),
+            new Scaffold(
+                name: 'classifier',
+                className: 'Classifier',
+                stubFile: 'Classifier.stub',
+                introducedIn: '2.71.0',
+                purpose: 'Base for a type classifier — ask "is this FQCN my kind?" via a shared interface (+ vendor list), instead of a hardcoded type-name list.',
+                subNamespace: 'Classifiers',
+            ),
         ];
     }
 }

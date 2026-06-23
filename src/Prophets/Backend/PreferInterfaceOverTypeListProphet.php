@@ -80,6 +80,15 @@ Good — the types declare what they are; you ask THEM:
     $isEnum = $node instanceof Node\Stmt\Enum_;    // not in_array($name, ['…Enum'])
     $isData = (new ReflectionClass($fqcn))->implementsInterface(SpatieData::class);
 
+When a set recurs (and especially when it mixes your types with unavoidable
+vendor ones), give it a NAMED home — a Classifier (run `commandments scaffold`
+for the base): the interface check and the vendor fallback live in one testable
+class, and the call site reads `(new IterableClassifier)->matches($fqcn)`:
+    final class IterableClassifier extends Classifier
+    {
+        protected function interface(): string { return \Traversable::class; }
+    }
+
 WHAT FIRES — any of these classifications by type NAME:
   1. a membership test — `in_array($x, …)` / `array_search($x, …)` — whose haystack
      is an array (inline or a class constant) of two or more TYPE-NAME-shaped
