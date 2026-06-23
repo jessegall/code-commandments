@@ -75,7 +75,9 @@ PHP;
     {
         $before = file_get_contents($this->file);
 
-        $this->artisan('commandments:repent')
+        // --all sweeps the isolated fixture scroll; bare `repent` now defaults
+        // to git scope (#196), which this temp-dir base path has no changes in.
+        $this->artisan('commandments:repent', ['--all' => true])
             ->expectsOutputToContain('SKIPPED')
             ->assertSuccessful();
 
