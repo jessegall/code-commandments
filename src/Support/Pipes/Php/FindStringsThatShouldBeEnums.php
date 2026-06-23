@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
-use Composer\Autoload\ClassLoader;
+use JesseGall\CodeCommandments\Support\ComposerLoader;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\EnumSummary;
 use JesseGall\CodeCommandments\Support\VendorPath;
@@ -65,10 +65,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
     /** @var array<string, bool> FQCN => whether the class file lives under /vendor/. */
     private static array $vendorCache = [];
-
-    private static ?ClassLoader $composerLoader = null;
-
-    private static bool $composerLoaderResolved = false;
 
     private ?CodebaseIndex $codebaseIndex = null;
 
@@ -376,7 +372,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                     'enum_fqcn' => $info['fqcn'],
                     'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                    'requires_import' => $importedAlias === null ? '1' : T_String::empty(),
+                    'requires_import' => $this->requiresImportFlag($importedAlias),
                 ],
             );
         }
@@ -440,7 +436,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                     'enum_fqcn' => $info['fqcn'],
                     'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                    'requires_import' => $importedAlias === null ? '1' : T_String::empty(),
+                    'requires_import' => $this->requiresImportFlag($importedAlias),
                 ],
             );
         }
@@ -748,7 +744,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
      */
     private function enumInfoFromAst(string $fqcn): ?array
     {
-        $loader = $this->getComposerLoader();
+        $loader = ComposerLoader::resolve();
 
         if ($loader === null) {
             return null;
@@ -859,25 +855,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
         if ($expr instanceof Expr\UnaryMinus && $expr->expr instanceof Scalar\Int_) {
             return -$expr->expr->value;
-        }
-
-        return null;
-    }
-
-    private function getComposerLoader(): ?ClassLoader
-    {
-        if (self::$composerLoaderResolved) {
-            return self::$composerLoader;
-        }
-
-        self::$composerLoaderResolved = true;
-
-        foreach (spl_autoload_functions() ?: [] as $autoload) {
-            if (is_array($autoload) && isset($autoload[0]) && $autoload[0] instanceof ClassLoader) {
-                self::$composerLoader = $autoload[0];
-
-                return self::$composerLoader;
-            }
         }
 
         return null;
@@ -1011,7 +988,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
             return self::$vendorCache[$fqcn];
         }
 
-        $loader = $this->getComposerLoader();
+        $loader = ComposerLoader::resolve();
 
         if ($loader === null) {
             return self::$vendorCache[$fqcn] = false;
@@ -1523,5 +1500,14 @@ final class FindStringsThatShouldBeEnums implements Pipe
         }
 
         return ucfirst($clean);
+    }
+
+    /**
+     * The `requires_import` group flag: '1' when the enum still needs a `use`
+     * import at the call site, empty otherwise.
+     */
+    private function requiresImportFlag(?string $importedAlias): string
+    {
+        return $importedAlias === null ? '1' : T_String::empty();
     }
 }
