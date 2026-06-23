@@ -391,7 +391,7 @@ SCRIPTURE;
     private function declaredTypeOf(Node\Expr $expr, Node $context, array $ast, NodeFinder $finder): ?Node
     {
         if ($expr instanceof Node\Expr\Variable && is_string($expr->name)) {
-            return $this->paramTypeInScope($expr->name, $context, $ast, $finder);
+            return ReceiverTypeResolver::paramTypeNode($expr->name, $context, $ast);
         }
 
         if (($expr instanceof Node\Expr\PropertyFetch || $expr instanceof Node\Expr\NullsafePropertyFetch)
@@ -401,7 +401,7 @@ SCRIPTURE;
             if ($expr->var instanceof Node\Expr\Variable && $expr->var->name === 'this') {
                 $class = ReceiverTypeResolver::enclosingClass($context, $ast);
 
-                return $class === null ? null : $this->propertyType($class, $expr->name->toString());
+                return $class === null ? null : ReceiverTypeResolver::propertyTypeNode($class, $expr->name->toString());
             }
 
             // $obj->prop — resolve $obj's class through the index, then its property.
@@ -418,7 +418,7 @@ SCRIPTURE;
      */
     private function objectPropertyType(string $objVar, string $property, Node $context, array $ast, NodeFinder $finder): ?Node
     {
-        $objType = $this->paramTypeInScope($objVar, $context, $ast, $finder);
+        $objType = ReceiverTypeResolver::paramTypeNode($objVar, $context, $ast);
         $name = $objType instanceof Node\Name ? $objType : ($objType instanceof Node\NullableType && $objType->type instanceof Node\Name ? $objType->type : null);
 
         if ($name === null || $this->index === null) {
@@ -446,7 +446,7 @@ SCRIPTURE;
 
         foreach ((new NodeFinder)->findInstanceOf($classAst, Node\Stmt\Class_::class) as $class) {
             if ($class->name?->toString() === $name->getLast()) {
-                return $this->propertyType($class, $property);
+                return ReceiverTypeResolver::propertyTypeNode($class, $property);
             }
         }
 
@@ -494,63 +494,6 @@ SCRIPTURE;
         $name = strtolower($type->toString());
 
         return isset(self::WRAPPERS[$name]) ? $name : null;
-    }
-
-    private function propertyType(Node\Stmt\Class_ $class, string $property): ?Node
-    {
-        foreach ($class->getProperties() as $prop) {
-            foreach ($prop->props as $declared) {
-                if ($declared->name->toString() === $property) {
-                    return $prop->type;
-                }
-            }
-        }
-
-        $ctor = $class->getMethod('__construct');
-
-        if ($ctor !== null) {
-            foreach ($ctor->params as $param) {
-                if ($param->flags !== 0 && $param->var instanceof Node\Expr\Variable && $param->var->name === $property) {
-                    return $param->type;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function paramTypeInScope(string $name, Node $context, array $ast, NodeFinder $finder): ?Node
-    {
-        $pos = (int) $context->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-
-        $functionLikes = array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Node\Expr\Closure::class),
-            $finder->findInstanceOf($ast, Node\Expr\ArrowFunction::class),
-        );
-
-        foreach ($functionLikes as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
-                continue;
-            }
-
-            foreach ($fn->params as $param) {
-                if ($param->var instanceof Node\Expr\Variable && $param->var->name === $name) {
-                    $best = $param->type;
-                    $bestStart = $start;
-                }
-            }
-        }
-
-        return $best;
     }
 
     private function nameFqcn(Node\Name $name): string
