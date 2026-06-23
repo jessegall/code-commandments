@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Support\Classifiers\CollectionClassifier;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
@@ -36,16 +37,6 @@ use PhpParser\NodeFinder;
 class PreferEmptyOverNullProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
     /** Vendor/framework types with a natural empty identity (matched by short name). */
-    private const KNOWN_COLLECTION_SHORT = [
-        'Collection', 'LazyCollection', 'EloquentCollection', 'DataCollection',
-        'PaginatedDataCollection', 'Fluent',
-    ];
-
-    /** Interfaces (by short name) that give a type an empty identity. */
-    private const COLLECTION_INTERFACES = [
-        'Countable', 'IteratorAggregate', 'Traversable', 'ArrayAccess', 'Arrayable',
-    ];
-
     private ?CodebaseIndex $index = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
@@ -287,52 +278,9 @@ SCRIPTURE;
      */
     private function isCollectionLike(Node\Name $member, array $uses, ?string $namespace): bool
     {
-        if (in_array($member->getLast(), self::KNOWN_COLLECTION_SHORT, true)) {
-            return true;
-        }
-
-        if ($this->index === null) {
-            return false;
-        }
-
         $fqcn = ltrim(NameResolver::resolve($member->toString(), $uses, $namespace), '\\');
 
-        if ($this->index->classByFqcn($fqcn) === null) {
-            return false; // vendor / unknown and not a known collection name
-        }
-
-        foreach ($this->index->interfacesOf($fqcn) as $interface) {
-            if (in_array($this->shortOf($interface), self::COLLECTION_INTERFACES, true)) {
-                return true;
-            }
-        }
-
-        // An ancestor that is itself a known collection (e.g. extends Fluent).
-        $cursor = $fqcn;
-        $depth = 0;
-
-        while ($cursor !== null && $depth++ < 16) {
-            $summary = $this->index->classByFqcn(ltrim($cursor, '\\'));
-
-            if ($summary === null) {
-                break;
-            }
-
-            if ($summary->parent !== null && in_array($this->shortOf($summary->parent), self::KNOWN_COLLECTION_SHORT, true)) {
-                return true;
-            }
-
-            $cursor = $summary->parent;
-        }
-
-        return false;
-    }
-
-    private function shortOf(string $fqcn): string
-    {
-        $pos = strrpos($fqcn, '\\');
-
-        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
+        return CollectionClassifier::make()->matches($fqcn, $this->index);
     }
 
 
