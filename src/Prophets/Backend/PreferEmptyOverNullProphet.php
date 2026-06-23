@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use JesseGall\CodeCommandments\Support\NullDistinguishedCallCensus;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
@@ -117,7 +118,7 @@ SCRIPTURE;
         }
 
         $namespace = $this->fileNamespace($ast);
-        $uses = $this->fileUses($ast);
+        $uses = FileImports::of($ast);
         $nullDistinguished = $this->index !== null
             ? NullDistinguishedCallCensus::methodNames($this->index)
             : [];
@@ -347,20 +348,4 @@ SCRIPTURE;
         return null;
     }
 
-    /**
-     * @param  array<Node>  $ast
-     * @return array<string, string>
-     */
-    private function fileUses(array $ast): array
-    {
-        $uses = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
-    }
 }
