@@ -16,6 +16,8 @@ use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CallSite;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
@@ -189,7 +191,7 @@ SCRIPTURE;
         }
 
         $namespace = $this->getNamespace($ast);
-        $uses = $this->fileUses($ast);
+        $uses = FileImports::of($ast);
         $warnings = [];
 
         foreach ($this->findings($ast, $content, $uses, $namespace) as $finding) {
@@ -482,7 +484,7 @@ SCRIPTURE;
      */
     private function parameterSlot(string $name, Node $site, array $ast): ?array
     {
-        $fn = $this->enclosingFunction($site, $ast);
+        $fn = ReceiverTypeResolver::enclosingFunction($site, $ast);
 
         if (! $fn instanceof Node\Stmt\ClassMethod) {
             return null;
@@ -540,7 +542,7 @@ SCRIPTURE;
             return null;
         }
 
-        $type = $this->receiverType($read['recv'], $ast, $uses, $namespace, $call);
+        $type = ReceiverTypeResolver::resolve($read['recv'], $ast, $uses, $namespace, $call);
 
         if ($type === null) {
             return null;
@@ -564,7 +566,7 @@ SCRIPTURE;
 
             $this->callerCache[$path] = $ast === null
                 ? false
-                : [$ast, $this->fileUses($ast), $this->getNamespace($ast)];
+                : [$ast, FileImports::of($ast), $this->getNamespace($ast)];
         }
 
         return $this->callerCache[$path];
@@ -635,7 +637,7 @@ SCRIPTURE;
             return null;
         }
 
-        $fn = $this->enclosingFunction($context, $ast);
+        $fn = ReceiverTypeResolver::enclosingFunction($context, $ast);
 
         if ($fn === null) {
             return null;
@@ -709,7 +711,7 @@ SCRIPTURE;
      */
     private function resolve(array $read, string $family, Node $site, array $ast, array $uses, ?string $namespace, string $content, bool $autoFixable): ?array
     {
-        $type = $this->receiverType($read['recv'], $ast, $uses, $namespace, $site);
+        $type = ReceiverTypeResolver::resolve($read['recv'], $ast, $uses, $namespace, $site);
 
         if ($type === null) {
             return null;
@@ -841,7 +843,7 @@ SCRIPTURE;
         }
 
         $namespace = $this->getNamespace($ast);
-        $uses = $this->fileUses($ast);
+        $uses = FileImports::of($ast);
         $finder = new NodeFinder;
         $edits = [];
         $penance = [];
@@ -856,7 +858,7 @@ SCRIPTURE;
                 continue;
             }
 
-            $type = $this->receiverType($read['recv'], $ast, $uses, $namespace, $node);
+            $type = ReceiverTypeResolver::resolve($read['recv'], $ast, $uses, $namespace, $node);
 
             if ($type === null) {
                 continue;
@@ -936,156 +938,5 @@ SCRIPTURE;
         return $ra !== null && $rb !== null
             && $ra['key'] === $rb['key']
             && $ra['getter'] === $rb['getter'];
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function enclosingFunction(Node $node, array $ast): ?Node\FunctionLike
-    {
-        $pos = (int) $node->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-        $finder = new NodeFinder;
-
-        foreach (array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-        ) as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start <= $pos && (int) $fn->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $fn;
-                $bestStart = $start;
-            }
-        }
-
-        return $best;
-    }
-
-    /**
-     * The resolved FQCN of a call receiver — a typed param `$x`, or a typed
-     * `$this->prop` — else null (an unresolved or chained receiver is a LEAVE).
-     *
-     * @param  array<Node>  $ast
-     * @param  array<string, string>  $uses
-     */
-    private function receiverType(Expr $recv, array $ast, array $uses, ?string $namespace, Node $context): ?string
-    {
-        if ($recv instanceof Expr\Variable && is_string($recv->name)) {
-            $type = $this->paramTypeInScope($recv->name, $context, $ast);
-
-            return $type !== null ? ltrim(NameResolver::resolve($type, $uses, $namespace), '\\') : null;
-        }
-
-        if ($recv instanceof Expr\PropertyFetch
-            && $recv->var instanceof Expr\Variable && $recv->var->name === 'this'
-            && $recv->name instanceof Node\Identifier
-        ) {
-            $class = $this->enclosingClass($context, $ast);
-            $type = $class !== null ? $this->propertyType($class, $recv->name->toString()) : null;
-
-            return $type !== null ? ltrim(NameResolver::resolve($type, $uses, $namespace), '\\') : null;
-        }
-
-        return null;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function paramTypeInScope(string $name, Node $context, array $ast): ?string
-    {
-        $pos = (int) $context->getStartFilePos();
-        $finder = new NodeFinder;
-        $best = null;
-        $bestStart = -1;
-
-        foreach (array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-        ) as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
-                continue;
-            }
-
-            foreach ($fn->params as $param) {
-                if ($param->var instanceof Expr\Variable && $param->var->name === $name
-                    && $param->type instanceof Node\Name
-                ) {
-                    $best = $param->type->toString();
-                    $bestStart = $start;
-                }
-            }
-        }
-
-        return $best;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function enclosingClass(Node $node, array $ast): ?Node\Stmt\Class_
-    {
-        $pos = (int) $node->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            $start = (int) $class->getStartFilePos();
-
-            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $class;
-                $bestStart = $start;
-            }
-        }
-
-        return $best;
-    }
-
-    private function propertyType(Node\Stmt\Class_ $class, string $property): ?string
-    {
-        foreach ($class->getProperties() as $prop) {
-            foreach ($prop->props as $declared) {
-                if ($declared->name->toString() === $property && $prop->type instanceof Node\Name) {
-                    return $prop->type->toString();
-                }
-            }
-        }
-
-        $ctor = $class->getMethod('__construct');
-
-        if ($ctor !== null) {
-            foreach ($ctor->params as $param) {
-                if ($param->flags !== 0 && $param->var instanceof Expr\Variable
-                    && $param->var->name === $property && $param->type instanceof Node\Name
-                ) {
-                    return $param->type->toString();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param  array<Node>  $ast
-     * @return array<string, string>
-     */
-    private function fileUses(array $ast): array
-    {
-        $uses = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
     }
 }
