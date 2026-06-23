@@ -33,6 +33,29 @@ class PreferEmptyOverNullProphetTest extends TestCase
         $this->assertCount(1, $judgment->warnings);
     }
 
+    public function test_does_not_flag_struct_shaped_array_return(): void
+    {
+        // A struct/tuple `array{…}|null` (RegexMatcher::matchFirst) has NO empty
+        // identity — `[]` is not a valid value and null means "no match". Steering
+        // it to `[]` is wrong, so it must be exempt.
+        $judgment = $this->judge(
+            'class A { /** @return array{match: string, offset: int}|null */ public function matchFirst(): ?array { return null; } }'
+        );
+
+        $this->assertCount(0, $judgment->warnings, 'a struct-shaped array{…} return is not steered to []');
+    }
+
+    public function test_still_flags_collection_shaped_array_docblock(): void
+    {
+        // `array<…>` / `list<…>` are collections (an empty instance IS valid) —
+        // the array{…} exemption must not leak to them.
+        $judgment = $this->judge(
+            'class A { /** @return array<int, string>|null */ public function rows(): ?array { return null; } }'
+        );
+
+        $this->assertCount(1, $judgment->warnings, 'a list/map-shaped array is still steered to []');
+    }
+
     public function test_flags_nullable_collection_property(): void
     {
         $judgment = $this->judge('class A { public Collection | null $items = null; }');
