@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Profiles;
 
+use JesseGall\CodeCommandments\Support\CompareSelf;
+
 /**
  * What a bare `judge` (no explicit scope flag) looks at under a given profile.
  * Also the scope the profile's git gate judges against.
@@ -17,6 +19,8 @@ namespace JesseGall\CodeCommandments\Support\Profiles;
  */
 enum JudgeScope: string
 {
+    use CompareSelf;
+
     /** No profile-implied scope — a bare `judge` scans the full scroll. */
     case None = 'none';
 

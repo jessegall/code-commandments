@@ -183,7 +183,7 @@ HOOK;
             // start; a Full briefing ADDS the scripture (the rules + configured prophets).
             $sessionStart = [$run('profile --brief')];
 
-            if ($opts->briefing === Briefing::Full) {
+            if (Briefing::Full->equals($opts->briefing)) {
                 $sessionStart[] = $run('scripture');
             }
 

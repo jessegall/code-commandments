@@ -128,7 +128,7 @@ final class RoleInference
      */
     public function isStore(): bool
     {
-        return $this->archetype === Archetype::StoreRegistry;
+        return Archetype::StoreRegistry->equals($this->archetype);
     }
 
     /**
@@ -138,7 +138,7 @@ final class RoleInference
      */
     public function isSet(): bool
     {
-        return $this->archetype === Archetype::SetCollection;
+        return Archetype::SetCollection->equals($this->archetype);
     }
 
     /** The detected keyed store/memo property name, or null. */
