@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\EnumInstanceResolver;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use ReflectionClass;
 
 /**
@@ -167,7 +168,7 @@ SCRIPTURE;
         }
 
         $finder = new NodeFinder;
-        $uses = $this->extractUses($ast, $finder);
+        $uses = FileImports::of($ast);
         $namespace = $this->extractNamespace($ast, $finder);
         $methods = $this->anyMethods();
         $traitFqcn = ltrim((string) $this->config('trait', self::DEFAULT_TRAIT), '\\');
@@ -290,7 +291,7 @@ SCRIPTURE;
         $node = $this->classLikeNodeFor($enumFqcn, $ast, $finder);
 
         if ($node !== null) {
-            $uses = $this->extractUses($ast, $finder);
+            $uses = FileImports::of($ast);
             $namespace = $this->extractNamespace($ast, $finder);
 
             foreach ($node->getTraitUses() as $traitUse) {
@@ -404,19 +405,6 @@ SCRIPTURE;
      * @param  array<Node>  $ast
      * @return array<string,string>  alias => FQCN
      */
-    private function extractUses(array $ast, NodeFinder $finder): array
-    {
-        $uses = [];
-
-        foreach ($finder->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
-    }
-
     /**
      * @param  array<Node>  $ast
      */

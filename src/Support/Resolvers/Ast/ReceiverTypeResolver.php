@@ -48,41 +48,39 @@ final class ReceiverTypeResolver
         return null;
     }
 
+    /** Function-like node kinds, for the enclosing-scope lookups. */
+    private const FUNCTION_LIKE = [Node\Stmt\ClassMethod::class, Node\Stmt\Function_::class, Expr\Closure::class];
+
     /**
-     * The declared type name of parameter $name in the function enclosing
-     * $context (the innermost match), or null.
+     * The declared type name of parameter $name in the innermost function that
+     * encloses $context AND declares it (handles a method param used inside a
+     * nested closure), or null.
      *
      * @param  array<Node>  $ast
      */
     public static function paramTypeInScope(string $name, Node $context, array $ast): ?string
     {
-        $pos = (int) $context->getStartFilePos();
-        $finder = new NodeFinder;
-        $best = null;
-        $bestStart = -1;
-
-        foreach (array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-        ) as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
-                continue;
+        $fn = self::innermost($ast, $context, self::FUNCTION_LIKE, static function (Node $fn) use ($name): bool {
+            foreach ($fn->params as $param) {
+                if ($param->var instanceof Expr\Variable && $param->var->name === $name && $param->type instanceof Node\Name) {
+                    return true;
+                }
             }
 
-            foreach ($fn->params as $param) {
-                if ($param->var instanceof Expr\Variable && $param->var->name === $name
-                    && $param->type instanceof Node\Name
-                ) {
-                    $best = $param->type->toString();
-                    $bestStart = $start;
-                }
+            return false;
+        });
+
+        if ($fn === null) {
+            return null;
+        }
+
+        foreach ($fn->params as $param) {
+            if ($param->var instanceof Expr\Variable && $param->var->name === $name && $param->type instanceof Node\Name) {
+                return $param->type->toString();
             }
         }
 
-        return $best;
+        return null;
     }
 
     /**
@@ -92,20 +90,9 @@ final class ReceiverTypeResolver
      */
     public static function enclosingClass(Node $node, array $ast): ?Node\Stmt\Class_
     {
-        $pos = (int) $node->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
+        $class = self::innermost($ast, $node, [Node\Stmt\Class_::class]);
 
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
-            $start = (int) $class->getStartFilePos();
-
-            if ($start <= $pos && (int) $class->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $class;
-                $bestStart = $start;
-            }
-        }
-
-        return $best;
+        return $class instanceof Node\Stmt\Class_ ? $class : null;
     }
 
     /**
@@ -116,21 +103,37 @@ final class ReceiverTypeResolver
      */
     public static function enclosingFunction(Node $node, array $ast): ?Node\FunctionLike
     {
+        $fn = self::innermost($ast, $node, self::FUNCTION_LIKE);
+
+        return $fn instanceof Node\FunctionLike ? $fn : null;
+    }
+
+    /**
+     * The innermost node of one of $types whose source range contains $node,
+     * optionally constrained by $accept — the one shared "walk enclosing scopes"
+     * loop behind the lookups above.
+     *
+     * @param  array<Node>  $ast
+     * @param  list<class-string<Node>>  $types
+     * @param  (callable(Node): bool)|null  $accept
+     */
+    private static function innermost(array $ast, Node $node, array $types, ?callable $accept = null): ?Node
+    {
         $pos = (int) $node->getStartFilePos();
+        $finder = new NodeFinder;
         $best = null;
         $bestStart = -1;
-        $finder = new NodeFinder;
 
-        foreach (array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-        ) as $fn) {
-            $start = (int) $fn->getStartFilePos();
+        foreach ($types as $type) {
+            foreach ($finder->findInstanceOf($ast, $type) as $candidate) {
+                $start = (int) $candidate->getStartFilePos();
 
-            if ($start <= $pos && (int) $fn->getEndFilePos() >= $pos && $start > $bestStart) {
-                $best = $fn;
-                $bestStart = $start;
+                if ($start <= $pos && (int) $candidate->getEndFilePos() >= $pos && $start > $bestStart
+                    && ($accept === null || $accept($candidate))
+                ) {
+                    $best = $candidate;
+                    $bestStart = $start;
+                }
             }
         }
 
