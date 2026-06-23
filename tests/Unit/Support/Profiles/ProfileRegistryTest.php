@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Unit\Support\Profiles;
 
 use JesseGall\CodeCommandments\Support\Profiles\GitGateStage;
+use JesseGall\CodeCommandments\Support\Profiles\Phase;
 use JesseGall\CodeCommandments\Support\Profiles\JudgeScope;
 use JesseGall\CodeCommandments\Support\Profiles\ProfileRegistry;
 use PHPUnit\Framework\TestCase;
@@ -62,7 +63,8 @@ class ProfileRegistryTest extends TestCase
         $this->assertSame(JudgeScope::None, $o->scope, 'penance audits the whole codebase');
         $this->assertSame(GitGateStage::PrePush, $o->gate, 'no commit gate; push-when-clean');
         $this->assertFalse($o->perPhaseNudges);
-        $this->assertSame('penance.sh', $o->stopHook, 'penance keeps going until righteous');
+        $this->assertSame(Phase::UntilClean, $o->behaviour->judge, 'penance judges the whole codebase until clean');
+        $this->assertTrue($o->hasStopHook(), 'penance keeps going until righteous');
     }
 
     public function test_disabled_is_inert(): void

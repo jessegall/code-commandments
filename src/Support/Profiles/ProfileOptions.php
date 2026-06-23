@@ -7,43 +7,51 @@ namespace JesseGall\CodeCommandments\Support\Profiles;
 /**
  * The behavioural knobs of a {@see Profile}. The options ARE the behaviour: the
  * {@see ProfileService} derives exactly which git hooks, Claude hooks, briefing,
- * and CLAUDE.md section to install from these flags, and {@see \JesseGall\CodeCommandments\Support\JudgeService}
+ * and CLAUDE.md section to install from these, and {@see \JesseGall\CodeCommandments\Support\JudgeService}
  * reads them to pick scope and gate severity.
+ *
+ * The cadence lives in {@see ProfileBehaviour} ({@see self::$behaviour}) — WHEN
+ * the profile judges and tests — and the git gate placement + per-phase nudge
+ * are DERIVED from it (so a profile declares its cadence once and the gate, the
+ * nudge, and the generated Stop hook all follow). The Stop script itself is
+ * GENERATED from the behaviour by {@see StopHookBuilder} — the package ships no
+ * per-profile Stop stub.
  *
  * Immutable value object (the package idiom — cf. {@see \JesseGall\CodeCommandments\Results\RepentInput}).
  */
 final class ProfileOptions
 {
+    /** Where the blocking git gate sits — DERIVED from {@see $behaviour}. */
+    public readonly GitGateStage $gate;
+
+    /** Whether the per-phase (per-commit) nudge installs — DERIVED from {@see $behaviour}. */
+    public readonly bool $perPhaseNudges;
+
     public function __construct(
         /** false => warnings are never emitted, counted, or seen-marked (sins-only). */
         public readonly bool $allowWarnings,
         /** What a bare `judge` looks at, and what the git gate judges against. */
         public readonly JudgeScope $scope,
-        /** Where the blocking git gate sits (if anywhere). */
-        public readonly GitGateStage $gate,
+        /** WHEN the profile judges + tests — the cadence the gate/nudge/Stop hook derive from. */
+        public readonly ProfileBehaviour $behaviour,
         /** Master switch for ALL agent awareness (session-start briefing, CLAUDE.md section, drift hook). */
         public readonly bool $briefAgent,
         /** Which briefing body to inject (only read when $briefAgent). */
         public readonly Briefing $briefing,
-        /** Install the per-phase nudges: stop-judge + phase-committed + post-commit reminder. */
-        public readonly bool $perPhaseNudges,
         /** Install the post-commit hook that clears ordinary absolutions. */
         public readonly bool $postCommitReset,
         /** Install the pre-push hook that clears until-push absolutions. */
         public readonly bool $prePushReset,
-        /**
-         * The profile's dedicated Stop hook script (a basename under
-         * `stubs/hooks/stop/`, e.g. 'grind.sh'), or null for a profile with no
-         * Stop hook (disabled). Every active profile owns its OWN complete Stop
-         * script — grind drives the plan and NEVER judges between phases;
-         * phased/sins-only gate on `judge --next --git`; penance on
-         * `judge --next`. It is copied verbatim onto the FIXED
-         * `.claude/hooks/stop-hook.sh` that settings.json wires, so switching
-         * BETWEEN active profiles only swaps this file's contents — the settings
-         * entry never changes. Switching to a null-stopHook profile removes it.
-         */
-        public readonly ?string $stopHook = null,
-    ) {}
+    ) {
+        $this->gate = $behaviour->gate();
+        $this->perPhaseNudges = $behaviour->nudgesEachPhase();
+    }
+
+    /** Whether this profile installs a Stop (keep-going) hook — disabled does not. */
+    public function hasStopHook(): bool
+    {
+        return $this->behaviour->hasStopHook();
+    }
 
     /**
      * The blocking severity is DERIVED, not a separate flag: wherever a profile

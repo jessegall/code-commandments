@@ -26,13 +26,13 @@ final class SinsOnlyProfile extends Profile
         return new ProfileOptions(
             allowWarnings: false,
             scope: JudgeScope::Staged,
-            gate: GitGateStage::PreCommit,
+            // Phased cadence (judge + test each phase) — warnings suppressed, so
+            // only sins surface and gate.
+            behaviour: new ProfileBehaviour(judge: Phase::EachPhase, test: Phase::EachPhase),
             briefAgent: true,
             briefing: Briefing::Full,
-            perPhaseNudges: true,
             postCommitReset: true,
             prePushReset: true,
-            stopHook: 'sins-only.sh',
         );
     }
 }

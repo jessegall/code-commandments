@@ -29,13 +29,14 @@ final class PenanceProfile extends Profile
         return new ProfileOptions(
             allowWarnings: true,
             scope: JudgeScope::None,
-            gate: GitGateStage::PrePush,
+            // Cleanup: judge the WHOLE codebase every Stop until zero; run the
+            // tests once before pushing. No commit gate (commit freely); the
+            // pre-push gate blocks while findings remain.
+            behaviour: new ProfileBehaviour(judge: Phase::UntilClean, test: Phase::AtEnd),
             briefAgent: true,
             briefing: Briefing::Full,
-            perPhaseNudges: false,
             postCommitReset: false,
             prePushReset: true,
-            stopHook: 'penance.sh',
         );
     }
 }

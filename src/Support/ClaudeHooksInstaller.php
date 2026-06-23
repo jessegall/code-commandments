@@ -246,7 +246,7 @@ HOOK;
         // contents on switch — so the settings entry never changes between active
         // profiles (no teardown). A profile with no Stop hook (disabled) wires
         // nothing here, so switching to it removes the entry.
-        if ($opts->stopHook !== null) {
+        if ($opts->hasStopHook()) {
             $config['Stop'] = [
                 [
                     'hooks' => [

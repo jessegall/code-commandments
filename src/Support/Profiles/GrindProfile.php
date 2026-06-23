@@ -32,13 +32,13 @@ final class GrindProfile extends Profile
         return new ProfileOptions(
             allowWarnings: true,
             scope: JudgeScope::Branch,
-            gate: GitGateStage::PrePush,
+            // Heads-down: judge AND tests deferred to ONE reckon at the end (the
+            // pre-push gate) — never between phases.
+            behaviour: new ProfileBehaviour(judge: Phase::AtEnd, test: Phase::AtEnd),
             briefAgent: true,
             briefing: Briefing::Short,
-            perPhaseNudges: false,
             postCommitReset: false,
             prePushReset: true,
-            stopHook: 'grind.sh',
         );
     }
 }
