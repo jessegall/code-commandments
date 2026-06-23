@@ -82,6 +82,33 @@ class PreferInterfaceOverTypeListProphetTest extends TestCase
         $this->assertTrue($this->judge("public function f(string \$p): bool { return str_ends_with(\$p, '.php') || str_ends_with(\$p, '.js'); }")->isRighteous());
     }
 
+    public function test_flags_an_instanceof_or_chain(): void
+    {
+        $j = $this->judge("public function f(\$x): bool { return \$x instanceof Collection || \$x instanceof LazyCollection; }");
+
+        $this->assertCount(1, $j->warnings);
+        $this->assertStringContainsString('instanceof', $j->warnings[0]->message);
+    }
+
+    public function test_flags_an_instanceof_and_chain(): void
+    {
+        // && intersection — "is iterable AND data" — is a type classification too.
+        $j = $this->judge("public function f(\$x): bool { return \$x instanceof Iterable_ && \$x instanceof Data; }");
+
+        $this->assertCount(1, $j->warnings);
+    }
+
+    public function test_leaves_a_single_instanceof(): void
+    {
+        $this->assertTrue($this->judge("public function f(\$x): bool { return \$x instanceof Collection; }")->isRighteous());
+    }
+
+    public function test_leaves_instanceof_chain_of_one_type(): void
+    {
+        // Two subjects, ONE type — not a type-set classification.
+        $this->assertTrue($this->judge("public function f(\$a, \$b): bool { return \$a instanceof Closure || \$b instanceof Closure; }")->isRighteous());
+    }
+
     public function test_leaves_non_type_value_lists(): void
     {
         // extensions, method names, lowercase predicates — legitimate data.

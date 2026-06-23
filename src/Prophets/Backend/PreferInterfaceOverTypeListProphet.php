@@ -95,7 +95,14 @@ WHAT FIRES — any of these classifications by type NAME:
      elements: string literals (`'Bag'`, `'\Ns\Foo'`) OR `Foo::class` references;
   2. a set op — `array_intersect`/`array_diff`(`_key`) — against such a list;
   3. a boolean chain of two or more `str_ends_with`/`str_starts_with` on
-     type-name-shaped affixes (`str_ends_with($n, 'Bag') || str_ends_with($n, 'Data')`).
+     type-name-shaped affixes (`str_ends_with($n, 'Bag') || str_ends_with($n, 'Data')`);
+  4. a boolean `||`/`&&` chain of `instanceof` against two or more DISTINCT types
+     (`$x instanceof A || $x instanceof B`) — a runtime version of the same set.
+
+The reusable home for ALL of these is a Classifier (`commandments scaffold`): it
+takes an FQCN string OR an object, checks the shared interface(s) (+ a vendor
+fallback), and COMPOSES — `Classifier::allOf($iterable, $data)`,
+`$bag->or($collection)` — so the set is named, shared, and edited in one place.
 
 WHAT DOES NOT — a list of non-type values (extensions, keys, method names,
 lowercase predicates like `is_array`), an associative lookup/metadata map (a
@@ -140,7 +147,24 @@ SCRIPTURE;
             }
         }
 
-        // 3: a boolean chain of >= 2 suffix/prefix tests on type names (the
+        // 3: a boolean `||` chain of `instanceof` against >= 2 DISTINCT types —
+        // `$x instanceof A || $x instanceof B` — a runtime "is it one of these
+        // kinds?" that a Classifier makes reusable, named, and edited in one place.
+        foreach ($this->instanceofChains($ast, $finder) as $chain) {
+            $first = $chain['nodes'][0];
+            $warnings[] = $this->warningAt(
+                $first->getStartLine(),
+                sprintf(
+                    'A chain of `instanceof` against %d types (%s) classifies by a hardcoded type set — move it to a Classifier so the set is shared, named, and edited in ONE place: `(new XClassifier)->matches($x)` (test the interface they share, e.g. `is_a()` / a marker). Inline `instanceof` chains get copy-pasted and drift.',
+                    count($chain['types']),
+                    $this->renderList($chain['types']),
+                ),
+                $this->lineSnippet($content, $first->getStartLine()),
+                'instanceof-chain:' . implode(',', array_slice($chain['types'], 0, 3)),
+            );
+        }
+
+        // 4: a boolean chain of >= 2 suffix/prefix tests on type names (the
         // `str_ends_with($n, 'Bag') || str_ends_with($n, 'Data')` smell), grouped
         // by the function they live in so one chain is one finding.
         foreach ($this->affixChains($ast, $finder) as $affixes) {
@@ -157,6 +181,72 @@ SCRIPTURE;
         }
 
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Outermost boolean (`||` / `&&`) expressions that test `instanceof` against
+     * two or more DISTINCT types — `$x instanceof A || $x instanceof B`,
+     * `$x instanceof Iterable && $x instanceof Data`. One chain = one finding.
+     *
+     * @param  array<Node>  $ast
+     * @return list<array{nodes: list<Expr\Instanceof_>, types: list<string>}>
+     */
+    private function instanceofChains(array $ast, NodeFinder $finder): array
+    {
+        $booleans = array_merge(
+            $finder->findInstanceOf($ast, Expr\BinaryOp\BooleanOr::class),
+            $finder->findInstanceOf($ast, Expr\BinaryOp\BooleanAnd::class),
+        );
+
+        $chains = [];
+
+        foreach ($booleans as $bool) {
+            if ($this->nestedInAnother($bool, $booleans)) {
+                continue; // only the outermost node of a chain — one finding
+            }
+
+            $nodes = [];
+            $types = [];
+
+            foreach ($finder->findInstanceOf([$bool], Expr\Instanceof_::class) as $check) {
+                if ($check->class instanceof Node\Name) {
+                    $nodes[] = $check;
+                    $types[$check->class->toString()] = true;
+                }
+            }
+
+            if (count($types) >= 2) {
+                $chains[] = ['nodes' => $nodes, 'types' => array_keys($types)];
+            }
+        }
+
+        return $chains;
+    }
+
+    /**
+     * Whether $node's source range is STRICTLY inside another candidate's range.
+     *
+     * @param  list<Node>  $candidates
+     */
+    private function nestedInAnother(Node $node, array $candidates): bool
+    {
+        $start = (int) $node->getStartFilePos();
+        $end = (int) $node->getEndFilePos();
+
+        foreach ($candidates as $other) {
+            if ($other === $node) {
+                continue;
+            }
+
+            $oStart = (int) $other->getStartFilePos();
+            $oEnd = (int) $other->getEndFilePos();
+
+            if ($oStart <= $start && $oEnd >= $end && ($oStart < $start || $oEnd > $end)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
