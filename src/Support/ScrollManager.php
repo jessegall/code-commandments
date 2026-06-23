@@ -563,18 +563,11 @@ class ScrollManager
             return $out;
         };
 
-        // Parallelise only the HEAVY files (a full single-file prophet pass — the
-        // expensive, cold-scan work). Files needing just the cheap cross-file
-        // re-run (single already cached — the incremental/penance case) are judged
-        // in-process: their work is smaller than the fork overhead.
-        $heavy = array_values(array_filter($missFiles, static fn (string $f): bool => $plan[$f]['runSingle']));
-        $light = array_values(array_filter($missFiles, static fn (string $f): bool => ! $plan[$f]['runSingle']));
-
-        $worker = ForkPool::map($heavy, $this->workerCount(), $task);
-
-        foreach ($light as $filePath) {
-            $worker[$filePath] = $task([$filePath])[$filePath] ?? null;
-        }
+        // Parallelise ALL the per-file work (single AND cross prophet passes) — both
+        // are prophet-execution-bound (each prophet re-parses the file), which is
+        // where the time goes; the index build itself is cheap. ForkPool falls back
+        // to in-process when there's a single file or forking is unavailable.
+        $worker = ForkPool::map($missFiles, $this->workerCount(), $task);
 
         foreach ($missFiles as $filePath) {
             // Safety net: a file a worker failed to return is judged in the parent,
