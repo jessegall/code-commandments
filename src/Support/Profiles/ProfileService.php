@@ -316,7 +316,7 @@ final class ProfileService
     private function ensureProfileSkill(): void
     {
         $namespace = is_array($this->config['scaffold'] ?? null)
-            ? (string) ($this->config['scaffold']['namespace'] ?? 'App\\Support')
+            ? T_String::coalesce($this->config['scaffold']['namespace'] ?? null, 'App\\Support')
             : 'App\\Support';
 
         $except = [];
@@ -403,7 +403,7 @@ final class ProfileService
 
         $gate = match (true) {
             $o->gate === GitGateStage::None => 'No git gate — nothing blocks commits or pushes.',
-            $o->gate === GitGateStage::PreCommit => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : '') . ' on staged files.',
+            $o->gate === GitGateStage::PreCommit => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : T_String::empty()) . ' on staged files.',
             $isPenance => 'NO commit gate — commit progress freely. The pre-push gate blocks pushing while ANY sins remain.',
             default => 'Pre-push gate blocks pushing while the branch has sins (no commit gate; warnings shown, not blocked).',
         };

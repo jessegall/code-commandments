@@ -15,14 +15,16 @@ use JesseGall\PhpTypes\T_String;
  */
 final class VueContext
 {
+    /**
+     * @param array{content: string, start: int, end: int}|null $template
+     * @param array{content: string, start: int, end: int, lang: string|null, setup: bool}|null $script
+     * @param array<MatchResult> $matches
+     */
     public function __construct(
         public readonly string $filePath,
         public readonly string $content,
-        /** @var array{content: string, start: int, end: int}|null */
         public ?array $template = null,
-        /** @var array{content: string, start: int, end: int, lang: string|null, setup: bool}|null */
         public ?array $script = null,
-        /** @var array<MatchResult> */
         public array $matches = [],
     ) {}
 

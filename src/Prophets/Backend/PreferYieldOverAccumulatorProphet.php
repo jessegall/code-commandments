@@ -137,6 +137,14 @@ class PreferYieldOverAccumulatorProphet extends PhpCommandment implements NeedsC
 
     private ?CodebaseIndex $index = null;
 
+    /**
+     * Class nodes of the file under judgment, keyed by short name — set per-judge
+     * so a same-file collector class can be inspected by AST.
+     *
+     * @var array<string, Node\Stmt\Class_>
+     */
+    private array $sameFileIndex = [];
+
     public function setCodebaseIndex(CodebaseIndex $index): void
     {
         $this->index = $index;
@@ -1061,14 +1069,6 @@ SCRIPTURE;
 
         return null;
     }
-
-    /**
-     * Class nodes of the file under judgment, keyed by short name — set per-judge
-     * so a same-file collector class can be inspected by AST.
-     *
-     * @var array<string, Node\Stmt\Class_>
-     */
-    private array $sameFileIndex = [];
 
     private function returnTypeShort(?Node $type): ?string
     {

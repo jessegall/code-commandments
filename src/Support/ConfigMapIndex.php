@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The config-value flow resolver (#registry-from-config): indexes the data-driven
@@ -104,7 +105,7 @@ final class ConfigMapIndex
     private static function locateConfigDir(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_dir($dir . '/config') && is_file($dir . '/composer.json')) {

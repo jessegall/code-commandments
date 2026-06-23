@@ -14,10 +14,12 @@ namespace JesseGall\CodeCommandments\Results;
  */
 final class RootCauseHint
 {
+    /**
+     * @param class-string Fully-qualified cause prophet class. $causeClass
+     */
     public function __construct(
         /** Short class name of the matched cause prophet (for scripture pointers). */
         public readonly string $causeShort,
-        /** @var class-string Fully-qualified cause prophet class. */
         public readonly string $causeClass,
         /** One-line "why this absence is an invariant violation, not genuine". */
         public readonly string $reason,

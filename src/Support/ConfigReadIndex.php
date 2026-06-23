@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The declared config KEY TREE of a project — every dotted path a `config('...')`
@@ -129,7 +130,7 @@ final class ConfigReadIndex
     private static function locateConfigDir(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_dir($dir . '/config') && is_file($dir . '/composer.json')) {

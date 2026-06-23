@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Support;
 
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The security vocabulary for the taint prophets (#163 #6/#8): which expressions are
@@ -165,7 +166,7 @@ final class TaintCatalog
             $name = match (true) {
                 $call instanceof Node\Expr\FuncCall && $call->name instanceof Node\Name => strtolower($call->name->getLast()),
                 ($call instanceof Node\Expr\MethodCall || $call instanceof Node\Expr\StaticCall) && $call->name instanceof Node\Identifier => strtolower($call->name->toString()),
-                default => '',
+                default => T_String::empty(),
             };
 
             if (in_array($name, $names, true)) {

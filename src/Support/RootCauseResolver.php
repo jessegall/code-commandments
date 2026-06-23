@@ -12,6 +12,7 @@ use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
 use Throwable;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Symptom-side root-cause trigger. For a symptom finding whose root-cause
@@ -168,7 +169,7 @@ final class RootCauseResolver
      */
     private function causeLines(string $cause, string $filePath): array
     {
-        $key = $cause . "\0" . $filePath;
+        $key = $cause . T_String::NULL_BYTE . $filePath;
 
         if (isset($this->causeLinesCache[$key])) {
             return $this->causeLinesCache[$key];

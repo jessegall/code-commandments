@@ -14,20 +14,22 @@ use PhpParser\Node;
  */
 final class PhpContext
 {
+    /**
+     * @param array<Node\Stmt\Class_> $classes
+     * @param array<array{class: Node\Stmt\Class_, method: Node\Stmt\ClassMethod}> $methods
+     * @param array<array{class: Node\Stmt\Class_, method: Node\Stmt\ClassMethod, param: Node\Param, type: string, fqcn: string, name: string}> $parameters
+     * @param array<string, string> Short name => FQCN $useStatements
+     * @param array<MatchResult> $matches
+     */
     public function __construct(
         public readonly string $filePath,
         public readonly string $content,
         public ?array $ast = null,
-        /** @var array<Node\Stmt\Class_> */
         public array $classes = [],
-        /** @var array<array{class: Node\Stmt\Class_, method: Node\Stmt\ClassMethod}> */
         public array $methods = [],
-        /** @var array<array{class: Node\Stmt\Class_, method: Node\Stmt\ClassMethod, param: Node\Param, type: string, fqcn: string, name: string}> */
         public array $parameters = [],
-        /** @var array<string, string> Short name => FQCN */
         public array $useStatements = [],
         public ?string $namespace = null,
-        /** @var array<MatchResult> */
         public array $matches = [],
     ) {}
 
