@@ -45,13 +45,19 @@ class SyncCommand extends Command
         $versionResolver = new VersionResolver();
         $basePath = base_path();
 
-        if ($after === 'previous') {
+        // Default (no --after) AND explicit `previous`: only add prophets
+        // introduced AFTER the last synced version, so a sync NEVER re-adds a
+        // prophet the consumer intentionally removed (they all carry
+        // #[IntroducedIn]). Only the very first sync (no recorded version) adds
+        // everything. Pass --after=0.0.0 for a deliberate full re-sync.
+        if ($after === null || $after === 'previous') {
+            $explicit = $after === 'previous';
             $after = $versionResolver->previousSyncedVersion($basePath);
 
-            if ($after === null) {
+            if ($after === null && $explicit) {
                 $this->warn('No previous sync recorded — falling back to a full sync.');
-            } else {
-                $this->info("Using previous synced version: {$after}");
+            } elseif ($after !== null) {
+                $this->info("Adding only prophets introduced after the last synced version: {$after}");
             }
         }
 
