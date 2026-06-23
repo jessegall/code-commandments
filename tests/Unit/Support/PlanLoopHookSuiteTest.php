@@ -56,7 +56,8 @@ class PlanLoopHookSuiteTest extends TestCase
     {
         $this->assertSame('sh .claude/hooks/plan-session-reset.sh', PlanLoopHookSuite::sessionStartEntries()[0]['hooks'][0]['command']);
         $this->assertSame('sh .claude/hooks/guard-plan-marker.sh', PlanLoopHookSuite::preToolUseEntries()[0]['hooks'][0]['command']);
-        $this->assertSame('sh .claude/hooks/keep-going.sh', PlanLoopHookSuite::stopEntry()['hooks'][0]['command']);
+        // The Stop driver is no longer the suite's own hook — it is the active
+        // profile's stop-hook.sh (which reads the plan-active marker the suite arms).
 
         $post = PlanLoopHookSuite::postToolUseEntries();
         $this->assertSame(['ExitPlanMode', 'Bash'], array_map(static fn (array $e): string => $e['matcher'], $post));
@@ -70,7 +71,6 @@ class PlanLoopHookSuiteTest extends TestCase
         $wired = [
             PlanLoopHookSuite::sessionStartEntries()[0]['hooks'][0]['command'],
             PlanLoopHookSuite::preToolUseEntries()[0]['hooks'][0]['command'],
-            PlanLoopHookSuite::stopEntry()['hooks'][0]['command'],
             ...array_map(static fn (array $e): string => $e['hooks'][0]['command'], PlanLoopHookSuite::postToolUseEntries()),
         ];
 

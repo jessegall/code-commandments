@@ -46,7 +46,7 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $this->assertContains('UserPromptSubmit', $events);
         // grind keeps going (Stop = keep-going hook) but has no per-phase PostToolUse nudge.
         $this->assertContains('Stop', $events);
-        $this->assertStringContainsString('profile-keep-going.sh', json_encode($cfg['Stop']));
+        $this->assertStringContainsString('stop-hook.sh', json_encode($cfg['Stop']));
         $this->assertNotContains('PostToolUse', $events);
     }
 
@@ -78,7 +78,7 @@ class ClaudeHooksInstallerProfileTest extends TestCase
     {
         $cfg = $this->build('phased');
 
-        $this->assertStringContainsString('profile-keep-going.sh', json_encode($cfg['Stop'] ?? []));
+        $this->assertStringContainsString('stop-hook.sh', json_encode($cfg['Stop'] ?? []));
         // The old informational `judge --git` Stop is gone (keep-going judges + blocks).
         $this->assertStringNotContainsString('judge --git', json_encode($cfg['Stop'] ?? []));
     }
@@ -100,7 +100,7 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $cfg = $this->build('grind', planLoop: true);
 
         // The plan loop still drives to completion…
-        $this->assertStringContainsString('keep-going.sh', json_encode($cfg['Stop'] ?? []));
+        $this->assertStringContainsString('stop-hook.sh', json_encode($cfg['Stop'] ?? []));
         $this->assertStringContainsString('plan-approved.sh', json_encode($cfg['PostToolUse'] ?? []));
 
         // …but the per-commit JUDGE nudge (phase-committed) is gone, and there is

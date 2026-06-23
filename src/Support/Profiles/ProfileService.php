@@ -277,9 +277,14 @@ final class ProfileService
         // so it stays installed even under `disabled` (you still need a way back on).
         $this->ensureProfileSkill();
 
-        // The keep-going Stop hook script (wired in settings.json only when keepGoing).
-        if ($opts->keepGoing) {
-            ProfileKeepGoingHook::install($this->basePath);
+        // Install THIS profile's dedicated Stop hook onto the fixed
+        // .claude/hooks/stop-hook.sh — switching between active profiles just
+        // swaps the file, so the settings entry never changes. A profile with no
+        // Stop hook (disabled) removes the script.
+        if ($opts->stopHook !== null) {
+            StopHookInstaller::install($this->basePath, $opts->stopHook);
+        } else {
+            @unlink($this->basePath . '/.claude/hooks/' . StopHookInstaller::INSTALLED_NAME);
         }
 
         // Briefing is delivered by the local session-start hook (scripture /

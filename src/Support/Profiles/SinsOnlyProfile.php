@@ -32,7 +32,7 @@ final class SinsOnlyProfile extends Profile
             perPhaseNudges: true,
             postCommitReset: true,
             prePushReset: true,
-            keepGoing: true,
+            stopHook: 'sins-only.sh',
         );
     }
 }

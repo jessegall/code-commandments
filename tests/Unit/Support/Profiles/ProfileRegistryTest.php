@@ -62,7 +62,7 @@ class ProfileRegistryTest extends TestCase
         $this->assertSame(JudgeScope::None, $o->scope, 'penance audits the whole codebase');
         $this->assertSame(GitGateStage::PrePush, $o->gate, 'no commit gate; push-when-clean');
         $this->assertFalse($o->perPhaseNudges);
-        $this->assertTrue($o->keepGoing, 'penance keeps going until righteous');
+        $this->assertSame('penance.sh', $o->stopHook, 'penance keeps going until righteous');
     }
 
     public function test_disabled_is_inert(): void

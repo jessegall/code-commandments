@@ -32,11 +32,17 @@ final class ProfileOptions
         /** Install the pre-push hook that clears until-push absolutions. */
         public readonly bool $prePushReset,
         /**
-         * Install the keep-going Stop hook: block stopping until the profile's goal
-         * is met (grind: no branch sins; phased/sins-only: changes clean; penance:
-         * nothing left). Self-completing + capped, so it never hard-traps.
+         * The profile's dedicated Stop hook script (a basename under
+         * `stubs/hooks/stop/`, e.g. 'grind.sh'), or null for a profile with no
+         * Stop hook (disabled). Every active profile owns its OWN complete Stop
+         * script — grind drives the plan and NEVER judges between phases;
+         * phased/sins-only gate on `judge --next --git`; penance on
+         * `judge --next`. It is copied verbatim onto the FIXED
+         * `.claude/hooks/stop-hook.sh` that settings.json wires, so switching
+         * BETWEEN active profiles only swaps this file's contents — the settings
+         * entry never changes. Switching to a null-stopHook profile removes it.
          */
-        public readonly bool $keepGoing = false,
+        public readonly ?string $stopHook = null,
     ) {}
 
     /**
