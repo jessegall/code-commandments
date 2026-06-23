@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileAst;
 use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -121,6 +122,8 @@ SCRIPTURE;
         }
 
         $finder = new NodeFinder;
+        $file = FileAst::of($ast);
+        $exempt = $this->exemptPrefixes();
         $warnings = [];
 
         // 1 + 2: a membership / set-op test against a list of type names.
@@ -142,7 +145,7 @@ SCRIPTURE;
                 }
             }
 
-            if ($names !== null) {
+            if ($names !== null && ! $this->allExempt($names, $file, $exempt)) {
                 $warnings[] = $this->listWarning($call, $names, $content);
             }
         }
@@ -151,6 +154,10 @@ SCRIPTURE;
         // `$x instanceof A || $x instanceof B` — a runtime "is it one of these
         // kinds?" that a Classifier makes reusable, named, and edited in one place.
         foreach ($this->instanceofChains($ast, $finder) as $chain) {
+            if ($this->allExempt($chain['types'], $file, $exempt)) {
+                continue;
+            }
+
             $first = $chain['nodes'][0];
             $warnings[] = $this->warningAt(
                 $first->getStartLine(),
@@ -181,6 +188,56 @@ SCRIPTURE;
         }
 
         return $warnings === [] ? $this->righteous() : Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Configured exempt FQCN prefixes — a chain/list of types ALL under one of
+     * these is skipped (e.g. `PhpParser\Node` for an AST-heavy analyzer where
+     * `$n instanceof Stmt\X || $n instanceof Expr\Y` is normal, not a smell).
+     *
+     * @return list<string>
+     */
+    private function exemptPrefixes(): array
+    {
+        $exempt = $this->config('exempt', []);
+
+        return is_array($exempt)
+            ? array_values(array_map(static fn ($p): string => ltrim((string) $p, '\\'), $exempt))
+            : [];
+    }
+
+    /**
+     * Whether EVERY $name (resolved to its FQCN via the file's imports) sits
+     * under a configured exempt prefix — then the classification is on exempt
+     * types and is not flagged. Empty exempt list never exempts.
+     *
+     * @param  list<string>  $names
+     * @param  list<string>  $exempt
+     */
+    private function allExempt(array $names, FileAst $file, array $exempt): bool
+    {
+        if ($exempt === []) {
+            return false;
+        }
+
+        foreach ($names as $name) {
+            $fqcn = ltrim($file->resolveType($name), '\\');
+
+            $matched = false;
+
+            foreach ($exempt as $prefix) {
+                if ($fqcn === $prefix || str_starts_with($fqcn, $prefix . '\\')) {
+                    $matched = true;
+                    break;
+                }
+            }
+
+            if (! $matched) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
