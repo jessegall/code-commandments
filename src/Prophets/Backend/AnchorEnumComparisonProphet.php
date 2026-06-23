@@ -190,7 +190,7 @@ SCRIPTURE;
 
             $enumFqcn = $this->resolveClassFqcn($call, $ast, $finder, $uses, $namespace);
 
-            if ($enumFqcn === null || ! $this->enumUsesTrait($enumFqcn, $traitFqcn, $ast, $finder)) {
+            if ($enumFqcn === null || ! $this->enumSupportsStaticSet($enumFqcn, $method, $traitFqcn, $ast, $finder)) {
                 continue;
             }
 
@@ -277,11 +277,15 @@ SCRIPTURE;
     }
 
     /**
-     * Whether $enumFqcn uses $traitFqcn — in-file AST first, then reflection.
+     * Whether $enumFqcn supports the static set call `$method` — i.e. it uses the
+     * configured CompareSelf trait, OR uses ANY trait that declares the CompareSelf
+     * contract for `$method` (`@method static … $method(mixed $value, …)`). The
+     * structural fallback means a consumer never has to duplicate the `trait`
+     * config just because its CompareSelf lives in a different namespace.
      *
      * @param  array<Node>  $ast
      */
-    private function enumUsesTrait(string $enumFqcn, string $traitFqcn, array $ast, NodeFinder $finder): bool
+    private function enumSupportsStaticSet(string $enumFqcn, string $method, string $traitFqcn, array $ast, NodeFinder $finder): bool
     {
         $node = $this->classLikeNodeFor($enumFqcn, $ast, $finder);
 
@@ -291,7 +295,9 @@ SCRIPTURE;
 
             foreach ($node->getTraitUses() as $traitUse) {
                 foreach ($traitUse->traits as $trait) {
-                    if (ltrim(NameResolver::resolve($trait->toString(), $uses, $namespace), '\\') === $traitFqcn) {
+                    $resolved = ltrim(NameResolver::resolve($trait->toString(), $uses, $namespace), '\\');
+
+                    if ($resolved === $traitFqcn || $this->traitDeclaresStaticSet($resolved, $method, $ast, $finder)) {
                         return true;
                     }
                 }
@@ -300,19 +306,61 @@ SCRIPTURE;
             return false;
         }
 
-        if (enum_exists($enumFqcn, autoload: true) || trait_exists($traitFqcn, autoload: true) && class_exists($enumFqcn, autoload: true)) {
-            try {
-                foreach ((new ReflectionClass($enumFqcn))->getTraitNames() as $used) {
-                    if (ltrim($used, '\\') === $traitFqcn) {
-                        return true;
-                    }
+        if (! enum_exists($enumFqcn, autoload: true) && ! class_exists($enumFqcn, autoload: true)) {
+            return false;
+        }
+
+        try {
+            foreach ((new ReflectionClass($enumFqcn))->getTraitNames() as $used) {
+                $used = ltrim($used, '\\');
+
+                if ($used === $traitFqcn || $this->traitDeclaresStaticSet($used, $method, $ast, $finder)) {
+                    return true;
                 }
-            } catch (\Throwable) {
-                return false;
             }
+        } catch (\Throwable) {
+            return false;
         }
 
         return false;
+    }
+
+    /**
+     * Whether a trait declares the CompareSelf static-set contract for $method:
+     * `@method static <ret> <method>(mixed $value, …)`. Read from the in-file AST
+     * node when the trait is declared here, else from reflection.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function traitDeclaresStaticSet(string $traitFqcn, string $method, array $ast, NodeFinder $finder): bool
+    {
+        $node = $this->classLikeNodeFor($traitFqcn, $ast, $finder);
+
+        if ($node instanceof Node\Stmt\Trait_) {
+            return $this->docDeclaresStaticSet($node->getDocComment()?->getText(), $method);
+        }
+
+        if (! trait_exists($traitFqcn, autoload: true)) {
+            return false;
+        }
+
+        try {
+            $doc = (new ReflectionClass($traitFqcn))->getDocComment();
+        } catch (\Throwable) {
+            return false;
+        }
+
+        return $this->docDeclaresStaticSet($doc === false ? null : $doc, $method);
+    }
+
+    private function docDeclaresStaticSet(?string $doc, string $method): bool
+    {
+        if ($doc === null || $doc === '') {
+            return false;
+        }
+
+        // @method static bool equalsAny(mixed $value, \UnitEnum ...$cases)
+        return preg_match('/@method\s+static\s+\S+\s+' . preg_quote($method, '/') . '\s*\(\s*mixed\s+\$/i', $doc) === 1;
     }
 
     /**
