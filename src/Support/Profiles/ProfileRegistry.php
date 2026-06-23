@@ -21,6 +21,7 @@ final class ProfileRegistry
         'grind' => GrindProfile::class,
         'phased' => PhasedProfile::class,
         'sins-only' => SinsOnlyProfile::class,
+        'penance' => PenanceProfile::class,
     ];
 
     /**

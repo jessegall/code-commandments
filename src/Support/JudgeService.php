@@ -158,6 +158,10 @@ final class JudgeService
             return $this->runNext($scrolls, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter, $prophetFilter, $fullScan, $allowWarnings);
         }
 
+        if ((bool) ($opts['plan'] ?? false)) {
+            return $this->runPlan($scrolls, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter, $prophetFilter, $fullScan, $allowWarnings);
+        }
+
         foreach ($scrolls as $scroll) {
             if (! $this->registry->hasScroll($scroll)) {
                 continue;
@@ -230,6 +234,70 @@ final class JudgeService
         foreach (NextFindingPresenter::lines($finding, count($ordered), $this->binary, $absolvable, $autoFixable, $repentInputs, $skillSlug) as $line) {
             ($this->emit)($line);
         }
+
+        return self::FAILURE;
+    }
+
+    /**
+     * The remediation roadmap: every finding in scope, ordered most-root-cause-first
+     * (the same order `--next` walks), printed as a numbered checklist so a cleanup
+     * pass can see the whole path up front and fix root causes before symptoms.
+     *
+     * @param  array<string>  $scrolls
+     * @param  array<string>  $filesFilter
+     * @param  array<string>  $gitFiles
+     */
+    private function runPlan(array $scrolls, ?string $fileFilter, array $filesFilter, bool $gitMode, array $gitFiles, ?string $pathFilter, ?string $prophetFilter, bool $fullScan, bool $allowWarnings): int
+    {
+        $collector = new FindingCollector($this->tracker);
+        $findings = [];
+
+        foreach ($scrolls as $scroll) {
+            if (! $this->registry->hasScroll($scroll)) {
+                continue;
+            }
+
+            $results = $this->getResults($scroll, $fileFilter, $filesFilter, $gitMode, $gitFiles, $pathFilter);
+            $findings = array_merge($findings, $collector->collect($results, $prophetFilter, markSeen: true, allowWarnings: $allowWarnings));
+        }
+
+        if ($fullScan) {
+            $this->tracker->gcUnseenFindings();
+        }
+
+        $ordered = FindingQueue::order($findings);
+        $cmd = $this->binary . $this->sep;
+
+        if ($ordered === []) {
+            ($this->emit)('Righteous: nothing to repent.');
+
+            return self::SUCCESS;
+        }
+
+        $total = count($ordered);
+        $autoFixable = count(array_filter($ordered, static fn ($f) => $f->autoFixable));
+
+        ($this->emit)("REPENTANCE PLAN — {$total} finding(s), fix in THIS order.");
+        ($this->emit)('Root causes come first: fixing an earlier item often clears later ones, so re-run the plan as you go.');
+        ($this->emit)(T_String::empty());
+
+        $i = 1;
+        foreach ($ordered as $finding) {
+            $kind = strtoupper($finding->kind);
+            $tier = ucfirst($finding->tier->value);
+            $fix = $finding->autoFixable ? ' [AUTO-FIXABLE]' : T_String::empty();
+            ($this->emit)(sprintf('%3d. [%s/%s] %s — %s%s', $i, $tier, $kind, $finding->prophetShort, $finding->location(), $fix));
+            ($this->emit)('       ' . $finding->message);
+            $i++;
+        }
+
+        ($this->emit)(T_String::empty());
+
+        if ($autoFixable > 0) {
+            ($this->emit)("First clear the {$autoFixable} [AUTO-FIXABLE] mechanically:  {$cmd}repent");
+        }
+
+        ($this->emit)("Then walk the rest one at a time (full rule inline):  {$cmd}judge --next");
 
         return self::FAILURE;
     }

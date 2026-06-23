@@ -20,6 +20,7 @@ user and adopts the new contract immediately.
 | `grind` | Heads-down. **No judge/tests between phases** — implement the whole plan, then reckon (run `judge` + your tests) once at the end. A pre-push gate blocks unresolved **sins** across the branch; warnings are flagged but don't block. |
 | `phased` | Face-by-face. Pre-commit gate blocks staged sins **and** warnings; per-phase nudges drive fix-as-you-go; full briefing. |
 | `sins-only` | Like `phased` but warnings are silenced everywhere — only sins surface and gate. |
+| `penance` | Cleanup mode — drive the existing backlog of sins+warnings to zero. **No commit gate** (commit progress freely; fixing a file never re-arms a blocker on it); a pre-push gate blocks pushing while sins remain. Start with `judge --plan` (the roadmap, root-cause first), `repent` the auto-fixable ones, then `judge --next` the rest. Keep-going holds the session open until `judge` is righteous. Never skip a messy file — that's the job. |
 
 ## How to run it
 
