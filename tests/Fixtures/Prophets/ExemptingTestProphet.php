@@ -31,9 +31,12 @@ class ExemptingTestProphet extends BaseCommandment
         return 'Test prophet that exempts its own primitive';
     }
 
+    /** @var list<class-string|string> */
+    public static array $exempt = ['App\\Support\\Option'];
+
     public function exemptClasses(): array
     {
-        return ['App\\Support\\Option'];
+        return static::$exempt;
     }
 
     public function judge(string $filePath, string $content): Judgment
@@ -46,5 +49,6 @@ class ExemptingTestProphet extends BaseCommandment
     public static function resetState(): void
     {
         static::$wasJudged = false;
+        static::$exempt = ['App\\Support\\Option'];
     }
 }

@@ -10,19 +10,7 @@ use PhpParser\Parser;
 use PhpParser\ParserFactory;
 
 /**
- * A per-process parse memo keyed by content hash, so a file is parsed ONCE per
- * run no matter how many prophets (or which parsing style — {@see \JesseGall\CodeCommandments\Commandments\PhpCommandment::parse()}
- * or {@see \JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst}) touch it.
- *
- * Before this, each of ~100 prophets re-parsed every file independently. The
- * parse result is the SAME shared node array across prophets: the handful of
- * prophets that traverse with `NameResolver(replaceNodes:false)` /
- * `ParentConnectingVisitor` only ADD node attributes (idempotent, additive), so
- * sharing one instance is safe — the test suite is the guard.
- *
- * A pure content-addressed cache, not semantic state: identical input always
- * yields the same AST. Bounded by a small LRU (prophets process one file fully
- * before the next, so only the current file's AST is hot).
+ * A per-process parse memo keyed by content hash, so a file is parsed ONCE per run and the same AST node array is shared across every prophet (bounded by a small LRU).
  */
 final class AstCache
 {
