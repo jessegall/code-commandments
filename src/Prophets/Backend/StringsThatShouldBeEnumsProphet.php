@@ -149,8 +149,8 @@ SCRIPTURE;
             ->pipe(ExtractUseStatements::class)
             ->pipe($pipe)
             ->sinsFromMatches(
-                fn ($match) => $this->messageFor($match),
-                fn ($match) => $this->suggestionFor($match),
+                $this->messageFor(...),
+                $this->suggestionFor(...),
             )
             ->judge();
     }

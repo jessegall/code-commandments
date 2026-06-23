@@ -193,7 +193,7 @@ final class FindRawLiterals implements Pipe
      */
     private static function findComparisonLiterals(array $ast, NodeFinder $nodeFinder, string $content, array &$findings, array &$consumed): void
     {
-        $comparisons = $nodeFinder->find($ast, static fn (Node $n): bool => self::isComparison($n));
+        $comparisons = $nodeFinder->find($ast, self::isComparison(...));
 
         foreach ($comparisons as $cmp) {
             /** @var Expr\BinaryOp $cmp */

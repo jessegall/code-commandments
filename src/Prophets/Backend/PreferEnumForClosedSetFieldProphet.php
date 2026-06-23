@@ -1078,7 +1078,7 @@ SCRIPTURE;
         }
 
         return array_values(array_map(
-            static fn (string $n): string => strtolower($n),
+            strtolower(...),
             array_filter($configured, 'is_string'),
         ));
     }

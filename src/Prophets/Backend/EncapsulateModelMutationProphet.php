@@ -338,7 +338,7 @@ SCRIPTURE;
      */
     private function firstThisAttributeWrite(Node\Stmt\ClassMethod $method): ?string
     {
-        foreach ((new NodeFinder)->find($method->stmts, fn (Node $n): bool => $this->isThisAttributeWrite($n)) as $write) {
+        foreach ((new NodeFinder)->find($method->stmts, $this->isThisAttributeWrite(...)) as $write) {
             /** @var Expr\Assign|Expr\AssignOp|Expr\PostInc|Expr\PreInc|Expr\PostDec|Expr\PreDec $write */
             $target = $write->var;
 
@@ -640,7 +640,7 @@ SCRIPTURE;
         }
 
         $methods = array_values(array_map(
-            static fn (string $m): string => strtolower($m),
+            strtolower(...),
             array_filter($configured, 'is_string'),
         ));
 

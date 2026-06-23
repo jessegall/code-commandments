@@ -420,7 +420,7 @@ SCRIPTURE;
         }
 
         return array_values(array_map(
-            static fn (string $name): string => strtolower($name),
+            strtolower(...),
             array_filter($configured, 'is_string'),
         ));
     }

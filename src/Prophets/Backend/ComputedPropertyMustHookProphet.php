@@ -74,7 +74,7 @@ SCRIPTURE;
             ->pipe(ExtractUseStatements::class)
             ->pipe(ExtractClass::class)
             ->returnRighteousIfNoClass()
-            ->pipe(fn (PhpContext $ctx) => $this->findComputedPropertiesSetInConstructor($ctx))
+            ->pipe($this->findComputedPropertiesSetInConstructor(...))
             ->sinsFromMatches(
                 fn (MatchResult $m) => sprintf(
                     'Computed property "$%s" is assigned in the constructor',

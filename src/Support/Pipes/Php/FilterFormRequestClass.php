@@ -19,7 +19,7 @@ final class FilterFormRequestClass implements Pipe
     {
         $requestClasses = array_values(array_filter(
             $input->classes,
-            fn (Node\Stmt\Class_ $class) => $this->isFormRequestClass($class)
+            $this->isFormRequestClass(...)
         ));
 
         return $input->with(classes: $requestClasses);
