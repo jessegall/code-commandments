@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Tests\Unit\Support\Profiles;
+
+use JesseGall\CodeCommandments\Support\Profiles\GitGateStage;
+use JesseGall\CodeCommandments\Support\Profiles\Phase;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileRegistry;
+use JesseGall\CodeCommandments\Support\Profiles\StopHookBuilder;
+use PHPUnit\Framework\TestCase;
+
+class StopHookBuilderTest extends TestCase
+{
+    private function build(string $profile): ?string
+    {
+        return StopHookBuilder::build($profile, ProfileRegistry::get($profile)->options());
+    }
+
+    public function test_grind_never_invokes_judge_and_defers_tests(): void
+    {
+        $script = $this->build('grind');
+
+        $this->assertNotNull($script);
+        // No keep-going judge invocation — the reckon is the pre-push gate (#197).
+        $this->assertDoesNotMatchRegularExpression('/\$\{run\}judge|eval .*judge/', $script);
+        $this->assertStringContainsString('Do NOT run judge or tests between phases', $script);
+        $this->assertStringStartsWith('#!/usr/bin/env sh', $script);
+    }
+
+    public function test_phased_judges_the_current_changes(): void
+    {
+        $script = $this->build('phased');
+
+        $this->assertStringContainsString('judge --next --git --no-cache', $script);
+        $this->assertStringContainsString('and the test suite', $script); // test: EachPhase
+    }
+
+    public function test_penance_judges_the_whole_codebase(): void
+    {
+        $script = $this->build('penance');
+
+        $this->assertStringContainsString('judge --next --no-cache', $script);
+        $this->assertStringNotContainsString('judge --next --git', $script); // whole codebase, not --git
+    }
+
+    public function test_disabled_generates_no_script(): void
+    {
+        $this->assertNull($this->build('disabled'));
+    }
+
+    public function test_behaviour_derives_gate_and_nudges(): void
+    {
+        $grind = ProfileRegistry::get('grind')->options();
+        $this->assertSame(GitGateStage::PrePush, $grind->gate);
+        $this->assertFalse($grind->perPhaseNudges);
+        $this->assertSame(Phase::AtEnd, $grind->behaviour->test);
+
+        $phased = ProfileRegistry::get('phased')->options();
+        $this->assertSame(GitGateStage::PreCommit, $phased->gate);
+        $this->assertTrue($phased->perPhaseNudges);
+
+        $disabled = ProfileRegistry::get('disabled')->options();
+        $this->assertSame(GitGateStage::None, $disabled->gate);
+        $this->assertFalse($disabled->hasStopHook());
+    }
+}

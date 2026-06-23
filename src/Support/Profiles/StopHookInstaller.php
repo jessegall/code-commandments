@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support\Profiles;
 
 /**
- * Installs a profile's dedicated Stop hook as the FIXED file
- * `.claude/hooks/stop-hook.sh`.
+ * Writes a profile's Stop hook to the FIXED file `.claude/hooks/stop-hook.sh`,
+ * GENERATING its contents from the profile's {@see ProfileBehaviour} via
+ * {@see StopHookBuilder} — the package ships no per-profile Stop stub.
  *
- * Every profile owns its own complete Stop script (`stubs/hooks/stop/<profile>.sh`);
- * the disabled profile's is a no-op. settings.json always wires
- * `Stop -> sh .claude/hooks/stop-hook.sh` and NEVER changes — switching profiles
- * just overwrites this one file with that profile's version, so there is no
- * settings teardown and no script is ever shared between profiles.
+ * settings.json always wires `Stop -> sh .claude/hooks/stop-hook.sh` and NEVER
+ * changes between active profiles — switching profiles just overwrites this one
+ * file with the regenerated script, so there is no settings teardown. A profile
+ * with no Stop hook (disabled) is removed by the caller.
  */
 final class StopHookInstaller
 {
@@ -21,24 +21,28 @@ final class StopHookInstaller
 
     public const STATUS_INSTALLED = 'installed';
     public const STATUS_WRITE_FAILED = 'write_failed';
+    public const STATUS_NONE = 'none';
 
     /**
-     * Copy the given profile's Stop stub into `.claude/hooks/stop-hook.sh`.
-     *
-     * @param  string  $stub  the profile's stub basename under stubs/hooks/stop/ (e.g. 'grind.sh')
+     * Generate $profile's Stop hook from $opts and write it to
+     * `.claude/hooks/stop-hook.sh`. Returns STATUS_NONE when the profile has no
+     * Stop hook (disabled) — the caller removes any existing file.
      */
-    public static function install(string $basePath, string $stub): string
+    public static function install(string $basePath, string $profile, ProfileOptions $opts): string
     {
+        $script = StopHookBuilder::build($profile, $opts);
+
+        if ($script === null) {
+            return self::STATUS_NONE;
+        }
+
         $target = rtrim($basePath, '/') . '/.claude/hooks';
 
         if (! is_dir($target) && ! @mkdir($target, 0755, true) && ! is_dir($target)) {
             return self::STATUS_WRITE_FAILED;
         }
 
-        $source = dirname(__DIR__, 3) . '/stubs/hooks/stop/' . $stub;
-        $contents = @file_get_contents($source);
-
-        if ($contents === false || @file_put_contents($target . '/' . self::INSTALLED_NAME, $contents) === false) {
+        if (@file_put_contents($target . '/' . self::INSTALLED_NAME, $script) === false) {
             return self::STATUS_WRITE_FAILED;
         }
 

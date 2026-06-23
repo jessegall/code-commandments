@@ -277,12 +277,12 @@ final class ProfileService
         // so it stays installed even under `disabled` (you still need a way back on).
         $this->ensureProfileSkill();
 
-        // Install THIS profile's dedicated Stop hook onto the fixed
-        // .claude/hooks/stop-hook.sh — switching between active profiles just
-        // swaps the file, so the settings entry never changes. A profile with no
-        // Stop hook (disabled) removes the script.
-        if ($opts->stopHook !== null) {
-            StopHookInstaller::install($this->basePath, $opts->stopHook);
+        // Generate THIS profile's Stop hook onto the fixed .claude/hooks/stop-hook.sh
+        // from its behaviour — switching between active profiles just regenerates
+        // the file, so the settings entry never changes. A profile with no Stop
+        // hook (disabled) removes the script.
+        if ($opts->hasStopHook()) {
+            StopHookInstaller::install($this->basePath, $new->name(), $opts);
         } else {
             @unlink($this->basePath . '/.claude/hooks/' . StopHookInstaller::INSTALLED_NAME);
         }
