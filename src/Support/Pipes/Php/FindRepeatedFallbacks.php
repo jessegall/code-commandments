@@ -64,7 +64,7 @@ final class FindRepeatedFallbacks implements Pipe
 
         $nodes = (new NodeFinder)->find(
             $input->ast,
-            static fn (Node $n): bool => FallbackFingerprint::qualifies($n),
+            FallbackFingerprint::qualifies(...),
         );
 
         $matches = [];
@@ -261,7 +261,7 @@ final class FindRepeatedFallbacks implements Pipe
     {
         $first = array_shift($names);
 
-        return $first . implode(T_String::empty(), array_map(static fn (string $n) => ucfirst($n), $names));
+        return $first . implode(T_String::empty(), array_map(ucfirst(...), $names));
     }
 
     /**

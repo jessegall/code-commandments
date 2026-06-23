@@ -176,7 +176,7 @@ final class CodebaseIndex
 
             $fallbackFinder = new NodeFinder;
 
-            foreach ($fallbackFinder->find($ast, static fn (Node $n): bool => FallbackFingerprint::qualifies($n)) as $node) {
+            foreach ($fallbackFinder->find($ast, FallbackFingerprint::qualifies(...)) as $node) {
                 $fingerprint = FallbackFingerprint::fingerprint($node, $content);
 
                 if ($fingerprint === null) {

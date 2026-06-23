@@ -93,7 +93,7 @@ final class ConfigMapIndex
     private static function normalise(array $keys): array
     {
         $keys = array_values(array_unique(array_map(
-            static fn (string $key): string => strtolower($key),
+            strtolower(...),
             $keys,
         )));
 
