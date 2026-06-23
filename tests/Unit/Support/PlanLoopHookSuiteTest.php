@@ -52,6 +52,22 @@ class PlanLoopHookSuiteTest extends TestCase
         $this->assertSame(PlanLoopHookSuite::STATUS_INSTALLED, PlanLoopHookSuite::install($this->dir));
     }
 
+    public function test_refresh_existing_overwrites_present_scripts_only(): void
+    {
+        $hooks = $this->dir . '/.claude/hooks';
+        mkdir($hooks, 0755, true);
+        // One stale suite script present; the rest absent.
+        file_put_contents($hooks . '/plan-start.sh', "#!/usr/bin/env sh\n# STALE keep-going.sh reference\n");
+
+        $count = PlanLoopHookSuite::refreshExisting($this->dir);
+
+        $this->assertSame(1, $count, 'only the present script is refreshed');
+        // The present one now matches the shipped stub (no stale keep-going ref)…
+        $this->assertStringNotContainsString('STALE', (string) file_get_contents($hooks . '/plan-start.sh'));
+        // …and no NEW suite script was added.
+        $this->assertFileDoesNotExist($hooks . '/guard-plan-marker.sh');
+    }
+
     public function test_settings_entries_reference_the_scripts(): void
     {
         $this->assertSame('sh .claude/hooks/plan-session-reset.sh', PlanLoopHookSuite::sessionStartEntries()[0]['hooks'][0]['command']);
