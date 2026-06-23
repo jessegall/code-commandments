@@ -25,11 +25,11 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         parent::tearDown();
     }
 
-    private function build(string $profile): array
+    private function build(string $profile, bool $planLoop = false): array
     {
         $opts = ProfileRegistry::get($profile)->options();
 
-        return ClaudeHooksInstaller::buildForProfile(ClaudeHooksInstaller::STANDALONE[0], ClaudeHooksInstaller::STANDALONE[1], $opts, false);
+        return ClaudeHooksInstaller::buildForProfile(ClaudeHooksInstaller::STANDALONE[0], ClaudeHooksInstaller::STANDALONE[1], $opts, $planLoop);
     }
 
     public function test_disabled_owns_no_hooks(): void
@@ -55,6 +55,29 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $this->assertContains('UserPromptSubmit', $events);
         $this->assertContains('Stop', $events);
         $this->assertContains('PostToolUse', $events);
+    }
+
+    // --- grind must NOT judge between phases, even with the plan loop on ---
+
+    public function test_grind_with_plan_loop_drives_but_never_judges_each_phase(): void
+    {
+        $cfg = $this->build('grind', planLoop: true);
+
+        // The plan loop still drives to completion…
+        $this->assertStringContainsString('keep-going.sh', json_encode($cfg['Stop'] ?? []));
+        $this->assertStringContainsString('plan-approved.sh', json_encode($cfg['PostToolUse'] ?? []));
+
+        // …but the per-commit JUDGE nudge (phase-committed) is gone, and there is
+        // no `judge --git` Stop hook either. grind reckons once at the end.
+        $this->assertStringNotContainsString('phase-committed.sh', json_encode($cfg['PostToolUse'] ?? []));
+        $this->assertStringNotContainsString('judge --git', json_encode($cfg['Stop'] ?? []));
+    }
+
+    public function test_phased_with_plan_loop_judges_each_phase(): void
+    {
+        $cfg = $this->build('phased', planLoop: true);
+
+        $this->assertStringContainsString('phase-committed.sh', json_encode($cfg['PostToolUse'] ?? []));
     }
 
     private function settings(): array

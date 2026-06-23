@@ -100,10 +100,13 @@ final class JudgeService
         // file/path filter) looks at exactly what this profile cares about, and the
         // profile decides whether warnings are emitted at all. Scope only shifts for
         // an EXPLICITLY-selected profile — a legacy consumer keeps full-scan `judge`.
+        // `--no-profile` opts out entirely: full-scroll scan + warnings shown,
+        // regardless of the active profile (for auditing the whole codebase).
+        $noProfile = (bool) ($opts['no_profile'] ?? false);
         $base = Environment::basePath();
-        $allowWarnings = ProfileService::resolve($base)->options()->allowWarnings;
+        $allowWarnings = $noProfile ? true : ProfileService::resolve($base)->options()->allowWarnings;
 
-        if ($fileFilter === null && empty($filesFilter) && ! $gitMode && ! $stagedMode && ! $branchMode && $pathFilter === null) {
+        if (! $noProfile && $fileFilter === null && empty($filesFilter) && ! $gitMode && ! $stagedMode && ! $branchMode && $pathFilter === null) {
             match (ProfileService::explicitScope($base)) {
                 JudgeScope::Staged => $stagedMode = true,
                 JudgeScope::Branch => $branchMode = true,

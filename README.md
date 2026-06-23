@@ -200,6 +200,7 @@ Judge the codebase for sins against the commandments.
 | `--git` | — | Only judge files that are new or changed in git |
 | `--staged` | — | Only judge files staged for commit (what the pre-commit gate uses) |
 | `--branch` | — | Judge everything changed since the branch base, INCLUDING committed work (survives intermediate commits — the grind reckoning) |
+| `--no-profile` | — | Ignore the active profile for this run: scan the WHOLE scroll and show warnings, regardless of the profile (audit the full codebase) |
 | `--absolve` | — | Mark files as absolved after confession |
 | `--no-cache` | — | Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative) |
 | `--next` | — | Show exactly one finding at a time (fix or absolve to advance) |

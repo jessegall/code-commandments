@@ -41,6 +41,7 @@ Each of these narrows what gets scanned. `--file`, `--files`, `--git`, and
 | `--path=<dir>` | **Override the scroll's `path` AND bypass every exclude (default + configured).** Use when you need to scan a specific subtree regardless of what the config says. Example: `judge --path=vendor/foo/src --scroll=backend` to run the rules against a vendored package you're reviewing. |
 | `--absolve` | Mark emitted warnings as reviewed so future runs don't re-report them (file-level). |
 | `--next` | **Guided mode.** Print exactly ONE finding at a time — its location, message, inline advisory rubric, scripture pointer, and fingerprint — ordered most-root-cause-first. The agent fixes it (then re-runs `--next`) or absolves it with a reason. Output is always short, so nothing is lost to truncation. Exits non-zero while findings remain. |
+| `--no-profile` | **Ignore the active profile for this run.** Bare `judge` normally adopts the profile's scope (phased→staged, grind→branch) and warning policy; `--no-profile` forces a full-scroll scan of the WHOLE codebase AND shows warnings (even under `sins-only`). Use it to audit everything regardless of the work mode, e.g. `judge --prophet=AnchorEnumComparison --no-profile`. Composes with `--prophet`; an explicit scope flag (`--staged`/`--branch`) still wins for scope while `--no-profile` keeps warnings on. |
 | `--config=<path>` | Point at a custom `commandments.php` (standalone CLI only). |
 
 ### When `--path` is the right flag
