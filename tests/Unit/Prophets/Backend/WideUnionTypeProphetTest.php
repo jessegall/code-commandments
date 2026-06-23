@@ -89,6 +89,27 @@ class WideUnionTypeProphetTest extends TestCase
         $this->assertStringContainsString('Option', $judgment->sins[0]->message);
     }
 
+    public function test_null_bearing_sin_is_not_auto_fixable(): void
+    {
+        // This prophet is a SinRepenter, but its only mechanical rewrite narrows a
+        // null-FREE union to a shared interface. A null-bearing sin must NOT be
+        // tagged auto-fixable, or `repent` no-ops forever on it (the [AUTO-FIXABLE]
+        // loop that traps a penance session).
+        $judgment = $this->judge('class A { public function m(array | string | null $x = null): void {} }');
+
+        $this->assertSame(false, $judgment->sins[0]->autoFixable, 'null-bearing sin is not auto-fixable');
+    }
+
+    public function test_plain_wide_union_warning_is_not_auto_fixable(): void
+    {
+        // A wide union with no narrowable shared interface is advisory-only — repent
+        // can't fix it, so it must not claim to.
+        $judgment = $this->judge('class A { public function m(string | int | float $x): void {} }');
+
+        $this->assertCount(1, $judgment->warnings);
+        $this->assertSame(false, $judgment->warnings[0]->autoFixable, 'non-narrowable warning is not auto-fixable');
+    }
+
     public function test_nullable_scalar_union_suggests_scalar_option(): void
     {
         $judgment = $this->judge('class A { public function m(string | int | null $x = null): void {} }');
