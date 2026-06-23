@@ -141,7 +141,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 sprintf('%s is `%s | null`, but %s has an empty identity — return %s instead of null, so callers never null-guard a collection.', $found['label'], $inner['display'], $inner['display'], $inner['empty']),
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'prefer-empty:' . $found['symbol'],
             );
         }
@@ -334,12 +334,6 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 
     /**
      * @param  array<Node>  $ast

@@ -33,7 +33,7 @@ class RepentCommand extends Command
         $service = new RepentService(
             $manager,
             $registry,
-            fn (string $line) => $this->output->writeln($line),
+            $this->output->writeln(...),
         );
 
         return $service->run([

@@ -110,7 +110,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $class->getStartLine(),
                 sprintf('%s is shaped like a set — you `add`/append into a collection, then only iterate it (`all`/`values`) and test membership, with no keyed `get(string)` lookup — but it is not named `*Set`/`*Collection` and carries no `Set` marker. Name it `*Set` and extend a shared base (`commandments:scaffold` can generate one), after which SetReturnContract enforces its total membership surface. (If you DO look entries up by key, it is a `*Registry` instead.)', $name),
-                $this->lineAt($content, $class->getStartLine()),
+                $this->lineSnippet($content, $class->getStartLine()),
                 'set-naming:' . $name,
             );
         }
@@ -162,10 +162,4 @@ SCRIPTURE;
             : self::DEFAULT_SUFFIXES;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

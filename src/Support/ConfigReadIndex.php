@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The declared config KEY TREE of a project — every dotted path a `config('...')`
@@ -129,7 +128,7 @@ final class ConfigReadIndex
     private static function locateConfigDir(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_dir($dir . '/config') && is_file($dir . '/composer.json')) {
@@ -145,33 +144,14 @@ final class ConfigReadIndex
 
     private static function parseDir(string $configDir): self
     {
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $finder = new NodeFinder;
         $paths = [];
         $topLevels = [];
         $envLeaves = [];
         $leafValues = [];
 
-        foreach (glob($configDir . '/*.php') ?: [] as $file) {
-            try {
-                $ast = $parser->parse((string) file_get_contents($file));
-            } catch (\Throwable) {
-                continue;
-            }
-
-            if ($ast === null) {
-                continue;
-            }
-
-            $return = $finder->findFirstInstanceOf($ast, Node\Stmt\Return_::class);
-
-            if (! $return instanceof Node\Stmt\Return_ || ! $return->expr instanceof Node\Expr\Array_) {
-                continue;
-            }
-
-            $base = basename($file, '.php');
+        foreach (ConfigDirReturnArrays::each($configDir) as [$returnArray, $base]) {
             $topLevels[strtolower($base)] = true;
-            self::collect($return->expr, $base, $paths, $envLeaves, $leafValues);
+            self::collect($returnArray, $base, $paths, $envLeaves, $leafValues);
         }
 
         return new self($paths, $topLevels, $envLeaves, $leafValues);

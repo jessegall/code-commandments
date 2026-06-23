@@ -47,6 +47,6 @@ final class ProfileOptions
      */
     public function gateBlocksOnWarnings(): bool
     {
-        return $this->allowWarnings && $this->scope === JudgeScope::Staged;
+        return $this->allowWarnings && JudgeScope::Staged->equals($this->scope);
     }
 }

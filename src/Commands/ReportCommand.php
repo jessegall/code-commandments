@@ -50,8 +50,8 @@ class ReportCommand extends Command
             ],
             $this->option('repo') ?: config('commandments.report.repo', 'jessegall/code-commandments'),
             base_path(),
-            fn (string $line) => $this->info($line),
-            fn (string $line) => $this->warn($line),
+            $this->info(...),
+            $this->warn(...),
         ) === \JesseGall\CodeCommandments\Support\ReportService::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 

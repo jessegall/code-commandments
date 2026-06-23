@@ -131,7 +131,7 @@ SCRIPTURE;
                         $enumName,
                         $caseName,
                     ),
-                    $this->lineAt($content, $stmt->getStartLine()),
+                    $this->lineSnippet($content, $stmt->getStartLine()),
                     null,
                     "enum-case-doc:{$enumName}::{$caseName}",
                     false,
@@ -175,10 +175,4 @@ SCRIPTURE;
         return preg_match('/[A-Za-z]{3,}/', $raw) === 1;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

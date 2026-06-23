@@ -25,4 +25,13 @@ class Environment
 
         return T_String::isNotEmpty($path) ? $base . '/' . $path : $base;
     }
+
+    /**
+     * The current working directory, falling back to the relative root when
+     * `getcwd()` fails — the one home for the `getcwd() ?: '.'` console idiom.
+     */
+    public static function workingDirectory(): string
+    {
+        return getcwd() ?: '.';
+    }
 }

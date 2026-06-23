@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -27,6 +28,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindRawLiterals implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * `strlen`-like calls whose comparison to 0/1 is an empty-string check.
      */
@@ -115,7 +118,7 @@ final class FindRawLiterals implements Pipe
                 match: $finding['literal'],
                 line: $finding['line'],
                 offset: null,
-                content: $this->snippet($input->content, $finding['line']),
+                content: $this->lineSnippet($input->content, $finding['line']),
                 groups: [
                     'kind' => $finding['kind'],
                     'position' => $finding['position'],
@@ -193,7 +196,7 @@ final class FindRawLiterals implements Pipe
      */
     private static function findComparisonLiterals(array $ast, NodeFinder $nodeFinder, string $content, array &$findings, array &$consumed): void
     {
-        $comparisons = $nodeFinder->find($ast, static fn (Node $n): bool => self::isComparison($n));
+        $comparisons = $nodeFinder->find($ast, self::isComparison(...));
 
         foreach ($comparisons as $cmp) {
             /** @var Expr\BinaryOp $cmp */
@@ -1262,10 +1265,4 @@ final class FindRawLiterals implements Pipe
         return $visitor->parents;
     }
 
-    private function snippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

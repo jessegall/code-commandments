@@ -161,7 +161,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $call->getStartLine(),
                 $this->messageFor($facade, $method),
-                $this->getLineSnippet($content, $call->getStartLine()),
+                $this->lineSnippet($content, $call->getStartLine()),
                 'no-facade:' . $key,
             );
         }
@@ -213,10 +213,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function getLineSnippet(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

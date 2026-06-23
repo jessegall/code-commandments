@@ -225,7 +225,7 @@ final class JudgeService
         }
 
         $resolver = new RootCauseResolver(
-            fn (string $filePath): ?CodebaseIndex => $this->manager->codebaseIndexForFile($filePath),
+            $this->manager->codebaseIndexForFile(...),
         );
 
         $finding = $resolver->annotate($ordered[0], $activeProphets);

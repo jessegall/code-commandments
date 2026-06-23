@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\FallbackFingerprint;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
@@ -25,6 +26,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindRepeatedFallbacks implements Pipe
 {
+    use ExtractsLineSnippet;
+
     private ?CodebaseIndex $codebaseIndex = null;
 
     private int $minOccurrences = 2;
@@ -64,7 +67,7 @@ final class FindRepeatedFallbacks implements Pipe
 
         $nodes = (new NodeFinder)->find(
             $input->ast,
-            static fn (Node $n): bool => FallbackFingerprint::qualifies($n),
+            FallbackFingerprint::qualifies(...),
         );
 
         $matches = [];
@@ -104,7 +107,7 @@ final class FindRepeatedFallbacks implements Pipe
                 match: $this->source($input->content, $node),
                 line: $line,
                 offset: null,
-                content: $this->snippet($input->content, $line),
+                content: $this->lineSnippet($input->content, $line),
                 groups: [
                     'op' => $parts['op'],
                     'expr' => $this->source($input->content, $node),
@@ -261,7 +264,7 @@ final class FindRepeatedFallbacks implements Pipe
     {
         $first = array_shift($names);
 
-        return $first . implode(T_String::empty(), array_map(static fn (string $n) => ucfirst($n), $names));
+        return $first . implode(T_String::empty(), array_map(ucfirst(...), $names));
     }
 
     /**
@@ -298,10 +301,4 @@ final class FindRepeatedFallbacks implements Pipe
         return trim(substr($content, $start, $end - $start + 1));
     }
 
-    private function snippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

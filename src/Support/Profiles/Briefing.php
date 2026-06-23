@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Profiles;
 
+use JesseGall\CodeCommandments\Support\CompareSelf;
+
 /**
  * Which agent briefing body a profile injects at session-start (only read when
  * {@see ProfileOptions::$briefAgent} is true).
@@ -14,6 +16,8 @@ namespace JesseGall\CodeCommandments\Support\Profiles;
  */
 enum Briefing: string
 {
+    use CompareSelf;
+
     /** The grind contract — implement the whole plan, reckon + test before push. */
     case Short = 'short';
 

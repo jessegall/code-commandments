@@ -216,7 +216,7 @@ SCRIPTURE;
         return $this->warningAt(
             $line,
             'A type unions `Option` with another type or null — Option already encodes value-or-nothing, so `Option | …` / `?Option` is a contradiction. The fix is a BARE `Option` with the alternatives moved INSIDE its generic — `Option<array|string>`. Do NOT "fix" it by deleting the Option and falling back to a raw `array|string|null` union: that is the wrong direction. Option is the right model for value-or-nothing — keep it, just stop unioning it.',
-            $this->lineAt($content, $line),
+            $this->lineSnippet($content, $line),
             'option-in-union',
         );
     }
@@ -234,10 +234,4 @@ SCRIPTURE;
         return end($parts) ?: 'Option';
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

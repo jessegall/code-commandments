@@ -109,7 +109,7 @@ SCRIPTURE;
                     $count,
                     $max,
                 ),
-                $this->getLineSnippet($content, $line),
+                $this->lineSnippet($content, $line),
                 'short-closure:' . $line,
             );
         }
@@ -157,10 +157,4 @@ SCRIPTURE;
         return is_int($max) && $max >= 1 ? $max : 5;
     }
 
-    private function getLineSnippet(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

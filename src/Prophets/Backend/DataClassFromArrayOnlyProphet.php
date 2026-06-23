@@ -192,7 +192,7 @@ SCRIPTURE;
 
             $name = $class->name?->toString() ?? 'class';
             $line = $class->getStartLine();
-            $snippet = $this->lineAt($content, $line);
+            $snippet = $this->lineSnippet($content, $line);
 
             // A class whose ::from() is handed a non-array — its OWN factories
             // (issue #14) OR a call site in ANY other file (#64, via the
@@ -714,10 +714,4 @@ SCRIPTURE;
         return end($parts) ?: 'FromArrayOnly';
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

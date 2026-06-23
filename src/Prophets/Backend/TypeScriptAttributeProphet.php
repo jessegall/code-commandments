@@ -15,11 +15,6 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  */
 class TypeScriptAttributeProphet extends PhpCommandment
 {
-    public function supported(): bool
-    {
-        return PackageDetector::hasSpatieData();
-    }
-
     protected array $utilityPaths = [
         'Data/Casts/',
         'Data/Attributes/',
@@ -30,6 +25,11 @@ class TypeScriptAttributeProphet extends PhpCommandment
         'Data/Common/BooleanCast',
         'Data/Common/QuantifiedItemCollection',
     ];
+
+    public function supported(): bool
+    {
+        return PackageDetector::hasSpatieData();
+    }
 
     public function description(): string
     {

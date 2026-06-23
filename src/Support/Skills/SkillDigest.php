@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Skills;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * A compact, always-loadable index of the shipped skills — printed by the
  * `skills` command and injected at session start so an agent KNOWS the coding-
@@ -19,7 +21,7 @@ final class SkillDigest
         $lines = [
             'CODE COMMANDMENTS SKILLS — the project\'s coding-rule playbooks live in .claude/skills/commandments-<slug>/.',
             'Before you WRITE or REVIEW code in one of these subjects, READ that skill\'s SKILL.md first (it links deeper reference/ files). Do not guess the rules.',
-            '',
+            T_String::empty(),
         ];
 
         foreach (SkillRegistry::all() as $skill) {
@@ -32,7 +34,7 @@ final class SkillDigest
             $lines[] = sprintf('- %s — %s', $skill->slug, self::trigger($skill->purpose));
         }
 
-        return implode("\n", $lines);
+        return implode(T_String::NEWLINE, $lines);
     }
 
     /**

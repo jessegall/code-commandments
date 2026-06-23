@@ -170,7 +170,7 @@ SCRIPTURE;
                     'Data factory `%s()` uses the reserved `from` prefix — Spatie\'s magic `::from()` dispatches by type into `from{Type}()` and can recurse into a same-typed factory and segfault (exit 139). Rename it to a non-`from` prefix (`for*`/`make`/`build`).',
                     $name,
                 );
-                $findings[] = $this->emit($isSin, $method->getStartLine(), $message, $this->lineAt($content, $method->getStartLine()), 'data-from-def:' . $name, false);
+                $findings[] = $this->emit($isSin, $method->getStartLine(), $message, $this->lineSnippet($content, $method->getStartLine()), 'data-from-def:' . $name, false);
             }
         }
 
@@ -215,7 +215,7 @@ SCRIPTURE;
                     : sprintf('`%s::from(...)` calls Spatie\'s magic object dispatch from outside the Data class. Add an explicit `%s::forX(Type $x): static` factory (`static::from($x->toArray())` inside the class) and call that.', $target, $target))
                 : sprintf('`%s::%s(...)` calls a reserved-`from`-prefix factory from outside the Data class — that factory should be renamed to a `for*` prefix (see its definition).', $target, $method);
 
-            $findings[] = $this->emit($isSin, $call->getStartLine(), $message, $this->lineAt($content, $call->getStartLine()), 'data-from-call:' . $target . ':' . $method, $autoFixable);
+            $findings[] = $this->emit($isSin, $call->getStartLine(), $message, $this->lineSnippet($content, $call->getStartLine()), 'data-from-call:' . $target . ':' . $method, $autoFixable);
         }
 
         if ($findings === []) {
@@ -466,10 +466,4 @@ SCRIPTURE;
             : ['Data'];
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

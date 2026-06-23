@@ -140,7 +140,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $class->getStartLine(),
                 sprintf('%s is named `*Resolver` but does no first-match dispatch — no kernel use, no guard-return chain, no `match(true)`, no first-non-null `??` chain. It is misnamed: rename to its real role (`*Registry`/`*Map` for a lookup, `*Reader`/`*Accessor` for a read, `*Factory` for a build, `*Interpolator` for a string template).', $name),
-                $this->lineAt($content, $class->getStartLine()),
+                $this->lineSnippet($content, $class->getStartLine()),
                 'resolver-misnamed:' . $name,
             );
         }
@@ -347,10 +347,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

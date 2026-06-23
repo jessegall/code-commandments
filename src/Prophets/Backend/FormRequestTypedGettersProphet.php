@@ -55,7 +55,7 @@ SCRIPTURE;
         return PhpPipeline::make($filePath, $content)
             ->onlyFormRequestClasses()
             ->pipe((new MatchPatterns)->add('getter_no_return', $pattern))
-            ->mapToWarnings(fn (PhpContext $ctx) => $this->createWarnings($ctx))
+            ->mapToWarnings($this->createWarnings(...))
             ->judge();
     }
 

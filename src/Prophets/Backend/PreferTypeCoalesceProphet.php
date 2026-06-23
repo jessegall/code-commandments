@@ -129,7 +129,7 @@ SCRIPTURE;
                     $type,
                     $wrapper,
                 ),
-                $this->lineAt($content, $coalesce->getStartLine()),
+                $this->lineSnippet($content, $coalesce->getStartLine()),
                 'type-coalesce:' . $type,
                 true,
             );
@@ -486,10 +486,4 @@ SCRIPTURE;
         return $name->isFullyQualified() ? '\\' . $name->toString() : $name->toString();
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

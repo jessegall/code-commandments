@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The declared database schema mined from a project's migrations — table → column →
@@ -85,7 +86,7 @@ final class MigrationSchemaIndex
     private static function locateMigrationsDir(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_file($dir . '/composer.json') && is_dir($dir . '/database/migrations')) {
@@ -105,7 +106,7 @@ final class MigrationSchemaIndex
         $finder = new NodeFinder;
         $tables = [];
 
-        foreach (glob($dir . '/*.php') ?: [] as $file) {
+        foreach (Glob::paths($dir . '/*.php') as $file) {
             try {
                 $ast = $parser->parse((string) file_get_contents($file));
             } catch (\Throwable) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -30,6 +31,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindRepeatedHydration implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /** @var list<string> */
     private array $methods = ['from'];
 
@@ -100,7 +103,7 @@ final class FindRepeatedHydration implements Pipe
                 match: $group['target'] . '::from($…->' . $group['property'] . ')',
                 line: $group['line'],
                 offset: null,
-                content: $this->getSnippet($input->content, $group['line']),
+                content: $this->lineSnippet($input->content, $group['line']),
                 groups: [
                     'target' => $group['target'],
                     'property' => $group['property'],
@@ -153,10 +156,4 @@ final class FindRepeatedHydration implements Pipe
         return null;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

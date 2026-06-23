@@ -34,7 +34,7 @@ class ScriptureConsoleCommand extends Command
             $input->getOption('prophet'),
             (bool) $input->getOption('detailed'),
             \JesseGall\CodeCommandments\Support\ClaudeHooksInstaller::STANDALONE,
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
         ) === \JesseGall\CodeCommandments\Support\ScriptureService::SUCCESS ? Command::SUCCESS : Command::FAILURE;
     }
 }

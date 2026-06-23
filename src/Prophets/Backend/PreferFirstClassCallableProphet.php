@@ -100,7 +100,7 @@ SCRIPTURE;
                 $warnings[] = $this->warningAt(
                     $closure->getStartLine(),
                     sprintf('This closure only forwards its argument(s) to one call — use the first-class callable `%s`. (Leave it if the higher-order caller passes extra args the target would now receive — e.g. Collection::map\'s key.)', $callable),
-                    $this->lineAt($content, $closure->getStartLine()),
+                    $this->lineSnippet($content, $closure->getStartLine()),
                     'forwarding-closure',
                 );
             }
@@ -219,10 +219,4 @@ SCRIPTURE;
         return substr($content, $start, (int) $node->getEndFilePos() - $start + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

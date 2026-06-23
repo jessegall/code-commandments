@@ -48,7 +48,7 @@ SCRIPTURE;
         return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! $ctx->filePathContains('Http/View') && ! $ctx->filePathContains('Http\\View'))
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! preg_match('/(Page|Data)\.php$/', $ctx->filePath))
-            ->pipe(fn (PhpContext $ctx) => $this->findPropertiesMissingHidden($ctx))
+            ->pipe($this->findPropertiesMissingHidden(...))
             ->mapToSins(fn (PhpContext $ctx) => array_map(
                 fn (MatchResult $match) => $this->sinAt(
                     $match->line,

@@ -211,7 +211,7 @@ final class RepentService
         }
 
         $resolver = new RootCauseResolver(
-            fn (string $path): ?CodebaseIndex => $this->manager->codebaseIndexForFile($path),
+            $this->manager->codebaseIndexForFile(...),
         );
 
         foreach ($lines as $line) {
@@ -310,7 +310,7 @@ final class RepentService
         $missing = [];
 
         foreach ($prophet->repentInputs() as $spec) {
-            if ($spec->required && trim($provided[$spec->name] ?? '') === '') {
+            if ($spec->required && T_String::isBlank($provided[$spec->name] ?? T_String::empty())) {
                 $missing[] = $spec;
             }
         }

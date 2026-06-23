@@ -27,14 +27,14 @@ class InstallSyncHookConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd() ?: '.';
+        $basePath = Environment::workingDirectory();
         Environment::setBasePath($basePath);
 
         return SyncHookInstaller::install(
             $basePath,
             (bool) $input->getOption('force'),
             'vendor/bin/commandments sync --after=previous',
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
             fn (string $line) => $output->writeln('<error>' . $line . '</error>'),
         ) === SyncHookInstaller::SUCCESS ? Command::SUCCESS : Command::FAILURE;
     }

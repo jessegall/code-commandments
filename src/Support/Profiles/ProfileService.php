@@ -285,11 +285,11 @@ final class ProfileService
     {
         $blocks = [];
 
-        if ($opts->gate === GitGateStage::PreCommit) {
+        if (GitGateStage::PreCommit->equals($opts->gate)) {
             $blocks[] = CommitHookInstaller::BLOCK_PRE_COMMIT_GATE;
         }
 
-        if ($opts->gate === GitGateStage::PrePush) {
+        if (GitGateStage::PrePush->equals($opts->gate)) {
             $blocks[] = CommitHookInstaller::BLOCK_PRE_PUSH_GATE;
         }
 
@@ -302,7 +302,7 @@ final class ProfileService
         }
 
         // The commit-msg guard rides along whenever the package is active at all.
-        if ($opts->briefAgent || $opts->gate !== GitGateStage::None || $opts->perPhaseNudges) {
+        if ($opts->briefAgent || GitGateStage::None->notEquals($opts->gate) || $opts->perPhaseNudges) {
             $blocks[] = CommitHookInstaller::BLOCK_COMMIT_MSG_GUARD;
         }
 
@@ -316,7 +316,7 @@ final class ProfileService
     private function ensureProfileSkill(): void
     {
         $namespace = is_array($this->config['scaffold'] ?? null)
-            ? (string) ($this->config['scaffold']['namespace'] ?? 'App\\Support')
+            ? T_String::coalesce($this->config['scaffold']['namespace'] ?? null, 'App\\Support')
             : 'App\\Support';
 
         $except = [];
@@ -399,11 +399,11 @@ final class ProfileService
             JudgeScope::Branch => "the whole branch's changes",
         };
 
-        $isPenance = $o->gate === GitGateStage::PrePush && $o->scope === JudgeScope::None;
+        $isPenance = GitGateStage::PrePush->equals($o->gate) && JudgeScope::None->equals($o->scope);
 
         $gate = match (true) {
-            $o->gate === GitGateStage::None => 'No git gate — nothing blocks commits or pushes.',
-            $o->gate === GitGateStage::PreCommit => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : '') . ' on staged files.',
+            GitGateStage::None->equals($o->gate) => 'No git gate — nothing blocks commits or pushes.',
+            GitGateStage::PreCommit->equals($o->gate) => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : T_String::empty()) . ' on staged files.',
             $isPenance => 'NO commit gate — commit progress freely. The pre-push gate blocks pushing while ANY sins remain.',
             default => 'Pre-push gate blocks pushing while the branch has sins (no commit gate; warnings shown, not blocked).',
         };
@@ -411,7 +411,7 @@ final class ProfileService
         $cadence = match (true) {
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
             $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`judge --plan`). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
-            $o->gate === GitGateStage::PrePush => 'Cadence: NO judge/tests between phases — implement the whole plan, then reckon (judge + run tests) once before pushing.',
+            GitGateStage::PrePush->equals($o->gate) => 'Cadence: NO judge/tests between phases — implement the whole plan, then reckon (judge + run tests) once before pushing.',
             default => 'Cadence: no per-phase nudges.',
         };
 
@@ -444,7 +444,7 @@ final class ProfileService
         }
 
         $o = $profile->options();
-        $isPenance = $o->gate === GitGateStage::PrePush && $o->scope === JudgeScope::None;
+        $isPenance = GitGateStage::PrePush->equals($o->gate) && JudgeScope::None->equals($o->scope);
 
         if ($isPenance) {
             $lines[] = T_String::empty();
@@ -453,7 +453,7 @@ final class ProfileService
             $lines[] = "  {$r}repent            # bulk-fix the [AUTO-FIXABLE] ones";
             $lines[] = "  {$r}judge --next      # walk the rest one at a time";
             $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins remain, and you cannot stop until judge is righteous.';
-        } elseif ($o->gate === GitGateStage::PrePush) {
+        } elseif (GitGateStage::PrePush->equals($o->gate)) {
             $lines[] = T_String::empty();
             $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge or tests between phases.';
             $lines[] = "When the whole plan is done: run `{$r}judge` (fix every sin, review warnings) and your full test suite, then push.";

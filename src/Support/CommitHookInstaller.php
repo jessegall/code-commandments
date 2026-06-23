@@ -427,10 +427,10 @@ final class CommitHookInstaller
         }
 
         $path = $hooksDir . '/' . $hook->value;
-        $existing = is_file($path) ? (string) @file_get_contents($path) : '';
+        $existing = is_file($path) ? (string) @file_get_contents($path) : T_String::empty();
 
         $foreign = $this->stripOwnedBlocks($existing);
-        $foreignBody = trim(preg_replace('/^#!.*$/m', '', $foreign) ?? '');
+        $foreignBody = trim(preg_replace('/^#!.*$/m', T_String::empty(), $foreign) ?? T_String::empty());
 
         // Order the desired blocks canonically (spec order).
         $ordered = [];

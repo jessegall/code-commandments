@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -22,6 +23,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindDirectRequestMethodCalls implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /** @var array<string> */
     private array $forbiddenMethods;
 
@@ -76,7 +79,7 @@ final class FindDirectRequestMethodCalls implements Pipe
                             match: $methodName,
                             line: $line,
                             offset: null,
-                            content: $this->getSnippet($input->content, $line),
+                            content: $this->lineSnippet($input->content, $line),
                             groups: [$methodName],
                         );
                     }
@@ -257,10 +260,4 @@ final class FindDirectRequestMethodCalls implements Pipe
         return $typeName;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

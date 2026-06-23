@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The config-value flow resolver (#registry-from-config): indexes the data-driven
@@ -92,7 +91,7 @@ final class ConfigMapIndex
     private static function normalise(array $keys): array
     {
         $keys = array_values(array_unique(array_map(
-            static fn (string $key): string => strtolower($key),
+            strtolower(...),
             $keys,
         )));
 
@@ -104,7 +103,7 @@ final class ConfigMapIndex
     private static function locateConfigDir(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_dir($dir . '/config') && is_file($dir . '/composer.json')) {
@@ -123,28 +122,10 @@ final class ConfigMapIndex
      */
     private static function parseDir(string $configDir): array
     {
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $finder = new NodeFinder;
         $maps = [];
 
-        foreach (glob($configDir . '/*.php') ?: [] as $file) {
-            try {
-                $ast = $parser->parse((string) file_get_contents($file));
-            } catch (\Throwable) {
-                continue;
-            }
-
-            if ($ast === null) {
-                continue;
-            }
-
-            $return = $finder->findFirstInstanceOf($ast, Node\Stmt\Return_::class);
-
-            if (! $return instanceof Node\Stmt\Return_ || ! $return->expr instanceof Node\Expr\Array_) {
-                continue;
-            }
-
-            self::collect($return->expr, basename($file, '.php'), $maps);
+        foreach (ConfigDirReturnArrays::each($configDir) as [$returnArray, $base]) {
+            self::collect($returnArray, $base, $maps);
         }
 
         return $maps;

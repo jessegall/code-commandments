@@ -55,8 +55,8 @@ class InstallHooksCommand extends Command
         // selection in .commandments/profile.
         (new ProfileService(base_path(), config('commandments', [])))->switch(
             'phased',
-            fn (string $line) => $this->output->writeln($line),
-            fn (string $line) => $this->warn($line),
+            $this->output->writeln(...),
+            $this->warn(...),
         );
 
         // Install the on-demand "how to do it right" skills into .claude/skills/.
@@ -104,7 +104,7 @@ class InstallHooksCommand extends Command
 
         $installed = \JesseGall\CodeCommandments\Support\Skills\SkillReporter::report(
             $results,
-            fn (string $line) => $this->output->writeln($line),
+            $this->output->writeln(...),
         );
 
         $this->output->writeln($installed > 0

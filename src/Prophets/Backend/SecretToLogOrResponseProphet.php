@@ -99,13 +99,13 @@ SCRIPTURE;
         $warnings = [];
         $seenLines = [];
 
-        foreach ($finder->find($ast, fn (Node $n) => $this->taint->isLeakSink($n)) as $sink) {
+        foreach ($finder->find($ast, $this->taint->isLeakSink(...)) as $sink) {
             if (! $sink instanceof Node\Expr\FuncCall && ! $sink instanceof Node\Expr\StaticCall) {
                 continue;
             }
 
             foreach ($sink->getArgs() as $arg) {
-                $secrets = $finder->find([$arg->value], fn (Node $n) => $this->taint->isSecretSource($n));
+                $secrets = $finder->find([$arg->value], $this->taint->isSecretSource(...));
 
                 if ($secrets === [] || $this->taint->hasRedaction($arg->value, $finder)) {
                     continue;
