@@ -83,11 +83,20 @@ Good — the types declare what they are; you ask THEM:
 
 When a set recurs (and especially when it mixes your types with unavoidable
 vendor ones), give it a NAMED home — a Classifier (run `commandments scaffold`
-for the base): the interface check and the vendor fallback live in one testable
-class, and the call site reads `(new IterableClassifier)->matches($fqcn)`:
-    final class IterableClassifier extends Classifier
+for the base + trait). Declare its members by `::class` (IDE-navigable, refactor-
+safe); the matching lives in the base, and the call site reads
+`CollectionClassifier::make()->matches($fqcn)`:
+    final class CollectionClassifier extends TypeClassifier
     {
-        protected function interface(): string { return \Traversable::class; }
+        protected function types(): array
+        {
+            return [Collection::class, LazyCollection::class, Fluent::class];
+        }
+
+        protected function interfaces(): array
+        {
+            return [\Traversable::class, \Countable::class];   // any subtype counts
+        }
     }
 
 WHAT FIRES — any of these classifications by type NAME:
@@ -101,9 +110,10 @@ WHAT FIRES — any of these classifications by type NAME:
      (`$x instanceof A || $x instanceof B`) — a runtime version of the same set.
 
 The reusable home for ALL of these is a Classifier (`commandments scaffold`): it
-takes an FQCN string OR an object, checks the shared interface(s) (+ a vendor
-fallback), and COMPOSES — `Classifier::allOf($iterable, $data)`,
-`$bag->or($collection)` — so the set is named, shared, and edited in one place.
+checks the shared interface(s) of its `::class` members (+ a vendor fallback), and
+COMPOSES — `Classifier::allOf($iterable, $data)`, `$bag->or($collection)` — so
+"iterable AND data" is built from the small ones, never a fresh list. `make()` is
+the static entry (override to `app(static::class)` when the classifier needs DI).
 
 WHAT DOES NOT — a list of non-type values (extensions, keys, method names,
 lowercase predicates like `is_array`), an associative lookup/metadata map (a
