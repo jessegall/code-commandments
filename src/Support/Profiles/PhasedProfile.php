@@ -33,7 +33,7 @@ final class PhasedProfile extends Profile
             perPhaseNudges: true,
             postCommitReset: true,
             prePushReset: true,
-            keepGoing: true,
+            stopHook: 'phased.sh',
         );
     }
 }

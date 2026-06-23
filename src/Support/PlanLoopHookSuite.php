@@ -11,10 +11,8 @@ namespace JesseGall\CodeCommandments\Support;
  * true, because a `Stop` hook that refuses to idle-stop is aggressive for a
  * consumer that just wants linting.
  *
- * When enabled it ships six shell scripts into `.claude/hooks/` and registers:
+ * When enabled it ships its shell scripts into `.claude/hooks/` and registers:
  *   - PreToolUse(Bash) → guard-plan-marker.sh: blocks hand-deleting the marker.
- *   - Stop            → keep-going.sh: drives an approved plan to completion
- *                       (worktree-keyed marker, 200-continuation backstop).
  *   - PostToolUse ExitPlanMode → plan-approved.sh: arms the loop + a /loop net.
  *   - PostToolUse Bash        → phase-committed.sh: after a commit, resolve
  *                       sins AND refresh the plan-progress memory.
@@ -33,7 +31,6 @@ final class PlanLoopHookSuite
      */
     public const SCRIPTS = [
         'plan-approved.sh',
-        'keep-going.sh',
         'phase-committed.sh',
         'plan-start.sh',
         'plan-release.sh',
@@ -80,16 +77,6 @@ final class PlanLoopHookSuite
         return [
             ['matcher' => 'Bash', 'hooks' => [self::command('sh .claude/hooks/guard-plan-marker.sh')]],
         ];
-    }
-
-    /**
-     * The Stop entry (auto-continue an approved plan).
-     *
-     * @return array<string, mixed>
-     */
-    public static function stopEntry(): array
-    {
-        return ['hooks' => [self::command('sh .claude/hooks/keep-going.sh')]];
     }
 
     /**

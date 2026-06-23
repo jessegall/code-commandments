@@ -35,7 +35,7 @@ final class PenanceProfile extends Profile
             perPhaseNudges: false,
             postCommitReset: false,
             prePushReset: true,
-            keepGoing: true,
+            stopHook: 'penance.sh',
         );
     }
 }

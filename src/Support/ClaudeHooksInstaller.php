@@ -51,11 +51,12 @@ final class ClaudeHooksInstaller
         'plan-approved.sh',
         'plan-start.sh',
         'plan-release.sh',
-        'keep-going.sh',
         'guard-plan-marker.sh',
         'phase-committed.sh',
         'plan-session-reset.sh',
-        'profile-keep-going.sh',
+        // The single, profile-owned Stop hook (its contents are swapped per
+        // profile by {@see \JesseGall\CodeCommandments\Support\Profiles\StopHookInstaller}).
+        'stop-hook.sh',
     ];
     /**
      * The runner a CONSUMER PROJECT uses, decided by the project itself (a
@@ -153,7 +154,6 @@ HOOK;
         if ($planLoop) {
             $config['SessionStart'] = [...PlanLoopHookSuite::sessionStartEntries(), ...$config['SessionStart']];
             $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
-            $config['Stop'][] = PlanLoopHookSuite::stopEntry();
             $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
         }
 
@@ -225,14 +225,18 @@ HOOK;
             ];
         }
 
-        // Keep-going Stop hook: block stopping until the profile's goal is met. One
-        // script self-resolves the active profile at run time. Supersedes the old
-        // informational `judge --git` Stop (it judges AND blocks).
-        if ($opts->keepGoing) {
+        // Stop hook: the fixed `stop-hook.sh`, wired identically for every active
+        // profile. Each profile owns its own complete Stop script (grind drives
+        // the plan and never judges; phased/sins-only gate on judge --next --git;
+        // penance on judge --next) and StopHookInstaller swaps the file's
+        // contents on switch — so the settings entry never changes between active
+        // profiles (no teardown). A profile with no Stop hook (disabled) wires
+        // nothing here, so switching to it removes the entry.
+        if ($opts->stopHook !== null) {
             $config['Stop'] = [
                 [
                     'hooks' => [
-                        ['type' => 'command', 'command' => 'sh .claude/hooks/profile-keep-going.sh'],
+                        ['type' => 'command', 'command' => 'sh .claude/hooks/stop-hook.sh'],
                     ],
                 ],
             ];
@@ -253,7 +257,9 @@ HOOK;
             $config['SessionStart'] = [...PlanLoopHookSuite::sessionStartEntries(), ...($config['SessionStart'] ?? [])];
             // Append (don't clobber) so the plan-mode skills hook survives.
             $config['PreToolUse'] = [...($config['PreToolUse'] ?? []), ...PlanLoopHookSuite::preToolUseEntries()];
-            $config['Stop'] = [...($config['Stop'] ?? []), PlanLoopHookSuite::stopEntry()];
+            // The Stop driver is the profile's own stop-hook.sh (it reads the
+            // plan-active marker the suite arms) — the suite no longer wires its
+            // own Stop entry, so exactly one Stop hook is ever installed.
             // grind (no per-phase nudges) keeps the plan-loop DRIVE but drops the
             // per-commit judge nudge — it reckons once at the end, not each phase.
             $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries($opts->perPhaseNudges);

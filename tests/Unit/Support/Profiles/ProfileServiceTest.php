@@ -94,9 +94,9 @@ class ProfileServiceTest extends TestCase
         // No per-phase machinery.
         $this->assertFileDoesNotExist($this->dir . '/.git/hooks/pre-commit');
         $this->assertFileDoesNotExist($this->dir . '/.git/hooks/post-commit');
-        // grind keeps going (Stop = keep-going hook) and the script is installed.
+        // grind keeps going (Stop = stop-hook.sh) and the script is installed.
         $this->assertContains('Stop', $this->settingsEvents());
-        $this->assertFileExists($this->dir . '/.claude/hooks/profile-keep-going.sh');
+        $this->assertFileExists($this->dir . '/.claude/hooks/stop-hook.sh');
         $this->assertContains('SessionStart', $this->settingsEvents());
         $this->assertContains('UserPromptSubmit', $this->settingsEvents());
     }
@@ -110,7 +110,7 @@ class ProfileServiceTest extends TestCase
         $this->assertFileDoesNotExist($this->dir . '/.git/hooks/post-commit');
         // …but a pre-push gate, and keep-going until righteous.
         $this->assertStringContainsString('pre-push gate', $this->hook('pre-push'));
-        $this->assertFileExists($this->dir . '/.claude/hooks/profile-keep-going.sh');
+        $this->assertFileExists($this->dir . '/.claude/hooks/stop-hook.sh');
         $this->assertSame('penance', trim((string) file_get_contents($this->dir . '/.commandments/profile')));
     }
 
