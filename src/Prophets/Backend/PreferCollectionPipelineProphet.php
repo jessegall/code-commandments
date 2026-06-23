@@ -146,7 +146,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 sprintf('Nested `%s(...)` composition reads inside-out — prefer a Collection chain `collect($x)->...->all()` that reads top-to-bottom in execution order (array_map→map, array_filter→filter, array_values→values, …).', $this->pipelineName($call)),
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'array-pipeline-nest',
             );
         }
@@ -258,10 +258,4 @@ SCRIPTURE;
         return $nested;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

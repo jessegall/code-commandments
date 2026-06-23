@@ -156,7 +156,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 sprintf('This `@var %s` compensates for an under-annotated return type — add the generic to `%s::%s()`\'s `@return` and remove the annotation, so every caller infers it.', $varType['raw'], $this->shortName($callee->classFqcn), $callee->name),
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'push-generic:' . $callee->name,
             );
         }
@@ -381,12 +381,6 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 
     /**
      * @param  array<Node>  $ast

@@ -112,7 +112,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 sprintf('%s extends a registry base but overrides %s() to read its own store, bypassing the base store. The inherited %s() write a store nothing reads — they are DEAD. Either register into the base store (call `parent::%s()` / drop the override), or stop extending the registry base — this is a discovered catalog (`*Catalog`/`*Map`), not a registration registry.', $name, $this->accessor(), implode('()/', $this->mutators()) . '()', $this->accessor()),
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'registry-base-bypass:' . $name,
             );
         }
@@ -223,10 +223,4 @@ SCRIPTURE;
         return is_array($value) && $value !== [] ? array_values(array_map('strval', $value)) : self::DEFAULT_MUTATORS;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

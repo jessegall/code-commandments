@@ -27,6 +27,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindRawLiterals implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * `strlen`-like calls whose comparison to 0/1 is an empty-string check.
      */
@@ -115,7 +117,7 @@ final class FindRawLiterals implements Pipe
                 match: $finding['literal'],
                 line: $finding['line'],
                 offset: null,
-                content: $this->snippet($input->content, $finding['line']),
+                content: $this->lineSnippet($input->content, $finding['line']),
                 groups: [
                     'kind' => $finding['kind'],
                     'position' => $finding['position'],
@@ -1262,10 +1264,4 @@ final class FindRawLiterals implements Pipe
         return $visitor->parents;
     }
 
-    private function snippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

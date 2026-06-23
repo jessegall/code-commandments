@@ -25,6 +25,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindRequestToDataPassthrough implements Pipe
 {
+    use ExtractsLineSnippet;
+
     public function handle(mixed $input): mixed
     {
         $matches = [];
@@ -91,7 +93,7 @@ final class FindRequestToDataPassthrough implements Pipe
                         match: $className . '::from()',
                         line: $line,
                         offset: null,
-                        content: $this->getSnippet($input->content, $line),
+                        content: $this->lineSnippet($input->content, $line),
                         groups: $requestKeys,
                     );
                 }
@@ -309,10 +311,4 @@ final class FindRequestToDataPassthrough implements Pipe
         return $typeName;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

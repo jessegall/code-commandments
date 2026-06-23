@@ -180,7 +180,7 @@ SCRIPTURE;
                     $method,
                     $method,
                 ),
-                $this->lineAt($content, $call->getStartLine()),
+                $this->lineSnippet($content, $call->getStartLine()),
                 'option-to-null:' . $method,
                 $autoFixable,
             );
@@ -537,10 +537,4 @@ SCRIPTURE;
             : self::DEFAULT_METHODS;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

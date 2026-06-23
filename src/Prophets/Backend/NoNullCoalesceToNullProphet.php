@@ -330,7 +330,7 @@ SCRIPTURE;
         return [
             'line' => $line,
             'message' => $message,
-            'snippet' => $this->lineAt($content, $line),
+            'snippet' => $this->lineSnippet($content, $line),
             'symbol' => $isRegistry ? 'coalesce-null-registry' : 'coalesce-null',
             'penance' => 'Removed no-op `?? null`',
             'edit' => [
@@ -370,10 +370,4 @@ SCRIPTURE;
         return substr($content, $node->getStartFilePos(), $node->getEndFilePos() - $node->getStartFilePos() + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

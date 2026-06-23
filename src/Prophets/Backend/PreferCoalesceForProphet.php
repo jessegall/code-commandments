@@ -186,7 +186,7 @@ SCRIPTURE;
                     $className,
                     $replacement,
                 ),
-                'snippet' => $this->lineAt($content, $line),
+                'snippet' => $this->lineSnippet($content, $line),
                 'symbol' => 'coalesce-for',
                 'penance' => 'Rewrote double-coalesce to coalesceFor()',
                 'edit' => [
@@ -268,10 +268,4 @@ SCRIPTURE;
         return substr($content, $node->getStartFilePos(), $node->getEndFilePos() - $node->getStartFilePos() + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

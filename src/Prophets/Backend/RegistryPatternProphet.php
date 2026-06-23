@@ -113,7 +113,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $class->getStartLine(),
                 sprintf('%s hand-rolls the registry shape (register + keyed store + lookup), and it is one of %d+ such classes with no shared base. Extract an abstract `Registry` base and extend it — `commandments:scaffold` generates one — so the register/find/get contract lives (and is enforced) in one place.', $name, $this->handRolledRegistryCount()),
-                $this->lineAt($content, $class->getStartLine()),
+                $this->lineSnippet($content, $class->getStartLine()),
                 'registry-pattern:' . $name,
             );
         }
@@ -187,10 +187,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

@@ -134,7 +134,7 @@ SCRIPTURE;
                         $name,
                         $owner,
                     ),
-                    $this->lineAt($content, $param->getStartLine()),
+                    $this->lineSnippet($content, $param->getStartLine()),
                     'inline-param-doc:' . $name,
                     true,
                 );
@@ -298,10 +298,4 @@ SCRIPTURE;
         return $type === '' ? null : $type;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : '';
-    }
 }

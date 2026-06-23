@@ -123,7 +123,7 @@ SCRIPTURE;
             $warnings[] = $this->warningAt(
                 $line,
                 'This `->then()` branch factory captures `$this` and does real work — extract it to a named static method on a `*Factory` class returning `callable` (e.g. `FieldFactory::object($this->dep)`), so the resolver reads as a table and the factory is named and reusable.',
-                $this->lineAt($content, $line),
+                $this->lineSnippet($content, $line),
                 'branch-factory',
             );
         }
@@ -167,10 +167,4 @@ SCRIPTURE;
         return is_array($methods) && $methods !== [] ? array_values(array_map('strval', $methods)) : self::DEFAULT_FACTORY_METHODS;
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }
