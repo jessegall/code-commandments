@@ -365,7 +365,13 @@ SCRIPTURE;
         $snippet = $this->lineAt($content, $line);
 
         if ($isSin) {
-            $sins[] = $this->sinAt($line, $this->message($count, $atoms, true), $snippet, null, 'wide-union');
+            // A null-bearing union is never auto-fixable: the only mechanical
+            // rewrite this prophet offers is narrowing a null-FREE union of
+            // project classes to their shared interface (`narrowCommonInterface`
+            // short-circuits on any scalar/null member). Mark the sin
+            // explicitly non-auto-fixable so it isn't mislabelled `[AUTO-FIXABLE]`
+            // by the `SinRepenter` default (which would loop `repent` forever).
+            $sins[] = $this->sinAt($line, $this->message($count, $atoms, true), $snippet, null, 'wide-union', false);
 
             return;
         }
@@ -384,7 +390,7 @@ SCRIPTURE;
                     implode('/', $atoms),
                 );
 
-            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union');
+            $warnings[] = $this->warningAt($line, $message, $snippet, 'wide-union', false);
 
             return;
         }
@@ -404,7 +410,7 @@ SCRIPTURE;
             return;
         }
 
-        $warnings[] = $this->warningAt($line, $this->message($count, $atoms, false), $snippet, 'wide-union');
+        $warnings[] = $this->warningAt($line, $this->message($count, $atoms, false), $snippet, 'wide-union', false);
     }
 
     /**
