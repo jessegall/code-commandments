@@ -363,7 +363,10 @@ final class CommitHookInstaller
         }
 
         $specs = $this->blockSpecs();
-        $desired = array_values(array_filter($desiredBlockIds, static fn (string $id): bool => isset($specs[$id])));
+        $desired = collect($desiredBlockIds)
+            ->filter(static fn (string $id): bool => isset($specs[$id]))
+            ->values()
+            ->all();
 
         // Group desired blocks per hook file, preserving canonical (spec) order.
         $byFile = [];
