@@ -270,6 +270,14 @@ final class ScaffoldRegistry
                 subNamespace: 'Classifiers',
             ),
             new Scaffold(
+                name: 'classifier-compound',
+                className: 'MatchesComposedClassifiers',
+                stubFile: 'MatchesComposedClassifiers.stub',
+                introducedIn: '2.71.0',
+                purpose: 'Trait: the compound classifier body (variadic matches delegating ALL/ANY) shared by every base.',
+                subNamespace: 'Classifiers',
+            ),
+            new Scaffold(
                 name: 'classifier-instance',
                 className: 'InstanceClassifier',
                 stubFile: 'InstanceClassifier.stub',
