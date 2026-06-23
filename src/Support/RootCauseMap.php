@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Support;
 use JesseGall\CodeCommandments\Prophets\Backend\NoNullCoalesceToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoOptionToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoSwallowedNotFoundProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\PreferCoercionHelperProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\PreferNativeTypedAccessorProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferEmptyOverNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullObjectDefaultsProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
@@ -64,6 +66,14 @@ final class RootCauseMap
             PreferTotalOverNullableProphet::class => self::ABSENCE_SYMPTOMS,
             RegistryReturnContractProphet::class => self::ABSENCE_SYMPTOMS,
             NoSwallowedNotFoundProphet::class => self::ABSENCE_SYMPTOMS,
+
+            // When the receiver is a typed bag, "use its native accessor" is the
+            // root fix; PreferCoercionHelper's "hoist the repeated coercion into
+            // a T_*::coerce() helper" would otherwise suggest the OPPOSITE on the
+            // very same guard-ternary. Defer it in-region so they never collide.
+            PreferNativeTypedAccessorProphet::class => [
+                PreferCoercionHelperProphet::class,
+            ],
         ];
     }
 
