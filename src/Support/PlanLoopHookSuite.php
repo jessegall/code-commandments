@@ -126,6 +126,36 @@ final class PlanLoopHookSuite
         return self::STATUS_INSTALLED;
     }
 
+    /**
+     * Overwrite ONLY the suite scripts that already exist in the consumer's
+     * `.claude/hooks/` with the current shipped versions — never adds a script
+     * the consumer did not already have. Used on a package update to refresh a
+     * stale/orphaned copy (e.g. a consumer that once had the plan-loop installed
+     * but no longer opts in via config). Returns how many files were refreshed.
+     */
+    public static function refreshExisting(string $basePath): int
+    {
+        $dir = rtrim($basePath, '/') . '/.claude/hooks';
+        $refreshed = 0;
+
+        foreach (self::SCRIPTS as $script) {
+            $target = $dir . '/' . $script;
+
+            if (! is_file($target)) {
+                continue;
+            }
+
+            $contents = @file_get_contents(self::stubsDir() . '/' . $script);
+
+            if ($contents !== false && @file_put_contents($target, $contents) !== false) {
+                @chmod($target, 0755);
+                $refreshed++;
+            }
+        }
+
+        return $refreshed;
+    }
+
     private static function stubsDir(): string
     {
         return dirname(__DIR__, 2) . '/stubs/hooks';
