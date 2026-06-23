@@ -24,8 +24,8 @@ class InstallSyncHookCommand extends Command
             base_path(),
             (bool) $this->option('force'),
             '@php artisan commandments:sync --after=previous',
-            fn (string $line) => $this->info($line),
-            fn (string $line) => $this->error($line),
+            $this->info(...),
+            $this->error(...),
         ) === SyncHookInstaller::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 }

@@ -35,7 +35,7 @@ class RepentConsoleCommand extends Command
         $service = new \JesseGall\CodeCommandments\Support\RepentService(
             $manager,
             $registry,
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
         );
 
         return $service->run([

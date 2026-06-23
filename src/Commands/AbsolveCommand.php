@@ -51,8 +51,8 @@ class AbsolveCommand extends Command
                 'reason' => $this->option('reason'),
             ],
             base_path(),
-            fn (string $line) => $this->info($line),
-            fn (string $line) => $this->warn($line),
+            $this->info(...),
+            $this->warn(...),
         ) === AbsolveService::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 }

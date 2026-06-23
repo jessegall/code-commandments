@@ -60,8 +60,8 @@ SCRIPTURE;
         }
 
         return VuePipeline::make($filePath, $content)
-            ->returnRighteousWhen(fn (VueContext $ctx) => $this->shouldSkip($ctx))
-            ->pipe(fn (VueContext $ctx) => $this->findHardcodedUrls($ctx))
+            ->returnRighteousWhen($this->shouldSkip(...))
+            ->pipe($this->findHardcodedUrls(...))
             ->sinsFromMatches(
                 'Hardcoded URL in router call',
                 'Use wayfinder-generated route helper: products.index.url()'

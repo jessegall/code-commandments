@@ -47,7 +47,7 @@ class InitConsoleCommand extends Command
         // git hooks, and the CLAUDE.md section, and records .commandments/profile.
         (new ProfileService($basePath, $this->loadConfig($basePath)))->switch(
             'phased',
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
             fn (string $line) => $output->writeln('<comment>' . $line . '</comment>'),
         );
 
@@ -88,7 +88,7 @@ class InitConsoleCommand extends Command
 
         $installed = \JesseGall\CodeCommandments\Support\Skills\SkillReporter::report(
             $results,
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
         );
 
         $output->writeln($installed > 0
