@@ -58,6 +58,20 @@ final class ClaudeHooksInstaller
         // profile by {@see \JesseGall\CodeCommandments\Support\Profiles\StopHookInstaller}).
         'stop-hook.sh',
     ];
+
+    /**
+     * Scripts the package USED to ship but no longer does. Still recognised as
+     * package-owned so a stale settings.json entry pointing at one is STRIPPED on
+     * the next profile write (migration), and their files are deleted on disk —
+     * but they are never installed. (The two keep-going hooks were unified into
+     * the per-profile `stop-hook.sh` in v2.66 — issue #197.)
+     *
+     * @var list<string>
+     */
+    public const RETIRED_SCRIPTS = [
+        'keep-going.sh',
+        'profile-keep-going.sh',
+    ];
     /**
      * The runner a CONSUMER PROJECT uses, decided by the project itself (a
      * Laravel app — `artisan` present — documents `php artisan commandments:…`;
@@ -505,7 +519,7 @@ HOOK;
             return true;
         }
 
-        foreach (self::OWNED_SCRIPTS as $script) {
+        foreach ([...self::OWNED_SCRIPTS, ...self::RETIRED_SCRIPTS] as $script) {
             if (str_contains($command, $script)) {
                 return true;
             }

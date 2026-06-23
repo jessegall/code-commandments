@@ -137,6 +137,29 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $this->assertFileDoesNotExist($this->dir . '/.claude/settings.json');
     }
 
+    public function test_writeForProfile_strips_a_retired_keep_going_stop_entry(): void
+    {
+        // Migration (#197): a consumer updated from an older package version has a
+        // stale Stop entry pointing at the retired profile-keep-going.sh — it must
+        // be stripped and replaced by the single stop-hook.sh, not left dangling.
+        mkdir($this->dir . '/.claude', 0755, true);
+        file_put_contents($this->dir . '/.claude/settings.json', json_encode([
+            'hooks' => [
+                'Stop' => [
+                    ['hooks' => [['type' => 'command', 'command' => 'sh .claude/hooks/profile-keep-going.sh']]],
+                    ['hooks' => [['type' => 'command', 'command' => 'sh .claude/hooks/keep-going.sh']]],
+                ],
+            ],
+        ]));
+
+        ClaudeHooksInstaller::writeForProfile($this->dir, ProfileRegistry::get('grind')->options(), false);
+
+        $stop = json_encode($this->settings()['hooks']['Stop'] ?? []);
+        $this->assertStringContainsString('stop-hook.sh', $stop);
+        $this->assertStringNotContainsString('profile-keep-going.sh', $stop);
+        $this->assertStringNotContainsString('keep-going.sh', $stop);
+    }
+
     public function test_writeForProfile_strips_owned_but_keeps_consumer_entries(): void
     {
         mkdir($this->dir . '/.claude', 0755, true);
