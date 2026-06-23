@@ -32,12 +32,12 @@ class ProfileConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd() ?: '.';
+        $basePath = Environment::workingDirectory();
         Environment::setBasePath($basePath);
 
         $service = new ProfileService($basePath, $this->loadConfig($input->getOption('config'), $basePath));
 
-        $emit = fn (string $line) => $output->writeln($line);
+        $emit = $output->writeln(...);
         $error = fn (string $line) => $output->writeln('<error>' . $line . '</error>');
 
         if ($input->getOption('brief')) {

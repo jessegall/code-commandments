@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * The follow-up guidance appended to a successful `report`, so a filed issue is
  * a CLOSED loop (file → watch → implement-or-fix on close) instead of a
@@ -21,7 +23,7 @@ final class ReportGuidance
         }
 
         return [
-            '',
+            T_String::empty(),
             "<comment>CLOSE THE LOOP on #{$number} — do not wait for a human to relay the resolution.</comment>",
             '  1. PASSIVE (always on): `commandments reports --check` runs at every session start and auto-lifts the absolution when the issue closes — so even days later it resurfaces on its own.',
             '  2. ACTIVE (this session): start a poll loop — paste this:',

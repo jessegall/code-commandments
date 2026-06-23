@@ -10,6 +10,7 @@ use PhpParser\NodeVisitorAbstract;
 use PhpParser\ParserFactory;
 use PhpParser\Error as ParseError;
 use ReflectionClass;
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 
 /**
  * Base class for PHP file commandments.
@@ -17,6 +18,8 @@ use ReflectionClass;
  */
 abstract class PhpCommandment extends BaseCommandment
 {
+    use ExtractsLineSnippet;
+
     protected ?\PhpParser\Parser $parser = null;
 
     /**

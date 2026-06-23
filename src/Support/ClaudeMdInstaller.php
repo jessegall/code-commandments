@@ -44,7 +44,7 @@ final class ClaudeMdInstaller
      */
     public static function section(array $runner): string
     {
-        return self::BEGIN . "\n" . self::body($runner[0], $runner[1]) . "\n" . self::END;
+        return self::BEGIN . T_String::NEWLINE . self::body($runner[0], $runner[1]) . T_String::NEWLINE . self::END;
     }
 
     /**
@@ -58,7 +58,7 @@ final class ClaudeMdInstaller
         $block = self::section(ClaudeHooksInstaller::runnerFor($basePath));
 
         if (! is_file($path)) {
-            return @file_put_contents($path, $block . "\n") === false
+            return @file_put_contents($path, $block . T_String::NEWLINE) === false
                 ? self::STATUS_WRITE_FAILED
                 : self::STATUS_CREATED;
         }
@@ -73,7 +73,7 @@ final class ClaudeMdInstaller
 
         if ($replaced === null) {
             // No section yet — append it.
-            $new = rtrim($content, "\n") . "\n\n" . $block . "\n";
+            $new = rtrim($content, T_String::NEWLINE) . T_String::PARAGRAPH . $block . T_String::NEWLINE;
 
             return @file_put_contents($path, $new) === false ? self::STATUS_WRITE_FAILED : self::STATUS_APPENDED;
         }
@@ -178,7 +178,7 @@ final class ClaudeMdInstaller
             return self::join(substr($content, 0, $start), $tail);
         }
 
-        return self::join(substr($content, 0, $start), '');
+        return self::join(substr($content, 0, $start), T_String::empty());
     }
 
     /**
@@ -187,14 +187,14 @@ final class ClaudeMdInstaller
      */
     private static function join(string $before, string $after): string
     {
-        $before = rtrim($before, "\n");
-        $after = ltrim($after, "\n");
+        $before = rtrim($before, T_String::NEWLINE);
+        $after = ltrim($after, T_String::NEWLINE);
 
-        if ($before === '') {
-            return $after === '' ? '' : $after . "\n";
+        if (T_String::isEmpty($before)) {
+            return T_String::isEmpty($after) ? T_String::empty() : $after . T_String::NEWLINE;
         }
 
-        return $after === '' ? $before . "\n" : $before . "\n\n" . $after . "\n";
+        return T_String::isEmpty($after) ? $before . T_String::NEWLINE : $before . T_String::PARAGRAPH . $after . T_String::NEWLINE;
     }
 
     /**
@@ -227,11 +227,11 @@ final class ClaudeMdInstaller
             $span = 1 + $m2[0][1]; // up to (not including) the next heading
             $tail = substr($content, $start + $span);
 
-            return substr($content, 0, $start) . $block . "\n\n" . ltrim($tail, "\n");
+            return substr($content, 0, $start) . $block . T_String::PARAGRAPH . ltrim($tail, T_String::NEWLINE);
         }
 
         // Section runs to EOF.
-        return substr($content, 0, $start) . $block . "\n";
+        return substr($content, 0, $start) . $block . T_String::NEWLINE;
     }
 
     private static function hasConflictMarkers(string $content): bool

@@ -45,8 +45,8 @@ class JudgeCommand extends Command
             $tracker,
             'php artisan commandments',
             ':',
-            fn (string $line) => $this->output->writeln($line),
-            fn (string $line) => $this->error($line),
+            $this->output->writeln(...),
+            $this->error(...),
         );
 
         return $service->run([

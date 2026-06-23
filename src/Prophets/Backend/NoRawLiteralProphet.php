@@ -27,18 +27,6 @@ use PhpParser\ParserFactory;
 #[IntroducedIn('1.28.0')]
 class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
 {
-    /**
-     * Rewriting `$x ?? T_String::empty()` to `T_String::coalesce($x)` removes
-     * the very fallback expression RepeatedFallback would flag — so resolve
-     * the raw literal first; its symptoms there are deferred until then.
-     *
-     * @return list<class-string>
-     */
-    public function supersedes(): array
-    {
-        return [RepeatedFallbackProphet::class];
-    }
-
     private const STRING_CLASS = 'JesseGall\\PhpTypes\\T_String';
 
     private const JSON_CLASS = 'JesseGall\\PhpTypes\\T_Json';
@@ -73,6 +61,18 @@ class NoRawLiteralProphet extends PhpCommandment implements SinRepenter
         'int_minus_one' => 'MINUS_ONE',
         'float_zero' => 'ZERO',
     ];
+
+    /**
+     * Rewriting `$x ?? T_String::empty()` to `T_String::coalesce($x)` removes
+     * the very fallback expression RepeatedFallback would flag — so resolve
+     * the raw literal first; its symptoms there are deferred until then.
+     *
+     * @return list<class-string>
+     */
+    public function supersedes(): array
+    {
+        return [RepeatedFallbackProphet::class];
+    }
 
     public function description(): string
     {

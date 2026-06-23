@@ -25,8 +25,8 @@ class ProfileCommand extends Command
         $config = config('commandments', []);
         $service = new ProfileService(base_path(), is_array($config) ? $config : []);
 
-        $emit = fn (string $line) => $this->output->writeln($line);
-        $error = fn (string $line) => $this->error($line);
+        $emit = $this->output->writeln(...);
+        $error = $this->error(...);
 
         if ($this->option('brief')) {
             $service->brief($emit);

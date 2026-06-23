@@ -28,7 +28,7 @@ class InstallSkillsCommand extends Command
             base_path('.claude/skills'),
             (bool) $this->option('auto'),
             (bool) $this->option('force'),
-            fn (string $line) => $this->line($line),
+            $this->line(...),
         );
 
         return self::SUCCESS;

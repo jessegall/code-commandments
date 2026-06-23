@@ -148,31 +148,12 @@ class ConfigSyncer
      */
     private function discoverProphets(string $type): array
     {
-        $dir = __DIR__ . '/../Prophets/' . $type;
-
-        if (! is_dir($dir)) {
-            return [];
-        }
-
         $prophets = [];
-        $files = scandir($dir);
 
-        if ($files === false) {
-            return [];
-        }
-
-        foreach ($files as $file) {
-            if (! str_ends_with($file, 'Prophet.php')) {
-                continue;
-            }
-
-            $className = 'JesseGall\\CodeCommandments\\Prophets\\' . $type . '\\' . str_replace('.php', T_String::empty(), $file);
-            $configOptions = $this->extractConfigOptions($dir . '/' . $file);
-            $introducedIn = $this->extractIntroducedIn($className);
-
+        foreach (ProphetFiles::each($type) as [$className, $filePath]) {
             $prophets[$className] = [
-                'config' => $configOptions,
-                'introduced_in' => $introducedIn,
+                'config' => (new ProphetConfigExtractor())->optionsFor($filePath),
+                'introduced_in' => $this->extractIntroducedIn($className),
             ];
         }
 
@@ -200,57 +181,6 @@ class ConfigSyncer
         }
 
         return $attributes[0]->newInstance()->version;
-    }
-
-    /**
-     * Extract config keys and defaults from a prophet source file.
-     *
-     * @return array<string, string> key => default value as raw PHP string
-     */
-    private function extractConfigOptions(string $filePath): array
-    {
-        $content = file_get_contents($filePath);
-
-        if ($content === false) {
-            return [];
-        }
-
-        $options = [];
-
-        if (preg_match_all('/\$this->config\(\s*\'([^\']+)\'\s*,\s*(.+?)\)/', $content, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                $key = $match[1];
-
-                if ($key === 'exclude') {
-                    continue;
-                }
-
-                $default = trim($match[2]);
-
-                if (str_contains($default, '::')) {
-                    $resolved = $this->resolveConstant($content, $default);
-
-                    if ($resolved !== null) {
-                        $default = $resolved;
-                    }
-                }
-
-                $options[$key] = $default;
-            }
-        }
-
-        return $options;
-    }
-
-    private function resolveConstant(string $fileContent, string $constant): ?string
-    {
-        $constName = preg_replace('/^(self|static)::/', T_String::empty(), $constant);
-
-        if (preg_match("/const\s+{$constName}\s*=\s*(.+?);/", $fileContent, $match)) {
-            return trim($match[1]);
-        }
-
-        return null;
     }
 
     /**

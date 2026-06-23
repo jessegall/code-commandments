@@ -26,7 +26,7 @@ class ScaffoldCommand extends Command
             app_path('Support'),
             (bool) $this->option('auto'),
             (bool) $this->option('force'),
-            fn (string $line) => $this->line($line),
+            $this->line(...),
         );
 
         return self::SUCCESS;

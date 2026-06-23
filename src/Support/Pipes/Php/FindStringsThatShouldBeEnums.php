@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
-use Composer\Autoload\ClassLoader;
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
+use JesseGall\CodeCommandments\Support\ComposerLoader;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\EnumSummary;
 use JesseGall\CodeCommandments\Support\VendorPath;
@@ -44,6 +45,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindStringsThatShouldBeEnums implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Methods whose string returns are wire-format (JSON responses, arrays
      * going over an API boundary) and where literal values are intentional.
@@ -65,10 +68,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
     /** @var array<string, bool> FQCN => whether the class file lives under /vendor/. */
     private static array $vendorCache = [];
-
-    private static ?ClassLoader $composerLoader = null;
-
-    private static bool $composerLoaderResolved = false;
 
     private ?CodebaseIndex $codebaseIndex = null;
 
@@ -176,7 +175,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
             $matches[] = $this->makeMatch(
                 name: 'named_arg',
                 line: $arg->getStartLine(),
-                content: $this->getSnippet($input->content, $arg->getStartLine()),
+                content: $this->lineSnippet($input->content, $arg->getStartLine()),
                 shortName: $shortName,
                 fqcn: $info['fqcn'],
                 caseName: $info['cases'][$value] ?? $this->matchCase($info, $value) ?? $value,
@@ -232,7 +231,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                         $matches[] = $this->makeMatch(
                             name: 'param_default',
                             line: $param->getStartLine(),
-                            content: $this->getSnippet($input->content, $param->getStartLine()),
+                            content: $this->lineSnippet($input->content, $param->getStartLine()),
                             shortName: $shortName,
                             fqcn: $info['fqcn'],
                             caseName: $info['cases'][$value] ?? $this->matchCase($info, $value) ?? $value,
@@ -276,7 +275,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
                 $matches[] = $this->makeMatchForClosedSet(
                     line: $param->getStartLine(),
-                    content: $this->getSnippet($input->content, $param->getStartLine()),
+                    content: $this->lineSnippet($input->content, $param->getStartLine()),
                     shortName: $shortName,
                     fqcn: $info['fqcn'],
                     literals: $literals,
@@ -293,7 +292,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
                 $matches[] = $this->makeMatchForClosedSet(
                     line: $param->getStartLine(),
-                    content: $this->getSnippet($input->content, $param->getStartLine()),
+                    content: $this->lineSnippet($input->content, $param->getStartLine()),
                     shortName: $this->suggestEnumName($paramName),
                     fqcn: T_String::empty(),
                     literals: $literals,
@@ -369,14 +368,14 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 match: "in_array(\${$identifier}, [" . implode(', ', $literals) . '])',
                 line: $call->getStartLine(),
                 offset: null,
-                content: $this->getSnippet($input->content, $call->getStartLine()),
+                content: $this->lineSnippet($input->content, $call->getStartLine()),
                 groups: [
                     'subject' => "\${$identifier}",
                     'enum_short' => $shortName,
                     'enum_fqcn' => $info['fqcn'],
                     'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                    'requires_import' => $importedAlias === null ? '1' : T_String::empty(),
+                    'requires_import' => $this->requiresImportFlag($importedAlias),
                 ],
             );
         }
@@ -432,7 +431,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 match: "{$kind} on \${$identifier}: " . implode(', ', $literals),
                 line: $node->getStartLine(),
                 offset: null,
-                content: $this->getSnippet($input->content, $node->getStartLine()),
+                content: $this->lineSnippet($input->content, $node->getStartLine()),
                 groups: [
                     'kind' => $kind,
                     'subject' => "\${$identifier}",
@@ -440,7 +439,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
                     'enum_fqcn' => $info['fqcn'],
                     'enum_cases' => $enumCases,
                     'literals' => implode(', ', array_map(fn ($v) => "'{$v}'", $literals)),
-                    'requires_import' => $importedAlias === null ? '1' : T_String::empty(),
+                    'requires_import' => $this->requiresImportFlag($importedAlias),
                 ],
             );
         }
@@ -748,7 +747,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
      */
     private function enumInfoFromAst(string $fqcn): ?array
     {
-        $loader = $this->getComposerLoader();
+        $loader = ComposerLoader::resolve();
 
         if ($loader === null) {
             return null;
@@ -859,25 +858,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
 
         if ($expr instanceof Expr\UnaryMinus && $expr->expr instanceof Scalar\Int_) {
             return -$expr->expr->value;
-        }
-
-        return null;
-    }
-
-    private function getComposerLoader(): ?ClassLoader
-    {
-        if (self::$composerLoaderResolved) {
-            return self::$composerLoader;
-        }
-
-        self::$composerLoaderResolved = true;
-
-        foreach (spl_autoload_functions() ?: [] as $autoload) {
-            if (is_array($autoload) && isset($autoload[0]) && $autoload[0] instanceof ClassLoader) {
-                self::$composerLoader = $autoload[0];
-
-                return self::$composerLoader;
-            }
         }
 
         return null;
@@ -1011,7 +991,7 @@ final class FindStringsThatShouldBeEnums implements Pipe
             return self::$vendorCache[$fqcn];
         }
 
-        $loader = $this->getComposerLoader();
+        $loader = ComposerLoader::resolve();
 
         if ($loader === null) {
             return self::$vendorCache[$fqcn] = false;
@@ -1117,12 +1097,6 @@ final class FindStringsThatShouldBeEnums implements Pipe
         return $parents;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 
     private function makeMatch(
         string $name,
@@ -1523,5 +1497,14 @@ final class FindStringsThatShouldBeEnums implements Pipe
         }
 
         return ucfirst($clean);
+    }
+
+    /**
+     * The `requires_import` group flag: '1' when the enum still needs a `use`
+     * import at the call site, empty otherwise.
+     */
+    private function requiresImportFlag(?string $importedAlias): string
+    {
+        return $importedAlias === null ? '1' : T_String::empty();
     }
 }

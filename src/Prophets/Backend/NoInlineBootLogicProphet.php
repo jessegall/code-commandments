@@ -91,7 +91,7 @@ SCRIPTURE;
     {
         return PhpPipeline::make($filePath, $content)
             ->returnRighteousWhen(fn (PhpContext $ctx) => ! $this->isModelFile($ctx->filePath, $ctx->content))
-            ->pipe(fn (PhpContext $ctx) => $this->findInlineBootLogic($ctx))
+            ->pipe($this->findInlineBootLogic(...))
             ->sinsFromMatches(
                 fn (MatchResult $m) => sprintf('Inline business logic in static::%s() hook', $m->groups['hook']),
                 'Dispatch an event instead and move business logic to a listener'

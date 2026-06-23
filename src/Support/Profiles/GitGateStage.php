@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Profiles;
 
+use JesseGall\CodeCommandments\Support\CompareSelf;
+
 /**
  * Where a profile's blocking git gate sits (if anywhere).
  *
@@ -13,6 +15,8 @@ namespace JesseGall\CodeCommandments\Support\Profiles;
  */
 enum GitGateStage: string
 {
+    use CompareSelf;
+
     /** No blocking gate (disabled). */
     case None = 'none';
 
