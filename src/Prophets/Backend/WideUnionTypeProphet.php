@@ -951,7 +951,7 @@ SCRIPTURE;
             $interfaceNs = ($pos = strrpos($interfaceFqcn, '\\')) !== false ? substr($interfaceFqcn, 0, $pos) : null;
 
             if ($interfaceNs !== ($namespace ?? null)) {
-                $content = $this->ensureUse($content, $interfaceFqcn);
+                $content = FileImports::ensure($content, $interfaceFqcn);
             }
         }
 
@@ -1027,20 +1027,5 @@ SCRIPTURE;
         $lineStart = $lineStart === false ? 0 : $lineStart + 1;
 
         return preg_replace('/\S.*$/s', '', substr($content, $lineStart, $pos - $lineStart)) ?? '';
-    }
-
-    private function ensureUse(string $content, string $fqcn): string
-    {
-        if (preg_match('/^\s*use\s+' . preg_quote($fqcn, '/') . '\s*;/m', $content) === 1) {
-            return $content;
-        }
-
-        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
-            return $content;
-        }
-
-        $insertAt = $m[0][1] + strlen($m[0][0]);
-
-        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
     }
 }
