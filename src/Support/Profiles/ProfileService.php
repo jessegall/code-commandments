@@ -287,6 +287,13 @@ final class ProfileService
             @unlink($this->basePath . '/.claude/hooks/' . StopHookInstaller::INSTALLED_NAME);
         }
 
+        // Migration: delete the retired keep-going scripts that the per-profile
+        // stop-hook.sh replaced (#197), so a consumer updated from an older
+        // package version is not left with confusing dead hook files.
+        foreach (ClaudeHooksInstaller::RETIRED_SCRIPTS as $retired) {
+            @unlink($this->basePath . '/.claude/hooks/' . $retired);
+        }
+
         // Briefing is delivered by the local session-start hook (scripture /
         // `profile --brief`), NOT committed CLAUDE.md — so strip any legacy
         // `## Code Commandments` section for EVERY profile. This keeps CLAUDE.md
