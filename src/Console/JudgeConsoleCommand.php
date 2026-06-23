@@ -45,7 +45,7 @@ class JudgeConsoleCommand extends Command
             $tracker,
             'commandments',
             ' ',
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
             fn (string $line) => $output->writeln('<error>' . $line . '</error>'),
         );
 

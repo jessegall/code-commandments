@@ -34,7 +34,7 @@ class InstallSyncHookConsoleCommand extends Command
             $basePath,
             (bool) $input->getOption('force'),
             'vendor/bin/commandments sync --after=previous',
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
             fn (string $line) => $output->writeln('<error>' . $line . '</error>'),
         ) === SyncHookInstaller::SUCCESS ? Command::SUCCESS : Command::FAILURE;
     }
