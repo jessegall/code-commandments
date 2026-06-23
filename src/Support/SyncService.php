@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support;
 
 use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
-use JesseGall\CodeCommandments\Support\Profiles\StopHookInstaller;
 use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldGenerator;
 use JesseGall\CodeCommandments\Support\Scaffolding\ScaffoldReporter;
 use JesseGall\CodeCommandments\Support\Skills\SkillInstaller;
@@ -132,25 +131,34 @@ final class SyncService
      */
     private static function refreshHookScripts(string $basePath, array $config, callable $emit): void
     {
-        if (is_dir($basePath . '/.claude/hooks')
-            && HandoffHelper::install($basePath) === HandoffHelper::STATUS_INSTALLED) {
+        if (! is_dir($basePath . '/.claude/hooks')) {
+            return;
+        }
+
+        if (HandoffHelper::install($basePath) === HandoffHelper::STATUS_INSTALLED) {
             $emit('Refreshed the handoff helpers in .claude/hooks/');
         }
 
-        // Keep the ACTIVE profile's Stop hook (.claude/hooks/stop-hook.sh)
-        // current — re-copy its dedicated script so a package update ships the
-        // latest behaviour without a profile switch.
-        if (is_dir($basePath . '/.claude/hooks')) {
-            $stopHook = (new ProfileService($basePath, $config))->active()->options()->stopHook;
+        // Future-proof a package update: RE-ENTER the active profile so every
+        // profile-owned hook (the stop-hook.sh contents, the settings.json
+        // wiring, the git gate) is regenerated from the just-updated package —
+        // an old hook script can never linger across an update. Silent: this is
+        // a refresh, not a user-initiated switch.
+        $service = new ProfileService($basePath, $config);
+        $active = $service->active()->name();
+        $noop = static fn (string $message): null => null;
+        $service->switch($active, $noop, $noop);
+        $emit("Re-applied the active profile ({$active}) so its hooks match the updated package");
 
-            if ($stopHook !== null) {
-                StopHookInstaller::install($basePath, $stopHook);
+        // Plan-loop scripts: install the full suite when opted in; otherwise just
+        // overwrite any that already exist on disk (so a stale/orphaned copy is
+        // refreshed) without adding the suite to a consumer that did not opt in.
+        if (PlanLoopHookSuite::enabled($config)) {
+            if (PlanLoopHookSuite::install($basePath) === PlanLoopHookSuite::STATUS_INSTALLED) {
+                $emit('Refreshed the plan-loop hook scripts in .claude/hooks/');
             }
-        }
-
-        if (PlanLoopHookSuite::enabled($config)
-            && PlanLoopHookSuite::install($basePath) === PlanLoopHookSuite::STATUS_INSTALLED) {
-            $emit('Refreshed the plan-loop hook scripts in .claude/hooks/');
+        } elseif (PlanLoopHookSuite::refreshExisting($basePath) > 0) {
+            $emit('Refreshed existing plan-loop hook scripts in .claude/hooks/');
         }
     }
 
