@@ -159,12 +159,18 @@ HOOK;
         $config = [];
 
         if ($opts->briefAgent) {
+            // The profile's concise contract (cadence/gate) ALWAYS briefs at session
+            // start; a Full briefing ADDS the scripture (the rules + configured prophets).
+            $sessionStart = [$run('profile --brief')];
+
+            if ($opts->briefing === Briefing::Full) {
+                $sessionStart[] = $run('scripture');
+            }
+
             $config['SessionStart'] = [
                 [
                     'hooks' => [
-                        // Full briefing => scripture (lists the configured prophets);
-                        // Short => the concise grind contract from `profile --brief`.
-                        $opts->briefing === Briefing::Full ? $run('scripture') : $run('profile --brief'),
+                        ...$sessionStart,
                         $run('reports --check'),
                         $run('scaffold --auto'),
                         $run('install-skills --auto'),

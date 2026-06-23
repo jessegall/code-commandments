@@ -19,7 +19,7 @@ class ProfileRegistryTest extends TestCase
 
     public function test_catalogue(): void
     {
-        $this->assertSame(['disabled', 'grind', 'phased', 'sins-only'], ProfileRegistry::names());
+        $this->assertSame(['disabled', 'grind', 'phased', 'sins-only', 'penance'], ProfileRegistry::names());
         $this->assertNull(ProfileRegistry::get('nope'));
         $this->assertFalse(ProfileRegistry::has('nope'));
     }
@@ -52,6 +52,17 @@ class ProfileRegistryTest extends TestCase
         $this->assertFalse($o->allowWarnings);
         // With no warnings to gate on, the staged gate effectively blocks sins only.
         $this->assertFalse($o->gateBlocksOnWarnings());
+    }
+
+    public function test_penance_is_a_cleanup_with_no_commit_gate(): void
+    {
+        $o = ProfileRegistry::get('penance')->options();
+
+        $this->assertTrue($o->allowWarnings, 'penance fixes warnings too');
+        $this->assertSame(JudgeScope::None, $o->scope, 'penance audits the whole codebase');
+        $this->assertSame(GitGateStage::PrePush, $o->gate, 'no commit gate; push-when-clean');
+        $this->assertFalse($o->perPhaseNudges);
+        $this->assertTrue($o->keepGoing, 'penance keeps going until righteous');
     }
 
     public function test_disabled_is_inert(): void
