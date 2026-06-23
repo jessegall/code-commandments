@@ -185,6 +185,36 @@ class JudgeProfileBehaviourTest extends TestCase
         $this->assertStringContainsString('SINS', $out);
     }
 
+    public function test_no_profile_audits_the_whole_scroll_under_an_active_profile(): void
+    {
+        // phased would narrow a bare judge to staged scope (and miss an unstaged
+        // sin); --no-profile ignores that and scans the whole scroll.
+        $this->setProfile('phased');
+        $this->file('base.php', 'clean');
+        $this->git('add -A');
+        $this->git('commit -qm base');
+        $this->file('Sin.php', 'SIN_ME'); // unstaged
+
+        [$staged] = $this->judge([]);
+        $this->assertSame(JudgeService::SUCCESS, $staged, 'phased bare judge only sees staged files');
+
+        [$code, $out] = $this->judge(['no_profile' => true]);
+        $this->assertSame(JudgeService::FAILURE, $code);
+        $this->assertStringContainsString('SINS', $out);
+    }
+
+    public function test_no_profile_shows_warnings_even_under_sins_only(): void
+    {
+        $this->setProfile('sins-only');
+        $this->file('Warn.php', 'WARN_ME');
+
+        [$suppressed, $outA] = $this->judge(['path' => $this->dir]);
+        $this->assertStringNotContainsString('WARNINGS', $outA);
+
+        [, $outB] = $this->judge(['path' => $this->dir, 'no_profile' => true]);
+        $this->assertStringContainsString('WARNINGS', $outB);
+    }
+
     public function test_branch_and_git_scopes_are_mutually_exclusive(): void
     {
         [$code, $out] = $this->judge(['git' => true, 'branch' => true]);

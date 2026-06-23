@@ -209,7 +209,9 @@ HOOK;
             $config['SessionStart'] = [...PlanLoopHookSuite::sessionStartEntries(), ...($config['SessionStart'] ?? [])];
             $config['PreToolUse'] = PlanLoopHookSuite::preToolUseEntries();
             $config['Stop'] = [...($config['Stop'] ?? []), PlanLoopHookSuite::stopEntry()];
-            $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries();
+            // grind (no per-phase nudges) keeps the plan-loop DRIVE but drops the
+            // per-commit judge nudge — it reckons once at the end, not each phase.
+            $config['PostToolUse'] = PlanLoopHookSuite::postToolUseEntries($opts->perPhaseNudges);
         }
 
         return $config;
