@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Contracts\SinRepenter;
 use JesseGall\CodeCommandments\Results\Finding;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\Profiles\JudgeScope;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\PhpTypes\T_String;
 
 /**
@@ -57,18 +59,28 @@ final class RepentService
         $dryRun = (bool) ($opts['dry_run'] ?? false);
         $repentInput = $this->parseInputs((array) ($opts['input'] ?? []));
 
-        // Scope defaults to the git working tree (#196): a bare `repent` must
-        // NEVER sweep the whole scroll repo-wide — that rewrote 67 unrelated
-        // files on a focused branch. Only an explicit --all widens it; --file
-        // / --files target an exact set; --git is just the explicit default.
+        // Scope defaults to git (#196): a bare `repent` must NEVER sweep the whole
+        // scroll repo-wide. Only --all widens it; --file/--files target an exact
+        // set. A bare `repent` (no --file/--files/--all and no EXPLICIT --git)
+        // adopts the active profile's scope just like a bare `judge` — so on a
+        // grind branch it repents the WHOLE branch (committed work included), not
+        // only the dirty tree, and an agent's bare `repent` matches `judge --next`.
+        // Explicit --git stays working-tree-only. (#198)
+        $explicitGit = (bool) ($opts['git'] ?? false);
         $useGit = $fileFilter === null && $filesFilter === [] && ! $allMode;
+        $profileScope = ($useGit && ! $explicitGit) ? ProfileService::explicitScope(Environment::basePath()) : null;
 
         $gitFiles = [];
         if ($useGit) {
-            $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
+            $detector = GitFileDetector::for(Environment::basePath());
+            $gitFiles = match ($profileScope) {
+                JudgeScope::Branch => $detector->getBranchFiles(),
+                JudgeScope::Staged => $detector->getStagedFiles(),
+                default => $detector->getChangedFiles(),
+            };
 
             if (empty($gitFiles)) {
-                ($this->emit)('No changed files to repent — code is righteous.');
+                ($this->emit)('No files in scope to repent — code is righteous.');
 
                 return self::SUCCESS;
             }

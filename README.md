@@ -228,7 +228,7 @@ Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE]
 | `--prophet` | `<value>` | Use a specific prophet for repentance |
 | `--file` | `<value>` | Repent sins in a specific file |
 | `--files` | `<value>` | Repent sins in specific files (comma-separated) |
-| `--git` | — | Only repent files that are new or changed in git |
+| `--git` | — | Force working-tree scope. Bare repent otherwise adopts the active profile scope (like judge) |
 | `--input` | `<value>` | Input for a parameterized fixer, repeatable: --input key=value |
 | `--dry-run` | — | Show what would be fixed without making changes |
 

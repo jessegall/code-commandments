@@ -112,9 +112,10 @@ final class NextFindingPresenter
         if ($autoFixable) {
             $lines[] = T_String::empty();
             $lines[] = 'This is AUTO-FIXABLE — DO NOT fix it by hand. Run:';
-            $lines[] = sprintf('  %s repent --git', $binary);
+            $lines[] = sprintf('  %s repent', $binary);
             $lines[] = '  then `' . $binary . ' judge --next` for the next finding.';
             $lines[] = '  (repent rewrites it reliably via AST; hand-fixing wastes effort and risks mistakes.)';
+            $lines[] = '  Agents: run `repent` WITHOUT scope flags — the active profile scopes it. (--git/--branch/--file are for interactive use.)';
             $lines[] = T_String::empty();
             $lines[] = sprintf('%d finding%s remain. Keep going until none do.', $totalRemaining, $totalRemaining === 1 ? T_String::empty() : 's');
 
