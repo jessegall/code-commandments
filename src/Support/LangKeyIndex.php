@@ -97,7 +97,7 @@ final class LangKeyIndex
         $groups = [];
 
         // <langDir>/<locale>/<group>.php
-        foreach (glob($langDir . '/*/*.php') ?: [] as $file) {
+        foreach (Glob::paths($langDir . '/*/*.php') as $file) {
             try {
                 $ast = $parser->parse((string) file_get_contents($file));
             } catch (\Throwable) {

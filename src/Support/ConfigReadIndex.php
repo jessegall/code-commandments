@@ -153,7 +153,7 @@ final class ConfigReadIndex
         $envLeaves = [];
         $leafValues = [];
 
-        foreach (glob($configDir . '/*.php') ?: [] as $file) {
+        foreach (Glob::paths($configDir . '/*.php') as $file) {
             try {
                 $ast = $parser->parse((string) file_get_contents($file));
             } catch (\Throwable) {

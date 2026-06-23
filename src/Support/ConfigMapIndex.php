@@ -128,7 +128,7 @@ final class ConfigMapIndex
         $finder = new NodeFinder;
         $maps = [];
 
-        foreach (glob($configDir . '/*.php') ?: [] as $file) {
+        foreach (Glob::paths($configDir . '/*.php') as $file) {
             try {
                 $ast = $parser->parse((string) file_get_contents($file));
             } catch (\Throwable) {
