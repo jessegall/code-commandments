@@ -444,16 +444,21 @@ final class ProfileService
         $cadence = match (true) {
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
             $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`judge --plan`). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
-            GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid. Do NOT stop to ask the user to confirm — the plan IS the agreement; execute it end to end. No "this is a big change, shall I continue?", no pausing halfway for approval. Only stop for a genuinely blocking matter the plan does not cover.',
+            GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid.',
             default => 'Cadence: no per-phase nudges.',
         };
 
-        return [
+        // Cadence (judge), test cadence, and autonomy are all DERIVED from the
+        // profile's behaviour — so a profile declares its behaviour once and the
+        // briefing follows. Autonomy is implementation-scoped (plan mode is free).
+        return array_values(array_filter([
             "Bare `judge` scope: {$scope}.",
             $gate,
             $o->allowWarnings ? 'Warnings are flagged.' : 'Warnings are silenced (sins only).',
             $cadence,
-        ];
+            $o->behaviour->testBriefing(),
+            $o->behaviour->autonomyBriefing(),
+        ]));
     }
 
     /**
@@ -488,8 +493,7 @@ final class ProfileService
             $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins or warnings remain, and you cannot stop until judge is righteous.';
         } elseif (GitGateStage::PrePush->equals($o->gate)) {
             $lines[] = T_String::empty();
-            $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge, the test suite, or ANY gate between phases — even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED in grind: running checks mid-grind is the mistake to avoid. Commit each phase freely and keep moving.';
-            $lines[] = 'Do NOT stop to ask the user to confirm or re-approve mid-grind. The plan you agreed on IS the authorization — execute it end to end, no "this is a large change, shall I continue?", no pausing halfway for sign-off. Only stop for a genuinely blocking matter the plan does not cover.';
+            $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge, the test suite, or ANY gate between phases — even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED in grind: running checks mid-grind is the mistake to avoid. Commit each phase freely and keep moving. (Autonomy during implementation is set above; in plan mode you still ask freely.)';
             $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` (fix every sin, resolve every warning) and your full test suite ONCE, then push.";
             $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins or warnings (each fixed or absolved with a reason).';
         }
