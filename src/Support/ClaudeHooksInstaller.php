@@ -442,10 +442,10 @@ HOOK;
         $events = array_values(array_unique([...array_keys($existing), ...array_keys($ours)]));
 
         foreach ($events as $event) {
-            $kept = array_values(array_filter(
-                $existing[$event] ?? [],
-                static fn (array $entry): bool => ! self::entryIsOwned($entry),
-            ));
+            $kept = collect($existing[$event] ?? [])
+                ->filter(static fn (array $entry): bool => ! self::entryIsOwned($entry))
+                ->values()
+                ->all();
 
             $merged = [...$kept, ...($ours[$event] ?? [])];
 
