@@ -94,7 +94,9 @@ class ProfileServiceTest extends TestCase
         // No per-phase machinery.
         $this->assertFileDoesNotExist($this->dir . '/.git/hooks/pre-commit');
         $this->assertFileDoesNotExist($this->dir . '/.git/hooks/post-commit');
-        $this->assertNotContains('Stop', $this->settingsEvents());
+        // grind keeps going (Stop = keep-going hook) and the script is installed.
+        $this->assertContains('Stop', $this->settingsEvents());
+        $this->assertFileExists($this->dir . '/.claude/hooks/profile-keep-going.sh');
         $this->assertContains('SessionStart', $this->settingsEvents());
         $this->assertContains('UserPromptSubmit', $this->settingsEvents());
     }
