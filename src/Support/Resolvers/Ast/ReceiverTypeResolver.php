@@ -10,16 +10,13 @@ use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 
 /**
- * Resolve a call/read receiver to its declared FQCN, plus the scope lookups that
- * feed it (enclosing class/function, a parameter's declared type, a property's
- * declared type).
- *
- * Resolution is purely declaration-based (a typed parameter `$x`, a typed
- * `$this->prop`): an untyped or chained receiver returns null (a deliberate
- * "leave it" for the caller), never a guess.
+ * Resolve a declaration-typed receiver (a typed param `$x`, a typed `$this->prop`) to its FQCN, plus the enclosing-scope lookups that feed it.
  */
 final class ReceiverTypeResolver
 {
+    /** Function-like node kinds, for the enclosing-scope lookups. */
+    private const FUNCTION_LIKE = [Node\Stmt\ClassMethod::class, Node\Stmt\Function_::class, Expr\Closure::class];
+
     /**
      * The resolved FQCN of $recv — a typed param `$x`, or a typed `$this->prop`
      * — else null (an unresolved or chained receiver).
@@ -47,9 +44,6 @@ final class ReceiverTypeResolver
 
         return null;
     }
-
-    /** Function-like node kinds, for the enclosing-scope lookups. */
-    private const FUNCTION_LIKE = [Node\Stmt\ClassMethod::class, Node\Stmt\Function_::class, Expr\Closure::class];
 
     /**
      * The declared type name of parameter $name in the innermost function that

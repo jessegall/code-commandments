@@ -414,20 +414,37 @@ class ScrollManager
             $namespace = trim($m[1]);
         }
 
-        if (preg_match_all('/^\s*(?:final\s+|abstract\s+|readonly\s+)*(?:class|interface|enum|trait)\s+(\w+)/mi', $content, $matches) === 0) {
+        if (preg_match_all('/^\s*(?:final\s+|abstract\s+|readonly\s+)*(class|interface|enum|trait)\s+(\w+)/mi', $content, $matches, PREG_SET_ORDER) === 0) {
             return false;
         }
 
-        $declared = [];
+        $exempt = array_map(static fn (string $f): string => ltrim($f, '\\'), $fqcns);
+        $exemptLower = array_map('strtolower', $exempt);
+        // `[UnitEnum::class]` / `[BackedEnum::class]` exempt every enum by kind
+        // (enums implicitly implement these — the AST shows only the `enum` keyword).
+        $wantsEnum = array_intersect($exemptLower, ['unitenum', 'backedenum']) !== [];
 
-        foreach ($matches[1] as $name) {
+        foreach ($matches as [$_, $kind, $name]) {
             $fqcn = $namespace === '' ? $name : $namespace . '\\' . $name;
-            $declared[strtolower(ltrim($fqcn, '\\'))] = true;
-        }
 
-        foreach ($fqcns as $fqcn) {
-            if (isset($declared[strtolower(ltrim($fqcn, '\\'))])) {
+            // Literal name match (the original behaviour).
+            if (in_array(strtolower(ltrim($fqcn, '\\')), $exemptLower, true)) {
                 return true;
+            }
+
+            // Kind match: an enum declaration is a UnitEnum/BackedEnum.
+            if (strtolower($kind) === 'enum' && $wantsEnum) {
+                return true;
+            }
+
+            // Inheritance match: the declared type IS-A one of the exempt classes
+            // (subclass / interface implementer / enum), when it is autoloadable.
+            if (class_exists($fqcn) || interface_exists($fqcn) || enum_exists($fqcn)) {
+                foreach ($exempt as $base) {
+                    if (is_a($fqcn, $base, true)) {
+                        return true;
+                    }
+                }
             }
         }
 
