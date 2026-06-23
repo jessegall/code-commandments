@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
@@ -447,25 +448,10 @@ SCRIPTURE;
         }
 
         foreach (array_keys($imports) as $fqcn) {
-            $content = $this->ensureUse($content, $fqcn);
+            $content = FileImports::ensure($content, $fqcn);
         }
 
         return RepentanceResult::absolved($content, $penance);
-    }
-
-    private function ensureUse(string $content, string $fqcn): string
-    {
-        if (preg_match('/^\s*use\s+' . preg_quote($fqcn, '/') . '\s*;/m', $content) === 1) {
-            return $content;
-        }
-
-        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
-            return $content;
-        }
-
-        $insertAt = $m[0][1] + strlen($m[0][0]);
-
-        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
     }
 
     private function messageFor(string $shape, string $cast, int $count, string $class): string

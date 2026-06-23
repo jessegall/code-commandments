@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
@@ -672,21 +673,6 @@ SCRIPTURE;
     /**
      * Add `use <fqcn>;` after the namespace declaration unless already imported.
      */
-    private function ensureUse(string $content, string $fqcn): string
-    {
-        if (preg_match('/^\s*use\s+' . preg_quote($fqcn, '/') . '\s*;/m', $content) === 1) {
-            return $content;
-        }
-
-        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
-            return $content;
-        }
-
-        $insertAt = $m[0][1] + strlen($m[0][0]);
-
-        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
-    }
-
     /**
      * The full FQCN for a reuse target: the value itself when an explicit FQCN
      * was passed, otherwise a bare short name resolved against the codebase
@@ -734,7 +720,7 @@ SCRIPTURE;
                 return [$content, null];
             }
 
-            return [$this->ensureUse($content, $fqcn), null];
+            return [FileImports::ensure($content, $fqcn), null];
         }
 
         // A bare short name we could not resolve to a FQCN — never guess one.
