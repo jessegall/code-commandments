@@ -93,17 +93,24 @@ final class PlanLoopHookSuite
     }
 
     /**
-     * The PostToolUse entries — replaces the inline post-commit reminder, since
-     * phase-committed.sh does the sin-resolver nudge AND the plan-progress memory.
+     * The PostToolUse entries. plan-approved (arm the loop on ExitPlanMode) is
+     * always present; phase-committed (the per-commit sin-resolver nudge) is the
+     * PER-PHASE JUDGE — omitted under a deferred-cadence profile like grind, which
+     * reckons once at the end and must NOT judge after each commit.
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function postToolUseEntries(): array
+    public static function postToolUseEntries(bool $judgeEachPhase = true): array
     {
-        return [
+        $entries = [
             ['matcher' => 'ExitPlanMode', 'hooks' => [self::command('sh .claude/hooks/plan-approved.sh')]],
-            ['matcher' => 'Bash', 'hooks' => [self::command('sh .claude/hooks/phase-committed.sh')]],
         ];
+
+        if ($judgeEachPhase) {
+            $entries[] = ['matcher' => 'Bash', 'hooks' => [self::command('sh .claude/hooks/phase-committed.sh')]];
+        }
+
+        return $entries;
     }
 
     /**
