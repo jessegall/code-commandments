@@ -56,13 +56,19 @@ class SyncConsoleCommand extends Command
         $after = $input->getOption('after');
         $versionResolver = new VersionResolver();
 
-        if ($after === 'previous') {
+        // Default (no --after) AND explicit `previous`: only add prophets
+        // introduced AFTER the last synced version, so a sync NEVER re-adds a
+        // prophet the consumer intentionally removed (they all carry
+        // #[IntroducedIn]). Only the very first sync (no recorded version) adds
+        // everything. Pass --after=0.0.0 for a deliberate full re-sync.
+        if ($after === null || $after === 'previous') {
+            $explicit = $after === 'previous';
             $after = $versionResolver->previousSyncedVersion($basePath);
 
-            if ($after === null) {
+            if ($after === null && $explicit) {
                 $output->writeln('<comment>No previous sync recorded — falling back to a full sync.</comment>');
-            } else {
-                $output->writeln("Using previous synced version: {$after}");
+            } elseif ($after !== null) {
+                $output->writeln("Adding only prophets introduced after the last synced version: {$after}");
             }
         }
 
