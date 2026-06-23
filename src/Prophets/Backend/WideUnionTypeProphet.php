@@ -54,16 +54,16 @@ class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepent
 
     private ?CodebaseIndex $index = null;
 
-    public function setCodebaseIndex(CodebaseIndex $index): void
-    {
-        $this->index = $index;
-    }
-
     /** Builtin union members that map cleanly to a php-types `T` case. */
     private const T_MAP = [
         'array' => 'Array', 'string' => 'String', 'int' => 'Int', 'float' => 'Float',
         'bool' => 'Bool', 'object' => 'Object', 'iterable' => 'Iterable', 'callable' => 'Callable',
     ];
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     public function description(): string
     {

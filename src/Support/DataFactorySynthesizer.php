@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Auto-fixes object-typed `XData::from($obj)` magic dispatch: it rewrites the
@@ -348,7 +349,7 @@ final class DataFactorySynthesizer
         }
 
         $existing = $this->methodNames($class);
-        $body = '';
+        $body = T_String::empty();
 
         foreach ($need['types'] as $typeShort => $typeFqcn) {
             $factoryName = 'for' . $typeShort;
@@ -511,7 +512,7 @@ final class DataFactorySynthesizer
     {
         $resolved = $class->namespacedName;
 
-        return '\\' . ($resolved !== null ? $resolved->toString() : ($class->name?->toString() ?? ''));
+        return '\\' . ($resolved !== null ? $resolved->toString() : ($class->name?->toString() ?? T_String::empty()));
     }
 
     private function nameFqcn(Node\Name $name): string

@@ -41,11 +41,6 @@ class NoContainerResolutionProphet extends PhpCommandment implements NeedsCodeba
 {
     private ?CodebaseIndex $codebaseIndex = null;
 
-    public function setCodebaseIndex(CodebaseIndex $index): void
-    {
-        $this->codebaseIndex = $index;
-    }
-
     /**
      * Class arguments that are noisy to flag — fetching the application
      * or container instance itself isn't the smell this prophet targets.
@@ -56,6 +51,11 @@ class NoContainerResolutionProphet extends PhpCommandment implements NeedsCodeba
         'Illuminate\\Contracts\\Container\\Container',
         'Psr\\Container\\ContainerInterface',
     ];
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->codebaseIndex = $index;
+    }
 
     public function description(): string
     {
