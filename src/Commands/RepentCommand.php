@@ -20,11 +20,12 @@ class RepentCommand extends Command
         {--prophet= : Use a specific prophet for repentance}
         {--file= : Repent sins in a specific file}
         {--files= : Repent sins in specific files (comma-separated)}
-        {--git : Only repent files that are new or changed in git}
+        {--git : Only repent files that are new or changed in git (this is the DEFAULT)}
+        {--all : Repent the WHOLE scroll repo-wide (opt-in; the bare command no longer does this)}
         {--input=* : Input for a parameterized fixer, repeatable: --input key=value}
         {--dry-run : Show what would be fixed without making changes}';
 
-    protected $description = 'Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed)';
+    protected $description = 'Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed). Defaults to git working-tree scope; pass --all for a repo-wide sweep';
 
     public function handle(
         ProphetRegistry $registry,
@@ -42,6 +43,7 @@ class RepentCommand extends Command
             'file' => $this->option('file'),
             'files' => $this->option('files') ? array_map('trim', explode(',', $this->option('files'))) : [],
             'git' => (bool) $this->option('git'),
+            'all' => (bool) $this->option('all'),
             'dry_run' => (bool) $this->option('dry-run'),
             'input' => (array) $this->option('input'),
         ]) === RepentService::SUCCESS ? self::SUCCESS : self::FAILURE;

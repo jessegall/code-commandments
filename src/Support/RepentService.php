@@ -53,16 +53,22 @@ final class RepentService
         $prophetFilter = $opts['prophet'] ?? null;
         $fileFilter = $opts['file'] ?? null;
         $filesFilter = $opts['files'] ?? [];
-        $gitMode = (bool) ($opts['git'] ?? false);
+        $allMode = (bool) ($opts['all'] ?? false);
         $dryRun = (bool) ($opts['dry_run'] ?? false);
         $repentInput = $this->parseInputs((array) ($opts['input'] ?? []));
 
+        // Scope defaults to the git working tree (#196): a bare `repent` must
+        // NEVER sweep the whole scroll repo-wide — that rewrote 67 unrelated
+        // files on a focused branch. Only an explicit --all widens it; --file
+        // / --files target an exact set; --git is just the explicit default.
+        $useGit = $fileFilter === null && $filesFilter === [] && ! $allMode;
+
         $gitFiles = [];
-        if ($gitMode) {
+        if ($useGit) {
             $gitFiles = GitFileDetector::for(Environment::basePath())->getChangedFiles();
 
             if (empty($gitFiles)) {
-                ($this->emit)('No changed files in git. Nothing to repent.');
+                ($this->emit)('No changed files to repent — code is righteous.');
 
                 return self::SUCCESS;
             }
@@ -95,12 +101,18 @@ final class RepentService
                 }
 
                 $prophetName = class_basename($prophet);
-                $files = $this->filesFor($scroll, $fileFilter, $filesFilter, $gitMode, $gitFiles);
+                $files = $this->filesFor($scroll, $fileFilter, $filesFilter, $useGit, $gitFiles);
 
                 foreach ($files as $file) {
                     $filePath = $file->getRealPath();
 
                     if ($filePath === false || ! $prophet->canRepent($filePath)) {
+                        continue;
+                    }
+
+                    // Never rewrite the commandments config itself — it is tool
+                    // configuration, not source under judgment (#196 swept it).
+                    if ($this->isProtectedConfig($filePath)) {
                         continue;
                     }
 
@@ -178,7 +190,7 @@ final class RepentService
      * @param  array<string>  $gitFiles
      * @return iterable<\SplFileInfo>
      */
-    private function filesFor(string $scroll, ?string $fileFilter, array $filesFilter, bool $gitMode, array $gitFiles): iterable
+    private function filesFor(string $scroll, ?string $fileFilter, array $filesFilter, bool $useGit, array $gitFiles): iterable
     {
         if ($fileFilter) {
             return [new \SplFileInfo($fileFilter)];
@@ -188,11 +200,22 @@ final class RepentService
             return array_map(static fn ($f) => new \SplFileInfo($f), $filesFilter);
         }
 
-        if ($gitMode && ! empty($gitFiles)) {
+        // Default + --git: only the working-tree changes. The whole scroll is
+        // reached ONLY via --all (which sets $useGit = false).
+        if ($useGit) {
             return array_map(static fn ($f) => new \SplFileInfo($f), $gitFiles);
         }
 
         return $this->manager->getFilesForScroll($scroll);
+    }
+
+    /**
+     * The commandments config file is configuration, not source under
+     * judgment — a `repent` sweep must never rewrite it (#196).
+     */
+    private function isProtectedConfig(string $filePath): bool
+    {
+        return in_array(basename($filePath), ['commandments.php', 'commandments.self.php'], true);
     }
 
     /**
