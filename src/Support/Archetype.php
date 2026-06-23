@@ -12,6 +12,8 @@ namespace JesseGall\CodeCommandments\Support;
  */
 enum Archetype: string
 {
+    use CompareSelf;
+
     /**
      * An encapsulated keyed store: a keyed-array property written by a public
      * mutator AND read back by lookups on the SAME property (the full
