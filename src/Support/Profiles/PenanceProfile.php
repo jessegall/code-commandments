@@ -32,7 +32,7 @@ final class PenanceProfile extends Profile
             // Cleanup: judge the WHOLE codebase every Stop until zero; run the
             // tests once before pushing. No commit gate (commit freely); the
             // pre-push gate blocks while findings remain.
-            behaviour: new ProfileBehaviour(judge: Phase::UntilClean, test: Phase::AtEnd),
+            behaviour: new ProfileBehaviour(judge: Phase::UntilClean, test: Phase::AtEnd, ask: Inquiry::WhenBlocked),
             briefAgent: true,
             briefing: Briefing::Full,
             postCommitReset: false,

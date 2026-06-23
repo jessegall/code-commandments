@@ -46,12 +46,14 @@ final class StopHookBuilder
     {
         $cap = self::CAP;
         $defer = self::deferredActivities($b);
+        $ask = self::shEscape($b->askGuidance());
         $msg = sprintf(
-            'The approved plan is not finished (%s, auto-continue $count/%d) — implement the next phase now and commit it. Do NOT run %s between phases: %s defers the reckon to the single pre-push gate. A long turn or context compaction is not a blocker. Release the loop ONLY for a genuine blocker: sh .claude/hooks/plan-release.sh \\"<reason>\\".',
+            'The approved plan is not finished (%s, auto-continue $count/%d) — implement the next phase now and commit it. Do NOT run %s between phases: %s defers the reckon to the single pre-push gate. A long turn or context compaction is not a blocker. %s',
             $profile,
             $cap,
             $defer,
             $profile,
+            $ask,
         );
         $fallback = sprintf(
             'The approved plan is not finished (%s %%s/%%s). Implement + commit the next phase; do NOT run %s between phases (the pre-push gate is the only reckon). Release only for a genuine blocker via sh .claude/hooks/plan-release.sh.',
@@ -106,11 +108,13 @@ final class StopHookBuilder
             ? 'run the gate (${run}judge --git) and the test suite, resolve every finding, and commit'
             : 'run the gate (${run}judge --git), resolve every finding, and commit';
 
+        $ask = self::shEscape($b->askGuidance());
         $planMsg = sprintf(
-            'The approved plan is not finished (%s, auto-continue $count/%d) — implement the next phase now. After each phase %s. A long turn or context compaction is not a blocker. Release only for a genuine blocker via sh .claude/hooks/plan-release.sh \\"<reason>\\".',
+            'The approved plan is not finished (%s, auto-continue $count/%d) — implement the next phase now. After each phase %s. A long turn or context compaction is not a blocker. %s',
             $profile,
             $cap,
             $phaseGate,
+            $ask,
         );
         $planFallback = sprintf(
             'Plan not finished (%s %%s/%%s). Implement the next phase; %s. Release only for a genuine blocker via sh .claude/hooks/plan-release.sh.',
@@ -204,5 +208,11 @@ final class StopHookBuilder
     private static function deferredActivities(ProfileBehaviour $b): string
     {
         return $b->test === Phase::AtEnd ? 'judge or tests' : 'judge';
+    }
+
+    /** Escape `"` for embedding inside a double-quoted `sh` string (`msg="…"`). */
+    private static function shEscape(string $text): string
+    {
+        return str_replace('"', '\\"', $text);
     }
 }

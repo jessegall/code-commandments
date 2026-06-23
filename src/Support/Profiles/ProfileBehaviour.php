@@ -27,7 +27,23 @@ final class ProfileBehaviour
         public readonly Phase $judge,
         /** When the agent is told to run the test suite (guidance only). */
         public readonly Phase $test,
+        /** How readily the agent interrupts the user to ask (guidance only). */
+        public readonly Inquiry $ask = Inquiry::WhenBlocked,
     ) {}
+
+    /**
+     * The one-line autonomy guidance the keep-going hook shows the agent —
+     * derived from {@see $ask}.
+     */
+    public function askGuidance(): string
+    {
+        return match ($this->ask) {
+            Inquiry::Never => 'Do NOT pause to ask the user — work around obstacles and keep going to the end.',
+            Inquiry::WhenBlocked => 'Release the loop ONLY for a genuine blocker (a decision only the user can make, information you cannot find or infer, or an unrecoverable failure): sh .claude/hooks/plan-release.sh "<reason>".',
+            Inquiry::OnDecisions => 'Keep going, but PAUSE to ask the user before a consequential or ambiguous decision (an irreversible action, a real trade-off, or several valid approaches) — and for any genuine blocker: sh .claude/hooks/plan-release.sh "<reason>".',
+            Inquiry::Freely => 'Ask the user whenever a question would clarify or de-risk the work.',
+        };
+    }
 
     /**
      * The blocking git gate placement DERIVED from the judge cadence: judge each
