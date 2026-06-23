@@ -529,7 +529,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_112 prophets._
+_113 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -561,6 +561,7 @@ _112 prophets._
 | `NoArrayBagProphet` | — | Do not pass array&lt;string, mixed&gt; bags around — give the bag a Fluent value class |
 | `NoArrayStringIndexingProphet` | — | Prefer typed DTOs over string-indexed arrays for structured data |
 | `NoAuthUserInDataClassesProphet` | — | Use #[FromAuthenticatedUser] attribute instead of auth()-&gt;user() in Data classes |
+| `NoCoalesceOnNonNullableProphet` | — | Do not `??`-coalesce a value that is never null — the default is dead |
 | `NoCompactProphet` | — | Do not bridge variables and arrays by name with compact()/extract() |
 | `NoConditionalArraySpreadProphet` | — | Assemble conditional array shapes with a builder, not a spread of a ternary with an empty arm |
 | `NoContainerResolutionProphet` | — | Prefer constructor injection over container resolution (app(), resolve(), App::make()) |

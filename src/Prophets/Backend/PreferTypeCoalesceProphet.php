@@ -41,6 +41,15 @@ class PreferTypeCoalesceProphet extends PhpCommandment implements SinRepenter, N
         'bool' => 'T_Bool',
     ];
 
+    /** cast node => builtin type. `(int)(… ?? …)` IS `T_Int::coalesce(…, …)`. */
+    private const CAST_TYPES = [
+        Node\Expr\Cast\Array_::class => 'array',
+        Node\Expr\Cast\String_::class => 'string',
+        Node\Expr\Cast\Int_::class => 'int',
+        Node\Expr\Cast\Double::class => 'float',
+        Node\Expr\Cast\Bool_::class => 'bool',
+    ];
+
     private ?CodebaseIndex $index = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
@@ -87,18 +96,24 @@ Good — the typed helper:
     $name  = T_String::coalesce($this->label);
     $limit = T_Int::coalesce($config->limit);
 
-WHAT FIRES — `<expr> ?? <empty literal>` where `<expr>` resolves to a NULLABLE of
-the literal's type: a `?array`/`?string`/`?int`/`?float`/`?bool` variable
-(parameter), `$this` property, or an object property resolved through the
-codebase index. The empty literal is `[]`/`''`/`0`/`0.0`/`false` or the matching
-`T_Array::EMPTY` / `T_String::EMPTY` / `T_Int::ZERO` / `T_Float::ZERO` /
-`T_Bool::FALSE` constant.
+There is also the CAST form — `(int) (<expr> ?? <default>)` — which is the inline
+body of the helper itself (`T_Int::coalesce` IS `(int) ($value ?? $default)`), so
+it is sound for ANY default and needs no type resolution:
+    $n = (int) ($req->page ?? 1);   ->   $n = T_Int::coalesce($req->page, 1);
+    $n = (int) ($req->page ?? 0);   ->   $n = T_Int::coalesce($req->page);
 
-WHAT DOES NOT — a `mixed`/untyped left side (the type, hence the right helper,
-is unknown), a non-nullable value (the `??` is already dead — a different smell),
-or a non-empty default. Those are left alone to avoid changing semantics.
+WHAT FIRES — (1) `<expr> ?? <empty literal>` where `<expr>` resolves to a NULLABLE
+of the literal's type (a `?array`/`?string`/`?int`/`?float`/`?bool` parameter,
+`$this` property, or index-resolved object property); the empty literal is
+`[]`/`''`/`0`/`0.0`/`false` or the matching `T_*::EMPTY`/`ZERO`/`FALSE`. (2) a cast
+`(int|string|float|bool|array) (<expr> ?? <default>)` for ANY default — the cast
+fixes the type.
 
-AUTO-FIXABLE: `repent` rewrites `<expr> ?? <empty>` to `T_X::coalesce(<expr>)`.
+WHAT DOES NOT — a bare `<expr> ?? <non-empty default>` with no cast (the type is
+unknown without the cast), a `mixed`/untyped left side, or a non-nullable value
+(the `??` is already dead — that is NoCoalesceOnNonNullable's smell).
+
+AUTO-FIXABLE: `repent` rewrites both forms to `T_X::coalesce(<expr>[, <default>])`.
 SCRIPTURE;
     }
 
@@ -113,7 +128,34 @@ SCRIPTURE;
         $finder = new NodeFinder;
         $warnings = [];
 
+        // `(int)(<expr> ?? <default>)` IS `T_Int::coalesce(<expr>, <default>)` —
+        // the cast makes the type explicit, so it is sound for ANY default.
+        $castCoalesces = $this->castCoalesces($ast, $finder);
+        $handled = [];
+
+        foreach ($castCoalesces as $cc) {
+            $handled[spl_object_id($cc['coalesce'])] = true;
+            $wrapper = self::WRAPPERS[$cc['type']];
+
+            $warnings[] = $this->warningAt(
+                $cc['cast']->getStartLine(),
+                sprintf(
+                    '`(%s) (… ?? …)` hand-casts a coalesced value — use `%s::coalesce(<value>, <default>)`, which IS exactly `(%s) (<value> ?? <default>)`.',
+                    $cc['type'],
+                    $wrapper,
+                    $cc['type'],
+                ),
+                $this->lineSnippet($content, $cc['cast']->getStartLine()),
+                'cast-coalesce:' . $cc['type'],
+                true,
+            );
+        }
+
         foreach ($finder->findInstanceOf($ast, Node\Expr\BinaryOp\Coalesce::class) as $coalesce) {
+            if (isset($handled[spl_object_id($coalesce)])) {
+                continue; // the enclosing cast already covers this coalesce
+            }
+
             $type = $this->matchedType($coalesce, $ast, $finder);
 
             if ($type === null) {
@@ -161,8 +203,24 @@ SCRIPTURE;
         /** @var list<array{start: int, end: int, text: string}> $edits */
         $edits = [];
         $penance = [];
+        $handled = [];
+
+        foreach ($this->castCoalesces($ast, $finder) as $cc) {
+            $handled[spl_object_id($cc['coalesce'])] = true;
+
+            $edits[] = [
+                'start' => (int) $cc['cast']->getStartFilePos(),
+                'end' => (int) $cc['cast']->getEndFilePos(),
+                'text' => $this->coalesceCallText($cc['type'], $cc['coalesce'], $content),
+            ];
+            $penance[] = sprintf('Rewrote `(%s) (… ?? …)` to %s::coalesce()', $cc['type'], self::WRAPPERS[$cc['type']]);
+        }
 
         foreach ($finder->findInstanceOf($ast, Node\Expr\BinaryOp\Coalesce::class) as $coalesce) {
+            if (isset($handled[spl_object_id($coalesce)])) {
+                continue;
+            }
+
             $type = $this->matchedType($coalesce, $ast, $finder);
 
             if ($type === null) {
@@ -191,6 +249,46 @@ SCRIPTURE;
         }
 
         return RepentanceResult::absolved($content, $penance);
+    }
+
+    /**
+     * Every `(int|string|float|bool|array)(<expr> ?? <default>)` in $ast — a cast
+     * directly wrapping a coalesce, which is the inline form of `T_X::coalesce`.
+     *
+     * @param  array<Node>  $ast
+     * @return list<array{cast: Node\Expr\Cast, type: string, coalesce: Node\Expr\BinaryOp\Coalesce}>
+     */
+    private function castCoalesces(array $ast, NodeFinder $finder): array
+    {
+        $out = [];
+
+        foreach ($finder->findInstanceOf($ast, Node\Expr\Cast::class) as $cast) {
+            $type = self::CAST_TYPES[$cast::class] ?? null;
+
+            if ($type !== null && $cast->expr instanceof Node\Expr\BinaryOp\Coalesce) {
+                $out[] = ['cast' => $cast, 'type' => $type, 'coalesce' => $cast->expr];
+            }
+        }
+
+        return $out;
+    }
+
+    /** `T_X::coalesce(<value>)`, or `T_X::coalesce(<value>, <default>)` when the default is not the type's empty. */
+    private function coalesceCallText(string $type, Node\Expr\BinaryOp\Coalesce $coalesce, string $content): string
+    {
+        $wrapper = self::WRAPPERS[$type];
+        $value = $this->srcOf($coalesce->left, $content);
+
+        if ($this->emptyLiteralType($coalesce->right) === $type) {
+            return sprintf('%s::coalesce(%s)', $wrapper, $value);
+        }
+
+        return sprintf('%s::coalesce(%s, %s)', $wrapper, $value, $this->srcOf($coalesce->right, $content));
+    }
+
+    private function srcOf(Node $node, string $content): string
+    {
+        return substr($content, (int) $node->getStartFilePos(), (int) $node->getEndFilePos() - (int) $node->getStartFilePos() + 1);
     }
 
     /**

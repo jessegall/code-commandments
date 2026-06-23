@@ -257,6 +257,7 @@ return [
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,
                 Backend\PreferTypeCoalesceProphet::class,
+                Backend\NoCoalesceOnNonNullableProphet::class,
                 Backend\PreferCoalesceForProphet::class,
                 Backend\PreferEnumForClosedSetFieldProphet::class => [
                     // 'names' => ['direction', 'status', 'kind', 'mode', 'type'],
