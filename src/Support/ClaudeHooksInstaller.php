@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use JesseGall\CodeCommandments\Support\Profiles\Briefing;
 use JesseGall\CodeCommandments\Support\Profiles\ProfileOptions;
 use JesseGall\PhpTypes\T_String;
+use JesseGall\PhpTypes\T_Json;
 
 /**
  * The SINGLE source of truth for the package's Claude Code hook wiring
@@ -37,6 +38,25 @@ final class ClaudeHooksInstaller
     /** The standalone runner: subcommands are space-separated (`vendor/bin/commandments judge`). */
     public const STANDALONE = ['vendor/bin/commandments', ' '];
 
+    /**
+     * Hook scripts the package ships (and therefore owns) that don't mention the
+     * runner in their command string.
+     *
+     * @var list<string>
+     */
+    private const OWNED_SCRIPTS = [
+        'handoff-detect.sh',
+        'handoff.sh',
+        'resume.sh',
+        'plan-approved.sh',
+        'plan-start.sh',
+        'plan-release.sh',
+        'keep-going.sh',
+        'guard-plan-marker.sh',
+        'phase-committed.sh',
+        'plan-session-reset.sh',
+        'profile-keep-going.sh',
+    ];
     /**
      * The runner a CONSUMER PROJECT uses, decided by the project itself (a
      * Laravel app — `artisan` present — documents `php artisan commandments:…`;
@@ -399,7 +419,7 @@ HOOK;
         }
 
         // An emptied settings object must serialize as `{}`, not `[]`.
-        $json = $settings === [] ? '{}' : json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $json = $settings === [] ? T_Json::emptyObject() : json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         if ($json === false || @file_put_contents($file, $json . T_String::NEWLINE) === false) {
             return self::STATUS_WRITE_FAILED;
@@ -488,23 +508,4 @@ HOOK;
         return false;
     }
 
-    /**
-     * Hook scripts the package ships (and therefore owns) that don't mention the
-     * runner in their command string.
-     *
-     * @var list<string>
-     */
-    private const OWNED_SCRIPTS = [
-        'handoff-detect.sh',
-        'handoff.sh',
-        'resume.sh',
-        'plan-approved.sh',
-        'plan-start.sh',
-        'plan-release.sh',
-        'keep-going.sh',
-        'guard-plan-marker.sh',
-        'phase-committed.sh',
-        'plan-session-reset.sh',
-        'profile-keep-going.sh',
-    ];
 }

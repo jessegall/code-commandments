@@ -146,7 +146,7 @@ final class AbsolveService
         }
 
         if ($unique === []) {
-            $error("No live finding at {$at}" . ($prophet !== null ? " for a prophet matching '{$prophet}'" : '') . '. Run judge --next to see current findings.');
+            $error("No live finding at {$at}" . ($prophet !== null ? " for a prophet matching '{$prophet}'" : T_String::empty()) . '. Run judge --next to see current findings.');
 
             return null;
         }

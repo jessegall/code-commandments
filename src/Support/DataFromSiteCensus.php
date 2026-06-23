@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindImplicitDataFrom;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * A codebase-wide census of object (non-array) `::from()` call sites, keyed by
@@ -91,8 +92,8 @@ final class DataFromSiteCensus
                 ->getContext();
 
             foreach ($context->matches as $match) {
-                $kind = $match->groups['kind'] ?? '';
-                $target = $match->groups['target'] ?? '';
+                $kind = $match->groups['kind'] ?? T_String::empty();
+                $target = $match->groups['target'] ?? T_String::empty();
 
                 if ($kind === 'nonarray') {
                     $object[$target] = true;

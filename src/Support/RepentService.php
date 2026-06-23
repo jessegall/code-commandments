@@ -310,7 +310,7 @@ final class RepentService
         $missing = [];
 
         foreach ($prophet->repentInputs() as $spec) {
-            if ($spec->required && trim($provided[$spec->name] ?? '') === '') {
+            if ($spec->required && T_String::isBlank($provided[$spec->name] ?? T_String::empty())) {
                 $missing[] = $spec;
             }
         }
