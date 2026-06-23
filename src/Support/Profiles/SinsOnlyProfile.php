@@ -28,7 +28,7 @@ final class SinsOnlyProfile extends Profile
             scope: JudgeScope::Staged,
             // Phased cadence (judge + test each phase) — warnings suppressed, so
             // only sins surface and gate.
-            behaviour: new ProfileBehaviour(judge: Phase::EachPhase, test: Phase::EachPhase),
+            behaviour: new ProfileBehaviour(judge: Phase::EachPhase, test: Phase::EachPhase, ask: Inquiry::OnDecisions),
             briefAgent: true,
             briefing: Briefing::Full,
             postCommitReset: true,

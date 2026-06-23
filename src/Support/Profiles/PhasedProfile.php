@@ -28,7 +28,7 @@ final class PhasedProfile extends Profile
             allowWarnings: true,
             scope: JudgeScope::Staged,
             // Face-by-face: judge + test each phase; the gate blocks at the commit.
-            behaviour: new ProfileBehaviour(judge: Phase::EachPhase, test: Phase::EachPhase),
+            behaviour: new ProfileBehaviour(judge: Phase::EachPhase, test: Phase::EachPhase, ask: Inquiry::OnDecisions),
             briefAgent: true,
             briefing: Briefing::Full,
             postCommitReset: true,
