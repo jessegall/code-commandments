@@ -90,6 +90,7 @@ return [
                 Backend\ResolverPatternProphet::class,
                 Backend\ResolverNamingHonestyProphet::class,
                 Backend\PushGenericToSourceProphet::class,
+                Backend\PreferNativeTypedAccessorProphet::class,
                 Backend\PreferNamedBranchFactoryProphet::class,
                 Backend\BehaviouralEnumDispatchProphet::class,
                 Backend\ThrowOnUnhandledCaseProphet::class,

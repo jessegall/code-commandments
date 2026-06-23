@@ -216,6 +216,7 @@ return [
                 Backend\NoSwallowedNotFoundProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
+                Backend\PreferNativeTypedAccessorProphet::class,
                 Backend\ShortClosureProphet::class,
                 Backend\ResolverPatternProphet::class,
                 Backend\DuplicateCodeProphet::class => [
