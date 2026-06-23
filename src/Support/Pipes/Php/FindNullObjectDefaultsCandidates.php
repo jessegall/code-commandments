@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 use JesseGall\CodeCommandments\Support\Classifiers\DateTimeClassifier;
 use JesseGall\CodeCommandments\Support\Classifiers\EnumClassifier;
 use JesseGall\CodeCommandments\Support\Classifiers\SpatieOptionalClassifier;
+use JesseGall\CodeCommandments\Support\Classifiers\TypeClassifier;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
@@ -73,8 +74,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
      */
     private function isOptionalValueType(string $typeName): bool
     {
-        return DateTimeClassifier::make()->matches($typeName)
-            || EnumClassifier::make()->matches($typeName);
+        return TypeClassifier::from(DateTimeClassifier::class, EnumClassifier::class)->matches($typeName);
     }
 
     /**

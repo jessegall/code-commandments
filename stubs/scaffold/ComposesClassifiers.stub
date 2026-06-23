@@ -33,6 +33,18 @@ trait ComposesClassifiers
         return static::composeClassifiers($classifiers, false);
     }
 
+    /**
+     * Union of classifiers named by CLASS — `make()`s each and composes with
+     * {@see anyOf()}. Sugar for "is it any of these kinds?":
+     * `TypeClassifier::from(DateTimeClassifier::class, EnumClassifier::class)`.
+     *
+     * @param  class-string<self>  ...$classifiers
+     */
+    public static function from(string ...$classifiers): self
+    {
+        return static::anyOf(...array_map(static fn (string $classifier): self => $classifier::make(), $classifiers));
+    }
+
     /** This classifier AND all of $others. */
     public function and(self ...$others): self
     {
