@@ -124,6 +124,54 @@ class EnumCaseMustBeDocumentedProphetTest extends TestCase
         $this->assertNotEmpty($this->prophet->detailedDescription());
     }
 
+    public function test_class_docblock_see_bullets_document_the_cases(): void
+    {
+        $judgment = $this->judge(
+            "/**\n"
+            . " * The lifecycle of an order.\n"
+            . " *\n"
+            . " * - {@see Status::Paid}: payment captured; awaiting fulfilment.\n"
+            . " * - {@see Status::Shipped}: handed to the carrier; tracking exists.\n"
+            . " */\n"
+            . "enum Status: string { case Paid = 'paid'; case Shipped = 'shipped'; }"
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_class_docblock_with_self_reference_documents_the_case(): void
+    {
+        $judgment = $this->judge(
+            "/**\n * - {@see self::Paid}: payment captured; awaiting fulfilment.\n */\n"
+            . "enum Status { case Paid; }"
+        );
+
+        $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_class_docblock_missing_a_case_still_flags_that_case(): void
+    {
+        // Paid is documented in the class docblock; Shipped is not — only Shipped fires.
+        $judgment = $this->judge(
+            "/**\n * - {@see Status::Paid}: payment captured.\n */\n"
+            . "enum Status { case Paid; case Shipped; }"
+        );
+
+        $this->assertCount(1, $judgment->sins);
+        $this->assertStringContainsString('Status::Shipped', $judgment->sins[0]->message);
+    }
+
+    public function test_bare_see_reference_without_a_description_does_not_count(): void
+    {
+        // A cross-reference with no description is not documentation.
+        $judgment = $this->judge(
+            "/**\n * See {@see Status::Paid} elsewhere.\n */\n"
+            . "enum Status { case Paid; case Shipped; }"
+        );
+
+        $this->assertCount(2, $judgment->sins);
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);
