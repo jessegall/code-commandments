@@ -258,6 +258,11 @@ final class ProfileService
         // so it stays installed even under `disabled` (you still need a way back on).
         $this->ensureProfileSkill();
 
+        // The keep-going Stop hook script (wired in settings.json only when keepGoing).
+        if ($opts->keepGoing) {
+            ProfileKeepGoingHook::install($this->basePath);
+        }
+
         // Briefing is delivered by the local session-start hook (scripture /
         // `profile --brief`), NOT committed CLAUDE.md — so strip any legacy
         // `## Code Commandments` section for EVERY profile. This keeps CLAUDE.md
@@ -366,7 +371,15 @@ final class ProfileService
         }
 
         if ($new->options()->briefAgent) {
+            $runner = ClaudeHooksInstaller::runnerFor($this->basePath);
+            $r = $runner[0] . $runner[1];
+
             $emit('(Claude: discard any previous commandments contract and follow the above from now on.)');
+            $emit(T_String::empty());
+            $emit('BEFORE you plan or write code, LOAD the commandments knowledge so your plan respects it:');
+            $emit("  {$r}scripture            # the rules");
+            $emit("  {$r}skills               # the architectural how-to skills (read the ones your work touches)");
+            $emit('A plan written without this knowledge will fight the prophets — load it first.');
         }
     }
 

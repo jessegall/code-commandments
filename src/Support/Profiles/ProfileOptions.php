@@ -31,6 +31,12 @@ final class ProfileOptions
         public readonly bool $postCommitReset,
         /** Install the pre-push hook that clears until-push absolutions. */
         public readonly bool $prePushReset,
+        /**
+         * Install the keep-going Stop hook: block stopping until the profile's goal
+         * is met (grind: no branch sins; phased/sins-only: changes clean; penance:
+         * nothing left). Self-completing + capped, so it never hard-traps.
+         */
+        public readonly bool $keepGoing = false,
     ) {}
 
     /**

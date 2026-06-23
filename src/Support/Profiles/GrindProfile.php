@@ -36,6 +36,7 @@ final class GrindProfile extends Profile
             perPhaseNudges: false,
             postCommitReset: false,
             prePushReset: true,
+            keepGoing: true,
         );
     }
 }
