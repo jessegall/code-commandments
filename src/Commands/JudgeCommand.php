@@ -28,7 +28,8 @@ class JudgeCommand extends Command
         {--no-profile : Ignore the active profile for this run: scan the whole scroll and show warnings, regardless of the profile (audit the full codebase)}
         {--absolve : Mark files as absolved after confession (manual review)}
         {--no-cache : Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)}
-        {--next : Show exactly one finding at a time (fix or absolve to advance)}';
+        {--next : Show exactly one finding at a time (fix or absolve to advance)}
+        {--plan : Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan)}';
 
     protected $description = 'Judge the codebase for sins against the commandments';
 
@@ -62,6 +63,7 @@ class JudgeCommand extends Command
             'absolve' => (bool) $this->option('absolve'),
             'no_cache' => (bool) $this->option('no-cache'),
             'next' => (bool) $this->option('next'),
+            'plan' => (bool) $this->option('plan'),
         ]) === JudgeService::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 }

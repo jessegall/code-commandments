@@ -399,14 +399,18 @@ final class ProfileService
             JudgeScope::Branch => "the whole branch's changes",
         };
 
-        $gate = match ($o->gate) {
-            GitGateStage::None => 'No git gate — nothing blocks commits or pushes.',
-            GitGateStage::PreCommit => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : '') . ' on staged files.',
-            GitGateStage::PrePush => 'Pre-push gate blocks sins across the whole branch (warnings shown, not blocked).',
+        $isPenance = $o->gate === GitGateStage::PrePush && $o->scope === JudgeScope::None;
+
+        $gate = match (true) {
+            $o->gate === GitGateStage::None => 'No git gate — nothing blocks commits or pushes.',
+            $o->gate === GitGateStage::PreCommit => 'Pre-commit gate blocks sins' . ($o->gateBlocksOnWarnings() ? ' and warnings' : '') . ' on staged files.',
+            $isPenance => 'NO commit gate — commit progress freely. The pre-push gate blocks pushing while ANY sins remain.',
+            default => 'Pre-push gate blocks pushing while the branch has sins (no commit gate; warnings shown, not blocked).',
         };
 
         $cadence = match (true) {
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
+            $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`judge --plan`). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
             $o->gate === GitGateStage::PrePush => 'Cadence: NO judge/tests between phases — implement the whole plan, then reckon (judge + run tests) once before pushing.',
             default => 'Cadence: no per-phase nudges.',
         };
@@ -439,7 +443,17 @@ final class ProfileService
             $lines[] = $line;
         }
 
-        if ($profile->options()->gate === GitGateStage::PrePush) {
+        $o = $profile->options();
+        $isPenance = $o->gate === GitGateStage::PrePush && $o->scope === JudgeScope::None;
+
+        if ($isPenance) {
+            $lines[] = T_String::empty();
+            $lines[] = 'This is a CLEANUP pass. See the whole roadmap, then work it root-cause first:';
+            $lines[] = "  {$r}judge --plan      # every finding, ordered (root causes first)";
+            $lines[] = "  {$r}repent            # bulk-fix the [AUTO-FIXABLE] ones";
+            $lines[] = "  {$r}judge --next      # walk the rest one at a time";
+            $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins remain, and you cannot stop until judge is righteous.';
+        } elseif ($o->gate === GitGateStage::PrePush) {
             $lines[] = T_String::empty();
             $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge or tests between phases.';
             $lines[] = "When the whole plan is done: run `{$r}judge` (fix every sin, review warnings) and your full test suite, then push.";

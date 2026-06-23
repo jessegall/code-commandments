@@ -290,13 +290,14 @@ final class CommitHookInstaller
 
         return <<<HOOK
         {$begin}
-        # Blocks the push when code-commandments finds sins anywhere in the
-        # branch's changes (the grind reckoning). Warnings are shown, not blocked.
+        # Blocks the push when code-commandments finds sins in the active profile's
+        # scope (grind: the branch; penance: the whole codebase). A bare `judge`
+        # resolves that scope from the profile. Warnings are shown, not blocked.
         if [ -x vendor/bin/commandments ]; then
-            vendor/bin/commandments judge --branch --no-cache
+            vendor/bin/commandments judge --no-cache
             cc_status=\$?
         elif [ -f artisan ]; then
-            php artisan commandments:judge --branch --no-cache
+            php artisan commandments:judge --no-cache
             cc_status=\$?
         else
             cc_status=0
@@ -304,8 +305,8 @@ final class CommitHookInstaller
 
         if [ "\$cc_status" -ne 0 ]; then
             echo ""
-            echo "✗ Push blocked: unresolved sins in this branch's changes."
-            echo "  Reckon before pushing:  commandments judge --next --branch"
+            echo "✗ Push blocked: unresolved sins remain in scope."
+            echo "  Reckon before pushing:  commandments judge --next"
             echo "  (Bypass only in a real emergency with: git push --no-verify)"
             exit 1
         fi

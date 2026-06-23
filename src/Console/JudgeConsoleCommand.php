@@ -30,7 +30,8 @@ class JudgeConsoleCommand extends Command
             ->addOption('no-profile', null, InputOption::VALUE_NONE, 'Ignore the active profile for this run: scan the WHOLE scroll and show warnings, regardless of the profile (audit the full codebase)')
             ->addOption('absolve', null, InputOption::VALUE_NONE, 'Mark files as absolved after confession')
             ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)')
-            ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)');
+            ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)')
+            ->addOption('plan', null, InputOption::VALUE_NONE, 'Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -60,6 +61,7 @@ class JudgeConsoleCommand extends Command
             'absolve' => (bool) $input->getOption('absolve'),
             'no_cache' => (bool) $input->getOption('no-cache'),
             'next' => (bool) $input->getOption('next'),
+            'plan' => (bool) $input->getOption('plan'),
         ]) === \JesseGall\CodeCommandments\Support\JudgeService::SUCCESS ? Command::SUCCESS : Command::FAILURE;
     }
 }

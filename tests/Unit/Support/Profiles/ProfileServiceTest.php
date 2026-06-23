@@ -101,6 +101,19 @@ class ProfileServiceTest extends TestCase
         $this->assertContains('UserPromptSubmit', $this->settingsEvents());
     }
 
+    public function test_penance_has_no_commit_gate_but_a_pre_push_gate_and_keep_going(): void
+    {
+        $this->switch('penance');
+
+        // No commit gate — the whole point (commit freely during cleanup).
+        $this->assertFileDoesNotExist($this->dir . '/.git/hooks/pre-commit');
+        $this->assertFileDoesNotExist($this->dir . '/.git/hooks/post-commit');
+        // …but a pre-push gate, and keep-going until righteous.
+        $this->assertStringContainsString('pre-push gate', $this->hook('pre-push'));
+        $this->assertFileExists($this->dir . '/.claude/hooks/profile-keep-going.sh');
+        $this->assertSame('penance', trim((string) file_get_contents($this->dir . '/.commandments/profile')));
+    }
+
     // --- teardown is computed from on-disk blocks ---
 
     public function test_grind_to_phased_strips_prepush_gate_and_adds_precommit(): void
