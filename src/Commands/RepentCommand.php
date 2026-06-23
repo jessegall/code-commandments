@@ -20,7 +20,7 @@ class RepentCommand extends Command
         {--prophet= : Use a specific prophet for repentance}
         {--file= : Repent sins in a specific file}
         {--files= : Repent sins in specific files (comma-separated)}
-        {--git : Only repent files that are new or changed in git (this is the DEFAULT)}
+        {--git : Force working-tree scope (changed files). Bare `repent` otherwise adopts the active profile scope, like `judge`}
         {--all : Repent the WHOLE scroll repo-wide (opt-in; the bare command no longer does this)}
         {--input=* : Input for a parameterized fixer, repeatable: --input key=value}
         {--dry-run : Show what would be fixed without making changes}';

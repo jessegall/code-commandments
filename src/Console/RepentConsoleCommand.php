@@ -23,7 +23,7 @@ class RepentConsoleCommand extends Command
             ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Use a specific prophet for repentance')
             ->addOption('file', null, InputOption::VALUE_REQUIRED, 'Repent sins in a specific file')
             ->addOption('files', null, InputOption::VALUE_REQUIRED, 'Repent sins in specific files (comma-separated)')
-            ->addOption('git', null, InputOption::VALUE_NONE, 'Only repent files that are new or changed in git')
+            ->addOption('git', null, InputOption::VALUE_NONE, 'Force working-tree scope. Bare repent otherwise adopts the active profile scope (like judge)')
             ->addOption('input', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Input for a parameterized fixer, repeatable: --input key=value')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be fixed without making changes');
     }
