@@ -145,6 +145,7 @@ return [
                 Backend\NoRedundantDefaultArgumentProphet::class,
                 Backend\PreferCoalesceForProphet::class,
                 Backend\PreferCoercionHelperProphet::class,
+                Backend\PreferInterfaceOverTypeListProphet::class,
                 Backend\ShortClosureProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
             ],
