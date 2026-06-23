@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\Classifiers\DateTimeClassifier;
+use JesseGall\CodeCommandments\Support\Classifiers\EnumClassifier;
+use JesseGall\CodeCommandments\Support\Classifiers\SpatieOptionalClassifier;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
@@ -65,31 +68,23 @@ final class FindNullObjectDefaultsCandidates implements Pipe
     private array $nullObjectMap = [];
 
     /**
-     * Concrete types Pattern B should leave alone — `T|null` here usually
-     * means "genuinely optional value", not "no-op default".
-     *
-     * @var array<string>
+     * Types Pattern B leaves alone — a `T|null` date/time or enum is a genuinely
+     * optional value, not a no-op default with an empty identity.
      */
-    private const PATTERN_B_TYPE_WHITELIST = [
-        'DateTimeImmutable',
-        'DateTime',
-        'DateTimeInterface',
-        'BackedEnum',
-        'UnitEnum',
-    ];
+    private function isOptionalValueType(string $typeName): bool
+    {
+        return DateTimeClassifier::make()->matches($typeName)
+            || EnumClassifier::make()->matches($typeName);
+    }
 
     /**
-     * Spatie LaravelData wrappers we never flag for either pattern —
-     * those types intentionally use null defaults inside Data classes.
-     *
-     * @var array<string>
+     * Spatie LaravelData wrappers (`Lazy`, `Optional`) — these intentionally use
+     * null defaults inside Data classes, so neither pattern flags them.
      */
-    private const SPATIE_DATA_WHITELIST = [
-        'Spatie\\LaravelData\\Lazy',
-        'Spatie\\LaravelData\\Optional',
-        'Lazy',
-        'Optional',
-    ];
+    private function isSpatieOptional(string $typeName): bool
+    {
+        return SpatieOptionalClassifier::make()->matches($typeName);
+    }
 
     private int $minNullsafeAccesses = 2;
 
@@ -168,8 +163,8 @@ final class FindNullObjectDefaultsCandidates implements Pipe
                 continue;
             }
 
-            if (in_array($typeInfo['typeName'], self::PATTERN_B_TYPE_WHITELIST, true)
-                || in_array($typeInfo['typeName'], self::SPATIE_DATA_WHITELIST, true)
+            if ($this->isOptionalValueType($typeInfo['typeName'])
+                || $this->isSpatieOptional($typeInfo['typeName'])
             ) {
                 continue;
             }
@@ -256,7 +251,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
                 continue;
             }
 
-            if (in_array($typeInfo['typeName'], self::SPATIE_DATA_WHITELIST, true)) {
+            if ($this->isSpatieOptional($typeInfo['typeName'])) {
                 continue;
             }
 
@@ -316,11 +311,11 @@ final class FindNullObjectDefaultsCandidates implements Pipe
                 continue;
             }
 
-            if (in_array($typeInfo['typeName'], self::PATTERN_B_TYPE_WHITELIST, true)) {
+            if ($this->isOptionalValueType($typeInfo['typeName'])) {
                 continue;
             }
 
-            if (in_array($typeInfo['typeName'], self::SPATIE_DATA_WHITELIST, true)) {
+            if ($this->isSpatieOptional($typeInfo['typeName'])) {
                 continue;
             }
 

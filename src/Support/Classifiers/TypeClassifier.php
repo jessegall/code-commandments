@@ -100,32 +100,11 @@ abstract class TypeClassifier extends Classifier
     protected static function composeClassifiers(array $classifiers, bool $requireAll): self
     {
         return new class($classifiers, $requireAll) extends TypeClassifier {
-            /** @param  list<TypeClassifier>  $classifiers */
-            public function __construct(
-                private readonly array $classifiers,
-                private readonly bool $requireAll,
-            ) {}
+            use MatchesComposedClassifiers;
 
             protected function types(): array
             {
                 return [];
-            }
-
-            public function matches(string $fqcn, ?CodebaseIndex $index = null): bool
-            {
-                foreach ($this->classifiers as $classifier) {
-                    $matched = $classifier->matches($fqcn, $index);
-
-                    if ($this->requireAll && ! $matched) {
-                        return false;
-                    }
-
-                    if (! $this->requireAll && $matched) {
-                        return true;
-                    }
-                }
-
-                return $this->requireAll && $this->classifiers !== [];
             }
         };
     }
