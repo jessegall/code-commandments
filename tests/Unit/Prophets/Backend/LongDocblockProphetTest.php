@@ -275,29 +275,35 @@ PHP;
         $this->assertTrue($this->prophet->judge('/app/Services/Wordy.php', $content)->hasWarnings());
     }
 
-    public function test_detects_docblocks_on_interfaces_and_enums(): void
+    public function test_detects_docblocks_on_interfaces(): void
     {
         $content = <<<'PHP'
 <?php
 namespace App\Contracts;
 
 /**
- * Status the order is in.
+ * A repository of things.
  *
- *  1. Pending - awaiting payment
- *  2. Paid - payment received
+ * It holds them, fetches them, and removes them on demand.
  */
-enum OrderStatus: string
+interface Repository
 {
-    case Pending = 'pending';
-    case Paid = 'paid';
+    public function find(string $id): mixed;
 }
 PHP;
 
-        $judgment = $this->prophet->judge('/app/Contracts/OrderStatus.php', $content);
+        $judgment = $this->prophet->judge('/app/Contracts/Repository.php', $content);
 
         $this->assertTrue($judgment->hasWarnings());
-        $this->assertStringContainsString('enum OrderStatus', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('interface Repository', $judgment->warnings[0]->message);
+    }
+
+    public function test_exempts_enums_via_exempt_classes(): void
+    {
+        // Enums are exempt at the scroll boundary: EnumCaseMustBeDocumented
+        // endorses a `{@see Enum::Case}` bullet per case in the class docblock
+        // (necessarily multi-line), so flagging it would contradict that rule.
+        $this->assertSame([\UnitEnum::class], $this->prophet->exemptClasses());
     }
 
     public function test_provides_descriptions(): void

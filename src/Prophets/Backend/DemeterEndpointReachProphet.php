@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 
 /**
  * Flag a reach-through `$edge->to->nodeId === …` that pulls a scalar out of an
@@ -107,7 +108,7 @@ SCRIPTURE;
         }
 
         $namespace = $this->getNamespace($ast);
-        $uses = $this->useMap($ast);
+        $uses = FileImports::of($ast);
         $warnings = [];
         $seen = [];
 
@@ -559,19 +560,6 @@ SCRIPTURE;
     /**
      * @return array<string, string>  alias => FQCN
      */
-    private function useMap(array $ast): array
-    {
-        $uses = [];
-
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Use_::class) as $use) {
-            foreach ($use->uses as $u) {
-                $uses[$u->getAlias()->toString()] = $u->name->toString();
-            }
-        }
-
-        return $uses;
-    }
-
     private function shortName(string $fqcn): string
     {
         $pos = strrpos($fqcn, '\\');

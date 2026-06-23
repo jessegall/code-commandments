@@ -23,6 +23,19 @@ class LongDocblockProphet extends PhpCommandment
         return 'Keep docblocks to one short narrative sentence above the @-tag block';
     }
 
+    /**
+     * Enums are exempt: {@see EnumCaseMustBeDocumentedProphet} endorses
+     * documenting every case as a `{@see Enum::Case}: …` bullet in the enum's
+     * class docblock, which is necessarily multi-line. `UnitEnum` matches every
+     * enum by kind.
+     *
+     * @return list<class-string>
+     */
+    public function exemptClasses(): array
+    {
+        return [\UnitEnum::class];
+    }
+
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'

@@ -11,6 +11,7 @@ use PhpParser\ParserFactory;
 use ReflectionClass;
 use JesseGall\CodeCommandments\Support\AstCache;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 
 /**
  * Base class for PHP file commandments.
@@ -270,13 +271,7 @@ abstract class PhpCommandment extends BaseCommandment
      */
     protected function getNamespace(array $ast): ?string
     {
-        foreach ($ast as $node) {
-            if ($node instanceof Node\Stmt\Namespace_ && $node->name !== null) {
-                return $node->name->toString();
-            }
-        }
-
-        return null;
+        return FileImports::namespace($ast);
     }
 
     /**

@@ -141,6 +141,38 @@ class ScrollManagerTest extends TestCase
         }
     }
 
+    public function test_exempt_classes_matches_enums_by_kind(): void
+    {
+        $dir = sys_get_temp_dir() . '/cc_exempt_' . uniqid();
+        mkdir($dir);
+
+        ExemptingTestProphet::resetState();
+        ExemptingTestProphet::$exempt = [\UnitEnum::class]; // exempt every enum by kind
+        $this->registry->register('test', ExemptingTestProphet::class);
+        $this->registry->setScrollConfig('test', ['path' => $dir, 'extensions' => ['php']]);
+
+        $enum = $dir . '/Status.php';
+        file_put_contents($enum, "<?php\nnamespace App;\nenum Status: string { case A = 'a'; }\n");
+        $class = $dir . '/Plain.php';
+        file_put_contents($class, "<?php\nnamespace App;\nclass Plain {}\n");
+
+        try {
+            // The enum file is skipped (UnitEnum matches it by kind)…
+            $this->scrollManager->judgeFile('test', $enum);
+            $this->assertFalse(ExemptingTestProphet::$wasJudged, 'enum should be exempt');
+
+            // …but a plain class is still judged.
+            ExemptingTestProphet::$wasJudged = false;
+            $this->scrollManager->judgeFile('test', $class);
+            $this->assertTrue(ExemptingTestProphet::$wasJudged, 'plain class is not exempt');
+        } finally {
+            ExemptingTestProphet::resetState();
+            @unlink($enum);
+            @unlink($class);
+            @rmdir($dir);
+        }
+    }
+
     public function test_prophet_without_exclusion_judges_all_files(): void
     {
         $this->registry->register('test', ExcludingTestProphet::class);
