@@ -25,10 +25,10 @@ final class DisabledProfile extends Profile
         return new ProfileOptions(
             allowWarnings: true,
             scope: JudgeScope::None,
-            gate: GitGateStage::None,
+            // Dormant: never judges or tests, no gate, no Stop hook.
+            behaviour: new ProfileBehaviour(judge: Phase::Never, test: Phase::Never),
             briefAgent: false,
             briefing: Briefing::Full,
-            perPhaseNudges: false,
             postCommitReset: false,
             prePushReset: false,
         );

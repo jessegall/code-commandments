@@ -27,13 +27,12 @@ final class PhasedProfile extends Profile
         return new ProfileOptions(
             allowWarnings: true,
             scope: JudgeScope::Staged,
-            gate: GitGateStage::PreCommit,
+            // Face-by-face: judge + test each phase; the gate blocks at the commit.
+            behaviour: new ProfileBehaviour(judge: Phase::EachPhase, test: Phase::EachPhase),
             briefAgent: true,
             briefing: Briefing::Full,
-            perPhaseNudges: true,
             postCommitReset: true,
             prePushReset: true,
-            stopHook: 'phased.sh',
         );
     }
 }
