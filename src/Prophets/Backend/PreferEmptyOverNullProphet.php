@@ -108,7 +108,7 @@ SCRIPTURE;
             return $this->righteous();
         }
 
-        $namespace = $this->fileNamespace($ast);
+        $namespace = FileImports::namespace($ast);
         $uses = FileImports::of($ast);
         $nullDistinguished = $this->index !== null
             ? NullDistinguishedCallCensus::methodNames($this->index)
@@ -283,17 +283,5 @@ SCRIPTURE;
         return CollectionClassifier::make()->matches($fqcn, $this->index);
     }
 
-
-    /**
-     * @param  array<Node>  $ast
-     */
-    private function fileNamespace(array $ast): ?string
-    {
-        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $ns) {
-            return $ns->name?->toString();
-        }
-
-        return null;
-    }
 
 }
