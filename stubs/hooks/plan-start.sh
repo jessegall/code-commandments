@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Helper — arm the plan auto-continue loop for THIS worktree on demand
 # (e.g. an autonomous grind started via /loop or cron, not via plan-mode
-# approval). The Stop hook (keep-going.sh) then drives the session forward
+# approval). The Stop hook (the active profile's stop-hook.sh) then drives the session forward
 # after each turn until the plan is done or you release it with
 # plan-release.sh. Run it as:  sh .claude/hooks/plan-start.sh
 root=$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "${CLAUDE_PROJECT_DIR:-.}")

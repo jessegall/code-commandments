@@ -3,7 +3,7 @@
 # directly. The loop may only be released via plan-release.sh, which refuses
 # non-blocker reasons. This stops the model from dropping the loop just because
 # a turn got long / context is compacting / the next part looks error-prone
-# (none of which are blockers). The 200-continuation cap in keep-going.sh is
+# (none of which are blockers). The 200-continuation cap in the profile's stop-hook.sh is
 # the ultimate backstop, so this can never wedge a session permanently.
 payload=$(cat)
 cmd=$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null)
