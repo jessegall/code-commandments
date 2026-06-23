@@ -40,7 +40,7 @@ class ReportConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd() ?: '.';
+        $basePath = Environment::workingDirectory();
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
 
         return ReportService::file(

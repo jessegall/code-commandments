@@ -235,8 +235,34 @@ PHP;
             ');
         }
 
-        // Create a test attribute that implements InjectsPropertyValue
+        // Create a test attribute that implements InjectsPropertyValue. The real
+        // spatie/laravel-data interface (when the package is installed) declares
+        // abstract methods, so stub them so the eval'd class is concrete.
         if (!class_exists('App\Data\Attributes\TestInjectingAttribute')) {
+            $methods = '';
+            if (method_exists('Spatie\LaravelData\Attributes\InjectsPropertyValue', 'resolve')
+                || interface_exists('Spatie\LaravelData\Attributes\InjectsPropertyValue')) {
+                $render = static function (?\ReflectionType $type): string {
+                    if (! $type instanceof \ReflectionNamedType) {
+                        return '';
+                    }
+                    $name = $type->getName();
+
+                    return $type->isBuiltin() ? $name : '\\' . ltrim($name, '\\');
+                };
+                $reflection = new \ReflectionClass('Spatie\LaravelData\Attributes\InjectsPropertyValue');
+                foreach ($reflection->getMethods() as $method) {
+                    $params = [];
+                    foreach ($method->getParameters() as $param) {
+                        $type = $render($param->getType());
+                        $params[] = ($type === '' ? '' : $type . ' ') . '$' . $param->getName();
+                    }
+                    $return = $render($method->getReturnType());
+                    $methods .= 'public function ' . $method->getName() . '(' . implode(', ', $params) . ')'
+                        . ($return === '' ? '' : ': ' . $return) . ' { return null; } ';
+                }
+            }
+
             eval('
                 namespace App\Data\Attributes;
 
@@ -244,7 +270,7 @@ PHP;
                 use Spatie\LaravelData\Attributes\InjectsPropertyValue;
 
                 #[Attribute(Attribute::TARGET_PROPERTY)]
-                class TestInjectingAttribute implements InjectsPropertyValue {}
+                class TestInjectingAttribute implements InjectsPropertyValue { ' . $methods . ' }
             ');
         }
 

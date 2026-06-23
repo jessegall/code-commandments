@@ -32,7 +32,7 @@ class ReportsConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd() ?: '.';
+        $basePath = Environment::workingDirectory();
 
         ReportsService::check(
             $this->tracker($basePath),

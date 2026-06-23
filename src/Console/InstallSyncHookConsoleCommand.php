@@ -27,7 +27,7 @@ class InstallSyncHookConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd() ?: '.';
+        $basePath = Environment::workingDirectory();
         Environment::setBasePath($basePath);
 
         return SyncHookInstaller::install(

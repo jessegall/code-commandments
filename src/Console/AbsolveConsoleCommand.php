@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Support\AbsolveService;
+use JesseGall\CodeCommandments\Support\Environment;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -52,7 +53,7 @@ class AbsolveConsoleCommand extends Command
                 'at' => $input->getOption('at'),
                 'reason' => $input->getOption('reason'),
             ],
-            getcwd() ?: '.',
+            Environment::workingDirectory(),
             fn (string $line) => $output->writeln('<info>' . $line . '</info>'),
             fn (string $line) => $output->writeln('<comment>' . $line . '</comment>'),
         ) === AbsolveService::SUCCESS ? Command::SUCCESS : Command::FAILURE;
