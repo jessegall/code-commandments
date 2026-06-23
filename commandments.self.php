@@ -136,7 +136,11 @@ return [
                 Backend\TooManyParametersProphet::class,
                 Backend\NoContainerResolutionProphet::class,
                 Backend\PreferNullObjectDefaultsProphet::class,
-                Backend\LongDocblockProphet::class,
+                Backend\LongDocblockProphet::class => [
+                    // The classifier family documents a reusable PATTERN — its
+                    // teaching docblocks are good docs, not hand-rolled narrative.
+                    'exclude' => ['Support/Classifiers'],
+                ],
                 Backend\SuggestCompareSelfTraitProphet::class,
                 Backend\AnchorEnumComparisonProphet::class,
                 Backend\DemeterEndpointReachProphet::class,
@@ -149,6 +153,9 @@ return [
                     // This package IS an AST analyzer — `$n instanceof Stmt\X ||
                     // $n instanceof Expr\Y` is normal node dispatch, not a smell.
                     'exempt' => ['PhpParser\\Node'],
+                ],
+                Backend\PreferClassifierCompositionProphet::class => [
+                    'classifier_base' => \JesseGall\CodeCommandments\Support\Classifiers\Classifier::class,
                 ],
                 Backend\ShortClosureProphet::class,
                 Backend\UnwrapOptionWithGuardProphet::class,
