@@ -63,6 +63,46 @@ class AnchorEnumComparisonProphetTest extends TestCase
         }
     }
 
+    public function test_flags_via_structural_detection_when_trait_fqcn_differs(): void
+    {
+        // The configured trait stays the default (App\Support\Enums\CompareSelf),
+        // but the enum uses a DIFFERENTLY-named CompareSelf-style trait. Structural
+        // detection (its `@method static …(mixed $value, …)` contract) still flags —
+        // so a consumer never has to duplicate the trait config (the workflows miss).
+        $code = <<<'PHP'
+        <?php
+        namespace Vendor\Pkg;
+
+        /**
+         * @method static bool equalsAny(mixed $value, \UnitEnum ...$cases)
+         */
+        trait MyCompare
+        {
+            public static function __callStatic(string $n, array $a): bool { return false; }
+        }
+
+        enum Kind
+        {
+            use MyCompare;
+            case A;
+            case B;
+        }
+
+        final class Checker
+        {
+            public function check(Kind $k): bool
+            {
+                return Kind::equalsAny($k, Kind::A, Kind::B);
+            }
+        }
+        PHP;
+
+        $warnings = array_values((new AnchorEnumComparisonProphet())->judge('/x.php', $code)->warnings);
+
+        $this->assertCount(1, $warnings);
+        $this->assertStringContainsString('$k->equalsAny(Kind::A, Kind::B)', $warnings[0]->message);
+    }
+
     public function test_repent_rewrites_to_the_instance_form(): void
     {
         $result = $this->prophet->repent($this->path, $this->content);
