@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Support;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
 use JesseGall\PhpTypes\T_String;
 
 /**
@@ -124,28 +122,10 @@ final class ConfigMapIndex
      */
     private static function parseDir(string $configDir): array
     {
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $finder = new NodeFinder;
         $maps = [];
 
-        foreach (Glob::paths($configDir . '/*.php') as $file) {
-            try {
-                $ast = $parser->parse((string) file_get_contents($file));
-            } catch (\Throwable) {
-                continue;
-            }
-
-            if ($ast === null) {
-                continue;
-            }
-
-            $return = $finder->findFirstInstanceOf($ast, Node\Stmt\Return_::class);
-
-            if (! $return instanceof Node\Stmt\Return_ || ! $return->expr instanceof Node\Expr\Array_) {
-                continue;
-            }
-
-            self::collect($return->expr, basename($file, '.php'), $maps);
+        foreach (ConfigDirReturnArrays::each($configDir) as [$returnArray, $base]) {
+            self::collect($returnArray, $base, $maps);
         }
 
         return $maps;
