@@ -49,6 +49,24 @@ class StopHookBuilderTest extends TestCase
         $this->assertNull($this->build('disabled'));
     }
 
+    public function test_grind_autonomy_is_when_blocked(): void
+    {
+        $script = $this->build('grind');
+
+        // WhenBlocked: release only for a genuine blocker, no "pause to ask".
+        $this->assertStringContainsString('ONLY for a genuine blocker', $script);
+        $this->assertStringNotContainsString('PAUSE to ask', $script);
+        // The release reason quotes are escaped for the double-quoted sh string.
+        $this->assertStringContainsString('plan-release.sh \\"<reason>\\"', $script);
+    }
+
+    public function test_phased_autonomy_pauses_on_decisions(): void
+    {
+        $script = $this->build('phased');
+
+        $this->assertStringContainsString('PAUSE to ask the user before a consequential or ambiguous decision', $script);
+    }
+
     public function test_behaviour_derives_gate_and_nudges(): void
     {
         $grind = ProfileRegistry::get('grind')->options();

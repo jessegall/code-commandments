@@ -34,7 +34,7 @@ final class GrindProfile extends Profile
             scope: JudgeScope::Branch,
             // Heads-down: judge AND tests deferred to ONE reckon at the end (the
             // pre-push gate) — never between phases.
-            behaviour: new ProfileBehaviour(judge: Phase::AtEnd, test: Phase::AtEnd),
+            behaviour: new ProfileBehaviour(judge: Phase::AtEnd, test: Phase::AtEnd, ask: Inquiry::WhenBlocked),
             briefAgent: true,
             briefing: Briefing::Short,
             postCommitReset: false,
