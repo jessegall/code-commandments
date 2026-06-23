@@ -76,7 +76,10 @@ final class NextFindingPresenter
 
             // The example carries only REQUIRED inputs — optional/either-or
             // inputs would make one combined command line contradictory.
-            $required = array_values(array_filter($repentInputs, static fn (RepentInput $spec): bool => $spec->required));
+            $required = collect($repentInputs)
+                ->filter(static fn (RepentInput $spec): bool => $spec->required)
+                ->values()
+                ->all();
             $base = sprintf('  %s repent --prophet=%s --file=%s', $binary, $finding->prophetShort, $finding->relativePath);
 
             if ($required !== []) {
