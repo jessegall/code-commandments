@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 use JesseGall\CodeCommandments\Tests\Fixtures\Prophets\CountingProphet;
+use JesseGall\CodeCommandments\Tests\Fixtures\Prophets\CrossCountingProphet;
 use JesseGall\CodeCommandments\Tests\TestCase;
 
 /**
@@ -128,17 +129,59 @@ class FindingsCacheTest extends TestCase
         $this->assertGreaterThan($before, CountingProphet::$calls, 'A new file changes the scroll fingerprint.');
     }
 
-    public function test_deleting_a_file_busts_the_cache(): void
+    public function test_sibling_change_busts_cross_file_findings_but_keeps_single_file_cached(): void
     {
+        CrossCountingProphet::reset();
+
+        $build = function (): ScrollManager {
+            $registry = new ProphetRegistry();
+            $registry->registerMany('test', [CountingProphet::class, CrossCountingProphet::class]);
+            $registry->setScrollConfig('test', [
+                'path' => $this->dir,
+                'extensions' => ['php'],
+                'exclude' => [],
+                'prophets' => [CountingProphet::class, CrossCountingProphet::class],
+            ]);
+            $manager = new ScrollManager($registry, new GenericFileScanner());
+            $manager->setFindingsCache(new FindingsCache($this->cacheFile, new Filesystem()));
+
+            return $manager;
+        };
+
         $this->write('A.php', 'FLAG_ME');
         $this->write('B.php', 'clean');
+        $build()->judgeScroll('test');
+        $single = CountingProphet::$calls;        // 2 (A + B)
+        $cross = CrossCountingProphet::$calls;     // 2 (A + B)
+
+        $this->write('B.php', 'touched');          // a DIFFERENT file changed
+        $build()->judgeScroll('test');
+
+        // Single-file: only the changed B re-runs; the unchanged A is served from
+        // its content-addressed cache (the split's win).
+        $this->assertSame($single + 1, CountingProphet::$calls, 'a sibling change must NOT cold-scan A for single-file prophets');
+        // Cross-file: the whole scroll's generation changed, so the cross prophet
+        // re-runs for BOTH files (correctness — A's cross finding could depend on B).
+        $this->assertSame($cross + 2, CrossCountingProphet::$calls, 'a sibling change re-runs cross-file prophets everywhere');
+    }
+
+    public function test_deleting_a_file_drops_it_without_cold_scanning_unchanged_siblings(): void
+    {
+        $this->write('A.php', 'FLAG_ME');
+        $this->write('B.php', 'FLAG_ME');
         $this->manager()->judgeScroll('test');
         $before = CountingProphet::$calls;
 
         @unlink($this->dir . '/B.php');
-        $this->manager()->judgeScroll('test');
+        $results = $this->manager()->judgeScroll('test');
 
-        $this->assertGreaterThan($before, CountingProphet::$calls, 'A deleted file changes the scroll fingerprint.');
+        // CountingProphet is single-file: deleting B cannot change A's finding, so
+        // A is served from its content-addressed cache (the split's win — a changed
+        // or deleted sibling no longer cold-scans every other file).
+        $this->assertSame($before, CountingProphet::$calls, 'unchanged A is not needlessly re-judged');
+        // …and B is gone from the results; no stale entry is served.
+        $this->assertTrue($results->has(realpath($this->dir . '/A.php')));
+        $this->assertFalse($results->has($this->dir . '/B.php'));
     }
 
     public function test_changing_the_ruleset_config_busts_the_cache(): void

@@ -206,46 +206,99 @@ class ScrollManager
     }
 
     /**
-     * Judge one file, serving from / writing to the findings cache. The index is
-     * built lazily via $ensureIndex (only on a cache miss), so a full cache hit
-     * skips the index build entirely.
+     * Judge one file, serving from / writing to the findings cache. Findings are
+     * split by prophet kind so a cleanup pass isn't a cold scan on every edit:
+     *  - SINGLE-file prophets are content-addressed (hash of THIS file + ruleset),
+     *    so editing another file leaves them cached.
+     *  - CROSS-file prophets ({@see NeedsCodebaseIndex}) are generation-keyed
+     *    (any file change busts them) and only THEY trigger the lazy index build.
+     * A file with no cross-file prophet (or a cross cache hit) never builds the index.
      *
      * @param  iterable<Commandment>  $prophets
      * @return Collection<string, Judgment>|null
      */
-    private function cachedOrJudge(string $filePath, iterable $prophets, ?FindingsCache $cache, callable $ensureIndex): ?Collection
+    private function cachedOrJudge(string $filePath, iterable $prophets, ?FindingsCache $cache, callable $ensureIndex, string $scroll): ?Collection
     {
-        if ($cache !== null && $cache->has($filePath)) {
-            $encoded = $cache->get($filePath);
-
-            return $encoded === [] ? null : JudgmentCodec::decode($encoded);
-        }
-
         $content = file_get_contents($filePath);
 
         if ($content === false) {
             return null;
         }
 
-        $ensureIndex();
-
-        $fileResults = collect();
+        $single = [];
+        $cross = [];
 
         foreach ($prophets as $prophet) {
             if (! $this->isProphetApplicable($prophet, $filePath)) {
                 continue;
             }
 
-            $judgment = $this->runProphet($prophet, $filePath, $content);
-
-            if ($judgment !== null) {
-                $fileResults->put(get_class($prophet), $judgment);
+            if ($prophet instanceof NeedsCodebaseIndex) {
+                $cross[] = $prophet;
+            } else {
+                $single[] = $prophet;
             }
         }
 
-        $cache?->put($filePath, JudgmentCodec::encode($fileResults));
+        $fileResults = collect();
+
+        // Single-file findings — content-addressed, survive other files changing.
+        $singleKey = sha1($this->rulesetVersion($scroll) . '|' . sha1($content));
+
+        if ($cache !== null && $cache->hasSingle($filePath, $singleKey)) {
+            $this->mergeEncoded($fileResults, $cache->getSingle($filePath));
+        } else {
+            $singleResults = collect();
+
+            foreach ($single as $prophet) {
+                $judgment = $this->runProphet($prophet, $filePath, $content);
+
+                if ($judgment !== null) {
+                    $singleResults->put(get_class($prophet), $judgment);
+                }
+            }
+
+            $cache?->putSingle($filePath, $singleKey, JudgmentCodec::encode($singleResults));
+            $singleResults->each(static fn (Judgment $j, string $cls) => $fileResults->put($cls, $j));
+        }
+
+        // Cross-file findings — generation-keyed; the index is built only here.
+        if ($cross !== []) {
+            if ($cache !== null && $cache->has($filePath)) {
+                $this->mergeEncoded($fileResults, $cache->get($filePath));
+            } else {
+                $ensureIndex();
+                $crossResults = collect();
+
+                foreach ($cross as $prophet) {
+                    $judgment = $this->runProphet($prophet, $filePath, $content);
+
+                    if ($judgment !== null) {
+                        $crossResults->put(get_class($prophet), $judgment);
+                    }
+                }
+
+                $cache?->put($filePath, JudgmentCodec::encode($crossResults));
+                $crossResults->each(static fn (Judgment $j, string $cls) => $fileResults->put($cls, $j));
+            }
+        }
 
         return $fileResults->isNotEmpty() ? $fileResults : null;
+    }
+
+    /**
+     * Merge an encoded cache entry (empty = judged clean) into $into.
+     *
+     * @param  Collection<string, Judgment>  $into
+     * @param  array<string, mixed>  $encoded
+     */
+    private function mergeEncoded(Collection $into, array $encoded): void
+    {
+        if ($encoded === []) {
+            return;
+        }
+
+        JudgmentCodec::decode($encoded)->each(static fn (Judgment $j, string $cls) => $into->put($cls, $j));
     }
 
     /**
@@ -363,7 +416,7 @@ class ScrollManager
                 continue;
             }
 
-            $fileResults = $this->cachedOrJudge($filePath, $prophets, $cache, $ensureIndex);
+            $fileResults = $this->cachedOrJudge($filePath, $prophets, $cache, $ensureIndex, $scroll);
 
             if ($fileResults !== null) {
                 $results->put($filePath, $fileResults);
@@ -438,7 +491,7 @@ class ScrollManager
             }
 
             $realFilePath = realpath($filePath) ?: $filePath;
-            $fileResults = $this->cachedOrJudge($realFilePath, $prophets, $cache, $ensureIndex);
+            $fileResults = $this->cachedOrJudge($realFilePath, $prophets, $cache, $ensureIndex, $scroll);
 
             if ($fileResults !== null) {
                 $results->put($filePath, $fileResults);
