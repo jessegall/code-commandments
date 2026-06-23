@@ -112,6 +112,33 @@ class PreferTypeCoalesceProphetTest extends TestCase
         $this->assertStringContainsString('T_String::coalesce($this->label)', $result->newContent);
     }
 
+    public function test_flags_cast_over_coalesce_with_any_default(): void
+    {
+        // `(int) ($x ?? 1)` IS T_Int::coalesce($x, 1) — flagged for ANY default.
+        $j = $this->judge('class C { public function h($x): int { return (int) ($x ?? 1); } }');
+
+        $this->assertCount(1, $j->warnings);
+        $this->assertStringContainsString('T_Int::coalesce', $j->warnings[0]->message);
+        $this->assertTrue($j->warnings[0]->autoFixable);
+    }
+
+    public function test_repent_cast_coalesce_preserves_the_default(): void
+    {
+        $src = '<?php class C { public function h($x): int { return (int) ($x ?? 1); } }';
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertStringContainsString('T_Int::coalesce($x, 1)', $result->newContent);
+        $this->assertStringNotContainsString('(int)', $result->newContent);
+    }
+
+    public function test_repent_cast_coalesce_omits_a_zero_default(): void
+    {
+        $src = '<?php class C { public function h($x): int { return (int) ($x ?? 0); } }';
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertStringContainsString('T_Int::coalesce($x)', $result->newContent);
+    }
+
     private function judge(string $body): Judgment
     {
         return $this->prophet->judge('/x.php', "<?php\n" . $body);

@@ -14,7 +14,7 @@ use PhpParser\NodeFinder;
 final class ReceiverTypeResolver
 {
     /** Function-like node kinds, for the enclosing-scope lookups. */
-    private const FUNCTION_LIKE = [Node\Stmt\ClassMethod::class, Node\Stmt\Function_::class, Expr\Closure::class];
+    private const FUNCTION_LIKE = [Node\Stmt\ClassMethod::class, Node\Stmt\Function_::class, Expr\Closure::class, Expr\ArrowFunction::class];
 
     /**
      * The resolved FQCN of $recv — a typed param `$x`, or a typed `$this->prop`
@@ -67,6 +67,68 @@ final class ReceiverTypeResolver
         foreach ($fn->params as $param) {
             if ($param->var instanceof Expr\Variable && $param->var->name === $name && $param->type instanceof Node\Name) {
                 return $param->type->toString();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The declared type NODE of parameter $name in the innermost enclosing
+     * function that declares it — the raw type (`Name`, `Identifier`,
+     * `NullableType`, `UnionType`, or null when untyped). Use this when you need
+     * to inspect the type (e.g. nullability); use {@see paramTypeInScope()} when a
+     * resolvable class-name string is enough.
+     *
+     * @param  array<Node>  $ast
+     */
+    public static function paramTypeNode(string $name, Node $context, array $ast): ?Node
+    {
+        $fn = self::innermost($ast, $context, self::FUNCTION_LIKE, static function (Node $fn) use ($name): bool {
+            foreach ($fn->params as $param) {
+                if ($param->var instanceof Expr\Variable && $param->var->name === $name) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if ($fn === null) {
+            return null;
+        }
+
+        foreach ($fn->params as $param) {
+            if ($param->var instanceof Expr\Variable && $param->var->name === $name) {
+                return $param->type;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The declared type NODE of $property on $class (a promoted-constructor param
+     * or a declared property), or null when untyped/absent. The node counterpart
+     * of {@see propertyType()}.
+     */
+    public static function propertyTypeNode(Node\Stmt\Class_ $class, string $property): ?Node
+    {
+        foreach ($class->getProperties() as $prop) {
+            foreach ($prop->props as $declared) {
+                if ($declared->name->toString() === $property) {
+                    return $prop->type;
+                }
+            }
+        }
+
+        $ctor = $class->getMethod('__construct');
+
+        if ($ctor !== null) {
+            foreach ($ctor->params as $param) {
+                if ($param->flags !== 0 && $param->var instanceof Expr\Variable && $param->var->name === $property) {
+                    return $param->type;
+                }
             }
         }
 

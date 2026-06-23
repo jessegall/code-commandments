@@ -115,6 +115,7 @@ return [
                 Backend\PreferNullCoalescingProphet::class,
                 Backend\NoNullCoalesceToNullProphet::class,
                 Backend\PreferTypeCoalesceProphet::class,
+                Backend\NoCoalesceOnNonNullableProphet::class,
                 Backend\PreferEnumForClosedSetFieldProphet::class,
                 Backend\PreferNativeEnumProphet::class,
                 Backend\PreferInjectionOverSingletonProphet::class,
