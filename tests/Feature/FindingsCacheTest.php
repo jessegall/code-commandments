@@ -63,6 +63,9 @@ class FindingsCacheTest extends TestCase
 
         $manager = new ScrollManager($registry, new GenericFileScanner());
         $manager->setFindingsCache(new FindingsCache($this->cacheFile, new Filesystem()));
+        // These tests count judge() calls via a static counter, so they must run
+        // in-process — a forked worker would increment the counter in a child.
+        $manager->setWorkers(1);
 
         return $manager;
     }
@@ -144,6 +147,7 @@ class FindingsCacheTest extends TestCase
             ]);
             $manager = new ScrollManager($registry, new GenericFileScanner());
             $manager->setFindingsCache(new FindingsCache($this->cacheFile, new Filesystem()));
+            $manager->setWorkers(1);
 
             return $manager;
         };

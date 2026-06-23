@@ -69,6 +69,10 @@ final class JudgeService
             $this->manager->setUseCache(false);
         }
 
+        if ((bool) ($opts['no_parallel'] ?? false)) {
+            $this->manager->setWorkers(1);
+        }
+
         $scrollFilter = $opts['scroll'] ?? null;
         $prophetFilter = $opts['prophet'] ?? null;
         $this->manager->setProphetFilter($prophetFilter);

@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\Caching\FindingsCache;
 use JesseGall\CodeCommandments\Support\Caching\JudgmentCodec;
+use JesseGall\CodeCommandments\Support\Concurrency\ForkPool;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\PathExcludeMatcher;
 use Illuminate\Support\Collection;
@@ -30,6 +31,9 @@ class ScrollManager
     private ?FindingsCache $findingsCache = null;
 
     private bool $useCache = true;
+
+    /** Worker processes for a full-scroll judge. 0 = auto (CPU cores, capped); 1 = sequential. */
+    private int $workers = 0;
 
     private ?string $prophetFilter = null;
 
@@ -60,6 +64,44 @@ class ScrollManager
     public function setUseCache(bool $useCache): void
     {
         $this->useCache = $useCache;
+    }
+
+    /**
+     * Set the worker count for a full-scroll judge: 0 = auto (CPU cores, capped),
+     * 1 = sequential, N = up to N forked workers. Honoured only where forking is
+     * available; otherwise the judge runs in-process regardless.
+     */
+    public function setWorkers(int $workers): void
+    {
+        $this->workers = max(0, $workers);
+    }
+
+    private function workerCount(): int
+    {
+        if ($this->workers > 0) {
+            return $this->workers;
+        }
+
+        if (! ForkPool::isAvailable()) {
+            return 1;
+        }
+
+        return max(1, min(self::cpuCount(), 10));
+    }
+
+    private static function cpuCount(): int
+    {
+        if (is_file('/proc/cpuinfo')) {
+            $count = substr_count((string) @file_get_contents('/proc/cpuinfo'), 'processor');
+
+            if ($count > 0) {
+                return $count;
+            }
+        }
+
+        $nproc = @shell_exec('sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null');
+
+        return is_string($nproc) && (int) trim($nproc) > 0 ? (int) trim($nproc) : 4;
     }
 
     /**
@@ -405,27 +447,197 @@ class ScrollManager
 
         $cache = $this->activateCache($scroll);
         $prophets = $this->prophetsFor($scroll);
-        $ensureIndex = $this->lazyIndexBuilder($scroll, $prophets);
 
-        $results = collect();
+        $files = [];
 
         foreach ($this->scanner->scan($path, $extensions, $excludePaths) as $file) {
-            $filePath = $file->getRealPath();
+            $real = $file->getRealPath();
 
-            if ($filePath === false) {
-                continue;
-            }
-
-            $fileResults = $this->cachedOrJudge($filePath, $prophets, $cache, $ensureIndex, $scroll);
-
-            if ($fileResults !== null) {
-                $results->put($filePath, $fileResults);
+            if ($real !== false) {
+                $files[] = $real;
             }
         }
+
+        $results = $this->judgeFileList($files, $prophets, $cache, $scroll);
 
         $cache?->save();
 
         return $results;
+    }
+
+    /**
+     * The cache-split + parallel core of a full-scroll judge: serve cache hits
+     * in-process, then run the MISSES across a fork pool. The codebase index is
+     * built+injected in the PARENT before forking, so workers inherit it via
+     * copy-on-write (no rebuild, no serialization). A worker that dies is covered
+     * by a parent-side safety net, so findings are never lost.
+     *
+     * @param  list<string>  $files
+     * @param  iterable<Commandment>  $prophets
+     * @return Collection<string, Collection<string, Judgment>>
+     */
+    private function judgeFileList(array $files, iterable $prophets, ?FindingsCache $cache, string $scroll): Collection
+    {
+        $rulesetVersion = $this->rulesetVersion($scroll);
+
+        $single = [];
+        $cross = [];
+
+        foreach ($prophets as $prophet) {
+            if ($prophet instanceof NeedsCodebaseIndex) {
+                $cross[] = $prophet;
+            } else {
+                $single[] = $prophet;
+            }
+        }
+
+        $hasCross = $cross !== [];
+        $results = collect();
+        $plan = [];
+
+        // Parent pass: serve fully-cached files; collect the rest as a work plan.
+        foreach ($files as $filePath) {
+            $content = @file_get_contents($filePath);
+
+            if ($content === false) {
+                continue;
+            }
+
+            $singleKey = sha1($rulesetVersion . '|' . sha1($content));
+            $runSingle = $cache === null || ! $cache->hasSingle($filePath, $singleKey);
+            $runCross = $hasCross && ($cache === null || ! $cache->has($filePath));
+
+            if (! $runSingle && ! $runCross) {
+                $merged = collect();
+                $this->mergeEncoded($merged, $cache?->getSingle($filePath) ?? []);
+
+                if ($hasCross) {
+                    $this->mergeEncoded($merged, $cache?->get($filePath) ?? []);
+                }
+
+                if ($merged->isNotEmpty()) {
+                    $results->put($filePath, $merged);
+                }
+
+                continue;
+            }
+
+            $plan[$filePath] = ['runSingle' => $runSingle, 'runCross' => $runCross, 'singleKey' => $singleKey];
+        }
+
+        if ($plan === []) {
+            return $results;
+        }
+
+        // Build + inject the index in the PARENT (workers inherit it via COW) when
+        // any planned file needs a cross-file prophet.
+        foreach ($plan as $p) {
+            if ($p['runCross']) {
+                $this->injectCodebaseIndex($prophets, $this->codebaseIndexFor($scroll));
+
+                break;
+            }
+        }
+
+        $missFiles = array_keys($plan);
+
+        $task = function (array $chunk) use ($plan, $single, $cross): array {
+            $out = [];
+
+            foreach ($chunk as $filePath) {
+                $content = @file_get_contents($filePath);
+
+                if ($content === false) {
+                    continue;
+                }
+
+                $p = $plan[$filePath];
+
+                $out[$filePath] = [
+                    'singleKey' => $p['singleKey'],
+                    'single' => $p['runSingle'] ? $this->runProphetsEncoded($single, $filePath, $content) : null,
+                    'cross' => $p['runCross'] ? $this->runProphetsEncoded($cross, $filePath, $content) : null,
+                ];
+            }
+
+            return $out;
+        };
+
+        // Parallelise only the HEAVY files (a full single-file prophet pass — the
+        // expensive, cold-scan work). Files needing just the cheap cross-file
+        // re-run (single already cached — the incremental/penance case) are judged
+        // in-process: their work is smaller than the fork overhead.
+        $heavy = array_values(array_filter($missFiles, static fn (string $f): bool => $plan[$f]['runSingle']));
+        $light = array_values(array_filter($missFiles, static fn (string $f): bool => ! $plan[$f]['runSingle']));
+
+        $worker = ForkPool::map($heavy, $this->workerCount(), $task);
+
+        foreach ($light as $filePath) {
+            $worker[$filePath] = $task([$filePath])[$filePath] ?? null;
+        }
+
+        foreach ($missFiles as $filePath) {
+            // Safety net: a file a worker failed to return is judged in the parent,
+            // so a dead fork never silently drops findings.
+            if (! isset($worker[$filePath])) {
+                $worker[$filePath] = $task([$filePath])[$filePath] ?? null;
+            }
+
+            $enc = $worker[$filePath];
+            $p = $plan[$filePath];
+            $merged = collect();
+
+            if (! $p['runSingle']) {
+                $this->mergeEncoded($merged, $cache?->getSingle($filePath) ?? []);
+            }
+
+            if (! $p['runCross'] && $hasCross) {
+                $this->mergeEncoded($merged, $cache?->get($filePath) ?? []);
+            }
+
+            if (is_array($enc)) {
+                if (($enc['single'] ?? null) !== null) {
+                    $cache?->putSingle($filePath, $enc['singleKey'], $enc['single']);
+                    $this->mergeEncoded($merged, $enc['single']);
+                }
+
+                if (($enc['cross'] ?? null) !== null) {
+                    $cache?->put($filePath, $enc['cross']);
+                    $this->mergeEncoded($merged, $enc['cross']);
+                }
+            }
+
+            if ($merged->isNotEmpty()) {
+                $results->put($filePath, $merged);
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Run an applicable subset of prophets on one file and return the encoded map.
+     *
+     * @param  list<Commandment>  $prophets
+     * @return array<string, mixed>
+     */
+    private function runProphetsEncoded(array $prophets, string $filePath, string $content): array
+    {
+        $results = collect();
+
+        foreach ($prophets as $prophet) {
+            if (! $this->isProphetApplicable($prophet, $filePath)) {
+                continue;
+            }
+
+            $judgment = $this->runProphet($prophet, $filePath, $content);
+
+            if ($judgment !== null) {
+                $results->put(get_class($prophet), $judgment);
+            }
+        }
+
+        return JudgmentCodec::encode($results);
     }
 
     /**
