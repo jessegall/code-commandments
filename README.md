@@ -529,7 +529,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_111 prophets._
+_112 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -589,6 +589,7 @@ _111 prophets._
 | `OutOfPurposeProphet` | — | A class with a role marker (*Registry/*Data/*Resolver) whose body shows a structural second-engine signal (reflection in a registry, an assembler cluster in a DTO, a store in a resolver) is doing a second job — extract it |
 | `PassThroughDependencyProphet` | — | A dependency only forwarded to one collaborator, never used itself, should be injected there |
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
+| `PreferClassifierCompositionProphet` | — | Compose classifier checks with anyOf()/allOf(), not a \|\|/&& chain of -&gt;matches() |
 | `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
 | `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |

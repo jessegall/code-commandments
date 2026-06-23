@@ -86,6 +86,12 @@ SCRIPTURE;
             return $this->righteous();
         }
 
+        // Generated scaffold/skill code carries deliberate teaching docblocks —
+        // the doc-length rule is about hand-written narrative, not generated docs.
+        if (str_contains($content, '@code-commandments-generated')) {
+            return $this->righteous();
+        }
+
         $maxLines = (int) $this->config('max_narrative_lines', self::DEFAULT_MAX_NARRATIVE_LINES);
         $warnings = [];
 
