@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Prophets\Backend;
 
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
 use JesseGall\CodeCommandments\Contracts\SinRepenter;
@@ -339,7 +340,7 @@ SCRIPTURE;
 
         return $value instanceof Expr\Variable
             && is_string($value->name)
-            && $this->isArrayType($this->paramTypeInScope($value->name, $call, $ast));
+            && $this->isArrayType(ReceiverTypeResolver::paramTypeNode($value->name, $call, $ast));
     }
 
     private function isArrayType(?Node $type): bool
@@ -351,43 +352,6 @@ SCRIPTURE;
         return $type instanceof Node\Identifier && strtolower($type->toString()) === 'array';
     }
 
-    /**
-     * The declared type of parameter $name in the innermost function-like
-     * (method / closure / arrow fn) that contains $call, or null.
-     *
-     * @param  array<Node>  $ast
-     */
-    private function paramTypeInScope(string $name, Expr\StaticCall $call, array $ast): ?Node
-    {
-        $finder = new NodeFinder;
-        $pos = (int) $call->getStartFilePos();
-        $best = null;
-        $bestStart = -1;
-
-        $functionLikes = array_merge(
-            $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class),
-            $finder->findInstanceOf($ast, Node\Stmt\Function_::class),
-            $finder->findInstanceOf($ast, Expr\Closure::class),
-            $finder->findInstanceOf($ast, Expr\ArrowFunction::class),
-        );
-
-        foreach ($functionLikes as $fn) {
-            $start = (int) $fn->getStartFilePos();
-
-            if ($start > $pos || (int) $fn->getEndFilePos() < $pos || $start <= $bestStart) {
-                continue;
-            }
-
-            foreach ($fn->params as $param) {
-                if ($param->var instanceof Expr\Variable && $param->var->name === $name) {
-                    $best = $param->type;
-                    $bestStart = $start;
-                }
-            }
-        }
-
-        return $best;
-    }
 
     /**
      * @param  list<string>  $suffixes
