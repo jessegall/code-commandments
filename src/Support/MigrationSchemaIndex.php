@@ -106,7 +106,7 @@ final class MigrationSchemaIndex
         $finder = new NodeFinder;
         $tables = [];
 
-        foreach (glob($dir . '/*.php') ?: [] as $file) {
+        foreach (Glob::paths($dir . '/*.php') as $file) {
             try {
                 $ast = $parser->parse((string) file_get_contents($file));
             } catch (\Throwable) {

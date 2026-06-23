@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
-use Composer\Autoload\ClassLoader;
+use JesseGall\CodeCommandments\Support\ComposerLoader;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use JesseGall\CodeCommandments\Support\VendorPath;
@@ -41,10 +41,6 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
 
     /** @var array<string, array{file: ?string, statics: list<string>}|false> */
     private static array $classCache = [];
-
-    private static ?ClassLoader $composerLoader = null;
-
-    private static bool $composerLoaderResolved = false;
 
     public function handle(mixed $input): mixed
     {
@@ -198,7 +194,7 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
      */
     private function resolveFromAutoload(string $fqcn): ?array
     {
-        $loader = $this->getComposerLoader();
+        $loader = ComposerLoader::resolve();
 
         if ($loader === null) {
             return null;
@@ -316,25 +312,6 @@ final class FindInvokableConstructWithStaticHelper implements Pipe
         }
 
         return $out;
-    }
-
-    private function getComposerLoader(): ?ClassLoader
-    {
-        if (self::$composerLoaderResolved) {
-            return self::$composerLoader;
-        }
-
-        self::$composerLoaderResolved = true;
-
-        foreach (spl_autoload_functions() ?: [] as $autoload) {
-            if (is_array($autoload) && isset($autoload[0]) && $autoload[0] instanceof ClassLoader) {
-                self::$composerLoader = $autoload[0];
-
-                return self::$composerLoader;
-            }
-        }
-
-        return null;
     }
 
     private function getSnippet(string $content, int $line): string
