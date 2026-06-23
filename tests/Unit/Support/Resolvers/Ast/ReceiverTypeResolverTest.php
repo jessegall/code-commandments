@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Unit\Support\Resolvers\Ast;
 
 use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileAst;
 use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\NodeFinder;
@@ -38,7 +39,7 @@ class ReceiverTypeResolverTest extends TestCase
         );
         $call = $this->firstCall($ast, 'input');
 
-        $fqcn = ReceiverTypeResolver::resolve($call->var, $ast, FileImports::of($ast), FileImports::namespace($ast), $call);
+        $fqcn = ReceiverTypeResolver::resolve($call->var, FileAst::of($ast), $call);
 
         $this->assertSame('Illuminate\\Http\\Request', $fqcn);
     }
@@ -51,7 +52,7 @@ class ReceiverTypeResolverTest extends TestCase
         );
         $call = $this->firstCall($ast, 'get');
 
-        $fqcn = ReceiverTypeResolver::resolve($call->var, $ast, FileImports::of($ast), FileImports::namespace($ast), $call);
+        $fqcn = ReceiverTypeResolver::resolve($call->var, FileAst::of($ast), $call);
 
         $this->assertSame('App\\Bag', $fqcn);
     }
@@ -64,7 +65,7 @@ class ReceiverTypeResolverTest extends TestCase
         );
         $call = $this->firstCall($ast, 'get');
 
-        $this->assertSame('App\\Bag', ReceiverTypeResolver::resolve($call->var, $ast, FileImports::of($ast), FileImports::namespace($ast), $call));
+        $this->assertSame('App\\Bag', ReceiverTypeResolver::resolve($call->var, FileAst::of($ast), $call));
     }
 
     public function test_returns_null_for_an_untyped_receiver(): void
@@ -72,7 +73,7 @@ class ReceiverTypeResolverTest extends TestCase
         $ast = $this->parse("namespace App;\nclass C { public function h(\$request) { return \$request->input('x'); } }");
         $call = $this->firstCall($ast, 'input');
 
-        $this->assertNull(ReceiverTypeResolver::resolve($call->var, $ast, FileImports::of($ast), FileImports::namespace($ast), $call));
+        $this->assertNull(ReceiverTypeResolver::resolve($call->var, FileAst::of($ast), $call));
     }
 
     public function test_returns_null_for_a_chained_receiver(): void
@@ -80,7 +81,7 @@ class ReceiverTypeResolverTest extends TestCase
         $ast = $this->parse("namespace App;\nclass C { public function h() { return foo()->get('x'); } }");
         $call = $this->firstCall($ast, 'get');
 
-        $this->assertNull(ReceiverTypeResolver::resolve($call->var, $ast, FileImports::of($ast), FileImports::namespace($ast), $call));
+        $this->assertNull(ReceiverTypeResolver::resolve($call->var, FileAst::of($ast), $call));
     }
 
     public function test_enclosing_class_and_function(): void

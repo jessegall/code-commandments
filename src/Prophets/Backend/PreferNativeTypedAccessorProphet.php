@@ -17,6 +17,7 @@ use JesseGall\CodeCommandments\Support\CallGraph\CallSite;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileAst;
 use JesseGall\CodeCommandments\Support\Resolvers\Ast\ReceiverTypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -542,7 +543,7 @@ SCRIPTURE;
             return null;
         }
 
-        $type = ReceiverTypeResolver::resolve($read['recv'], $ast, $uses, $namespace, $call);
+        $type = ReceiverTypeResolver::resolve($read['recv'], new FileAst($ast, $uses, $namespace), $call);
 
         if ($type === null) {
             return null;
@@ -711,7 +712,7 @@ SCRIPTURE;
      */
     private function resolve(array $read, string $family, Node $site, array $ast, array $uses, ?string $namespace, string $content, bool $autoFixable): ?array
     {
-        $type = ReceiverTypeResolver::resolve($read['recv'], $ast, $uses, $namespace, $site);
+        $type = ReceiverTypeResolver::resolve($read['recv'], new FileAst($ast, $uses, $namespace), $site);
 
         if ($type === null) {
             return null;
@@ -858,7 +859,7 @@ SCRIPTURE;
                 continue;
             }
 
-            $type = ReceiverTypeResolver::resolve($read['recv'], $ast, $uses, $namespace, $node);
+            $type = ReceiverTypeResolver::resolve($read['recv'], new FileAst($ast, $uses, $namespace), $node);
 
             if ($type === null) {
                 continue;

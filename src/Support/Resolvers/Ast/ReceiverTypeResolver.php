@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Resolvers\Ast;
 
-use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
@@ -20,26 +19,23 @@ final class ReceiverTypeResolver
     /**
      * The resolved FQCN of $recv — a typed param `$x`, or a typed `$this->prop`
      * — else null (an unresolved or chained receiver).
-     *
-     * @param  array<Node>  $ast
-     * @param  array<string, string>  $uses  alias => FQCN (see {@see FileImports::of()})
      */
-    public static function resolve(Expr $recv, array $ast, array $uses, ?string $namespace, Node $context): ?string
+    public static function resolve(Expr $recv, FileAst $file, Node $context): ?string
     {
         if ($recv instanceof Expr\Variable && is_string($recv->name)) {
-            $type = self::paramTypeInScope($recv->name, $context, $ast);
+            $type = self::paramTypeInScope($recv->name, $context, $file->nodes);
 
-            return $type !== null ? ltrim(NameResolver::resolve($type, $uses, $namespace), '\\') : null;
+            return $type !== null ? $file->resolveType($type) : null;
         }
 
         if ($recv instanceof Expr\PropertyFetch
             && $recv->var instanceof Expr\Variable && $recv->var->name === 'this'
             && $recv->name instanceof Node\Identifier
         ) {
-            $class = self::enclosingClass($context, $ast);
+            $class = self::enclosingClass($context, $file->nodes);
             $type = $class !== null ? self::propertyType($class, $recv->name->toString()) : null;
 
-            return $type !== null ? ltrim(NameResolver::resolve($type, $uses, $namespace), '\\') : null;
+            return $type !== null ? $file->resolveType($type) : null;
         }
 
         return null;
