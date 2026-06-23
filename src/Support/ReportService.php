@@ -67,7 +67,7 @@ final class ReportService
             }
 
             if ($unique === []) {
-                $error("No live finding at {$at}" . ($filter !== null ? " for a prophet matching '{$filter}'" : '') . '. Run judge --next to see current findings.');
+                $error("No live finding at {$at}" . ($filter !== null ? " for a prophet matching '{$filter}'" : T_String::empty()) . '. Run judge --next to see current findings.');
 
                 return self::FAILURE;
             }

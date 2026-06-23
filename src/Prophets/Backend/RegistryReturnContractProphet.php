@@ -153,7 +153,7 @@ SCRIPTURE;
                     $sins[] = $this->sinAt(
                         $method->getStartLine(),
                         $message,
-                        $this->lineAt($content, $method->getStartLine()),
+                        $this->lineSnippet($content, $method->getStartLine()),
                         null,
                         'registry-return:' . $name,
                         false,
@@ -209,7 +209,7 @@ SCRIPTURE;
         return $this->warningAt(
             $method->getStartLine(),
             sprintf('%s() returns a nullable on a class with the registry shape (you `register`/store into it, then look up). A miss is a wiring bug, not a valid "no value": return T and throw — with a `has%s()` companion / a named exception — or, if absence is genuine, model it as an Option at the source. (Heuristic: no `Registry` marker; mark the class or extend a base for full enforcement.)', $name, ucfirst($name)),
-            $this->lineAt($content, $method->getStartLine()),
+            $this->lineSnippet($content, $method->getStartLine()),
             'registry-return-shape:' . $name,
         );
     }
@@ -464,10 +464,4 @@ SCRIPTURE;
         return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 }

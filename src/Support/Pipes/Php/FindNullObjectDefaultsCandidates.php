@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -53,6 +54,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindNullObjectDefaultsCandidates implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Type aliases (`callable`) or FQCN keys mapped to the Null Object
      * class FQCN that should replace `null` as the default.
@@ -205,7 +208,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
                 match: '$this->' . $name . '()',
                 line: $firstLine,
                 offset: null,
-                content: $this->getSnippet($content, $firstLine),
+                content: $this->lineSnippet($content, $firstLine),
                 groups: [
                     'subject' => '$this->' . $name . '()',
                     'method' => $name,
@@ -716,7 +719,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             match: "\${$paramName}",
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [
                 'subject' => "\${$paramName}",
                 'method' => $method->name->toString(),
@@ -937,7 +940,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             match: $subject,
             line: $line,
             offset: null,
-            content: $this->getSnippet($content, $line),
+            content: $this->lineSnippet($content, $line),
             groups: [
                 'subject' => $subject,
                 'method' => $method->name->toString(),
@@ -999,10 +1002,4 @@ final class FindNullObjectDefaultsCandidates implements Pipe
         return $this->printer->prettyPrintExpr($expr);
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

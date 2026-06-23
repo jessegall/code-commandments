@@ -41,11 +41,6 @@ class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements Param
 {
     private ?CodebaseIndex $index = null;
 
-    public function setCodebaseIndex(CodebaseIndex $index): void
-    {
-        $this->index = $index;
-    }
-
     /**
      * Field name endings that almost always denote a finite, closed set.
      * Matched case-insensitively at a word boundary (camelCase or snake_case),
@@ -62,6 +57,11 @@ class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements Param
 
     /** @var array<string, string> */
     private array $repentInput = [];
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
 
     public function description(): string
     {
@@ -1078,7 +1078,7 @@ SCRIPTURE;
         }
 
         return array_values(array_map(
-            static fn (string $n): string => strtolower($n),
+            strtolower(...),
             array_filter($configured, 'is_string'),
         ));
     }

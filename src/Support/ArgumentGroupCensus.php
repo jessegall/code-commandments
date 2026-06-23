@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * Censuses tuples of arguments passed TOGETHER across a project's call sites — the
@@ -108,7 +109,7 @@ final class ArgumentGroupCensus
     private static function locateRoot(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_file($dir . '/composer.json') && (is_dir($dir . '/src') || is_dir($dir . '/app'))) {

@@ -42,7 +42,7 @@ class ScaffoldConsoleCommand extends Command
             $basePath . '/app/Support',
             (bool) $input->getOption('auto'),
             (bool) $input->getOption('force'),
-            fn (string $line) => $output->writeln($line),
+            $output->writeln(...),
         );
 
         return Command::SUCCESS;

@@ -40,7 +40,7 @@ SCRIPTURE;
     public function judge(string $filePath, string $content): Judgment
     {
         return PhpPipeline::make($filePath, $content)
-            ->pipe(fn (PhpContext $ctx) => $this->findEventDispatchCalls($ctx))
+            ->pipe($this->findEventDispatchCalls(...))
             ->sinsFromMatches(
                 'Using static ::dispatch() on event class',
                 'Use event() helper instead: event(new EventClass(...))'

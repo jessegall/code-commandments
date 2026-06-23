@@ -16,9 +16,16 @@ namespace JesseGall\CodeCommandments\Results;
  */
 enum Tier: string
 {
+    /** Changes the shape or types of the code — array bags, nullable decisions, value objects. The deepest root cause, so it sorts first. */
     case Structural = 'structural';
+
+    /** Affects behaviour or safety — raw request input, event dispatch, unhandled cases. Fixed after structure but before naming. */
     case Correctness = 'correctness';
+
+    /** Naming and contracts — kebab routes, typed getters, documented cases. A surface-of-the-API concern, addressed after correctness. */
     case Convention = 'convention';
+
+    /** Surface polish — sprintf vs interpolation, docblock length. No behavioural weight, so it sorts last. */
     case Cosmetic = 'cosmetic';
 
     /**

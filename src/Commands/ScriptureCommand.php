@@ -29,7 +29,7 @@ class ScriptureCommand extends Command
             $this->option('prophet'),
             (bool) $this->option('detailed'),
             ClaudeHooksInstaller::ARTISAN,
-            fn (string $line) => $this->output->writeln($line),
+            $this->output->writeln(...),
         ) === ScriptureService::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 }

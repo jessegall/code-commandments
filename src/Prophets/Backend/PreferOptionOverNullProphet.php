@@ -271,7 +271,7 @@ SCRIPTURE;
             ->pipe(ParsePhpAst::class)
             ->pipe(ExtractUseStatements::class)
             ->pipe($pipe)
-            ->partitionMatches(fn (MatchResult $match) => $this->translate($match))
+            ->partitionMatches($this->translate(...))
             ->judge();
     }
 

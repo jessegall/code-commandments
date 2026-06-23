@@ -68,7 +68,7 @@ final class Absolver
             $this->tracker->absolveFinding($fingerprint, $reason);
         }
 
-        $scope = $untilPush ? ' until push' : '';
+        $scope = $untilPush ? ' until push' : T_String::empty();
 
         return [
             'status' => self::STATUS_OK,
@@ -165,7 +165,7 @@ final class Absolver
             }
         }
 
-        $lifetime = $untilPush ? ' until push' : '';
+        $lifetime = $untilPush ? ' until push' : T_String::empty();
 
         return [
             'status' => self::STATUS_OK,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
 use PhpParser\Node;
@@ -31,6 +32,8 @@ use JesseGall\PhpTypes\T_String;
  */
 final class FindInlineExceptionConstruction implements Pipe
 {
+    use ExtractsLineSnippet;
+
     /**
      * Generic SPL exception/error classes — throwing one of these names
      * a failure category, never the actual failure.
@@ -148,7 +151,7 @@ final class FindInlineExceptionConstruction implements Pipe
             match: 'new ' . $shortName,
             line: $line,
             offset: null,
-            content: $this->getSnippet($input->content, $line),
+            content: $this->lineSnippet($input->content, $line),
             groups: [
                 'kind' => $isGeneric ? 'generic' : 'custom_message',
                 'exception' => $shortName,
@@ -207,7 +210,7 @@ final class FindInlineExceptionConstruction implements Pipe
             match: $shortName . '::' . ($call->name instanceof Node\Identifier ? $call->name->toString() : 'make'),
             line: $line,
             offset: null,
-            content: $this->getSnippet($input->content, $line),
+            content: $this->lineSnippet($input->content, $line),
             groups: [
                 'kind' => 'factory_message',
                 'exception' => $shortName,
@@ -441,10 +444,4 @@ final class FindInlineExceptionConstruction implements Pipe
         return $visitor->parents;
     }
 
-    private function getSnippet(string $content, int $line): string
-    {
-        $lines = explode(T_String::NEWLINE, $content);
-
-        return isset($lines[$line - 1]) ? trim($lines[$line - 1]) : T_String::empty();
-    }
 }

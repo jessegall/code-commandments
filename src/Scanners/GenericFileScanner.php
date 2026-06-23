@@ -21,7 +21,7 @@ class GenericFileScanner implements FileScanner
         bool $honorDefaultExcludes = true,
     ): iterable {
         $paths = is_array($path) ? $path : [$path];
-        $validPaths = array_filter($paths, fn (string $p) => is_dir($p));
+        $validPaths = array_filter($paths, is_dir(...));
 
         if (empty($validPaths)) {
             return;

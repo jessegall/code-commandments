@@ -453,7 +453,7 @@ SCRIPTURE;
         return [
             'line' => $line,
             'message' => sprintf('Argument `%s` restates the parameter\'s default — drop it, the default is applied automatically.', $name),
-            'snippet' => $this->lineAt($content, $line),
+            'snippet' => $this->lineSnippet($content, $line),
             'symbol' => 'redundant-default:' . $name,
             'penance' => "Dropped redundant default argument `{$name}`",
             'edit' => $this->removalRange($node, $content),
@@ -490,12 +490,6 @@ SCRIPTURE;
         return ['start' => $start, 'end' => $i - 1];
     }
 
-    private function lineAt(string $content, int $line): string
-    {
-        $lines = explode("\n", $content);
-
-        return trim($lines[$line - 1] ?? '');
-    }
 
     /**
      * @param  array<Node>  $ast

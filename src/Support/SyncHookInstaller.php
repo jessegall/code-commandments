@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\PhpTypes\T_String;
+
 /**
  * The shared logic behind `install-sync-hook` — write the git post-merge hook
  * (one runner-detecting body via {@see ClaudeHooksInstaller::postMergeHookScript()}),
@@ -41,7 +43,7 @@ final class SyncHookInstaller
             return self::SUCCESS;
         }
 
-        if (@file_put_contents($hookPath, ClaudeHooksInstaller::postMergeHookScript() . "\n") === false) {
+        if (@file_put_contents($hookPath, ClaudeHooksInstaller::postMergeHookScript() . T_String::NEWLINE) === false) {
             $error("Failed to write {$hookPath}");
 
             return self::FAILURE;

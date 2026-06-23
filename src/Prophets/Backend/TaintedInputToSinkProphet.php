@@ -104,7 +104,7 @@ SCRIPTURE;
         $warnings = [];
         $seenLines = [];
 
-        foreach ($finder->find($ast, fn (Node $n) => $this->taint->isDangerousSink($n)) as $sink) {
+        foreach ($finder->find($ast, $this->taint->isDangerousSink(...)) as $sink) {
             if (! $sink instanceof Node\Expr\MethodCall && ! $sink instanceof Node\Expr\StaticCall && ! $sink instanceof Node\Expr\FuncCall) {
                 continue;
             }
@@ -114,7 +114,7 @@ SCRIPTURE;
             $args = $this->taint->isRawSqlSink($sink) ? array_slice($sink->getArgs(), 0, 1) : $sink->getArgs();
 
             foreach ($args as $arg) {
-                $sources = $finder->find([$arg->value], fn (Node $n) => $this->taint->isRequestSource($n));
+                $sources = $finder->find([$arg->value], $this->taint->isRequestSource(...));
 
                 if ($sources === [] || $this->taint->hasSanitizer($arg->value, $finder)) {
                     continue;

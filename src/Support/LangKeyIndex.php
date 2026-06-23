@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
+use JesseGall\PhpTypes\T_String;
 
 /**
  * The declared translation KEY TREE of a project — every dotted key a `__()` /
@@ -70,7 +71,7 @@ final class LangKeyIndex
     private static function locateLangDir(string $filePath): ?string
     {
         $dir = \dirname($filePath);
-        $previous = '';
+        $previous = T_String::empty();
 
         while ($dir !== $previous && $dir !== '' && $dir !== '.') {
             if (is_file($dir . '/composer.json')) {
@@ -96,7 +97,7 @@ final class LangKeyIndex
         $groups = [];
 
         // <langDir>/<locale>/<group>.php
-        foreach (glob($langDir . '/*/*.php') ?: [] as $file) {
+        foreach (Glob::paths($langDir . '/*/*.php') as $file) {
             try {
                 $ast = $parser->parse((string) file_get_contents($file));
             } catch (\Throwable) {
