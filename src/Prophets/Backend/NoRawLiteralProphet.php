@@ -288,6 +288,7 @@ SCRIPTURE;
             'separators' => (bool) $this->config('flag_separators', false),
             'sentinel_ints' => (bool) $this->config('flag_sentinel_ints', false),
             'sentinel_floats' => (bool) $this->config('flag_sentinel_floats', false),
+            'initializers_only' => (bool) $this->config('initializers_only', false),
         ];
     }
 
