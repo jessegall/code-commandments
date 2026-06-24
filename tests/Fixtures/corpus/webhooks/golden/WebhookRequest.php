@@ -31,7 +31,7 @@ final class WebhookRequest extends FormRequest
 
     public function resourceId(): string
     {
-        return $this->string('resource_id')->toString();
+        return (string) $this->string('resource_id');
     }
 
     public function occurredAt(): int
@@ -41,7 +41,7 @@ final class WebhookRequest extends FormRequest
 
     public function signature(): string
     {
-        return $this->string('signature')->toString();
+        return (string) $this->string('signature');
     }
 
     public function payload(): WebhookPayload

@@ -27,12 +27,12 @@ final class PlaceOrderRequest extends FormRequest
 
     public function customerId(): string
     {
-        return $this->string('customer_id')->toString();
+        return (string) $this->string('customer_id');
     }
 
     public function sku(): string
     {
-        return $this->string('sku')->toString();
+        return (string) $this->string('sku');
     }
 
     public function quantity(): int
@@ -47,6 +47,6 @@ final class PlaceOrderRequest extends FormRequest
 
     public function currency(): string
     {
-        return $this->string('currency')->toString();
+        return (string) $this->string('currency');
     }
 }
