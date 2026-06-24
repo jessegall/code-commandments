@@ -29,6 +29,12 @@ use PhpParser\NodeFinder;
  *
  * Advisory, never a sin — renaming is a cross-repo refactor and sometimes the
  * domain's ubiquitous language wins; emit guidance only.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static suffix(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.127.0')]
 class ResolverNamingHonestyProphet extends PhpCommandment

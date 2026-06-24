@@ -198,10 +198,22 @@ final class ConfigMigrator
         }
 
         foreach ($config as $key => $value) {
-            $chain .= '->set(' . var_export((string) $key, true) . ', ' . $this->export($value) . ')';
+            // Emit the typed fluent setter: `max_method_lines` => `->maxMethodLines(60)`.
+            // Every key is callable in camelCase (BaseCommandment::__call), so this is
+            // always valid; a `true` value is a flag (`->initializersOnly()`).
+            $method = $this->camelCase((string) $key);
+
+            $chain .= $value === true
+                ? "->{$method}()"
+                : "->{$method}(" . $this->export($value) . ')';
         }
 
         return $chain;
+    }
+
+    private function camelCase(string $key): string
+    {
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $key))));
     }
 
     /**

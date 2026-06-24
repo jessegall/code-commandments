@@ -21,6 +21,12 @@ use PhpParser\NodeVisitor\NameResolver;
  * dependency from the class signature and forces tests to swap a global. The
  * complement of NoContainerResolution (which covers `app()`/`resolve()`):
  * inject the underlying contract through the constructor instead.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static allow(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.115.0')]
 class NoFacadesInServicesProphet extends PhpCommandment

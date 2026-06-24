@@ -19,6 +19,13 @@ use PhpParser\NodeFinder;
  * Flag a method that hand-maps a Spatie Data object's properties into an array
  * — that conversion belongs to the Data object itself (`->toArray()` plus
  * `#[WithTransformer]` / casts), not a bespoke serialiser at the call site.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static dataBase(string $value)
+ * @method static minReads(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.65.0')]
 class PreferDataTransformersProphet extends PhpCommandment implements NeedsCodebaseIndex

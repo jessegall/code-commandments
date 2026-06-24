@@ -19,6 +19,12 @@ use PhpParser\NodeFinder;
  * two absence encodings stacked, and `Option | string` is "either wrapped or
  * not — pick one". The alternatives belong INSIDE the generic (`Option<string>`),
  * never beside it.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.80.0')]
 class NoOptionInUnionProphet extends PhpCommandment

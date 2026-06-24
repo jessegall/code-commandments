@@ -26,6 +26,14 @@ use PhpParser\NodeFinder;
  * a catalog/map, not a registration registry.
  *
  * Advisory, never a sin — the right shape is a design call.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static accessor(string $value)
+ * @method static markers(array $value)
+ * @method static mutators(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.1.0')]
 class RegistryBaseBypassProphet extends PhpCommandment

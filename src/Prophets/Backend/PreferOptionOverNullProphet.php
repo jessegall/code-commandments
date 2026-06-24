@@ -27,6 +27,16 @@ use PhpParser\NodeFinder;
  * judged by the BODY (an explicit `return null;` next to value returns),
  * not the signature. Suggests an Option wrapper, or a configured Null
  * Object when one exists for the return type.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static excludeMethods(array $value)
+ * @method static frameworkMethods(array $value)
+ * @method static minCallers(int $value)
+ * @method static nullObjects(array $value)
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.19.0')]
 class PreferOptionOverNullProphet extends PhpCommandment implements NeedsCodebaseIndex

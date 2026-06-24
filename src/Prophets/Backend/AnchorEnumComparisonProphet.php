@@ -39,6 +39,13 @@ use ReflectionClass;
  * non-nullable (a typed enum param/variable, `$this->prop`, or `$var->prop`
  * resolved via the in-file class or reflection). Anything unresolved or
  * nullable is left alone — the static form is the right shape there.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static anyMethods(array $value)
+ * @method static trait(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.56.0')]
 class AnchorEnumComparisonProphet extends PhpCommandment implements SinRepenter

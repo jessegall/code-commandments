@@ -18,6 +18,12 @@ use PhpParser\NodeFinder;
 
 /**
  * Flag classifying a thing by membership in a HARDCODED LIST OF TYPE NAMES — `in_array($x, ['Bag', 'Collection', 'Data'])` or `in_array($name, self::SOMETHING_BASES)` — and push the knowledge to the types instead (a marker interface they implement, or an AST/reflection question).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static exempt(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.71.0')]
 class PreferInterfaceOverTypeListProphet extends PhpCommandment

@@ -12,6 +12,12 @@ use PhpParser\Node;
 
 /**
  * Surface docblocks that have grown beyond a short narrative sentence.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static maxNarrativeLines(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.14.0')]
 class LongDocblockProphet extends PhpCommandment
