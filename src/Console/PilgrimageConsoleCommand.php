@@ -9,8 +9,10 @@ use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageIndexCache;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimagePresenter;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageRunner;
+use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageStarter;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -28,6 +30,7 @@ class PilgrimageConsoleCommand extends Command
         $this
             ->setName('pilgrimage')
             ->setDescription('Begin the forward-only doctrine walk (resets state; `next` advances it)')
+            ->addArgument('prophet', InputArgument::OPTIONAL, 'Constrain the walk to ONE prophet (partial name, like judge --prophet) — repent only its findings')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to commandments.php config file')
             ->addOption('scroll', null, InputOption::VALUE_REQUIRED, 'Scroll to walk', 'backend')
             ->addOption('is-complete', null, InputOption::VALUE_NONE, 'INTERNAL: exit 0 only if THIS session has genuinely walked the whole pilgrimage (the pre-push gate uses this to grant a completed walk one push). Recomputed from the cursor — a hand-written complete flag does not pass')
@@ -60,11 +63,17 @@ class PilgrimageConsoleCommand extends Command
             return $runner->isComplete() ? Command::SUCCESS : Command::FAILURE;
         }
 
-        $state = $runner->begin();
+        $prophet = $input->getArgument('prophet');
 
-        $output->writeln(sprintf('<info>The pilgrimage begins.</info> %d doctrines ahead.', $runner->totalDoctrines()));
+        $step = PilgrimageStarter::start($runner, $basePath, is_string($prophet) ? $prophet : null, $output->writeln(...));
 
-        foreach (PilgrimagePresenter::render($state, $runner) as $line) {
+        if ($step === null) {
+            return Command::SUCCESS;
+        }
+
+        $output->writeln(sprintf('<info>The pilgrimage begins.</info> %d station(s) ahead.', $runner->totalDoctrines()));
+
+        foreach (PilgrimagePresenter::render($step, $runner) as $line) {
             $output->writeln($line);
         }
 

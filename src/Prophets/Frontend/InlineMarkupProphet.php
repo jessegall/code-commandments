@@ -20,6 +20,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static maxHtmlTags(int $value)
  * @method-generated-end

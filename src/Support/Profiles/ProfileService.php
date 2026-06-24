@@ -456,7 +456,7 @@ final class ProfileService
         };
 
         $cadence = match (true) {
-            Briefing::Repentr->equals($o->briefing) => 'Cadence: REPENTR — repent ONE prophet. FIRST ask the user WHICH PROPHET, then drive ONLY that prophet to zero: `repent --prophet=<NAME>` for the [AUTO-FIXABLE] ones, fix the rest by hand, `judge --prophet=<NAME>` to verify. Do NOT touch other prophets\' findings.',
+            Briefing::Repentr->equals($o->briefing) => 'Cadence: REPENTR — a single-prophet PILGRIMAGE. FIRST present the candidate menu and ask the user WHICH PROPHET (do NOT pick). Then `pilgrimage <NAME>` to start the one-prophet walk, `autofix` for the [AUTO-FIXABLE] locations, `next` to verify + finish. Do NOT touch other prophets.',
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
             $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`pilgrimage` then `next`, reading each output in full). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
             GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid.',
@@ -471,6 +471,9 @@ final class ProfileService
             $gate,
             $o->allowWarnings ? 'Warnings are flagged.' : 'Warnings are silenced (sins only).',
             $cadence,
+            $o->behaviour->autoStartsPilgrimage()
+                ? "AUTO-START: run `pilgrimage` {$o->behaviour->pilgrimageTrigger()} — do NOT wait to be asked. The pilgrimage is how you fix findings under this profile; `next` advances it, the scope is profile-derived."
+                : null,
             $o->behaviour->testBriefing(),
             $o->behaviour->autonomyBriefing(),
         ]));
@@ -501,14 +504,18 @@ final class ProfileService
 
         if (Briefing::Repentr->equals($o->briefing)) {
             $lines[] = T_String::empty();
-            $lines[] = 'REPENTR — you repent ONE prophet at a time. Before anything else, STOP and ASK the user:';
+            $lines[] = 'REPENTR — you repent ONE prophet at a time, via a guided single-prophet walk.';
+            $lines[] = 'Before anything else, run a bare `pilgrimage`: it REFUSES and prints the candidate';
+            $lines[] = 'prophets ranked by finding count. Present that menu to the user and STOP — ASK:';
             $lines[] = '    ❓ WHICH PROPHET should I repent?';
-            $lines[] = 'Do not pick one yourself and do not start judging the whole codebase. Once the user names it:';
-            $lines[] = "  {$r}judge --prophet=<NAME> --no-profile   # list ONLY that prophet's findings, everywhere";
-            $lines[] = "  {$r}repent --prophet=<NAME>               # auto-fix the [AUTO-FIXABLE] ones in place";
-            $lines[] = '  then fix the rest by hand (or absolve a genuine false positive / report a wrong rule), and re-run';
-            $lines[] = "  {$r}judge --prophet=<NAME> --no-profile   # until it reports clean";
-            $lines[] = 'Stay on that ONE prophet — do NOT fix, absolve, or even look at other prophets\' findings. When it is clean, tell the user and ask whether to repent another (or switch profiles).';
+            $lines[] = 'Do NOT pick one yourself. Once the user names it:';
+            $lines[] = "  {$r}pilgrimage <NAME>   # begin the single-prophet walk (partial name, like judge --prophet)";
+            $lines[] = "  {$r}autofix             # [AUTO-FIXABLE] locations: repent this prophet in place, then `next`";
+            $lines[] = "  {$r}next                # after fixing/absolving EVERY shown location, advance/finish";
+            $lines[] = "  {$r}todo                # just the remaining file:line list";
+            $lines[] = 'absolve/report are scoped to THIS prophet automatically — never pass --prophet. READ each';
+            $lines[] = 'output IN FULL. Stay on the ONE prophet; if it is a symptom of an unresolved root cause, the';
+            $lines[] = 'walk points you at the cause first. When clean, tell the user and ASK: another prophet, full walk, or switch profile.';
 
             return $lines;
         }

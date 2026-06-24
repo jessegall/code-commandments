@@ -27,6 +27,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static excludeEnums(array $value)
  * @method static minGroup(int $value)

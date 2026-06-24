@@ -32,6 +32,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static narrowCap(int $value)
  * @method static sinAtTypes(int $value)

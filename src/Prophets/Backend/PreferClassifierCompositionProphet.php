@@ -25,6 +25,7 @@ use PhpParser\PrettyPrinter;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static classifierBase(string $value)
  * @method-generated-end

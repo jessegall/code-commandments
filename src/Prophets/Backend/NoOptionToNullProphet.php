@@ -27,6 +27,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static methods(array $value)
  * @method static optionClass(string $value)

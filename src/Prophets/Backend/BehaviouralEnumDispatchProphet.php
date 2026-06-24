@@ -35,6 +35,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static minArms(int $value)
  * @method-generated-end

@@ -26,6 +26,7 @@ use PhpParser\NodeVisitorAbstract;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static maxClosureStatements(int $value)
  * @method-generated-end
