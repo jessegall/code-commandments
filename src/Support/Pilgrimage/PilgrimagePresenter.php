@@ -23,22 +23,30 @@ final class PilgrimagePresenter
     public static function render(array $step, PilgrimageRunner $runner): array
     {
         if (($step['complete'] ?? false) === true) {
+            $total = (int) ($step['prophetsTotal'] ?? 0);
+
             return [
                 '',
-                '✓ The pilgrimage is complete — every doctrine has been walked.',
+                sprintf('✓ The pilgrimage is complete — all %d prophets across every doctrine have been walked.', $total),
                 '  Run `commandments pilgrimage` again for a fresh pass to catch anything newly introduced.',
             ];
         }
 
         $locations = $step['locations'] ?? [];
 
+        $walked = (int) ($step['prophetsWalked'] ?? 0);
+        $total = (int) ($step['prophetsTotal'] ?? 0);
+
         $lines = [
             '',
             self::RULE,
             sprintf(' PROPHET   %s', $step['prophet'] ?? '?'),
             sprintf(' PILLAR    %s · doctrine %d/%d', $step['doctrine'] ?? '?', ($step['doctrineIndex'] ?? 0) + 1, $runner->totalDoctrines()),
+            sprintf(' PROGRESS  %s  %d/%d prophets walked', self::bar($walked, $total), $walked, $total),
             self::RULE,
         ];
+
+        $lines = array_merge($lines, self::doctrineChecklist($step));
 
         if (($step['stillUnresolved'] ?? false) === true) {
             $lines[] = '';
@@ -93,6 +101,58 @@ final class PilgrimagePresenter
         $lines[] = '   locations and leave the pillar unresolved. Act on every location above.';
         $lines[] = ' When all are fixed, absolved, or reported, run `commandments next` — it re-checks';
         $lines[] = ' this prophet and only then advances (forward-only; it never revisits a passed one).';
+
+        return $lines;
+    }
+
+    /**
+     * A unicode progress bar for `$done`/`$total`.
+     */
+    private static function bar(int $done, int $total, int $width = 24): string
+    {
+        if ($total <= 0) {
+            return str_repeat('░', $width);
+        }
+
+        $filled = (int) round(($done / $total) * $width);
+        $percent = (int) round(($done / $total) * 100);
+
+        return str_repeat('█', $filled) . str_repeat('░', $width - $filled) . sprintf(' %d%%', $percent);
+    }
+
+    /**
+     * The current doctrine's roster as a checklist, with the current prophet marked,
+     * and an instruction for the agent to keep a live TODO of it. The agent's TODO is
+     * the only thing that survives across `next` calls in the agent's own view, so we
+     * ask it to maintain one per doctrine.
+     *
+     * @param  array<string, mixed>  $step
+     * @return list<string>
+     */
+    private static function doctrineChecklist(array $step): array
+    {
+        $roster = $step['doctrineRoster'] ?? [];
+
+        if (! is_array($roster) || $roster === []) {
+            return [];
+        }
+
+        $position = $step['doctrineProphetPosition'];
+        $lines = ['', sprintf(' THIS DOCTRINE — %s (%d prophets):', $step['doctrine'] ?? '?', count($roster))];
+
+        foreach ($roster as $i => $name) {
+            $mark = match (true) {
+                is_int($position) && $i < $position => '[x]',   // walked
+                $i === $position => '[»]',                       // current
+                default => '[ ]',                                // ahead
+            };
+            $lines[] = sprintf('   %s %s', $mark, $name);
+        }
+
+        $lines[] = '';
+        $lines[] = ' ▸ Keep a live TODO LIST for this doctrine (one item per prophet above, in this';
+        $lines[] = '   order) so you — and the user — can see what is done and what remains. Mark the';
+        $lines[] = '   current prophet in-progress, and completed once `next` advances past it.';
 
         return $lines;
     }
