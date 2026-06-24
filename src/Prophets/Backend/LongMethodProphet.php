@@ -15,6 +15,10 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\MethodLineCounter;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpContext;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+use PhpParser\Node\Scalar\InterpolatedString;
+use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Return_;
 
 /**
  * Methods should not be excessively long.
@@ -85,6 +89,14 @@ SCRIPTURE;
 
         foreach ($ctx->methods as $methodData) {
             $method = $methodData['method'];
+
+            // A method whose entire body is `return <heredoc/nowdoc/string>;` is
+            // verbatim CONTENT (skill docs, a template, an SQL blob) — its line count
+            // is authored text, not logic to extract (#206). Never flag it.
+            if ($this->isVerbatimContent($method)) {
+                continue;
+            }
+
             $class = $methodData['class'];
             $className = $class->name?->toString() ?? 'Unknown';
             $methodName = $method->name->toString();
@@ -109,5 +121,22 @@ SCRIPTURE;
         }
 
         return $sins;
+    }
+
+    /**
+     * Whether the method's whole body is a single `return <string literal>;` — a
+     * heredoc/nowdoc/plain or interpolated string. Such a method holds verbatim
+     * content; its length is text, not branching logic to break up.
+     */
+    private function isVerbatimContent(ClassMethod $method): bool
+    {
+        if ($method->stmts === null || count($method->stmts) !== 1) {
+            return false;
+        }
+
+        $statement = $method->stmts[0];
+
+        return $statement instanceof Return_
+            && ($statement->expr instanceof String_ || $statement->expr instanceof InterpolatedString);
     }
 }
