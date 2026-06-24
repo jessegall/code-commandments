@@ -34,9 +34,15 @@ use PhpParser\ParserFactory;
 #[IntroducedIn('1.116.0')]
 class PreferCoercionHelperProphet extends PhpCommandment implements SinRepenter
 {
+    // Scalar type-guards only — each maps to a real php-types coercer
+    // (`T_Int|T_Float|T_String|T_Bool::coerce`). `is_array` is deliberately ABSENT:
+    // there is no `T_Array::coerce(mixed, array)` to extract to, so an
+    // `is_array($x) ? … : …` ternary has no valid remedy — and these are nearly
+    // always transform-or-passthrough (`is_array($x) ? migrate($x) : $x`), not a
+    // cast-with-default (#216).
     private const TYPE_PREDICATES = [
         'is_numeric', 'is_string', 'is_int', 'is_integer',
-        'is_float', 'is_double', 'is_bool', 'is_array', 'is_scalar',
+        'is_float', 'is_double', 'is_bool', 'is_scalar',
     ];
 
     public function description(): string
