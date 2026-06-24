@@ -29,6 +29,20 @@ class NoArrayStringIndexingProphetTest extends TestCase
         $this->assertStringContainsString("\$row['nodeId']", $judgment->sins[0]->message);
     }
 
+    public function test_exempts_a_json_document_round_trip(): void
+    {
+        // #211: editing a deserialized JSON document (json_decode → index →
+        // json_encode) is a wire-format round-trip (composer.json, a manifest), not a
+        // domain bag — subscripting it is how you edit the document.
+        $judgment = $this->judge(
+            '$doc = json_decode((string) file_get_contents("composer.json"), true); '
+            . '$doc[\'scripts\'][\'post-update-cmd\'][] = \'x\'; '
+            . 'return json_encode($doc);'
+        );
+
+        $this->assertCount(0, $judgment->sins, 'a json_decode/encode round-trip is wire format, not an array bag');
+    }
+
     public function test_flags_literal_string_write(): void
     {
         $judgment = $this->judge("\$row['status'] = 'pending';");
