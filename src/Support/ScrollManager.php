@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Commandments\BaseCommandment;
 use JesseGall\CodeCommandments\Contracts\Commandment;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
@@ -372,6 +373,12 @@ class ScrollManager
             return null;
         }
 
+        // A prophet the user silenced (`->disabled()` / severity Off) stays listed
+        // and discoverable, but never runs.
+        if ($prophet instanceof BaseCommandment && $prophet->isDisabled()) {
+            return null;
+        }
+
         // Never let a prophet flag the very primitive it recommends: if this
         // file declares one of the prophet's configured exempt classes (its
         // Option / Union / etc.), skip it. FQCN-matched, so a domain class that
@@ -383,7 +390,13 @@ class ScrollManager
         ProphetExecutionContext::enter(get_class($prophet), $filePath);
 
         try {
-            return $prophet->judge($filePath, $content);
+            $judgment = $prophet->judge($filePath, $content);
+
+            // Re-stamp findings with the user's chosen severity (Sin / Admonition /
+            // Off) before they leave the prophet — the gate is the user's to set.
+            return $prophet instanceof BaseCommandment
+                ? $prophet->applyConfiguredSeverity($judgment)
+                : $judgment;
         } catch (Throwable $e) {
             $this->failures[] = new ProphetFailure(get_class($prophet), $filePath, $e);
 
