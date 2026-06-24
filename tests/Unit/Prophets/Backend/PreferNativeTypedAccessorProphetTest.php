@@ -87,12 +87,14 @@ class PreferNativeTypedAccessorProphetTest extends TestCase
         $this->assertTrue($j->warnings[0]->autoFixable);
     }
 
-    public function test_flags_coerce_or_null_to_float(): void
+    public function test_does_not_flag_coerce_or_null(): void
     {
+        // #212: coerceOrNull() PRESERVES null (load-bearing absence), but the native
+        // accessor float('rate') coerces an absent key to 0.0 — not equivalent, so the
+        // rule must stay silent rather than offer a semantics-dropping auto-fix.
         $j = $this->judge('return T_Float::coerceOrNull($request->get(\'rate\'));');
 
-        $this->assertCount(1, $j->warnings);
-        $this->assertStringContainsString("float('rate')", $j->warnings[0]->message);
+        $this->assertCount(0, $j->warnings);
     }
 
     public function test_flags_bool_cast_over_get_with_default(): void
