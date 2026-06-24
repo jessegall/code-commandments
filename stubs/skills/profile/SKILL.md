@@ -1,6 +1,6 @@
 ---
 name: commandments-profile
-description: Switch the code-commandments work profile (disabled / grind / phased / sins-only) for this project. Use when the user says "/commandments-profile [name]", "set the commandments profile to …", "switch to grind/phased/disabled", or asks to make code-commandments quieter/stricter, or to turn it off. Running the switch re-wires the git + Claude hooks and re-briefs you on the new contract.
+description: Switch the code-commandments work profile (disabled / grind / phased / sins-only / penance / repentr) for this project. Use when the user says "/commandments-profile [name]", "set the commandments profile to …", "switch to grind/phased/disabled/penance/repentr", or asks to make code-commandments quieter/stricter, to turn it off, or to repent a single prophet. Running the switch re-wires the git + Claude hooks and re-briefs you on the new contract.
 ---
 
 # code-commandments — switch work profile
@@ -21,6 +21,7 @@ user and adopts the new contract immediately.
 | `phased` | Face-by-face. Pre-commit gate blocks staged sins **and** warnings; per-phase nudges drive fix-as-you-go; full briefing. |
 | `sins-only` | Like `phased` but warnings are silenced everywhere — only sins surface and gate. |
 | `penance` | Cleanup mode — drive the existing backlog of sins+warnings to zero. **No commit gate** (commit progress freely; fixing a file never re-arms a blocker on it); a pre-push gate blocks pushing while sins remain. START with `pilgrimage` (the forward-only walk, one prophet at a time) — do NOT bulk-`repent` or `judge` first; both are locked while the walk runs. On an [AUTO-FIXABLE] prophet, run `autofix` to fix THAT prophet in place, then `next`. Read each output IN FULL. Keep-going holds the session open until `judge` is righteous. Never skip a messy file — that's the job. |
+| `repentr` | Single-prophet repent — drive **one** prophet's findings to zero, not the whole backlog. On switching you MUST first **ask the user WHICH PROPHET**, then work only that one: `repent --prophet=<NAME>` for the [AUTO-FIXABLE] ones, fix the rest by hand, `judge --prophet=<NAME> --no-profile` until clean. No git gate and no keep-going loop — stay on the one prophet; do not touch other prophets' findings. |
 
 ## How to run it
 
