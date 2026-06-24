@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 # PostToolUse(Bash) — after a `git commit`, drive the post-phase routine.
 #
-#   - ALWAYS: a commit means a phase just landed — re-read the Code Commandments
-#     and resolve every sin before the next phase.
+#   - ALWAYS: a commit means a phase just landed — walk and resolve every finding
+#     with `pilgrimage`/`next` before the next phase.
 #   - WHILE A PLAN IS ACTIVE for this worktree (the plan-active marker exists):
 #     ALSO refresh the plan-progress MEMORY, so completed phases and remaining
 #     work survive context compression and the plan can be resumed from memory.
@@ -17,7 +17,7 @@ root=$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "${CLAUDE_PROJEC
 # Laravel app (published config + provider bindings), else the standalone binary.
 if [ -f "$root/artisan" ]; then run="php artisan commandments:"; else run="vendor/bin/commandments "; fi
 
-ctx="A commit just landed — a phase is complete. Re-read the Code Commandments section of CLAUDE.md now and act as a sin resolver: run \`${run}judge --next --git\` and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to leave a sin in place."
+ctx="A commit just landed — a phase is complete. Act as a sin resolver now: run \`${run}pilgrimage\` then \`${run}next\` to walk the findings (one prophet at a time, with its full scripture and every location — READ each output IN FULL, never truncate it). Handle every finding before starting the next phase. Fix each sin — even pre-existing ones in files you touched. Advisories: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to leave a sin in place."
 
 # Only nudge the plan-progress memory while THIS worktree's plan loop is armed,
 # so ordinary non-plan commits stay quiet.
@@ -30,7 +30,7 @@ if command -v jq >/dev/null 2>&1; then
 else
     # jq absent: emit the always-on sin-resolver nudge only. The runner goes in via
     # a printf %s slot; the rest of the body has no % or backslash to reprocess.
-    printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"A commit just landed — re-read the Code Commandments and run %sjudge --next --git, resolving every finding before the next phase."}}' "$run"
+    printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"A commit just landed — walk the findings with %spilgrimage then next (read each output IN FULL), resolving every one before the next phase."}}' "$run"
 fi
 
 exit 0
