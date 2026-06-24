@@ -23,7 +23,7 @@ use PhpParser\ParserFactory;
 
 /**
  * Suggest an enum for a `string`-typed field whose NAME reads as a closed set —
- * `direction`, `status`, `kind`, `mode`, `type`, … — even when no literal and
+ * `direction`, `status`, `kind`, `mode`, … — even when no literal and
  * no enum exist yet.
  *
  * Its sibling, {@see StringsThatShouldBeEnumsProphet}, is literal-anchored: it
@@ -45,12 +45,20 @@ class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements Param
     /**
      * Field name endings that almost always denote a finite, closed set.
      * Matched case-insensitively at a word boundary (camelCase or snake_case),
-     * so `sortDirection` and `node_type` match but `prototype` does not.
+     * so `sortDirection` and `node_status` match but `prototype` does not.
+     *
+     * `type` is deliberately NOT here (#204): it is the most overloaded noun in the
+     * language — a class-string (`@param class-string $type`), a wire/MIME/resource
+     * token (`resource:<x>`, `application/json`), a registry-populated or raw-decode
+     * value — far more often than a code-defined closed set, so the bare-name signal
+     * is near-useless for it. A genuine closed-set `$type` still gets flagged by the
+     * literal-anchored sibling (StringsThatShouldBeEnums) the moment it shows
+     * evidence; add `'type'` back via config if your codebase wants the name signal.
      *
      * @var list<string>
      */
     private const DEFAULT_NAMES = [
-        'direction', 'status', 'state', 'kind', 'mode', 'type', 'level',
+        'direction', 'status', 'state', 'kind', 'mode', 'level',
         'severity', 'visibility', 'role', 'format', 'strategy', 'operator',
         'phase', 'stage', 'category', 'variant', 'priority', 'alignment',
         'orientation', 'unit', 'period', 'scope', 'tier',
@@ -79,8 +87,9 @@ class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements Param
         return Advisory::make()
             ->applyWhen(
                 'A `string`-typed field whose name denotes a closed set '
-                . '(`$direction`, `$status`, `$kind`, `$mode`, `$type`, …) — a value '
-                . 'with a known, finite set of cases that is currently stringly-typed.'
+                . '(`$direction`, `$status`, `$kind`, `$mode`, …) — a value '
+                . 'with a known, finite set of cases that is currently stringly-typed. '
+                . '(`type` is excluded by default — too overloaded; #204.)'
             )
             ->leaveWhen(
                 'The value is genuinely open free text that merely shares the name '
@@ -99,7 +108,7 @@ class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements Param
     public function detailedDescription(): string
     {
         return <<<'SCRIPTURE'
-A closed-set value — a direction, status, kind, mode, type — belongs in an
+A closed-set value — a direction, status, kind, mode — belongs in an
 enum, not a `string`. Stringly-typed closed sets bypass static analysis, IDE
 refactors, and exhaustive `match`; every consumer re-validates by hand.
 
@@ -193,7 +202,7 @@ empty — nothing.
 Configure via:
 
     Backend\PreferEnumForClosedSetFieldProphet::class => [
-        'names' => ['direction', 'status', 'kind', 'mode', 'type', /* … */],
+        'names' => ['direction', 'status', 'kind', 'mode', /* … */],  // add 'type' here if your codebase wants it (#204)
         'data_base_suffix' => 'Data',  // a parent ending in this → safe to auto-fix
         'compare_self_trait' => 'App\\Support\\Enums\\CompareSelf',  // reused enums using it → emit Case->equals($x)
     ],
