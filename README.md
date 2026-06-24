@@ -218,6 +218,7 @@ Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&g
 | Flag | Argument | Description |
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--write` | — | Rewrite the config file IN PLACE (a .bak backup is kept); otherwise only print + write a reference file |
 | `--out` | `<value>` | Where to write the reference file (default: alongside the config) |
 
 ### `next`
