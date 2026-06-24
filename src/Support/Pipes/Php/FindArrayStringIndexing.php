@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\JsonDocumentVariableResolver;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\OriginTracer;
@@ -136,6 +137,25 @@ final class FindArrayStringIndexing implements Pipe
             }
 
             if ($this->isDictNode($this->rootSubscripted($access), $access, $parents, $scopedDictVars, $globalDictVars, $dictProps)) {
+                continue;
+            }
+
+            // #211: editing a deserialized JSON DOCUMENT (a variable from
+            // `json_decode(...)`, or one re-encoded with `json_encode(...)`) is a
+            // wire-format round-trip — composer.json, package manifests, API payloads
+            // — not a domain bag to model as a DTO. Indexing it by key is the only way
+            // to edit it.
+            $rootVariable = $access->var;
+            while ($rootVariable instanceof Expr\ArrayDimFetch) {
+                $rootVariable = $rootVariable->var;
+            }
+
+            $scope = $rootVariable instanceof Expr\Variable ? $this->findEnclosingFunctionLike($access, $parents) : null;
+
+            if ($rootVariable instanceof Expr\Variable
+                && $scope instanceof Node\FunctionLike
+                && (new JsonDocumentVariableResolver)->isJsonDocument($rootVariable, $scope)
+            ) {
                 continue;
             }
 
