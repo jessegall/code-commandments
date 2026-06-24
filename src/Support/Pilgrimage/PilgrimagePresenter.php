@@ -54,12 +54,24 @@ final class PilgrimagePresenter
         }
 
         $lines[] = '';
-        $lines[] = sprintf(' LOCATIONS (%d) — fix or absolve EVERY one:', count($locations));
+        $lines[] = sprintf(' LOCATIONS (%d) — resolve EVERY one before `next`:', count($locations));
 
         foreach ($locations as $location) {
             $lines[] = sprintf('   %s:%s', $location['file'], $location['line'] ?? '?');
             $lines[] = '     ' . $location['message'];
         }
+
+        $prophet = (string) ($step['prophet'] ?? '');
+
+        $lines[] = '';
+        $lines[] = ' HOW TO RESOLVE EACH LOCATION';
+        $lines[] = '   • FIX — edit the file so the rule no longer fires (follow the scripture above).';
+        $lines[] = '   • Bulk-fix the auto-fixable ones first:  commandments repent';
+        $lines[] = '   • ABSOLVE — only a GENUINE false positive, with a real reason (sins cannot be';
+        $lines[] = '     absolved, only advisory findings):';
+        $lines[] = sprintf('       commandments absolve --at=<file:line above> --prophet=%s --reason="why this is a real exception"', $prophet);
+        $lines[] = '   • REPORT — the rule itself is wrong here:';
+        $lines[] = sprintf('       commandments report --prophet=%s --at=<file:line above> --reason="why the rule is wrong"', $prophet);
 
         $lines[] = '';
         $lines[] = self::THIN;
