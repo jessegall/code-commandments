@@ -133,6 +133,26 @@ class OptionDisciplineProphetTest extends TestCase
         $this->assertFalse($this->judge('Lib.php')->hasWarnings());
     }
 
+    public function test_case_b_silent_when_overriding_an_option_returning_contract(): void
+    {
+        // A handler whose `: Option` return is imposed by an interface (whose other
+        // implementors legitimately return none()). This single always-some override
+        // cannot be retyped — flagging it is a false positive.
+        $this->write('Handler.php', <<<'PHP'
+        <?php
+        namespace App;
+        use JesseGall\PhpTypes\Option;
+        interface Handler {
+            public function intent(): Option;
+        }
+        final class ClearHandler implements Handler {
+            public function intent(): Option { return Option::some('clear'); }
+        }
+        PHP);
+
+        $this->assertFalse($this->judge('Handler.php')->hasWarnings(), 'an Option override is contract-locked, not overuse');
+    }
+
     // ── Case D: construct-then-unwrap ───────────────────────────────────
 
     public function test_case_d_flags_wrap_then_unwrap(): void
