@@ -29,15 +29,47 @@ final class PilgrimageRunner
 
     private ?CodebaseIndex $index = null;
 
+    private readonly string $scroll;
+
     public function __construct(
         private readonly string $basePath,
         private readonly array $config,
-        private readonly string $scroll = 'backend',
-    ) {}
+        ?string $scroll = null,
+    ) {
+        $this->scroll = $this->resolveScroll($scroll);
+    }
 
-    public static function fromConfig(string $basePath, string $configPath, string $scroll = 'backend'): self
+    public static function fromConfig(string $basePath, string $configPath, ?string $scroll = null): self
     {
         return new self($basePath, ConfigLoader::load($configPath), $scroll);
+    }
+
+    public function scroll(): string
+    {
+        return $this->scroll;
+    }
+
+    /**
+     * The scroll to walk. An explicit name wins if it exists; otherwise pick the
+     * first scroll whose extensions include `php` (the doctrines are backend rules),
+     * falling back to the first scroll. Consumers name scrolls freely
+     * (`acme-backend`), so a hardcoded `backend` would silently register no prophets.
+     */
+    private function resolveScroll(?string $requested): string
+    {
+        $scrolls = $this->config['scrolls'] ?? [];
+
+        if ($requested !== null && isset($scrolls[$requested])) {
+            return $requested;
+        }
+
+        foreach ($scrolls as $name => $scroll) {
+            if (in_array('php', $scroll['extensions'] ?? [], true)) {
+                return (string) $name;
+            }
+        }
+
+        return (string) (array_key_first($scrolls) ?? ($requested ?? 'backend'));
     }
 
     /**
