@@ -8,16 +8,28 @@ use JesseGall\CodeCommandments\Prophets\Backend\NoCoalesceOnNonNullableProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoNullCoalesceToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoOptionToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoSwallowedNotFoundProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\EagerRegistryProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\PreferClassifierCompositionProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalesceFactoryProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalesceForProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalescingFactoryProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\PreferConfigDrivenRegistryProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferEmptyOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\PreferInterfaceOverTypeListProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNativeTypedAccessorProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullObjectDefaultsProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTotalOverNullableProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTypeCoalesceProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\RegistryBaseBypassProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\RegistryNamingHonestyProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\RegistryPatternProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\RegistryPurityProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\RegistryReturnContractProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\ResolverNamingHonestyProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\ResolverPatternProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\SetNamingHonestyProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\SetReturnContractProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\ThrowOnUnhandledCaseProphet;
 
 /**
@@ -49,6 +61,26 @@ final class DoctrineRegistry
                 [NoCoalesceOnNonNullableProphet::class, NoNullCoalesceToNullProphet::class, NoOptionToNullProphet::class],
                 [PreferCoalesceFactoryProphet::class, PreferCoalescingFactoryProphet::class],
                 [PreferTypeCoalesceProphet::class, PreferCoalesceForProphet::class],
+            ]),
+
+            // ROLES — a class that PLAYS a structural role (Registry / Set / Resolver)
+            // should declare it, then honour its contract. Coarse → fine: extract the
+            // shared base → name the role honestly → honour the return/purity contract
+            // → the finer refinements (eager, config-driven). Shape detection is shared
+            // with the engine via RegistryShape/SetShape (the corpus-grounded rewrite).
+            new Doctrine('roles', [
+                [RegistryPatternProphet::class],
+                [RegistryNamingHonestyProphet::class, SetNamingHonestyProphet::class, ResolverNamingHonestyProphet::class, ResolverPatternProphet::class],
+                [RegistryReturnContractProphet::class, SetReturnContractProphet::class, RegistryPurityProphet::class, RegistryBaseBypassProphet::class],
+                [EagerRegistryProphet::class, PreferConfigDrivenRegistryProphet::class],
+            ]),
+
+            // CLASSIFICATION — decide "which kind is this?" by the TYPE, not a hardcoded
+            // name list. Coarse → fine: replace the type-name list with a marker
+            // interface / Classifier → then compose classifiers rather than re-listing.
+            new Doctrine('classification', [
+                [PreferInterfaceOverTypeListProphet::class],
+                [PreferClassifierCompositionProphet::class],
             ]),
         ];
     }
