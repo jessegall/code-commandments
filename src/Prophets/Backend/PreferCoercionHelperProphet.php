@@ -26,6 +26,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static minOccurrences(int $value)
  * @method-generated-end

@@ -39,6 +39,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static compareSelfTrait(string $value)
  * @method static dataBaseSuffix(string $value)

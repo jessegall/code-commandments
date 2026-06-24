@@ -38,6 +38,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static notFoundExceptions(array $value)
  * @method-generated-end

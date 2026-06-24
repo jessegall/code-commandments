@@ -18,6 +18,7 @@ use JesseGall\CodeCommandments\Prophets\Backend\NoInlineValidationProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRequestDataPassthroughProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoValidatedMethodProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OneRulePerFilterProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoAuthUserInDataClassesProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferClassifierCompositionProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalesceFactoryProphet;
@@ -248,13 +249,14 @@ final class DoctrineRegistry
             // IDIOMATIC-ITERATION — express iteration with the language/collection
             // idiom, not hand-rolled accumulation. Coarse → fine: an accumulator loop →
             // a generator/yield; a manual loop building a result → a collection pipeline;
-            // conditional array spread → a declarative build; an ad-hoc closure → a
-            // first-class callable; compact() → an explicit array.
+            // conditional array spread → a declarative build; then tidy the closures in
+            // the chain — a forwarding closure → a first-class callable, a compound
+            // filter predicate → one rule per filter; compact() → an explicit array.
             new Doctrine('idiomatic-iteration', [
                 [PreferYieldOverAccumulatorProphet::class],
                 [PreferCollectionPipelineProphet::class],
                 [NoConditionalArraySpreadProphet::class],
-                [PreferFirstClassCallableProphet::class],
+                [PreferFirstClassCallableProphet::class, OneRulePerFilterProphet::class],
                 [NoCompactProphet::class],
             ]),
 

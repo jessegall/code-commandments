@@ -28,6 +28,7 @@ use PhpParser\Node\Stmt\Return_;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static maxMethodLines(int $value)
  * @method-generated-end
