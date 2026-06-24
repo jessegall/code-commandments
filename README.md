@@ -132,6 +132,8 @@ Every command is available via both Laravel artisan
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
 | [`judge`](#judge) | Judge the codebase for sins against the commandments |
 | [`migrate-config`](#migrate-config) | Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&gt;… form |
+| [`next`](#next) | Advance the pilgrimage to the next finding (forward-only) |
+| [`pilgrimage`](#pilgrimage) | Begin the forward-only doctrine walk (resets state; `next` advances it) |
 | [`profile`](#profile) | Show, list, or switch the active code-commandments profile (disabled/grind/phased/sins-only) |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
 | [`report`](#report) | Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue |
@@ -217,6 +219,24 @@ Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&g
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to commandments.php config file |
 | `--out` | `<value>` | Where to write the reference file (default: alongside the config) |
+
+### `next`
+
+Advance the pilgrimage to the next finding (forward-only).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--scroll` | `<value>` | Scroll to walk |
+
+### `pilgrimage`
+
+Begin the forward-only doctrine walk (resets state; `next` advances it).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--scroll` | `<value>` | Scroll to walk |
 
 ### `profile`
 
