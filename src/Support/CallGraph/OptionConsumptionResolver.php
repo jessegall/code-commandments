@@ -24,8 +24,11 @@ use PhpParser\ParserFactory;
  */
 final class OptionConsumptionResolver
 {
-    /** Option methods that UNWRAP back to a bare value — the ceremony tell. */
-    private const UNWRAP = ['getorelse', 'getornull', 'getorthrow', 'getor', 'unwrap', 'valueor', 'tonullable'];
+    /** Option methods that ROUND-TRIP back to a bare value/null — the clearest ceremony tell. */
+    private const UNWRAP = ['getorelse', 'getornull', 'getor', 'unwrap', 'valueor', 'tonullable'];
+
+    /** `getOrThrow`-style — "I require presence". A legit use of Option's absence, NOT a round-trip. */
+    private const REQUIRE = ['getorthrow', 'expect', 'orfail'];
 
     /** VALUE-ADDING Option methods — a transform pipeline nullsafe+coalesce can't express. The real reason to use Option. */
     private const CHAIN = ['map', 'flatmap', 'andthen', 'filter', 'each', 'tap', 'orelse', 'mapor'];
@@ -87,6 +90,24 @@ final class OptionConsumptionResolver
         return null;
     }
 
+    /** Classify a method invoked ON an Option result. */
+    private function methodKind(string $m): string
+    {
+        if (in_array($m, self::UNWRAP, true)) {
+            return 'unwrap';
+        }
+
+        if (in_array($m, self::REQUIRE, true)) {
+            return 'require';
+        }
+
+        if (in_array($m, self::CHAIN, true)) {
+            return 'chain';
+        }
+
+        return 'query'; // queries + any unknown method — ceremony, not value-adding
+    }
+
     /** The lowercased callee name of a call node, or null. */
     private static function callName(Node $n): ?string
     {
@@ -112,21 +133,7 @@ final class OptionConsumptionResolver
             && $parent->var === $call
             && $parent->name instanceof Node\Identifier
         ) {
-            $m = strtolower($parent->name->toString());
-
-            if (in_array($m, self::UNWRAP, true)) {
-                return 'unwrap';
-            }
-
-            if (in_array($m, self::CHAIN, true)) {
-                return 'chain';
-            }
-
-            if (in_array($m, self::QUERY, true)) {
-                return 'query';
-            }
-
-            return 'query'; // an unknown method on the Option — treat as ceremony, not value-adding
+            return $this->methodKind(strtolower($parent->name->toString()));
         }
 
         // call()?->x — a nullsafe reach is treating the nullable as a chain.
@@ -182,13 +189,7 @@ final class OptionConsumptionResolver
                 $parent = $node->getAttribute('parent');
 
                 if (($parent instanceof Expr\MethodCall || $parent instanceof Expr\NullsafeMethodCall) && $parent->var === $node && $parent->name instanceof Node\Identifier) {
-                    $m = strtolower($parent->name->toString());
-
-                    if (in_array($m, self::UNWRAP, true)) {
-                        return 'unwrap';
-                    }
-
-                    return in_array($m, self::CHAIN, true) ? 'chain' : 'query';
+                    return $this->methodKind(strtolower($parent->name->toString()));
                 }
 
                 if ($parent instanceof Expr\NullsafePropertyFetch && $parent->var === $node) {
