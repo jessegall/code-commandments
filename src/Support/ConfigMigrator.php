@@ -19,6 +19,133 @@ final class ConfigMigrator
     private const PROPHET_NS = 'JesseGall\\CodeCommandments\\Prophets\\';
 
     /**
+     * Rewrite the config SOURCE in place: replace each scroll's `'prophets' => [ … ]`
+     * array (matched in scroll order) with the fluent form, and inject the needed
+     * `use` statements. Everything else — `__DIR__`, excludes, comments, other keys —
+     * is preserved verbatim, since only the prophet arrays are touched.
+     *
+     * @param  array<string, mixed>  $config  the loaded config (for scroll order + prophet lists)
+     */
+    public function rewriteSource(string $source, array $config): string
+    {
+        $scrolls = array_values($config['scrolls'] ?? []);
+        $offset = 0;
+        $index = 0;
+
+        while (($pos = strpos($source, "'prophets' => [", $offset)) !== false) {
+            if (! isset($scrolls[$index])) {
+                break;
+            }
+
+            $prophets = is_array($scrolls[$index]['prophets'] ?? null) ? $scrolls[$index]['prophets'] : [];
+            $index++;
+
+            $open = $pos + strlen("'prophets' => ["); // first char INSIDE the bracket
+            $close = $this->matchClosingBracket($source, $open - 1);
+
+            if ($close === null) {
+                $offset = $pos + 1;
+
+                continue;
+            }
+
+            $replacement = "\n" . $this->migrateProphets($prophets) . "\n            ";
+            $source = substr($source, 0, $open) . $replacement . substr($source, $close);
+            $offset = $open + strlen($replacement);
+        }
+
+        return $this->injectUseStatements($source, $scrolls);
+    }
+
+    /**
+     * The index of the `]` that closes the `[` at $openBracketPos, ignoring brackets
+     * inside single/double-quoted strings.
+     */
+    private function matchClosingBracket(string $source, int $openBracketPos): ?int
+    {
+        $depth = 0;
+        $length = strlen($source);
+        $quote = null;
+
+        for ($i = $openBracketPos; $i < $length; $i++) {
+            $char = $source[$i];
+
+            if ($quote !== null) {
+                if ($char === '\\') {
+                    $i++; // skip the escaped char
+                } elseif ($char === $quote) {
+                    $quote = null;
+                }
+
+                continue;
+            }
+
+            if ($char === "'" || $char === '"') {
+                $quote = $char;
+            } elseif ($char === '[') {
+                $depth++;
+            } elseif ($char === ']') {
+                $depth--;
+
+                if ($depth === 0) {
+                    return $i;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Add `use …\Prophets\Backend;`, `…\Prophets\Frontend;` (when a frontend scroll
+     * exists) and `…\Results\Severity;` after the last existing `use`, skipping any
+     * already present.
+     *
+     * @param  list<array<string, mixed>>  $scrolls
+     */
+    private function injectUseStatements(string $source, array $scrolls): string
+    {
+        $needed = [
+            'JesseGall\\CodeCommandments\\Prophets\\Backend',
+            'JesseGall\\CodeCommandments\\Results\\Severity',
+        ];
+
+        foreach ($scrolls as $scroll) {
+            foreach ($scroll['prophets'] ?? [] as $key => $value) {
+                $class = is_string($key) ? $key : (string) $value;
+
+                if (str_contains($class, '\\Frontend\\')) {
+                    $needed[] = 'JesseGall\\CodeCommandments\\Prophets\\Frontend';
+
+                    break 2;
+                }
+            }
+        }
+
+        $additions = '';
+
+        foreach (array_unique($needed) as $use) {
+            if (! preg_match('/^use\s+' . preg_quote($use, '/') . '\s*;/m', $source)) {
+                $additions .= "use {$use};\n";
+            }
+        }
+
+        if ($additions === '') {
+            return $source;
+        }
+
+        // Insert after the last existing `use …;` line.
+        if (preg_match_all('/^use\s+[^;]+;/m', $source, $matches, PREG_OFFSET_CAPTURE)) {
+            $last = end($matches[0]);
+            $insertAt = $last[1] + strlen($last[0]);
+
+            return substr($source, 0, $insertAt) . "\n" . rtrim($additions) . substr($source, $insertAt);
+        }
+
+        return $source;
+    }
+
+    /**
      * Render a scroll's prophets list as a fluent `'prophets' => [ ... ]` block.
      *
      * @param  array<int|string, mixed>  $prophets  the legacy list (class, or class => config)

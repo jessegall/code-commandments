@@ -26,6 +26,7 @@ class MigrateConfigConsoleCommand extends Command
             ->setName('migrate-config')
             ->setDescription('Convert a legacy array-style prophets list to the fluent ProphetClass::make()->… form')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to commandments.php config file')
+            ->addOption('write', null, InputOption::VALUE_NONE, 'Rewrite the config file IN PLACE (a .bak backup is kept); otherwise only print + write a reference file')
             ->addOption('out', null, InputOption::VALUE_REQUIRED, 'Where to write the reference file (default: alongside the config)');
     }
 
@@ -52,6 +53,11 @@ class MigrateConfigConsoleCommand extends Command
         }
 
         $migrator = new ConfigMigrator;
+
+        if ($input->getOption('write')) {
+            return $this->rewriteInPlace($migrator, $configPath, $config, $output);
+        }
+
         $rendered = [];
 
         foreach ($scrolls as $name => $scroll) {
@@ -94,7 +100,46 @@ class MigrateConfigConsoleCommand extends Command
         }
 
         $output->writeln("<info>Reference written to</info> {$out}");
-        $output->writeln('Add <comment>use JesseGall\\CodeCommandments\\Results\\Severity;</comment> and paste each block over your existing prophets list.');
+        $output->writeln('Add <comment>use JesseGall\\CodeCommandments\\Results\\Severity;</comment> and paste each block over your existing prophets list. (Or re-run with <comment>--write</comment> to do it in place.)');
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    private function rewriteInPlace(ConfigMigrator $migrator, string $configPath, array $config, OutputInterface $output): int
+    {
+        $source = (string) file_get_contents($configPath);
+        $rewritten = $migrator->rewriteSource($source, $config);
+
+        if ($rewritten === $source) {
+            $output->writeln('<comment>Nothing to rewrite — the config is already fluent.</comment>');
+
+            return Command::SUCCESS;
+        }
+
+        // Refuse to write anything that doesn't parse.
+        $temp = (string) tempnam(sys_get_temp_dir(), 'cc-migrate-') . '.php';
+        file_put_contents($temp, $rewritten);
+        exec('php -l ' . escapeshellarg($temp) . ' 2>&1', $lint, $status);
+        @unlink($temp);
+
+        if ($status !== 0) {
+            $output->writeln('<error>The rewrite did not produce valid PHP — the config was left untouched.</error>');
+
+            foreach ($lint as $line) {
+                $output->writeln('  ' . $line);
+            }
+
+            return Command::FAILURE;
+        }
+
+        copy($configPath, $configPath . '.bak');
+        file_put_contents($configPath, $rewritten);
+
+        $output->writeln("<info>Rewrote</info> {$configPath} <info>to the fluent form.</info>");
+        $output->writeln("Backup kept at {$configPath}.bak — review the result, then delete it when satisfied.");
 
         return Command::SUCCESS;
     }
