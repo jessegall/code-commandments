@@ -75,14 +75,19 @@ final class SetShape
                     continue;
                 }
 
-                // REGISTRATION STORE, not a set: the key is an external method
-                // PARAMETER (`register($key, $value)` → `$this->store[$key] = …`).
-                // That is a keyed store looked up by a lookup key, not a Set keyed
-                // by an item's own identity (`$this->items[$item::class] = $item`,
-                // where the key is derived from the value). Bail out.
+                // REGISTRATION STORE, not a set: a SEPARATE VALUE PARAMETER is stored
+                // under a key parameter (`register($key, $value)` → `$this->store[$key]
+                // = $value`). That is a keyed value store. A sentinel or the item
+                // itself stored under a param key (`$this->items[$perm] = true`,
+                // `$this->items[$m] = $m`) is still a Set keyed by member identity, so
+                // only bail when BOTH the key and the value are method parameters.
                 $dim = $assign->var->dim;
+                $value = $assign instanceof Expr\Assign ? $assign->expr : null;
 
-                if ($dim instanceof Expr\Variable && is_string($dim->name) && isset($params[$dim->name])) {
+                if ($dim instanceof Expr\Variable && is_string($dim->name) && isset($params[$dim->name])
+                    && $value instanceof Expr\Variable && is_string($value->name) && isset($params[$value->name])
+                    && $value->name !== $dim->name
+                ) {
                     return null;
                 }
 
