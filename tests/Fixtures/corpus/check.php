@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Dev helper: run the FULL backend prophet registry over a directory of .php
  * files and print every finding. Used to iterate a "golden" corpus slice to
