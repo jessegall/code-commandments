@@ -210,18 +210,83 @@ final class PilgrimageRunner
      */
     private function stepFor(PilgrimageState $state, Commandment $prophet, array $locations, bool $resolvedReminder = false): array
     {
-        $station = $this->itinerary()[$state->doctrine] ?? ['name' => 'singletons'];
+        $station = $this->itinerary()[$state->doctrine] ?? ['name' => 'singletons', 'pillars' => []];
+        $roster = $this->doctrineRoster($station);
+        $current = (new ReflectionClass($prophet))->getShortName();
+        [$walked, $total] = $this->overallProgress($state);
 
         return [
             'complete' => false,
-            'prophet' => (new ReflectionClass($prophet))->getShortName(),
+            'prophet' => $current,
             'scripture' => $this->scriptureOf($prophet),
             'doctrine' => $station['name'],
             'doctrineIndex' => $state->doctrine,
             'pillar' => $state->pillar,
             'locations' => $locations,
             'stillUnresolved' => $resolvedReminder,
+            // Progress: where we are in the doctrine + across the whole walk.
+            'doctrineRoster' => $roster,
+            'doctrineProphetPosition' => array_search($current, $roster, true),
+            'prophetsWalked' => $walked,
+            'prophetsTotal' => $total,
         ];
+    }
+
+    /**
+     * The short names of every prophet in a doctrine (across its pillars), in walk
+     * order — the checklist the agent works through for this doctrine.
+     *
+     * @param  array{name: string, pillars: list<list<class-string<Commandment>>>}  $station
+     * @return list<string>
+     */
+    private function doctrineRoster(array $station): array
+    {
+        $names = [];
+
+        foreach ($station['pillars'] ?? [] as $pillar) {
+            foreach ($pillar as $class) {
+                $names[] = $this->shortName($class);
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * How many prophets have been WALKED (passed or current) versus the total across
+     * the whole itinerary — the "how far am I" figure, useful in penance.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function overallProgress(PilgrimageState $state): array
+    {
+        $itinerary = $this->itinerary();
+        $total = 0;
+        $walked = 0;
+
+        foreach ($itinerary as $d => $station) {
+            foreach ($station['pillars'] as $p => $pillar) {
+                foreach (array_keys($pillar) as $i) {
+                    $total++;
+
+                    if ($d < $state->doctrine
+                        || ($d === $state->doctrine && $p < $state->pillar)
+                        || ($d === $state->doctrine && $p === $state->pillar && $i <= $state->prophet)
+                    ) {
+                        $walked++;
+                    }
+                }
+            }
+        }
+
+        return [$walked, $total];
+    }
+
+    private function shortName(string $class): string
+    {
+        $parts = explode('\\', $class);
+
+        return end($parts);
     }
 
     /**
@@ -229,7 +294,9 @@ final class PilgrimageRunner
      */
     private function completeStep(): array
     {
-        return ['complete' => true, 'locations' => []];
+        $total = $this->overallProgress(new PilgrimageState(doctrine: PHP_INT_MAX))[1];
+
+        return ['complete' => true, 'locations' => [], 'prophetsTotal' => $total];
     }
 
     private function scriptureOf(Commandment $prophet): string
