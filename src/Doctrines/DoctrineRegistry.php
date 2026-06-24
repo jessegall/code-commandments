@@ -11,7 +11,13 @@ use JesseGall\CodeCommandments\Prophets\Backend\NoSwallowedNotFoundProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\DataClassFromArrayOnlyProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\DataClumpToValueObjectProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\EagerRegistryProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\FormRequestTypedGettersProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoArrayBagProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoDirectRequestInputProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoInlineValidationProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoRequestDataPassthroughProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoValidatedMethodProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoAuthUserInDataClassesProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferClassifierCompositionProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalesceFactoryProphet;
@@ -97,6 +103,19 @@ final class DoctrineRegistry
             new Doctrine('value-objects', [
                 [DataClumpToValueObjectProphet::class, NoArrayBagProphet::class],
                 [DataClassFromArrayOnlyProphet::class, NoAuthUserInDataClassesProphet::class],
+            ]),
+
+            // BOUNDARY — data crossing into the app should be VALIDATED and TYPED at
+            // the edge, never threaded raw. Coarse → fine: stop taking raw/untyped
+            // request input and validate it at the boundary → then read the validated
+            // input through typed getters (not `->validated()`, not a raw passthrough).
+            // (The independent HTTP conventions — NoJsonResponse / ControllerPrivate-
+            // Methods / KebabCaseRoutes — stay singletons; they don't chain with input
+            // typing. PreferNativeTypedAccessor lives in `totality` as its boundary
+            // head, where it cascades the boundary → coalesce story.)
+            new Doctrine('boundary', [
+                [NoRawRequestProphet::class, NoDirectRequestInputProphet::class, NoInlineValidationProphet::class],
+                [FormRequestTypedGettersProphet::class, NoValidatedMethodProphet::class, NoRequestDataPassthroughProphet::class],
             ]),
         ];
     }
