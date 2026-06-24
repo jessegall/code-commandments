@@ -32,6 +32,13 @@ final class ScaffoldRegistry
                 purpose: 'Present-or-absent value type for PreferOptionOverNull.',
             ),
             new Scaffold(
+                name: 'value-bag',
+                className: 'ValueBag',
+                stubFile: 'ValueBag.stub',
+                introducedIn: '2.73.0',
+                purpose: 'Fluent bag with a TOTAL coalesce() factory (never null) for PreferCoalescingFactory.',
+            ),
+            new Scaffold(
                 name: 'union',
                 className: 'Union',
                 stubFile: 'Union.stub',
