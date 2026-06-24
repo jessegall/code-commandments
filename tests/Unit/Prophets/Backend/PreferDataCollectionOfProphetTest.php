@@ -188,6 +188,33 @@ class PreferDataCollectionOfProphetTest extends TestCase
         $this->assertFalse($judgment->hasWarnings());
     }
 
+    public function test_does_not_flag_a_backed_enum_from_in_a_loop(): void
+    {
+        // #217: a backed enum's ::from() is the enum's value-of constructor, not
+        // Spatie Data collection hydration — and a backed enum has no ::collect(),
+        // so the suggested fix is impossible. `JesseGall\PhpTypes\T` is a real,
+        // loadable string-backed enum, so the prophet can tell it is not Data.
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use JesseGall\PhpTypes\T;
+        class Service {
+            public function kinds(array $map): array {
+                $out = [];
+                foreach (array_keys($map) as $v) {
+                    $out[] = T::from($v);
+                }
+                return $out;
+            }
+        }
+        PHP;
+
+        $judgment = $this->prophet->judge('/x.php', $content);
+
+        $this->assertFalse($judgment->hasWarnings(), 'a backed-enum ::from() must not be flagged as Data hydration');
+        $this->assertFalse($judgment->isFallen());
+    }
+
     public function test_advisory_is_complete(): void
     {
         $advisory = $this->prophet->advisory();
