@@ -27,6 +27,7 @@ class Application extends SymfonyApplication
         $this->add(new MigrateConfigConsoleCommand());
         $this->add(new PilgrimageConsoleCommand());
         $this->add(new NextConsoleCommand());
+        $this->add(new TodoConsoleCommand());
         $this->add(new InstallSyncHookConsoleCommand());
         $this->add(new ProfileConsoleCommand());
     }

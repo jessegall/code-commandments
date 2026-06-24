@@ -73,6 +73,40 @@ final class PilgrimageRunner
     }
 
     /**
+     * Peek at the CURRENT prophet without advancing: re-scan it and return its
+     * remaining locations (the agent's live "what's still to fix here" list).
+     * Returns null when no walk is in progress; an empty `locations` means the
+     * current prophet is clean and `next` would advance.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function peek(): ?array
+    {
+        $state = PilgrimageState::load($this->basePath);
+
+        if ($state === null) {
+            return null;
+        }
+
+        if ($state->complete) {
+            return ['complete' => true, 'locations' => []];
+        }
+
+        $prophet = $this->currentProphet($state);
+
+        if ($prophet === null) {
+            return ['complete' => false, 'prophet' => null, 'locations' => []];
+        }
+
+        return [
+            'complete' => false,
+            'prophet' => (new ReflectionClass($prophet))->getShortName(),
+            'doctrine' => $this->itinerary()[$state->doctrine]['name'] ?? 'singletons',
+            'locations' => $this->scan($prophet, $state),
+        ];
+    }
+
+    /**
      * Reset the walk and stop at the first prophet that has findings.
      *
      * @return array<string, mixed>
