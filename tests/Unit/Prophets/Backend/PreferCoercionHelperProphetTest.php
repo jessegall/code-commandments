@@ -57,6 +57,19 @@ class PreferCoercionHelperProphetTest extends TestCase
         return $this->prophet->judge('/x.php', "<?php\nnamespace App;\nclass Conf {\n{$body}\n private function get(\$k, \$d = null) { return \$d; }\n}\n");
     }
 
+    public function test_does_not_flag_is_array_ternaries(): void
+    {
+        // #216: there is no T_Array::coerce(mixed, array) helper, and is_array
+        // ternaries are transform-or-passthrough, not cast-with-default — no remedy.
+        $j = $this->judge('
+            public function a(): array { $v = $this->get("a"); return is_array($v) ? $v : json_decode((string) $v, true); }
+            public function b(): array { $n = $this->get("b"); return is_array($n) ? $this->wrap($n) : $n; }
+            public function wrap($x): array { return [$x]; }
+        ');
+
+        $this->assertCount(0, $j->warnings, 'is_array ternaries have no coerce helper and must not fire');
+    }
+
     public function test_flags_a_repeated_numeric_int_coercion(): void
     {
         $j = $this->judge('
