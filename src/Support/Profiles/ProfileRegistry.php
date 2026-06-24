@@ -22,6 +22,7 @@ final class ProfileRegistry
         'phased' => PhasedProfile::class,
         'sins-only' => SinsOnlyProfile::class,
         'penance' => PenanceProfile::class,
+        'repentr' => RepentrProfile::class,
     ];
 
     /**

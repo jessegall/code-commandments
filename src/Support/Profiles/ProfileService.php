@@ -456,6 +456,7 @@ final class ProfileService
         };
 
         $cadence = match (true) {
+            Briefing::Repentr->equals($o->briefing) => 'Cadence: REPENTR — repent ONE prophet. FIRST ask the user WHICH PROPHET, then drive ONLY that prophet to zero: `repent --prophet=<NAME>` for the [AUTO-FIXABLE] ones, fix the rest by hand, `judge --prophet=<NAME>` to verify. Do NOT touch other prophets\' findings.',
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
             $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`pilgrimage` then `next`, reading each output in full). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
             GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid.',
@@ -497,6 +498,20 @@ final class ProfileService
 
         $o = $profile->options();
         $isPenance = GitGateStage::PrePush->equals($o->gate) && JudgeScope::None->equals($o->scope);
+
+        if (Briefing::Repentr->equals($o->briefing)) {
+            $lines[] = T_String::empty();
+            $lines[] = 'REPENTR — you repent ONE prophet at a time. Before anything else, STOP and ASK the user:';
+            $lines[] = '    ❓ WHICH PROPHET should I repent?';
+            $lines[] = 'Do not pick one yourself and do not start judging the whole codebase. Once the user names it:';
+            $lines[] = "  {$r}judge --prophet=<NAME> --no-profile   # list ONLY that prophet's findings, everywhere";
+            $lines[] = "  {$r}repent --prophet=<NAME>               # auto-fix the [AUTO-FIXABLE] ones in place";
+            $lines[] = '  then fix the rest by hand (or absolve a genuine false positive / report a wrong rule), and re-run';
+            $lines[] = "  {$r}judge --prophet=<NAME> --no-profile   # until it reports clean";
+            $lines[] = 'Stay on that ONE prophet — do NOT fix, absolve, or even look at other prophets\' findings. When it is clean, tell the user and ask whether to repent another (or switch profiles).';
+
+            return $lines;
+        }
 
         if ($isPenance) {
             $lines[] = T_String::empty();

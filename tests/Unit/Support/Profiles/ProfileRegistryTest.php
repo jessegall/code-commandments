@@ -20,7 +20,7 @@ class ProfileRegistryTest extends TestCase
 
     public function test_catalogue(): void
     {
-        $this->assertSame(['disabled', 'grind', 'phased', 'sins-only', 'penance'], ProfileRegistry::names());
+        $this->assertSame(['disabled', 'grind', 'phased', 'sins-only', 'penance', 'repentr'], ProfileRegistry::names());
         $this->assertNull(ProfileRegistry::get('nope'));
         $this->assertFalse(ProfileRegistry::has('nope'));
     }
@@ -65,6 +65,17 @@ class ProfileRegistryTest extends TestCase
         $this->assertFalse($o->perPhaseNudges);
         $this->assertSame(Phase::UntilClean, $o->behaviour->judge, 'penance judges the whole codebase until clean');
         $this->assertTrue($o->hasStopHook(), 'penance keeps going until righteous');
+    }
+
+    public function test_repentr_is_a_single_prophet_briefing_with_no_gate_or_loop(): void
+    {
+        $o = ProfileRegistry::get('repentr')->options();
+
+        $this->assertTrue($o->briefAgent, 'repentr briefs the agent (ask which prophet)');
+        $this->assertSame(\JesseGall\CodeCommandments\Support\Profiles\Briefing::Repentr, $o->briefing);
+        $this->assertSame(GitGateStage::None, $o->gate, 'no gate — stay focused on one prophet');
+        $this->assertFalse($o->hasStopHook(), 'no whole-codebase keep-going loop');
+        $this->assertSame(Phase::Never, $o->behaviour->judge);
     }
 
     public function test_disabled_is_inert(): void
