@@ -376,6 +376,29 @@ final class PilgrimageRunner
     }
 
     /**
+     * Whether the walk is GENUINELY complete for the current session — used by the
+     * pre-push gate to grant a completed pilgrimage one push past the gate. We do not
+     * trust the persisted `complete` flag alone (an agent could hand-write it): the
+     * cursor must actually have run past the last doctrine, AND the walk must be owned
+     * by the calling session. A forged `complete:true` with the cursor still at the
+     * start fails the cursor check and does NOT relax the gate.
+     */
+    public function isComplete(): bool
+    {
+        $state = PilgrimageState::load($this->basePath);
+
+        if ($state === null || ! $state->complete) {
+            return false;
+        }
+
+        if ($state->owner === '' || $state->owner !== PilgrimageState::currentSession()) {
+            return false;
+        }
+
+        return $state->doctrine >= $this->totalDoctrines();
+    }
+
+    /**
      * @return list<array{name: string, pillars: list<list<class-string<Commandment>>>}>
      */
     private function itinerary(): array

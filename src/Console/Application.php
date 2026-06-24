@@ -20,6 +20,7 @@ class Application extends SymfonyApplication
         $this->registerCommand(new InstallSkillsConsoleCommand());
         $this->registerCommand(new SkillsConsoleCommand());
         $this->registerCommand(new ReportConsoleCommand());
+        $this->registerCommand(new FeatureRequestConsoleCommand());
         $this->registerCommand(new ReportsConsoleCommand());
         $this->registerCommand(new ScriptureConsoleCommand());
         $this->registerCommand(new InitConsoleCommand());
@@ -30,6 +31,7 @@ class Application extends SymfonyApplication
         $this->registerCommand(new NextConsoleCommand());
         $this->registerCommand(new TodoConsoleCommand());
         $this->registerCommand(new AutofixConsoleCommand());
+        $this->registerCommand(new AbandonConsoleCommand());
         $this->registerCommand(new InstallSyncHookConsoleCommand());
         $this->registerCommand(new ProfileConsoleCommand());
     }
