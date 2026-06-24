@@ -20,6 +20,13 @@ use PhpParser\PrettyPrinter;
  * composing boolean chains from Predicate objects, extract a resolver's
  * inline predicates into named classes — and SIN a resolver that is just a
  * pile of inline closures (the half-done extraction that buys nothing).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static baseClasses(array $value)
+ * @method static suffix(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.62.0')]
 class ResolverPatternProphet extends PhpCommandment

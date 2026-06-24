@@ -21,6 +21,15 @@ use PhpParser\ParserFactory;
  * template from its values and (by default) pulling invisible escape runs into
  * named T_String constants. Opinionated and opt-in — flags interpolated strings
  * that also contain escape sequences by default.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static extractWhitespace(bool $on = true)
+ * @method static minInterpolations(int $value)
+ * @method static requireEscape(bool $on = true)
+ * @method static stringClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.29.0')]
 class PreferSprintfProphet extends PhpCommandment implements SinRepenter

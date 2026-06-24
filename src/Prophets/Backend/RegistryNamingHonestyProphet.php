@@ -25,6 +25,12 @@ use PhpParser\NodeFinder;
  *
  * Advisory, never a sin — renaming ripples across call sites and the domain's
  * ubiquitous language sometimes wins. Emit guidance only.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static suffixes(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.0.0')]
 class RegistryNamingHonestyProphet extends PhpCommandment

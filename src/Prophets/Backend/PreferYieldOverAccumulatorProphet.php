@@ -74,6 +74,12 @@ use ReflectionNamedType;
  *
  * Advisory, never a sin; not auto-fixable (yielding is a design call, and the FP
  * corpus — builder/registration hooks, aggregates, visitors, hot loops — is real).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minMethods(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.4.0')]
 class PreferYieldOverAccumulatorProphet extends PhpCommandment implements NeedsCodebaseIndex

@@ -14,6 +14,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  * Keep Vue files under max lines by extracting components.
  *
  * Vue components should be kept under a configurable line limit.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static maxVueLines(int $value)
+ * @method-generated-end
  */
 class LongVueFilesProphet extends FrontendCommandment
 {

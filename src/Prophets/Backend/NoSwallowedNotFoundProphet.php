@@ -35,6 +35,12 @@ use PhpParser\NodeFinder;
  *
  * Advisory, never a sin; not auto-fixable (rethrowing changes runtime behaviour
  * — a deliberate call).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static notFoundExceptions(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.0.0')]
 class NoSwallowedNotFoundProphet extends PhpCommandment

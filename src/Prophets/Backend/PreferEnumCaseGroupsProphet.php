@@ -21,6 +21,14 @@ use PhpParser\NodeFinder;
  * Flag a recognisable subset of an enum's cases inlined as an array literal
  * when that same group is duplicated elsewhere in the codebase — it should
  * live as a named accessor on the enum, not be re-inlined.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static excludeEnums(array $value)
+ * @method static minGroup(int $value)
+ * @method static minReuse(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.54.0')]
 class PreferEnumCaseGroupsProphet extends PhpCommandment implements NeedsCodebaseIndex

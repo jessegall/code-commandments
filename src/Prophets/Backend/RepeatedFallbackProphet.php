@@ -18,6 +18,13 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * Flag a computed null/falsy-fallback chain (`??`, `?:`, or a full-ternary
  * null/isset/empty check) that is written verbatim in two or more places, and
  * suggest hoisting it into one named static factory.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minOccurrences(int $value)
+ * @method static nullObjects(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.27.0')]
 class RepeatedFallbackProphet extends PhpCommandment implements NeedsCodebaseIndex

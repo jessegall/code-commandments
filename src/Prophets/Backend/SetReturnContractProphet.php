@@ -29,6 +29,13 @@ use PhpParser\NodeFinder;
  *
  * Marker-driven only (the author opted in), so false positives can't breed on the
  * heuristic shape; the shape path lives in {@see SetNamingHonestyProphet}.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static markers(array $value)
+ * @method static optionClasses(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.28.0')]
 class SetReturnContractProphet extends PhpCommandment

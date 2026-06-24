@@ -31,6 +31,12 @@ use PhpParser\NodeFinder;
  *
  * Option is for value-OR-nothing. When there is always a value, return it
  * (or throw when it genuinely cannot be produced).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.75.0')]
 class NoOptionOveruseProphet extends PhpCommandment implements NeedsCodebaseIndex

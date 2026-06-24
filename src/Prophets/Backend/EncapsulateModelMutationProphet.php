@@ -48,6 +48,12 @@ use PhpParser\NodeVisitorAbstract;
  *
  * Advisory, never a sin; not auto-fixable — extracting the method needs a
  * human-chosen name and a decision about whether it also persists.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static persistMethods(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.34.0')]
 class EncapsulateModelMutationProphet extends PhpCommandment

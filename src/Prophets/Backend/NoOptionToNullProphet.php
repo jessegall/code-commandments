@@ -21,6 +21,13 @@ use PhpParser\NodeFinder;
  * forces `?->` / `=== null` checks downstream. Act on the value with
  * `->map()`/`->each()`, require it with `->getOrThrow()`, or pass a REAL
  * default to `->getOr($default)`.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static methods(array $value)
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.74.0')]
 class NoOptionToNullProphet extends PhpCommandment implements SinRepenter

@@ -42,6 +42,12 @@ use PhpParser\PrettyPrinter;
  * The configurable `null_objects` map lets the prophet pick the right
  * replacement class for known types (e.g. `callable => NullCallable`,
  * `LoggerInterface => NullLogger`).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static nullObjects(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.13.0')]
 class PreferNullObjectDefaultsProphet extends PhpCommandment implements SinRepenter

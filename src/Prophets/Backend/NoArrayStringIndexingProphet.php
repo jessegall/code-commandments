@@ -25,6 +25,13 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * When a `CodebaseIndex` is injected (same-scroll call graph), per-sin
  * suggestions walk upstream through `max_trace_depth` hops to point at
  * the method where the DTO should actually be introduced.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static crossFileTrace(bool $on = true)
+ * @method static maxTraceDepth(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.4.0')]
 class NoArrayStringIndexingProphet extends PhpCommandment implements NeedsCodebaseIndex

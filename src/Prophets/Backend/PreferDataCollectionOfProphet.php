@@ -22,6 +22,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * `SomeData::from($row)`, or `array_map(fn ($r) => SomeData::from($r), ...)`
  * — where Spatie Data's `#[DataCollectionOf]` / `::collect()` would do it
  * declaratively.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static methods(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.38.0')]
 class PreferDataCollectionOfProphet extends PhpCommandment

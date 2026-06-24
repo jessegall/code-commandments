@@ -1,7 +1,13 @@
 {
     "name": "jessegall/code-commandments",
     "description": "A Laravel package for enforcing code commandments through prophets who judge and absolve transgressions",
-    "keywords": ["laravel", "code-quality", "static-analysis", "linting", "commandments"],
+    "keywords": [
+        "laravel",
+        "code-quality",
+        "static-analysis",
+        "linting",
+        "commandments"
+    ],
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -10,7 +16,9 @@
             "email": "jessegall@example.com"
         }
     ],
-    "bin": ["bin/commandments"],
+    "bin": [
+        "bin/commandments"
+    ],
     "require": {
         "php": "^8.2",
         "illuminate/console": "^10.0|^11.0|^12.0",
@@ -33,7 +41,8 @@
         "issues:new": "bash scripts/new-issues.sh",
         "update-consumers": "bash scripts/update-consumers.sh",
         "readme": "php scripts/generate-readme.php",
-        "readme:check": "php scripts/generate-readme.php --check"
+        "readme:check": "php scripts/generate-readme.php --check",
+        "hints": "php scripts/generate-prophet-method-hints.php"
     },
     "scripts-descriptions": {
         "judge:self": "Run the prophets against this package's own src/ (dogfooding).",
@@ -42,7 +51,8 @@
         "issues:new": "Show only NEW open issues since the last check (tracked in .commandments/seen-issues) with body+comments + the response protocol. Use `--seed` to baseline. Drive on a loop: /loop 5m composer issues:new.",
         "update-consumers": "Run `composer require --dev jessegall/code-commandments` in each .env-registered consumer — that pins ^latest and fires the consumer's post-update sync (prophets/scaffold/skills/hooks/CLAUDE.md). Leaves changes uncommitted for you to review and push.",
         "readme": "Regenerate the auto-generated README sections (prophet + command tables) from the source classes.",
-        "readme:check": "Fail if the auto-generated README sections are stale (run in the pre-commit hook / CI)."
+        "readme:check": "Fail if the auto-generated README sections are stale (run in the pre-commit hook / CI).",
+        "hints": "Regenerate the @method IntelliSense hints on each prophet from its config keys."
     },
     "autoload": {
         "psr-4": {

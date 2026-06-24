@@ -13,6 +13,21 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  * Detect repeating patterns that could be extracted into reusable components or composables.
  *
  * This validator detects repeating patterns in Vue files that suggest extraction opportunities.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minCardPatterns(int $value)
+ * @method static minClassDuplicates(int $value)
+ * @method static minComponentDuplicates(int $value)
+ * @method static minDialogRefs(int $value)
+ * @method static minDialogs(int $value)
+ * @method static minFormBindings(int $value)
+ * @method static minInputFields(int $value)
+ * @method static minOnHandlers(int $value)
+ * @method static minOpenFunctions(int $value)
+ * @method static minRefStates(int $value)
+ * @method-generated-end
  */
 class RepeatingPatternsProphet extends FrontendCommandment
 {

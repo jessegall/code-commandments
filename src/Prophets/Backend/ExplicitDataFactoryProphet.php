@@ -33,6 +33,12 @@ use PhpParser\ParserFactory;
  * magic object dispatch; object→Data mapping lives in named fromX() factories.
  * The mechanical cases — from(empty array) and bare new self() — are
  * auto-fixable to ::make().
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static dataSuffixes(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.40.0')]
 class ExplicitDataFactoryProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex

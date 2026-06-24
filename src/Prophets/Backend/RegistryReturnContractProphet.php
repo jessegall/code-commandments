@@ -34,6 +34,13 @@ use Throwable;
  *
  * Tier 1 only (marker-driven); the un-marked "looks like a registry" heuristic is
  * intentionally not implemented — that is where false positives breed.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static markers(array $value)
+ * @method static optionClasses(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.125.0')]
 class RegistryReturnContractProphet extends PhpCommandment implements NeedsCodebaseIndex

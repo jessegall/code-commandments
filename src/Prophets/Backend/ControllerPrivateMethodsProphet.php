@@ -16,6 +16,13 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  * When a controller accumulates multiple private helper methods, it's a sign
  * that business logic should be extracted to a service or delegate class.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static maxPrivateMethods(int $value)
+ * @method static minMethodLines(int $value)
+ * @method-generated-end
  */
 class ControllerPrivateMethodsProphet extends PhpCommandment
 {

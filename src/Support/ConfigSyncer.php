@@ -135,7 +135,12 @@ class ConfigSyncer
         $classes = [];
 
         foreach ($prophets as $key => $value) {
-            $classes[] = is_string($key) ? $key : $value;
+            if (is_object($value)) {
+                // Fluent form: `ProphetClass::make()->…` — a configured instance.
+                $classes[] = $value::class;
+            } else {
+                $classes[] = is_string($key) ? $key : $value;
+            }
         }
 
         return $classes;

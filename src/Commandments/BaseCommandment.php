@@ -86,6 +86,26 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
+     * Fluent typed setters by name: every config key is callable in camelCase —
+     * `->maxMethodLines(60)` sets `max_method_lines`, `->minCallers(10)` sets
+     * `min_callers`. This makes the whole config surface fluent (and the migrator's
+     * output clean) without hand-writing a wrapper per key; `@method` annotations on
+     * each prophet declare the ones it actually reads, for IntelliSense. A prophet may
+     * still override with a real method (typed args, validation) — that wins.
+     *
+     * @param  array<int, mixed>  $arguments
+     */
+    public function __call(string $name, array $arguments): static
+    {
+        return $this->setting($this->snakeCase($name), $arguments[0] ?? true);
+    }
+
+    private function snakeCase(string $name): string
+    {
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+    }
+
+    /**
      * Generic fluent setter — the escape hatch for a setting that doesn't (yet)
      * have a typed wrapper, and what the config migrator emits for them. Prefer a
      * prophet's typed method (`->minCallers(10)`) where one exists.

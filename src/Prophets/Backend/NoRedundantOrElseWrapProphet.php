@@ -21,6 +21,13 @@ use PhpParser\NodeFinder;
  * value becomes `some`, null becomes `none`), so the `Option::some(...)` /
  * `Option::make(...)` wrap is dead boilerplate. Return the value directly:
  * `->orElse(fn () => $x)`.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static methods(array $value)
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.136.0')]
 class NoRedundantOrElseWrapProphet extends PhpCommandment implements SinRepenter

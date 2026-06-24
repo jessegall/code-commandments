@@ -22,6 +22,12 @@ use PhpParser\PrettyPrinter;
  *
  * This is NOT a "prefer defaults" rule — it only relocates a presence-check
  * fallback that ALREADY exists at the call site against the SAME receiver.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static presencePrefixes(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.69.0')]
 class PreferDefaultFallbackProphet extends PhpCommandment

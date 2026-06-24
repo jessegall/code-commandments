@@ -23,6 +23,12 @@ use PhpParser\ParserFactory;
  * that recurs in a class. The same guard+cast+fallback hand-rolled in several
  * methods should be ONE named typed-accessor helper (like the `stringOr()` such
  * classes already tend to have), so the coercion rule lives in a single place.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minOccurrences(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.116.0')]
 class PreferCoercionHelperProphet extends PhpCommandment implements SinRepenter

@@ -19,6 +19,12 @@ use PhpParser\PrettyPrinter;
 
 /**
  * Flag a hand-written `||` / `&&` chain of classifier `->matches($x)` checks on the same argument and suggest composing them with `Classifier::anyOf(...)` / `allOf(...)` — one named compound instead of a repeated, drift-prone chain.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static classifierBase(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.71.0')]
 class PreferClassifierCompositionProphet extends PhpCommandment implements NeedsCodebaseIndex

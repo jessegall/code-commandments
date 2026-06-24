@@ -62,6 +62,16 @@ use PhpParser\NodeFinder;
  * Advisory, never a sin; not auto-fixable — extraction is a design call (same
  * stance as RegistryPattern / PreferTotalOverNullable). The finding SUGGESTS the
  * cut ("extract the reflection into a *Reflector collaborator"), never rewrites.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static exemptAttributes(array $value)
+ * @method static exemptBases(array $value)
+ * @method static exemptSuffixes(array $value)
+ * @method static minVerbFamilies(int $value)
+ * @method static roles(mixed $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.5.0')]
 class OutOfPurposeProphet extends PhpCommandment

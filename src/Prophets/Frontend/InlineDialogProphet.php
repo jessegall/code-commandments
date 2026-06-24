@@ -14,6 +14,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  * Pages should not have inline dialog/modal definitions. Extract them
  * to dedicated components for better maintainability and reusability.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minContentLength(int $value)
+ * @method-generated-end
  */
 class InlineDialogProphet extends FrontendCommandment
 {

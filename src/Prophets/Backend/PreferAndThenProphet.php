@@ -18,6 +18,14 @@ use PhpParser\NodeFinder;
  * Flag `transform(cb)->getOr(Option::none())` where the callback returns an
  * Option — an `Option<Option>` flattened by hand, which is exactly `andThen(cb)`.
  * See {@see detailedDescription()} for the full rationale.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static getOrMethod(string $value)
+ * @method static mapMethods(array $value)
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.123.0')]
 class PreferAndThenProphet extends PhpCommandment implements SinRepenter

@@ -24,6 +24,12 @@ use PhpParser\NodeFinder;
  * {@see SetReturnContractProphet} can enforce its contract.
  *
  * Advisory, never a sin — renaming ripples across call sites. Emit guidance only.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static suffixes(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.28.0')]
 class SetNamingHonestyProphet extends PhpCommandment

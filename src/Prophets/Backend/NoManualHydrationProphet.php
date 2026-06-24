@@ -17,6 +17,13 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * Flag hand-rolled array-to-object hydration — static creators (or inline
  * instantiations) that read array keys one by one and feed them into a
  * constructor. Spatie Laravel Data's `::from()` does all of that.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minKeyReads(int $value)
+ * @method static minPropertyReads(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.18.0')]
 class NoManualHydrationProphet extends PhpCommandment

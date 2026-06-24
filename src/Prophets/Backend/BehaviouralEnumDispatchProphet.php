@@ -29,6 +29,12 @@ use PhpParser\NodeFinder;
  * first-match dispatch → the resolver kernel.)
  *
  * Advisory, never a sin; not auto-fixable (extraction needs naming + DI choices).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minArms(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.131.0')]
 class BehaviouralEnumDispatchProphet extends PhpCommandment

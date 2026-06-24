@@ -27,6 +27,14 @@ use PhpParser\ParserFactory;
  * Every class that extends Spatie Data directly must `use` the FromArrayOnly
  * trait, so `::from()` is guarded against the magic object dispatch at
  * runtime. Mechanical, so it is auto-fixable.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static baseClass(string $value)
+ * @method static dataSuffixes(array $value)
+ * @method static traitClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.41.0')]
 class DataClassFromArrayOnlyProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex
