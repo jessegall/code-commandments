@@ -250,7 +250,7 @@ HOOK;
             $config['Stop'] = [
                 [
                     'hooks' => [
-                        ['type' => 'command', 'command' => 'sh .claude/hooks/stop-hook.sh'],
+                        ['type' => 'command', 'command' => self::stopHookCommand()],
                     ],
                 ],
             ];
@@ -301,6 +301,21 @@ HOOK;
      * A PostToolUse (Bash) hook command: when the tool call was a git commit,
      * inject a reminder to re-read the commandments and resolve every sin.
      */
+    /**
+     * The settings.json Stop-hook command. This entry is COMMITTED (settings.json is
+     * checked in), so it is inherited by every git worktree — and worktrees share it
+     * whether or not they opted into commandments. The guard makes it a NO-OP unless
+     * THIS worktree opted in (its own .commandments/profile, not 'disabled'), so a
+     * fresh worktree never runs the (possibly stale, committed) stop-hook.sh. It also
+     * resolves the worktree's OWN stop-hook.sh by $root, not a relative path.
+     */
+    public static function stopHookCommand(): string
+    {
+        return 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); '
+            . 'case "$(cat "$root/.commandments/profile" 2>/dev/null)" in ""|disabled) exit 0;; esac; '
+            . '[ -f "$root/.claude/hooks/stop-hook.sh" ] && sh "$root/.claude/hooks/stop-hook.sh"';
+    }
+
     public static function postCommitReminderCommand(string $binary, string $sep): string
     {
         $message = 'A commit just landed — a phase is complete. Act as a sin resolver now: run `'
