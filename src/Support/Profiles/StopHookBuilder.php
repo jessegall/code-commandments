@@ -64,6 +64,13 @@ final class StopHookBuilder
         return self::header($profile, $b)
             . <<<SH
             root=\$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "\${CLAUDE_PROJECT_DIR:-.}")
+
+            # Worktree isolation: git worktrees share a committed .claude/, so this
+            # Stop hook can fire in a worktree that never opted into commandments.
+            # Allow the stop unless THIS worktree opted in (its own .commandments/
+            # profile, not 'disabled').
+            case "\$(cat "\$root/.commandments/profile" 2>/dev/null)" in ''|disabled) exit 0 ;; esac
+
             marker="\$root/.claude/plan-active"
 
             # No active plan for this worktree -> allow the stop (and never judge).
@@ -131,6 +138,13 @@ final class StopHookBuilder
         return self::header($profile, $b)
             . <<<SH
             root=\$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "\${CLAUDE_PROJECT_DIR:-.}")
+
+            # Worktree isolation: git worktrees share a committed .claude/, so this
+            # Stop hook can fire in a worktree that never opted into commandments.
+            # Allow the stop unless THIS worktree opted in (its own .commandments/
+            # profile, not 'disabled').
+            case "\$(cat "\$root/.commandments/profile" 2>/dev/null)" in ''|disabled) exit 0 ;; esac
+
             if [ -f "\$root/artisan" ]; then run="php artisan commandments:"; else run="vendor/bin/commandments "; fi
             marker="\$root/.claude/plan-active"
             mkdir -p "\$root/.commandments" 2>/dev/null
