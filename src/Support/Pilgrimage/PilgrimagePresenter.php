@@ -36,9 +36,16 @@ final class PilgrimagePresenter
 
         $walked = (int) ($step['prophetsWalked'] ?? 0);
         $total = (int) ($step['prophetsTotal'] ?? 0);
+        $autoFixable = count(array_filter($locations, static fn (array $l): bool => ($l['autoFixable'] ?? false) === true));
 
         $lines = [
             '',
+            sprintf('▶ NOW WORKING ON: %s — resolve %d location(s)%s in the %s doctrine.',
+                $step['prophet'] ?? '?',
+                count($locations),
+                $autoFixable > 0 ? sprintf(' (%d [AUTO-FIXABLE])', $autoFixable) : '',
+                $step['doctrine'] ?? '?',
+            ),
             self::RULE,
             sprintf(' PROPHET   %s', $step['prophet'] ?? '?'),
             sprintf(' PILLAR    %s · doctrine %d/%d', $step['doctrine'] ?? '?', ($step['doctrineIndex'] ?? 0) + 1, $runner->totalDoctrines()),
@@ -61,8 +68,6 @@ final class PilgrimagePresenter
         foreach (explode("\n", (string) ($step['scripture'] ?? '')) as $scriptureLine) {
             $lines[] = '   ' . $scriptureLine;
         }
-
-        $autoFixable = count(array_filter($locations, static fn (array $l): bool => ($l['autoFixable'] ?? false) === true));
 
         $lines[] = '';
         $lines[] = sprintf(' LOCATIONS (%d) — resolve EVERY one before `next`:', count($locations));
