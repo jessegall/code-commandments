@@ -529,7 +529,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_113 prophets._
+_114 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -593,6 +593,7 @@ _113 prophets._
 | `PreferClassifierCompositionProphet` | — | Compose classifier checks with anyOf()/allOf(), not a \|\|/&& chain of -&gt;matches() |
 | `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
+| `PreferCoalescingFactoryProphet` | — | Build a wrapper via a total/coalescing factory, not `cond ? new T(...) : null` + null-guards |
 | `PreferCoercionHelperProphet` | Yes | Extract a repeated inline cast-with-fallback (is_x($v) ? (cast) $v : default) into a named coercion helper |
 | `PreferCollectionPipelineProphet` | — | Prefer a Collection chain over nested array_* compositions (they read inside-out) |
 | `PreferConfigDrivenRegistryProphet` | — | An enum whose cases mirror a config-registered set should be driven by a config registry |
