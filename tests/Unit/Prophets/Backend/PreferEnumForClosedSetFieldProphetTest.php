@@ -30,19 +30,19 @@ class PreferEnumForClosedSetFieldProphetTest extends TestCase
 
     public function test_does_not_flag_a_field_whose_values_come_from_class_constants(): void
     {
-        // #137: $type holds an OPEN wire-type token space modelled by a value class
+        // #137: $status holds an OPEN wire-type token space modelled by a value class
         // (WireType::MIXED/STRING + dynamic `resource:<x>` forms). Its values are
         // sourced from class constants, so it is already modelled — not a fresh
         // closed set to mint a new enum for.
         $judgment = $this->judge(<<<'PHP'
 class InputSocket extends Data {
-    public function __construct(public readonly string $type) {}
-    public static function make(string $type = WireType::MIXED): self { return self::from(['type' => $type]); }
-    public static function text(): self { return self::from(['type' => WireType::STRING]); }
+    public function __construct(public readonly string $status) {}
+    public static function make(string $status = WireType::MIXED): self { return self::from(['status' => $status]); }
+    public static function text(): self { return self::from(['status' => WireType::STRING]); }
 }
 PHP);
 
-        $this->assertTrue($judgment->isRighteous(), '$type backed by WireType:: constants must not be flagged');
+        $this->assertTrue($judgment->isRighteous(), '$status backed by WireType:: constants must not be flagged');
     }
 
     public function test_does_not_flag_a_field_defaulted_to_a_class_constant(): void
@@ -55,7 +55,7 @@ PHP);
     public function test_does_not_flag_a_field_assigned_a_class_string(): void
     {
         // `::class` backing is a class-string — open by nature (the advisory says so).
-        $judgment = $this->judge('class A extends Data { public function __construct(public string $type) {} public static function for(): self { return self::from(["type" => Foo::class]); } }');
+        $judgment = $this->judge('class A extends Data { public function __construct(public string $status) {} public static function for(): self { return self::from(["status" => Foo::class]); } }');
 
         $this->assertTrue($judgment->isRighteous());
     }
@@ -69,7 +69,7 @@ PHP);
 
     public function test_flags_a_snake_case_suffix(): void
     {
-        $judgment = $this->judge('class A { public string $node_type; }');
+        $judgment = $this->judge('class A { public string $node_status; }');
 
         $this->assertCount(1, $judgment->warnings);
     }
@@ -94,6 +94,21 @@ PHP);
         $judgment = $this->judge('class A { public string $prototype; }');
 
         $this->assertTrue($judgment->isRighteous());
+    }
+
+    public function test_does_not_flag_a_type_field_by_name_alone(): void
+    {
+        // #204: `type` is the most overloaded noun — a class-string, a wire/MIME/
+        // resource token, a registry/raw-decode value far more often than a code-
+        // defined closed set — so it is NOT in the default name list. (A genuine
+        // closed-set `$type` is still caught by StringsThatShouldBeEnums once it
+        // shows a literal.)
+        $this->assertTrue($this->judge('class A { public string $type; }')->isRighteous());
+        $this->assertTrue($this->judge('class A { public function __construct(public string $resourceType) {} }')->isRighteous());
+        $this->assertTrue($this->judge('class A { public string $node_type; }')->isRighteous());
+
+        // …but a still-listed closed-set noun on the same shape still fires.
+        $this->assertCount(1, $this->judge('class A { public string $status; }')->warnings);
     }
 
     public function test_does_not_flag_a_name_outside_the_list(): void
@@ -142,7 +157,7 @@ PHP);
     {
         // Only data FIELDS (properties + promoted ctor props). A transient method
         // parameter often carries a class-string / type name, not an enum value.
-        $judgment = $this->judge('class A { public function findNodes(string $nodeType): array { return []; } }');
+        $judgment = $this->judge('class A { public function findNodes(string $nodeStatus): array { return []; } }');
 
         $this->assertTrue($judgment->isRighteous());
     }
@@ -256,13 +271,13 @@ PHP);
             __DIR__ . '/../../../Fixtures/Enums/EditorActionType.php',
         ]));
 
-        $code = "<?php\nnamespace App\\Workflow;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$type) {} }";
+        $code = "<?php\nnamespace App\\Workflow;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$status) {} }";
         $this->prophet->setRepentInput(['enum-class' => 'EditorActionType']);
 
         $result = $this->prophet->repent('/app/Workflow/AppliedEditorAction.php', $code);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('public EditorActionType $type', $result->newContent);
+        $this->assertStringContainsString('public EditorActionType $status', $result->newContent);
         // The import is added — the bug from #191.
         $this->assertStringContainsString('use JesseGall\\CodeCommandments\\Tests\\Fixtures\\Enums\\EditorActionType;', $result->newContent);
         $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($result->newContent));
@@ -273,13 +288,13 @@ PHP);
         // #191: a short name the index cannot resolve (no index here) must NOT be
         // silently left unimported — the retype happens but the penance tells the
         // dev to add the import by hand rather than guessing a FQCN.
-        $code = "<?php\nnamespace App\\Workflow;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$type) {} }";
+        $code = "<?php\nnamespace App\\Workflow;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$status) {} }";
         $this->prophet->setRepentInput(['enum-class' => 'EditorActionType']);
 
         $result = $this->prophet->repent('/app/Workflow/AppliedEditorAction.php', $code);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('public EditorActionType $type', $result->newContent);
+        $this->assertStringContainsString('public EditorActionType $status', $result->newContent);
         $this->assertNotEmpty(array_filter(
             $result->penance,
             static fn (string $p): bool => str_contains($p, 'use') && str_contains($p, 'EditorActionType'),
@@ -294,13 +309,13 @@ PHP);
             __DIR__ . '/../../../Fixtures/Enums/EditorActionType.php',
         ]));
 
-        $code = "<?php\nnamespace JesseGall\\CodeCommandments\\Tests\\Fixtures\\Enums;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$type) {} }";
+        $code = "<?php\nnamespace JesseGall\\CodeCommandments\\Tests\\Fixtures\\Enums;\n\nclass AppliedEditorAction extends Data { public function __construct(public string \$status) {} }";
         $this->prophet->setRepentInput(['enum-class' => 'EditorActionType']);
 
         $result = $this->prophet->repent('/x.php', $code);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('public EditorActionType $type', $result->newContent);
+        $this->assertStringContainsString('public EditorActionType $status', $result->newContent);
         $this->assertStringNotContainsString('use JesseGall', $result->newContent);
         $this->assertEmpty(array_filter($result->penance, static fn (string $p): bool => str_contains($p, 'Add a `use`')));
     }
@@ -309,13 +324,13 @@ PHP);
     {
         // issue #29: a `Enum::Case->value` default must lose `->value`, else it
         // is a string default on an enum-typed property → PHP fatal.
-        $code = "<?php\nnamespace App;\n\nclass Field extends Data { public function __construct(public string \$type = SchemaFieldType::String->value) {} }";
+        $code = "<?php\nnamespace App;\n\nclass Field extends Data { public function __construct(public string \$status = SchemaFieldType::String->value) {} }";
         $this->prophet->setRepentInput(['enum-class' => 'SchemaFieldType']);
 
         $result = $this->prophet->repent('/x.php', $code);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('public SchemaFieldType $type = SchemaFieldType::String', $result->newContent);
+        $this->assertStringContainsString('public SchemaFieldType $status = SchemaFieldType::String', $result->newContent);
         $this->assertStringNotContainsString('->value', $result->newContent);
     }
 
@@ -333,7 +348,7 @@ PHP);
 
     public function test_repent_result_parses_after_default_conversion(): void
     {
-        $code = "<?php\nnamespace App;\n\nclass Field extends Data { public function __construct(public string \$type = SchemaFieldType::String->value) {} }";
+        $code = "<?php\nnamespace App;\n\nclass Field extends Data { public function __construct(public string \$status = SchemaFieldType::String->value) {} }";
         $this->prophet->setRepentInput(['enum-class' => 'SchemaFieldType']);
 
         $fixed = $this->prophet->repent('/x.php', $code)->newContent;
@@ -347,25 +362,25 @@ PHP);
         // issue #30: the exact Field.php readers must convert with the retype.
         $code = "<?php\n"
             . "class Field extends Data {\n"
-            . "    public function __construct(public string \$type = SchemaFieldType::String->value) {}\n"
-            . "    public function wireSocketType(): string { return \$this->type; }\n"
-            . "    public function elementWireType(): string|null { return \$this->type === 'array' ? null : \$this->type; }\n"
-            . "    public function label(): string { return 'Field: ' . \$this->type; }\n"
+            . "    public function __construct(public string \$status = SchemaFieldType::String->value) {}\n"
+            . "    public function wireSocketType(): string { return \$this->status; }\n"
+            . "    public function elementWireType(): string|null { return \$this->status === 'array' ? null : \$this->status; }\n"
+            . "    public function label(): string { return 'Field: ' . \$this->status; }\n"
             . "}";
         $this->prophet->setRepentInput(['enum-class' => 'SchemaFieldType']);
 
         $fixed = $this->prophet->repent('/x.php', $code)->newContent;
 
         // (1) direct return in a `: string` method → ->value
-        $this->assertStringContainsString('return $this->type->value;', $fixed);
+        $this->assertStringContainsString('return $this->status->value;', $fixed);
         // (2a) comparison literal → enum case
-        $this->assertStringContainsString("\$this->type === SchemaFieldType::Array", $fixed);
+        $this->assertStringContainsString("\$this->status === SchemaFieldType::Array", $fixed);
         // (2b) return-through-ternary in a `string|null` method → ->value
-        $this->assertStringContainsString('null : $this->type->value', $fixed);
+        $this->assertStringContainsString('null : $this->status->value', $fixed);
         // concat operand → ->value
-        $this->assertStringContainsString("'Field: ' . \$this->type->value", $fixed);
+        $this->assertStringContainsString("'Field: ' . \$this->status->value", $fixed);
         // and the property + default retyped
-        $this->assertStringContainsString('public SchemaFieldType $type = SchemaFieldType::String', $fixed);
+        $this->assertStringContainsString('public SchemaFieldType $status = SchemaFieldType::String', $fixed);
         // result parses
         $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
     }
@@ -376,25 +391,25 @@ PHP);
         // become `Case->equals($x)` — not `$x === Case`, which SuggestCompareSelfTrait
         // would immediately flag.
         $enum = \JesseGall\CodeCommandments\Tests\Fixtures\EnumWithCompareSelf::class;
-        $code = "<?php\nclass Field extends Data {\n public function __construct(public string \$type = 'array') {}\n public function w(): string { return \$this->type === 'array' ? 'a' : \$this->type; }\n}";
-        $this->prophet->setRepentInput(['enum-class' => $enum, 'field' => 'type']);
+        $code = "<?php\nclass Field extends Data {\n public function __construct(public string \$status = 'array') {}\n public function w(): string { return \$this->status === 'array' ? 'a' : \$this->status; }\n}";
+        $this->prophet->setRepentInput(['enum-class' => $enum, 'field' => 'status']);
 
         $fixed = $this->prophet->repent('/x.php', $code)->newContent;
 
-        $this->assertStringContainsString('EnumWithCompareSelf::Array->equals($this->type)', $fixed);
-        $this->assertStringNotContainsString("\$this->type === ", $fixed);
+        $this->assertStringContainsString('EnumWithCompareSelf::Array->equals($this->status)', $fixed);
+        $this->assertStringNotContainsString("\$this->status === ", $fixed);
         $this->assertNotFalse((new \PhpParser\ParserFactory)->createForNewestSupportedVersion()->parse($fixed));
     }
 
     public function test_repent_keeps_identical_form_for_a_plain_enum(): void
     {
         $enum = \JesseGall\CodeCommandments\Tests\Fixtures\PlainEnumNoCompareSelf::class;
-        $code = "<?php\nclass Field extends Data {\n public function __construct(public string \$type = 'array') {}\n public function w(): bool { return \$this->type === 'array'; }\n}";
-        $this->prophet->setRepentInput(['enum-class' => $enum, 'field' => 'type']);
+        $code = "<?php\nclass Field extends Data {\n public function __construct(public string \$status = 'array') {}\n public function w(): bool { return \$this->status === 'array'; }\n}";
+        $this->prophet->setRepentInput(['enum-class' => $enum, 'field' => 'status']);
 
         $fixed = $this->prophet->repent('/x.php', $code)->newContent;
 
-        $this->assertStringContainsString('$this->type === PlainEnumNoCompareSelf::Array', $fixed);
+        $this->assertStringContainsString('$this->status === PlainEnumNoCompareSelf::Array', $fixed);
         $this->assertStringNotContainsString('->equals(', $fixed);
     }
 
