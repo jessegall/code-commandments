@@ -66,15 +66,10 @@ final class SyncHookInstaller
      */
     private static function installComposerScript(string $basePath, string $command, callable $emit, callable $error): void
     {
-        $status = (new ComposerScriptInstaller())->install($basePath . '/composer.json', 'post-update-cmd', $command);
-
-        match ($status) {
-            ComposerScriptInstaller::STATUS_INSTALLED => $emit("Added {$command} to composer.json post-update-cmd"),
-            ComposerScriptInstaller::STATUS_ALREADY_PRESENT => $emit('composer.json already has the sync script — skipped'),
-            ComposerScriptInstaller::STATUS_MISSING_FILE => $emit('No composer.json found — skipping composer-script install.'),
-            ComposerScriptInstaller::STATUS_INVALID_JSON => $error('composer.json is not valid JSON — skipping composer-script install. Add the script manually.'),
-            ComposerScriptInstaller::STATUS_WRITE_FAILED => $error('Failed to write composer.json — check permissions.'),
-        };
+        // One place owns the composer-script wiring: register `commandments update`
+        // on BOTH post-update-cmd and post-install-cmd. ($command is the legacy
+        // per-variant sync invocation, now superseded by the single update entry.)
+        CommandmentsUpdater::ensureComposerScripts($basePath, $emit, $error);
     }
 
     /**

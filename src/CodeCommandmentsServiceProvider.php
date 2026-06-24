@@ -19,6 +19,7 @@ use JesseGall\CodeCommandments\Commands\ProfileCommand;
 use JesseGall\CodeCommandments\Commands\RepentCommand;
 use JesseGall\CodeCommandments\Commands\ScriptureCommand;
 use JesseGall\CodeCommandments\Commands\SyncCommand;
+use JesseGall\CodeCommandments\Commands\UpdateCommand;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker as ConfessionTrackerContract;
 use JesseGall\CodeCommandments\Contracts\FileScanner;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
@@ -109,9 +110,38 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 SkillsCommand::class,
                 InstallSyncHookCommand::class,
                 SyncCommand::class,
+                UpdateCommand::class,
                 ProfileCommand::class,
             ]);
+
+            $this->ensureComposerLifecycleScripts();
         }
+    }
+
+    /**
+     * First-load self-wiring: the very first time the package boots in a console
+     * context, register `commandments update` on the consumer's composer
+     * post-update / post-install scripts so every future install/update stays in
+     * sync — no composer-plugin, no `allow-plugins` prompt. Marker-gated so it runs
+     * once and never touches composer.json again on its own.
+     */
+    private function ensureComposerLifecycleScripts(): void
+    {
+        $basePath = $this->app->basePath();
+        $marker = $basePath . '/.commandments/.composer-wired';
+
+        if (is_file($marker)) {
+            return;
+        }
+
+        \JesseGall\CodeCommandments\Support\CommandmentsUpdater::ensureComposerScripts(
+            $basePath,
+            static fn (string $line) => null,
+            static fn (string $line) => null,
+        );
+
+        @mkdir(dirname($marker), 0755, true);
+        @file_put_contents($marker, "1\n");
     }
 
     protected function registerProphetsFromConfig(ProphetRegistry $registry): void
