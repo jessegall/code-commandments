@@ -131,6 +131,7 @@ Every command is available via both Laravel artisan
 | [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/ |
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
 | [`judge`](#judge) | Judge the codebase for sins against the commandments |
+| [`migrate-config`](#migrate-config) | Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&gt;… form |
 | [`profile`](#profile) | Show, list, or switch the active code-commandments profile (disabled/grind/phased/sins-only) |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
 | [`report`](#report) | Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue |
@@ -206,6 +207,15 @@ Judge the codebase for sins against the commandments.
 | `--no-parallel` | — | Judge sequentially (no forked workers) — use on a platform without pcntl or to debug |
 | `--next` | — | Show exactly one finding at a time (fix or absolve to advance) |
 | `--plan` | — | Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan) |
+
+### `migrate-config`
+
+Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&gt;… form.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--out` | `<value>` | Where to write the reference file (default: alongside the config) |
 
 ### `profile`
 
