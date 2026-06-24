@@ -9,7 +9,7 @@ use JesseGall\PhpTypes\T_String;
 
 /**
  * Resolves the currently-installed package version and the previously
- * synced version (persisted in `<base-path>/.commandments-last-synced`).
+ * synced version (persisted in `<base-path>/.commandments/last-synced`).
  *
  * `sync --after=previous` uses these to answer "show me prophets added
  * since the last time I synced" without the user having to remember
@@ -19,7 +19,10 @@ class VersionResolver
 {
     public const PACKAGE_NAME = 'jessegall/code-commandments';
 
-    public const STATE_FILENAME = '.commandments-last-synced';
+    public const STATE_FILENAME = '.commandments/last-synced';
+
+    /** Pre-v3.0.4 location, read as a fallback and migrated forward on the next record. */
+    public const LEGACY_STATE_FILENAME = '.commandments-last-synced';
 
     /**
      * Currently-installed version from Composer metadata. Returns null for
@@ -50,6 +53,12 @@ class VersionResolver
         $path = $this->stateFilePath($basePath);
 
         if (! is_file($path)) {
+            // Backward-compat: read the pre-v3.0.4 root dotfile if the consolidated
+            // one isn't there yet.
+            $path = rtrim($basePath, '/') . '/' . self::LEGACY_STATE_FILENAME;
+        }
+
+        if (! is_file($path)) {
             return null;
         }
 
@@ -59,16 +68,22 @@ class VersionResolver
             return null;
         }
 
-        $version = trim($contents);
-
-        return $this->normalizeSemver($version);
+        return $this->normalizeSemver(trim($contents));
     }
 
     public function recordSyncedVersion(string $basePath, string $version): bool
     {
         $path = $this->stateFilePath($basePath);
+        @mkdir(dirname($path), 0755, true);
 
-        return @file_put_contents($path, $version . T_String::NEWLINE) !== false;
+        $written = @file_put_contents($path, $version . T_String::NEWLINE) !== false;
+
+        if ($written) {
+            // Migrate forward: retire the old root dotfile once the new one is written.
+            @unlink(rtrim($basePath, '/') . '/' . self::LEGACY_STATE_FILENAME);
+        }
+
+        return $written;
     }
 
     public function stateFilePath(string $basePath): string
