@@ -86,6 +86,16 @@ abstract class BaseCommandment implements Commandment
     }
 
     /**
+     * Generic fluent setter — the escape hatch for a setting that doesn't (yet)
+     * have a typed wrapper, and what the config migrator emits for them. Prefer a
+     * prophet's typed method (`->minCallers(10)`) where one exists.
+     */
+    public function set(string $key, mixed $value): static
+    {
+        return $this->setting($key, $value);
+    }
+
+    /**
      * The resolved severity override — the explicit fluent value, else a legacy
      * `['severity' => 'sin'|'warning'|'off']` config entry. Null when neither is
      * set (the prophet's emitted severity stands; a doctrine-level default is
