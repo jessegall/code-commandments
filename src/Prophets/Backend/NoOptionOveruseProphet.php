@@ -6,28 +6,42 @@ namespace JesseGall\CodeCommandments\Prophets\Backend;
 
 use JesseGall\CodeCommandments\Attributes\IntroducedIn;
 use JesseGall\CodeCommandments\Commandments\PhpCommandment;
+use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
+use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\OptionConsumptionResolver;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 
 /**
  * The counterweight to PreferOptionOverNull: flag Option used as ceremony,
- * where there is no absence to model. Two smells:
+ * where there is no absence to model. Three smells:
  *
  *   1. a method typed `: Option` whose every return is `some(...)` and never
  *      `none()` — the value is never absent, so the Option only adds noise;
  *   2. constructing an Option and immediately unwrapping it
  *      (`Option::some($x)->getOrThrow()`).
+ *   3. (cross-cutting, needs the index) a method typed `: Option` whose EVERY
+ *      call site only UNWRAPS or queries it (`->getOrElse`/`->isSome`) and never
+ *      keeps it as an Option (no `->map`/chain) — the box no caller wants.
  *
  * Option is for value-OR-nothing. When there is always a value, return it
  * (or throw when it genuinely cannot be produced).
  */
 #[IntroducedIn('1.75.0')]
-class NoOptionOveruseProphet extends PhpCommandment
+class NoOptionOveruseProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
+    private ?CodebaseIndex $index = null;
+
+    public function setCodebaseIndex(CodebaseIndex $index): void
+    {
+        $this->index = $index;
+    }
+
     private const DEFAULT_OPTION_CLASS = 'App\\Support\\Option';
 
     private const DEFAULT_SOME_METHODS = ['some', 'of'];
@@ -137,12 +151,83 @@ SCRIPTURE;
 
         $this->flagAlwaysSomeMethods($finder, $ast, $optionShort, $warnings);
         $this->flagConstructThenUnwrap($finder, $ast, $optionShort, $warnings);
+        $this->flagCeremonyOnlyCallers($finder, $ast, $optionShort, $warnings);
 
         if ($warnings === []) {
             return $this->righteous();
         }
 
         return Judgment::withWarnings($warnings);
+    }
+
+    /**
+     * Smell 3 (cross-cutting): a method typed `: Option` whose EVERY resolved call
+     * site immediately unwraps or queries it and NONE keeps it as an Option (no
+     * map/chain) — the Option boxes a value every caller only unboxes, so it earns
+     * nothing a nullable would not. Silent when there are no resolved callers (we
+     * cannot tell) or any caller chains the Option (then it does earn its keep).
+     *
+     * @param  array<Node>  $ast
+     * @param  list<\JesseGall\CodeCommandments\Results\Warning>  $warnings
+     */
+    private function flagCeremonyOnlyCallers(NodeFinder $finder, array $ast, string $optionShort, array &$warnings): void
+    {
+        if ($this->index === null) {
+            return;
+        }
+
+        $namespace = FileImports::namespace($ast);
+        $resolver = new OptionConsumptionResolver;
+
+        foreach ($finder->findInstanceOf($ast, Node\Stmt\Class_::class) as $class) {
+            if ($class->name === null) {
+                continue;
+            }
+
+            $fqcn = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . $class->name->toString();
+
+            foreach ($class->getMethods() as $method) {
+                if ($method->stmts === null || $this->returnTypeShort($method) !== $optionShort) {
+                    continue;
+                }
+
+                $consumptions = $resolver->consumptions($fqcn, $method->name->toString(), $this->index);
+
+                // No resolved callers → cannot judge. Any caller that CHAINS the
+                // Option (map/filter/…) means it earns its keep → leave it.
+                if ($consumptions === [] || in_array('chain', $consumptions, true)) {
+                    continue;
+                }
+
+                // Need at least one ROUND-TRIP unwrap (`getOrElse`/`getOrNull`) as the
+                // ceremony tell — a value boxed only to be unboxed. Callers that only
+                // `getOrThrow` (require presence) are a legit use, not ceremony.
+                if (! in_array('unwrap', $consumptions, true)) {
+                    continue;
+                }
+
+                // …and EVERY consumption must be ceremony (unwrap / query / require).
+                // A 'nullcheck'/'passed'/'other' means the caller does something more.
+                $ceremony = array_filter($consumptions, static fn (string $k): bool => in_array($k, ['unwrap', 'query', 'require'], true));
+
+                if (count($ceremony) !== count($consumptions)) {
+                    continue;
+                }
+
+                $warnings[] = $this->warningAt(
+                    $method->getStartLine(),
+                    sprintf(
+                        '%s() returns `: %s` but every one of its %d resolved call site(s) immediately unwraps or queries it (%s) — no caller keeps it as an Option (no map/chain). The Option boxes a value the callers only unbox; return the nullable directly.',
+                        $method->name->toString(),
+                        $optionShort,
+                        count($consumptions),
+                        implode('/', array_values(array_unique($consumptions))),
+                    ),
+                    null,
+                    'option-overuse-ceremony-callers:' . $method->name->toString(),
+                );
+            }
+        }
     }
 
     /**
