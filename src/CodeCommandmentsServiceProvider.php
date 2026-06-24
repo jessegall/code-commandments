@@ -20,6 +20,7 @@ use JesseGall\CodeCommandments\Commands\RepentCommand;
 use JesseGall\CodeCommandments\Commands\ScriptureCommand;
 use JesseGall\CodeCommandments\Commands\NextCommand;
 use JesseGall\CodeCommandments\Commands\PilgrimageCommand;
+use JesseGall\CodeCommandments\Commands\TodoCommand;
 use JesseGall\CodeCommandments\Commands\SyncCommand;
 use JesseGall\CodeCommandments\Commands\UpdateCommand;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker as ConfessionTrackerContract;
@@ -115,6 +116,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 UpdateCommand::class,
                 PilgrimageCommand::class,
                 NextCommand::class,
+                TodoCommand::class,
                 ProfileCommand::class,
             ]);
 
