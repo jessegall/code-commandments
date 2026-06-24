@@ -266,6 +266,9 @@ final class PilgrimageRunner
 
     private function index(PilgrimageState $state): CodebaseIndex
     {
-        return $this->index ??= CodebaseIndex::build($state->scope !== [] ? $state->scope : $this->scopeFiles());
+        return $this->index ??= (new PilgrimageIndexCache())->get(
+            $this->basePath,
+            $state->scope !== [] ? $state->scope : $this->scopeFiles(),
+        );
     }
 }

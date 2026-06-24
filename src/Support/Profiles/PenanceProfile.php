@@ -10,7 +10,7 @@ namespace JesseGall\CodeCommandments\Support\Profiles;
  * cleanup pass: there is NO pre-commit gate (commit progress freely; fixing a
  * file no longer re-arms a blocker on it), only a pre-push gate that blocks
  * pushing while sins remain. Keep-going holds the session open until `judge` is
- * righteous, and `judge --plan` lays out the fix order (root causes first).
+ * righteous, and `pilgrimage` + `next` walk the fix order (root causes first).
  */
 final class PenanceProfile extends Profile
 {
@@ -21,7 +21,7 @@ final class PenanceProfile extends Profile
 
     public function description(): string
     {
-        return 'Cleanup — drive the whole backlog to zero (judge --plan, root-cause first); no commit gate, push blocked while sins remain.';
+        return 'Cleanup — drive the whole backlog to zero (pilgrimage + next, root-cause first); no commit gate, push blocked while sins remain.';
     }
 
     public function options(): ProfileOptions
