@@ -101,6 +101,7 @@ final class PilgrimagePresenter
         $lines[] = '   locations and leave the pillar unresolved. Act on every location above.';
         $lines[] = ' When all are fixed, absolved, or reported, run `commandments next` — it re-checks';
         $lines[] = ' this prophet and only then advances (forward-only; it never revisits a passed one).';
+        $lines[] = ' Quick re-check of what is still left here (no scripture): `commandments todo`.';
 
         return $lines;
     }
