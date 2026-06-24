@@ -94,6 +94,7 @@ final class FindArrayBagDeclarations implements Pipe
 
             $className = $classLike->name?->toString() ?? '?';
             $isDataClass = $this->extendsOneOf($classLike, self::SPATIE_DATA_CLASSES, $input->useStatements);
+            $contractMethods = $this->contractLockedMethods($classLike, $input->useStatements);
 
             foreach ($classLike->stmts as $stmt) {
                 if ($stmt instanceof Node\Stmt\Property) {
@@ -102,7 +103,7 @@ final class FindArrayBagDeclarations implements Pipe
             }
 
             foreach ($classLike->getMethods() as $method) {
-                $this->collectMethod($method, $className, $isDataClass, $input->content, $matches);
+                $this->collectMethod($method, $className, $isDataClass, $contractMethods, $input->content, $matches);
             }
         }
 
@@ -146,16 +147,28 @@ final class FindArrayBagDeclarations implements Pipe
     /**
      * @param  array<MatchResult>  $matches
      */
+    /**
+     * @param  array<string, true>  $contractMethods
+     * @param  array<MatchResult>  $matches
+     */
     private function collectMethod(
         Node\Stmt\ClassMethod $method,
         string $className,
         bool $isDataClass,
+        array $contractMethods,
         string $content,
         array &$matches,
     ): void {
         $methodName = $method->name->toString();
 
         if (in_array($methodName, $this->exemptMethods, true)) {
+            return;
+        }
+
+        // #199/#200: a method that implements an interface (or an abstract parent)
+        // method has a signature it CANNOT change — `array $attributes` on a
+        // Laravel CastsAttributes::get() is the contract, not a value bag.
+        if (isset($contractMethods[$methodName])) {
             return;
         }
 
@@ -505,6 +518,36 @@ final class FindArrayBagDeclarations implements Pipe
      * @param  list<string>  $candidates
      * @param  array<string, string>  $useStatements
      */
+    /**
+     * Method names locked by an implemented interface — their signatures are the
+     * contract, not a value bag. Each `implements` name is resolved to its FQCN
+     * via the file's imports and, when loadable, reflected for its method set
+     * (which includes inherited interface methods).
+     *
+     * @param  array<string, string>  $useStatements
+     * @return array<string, true>
+     */
+    private function contractLockedMethods(Node\Stmt\ClassLike $classLike, array $useStatements): array
+    {
+        if (! $classLike instanceof Node\Stmt\Class_) {
+            return [];
+        }
+
+        $locked = [];
+
+        foreach ($classLike->implements as $interface) {
+            $fqcn = $useStatements[$interface->toString()] ?? $interface->toString();
+
+            if (interface_exists($fqcn)) {
+                foreach (get_class_methods($fqcn) as $method) {
+                    $locked[$method] = true;
+                }
+            }
+        }
+
+        return $locked;
+    }
+
     private function extendsOneOf(Node\Stmt\ClassLike $classLike, array $candidates, array $useStatements): bool
     {
         if (! $classLike instanceof Node\Stmt\Class_ || $classLike->extends === null) {

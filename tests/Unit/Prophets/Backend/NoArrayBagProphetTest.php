@@ -332,6 +332,29 @@ class NoArrayBagProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    /**
+     * #199 / #200: `array $attributes` whose signature is locked by an implemented
+     * interface (Laravel's CastsAttributes::get()/set()) is the contract, not a
+     * value bag — an implementer cannot change it. The prophet must skip it.
+     */
+    public function test_does_not_flag_array_params_locked_by_an_implemented_interface(): void
+    {
+        $content = <<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+        use Illuminate\Database\Eloquent\Model;
+        final class GraphCast implements CastsAttributes {
+            /** @param array<string, mixed> $attributes */
+            public function get(Model $model, string $key, mixed $value, array $attributes): ?string { return null; }
+            /** @param array<string, mixed> $attributes */
+            public function set(Model $model, string $key, mixed $value, array $attributes): array { return []; }
+        }
+        PHP;
+
+        $this->assertTrue($this->prophet->judge('/x.php', $content)->isRighteous());
+    }
+
     public function test_does_not_flag_nested_generic_dictionary(): void
     {
         $judgment = $this->judgeClass(<<<'PHP'

@@ -52,9 +52,12 @@ Bad — construct-or-null, then guard at every use:
     $match = $bag?->get('match') ?? $name;
 
 Good — a total factory absorbs the condition; the bag is never null:
-    $bag  = Fluent::coalesce($entry);     // empty Fluent when $entry is not an array
+    $bag  = ValueBag::coalesce($entry);   // empty bag when $entry is not an array
     $name = $bag->get('name');
     $match = $bag->get('match', $name);
+
+`commandments scaffold` generates a `ValueBag` with exactly this `coalesce()`
+total factory; or give your own wrapper a `static coalesce(mixed): self`.
 
 WHAT FIRES — `$x = <cond> ? new T(...) : null` (either branch order) assigned to a
 variable that is later consumed via `?->` or as the left of `??` in the same
