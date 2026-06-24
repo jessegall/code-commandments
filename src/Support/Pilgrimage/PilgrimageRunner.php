@@ -127,7 +127,7 @@ final class PilgrimageRunner
         // a reported finding stays quiet until its issue is answered).
         $this->tracker()->clearFindingAbsolutions();
 
-        $state = new PilgrimageState(scope: $this->scopeFiles(), scroll: $this->scroll);
+        $state = new PilgrimageState(scope: $this->scopeFiles(), scroll: $this->scroll, owner: PilgrimageState::currentSession());
         $step = $this->walkFrom($state);
         $state->save($this->basePath);
 

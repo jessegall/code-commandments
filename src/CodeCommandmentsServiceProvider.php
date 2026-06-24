@@ -20,6 +20,7 @@ use JesseGall\CodeCommandments\Commands\RepentCommand;
 use JesseGall\CodeCommandments\Commands\ScriptureCommand;
 use JesseGall\CodeCommandments\Commands\NextCommand;
 use JesseGall\CodeCommandments\Commands\PilgrimageCommand;
+use JesseGall\CodeCommandments\Commands\AutofixCommand;
 use JesseGall\CodeCommandments\Commands\TodoCommand;
 use JesseGall\CodeCommandments\Commands\SyncCommand;
 use JesseGall\CodeCommandments\Commands\UpdateCommand;
@@ -117,6 +118,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 PilgrimageCommand::class,
                 NextCommand::class,
                 TodoCommand::class,
+                AutofixCommand::class,
                 ProfileCommand::class,
             ]);
 

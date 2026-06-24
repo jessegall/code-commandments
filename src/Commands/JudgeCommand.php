@@ -39,6 +39,10 @@ class JudgeCommand extends Command
         ScrollManager $manager,
         ConfessionTracker $tracker
     ): int {
+        if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(base_path(), 'judge', $this->line(...), 'php artisan commandments:')) {
+            return self::SUCCESS;
+        }
+
         $service = new JudgeService(
             $manager,
             $registry,
