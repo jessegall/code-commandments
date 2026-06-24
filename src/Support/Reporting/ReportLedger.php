@@ -9,13 +9,16 @@ use JesseGall\PhpTypes\T_String;
 /**
  * A local record of the prophet reports THIS project has filed, so a consumer
  * can be told when one of their reports has been resolved upstream (and that
- * it's time to update the package). Persisted next to `.commandments-last-synced`.
+ * it's time to update the package). Persisted in the `.commandments/` folder.
  *
  * @phpstan-type Entry array{number: int, url: string, prophet: string, repo: string, reason: string, reported_at: string, resolved: bool, notified: bool}
  */
 final class ReportLedger
 {
-    public const FILENAME = '.commandments-reports.json';
+    public const FILENAME = '.commandments/reports.json';
+
+    /** Pre-v3.0.4 location, read as a fallback and migrated forward on the next write. */
+    public const LEGACY_FILENAME = '.commandments-reports.json';
 
     public function __construct(
         private readonly string $basePath,
@@ -26,16 +29,23 @@ final class ReportLedger
         return rtrim($this->basePath, '/') . '/' . self::FILENAME;
     }
 
+    private function legacyPath(): string
+    {
+        return rtrim($this->basePath, '/') . '/' . self::LEGACY_FILENAME;
+    }
+
     /**
      * @return list<array<string, mixed>>
      */
     public function all(): array
     {
-        if (! is_file($this->path())) {
+        $path = is_file($this->path()) ? $this->path() : $this->legacyPath();
+
+        if (! is_file($path)) {
             return [];
         }
 
-        $data = json_decode((string) file_get_contents($this->path()), true);
+        $data = json_decode((string) file_get_contents($path), true);
         $reports = is_array($data) ? ($data['reports'] ?? null) : null;
 
         return is_array($reports) ? array_values($reports) : [];
@@ -73,9 +83,14 @@ final class ReportLedger
      */
     public function write(array $reports): void
     {
+        @mkdir(dirname($this->path()), 0755, true);
+
         file_put_contents(
             $this->path(),
             json_encode(['reports' => array_values($reports)], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . T_String::NEWLINE,
         );
+
+        // Migrate forward: retire the old root dotfile once the new one is written.
+        @unlink($this->legacyPath());
     }
 }
