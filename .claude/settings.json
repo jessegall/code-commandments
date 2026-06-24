@@ -1,89 +1,44 @@
 {
-    "hooks": {
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "sh .claude/hooks/check-prophet-reports.sh SessionStart"
-                    },
-                    {
-                        "type": "command",
-                        "command": "sh .claude/hooks/maintainer-skills.sh"
-                    }
-                ]
-            },
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments profile --brief 2>/dev/null || true"
-                    },
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments reports --check 2>/dev/null || true"
-                    },
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments scaffold --auto 2>/dev/null || true"
-                    },
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments install-skills --auto 2>/dev/null || true"
-                    },
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments skills 2>/dev/null || true"
-                    },
-                    {
-                        "type": "command",
-                        "command": "sh .claude/hooks/handoff-detect.sh 2>/dev/null || true"
-                    },
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments profile --drift-check 2>/dev/null || true"
-                    }
-                ]
-            }
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "sh .claude/hooks/check-prophet-reports.sh Stop"
-                    }
-                ]
-            },
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash .claude/hooks/stop-protocol.sh"
-                    }
-                ]
-            }
-        ],
-        "UserPromptSubmit": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "vendor/bin/commandments profile --drift-check 2>/dev/null || true"
-                    }
-                ]
-            }
-        ],
-        "PreToolUse": [
-            {
-                "matcher": "EnterPlanMode|ExitPlanMode",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "cat >/dev/null 2>&1; printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"PLAN MODE with Code Commandments active. Your plan MUST be designed around the architectural patterns the prophets enforce \u2014 retrofitting them after the gate blocks you is wasted work. BEFORE finalizing the plan: run `vendor/bin/commandments skills` and READ the skills your work touches (option, invariants, registry, set, null-object, enums, named-exceptions, resolvers, coalesce-factories, immutable-data, model-behaviour), and `vendor/bin/commandments scripture` for the rules. Bake the patterns INTO the plan: Option over null, the right value objects, registries/sets, named exceptions, total functions, no array-bags. A plan that ignores the commandments will fight them.\"}}'; exit 0"
-                    }
-                ]
-            }
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/check-prophet-reports.sh SessionStart"
+          },
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/maintainer-skills.sh"
+          }
         ]
-    }
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/check-prophet-reports.sh Stop"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/stop-protocol.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/grind-keep-going.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
