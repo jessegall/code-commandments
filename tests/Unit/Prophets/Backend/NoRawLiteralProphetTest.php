@@ -549,6 +549,32 @@ class NoRawLiteralProphetTest extends TestCase
         $this->assertStringContainsString('T_String::SPACE', $judgment->sins[0]->suggestion);
     }
 
+    public function test_initializers_only_flags_definition_defaults_not_method_bodies(): void
+    {
+        $this->prophet->configure(['flag_empty_array' => true, 'initializers_only' => true]);
+
+        $judgment = $this->prophet->judge('/x.php', <<<'PHP'
+        <?php
+        class NodeDef {
+            public function __construct(
+                private readonly array $inputs = [],
+                private readonly array $branches = [],
+            ) {}
+            public function build(): array {
+                $acc = [];
+                return $acc;
+            }
+        }
+        PHP);
+
+        // Only the two promoted-param defaults — never the method-body `$acc = []`.
+        $this->assertFallen($judgment, 2);
+
+        foreach ([...$judgment->sins, ...$judgment->warnings] as $finding) {
+            $this->assertContains($finding->line, [4, 5], 'only the initializer-position literals should fire');
+        }
+    }
+
     public function test_flags_separators_when_enabled(): void
     {
         $this->prophet->configure(['flag_separators' => true]);

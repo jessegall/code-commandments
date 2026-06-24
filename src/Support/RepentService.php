@@ -418,7 +418,7 @@ final class RepentService
             ($this->emit)(T_String::empty());
             ($this->emit)('These auto-fixes were withheld so an invariant violation is not laundered into');
             ($this->emit)('a default/Option. Fix the named root cause, then re-run repent — or walk it with');
-            ($this->emit)('`judge --next` (it surfaces the cause with a fix-this-first hint).');
+            ($this->emit)('the pilgrimage (pilgrimage / next reach the root-cause pillar before its symptoms).');
         }
 
         if ($dryRun) {

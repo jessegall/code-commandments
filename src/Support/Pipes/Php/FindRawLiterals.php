@@ -81,7 +81,13 @@ final class FindRawLiterals implements Pipe
      * string / JSON / matrix) are on by default; the noisy categories are
      * opt-in.
      *
-     * @var array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool, sentinel_floats: bool}
+     * `initializers_only` loosens the prophet to a class's DEFINITION surface:
+     * when on, it flags a raw literal only in an initializer/const position — a
+     * property or promoted-param default (`private array $inputs = []`), a class
+     * constant, a parameter default, an enum case — and leaves literals inside
+     * method bodies alone.
+     *
+     * @var array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool, sentinel_floats: bool, initializers_only: bool}
      */
     private array $options = [
         'empty_array' => false,
@@ -90,6 +96,7 @@ final class FindRawLiterals implements Pipe
         'separators' => false,
         'sentinel_ints' => false,
         'sentinel_floats' => false,
+        'initializers_only' => false,
     ];
 
     /**
@@ -150,6 +157,7 @@ final class FindRawLiterals implements Pipe
             'separators' => false,
             'sentinel_ints' => false,
             'sentinel_floats' => false,
+            'initializers_only' => false,
         ], $options);
 
         // Files that DEFINE a type helper hold the canonical literal — skip them.
@@ -169,6 +177,13 @@ final class FindRawLiterals implements Pipe
         self::findSentinelInts($ast, $nodeFinder, $content, $parents, $options, $findings, $consumed);
         self::findSentinelFloats($ast, $nodeFinder, $content, $parents, $options, $findings, $consumed);
         self::findCoalesceLiterals($ast, $nodeFinder, $content, $findings);
+
+        if ($options['initializers_only']) {
+            // Only literals in an initializer / const position (a property or
+            // promoted-param default, a class constant, a parameter default, an enum
+            // case) — leave method-body literals alone.
+            $findings = array_values(array_filter($findings, static fn (array $f): bool => ($f['position'] ?? 'value') === 'const'));
+        }
 
         return self::dedupeFindings($findings);
     }

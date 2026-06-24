@@ -69,7 +69,7 @@ final class AbsolveService
 
             if ($result['blocking_sins'] > 0) {
                 $r = ClaudeHooksInstaller::runnerFor($basePath);
-                $error("{$result['blocking_sins']} sin(s) cannot be absolved and still block — fix them with: {$r[0]}{$r[1]}judge --next");
+                $error("{$result['blocking_sins']} sin(s) cannot be absolved and still block — fix them: walk with {$r[0]}{$r[1]}pilgrimage then {$r[0]}{$r[1]}next");
             }
 
             return self::SUCCESS;
@@ -88,7 +88,7 @@ final class AbsolveService
         }
 
         if (! is_string($fingerprint) || T_String::isBlank($fingerprint)) {
-            $error('Pass --fingerprint=<hash> or --at=path:line (copy either from judge --next).');
+            $error('Pass --fingerprint=<hash> or --at=path:line (the file:line shown under each pilgrimage / next step).');
 
             return self::FAILURE;
         }
@@ -146,7 +146,7 @@ final class AbsolveService
         }
 
         if ($unique === []) {
-            $error("No live finding at {$at}" . ($prophet !== null ? " for a prophet matching '{$prophet}'" : T_String::empty()) . '. Run judge --next to see current findings.');
+            $error("No live finding at {$at}" . ($prophet !== null ? " for a prophet matching '{$prophet}'" : T_String::empty()) . '. Run next (the pilgrimage step) or judge to see current findings.');
 
             return null;
         }

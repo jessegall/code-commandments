@@ -277,6 +277,52 @@ SCRIPTURE;
     }
 
     /**
+     * Restrict to a class's DEFINITION surface — flag a raw literal only in an
+     * initializer/const position (a property or promoted-param default, a class
+     * constant, a parameter default, an enum case) and leave method bodies alone.
+     */
+    public function initializersOnly(bool $on = true): static
+    {
+        return $this->setting('initializers_only', $on);
+    }
+
+    /** Also flag empty `[]` array literals. */
+    public function flagEmptyArray(bool $on = true): static
+    {
+        return $this->setting('flag_empty_array', $on);
+    }
+
+    /** Flag whitespace literals (\n \t \r …). On by default. */
+    public function flagWhitespace(bool $on = true): static
+    {
+        return $this->setting('flag_whitespace', $on);
+    }
+
+    /** Flag a lone space `' '`. */
+    public function flagSpace(bool $on = true): static
+    {
+        return $this->setting('flag_space', $on);
+    }
+
+    /** Flag separator literals (`, `, `/`, `.`, `-`). */
+    public function flagSeparators(bool $on = true): static
+    {
+        return $this->setting('flag_separators', $on);
+    }
+
+    /** Flag sentinel integers (0, 1, -1). */
+    public function flagSentinelInts(bool $on = true): static
+    {
+        return $this->setting('flag_sentinel_ints', $on);
+    }
+
+    /** Flag sentinel floats (0.0). */
+    public function flagSentinelFloats(bool $on = true): static
+    {
+        return $this->setting('flag_sentinel_floats', $on);
+    }
+
+    /**
      * @return array{empty_array: bool, whitespace: bool, space: bool, separators: bool, sentinel_ints: bool}
      */
     private function optionsFromConfig(): array
@@ -288,6 +334,7 @@ SCRIPTURE;
             'separators' => (bool) $this->config('flag_separators', false),
             'sentinel_ints' => (bool) $this->config('flag_sentinel_ints', false),
             'sentinel_floats' => (bool) $this->config('flag_sentinel_floats', false),
+            'initializers_only' => (bool) $this->config('initializers_only', false),
         ];
     }
 

@@ -35,14 +35,10 @@ return [
                 Backend\NoRawRequestProphet::class,
                 Backend\NoJsonResponseProphet::class,
                 Backend\NoDirectRequestInputProphet::class,
-                Backend\NoEventDispatchProphet::class,
-                Backend\NoRecordThatOutsideAggregateProphet::class,
                 Backend\NoValidatedMethodProphet::class,
                 Backend\NoInlineValidationProphet::class,
-                Backend\TypeScriptAttributeProphet::class,
                 Backend\ReadonlyDataPropertiesProphet::class,
                 Backend\FormRequestTypedGettersProphet::class,
-                Backend\HiddenAttributeProphet::class,
                 Backend\ControllerPrivateMethodsProphet::class => [
                     'max_private_methods' => 3,
                     'min_method_lines' => 3,
@@ -67,6 +63,12 @@ return [
                     // 'flag_separators'    => true,  // , ', ' / . -
                     // 'flag_sentinel_ints' => true,  // 0 1 -1
                     // 'flag_sentinel_floats' => true,  // 0.0
+                    //
+                    // Loosen to a class's DEFINITION surface — flag a raw literal only
+                    // in an initializer/const position (a property or promoted-param
+                    // default `private array $inputs = []`, a class constant, a
+                    // parameter default, an enum case) and leave method bodies alone:
+                    // 'initializers_only' => true,
                     //
                     // Override the type-helper classes the fixer rewrites to:
                     // 'string_class' => 'JesseGall\\PhpTypes\\T_String',

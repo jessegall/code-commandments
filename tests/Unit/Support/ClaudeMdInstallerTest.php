@@ -141,8 +141,10 @@ class ClaudeMdInstallerTest extends TestCase
         foreach ([$artisan, $standalone] as $text) {
             $this->assertStringContainsString('"I disagree" is not', $text);
             $this->assertStringContainsString('accept pre-existing backlog', $text);
+            $this->assertStringContainsString('READ EACH OUTPUT IN FULL', $text);
+            $this->assertStringNotContainsString('judge --next', $text);
         }
-        $this->assertStringContainsString('php artisan commandments:judge --next --git', $artisan);
-        $this->assertStringContainsString('vendor/bin/commandments judge --next --git', $standalone);
+        $this->assertStringContainsString('php artisan commandments:pilgrimage', $artisan);
+        $this->assertStringContainsString('vendor/bin/commandments pilgrimage', $standalone);
     }
 }
