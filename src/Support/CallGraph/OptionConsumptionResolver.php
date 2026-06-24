@@ -178,14 +178,16 @@ final class OptionConsumptionResolver
             return 'other';
         }
 
-        $assignLine = $call->getStartLine();
+        $after = $call->getEndFilePos();
 
-        foreach ((new NodeFinder)->find((array) $fn->getStmts(), static fn (Node $n): bool => true) as $node) {
-            if ($node->getStartLine() <= $assignLine) {
+        foreach ((new NodeFinder)->findInstanceOf((array) $fn->getStmts(), Expr\Variable::class) as $node) {
+            // Strictly AFTER the assignment expression (by byte offset, so a same-line
+            // `$x = call(); if ($x === null)` is handled, not skipped as same-line).
+            if ($node->getStartFilePos() <= $after) {
                 continue;
             }
 
-            if ($node instanceof Expr\Variable && $node->name === $name) {
+            if ($node->name === $name) {
                 $parent = $node->getAttribute('parent');
 
                 if (($parent instanceof Expr\MethodCall || $parent instanceof Expr\NullsafeMethodCall) && $parent->var === $node && $parent->name instanceof Node\Identifier) {
