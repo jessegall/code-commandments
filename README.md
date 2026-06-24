@@ -568,7 +568,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_115 prophets._
+_111 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -591,7 +591,6 @@ _115 prophets._
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
 | `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |
 | `HardcodedLiteralShouldBeConfigProphet` | — | A literal hardcoded into a consumer that reads it from config elsewhere should read from config too |
-| `HiddenAttributeProphet` | — | Add #[Hidden] to properties with #[FromContainer] or #[FromSession] |
 | `KebabCaseRoutesProphet` | — | Route URIs must use kebab-case |
 | `LongDocblockProphet` | — | Keep docblocks to one short narrative sentence above the @-tag block |
 | `LongMethodProphet` | — | Keep methods short and focused on a single responsibility |
@@ -605,7 +604,6 @@ _115 prophets._
 | `NoConditionalArraySpreadProphet` | — | Assemble conditional array shapes with a builder, not a spread of a ternary with an empty arm |
 | `NoContainerResolutionProphet` | — | Prefer constructor injection over container resolution (app(), resolve(), App::make()) |
 | `NoDirectRequestInputProphet` | — | Use typed FormRequest getters instead of direct request data access |
-| `NoEventDispatchProphet` | — | Use event() helper instead of Event::dispatch() or static dispatch |
 | `NoExternalDataFromProphet` | Yes | Keep Spatie ::from() inside the Data class — no custom from* factories, no external ::from() |
 | `NoFacadesInServicesProphet` | — | Do not call Laravel facades in services — inject the underlying contract via the constructor |
 | `NoInlineBootLogicProphet` | — | Model boot hooks should only dispatch events, not contain business logic |
@@ -619,7 +617,6 @@ _115 prophets._
 | `NoOptionToNullProphet` | Yes | Do not unwrap an Option back to null with getOr(null) |
 | `NoRawLiteralProphet` | Yes | Do not write raw magic literals (empties, newlines, …) — name them with T_String / T_Json / T_Array / T_Int |
 | `NoRawRequestProphet` | — | Use FormRequest classes instead of raw Request in controllers |
-| `NoRecordThatOutsideAggregateProphet` | — | Only call recordThat() inside Aggregate classes |
 | `NoRedundantDefaultArgumentProphet` | Yes | Do not pass an argument equal to the parameter default — the default is already applied |
 | `NoRedundantOrElseWrapProphet` | Yes | Do not manually wrap an orElse alternative in Option::some()/make() |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
@@ -684,7 +681,6 @@ _115 prophets._
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
 | `TranslationKeyCongruenceProphet` | — | A __()/trans() key must exist in a lang file — a missing key renders as the key string |
-| `TypeScriptAttributeProphet` | — | Add #[TypeScript] attribute to all Data classes |
 | `UnwrapOptionWithGuardProphet` | Yes | Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow() |
 | `WideUnionTypeProphet` | Yes | Avoid wide type unions — model value-or-nothing as an Option |
 
