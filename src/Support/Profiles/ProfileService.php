@@ -500,9 +500,9 @@ final class ProfileService
 
         if ($isPenance) {
             $lines[] = T_String::empty();
-            $lines[] = 'This is a CLEANUP pass. Walk the doctrines root-cause first, forward-only:';
-            $lines[] = "  {$r}repent            # first, bulk-fix the [AUTO-FIXABLE] findings";
-            $lines[] = "  {$r}pilgrimage        # begin the walk — ONE prophet at a time, pillar by pillar";
+            $lines[] = 'This is a CLEANUP pass. The PILGRIMAGE is the only way through it — do NOT run a bulk `repent` or `judge`; while the walk is active they are locked:';
+            $lines[] = "  {$r}pilgrimage        # START HERE — the forward-only walk, ONE prophet at a time, pillar by pillar";
+            $lines[] = "  {$r}autofix           # ON an [AUTO-FIXABLE] prophet: fix THIS prophet in place (does not advance)";
             $lines[] = "  {$r}next              # after fixing/absolving every shown location, advance";
             $lines[] = 'READ each pilgrimage/next output IN FULL — never head/tail/truncate it, or you WILL miss locations. `next` re-checks the current prophet and refuses to advance until it is clean (forward-only — it never revisits a passed one, so you cannot loop). Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins or admonitions remain.';
         } elseif (GitGateStage::PrePush->equals($o->gate)) {

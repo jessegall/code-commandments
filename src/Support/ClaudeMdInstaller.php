@@ -258,6 +258,7 @@ final class ClaudeMdInstaller
         $scripture = "{$r}scripture --prophet=NAME";
         $reportFull = "{$r}report --at=path:line --reason=\"what is wrong\"";
         $repent = "{$r}repent";
+        $autofix = "{$r}autofix";
         $reportShort = "{$r}report --at=path:line --reason=\"…\"";
         $featureReq = "{$r}report --feature-request --title=\"…\" --reason=\"…\"";
 
@@ -280,10 +281,12 @@ each location do exactly one:
   - FIX it (follow the scripture); OR
   - if it is an advisory finding whose rubric does not apply here, absolve it
     WITH A REASON: `{$absolveAt}`.
-Sins are imperative and cannot be absolved — they must be fixed. Bulk-fix the
-[AUTO-FIXABLE] ones first with `{$repent}`; audit the whole codebase any time
-with `{$judge}`. To accept a large pre-existing backlog once, so only NEW
-advisories surface (sins still block), baseline it: `{$absolveAll}`.
+Sins are imperative and cannot be absolved — they must be fixed. Do NOT bulk
+`{$repent}` or `{$judge}` to "start" — while the walk runs they are LOCKED. On an
+[AUTO-FIXABLE] prophet, run `{$autofix}` to fix THAT prophet in place, then
+`{$next}`. `{$judge}` (no flag) is the whole-codebase audit, for when no walk runs.
+To accept a large pre-existing backlog once (only NEW advisories surface after; sins
+still block), baseline it: `{$absolveAll}`.
 
 OWN EVERY SIN YOU ENCOUNTER: a sin is a sin regardless of who wrote it. If
 judge surfaces a sin — in your own changes OR pre-existing in a file you are
@@ -367,6 +370,7 @@ INSTRUCTIONS;
         $judgeNext = "{$r}judge --next";
         $absolveH = "{$r}absolve --fingerprint=H --reason=\"…\"";
         $repent = "{$r}repent";
+        $autofix = "{$r}autofix";
         $reportShort = "{$r}report --at=path:line --reason=\"…\"";
         $scripture = "{$r}scripture --prophet=NAME";
         $reportFull = "{$r}report --at=path:line --reason=\"why\"";

@@ -20,6 +20,20 @@ final class PilgrimageLock
     public const BYPASS_ENV = 'COMMANDMENTS_PILGRIMAGE_BYPASS';
 
     /**
+     * The short name of the prophet the pilgrimage is currently on, when the walk is
+     * locked for THIS session — every action (absolve/report) is scoped to it. Null
+     * when no walk is active for this session.
+     */
+    public static function currentProphet(string $basePath, ?string $configPath): ?string
+    {
+        if ($configPath === null || ! PilgrimageState::lockedForCurrentSession($basePath)) {
+            return null;
+        }
+
+        return PilgrimageRunner::fromConfig($basePath, $configPath)->peek()['prophet'] ?? null;
+    }
+
+    /**
      * If a pilgrimage is active (and this isn't a bypassed internal call), emit the
      * redirect to the pilgrimage commands and return true — the caller should stop.
      *
