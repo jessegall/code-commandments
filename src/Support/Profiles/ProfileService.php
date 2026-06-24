@@ -50,11 +50,25 @@ final class ProfileService
             return ProfileRegistry::get($name);
         }
 
-        if ($this->hasLegacySetup()) {
+        // A linked git worktree shares the main repo's .git/hooks and may share a
+        // committed CLAUDE.md, so neither is evidence THAT worktree opted into a
+        // profile. Never infer one for it — it stays dormant (disabled) until a
+        // profile is explicitly selected in the worktree (writing its own
+        // .commandments/profile). This keeps worktrees isolated from each other.
+        if (! $this->isLinkedWorktree() && $this->hasLegacySetup()) {
             return ProfileRegistry::get('phased');
         }
 
         return ProfileRegistry::default();
+    }
+
+    /**
+     * Whether $basePath is a LINKED git worktree (its `.git` is a file pointing at
+     * `…/.git/worktrees/<name>`), as opposed to the main checkout (`.git` is a dir).
+     */
+    private function isLinkedWorktree(): bool
+    {
+        return is_file($this->basePath . '/.git');
     }
 
     /**
