@@ -45,6 +45,18 @@ PHP;
         $this->assertStringContainsString('lines long', $judgment->sins[0]->message);
     }
 
+    public function test_exempts_a_method_that_is_a_single_verbatim_heredoc_return(): void
+    {
+        // #206: a method whose whole body is `return <<<'DOC' … DOC;` holds verbatim
+        // content (skill docs); its length is authored text, not logic to extract.
+        $doc = str_repeat("Verbatim documentation line that is just authored text.\n", 40);
+        $content = "<?php\nclass WorkflowEngineSkill {\n  private function guide(): string {\n    return <<<'GUIDE'\n{$doc}\nGUIDE;\n  }\n}\n";
+
+        $judgment = $this->prophet->judge('/app/Skills/WorkflowEngineSkill.php', $content);
+
+        $this->assertCount(0, $judgment->sins, 'a single verbatim heredoc/nowdoc return is content, not a long method');
+    }
+
     public function test_passes_with_short_methods(): void
     {
         $content = <<<'PHP'

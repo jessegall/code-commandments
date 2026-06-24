@@ -264,6 +264,16 @@ final class FindStringsThatShouldBeEnums implements Pipe
         }
 
         [$paramIndex, $literals] = $closedSet;
+
+        // #207: only an enum if the value DECIDES something. A param that is purely
+        // presentation — interpolated into output, concatenated, passed through — and
+        // never branched on (no comparison / match / switch / array-key / in_array) is
+        // a one-off label ('Inputs'/'Outputs' to a doc renderer), not a closed-set
+        // domain value. Don't flag it.
+        if (! $this->paramIsDecisionUsed($param, $paramName, $parentMap)) {
+            return;
+        }
+
         $candidate = $this->findCandidateEnumForLiterals($paramName, $literals, $importedEnums);
 
         if ($candidate !== null) {
@@ -302,6 +312,91 @@ final class FindStringsThatShouldBeEnums implements Pipe
                 );
             }
         }
+    }
+
+    /**
+     * Whether the parameter warrants an enum. It does UNLESS its value is used
+     * inside the method ONLY for presentation — interpolated, concatenated, or
+     * passed through — and never to DECIDE something (a comparison, a match/switch
+     * subject, an `if` condition, an array-key lookup, or an `in_array` test). A
+     * presentation-only param is a one-off label ('Inputs'/'Outputs' to a renderer),
+     * not a closed-set domain value (#207). An UNUSED param (a stub) keeps flagging —
+     * the stringly-typed API contract still wants an enum; only an actively
+     * presentation-used one is suppressed. Unknown scope → keep flagging.
+     *
+     * @param  array<int, Node>  $parentMap
+     */
+    private function paramIsDecisionUsed(Node\Param $param, string $paramName, array $parentMap): bool
+    {
+        $function = $parentMap[spl_object_id($param)] ?? null;
+
+        if (! $function instanceof Node\FunctionLike || $function->getStmts() === null) {
+            return true;
+        }
+
+        $usedAtAll = false;
+
+        foreach ((new NodeFinder)->findInstanceOf($function->getStmts(), Expr\Variable::class) as $variable) {
+            if ($variable->name !== $paramName) {
+                continue;
+            }
+
+            $usedAtAll = true;
+
+            if ($this->isDecisionContext($variable, $parentMap)) {
+                return true;
+            }
+        }
+
+        // Unused (a stub) → keep flagging the stringly-typed API; used but never for a
+        // decision → presentation-only, suppress.
+        return ! $usedAtAll;
+    }
+
+    /**
+     * @param  array<int, Node>  $parentMap
+     */
+    private function isDecisionContext(Expr\Variable $variable, array $parentMap): bool
+    {
+        $parent = $parentMap[spl_object_id($variable)] ?? null;
+
+        if ($parent === null) {
+            return false;
+        }
+
+        // === / !== / == / != against another value.
+        if ($parent instanceof Expr\BinaryOp\Identical
+            || $parent instanceof Expr\BinaryOp\NotIdentical
+            || $parent instanceof Expr\BinaryOp\Equal
+            || $parent instanceof Expr\BinaryOp\NotEqual
+        ) {
+            return true;
+        }
+
+        // match($x) / switch($x) / if($x) — the value is the branch subject.
+        if (($parent instanceof Expr\Match_ || $parent instanceof Node\Stmt\Switch_ || $parent instanceof Node\Stmt\If_ || $parent instanceof Node\Stmt\ElseIf_)
+            && $parent->cond === $variable
+        ) {
+            return true;
+        }
+
+        // $arr[$x] — used as an array key (a lookup table keyed by the value).
+        if ($parent instanceof Expr\ArrayDimFetch && $parent->dim === $variable) {
+            return true;
+        }
+
+        // in_array($x, …) / array_search($x, …) / array_key_exists($x, …).
+        if ($parent instanceof Node\Arg) {
+            $call = $parentMap[spl_object_id($parent)] ?? null;
+
+            if ($call instanceof Expr\FuncCall && $call->name instanceof Node\Name
+                && in_array(strtolower($call->name->toString()), ['in_array', 'array_search', 'array_key_exists'], true)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
