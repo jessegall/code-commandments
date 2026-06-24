@@ -21,6 +21,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static getOrMethod(string $value)
  * @method static mapMethods(array $value)

@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static minCardPatterns(int $value)
  * @method static minClassDuplicates(int $value)

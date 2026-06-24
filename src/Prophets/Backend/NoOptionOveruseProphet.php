@@ -34,6 +34,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static optionClass(string $value)
  * @method-generated-end

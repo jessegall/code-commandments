@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Support\TailwindClassFilter;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static allowedPatterns(array $value)
  * @method-generated-end

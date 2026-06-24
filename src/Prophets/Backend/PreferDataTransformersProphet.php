@@ -22,6 +22,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static dataBase(string $value)
  * @method static minReads(int $value)
