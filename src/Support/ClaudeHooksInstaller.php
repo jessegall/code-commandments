@@ -303,12 +303,13 @@ HOOK;
      */
     public static function postCommitReminderCommand(string $binary, string $sep): string
     {
-        $message = 'A commit just landed — a phase is complete. Re-read the Code Commandments '
-            . 'section of CLAUDE.md now and act as a sin resolver: run `' . $binary . $sep . 'judge --next --git` '
-            . 'and handle every finding before starting the next phase. Fix each sin — even pre-existing ones in '
-            . 'files you touched. Warnings: default to FIXING; absolve only when the rubric LEAVE-WHEN genuinely '
-            . 'applies, with a reason. Absolve is not a dismiss button. I did not cause this is never a reason to '
-            . 'leave a sin in place.';
+        $message = 'A commit just landed — a phase is complete. Act as a sin resolver now: run `'
+            . $binary . $sep . 'pilgrimage` then `' . $binary . $sep . 'next` to walk the findings '
+            . '(one prophet at a time, with its full scripture and every location — READ each output IN FULL, '
+            . 'never truncate it). Handle every finding before starting the next phase. Fix each sin — even '
+            . 'pre-existing ones in files you touched. Warnings: default to FIXING; absolve only when the rubric '
+            . 'LEAVE-WHEN genuinely applies, with a reason. Absolve is not a dismiss button. I did not cause this '
+            . 'is never a reason to leave a sin in place.';
 
         $json = '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"' . $message . '"}}';
 

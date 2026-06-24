@@ -131,6 +131,9 @@ Every command is available via both Laravel artisan
 | [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/ |
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
 | [`judge`](#judge) | Judge the codebase for sins against the commandments |
+| [`migrate-config`](#migrate-config) | Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&gt;… form |
+| [`next`](#next) | Advance the pilgrimage to the next finding (forward-only) |
+| [`pilgrimage`](#pilgrimage) | Begin the forward-only doctrine walk (resets state; `next` advances it) |
 | [`profile`](#profile) | Show, list, or switch the active code-commandments profile (disabled/grind/phased/sins-only) |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
 | [`report`](#report) | Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue |
@@ -139,6 +142,7 @@ Every command is available via both Laravel artisan
 | [`scripture`](#scripture) | List all commandments and their descriptions |
 | [`skills`](#skills) | List the available Code Commandments skills (what they teach + where to read) |
 | [`sync`](#sync) | Add newly available prophets to your config file |
+| [`update`](#update) | Stay current: wire the composer lifecycle scripts, then sync prophets / scaffold / skills / hooks |
 
 ### `absolve`
 
@@ -206,6 +210,33 @@ Judge the codebase for sins against the commandments.
 | `--no-parallel` | — | Judge sequentially (no forked workers) — use on a platform without pcntl or to debug |
 | `--next` | — | Show exactly one finding at a time (fix or absolve to advance) |
 | `--plan` | — | Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan) |
+
+### `migrate-config`
+
+Convert a legacy array-style prophets list to the fluent ProphetClass::make()-&gt;… form.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--out` | `<value>` | Where to write the reference file (default: alongside the config) |
+
+### `next`
+
+Advance the pilgrimage to the next finding (forward-only).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--scroll` | `<value>` | Scroll to walk |
+
+### `pilgrimage`
+
+Begin the forward-only doctrine walk (resets state; `next` advances it).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
+| `--scroll` | `<value>` | Scroll to walk |
 
 ### `profile`
 
@@ -293,6 +324,14 @@ Add newly available prophets to your config file.
 | `--config`, `-c` | `<value>` | Path to commandments.php config file |
 | `--after` | `<value>` | Only add prophets introduced after this version (e.g. 1.4.0). Pass `previous` to use the last synced version automatically. Prophets you removed before upgrading stay removed. |
 | `--dry-run` | — | Show what would be added without modifying the file |
+
+### `update`
+
+Stay current: wire the composer lifecycle scripts, then sync prophets / scaffold / skills / hooks.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
 
 <!-- AUTOGEN:COMMANDS:END -->
 
@@ -529,7 +568,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_114 prophets._
+_111 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -552,7 +591,6 @@ _114 prophets._
 | `FeatureEnvyProphet` | — | Move a query over another object's internals onto that object (tell-don't-ask) |
 | `FormRequestTypedGettersProphet` | — | Add explicit return types to FormRequest getter methods |
 | `HardcodedLiteralShouldBeConfigProphet` | — | A literal hardcoded into a consumer that reads it from config elsewhere should read from config too |
-| `HiddenAttributeProphet` | — | Add #[Hidden] to properties with #[FromContainer] or #[FromSession] |
 | `KebabCaseRoutesProphet` | — | Route URIs must use kebab-case |
 | `LongDocblockProphet` | — | Keep docblocks to one short narrative sentence above the @-tag block |
 | `LongMethodProphet` | — | Keep methods short and focused on a single responsibility |
@@ -566,7 +604,6 @@ _114 prophets._
 | `NoConditionalArraySpreadProphet` | — | Assemble conditional array shapes with a builder, not a spread of a ternary with an empty arm |
 | `NoContainerResolutionProphet` | — | Prefer constructor injection over container resolution (app(), resolve(), App::make()) |
 | `NoDirectRequestInputProphet` | — | Use typed FormRequest getters instead of direct request data access |
-| `NoEventDispatchProphet` | — | Use event() helper instead of Event::dispatch() or static dispatch |
 | `NoExternalDataFromProphet` | Yes | Keep Spatie ::from() inside the Data class — no custom from* factories, no external ::from() |
 | `NoFacadesInServicesProphet` | — | Do not call Laravel facades in services — inject the underlying contract via the constructor |
 | `NoInlineBootLogicProphet` | — | Model boot hooks should only dispatch events, not contain business logic |
@@ -580,7 +617,6 @@ _114 prophets._
 | `NoOptionToNullProphet` | Yes | Do not unwrap an Option back to null with getOr(null) |
 | `NoRawLiteralProphet` | Yes | Do not write raw magic literals (empties, newlines, …) — name them with T_String / T_Json / T_Array / T_Int |
 | `NoRawRequestProphet` | — | Use FormRequest classes instead of raw Request in controllers |
-| `NoRecordThatOutsideAggregateProphet` | — | Only call recordThat() inside Aggregate classes |
 | `NoRedundantDefaultArgumentProphet` | Yes | Do not pass an argument equal to the parameter default — the default is already applied |
 | `NoRedundantOrElseWrapProphet` | Yes | Do not manually wrap an orElse alternative in Option::some()/make() |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
@@ -621,6 +657,7 @@ _114 prophets._
 | `PreferTotalOverNullableProphet` | — | Make a method total or throw when every caller already de-nulls its nullable return |
 | `PreferTypeCoalesceProphet` | Yes | Prefer T_*::coalesce() over `?? &lt;empty literal&gt;` on a nullable typed value |
 | `PreferTypeMethodOverInlineDispatchProphet` | — | Move per-case dispatch and type-constant mappings onto the type, not inline at the call site |
+| `PreferTypedBoundaryProphet` | — | Type values at the deserialization boundary instead of leaking `mixed` for consumers to re-coerce. |
 | `PreferYieldOverAccumulatorProphet` | — | Prefer returning / yielding typed results over threading a write-only accumulator parameter through a class |
 | `PushGenericToSourceProphet` | — | Push a type to its source @return instead of re-asserting it with a call-site @var |
 | `QueryModelsThroughQueryMethodProphet` | Yes | Query models through the ::query() method instead of direct static calls |
@@ -644,7 +681,6 @@ _114 prophets._
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
 | `TranslationKeyCongruenceProphet` | — | A __()/trans() key must exist in a lang file — a missing key renders as the key string |
-| `TypeScriptAttributeProphet` | — | Add #[TypeScript] attribute to all Data classes |
 | `UnwrapOptionWithGuardProphet` | Yes | Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow() |
 | `WideUnionTypeProphet` | Yes | Avoid wide type unions — model value-or-nothing as an Option |
 

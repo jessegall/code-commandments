@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use JesseGall\CodeCommandments\Commandments\BaseCommandment;
 use JesseGall\CodeCommandments\Contracts\Commandment;
+use JesseGall\CodeCommandments\Doctrines\DoctrineRegistry;
+use JesseGall\CodeCommandments\Results\Severity;
 use Illuminate\Support\Collection;
 
 /**
@@ -17,6 +20,16 @@ class ProphetRegistry
      * @var array<string, array<class-string<Commandment>>>
      */
     protected array $prophets = [];
+
+    /**
+     * Pre-built, fluently-configured prophet instances keyed by scroll + class —
+     * the new `ProphetClass::make()->severity(...)->...` config form. When present
+     * the instance is used as-is (it already carries its settings) instead of
+     * `new $class()`.
+     *
+     * @var array<string, array<class-string<Commandment>, Commandment>>
+     */
+    protected array $prophetInstances = [];
 
     /**
      * @var array<string, array<string, mixed>>
@@ -61,7 +74,12 @@ class ProphetRegistry
     public function registerMany(string $scroll, array $prophetClasses): void
     {
         foreach ($prophetClasses as $key => $value) {
-            if (is_string($key)) {
+            if ($value instanceof Commandment) {
+                // Fluent: a pre-configured `ProphetClass::make()->severity(...)` instance.
+                $class = $value::class;
+                $this->register($scroll, $class);
+                $this->prophetInstances[$scroll][$class] = $value;
+            } elseif (is_string($key)) {
                 // Associative: class => config
                 $this->register($scroll, $key);
                 $this->setProphetConfig($scroll, $key, $value);
@@ -122,15 +140,57 @@ class ProphetRegistry
         $thresholds = $this->scrollConfigs[$scroll]['thresholds'] ?? [];
 
         return collect($classes)->map(function (string $class) use ($scroll, $thresholds) {
-            $prophet = new $class();
+            // A fluently-built instance is already configured — use it as-is so its
+            // settings aren't clobbered by the threshold merge.
+            $prophet = $this->prophetInstances[$scroll][$class] ?? null;
 
-            if (method_exists($prophet, 'configure')) {
-                $prophetConfig = $this->prophetConfigs[$scroll][$class] ?? [];
-                $prophet->configure(array_merge($thresholds, $prophetConfig));
+            if ($prophet === null) {
+                $prophet = new $class();
+
+                if (method_exists($prophet, 'configure')) {
+                    $prophetConfig = $this->prophetConfigs[$scroll][$class] ?? [];
+                    $prophet->configure(array_merge($thresholds, $prophetConfig));
+                }
             }
+
+            $this->applyDoctrineSeverity($scroll, $prophet);
 
             return $prophet;
         })->filter(fn (Commandment $prophet) => $prophet->supported());
+    }
+
+    /**
+     * Layer a doctrine- or band-level severity default UNDER an unset prophet: a
+     * `doctrines` config map (`['totality' => 'sin', 'totality.band.5' => 'warning',
+     * 'idiomatic-iteration' => 'off']`) sets the stake for a whole doctrine or one
+     * band. A band-specific entry wins over the doctrine-wide one; an explicit
+     * prophet-level override always wins over both.
+     */
+    private function applyDoctrineSeverity(string $scroll, Commandment $prophet): void
+    {
+        if (! $prophet instanceof BaseCommandment || $prophet->severityOverride() !== null) {
+            return;
+        }
+
+        $location = DoctrineRegistry::locate($prophet::class);
+
+        if ($location === null) {
+            return;
+        }
+
+        $doctrines = $this->scrollConfigs[$scroll]['doctrines'] ?? [];
+        $byBand = $location['doctrine'] . '.band.' . $location['band'];
+        $value = $doctrines[$byBand] ?? $doctrines[$location['doctrine']] ?? null;
+
+        if ($value === null) {
+            return;
+        }
+
+        $severity = $value instanceof Severity ? $value : (is_string($value) ? Severity::fromName($value) : null);
+
+        if ($severity !== null) {
+            $prophet->severity($severity);
+        }
     }
 
     /**

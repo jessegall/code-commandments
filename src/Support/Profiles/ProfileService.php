@@ -432,7 +432,7 @@ final class ProfileService
 
         $isPenance = GitGateStage::PrePush->equals($o->gate) && JudgeScope::None->equals($o->scope);
 
-        $alsoWarnings = $o->gateBlocksOnWarnings() ? ' and warnings' : T_String::empty();
+        $alsoWarnings = $o->gateBlocksOnWarnings() ? ' or warnings' : T_String::empty();
 
         $gate = match (true) {
             GitGateStage::None->equals($o->gate) => 'No git gate — nothing blocks commits or pushes.',
@@ -443,7 +443,7 @@ final class ProfileService
 
         $cadence = match (true) {
             $o->perPhaseNudges => 'Cadence: judge each phase as you go — fix findings before the next phase.',
-            $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`judge --plan`). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
+            $isPenance => 'Cadence: a CLEANUP — drive the WHOLE backlog to zero, root causes first (`pilgrimage` then `next`, reading each output in full). Commit progress freely; NEVER skip a messy file (that is the job). Push only when clean.',
             GitGateStage::PrePush->equals($o->gate) => 'Cadence: GRIND — do NOT run judge, the test suite, or ANY gate between phases, even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED here: implement the whole plan phase by phase, commit freely, and reckon (judge + run tests) ONCE before pushing. Running checks mid-grind is the mistake to avoid.',
             default => 'Cadence: no per-phase nudges.',
         };
@@ -486,16 +486,20 @@ final class ProfileService
 
         if ($isPenance) {
             $lines[] = T_String::empty();
-            $lines[] = 'This is a CLEANUP pass. See the whole roadmap, then work it root-cause first:';
-            $lines[] = "  {$r}judge --plan      # every finding, ordered (root causes first)";
-            $lines[] = "  {$r}repent            # bulk-fix the [AUTO-FIXABLE] ones";
-            $lines[] = "  {$r}judge --next      # walk the rest one at a time";
-            $lines[] = 'Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins or warnings remain, and you cannot stop until judge is righteous.';
+            $lines[] = 'This is a CLEANUP pass. Walk the doctrines root-cause first, forward-only:';
+            $lines[] = "  {$r}repent            # first, bulk-fix the [AUTO-FIXABLE] findings";
+            $lines[] = "  {$r}pilgrimage        # begin the walk — ONE prophet at a time, pillar by pillar";
+            $lines[] = "  {$r}next              # after fixing/absolving every shown location, advance";
+            $lines[] = 'READ each pilgrimage/next output IN FULL — never head/tail/truncate it, or you WILL miss locations. `next` re-checks the current prophet and refuses to advance until it is clean (forward-only — it never revisits a passed one, so you cannot loop). Commit progress freely — nothing blocks a commit. NEVER skip a messy file; that is the job. The pre-push gate blocks pushing while sins or warnings remain.';
         } elseif (GitGateStage::PrePush->equals($o->gate)) {
             $lines[] = T_String::empty();
             $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge, the test suite, or ANY gate between phases — even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED in grind: running checks mid-grind is the mistake to avoid. Commit each phase freely and keep moving. (Autonomy during implementation is set above; in plan mode you still ask freely.)';
-            $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` (fix every sin, resolve every warning) and your full test suite ONCE, then push.";
+            $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` and your full test suite ONCE. If judge flags anything, walk it with `{$r}pilgrimage` then `{$r}next` (read the FULL output — never truncate it), fixing or absolving each, then push.";
             $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins or warnings (each fixed or absolved with a reason).';
+        } elseif (GitGateStage::PreCommit->equals($o->gate)) {
+            $lines[] = T_String::empty();
+            $lines[] = "When `{$r}judge` flags a phase, walk the findings before you stage the next: run `{$r}pilgrimage` then `{$r}next` — ONE prophet at a time, with its full scripture and EVERY location.";
+            $lines[] = 'READ each pilgrimage/next output IN FULL — never head/tail/truncate it, or you WILL miss locations. `next` re-checks the current prophet and refuses to advance until it is clean (forward-only — it never loops back). Fix each, or absolve a GENUINE false positive with a reason. The pre-commit gate blocks the commit until your staged files are clean.';
         }
 
         return $lines;

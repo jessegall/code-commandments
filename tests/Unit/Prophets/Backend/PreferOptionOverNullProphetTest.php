@@ -671,8 +671,10 @@ class PreferOptionOverNullProphetTest extends TestCase
         $this->assertCleanFor($judgment);
     }
 
-    public function test_emits_with_caller_count_when_above_threshold(): void
+    public function test_emits_when_callers_branch_on_absence_above_threshold(): void
     {
+        // Three callers that each MANUALLY branch on the null — exactly where forcing
+        // explicit Option handling pays for itself.
         $judgment = $this->judgeWithIndex(<<<'PHP'
         <?php
         namespace App;
@@ -681,9 +683,9 @@ class PreferOptionOverNullProphetTest extends TestCase
                 foreach ($edges as $e) { if ($e) { return $e; } }
                 return null;
             }
-            public function a(): void { $this->findRef([]); }
-            public function b(): void { $this->findRef([]); }
-            public function c(): void { $this->findRef([]); }
+            public function a(): void { if ($this->findRef([]) === null) { return; } }
+            public function b(): void { $x = $this->findRef([]); if ($x === null) { return; } }
+            public function c(): void { $r = $this->findRef([]); if ($r !== null) { echo $r; } }
         }
         PHP);
 
@@ -691,10 +693,11 @@ class PreferOptionOverNullProphetTest extends TestCase
         $this->assertStringContainsString('3 call sites', $judgment->warnings[0]->message);
     }
 
-    public function test_high_threshold_suppresses_even_several_callers(): void
+    public function test_suppresses_when_callers_do_not_branch_on_absence(): void
     {
-        $this->prophet->configure(['min_callers' => 10]);
-
+        // Three callers that DISCARD the result — they never branch on absence, so an
+        // Option would buy nothing at any call site. The over-fire fix: it is no longer
+        // enough to COUNT callers; they must actually juggle the null.
         $judgment = $this->judgeWithIndex(<<<'PHP'
         <?php
         namespace App;
@@ -712,9 +715,10 @@ class PreferOptionOverNullProphetTest extends TestCase
         $this->assertCleanFor($judgment);
     }
 
-    public function test_unknown_caller_count_is_not_suppressed(): void
+    public function test_high_threshold_suppresses_even_several_branching_callers(): void
     {
-        // No callers the index can resolve → unknown, not "unused" → emit.
+        $this->prophet->configure(['min_callers' => 10]);
+
         $judgment = $this->judgeWithIndex(<<<'PHP'
         <?php
         namespace App;
@@ -723,10 +727,44 @@ class PreferOptionOverNullProphetTest extends TestCase
                 foreach ($edges as $e) { if ($e) { return $e; } }
                 return null;
             }
+            public function a(): void { if ($this->findRef([]) === null) { return; } }
+            public function b(): void { $x = $this->findRef([]); if ($x === null) { return; } }
+            public function c(): void { $r = $this->findRef([]); if ($r !== null) { echo $r; } }
         }
         PHP);
 
-        $this->assertHasWarnings($judgment, 1);
+        $this->assertCleanFor($judgment);
+    }
+
+    public function test_no_index_is_not_suppressed(): void
+    {
+        // Without an index we cannot weigh the call sites — judge by the BODY alone
+        // and emit. (Distinct from an index that positively resolves no branching
+        // caller, which IS suppressed.)
+        $prophet = new PreferOptionOverNullProphet;
+        $code = "<?php\nnamespace App;\nclass Service { public function findRef(array \$edges): mixed { foreach (\$edges as \$e) { if (\$e) { return \$e; } } return null; } }";
+
+        $this->assertTrue($prophet->judge('/x.php', $code)->hasWarnings());
+    }
+
+    public function test_index_resolving_no_branching_callers_is_suppressed(): void
+    {
+        // A boundary/framework method whose only resolved caller passes the value on —
+        // never branches on absence — gains nothing from Option. Positive evidence, so
+        // suppress (the fix for request accessors / Eloquent casts over-firing).
+        $judgment = $this->judgeWithIndex(<<<'PHP'
+        <?php
+        namespace App;
+        class Service {
+            public function findRef(array $edges): mixed {
+                foreach ($edges as $e) { if ($e) { return $e; } }
+                return null;
+            }
+            public function pass(): mixed { return $this->findRef([]); }
+        }
+        PHP);
+
+        $this->assertCleanFor($judgment);
     }
 
     public function test_leaves_a_framework_locked_signature(): void
@@ -748,7 +786,7 @@ class PreferOptionOverNullProphetTest extends TestCase
         // ours to change — still flagged.
         $this->prophet->configure(['min_callers' => 0]);
 
-        $judgment = $this->judgeWithIndex("<?php\nnamespace App;\nclass Base {}\nclass MyHandler extends Base {\n public function handle(): string | null { if (\$this->x()) { return 'a'; } return null; }\n public function x() { return true; }\n}\n");
+        $judgment = $this->judgeWithIndex("<?php\nnamespace App;\nclass Base {}\nclass MyHandler extends Base {\n public function handle(): string | null { if (\$this->x()) { return 'a'; } return null; }\n public function x() { return true; }\n public function a(): void { if (\$this->handle() === null) { return; } }\n public function b(): void { \$r = \$this->handle(); if (\$r === null) { return; } }\n}\n");
 
         $this->assertTrue($judgment->hasWarnings());
     }
