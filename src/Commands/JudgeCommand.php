@@ -30,7 +30,8 @@ class JudgeCommand extends Command
         {--no-cache : Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)}
         {--no-parallel : Judge sequentially (no forked workers)}
         {--next : Show exactly one finding at a time (fix or absolve to advance)}
-        {--plan : Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan)}';
+        {--plan : Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan)}
+        {--gate-probe : INTERNAL: run a fresh scan only for its exit code (used by the pre-push / Stop gates). Bypasses the pilgrimage lock but suppresses the findings report}';
 
     protected $description = 'Judge the codebase for sins against the commandments';
 
@@ -39,7 +40,9 @@ class JudgeCommand extends Command
         ScrollManager $manager,
         ConfessionTracker $tracker
     ): int {
-        if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(base_path(), 'judge', $this->line(...), 'php artisan commandments:')) {
+        $gateProbe = (bool) $this->option('gate-probe');
+
+        if (! $gateProbe && \JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(base_path(), 'judge', $this->line(...), 'php artisan commandments:')) {
             return self::SUCCESS;
         }
 
@@ -49,8 +52,8 @@ class JudgeCommand extends Command
             $tracker,
             'php artisan commandments',
             ':',
-            $this->output->writeln(...),
-            $this->error(...),
+            $gateProbe ? static fn (string $line) => null : $this->output->writeln(...),
+            $gateProbe ? static fn (string $line) => null : $this->error(...),
         );
 
         return $service->run([
@@ -66,7 +69,7 @@ class JudgeCommand extends Command
             'branch' => (bool) $this->option('branch'),
             'no_profile' => (bool) $this->option('no-profile'),
             'absolve' => (bool) $this->option('absolve'),
-            'no_cache' => (bool) $this->option('no-cache'),
+            'no_cache' => $gateProbe || (bool) $this->option('no-cache'),
             'next' => (bool) $this->option('next'),
             'no_parallel' => (bool) $this->option('no-parallel'),
             'plan' => (bool) $this->option('plan'),

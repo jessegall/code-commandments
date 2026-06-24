@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use Illuminate\Support\ServiceProvider;
+use JesseGall\CodeCommandments\Commands\AbandonCommand;
 use JesseGall\CodeCommandments\Commands\AbsolveCommand;
+use JesseGall\CodeCommandments\Commands\FeatureRequestCommand;
 use JesseGall\CodeCommandments\Commands\ReportCommand;
 use JesseGall\CodeCommandments\Commands\ReportsCommand;
 use JesseGall\CodeCommandments\Commands\ScaffoldCommand;
@@ -107,6 +109,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 ScriptureCommand::class,
                 ScaffoldCommand::class,
                 ReportCommand::class,
+                FeatureRequestCommand::class,
                 ReportsCommand::class,
                 MakeProphetCommand::class,
                 InstallHooksCommand::class,
@@ -119,6 +122,7 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 NextCommand::class,
                 TodoCommand::class,
                 AutofixCommand::class,
+                AbandonCommand::class,
                 ProfileCommand::class,
             ]);
 

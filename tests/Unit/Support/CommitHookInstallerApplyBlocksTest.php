@@ -77,6 +77,25 @@ class CommitHookInstallerApplyBlocksTest extends TestCase
         $this->assertLessThan(strpos($prePush, 'pre-push reset'), strpos($prePush, 'pre-push gate'));
     }
 
+    public function test_pre_push_gate_probes_via_gate_probe_and_consumes_a_completed_walk(): void
+    {
+        $this->apply([CommitHookInstaller::BLOCK_PRE_PUSH_GATE]);
+
+        $prePush = $this->hook('pre-push');
+
+        // The probe uses --gate-probe (works mid-pilgrimage, exit code only) — never a
+        // bare `judge` (which the lock would refuse) nor the retired bypass env.
+        $this->assertStringContainsString('judge --gate-probe', $prePush);
+        $this->assertStringNotContainsString('COMMANDMENTS_PILGRIMAGE_BYPASS', $prePush);
+
+        // A completed walk earns ONE push, then is consumed so the next push re-arms.
+        $this->assertStringContainsString('pilgrimage --is-complete', $prePush);
+        $this->assertStringContainsString('pilgrimage --clear', $prePush);
+
+        // It must NOT teach the owning agent session to escape with --no-verify.
+        $this->assertStringNotContainsString('--no-verify', $prePush);
+    }
+
     public function test_removing_one_of_two_pre_push_blocks_keeps_the_other(): void
     {
         $this->apply([CommitHookInstaller::BLOCK_PRE_PUSH_GATE, CommitHookInstaller::BLOCK_PRE_PUSH_RESET]);
