@@ -20,7 +20,8 @@ use JesseGall\PhpTypes\T_String;
 class SyncCommand extends Command
 {
     protected $signature = 'commandments:sync
-        {--after= : Only add prophets introduced after this version (e.g. 1.4.0). Pass `previous` to use the last synced version automatically.}
+        {--after= : Override the floor: only add prophets introduced after this version (e.g. 1.4.0), or `previous` for the last synced version.}
+        {--all : OPT OUT of removal-respecting sync: add EVERY available prophet missing from the config. Without this, sync NEVER re-adds a prophet you removed.}
         {--dry-run : Show what would be added without modifying the file}';
 
     protected $description = 'Add newly available prophets to your config file';
@@ -45,20 +46,26 @@ class SyncCommand extends Command
         $versionResolver = new VersionResolver();
         $basePath = base_path();
 
-        // Default (no --after) AND explicit `previous`: only add prophets
-        // introduced AFTER the last synced version, so a sync NEVER re-adds a
-        // prophet the consumer intentionally removed (they all carry
-        // #[IntroducedIn]). Only the very first sync (no recorded version) adds
-        // everything. Pass --after=0.0.0 for a deliberate full re-sync.
-        if ($after === null || $after === 'previous') {
-            $explicit = $after === 'previous';
-            $after = $versionResolver->previousSyncedVersion($basePath);
-
-            if ($after === null && $explicit) {
-                $this->warn('No previous sync recorded — falling back to a full sync.');
-            } elseif ($after !== null) {
-                $this->info("Adding only prophets introduced after the last synced version: {$after}");
+        // Removal-respecting is the DEFAULT — a sync only adds prophets introduced
+        // AFTER a floor version, so it NEVER re-adds one you intentionally removed
+        // (they all carry #[IntroducedIn]). Floor = the last synced version, else the
+        // currently-installed version (so an unknown baseline still adds nothing).
+        // `--all` opts out for a full re-sync; `--after=X` overrides the floor.
+        if (! $this->option('all')) {
+            if ($after === null || $after === 'previous') {
+                $after = $versionResolver->previousSyncedVersion($basePath)
+                    ?? $versionResolver->currentVersion();
             }
+
+            if ($after === null) {
+                $this->warn('No sync baseline and no --all — taking your config as intentional, adding nothing. Use `sync --all` for a full (re-)sync.');
+
+                return self::SUCCESS;
+            }
+
+            $this->info("Adding only prophets introduced after: {$after}");
+        } else {
+            $after = null; // explicit full sync
         }
 
         if ($after !== null && ! $this->isValidVersion($after)) {

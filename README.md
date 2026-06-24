@@ -324,7 +324,8 @@ Add newly available prophets to your config file.
 | Flag | Argument | Description |
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to commandments.php config file |
-| `--after` | `<value>` | Only add prophets introduced after this version (e.g. 1.4.0). Pass `previous` to use the last synced version automatically. Prophets you removed before upgrading stay removed. |
+| `--after` | `<value>` | Override the floor: only add prophets introduced after this version (e.g. 1.4.0), or `previous` for the last synced version. |
+| `--all` | — | OPT OUT of removal-respecting sync: add EVERY available prophet missing from the config (initial setup / deliberate full re-sync). Without this, sync NEVER re-adds a prophet you removed. |
 | `--dry-run` | — | Show what would be added without modifying the file |
 
 ### `todo`
