@@ -137,7 +137,11 @@ HOOK;
                     'hooks' => [
                         $run('scripture'),
                         $run('reports --check'),
-                        $run('scaffold --auto'),
+                        // NOTE: scaffold is deliberately NOT here. It mutates TRACKED
+                        // source (src/Support/*), so it belongs on the dependency-change
+                        // lifecycle (sync, wired into composer post-install/update-cmd),
+                        // not a per-session boundary — firing it each session re-emits in
+                        // PSR/Pint defaults and churns the host's house style (#218).
                         $run('install-skills --auto'),
                         $run('skills'),
                         // Binary-independent shell hook — offers a resume when a
@@ -206,7 +210,9 @@ HOOK;
                     'hooks' => [
                         ...$sessionStart,
                         $run('reports --check'),
-                        $run('scaffold --auto'),
+                        // scaffold is intentionally absent — codegen over tracked source
+                        // runs on the composer lifecycle (sync), not the session boundary,
+                        // so it can't churn the host's formatting every session (#218).
                         $run('install-skills --auto'),
                         $run('skills'),
                         ['type' => 'command', 'command' => 'sh .claude/hooks/handoff-detect.sh 2>/dev/null || true'],
