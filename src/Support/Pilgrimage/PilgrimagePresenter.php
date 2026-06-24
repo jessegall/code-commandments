@@ -80,7 +80,7 @@ final class PilgrimagePresenter
         $lines[] = '   • FIX — edit the file so the rule no longer fires (follow the scripture above).';
 
         if ($autoFixable > 0) {
-            $lines[] = sprintf('   • AUTO-FIX — %d of these are [AUTO-FIXABLE]; bulk-fix them first:  commandments repent', $autoFixable);
+            $lines[] = sprintf('   • AUTO-FIX — %d of these are [AUTO-FIXABLE]: run `commandments autofix` to repent THIS prophet in place, then `commandments next`. (Not everything auto-fixes; resolve the rest by hand.)', $autoFixable);
         }
 
         $lines[] = '   • ABSOLVE — only a GENUINE false positive, with a real reason (sins cannot be';

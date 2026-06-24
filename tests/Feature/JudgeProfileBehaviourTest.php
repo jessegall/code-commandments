@@ -215,16 +215,17 @@ class JudgeProfileBehaviourTest extends TestCase
         $this->assertStringContainsString('WARNINGS', $outB);
     }
 
-    public function test_plan_prints_an_ordered_remediation_roadmap(): void
+    public function test_plan_redirects_to_the_pilgrimage(): void
     {
+        // --plan is retired — the pilgrimage is the roadmap. It redirects there and
+        // still exits non-zero while findings remain.
         $this->file('A.php', 'SIN_ME WARN_ME');
 
         [$code, $out] = $this->judge(['plan' => true, 'path' => $this->dir]);
 
         $this->assertSame(JudgeService::FAILURE, $code);
-        $this->assertStringContainsString('REPENTANCE PLAN', $out);
-        $this->assertStringContainsString('ProfileMarker', $out);
-        $this->assertStringContainsString('judge --next', $out); // points at how to walk it
+        $this->assertStringContainsString('PILGRIMAGE', $out);
+        $this->assertStringContainsString('pilgrimage', $out); // points at how to walk it
     }
 
     public function test_branch_and_git_scopes_are_mutually_exclusive(): void

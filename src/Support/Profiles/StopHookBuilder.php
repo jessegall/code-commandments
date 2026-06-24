@@ -173,8 +173,10 @@ final class StopHookBuilder
                 exit 0
             fi
 
-            # 2) Profile gate — keep going until the judge scope is finding-free.
-            ( cd "\$root" && eval "\${run}judge --next{$scopeFlag} --no-cache" ) >/dev/null 2>&1
+            # 2) Profile gate — keep going until the judge scope is finding-free. The
+            # bypass lets this internal exit-code probe run `judge` even while a
+            # pilgrimage is active (agents are otherwise locked to the guided walk).
+            ( cd "\$root" && COMMANDMENTS_PILGRIMAGE_BYPASS=1 eval "\${run}judge{$scopeFlag} --no-cache" ) >/dev/null 2>&1
             status=\$?
 
             countfile="\$root/.commandments/keep-going-count"

@@ -231,27 +231,17 @@ final class JudgeService
             return self::SUCCESS;
         }
 
-        $activeProphets = [];
-        foreach ($scrolls as $scroll) {
-            if ($this->registry->hasScroll($scroll)) {
-                $activeProphets += $this->manager->activeProphetClasses($scroll);
-            }
-        }
-
-        $resolver = new RootCauseResolver(
-            $this->manager->codebaseIndexForFile(...),
-        );
-
-        $finding = $resolver->annotate($ordered[0], $activeProphets);
-        $prophet = new $finding->prophetClass();
-        $absolvable = $finding->isWarning() || $prophet->requiresConfession();
-        $autoFixable = $finding->autoFixable;
-        $repentInputs = ($autoFixable && $prophet instanceof ParameterizedRepenter) ? $prophet->repentInputs() : null;
-        $skillSlug = $prophet->skill();
-
-        foreach (NextFindingPresenter::lines($finding, count($ordered), $this->binary, $absolvable, $autoFixable, $repentInputs, $skillSlug) as $line) {
-            ($this->emit)($line);
-        }
+        // `judge --next` is RETIRED — the guided walk is the PILGRIMAGE (faster,
+        // per-pillar, forward-only). Redirect there instead of doing the old walk, so
+        // agents stop bypassing it. The exit code still reflects "findings remain", so
+        // the gate probes that shell out to this keep working unchanged.
+        $cmd = $this->binary . $this->sep;
+        ($this->emit)(NextFindingPresenter::clearLine());
+        ($this->emit)(T_String::empty());
+        ($this->emit)(sprintf('%d finding(s) remain — but the guided walk is now the PILGRIMAGE. Do NOT use `judge --next`:', count($ordered)));
+        ($this->emit)("  {$cmd}pilgrimage   # begin the forward-only walk — ONE prophet at a time, full scripture + EVERY location");
+        ($this->emit)("  {$cmd}next         # advance it (verify-before-advance);  {$cmd}todo  = the current prophet's remaining locations");
+        ($this->emit)('READ each output IN FULL — never head/tail/truncate it. `judge` (no flag) still gives the whole-codebase audit.');
 
         return self::FAILURE;
     }
@@ -295,27 +285,19 @@ final class JudgeService
         $total = count($ordered);
         $autoFixable = count(array_filter($ordered, static fn ($f) => $f->autoFixable));
 
-        ($this->emit)("REPENTANCE PLAN — {$total} finding(s), fix in THIS order.");
-        ($this->emit)('Root causes come first: fixing an earlier item often clears later ones, so re-run the plan as you go.');
-        ($this->emit)(T_String::empty());
-
-        $i = 1;
-        foreach ($ordered as $finding) {
-            $kind = strtoupper($finding->kind);
-            $tier = ucfirst($finding->tier->value);
-            $fix = $finding->autoFixable ? ' [AUTO-FIXABLE]' : T_String::empty();
-            ($this->emit)(sprintf('%3d. [%s/%s] %s — %s%s', $i, $tier, $kind, $finding->prophetShort, $finding->location(), $fix));
-            ($this->emit)('       ' . $finding->message);
-            $i++;
-        }
-
+        // `judge --plan` is RETIRED — the PILGRIMAGE is the roadmap now (it walks the
+        // doctrines coarse→fine, one prophet at a time). Point there.
+        ($this->emit)(sprintf('%d finding(s) remain — but the roadmap is now the PILGRIMAGE, not `judge --plan`:', $total));
         ($this->emit)(T_String::empty());
 
         if ($autoFixable > 0) {
             ($this->emit)("First clear the {$autoFixable} [AUTO-FIXABLE] mechanically:  {$cmd}repent");
         }
 
-        ($this->emit)("Then walk the rest one at a time (full rule inline):  {$cmd}judge --next");
+        ($this->emit)("Then walk the doctrines, root-cause first, one prophet at a time:");
+        ($this->emit)("  {$cmd}pilgrimage   # begin the forward-only walk");
+        ($this->emit)("  {$cmd}next         # advance it;  {$cmd}todo  = the current prophet's remaining locations");
+        ($this->emit)('READ each output IN FULL. `judge` (no flag) gives the whole-codebase audit.');
 
         return self::FAILURE;
     }

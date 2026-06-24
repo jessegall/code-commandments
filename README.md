@@ -127,6 +127,7 @@ Every command is available via both Laravel artisan
 | Command | Purpose |
 |---|---|
 | [`absolve`](#absolve) | Absolve a single finding by fingerprint, with a required reason |
+| [`autofix`](#autofix) | Auto-fix the CURRENT pilgrimage prophet ([AUTO-FIXABLE] findings only), in place |
 | [`init`](#init) | Initialize code commandments for a standalone project |
 | [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/ |
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
@@ -162,6 +163,16 @@ Absolve a single finding by fingerprint, with a required reason.
 | `--until-push` | — | Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only) |
 | `--clear-until-push` | — | Drop every push-scoped (until-push) absolution; used by the pre-push hook |
 | `--clear` | — | Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered |
+
+### `autofix`
+
+Auto-fix the CURRENT pilgrimage prophet ([AUTO-FIXABLE] findings only), in place.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--scroll` | `<value>` | Scroll to walk |
+| `--dry-run` | — | Show what would be fixed without making changes |
 
 ### `init`
 

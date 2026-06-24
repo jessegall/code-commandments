@@ -30,6 +30,12 @@ class RepentConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        // Locked mid-pilgrimage — use `autofix` to repent the CURRENT prophet instead
+        // of a bulk repent that wanders off the walk.
+        if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(getcwd() ?: '.', 'repent', $output->writeln(...))) {
+            return Command::SUCCESS;
+        }
+
         [$registry, $manager] = $this->bootEnvironment($input->getOption('config'));
 
         $service = new \JesseGall\CodeCommandments\Support\RepentService(

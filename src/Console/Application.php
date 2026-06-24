@@ -29,6 +29,7 @@ class Application extends SymfonyApplication
         $this->registerCommand(new PilgrimageConsoleCommand());
         $this->registerCommand(new NextConsoleCommand());
         $this->registerCommand(new TodoConsoleCommand());
+        $this->registerCommand(new AutofixConsoleCommand());
         $this->registerCommand(new InstallSyncHookConsoleCommand());
         $this->registerCommand(new ProfileConsoleCommand());
     }

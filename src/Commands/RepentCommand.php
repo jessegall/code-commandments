@@ -31,6 +31,10 @@ class RepentCommand extends Command
         ProphetRegistry $registry,
         ScrollManager $manager
     ): int {
+        if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(base_path(), 'repent', $this->line(...), 'php artisan commandments:')) {
+            return self::SUCCESS;
+        }
+
         $service = new RepentService(
             $manager,
             $registry,

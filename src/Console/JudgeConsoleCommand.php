@@ -37,6 +37,11 @@ class JudgeConsoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        // Locked mid-pilgrimage — the guided walk is the only judging path while it runs.
+        if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(getcwd() ?: '.', 'judge', $output->writeln(...))) {
+            return Command::SUCCESS;
+        }
+
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
 
         $service = new \JesseGall\CodeCommandments\Support\JudgeService(
