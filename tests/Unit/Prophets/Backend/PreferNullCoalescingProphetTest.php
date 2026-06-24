@@ -70,30 +70,30 @@ class PreferNullCoalescingProphetTest extends TestCase
 
     public function test_flags_option_hasvalue_unwrap(): void
     {
-        $judgment = $this->judge('$name = $opt->hasValue() ? $opt->getOrThrow() : "guest";');
+        $judgment = $this->judge('$name = $opt->isSome() ? $opt->unwrap() : "guest";');
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('getOr', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('unwrapOr', $judgment->warnings[0]->message);
     }
 
     public function test_flags_option_isempty_inverted(): void
     {
-        $judgment = $this->judge('$name = $this->opt->isEmpty() ? "guest" : $this->opt->getOrThrow();');
+        $judgment = $this->judge('$name = $this->opt->isNone() ? "guest" : $this->opt->unwrap();');
 
         $this->assertCount(1, $judgment->warnings);
-        $this->assertStringContainsString('getOr', $judgment->warnings[0]->message);
+        $this->assertStringContainsString('unwrapOr', $judgment->warnings[0]->message);
     }
 
     public function test_flags_negated_option_hasvalue(): void
     {
-        $judgment = $this->judge('$name = ! $opt->hasValue() ? "guest" : $opt->getOrThrow();');
+        $judgment = $this->judge('$name = ! $opt->isSome() ? "guest" : $opt->unwrap();');
 
         $this->assertCount(1, $judgment->warnings);
     }
 
     public function test_does_not_flag_option_unwrap_on_a_different_receiver(): void
     {
-        $judgment = $this->judge('$name = $a->hasValue() ? $b->getOrThrow() : "guest";');
+        $judgment = $this->judge('$name = $a->isSome() ? $b->unwrap() : "guest";');
 
         $this->assertTrue($judgment->isRighteous());
     }

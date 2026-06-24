@@ -22,6 +22,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static minOccurrences(int $value)
  * @method static nullObjects(array $value)

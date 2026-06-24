@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Unit\Support;
 
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\ThrowOnUnhandledCaseProphet;
 use JesseGall\CodeCommandments\Results\Finding;
 use JesseGall\CodeCommandments\Results\Tier;
@@ -52,7 +52,7 @@ PHP);
         $resolver = new RootCauseResolver(fn (): null => null);
         $finding = $this->symptomFinding($file, $this->lineContaining($file, 'function priority'));
 
-        $result = $resolver->annotate($finding, [PreferOptionOverNullProphet::class => true]);
+        $result = $resolver->annotate($finding, [OptionDisciplineProphet::class => true]);
 
         $this->assertNotNull($result->rootCauseHint);
         $this->assertSame(ThrowOnUnhandledCaseProphet::class, $result->rootCauseHint->causeClass);
@@ -85,7 +85,7 @@ PHP);
 
         // Every cause is active (a full, unfiltered run) → supersedes deferral
         // handles ordering; the resolver must be a no-op.
-        $active = [PreferOptionOverNullProphet::class => true];
+        $active = [OptionDisciplineProphet::class => true];
         foreach ($finding->rootCauses as $cause) {
             $active[$cause] = true;
         }
@@ -117,7 +117,7 @@ PHP);
         $resolver = new RootCauseResolver(fn (): null => null);
         $finding = $this->symptomFinding($file, $this->lineContaining($file, 'function symptom'));
 
-        $result = $resolver->annotate($finding, [PreferOptionOverNullProphet::class => true]);
+        $result = $resolver->annotate($finding, [OptionDisciplineProphet::class => true]);
 
         $this->assertNull($result->rootCauseHint);
         $this->assertTrue($result->rootCauseChecked);
@@ -137,8 +137,8 @@ PHP);
     private function symptomFinding(string $filePath, int $line, ?array $rootCauses = null): Finding
     {
         return new Finding(
-            prophetClass: PreferOptionOverNullProphet::class,
-            prophetShort: 'PreferOptionOverNullProphet',
+            prophetClass: OptionDisciplineProphet::class,
+            prophetShort: 'OptionDisciplineProphet',
             filePath: $filePath,
             relativePath: basename($filePath),
             kind: 'warning',
@@ -152,7 +152,7 @@ PHP);
             supersedes: [],
             fingerprint: 'fp',
             autoFixable: false,
-            rootCauses: $rootCauses ?? (new PreferOptionOverNullProphet())->rootCauses(),
+            rootCauses: $rootCauses ?? (new OptionDisciplineProphet())->rootCauses(),
         );
     }
 

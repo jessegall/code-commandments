@@ -34,7 +34,7 @@ class PreferTotalOverNullableProphetTest extends TestCase
     {
         $judgment = $this->judge('class C {
             private function find(): Option { return $this->o; }
-            public function a() { return $this->find()->getOrThrow(); }
+            public function a() { return $this->find()->unwrap(); }
             public function b() { return $this->find()->unwrap()->id; }
         }');
 
@@ -43,11 +43,11 @@ class PreferTotalOverNullableProphetTest extends TestCase
 
     public function test_leaves_option_when_a_caller_supplies_a_default(): void
     {
-        // `->getOr($default)` HANDLES the absence — the Option is earned, not a de-null.
+        // `->unwrapOr($default)` HANDLES the absence — the Option is earned, not a de-null.
         $this->assertFalse($this->judge('class C {
             private function find(): Option { return $this->o; }
-            public function a() { return $this->find()->getOr(null); }
-            public function b() { return $this->find()->getOrThrow(); }
+            public function a() { return $this->find()->unwrapOr(null); }
+            public function b() { return $this->find()->unwrap(); }
         }')->hasWarnings());
     }
 
@@ -164,7 +164,7 @@ class PreferTotalOverNullableProphetTest extends TestCase
         class C {
             /** @return Option<ValueBag> */
             private function decode(): Option { return $this->v; }
-            public function a() { return $this->decode()->getOrThrow(); }
+            public function a() { return $this->decode()->unwrap(); }
         }');
 
         $this->assertCount(1, $judgment->warnings);
@@ -175,16 +175,16 @@ class PreferTotalOverNullableProphetTest extends TestCase
     public function test_does_not_fire_on_empty_identity_when_caller_handles_absence(): void
     {
         // #115: an Option<string> (string has empty identity '') consumed via
-        // ->transform(...)->getOr($default) — the caller HANDLES the miss, so the
+        // ->map(...)->unwrapOr($default) — the caller HANDLES the miss, so the
         // nullability is earned. Must NOT fire (and '' would be a wrong path).
         $righteous = $this->judge('class C {
             /** @return Option<string> */
             private function viteConfigPath(): Option { return $this->p; }
-            public function a(): bool { return $this->viteConfigPath()->transform(fn (string $p) => str_contains($p, "x"))->getOr(false); }
+            public function a(): bool { return $this->viteConfigPath()->map(fn (string $p) => str_contains($p, "x"))->unwrapOr(false); }
         }');
         $this->assertTrue($righteous->isRighteous());
 
-        // Plain ->getOr($default) likewise handles absence.
+        // Plain ->unwrapOr($default) likewise handles absence.
         $plain = $this->judge('class C {
             private function label(): ?string { return $this->l; }
             public function a(): string { return $this->label() ?? "fallback"; }

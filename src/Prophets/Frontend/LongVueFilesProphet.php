@@ -18,6 +18,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static maxVueLines(int $value)
  * @method-generated-end

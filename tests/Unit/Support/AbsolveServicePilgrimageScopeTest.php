@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Unit\Support;
 
 use Illuminate\Filesystem\Filesystem;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\AbsolveService;
 use JesseGall\CodeCommandments\Support\Environment;
@@ -50,7 +50,7 @@ class AbsolveServicePilgrimageScopeTest extends TestCase
         }
         PHP);
 
-        $prophets = [PreferOptionOverNullProphet::class, NoRawRequestProphet::class];
+        $prophets = [OptionDisciplineProphet::class, NoRawRequestProphet::class];
 
         file_put_contents($this->dir . '/commandments.php', '<?php return ' . var_export([
             'scrolls' => ['backend' => [

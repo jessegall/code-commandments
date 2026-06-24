@@ -29,7 +29,7 @@ final class AlertDispatcher
 
     /**
      * The per-severity template is required — use the throwing require(), not
-     * the optional lookup(). No getOr(null), no `?? ''` laundering.
+     * the optional lookup(). No unwrapOr(null), no `?? ''` laundering.
      *
      * @param array<string, string> $vars
      */

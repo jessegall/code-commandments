@@ -6,8 +6,8 @@ defensive ceremony everywhere or silently swallows a bug.
 
 | Kind | What the `null` means | Right tool | Enforced by |
 |---|---|---|---|
-| **1. Genuine domain absence** | A value-or-nothing that is possible from *valid* input — an optional field, a real lookup miss, untrusted external data. | `{{ namespace }}\Option<T>` (or a Null Object) | `PreferOptionOverNull` pushes here |
-| **2. No absence at all** | The value is *always* produced; the Option/nullable is pure ceremony. | Return `T` directly — no hedge | `NoOptionOveruse` |
+| **1. Genuine domain absence** | A value-or-nothing that is possible from *valid* input — an optional field, a real lookup miss, untrusted external data. | `{{ namespace }}\Option<T>` (or a Null Object) | `OptionDiscipline` pushes here |
+| **2. No absence at all** | The value is *always* produced; the Option/nullable is pure ceremony. | Return `T` directly — no hedge | `OptionDiscipline` |
 | **3. Invariant violation** | The `none` can only happen if *we* made a mistake: an unhandled enum case, an unregistered handler, a "not found" the caller already established must exist. | **Fail loud** — throw a named exception, or make the method total | `ThrowOnUnhandledCase`, `PreferTotalOverNullable`, `NoSwallowedNotFound` |
 
 This skill is about telling **3** apart from **1**. The test is a single
@@ -35,7 +35,7 @@ public function rendererFor(NodeType $type): Option
 }
 ```
 
-Every caller now `->getOrThrow()`s this. The Option promised "maybe no
+Every caller now `->unwrap()`s this. The Option promised "maybe no
 renderer" — but no input ever validly produces none. It is an invariant
 violation dressed up as the blessed pattern, and it gets waved through review
 *because* it looks like `Option`.
@@ -61,19 +61,19 @@ public function rendererFor(NodeType $type): Renderer
 /** @return Option<User> */
 public function findByEmail(string $email): Option
 {
-    return Option::make($this->users[$email] ?? null);
+    return Option::fromNullable($this->users[$email] ?? null);
 }
 ```
 
 Here the `none` is reachable from valid input, so kind 1 holds: keep the Option,
-let the caller `->transform(...)->getOr(...)`.
+let the caller `->map(...)->unwrapOr(...)`.
 
 ## When to reach for "fail loud" (kind 3)
 
 - A `match`/`switch` over a closed enum where every real case yields a value and
   the only `none` is the `default`/`null` arm — the none means "unhandled case".
 - A method whose absence **no caller ever tolerates** — every call site does
-  `?? throw`, `->getOrThrow()`, or a blind `->` deref.
+  `?? throw`, `->unwrap()`, or a blind `->` deref.
 - A lookup whose key the surrounding code already **established must exist** (an
   authenticated user id, a foreign key, a required template).
 
@@ -82,8 +82,8 @@ let the caller `->transform(...)->getOr(...)`.
 - The absence is possible from valid input: an optional lookup, untrusted
   external data, a real domain "not found".
 - **Any** caller genuinely handles the absence — branches on null, supplies a
-  real `?? $default`, uses `?->`, consumes the Option with `->getOr($default)` /
-  `->transform(...)->getOr(...)`, or passes it on as still-optional.
+  real `?? $default`, uses `?->`, consumes the Option with `->unwrapOr($default)` /
+  `->map(...)->unwrapOr(...)`, or passes it on as still-optional.
 
 In those cases the partiality is *earned* — keep modelling it as `Option<T>`
 (never raw `null`), and read the `commandments-option` skill for the API.

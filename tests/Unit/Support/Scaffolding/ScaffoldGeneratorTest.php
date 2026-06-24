@@ -34,12 +34,9 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('namespace Acme\\Support;', $trait);
         $this->assertStringContainsString('trait FromArrayOnly', $trait);
 
-        $this->assertFileExists($this->dir . '/Option.php');
         $this->assertFileExists($this->dir . '/NullCallable.php');
-        $option = file_get_contents($this->dir . '/Option.php');
-        $this->assertStringContainsString('namespace Acme\\Support;', $option);
-        // The coalescing constructor — first non-null candidate, else none.
-        $this->assertStringContainsString('public static function coalesce(mixed ...$candidates): self', $option);
+        $nullCallable = file_get_contents($this->dir . '/NullCallable.php');
+        $this->assertStringContainsString('namespace Acme\\Support;', $nullCallable);
     }
 
     public function test_compare_self_declares_singular_helpers_instance_only(): void
@@ -87,120 +84,32 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('$value instanceof $this->class', $src);
     }
 
-    public function test_generated_option_has_ergonomic_when_helpers(): void
-    {
-        // #40 + #41: when()/whenNot() take mixed (truthiness, no `=== true`);
-        // someWhen()/someWhenNot() wrap a bare value OR resolve a factory.
-        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
 
-        $option = file_get_contents($this->dir . '/Option.php');
 
-        $this->assertStringContainsString('public static function when(mixed $condition, callable $factory): self', $option);
-        $this->assertStringContainsString('public static function whenNot(mixed $condition, callable $factory): self', $option);
-        // someWhen()/someWhenNot() accept a factory OR a bare value (resolved when callable).
-        $this->assertStringContainsString('public static function someWhen(mixed $condition, mixed $value): self', $option);
-        $this->assertStringContainsString('public static function someWhenNot(mixed $condition, mixed $value): self', $option);
-        $this->assertStringContainsString('return self::some(is_callable($value) ? $value() : $value);', $option);
-        $this->assertStringContainsString('return $condition ? $factory() : self::none();', $option);
 
-        // Nullable/lookup factories: make(), find(), first().
-        $this->assertStringContainsString('public static function make(mixed $value): self', $option);
-        $this->assertStringContainsString('public static function find(array $items, int|string $key): self', $option);
-        $this->assertStringContainsString('public static function first(iterable $items, callable $predicate): self', $option);
-    }
 
-    public function test_generated_option_has_transform_and_then_tap(): void
-    {
-        // #59/#60: the single-value API reads as plain English — transform()
-        // (value -> value), andThen() (value -> Option), tap() (peek + return
-        // self). No collection-flavoured map()/flatMap()/each() names.
-        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
-
-        $option = file_get_contents($this->dir . '/Option.php');
-
-        $this->assertStringContainsString('public function transform(callable $transform): self', $option);
-        $this->assertStringContainsString('public function andThen(callable $andThen): self', $option);
-        $this->assertStringContainsString('$result = $andThen($this->value);', $option);
-        $this->assertStringContainsString('public function tap(callable $callback): self', $option);
-
-        // The old collection-flavoured names are gone.
-        $this->assertStringNotContainsString('function map(', $option);
-        $this->assertStringNotContainsString('function flatMap(', $option);
-        $this->assertStringNotContainsString('function each(', $option);
-    }
-
-    public function test_generated_option_has_fallback_and_guard_combinators(): void
-    {
-        // #52: orElse/or/orWhen/andWhen/filter remove ||/&& chains from call sites.
-        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
-
-        $option = file_get_contents($this->dir . '/Option.php');
-
-        $this->assertStringContainsString('public function orElse(callable $alternative): self', $option);
-        // #111: the immutable Option is covariant (T only in output positions),
-        // so Option<string> is an Option<mixed> — without this, ~90 call sites
-        // PHPStan-fail. or()/orWhen() use a method-level TOther to keep T out of
-        // contravariant positions.
-        $this->assertStringContainsString('@template-covariant T', $option);
-        $this->assertStringContainsString('public function or(self $alternative): self', $option);
-        $this->assertStringContainsString('public function orWhen(mixed $condition, mixed $value): self', $option);
-        $this->assertStringContainsString('public function andWhen(mixed $condition): self', $option);
-        $this->assertStringContainsString('return $this->hasValue && $condition ? $this : self::none();', $option);
-        $this->assertStringContainsString('public function filter(callable $predicate): self', $option);
-    }
-
-    public function test_generated_option_guards_and_then_and_auto_wraps_or_else(): void
-    {
-        // #63(B): andThen() still asserts its callback returns an Option (the
-        // flatten contract), so a forgotten wrap is caught in dev/test.
-        // orElse() instead LIFTS a bare value into an Option (a plain value ->
-        // some, null -> none), so callers need no Option::some(...) wrap — a
-        // regen must keep both behaviours.
-        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
-
-        $option = file_get_contents($this->dir . '/Option.php');
-
-        $this->assertStringContainsString("assert(\$result instanceof self, 'andThen callback must return an Option')", $option);
-        $this->assertStringContainsString('return $result instanceof self ? $result : self::make($result);', $option);
-        $this->assertStringContainsString('@param  callable(): (self<TOut>|TOut|null)  $alternative', $option);
-    }
-
-    public function test_generated_option_get_or_throw_accepts_a_custom_exception(): void
-    {
-        // #85: getOrThrow(\Throwable|\Closure|null) — a lazy factory for a domain
-        // exception (built only on the empty path), an eager instance, or the
-        // backward-compatible generic LogicException with no arg.
-        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
-
-        $option = file_get_contents($this->dir . '/Option.php');
-
-        $this->assertStringContainsString('public function getOrThrow(\Throwable|\Closure|null $error = null): mixed', $option);
-        $this->assertStringContainsString('$error instanceof \Closure => $error(),', $option);
-        $this->assertStringContainsString('$error instanceof \Throwable => $error,', $option);
-        $this->assertStringContainsString("default => new \\LogicException('Option is empty'),", $option);
-    }
 
     public function test_auto_refresh_stamps_a_do_not_edit_banner(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, force: true, except: [], autoRefresh: true);
 
-        $option = file_get_contents($this->dir . '/Option.php');
+        $nullCallable = file_get_contents($this->dir . '/NullCallable.php');
 
-        $this->assertStringContainsString('AUTO-GENERATED — DO NOT EDIT', $option);
-        $this->assertStringContainsString('scaffold.auto_refresh is ON', $option);
-        $this->assertStringNotContainsString('safe to edit', $option);
+        $this->assertStringContainsString('AUTO-GENERATED — DO NOT EDIT', $nullCallable);
+        $this->assertStringContainsString('scaffold.auto_refresh is ON', $nullCallable);
+        $this->assertStringNotContainsString('safe to edit', $nullCallable);
         // The generated marker must stay so judging still skips it.
-        $this->assertStringContainsString('@code-commandments-generated', $option);
+        $this->assertStringContainsString('@code-commandments-generated', $nullCallable);
     }
 
     public function test_default_generation_keeps_the_safe_to_edit_header(): void
     {
         ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
 
-        $option = file_get_contents($this->dir . '/Option.php');
+        $nullCallable = file_get_contents($this->dir . '/NullCallable.php');
 
-        $this->assertStringContainsString('safe to edit', $option);
-        $this->assertStringNotContainsString('DO NOT EDIT', $option);
+        $this->assertStringContainsString('safe to edit', $nullCallable);
+        $this->assertStringNotContainsString('DO NOT EDIT', $nullCallable);
     }
 
     public function test_generates_the_union_sum_type(): void
@@ -239,19 +148,6 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertStringContainsString('T::any($value, ...$this->allowed)', $src);
     }
 
-    public function test_generates_the_scalar_option(): void
-    {
-        ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir);
-
-        $scalarOption = $this->dir . '/ScalarOption.php';
-        $this->assertFileExists($scalarOption);
-        $src = file_get_contents($scalarOption);
-        $this->assertStringContainsString('namespace Acme\\Support;', $src);
-        // Wraps an Option<scalar> — the present type is constrained natively.
-        $this->assertStringContainsString('final class ScalarOption', $src);
-        $this->assertStringContainsString('public static function some(string|int|float|bool $value): self', $src);
-        $this->assertStringContainsString('public function getOrThrow(\Throwable|\Closure|null $error = null): string|int|float|bool', $src);
-    }
 
     public function test_generates_capture_and_wrap_result_factories(): void
     {
@@ -391,7 +287,7 @@ class ScaffoldGeneratorTest extends TestCase
         $this->assertSame('Acme\\Support\\Resolvers\\Predicates\\IsNull', $byName['predicate-is-null'] ?? null);
         $this->assertSame('Acme\\Support\\Resolvers\\Resolver', $byName['resolver'] ?? null);
         // A flat scaffold is unaffected.
-        $this->assertSame('Acme\\Support\\Option', $byName['option'] ?? null);
+        $this->assertSame('Acme\\Support\\ValueBag', $byName['value-bag'] ?? null);
     }
 
     public function test_force_refreshes_a_relocated_class_in_place(): void
@@ -447,20 +343,20 @@ class ScaffoldGeneratorTest extends TestCase
         $gen = ScaffoldGenerator::packaged();
         $gen->generate('Acme\\Support', $this->dir);
 
-        file_put_contents($this->dir . '/Option.php', '<?php // hand-edited');
+        file_put_contents($this->dir . '/ValueBag.php', '<?php // hand-edited');
 
         $results = $gen->generate('Acme\\Support', $this->dir, force: true);
 
-        $option = collect($results)->firstWhere('name', 'option');
-        $this->assertSame(ScaffoldGenerator::STATUS_REWRITTEN, $option['status']);
-        $this->assertStringContainsString('final readonly class Option', file_get_contents($this->dir . '/Option.php'));
+        $valueBag = collect($results)->firstWhere('name', 'value-bag');
+        $this->assertSame(ScaffoldGenerator::STATUS_REWRITTEN, $valueBag['status']);
+        $this->assertStringContainsString('class ValueBag', file_get_contents($this->dir . '/ValueBag.php'));
     }
 
     public function test_except_skips_named_scaffolds(): void
     {
-        $results = ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, except: ['option']);
+        $results = ScaffoldGenerator::packaged()->generate('Acme\\Support', $this->dir, except: ['value-bag']);
 
-        $this->assertFileDoesNotExist($this->dir . '/Option.php');
+        $this->assertFileDoesNotExist($this->dir . '/ValueBag.php');
         $this->assertFileExists($this->dir . '/FromArrayOnly.php');
     }
 }

@@ -26,6 +26,8 @@ use PhpParser\PrettyPrinter;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static presencePrefixes(array $value)
  * @method-generated-end

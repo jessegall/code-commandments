@@ -19,6 +19,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static minCases(int $value)
  * @method-generated-end

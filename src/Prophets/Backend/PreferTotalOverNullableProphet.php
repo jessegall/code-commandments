@@ -20,7 +20,7 @@ use PhpParser\NodeVisitor\NameResolver;
 /**
  * Flag a nullable return whose absence is never actually tolerated (#98 H2): a
  * PRIVATE method declares `?T` / `T | null` / `Option<T>`, yet EVERY call site
- * immediately de-nulls it — `?? throw`, `->getOrThrow()`/`->unwrap()`, or a blind
+ * immediately de-nulls it — `?? throw`, `->unwrap()`/`->unwrap()`, or a blind
  * `->` dereference. The nullability is unearned ceremony: make the method total
  * (always return a value — a Null Object, an exhaustive match) or THROW at the
  * source, so the contract is honest in one place instead of re-asserted at every
@@ -31,7 +31,7 @@ use PhpParser\NodeVisitor\NameResolver;
  * of the same ladder live in other prophets: a closed-enum `default => null` →
  * {@see ThrowOnUnhandledCaseProphet}; a registry miss → {@see RegistryReturnContractProphet};
  * a nullable param normalised to a default → {@see PreferNullObjectDefaultsProphet};
- * a genuine value-or-nothing → {@see PreferOptionOverNullProphet}.
+ * a genuine value-or-nothing → {@see OptionDisciplineProphet}.
  *
  * Advisory, never a sin; not auto-fixable (totalising is a design call).
  */
@@ -70,7 +70,7 @@ class PreferTotalOverNullableProphet extends PhpCommandment implements NeedsCode
     public function advisory(): Advisory
     {
         return Advisory::make()
-            ->applyWhen('A PRIVATE method returns `?T` / `T | null` / `Option<T>`, but every call site immediately requires the value — `?? throw`, `->getOrThrow()`/`->unwrap()`, or a blind `->` dereference. The absence is never handled, so the nullability is unearned.')
+            ->applyWhen('A PRIVATE method returns `?T` / `T | null` / `Option<T>`, but every call site immediately requires the value — `?? throw`, `->unwrap()`/`->unwrap()`, or a blind `->` dereference. The absence is never handled, so the nullability is unearned.')
             ->leaveWhen('any caller genuinely handles the absence — branches on null, supplies a real `?? $default`, uses `?->`, or passes it on as optional. Then the absence is real: keep it (as `Option<T>`, not raw null).')
             ->whenUnsure('only when NO caller tolerates "no value": make the method TOTAL or THROW at the source. If T has an empty IDENTITY (a Fluent bag, scalar, no-arg/`::empty()` class) AND that empty value is a valid domain value, returning it is the total form; if the empty value would be wrong (e.g. `\'\'` for a path), throw instead.');
     }
@@ -79,7 +79,7 @@ class PreferTotalOverNullableProphet extends PhpCommandment implements NeedsCode
     {
         return <<<'SCRIPTURE'
 A nullable return is a promise that "no value" is a real, handleable outcome.
-When EVERY caller immediately un-hedges it — `?? throw`, `->getOrThrow()`, or a
+When EVERY caller immediately un-hedges it — `?? throw`, `->unwrap()`, or a
 blind `->` deref that assumes non-null — the promise was a lie: the value always
 had to be there. The nullability just spreads defensive ceremony across callers
 for a state none of them accept.
@@ -104,7 +104,7 @@ the same partiality wearing a nicer coat, and it gets waved through review
 
     // ❌ nullable — null is not a real outcome; an unreadable file just has no data
     private function decode(string $p): ?ValueBag { … return null; }
-    // ❌ Option — same partiality; every caller still un-hedges (->getOrThrow()/->getOr(new ValueBag))
+    // ❌ Option — same partiality; every caller still un-hedges (->unwrap()/->unwrapOr(new ValueBag))
     /** @return Option<ValueBag> */
     private function decode(string $p): Option { … return Option::none(); }
 
@@ -121,13 +121,13 @@ Empty identities: `array`→`[]`, `string`→`''`, `int`/`float`→`0`/`0.0`,
 
 WHAT FIRES — a PRIVATE method whose return is `?T` / `T | null` / `Option<T>`,
 with >= 1 in-class call site, where EVERY call site de-nulls the result
-(`$this->m() ?? throw …`, `->getOrThrow()`/`->unwrap()`, or a blind `->` deref).
+(`$this->m() ?? throw …`, `->unwrap()`/`->unwrap()`, or a blind `->` deref).
 When T ALSO has an empty identity (a Fluent bag, scalar, no-arg/`::empty()`
 class), the remedy adds "return the empty T" alongside "or throw".
 
 WHAT DOES NOT — ANY caller that handles the absence keeps the nullable earned:
 a `?? $realDefault`, a `?->` chain, a `=== null` branch, passing it on, OR an
-Option consumed with `->getOr($default)` / `->transform(...)->getOr(...)` (a
+Option consumed with `->unwrapOr($default)` / `->map(...)->unwrapOr(...)` (a
 default IS handling the miss — even for an empty-identity type, where returning
 the empty value may be a wrong domain value, e.g. `''` for a path). A non-private
 method (callers may live elsewhere). Advisory: return-empty / totalise / throw
@@ -169,11 +169,11 @@ SCRIPTURE;
 
                 // The trigger is ALWAYS "every caller de-nulls" — if ANY caller
                 // handles the absence (`?? $default`, `?->`, an Option
-                // `->getOr($default)`/`->transform(...)->getOr(...)`, a `=== null`
+                // `->unwrapOr($default)`/`->map(...)->unwrapOr(...)`, a `=== null`
                 // branch), the nullability is earned, keep it. (#115: do NOT fire
                 // on an empty-identity type whose caller already handles absence —
                 // e.g. `viteConfigPath(): Option<string>` consumed via
-                // `->transform(...)->getOr(false)`; returning `''` would also be a
+                // `->map(...)->unwrapOr(false)`; returning `''` would also be a
                 // wrong "empty identity" for a path.)
                 if (! $this->everyCallDeNulls($calls, $kind, $parents)) {
                     continue;
@@ -215,7 +215,7 @@ SCRIPTURE;
         }
 
         return sprintf(
-            '%s() returns %s, but every call site immediately requires the value (`?? throw` / `->getOrThrow()` / a blind `->` deref) — the absence is never handled. Make it total (a Null Object / exhaustive match) or throw a named exception at the source, so the contract is honest once instead of re-asserted at every caller.',
+            '%s() returns %s, but every call site immediately requires the value (`?? throw` / `->unwrap()` / a blind `->` deref) — the absence is never handled. Make it total (a Null Object / exhaustive match) or throw a named exception at the source, so the contract is honest once instead of re-asserted at every caller.',
             $method,
             $hedge,
         );
@@ -405,8 +405,8 @@ SCRIPTURE;
     /**
      * Classify the method's nullable return, or null if it isn't nullable:
      *  - 'nullable' — native `?T` / `T | null`. De-null = blind `->` deref or `?? throw`.
-     *  - 'option'   — an `Option`-typed return. De-null = `->getOrThrow()`/`->unwrap()`
-     *                 ONLY; `->getOr($default)` / `->map(…)` TOLERATE the absence.
+     *  - 'option'   — an `Option`-typed return. De-null = `->unwrap()`/`->unwrap()`
+     *                 ONLY; `->unwrapOr($default)` / `->map(…)` TOLERATE the absence.
      *
      * @return 'nullable'|'option'|null
      */
@@ -472,9 +472,9 @@ SCRIPTURE;
     /**
      * Whether this call's result is immediately required (the absence rejected).
      * The rule differs by return kind — an `Option` has tolerant de-null methods
-     * (`->getOr($default)`, `->map(…)`) that a native `?T` does not:
-     *  - 'option'   — ONLY a `->getOrThrow()`/`->unwrap()` call requires it. Any
-     *                 other chained method (`->getOr`, `->map`, `->andThen`) HANDLES
+     * (`->unwrapOr($default)`, `->map(…)`) that a native `?T` does not:
+     *  - 'option'   — ONLY a `->unwrap()`/`->unwrap()` call requires it. Any
+     *                 other chained method (`->unwrapOr`, `->map`, `->andThen`) HANDLES
      *                 the none, so the Option is earned — not a de-null.
      *  - 'nullable' — `$this->m() ?? throw …`, or a PLAIN (non-nullsafe) `->member` /
      *                 `->method()` deref (assumes non-null). `?->` and `?? $default`

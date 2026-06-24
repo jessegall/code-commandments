@@ -78,6 +78,8 @@ use ReflectionNamedType;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static minMethods(int $value)
  * @method-generated-end
