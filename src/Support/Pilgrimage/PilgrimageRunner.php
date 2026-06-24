@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pilgrimage;
 
+use Illuminate\Filesystem\Filesystem;
 use JesseGall\CodeCommandments\Contracts\Commandment;
+use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
+use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
+use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
 use ReflectionClass;
 
 /**
@@ -28,6 +32,8 @@ final class PilgrimageRunner
     private ?array $itinerary = null;
 
     private ?CodebaseIndex $index = null;
+
+    private ?ConfessionTracker $tracker = null;
 
     private readonly string $scroll;
 
@@ -114,6 +120,12 @@ final class PilgrimageRunner
     public function begin(): array
     {
         PilgrimageState::clear($this->basePath);
+        PilgrimageIndexCache::clear($this->basePath);
+
+        // A fresh reckoning: clear ordinary finding-absolutions so everything
+        // re-surfaces (reported + until-push absolutions are deliberately kept —
+        // a reported finding stays quiet until its issue is answered).
+        $this->tracker()->clearFindingAbsolutions();
 
         $state = new PilgrimageState(scope: $this->scopeFiles(), scroll: $this->scroll);
         $step = $this->walkFrom($state);
@@ -235,7 +247,23 @@ final class PilgrimageRunner
     {
         $index = $prophet instanceof NeedsCodebaseIndex ? $this->index($state) : new CodebaseIndex();
 
-        return (new Pilgrimage)->scanProphet($prophet, $state->scope, $index, $this->basePath);
+        return (new Pilgrimage)->scanProphet($prophet, $state->scope, $index, $this->basePath, $this->tracker());
+    }
+
+    /**
+     * The absolution/report ledger, so the walk skips findings the consumer has
+     * already absolved or reported (#213). Built from the configured tablet path.
+     */
+    private function tracker(): ConfessionTracker
+    {
+        if ($this->tracker !== null) {
+            return $this->tracker;
+        }
+
+        $tabletPath = $this->config['confession']['tablet_path']
+            ?? Environment::basePath('.commandments/confessions.json');
+
+        return $this->tracker = new JsonConfessionTracker((string) $tabletPath, new Filesystem());
     }
 
     /**
