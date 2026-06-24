@@ -19,17 +19,19 @@ class JudgeNextCommandTest extends TestCase
         ]);
     }
 
-    public function test_next_shows_one_finding_and_fails(): void
+    public function test_next_redirects_to_the_pilgrimage_and_fails_while_findings_remain(): void
     {
+        // --next is retired — the guided walk is the pilgrimage. It redirects there
+        // but still exits non-zero while findings remain (so gate probes keep working).
         $this->artisan('commandments:judge', ['--next' => true])
-            ->expectsOutputToContain('NEXT')
+            ->expectsOutputToContain('PILGRIMAGE')
             ->assertFailed();
     }
 
-    public function test_next_points_at_fix_or_absolve(): void
+    public function test_next_points_at_the_pilgrimage_commands(): void
     {
         $this->artisan('commandments:judge', ['--next' => true])
-            ->expectsOutputToContain('there is no skip')
+            ->expectsOutputToContain('pilgrimage')
             ->assertFailed();
     }
 }

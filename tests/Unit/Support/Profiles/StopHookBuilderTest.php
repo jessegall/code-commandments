@@ -32,7 +32,9 @@ class StopHookBuilderTest extends TestCase
     {
         $script = $this->build('phased');
 
-        $this->assertStringContainsString('judge --next --git --no-cache', $script);
+        // The gate PROBE scopes to the staged changes (--git); bypass lets it run
+        // even mid-pilgrimage.
+        $this->assertStringContainsString('COMMANDMENTS_PILGRIMAGE_BYPASS=1 eval "${run}judge --git --no-cache"', $script);
         $this->assertStringContainsString('and the test suite', $script); // test: EachPhase
     }
 
@@ -40,8 +42,8 @@ class StopHookBuilderTest extends TestCase
     {
         $script = $this->build('penance');
 
-        $this->assertStringContainsString('judge --next --no-cache', $script);
-        $this->assertStringNotContainsString('judge --next --git', $script); // whole codebase, not --git
+        // The gate PROBE judges the whole codebase (no --git scope).
+        $this->assertStringContainsString('COMMANDMENTS_PILGRIMAGE_BYPASS=1 eval "${run}judge --no-cache"', $script);
     }
 
     public function test_disabled_generates_no_script(): void

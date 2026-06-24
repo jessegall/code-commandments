@@ -24,7 +24,19 @@ final class PilgrimageState
         public array $scope = [],
         public string $scroll = 'backend',
         public bool $complete = false,
+        // The agent SESSION that started the walk (Claude Code's CLAUDE_CODE_SESSION_ID).
+        // The judging-command lock applies ONLY to this session, so a human running
+        // commands in their own terminal is never blocked by the agent's pilgrimage.
+        public string $owner = '',
     ) {}
+
+    /** The current invocation's Claude Code session id, or '' outside a session. */
+    public static function currentSession(): string
+    {
+        $id = getenv('CLAUDE_CODE_SESSION_ID');
+
+        return is_string($id) ? $id : '';
+    }
 
     public static function path(string $basePath): string
     {
@@ -52,6 +64,7 @@ final class PilgrimageState
             is_array($data['scope'] ?? null) ? $data['scope'] : [],
             (string) ($data['scroll'] ?? 'backend'),
             (bool) ($data['complete'] ?? false),
+            (string) ($data['owner'] ?? ''),
         );
     }
 
@@ -67,11 +80,44 @@ final class PilgrimageState
             'scope' => $this->scope,
             'scroll' => $this->scroll,
             'complete' => $this->complete,
+            'owner' => $this->owner,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
 
     public static function clear(string $basePath): void
     {
         @unlink(self::path($basePath));
+    }
+
+    /**
+     * Whether a pilgrimage is mid-walk (state exists and not yet complete). While
+     * active, the judging commands (`judge`, bulk `repent`) are locked — the agent
+     * must use only `next`/`todo`/`autofix`/`absolve`/`report` — so it can't wander
+     * off the guided walk.
+     */
+    public static function isActive(string $basePath): bool
+    {
+        $state = self::load($basePath);
+
+        return $state !== null && ! $state->complete;
+    }
+
+    /**
+     * Whether an active pilgrimage is owned by the CURRENT agent session — i.e. this
+     * command was run by the same Claude Code session that started the walk. A human
+     * in their own terminal (no session id, or a different one) is never the owner,
+     * so the judging-command lock never blocks them.
+     */
+    public static function lockedForCurrentSession(string $basePath): bool
+    {
+        $state = self::load($basePath);
+
+        if ($state === null || $state->complete) {
+            return false;
+        }
+
+        // No recorded owner → started outside a session (e.g. CI / manual) → don't
+        // lock anyone. Otherwise lock only the owning session.
+        return $state->owner !== '' && $state->owner === self::currentSession();
     }
 }
