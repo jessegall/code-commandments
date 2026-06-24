@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static indentSpaces(int $value)
  * @method static maxNestingDepth(int $value)

@@ -19,6 +19,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static maxPrivateMethods(int $value)
  * @method static minMethodLines(int $value)

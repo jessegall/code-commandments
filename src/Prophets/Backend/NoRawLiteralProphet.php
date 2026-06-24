@@ -26,6 +26,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static arrayClass(string $value)
  * @method static boolClass(string $value)

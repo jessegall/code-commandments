@@ -95,6 +95,7 @@ return [
                 Backend\DuplicateCodeProphet::class,
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
+                Backend\OneRulePerFilterProphet::class,
                 Backend\NoInlineParamDocProphet::class,
                 Backend\ConstantsAndPropertiesFirstProphet::class,
                 Backend\PreferDataTransformersProphet::class,

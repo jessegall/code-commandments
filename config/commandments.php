@@ -165,6 +165,7 @@ return [
                 Backend\EncapsulateModelMutationProphet::class,
                 Backend\PreferCollectionPipelineProphet::class,
                 Backend\PreferFirstClassCallableProphet::class,
+                Backend\OneRulePerFilterProphet::class,
                 Backend\NoInlineParamDocProphet::class,
                 Backend\ConstantsAndPropertiesFirstProphet::class,
                 Backend\NoFacadesInServicesProphet::class,

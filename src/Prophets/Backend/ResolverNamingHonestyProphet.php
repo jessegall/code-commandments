@@ -32,6 +32,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static suffix(string $value)
  * @method-generated-end

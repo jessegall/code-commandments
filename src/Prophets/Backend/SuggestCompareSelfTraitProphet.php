@@ -55,6 +55,7 @@ use ReflectionEnum;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static equalsAnyMethod(string $value)
  * @method static equalsMethod(string $value)

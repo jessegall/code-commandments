@@ -17,6 +17,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static minContentLength(int $value)
  * @method-generated-end

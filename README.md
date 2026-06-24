@@ -579,7 +579,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_111 prophets._
+_112 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -634,6 +634,7 @@ _111 prophets._
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
 | `NoSwallowedNotFoundProphet` | — | Do not catch a not-found exception just to swallow it into null/false/[] — let it throw |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
+| `OneRulePerFilterProphet` | — | A filter()/reject() closure should hold ONE rule — split an && chain, and say !(…) as reject(…) |
 | `OutOfPurposeProphet` | — | A class with a role marker (*Registry/*Data/*Resolver) whose body shows a structural second-engine signal (reflection in a registry, an assembler cluster in a DTO, a store in a resolver) is doing a second job — extract it |
 | `PassThroughDependencyProphet` | — | A dependency only forwarded to one collaborator, never used itself, should be injected there |
 | `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
