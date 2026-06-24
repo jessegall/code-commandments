@@ -448,43 +448,138 @@ SCRIPTURE;
      */
     private function flagAlwaysSomeMethods(NodeFinder $finder, array $ast, string $optionShort, array &$warnings): void
     {
-        /** @var array<Node\Stmt\ClassMethod> $methods */
-        $methods = $finder->findInstanceOf($ast, Node\Stmt\ClassMethod::class);
+        /** @var array<Node\Stmt\ClassLike> $classes */
+        $classes = $finder->findInstanceOf($ast, Node\Stmt\ClassLike::class);
 
-        foreach ($methods as $method) {
-            if ($method->stmts === null || $this->returnTypeShort($method) !== $optionShort) {
+        foreach ($classes as $class) {
+            $fqcn = $this->classLikeFqcn($ast, $class);
+
+            foreach ($class->getMethods() as $method) {
+                if ($method->stmts === null || $this->returnTypeShort($method) !== $optionShort) {
+                    continue;
+                }
+
+                /** @var array<Node\Stmt\Return_> $returns */
+                $returns = $finder->findInstanceOf($method->stmts, Node\Stmt\Return_::class);
+
+                $anySome = false;
+
+                foreach ($returns as $return) {
+                    // A none(), or anything that is not a some() construction (a variable,
+                    // a delegated/mapped Option, …) means absence may be real — stay silent.
+                    if ($this->optionConstructorKind($return->expr, $optionShort) !== 'some') {
+                        continue 2;
+                    }
+
+                    $anySome = true;
+                }
+
+                // An override of an Option-returning interface / parent method is locked
+                // to `: Option` by the contract — its siblings legitimately return none(),
+                // so this single always-some implementation cannot be retyped. Not ours.
+                if ($anySome && ! $this->overridesOptionContract($class, $fqcn, $method->name->toString(), $optionShort, $ast)) {
+                    $warnings[] = $this->warningAt(
+                        $method->getStartLine(),
+                        sprintf(
+                            '%s() is typed `: %s` but every return is `%s::some(...)` — it is never empty, so the Option only adds an unwrap at each call site. Return the value directly (or throw when it genuinely cannot be produced).',
+                            $method->name->toString(),
+                            $optionShort,
+                            $optionShort,
+                        ),
+                        null,
+                        'option-overuse-always-some:' . $method->name->toString(),
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Whether $methodName is inherited from an Option-returning interface or parent —
+     * making its `: Option` signature a contract, not this class's choice. Reflection
+     * for loadable classes (consumer + vendor autoload at scan time); a same-file AST
+     * scan as the fallback for fixtures / unloadable code.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function overridesOptionContract(Node\Stmt\ClassLike $class, ?string $fqcn, string $methodName, string $optionShort, array $ast): bool
+    {
+        if ($fqcn !== null && (class_exists($fqcn) || interface_exists($fqcn))) {
+            try {
+                $ref = new \ReflectionClass($fqcn);
+                $parent = $ref->getParentClass();
+                $sources = $parent === false ? $ref->getInterfaces() : array_merge($ref->getInterfaces(), [$parent]);
+
+                foreach ($sources as $source) {
+                    if (! $source->hasMethod($methodName)) {
+                        continue;
+                    }
+
+                    $type = $source->getMethod($methodName)->getReturnType();
+
+                    if ($type instanceof \ReflectionNamedType && $this->shortOf($type->getName()) === $optionShort) {
+                        return true;
+                    }
+                }
+            } catch (\Throwable) {
+                // fall through to the AST fallback
+            }
+        }
+
+        // AST fallback: a parent / interface declared IN THE SAME FILE that names this
+        // method with an Option return type.
+        $superShorts = [];
+
+        if ($class instanceof Node\Stmt\Class_) {
+            if ($class->extends !== null) {
+                $superShorts[] = $class->extends->getLast();
+            }
+            foreach ($class->implements as $implemented) {
+                $superShorts[] = $implemented->getLast();
+            }
+        }
+
+        if ($superShorts === []) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\ClassLike::class) as $other) {
+            if ($other->name === null || ! in_array($other->name->toString(), $superShorts, true)) {
                 continue;
             }
 
-            /** @var array<Node\Stmt\Return_> $returns */
-            $returns = $finder->findInstanceOf($method->stmts, Node\Stmt\Return_::class);
+            $inherited = $other->getMethod($methodName);
 
-            $anySome = false;
-
-            foreach ($returns as $return) {
-                // A none(), or anything that is not a some() construction (a variable,
-                // a delegated/mapped Option, …) means absence may be real — stay silent.
-                if ($this->optionConstructorKind($return->expr, $optionShort) !== 'some') {
-                    continue 2;
-                }
-
-                $anySome = true;
-            }
-
-            if ($anySome) {
-                $warnings[] = $this->warningAt(
-                    $method->getStartLine(),
-                    sprintf(
-                        '%s() is typed `: %s` but every return is `%s::some(...)` — it is never empty, so the Option only adds an unwrap at each call site. Return the value directly (or throw when it genuinely cannot be produced).',
-                        $method->name->toString(),
-                        $optionShort,
-                        $optionShort,
-                    ),
-                    null,
-                    'option-overuse-always-some:' . $method->name->toString(),
-                );
+            if ($inherited !== null && $this->returnTypeShort($inherited) === $optionShort) {
+                return true;
             }
         }
+
+        return false;
+    }
+
+    /** The FQCN of a class-like AST node (namespace + name), or null when anonymous. */
+    private function classLikeFqcn(array $ast, Node\Stmt\ClassLike $class): ?string
+    {
+        if ($class->name === null) {
+            return null;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($ast, Node\Stmt\Namespace_::class) as $namespace) {
+            if ($namespace->name !== null) {
+                return $namespace->name->toString() . '\\' . $class->name->toString();
+            }
+        }
+
+        return $class->name->toString();
+    }
+
+    /** Last segment of a (possibly namespaced) class name. */
+    private function shortOf(string $class): string
+    {
+        $parts = explode('\\', ltrim($class, '\\'));
+
+        return end($parts) ?: $class;
     }
 
     /**
