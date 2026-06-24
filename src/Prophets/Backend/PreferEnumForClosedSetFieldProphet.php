@@ -36,6 +36,14 @@ use PhpParser\ParserFactory;
  *
  *     repent --prophet=PreferEnumForClosedSetField --file=… \
  *         --input create-enum-class=SocketDirection --input cases=input,output
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static compareSelfTrait(string $value)
+ * @method static dataBaseSuffix(string $value)
+ * @method static names(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.91.0')]
 class PreferEnumForClosedSetFieldProphet extends PhpCommandment implements ParameterizedRepenter, NeedsCodebaseIndex

@@ -19,6 +19,12 @@ use JesseGall\CodeCommandments\Support\TailwindClassFilter;
  *
  * Layout/spacing classes (margin, grid, flex positioning) are allowed
  * as they are contextual concerns of the parent, not the component.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static allowedPatterns(array $value)
+ * @method-generated-end
  */
 class StyleOverridesProphet extends FrontendCommandment
 {

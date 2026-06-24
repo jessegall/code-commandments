@@ -13,6 +13,14 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  * Avoid deeply nested templates - consider extracting components.
  *
  * Templates with deep nesting (6+ levels) are hard to read and maintain.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static indentSpaces(int $value)
+ * @method static maxNestingDepth(int $value)
+ * @method static minDeepLines(int $value)
+ * @method-generated-end
  */
 class DeepNestingProphet extends FrontendCommandment
 {

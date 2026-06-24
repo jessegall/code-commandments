@@ -26,6 +26,16 @@ use PhpParser\ParserFactory;
  * the union is value-or-nothing (it includes null), the answer is an `Option`
  * (the null becomes the Option's absence, the rest its generic); otherwise a
  * small value object or a single type.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static narrowCap(int $value)
+ * @method static sinAtTypes(int $value)
+ * @method static supportNamespace(string $value)
+ * @method static warnAtTypes(int $value)
+ * @method static warningsEnabled(bool $on = true)
+ * @method-generated-end
  */
 #[IntroducedIn('1.81.0')]
 class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepenter, NeedsCodebaseIndex

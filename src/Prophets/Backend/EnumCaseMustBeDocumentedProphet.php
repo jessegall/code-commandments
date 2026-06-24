@@ -47,6 +47,12 @@ use PhpParser\NodeFinder;
  * `/* … *\/`, `// …`); set `style => 'docblock'` to require a true `/** … *\/`
  * docblock for the inline form. A separator like `// ---`, an empty `/** *\/`, or
  * a bare `{@see Enum::Case}` cross-reference with no description does not count.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static style(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.35.0')]
 class EnumCaseMustBeDocumentedProphet extends PhpCommandment

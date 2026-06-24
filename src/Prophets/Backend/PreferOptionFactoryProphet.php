@@ -38,6 +38,12 @@ use PhpParser\NodeFinder;
  * must itself return an Option), whereas `someWhen` wraps it in `some()`.
  *
  * Advisory, never a sin — collapsing to a factory is a readability call.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static optionClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('2.2.0')]
 class PreferOptionFactoryProphet extends PhpCommandment

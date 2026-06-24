@@ -26,6 +26,12 @@ use PhpParser\NodeFinder;
  * stays inline — extracting a one-liner constant is pure ceremony.
  *
  * Advisory, never a sin; not auto-fixable (extracting a class is a refactor).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static factoryMethods(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.129.0')]
 class PreferNamedBranchFactoryProphet extends PhpCommandment

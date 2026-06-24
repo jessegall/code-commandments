@@ -17,6 +17,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * generic SPL exceptions, and named exceptions fed a message string.
  * A throw site passes domain values; the exception builds its own
  * message in a static factory (preferred) or its constructor.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static allow(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.23.0')]
 class PreferNamedExceptionsProphet extends PhpCommandment

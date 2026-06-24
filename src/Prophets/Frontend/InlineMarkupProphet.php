@@ -14,6 +14,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  * Templates cluttered with raw HTML elements indicate implementation details
  * that should be extracted into dedicated, named components.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static maxHtmlTags(int $value)
+ * @method-generated-end
  */
 class InlineMarkupProphet extends FrontendCommandment
 {

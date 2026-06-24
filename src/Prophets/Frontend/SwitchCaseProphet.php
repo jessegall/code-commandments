@@ -15,6 +15,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  * When conditionally rendering based on a string value with multiple cases,
  * use the SwitchCase component instead of v-if/v-else-if chains.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minCases(int $value)
+ * @method-generated-end
  */
 class SwitchCaseProphet extends FrontendCommandment
 {

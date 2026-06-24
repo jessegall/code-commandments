@@ -23,6 +23,24 @@ use PhpParser\ParserFactory;
  * the empty checks (`=== ''` / `strlen()` / `trim()`), and rewrite them to the
  * named type helpers from jessegall/php-types (`T_String`, `T_Json`, `T_Array`,
  * `T_Int`).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static arrayClass(string $value)
+ * @method static boolClass(string $value)
+ * @method static flagEmptyArray(bool $on = true)
+ * @method static flagSentinelFloats(bool $on = true)
+ * @method static flagSentinelInts(bool $on = true)
+ * @method static flagSeparators(bool $on = true)
+ * @method static flagSpace(bool $on = true)
+ * @method static flagWhitespace(bool $on = true)
+ * @method static floatClass(string $value)
+ * @method static initializersOnly(bool $on = true)
+ * @method static intClass(string $value)
+ * @method static jsonClass(string $value)
+ * @method static stringClass(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.28.0')]
 class NoRawLiteralProphet extends PhpCommandment implements SinRepenter

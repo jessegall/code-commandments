@@ -19,6 +19,13 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
 /**
  * Flag the same field hydrated to the same type more than once via
  * `::from()`. A field that keeps being hydrated should simply BE that type.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static methods(array $value)
+ * @method static minOccurrences(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.37.0')]
 class NoRepeatedHydrationProphet extends PhpCommandment

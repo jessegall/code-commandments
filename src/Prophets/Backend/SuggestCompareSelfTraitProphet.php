@@ -52,6 +52,18 @@ use ReflectionEnum;
  *
  * The trait FQCN, the four `equals`-family method names, minimum chain length,
  * and excluded enums are all configurable.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static equalsAnyMethod(string $value)
+ * @method static equalsMethod(string $value)
+ * @method static excludeEnums(array $value)
+ * @method static minChain(int $value)
+ * @method static notEqualsAnyMethod(string $value)
+ * @method static notEqualsMethod(string $value)
+ * @method static trait(string $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.15.0')]
 class SuggestCompareSelfTraitProphet extends PhpCommandment implements SinRepenter, NeedsCodebaseIndex

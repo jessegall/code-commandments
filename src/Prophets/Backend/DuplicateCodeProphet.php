@@ -19,6 +19,12 @@ use PhpParser\NodeFinder;
 /**
  * Flag a method whose body is duplicated elsewhere in the codebase — the same
  * structure (modulo variable names) repeated, which should be extracted.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static minLines(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.64.0')]
 class DuplicateCodeProphet extends PhpCommandment implements NeedsCodebaseIndex

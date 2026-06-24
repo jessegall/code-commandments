@@ -27,6 +27,12 @@ use PhpParser\NodeFinder;
  *  2. No external `SomeData::from(...)` — the magic entry point may only be
  *     self/static/parent::from() inside the class. Outside, call an explicit
  *     named factory (`SomeData::forX(...)` / `::forArray([...])`).
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static dataSuffixes(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.137.0')]
 class NoExternalDataFromProphet extends PhpCommandment implements SinRepenter

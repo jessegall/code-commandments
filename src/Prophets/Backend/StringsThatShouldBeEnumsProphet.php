@@ -30,6 +30,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *      use a small closed set of literals. This fires even when no
  *      enum exists yet — the highest-value moment to suggest creating
  *      one.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static crossFileTrace(bool $on = true)
+ * @method-generated-end
  */
 #[IntroducedIn('1.6.0')]
 class StringsThatShouldBeEnumsProphet extends PhpCommandment implements NeedsCodebaseIndex

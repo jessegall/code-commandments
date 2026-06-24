@@ -13,6 +13,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  * TypeScript files in components should be under 200 lines.
  *
  * Large TypeScript files in components indicate the need to split logic.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static maxTsLines(int $value)
+ * @method-generated-end
  */
 class LongTsFilesProphet extends FrontendCommandment
 {

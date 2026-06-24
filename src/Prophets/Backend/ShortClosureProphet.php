@@ -20,6 +20,12 @@ use PhpParser\NodeVisitorAbstract;
  * Flag a big anonymous function. A multi-statement closure is a named method
  * that lost its name: it can't be unit-tested, can't be named, and buries the
  * intent of the method it sits in. Extract it to a private method.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static maxClosureStatements(int $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.119.0')]
 class ShortClosureProphet extends PhpCommandment

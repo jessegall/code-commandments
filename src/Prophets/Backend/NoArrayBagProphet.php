@@ -18,6 +18,12 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  * parameters, properties (incl. constructor-promoted), and returns.
  * A named value bag deserves a Fluent-based value class; on a Spatie
  * Data object the Castable/WithCastable combo hydrates it for free.
+ *
+ *
+ *
+ * @method-generated-start
+ * @method static exemptMethods(array $value)
+ * @method-generated-end
  */
 #[IntroducedIn('1.22.0')]
 class NoArrayBagProphet extends PhpCommandment
