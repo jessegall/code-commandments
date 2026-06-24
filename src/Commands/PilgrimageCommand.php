@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageIndexCache;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimagePresenter;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageRunner;
+use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageStarter;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState;
 
 /**
@@ -18,7 +19,7 @@ use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState;
  */
 class PilgrimageCommand extends Command
 {
-    protected $signature = 'commandments:pilgrimage {--scroll=backend}
+    protected $signature = 'commandments:pilgrimage {prophet? : Constrain the walk to ONE prophet (partial name, like judge --prophet)} {--scroll=backend}
         {--is-complete : INTERNAL: exit 0 only if THIS session has genuinely walked the whole pilgrimage (the pre-push gate uses this). Recomputed from the cursor}
         {--clear : INTERNAL: discard the pilgrimage state (the pre-push gate consumes a completed walk so the next push re-arms the gate)}';
 
@@ -41,9 +42,15 @@ class PilgrimageCommand extends Command
             return $runner->isComplete() ? self::SUCCESS : self::FAILURE;
         }
 
-        $step = $runner->begin();
+        $prophet = $this->argument('prophet');
 
-        $this->line(sprintf('The pilgrimage begins. %d doctrines ahead.', $runner->totalDoctrines()));
+        $step = PilgrimageStarter::start($runner, base_path(), is_string($prophet) ? $prophet : null, $this->line(...));
+
+        if ($step === null) {
+            return self::SUCCESS;
+        }
+
+        $this->line(sprintf('The pilgrimage begins. %d station(s) ahead.', $runner->totalDoctrines()));
 
         foreach (PilgrimagePresenter::render($step, $runner) as $line) {
             $this->line($line);

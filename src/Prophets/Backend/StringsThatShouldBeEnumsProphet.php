@@ -36,6 +36,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static crossFileTrace(bool $on = true)
  * @method-generated-end

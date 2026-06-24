@@ -68,6 +68,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static exemptAttributes(array $value)
  * @method static exemptBases(array $value)

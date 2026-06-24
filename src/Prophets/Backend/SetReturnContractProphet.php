@@ -35,6 +35,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static markers(array $value)
  * @method static optionClasses(array $value)

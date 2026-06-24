@@ -110,4 +110,29 @@ final class ProfileBehaviour
     {
         return $this->judge === Phase::EachPhase || $this->judge === Phase::UntilClean;
     }
+
+    /**
+     * Whether the agent should AUTO-START the pilgrimage (the guided fix-walk) for
+     * this profile, rather than wait to be told — derived from the cadence. Every
+     * cadence except Never auto-starts; repentr (Never, no Stop hook) is the one
+     * profile that is user-driven (the agent must ask WHICH prophet first).
+     */
+    public function autoStartsPilgrimage(): bool
+    {
+        return $this->judge !== Phase::Never;
+    }
+
+    /**
+     * The WHEN of the auto-start, in one human phrase — drives the briefing's
+     * auto-start line. Empty when the profile does not auto-start.
+     */
+    public function pilgrimageTrigger(): string
+    {
+        return match ($this->judge) {
+            Phase::AtEnd => 'the MOMENT the plan is fully implemented (the pilgrimage IS the reckon)',
+            Phase::EachPhase => 'before every commit, on the changes for that phase',
+            Phase::UntilClean => 'now, and keep walking until the whole backlog is clean',
+            Phase::Never => '',
+        };
+    }
 }
