@@ -196,8 +196,8 @@ final class CommitHookInstaller
         return <<<HOOK
         {$begin}
         # Blocks the commit when code-commandments finds sins in the STAGED
-        # changes (only what is actually being committed). Run `judge --next`
-        # to walk and fix them one at a time.
+        # changes (only what is actually being committed). Walk and fix them with
+        # `pilgrimage` then `next`.
         if [ -x vendor/bin/commandments ]; then
             vendor/bin/commandments judge --staged --no-cache
             cc_status=\$?
@@ -212,8 +212,8 @@ final class CommitHookInstaller
             echo ""
             echo "✗ Commit blocked: unresolved findings on your staged files."
             echo "  Every sin AND warning must be fixed, or absolved with a reason."
-            echo "  Walk them one at a time:  commandments judge --next --staged"
-            echo "  Fix it, or absolve:  commandments absolve --fingerprint=<hash> --reason=\"why\""
+            echo "  Walk and fix them:  commandments pilgrimage   then   commandments next"
+            echo "  Absolve a genuine false positive:  commandments absolve --at=<file:line> --prophet=<Name> --reason=\"why\""
             echo "  Genuinely wrong finding (false positive / ill-fitting rule / prophet bug)?"
             echo "  Report it, do not work around it:  commandments report --prophet=NAME --reason=..."
             echo "  (Bypass only in a real emergency with: git commit --no-verify)"
@@ -309,7 +309,7 @@ final class CommitHookInstaller
             echo ""
             echo "✗ Push blocked: unresolved findings remain in scope."
             echo "  Every sin AND warning must be fixed, or absolved with a reason."
-            echo "  Reckon before pushing:  commandments judge --next"
+            echo "  Reckon before pushing:  commandments pilgrimage   then   commandments next"
             echo "  (Bypass only in a real emergency with: git push --no-verify)"
             exit 1
         fi
