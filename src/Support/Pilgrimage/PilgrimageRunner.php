@@ -12,6 +12,10 @@ use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\GitFileDetector;
+use JesseGall\CodeCommandments\Support\Profiles\JudgeScope;
+use JesseGall\CodeCommandments\Support\RootCauseMap;
+use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Tracking\JsonConfessionTracker;
 use ReflectionClass;
@@ -34,6 +38,9 @@ final class PilgrimageRunner
     private ?CodebaseIndex $index = null;
 
     private ?ConfessionTracker $tracker = null;
+
+    /** The single prophet this walk is constrained to (FQCN), or null for the full cascade. */
+    private ?string $onlyProphet = null;
 
     private readonly string $scroll;
 
@@ -113,12 +120,26 @@ final class PilgrimageRunner
     }
 
     /**
-     * Reset the walk and stop at the first prophet that has findings.
+     * Reset the walk and stop at the first prophet that has findings. The walk's
+     * SCOPE is frozen from the active profile: which files (whole scroll / branch /
+     * staged) and severity, plus an optional single-prophet constraint. Refuses to
+     * clobber an in-flight walk owned by this session (finish with `next` or leave
+     * with `abandon` first) — a completed walk restarts freely.
      *
+     * @param  class-string<Commandment>|null  $onlyProphet  constrain to one prophet
      * @return array<string, mixed>
      */
-    public function begin(): array
+    public function begin(?string $onlyProphet = null): array
     {
+        $existing = PilgrimageState::load($this->basePath);
+
+        if ($existing !== null && ! $existing->complete
+            && $existing->owner !== '' && $existing->owner === PilgrimageState::currentSession()) {
+            return ['error' => true, 'inProgress' => $existing->onlyProphet];
+        }
+
+        $this->onlyProphet = $onlyProphet;
+
         PilgrimageState::clear($this->basePath);
         PilgrimageIndexCache::clear($this->basePath);
 
@@ -127,11 +148,46 @@ final class PilgrimageRunner
         // a reported finding stays quiet until its issue is answered).
         $this->tracker()->clearFindingAbsolutions();
 
-        $state = new PilgrimageState(scope: $this->scopeFiles(), scroll: $this->scroll, owner: PilgrimageState::currentSession());
+        $opts = ProfileService::resolve($this->basePath)->options();
+        $scopeKind = $this->scopeKindFor($opts->scope);
+
+        $state = new PilgrimageState(
+            scope: $this->filesForScopeKind($scopeKind),
+            scroll: $this->scroll,
+            owner: PilgrimageState::currentSession(),
+            scopeKind: $scopeKind,
+            allowWarnings: $opts->allowWarnings,
+            onlyProphet: $onlyProphet,
+        );
+
         $step = $this->walkFrom($state);
         $state->save($this->basePath);
 
         return $step;
+    }
+
+    /** The profile's JudgeScope as the persisted scope-kind tag. */
+    private function scopeKindFor(JudgeScope $scope): string
+    {
+        return match (true) {
+            JudgeScope::Staged->equals($scope) => 'staged',
+            JudgeScope::Branch->equals($scope) => 'branch',
+            default => 'full',
+        };
+    }
+
+    /**
+     * The frozen file list for a scope kind: branch/staged via git, full = the scroll.
+     *
+     * @return list<string>
+     */
+    private function filesForScopeKind(string $kind): array
+    {
+        return match ($kind) {
+            'staged' => GitFileDetector::for($this->basePath)->getStagedFiles(),
+            'branch' => GitFileDetector::for($this->basePath)->getBranchFiles(),
+            default => $this->scopeFiles(),
+        };
     }
 
     /**
@@ -247,7 +303,7 @@ final class PilgrimageRunner
     {
         $index = $prophet instanceof NeedsCodebaseIndex ? $this->index($state) : new CodebaseIndex();
 
-        return (new Pilgrimage)->scanProphet($prophet, $state->scope, $index, $this->basePath, $this->tracker());
+        return (new Pilgrimage)->scanProphet($prophet, $state->scope, $index, $this->basePath, $this->tracker(), $state->allowWarnings);
     }
 
     /**
@@ -376,6 +432,40 @@ final class PilgrimageRunner
     }
 
     /**
+     * A one-line, human-readable description of the active walk's SCOPE — so every
+     * pilgrimage/next/todo output can state what it is walking (the scope is otherwise
+     * invisible state that changes per profile). Empty when no walk is active.
+     */
+    public function scopeSummary(): string
+    {
+        $state = PilgrimageState::load($this->basePath);
+
+        if ($state === null) {
+            return '';
+        }
+
+        if ($state->onlyProphet !== null) {
+            return sprintf('ONE prophet — %s, across %d file(s)', $this->shortName($state->onlyProphet), count($state->scope));
+        }
+
+        $where = match ($state->scopeKind) {
+            'staged' => 'your STAGED changes',
+            'branch' => "the BRANCH's changes",
+            default => 'the WHOLE scroll',
+        };
+
+        return sprintf('%s (%d file(s)) · %s', $where, count($state->scope), $state->allowWarnings ? 'sins + admonitions' : 'sins only');
+    }
+
+    /** The short name of the prophet a single-prophet walk is constrained to, or null. */
+    public function singleProphetShort(): ?string
+    {
+        $only = PilgrimageState::load($this->basePath)?->onlyProphet;
+
+        return $only !== null ? $this->shortName($only) : null;
+    }
+
+    /**
      * Whether the walk is GENUINELY complete for the current session — used by the
      * pre-push gate to grant a completed pilgrimage one push past the gate. We do not
      * trust the persisted `complete` flag alone (an agent could hand-write it): the
@@ -395,7 +485,54 @@ final class PilgrimageRunner
             return false;
         }
 
-        return $state->doctrine >= $this->totalDoctrines();
+        if ($state->doctrine < $this->totalDoctrines()) {
+            return false;
+        }
+
+        // A single-prophet walk covers ONE rule — it can never relax a gate that
+        // judges the whole scope. The gate falls through to its own probe.
+        if ($state->onlyProphet !== null) {
+            return false;
+        }
+
+        // The walk only earns a gate bypass for the scope it ACTUALLY covered. If the
+        // active profile's scope/severity changed since `begin()` (the user switched
+        // profiles), or files have entered the live scope that the frozen walk never
+        // visited, the completion is stale — do NOT relax; the gate re-probes.
+        $opts = ProfileService::resolve($this->basePath)->options();
+
+        if ($this->scopeKindFor($opts->scope) !== $state->scopeKind || $opts->allowWarnings !== $state->allowWarnings) {
+            return false;
+        }
+
+        $live = $this->normalizePaths($this->filesForScopeKind($state->scopeKind));
+        $frozen = $this->normalizePaths($state->scope);
+
+        return array_diff($live, $frozen) === [];
+    }
+
+    /**
+     * Canonicalize a file list (realpath, drop unresolved) so a branch/staged file
+     * list produced now is comparable to the one frozen at `begin()` — guards the
+     * relative-vs-absolute / symlink-prefix mismatch the gate guard would otherwise
+     * trip on.
+     *
+     * @param  list<string>  $files
+     * @return list<string>
+     */
+    private function normalizePaths(array $files): array
+    {
+        $out = [];
+
+        foreach ($files as $file) {
+            $real = realpath($file);
+
+            if ($real !== false) {
+                $out[$real] = true;
+            }
+        }
+
+        return array_keys($out);
     }
 
     /**
@@ -403,7 +540,10 @@ final class PilgrimageRunner
      */
     private function itinerary(): array
     {
-        return $this->itinerary ??= Pilgrimage::itinerary(array_keys($this->prophetsByClass()));
+        return $this->itinerary ??= Pilgrimage::itinerary(
+            array_keys($this->prophetsByClass()),
+            $this->onlyProphet ?? PilgrimageState::load($this->basePath)?->onlyProphet,
+        );
     }
 
     /**
@@ -450,9 +590,96 @@ final class PilgrimageRunner
 
     private function index(PilgrimageState $state): CodebaseIndex
     {
-        return $this->index ??= (new PilgrimageIndexCache())->get(
-            $this->basePath,
-            $state->scope !== [] ? $state->scope : $this->scopeFiles(),
-        );
+        // The cross-file index is ALWAYS built from the full scroll, even when the
+        // walk's reported scope is narrowed (branch/staged) — so origin traces and
+        // NeedsCodebaseIndex prophets resolve callers outside the scope, exactly as
+        // `judge --branch/--staged` does.
+        return $this->index ??= (new PilgrimageIndexCache())->get($this->basePath, $this->scopeFiles());
+    }
+
+    /**
+     * Resolve a partial prophet name (like `judge --prophet`, but STRICTER) to a
+     * single registered prophet class. Exactly one match → its FQCN; zero or many →
+     * null + the candidate short names, so the caller can refuse and list them.
+     *
+     * @return array{class: class-string<Commandment>|null, candidates: list<string>}
+     */
+    public function resolveProphet(string $needle): array
+    {
+        $needle = strtolower(trim($needle));
+        $registered = array_keys($this->prophetsByClass());
+
+        if ($needle === '') {
+            return ['class' => null, 'candidates' => array_map($this->shortName(...), $registered)];
+        }
+
+        $matches = array_values(array_filter(
+            $registered,
+            fn (string $class): bool => str_contains(strtolower($this->shortName($class)), $needle),
+        ));
+
+        if (count($matches) === 1) {
+            return ['class' => $matches[0], 'candidates' => []];
+        }
+
+        return ['class' => null, 'candidates' => array_map($this->shortName(...), $matches !== [] ? $matches : $registered)];
+    }
+
+    /**
+     * Short name => finding count for every prophet that currently fires over the
+     * full scroll, most first — the ranked menu shown when a single-prophet walk is
+     * started without naming a prophet. Scans every prophet, so it is for the
+     * refusal/menu path only, not the hot loop.
+     *
+     * @return array<string, int>
+     */
+    public function prophetFindingCounts(): array
+    {
+        $files = $this->scopeFiles();
+        $index = (new PilgrimageIndexCache())->get($this->basePath, $files);
+        $pilgrimage = new Pilgrimage;
+        $counts = [];
+
+        foreach ($this->prophetsByClass() as $class => $prophet) {
+            $idx = $prophet instanceof NeedsCodebaseIndex ? $index : new CodebaseIndex();
+            $count = count($pilgrimage->scanProphet($prophet, $files, $idx, $this->basePath, $this->tracker()));
+
+            if ($count > 0) {
+                $counts[$this->shortName($class)] = $count;
+            }
+        }
+
+        arsort($counts);
+
+        return $counts;
+    }
+
+    /**
+     * If $targetFqcn is a RootCauseMap symptom whose cause still fires in scope, the
+     * cause's short name (so a single-prophet walk can refuse to repent the symptom
+     * in isolation and point at the cause) — else null.
+     *
+     * @param  class-string<Commandment>  $targetFqcn
+     */
+    public function unresolvedCauseFor(string $targetFqcn): ?string
+    {
+        $files = $this->scopeFiles();
+        $pilgrimage = new Pilgrimage;
+
+        foreach (RootCauseMap::causesOf($targetFqcn) as $causeClass) {
+            $prophet = $this->prophetsByClass()[$causeClass] ?? null;
+
+            if ($prophet === null) {
+                continue;
+            }
+
+            $index = $prophet instanceof NeedsCodebaseIndex ? (new PilgrimageIndexCache())->get($this->basePath, $files) : new CodebaseIndex();
+
+            if ($pilgrimage->scanProphet($prophet, $files, $index, $this->basePath, $this->tracker()) !== []) {
+                return $this->shortName($causeClass);
+            }
+        }
+
+        return null;
     }
 }

@@ -53,6 +53,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static style(string $value)
  * @method-generated-end

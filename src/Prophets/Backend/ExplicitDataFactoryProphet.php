@@ -39,6 +39,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static dataSuffixes(array $value)
  * @method-generated-end

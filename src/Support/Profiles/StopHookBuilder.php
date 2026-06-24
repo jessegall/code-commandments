@@ -48,7 +48,7 @@ final class StopHookBuilder
         $defer = self::deferredActivities($b);
         $ask = self::shEscape($b->askGuidance());
         $msg = sprintf(
-            'The approved plan is not finished (%s, auto-continue $count/%d) — implement the next phase now and commit it. Do NOT run %s between phases: %s defers the reckon to the single pre-push gate. A long turn or context compaction is not a blocker. %s',
+            'The approved plan is not finished (%s, auto-continue $count/%d) — implement the next phase now and commit it. Do NOT run %s between phases: %s defers the reckon to the single pre-push gate. The MOMENT the plan is fully implemented, AUTO-START the reckon yourself — run `pilgrimage` (do not wait to be asked) and walk it with `next`; the pre-push gate stays shut until that walk is complete. A long turn or context compaction is not a blocker. %s',
             $profile,
             $cap,
             $defer,

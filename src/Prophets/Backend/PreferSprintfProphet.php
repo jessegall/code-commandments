@@ -27,6 +27,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static extractWhitespace(bool $on = true)
  * @method static minInterpolations(int $value)

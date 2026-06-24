@@ -18,6 +18,7 @@ use PhpParser\Node;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static maxNarrativeLines(int $value)
  * @method-generated-end

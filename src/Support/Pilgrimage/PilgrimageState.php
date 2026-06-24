@@ -28,6 +28,11 @@ final class PilgrimageState
         // The judging-command lock applies ONLY to this session, so a human running
         // commands in their own terminal is never blocked by the agent's pilgrimage.
         public string $owner = '',
+        // The walk's SCOPE descriptor, frozen at begin() from the active profile, so
+        // the gate can only relax for the scope the walk actually covered.
+        public string $scopeKind = 'full',   // 'full' | 'branch' | 'staged'
+        public bool $allowWarnings = true,    // false under sins-only
+        public ?string $onlyProphet = null,   // FQCN when a single-prophet walk
     ) {}
 
     /** The current invocation's Claude Code session id, or '' outside a session. */
@@ -65,6 +70,9 @@ final class PilgrimageState
             (string) ($data['scroll'] ?? 'backend'),
             (bool) ($data['complete'] ?? false),
             (string) ($data['owner'] ?? ''),
+            (string) ($data['scopeKind'] ?? 'full'),
+            (bool) ($data['allowWarnings'] ?? true),
+            isset($data['onlyProphet']) && is_string($data['onlyProphet']) && $data['onlyProphet'] !== '' ? $data['onlyProphet'] : null,
         );
     }
 
@@ -81,6 +89,9 @@ final class PilgrimageState
             'scroll' => $this->scroll,
             'complete' => $this->complete,
             'owner' => $this->owner,
+            'scopeKind' => $this->scopeKind,
+            'allowWarnings' => $this->allowWarnings,
+            'onlyProphet' => $this->onlyProphet,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
 

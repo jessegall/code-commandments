@@ -32,6 +32,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static accessor(string $value)
  * @method static markers(array $value)

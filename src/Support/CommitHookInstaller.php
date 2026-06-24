@@ -204,10 +204,10 @@ final class CommitHookInstaller
         cc_prof=\$(cat .commandments/profile 2>/dev/null)
         if [ "\${CLAUDECODE:-}" = "1" ] && [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
         if [ -x vendor/bin/commandments ]; then
-            vendor/bin/commandments judge --staged --no-cache
+            vendor/bin/commandments judge --staged --gate-probe
             cc_status=\$?
         elif [ -f artisan ]; then
-            php artisan commandments:judge --staged --no-cache
+            php artisan commandments:judge --staged --gate-probe
             cc_status=\$?
         else
             cc_status=0

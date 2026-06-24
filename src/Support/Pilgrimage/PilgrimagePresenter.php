@@ -23,11 +23,31 @@ final class PilgrimagePresenter
     public static function render(array $step, PilgrimageRunner $runner): array
     {
         if (($step['complete'] ?? false) === true) {
+            $only = $runner->singleProphetShort();
+
+            if ($only !== null) {
+                // A single-prophet walk: a TERMINAL, not a launchpad. The agent must
+                // stop and ask the user — not auto-pick "another prophet" and loop.
+                return [
+                    '',
+                    sprintf('✓ %s is clean — every location repented across the scope.', $only),
+                    '  This was a SINGLE-PROPHET walk; the rest of the codebase is intentionally untouched.',
+                    '',
+                    '  The user may want to:',
+                    '    a) repent ANOTHER prophet → `commandments pilgrimage <NAME>` (ask which)',
+                    '    b) clean EVERYTHING → switch to the penance profile, then `commandments pilgrimage`',
+                    '    c) stop here → switch profile, or nothing further',
+                    '',
+                    '  You are DONE with the prophet you were asked to fix. Report that it is clean and STOP —',
+                    '  ASK the user which of the above they want; do NOT start another walk on your own.',
+                ];
+            }
+
             $total = (int) ($step['prophetsTotal'] ?? 0);
 
             return [
                 '',
-                sprintf('✓ The pilgrimage is complete — all %d prophets across every doctrine have been walked.', $total),
+                sprintf('✓ The pilgrimage is complete — all %d prophets across %s have been walked.', $total, $runner->scopeSummary() ?: 'every doctrine'),
                 '  Run `commandments pilgrimage` again for a fresh pass to catch anything newly introduced.',
             ];
         }
@@ -40,7 +60,8 @@ final class PilgrimagePresenter
 
         $lines = [
             '',
-            sprintf('▶ NOW WORKING ON: %s — resolve %d location(s)%s in the %s doctrine.',
+            sprintf('▶ PILGRIMAGE — walking %s', $runner->scopeSummary() ?: 'the walk'),
+            sprintf('  NOW ON: %s — resolve %d location(s)%s in the %s doctrine.',
                 $step['prophet'] ?? '?',
                 count($locations),
                 $autoFixable > 0 ? sprintf(' (%d [AUTO-FIXABLE])', $autoFixable) : '',

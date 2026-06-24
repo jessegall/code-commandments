@@ -29,11 +29,24 @@ final class Pilgrimage
      * The ordered walk: every doctrine's pillars, then a final `singletons`
      * doctrine holding the prophets that belong to no doctrine.
      *
+     * When $onlyProphet is given (a single-prophet walk — repentr, or any
+     * `pilgrimage <PROPHET>`), the itinerary collapses to ONE station holding just
+     * that prophet, named after its home doctrine. Everything downstream reads "the
+     * current prophet" through the cursor, so a one-station itinerary makes the whole
+     * walk single-prophet for free.
+     *
      * @param  list<class-string<Commandment>>  $registered  the scroll's full prophet set
+     * @param  class-string<Commandment>|null  $onlyProphet  constrain to one prophet
      * @return list<array{name: string, pillars: list<list<class-string<Commandment>>>}>
      */
-    public static function itinerary(array $registered): array
+    public static function itinerary(array $registered, ?string $onlyProphet = null): array
     {
+        if ($onlyProphet !== null) {
+            $located = DoctrineRegistry::locate($onlyProphet);
+
+            return [['name' => $located['doctrine'] ?? 'singletons', 'pillars' => [[$onlyProphet]]]];
+        }
+
         $stations = [];
 
         foreach (DoctrineRegistry::all() as $doctrine) {
@@ -60,10 +73,15 @@ final class Pilgrimage
      * (#213); the fingerprint matches the same content-based key `absolve`/`report`
      * record, so it self-heals when the code changes.
      *
+     * When $allowWarnings is false (the sins-only profile), warnings are dropped
+     * AFTER `applyConfiguredSeverity()` — so a warning a prophet's config promotes to
+     * a sin still surfaces, and a prophet with only admonitions yields nothing (it is
+     * skipped clean, never a station). The post-severity order is load-bearing.
+     *
      * @param  list<string>  $files
      * @return list<array{file: string, line: int|null, message: string, autoFixable: bool}>
      */
-    public function scanProphet(Commandment $prophet, array $files, CodebaseIndex $index, string $basePath, ?ConfessionTracker $tracker = null): array
+    public function scanProphet(Commandment $prophet, array $files, CodebaseIndex $index, string $basePath, ?ConfessionTracker $tracker = null, bool $allowWarnings = true): array
     {
         if ($prophet instanceof NeedsCodebaseIndex) {
             $prophet->setCodebaseIndex($index);
@@ -87,7 +105,9 @@ final class Pilgrimage
 
             $relative = $this->relative($file, $basePath);
 
-            foreach ([...$judgment->sins, ...$judgment->warnings] as $finding) {
+            $findings = $allowWarnings ? [...$judgment->sins, ...$judgment->warnings] : $judgment->sins;
+
+            foreach ($findings as $finding) {
                 if ($tracker !== null && $this->isSilenced($tracker, $prophetClass, $relative, $finding)) {
                     continue;
                 }

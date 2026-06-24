@@ -25,6 +25,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static minLines(int $value)
  * @method-generated-end

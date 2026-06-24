@@ -33,6 +33,7 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static baseClass(string $value)
  * @method static dataSuffixes(array $value)

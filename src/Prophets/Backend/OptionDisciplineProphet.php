@@ -41,6 +41,7 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static excludeMethods(array $value)
  * @method static frameworkMethods(array $value)

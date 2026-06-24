@@ -24,6 +24,7 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static exemptMethods(array $value)
  * @method-generated-end

@@ -48,6 +48,7 @@ use PhpParser\PrettyPrinter;
  *
  *
  *
+ *
  * @method-generated-start
  * @method static nullObjects(array $value)
  * @method-generated-end
