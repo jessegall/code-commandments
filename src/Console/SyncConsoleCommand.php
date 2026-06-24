@@ -30,7 +30,8 @@ class SyncConsoleCommand extends Command
             ->setName('sync')
             ->setDescription('Add newly available prophets to your config file')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to commandments.php config file')
-            ->addOption('after', null, InputOption::VALUE_REQUIRED, 'Only add prophets introduced after this version (e.g. 1.4.0). Pass `previous` to use the last synced version automatically. Prophets you removed before upgrading stay removed.')
+            ->addOption('after', null, InputOption::VALUE_REQUIRED, 'Override the floor: only add prophets introduced after this version (e.g. 1.4.0), or `previous` for the last synced version.')
+            ->addOption('all', null, InputOption::VALUE_NONE, 'OPT OUT of removal-respecting sync: add EVERY available prophet missing from the config (initial setup / deliberate full re-sync). Without this, sync NEVER re-adds a prophet you removed.')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be added without modifying the file');
     }
 
@@ -56,20 +57,27 @@ class SyncConsoleCommand extends Command
         $after = $input->getOption('after');
         $versionResolver = new VersionResolver();
 
-        // Default (no --after) AND explicit `previous`: only add prophets
-        // introduced AFTER the last synced version, so a sync NEVER re-adds a
-        // prophet the consumer intentionally removed (they all carry
-        // #[IntroducedIn]). Only the very first sync (no recorded version) adds
-        // everything. Pass --after=0.0.0 for a deliberate full re-sync.
-        if ($after === null || $after === 'previous') {
-            $explicit = $after === 'previous';
-            $after = $versionResolver->previousSyncedVersion($basePath);
-
-            if ($after === null && $explicit) {
-                $output->writeln('<comment>No previous sync recorded — falling back to a full sync.</comment>');
-            } elseif ($after !== null) {
-                $output->writeln("Adding only prophets introduced after the last synced version: {$after}");
+        // Removal-respecting is the DEFAULT — a sync only adds prophets introduced
+        // AFTER a floor version, so it NEVER re-adds one you intentionally removed
+        // (they all carry #[IntroducedIn]). Floor = the last synced version, else the
+        // currently-installed version (so an unknown baseline still adds nothing,
+        // taking your config as intentional). `--all` opts out for a full re-sync;
+        // `--after=X` overrides the floor (`previous` = last synced).
+        if (! $input->getOption('all')) {
+            if ($after === null || $after === 'previous') {
+                $after = $versionResolver->previousSyncedVersion($basePath)
+                    ?? $versionResolver->currentVersion();
             }
+
+            if ($after === null) {
+                $output->writeln('<comment>No sync baseline and no --all — taking your config as intentional, adding nothing. Use `sync --all` for a full (re-)sync.</comment>');
+
+                return Command::SUCCESS;
+            }
+
+            $output->writeln("Adding only prophets introduced after: {$after}");
+        } else {
+            $after = null; // explicit full sync
         }
 
         if ($after !== null && ! $this->isValidVersion($after)) {
