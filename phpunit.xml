@@ -18,6 +18,9 @@
         <testsuite name="Skills">
             <directory>tests/Skills</directory>
         </testsuite>
+        <testsuite name="Doctrine">
+            <directory>tests/Doctrine</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

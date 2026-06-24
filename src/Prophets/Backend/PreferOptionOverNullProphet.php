@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\OptionConsumptionResolver;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
@@ -18,6 +19,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\ExtractUseStatements;
 use JesseGall\CodeCommandments\Support\Pipes\Php\FindNullableValueReturns;
 use JesseGall\CodeCommandments\Support\Pipes\Php\ParsePhpAst;
 use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
+use PhpParser\Node;
+use PhpParser\NodeFinder;
 
 /**
  * Flag methods that decide between a value and nothing by returning null,
@@ -41,6 +44,9 @@ class PreferOptionOverNullProphet extends PhpCommandment implements NeedsCodebas
     private const DEFAULT_MIN_CALLERS = 2;
 
     private ?CodebaseIndex $index = null;
+
+    /** @var array<\PhpParser\Node>|null  the file's AST for the current judge run, for body-level exemptions */
+    private ?array $sourceAst = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
     {
@@ -264,6 +270,8 @@ SCRIPTURE;
 
     public function judge(string $filePath, string $content): Judgment
     {
+        $this->sourceAst = $this->parse($content);
+
         $pipe = (new FindNullableValueReturns)
             ->withExcludedMethods($this->resolveExcludedMethods());
 
@@ -284,12 +292,22 @@ SCRIPTURE;
             return null;
         }
 
+        // A framework-contract method (an Eloquent cast's get()/set()) or a request-
+        // boundary PARSER (reads `$this->input()`/`$this->validated()` and returns
+        // null for absent/invalid input) returns null by the boundary's idiom, not a
+        // domain "value-or-nothing" decision — Option is wrong there. These often have
+        // ZERO in-code callers (the framework / HTTP layer calls them), so the call-
+        // site gate cannot reach them.
+        if ($this->isFrameworkContractMethod($match) || $this->isRequestBoundaryParser($match) || $this->isNullableParamPassthrough($match)) {
+            return null;
+        }
+
         $callers = $this->callerInfoFor($match);
 
         // Measure & suppress: when the index can resolve how many call sites
         // depend on this method and that number is below the threshold, the
         // refactor isn't worth the ceremony — stay silent.
-        if ($callers['known'] && $callers['count'] < $this->minCallers()) {
+        if ($callers['known'] && $callers['count'] < $this->minCallersThreshold()) {
             return null;
         }
 
@@ -327,16 +345,208 @@ SCRIPTURE;
             return ['known' => false, 'count' => 0];
         }
 
-        $count = count($this->index->callersOf($fqcn, $method));
-
-        if ($count === 0) {
+        // ZERO resolved callers is UNKNOWN, not "uncalled": the index may simply be
+        // unable to attribute the calls (enum-method / dynamic dispatch). Stay silent
+        // about the count → emit, as before.
+        if ($this->index->callersOf($fqcn, $method) === []) {
             return ['known' => false, 'count' => 0];
         }
 
-        return ['known' => true, 'count' => $count];
+        // With RESOLVED callers, don't just COUNT them — classify how they CONSUME the
+        // nullable. Option earns its place only where callers MANUALLY BRANCH on
+        // absence (`=== null` / `if (! $x)`). A boundary method whose resolved callers
+        // only PASS the value on or read it nullsafe gains nothing from forced Option
+        // handling — that is positive evidence, so the "count" the gate weighs against
+        // min_callers is the number of null-BRANCHING sites.
+        $consumptions = (new OptionConsumptionResolver)->consumptions($fqcn, $method, $this->index);
+        $branching = count(array_filter($consumptions, static fn (string $kind): bool => $kind === 'nullcheck'));
+
+        return ['known' => true, 'count' => $branching];
     }
 
-    private function minCallers(): int
+    /**
+     * An Eloquent cast's contract method — `get()`/`set()` on a class implementing
+     * `CastsAttributes`. The signature (and its nullable) is the framework's, invoked
+     * by Eloquent, not a domain decision we may retype.
+     */
+    private function isFrameworkContractMethod(MatchResult $match): bool
+    {
+        if ($this->index === null) {
+            return false;
+        }
+
+        if (! in_array(strtolower($match->groups['method_name'] ?? ''), ['get', 'set'], true)) {
+            return false;
+        }
+
+        foreach ($this->index->interfacesOf(ltrim($match->groups['class_fqcn'] ?? '', '\\')) as $interface) {
+            if (str_ends_with($interface, 'CastsAttributes')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A request-BOUNDARY parser: a method that reads request input
+     * (`$this->input()`/`$this->validated()`/`$this->array()`/…) and returns null
+     * for absent or invalid input. Null is the HTTP boundary's idiom there, not a
+     * domain "value-or-nothing" the callers must be forced to handle.
+     */
+    private function isRequestBoundaryParser(MatchResult $match): bool
+    {
+        $node = $this->methodNode($match);
+
+        if ($node === null || $node->stmts === null) {
+            return false;
+        }
+
+        $accessors = ['input', 'validated', 'string', 'array', 'integer', 'boolean', 'float', 'enum', 'date', 'collect', 'query', 'post', 'file', 'only', 'except', 'has', 'filled'];
+
+        foreach ((new NodeFinder)->findInstanceOf($node->stmts, Node\Expr\MethodCall::class) as $call) {
+            if ($call->var instanceof Node\Expr\Variable
+                && $call->var->name === 'this'
+                && $call->name instanceof Node\Identifier
+                && in_array(strtolower($call->name->toString()), $accessors, true)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A nullable-PASSTHROUGH: the method just relays the null of one of its own
+     * nullable parameters — `return $value === null ? null : new static($value)`.
+     * The null it returns is the CALLER's null mirrored back, not a nothingness this
+     * method decided, so an Option here would only re-box an already-nullable input.
+     * (The scripture already exempts "passthroughs of someone else's nullable".)
+     */
+    private function isNullableParamPassthrough(MatchResult $match): bool
+    {
+        $node = $this->methodNode($match);
+
+        if ($node === null || $node->stmts === null) {
+            return false;
+        }
+
+        $nullableParams = [];
+
+        foreach ($node->params as $param) {
+            if ($param->var instanceof Node\Expr\Variable && is_string($param->var->name) && $this->typeAllowsNull($param->type)) {
+                $nullableParams[$param->var->name] = true;
+            }
+        }
+
+        if ($nullableParams === []) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($node->stmts, Node\Expr\Ternary::class) as $ternary) {
+            if ($ternary->cond instanceof Node\Expr\BinaryOp\Identical || $ternary->cond instanceof Node\Expr\BinaryOp\NotIdentical) {
+                foreach ([$ternary->cond->left, $ternary->cond->right] as $operand) {
+                    if ($operand instanceof Node\Expr\Variable && is_string($operand->name) && isset($nullableParams[$operand->name])) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function typeAllowsNull(?Node $type): bool
+    {
+        if ($type === null) {
+            return true; // untyped param can be null
+        }
+
+        if ($type instanceof Node\NullableType) {
+            return true;
+        }
+
+        if ($type instanceof Node\Identifier) {
+            return in_array($type->toLowerString(), ['null', 'mixed'], true);
+        }
+
+        if ($type instanceof Node\UnionType) {
+            foreach ($type->types as $member) {
+                if ($member instanceof Node\Identifier && $member->toLowerString() === 'null') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function methodNode(MatchResult $match): ?Node\Stmt\ClassMethod
+    {
+        if ($this->sourceAst === null) {
+            return null;
+        }
+
+        $parts = explode('\\', ltrim($match->groups['class_fqcn'] ?? '', '\\'));
+        $short = end($parts);
+        $method = $match->groups['method_name'] ?? '';
+
+        // ClassLike covers class / trait / enum / interface — a request concern is
+        // often a TRAIT, so a Class_-only search would miss it.
+        foreach ((new NodeFinder)->findInstanceOf($this->sourceAst, Node\Stmt\ClassLike::class) as $classLike) {
+            if ($classLike->name === null || ($short !== '' && $classLike->name->toString() !== $short)) {
+                continue;
+            }
+
+            foreach ($classLike->getMethods() as $candidate) {
+                if ($candidate->name->toString() === $method) {
+                    return $candidate;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Minimum resolved call sites that branch on absence before this fires. The
+     * higher the bar, the more callers must juggle the null for an Option to earn
+     * its place.
+     */
+    public function minCallers(int $count): static
+    {
+        return $this->setting('min_callers', $count);
+    }
+
+    /** The Option primitive to suggest for value-or-nothing returns. */
+    public function optionClass(string $class): static
+    {
+        return $this->setting('option_class', $class);
+    }
+
+    /**
+     * Per-return-type Null Object sentinels — a flagged method whose return type
+     * matches a key is told to return the sentinel instead of wrapping in Option.
+     *
+     * @param  array<class-string, class-string>  $map
+     */
+    public function nullObjects(array $map): static
+    {
+        return $this->setting('null_objects', $map);
+    }
+
+    /**
+     * Method-name patterns to leave alone (default `try*`, `__*`).
+     *
+     * @param  list<string>  $patterns
+     */
+    public function excludeMethods(array $patterns): static
+    {
+        return $this->setting('exclude_methods', $patterns);
+    }
+
+    private function minCallersThreshold(): int
     {
         $value = $this->config('min_callers', self::DEFAULT_MIN_CALLERS);
 

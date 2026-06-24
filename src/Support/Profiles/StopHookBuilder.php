@@ -122,11 +122,10 @@ final class StopHookBuilder
             $phaseGate,
         );
         $gateMsg = sprintf(
-            '%s remain in %s (%s) — keep going, do NOT stop. Resolve every one: fix it, or for a genuine false positive absolve/report it. See what is left with ${run}judge --next%s. This hook releases automatically once judge is righteous.',
+            '%s remain in %s (%s) — keep going, do NOT stop. Walk them with ${run}pilgrimage then ${run}next: it shows ONE prophet at a time with its full scripture and EVERY location. READ EACH OUTPUT IN FULL — never head/tail/truncate it, or you miss locations. Fix or absolve each (for a genuine false positive, absolve or report it with a reason); next re-checks the prophet before advancing and never loops back. This gate releases automatically once your changes are finding-free.',
             ucfirst($noun),
             $where,
             $profile,
-            $scopeFlag,
         );
 
         return self::header($profile, $b)
@@ -183,8 +182,12 @@ final class StopHookBuilder
             count=\$((count + 1))
             printf '%s' "\$count" > "\$countfile"
 
-            reason=\$(printf '{$gateMsg}' "\$run")
-            printf '{"decision":"block","reason":"%s"}' "\$reason"
+            msg="{$gateMsg}"
+            if command -v jq >/dev/null 2>&1; then
+                jq -nc --arg r "\$msg" '{decision:"block",reason:\$r}'
+            else
+                printf '{"decision":"block","reason":"%s"}' "\$msg"
+            fi
             exit 0
 
             SH;

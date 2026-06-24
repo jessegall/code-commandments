@@ -24,4 +24,22 @@ final class GreetingController
 
         return "{$myName} searched for {$foundName}";
     }
+
+    public function invite(string $email): string
+    {
+        // A second site that BRANCHES on the same absence — a search miss is a
+        // different outcome here (re-invite), so the callers juggle it divergently.
+        $user = $this->directory->findByEmail($email);
+
+        if ($user === null) {
+            return "invite sent to {$email}";
+        }
+
+        return "{$user->displayName()} already joined";
+    }
+
+    public function exists(string $email): bool
+    {
+        return $this->directory->findByEmail($email) !== null;
+    }
 }

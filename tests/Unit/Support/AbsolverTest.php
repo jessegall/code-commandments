@@ -44,9 +44,9 @@ class AbsolverTest extends TestCase
                 foreach ($edges as $e) { if ($e) { return $e; } }
                 return null;
             }
-            public function a(): void { $this->findRef([]); }
-            public function b(): void { $this->findRef([]); }
-            public function c(): void { $this->findRef([]); }
+            public function a(): void { if ($this->findRef([]) === null) { return; } }
+            public function b(): void { $x = $this->findRef([]); if ($x === null) { return; } }
+            public function c(): void { $r = $this->findRef([]); if ($r !== null) { echo $r; } }
             public function store(Request $request): mixed { return $request->input('name'); }
         }
         PHP);
