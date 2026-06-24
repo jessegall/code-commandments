@@ -43,6 +43,8 @@ use ReflectionClass;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static anyMethods(array $value)
  * @method static trait(string $value)

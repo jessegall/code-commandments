@@ -33,12 +33,12 @@ final class AlertDispatcher
 
     /**
      * SMELL: the template for a known severity MUST exist, yet the Option is
-     * collapsed back to null with `getOr(null)` and then laundered with `?? ''`.
+     * collapsed back to null with `unwrapOr(null)` and then laundered with `?? ''`.
      *
      * @param array<string, string> $vars
      */
     private function renderBody(Severity $severity, array $vars): string
     {
-        return $this->templates->lookup($severity->value)->getOr(null)?->render($vars) ?? '';
+        return $this->templates->lookup($severity->value)->unwrapOr(null)?->render($vars) ?? '';
     }
 }

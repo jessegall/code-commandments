@@ -18,7 +18,7 @@ final class GreetingController
         // Genuine absence: model it with Option — the search miss is expected.
         $foundName = $this->directory->findByEmail($searchEmail)
             ->map(fn (User $u): string => $u->displayName())
-            ->getOr('not found');
+            ->unwrapOr('not found');
 
         return "{$myName} searched for {$foundName}";
     }

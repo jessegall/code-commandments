@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Unit\Pilgrimage;
 
 use JesseGall\CodeCommandments\Doctrines\DoctrineRegistry;
 use JesseGall\CodeCommandments\Prophets\Backend\LongMethodProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Support\Pilgrimage\Pilgrimage;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +15,7 @@ class PilgrimageTest extends TestCase
 {
     public function test_itinerary_lists_doctrines_then_a_final_singletons_station(): void
     {
-        $itinerary = Pilgrimage::itinerary([LongMethodProphet::class, PreferOptionOverNullProphet::class]);
+        $itinerary = Pilgrimage::itinerary([LongMethodProphet::class, OptionDisciplineProphet::class]);
 
         $names = array_column($itinerary, 'name');
 
@@ -25,14 +25,14 @@ class PilgrimageTest extends TestCase
 
     public function test_homed_prophets_never_land_in_the_singletons_station(): void
     {
-        // LongMethod is a homeless singleton; PreferOptionOverNull is homed in `totality`.
-        $itinerary = Pilgrimage::itinerary([LongMethodProphet::class, PreferOptionOverNullProphet::class]);
+        // LongMethod is a homeless singleton; OptionDiscipline is homed in `totality`.
+        $itinerary = Pilgrimage::itinerary([LongMethodProphet::class, OptionDisciplineProphet::class]);
 
         $singletons = array_values(array_filter($itinerary, static fn (array $s): bool => $s['name'] === 'singletons'));
         $flat = array_merge(...array_merge(...array_column($singletons, 'pillars')));
 
         $this->assertContains(LongMethodProphet::class, $flat);
-        $this->assertNotContains(PreferOptionOverNullProphet::class, $flat);
+        $this->assertNotContains(OptionDisciplineProphet::class, $flat);
         $this->assertNull(DoctrineRegistry::locate(LongMethodProphet::class));
     }
 

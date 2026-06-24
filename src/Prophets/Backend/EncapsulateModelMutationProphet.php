@@ -52,6 +52,8 @@ use PhpParser\NodeVisitorAbstract;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static persistMethods(array $value)
  * @method-generated-end

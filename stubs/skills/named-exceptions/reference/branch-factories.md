@@ -15,7 +15,7 @@ and reusable, and its dependency is built in one place.
 Resolver::firstResultWins(
     IsObjectType::for($this->objects)
         ->then(fn (FieldTypeRequest $r) => CreatableFieldType::object(
-            $this->objects->slugForToken((string) $r->type)->getOrThrow(),
+            $this->objects->slugForToken((string) $r->type)->unwrap(),
         )),
 );
 ```
@@ -32,7 +32,7 @@ final class FieldFactory
     public static function object(SchemaTypeRegistry $objects): callable
     {
         return static fn (FieldTypeRequest $r) => CreatableFieldType::object(
-            $objects->slugForToken((string) $r->type)->getOrThrow(),
+            $objects->slugForToken((string) $r->type)->unwrap(),
         );
     }
 }
@@ -64,7 +64,7 @@ A `->then(<closure>)` whose closure body BOTH:
 
 | `->then(...)` argument | Verdict | Do |
 |---|---|---|
-| `fn ($r) => $this->dep->build($r)->getOrThrow()` (captures `$this`, does work) | warn | Extract to `SomeFactory::name($this->dep)` returning `callable`. |
+| `fn ($r) => $this->dep->build($r)->unwrap()` (captures `$this`, does work) | warn | Extract to `SomeFactory::name($this->dep)` returning `callable`. |
 | `fn () => SomeEnum::Case` / `fn () => self::CONST` | leave | Trivial constant — inline. |
 | `fn () => $this->prop` (bare property) | leave | Trivial — inline. |
 | `->then(Capture::make())` / `->then(T::scalar(...))` | leave | Already a named callable. |

@@ -21,6 +21,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static minKeyReads(int $value)
  * @method static minPropertyReads(int $value)

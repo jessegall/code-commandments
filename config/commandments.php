@@ -119,9 +119,10 @@ return [
                     // 'extract_whitespace' => true,  // \n\n -> a T_String::PARAGRAPH arg
                     // 'min_interpolations' => 1,
                 ],
-                Backend\PreferOptionOverNullProphet::class => [
-                    // Suggested wrapper for value-or-nothing returns:
-                    // 'option_class' => 'App\\Support\\Option',
+                Backend\OptionDisciplineProphet::class => [
+                    // The Option primitive to suggest / recognise. Defaults to
+                    // JesseGall\PhpTypes\Option (require jessegall/php-types).
+                    // 'option_class' => JesseGall\PhpTypes\Option::class,
                     //
                     // Per-type sentinels: when a flagged method's return type
                     // matches a key, the suggestion becomes "return this Null
@@ -131,9 +132,9 @@ return [
                     // ],
                     //
                     // 'exclude_methods' => ['try*', '__*'],
-                    // 'severity' => 'warning', // or 'sin'
+                    // 'min_callers' => 2,       // adopt only when ≥N callers branch on the null
+                    // 'severity' => 'warning',  // or 'sin'
                 ],
-                Backend\PreferOptionFactoryProphet::class,
                 Backend\StringsThatShouldBeEnumsProphet::class,
                 Backend\EnumCaseMustBeDocumentedProphet::class,
                 Backend\RepeatedFallbackProphet::class => [
@@ -169,8 +170,6 @@ return [
                 Backend\NoInlineParamDocProphet::class,
                 Backend\ConstantsAndPropertiesFirstProphet::class,
                 Backend\NoFacadesInServicesProphet::class,
-                Backend\UnwrapOptionWithGuardProphet::class,
-                Backend\PreferAndThenProphet::class,
                 Backend\PreferEmptyOverNullProphet::class,
                 Backend\RegistryReturnContractProphet::class,
                 Backend\EagerRegistryProphet::class,
@@ -236,19 +235,11 @@ return [
                 ],
                 Backend\NoOptionToNullProphet::class => [
                     // Option accessor methods whose null default is the smell:
-                    // 'methods' => ['getOr'],
-                ],
-                Backend\NoOptionOveruseProphet::class => [
-                    // 'option_class' => App\Support\Option::class,
+                    // 'methods' => ['unwrapOr'],
                 ],
                 Backend\NoOptionInUnionProphet::class => [
-                    // 'option_class' => App\Support\Option::class,
+                    // 'option_class' => JesseGall\PhpTypes\Option::class,
                 ],
-                Backend\NoRedundantOrElseWrapProphet::class => [
-                    // 'option_class' => App\Support\Option::class,
-                    // 'methods' => ['orElse'],
-                ],
-                Backend\PreferOptionChainOverGuardProphet::class,
                 Backend\PreferCoalesceFactoryProphet::class,
                 Backend\PreferYieldOverAccumulatorProphet::class => [
                     // 'min_methods' => 3,   // fire only when >= N methods thread the same collector param

@@ -24,6 +24,8 @@ use PhpParser\PrettyPrinter;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static baseClasses(array $value)
  * @method static suffix(string $value)

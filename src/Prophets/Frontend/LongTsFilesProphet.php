@@ -17,6 +17,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Vue\VuePipeline;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static maxTsLines(int $value)
  * @method-generated-end

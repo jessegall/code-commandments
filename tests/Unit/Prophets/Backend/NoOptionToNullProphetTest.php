@@ -25,7 +25,7 @@ class NoOptionToNullProphetTest extends TestCase
         {
             public function go($port): void
             {
-                $input = $this->inputByName($port)->getOr(null);
+                $input = $this->inputByName($port)->unwrapOr(null);
 
                 if ($input?->socketType() === SocketType::Bag) {
                     // ...
@@ -47,7 +47,7 @@ class NoOptionToNullProphetTest extends TestCase
             public function go($port)
             {
                 $default = null;
-                $input = $this->inputByName($port)->getOr($default);
+                $input = $this->inputByName($port)->unwrapOr($default);
 
                 return $input?->type();
             }
@@ -60,10 +60,10 @@ class NoOptionToNullProphetTest extends TestCase
     public function test_flags_null_via_coalesce_and_ternary(): void
     {
         $coalesce = $this->judge(<<<'PHP'
-        class A { public function go($p) { $v = $this->opt($p)->getOr($x ?? null); return $v?->x(); } }
+        class A { public function go($p) { $v = $this->opt($p)->unwrapOr($x ?? null); return $v?->x(); } }
         PHP);
         $ternary = $this->judge(<<<'PHP'
-        class B { public function go($p, $cond) { $v = $this->opt($p)->getOr($cond ? $y : null); return $v?->x(); } }
+        class B { public function go($p, $cond) { $v = $this->opt($p)->unwrapOr($cond ? $y : null); return $v?->x(); } }
         PHP);
 
         $this->assertCount(1, $coalesce->warnings);
@@ -72,7 +72,7 @@ class NoOptionToNullProphetTest extends TestCase
 
     public function test_does_not_flag_a_variable_that_holds_a_real_value(): void
     {
-        // $default is assigned a real value — getOr($default) is a genuine fallback.
+        // $default is assigned a real value — unwrapOr($default) is a genuine fallback.
         $judgment = $this->judge(<<<'PHP'
         class Resolver
         {
@@ -80,7 +80,7 @@ class NoOptionToNullProphetTest extends TestCase
             {
                 $default = Input::empty();
 
-                return $this->inputByName($port)->getOr($default);
+                return $this->inputByName($port)->unwrapOr($default);
             }
         }
         PHP);
@@ -95,7 +95,7 @@ class NoOptionToNullProphetTest extends TestCase
         {
             public function go($port)
             {
-                return $this->inputByName($port)->getOr(Input::empty());
+                return $this->inputByName($port)->unwrapOr(Input::empty());
             }
         }
         PHP);
@@ -110,9 +110,9 @@ class NoOptionToNullProphetTest extends TestCase
         {
             public function go($port): void
             {
-                $a = $this->inputByName($port)->getOrThrow();
+                $a = $this->inputByName($port)->unwrap();
                 $b = $this->inputByName($port)->map(fn ($i) => $i->socketType());
-                $this->inputByName($port)->each(fn ($i) => $i->go());
+                $this->inputByName($port)->inspect(fn ($i) => $i->go());
             }
         }
         PHP);
@@ -130,7 +130,7 @@ class NoOptionToNullProphetTest extends TestCase
             public function build($attr)
             {
                 return new OutputSocket(
-                    isVisibleRule: $this->normaliseVisibilityRule($attr)->getOr(null),
+                    isVisibleRule: $this->normaliseVisibilityRule($attr)->unwrapOr(null),
                 );
             }
         }
@@ -141,13 +141,13 @@ class NoOptionToNullProphetTest extends TestCase
 
     public function test_does_not_flag_carry_via_return(): void
     {
-        // The method's own contract is ?T — returning getOr(null) is the boundary.
+        // The method's own contract is ?T — returning unwrapOr(null) is the boundary.
         $judgment = $this->judge(<<<'PHP'
         class C
         {
             public function elementType($attr): ?string
             {
-                return $this->resolveElementType($attr)->getOr(null);
+                return $this->resolveElementType($attr)->unwrapOr(null);
             }
         }
         PHP);
@@ -164,7 +164,7 @@ class NoOptionToNullProphetTest extends TestCase
             public function resolvers()
             {
                 return Resolver::firstResultWins(
-                    IsX::make()->then(fn ($r) => $this->build($r)->getOr(null)),
+                    IsX::make()->then(fn ($r) => $this->build($r)->unwrapOr(null)),
                 );
             }
         }
@@ -189,14 +189,14 @@ class NoOptionToNullProphetTest extends TestCase
 
     public function test_repent_collapses_unwrap_then_null_check(): void
     {
-        $src = "<?php\nclass C {\n public function m(\$opt): void {\n  \$x = \$opt->getOr(null);\n  if (\$x !== null) { \$t = 1; }\n }\n public function n(\$opt): void {\n  \$y = \$opt->getOr(null);\n  if (\$y === null) { return; }\n }\n}\n";
+        $src = "<?php\nclass C {\n public function m(\$opt): void {\n  \$x = \$opt->unwrapOr(null);\n  if (\$x !== null) { \$t = 1; }\n }\n public function n(\$opt): void {\n  \$y = \$opt->unwrapOr(null);\n  if (\$y === null) { return; }\n }\n}\n";
 
         $result = $this->prophet->repent('/x.php', $src);
 
         $this->assertTrue($result->absolved);
-        $this->assertStringContainsString('if ($opt->hasValue()) {', $result->newContent);
-        $this->assertStringContainsString('if ($opt->isEmpty()) {', $result->newContent);
-        $this->assertStringNotContainsString('getOr(null)', $result->newContent);
+        $this->assertStringContainsString('if ($opt->isSome()) {', $result->newContent);
+        $this->assertStringContainsString('if ($opt->isNone()) {', $result->newContent);
+        $this->assertStringNotContainsString('unwrapOr(null)', $result->newContent);
         $this->assertStringNotContainsString('$x =', $result->newContent);
     }
 
@@ -204,7 +204,7 @@ class NoOptionToNullProphetTest extends TestCase
     {
         // The trap: the unwrapped value is ALSO passed on — dropping it would
         // lose the value. Must not auto-fix.
-        $src = "<?php\nclass C {\n public function m(\$opt): void {\n  \$x = \$opt->getOr(null);\n  if (\$x !== null) { \$t = 1; }\n  options(\$x);\n }\n}\n";
+        $src = "<?php\nclass C {\n public function m(\$opt): void {\n  \$x = \$opt->unwrapOr(null);\n  if (\$x !== null) { \$t = 1; }\n  options(\$x);\n }\n}\n";
 
         $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
     }
@@ -212,7 +212,7 @@ class NoOptionToNullProphetTest extends TestCase
     public function test_repent_leaves_a_call_receiver(): void
     {
         // Inlining a CALL receiver would re-evaluate it — not safe to drop the local.
-        $src = "<?php\nclass C {\n public function m(): void {\n  \$x = \$this->e->valuesFor(1)->getOr(null);\n  if (\$x !== null) { \$t = 1; }\n }\n}\n";
+        $src = "<?php\nclass C {\n public function m(): void {\n  \$x = \$this->e->valuesFor(1)->unwrapOr(null);\n  if (\$x !== null) { \$t = 1; }\n }\n}\n";
 
         $this->assertFalse($this->prophet->repent('/x.php', $src)->absolved);
     }

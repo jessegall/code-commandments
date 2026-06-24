@@ -86,7 +86,7 @@ private function applyEffect(NodeDescriptor $d, SocketEffect $rule, PickedValue 
 {
     return match ($rule->effect) {
         PickEffect::ResourceToken => $d->retypeInput($rule->port, WireType::resource($p->raw)->toToken()),
-        PickEffect::SchemaToken   => $this->objects->fieldsFor($p->raw)->isEmpty() ? $d : $d->retypeOutput(...),
+        PickEffect::SchemaToken   => $this->objects->fieldsFor($p->raw)->isNone() ? $d : $d->retypeOutput(...),
         // … 4 more …
         default => $this->applyModelEffect($d, $rule, $p->modelClass),   // a SECOND wide match
     };

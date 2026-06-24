@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Prophets\Backend\NoOptionToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoSwallowedNotFoundProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferEmptyOverNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullObjectDefaultsProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTotalOverNullableProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\RegistryNamingHonestyProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\RegistryReturnContractProphet;
@@ -42,22 +42,22 @@ class RootCausePrecedenceTest extends TestCase
 
         // ROOT CAUSE and SYMPTOM both fire on the enum.
         $this->assertHasFinding($f, 'ThrowOnUnhandledCaseProphet', 'OrderStatus.php');
-        $this->assertHasFinding($f, 'PreferOptionOverNullProphet', 'OrderStatus.php');
+        $this->assertHasFinding($f, 'OptionDisciplineProphet', 'OrderStatus.php');
 
         // Full run: the symptom is DEFERRED (the cause supersedes it in-region).
         $ordered = $this->orderedSymbols($this->familyFindingObjects(self::EXAMPLES . '/example-01-enum-dispatch/initial'));
         $this->assertContains('ThrowOnUnhandledCaseProphet', $ordered);
-        $this->assertNotContains('PreferOptionOverNullProphet', $ordered, 'symptom should be deferred under a full run');
+        $this->assertNotContains('OptionDisciplineProphet', $ordered, 'symptom should be deferred under a full run');
     }
 
     public function test_example_01_filtered_symptom_gets_root_cause_hint(): void
     {
         $dir = self::EXAMPLES . '/example-01-enum-dispatch/initial';
-        $symptom = $this->firstFindingObject($dir, PreferOptionOverNullProphet::class);
+        $symptom = $this->firstFindingObject($dir, OptionDisciplineProphet::class);
         $this->assertNotNull($symptom);
 
         $resolver = new RootCauseResolver(fn (): null => null);
-        $annotated = $resolver->annotate($symptom, [PreferOptionOverNullProphet::class => true]);
+        $annotated = $resolver->annotate($symptom, [OptionDisciplineProphet::class => true]);
 
         $this->assertNotNull($annotated->rootCauseHint);
         $this->assertSame(ThrowOnUnhandledCaseProphet::class, $annotated->rootCauseHint->causeClass);
@@ -125,15 +125,15 @@ class RootCausePrecedenceTest extends TestCase
     {
         $dir = self::EXAMPLES . '/example-05-genuine-vs-invariant/initial';
 
-        // findByEmail is GENUINE absence → PreferOptionOverNull fires...
-        $symptom = $this->firstFindingObject($dir, PreferOptionOverNullProphet::class, 'findByEmail');
-        $this->assertNotNull($symptom, 'PreferOptionOverNull should fire on findByEmail');
+        // findByEmail is GENUINE absence → OptionDiscipline fires...
+        $symptom = $this->firstFindingObject($dir, OptionDisciplineProphet::class, 'findByEmail');
+        $this->assertNotNull($symptom, 'OptionDiscipline should fire on findByEmail');
 
         // ...and the trigger runs, matches no invariant cause, leaves NO hint
         // (confirmed genuine absence — the symptom is the right fix).
         $index = CodebaseIndex::build($this->phpFiles($dir));
         $resolver = new RootCauseResolver(fn (): CodebaseIndex => $index);
-        $annotated = $resolver->annotate($symptom, [PreferOptionOverNullProphet::class => true]);
+        $annotated = $resolver->annotate($symptom, [OptionDisciplineProphet::class => true]);
 
         $this->assertNull($annotated->rootCauseHint, 'genuine absence must not get a root-cause hint');
         $this->assertTrue($annotated->rootCauseChecked, 'genuine absence should be marked checked');
@@ -203,7 +203,7 @@ class RootCausePrecedenceTest extends TestCase
             new PreferTotalOverNullableProphet(),
             new RegistryReturnContractProphet(),
             new NoSwallowedNotFoundProphet(),
-            (new PreferOptionOverNullProphet())->configure($option + ['min_callers' => 1]),
+            (new OptionDisciplineProphet())->configure($option + ['min_callers' => 1]),
             new PreferEmptyOverNullProphet(),
             new PreferNullObjectDefaultsProphet(),
             (new NoOptionToNullProphet())->configure($option),

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Unit\Support;
 
 use Illuminate\Filesystem\Filesystem;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Results\Finding;
 use JesseGall\CodeCommandments\Scanners\GenericFileScanner;
 use JesseGall\CodeCommandments\Support\Absolver;
@@ -55,14 +55,14 @@ class AbsolverTest extends TestCase
 
         $this->registry = new ProphetRegistry();
         $this->registry->registerMany('backend', [
-            PreferOptionOverNullProphet::class,
+            OptionDisciplineProphet::class,
             NoRawRequestProphet::class,
         ]);
         $this->registry->setScrollConfig('backend', [
             'path' => $this->dir,
             'extensions' => ['php'],
             'exclude' => [],
-            'prophets' => [PreferOptionOverNullProphet::class, NoRawRequestProphet::class],
+            'prophets' => [OptionDisciplineProphet::class, NoRawRequestProphet::class],
         ]);
 
         $this->manager = new ScrollManager($this->registry, new GenericFileScanner());
@@ -189,12 +189,12 @@ class AbsolverTest extends TestCase
     public function test_batch_warnings_prophet_filter_narrows_the_batch(): void
     {
         $registry = new ProphetRegistry();
-        $registry->registerMany('warns', [PreferOptionOverNullProphet::class]);
+        $registry->registerMany('warns', [OptionDisciplineProphet::class]);
         $registry->setScrollConfig('warns', [
             'path' => $this->dir,
             'extensions' => ['php'],
             'exclude' => [],
-            'prophets' => [PreferOptionOverNullProphet::class],
+            'prophets' => [OptionDisciplineProphet::class],
         ]);
         $manager = new ScrollManager($registry, new GenericFileScanner());
         $absolver = new Absolver($manager, $registry, $this->tracker);
@@ -204,7 +204,7 @@ class AbsolverTest extends TestCase
         $this->assertStringContainsString('No admonitions in scope', $miss['message']);
 
         // The matching prophet absolves its warning.
-        $hit = $absolver->absolveWarnings('reason', null, 'PreferOption');
+        $hit = $absolver->absolveWarnings('reason', null, 'OptionDiscipline');
         $this->assertSame(Absolver::STATUS_OK, $hit['status']);
         $this->assertStringContainsString('1 warning', $hit['message']);
     }
@@ -235,7 +235,7 @@ class AbsolverTest extends TestCase
         $absolver = new Absolver($this->manager, $this->registry, $this->tracker);
 
         // The warning's own prophet matches; an unrelated name does not.
-        $this->assertNotEmpty($absolver->findingsAt($warning->relativePath, (int) $warning->line, (int) $warning->line, 'PreferOption'));
+        $this->assertNotEmpty($absolver->findingsAt($warning->relativePath, (int) $warning->line, (int) $warning->line, 'OptionDiscipline'));
         $this->assertEmpty($absolver->findingsAt($warning->relativePath, (int) $warning->line, (int) $warning->line, 'NoSuchProphet'));
     }
 
