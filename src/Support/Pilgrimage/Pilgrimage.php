@@ -6,7 +6,11 @@ namespace JesseGall\CodeCommandments\Support\Pilgrimage;
 
 use JesseGall\CodeCommandments\Commandments\BaseCommandment;
 use JesseGall\CodeCommandments\Contracts\Commandment;
+use JesseGall\CodeCommandments\Contracts\ConfessionTracker;
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
+use JesseGall\CodeCommandments\Results\Sin;
+use JesseGall\CodeCommandments\Results\Warning;
+use JesseGall\CodeCommandments\Support\Fingerprint;
 use JesseGall\CodeCommandments\Doctrines\DoctrineRegistry;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
 
@@ -51,17 +55,21 @@ final class Pilgrimage
 
     /**
      * Dispatch ONE prophet over the frozen scope and return every location it fires
-     * at (severity already applied; a disabled prophet returns nothing).
+     * at (severity already applied; a disabled prophet returns nothing). Findings the
+     * consumer has ABSOLVED or REPORTED are skipped — they must not block the walk
+     * (#213); the fingerprint matches the same content-based key `absolve`/`report`
+     * record, so it self-heals when the code changes.
      *
      * @param  list<string>  $files
      * @return list<array{file: string, line: int|null, message: string, autoFixable: bool}>
      */
-    public function scanProphet(Commandment $prophet, array $files, CodebaseIndex $index, string $basePath): array
+    public function scanProphet(Commandment $prophet, array $files, CodebaseIndex $index, string $basePath, ?ConfessionTracker $tracker = null): array
     {
         if ($prophet instanceof NeedsCodebaseIndex) {
             $prophet->setCodebaseIndex($index);
         }
 
+        $prophetClass = $prophet::class;
         $locations = [];
 
         foreach ($files as $file) {
@@ -77,9 +85,15 @@ final class Pilgrimage
                 $judgment = $prophet->applyConfiguredSeverity($judgment);
             }
 
+            $relative = $this->relative($file, $basePath);
+
             foreach ([...$judgment->sins, ...$judgment->warnings] as $finding) {
+                if ($tracker !== null && $this->isSilenced($tracker, $prophetClass, $relative, $finding)) {
+                    continue;
+                }
+
                 $locations[] = [
-                    'file' => $this->relative($file, $basePath),
+                    'file' => $relative,
                     'line' => $finding->line,
                     'message' => $finding->message,
                     'autoFixable' => $finding->autoFixable ?? false,
@@ -88,6 +102,13 @@ final class Pilgrimage
         }
 
         return $locations;
+    }
+
+    private function isSilenced(ConfessionTracker $tracker, string $prophetClass, string $relativePath, Sin|Warning $finding): bool
+    {
+        $fingerprint = Fingerprint::of($prophetClass, $relativePath, $finding->symbol, $finding->snippet);
+
+        return $tracker->isFindingAbsolved($fingerprint) || $tracker->isFindingReported($fingerprint);
     }
 
     private function relative(string $file, string $basePath): string
