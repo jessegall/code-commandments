@@ -25,7 +25,7 @@ final class ProductSearchRequest extends FormRequest
 
     public function term(): string
     {
-        return $this->string('term')->toString();
+        return (string) $this->string('term');
     }
 
     public function type(): ?ProductType

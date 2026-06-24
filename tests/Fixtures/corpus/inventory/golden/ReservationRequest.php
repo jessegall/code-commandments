@@ -24,7 +24,7 @@ final class ReservationRequest extends FormRequest
 
     public function sku(): Sku
     {
-        return new Sku($this->string('sku')->toString());
+        return new Sku((string) $this->string('sku'));
     }
 
     public function quantity(): int

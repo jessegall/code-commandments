@@ -25,7 +25,7 @@ final class SubscriptionRequest extends FormRequest
 
     public function customerId(): string
     {
-        return $this->string('customer_id')->toString();
+        return (string) $this->string('customer_id');
     }
 
     public function plan(): Plan
