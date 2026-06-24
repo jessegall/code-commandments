@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Results\Judgment;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\CallGraph\OptionConsumptionResolver;
 use JesseGall\CodeCommandments\Results\Sin;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
@@ -327,13 +328,23 @@ SCRIPTURE;
             return ['known' => false, 'count' => 0];
         }
 
-        $count = count($this->index->callersOf($fqcn, $method));
-
-        if ($count === 0) {
+        // ZERO resolved callers is UNKNOWN, not "uncalled": the index may simply be
+        // unable to attribute the calls (enum-method / dynamic dispatch). Stay silent
+        // about the count → emit, as before.
+        if ($this->index->callersOf($fqcn, $method) === []) {
             return ['known' => false, 'count' => 0];
         }
 
-        return ['known' => true, 'count' => $count];
+        // With RESOLVED callers, don't just COUNT them — classify how they CONSUME the
+        // nullable. Option earns its place only where callers MANUALLY BRANCH on
+        // absence (`=== null` / `if (! $x)`). A boundary method whose resolved callers
+        // only PASS the value on or read it nullsafe gains nothing from forced Option
+        // handling — that is positive evidence, so the "count" the gate weighs against
+        // min_callers is the number of null-BRANCHING sites.
+        $consumptions = (new OptionConsumptionResolver)->consumptions($fqcn, $method, $this->index);
+        $branching = count(array_filter($consumptions, static fn (string $kind): bool => $kind === 'nullcheck'));
+
+        return ['known' => true, 'count' => $branching];
     }
 
     private function minCallers(): int
