@@ -307,7 +307,7 @@ SCRIPTURE;
         // Measure & suppress: when the index can resolve how many call sites
         // depend on this method and that number is below the threshold, the
         // refactor isn't worth the ceremony — stay silent.
-        if ($callers['known'] && $callers['count'] < $this->minCallers()) {
+        if ($callers['known'] && $callers['count'] < $this->minCallersThreshold()) {
             return null;
         }
 
@@ -509,7 +509,44 @@ SCRIPTURE;
         return null;
     }
 
-    private function minCallers(): int
+    /**
+     * Minimum resolved call sites that branch on absence before this fires. The
+     * higher the bar, the more callers must juggle the null for an Option to earn
+     * its place.
+     */
+    public function minCallers(int $count): static
+    {
+        return $this->setting('min_callers', $count);
+    }
+
+    /** The Option primitive to suggest for value-or-nothing returns. */
+    public function optionClass(string $class): static
+    {
+        return $this->setting('option_class', $class);
+    }
+
+    /**
+     * Per-return-type Null Object sentinels — a flagged method whose return type
+     * matches a key is told to return the sentinel instead of wrapping in Option.
+     *
+     * @param  array<class-string, class-string>  $map
+     */
+    public function nullObjects(array $map): static
+    {
+        return $this->setting('null_objects', $map);
+    }
+
+    /**
+     * Method-name patterns to leave alone (default `try*`, `__*`).
+     *
+     * @param  list<string>  $patterns
+     */
+    public function excludeMethods(array $patterns): static
+    {
+        return $this->setting('exclude_methods', $patterns);
+    }
+
+    private function minCallersThreshold(): int
     {
         $value = $this->config('min_callers', self::DEFAULT_MIN_CALLERS);
 
