@@ -31,6 +31,26 @@ class PreferInterfaceOverTypeListProphetTest extends TestCase
         $this->assertStringContainsString('hardcoded list of type names', $j->warnings[0]->message);
     }
 
+    public function test_skips_a_domain_value_set_membership(): void
+    {
+        // #201: a stored domain attribute ($descriptor->group) tested against plain
+        // LABELS ('Variables', 'JSON', …) that resolve to no type is classifying a
+        // VALUE — the marker-interface remedy cannot apply. Not the smell.
+        $j = $this->judge(
+            "public function isUtility(\$descriptor): bool { return in_array(\$descriptor->group, ['Variables', 'Logic', 'Validation', 'JSON', 'Progress'], true); }"
+        );
+
+        $this->assertTrue($j->isRighteous());
+    }
+
+    public function test_still_flags_a_property_needle_over_a_class_const_list(): void
+    {
+        // ...but a `::class` list is unambiguously a type reference, property needle or not.
+        $j = $this->judge("public function f(\$x): bool { return in_array(\$x->handler, [Bag::class, Data::class], true); }");
+
+        $this->assertCount(1, $j->warnings);
+    }
+
     public function test_flags_a_const_type_name_list(): void
     {
         $j = $this->judge(
