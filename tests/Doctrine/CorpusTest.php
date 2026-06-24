@@ -57,6 +57,10 @@ class CorpusTest extends TestCase
     public static function goldenScenarios(): iterable
     {
         foreach ((array) glob(self::CORPUS . '/*/golden', GLOB_ONLYDIR) as $dir) {
+            if (self::isJudgmentCorpus(basename(dirname($dir)))) {
+                continue;
+            }
+
             yield 'corpus:' . basename(dirname($dir)) => [$dir];
         }
 
@@ -85,8 +89,25 @@ class CorpusTest extends TestCase
     public static function messyScenarios(): iterable
     {
         foreach ((array) glob(self::CORPUS . '/*/messy', GLOB_ONLYDIR) as $dir) {
+            if (self::isJudgmentCorpus(basename(dirname($dir)))) {
+                continue;
+            }
+
             yield 'corpus:' . basename(dirname($dir)) => [$dir];
         }
+    }
+
+    /**
+     * The Option-vs-null slices are a JUDGMENT corpus — they exercise specific
+     * Option-prophet behaviour (when an Option is justified vs over-engineering),
+     * not universal cleanliness. Their goldens are idiomatic but not silent across
+     * EVERY prophet, and the over-engineering in a messy twin is deliberately subtle
+     * — so the universal silent/lights-up net does not fit them. They have their own
+     * dedicated test ({@see OptionCorpusTest}).
+     */
+    private static function isJudgmentCorpus(string $slug): bool
+    {
+        return str_starts_with($slug, 'option-') || str_starts_with($slug, 'null-');
     }
 
     /**
