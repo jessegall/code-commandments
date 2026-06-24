@@ -337,10 +337,15 @@ SCRIPTURE;
      */
     private function coercionWrapper(Node $node, array $uses, ?string $namespace): ?array
     {
+        // Only the NON-null `coerce()` maps to a native typed accessor: `string()`,
+        // `integer()`, … coerce an absent key to '' / 0 / false, never null. The
+        // `coerceOrNull()` variant PRESERVES null (a load-bearing "absent" the caller
+        // may branch on), so the bag's accessor is NOT equivalent — flagging it would
+        // offer an auto-fix that silently drops the nullable-absent distinction (#212).
         if ($node instanceof Expr\StaticCall
             && $node->class instanceof Node\Name
             && $node->name instanceof Node\Identifier
-            && in_array($node->name->toString(), ['coerce', 'coerceOrNull'], true)
+            && $node->name->toString() === 'coerce'
         ) {
             $fqcn = ltrim(NameResolver::resolve($node->class->toString(), $uses, $namespace), '\\');
             $family = self::COERCERS[$fqcn] ?? null;
