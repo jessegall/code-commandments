@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 use JesseGall\CodeCommandments\Support\ExtractsLineSnippet;
 use JesseGall\CodeCommandments\Support\Pipes\MatchResult;
 use JesseGall\CodeCommandments\Support\Pipes\Pipe;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Scalar;
@@ -30,8 +31,16 @@ final class FindManualDataCollection implements Pipe
 {
     use ExtractsLineSnippet;
 
+    /** The Spatie Data base — a hydration target MUST be a subclass of this. */
+    private const DATA_BASE = 'Spatie\\LaravelData\\Data';
+
     /** @var list<string> */
     private array $methods = ['from'];
+
+    /** @var array<string, string>  short alias => FQCN, for the file being judged */
+    private array $imports = [];
+
+    private ?string $namespace = null;
 
     /**
      * @param  list<string>  $methods
@@ -48,6 +57,12 @@ final class FindManualDataCollection implements Pipe
         if ($input->ast === null) {
             return $input->with(matches: []);
         }
+
+        // Resolve class names to FQCNs so we only flag genuine Spatie Data
+        // subclasses — a backed enum's ::from() (or any other ::from()) is not
+        // collection hydration and has no ::collect() to suggest (#217).
+        $this->imports = FileImports::of($input->ast);
+        $this->namespace = FileImports::namespace($input->ast);
 
         $nodeFinder = new NodeFinder;
         $matches = [];
@@ -194,7 +209,7 @@ final class FindManualDataCollection implements Pipe
         if ($classItem->value instanceof Expr\ClassConstFetch
             && $classItem->value->class instanceof Node\Name
         ) {
-            return $this->shortName($classItem->value->class->getLast());
+            return $this->dataTargetShortName($classItem->value->class);
         }
 
         return null;
@@ -220,13 +235,56 @@ final class FindManualDataCollection implements Pipe
             return null;
         }
 
-        $short = $expr->class->getLast();
+        return $this->dataTargetShortName($expr->class);
+    }
+
+    /**
+     * The short class name unless $class is a LOADABLE non-Data type — then null.
+     * The whole point (#217): a backed enum's `::from()` (or any other loadable
+     * `::from()` that is not Spatie Data) is not collection hydration and has no
+     * `::collect()` to suggest, so it must not flag. A name we cannot load (a test
+     * fixture, an unscanned class) falls through to the name-based match so genuine
+     * Data hydration is still caught without a loadable class on hand.
+     */
+    private function dataTargetShortName(Node\Name $class): ?string
+    {
+        $short = $class->getLast();
 
         if (in_array($short, ['self', 'static', 'parent'], true)) {
             return null;
         }
 
+        $fqcn = $this->resolveFqcn($class);
+
+        // Loadable but not a Data subclass (a backed enum, a value-object factory, …)
+        // ⇒ not hydration. Unloadable ⇒ keep the name-based behaviour.
+        if ((class_exists($fqcn) || enum_exists($fqcn)) && ! is_subclass_of($fqcn, self::DATA_BASE)) {
+            return null;
+        }
+
         return $short;
+    }
+
+    /**
+     * Resolve a written class name to its FQCN using the file's namespace + imports
+     * (php-parser does not run name resolution in this pipeline).
+     */
+    private function resolveFqcn(Node\Name $class): string
+    {
+        if ($class->isFullyQualified()) {
+            return ltrim($class->toString(), '\\');
+        }
+
+        $parts = explode('\\', $class->toString());
+        $first = $parts[0];
+
+        if (isset($this->imports[$first])) {
+            $rest = count($parts) > 1 ? '\\' . implode('\\', array_slice($parts, 1)) : '';
+
+            return $this->imports[$first] . $rest;
+        }
+
+        return ($this->namespace !== null && $this->namespace !== '' ? $this->namespace . '\\' : '') . $class->toString();
     }
 
     private function referencesVariable(Node $subtree, string $name): bool
@@ -240,13 +298,6 @@ final class FindManualDataCollection implements Pipe
         }
 
         return false;
-    }
-
-    private function shortName(string $name): string
-    {
-        $parts = explode('\\', $name);
-
-        return end($parts) ?: $name;
     }
 
 }
