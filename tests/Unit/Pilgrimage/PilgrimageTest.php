@@ -36,6 +36,33 @@ class PilgrimageTest extends TestCase
         $this->assertNull(DoctrineRegistry::locate(LongMethodProphet::class));
     }
 
+    public function test_resolves_a_prefixed_php_scroll_when_the_requested_name_is_absent(): void
+    {
+        // Consumers name scrolls freely (e.g. `acme-pos-backend`); a hardcoded
+        // `backend` default must fall through to the PHP scroll, not register zero
+        // prophets and finish instantly (#scroll-resolution bug).
+        $config = ['scrolls' => [
+            'acme-frontend' => ['extensions' => ['vue', 'ts']],
+            'acme-backend' => ['extensions' => ['php']],
+        ]];
+
+        $runner = new \JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageRunner('/tmp', $config, 'backend');
+
+        $this->assertSame('acme-backend', $runner->scroll());
+    }
+
+    public function test_honours_an_explicit_existing_scroll(): void
+    {
+        $config = ['scrolls' => [
+            'backend' => ['extensions' => ['php']],
+            'frontend' => ['extensions' => ['vue']],
+        ]];
+
+        $runner = new \JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageRunner('/tmp', $config, 'frontend');
+
+        $this->assertSame('frontend', $runner->scroll());
+    }
+
     public function test_state_round_trips_through_disk(): void
     {
         $dir = sys_get_temp_dir() . '/cc-pilg-' . uniqid();
