@@ -54,7 +54,7 @@ final class Pilgrimage
      * at (severity already applied; a disabled prophet returns nothing).
      *
      * @param  list<string>  $files
-     * @return list<array{file: string, line: int|null, message: string}>
+     * @return list<array{file: string, line: int|null, message: string, autoFixable: bool}>
      */
     public function scanProphet(Commandment $prophet, array $files, CodebaseIndex $index, string $basePath): array
     {
@@ -82,6 +82,7 @@ final class Pilgrimage
                     'file' => $this->relative($file, $basePath),
                     'line' => $finding->line,
                     'message' => $finding->message,
+                    'autoFixable' => $finding->autoFixable ?? false,
                 ];
             }
         }
