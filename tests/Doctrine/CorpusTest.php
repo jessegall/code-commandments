@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Feature;
+namespace JesseGall\CodeCommandments\Tests\Doctrine;
 
 use JesseGall\CodeCommandments\Contracts\NeedsCodebaseIndex;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
  * Seeded from the invariant-root-cause example twins (initial = messy, final = golden).
  * Frontend is out of scope for the v3 doctrine phase.
  */
-class DoctrineCorpusTest extends TestCase
+class CorpusTest extends TestCase
 {
     private const EXAMPLES = __DIR__ . '/../../invariant-root-cause/examples';
 

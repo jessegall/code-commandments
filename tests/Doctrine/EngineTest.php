@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Unit\Doctrines;
+namespace JesseGall\CodeCommandments\Tests\Doctrine;
 
 use JesseGall\CodeCommandments\Doctrines\Doctrine;
 use JesseGall\CodeCommandments\Doctrines\DoctrineCascade;
@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Prophets\Backend\PreferTypeCoalesceProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\ShortClosureProphet;
 use PHPUnit\Framework\TestCase;
 
-class DoctrineEngineTest extends TestCase
+class EngineTest extends TestCase
 {
     // ── Doctrine value object ────────────────────────────────────────────────
 
