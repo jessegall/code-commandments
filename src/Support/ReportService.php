@@ -37,7 +37,36 @@ final class ReportService
         callable $error,
     ): int {
         if ((bool) ($opts['feature_request'] ?? false)) {
+            $emit('⚠ `report --feature-request` has moved to its own command: `commandments feature-request "<text>"`. Filing via the new path this time — the flag is removed next release.');
+
             return self::fileFeatureRequest($opts, $defaultRepo, $emit, $error);
+        }
+
+        // While a pilgrimage is active for THIS session, a report is scoped to the
+        // prophet the walk is currently on and MUST target the current finding by
+        // location (--at) — so the agent can't report a finding for some other prophet
+        // and wander off the walk. A human (different/no session) is never scoped.
+        $current = \JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::currentProphetForBasePath($basePath);
+
+        if ($current !== null) {
+            $passed = is_string($opts['prophet'] ?? null) && $opts['prophet'] !== '' ? trim((string) $opts['prophet']) : null;
+
+            if ($passed !== null && stripos($current, $passed) === false) {
+                $error("report is scoped to the current pilgrimage prophet {$current}; you passed '{$passed}'. Drop --prophet (it is implied) or run `commandments next` to advance.");
+
+                return self::FAILURE;
+            }
+
+            $opts['prophet'] = $current;
+            $atOpt = $opts['at'] ?? null;
+
+            if (! is_string($atOpt) || T_String::isBlank($atOpt)) {
+                $error("Pilgrimage active — report the CURRENT finding by location:  report --at=<file:line> --reason=\"what is wrong\"  (scoped to {$current}). To propose a NEW rule instead, use `commandments feature-request`.");
+
+                return self::FAILURE;
+            }
+
+            $emit("Pilgrimage active — scoped to {$current}.");
         }
 
         $prophet = $opts['prophet'] ?? null;
@@ -143,11 +172,16 @@ final class ReportService
     }
 
     /**
+     * File an ENHANCEMENT / new-rule proposal. Reached from `report --feature-request`
+     * (legacy) and, directly, from the first-class `feature-request` command — the one
+     * action that stays available mid-pilgrimage, since a proposal has no current
+     * finding to scope to.
+     *
      * @param  array<string, mixed>  $opts
      * @param  callable(string): void  $emit
      * @param  callable(string): void  $error
      */
-    private static function fileFeatureRequest(array $opts, string $repo, callable $emit, callable $error): int
+    public static function fileFeatureRequest(array $opts, string $repo, callable $emit, callable $error): int
     {
         $reason = $opts['reason'] ?? null;
 

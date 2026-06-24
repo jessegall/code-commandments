@@ -78,8 +78,6 @@ final class PilgrimagePresenter
             $lines[] = '     ' . $location['message'];
         }
 
-        $prophet = (string) ($step['prophet'] ?? '');
-
         $lines[] = '';
         $lines[] = ' HOW TO RESOLVE EACH LOCATION';
         $lines[] = '   • FIX — edit the file so the rule no longer fires (follow the scripture above).';
@@ -88,17 +86,23 @@ final class PilgrimagePresenter
             $lines[] = sprintf('   • AUTO-FIX — %d of these are [AUTO-FIXABLE]: run `commandments autofix` to repent THIS prophet in place, then `commandments next`. (Not everything auto-fixes; resolve the rest by hand.)', $autoFixable);
         }
 
-        $lines[] = '   • ABSOLVE — only a GENUINE false positive, with a real reason (sins cannot be';
-        $lines[] = '     absolved, only advisory findings):';
-        $lines[] = sprintf('       commandments absolve --at=<file:line above> --prophet=%s --reason="why this is a real exception"', $prophet);
+        $lines[] = '   • ABSOLVE — how you DECLINE a finding you should NOT change: a GENUINE false';
+        $lines[] = '     positive, with a real reason (sins cannot be absolved, only advisory findings).';
+        $lines[] = '     It is scoped to THIS prophet — --prophet is implied, target the location:';
+        $lines[] = '       commandments absolve --at=<file:line above> --reason="why this is a real exception"';
+        $lines[] = '   • REPORT — how you DECLINE a WRONG rule: do this PROACTIVELY the moment a finding';
+        $lines[] = '     here is a false positive, the rule is ill-fitting, or the prophet has a BUG (a';
+        $lines[] = '     crash, a misleading message, an [AUTO-FIXABLE] that no-ops or fixes badly). Scoped';
+        $lines[] = '     to THIS prophet; it opens a GitHub issue another session fixes and quiets the';
+        $lines[] = '     finding until the issue is answered — reporting is part of the job:';
+        $lines[] = '       commandments report --at=<file:line above> --reason="what is wrong"';
+
         $lines[] = '';
-        $lines[] = ' REPORT A WRONG PROPHET — do this PROACTIVELY, do not just absolve or work around:';
-        $lines[] = '   the moment a finding here is a genuine false positive, the rule is wrong/ill-fitting,';
-        $lines[] = '   or the prophet has a BUG (a crash, a misleading message, an [AUTO-FIXABLE] that';
-        $lines[] = '   no-ops, a bad auto-fix), file it:';
-        $lines[] = sprintf('       commandments report --prophet=%s --at=<file:line above> --reason="what is wrong"', $prophet);
-        $lines[] = '   It opens a GitHub issue another session fixes — it is how the prophets improve — and';
-        $lines[] = '   quiets the finding until the issue is answered. Reporting is part of the job.';
+        $lines[] = ' Neither absolve nor report is a shortcut PAST the walk — they are the principled';
+        $lines[] = ' way to say "this one should not change". To propose a NEW rule, run';
+        $lines[] = ' `commandments feature-request "<text>"` (the one action not scoped to this prophet).';
+        $lines[] = ' If a step genuinely cannot be resolved, `commandments abandon` leaves the walk';
+        $lines[] = ' (judge/repent return; the push gate still enforces sins) — do NOT restart to escape.';
 
         $lines[] = '';
         $lines[] = self::THIN;

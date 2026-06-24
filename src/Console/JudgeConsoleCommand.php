@@ -32,17 +32,25 @@ class JudgeConsoleCommand extends Command
             ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Force a fresh judge — never read the findings cache (the pre-commit gate uses this to stay authoritative)')
             ->addOption('no-parallel', null, InputOption::VALUE_NONE, 'Judge sequentially (no forked workers) — use on a platform without pcntl or to debug')
             ->addOption('next', null, InputOption::VALUE_NONE, 'Show exactly one finding at a time (fix or absolve to advance)')
-            ->addOption('plan', null, InputOption::VALUE_NONE, 'Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan)');
+            ->addOption('plan', null, InputOption::VALUE_NONE, 'Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan)')
+            ->addOption('gate-probe', null, InputOption::VALUE_NONE, 'INTERNAL: run a fresh scan only for its exit code (used by the pre-push / Stop gates). Bypasses the pilgrimage lock but suppresses the findings report, so it is no use for browsing');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        // Locked mid-pilgrimage — the guided walk is the only judging path while it runs.
-        if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(getcwd() ?: '.', 'judge', $output->writeln(...))) {
+        $gateProbe = (bool) $input->getOption('gate-probe');
+
+        // Locked mid-pilgrimage — the guided walk is the only judging path while it
+        // runs. The gate probe is the ONE exception: it yields the exit code without
+        // ever printing findings, so it can't be used to wander off the walk.
+        if (! $gateProbe && \JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::blocks(getcwd() ?: '.', 'judge', $output->writeln(...))) {
             return Command::SUCCESS;
         }
 
         [$registry, $manager, $tracker] = $this->bootEnvironment($input->getOption('config'));
+
+        $emit = $gateProbe ? static fn (string $line) => null : $output->writeln(...);
+        $error = $gateProbe ? static fn (string $line) => null : fn (string $line) => $output->writeln('<error>' . $line . '</error>');
 
         $service = new \JesseGall\CodeCommandments\Support\JudgeService(
             $manager,
@@ -50,8 +58,8 @@ class JudgeConsoleCommand extends Command
             $tracker,
             'commandments',
             ' ',
-            $output->writeln(...),
-            fn (string $line) => $output->writeln('<error>' . $line . '</error>'),
+            $emit,
+            $error,
         );
 
         return $service->run([
@@ -65,7 +73,7 @@ class JudgeConsoleCommand extends Command
             'branch' => (bool) $input->getOption('branch'),
             'no_profile' => (bool) $input->getOption('no-profile'),
             'absolve' => (bool) $input->getOption('absolve'),
-            'no_cache' => (bool) $input->getOption('no-cache'),
+            'no_cache' => $gateProbe || (bool) $input->getOption('no-cache'),
             'next' => (bool) $input->getOption('next'),
             'no_parallel' => (bool) $input->getOption('no-parallel'),
             'plan' => (bool) $input->getOption('plan'),

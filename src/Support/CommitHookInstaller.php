@@ -299,29 +299,42 @@ final class CommitHookInstaller
         return <<<HOOK
         {$begin}
         # Blocks the push when code-commandments finds unresolved findings (sins OR
-        # warnings) in the active profile's scope (grind: the branch; penance: the
-        # whole codebase). A bare `judge` resolves that scope from the profile.
+        # admonitions) in the active profile's scope (grind: the branch; penance: the
+        # whole codebase). The `--gate-probe` mode resolves that scope from the profile
+        # and yields just an exit code — it works even mid-pilgrimage (when a bare
+        # `judge` is locked).
         # Worktree isolation: gate ONLY when the firing worktree opted into
         # commandments (its own .commandments/profile, not 'disabled').
         cc_prof=\$(cat .commandments/profile 2>/dev/null)
         if [ "\${CLAUDECODE:-}" = "1" ] && [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
         if [ -x vendor/bin/commandments ]; then
-            vendor/bin/commandments judge --no-cache
-            cc_status=\$?
+            cc_bin="vendor/bin/commandments"; cc_sep=" "
         elif [ -f artisan ]; then
-            php artisan commandments:judge --no-cache
-            cc_status=\$?
+            cc_bin="php artisan commandments"; cc_sep=":"
         else
-            cc_status=0
+            cc_bin=""
         fi
 
-        if [ "\$cc_status" -ne 0 ]; then
-            echo ""
-            echo "✗ Push blocked: unresolved findings remain in scope."
-            echo "  Every sin AND admonition must be fixed, or absolved with a reason."
-            echo "  Reckon before pushing:  commandments pilgrimage   then   commandments next"
-            echo "  (Bypass only in a real emergency with: git push --no-verify)"
-            exit 1
+        if [ -n "\$cc_bin" ]; then
+            # A pilgrimage walked to completion by THIS session earns ONE push past the
+            # gate, even with sins remaining — the walk is the contract. Consume it so
+            # the NEXT push re-arms the gate (completeness is recomputed from the cursor,
+            # so a hand-written complete flag does not pass).
+            if \${cc_bin}\${cc_sep}pilgrimage --is-complete >/dev/null 2>&1; then
+                \${cc_bin}\${cc_sep}pilgrimage --clear >/dev/null 2>&1
+            else
+                \${cc_bin}\${cc_sep}judge --gate-probe >/dev/null 2>&1
+                cc_status=\$?
+
+                if [ "\$cc_status" -ne 0 ]; then
+                    echo ""
+                    echo "✗ Push blocked: unresolved findings remain in scope."
+                    echo "  Every sin AND admonition must be fixed, absolved, or reported."
+                    echo "  Walk the guided fix:  \${cc_bin}\${cc_sep}pilgrimage   then   \${cc_bin}\${cc_sep}next"
+                    echo "  When the pilgrimage is COMPLETE you may push the residue once."
+                    exit 1
+                fi
+            fi
         fi
         fi
         {$end}

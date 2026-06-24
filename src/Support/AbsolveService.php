@@ -45,6 +45,40 @@ final class AbsolveService
             return self::SUCCESS;
         }
 
+        // While a pilgrimage is active for THIS session, every absolution is scoped to
+        // the prophet the walk is currently on — one finding at a time, by location.
+        // The bulk verbs (--all / --warnings / --scope) and a bare --fingerprint bypass
+        // the walk, so they are refused; --prophet is implied (and errors if it names a
+        // different prophet). A human (different/no session) is never scoped.
+        $current = \JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock::currentProphetForBasePath($basePath);
+
+        if ($current !== null) {
+            if ((bool) ($opts['all'] ?? false) || (bool) ($opts['warnings'] ?? false) || ($opts['scope'] ?? null) !== null) {
+                $error("Pilgrimage active — absolve one finding at a time, scoped to {$current}. Use:  absolve --at=<file:line> --reason=\"…\"  (no --all/--warnings/--scope mid-walk).");
+
+                return self::FAILURE;
+            }
+
+            $fp = $opts['fingerprint'] ?? null;
+
+            if (is_string($fp) && T_String::isNotBlank($fp)) {
+                $error("Pilgrimage active — target the CURRENT finding by location, not a fingerprint:  absolve --at=<file:line> --reason=\"…\"  (scoped to {$current}).");
+
+                return self::FAILURE;
+            }
+
+            $passed = is_string($opts['prophet'] ?? null) && $opts['prophet'] !== '' ? trim((string) $opts['prophet']) : null;
+
+            if ($passed !== null && stripos($current, $passed) === false) {
+                $error("absolve is scoped to the current pilgrimage prophet {$current}; you passed '{$passed}'. Drop --prophet (it is implied) or run `commandments next` to advance.");
+
+                return self::FAILURE;
+            }
+
+            $opts['prophet'] = $current;
+            $emit("Pilgrimage active — scoped to {$current}.");
+        }
+
         $reason = $opts['reason'] ?? null;
         $prophet = is_string($opts['prophet'] ?? null) && $opts['prophet'] !== '' ? $opts['prophet'] : null;
 

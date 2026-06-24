@@ -126,8 +126,10 @@ Every command is available via both Laravel artisan
 
 | Command | Purpose |
 |---|---|
+| [`abandon`](#abandon) | Leave the current pilgrimage early (judge/repent return; the push gate still enforces sins) |
 | [`absolve`](#absolve) | Absolve a single finding by fingerprint, with a required reason |
 | [`autofix`](#autofix) | Auto-fix the CURRENT pilgrimage prophet ([AUTO-FIXABLE] findings only), in place |
+| [`feature-request`](#feature-request) | Propose a NEW rule / enhancement as a GitHub issue (no finding needed; allowed mid-pilgrimage) |
 | [`init`](#init) | Initialize code commandments for a standalone project |
 | [`install-skills`](#install-skills) | Install the Code Commandments skills into .claude/skills/ |
 | [`install-sync-hook`](#install-sync-hook) | Install a git post-merge hook that auto-runs `sync --after=previous` when composer.lock changes |
@@ -137,7 +139,7 @@ Every command is available via both Laravel artisan
 | [`pilgrimage`](#pilgrimage) | Begin the forward-only doctrine walk (resets state; `next` advances it) |
 | [`profile`](#profile) | Show, list, or switch the active code-commandments profile (disabled/grind/phased/sins-only) |
 | [`repent`](#repent) | Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE] warnings (no severity bump needed) |
-| [`report`](#report) | Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue |
+| [`report`](#report) | Report a prophet false-positive / wrong rule as a GitHub issue (to PROPOSE a new rule, use `commandments feature-request`) |
 | [`reports`](#reports) | Show the status of prophet reports this project filed (resolved upstream yet?) |
 | [`scaffold`](#scaffold) | Generate recommended support classes (Option, FromArrayOnly, …) into your namespace |
 | [`scripture`](#scripture) | List all commandments and their descriptions |
@@ -145,6 +147,10 @@ Every command is available via both Laravel artisan
 | [`sync`](#sync) | Add newly available prophets to your config file |
 | [`todo`](#todo) | List the still-unresolved file:line locations for the current pilgrimage prophet (compact; does not advance) |
 | [`update`](#update) | Stay current: wire the composer lifecycle scripts, then sync prophets / scaffold / skills / hooks |
+
+### `abandon`
+
+Leave the current pilgrimage early (judge/repent return; the push gate still enforces sins).
 
 ### `absolve`
 
@@ -171,6 +177,20 @@ Auto-fix the CURRENT pilgrimage prophet ([AUTO-FIXABLE] findings only), in place
 | `--config`, `-c` | `<value>` | Path to config file |
 | `--scroll` | `<value>` | Scroll to walk |
 | `--dry-run` | — | Show what would be fixed without making changes |
+
+### `feature-request`
+
+Propose a NEW rule / enhancement as a GitHub issue (no finding needed; allowed mid-pilgrimage).
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to config file |
+| `--stdin` | — | Read the proposal body from STDIN (robust for multi-paragraph text — no shell-quoting) |
+| `--reason-file` | `<value>` | Read the proposal body from a file (alternative to the positional text / --stdin) |
+| `--title` | `<value>` | Short issue title; defaults to a summary of the proposal |
+| `--proposed-prophet` | `<value>` | Proposed name for the new prophet you are suggesting |
+| `--rubric` | `<value>` | Proposed APPLY/LEAVE rubric for the suggested rule |
+| `--repo` | `<value>` | GitHub repo (owner/name) to file the issue on |
 
 ### `init`
 
@@ -220,6 +240,7 @@ Judge the codebase for sins against the commandments.
 | `--no-parallel` | — | Judge sequentially (no forked workers) — use on a platform without pcntl or to debug |
 | `--next` | — | Show exactly one finding at a time (fix or absolve to advance) |
 | `--plan` | — | Print the remediation roadmap: every finding ordered root-cause-first as a numbered checklist (the penance plan) |
+| `--gate-probe` | — | INTERNAL: run a fresh scan only for its exit code (used by the pre-push / Stop gates). Bypasses the pilgrimage lock but suppresses the findings report, so it is no use for browsing |
 
 ### `migrate-config`
 
@@ -248,6 +269,8 @@ Begin the forward-only doctrine walk (resets state; `next` advances it).
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to commandments.php config file |
 | `--scroll` | `<value>` | Scroll to walk |
+| `--is-complete` | — | INTERNAL: exit 0 only if THIS session has genuinely walked the whole pilgrimage (the pre-push gate uses this to grant a completed walk one push). Recomputed from the cursor — a hand-written complete flag does not pass |
+| `--clear` | — | INTERNAL: discard the pilgrimage state (the pre-push gate consumes a completed walk so the next push re-arms the gate) |
 
 ### `profile`
 
@@ -276,7 +299,7 @@ Auto-fix findings that can be automatically resolved — sins and [AUTO-FIXABLE]
 
 ### `report`
 
-Report a prophet false-positive/wrong rule, or (with --feature-request) file a new-prophet/feature proposal, as a GitHub issue.
+Report a prophet false-positive / wrong rule as a GitHub issue (to PROPOSE a new rule, use `commandments feature-request`).
 
 | Flag | Argument | Description |
 |---|---|---|
@@ -287,10 +310,10 @@ Report a prophet false-positive/wrong rule, or (with --feature-request) file a n
 | `--line` | `<value>` | Line number |
 | `--fingerprint` | `<value>` | The finding fingerprint from `judge --next` — records a report-linked absolution so the finding stays quiet until the issue is answered |
 | `--at` | `<value>` | Target the finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; records the report-linked absolution and infers --prophet/--file/--line. Combine with --prophet to disambiguate ties |
-| `--feature-request` | — | File an ENHANCEMENT / new-rule proposal instead of a false-positive report — needs no --prophet/--at/--fingerprint, records no absolution |
-| `--title` | `<value>` | (feature-request) Short issue title; defaults to a summary of --reason |
-| `--proposed-prophet` | `<value>` | (feature-request) Proposed name for a new prophet you are suggesting |
-| `--rubric` | `<value>` | (feature-request) Proposed APPLY/LEAVE rubric for the suggested rule |
+| `--feature-request` | — | DEPRECATED — moved to `commandments feature-request "&lt;text&gt;"`. Still works for one release, then removed |
+| `--title` | `<value>` | (deprecated feature-request) Short issue title; defaults to a summary of --reason |
+| `--proposed-prophet` | `<value>` | (deprecated feature-request) Proposed name for a new prophet you are suggesting |
+| `--rubric` | `<value>` | (deprecated feature-request) Proposed APPLY/LEAVE rubric for the suggested rule |
 | `--repo` | `<value>` | GitHub repo (owner/name) to file the issue on |
 
 ### `reports`

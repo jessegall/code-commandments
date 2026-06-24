@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Console;
 
 use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
+use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageIndexCache;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimagePresenter;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageRunner;
+use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,7 +29,9 @@ class PilgrimageConsoleCommand extends Command
             ->setName('pilgrimage')
             ->setDescription('Begin the forward-only doctrine walk (resets state; `next` advances it)')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to commandments.php config file')
-            ->addOption('scroll', null, InputOption::VALUE_REQUIRED, 'Scroll to walk', 'backend');
+            ->addOption('scroll', null, InputOption::VALUE_REQUIRED, 'Scroll to walk', 'backend')
+            ->addOption('is-complete', null, InputOption::VALUE_NONE, 'INTERNAL: exit 0 only if THIS session has genuinely walked the whole pilgrimage (the pre-push gate uses this to grant a completed walk one push). Recomputed from the cursor — a hand-written complete flag does not pass')
+            ->addOption('clear', null, InputOption::VALUE_NONE, 'INTERNAL: discard the pilgrimage state (the pre-push gate consumes a completed walk so the next push re-arms the gate)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -43,7 +47,19 @@ class PilgrimageConsoleCommand extends Command
             return Command::FAILURE;
         }
 
+        if ((bool) $input->getOption('clear')) {
+            PilgrimageState::clear($basePath);
+            PilgrimageIndexCache::clear($basePath);
+
+            return Command::SUCCESS;
+        }
+
         $runner = PilgrimageRunner::fromConfig($basePath, $configPath, (string) $input->getOption('scroll'));
+
+        if ((bool) $input->getOption('is-complete')) {
+            return $runner->isComplete() ? Command::SUCCESS : Command::FAILURE;
+        }
+
         $state = $runner->begin();
 
         $output->writeln(sprintf('<info>The pilgrimage begins.</info> %d doctrines ahead.', $runner->totalDoctrines()));
