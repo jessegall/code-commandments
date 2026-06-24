@@ -38,6 +38,20 @@ class StringsThatShouldBeEnumsCrossFileTest extends TestCase
         ]);
     }
 
+    public function test_pattern_3_does_not_flag_a_presentation_only_param(): void
+    {
+        // #207: $label receives a closed set ('Inputs'/'Outputs') but is only
+        // interpolated into output — a label, not a domain enum.
+        $results = $this->manager->judgeScroll('test');
+
+        $docRenderer = $this->fixtureDir . '/DocRenderer.php';
+
+        $this->assertNull(
+            $this->firstSinFor($results, $docRenderer),
+            'A presentation-only $label (interpolated, never branched on) must NOT be flagged as an enum.',
+        );
+    }
+
     public function test_pattern_3_flags_string_param_when_callers_form_a_closed_set_matching_an_unimported_enum(): void
     {
         $results = $this->manager->judgeScroll('test');
