@@ -134,6 +134,17 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
             return;
         }
 
+        // Never wire our OWN repository — only a consumer that depends on us.
+        $composerJson = $basePath . '/composer.json';
+
+        if (is_file($composerJson)) {
+            $self = json_decode((string) file_get_contents($composerJson), true);
+
+            if (is_array($self) && ($self['name'] ?? null) === 'jessegall/code-commandments') {
+                return;
+            }
+        }
+
         \JesseGall\CodeCommandments\Support\CommandmentsUpdater::ensureComposerScripts(
             $basePath,
             static fn (string $line) => null,
