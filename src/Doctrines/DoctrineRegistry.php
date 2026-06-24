@@ -8,7 +8,11 @@ use JesseGall\CodeCommandments\Prophets\Backend\NoCoalesceOnNonNullableProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoNullCoalesceToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoOptionToNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoSwallowedNotFoundProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\DataClassFromArrayOnlyProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\DataClumpToValueObjectProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\EagerRegistryProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoArrayBagProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\NoAuthUserInDataClassesProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferClassifierCompositionProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalesceFactoryProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoalesceForProphet;
@@ -81,6 +85,18 @@ final class DoctrineRegistry
             new Doctrine('classification', [
                 [PreferInterfaceOverTypeListProphet::class],
                 [PreferClassifierCompositionProphet::class],
+            ]),
+
+            // VALUE OBJECTS — model structured data as a typed value object, not loose
+            // primitives or an untyped array. Coarse → fine: INTRODUCE the type (a data
+            // clump that travels together, or an `array<string,mixed>` bag, becomes a
+            // value object) → then the resulting data class honours its contract
+            // (array-constructible) and stays pure (no auth user / framework state
+            // smuggled in). Introduce the value object first; its hygiene rules only
+            // matter once it exists.
+            new Doctrine('value-objects', [
+                [DataClumpToValueObjectProphet::class, NoArrayBagProphet::class],
+                [DataClassFromArrayOnlyProphet::class, NoAuthUserInDataClassesProphet::class],
             ]),
         ];
     }
