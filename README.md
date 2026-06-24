@@ -160,8 +160,6 @@ Absolve a single finding by fingerprint, with a required reason.
 | `--warnings` | — | Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing) |
 | `--scope` | `<value>` | Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index) |
 | `--prophet` | `<value>` | Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding |
-| `--until-push` | — | Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only) |
-| `--clear-until-push` | — | Drop every push-scoped (until-push) absolution; used by the pre-push hook |
 | `--clear` | — | Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered |
 
 ### `autofix`

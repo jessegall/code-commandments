@@ -216,7 +216,7 @@ final class CommitHookInstaller
         if [ "\$cc_status" -ne 0 ]; then
             echo ""
             echo "✗ Commit blocked: unresolved findings on your staged files."
-            echo "  Every sin AND warning must be fixed, or absolved with a reason."
+            echo "  Every sin AND admonition must be fixed, or absolved with a reason."
             echo "  Walk and fix them:  commandments pilgrimage   then   commandments next"
             echo "  Absolve a genuine false positive:  commandments absolve --at=<file:line> --prophet=<Name> --reason=\"why\""
             echo "  Genuinely wrong finding (false positive / ill-fitting rule / prophet bug)?"
@@ -254,13 +254,10 @@ final class CommitHookInstaller
 
         return <<<HOOK
         {$begin}
-        # Drop push-scoped (until-push) absolutions before the push lands, so a
-        # sticky LEAVE never outlives the grind it was scoped to.
-        if [ -x vendor/bin/commandments ]; then
-            vendor/bin/commandments absolve --clear-until-push >/dev/null 2>&1
-        elif [ -f artisan ]; then
-            php artisan commandments:absolve --clear-until-push >/dev/null 2>&1
-        fi
+        # (Retired.) Push-scoped `--until-push` absolutions no longer exist — in the
+        # pilgrimage model an absolution lasts until the walk ends (the next
+        # `pilgrimage` clears it), so there is nothing to drop before a push.
+        :
         {$end}
         HOOK;
     }
@@ -321,7 +318,7 @@ final class CommitHookInstaller
         if [ "\$cc_status" -ne 0 ]; then
             echo ""
             echo "✗ Push blocked: unresolved findings remain in scope."
-            echo "  Every sin AND warning must be fixed, or absolved with a reason."
+            echo "  Every sin AND admonition must be fixed, or absolved with a reason."
             echo "  Reckon before pushing:  commandments pilgrimage   then   commandments next"
             echo "  (Bypass only in a real emergency with: git push --no-verify)"
             exit 1

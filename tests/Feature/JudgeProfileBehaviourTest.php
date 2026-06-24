@@ -95,7 +95,7 @@ class JudgeProfileBehaviourTest extends TestCase
 
         $this->assertSame(JudgeService::SUCCESS, $code);
         $this->assertStringNotContainsString('WARN_ME found', $out);
-        $this->assertStringNotContainsString('WARNINGS', $out);
+        $this->assertStringNotContainsString('ADMONITIONS', $out);
     }
 
     public function test_phased_shows_warnings_but_a_warning_only_file_does_not_block(): void
@@ -106,7 +106,7 @@ class JudgeProfileBehaviourTest extends TestCase
         [$code, $out] = $this->judge(['path' => $this->dir]);
 
         $this->assertSame(JudgeService::SUCCESS, $code, 'a warning-only non-staged judge must not block');
-        $this->assertStringContainsString('WARNINGS', $out);
+        $this->assertStringContainsString('ADMONITIONS', $out);
         $this->assertStringContainsString('ProfileMarker', $out);
     }
 
@@ -151,7 +151,7 @@ class JudgeProfileBehaviourTest extends TestCase
         [$code, $out] = $this->judge([]); // bare judge → profile scope (branch)
 
         $this->assertSame(JudgeService::FAILURE, $code, 'grind reckons at the end — the pre-push gate blocks unresolved warnings');
-        $this->assertStringContainsString('WARNINGS', $out);
+        $this->assertStringContainsString('ADMONITIONS', $out);
         $this->assertStringContainsString('ProfileMarker', $out);
     }
 
@@ -209,10 +209,10 @@ class JudgeProfileBehaviourTest extends TestCase
         $this->file('Warn.php', 'WARN_ME');
 
         [$suppressed, $outA] = $this->judge(['path' => $this->dir]);
-        $this->assertStringNotContainsString('WARNINGS', $outA);
+        $this->assertStringNotContainsString('ADMONITIONS', $outA);
 
         [, $outB] = $this->judge(['path' => $this->dir, 'no_profile' => true]);
-        $this->assertStringContainsString('WARNINGS', $outB);
+        $this->assertStringContainsString('ADMONITIONS', $outB);
     }
 
     public function test_plan_redirects_to_the_pilgrimage(): void

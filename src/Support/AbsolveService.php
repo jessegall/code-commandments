@@ -19,7 +19,7 @@ final class AbsolveService
     public const FAILURE = 1;
 
     /**
-     * @param  array<string, mixed>  $opts  clear, clear_until_push, until_push, warnings, scope, prophet, all, fingerprint, at, reason
+     * @param  array<string, mixed>  $opts  clear, warnings, scope, prophet, all, fingerprint, at, reason
      * @param  callable(string): void  $emit
      * @param  callable(string): void  $error
      */
@@ -32,19 +32,19 @@ final class AbsolveService
         callable $emit,
         callable $error,
     ): int {
-        if ((bool) ($opts['clear_until_push'] ?? false)) {
-            $emit('Cleared ' . $tracker->clearUntilPushAbsolutions() . ' push-scoped absolution(s).');
-
-            return self::SUCCESS;
-        }
-
         if ((bool) ($opts['clear'] ?? false)) {
+            // During a pilgrimage, absolutions last until the walk ENDS (the next
+            // `pilgrimage` clears them) — so the per-commit reset must NOT wipe an
+            // absolved false positive mid-walk, or it re-surfaces and blocks `next`.
+            if (\JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState::isActive($basePath)) {
+                return self::SUCCESS;
+            }
+
             $emit('Cleared ' . $tracker->clearFindingAbsolutions() . ' absolution(s). Every finding will be re-evaluated from scratch.');
 
             return self::SUCCESS;
         }
 
-        $untilPush = (bool) ($opts['until_push'] ?? false);
         $reason = $opts['reason'] ?? null;
         $prophet = is_string($opts['prophet'] ?? null) && $opts['prophet'] !== '' ? $opts['prophet'] : null;
 
@@ -56,7 +56,7 @@ final class AbsolveService
             }
 
             $result = (new Absolver($manager, $registry, $tracker))
-                ->absolveWarnings($reason, $scopeFiles, $untilPush, $prophet);
+                ->absolveWarnings($reason, $scopeFiles, $prophet);
 
             $result['status'] === Absolver::STATUS_OK ? $emit($result['message']) : $error($result['message']);
 
@@ -93,7 +93,7 @@ final class AbsolveService
             return self::FAILURE;
         }
 
-        $result = $absolver->absolve(trim($fingerprint), $reason, $untilPush);
+        $result = $absolver->absolve(trim($fingerprint), $reason);
 
         if ($result['status'] === Absolver::STATUS_OK) {
             $emit($result['message']);
