@@ -202,7 +202,7 @@ final class CommitHookInstaller
         # the firing worktree opted into commandments (its own .commandments/profile,
         # not 'disabled'). A fresh worktree is left untouched.
         cc_prof=\$(cat .commandments/profile 2>/dev/null)
-        if [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
+        if [ "\${CLAUDECODE:-}" = "1" ] && [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
         if [ -x vendor/bin/commandments ]; then
             vendor/bin/commandments judge --staged --no-cache
             cc_status=\$?
@@ -273,7 +273,7 @@ final class CommitHookInstaller
         # Worktree isolation: guard ONLY when the firing worktree opted into
         # commandments (its own .commandments/profile, not 'disabled').
         cc_prof=\$(cat .commandments/profile 2>/dev/null)
-        if [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ] && grep -qiE '^[[:space:]]*co-authored-by:' "\$1"; then
+        if [ "\${CLAUDECODE:-}" = "1" ] && [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ] && grep -qiE '^[[:space:]]*co-authored-by:' "\$1"; then
             echo ""
             echo "✗ Commit blocked: Co-authored-by trailers are not allowed."
             echo "  Remove the Co-authored-by line(s) from the commit message."
@@ -304,7 +304,7 @@ final class CommitHookInstaller
         # Worktree isolation: gate ONLY when the firing worktree opted into
         # commandments (its own .commandments/profile, not 'disabled').
         cc_prof=\$(cat .commandments/profile 2>/dev/null)
-        if [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
+        if [ "\${CLAUDECODE:-}" = "1" ] && [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
         if [ -x vendor/bin/commandments ]; then
             vendor/bin/commandments judge --no-cache
             cc_status=\$?
