@@ -144,9 +144,13 @@ SCRIPTURE;
 
             $fn = $call->name->toString();
             $names = null;
+            $needle = null;
+            $haystack = null;
 
             if (in_array($fn, self::MEMBERSHIP_FUNCS, true) && ($call->args[1] ?? null) instanceof Node\Arg) {
                 $names = $this->typeNameList($call->args[1]->value, $ast);
+                $needle = ($call->args[0] ?? null) instanceof Node\Arg ? $call->args[0]->value : null;
+                $haystack = $call->args[1]->value;
             } elseif (in_array($fn, self::SET_FUNCS, true)) {
                 foreach ($call->args as $arg) {
                     if ($arg instanceof Node\Arg && ($names = $this->typeNameList($arg->value, $ast)) !== null) {
@@ -155,7 +159,9 @@ SCRIPTURE;
                 }
             }
 
-            if ($names !== null && ! $this->allExempt($names, $file, $exempt)) {
+            if ($names !== null
+                && ! $this->allExempt($names, $file, $exempt)
+                && ! $this->isValueSetMembership($needle, $haystack, $ast, $file)) {
                 $warnings[] = $this->listWarning($call, $names, $content);
             }
         }
@@ -485,6 +491,57 @@ SCRIPTURE;
      * Whether $value looks like a class name — PascalCase or a namespaced FQCN,
      * and at least 3 chars (so short affixes like `Id` / a bare cap do not fire).
      */
+    /**
+     * Whether a membership test is classifying a VALUE, not a type — then the
+     * marker-interface remedy cannot apply and it is not the smell (#201).
+     *
+     * The signal is the NEEDLE: a stored domain attribute (`$descriptor->group`,
+     * a property fetch) tested against an UNGROUNDED haystack — type-name-shaped
+     * strings, none of which is a `::class` reference, an FQ (namespaced) name, or
+     * a name that resolves to a loadable class/interface/enum. A computed-name
+     * needle (`$shortName`, `get_class($x)`) or a type-grounded list still flags.
+     *
+     * @param  array<Node>  $ast
+     */
+    private function isValueSetMembership(?Expr $needle, ?Expr $haystack, array $ast, FileAst $file): bool
+    {
+        $needleIsStoredAttribute = $needle instanceof Expr\PropertyFetch
+            || $needle instanceof Expr\NullsafePropertyFetch
+            || $needle instanceof Expr\StaticPropertyFetch;
+
+        if (! $needleIsStoredAttribute || $haystack === null) {
+            return false;
+        }
+
+        $array = $this->resolveArray($haystack, $ast);
+
+        if ($array === null) {
+            return false;
+        }
+
+        foreach ($array->items as $item) {
+            if ($item === null) {
+                continue;
+            }
+
+            // A `::class` reference is unambiguously a type — keep flagging.
+            if ($item->value instanceof Expr\ClassConstFetch) {
+                return false;
+            }
+
+            if ($item->value instanceof Node\Scalar\String_) {
+                $name = $item->value->value;
+                $fqcn = ltrim($file->resolveType($name), '\\');
+
+                if (str_contains($name, '\\') || class_exists($fqcn) || interface_exists($fqcn) || enum_exists($fqcn)) {
+                    return false; // genuinely a type reference
+                }
+            }
+        }
+
+        return true;
+    }
+
     private function isTypeNameShaped(string $value): bool
     {
         return strlen(ltrim($value, '\\')) >= 3
