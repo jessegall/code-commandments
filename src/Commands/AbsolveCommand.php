@@ -23,8 +23,6 @@ class AbsolveCommand extends Command
         {--warnings : Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)}
         {--scope= : Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index)}
         {--prophet= : Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding}
-        {--until-push : Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only)}
-        {--clear-until-push : Drop every push-scoped (until-push) absolution; used by the pre-push hook}
         {--clear : Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered}';
 
     protected $description = 'Absolve a single finding by fingerprint, with a required reason';
@@ -40,8 +38,6 @@ class AbsolveCommand extends Command
             $tracker,
             [
                 'clear' => (bool) $this->option('clear'),
-                'clear_until_push' => (bool) $this->option('clear-until-push'),
-                'until_push' => (bool) $this->option('until-push'),
                 'warnings' => (bool) $this->option('warnings'),
                 'scope' => $this->option('scope'),
                 'prophet' => $this->option('prophet'),

@@ -28,8 +28,6 @@ class AbsolveConsoleCommand extends Command
             ->addOption('warnings', null, InputOption::VALUE_NONE, 'Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)')
             ->addOption('scope', null, InputOption::VALUE_REQUIRED, 'Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index)')
             ->addOption('prophet', null, InputOption::VALUE_REQUIRED, 'Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding')
-            ->addOption('until-push', null, InputOption::VALUE_NONE, 'Make the absolution STICKY: it survives the post-commit reset and stays until git push (warnings only)')
-            ->addOption('clear-until-push', null, InputOption::VALUE_NONE, 'Drop every push-scoped (until-push) absolution; used by the pre-push hook')
             ->addOption('clear', null, InputOption::VALUE_NONE, 'Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered');
     }
 
@@ -43,8 +41,6 @@ class AbsolveConsoleCommand extends Command
             $tracker,
             [
                 'clear' => (bool) $input->getOption('clear'),
-                'clear_until_push' => (bool) $input->getOption('clear-until-push'),
-                'until_push' => (bool) $input->getOption('until-push'),
                 'warnings' => (bool) $input->getOption('warnings'),
                 'scope' => $input->getOption('scope'),
                 'prophet' => $input->getOption('prophet'),

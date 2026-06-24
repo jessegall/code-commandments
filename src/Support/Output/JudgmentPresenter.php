@@ -233,7 +233,7 @@ final class JudgmentPresenter
         // Show warnings section
         if ($totalWarnings > 0 && ! empty($manualVerificationFiles)) {
             $this->output->newLine();
-            $this->output->writeln("WARNINGS: {$totalWarnings} requiring manual review");
+            $this->output->writeln("ADMONITIONS: {$totalWarnings} requiring manual review");
             $this->output->newLine();
 
             $warningProphets = [];
@@ -249,7 +249,7 @@ final class JudgmentPresenter
             }
 
             $this->output->newLine();
-            $this->output->writeln('Warnings are ADVISORY — each carries an APPLY-WHEN / LEAVE-WHEN rubric.');
+            $this->output->writeln('Admonitions are ADVISORY — each carries an APPLY-WHEN / LEAVE-WHEN rubric.');
             $this->output->writeln('Walk them one at a time (rubric + full rule shown inline):');
             $this->output->writeln("  php artisan commandments:judge --next{$gitFlag}");
             $this->output->newLine();
