@@ -140,6 +140,7 @@ Every command is available via both Laravel artisan
 | [`scripture`](#scripture) | List all commandments and their descriptions |
 | [`skills`](#skills) | List the available Code Commandments skills (what they teach + where to read) |
 | [`sync`](#sync) | Add newly available prophets to your config file |
+| [`update`](#update) | Stay current: wire the composer lifecycle scripts, then sync prophets / scaffold / skills / hooks |
 
 ### `absolve`
 
@@ -303,6 +304,14 @@ Add newly available prophets to your config file.
 | `--config`, `-c` | `<value>` | Path to commandments.php config file |
 | `--after` | `<value>` | Only add prophets introduced after this version (e.g. 1.4.0). Pass `previous` to use the last synced version automatically. Prophets you removed before upgrading stay removed. |
 | `--dry-run` | — | Show what would be added without modifying the file |
+
+### `update`
+
+Stay current: wire the composer lifecycle scripts, then sync prophets / scaffold / skills / hooks.
+
+| Flag | Argument | Description |
+|---|---|---|
+| `--config`, `-c` | `<value>` | Path to commandments.php config file |
 
 <!-- AUTOGEN:COMMANDS:END -->
 

@@ -23,6 +23,7 @@ class Application extends SymfonyApplication
         $this->add(new ScriptureConsoleCommand());
         $this->add(new InitConsoleCommand());
         $this->add(new SyncConsoleCommand());
+        $this->add(new UpdateConsoleCommand());
         $this->add(new MigrateConfigConsoleCommand());
         $this->add(new InstallSyncHookConsoleCommand());
         $this->add(new ProfileConsoleCommand());
