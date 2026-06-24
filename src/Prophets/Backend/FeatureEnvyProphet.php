@@ -216,6 +216,16 @@ SCRIPTURE;
 
             $envy = $this->firstForeignQuery($method, $paramOwners, $propertyOwners, $unwrapOwners);
 
+            // #203: feature envy is being envious of ONE object. A method that
+            // accesses TWO OR MORE distinct foreign owners is ORCHESTRATING /
+            // coordinating them (an assembler/resolver/command composing several
+            // collaborators into its own layer's result), not coveting one. Moving
+            // it onto any single owner would couple that owner to the others — so a
+            // multi-collaborator method is correct layering, not envy.
+            if ($envy !== null && $this->distinctForeignOwnersAccessed($method, $paramOwners, $propertyOwners) >= 2) {
+                continue;
+            }
+
             if ($envy !== null) {
                 $warnings[] = $this->warningAt(
                     $method->getStartLine(),
@@ -356,6 +366,39 @@ SCRIPTURE;
      * @param  array<string, string>  $propertyOwners
      * @return array{owner: string, access: string}|null
      */
+    /**
+     * How many DISTINCT foreign owners (project-owned classes that are not the host)
+     * the method touches as a receiver — `$this->serviceProp->…` or `$param->…`. Two
+     * or more means the method coordinates several collaborators, so it is not envious
+     * of any single one (#203).
+     *
+     * @param  array<string, string>  $paramOwners     param var name => owner FQCN
+     * @param  array<string, string>  $propertyOwners  property name => owner FQCN
+     */
+    private function distinctForeignOwnersAccessed(Node\Stmt\ClassMethod $method, array $paramOwners, array $propertyOwners): int
+    {
+        $finder = new NodeFinder;
+        $owners = [];
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\PropertyFetch::class) as $fetch) {
+            if ($fetch->var instanceof Expr\Variable
+                && $fetch->var->name === 'this'
+                && $fetch->name instanceof Node\Identifier
+                && isset($propertyOwners[$fetch->name->toString()])
+            ) {
+                $owners[$propertyOwners[$fetch->name->toString()]] = true;
+            }
+        }
+
+        foreach ($finder->findInstanceOf($method->stmts, Expr\Variable::class) as $var) {
+            if (is_string($var->name) && isset($paramOwners[$var->name])) {
+                $owners[$paramOwners[$var->name]] = true;
+            }
+        }
+
+        return count($owners);
+    }
+
     private function firstForeignQuery(Node\Stmt\ClassMethod $method, array $paramOwners, array $propertyOwners, array $unwrapOwners = []): ?array
     {
         $finder = new NodeFinder;

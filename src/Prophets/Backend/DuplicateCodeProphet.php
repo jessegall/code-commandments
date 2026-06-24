@@ -25,6 +25,9 @@ class DuplicateCodeProphet extends PhpCommandment implements NeedsCodebaseIndex
 {
     private const DEFAULT_MIN_LINES = 4;
 
+    /** Built-in TYPE predicates whose negated guard is the "parse a maybe-X" preamble (#202). */
+    private const TYPE_PREDICATES = ['is_array', 'is_string', 'is_int', 'is_integer', 'is_bool', 'is_float', 'is_numeric', 'is_object', 'is_iterable', 'is_null', 'is_callable', 'is_scalar'];
+
     private ?CodebaseIndex $index = null;
 
     public function setCodebaseIndex(CodebaseIndex $index): void
@@ -162,6 +165,16 @@ SCRIPTURE;
             // shared with another method that then diverges. Report the longest.
             $fragment = $this->longestSharedFragment($method, $minLines, $self, $line);
 
+            // #202: a shared LEADING run that is just the ubiquitous "parse a maybe-
+            // array" scaffolding — a type-guard clause, an accumulator init, then a
+            // loop header — is not duplicated LOGIC; the bodies diverge inside the
+            // loop. Extracting it would force a generic higher-order helper that
+            // obscures a 3-line idiom. (A truly duplicated whole body still fires via
+            // the body-hash path above.)
+            if ($fragment !== null && $this->opensWithGenericGuardPreamble($method)) {
+                continue;
+            }
+
             if ($fragment !== null) {
                 $warnings[] = $this->warningAt(
                     $line,
@@ -204,6 +217,98 @@ SCRIPTURE;
      *
      * @return array{hash: string, lines: int, others: list<array{file: string, class: string, method: string, line: int, lines: int}>}|null
      */
+    /**
+     * Whether the method opens with a generic guard preamble that leads straight
+     * into a loop — `if (! is_array($x)) return …;  $acc = …;  foreach (…)` — where
+     * the real, diverging work happens INSIDE the loop. Such a shared leading run is
+     * idiom, not duplicated logic (#202). Only scaffolding statements (a guard clause
+     * that exits, and simple initialiser assignments) may precede the loop.
+     */
+    private function opensWithGenericGuardPreamble(Node\Stmt\ClassMethod $method): bool
+    {
+        foreach ($method->stmts ?? [] as $stmt) {
+            if ($stmt instanceof Node\Stmt\Foreach_
+                || $stmt instanceof Node\Stmt\For_
+                || $stmt instanceof Node\Stmt\While_
+            ) {
+                return true; // reached the loop with only trivial scaffolding before it
+            }
+
+            // Only a TYPE-PREDICATE guard (`if (! is_array($v)) return …`) and an
+            // EMPTY-COLLECTION accumulator init (`$acc = []` / `T_Array::empty()`) may
+            // precede the loop. A domain-method guard (`if ($node->isEmpty())`) or an
+            // assignment from a real call (`$d = $node->getOrThrow()`) is substantive
+            // logic — a genuine shared preamble worth extracting — so bail out.
+            if ($stmt instanceof Node\Stmt\If_ && $this->isTypePredicateGuard($stmt)) {
+                continue;
+            }
+
+            if ($stmt instanceof Node\Stmt\Expression
+                && $stmt->expr instanceof Node\Expr\Assign
+                && $this->isEmptyCollectionInit($stmt->expr->expr)
+            ) {
+                continue;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * A guard clause whose condition tests a built-in TYPE predicate (`is_array`,
+     * `is_string`, …) — the "is this the shape I expect?" gate, not a domain check.
+     */
+    private function isTypePredicateGuard(Node\Stmt\If_ $if): bool
+    {
+        if (! $this->isGuardClause($if)) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf([$if->cond], Node\Expr\FuncCall::class) as $call) {
+            if ($call->name instanceof Node\Name && in_array(strtolower($call->name->getLast()), self::TYPE_PREDICATES, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * An empty-collection initialiser — `[]`, a literal array, `T_Array::empty()`, or
+     * a `T_Array::EMPTY`-style constant: an accumulator, not a value from real work.
+     */
+    private function isEmptyCollectionInit(Node\Expr $expr): bool
+    {
+        return $expr instanceof Node\Expr\Array_
+            || ($expr instanceof Node\Expr\StaticCall && $expr->name instanceof Node\Identifier && strtolower($expr->name->toString()) === 'empty')
+            || ($expr instanceof Node\Expr\ClassConstFetch && $expr->name instanceof Node\Identifier && strtoupper($expr->name->toString()) === 'EMPTY');
+    }
+
+    /**
+     * A guard clause: an `if` with no else/elseif whose body only exits (return or
+     * throw) — `if (! is_array($v)) return T_Array::empty();`.
+     */
+    private function isGuardClause(Node\Stmt\If_ $if): bool
+    {
+        if ($if->elseifs !== [] || $if->else !== null || $if->stmts === []) {
+            return false;
+        }
+
+        foreach ($if->stmts as $stmt) {
+            $isExit = $stmt instanceof Node\Stmt\Return_
+                || $stmt instanceof Node\Stmt\Throw_
+                || ($stmt instanceof Node\Stmt\Expression && $stmt->expr instanceof Node\Expr\Throw_);
+
+            if (! $isExit) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function longestSharedFragment(Node\Stmt\ClassMethod $method, int $minLines, string $self, int $line): ?array
     {
         $fragments = MethodBodyHash::leadingFragments($method, $minLines);
