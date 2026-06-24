@@ -35,7 +35,7 @@ final class Absolver
     /**
      * @return array{status: string, message: string}
      */
-    public function absolve(string $fingerprint, ?string $reason, bool $untilPush = false): array
+    public function absolve(string $fingerprint, ?string $reason): array
     {
         if ($reason === null || T_String::isBlank($reason)) {
             return $this->error('A reason is required: --reason="why this rule does not apply here".');
@@ -62,17 +62,11 @@ final class Absolver
             );
         }
 
-        if ($untilPush) {
-            $this->tracker->absolveFindingUntilPush($fingerprint, $reason);
-        } else {
-            $this->tracker->absolveFinding($fingerprint, $reason);
-        }
-
-        $scope = $untilPush ? ' until push' : T_String::empty();
+        $this->tracker->absolveFinding($fingerprint, $reason);
 
         return [
             'status' => self::STATUS_OK,
-            'message' => "Absolved{$scope} {$finding->prophetShort} at {$finding->location()} — \"{$reason}\".",
+            'message' => "Absolved {$finding->prophetShort} at {$finding->location()} — \"{$reason}\".",
         ];
     }
 
@@ -81,15 +75,14 @@ final class Absolver
      * ANY sin is in scope — it errors and absolves NOTHING (sins are imperative
      * and can never be batch-dismissed). `$scopeFiles` (absolute paths) limits
      * the batch to a changed/staged subset; null means the whole queue. When
-     * `$untilPush` the absolutions survive the post-commit reset until push.
      *
      * @param  list<string>|null  $scopeFiles
      * @return array{status: string, message: string}
      */
-    public function absolveWarnings(?string $reason, ?array $scopeFiles, bool $untilPush, ?string $prophet = null): array
+    public function absolveWarnings(?string $reason, ?array $scopeFiles, ?string $prophet = null): array
     {
         if ($reason === null || T_String::isBlank($reason)) {
-            return $this->error('A reason is required: --reason="why these warnings are accepted".');
+            return $this->error('A reason is required: --reason="why these admonitions are accepted".');
         }
 
         $scope = $scopeFiles === null
@@ -153,23 +146,17 @@ final class Absolver
         if ($warnings === []) {
             return [
                 'status' => self::STATUS_OK,
-                'message' => 'No warnings in scope — nothing to absolve.',
+                'message' => 'No admonitions in scope — nothing to absolve.',
             ];
         }
 
         foreach ($warnings as $finding) {
-            if ($untilPush) {
-                $this->tracker->absolveFindingUntilPush($finding->fingerprint, $reason);
-            } else {
-                $this->tracker->absolveFinding($finding->fingerprint, $reason);
-            }
+            $this->tracker->absolveFinding($finding->fingerprint, $reason);
         }
-
-        $lifetime = $untilPush ? ' until push' : T_String::empty();
 
         return [
             'status' => self::STATUS_OK,
-            'message' => sprintf('Absolved %d warning(s)%s — "%s".', count($warnings), $lifetime, $reason),
+            'message' => sprintf('Absolved %d warning(s) — "%s".', count($warnings), $reason),
         ];
     }
 

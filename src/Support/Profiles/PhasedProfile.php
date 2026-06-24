@@ -19,7 +19,7 @@ final class PhasedProfile extends Profile
 
     public function description(): string
     {
-        return 'Face-by-face — pre-commit gate blocks staged sins + warnings, per-phase nudges, full briefing.';
+        return 'Face-by-face — pre-commit gate blocks staged sins + admonitions, per-phase nudges, full briefing.';
     }
 
     public function options(): ProfileOptions

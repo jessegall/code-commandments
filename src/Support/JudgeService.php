@@ -515,7 +515,7 @@ final class JudgeService
 
         if ($this->totalWarnings > 0 && ! empty($this->manualVerificationFiles)) {
             ($this->emit)(T_String::empty());
-            ($this->emit)("WARNINGS: {$this->totalWarnings} requiring manual review");
+            ($this->emit)("ADMONITIONS: {$this->totalWarnings} requiring manual review");
             ($this->emit)(T_String::empty());
 
             if ($isDetailedView) {
@@ -540,10 +540,10 @@ final class JudgeService
                 }
 
                 ($this->emit)(T_String::empty());
-                ($this->emit)('Each warning carries an APPLY-WHEN / LEAVE-WHEN rubric (use judgment) —');
+                ($this->emit)('Each admonition carries an APPLY-WHEN / LEAVE-WHEN rubric (use judgment) —');
 
                 if ($warningsBlock) {
-                    ($this->emit)('but it is NOT ignorable: the gate is BLOCKED until every warning is');
+                    ($this->emit)('but it is NOT ignorable: the gate is BLOCKED until every admonition is');
                     ($this->emit)('resolved (fixed or absolved with a reason). Walk them one at a time');
                     ($this->emit)('(rubric + full rule shown inline):');
                 } else {
@@ -562,9 +562,9 @@ final class JudgeService
         if ($warningsBlock && $this->totalSins === 0 && $this->totalWarnings > 0) {
             $scopeFlag = $stagedMode ? ' --scope=staged' : T_String::empty();
             ($this->emit)(T_String::empty());
-            ($this->emit)("UNRESOLVED: {$this->totalWarnings} warning(s) in scope must be fixed or absolved before the gate passes:");
+            ($this->emit)("UNRESOLVED: {$this->totalWarnings} admonition(s) in scope must be fixed or absolved before the gate passes:");
             ($this->emit)("  {$cmd}absolve --fingerprint=<hash> --reason=\"why it does not apply here\"");
-            ($this->emit)("  many at once? {$cmd}absolve --warnings{$scopeFlag} --reason=\"…\"  (add --prophet=NAME to scope; --until-push to keep it past the commit until you push)");
+            ($this->emit)("  many at once? {$cmd}absolve --warnings{$scopeFlag} --reason=\"…\"  (add --prophet=NAME to scope)");
         }
 
         $blocks = $this->totalSins > 0 || ($warningsBlock && $this->totalWarnings > 0) || $hadFailures;

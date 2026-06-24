@@ -178,43 +178,12 @@ class AbsolverTest extends TestCase
         $warning = $this->findingOfKind('warning');
 
         $result = (new Absolver($this->manager, $this->registry, $this->tracker))
-            ->absolveWarnings('accepted for now', null, false);
+            ->absolveWarnings('accepted for now', null);
 
         $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
         $this->assertStringContainsString('sin(s) in scope', $result['message']);
         $this->assertStringContainsString('touched NOTHING', $result['message']);
         $this->assertFalse($this->tracker->isFindingAbsolved($warning->fingerprint), 'No warning may be absolved when a sin is in scope.');
-    }
-
-    public function test_batch_warnings_until_push_absolves_stickily_when_no_sin(): void
-    {
-        // Capture the warning fingerprint before it gets absolved away.
-        $warningFingerprint = $this->findingOfKind('warning')->fingerprint;
-
-        // A registry with only the warning prophet — no sin in scope.
-        $registry = new ProphetRegistry();
-        $registry->registerMany('warns', [PreferOptionOverNullProphet::class]);
-        $registry->setScrollConfig('warns', [
-            'path' => $this->dir,
-            'extensions' => ['php'],
-            'exclude' => [],
-            'prophets' => [PreferOptionOverNullProphet::class],
-        ]);
-        $manager = new ScrollManager($registry, new GenericFileScanner());
-
-        $result = (new Absolver($manager, $registry, $this->tracker))
-            ->absolveWarnings('reasoned LEAVE for this grind', null, true);
-
-        $this->assertSame(Absolver::STATUS_OK, $result['status']);
-        $this->assertStringContainsString('until push', $result['message']);
-
-        // Sticky: it survives the post-commit reset.
-        $this->tracker->clearFindingAbsolutions();
-        $this->assertTrue($this->tracker->isFindingAbsolved($warningFingerprint));
-
-        // ...and clears at push.
-        $this->tracker->clearUntilPushAbsolutions();
-        $this->assertFalse($this->tracker->isFindingAbsolved($warningFingerprint));
     }
 
     public function test_batch_warnings_prophet_filter_narrows_the_batch(): void
@@ -231,11 +200,11 @@ class AbsolverTest extends TestCase
         $absolver = new Absolver($manager, $registry, $this->tracker);
 
         // A non-matching prophet name absolves nothing.
-        $miss = $absolver->absolveWarnings('reason', null, false, 'NoSuchProphet');
-        $this->assertStringContainsString('No warnings in scope', $miss['message']);
+        $miss = $absolver->absolveWarnings('reason', null, 'NoSuchProphet');
+        $this->assertStringContainsString('No admonitions in scope', $miss['message']);
 
         // The matching prophet absolves its warning.
-        $hit = $absolver->absolveWarnings('reason', null, false, 'PreferOption');
+        $hit = $absolver->absolveWarnings('reason', null, 'PreferOption');
         $this->assertSame(Absolver::STATUS_OK, $hit['status']);
         $this->assertStringContainsString('1 warning', $hit['message']);
     }
