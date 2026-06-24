@@ -13,6 +13,8 @@ use JesseGall\CodeCommandments\Support\CompareSelf;
  * - {@see Briefing::Short}: the grind contract — implement the whole plan, no
  *   judge/test between phases, reckon + test before push.
  * - {@see Briefing::Full}: the complete scripture (phased / sins-only).
+ * - {@see Briefing::Repentr}: the single-prophet repent contract — ask WHICH
+ *   prophet, then drive only its findings to zero.
  */
 enum Briefing: string
 {
@@ -23,4 +25,7 @@ enum Briefing: string
 
     /** The complete scripture (phased / sins-only). */
     case Full = 'full';
+
+    /** The single-prophet repent contract (repentr). */
+    case Repentr = 'repentr';
 }
