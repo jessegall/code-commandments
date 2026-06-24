@@ -62,7 +62,8 @@ final class ScriptureService
         }
 
         $r = $runner[0] . $runner[1];
-        $emit("Check violations: {$r}judge --next --git");
+        $emit("Audit everything: {$r}judge");
+        $emit("Walk + fix findings: {$r}pilgrimage  then  {$r}next  (read each output IN FULL — never truncate)");
         $emit("Auto-fix [AUTO-FIXABLE] sins: {$r}repent  (do NOT hand-fix these)");
         $emit("Report a false positive OR prophet bug (proactively!): {$r}report --at=path:line --reason=\"what is wrong\"");
 

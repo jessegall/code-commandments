@@ -432,7 +432,7 @@ final class ProfileService
 
         $isPenance = GitGateStage::PrePush->equals($o->gate) && JudgeScope::None->equals($o->scope);
 
-        $alsoWarnings = $o->gateBlocksOnWarnings() ? ' and warnings' : T_String::empty();
+        $alsoWarnings = $o->gateBlocksOnWarnings() ? ' or warnings' : T_String::empty();
 
         $gate = match (true) {
             GitGateStage::None->equals($o->gate) => 'No git gate — nothing blocks commits or pushes.',
@@ -496,6 +496,10 @@ final class ProfileService
             $lines[] = 'Implement the entire plan phase by phase. Do NOT run judge, the test suite, or ANY gate between phases — even though your default habit (and CLAUDE.md) is to verify each step. That habit is SUSPENDED in grind: running checks mid-grind is the mistake to avoid. Commit each phase freely and keep moving. (Autonomy during implementation is set above; in plan mode you still ask freely.)';
             $lines[] = "Only when the WHOLE plan is done: run `{$r}judge` and your full test suite ONCE. If judge flags anything, walk it with `{$r}pilgrimage` then `{$r}next` (read the FULL output — never truncate it), fixing or absolving each, then push.";
             $lines[] = 'The pre-push gate blocks the push until the branch has no unresolved sins or warnings (each fixed or absolved with a reason).';
+        } elseif (GitGateStage::PreCommit->equals($o->gate)) {
+            $lines[] = T_String::empty();
+            $lines[] = "When `{$r}judge` flags a phase, walk the findings before you stage the next: run `{$r}pilgrimage` then `{$r}next` — ONE prophet at a time, with its full scripture and EVERY location.";
+            $lines[] = 'READ each pilgrimage/next output IN FULL — never head/tail/truncate it, or you WILL miss locations. `next` re-checks the current prophet and refuses to advance until it is clean (forward-only — it never loops back). Fix each, or absolve a GENUINE false positive with a reason. The pre-commit gate blocks the commit until your staged files are clean.';
         }
 
         return $lines;

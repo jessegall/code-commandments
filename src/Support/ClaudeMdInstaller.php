@@ -250,14 +250,13 @@ final class ClaudeMdInstaller
         $runner = ClaudeHooksInstaller::runnerFor($basePath);
         $r = $runner[0] . $runner[1];
 
-        $judgeNextGit = "{$r}judge --next --git";
+        $pilgrimage = "{$r}pilgrimage";
+        $next = "{$r}next";
+        $judge = "{$r}judge";
         $absolveAll = "{$r}absolve --all --reason=\"accept pre-existing backlog\"";
-        $absolveReason = "{$r}absolve --fingerprint=<hash> --reason=\"…\"";
-        $judgeGit = "{$r}judge --git";
+        $absolveAt = "{$r}absolve --at=path:line --prophet=NAME --reason=\"why it does not apply\"";
         $scripture = "{$r}scripture --prophet=NAME";
         $reportFull = "{$r}report --at=path:line --reason=\"what is wrong\"";
-        $absolveH = "{$r}absolve --fingerprint=H --reason=\"…\"";
-        $judgeNext = "{$r}judge --next";
         $repent = "{$r}repent";
         $reportShort = "{$r}report --at=path:line --reason=\"…\"";
         $featureReq = "{$r}report --feature-request --title=\"…\" --reason=\"…\"";
@@ -266,21 +265,25 @@ final class ClaudeMdInstaller
 This project uses Code Commandments to enforce coding standards.
 
 IMPORTANT: The git pre-commit hook (`judge --staged`) BLOCKS a commit until
-every finding on the staged files is resolved — sins fixed, and each warning
-fixed OR absolved with a reason. Warnings carry a rubric (use judgment) but are
-NOT ignorable at commit time.
+every finding on the staged files is resolved — sins fixed, and each advisory
+finding fixed OR absolved with a reason. Advisories carry a rubric (use
+judgment) but are NOT ignorable at commit time.
 
-THE GUIDED WORKFLOW (use this): run `{$judgeNextGit}`.
-Scope to YOUR changes with --git so you are not handed the repo's pre-existing
-backlog (plain `--next` walks the whole codebase). To accept a large
-pre-existing backlog once so only NEW findings surface, run
-`{$absolveAll}`.
-It shows exactly ONE finding at a time with its full rule inline, so you
-cannot miss anything in a wall of output. For each finding do exactly one:
-  - Fix it, then run `judge --next` again for the next one; OR
-  - If it is an advisory WARNING whose rubric does not apply here, absolve it
-    WITH A REASON: `{$absolveReason}`.
-Sins are imperative and cannot be absolved — they must be fixed.
+THE GUIDED WORKFLOW (use this): `{$pilgrimage}` to begin, then `{$next}` to
+advance. It walks the doctrines pillar by pillar, ONE PROPHET at a time, showing
+that prophet's full scripture and EVERY location it fires at.
+READ EACH OUTPUT IN FULL — never head/tail/truncate it, or you will miss
+locations and leave the pillar unresolved. For the shown prophet, resolve EVERY
+location, then run `{$next}` — it RE-CHECKS that prophet and refuses to advance
+until it is clean (forward-only — it never loops back to a passed prophet). For
+each location do exactly one:
+  - FIX it (follow the scripture); OR
+  - if it is an advisory finding whose rubric does not apply here, absolve it
+    WITH A REASON: `{$absolveAt}`.
+Sins are imperative and cannot be absolved — they must be fixed. Bulk-fix the
+[AUTO-FIXABLE] ones first with `{$repent}`; audit the whole codebase any time
+with `{$judge}`. To accept a large pre-existing backlog once, so only NEW
+advisories surface (sins still block), baseline it: `{$absolveAll}`.
 
 OWN EVERY SIN YOU ENCOUNTER: a sin is a sin regardless of who wrote it. If
 judge surfaces a sin — in your own changes OR pre-existing in a file you are
@@ -289,16 +292,16 @@ advisory warning whose rubric genuinely does not apply, absolve it with a
 reason. "I didn't cause this" is NEVER a reason to leave a finding in place.
 Be a gentleman: leave every file you touch righteous.
 
-REQUIRED: Always read the rule before fixing. `judge --next` prints the
-rubric inline; for the full scripture run
-`{$scripture}`. Each warning carries an
+REQUIRED: Always read the rule before fixing. `{$next}` prints the prophet's
+full scripture inline; for the same rule on its own run
+`{$scripture}`. Each advisory carries an
 APPLY-WHEN / LEAVE-WHEN rubric — use judgment — but a staged commit is BLOCKED
 until every one is fixed or absolved with a reason. Never leave one untouched.
 
 PHASED-COMMIT WORKFLOW (for any multi-step change, all in ONE pull request):
   1. Implement ONE phase.
-  2. Run `{$judgeGit}`, then `--next` until clean —
-     fix every sin (and address each warning).
+  2. Walk `{$pilgrimage}` then `{$next}` until clean —
+     fix every sin (and address each advisory).
   3. Commit and push that phase.
   4. Move to the next phase and repeat.
 This keeps every commit righteous and each phase reviewable on its own.
@@ -343,11 +346,12 @@ intended" RE-BLOCKS, and you must fix it. So a wrong report self-corrects — it
 buys quiet now, not a permanent pass.
 
 COMMANDS:
-  {$judgeGit}        # Check changed files
-  {$judgeNext}       # GUIDED: one finding at a time
-  {$absolveH}  # warnings only
-  {$repent}             # Auto-fix where possible
-  {$reportShort}  # report a false positive
+  {$judge}              # Audit the whole codebase
+  {$pilgrimage}         # GUIDED: begin the forward-only walk (one prophet at a time)
+  {$next}               # advance the walk (verify-before-advance; read output IN FULL)
+  {$repent}             # Auto-fix the [AUTO-FIXABLE] ones
+  {$absolveAt}  # absolve a genuine advisory false positive
+  {$reportShort}  # report a wrong finding / prophet bug
   {$scripture}  # Full rule for a prophet
 INSTRUCTIONS;
     }
