@@ -36,6 +36,14 @@ final class ConfigMigrator
                 $config = [];
             }
 
+            // A prophet retired/removed in the installed version no longer exists —
+            // emitting `X::make()` would fatal on config load, so drop it with a note.
+            if (! class_exists(ltrim($class, '\\'))) {
+                $lines[] = $indent . '// removed (no longer in the package): ' . $this->classReference($class);
+
+                continue;
+            }
+
             $lines[] = $indent . $this->fluent($class, $config) . ',';
         }
 
