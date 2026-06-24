@@ -24,6 +24,8 @@ class DoctrineCorpusTest extends TestCase
 {
     private const EXAMPLES = __DIR__ . '/../../invariant-root-cause/examples';
 
+    private const CORPUS = __DIR__ . '/../Fixtures/corpus';
+
     private const CONFIG = __DIR__ . '/../../config/commandments.php';
 
     /**
@@ -42,25 +44,48 @@ class DoctrineCorpusTest extends TestCase
     }
 
     /**
-     * The golden twins that are clean across the FULL backend registry today. The
-     * pool starts small and GROWS — every new properly-refactored example is added
-     * here. The other seed examples (01 enum-dispatch, 05 genuine-vs-invariant, 06
-     * notifications) are "golden" only for the 9-prophet root-cause family; the full
-     * registry still flags undocumented enum cases / un-based registries on them, so
-     * they are NOT yet valid universal-golden fixtures and are excluded until cleaned.
+     * Every golden twin must be SILENT across the full backend registry. Sources:
+     * the dedicated v3 corpus (`tests/Fixtures/corpus/<subsystem>/golden`), plus the
+     * subset of invariant-root-cause `final` twins that are universally clean. The
+     * three remaining invariant seeds (01 enum-dispatch, 05 genuine-vs-invariant, 06
+     * notifications) are golden only for the 9-prophet root-cause family (the full
+     * registry still flags undocumented cases / un-based registries on them), so they
+     * are excluded until cleaned.
      *
      * @return iterable<string, array{string}>
      */
     public static function goldenScenarios(): iterable
     {
-        $universallyClean = [
-            'example-02-registry-contract',
-            'example-03-null-object',
-            'example-04-swallowed-notfound',
-        ];
+        foreach ((array) glob(self::CORPUS . '/*/golden', GLOB_ONLYDIR) as $dir) {
+            yield 'corpus:' . basename(dirname($dir)) => [$dir];
+        }
 
-        foreach ($universallyClean as $name) {
+        foreach (['example-02-registry-contract', 'example-03-null-object', 'example-04-swallowed-notfound'] as $name) {
             yield $name => [self::EXAMPLES . '/' . $name . '/final'];
+        }
+    }
+
+    /**
+     * The messy twin of every corpus subsystem must LIGHT UP — a before/after pair
+     * is only useful if the "before" actually trips prophets.
+     *
+     * @dataProvider messyScenarios
+     */
+    public function test_messy_twin_lights_up(string $dir): void
+    {
+        $this->assertNotSame([], $this->backendFindings($dir), sprintf(
+            "Messy twin '%s' should trip prophets but was silent.",
+            basename(dirname($dir)),
+        ));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function messyScenarios(): iterable
+    {
+        foreach ((array) glob(self::CORPUS . '/*/messy', GLOB_ONLYDIR) as $dir) {
+            yield 'corpus:' . basename(dirname($dir)) => [$dir];
         }
     }
 
