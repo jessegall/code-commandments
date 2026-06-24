@@ -18,6 +18,8 @@ use JesseGall\CodeCommandments\Commands\MakeProphetCommand;
 use JesseGall\CodeCommandments\Commands\ProfileCommand;
 use JesseGall\CodeCommandments\Commands\RepentCommand;
 use JesseGall\CodeCommandments\Commands\ScriptureCommand;
+use JesseGall\CodeCommandments\Commands\NextCommand;
+use JesseGall\CodeCommandments\Commands\PilgrimageCommand;
 use JesseGall\CodeCommandments\Commands\SyncCommand;
 use JesseGall\CodeCommandments\Commands\UpdateCommand;
 use JesseGall\CodeCommandments\Contracts\ConfessionTracker as ConfessionTrackerContract;
@@ -111,6 +113,8 @@ class CodeCommandmentsServiceProvider extends ServiceProvider
                 InstallSyncHookCommand::class,
                 SyncCommand::class,
                 UpdateCommand::class,
+                PilgrimageCommand::class,
+                NextCommand::class,
                 ProfileCommand::class,
             ]);
 

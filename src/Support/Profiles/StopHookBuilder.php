@@ -122,11 +122,10 @@ final class StopHookBuilder
             $phaseGate,
         );
         $gateMsg = sprintf(
-            '%s remain in %s (%s) — keep going, do NOT stop. Resolve every one: fix it, or for a genuine false positive absolve/report it. See what is left with ${run}judge --next%s. This hook releases automatically once judge is righteous.',
+            '%s remain in %s (%s) — keep going, do NOT stop. Walk them with ${run}pilgrimage then ${run}next: it shows ONE prophet at a time with its full scripture and EVERY location. READ EACH OUTPUT IN FULL — never head/tail/truncate it, or you miss locations. Fix or absolve each (a genuine false positive: absolve/report it); `next` re-checks before advancing and never loops back. This hook releases automatically once the gate is clean.',
             ucfirst($noun),
             $where,
             $profile,
-            $scopeFlag,
         );
 
         return self::header($profile, $b)
