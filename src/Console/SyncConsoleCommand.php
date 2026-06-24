@@ -123,7 +123,7 @@ class SyncConsoleCommand extends Command
         $output->writeln("Synced {$count} new prophet(s) into {$relativePath}.");
 
         if ($currentVersion !== null) {
-            $output->writeln("Recorded sync version {$currentVersion} in .commandments-last-synced");
+            $output->writeln("Recorded sync version {$currentVersion} in .commandments/last-synced");
         }
 
         return Command::SUCCESS;

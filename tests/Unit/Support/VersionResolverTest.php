@@ -52,6 +52,7 @@ class VersionResolverTest extends TestCase
 
     public function test_returns_null_for_garbage_content(): void
     {
+        @mkdir(dirname($this->resolver->stateFilePath($this->tempDir)), 0755, true);
         file_put_contents($this->resolver->stateFilePath($this->tempDir), "not a version\n");
         $this->assertNull($this->resolver->previousSyncedVersion($this->tempDir));
     }
@@ -65,13 +66,26 @@ class VersionResolverTest extends TestCase
     public function test_state_file_path_is_project_relative(): void
     {
         $path = $this->resolver->stateFilePath('/foo/bar');
-        $this->assertSame('/foo/bar/.commandments-last-synced', $path);
+        $this->assertSame('/foo/bar/.commandments/last-synced', $path);
     }
 
     public function test_state_file_path_strips_trailing_slash(): void
     {
         $path = $this->resolver->stateFilePath('/foo/bar/');
-        $this->assertSame('/foo/bar/.commandments-last-synced', $path);
+        $this->assertSame('/foo/bar/.commandments/last-synced', $path);
+    }
+
+    public function test_reads_the_legacy_root_dotfile_then_migrates_it_into_the_folder(): void
+    {
+        // Pre-v3.0.4 consumers keep the baseline at the root dotfile.
+        file_put_contents($this->tempDir . '/.commandments-last-synced', "2.5.0\n");
+        $this->assertSame('2.5.0', $this->resolver->previousSyncedVersion($this->tempDir));
+
+        // Recording writes the consolidated file and retires the legacy one.
+        $this->resolver->recordSyncedVersion($this->tempDir, '3.0.4');
+        $this->assertFileExists($this->resolver->stateFilePath($this->tempDir));
+        $this->assertFileDoesNotExist($this->tempDir . '/.commandments-last-synced');
+        $this->assertSame('3.0.4', $this->resolver->previousSyncedVersion($this->tempDir));
     }
 
     public function test_current_version_is_null_or_valid_semver(): void

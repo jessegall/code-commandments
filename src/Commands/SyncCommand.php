@@ -108,7 +108,7 @@ class SyncCommand extends Command
         $this->info("Synced {$count} new prophet(s) into config/commandments.php.");
 
         if ($currentVersion !== null) {
-            $this->line("Recorded sync version {$currentVersion} in .commandments-last-synced");
+            $this->line("Recorded sync version {$currentVersion} in .commandments/last-synced");
         }
 
         return self::SUCCESS;

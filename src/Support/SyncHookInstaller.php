@@ -88,9 +88,9 @@ final class SyncHookInstaller
         }
 
         if ($resolver->recordSyncedVersion($basePath, $current)) {
-            $emit("Recorded baseline sync version {$current} in .commandments-last-synced");
+            $emit("Recorded baseline sync version {$current} in .commandments/last-synced");
         } else {
-            $error('Failed to write .commandments-last-synced — check permissions.');
+            $error('Failed to write .commandments/last-synced — check permissions.');
         }
     }
 }
