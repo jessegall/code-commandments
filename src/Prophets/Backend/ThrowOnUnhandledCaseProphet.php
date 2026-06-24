@@ -22,7 +22,7 @@ use PhpParser\NodeFinder;
  * swallows a programming error and makes every caller null-guard a state that
  * should have crashed.
  *
- * The inverse of {@see PreferOptionOverNullProphet}: that one pushes a GENUINE
+ * The inverse of {@see OptionDisciplineProphet}: that one pushes a GENUINE
  * domain absence toward Option; this one says the invariant-violation absence
  * should THROW a named exception (or drop the `default` so a new case is a match
  * error). Reserve Option for absence that is possible from valid input.
@@ -46,7 +46,7 @@ class ThrowOnUnhandledCaseProphet extends PhpCommandment
     {
         return Advisory::make()
             ->applyWhen('A `match` over a closed-set enum has a `default`/`null` arm that returns `null` or `Option::none()`, while EVERY real case arm yields a value — so the none can only happen for an unhandled case (a forgotten wiring). That is an invariant violation modelled as absence.')
-            ->leaveWhen('the absence is genuinely possible from valid input — an optional lookup, untrusted external data, a real domain "not found". Then Option / Null Object is correct (PreferOptionOverNull\'s case), not a throw.')
+            ->leaveWhen('the absence is genuinely possible from valid input — an optional lookup, untrusted external data, a real domain "not found". Then Option / Null Object is correct (OptionDiscipline\'s case), not a throw.')
             ->whenUnsure('ask what the none MEANS: "we forgot to handle this case" → throw a named exception (or drop the `default` so an added case is a compile-time match error). "there may legitimately be no value" → keep Option. Never let a should-crash bug become a silent empty value.');
     }
 
@@ -55,7 +55,7 @@ class ThrowOnUnhandledCaseProphet extends PhpCommandment
         return <<<'SCRIPTURE'
 There are three kinds of "absence" behind a `?T` / `Option<T>`:
   1. GENUINE domain absence (a lookup miss, an optional) — Option/Null Object is
-     right; PreferOptionOverNull pushes here.
+     right; OptionDiscipline pushes here.
   2. NO absence at all — the value is always produced; the Option is ceremony —
      NoOptionOveruse catches this.
   3. IMPOSSIBLE / invariant-violation absence — the none can only happen if WE
@@ -92,7 +92,7 @@ unhandled case.
 
 WHAT DOES NOT — a `default` that returns a real VALUE (a legitimate fallback); a
 case arm that itself yields null/none (then the absence is genuine, not just the
-fallthrough — PreferOptionOverNull's domain); a `match (true)` / non-enum subject;
+fallthrough — OptionDiscipline's domain); a `match (true)` / non-enum subject;
 or a value/constant map. Advisory — confirm the none really is "impossible" before
 turning it into a throw.
 SCRIPTURE;

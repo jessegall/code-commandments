@@ -25,6 +25,8 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static includeConstructors(bool $on = true)
  * @method static maxParameters(int $value)

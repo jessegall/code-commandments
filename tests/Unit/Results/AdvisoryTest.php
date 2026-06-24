@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Unit\Results;
 
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRawRequestProphet;
 use JesseGall\CodeCommandments\Results\Advisory;
 use JesseGall\CodeCommandments\Tests\TestCase;
@@ -45,7 +45,7 @@ class AdvisoryTest extends TestCase
 
     public function test_advisory_prophet_exposes_complete_rubric(): void
     {
-        $advisory = (new PreferOptionOverNullProphet())->advisory();
+        $advisory = (new OptionDisciplineProphet())->advisory();
 
         $this->assertInstanceOf(Advisory::class, $advisory);
         $this->assertTrue($advisory->isComplete());

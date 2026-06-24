@@ -9,7 +9,7 @@ to *do* with the absence.
 |---|---|---|
 | Absent case has a sensible **no-op behaviour** (do-nothing observer/logger/callback) | **Null Object** (`new NullObserver()`, `{{ namespace }}\NullCallable`) | Caller calls through with no guard; the absence behaves. |
 | T is **collection-like** and callers iterate / `->all()` / `count()` | **empty instance** (`[]`, `T::empty()`, `new T()`) | Empty IS the absence; no `| null`, no null-guard. |
-| Absence is a **value** the caller must read and may branch on, but is not an error | **`Option<T>`** (`{{ namespace }}\Option`) | A typed present-or-absent; caller uses `getOr()`/`transform()`/`andThen()` — see the `commandments-option` skill. |
+| Absence is a **value** the caller must read and may branch on, but is not an error | **`Option<T>`** (`{{ namespace }}\Option`) | A typed present-or-absent; caller uses `unwrapOr()`/`transform()`/`andThen()` — see the `commandments-option` skill. |
 | Caller must **distinguish ABSENT from EMPTY** (cache miss vs empty result, 404 vs found-but-empty) | **null** or **`Option`** | An empty value can't carry "I looked and there was nothing" vs "I didn't find it". |
 | Absence is an **invariant violation** (this should always exist) | **throw** a named exception | Fail loud — see the `commandments-named-exceptions` / `commandments-invariants` skills. |
 
@@ -32,8 +32,8 @@ foreach ($repo->rows() as $row) { /* ... */ }
 
 // Option: caller reads the absence and decides.
 $repo->find($id)
-    ->transform(fn (User $u) => $u->name)
-    ->getOr('(unknown)');
+    ->map(fn (User $u) => $u->name)
+    ->unwrapOr('(unknown)');
 ```
 
 ## The load-bearing carve-out: ABSENT vs EMPTY

@@ -25,13 +25,6 @@ final class ScaffoldRegistry
                 purpose: 'Trait that forces Spatie Data ::from() to take an array (no magic dispatch).',
             ),
             new Scaffold(
-                name: 'option',
-                className: 'Option',
-                stubFile: 'Option.stub',
-                introducedIn: '1.39.0',
-                purpose: 'Present-or-absent value type for PreferOptionOverNull.',
-            ),
-            new Scaffold(
                 name: 'value-bag',
                 className: 'ValueBag',
                 stubFile: 'ValueBag.stub',
@@ -51,13 +44,6 @@ final class ScaffoldRegistry
                 stubFile: 'ScalarUnion.stub',
                 introducedIn: '1.84.0',
                 purpose: 'A Union constrained to string|int|float|bool — the ready-made scalar sum type.',
-            ),
-            new Scaffold(
-                name: 'scalar-option',
-                className: 'ScalarOption',
-                stubFile: 'ScalarOption.stub',
-                introducedIn: '1.86.0',
-                purpose: 'Present-or-absent scalar — the Option twin of ScalarUnion (nullable-scalar case).',
             ),
             new Scaffold(
                 name: 'union-cast',

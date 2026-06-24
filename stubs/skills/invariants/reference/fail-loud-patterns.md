@@ -101,10 +101,10 @@ public function decode(string $p): ValueBag
 - A `default` arm that returns a real **value** is a legitimate fallback — not
   absence. Leave it.
 - A case arm that *itself* yields null/none means the absence is genuine
-  (kind 1), not just the fallthrough — that is `PreferOptionOverNull`'s domain,
+  (kind 1), not just the fallthrough — that is `OptionDiscipline`'s domain,
   keep the Option.
 - A method where **any** caller handles the miss (`?? $realDefault`, `?->`, a
-  `=== null` branch, an Option consumed via `->getOr($default)`) — the
+  `=== null` branch, an Option consumed via `->unwrapOr($default)`) — the
   nullability is earned. Even for an empty-identity type: if returning the empty
   value would be a *wrong* domain value, the existing caller-side default is
   correct, leave it.

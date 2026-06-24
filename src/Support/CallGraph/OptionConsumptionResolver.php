@@ -24,17 +24,17 @@ use PhpParser\ParserFactory;
  */
 final class OptionConsumptionResolver
 {
-    /** Option methods that ROUND-TRIP back to a bare value/null — the clearest ceremony tell. */
-    private const UNWRAP = ['getorelse', 'getornull', 'getor', 'unwrap', 'valueor', 'tonullable'];
+    /** Option methods that ROUND-TRIP back to a bare value/null. */
+    private const UNWRAP = ['unwrapor', 'unwraporelse', 'tonullable'];
 
-    /** `getOrThrow`-style — "I require presence". A legit use of Option's absence, NOT a round-trip. */
-    private const REQUIRE = ['getorthrow', 'expect', 'orfail'];
+    /** Presence-or-throw — "I require presence". */
+    private const REQUIRE = ['unwrap', 'expect'];
 
-    /** VALUE-ADDING Option methods — a transform pipeline nullsafe+coalesce can't express. The real reason to use Option. */
-    private const CHAIN = ['map', 'flatmap', 'andthen', 'filter', 'each', 'tap', 'orelse', 'mapor'];
+    /** VALUE-ADDING / composable Option methods. */
+    private const CHAIN = ['map', 'mapor', 'maporelse', 'andthen', 'filter', 'inspect', 'and', 'or', 'orelse', 'xor', 'zip', 'flatten'];
 
-    /** Boolean QUERIES on an Option — ceremony equivalent to a null check, NOT value-adding. */
-    private const QUERY = ['issome', 'isnone', 'isempty', 'ispresent', 'exists', 'contains', 'has', 'or', 'when'];
+    /** Boolean QUERIES on an Option. */
+    private const QUERY = ['issome', 'isnone', 'issomeand', 'isnoneor'];
 
     /** @var array<string, list<Node>|null> parsed-and-parented caller files */
     private array $files = [];

@@ -30,6 +30,8 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static factoryMethods(array $value)
  * @method-generated-end

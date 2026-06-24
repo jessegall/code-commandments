@@ -11,7 +11,7 @@ initial/
   ChannelRegistry.php       find(): ?Channel  (?? null, callers de-null)
   Template.php              value object
   TemplateStore.php         lookup(): Option<Template>  (GENUINE — fine) ...
-  AlertDispatcher.php       ... but consumed with ->getOr(null); + private ?Channel helper
+  AlertDispatcher.php       ... but consumed with ->unwrapOr(null); + private ?Channel helper
 ```
 
 ## Findings, per file, with order (root cause leads symptom)
@@ -29,10 +29,10 @@ initial/
    - ROOT: **`PreferTotalOverNullableProphet`** → SYMPTOM: `PreferNullObjectDefaultsProphet` /
      `PreferOptionOverNullProphet`.
 
-4. **`AlertDispatcher::renderBody()`** — `$this->templates->lookup($key)->getOr(null)?->render(...) ?? ''`.
+4. **`AlertDispatcher::renderBody()`** — `$this->templates->lookup($key)->unwrapOr(null)?->render(...) ?? ''`.
    The template for a *known severity* must exist — this is an invariant, but the `Option` is collapsed
    back to `null`.
-   - ROOT: **`NoOptionToNullProphet`** (`getOr(null)`) → SYMPTOM: the trailing `?? ''` laundering.
+   - ROOT: **`NoOptionToNullProphet`** (`unwrapOr(null)`) → SYMPTOM: the trailing `?? ''` laundering.
    - **Important `Option<T>` contrast:** `TemplateStore::lookup()` returning `Option<Template>` is **kept
      as-is** — a *user-customised* template legitimately may not exist (genuine absence). The fix is not
      "stop using Option," it is "don't use the *optional* API for a *required* template." `final/` adds a
@@ -48,12 +48,12 @@ initial/
 - `ChannelRegistry` → `get(): Channel` throws + `has()`; **ADD** `ChannelNotRegisteredException`.
 - `AlertDispatcher::channelFor()` → total `Channel` (via `registry->get()`).
 - `AlertDispatcher::renderBody()` → `templates->require($key)->render(...)`; **ADD**
-  `TemplateNotFoundException`; the smelly `getOr(null) … ?? ''` is gone.
+  `TemplateNotFoundException`; the smelly `unwrapOr(null) … ?? ''` is gone.
 - `TemplateStore::lookup(): Option<Template>` → **unchanged** (genuine absence, Option is correct); a new
   `require(): Template` is added for the invariant path.
 
 **Class changes:** **ADD** `ChannelNotRegisteredException`, `TemplateNotFoundException`. No class removed
 here (contrast example 05, which removes a redundant wrapper).
 
-> `Option` here = the project's Option monad (`fromValue` / `some` / `none` / `map` / `getOr` /
-> `getOrThrow`), shown illustratively.
+> `Option` here = the project's Option monad (`fromValue` / `some` / `none` / `map` / `unwrapOr` /
+> `unwrap`), shown illustratively.

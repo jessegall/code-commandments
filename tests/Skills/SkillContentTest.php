@@ -16,7 +16,7 @@ class SkillContentTest extends TestCase
 {
     private const SKILLS_DIR = __DIR__ . '/../../stubs/skills';
 
-    private const OPTION_STUB = __DIR__ . '/../../stubs/scaffold/Option.stub';
+    private const OPTION_SOURCE = __DIR__ . '/../../vendor/jessegall/php-types/src/Option.php';
 
     /**
      * @return list<string>
@@ -71,33 +71,26 @@ class SkillContentTest extends TestCase
         foreach ($this->markdownFiles() as $file) {
             $content = (string) file_get_contents($file);
 
-            // Static factory calls: Option::<m>( must be a real method.
+            // Static factory calls: Option::<m>( must be a real method on the canonical Option.
             preg_match_all('/Option::(\w+)\s*\(/', $content, $statics);
             foreach (array_unique($statics[1]) as $method) {
                 $this->assertContains(
                     $method,
                     $allowed,
-                    sprintf('%s calls Option::%s() — absent from Option.stub.', $this->rel($file), $method),
+                    sprintf('%s calls Option::%s() — absent from JesseGall\\PhpTypes\\Option.', $this->rel($file), $method),
                 );
             }
-
-            // The canonical confusion: the scaffolded Option has transform(), NOT map().
-            $this->assertDoesNotMatchRegularExpression(
-                '/->\s*map\s*\(|Option::map\s*\(|`map\(\)`/',
-                $content,
-                sprintf('%s uses map() — the scaffolded Option has transform(), not map().', $this->rel($file)),
-            );
         }
     }
 
     /**
-     * Public method + static-factory names declared on the scaffolded Option.
+     * Public method + static-factory names declared on the canonical Option.
      *
      * @return list<string>
      */
     private function optionMethods(): array
     {
-        $stub = (string) file_get_contents(self::OPTION_STUB);
+        $stub = (string) file_get_contents(self::OPTION_SOURCE);
         preg_match_all('/public\s+(?:static\s+)?function\s+(\w+)\s*\(/', $stub, $m);
 
         return array_values(array_unique($m[1]));

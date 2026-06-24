@@ -26,6 +26,8 @@ use JesseGall\CodeCommandments\Support\Pipes\Php\PhpPipeline;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static methods(array $value)
  * @method-generated-end

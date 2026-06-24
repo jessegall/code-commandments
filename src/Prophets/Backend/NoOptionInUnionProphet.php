@@ -23,6 +23,8 @@ use PhpParser\NodeFinder;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static optionClass(string $value)
  * @method-generated-end
@@ -30,7 +32,7 @@ use PhpParser\NodeFinder;
 #[IntroducedIn('1.80.0')]
 class NoOptionInUnionProphet extends PhpCommandment
 {
-    private const DEFAULT_OPTION_CLASS = 'App\\Support\\Option';
+    private const DEFAULT_OPTION_CLASS = 'JesseGall\\PhpTypes\\Option';
 
     public function description(): string
     {
@@ -80,7 +82,7 @@ class NoOptionInUnionProphet extends PhpCommandment
 `Option` IS the value-or-nothing type. Putting it in a union undoes that:
 
   - `Option | null` / `?Option` — two absence encodings stacked. A caller would
-    have to check `=== null` AND `isEmpty()`. Which "nothing" is it?
+    have to check `=== null` AND `isNone()`. Which "nothing" is it?
   - `Option | string` — "either wrapped or a bare string". The caller can't
     rely on the Option contract because half the time it isn't one.
 

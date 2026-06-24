@@ -30,6 +30,8 @@ use PhpParser\ParserFactory;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static narrowCap(int $value)
  * @method static sinAtTypes(int $value)
@@ -104,7 +106,7 @@ class WideUnionTypeProphet extends PhpCommandment implements ParameterizedRepent
 
         return array_map(
             static fn (string $name): string => $namespace . '\\' . $name,
-            ['Union', 'ScalarUnion', 'UnionCast', 'Option', 'ScalarOption'],
+            ['Union', 'ScalarUnion', 'UnionCast', 'Option'],
         );
     }
 
@@ -170,7 +172,7 @@ Good — value-or-nothing is an Option (the null IS the absence):
 
 Good — an all-scalar union has a ready-made home:
     ScalarUnion  \$value,    // string|int|float|bool      (always present)
-    ScalarOption \$value,    // string|int|float|bool|null  (the null is absence)
+    Option \$value,          // Option<string|int|float|bool>  (the null is absence)
 
 Good — one concept wearing disguises is a value object:
     VisibilityRule \$isVisibleRule,
@@ -426,7 +428,7 @@ SCRIPTURE;
 
     /**
      * The finding message — tailored to the union's shape. An all-scalar union
-     * has a ready-made home: `ScalarUnion` (always present) or `ScalarOption`
+     * has a ready-made home: `ScalarUnion` (always present) or an `Option`
      * (when it also includes null — a nullable scalar, where the null is the
      * absence). Otherwise fall back to the general Option / Union / value-object
      * guidance.
@@ -445,7 +447,7 @@ SCRIPTURE;
         $allScalar = $nonNull !== [] && array_diff($nonNull, ['string', 'int', 'float', 'bool']) === [];
 
         if ($allScalar && $hasNull) {
-            return $head . ' Every present member is a scalar and it includes null — this is a nullable scalar, so its home is `ScalarOption` (a present-or-absent scalar; the null becomes the absence).';
+            return $head . ' Every present member is a scalar and it includes null — this is a nullable scalar, so its home is an `Option` (present-or-absent; the null becomes the absence).';
         }
 
         if ($allScalar) {

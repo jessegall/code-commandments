@@ -31,7 +31,7 @@ returned null. Dead after the fix.
 ## The fix (`final/`)
 
 - `getById` → returns `User`, **throws** `UserNotFoundException` (invariant enforced).
-- `findByEmail` → returns **`Option<User>`** and the caller uses `->map(...)->getOr('not found')` (genuine
+- `findByEmail` → returns **`Option<User>`** and the caller uses `->map(...)->unwrapOr('not found')` (genuine
   absence, modelled correctly — this is `Option<T>` doing its actual job).
 - **Class change: REMOVE a class** — delete `MaybeUser`; it was pure ceremony born from the bad nullable
   contract.

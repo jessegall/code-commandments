@@ -115,7 +115,7 @@ class WideUnionTypeProphetTest extends TestCase
         $judgment = $this->judge('class A { public function m(string | int | null $x = null): void {} }');
 
         $this->assertCount(1, $judgment->sins);
-        $this->assertStringContainsString('ScalarOption', $judgment->sins[0]->message);
+        $this->assertStringContainsString('Option', $judgment->sins[0]->message);
     }
 
     public function test_non_scalar_union_keeps_general_guidance(): void

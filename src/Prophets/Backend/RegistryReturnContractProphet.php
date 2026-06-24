@@ -38,6 +38,8 @@ use Throwable;
  *
  *
  *
+ *
+ *
  * @method-generated-start
  * @method static markers(array $value)
  * @method static optionClasses(array $value)

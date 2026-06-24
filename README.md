@@ -612,7 +612,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_112 prophets._
+_106 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -657,20 +657,18 @@ _112 prophets._
 | `NoManualHydrationProphet` | — | Do not hand-roll array-to-object hydration — extend Spatie Data and use ::from() |
 | `NoNullCoalesceToNullProphet` | Yes | Drop the no-op `?? null` — it returns the left side unchanged |
 | `NoOptionInUnionProphet` | — | Do not union Option with other types or null — Option is the whole type |
-| `NoOptionOveruseProphet` | — | Do not use Option as ceremony where there is no absence to model |
-| `NoOptionToNullProphet` | Yes | Do not unwrap an Option back to null with getOr(null) |
+| `NoOptionToNullProphet` | Yes | Do not unwrap an Option back to null with unwrapOr(null) |
 | `NoRawLiteralProphet` | Yes | Do not write raw magic literals (empties, newlines, …) — name them with T_String / T_Json / T_Array / T_Int |
 | `NoRawRequestProphet` | — | Use FormRequest classes instead of raw Request in controllers |
 | `NoRedundantDefaultArgumentProphet` | Yes | Do not pass an argument equal to the parameter default — the default is already applied |
-| `NoRedundantOrElseWrapProphet` | Yes | Do not manually wrap an orElse alternative in Option::some()/make() |
 | `NoRepeatedHydrationProphet` | — | Do not re-hydrate the same field with ::from() — declare it as the type so it hydrates once |
 | `NoRequestDataPassthroughProphet` | — | Inject request in Data class instead of passing computed values to from() |
 | `NoSwallowedNotFoundProphet` | — | Do not catch a not-found exception just to swallow it into null/false/[] — let it throw |
 | `NoValidatedMethodProphet` | — | Use typed getters instead of $request-&gt;validated() |
 | `OneRulePerFilterProphet` | — | A filter()/reject() closure should hold ONE rule — split an && chain, and say !(…) as reject(…) |
+| `OptionDisciplineProphet` | — | Model absence exactly when it is real — adopt Option for value-or-nothing, never for always-value |
 | `OutOfPurposeProphet` | — | A class with a role marker (*Registry/*Data/*Resolver) whose body shows a structural second-engine signal (reflection in a registry, an assembler cluster in a DTO, a store in a resolver) is doing a second job — extract it |
 | `PassThroughDependencyProphet` | — | A dependency only forwarded to one collaborator, never used itself, should be injected there |
-| `PreferAndThenProphet` | Yes | Use Option::andThen() instead of transform()-&gt;getOr(Option::none()) — do not flatten an Option&lt;Option&gt; by hand |
 | `PreferClassifierCompositionProphet` | — | Compose classifier checks with anyOf()/allOf(), not a \|\|/&& chain of -&gt;matches() |
 | `PreferCoalesceFactoryProphet` | — | Hoist new ValueObject($nullableOrLoose) ceremony into a total ::coalesce() factory |
 | `PreferCoalesceForProphet` | Yes | Use T_Array::coalesceFor($array, $key) instead of double-coalescing a dynamic dictionary lookup |
@@ -692,11 +690,8 @@ _112 prophets._
 | `PreferNamedExceptionsProphet` | — | Do not pass message strings at throw sites — throw named exceptions via static factories |
 | `PreferNativeEnumProphet` | — | Prefer a native enum over a hand-rolled constant class |
 | `PreferNativeTypedAccessorProphet` | Yes | Use the receiver's native typed accessor instead of coercing its untyped get() |
-| `PreferNullCoalescingProphet` | — | Use `??` (or Option::getOr) instead of a self-fallback ternary |
+| `PreferNullCoalescingProphet` | — | Use `??` (or Option::unwrapOr) instead of a self-fallback ternary |
 | `PreferNullObjectDefaultsProphet` | Yes | Prefer Null Object defaults over nullable params normalized in the body |
-| `PreferOptionChainOverGuardProphet` | — | Prefer an Option chain over an imperative isEmpty() guard — transform()-&gt;orElse()-&gt;getOrThrow() |
-| `PreferOptionFactoryProphet` | — | Build an Option with a factory (make/find/someWhen), not a hand-rolled some()/none() branch |
-| `PreferOptionOverNullProphet` | — | Do not return null from decision methods — return an Option or a Null Object |
 | `PreferSprintfProphet` | Yes | Prefer sprintf() over string interpolation — separate the template from its values |
 | `PreferStaticOverInvokableConstructProphet` | — | Prefer a static factory over (new X(...))(...) for project-owned classes |
 | `PreferTotalOverNullableProphet` | — | Make a method total or throw when every caller already de-nulls its nullable return |
@@ -726,7 +721,6 @@ _112 prophets._
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
 | `TranslationKeyCongruenceProphet` | — | A __()/trans() key must exist in a lang file — a missing key renders as the key string |
-| `UnwrapOptionWithGuardProphet` | Yes | Do not guard-then-unwrap an Option — use getOr()/transform()/tap() instead of isEmpty() + getOrThrow() |
 | `WideUnionTypeProphet` | Yes | Avoid wide type unions — model value-or-nothing as an Option |
 
 ### Frontend (Vue / TypeScript)

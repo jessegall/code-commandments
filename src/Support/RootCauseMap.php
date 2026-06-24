@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Prophets\Backend\PreferCoercionHelperProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNativeTypedAccessorProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferEmptyOverNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullObjectDefaultsProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTotalOverNullableProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\RegistryReturnContractProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\ThrowOnUnhandledCaseProphet;
@@ -44,7 +44,7 @@ final class RootCauseMap
      * @var list<class-string>
      */
     private const ABSENCE_SYMPTOMS = [
-        PreferOptionOverNullProphet::class,
+        OptionDisciplineProphet::class,
         PreferEmptyOverNullProphet::class,
         PreferNullObjectDefaultsProphet::class,
         NoOptionToNullProphet::class,

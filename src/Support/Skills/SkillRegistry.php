@@ -29,18 +29,12 @@ final class SkillRegistry
             new Skill(
                 slug: 'option',
                 introducedIn: '2.5.0',
-                purpose: 'When to reach for Option<T> and the core API; the smells (getOr(null), ?? null, Option-in-union, unwrap-with-guard); Option vs null vs Null Object vs throw.',
+                purpose: 'When to model absence with Option<T> and the core API; the smells (unwrapOr(null), ?? null, Option-in-union, always-some, wrap-then-unwrap); Option vs null vs Null Object vs throw.',
                 prophets: [
+                    'OptionDiscipline',
                     'NoOptionToNull',
                     'NoNullCoalesceToNull',
                     'NoOptionInUnion',
-                    'NoOptionOveruse',
-                    'UnwrapOptionWithGuard',
-                    'PreferOptionChainOverGuard',
-                    'PreferOptionOverNull',
-                    'PreferOptionFactory',
-                    'PreferAndThen',
-                    'NoRedundantOrElseWrap',
                 ],
             ),
             new Skill(

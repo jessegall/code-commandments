@@ -29,7 +29,7 @@ use JesseGall\CodeCommandments\Prophets\Backend\PreferEmptyOverNullProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferInterfaceOverTypeListProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNativeTypedAccessorProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullObjectDefaultsProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTotalOverNullableProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTypeCoalesceProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\RegistryBaseBypassProphet;
@@ -61,13 +61,10 @@ use JesseGall\CodeCommandments\Prophets\Backend\NoExternalDataFromProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoFacadesInServicesProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoManualHydrationProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoOptionInUnionProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\NoOptionOveruseProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRawLiteralProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\NoRedundantOrElseWrapProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\NoRepeatedHydrationProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\OutOfPurposeProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PassThroughDependencyProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferAndThenProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCoercionHelperProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferCollectionPipelineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferDataCollectionOfProphet;
@@ -81,8 +78,6 @@ use JesseGall\CodeCommandments\Prophets\Backend\PreferInjectionOverSingletonProp
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNamedBranchFactoryProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNativeEnumProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNullCoalescingProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionChainOverGuardProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionFactoryProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTypeMethodOverInlineDispatchProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferYieldOverAccumulatorProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\ReadonlyDataPropertiesProphet;
@@ -93,7 +88,6 @@ use JesseGall\CodeCommandments\Prophets\Backend\SuggestCompareSelfTraitProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\TaintedInputToSinkProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\TooManyParametersProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\TranslationKeyCongruenceProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\UnwrapOptionWithGuardProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\WideUnionTypeProphet;
 
 /**
@@ -121,9 +115,9 @@ final class DoctrineRegistry
             new Doctrine('totality', [
                 [PreferNativeTypedAccessorProphet::class],
                 [ThrowOnUnhandledCaseProphet::class, RegistryReturnContractProphet::class, NoSwallowedNotFoundProphet::class],
-                [PreferTotalOverNullableProphet::class, PreferOptionOverNullProphet::class, PreferEmptyOverNullProphet::class, PreferNullObjectDefaultsProphet::class, WideUnionTypeProphet::class, PreferDefaultOverNullableProphet::class, PreferDefaultFallbackProphet::class],
-                [NoCoalesceOnNonNullableProphet::class, NoNullCoalesceToNullProphet::class, NoOptionToNullProphet::class, NoOptionInUnionProphet::class, NoOptionOveruseProphet::class, NoRedundantOrElseWrapProphet::class, PreferAndThenProphet::class, PreferOptionChainOverGuardProphet::class, UnwrapOptionWithGuardProphet::class, PreferNullCoalescingProphet::class],
-                [PreferCoalesceFactoryProphet::class, PreferCoalescingFactoryProphet::class, PreferOptionFactoryProphet::class, RepeatedFallbackProphet::class],
+                [PreferTotalOverNullableProphet::class, OptionDisciplineProphet::class, PreferEmptyOverNullProphet::class, PreferNullObjectDefaultsProphet::class, WideUnionTypeProphet::class, PreferDefaultOverNullableProphet::class, PreferDefaultFallbackProphet::class],
+                [NoCoalesceOnNonNullableProphet::class, NoNullCoalesceToNullProphet::class, NoOptionToNullProphet::class, NoOptionInUnionProphet::class, PreferNullCoalescingProphet::class],
+                [PreferCoalesceFactoryProphet::class, PreferCoalescingFactoryProphet::class, RepeatedFallbackProphet::class],
                 [PreferTypeCoalesceProphet::class, PreferCoalesceForProphet::class, PreferCoercionHelperProphet::class],
             ]),
 

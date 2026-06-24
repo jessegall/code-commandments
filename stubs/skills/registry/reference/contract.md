@@ -31,7 +31,7 @@ Once a class is a *marked* registry (it extends `{{ namespace }}\Registry`, is n
 
 ```php
 // BAD — leaks an Option for every caller to unwrap
-public function find(string $key): Option { return Option::find($this->handlers, $key); }
+public function find(string $key): Option { return Option::fromNullable($this->handlers[$key] ?? null); }
 
 // BAD — a plain getter that hands back null
 public function get(string $key): ?Handler { return $this->handlers[$key] ?? null; }

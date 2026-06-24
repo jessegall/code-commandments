@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Unit\Pilgrimage;
 
 use JesseGall\CodeCommandments\Prophets\Backend\LongMethodProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageLock;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageRunner;
 use JesseGall\CodeCommandments\Support\Pilgrimage\PilgrimageState;
@@ -39,7 +39,7 @@ class PilgrimageLockTest extends TestCase
     {
         $config = ['scrolls' => ['backend' => [
             'extensions' => ['php'],
-            'prophets' => [LongMethodProphet::class, PreferOptionOverNullProphet::class],
+            'prophets' => [LongMethodProphet::class, OptionDisciplineProphet::class],
         ]]];
 
         return new PilgrimageRunner($this->dir, $config, 'backend');

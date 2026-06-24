@@ -16,11 +16,13 @@ use PhpParser\Node\Expr;
 use PhpParser\NodeFinder;
 
 /**
- * Flag `->getOr(null)` — unwrapping an Option straight back into a nullable
+ * Flag `->unwrapOr(null)` — unwrapping an Option straight back into a nullable
  * value. That throws away the whole point of Option (no nulls to check) and
  * forces `?->` / `=== null` checks downstream. Act on the value with
- * `->map()`/`->each()`, require it with `->getOrThrow()`, or pass a REAL
- * default to `->getOr($default)`.
+ * `->map()`/`->inspect()`, require it with `->unwrap()`, or pass a REAL
+ * default to `->unwrapOr($default)`.
+ *
+ *
  *
  *
  *
@@ -34,11 +36,11 @@ use PhpParser\NodeFinder;
 class NoOptionToNullProphet extends PhpCommandment implements SinRepenter
 {
     /** @var list<string> Option accessor methods whose null default is the smell. */
-    private const DEFAULT_METHODS = ['getOr'];
+    private const DEFAULT_METHODS = ['unwrapOr'];
 
     public function description(): string
     {
-        return 'Do not unwrap an Option back to null with getOr(null)';
+        return 'Do not unwrap an Option back to null with unwrapOr(null)';
     }
 
     /**
@@ -49,7 +51,7 @@ class NoOptionToNullProphet extends PhpCommandment implements SinRepenter
      */
     public function exemptClasses(): array
     {
-        $class = ltrim((string) ($this->config('option_class') ?: 'App\\Support\\Option'), '\\');
+        $class = ltrim((string) ($this->config('option_class') ?: 'JesseGall\\PhpTypes\\Option'), '\\');
 
         return $class === '' ? [] : [$class];
     }
@@ -63,7 +65,7 @@ class NoOptionToNullProphet extends PhpCommandment implements SinRepenter
     {
         return Advisory::make()
             ->applyWhen(
-                'An Option is unwrapped with `getOr(null)`, turning it straight '
+                'An Option is unwrapped with `unwrapOr(null)`, turning it straight '
                 . 'back into a nullable value the surrounding code then null-checks '
                 . '(`?->`, `=== null`) — discarding the Option entirely.'
             )
@@ -76,7 +78,7 @@ class NoOptionToNullProphet extends PhpCommandment implements SinRepenter
             )
             ->whenUnsure(
                 'If you find yourself null-checking the result, use map()/each()/'
-                . 'getOrThrow() instead. getOr() should carry a REAL default, never null.'
+                . 'unwrap() instead. unwrapOr() should carry a REAL default, never null.'
             );
     }
 
@@ -84,44 +86,44 @@ class NoOptionToNullProphet extends PhpCommandment implements SinRepenter
     {
         return <<<'SCRIPTURE'
 `Option` exists so a value's presence is in the type, not a null you must
-remember to check. `->getOr(null)` immediately undoes that — it converts
+remember to check. `->unwrapOr(null)` immediately undoes that — it converts
 `Option<T>` back to `T|null`, and the code right after it goes back to
 `?->`/`=== null` checks. You have paid for the Option and thrown it away.
 
 Bad — unwrap to null, then null-check (the Option was pointless):
-    $input = $this->inputByName($port)->getOr(null);
+    $input = $this->inputByName($port)->unwrapOr(null);
     if ($input?->socketType() === SocketType::Bag) { ... }
 
 Good — stay inside the Option:
     // act only when present:
-    $this->inputByName($port)->each(fn (Input $input) => /* … */);
+    $this->inputByName($port)->inspect(fn (Input $input) => /* … */);
 
     // map to another Option / value:
     $type = $this->inputByName($port)->map(fn (Input $i) => $i->socketType());
 
     // require it (throws if absent — when absence is a bug):
-    $input = $this->inputByName($port)->getOrThrow();
+    $input = $this->inputByName($port)->unwrap();
 
     // or a REAL default (never null):
-    $input = $this->inputByName($port)->getOr(Input::empty());
+    $input = $this->inputByName($port)->unwrapOr(Input::empty());
 
-WHAT FIRES — `getOr()` handed null in any form: the `null` literal, `$x ?? null`,
+WHAT FIRES — `unwrapOr()` handed null in any form: the `null` literal, `$x ?? null`,
 a ternary with a null branch, or a local variable whose every assignment is null
-(`$d = null; …->getOr($d)`). Laundering the null does not make it a real default.
+(`$d = null; …->unwrapOr($d)`). Laundering the null does not make it a real default.
 
-WHAT DOES NOT — `getOr($realDefault)` with a genuine fallback, `getOrThrow()`,
+WHAT DOES NOT — `unwrapOr($realDefault)` with a genuine fallback, `unwrap()`,
 `map()`, `each()`, AND carry-into-nullable positions where the value-or-null is
 handed straight to a sink that accepts null rather than null-checked:
 
-    new OutputSocket(isVisibleRule: $rule->getOr(null));   // nullable arg — carry
-    return $this->find($x)->getOr(null);                   // method's own ?T contract
-    IsX::make()->then(fn () => $this->build($x)->getOr(null));  // factory: null = no match
+    new OutputSocket(isVisibleRule: $rule->unwrapOr(null));   // nullable arg — carry
+    return $this->find($x)->unwrapOr(null);                   // method's own ?T contract
+    IsX::make()->then(fn () => $this->build($x)->unwrapOr(null));  // factory: null = no match
 
-The smell is unwrap-THEN-null-check (`$x = …->getOr(null); if ($x === null)`),
+The smell is unwrap-THEN-null-check (`$x = …->unwrapOr(null); if ($x === null)`),
 not unwrap-and-hand-off. Configure the method name(s) if your accessor differs:
 
     Backend\NoOptionToNullProphet::class => [
-        'methods' => ['getOr'],
+        'methods' => ['unwrapOr'],
     ],
 SCRIPTURE;
     }
@@ -166,7 +168,7 @@ SCRIPTURE;
             // Carry-into-nullable is legitimate: handing the value-or-null
             // straight to a sink that accepts null — a (nullable) call argument,
             // a `return` (the method's own ?T contract), or a resolver factory
-            // arrow body (`fn () => …->getOr(null)`, where null = "no match").
+            // arrow body (`fn () => …->unwrapOr(null)`, where null = "no match").
             // The smell is unwrap-THEN-null-check, not unwrap-and-hand-off (#23).
             if ($this->isCarryPosition($call, $parents)) {
                 continue;
@@ -174,17 +176,17 @@ SCRIPTURE;
 
             $method = $call->name->toString();
 
-            // #68: the SAFE auto-fixable sub-pattern — `$x = $opt->getOr(null);
+            // #68: the SAFE auto-fixable sub-pattern — `$x = $opt->unwrapOr(null);
             // if ($x === null) …` where $x is used SOLELY in the null test. Then
-            // repent drops the local and rewrites the test to ->isEmpty()/
-            // ->hasValue(). Any other use of $x (passed on, returned) makes it a
+            // repent drops the local and rewrites the test to ->isNone()/
+            // ->isSome(). Any other use of $x (passed on, returned) makes it a
             // cascade — advisory only.
             $autoFixable = $this->unwrapNullCheckPattern($call, $parents, $nullLocalsCache) !== null;
 
             $warnings[] = $this->warningAt(
                 $call->getStartLine(),
                 sprintf(
-                    '`->%s(...)` is handed a null default — unwrapping the Option back into a nullable value and forcing null checks downstream, which is exactly what Option exists to avoid. Act on the value with `->map(...)`/`->each(...)`, require it with `->getOrThrow()`, or pass a REAL default to `->%s($default)`. (Wrapping the null in a variable or `?? null` does not make it a real default.)',
+                    '`->%s(...)` is handed a null default — unwrapping the Option back into a nullable value and forcing null checks downstream, which is exactly what Option exists to avoid. Act on the value with `->map(...)`/`->inspect(...)`, require it with `->unwrap()`, or pass a REAL default to `->%s($default)`. (Wrapping the null in a variable or `?? null` does not make it a real default.)',
                     $method,
                     $method,
                 ),
@@ -221,7 +223,7 @@ SCRIPTURE;
     }
 
     /**
-     * The safe #68 auto-fix shape: a `$x = OPT->getOr(<null>);` assignment whose
+     * The safe #68 auto-fix shape: a `$x = OPT->unwrapOr(<null>);` assignment whose
      * variable is used SOLELY in `$x === null` / `$x !== null` tests, AND whose
      * Option receiver OPT is side-effect-free (so inlining it does not re-run a
      * call). Any OTHER use of $x (passed on, returned, a `?->` chain) makes it a
@@ -359,7 +361,7 @@ SCRIPTURE;
 
             $receiverSrc = substr($content, (int) $pattern['receiver']->getStartFilePos(), (int) $pattern['receiver']->getEndFilePos() - (int) $pattern['receiver']->getStartFilePos() + 1);
 
-            // Drop the whole `$x = …->getOr(null);` line.
+            // Drop the whole `$x = …->unwrapOr(null);` line.
             $stmt = $pattern['stmt'];
             $newlineBefore = strrpos(substr($content, 0, (int) $stmt->getStartFilePos()), "\n");
             $lineStart = $newlineBefore === false ? 0 : $newlineBefore + 1;
@@ -371,11 +373,11 @@ SCRIPTURE;
                 $edits[] = [
                     'start' => (int) $cmp['node']->getStartFilePos(),
                     'end' => (int) $cmp['node']->getEndFilePos(),
-                    'text' => $receiverSrc . ($cmp['negated'] ? '->hasValue()' : '->isEmpty()'),
+                    'text' => $receiverSrc . ($cmp['negated'] ? '->isSome()' : '->isNone()'),
                 ];
             }
 
-            $penance[] = sprintf('Dropped $%s = …->getOr(null) and rewrote its null check to %s->isEmpty()/->hasValue()', $pattern['name'], $receiverSrc);
+            $penance[] = sprintf('Dropped $%s = …->unwrapOr(null) and rewrote its null check to %s->isNone()/->isSome()', $pattern['name'], $receiverSrc);
         }
 
         if ($edits === []) {
@@ -434,7 +436,7 @@ SCRIPTURE;
 
     /**
      * Names of local variables in $fn whose EVERY assignment is the null literal
-     * (and which are not parameters) — so `$d = null; …->getOr($d)` is caught.
+     * (and which are not parameters) — so `$d = null; …->unwrapOr($d)` is caught.
      *
      * @param  array<int, array<string, true>>  $cache
      * @return array<string, true>

@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Doctrines\DoctrineCascade;
 use JesseGall\CodeCommandments\Doctrines\DoctrineRegistry;
 use JesseGall\CodeCommandments\Doctrines\Ranked;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferNativeTypedAccessorProphet;
-use JesseGall\CodeCommandments\Prophets\Backend\PreferOptionOverNullProphet;
+use JesseGall\CodeCommandments\Prophets\Backend\OptionDisciplineProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\PreferTypeCoalesceProphet;
 use JesseGall\CodeCommandments\Prophets\Backend\ShortClosureProphet;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +36,7 @@ class EngineTest extends TestCase
     {
         // Boundary is the coarsest band; the T_*::coalesce hygiene nitpick the finest.
         $boundary = DoctrineRegistry::locate(PreferNativeTypedAccessorProphet::class);
-        $source = DoctrineRegistry::locate(PreferOptionOverNullProphet::class);
+        $source = DoctrineRegistry::locate(OptionDisciplineProphet::class);
         $nitpick = DoctrineRegistry::locate(PreferTypeCoalesceProphet::class);
 
         $this->assertSame('totality', $boundary['doctrine']);
