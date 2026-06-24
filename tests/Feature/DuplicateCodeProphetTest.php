@@ -80,6 +80,19 @@ class DuplicateCodeProphetTest extends TestCase
         }
     }
 
+    public function test_does_not_flag_a_generic_maybe_array_guard_preamble(): void
+    {
+        // #202: ParseListA/ParseListB share only `if (! is_array($v)) return [];
+        // $acc = []; foreach (...)` then diverge inside the loop — idiom, not
+        // duplicated logic.
+        $results = $this->manager->judgeScroll('test');
+
+        $this->assertEmpty($this->warningsFor($results, $this->fixtureDir . '/ParseListA.php'),
+            '#202: a generic is_array-guard + accumulator + foreach preamble must not be flagged.');
+        $this->assertEmpty($this->warningsFor($results, $this->fixtureDir . '/ParseListB.php'),
+            '#202: a generic is_array-guard + accumulator + foreach preamble must not be flagged.');
+    }
+
     public function test_stays_silent_without_an_index(): void
     {
         // No index injected -> cannot compare cross-file -> silent.

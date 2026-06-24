@@ -107,6 +107,19 @@ class FeatureEnvyProphetTest extends TestCase
         }
     }
 
+    public function test_does_not_flag_a_method_orchestrating_two_collaborators(): void
+    {
+        // #203: resolveTarget queries NodeDescriptor's outputs but also coordinates
+        // the injected HandleValidator — two distinct collaborators, so it is
+        // orchestration (correct layering), not envy of any single owner.
+        $results = $this->manager->judgeScroll('test');
+
+        $this->assertEmpty(
+            $this->warningsFor($results, $this->fixtureDir . '/OrchestratingAssembler.php'),
+            '#203: a method coordinating two distinct collaborators is orchestration, not feature envy.',
+        );
+    }
+
     public function test_stays_silent_without_an_index(): void
     {
         $prophet = new FeatureEnvyProphet;
