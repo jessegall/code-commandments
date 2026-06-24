@@ -16,6 +16,30 @@ class CommitHookInstallerTest extends TestCase
         parent::setUp();
         $this->dir = sys_get_temp_dir() . '/cc-commit-hook-' . uniqid();
         mkdir($this->dir . '/.git', 0755, true);
+
+        // The hooks no-op unless the firing worktree opted into commandments (its
+        // own .commandments/profile, not 'disabled') — so the tests run them with
+        // the dir as cwd and a profile present. @see runHook().
+        mkdir($this->dir . '/.commandments', 0755, true);
+        file_put_contents($this->dir . '/.commandments/profile', "phased\n");
+    }
+
+    /**
+     * Run a hook with the test dir as cwd (the worktree the guard reads), returning
+     * its exit code.
+     */
+    private function runHook(string $hookPath, string ...$args): int
+    {
+        $cmd = 'cd ' . escapeshellarg($this->dir) . ' && sh ' . escapeshellarg($hookPath);
+
+        foreach ($args as $arg) {
+            $cmd .= ' ' . escapeshellarg($arg);
+        }
+
+        $out = [];
+        exec($cmd . ' 2>/dev/null', $out, $status);
+
+        return $status;
     }
 
     protected function tearDown(): void
@@ -25,6 +49,8 @@ class CommitHookInstallerTest extends TestCase
         @unlink($this->dir . '/.git/hooks/commit-msg');
         @rmdir($this->dir . '/.git/hooks');
         @rmdir($this->dir . '/.git');
+        @unlink($this->dir . '/.commandments/profile');
+        @rmdir($this->dir . '/.commandments');
         @rmdir($this->dir);
         parent::tearDown();
     }
@@ -96,13 +122,11 @@ class CommitHookInstallerTest extends TestCase
 
         // A message with a Co-authored-by trailer is rejected.
         file_put_contents($this->dir . '/coauthor.txt', "feat: x\n\nCo-Authored-By: Bob <b@x>\n");
-        exec('sh ' . escapeshellarg($hook) . ' ' . escapeshellarg($this->dir . '/coauthor.txt') . ' 2>/dev/null', $o1, $blocked);
-        $this->assertSame(1, $blocked, 'Co-authored-by message should be blocked');
+        $this->assertSame(1, $this->runHook($hook, $this->dir . '/coauthor.txt'), 'Co-authored-by message should be blocked');
 
         // A clean message passes.
         file_put_contents($this->dir . '/clean.txt', "feat: x\n");
-        exec('sh ' . escapeshellarg($hook) . ' ' . escapeshellarg($this->dir . '/clean.txt') . ' 2>/dev/null', $o2, $clean);
-        $this->assertSame(0, $clean, 'Clean message should pass');
+        $this->assertSame(0, $this->runHook($hook, $this->dir . '/clean.txt'), 'Clean message should pass');
 
         @unlink($this->dir . '/coauthor.txt');
         @unlink($this->dir . '/clean.txt');
@@ -125,8 +149,7 @@ class CommitHookInstallerTest extends TestCase
 
         // It still blocks a Co-authored-by trailer after the refresh.
         file_put_contents($this->dir . '/coauthor.txt', "feat: x\n\nCo-Authored-By: Bob <b@x>\n");
-        exec('sh ' . escapeshellarg($hook) . ' ' . escapeshellarg($this->dir . '/coauthor.txt') . ' 2>/dev/null', $o, $blocked);
-        $this->assertSame(1, $blocked, 'Refreshed guard should still block Co-authored-by');
+        $this->assertSame(1, $this->runHook($hook, $this->dir . '/coauthor.txt'), 'Refreshed guard should still block Co-authored-by');
 
         @unlink($this->dir . '/coauthor.txt');
     }

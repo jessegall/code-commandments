@@ -198,6 +198,11 @@ final class CommitHookInstaller
         # Blocks the commit when code-commandments finds sins in the STAGED
         # changes (only what is actually being committed). Walk and fix them with
         # `pilgrimage` then `next`.
+        # Worktree isolation: git worktrees share this .git/hooks, so gate ONLY when
+        # the firing worktree opted into commandments (its own .commandments/profile,
+        # not 'disabled'). A fresh worktree is left untouched.
+        cc_prof=\$(cat .commandments/profile 2>/dev/null)
+        if [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
         if [ -x vendor/bin/commandments ]; then
             vendor/bin/commandments judge --staged --no-cache
             cc_status=\$?
@@ -218,6 +223,7 @@ final class CommitHookInstaller
             echo "  Report it, do not work around it:  commandments report --prophet=NAME --reason=..."
             echo "  (Bypass only in a real emergency with: git commit --no-verify)"
             exit 1
+        fi
         fi
         {$end}
         HOOK;
@@ -267,7 +273,10 @@ final class CommitHookInstaller
         return <<<HOOK
         {$begin}
         # Reject Co-authored-by trailers in commit messages.
-        if grep -qiE '^[[:space:]]*co-authored-by:' "\$1"; then
+        # Worktree isolation: guard ONLY when the firing worktree opted into
+        # commandments (its own .commandments/profile, not 'disabled').
+        cc_prof=\$(cat .commandments/profile 2>/dev/null)
+        if [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ] && grep -qiE '^[[:space:]]*co-authored-by:' "\$1"; then
             echo ""
             echo "✗ Commit blocked: Co-authored-by trailers are not allowed."
             echo "  Remove the Co-authored-by line(s) from the commit message."
@@ -295,6 +304,10 @@ final class CommitHookInstaller
         # Blocks the push when code-commandments finds unresolved findings (sins OR
         # warnings) in the active profile's scope (grind: the branch; penance: the
         # whole codebase). A bare `judge` resolves that scope from the profile.
+        # Worktree isolation: gate ONLY when the firing worktree opted into
+        # commandments (its own .commandments/profile, not 'disabled').
+        cc_prof=\$(cat .commandments/profile 2>/dev/null)
+        if [ -n "\$cc_prof" ] && [ "\$cc_prof" != "disabled" ]; then
         if [ -x vendor/bin/commandments ]; then
             vendor/bin/commandments judge --no-cache
             cc_status=\$?
@@ -312,6 +325,7 @@ final class CommitHookInstaller
             echo "  Reckon before pushing:  commandments pilgrimage   then   commandments next"
             echo "  (Bypass only in a real emergency with: git push --no-verify)"
             exit 1
+        fi
         fi
         {$end}
         HOOK;
