@@ -107,8 +107,10 @@ final class PilgrimagePresenter
             $lines[] = sprintf('   • AUTO-FIX — %d of these are [AUTO-FIXABLE]: run `commandments autofix` to repent THIS prophet in place, then `commandments next`. (Not everything auto-fixes; resolve the rest by hand.)', $autoFixable);
         }
 
-        $lines[] = '   • ABSOLVE — how you DECLINE a finding you should NOT change: a GENUINE false';
-        $lines[] = '     positive, with a real reason (sins cannot be absolved, only advisory findings).';
+        $lines[] = '   • ABSOLVE — how you DECLINE a finding you should NOT change: a GENUINE exception,';
+        $lines[] = '     with a real reason. Works on warnings AND sins — a sin absolution is a';
+        $lines[] = '     deliberate, AUDITED act for a pre-existing/out-of-scope sin you must not touch';
+        $lines[] = '     (FIX is still the default; absolve is the escape hatch, never a shortcut).';
         $lines[] = '     It is scoped to THIS prophet — --prophet is implied, target the location:';
         $lines[] = '       commandments absolve --at=<file:line above> --reason="why this is a real exception"';
         $lines[] = '   • REPORT — how you DECLINE a WRONG rule: do this PROACTIVELY the moment a finding';

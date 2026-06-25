@@ -12,11 +12,12 @@ use JesseGall\PhpTypes\T_String;
 /**
  * Records a finding-level absolution after validating it.
  *
- * Absolution is only legitimate for advisory findings (warnings) and for
- * sins whose prophet explicitly `requiresConfession`. To enforce that — and
- * to refuse fingerprints that no longer correspond to a live finding — the
- * absolver re-locates the finding by re-scanning, rather than trusting a
- * fingerprint blindly.
+ * Single-target absolution is legitimate for any live finding — warnings AND
+ * sins (a reasoned, audited escape hatch so an agent is never wedged by a
+ * pre-existing, out-of-scope sin). Batch absolution (`--warnings`/`--all`)
+ * never sweeps a sin. To refuse fingerprints that no longer correspond to a
+ * live finding, the absolver re-locates the finding by re-scanning, rather
+ * than trusting a fingerprint blindly.
  */
 final class Absolver
 {
@@ -50,23 +51,20 @@ final class Absolver
             );
         }
 
-        // A sin must be fixed, not absolved. The ONE escape is to `report` it as
-        // genuinely wrong: that records a report-linked absolution directly, so a
-        // reported sin is already suppressed and never reaches this path. Manual
-        // `absolve` therefore still refuses a sin — pointing at `report` instead.
-        if ($finding->isSin() && ! $this->prophet($finding->prophetClass)->requiresConfession()) {
-            return $this->error(
-                "{$finding->prophetShort} is a sin and must be FIXED, not absolved "
-                . "({$finding->location()}). If the rule is genuinely wrong, `report` it "
-                . '— that records a report-linked absolution and files an issue.'
-            );
-        }
-
+        // A sin CAN be absolved, single-target, with a reason — the deliberate
+        // escape hatch so an agent is never wedged by a pre-existing, out-of-scope
+        // sin it shouldn't touch (without mischaracterizing "I accept this" as
+        // "the rule is wrong", which is what `report` implies). The absolution is
+        // recorded with its reason and surfaced as an audited SIN absolution.
+        // Batch absolve (`--warnings`/`--all`) still NEVER sweeps a sin — each
+        // accepted sin is an individual, reasoned act.
         $this->tracker->absolveFinding($fingerprint, $reason);
+
+        $label = $finding->isSin() ? 'Absolved SIN (audited)' : 'Absolved';
 
         return [
             'status' => self::STATUS_OK,
-            'message' => "Absolved {$finding->prophetShort} at {$finding->location()} — \"{$reason}\".",
+            'message' => "{$label} {$finding->prophetShort} at {$finding->location()} — \"{$reason}\".",
         ];
     }
 

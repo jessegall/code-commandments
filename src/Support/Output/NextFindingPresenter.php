@@ -147,9 +147,14 @@ final class NextFindingPresenter
                 $lines[] = sprintf('       · many coincidental LEAVEs at once? %s absolve --warnings --scope=git --reason="…" (one scan; add --prophet=%s to scope to this rule).', $binary, $finding->prophetShort);
             }
         } else {
-            $lines[] = '  (This is a sin — it cannot be absolved. It must be fixed.)';
-            $lines[] = '  You own this even if you did not cause it — it is on a file you touched. "I didn\'t cause this" is never a reason to leave a sin.';
-            $lines[] = '  2. OR, if you believe the rule is genuinely WRONG, report it — that files an issue AND quiets this finding until the issue is answered:';
+            $lines[] = '  (This is a sin — FIXING is the default. You own it even if you did not cause it — it is on a file you touched.)';
+            $lines[] = '  2. OR, if it is a pre-existing / out-of-scope sin you must NOT touch, absolve it WITH A REASON (a deliberate, audited act — not a shortcut):';
+            $lines[] = sprintf(
+                '       %s absolve --fingerprint=%s --reason="why this sin is consciously accepted here"',
+                $binary,
+                $finding->fingerprint,
+            );
+            $lines[] = '  3. OR, if you believe the rule is genuinely WRONG, report it — that files an issue AND quiets this finding until the issue is answered:';
             $lines[] = sprintf(
                 '       %s report --prophet=%s %s --reason="why it is wrong"',
                 $binary,

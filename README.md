@@ -127,7 +127,7 @@ Every command is available via both Laravel artisan
 | Command | Purpose |
 |---|---|
 | [`abandon`](#abandon) | Leave the current pilgrimage early (judge/repent return; the push gate still enforces sins) |
-| [`absolve`](#absolve) | Absolve a single finding by fingerprint, with a required reason |
+| [`absolve`](#absolve) | Absolve a single finding (warning OR sin) by fingerprint/location, with a required reason |
 | [`autofix`](#autofix) | Auto-fix the CURRENT pilgrimage prophet ([AUTO-FIXABLE] findings only), in place |
 | [`feature-request`](#feature-request) | Propose a NEW rule / enhancement as a GitHub issue (no finding needed; allowed mid-pilgrimage) |
 | [`init`](#init) | Initialize code commandments for a standalone project |
@@ -154,14 +154,14 @@ Leave the current pilgrimage early (judge/repent return; the push gate still enf
 
 ### `absolve`
 
-Absolve a single finding by fingerprint, with a required reason.
+Absolve a single finding (warning OR sin) by fingerprint/location, with a required reason.
 
 | Flag | Argument | Description |
 |---|---|---|
 | `--config`, `-c` | `<value>` | Path to config file |
 | `--fingerprint` | `<value>` | The finding fingerprint shown by judge --next |
 | `--at` | `<value>` | Target a finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; combine with --prophet to disambiguate ties |
-| `--reason` | `<value>` | Why the rule does not apply here (required) |
+| `--reason` | `<value>` | Why the rule does not apply / is consciously accepted here (required; sins included) |
 | `--all` | — | Baseline the queue: absolve every current advisory finding at once (sins still block) |
 | `--warnings` | — | Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing) |
 | `--scope` | `<value>` | Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index) |
