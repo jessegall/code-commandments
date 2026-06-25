@@ -69,6 +69,8 @@ Do not start work without all three loaded.
 
 - **`absence`** — modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw).
 - **`exceptions`** — throwing or catching: named `::for()` factory exceptions, never swallow a failure.
+- **`enums-with-behaviour`** — a closed set of values: seal it as a native backed enum, put the per-case
+  logic on the enum (not a `match` at every call site).
 - **`concurrent-state`** — state shared across requests/workers (`::for($id): Concurrent<self>`)."""
 
 BLOCK = f"{BEGIN}\n{BODY}\n{END}"
