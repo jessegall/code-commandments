@@ -144,6 +144,14 @@ Pattern B does NOT fire for value-object-style nullables
 (`DateTimeImmutable | null`, `BackedEnum | null`) — there null is
 a genuine optional value, not a stand-in for "no behavior".
 
+It also leaves Eloquent **model** nullables alone (`User | null`,
+a finder result like `Workflow::query()->find($id)`). A nullable
+model is GENUINE record absence — the row may never have existed or
+may have been deleted between dispatch and use — and a Null Object
+model is meaningless (it carries DB-backed state/identity). The type
+is confirmed a model semantically (reflection over the resolved
+FQCN), not by name.
+
 Configure replacements per type via the `null_objects` map:
 
     Backend\PreferNullObjectDefaultsProphet::class => [

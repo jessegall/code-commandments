@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support\Pipes\Php;
 
+use JesseGall\CodeCommandments\Support\CallGraph\NameResolver;
 use JesseGall\CodeCommandments\Support\Classifiers\DateTimeClassifier;
 use JesseGall\CodeCommandments\Support\Classifiers\EnumClassifier;
 use JesseGall\CodeCommandments\Support\Classifiers\SpatieOptionalClassifier;
@@ -86,6 +87,22 @@ final class FindNullObjectDefaultsCandidates implements Pipe
         return SpatieOptionalClassifier::make()->matches($typeName);
     }
 
+    /**
+     * A nullable persistence ENTITY (an Eloquent model) is GENUINE record absence
+     * — the row may never have existed or may have been deleted between dispatch
+     * and use — not a missing-behavior stand-in. A Null Object model is meaningless
+     * (it carries DB-backed state/identity), so Pattern B leaves it alone, the same
+     * way it leaves date/time and enum value-nullables. The short type name is
+     * resolved to a FQCN through the file's imports so the model check is semantic
+     * (real ancestry via {@see TypeChecker::isModelType()}), not name-matching.
+     *
+     * @param  array<string, string>  $useStatements
+     */
+    private function isRecordEntityType(string $typeName, array $useStatements, ?string $namespace): bool
+    {
+        return TypeChecker::isModelType(NameResolver::resolve($typeName, $useStatements, $namespace));
+    }
+
     private int $minNullsafeAccesses = 2;
 
     private ?PrettyPrinter\Standard $printer = null;
@@ -137,7 +154,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
         foreach ($nodeFinder->findInstanceOf($input->ast, Stmt\Class_::class) as $class) {
             assert($class instanceof Stmt\Class_);
 
-            foreach ($this->detectAccessorChains($class, $input->content) as $match) {
+            foreach ($this->detectAccessorChains($class, $input) as $match) {
                 $matches[] = $match;
             }
         }
@@ -148,8 +165,9 @@ final class FindNullObjectDefaultsCandidates implements Pipe
     /**
      * @return iterable<MatchResult>
      */
-    private function detectAccessorChains(Stmt\Class_ $class, string $content): iterable
+    private function detectAccessorChains(Stmt\Class_ $class, PhpContext $input): iterable
     {
+        $content = $input->content;
         $finder = new NodeFinder;
 
         foreach ($class->getMethods() as $accessor) {
@@ -165,6 +183,7 @@ final class FindNullObjectDefaultsCandidates implements Pipe
 
             if ($this->isOptionalValueType($typeInfo['typeName'])
                 || $this->isSpatieOptional($typeInfo['typeName'])
+                || $this->isRecordEntityType($typeInfo['typeName'], $input->useStatements, $input->namespace)
             ) {
                 continue;
             }
@@ -316,6 +335,10 @@ final class FindNullObjectDefaultsCandidates implements Pipe
             }
 
             if ($this->isSpatieOptional($typeInfo['typeName'])) {
+                continue;
+            }
+
+            if ($this->isRecordEntityType($typeInfo['typeName'], $input->useStatements, $input->namespace)) {
                 continue;
             }
 
