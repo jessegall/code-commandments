@@ -185,7 +185,10 @@ final class RepentService
                             $created = str_replace(Environment::basePath() . '/', T_String::empty(), $newPath);
                             $this->fixedFiles[$prophetName][] = "{$created} (created)";
                         }
-                        $totalFixed++;
+                        // Count FINDINGS fixed (one penance entry each), not files —
+                        // a file with 2 rewrites is 2 fixed sins, so the total matches
+                        // what `todo` listed.
+                        $totalFixed += max(1, count($result->penance));
                     } elseif (! $result->absolved) {
                         $this->failedFiles[$prophetName][] = $relativePath . ($result->failureReason ? " ({$result->failureReason})" : T_String::empty());
                         $totalFailed++;

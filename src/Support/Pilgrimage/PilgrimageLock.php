@@ -66,7 +66,7 @@ final class PilgrimageLock
         $emit("   {$runner}absolve --at=<file:line> --reason=\"…\"   # DECLINE a genuine false positive (scoped to the current prophet)");
         $emit("   {$runner}report  --at=<file:line> --reason=\"…\"   # DECLINE a wrong rule / prophet bug (scoped, files an issue)");
         $emit("   {$runner}feature-request \"<full proposal text>\"  # propose a NEW rule (the one unscoped action)");
-        $emit("   {$runner}abandon         # leave the walk early (judge/repent return; the push gate still enforces sins)");
+        $emit("   {$runner}abandon         # leave the walk early (judge/repent return; any gate your profile enforces still applies)");
         $emit('absolve/report are how you DECLINE a finding you should not change — not a shortcut past it. Walk to the');
         $emit("end (`next` until complete) and only then is `judge`/`repent` free again. `{$runner}pilgrimage` restarts from");
         $emit('prophet 0 and DISCARDS a completed walk (re-arming the push gate) — use `abandon`, not restart, to step out.');
