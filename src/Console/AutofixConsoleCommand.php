@@ -65,6 +65,13 @@ class AutofixConsoleCommand extends Command
             return Command::SUCCESS;
         }
 
+        if (($step['auto_fixable'] ?? false) === false) {
+            $count = count($step['locations'] ?? []);
+            $output->writeln("<comment>{$prophet} is NOT [AUTO-FIXABLE]</comment> — its {$count} finding(s) must be resolved by hand. Run `commandments todo` to list them, fix each, then `commandments next`.");
+
+            return Command::SUCCESS;
+        }
+
         $output->writeln("Auto-fixing the current prophet: {$prophet}");
 
         [$registry, $manager] = $this->bootEnvironment($input->getOption('config'));

@@ -115,6 +115,7 @@ final class PilgrimageRunner
         return [
             'complete' => false,
             'prophet' => (new ReflectionClass($prophet))->getShortName(),
+            'auto_fixable' => $prophet instanceof \JesseGall\CodeCommandments\Contracts\SinRepenter,
             'doctrine' => $this->itinerary()[$state->doctrine]['name'] ?? 'singletons',
             'locations' => $this->scan($prophet, $state),
         ];
