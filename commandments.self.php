@@ -108,6 +108,7 @@ return [
                 Backend\NoNullCoalesceToNullProphet::class,
                 Backend\PreferTypeCoalesceProphet::class,
                 Backend\NoCoalesceOnNonNullableProphet::class,
+                Backend\TypeHonestyProphet::class,
                 Backend\PreferCoalescingFactoryProphet::class,
                 Backend\PreferEnumForClosedSetFieldProphet::class,
                 Backend\PreferNativeEnumProphet::class,
