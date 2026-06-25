@@ -35,10 +35,18 @@ class AutofixCommand extends Command
         }
 
         $runner = new PilgrimageRunner(base_path(), config('commandments', []), (string) $this->option('scroll'));
-        $prophet = $runner->peek()['prophet'] ?? null;
+        $peek = $runner->peek();
+        $prophet = $peek['prophet'] ?? null;
 
         if ($prophet === null) {
             $this->line('No current prophet to auto-fix.');
+
+            return self::SUCCESS;
+        }
+
+        if (($peek['auto_fixable'] ?? false) === false) {
+            $count = count($peek['locations'] ?? []);
+            $this->line("{$prophet} is NOT [AUTO-FIXABLE] — its {$count} finding(s) must be resolved by hand. Run `commandments todo` to list them, fix each, then `commandments next`.");
 
             return self::SUCCESS;
         }
