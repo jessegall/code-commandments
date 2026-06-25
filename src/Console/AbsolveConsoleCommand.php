@@ -19,11 +19,11 @@ class AbsolveConsoleCommand extends Command
     {
         $this
             ->setName('absolve')
-            ->setDescription('Absolve a single finding by fingerprint, with a required reason')
+            ->setDescription('Absolve a single finding (warning OR sin) by fingerprint/location, with a required reason')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file')
             ->addOption('fingerprint', null, InputOption::VALUE_REQUIRED, 'The finding fingerprint shown by judge --next')
             ->addOption('at', null, InputOption::VALUE_REQUIRED, 'Target a finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; combine with --prophet to disambiguate ties')
-            ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply here (required)')
+            ->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Why the rule does not apply / is consciously accepted here (required; sins included)')
             ->addOption('all', null, InputOption::VALUE_NONE, 'Baseline the queue: absolve every current advisory finding at once (sins still block)')
             ->addOption('warnings', null, InputOption::VALUE_NONE, 'Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)')
             ->addOption('scope', null, InputOption::VALUE_REQUIRED, 'Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index)')
