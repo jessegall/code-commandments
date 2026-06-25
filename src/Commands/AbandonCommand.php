@@ -20,7 +20,7 @@ class AbandonCommand extends Command
 {
     protected $signature = 'commandments:abandon';
 
-    protected $description = 'Leave the current pilgrimage early (judge/repent return; the push gate still enforces sins)';
+    protected $description = 'Leave the current pilgrimage early (judge/repent return; any gate your profile enforces still applies)';
 
     public function handle(): int
     {
@@ -35,7 +35,7 @@ class AbandonCommand extends Command
         PilgrimageState::clear(base_path());
         PilgrimageIndexCache::clear(base_path());
 
-        $this->info('Pilgrimage abandoned. `judge` and `repent` are available again — the push gate still enforces unresolved sins. Run `commandments:pilgrimage` to start a fresh walk.');
+        $this->info('Pilgrimage abandoned. `judge` and `repent` are available again — abandoning does NOT mark the walk complete, so any commit/push gate your profile enforces still applies. Run `commandments:pilgrimage` to start a fresh walk.');
 
         return self::SUCCESS;
     }

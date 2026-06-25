@@ -65,6 +65,12 @@ class PilgrimageConsoleCommand extends Command
 
         $prophet = $input->getArgument('prophet');
 
+        if (is_string($prophet) && in_array(strtolower($prophet), ['next', 'todo', 'autofix', 'abandon', 'absolve', 'report', 'judge', 'repent', 'skills', 'scripture'], true)) {
+            $output->writeln("<comment>`{$prophet}` is a top-level command, not a pilgrimage argument.</comment> Did you mean `commandments {$prophet}`? (the pilgrimage's optional argument is a PROPHET name filter.)");
+
+            return Command::SUCCESS;
+        }
+
         $step = PilgrimageStarter::start($runner, $basePath, is_string($prophet) ? $prophet : null, $output->writeln(...));
 
         if ($step === null) {
