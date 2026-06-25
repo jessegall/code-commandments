@@ -187,6 +187,14 @@ PHP;
         $this->assertCount(2, $judgment->sins);
         $this->assertStringContainsString('process()', $judgment->sins[0]->message);
         $this->assertStringContainsString('cancel()', $judgment->sins[1]->message);
+
+        // Each long method carries a DISTINCT symbol — without it two long methods
+        // in one file share a fingerprint, so absolving one suppresses both and the
+        // other reports "no live finding".
+        $this->assertNotNull($judgment->sins[0]->symbol);
+        $this->assertNotSame($judgment->sins[0]->symbol, $judgment->sins[1]->symbol);
+        $this->assertStringContainsString('process', (string) $judgment->sins[0]->symbol);
+        $this->assertStringContainsString('cancel', (string) $judgment->sins[1]->symbol);
     }
 
     public function test_reports_correct_line_number(): void
