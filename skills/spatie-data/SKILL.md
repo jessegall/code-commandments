@@ -1,6 +1,6 @@
 ---
 name: spatie-data
-description: How to write a Spatie Data class — final, public readonly promoted props; construct via `::from([...])` not `new` (except a `new` default value in the constructor); document the construction entry points at the top; never hand-hydrate field-by-field; typed collections via `#[DataCollectionOf]` + `::collect()`; honest field types (no all-nullable DTO); `Optional` vs `?T` vs default; class-level `#[MapInputName]`; `#[WithCast]`; validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator, or a `#[...]` data attribute.
+description: How to write a Spatie Data class — final, public readonly promoted props; construct via `::from([...])` not `new` (except a `new` default value in the constructor); document only `fromX()` object factories with `@method` (never the array shape); never hand-hydrate field-by-field; typed collections via `#[DataCollectionOf]` + `::collect()`; honest field types (no all-nullable DTO); `Optional` vs `?T` vs default; class-level `#[MapInputName]`; `#[WithCast]`; validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator, or a `#[...]` data attribute.
 ---
 
 # Spatie Data — let the class build itself
@@ -17,8 +17,6 @@ use Spatie\LaravelData\Data;
 
 /**
  * Typed view of the inspect_trace tool's arguments.
- *
- * @method static static from(array{nodeId?: string, offset?: int, limit?: int} $data)
  */
 final class InspectTraceInput extends Data
 {
@@ -34,8 +32,9 @@ final class InspectTraceInput extends Data
 - **`final`**, **public `readonly`** promoted constructor properties. Immutable by construction — built
   once, never mutated. No setters; "change" a field by building a new one with `::from([...])`.
 - **Construct via `::from([...])`, not `new`** — see the next section.
-- **Document every `::from()` shape at the top with `@method`** — see ["Document every `::from()` shape"](#document-every-from-shape-with-method)
-  below. `::from()` is magic and variadic, so the shapes it accepts are invisible at a glance.
+- **Document non-array `fromX()` factories with `@method`** (see below) — *only* when you add a
+  `fromX(SomeClass $x)` magic factory. The plain `::from([...])` array shape needs **no** `@method`: it's
+  the default, already visible in the constructor. A class with no `fromX()` factories needs no `@method`.
 
 ## Construct with `::from()`, never `new` — except defaults
 
@@ -63,20 +62,22 @@ Never hand-roll the mapping: a static `fromArray()`/`fromRow()` reading keys one
 `new self(...)` re-implements what `::from()` already does. If a source genuinely needs conversion, write
 an explicit magic factory — `public static function fromUser(User $user): self`.
 
-## Document every `::from()` shape with `@method`
+## Document `fromX()` object factories with `@method` — never the array shape
 
 `::from()` **magically dispatches** to any `fromX(T $x)` factory whose parameter type matches the payload
 (the resolver tests each method's `accepts()`), so `ProfileData::from($user)` silently calls `fromUser`.
 The IDE and the reader cannot see that from the constructor. So:
 
-**Every `fromX(T)` factory gets a matching `@method static static from(T $x)` line in the class docblock —
-plus one `@method` for the base array shape.** That is the single place the full construction surface is
-visible.
+**Each `fromX(T)` *object* factory gets a matching `@method static static from(T $x)` line** — that
+surfaces the hidden construction shapes.
+
+**Do NOT `@method`-document the array shape.** `::from([...])` from an array is the default; the
+constructor already shows the keys it takes, so a verbose `@method static static from(array{a?: …, b?: …})`
+just duplicates it as noise. Only the *non-array* factory types earn a `@method`.
 
 ```php
 /**
- * @method static static from(array{id: string, name: string} $data)
- * @method static static from(User $user)
+ * @method static static from(User $user)   // the magic fromUser() shape — NOT the array
  */
 final class ProfileData extends Data
 {
@@ -169,7 +170,7 @@ if you think you need one, you probably want a typed accessor / method on the cl
 ```
 Spatie Data
 - [ ] Built via ::from([...]) (or a fromX() factory), never `new` — except a `new` default value in the signature.
-- [ ] Construction entry points documented at the top (class docblock / @method static self from(array{...})).
+- [ ] Each fromX() OBJECT factory has a `@method static static from(T $x)`; the array shape is NOT @method-documented.
 - [ ] final class; public readonly promoted props (except a #[WithCast] property, which can't be readonly).
 - [ ] Required fields are non-nullable/no-default (from() throws on miss); optional is a DELIBERATE Optional/?T/default.
 - [ ] NOT an all-nullable DTO — the type tells the truth about what's required.
