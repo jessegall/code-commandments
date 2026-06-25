@@ -691,9 +691,6 @@ class ScrollManager
     public function judgeFiles(string $scroll, array $filePaths): Collection
     {
         $config = $this->registry->getScrollConfig($scroll);
-        $path = $config['path'] ?? Environment::basePath();
-        $extensions = $config['extensions'] ?? [];
-        $excludePaths = $config['exclude'] ?? [];
 
         $cache = $this->activateCache($scroll);
         $prophets = $this->prophetsFor($scroll);
@@ -704,25 +701,13 @@ class ScrollManager
 
         $results = collect();
 
-        // Normalize the scroll path for comparison
-        $scrollPath = realpath($path);
+        // THE single scope authority: only files within the scroll's path /
+        // extensions / exclude are ever judged — so an excluded file can never be
+        // resolved no matter how it reached this list (git diff, staged, etc.).
+        $scope = ScrollScope::fromConfig(Environment::basePath(), $config);
 
         foreach ($filePaths as $filePath) {
-            if (!file_exists($filePath)) {
-                continue;
-            }
-
-            // Only judge files within the scroll's configured path
-            if ($scrollPath !== false && !str_starts_with(realpath($filePath), $scrollPath)) {
-                continue;
-            }
-
-            if (PathExcludeMatcher::shouldExclude(realpath($filePath) ?: $filePath, $excludePaths)) {
-                continue;
-            }
-
-            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-            if (!empty($extensions) && !in_array($extension, $extensions, true)) {
+            if (! $scope->includes($filePath)) {
                 continue;
             }
 
