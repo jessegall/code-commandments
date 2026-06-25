@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Results\RepentanceResult;
 use JesseGall\CodeCommandments\Results\Tier;
 use JesseGall\CodeCommandments\Results\Warning;
 use JesseGall\CodeCommandments\Support\CallGraph\CodebaseIndex;
+use JesseGall\CodeCommandments\Support\Resolvers\Ast\FileImports;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 
@@ -204,9 +205,12 @@ SCRIPTURE;
         $edits = [];
         $penance = [];
         $handled = [];
+        /** @var array<string, true> $used  builtin types whose T_* wrapper this fix emits */
+        $used = [];
 
         foreach ($this->castCoalesces($ast, $finder) as $cc) {
             $handled[spl_object_id($cc['coalesce'])] = true;
+            $used[$cc['type']] = true;
 
             $edits[] = [
                 'start' => (int) $cc['cast']->getStartFilePos(),
@@ -230,6 +234,7 @@ SCRIPTURE;
             $left = $coalesce->left;
             $leftSrc = substr($content, (int) $left->getStartFilePos(), (int) $left->getEndFilePos() - (int) $left->getStartFilePos() + 1);
 
+            $used[$type] = true;
             $edits[] = [
                 'start' => (int) $coalesce->getStartFilePos(),
                 'end' => (int) $coalesce->getEndFilePos(),
@@ -246,6 +251,13 @@ SCRIPTURE;
 
         foreach ($edits as $edit) {
             $content = substr($content, 0, $edit['start']) . $edit['text'] . substr($content, $edit['end'] + 1);
+        }
+
+        // The rewrite emits the SHORT class name (`T_Array::coalesce(...)`); ensure
+        // the matching `use JesseGall\PhpTypes\T_*;` import exists, or in a namespaced
+        // file the name resolves to the file's own namespace and fatals at runtime.
+        foreach (array_keys($used) as $builtin) {
+            $content = FileImports::ensure($content, 'JesseGall\\PhpTypes\\' . self::WRAPPERS[$builtin]);
         }
 
         return RepentanceResult::absolved($content, $penance);

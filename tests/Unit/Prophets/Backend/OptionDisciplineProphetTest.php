@@ -40,6 +40,28 @@ class OptionDisciplineProphetTest extends TestCase
         file_put_contents($this->dir . '/' . $name, $php);
     }
 
+    public function test_does_not_fire_on_a_nullable_list_return_issue_221(): void
+    {
+        // inCategory() returns a LIST (or null) — its natural absence is `[]`, not
+        // Option::none(). That is PreferEmptyOverNull's domain; OptionDiscipline must
+        // not fire (the @return docblock signals the array result).
+        $this->write('CatalogService.php', "<?php\nnamespace App\\Catalog;\nclass CatalogService {\n  /** @return array<int, mixed>|null */\n  public function inCategory(\$key) {\n    if (\$key === null) { return null; }\n    \$out = [];\n    foreach ([1,2] as \$p) { \$out[] = \$p; }\n    return \$out;\n  }\n}\n");
+
+        $j = $this->judge('CatalogService.php');
+
+        $this->assertCount(0, $j->sins);
+        $this->assertCount(0, $j->warnings, 'A nullable list/array return belongs to PreferEmptyOverNull, not OptionDiscipline.');
+    }
+
+    public function test_does_not_fire_on_a_declared_array_nullable_return(): void
+    {
+        $this->write('Repo.php', "<?php\nnamespace App\\X;\nclass Repo {\n  public function find(\$k): ?array {\n    if (\$k === null) { return null; }\n    return ['a'];\n  }\n}\n");
+
+        $j = $this->judge('Repo.php');
+        $this->assertCount(0, $j->warnings);
+        $this->assertCount(0, $j->sins);
+    }
+
     /**
      * Judge one named file against the whole written dir (so cross-file callers
      * resolve through the index).

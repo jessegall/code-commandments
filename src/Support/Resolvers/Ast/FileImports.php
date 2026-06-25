@@ -51,9 +51,12 @@ final class FileImports
     }
 
     /**
-     * Ensure $content imports $fqcn — add `use $fqcn;` right after the namespace
-     * declaration when absent (a repent helper; returns $content unchanged when the
-     * import already exists or there is no namespace to anchor to).
+     * Ensure $content imports $fqcn — add `use $fqcn;` so a rewrite that emits the
+     * short name (`T_Array::coalesce(...)`) resolves. Anchors after the `namespace`
+     * declaration when present; otherwise (global namespace) after the last
+     * `declare(...);`, else right after the opening `<?php` tag. No-op when the
+     * import already exists. Without this an auto-fix that emits a short class name
+     * in a namespaced file resolves to the file's own namespace and fatals.
      */
     public static function ensure(string $content, string $fqcn): string
     {
@@ -61,12 +64,28 @@ final class FileImports
             return $content;
         }
 
-        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) !== 1) {
-            return $content;
+        // Prefer anchoring after the namespace declaration.
+        if (preg_match('/^namespace\s+[^;]+;/m', $content, $m, PREG_OFFSET_CAPTURE) === 1) {
+            $insertAt = $m[0][1] + strlen($m[0][0]);
+
+            return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
         }
 
-        $insertAt = $m[0][1] + strlen($m[0][0]);
+        // Global namespace: anchor after the last declare(...); if any.
+        if (preg_match_all('/^declare\s*\([^;]*\)\s*;/m', $content, $m, PREG_OFFSET_CAPTURE) >= 1) {
+            $last = end($m[0]);
+            $insertAt = $last[1] + strlen($last[0]);
 
-        return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
+            return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
+        }
+
+        // Else right after the opening PHP tag.
+        if (preg_match('/^<\?php/m', $content, $m, PREG_OFFSET_CAPTURE) === 1) {
+            $insertAt = $m[0][1] + strlen($m[0][0]);
+
+            return substr($content, 0, $insertAt) . "\n\nuse {$fqcn};" . substr($content, $insertAt);
+        }
+
+        return $content;
     }
 }
