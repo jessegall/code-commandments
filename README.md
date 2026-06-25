@@ -126,7 +126,7 @@ Every command is available via both Laravel artisan
 
 | Command | Purpose |
 |---|---|
-| [`abandon`](#abandon) | Leave the current pilgrimage early (judge/repent return; the push gate still enforces sins) |
+| [`abandon`](#abandon) | Leave the current pilgrimage early (judge/repent return; any gate your profile enforces still applies) |
 | [`absolve`](#absolve) | Absolve a single finding (warning OR sin) by fingerprint/location, with a required reason |
 | [`autofix`](#autofix) | Auto-fix the CURRENT pilgrimage prophet ([AUTO-FIXABLE] findings only), in place |
 | [`feature-request`](#feature-request) | Propose a NEW rule / enhancement as a GitHub issue (no finding needed; allowed mid-pilgrimage) |
@@ -150,7 +150,7 @@ Every command is available via both Laravel artisan
 
 ### `abandon`
 
-Leave the current pilgrimage early (judge/repent return; the push gate still enforces sins).
+Leave the current pilgrimage early (judge/repent return; any gate your profile enforces still applies).
 
 ### `absolve`
 

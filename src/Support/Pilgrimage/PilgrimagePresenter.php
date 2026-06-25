@@ -125,7 +125,7 @@ final class PilgrimagePresenter
         $lines[] = ' way to say "this one should not change". To propose a NEW rule, run';
         $lines[] = ' `commandments feature-request "<text>"` (the one action not scoped to this prophet).';
         $lines[] = ' If a step genuinely cannot be resolved, `commandments abandon` leaves the walk';
-        $lines[] = ' (judge/repent return; the push gate still enforces sins) — do NOT restart to escape.';
+        $lines[] = ' (judge/repent return; any gate your profile enforces still applies) — do NOT restart to escape.';
 
         $lines[] = '';
         $lines[] = self::THIN;
