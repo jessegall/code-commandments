@@ -80,6 +80,8 @@ Do not start work without all of them loaded.
 - **`exceptions`** — throwing or catching: named `::for()` factory exceptions, never swallow a failure.
 - **`enums-with-behaviour`** — a closed set of values: seal it as a native backed enum, put the per-case
   logic on the enum (not a `match` at every call site).
+- **`role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it
+  `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract.
 - **`concurrent-state`** — state shared across requests/workers (`::for($id): Concurrent<self>`)."""
 
 BLOCK = f"{BEGIN}\n{BODY}\n{END}"

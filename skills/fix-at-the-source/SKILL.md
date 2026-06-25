@@ -135,6 +135,11 @@ is born, and every `Command` that exists is real.
 - **Absolving / tolerating the symptom.** You've agreed the wrongness is fine to keep. It isn't.
 - **Per-field nullability triage on an all-optional DTO** ("which of these do I make non-null?"). Wrong
   question. The question is: *should this DTO exist, and where is this value actually parsed?*
+- **A wrapper / override / cast / suppression that launders N call sites so they pass.** When a cluster of
+  call sites trips a check, fixing them *is* the work — do not give a class a looser constructor that
+  quietly coerces the input (e.g. a `ValueBag` that accepts a looser key type to silence ~10 type errors),
+  or scatter casts/`@phpstan-ignore`, to avoid touching them. That makes the code *pass* while growing it
+  and hides the smell at the source. Fix the call sites — even the awkward one.
 
 ## Checklist
 
