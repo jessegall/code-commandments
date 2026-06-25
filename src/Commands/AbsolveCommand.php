@@ -11,21 +11,23 @@ use JesseGall\CodeCommandments\Support\ProphetRegistry;
 use JesseGall\CodeCommandments\Support\ScrollManager;
 
 /**
- * Absolve a single finding by fingerprint, with a required reason.
+ * Absolve a single finding by fingerprint, with a required reason. Works on
+ * warnings AND sins — a single-target sin absolution is a deliberate, audited
+ * escape (FIX stays the default; batch absolve never sweeps a sin).
  */
 class AbsolveCommand extends Command
 {
     protected $signature = 'commandments:absolve
         {--fingerprint= : The finding fingerprint shown by judge --next}
         {--at= : Target a finding by location instead of a fingerprint — path:line (or path:from-to), exactly as judge prints it; combine with --prophet to disambiguate ties}
-        {--reason= : Why the rule does not apply here (required)}
+        {--reason= : Why the rule does not apply / is consciously accepted here (required; sins included)}
         {--all : Baseline the queue: absolve every current advisory finding at once (sins still block)}
         {--warnings : Batch-absolve every WARNING in scope under one --reason; hard-refuses if any sin is in scope (absolves nothing)}
         {--scope= : Limit --warnings to changed files: "git" (vs tracked state) or "staged" (the index)}
         {--prophet= : Limit --warnings to one prophet (partial name match), e.g. --prophet=DuplicateCode — one scan, not one-per-finding}
         {--clear : Remove every ordinary absolution (post-commit reset so nothing stays hidden); report-linked absolutions persist until their issue is answered}';
 
-    protected $description = 'Absolve a single finding by fingerprint, with a required reason';
+    protected $description = 'Absolve a single finding (warning OR sin) by fingerprint/location, with a required reason';
 
     public function handle(
         ProphetRegistry $registry,

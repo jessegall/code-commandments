@@ -103,7 +103,7 @@ final class AbsolveService
 
             if ($result['blocking_sins'] > 0) {
                 $r = ClaudeHooksInstaller::runnerFor($basePath);
-                $error("{$result['blocking_sins']} sin(s) cannot be absolved and still block — fix them: walk with {$r[0]}{$r[1]}pilgrimage then {$r[0]}{$r[1]}next");
+                $error("{$result['blocking_sins']} sin(s) were NOT swept (batch never absolves a sin) and still block — fix them (walk with {$r[0]}{$r[1]}pilgrimage then {$r[0]}{$r[1]}next), or accept one deliberately: {$r[0]}{$r[1]}absolve --at=<file:line> --reason=\"…\"");
             }
 
             return self::SUCCESS;

@@ -261,6 +261,8 @@ final class ClaudeMdInstaller
         $autofix = "{$r}autofix";
         $reportShort = "{$r}report --at=path:line --reason=\"…\"";
         $featureReq = "{$r}report --feature-request --title=\"…\" --reason=\"…\"";
+        $sinEscape = AbsolutionPolicy::sinEscapeRule($absolveAt);
+        $ownEverySin = AbsolutionPolicy::ownEverySinRule();
 
         return <<<INSTRUCTIONS
 This project uses Code Commandments to enforce coding standards.
@@ -281,19 +283,14 @@ each location do exactly one:
   - FIX it (follow the scripture); OR
   - if it is an advisory finding whose rubric does not apply here, absolve it
     WITH A REASON: `{$absolveAt}`.
-Sins are imperative and cannot be absolved — they must be fixed. Do NOT bulk
+{$sinEscape} Do NOT bulk
 `{$repent}` or `{$judge}` to "start" — while the walk runs they are LOCKED. On an
 [AUTO-FIXABLE] prophet, run `{$autofix}` to fix THAT prophet in place, then
 `{$next}`. `{$judge}` (no flag) is the whole-codebase audit, for when no walk runs.
 To accept a large pre-existing backlog once (only NEW advisories surface after; sins
 still block), baseline it: `{$absolveAll}`.
 
-OWN EVERY SIN YOU ENCOUNTER: a sin is a sin regardless of who wrote it. If
-judge surfaces a sin — in your own changes OR pre-existing in a file you are
-working in — you handle it. Fix it (sins cannot be absolved), or for an
-advisory warning whose rubric genuinely does not apply, absolve it with a
-reason. "I didn't cause this" is NEVER a reason to leave a finding in place.
-Be a gentleman: leave every file you touch righteous.
+OWN EVERY SIN YOU ENCOUNTER: {$ownEverySin}
 
 REQUIRED: Always read the rule before fixing. `{$next}` prints the prophet's
 full scripture inline; for the same rule on its own run
@@ -374,6 +371,8 @@ INSTRUCTIONS;
         $reportShort = "{$r}report --at=path:line --reason=\"…\"";
         $scripture = "{$r}scripture --prophet=NAME";
         $reportFull = "{$r}report --at=path:line --reason=\"why\"";
+        $sinEscape = AbsolutionPolicy::sinEscapeRule($absolveReason);
+        $ownEverySin = AbsolutionPolicy::ownEverySinRule();
 
         return <<<MARKDOWN
 ## Code Commandments
@@ -402,11 +401,11 @@ It shows exactly **one finding at a time** with its full rule inline — so noth
 - If it is an advisory **warning** whose rubric does not apply here, **absolve it with a reason**:
   `{$absolveReason}`.
 
-Sins are imperative and **cannot be absolved** — they must be fixed. Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. **Default to FIXING a warning.** Absolve it only when the rubric's LEAVE-WHEN genuinely applies, and say why — absolve is not a dismiss button, and the post-commit reset wipes absolutions anyway, so a dodged warning comes back next phase. Never leave a warning untouched.
+{$sinEscape} Warnings are **advisory**: each carries an APPLY-WHEN / LEAVE-WHEN rubric. **Default to FIXING a warning.** Absolve it only when the rubric's LEAVE-WHEN genuinely applies, and say why — absolve is not a dismiss button, and the post-commit reset wipes absolutions anyway, so a dodged warning comes back next phase. Never leave a warning untouched.
 
 ### Own every sin you encounter
 
-A sin is a sin regardless of who wrote it. If `judge` surfaces a sin — whether in your own changes or **pre-existing** in a file you are working in — **you handle it**: fix it (sins cannot be absolved), or for an advisory warning whose rubric genuinely does not apply, absolve it with a reason. **"I didn't cause this" is never a reason to leave a finding in place.** Be a gentleman: leave every file you touch righteous.
+{$ownEverySin}
 
 ### Phased-commit workflow (multi-step changes, one PR)
 

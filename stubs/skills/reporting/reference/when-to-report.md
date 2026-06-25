@@ -6,8 +6,9 @@ code wrong here?"**
 | Situation | Do this |
 |---|---|
 | The code is genuinely correct and the prophet is **wrong** (false positive), or the **rule itself** doesn't belong here | **`report --at=path:line --reason=…`** — file it so the prophet gets fixed. It quiets the finding until the issue is answered. |
-| The code is genuinely **wrong** (the prophet is right) | **Fix the code.** Sins must be fixed; auto-fixable ones via `repent`. |
+| The code is genuinely **wrong** (the prophet is right) | **Fix the code.** Sins should be fixed; auto-fixable ones via `repent`. |
 | It's an advisory **WARNING** whose rubric's LEAVE-WHEN genuinely applies here | **`absolve --reason=…`** — a reasoned, one-off exception. Not a dismiss button. |
+| It's a **SIN** in pre-existing / out-of-scope code you must NOT touch in this change | **`absolve --at=path:line --reason=…`** — a sin CAN be absolved single-target with a reason (a deliberate, audited escape so you're never wedged). FIX is still the default; batch absolve never sweeps a sin. |
 
 ## The trap to avoid
 

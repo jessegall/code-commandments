@@ -110,16 +110,30 @@ class AbsolverTest extends TestCase
         $this->assertTrue($this->tracker->isFindingAbsolved($warning->fingerprint));
     }
 
-    public function test_refuses_to_absolve_a_sin(): void
+    public function test_single_target_absolves_a_sin_with_a_reason(): void
     {
+        // A sin CAN be absolved single-target with a reason — the escape hatch so
+        // an agent is never wedged by a pre-existing, out-of-scope sin. The result
+        // is surfaced as an audited SIN absolution.
         $sin = $this->findingOfKind('sin');
 
         $result = (new Absolver($this->manager, $this->registry, $this->tracker))
-            ->absolve($sin->fingerprint, 'I do not want to fix it');
+            ->absolve($sin->fingerprint, 'pre-existing, out-of-scope legacy code');
 
-        $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
-        $this->assertStringContainsString('must be FIXED', $result['message']);
-        $this->assertFalse($this->tracker->isFindingAbsolved($sin->fingerprint));
+        $this->assertSame(Absolver::STATUS_OK, $result['status']);
+        $this->assertStringContainsString('SIN', $result['message']);
+        $this->assertTrue($this->tracker->isFindingAbsolved($sin->fingerprint));
+    }
+
+    public function test_absolved_sin_drops_from_the_queue(): void
+    {
+        $sin = $this->findingOfKind('sin');
+
+        (new Absolver($this->manager, $this->registry, $this->tracker))
+            ->absolve($sin->fingerprint, 'pre-existing, out-of-scope legacy code');
+
+        $remaining = array_map(static fn (Finding $f): string => $f->fingerprint, $this->findings());
+        $this->assertNotContains($sin->fingerprint, $remaining, 'An absolved sin must not still surface.');
     }
 
     public function test_reporting_a_sin_absolves_it_and_drops_it_from_the_queue(): void
@@ -137,18 +151,17 @@ class AbsolverTest extends TestCase
         $this->assertNotContains($sin->fingerprint, $remaining, 'A reported sin must not still surface.');
     }
 
-    public function test_manual_absolve_still_refuses_an_unreported_sin(): void
+    public function test_batch_warnings_still_never_sweeps_a_sin(): void
     {
-        // The guardrail: a sin you simply do not want to fix stays refused; the
-        // message points at `report` as the only legitimate escape.
+        // Single-target absolve accepts a sin, but batch absolve does NOT — each
+        // accepted sin must be an individual, reasoned act, never swept wholesale.
         $sin = $this->findingOfKind('sin');
 
         $result = (new Absolver($this->manager, $this->registry, $this->tracker))
-            ->absolve($sin->fingerprint, 'I do not want to fix it');
+            ->absolveWarnings('blanket reason', null);
 
         $this->assertSame(Absolver::STATUS_ERROR, $result['status']);
-        $this->assertStringContainsString('must be FIXED', $result['message']);
-        $this->assertStringContainsString('report', $result['message']);
+        $this->assertFalse($this->tracker->isFindingAbsolved($sin->fingerprint));
     }
 
     public function test_requires_a_reason(): void
