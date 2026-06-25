@@ -29,6 +29,27 @@ PHP);
         $this->assertContains('gateways', $shape->storeProperties());
     }
 
+    public function test_detects_keyed_read_through_a_lookup_helper_issue_222(): void
+    {
+        // The by-key read is wrapped in a helper — `Option::find($this->nodes, $key)`
+        // / `data_get($this->store, $key)` — with no literal `$this->store[$key]`.
+        // It is still a Registry (keyed value lookup), not a Set.
+        $class = $this->classNode(<<<'PHP'
+<?php
+final class NodeRepository {
+    private array $nodes = [];
+    public function register($node): void { $this->nodes[$node->id->value] = $node; }
+    public function find($id) { return Option::find($this->nodes, $id->value); }
+    public function all(): array { return $this->nodes; }
+}
+PHP);
+
+        $shape = RegistryShape::detect($class);
+
+        $this->assertNotNull($shape, 'A helper-wrapped keyed read is still a Registry.');
+        $this->assertContains('nodes', $shape->storeProperties());
+    }
+
     public function test_detects_add_verb_too_name_free(): void
     {
         // The "put things in" signal is the AST write, not the method name.

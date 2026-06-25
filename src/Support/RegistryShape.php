@@ -36,6 +36,15 @@ final class RegistryShape
     private const STORE_READ_METHODS = ['get', 'offsetGet'];
 
     /**
+     * Keyed-lookup HELPERS that take the collection as their first argument and a
+     * key as the second — `Option::find($store, $key)`, `Arr::get($store, $key)`,
+     * `data_get($store, $key)`. When the store property is passed into one of these
+     * the class IS doing a by-key value lookup (a Registry), even though there is no
+     * literal `$this->store[$key]` read — so it must not be mistaken for a Set.
+     */
+    private const KEYED_LOOKUP_HELPERS = ['find', 'get', 'value', 'pull', 'dataget', 'data_get'];
+
+    /**
      * @param  list<string>  $storeProps  property names that are both publicly written as a keyed store and read back
      */
     private function __construct(
@@ -183,6 +192,30 @@ final class RegistryShape
             }
         }
 
+        // `Helper::find($this->store, $key)` / `data_get($this->store, $key)` — the
+        // store passed as the collection arg to a keyed-lookup helper IS a by-key
+        // value read, even with no literal `$this->store[$key]`.
+        $calls = $finder->find($stmts, static fn (Node $n): bool =>
+            $n instanceof Expr\StaticCall || $n instanceof Expr\FuncCall || $n instanceof Expr\MethodCall);
+
+        foreach ($calls as $call) {
+            $name = self::callName($call);
+
+            if ($name === null || ! in_array($name, self::KEYED_LOOKUP_HELPERS, true) || count($call->args) < 2) {
+                continue;
+            }
+
+            $first = $call->args[0];
+
+            if ($first instanceof Node\Arg) {
+                $prop = self::thisPropName($first->value);
+
+                if ($prop !== null) {
+                    $props[$prop] = true;
+                }
+            }
+        }
+
         return $props;
     }
 
@@ -257,6 +290,20 @@ final class RegistryShape
      * wrapper write/read (`$this->store->get(...)`, `$this->tags->toBase()->put(...)`)
      * is attributed to its store property. Null when the chain isn't rooted at `$this`.
      */
+    /** The lowercased short call name for a static/method/func call, or null. */
+    private static function callName(Expr $call): ?string
+    {
+        if ($call instanceof Expr\StaticCall || $call instanceof Expr\MethodCall) {
+            return $call->name instanceof Node\Identifier ? strtolower($call->name->toString()) : null;
+        }
+
+        if ($call instanceof Expr\FuncCall) {
+            return $call->name instanceof Node\Name ? strtolower($call->name->getLast()) : null;
+        }
+
+        return null;
+    }
+
     private static function receiverRootProp(Expr $expr): ?string
     {
         $cursor = $expr;
