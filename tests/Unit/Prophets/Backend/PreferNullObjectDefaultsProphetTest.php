@@ -329,6 +329,63 @@ class PreferNullObjectDefaultsProphetTest extends TestCase
         $this->assertTrue($judgment->isRighteous());
     }
 
+    public function test_does_not_warn_on_eloquent_model_nullable_param(): void
+    {
+        // A nullable Eloquent model is GENUINE record absence (the row may have
+        // been deleted), not a missing-behavior stand-in — and a Null Object model
+        // is meaningless. Resolved to its FQCN and confirmed a Model via reflection.
+        $judgment = $this->judge(<<<'PHP'
+        use JesseGall\CodeCommandments\Tests\Fixtures\Models\AbsenceModel;
+        class Worker {
+            public function step(AbsenceModel | null $row = null): void {
+                $row?->paint();
+                $row?->label();
+            }
+        }
+        PHP);
+
+        $this->assertCount(0, $judgment->warnings, 'A nullable Eloquent model must not be a Null Object candidate.');
+    }
+
+    public function test_does_not_warn_on_finder_model_accessor_chain(): void
+    {
+        // The reported repro (#219): a private accessor returns a nullable model
+        // from a finder, and callers de-null it via `?->` in several places. The
+        // nullable is real record absence — Pattern B must not suggest a Null Object.
+        // `App\Models\Workflow` is not loadable here, so isModelType uses its
+        // `\Models\` path fallback (reflection runs in real consumer scans).
+        $judgment = $this->judge(<<<'PHP'
+        use App\Models\Workflow;
+        class RunWorkflowJob {
+            public function handle(): void {
+                $this->workflowFor()?->update(['a' => 1]);
+                $this->workflowFor()?->update(['b' => 2]);
+            }
+            private function workflowFor(): Workflow | null {
+                return Workflow::query()->find(1);
+            }
+        }
+        PHP);
+
+        $this->assertCount(0, $judgment->warnings, 'A finder-derived nullable model accessor must not be a Null Object candidate.');
+    }
+
+    public function test_still_warns_on_non_model_nullable_so_exemption_is_targeted(): void
+    {
+        // Guard against over-exemption: a plain service nullable (NOT a model) is
+        // still a Null Object candidate — the model exemption is type-targeted.
+        $judgment = $this->judge(<<<'PHP'
+        class Worker {
+            public function step(Observer | null $observer = null): void {
+                $observer?->executing();
+                $observer?->completed();
+            }
+        }
+        PHP);
+
+        $this->assertCount(1, $judgment->warnings, 'A non-model nullable must still warn.');
+    }
+
     public function test_does_not_warn_when_type_not_nullable(): void
     {
         $judgment = $this->judge(<<<'PHP'
