@@ -612,7 +612,7 @@ Frontend\StyleOverridesProphet::class => [
 
 ### Backend (PHP)
 
-_106 prophets._
+_107 prophets._
 
 | Prophet | Auto-fix | What it enforces |
 |---|---|---|
@@ -721,6 +721,7 @@ _106 prophets._
 | `ThrowOnUnhandledCaseProphet` | — | Throw a named exception for an unhandled closed-set case — do not model an invariant violation as null/Option |
 | `TooManyParametersProphet` | — | Keep parameter lists short — group related parameters into an object |
 | `TranslationKeyCongruenceProphet` | — | A __()/trans() key must exist in a lang file — a missing key renders as the key string |
+| `TypeHonestyProphet` | — | Type honesty at the boundary — no empty-string fake for a required slot; no all-nullable boundary DTO |
 | `WideUnionTypeProphet` | Yes | Avoid wide type unions — model value-or-nothing as an Option |
 
 ### Frontend (Vue / TypeScript)

@@ -252,6 +252,7 @@ return [
                 Backend\NoNullCoalesceToNullProphet::class,
                 Backend\PreferTypeCoalesceProphet::class,
                 Backend\NoCoalesceOnNonNullableProphet::class,
+                Backend\TypeHonestyProphet::class,
                 Backend\PreferCoalescingFactoryProphet::class,
                 Backend\PreferCoalesceForProphet::class,
                 Backend\PreferEnumForClosedSetFieldProphet::class => [
