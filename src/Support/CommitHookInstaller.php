@@ -216,7 +216,7 @@ final class CommitHookInstaller
         if [ "\$cc_status" -ne 0 ]; then
             echo ""
             echo "✗ Commit blocked: unresolved findings on your staged files."
-            echo "  Every sin AND admonition must be fixed, or absolved with a reason."
+            echo "  Resolve every finding the gate lists above — fix it, or absolve it with a reason."
             echo "  Walk and fix them:  commandments pilgrimage   then   commandments next"
             echo "  Absolve a genuine false positive:  commandments absolve --at=<file:line> --prophet=<Name> --reason=\"why\""
             echo "  Genuinely wrong finding (false positive / ill-fitting rule / prophet bug)?"
@@ -329,7 +329,7 @@ final class CommitHookInstaller
                 if [ "\$cc_status" -ne 0 ]; then
                     echo ""
                     echo "✗ Push blocked: unresolved findings remain in scope."
-                    echo "  Every sin AND admonition must be fixed, absolved, or reported."
+                    echo "  Resolve every finding the gate reports — fix it, absolve it with a reason, or report it."
                     echo "  Walk the guided fix:  \${cc_bin}\${cc_sep}pilgrimage   then   \${cc_bin}\${cc_sep}next"
                     echo "  When the pilgrimage is COMPLETE you may push the residue once."
                     exit 1
