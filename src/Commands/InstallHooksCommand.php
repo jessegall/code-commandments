@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Commands;
 
 use Illuminate\Console\Command;
+use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\ClaudeMdInstaller;
 use JesseGall\CodeCommandments\Support\GitignoreInstaller;
 use JesseGall\CodeCommandments\Support\HandoffHelper;
 use JesseGall\CodeCommandments\Support\PlanLoopHookSuite;
 use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
-use JesseGall\PhpTypes\T_Json;
-use JesseGall\PhpTypes\T_String;
 
 /**
  * Install Claude Code hooks for the commandments.
@@ -26,7 +25,6 @@ class InstallHooksCommand extends Command
     public function handle(): int
     {
         $claudeDir = base_path('.claude');
-        $settingsFile = $claudeDir.'/settings.json';
 
         // Create .claude directory if it doesn't exist
         if (!is_dir($claudeDir)) {
@@ -34,20 +32,10 @@ class InstallHooksCommand extends Command
             $this->output->writeln('Created .claude directory');
         }
 
-        // Seed the settings.json `instructions` block (the profile switch below
-        // merges its hooks INTO this file, preserving the instructions + any
-        // consumer keys). Only added when absent.
-        $existingSettings = [];
-        if (file_exists($settingsFile)) {
-            $content = file_get_contents($settingsFile);
-            $existingSettings = json_decode($content ?: T_Json::emptyObject(), true) ?? [];
-        }
-
-        if (!isset($existingSettings['instructions'])) {
-            $existingSettings['instructions'] = $this->getClaudeInstructions();
-            $json = json_encode($existingSettings ?: ['instructions' => $this->getClaudeInstructions()], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            file_put_contents($settingsFile, $json.T_String::NEWLINE);
-        }
+        // Seed the `instructions` briefing into the LOCAL settings.local.json (the
+        // profile switch below merges its hooks INTO the same file, preserving the
+        // instructions + any consumer keys). Only added when absent.
+        ClaudeHooksInstaller::seedInstructions(base_path(), $this->getClaudeInstructions());
 
         // install-hooks IS `profile phased`: the profile owns the Claude hook
         // wiring, the git hooks (pre-commit gate, post-commit reset, commit-msg

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Console;
 
+use JesseGall\CodeCommandments\Support\ClaudeHooksInstaller;
 use JesseGall\CodeCommandments\Support\ClaudeMdInstaller;
 use JesseGall\CodeCommandments\Support\ConfigGenerator;
 use JesseGall\CodeCommandments\Support\ConfigLoader;
@@ -16,7 +17,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use JesseGall\PhpTypes\T_Json;
 use JesseGall\PhpTypes\T_String;
 
 /**
@@ -122,29 +122,12 @@ class InitConsoleCommand extends Command
     }
 
     /**
-     * Seed the settings.json `instructions` block before the profile switch merges
-     * its hooks into the file. Only added when absent.
+     * Seed the `instructions` briefing into the LOCAL settings.local.json before
+     * the profile switch merges its hooks into the same file. Only added when absent.
      */
     private function seedSettingsInstructions(string $basePath): void
     {
-        $claudeDir = $basePath . '/.claude';
-        $settingsFile = $claudeDir . '/settings.json';
-
-        if (! is_dir($claudeDir)) {
-            mkdir($claudeDir, 0755, true);
-        }
-
-        $settings = [];
-        if (file_exists($settingsFile)) {
-            $settings = json_decode((string) file_get_contents($settingsFile) ?: T_Json::emptyObject(), true) ?? [];
-        }
-
-        if (isset($settings['instructions'])) {
-            return;
-        }
-
-        $settings['instructions'] = ClaudeMdInstaller::settingsInstructions($basePath);
-        file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . T_String::NEWLINE);
+        ClaudeHooksInstaller::seedInstructions($basePath, ClaudeMdInstaller::settingsInstructions($basePath));
     }
 
     private function createConfig(string $basePath, bool $autoDetect, OutputInterface $output): void

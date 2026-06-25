@@ -10,10 +10,13 @@ use JesseGall\PhpTypes\T_String;
 use JesseGall\PhpTypes\T_Json;
 
 /**
- * The SINGLE source of truth for the package's Claude Code hook wiring
- * (`.claude/settings.json`). Both runners use it so the artisan (`php artisan
- * commandments:…`) and standalone (`vendor/bin/commandments …`) variants can
- * never drift:
+ * The SINGLE source of truth for the package's Claude Code hook wiring. The
+ * wiring is written to the LOCAL, gitignored `.claude/settings.local.json`
+ * (see {@see self::settingsFile()}) — never the committed `settings.json` — so
+ * a consumer's checked-in settings stay ours-free and a developer's
+ * profile-derived hooks never churn version control. Both runners use it so the
+ * artisan (`php artisan commandments:…`) and standalone (`vendor/bin/commandments
+ * …`) variants can never drift:
  *
  *  - `install-hooks` / `init` build the wiring with {@see self::build()}.
  *  - `sync` RE-ASSERTS it with {@see self::reassert()} on every package update,
@@ -31,6 +34,57 @@ final class ClaudeHooksInstaller
     public const STATUS_UNCHANGED = 'unchanged';
     public const STATUS_NO_SETTINGS = 'no_settings';
     public const STATUS_WRITE_FAILED = 'write_failed';
+
+    /**
+     * Our hook wiring + briefing live in the LOCAL settings file
+     * (`.claude/settings.local.json`) — gitignored, per-developer, never
+     * committed — NOT the shared/committed `settings.json`. Claude Code merges
+     * settings.local.json OVER settings.json, so the hooks/instructions are
+     * honoured identically while the consumer's checked-in settings.json stays
+     * ours-free. {@see self::migrateCommittedSettings()} moves a legacy
+     * consumer's entries out of the committed file on the next write.
+     */
+    public static function settingsFile(string $basePath): string
+    {
+        return rtrim($basePath, '/') . '/.claude/settings.local.json';
+    }
+
+    /** The committed settings file — only ever touched to migrate OUR entries OUT of it. */
+    public static function committedSettingsFile(string $basePath): string
+    {
+        return rtrim($basePath, '/') . '/.claude/settings.json';
+    }
+
+    /**
+     * Seed the `instructions` briefing into the LOCAL settings file, only when
+     * absent (idempotent). The profile switch that follows merges the hook
+     * wiring into the same file and preserves this block. Creates `.claude/`
+     * and the file as needed.
+     */
+    public static function seedInstructions(string $basePath, string $instructions): void
+    {
+        $file = self::settingsFile($basePath);
+        @mkdir(dirname($file), 0755, true);
+
+        $settings = is_file($file)
+            ? json_decode((string) @file_get_contents($file), true)
+            : [];
+
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+
+        if (isset($settings['instructions'])) {
+            return;
+        }
+
+        $settings['instructions'] = $instructions;
+        $json = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        if ($json !== false) {
+            @file_put_contents($file, $json . T_String::NEWLINE);
+        }
+    }
 
     /** The artisan runner: subcommands are colon-suffixed (`php artisan commandments:judge`). */
     public const ARTISAN = ['php artisan commandments', ':'];
@@ -61,7 +115,7 @@ final class ClaudeHooksInstaller
 
     /**
      * Scripts the package USED to ship but no longer does. Still recognised as
-     * package-owned so a stale settings.json entry pointing at one is STRIPPED on
+     * package-owned so a stale settings entry pointing at one is STRIPPED on
      * the next profile write (migration), and their files are deleted on disk —
      * but they are never installed. (The two keep-going hooks were unified into
      * the per-profile `stop-hook.sh` in v2.66 — issue #197.)
@@ -308,12 +362,12 @@ HOOK;
      * inject a reminder to re-read the commandments and resolve every sin.
      */
     /**
-     * The settings.json Stop-hook command. This entry is COMMITTED (settings.json is
-     * checked in), so it is inherited by every git worktree — and worktrees share it
-     * whether or not they opted into commandments. The guard makes it a NO-OP unless
-     * THIS worktree opted in (its own .commandments/profile, not 'disabled'), so a
-     * fresh worktree never runs the (possibly stale, committed) stop-hook.sh. It also
-     * resolves the worktree's OWN stop-hook.sh by $root, not a relative path.
+     * The Stop-hook command. It lives in the LOCAL settings.local.json (per
+     * working tree, gitignored), but a guard still earns its keep: it makes the
+     * hook a NO-OP unless THIS tree opted in (its own .commandments/profile, not
+     * 'disabled'), so a leftover settings.local.json in a disabled/transient tree
+     * never runs a stale stop-hook.sh. It also resolves the tree's OWN
+     * stop-hook.sh by $root, not a relative path.
      */
     public static function stopHookCommand(): string
     {
@@ -339,22 +393,29 @@ HOOK;
     }
 
     /**
-     * Re-assert our hooks into `$basePath/.claude/settings.json`, idempotently
-     * (new entries added, existing/hand-added ones preserved). Only acts when a
-     * settings.json already exists — a routine sync must not impose Claude hooks
-     * on a consumer that never opted into them; first-time wiring stays
-     * install-hooks/init's job. The runner is detected from the project, so the
-     * artisan and standalone entry points yield identical wiring.
+     * Re-assert our hooks into the LOCAL `$basePath/.claude/settings.local.json`,
+     * idempotently (new entries added, existing/hand-added ones preserved). Only
+     * acts when the consumer already has a .claude settings presence — committed
+     * `settings.json` (legacy, migrated out here) OR the local file — so a routine
+     * sync never imposes Claude hooks on a project that never opted in; first-time
+     * wiring stays install-hooks/init's job. The runner is detected from the
+     * project, so the artisan and standalone entry points yield identical wiring.
      */
     public static function reassert(string $basePath, bool $planLoop): string
     {
-        $file = rtrim($basePath, '/') . '/.claude/settings.json';
+        $migrated = self::migrateCommittedSettings($basePath);
 
-        if (! is_file($file)) {
+        $file = self::settingsFile($basePath);
+
+        // Opt-in signal: no committed settings.json AND no local file means the
+        // consumer never wired Claude hooks — leave them alone.
+        if (! $migrated && ! is_file($file) && ! is_file(self::committedSettingsFile($basePath))) {
             return self::STATUS_NO_SETTINGS;
         }
 
-        $settings = json_decode((string) @file_get_contents($file), true);
+        $settings = is_file($file)
+            ? json_decode((string) @file_get_contents($file), true)
+            : [];
 
         if (! is_array($settings)) {
             $settings = [];
@@ -363,7 +424,7 @@ HOOK;
         $before = $settings['hooks'] ?? [];
         $after = self::apply($before, $basePath, $planLoop);
 
-        if ($after === $before) {
+        if ($after === $before && is_file($file)) {
             return self::STATUS_UNCHANGED;
         }
 
@@ -412,16 +473,19 @@ HOOK;
     }
 
     /**
-     * Write the active profile's hooks into `$basePath/.claude/settings.json`,
-     * preserving consumer hooks. Creates the file for an active profile that owns
-     * hooks; for a profile that owns none (disabled), it edits an existing file to
-     * strip our entries but never CREATES one (a dormant package leaves no trace).
+     * Write the active profile's hooks into the LOCAL `$basePath/.claude/settings.local.json`
+     * (migrating any legacy committed entries out first), preserving consumer hooks.
+     * Creates the file for an active profile that owns hooks; for a profile that owns
+     * none (disabled), it edits an existing file to strip our entries but never
+     * CREATES one (a dormant package leaves no trace).
      *
      * @param  array{0: string, 1: string}  $runner  optional explicit runner; detected otherwise
      */
     public static function writeForProfile(string $basePath, ProfileOptions $opts, bool $planLoop): string
     {
-        $file = rtrim($basePath, '/') . '/.claude/settings.json';
+        self::migrateCommittedSettings($basePath);
+
+        $file = self::settingsFile($basePath);
         $runner = self::runnerFor($basePath);
         $ours = self::buildForProfile($runner[0], $runner[1], $opts, $planLoop);
 
@@ -468,6 +532,66 @@ HOOK;
         }
 
         return self::STATUS_INSTALLED;
+    }
+
+    /**
+     * Move our footprint OUT of the COMMITTED settings.json (the legacy
+     * location) so it stops being checked in and can't double-fire alongside
+     * the local copy. Strips package-owned hook entries and our seeded
+     * `instructions` block; a consumer's own hooks, other settings, and a
+     * hand-written `instructions` are preserved untouched. A no-op when there's
+     * nothing of ours there (so it stays quiet for fresh consumers). Returns
+     * whether the committed file was rewritten.
+     */
+    public static function migrateCommittedSettings(string $basePath): bool
+    {
+        $file = self::committedSettingsFile($basePath);
+
+        if (! is_file($file)) {
+            return false;
+        }
+
+        $settings = json_decode((string) @file_get_contents($file), true);
+
+        if (! is_array($settings)) {
+            return false;
+        }
+
+        $changed = false;
+
+        if (isset($settings['hooks']) && is_array($settings['hooks'])) {
+            $stripped = self::mergeOwned($settings['hooks'], []);
+
+            if ($stripped !== $settings['hooks']) {
+                if ($stripped === []) {
+                    unset($settings['hooks']);
+                } else {
+                    $settings['hooks'] = $stripped;
+                }
+
+                $changed = true;
+            }
+        }
+
+        if (isset($settings['instructions'])
+            && is_string($settings['instructions'])
+            && str_contains($settings['instructions'], 'Code Commandments')
+        ) {
+            unset($settings['instructions']);
+            $changed = true;
+        }
+
+        if (! $changed) {
+            return false;
+        }
+
+        $json = $settings === [] ? T_Json::emptyObject() : json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        if ($json === false) {
+            return false;
+        }
+
+        return @file_put_contents($file, $json . T_String::NEWLINE) !== false;
     }
 
     /**
@@ -542,12 +666,25 @@ HOOK;
         }
 
         foreach ([...self::OWNED_SCRIPTS, ...self::RETIRED_SCRIPTS] as $script) {
-            if (str_contains($command, $script)) {
+            if (self::commandInvokesScript($command, $script)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Whether $command runs $script as a FILENAME, not merely contains its text —
+     * the script must appear at a path/word boundary (after `/` or whitespace, or
+     * at the start). Without this, the retired `keep-going.sh` would false-match a
+     * consumer's own `grind-keep-going.sh` and migration would strip it.
+     */
+    private static function commandInvokesScript(string $command, string $script): bool
+    {
+        return str_starts_with($command, $script)
+            || str_contains($command, '/' . $script)
+            || str_contains($command, ' ' . $script);
     }
 
 }

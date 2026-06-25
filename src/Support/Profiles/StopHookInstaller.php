@@ -9,14 +9,14 @@ namespace JesseGall\CodeCommandments\Support\Profiles;
  * GENERATING its contents from the profile's {@see ProfileBehaviour} via
  * {@see StopHookBuilder} — the package ships no per-profile Stop stub.
  *
- * settings.json always wires `Stop -> sh .claude/hooks/stop-hook.sh` and NEVER
- * changes between active profiles — switching profiles just overwrites this one
- * file with the regenerated script, so there is no settings teardown. A profile
- * with no Stop hook (disabled) is removed by the caller.
+ * settings.local.json always wires `Stop -> sh .claude/hooks/stop-hook.sh` and
+ * NEVER changes between active profiles — switching profiles just overwrites this
+ * one file with the regenerated script, so there is no settings teardown. A
+ * profile with no Stop hook (disabled) is removed by the caller.
  */
 final class StopHookInstaller
 {
-    /** The fixed script settings.json points at, regardless of profile. */
+    /** The fixed script settings.local.json points at, regardless of profile. */
     public const INSTALLED_NAME = 'stop-hook.sh';
 
     public const STATUS_INSTALLED = 'installed';
