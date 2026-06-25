@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+# >>> code-commandments readme-autogen >>>
+"$(git rev-parse --show-toplevel)/scripts/pre-commit-readme.sh"
+# <<< code-commandments readme-autogen <<<
