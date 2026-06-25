@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Support\ConfigLoader;
 use JesseGall\CodeCommandments\Support\Environment;
 use JesseGall\CodeCommandments\Support\GitFileDetector;
 use JesseGall\CodeCommandments\Support\Profiles\JudgeScope;
+use JesseGall\CodeCommandments\Support\ScrollScope;
 use JesseGall\CodeCommandments\Support\RootCauseMap;
 use JesseGall\CodeCommandments\Support\Profiles\ProfileService;
 use JesseGall\CodeCommandments\Support\ProphetRegistry;
@@ -178,16 +179,41 @@ final class PilgrimageRunner
 
     /**
      * The frozen file list for a scope kind: branch/staged via git, full = the scroll.
+     * The git-derived sets are RESTRICTED to the scroll's scope (its `path`,
+     * `extensions`, `exclude`) — exactly as `judge --git/--staged`
+     * ({@see \JesseGall\CodeCommandments\Support\ScrollManager::judgeFiles()}) and
+     * the absolve/report resolvers do. Without this the walk would surface findings
+     * in files OUTSIDE the scroll (e.g. an excluded `tests/` tree) that the gate and
+     * the absolve/report resolvers can't see — wedging the agent on a finding it
+     * can neither fix in scope nor absolve.
      *
      * @return list<string>
      */
     private function filesForScopeKind(string $kind): array
     {
         return match ($kind) {
-            'staged' => GitFileDetector::for($this->basePath)->getStagedFiles(),
-            'branch' => GitFileDetector::for($this->basePath)->getBranchFiles(),
+            'staged' => $this->filterToScroll(GitFileDetector::for($this->basePath)->getStagedFiles()),
+            'branch' => $this->filterToScroll(GitFileDetector::for($this->basePath)->getBranchFiles()),
             default => $this->scopeFiles(),
         };
+    }
+
+    /**
+     * Keep only the files that fall within the active scroll's scope — its
+     * configured `path`, `extensions`, and `exclude` — via the single
+     * {@see ScrollScope} authority that `judge --git/--staged` and the
+     * absolve/report resolvers also use. So the walk, the push gate, and
+     * absolve/report all judge the SAME file set, and an excluded file can never
+     * be surfaced by the walk yet be unresolvable by absolve/report.
+     *
+     * @param  list<string>  $files
+     * @return list<string>
+     */
+    private function filterToScroll(array $files): array
+    {
+        $backend = $this->config['scrolls'][$this->scroll] ?? [];
+
+        return ScrollScope::fromConfig($this->basePath, $backend)->filter($files);
     }
 
     /**
