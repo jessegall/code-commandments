@@ -50,7 +50,14 @@ BODY = """## Skills — load before you work
 
 Code style in this package lives in the skills under `.claude/skills/`. Two tiers.
 
-**MANDATORY LOAD — load these FIVE at the start of every coding session, before you explore-to-plan or
+**Prefer cleaning up the code over laundering the problem.** When several call sites need fixing, fix them.
+Do NOT add a wrapper, constructor override, cast, or suppression that hides the smell internally just to
+avoid touching them — e.g. giving `ValueBag` a looser-key constructor that launders input to silence ~10
+type errors, instead of fixing those call sites. A shortcut that makes the code *pass* while growing it is
+the wrong move; the real fix touches the call sites — even when one is awkward to reach. This is
+`fix-at-the-source` applied as a work ethic.
+
+**MANDATORY LOAD — load these SIX at the start of every coding session, before you explore-to-plan or
 edit a single line** (via the Skill tool):
 
 - **`fix-at-the-source`** — the root-cause-first move: trace a value to where it's born, never patch the
@@ -61,9 +68,11 @@ edit a single line** (via the Skill tool):
   primitive obsession. (Decide the type; then `spatie-data` is how to write it.)
 - **`spatie-data`** — how to write and construct Spatie `Data` classes (this package is Data-class-heavy,
   so you will touch them).
+- **`laravel-idioms`** — typed request/bag access (never raw `->input()`/`->get()`), required constructor
+  DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods.
 - **`documentation`** — concise, present-tense docs; rare inline comments; never narrate the past.
 
-Do not start work without all three loaded.
+Do not start work without all of them loaded.
 
 **KEEP IN MIND — load the moment the work touches them:**
 
