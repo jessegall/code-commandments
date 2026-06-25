@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use FilesystemIterator;
 use PhpParser\Node;
+use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -100,6 +101,24 @@ final class Codebase
     }
 
     /**
+     * `#[Attr(...)]` usages, matched by short name or fully-qualified name.
+     */
+    public function whereAttribute(string $name): Query
+    {
+        $want = ltrim($name, '\\');
+
+        return new Query($this, static function (Node $node) use ($want): bool {
+            if (! $node instanceof Attribute) {
+                return false;
+            }
+
+            $resolved = $node->name->toString();
+
+            return $resolved === $want || self::shortName($resolved) === $want;
+        });
+    }
+
+    /**
      * Raw escape hatch: select nodes by your own predicate.
      *
      * @param  \Closure(Node): bool  $test
@@ -115,6 +134,13 @@ final class Codebase
     public function files(): array
     {
         return $this->files;
+    }
+
+    private static function shortName(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     private static function parse(string $code, string $path): ParsedFile

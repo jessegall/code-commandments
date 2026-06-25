@@ -1,0 +1,40 @@
+<?php
+
+namespace Shop\Legacy;
+
+use Shop\Models\Customer;
+
+/**
+ * This class is responsible for importing legacy orders from the old system.
+ * It was originally extracted from the monolith during the 2023 migration and
+ * has been refactored several times since. It reads the legacy CSV export, maps
+ * each row to a customer, and creates the order. Previously this logic lived in
+ * the OrderController but was moved here to keep controllers thin.
+ *
+ * TODO: remove once the legacy importer is fully decommissioned.
+ */
+final class LegacyOrderImporter
+{
+    // previously this returned an array, now it returns a Customer or null
+    public function findCustomer(string $email): ?Customer
+    {
+        // loop over all customers and find the matching one
+        return Customer::query()->where('email', $email)->first();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    public function import(array $rows): void
+    {
+        foreach ($rows as $row) {
+            $customer = $this->findCustomer($row['email'] ?? '');
+
+            // changed from update() to direct assignment in v2
+            if ($customer !== null) {
+                $customer->imported = true;
+                $customer->save();
+            }
+        }
+    }
+}
