@@ -45,7 +45,9 @@ class InstallHooksCommandTest extends TestCase
 
     public function test_install_hooks_creates_settings_file(): void
     {
-        $settingsFile = base_path('.claude/settings.json');
+        // Hooks live in the LOCAL (gitignored) settings.local.json, never the
+        // committed settings.json.
+        $settingsFile = base_path('.claude/settings.local.json');
 
         // Remove if exists
         if (file_exists($settingsFile)) {
@@ -92,8 +94,8 @@ class InstallHooksCommandTest extends TestCase
         $this->assertStringNotContainsString('## Code Commandments', file_get_contents($claudeMdPath));
         $this->assertStringNotContainsString(\JesseGall\CodeCommandments\Support\ClaudeMdInstaller::BEGIN, file_get_contents($claudeMdPath));
 
-        // The briefing instead lives in the session-start hook wiring.
-        $settings = json_decode((string) file_get_contents(base_path('.claude/settings.json')), true);
+        // The briefing instead lives in the session-start hook wiring (local file).
+        $settings = json_decode((string) file_get_contents(base_path('.claude/settings.local.json')), true);
         $this->assertArrayHasKey('SessionStart', $settings['hooks'] ?? []);
 
         // Cleanup

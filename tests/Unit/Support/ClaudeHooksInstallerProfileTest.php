@@ -118,7 +118,7 @@ class ClaudeHooksInstallerProfileTest extends TestCase
 
     private function settings(): array
     {
-        return json_decode((string) @file_get_contents($this->dir . '/.claude/settings.json'), true) ?: [];
+        return json_decode((string) @file_get_contents($this->dir . '/.claude/settings.local.json'), true) ?: [];
     }
 
     public function test_writeForProfile_creates_for_an_active_profile(): void
@@ -134,7 +134,7 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $status = ClaudeHooksInstaller::writeForProfile($this->dir, ProfileRegistry::get('disabled')->options(), false);
 
         $this->assertSame(ClaudeHooksInstaller::STATUS_NO_SETTINGS, $status);
-        $this->assertFileDoesNotExist($this->dir . '/.claude/settings.json');
+        $this->assertFileDoesNotExist($this->dir . '/.claude/settings.local.json');
     }
 
     public function test_writeForProfile_strips_a_retired_keep_going_stop_entry(): void
@@ -143,7 +143,7 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         // stale Stop entry pointing at the retired profile-keep-going.sh — it must
         // be stripped and replaced by the single stop-hook.sh, not left dangling.
         mkdir($this->dir . '/.claude', 0755, true);
-        file_put_contents($this->dir . '/.claude/settings.json', json_encode([
+        file_put_contents($this->dir . '/.claude/settings.local.json', json_encode([
             'hooks' => [
                 'Stop' => [
                     ['hooks' => [['type' => 'command', 'command' => 'sh .claude/hooks/profile-keep-going.sh']]],
@@ -160,32 +160,35 @@ class ClaudeHooksInstallerProfileTest extends TestCase
         $this->assertStringNotContainsString('keep-going.sh', $stop);
     }
 
-    public function test_writeForProfile_strips_owned_but_keeps_consumer_entries(): void
+    public function test_writeForProfile_migrates_our_entries_out_of_committed_settings_keeping_consumer_entries(): void
     {
+        // A legacy consumer had OUR hooks committed in settings.json alongside their
+        // own permission + SessionStart hook. The first profile write must MIGRATE
+        // our entries out of the committed file (so they stop being checked in /
+        // double-firing) while leaving every consumer key untouched — and (re)write
+        // our wiring to the local settings.local.json.
         mkdir($this->dir . '/.claude', 0755, true);
         file_put_contents($this->dir . '/.claude/settings.json', json_encode([
             'permissions' => ['allow' => ['Bash(ls)']],
             'hooks' => [
                 'SessionStart' => [
                     ['hooks' => [['type' => 'command', 'command' => 'echo mine']]],
+                    ['hooks' => [['type' => 'command', 'command' => 'vendor/bin/commandments scripture 2>/dev/null || true']]],
                 ],
             ],
         ]));
 
-        // Switch to phased (adds ours), then disabled (strips ours).
         ClaudeHooksInstaller::writeForProfile($this->dir, ProfileRegistry::get('phased')->options(), false);
-        ClaudeHooksInstaller::writeForProfile($this->dir, ProfileRegistry::get('disabled')->options(), false);
 
-        $settings = $this->settings();
-        // Consumer permission + their own SessionStart hook survive.
-        $this->assertArrayHasKey('permissions', $settings);
-        $commands = [];
-        foreach ($settings['hooks']['SessionStart'] ?? [] as $entry) {
-            foreach ($entry['hooks'] as $h) {
-                $commands[] = $h['command'];
-            }
-        }
-        $this->assertContains('echo mine', $commands);
-        $this->assertNotContains('vendor/bin/commandments scripture 2>/dev/null || true', $commands);
+        // Committed settings.json: consumer keys survive, OUR owned hook is gone.
+        $committed = json_decode((string) @file_get_contents($this->dir . '/.claude/settings.json'), true) ?: [];
+        $this->assertArrayHasKey('permissions', $committed);
+        $committedJson = json_encode($committed);
+        $this->assertStringContainsString('echo mine', $committedJson);
+        $this->assertStringNotContainsString('commandments scripture', $committedJson);
+
+        // Local settings.local.json: our wiring lives here now.
+        $this->assertArrayHasKey('SessionStart', $this->settings()['hooks'] ?? []);
+        $this->assertStringContainsString('commandments scripture', json_encode($this->settings()['hooks']));
     }
 }
