@@ -102,6 +102,34 @@ class PreferTypeCoalesceProphetTest extends TestCase
         $this->assertStringNotContainsString('?? []', $result->newContent);
     }
 
+    public function test_repent_adds_the_php_types_import_in_a_namespaced_file(): void
+    {
+        // The rewrite emits the SHORT name `T_Array::coalesce(...)`. In a namespaced
+        // file with no import that resolves to App\T_Array and fatals at runtime, so
+        // repent MUST add `use JesseGall\PhpTypes\T_Array;`.
+        $src = "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Catalog;\n\nclass C { public function h(?array \$x): array { return \$x ?? []; } }\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertTrue($result->absolved);
+        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T_Array;', $result->newContent);
+        $this->assertStringContainsString('T_Array::coalesce($x)', $result->newContent);
+        // Mixed types each get their own import.
+        $src2 = "<?php\n\nnamespace App\\X;\n\nclass C {\n public function a(?array \$x): array { return \$x ?? []; }\n public function b(?string \$s): string { return \$s ?? ''; }\n}\n";
+        $r2 = $this->prophet->repent('/y.php', $src2);
+        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T_Array;', $r2->newContent);
+        $this->assertStringContainsString('use JesseGall\\PhpTypes\\T_String;', $r2->newContent);
+    }
+
+    public function test_repent_does_not_duplicate_an_existing_php_types_import(): void
+    {
+        $src = "<?php\n\nnamespace App\\X;\n\nuse JesseGall\\PhpTypes\\T_Array;\n\nclass C { public function h(?array \$x): array { return \$x ?? T_Array::EMPTY; } }\n";
+
+        $result = $this->prophet->repent('/x.php', $src);
+
+        $this->assertSame(1, substr_count($result->newContent, 'use JesseGall\\PhpTypes\\T_Array;'));
+    }
+
     public function test_repent_rewrites_string_property(): void
     {
         $src = '<?php class C { private ?string $label = null; public function h(): string { return $this->label ?? ""; } }';

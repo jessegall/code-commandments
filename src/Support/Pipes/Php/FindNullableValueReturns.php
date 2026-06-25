@@ -84,6 +84,13 @@ final class FindNullableValueReturns implements Pipe
                     continue;
                 }
 
+                // A nullable LIST/array/collection's natural absence is the EMPTY
+                // value (`return []`), not Option::none() — that is PreferEmptyOverNull's
+                // domain. Don't push Option here (issue #221).
+                if ($this->returnsEmptyableValue($method)) {
+                    continue;
+                }
+
                 $typeInfo = $this->returnTypeInfo($method->returnType, $input->useStatements, $input->namespace);
                 $label = ($ownName !== null ? $ownName . '::' : T_String::empty()) . $method->name->toString() . '()';
                 $line = $method->getStartLine();
@@ -112,6 +119,82 @@ final class FindNullableValueReturns implements Pipe
         }
 
         return $input->with(matches: $matches);
+    }
+
+    /**
+     * Whether the method's non-null result is an EMPTYABLE type (array / list /
+     * iterable / a *Collection) — whose natural absence is the empty value, not
+     * Option::none(). Detected from the declared return type, the `@return`
+     * docblock, or array-literal returns. Such methods belong to
+     * PreferEmptyOverNull, so OptionDiscipline must not fire on them (issue #221).
+     */
+    private function returnsEmptyableValue(Stmt\ClassMethod $method): bool
+    {
+        if ($this->typeIsEmptyable($method->returnType)) {
+            return true;
+        }
+
+        $doc = $method->getDocComment()?->getText();
+
+        if ($doc !== null && preg_match('/@return\s+([^\s]+)/', $doc, $m) === 1) {
+            foreach (explode('|', $m[1]) as $part) {
+                $part = strtolower(trim($part));
+
+                if ($part === 'array' || $part === 'iterable' || str_starts_with($part, 'list<')
+                    || str_starts_with($part, 'array<') || str_starts_with($part, 'array{')
+                    || str_ends_with($part, '[]') || str_ends_with($part, 'collection')
+                    || str_ends_with($part, 'collection>')
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        // Every non-null return is an array literal.
+        $valueReturns = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($method->stmts ?? [], Stmt\Return_::class) as $ret) {
+            if ($ret->expr === null || $this->isNull($ret->expr)) {
+                continue;
+            }
+
+            $valueReturns[] = $ret->expr;
+        }
+
+        if ($valueReturns !== [] && array_reduce($valueReturns, fn (bool $c, Node\Expr $e): bool => $c && $e instanceof Node\Expr\Array_, true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function typeIsEmptyable(?Node $type): bool
+    {
+        if ($type instanceof Node\NullableType) {
+            return $this->typeIsEmptyable($type->type);
+        }
+
+        if ($type instanceof Node\UnionType || $type instanceof Node\IntersectionType) {
+            foreach ($type->types as $member) {
+                if ($this->typeIsEmptyable($member)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($type instanceof Node\Identifier) {
+            return in_array($type->toLowerString(), ['array', 'iterable'], true);
+        }
+
+        if ($type instanceof Node\Name) {
+            $short = strtolower($type->getLast());
+
+            return $short === 'collection' || str_ends_with($short, 'collection');
+        }
+
+        return false;
     }
 
     private function isExcluded(Stmt\ClassMethod $method): bool
