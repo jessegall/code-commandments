@@ -50,11 +50,13 @@ BODY = """## Skills — load before you work
 
 Code style in this package lives in the skills under `.claude/skills/`. Two tiers.
 
-**MANDATORY LOAD — load these FOUR at the start of every coding session, before you explore-to-plan or
+**MANDATORY LOAD — load these FIVE at the start of every coding session, before you explore-to-plan or
 edit a single line** (via the Skill tool):
 
 - **`fix-at-the-source`** — the root-cause-first move: trace a value to where it's born, never patch the
   symptom. Governs how every change is made.
+- **`guard-clauses-and-flow`** — validate preconditions at the TOP (early return/throw), flat body, happy
+  path last; never bury a check inline.
 - **`value-objects`** — give related data a type: no loose `array<string,mixed>` bags, no data clumps, no
   primitive obsession. (Decide the type; then `spatie-data` is how to write it.)
 - **`spatie-data`** — how to write and construct Spatie `Data` classes (this package is Data-class-heavy,
