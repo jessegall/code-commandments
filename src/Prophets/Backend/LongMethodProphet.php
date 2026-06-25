@@ -126,7 +126,11 @@ SCRIPTURE;
                     $maxLines
                 ),
                 null,
-                'Extract logic into smaller, well-named private methods or dedicated classes'
+                'Extract logic into smaller, well-named private methods or dedicated classes',
+                // Distinct symbol per method so two long methods in ONE file get
+                // distinct fingerprints — without it they collide and absolving one
+                // suppresses both (the other then reports "no live finding").
+                sprintf('%s::%s', $className, $methodName),
             );
         }
 
