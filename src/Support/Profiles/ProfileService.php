@@ -252,11 +252,13 @@ final class ProfileService
         // blocks). Quiet when already correct.
         (new CommitHookInstaller())->applyBlocks($this->basePath, $this->desiredBlocks($opts), $emit, $error);
 
-        // Claude hooks: refresh ONLY when the consumer already has a settings.json
-        // (a routine sync must not impose hooks on a project that never opted in).
-        if (is_file($this->basePath . '/.claude/settings.json')
+        // Claude hooks: refresh ONLY when the consumer already has a .claude
+        // settings file — committed (legacy, migrated out) OR local — so a routine
+        // sync never imposes hooks on a project that never opted in. The wiring is
+        // (re)written to the gitignored settings.local.json.
+        if ((is_file($this->basePath . '/.claude/settings.json') || is_file(ClaudeHooksInstaller::settingsFile($this->basePath)))
             && ClaudeHooksInstaller::writeForProfile($this->basePath, $opts, $this->planLoopEnabled()) === ClaudeHooksInstaller::STATUS_INSTALLED) {
-            $emit('Refreshed the Claude hook wiring in .claude/settings.json');
+            $emit('Refreshed the Claude hook wiring in .claude/settings.local.json');
         }
 
         // CLAUDE.md cleanup on update: briefing is hook-delivered now, so strip any
@@ -282,8 +284,8 @@ final class ProfileService
         (new CommitHookInstaller())->applyBlocks($this->basePath, $this->desiredBlocks($opts), $emit, $error);
 
         match (ClaudeHooksInstaller::writeForProfile($this->basePath, $opts, $this->planLoopEnabled())) {
-            ClaudeHooksInstaller::STATUS_INSTALLED => $emit('Updated .claude/settings.json hooks for this profile'),
-            ClaudeHooksInstaller::STATUS_WRITE_FAILED => $error('Failed to write .claude/settings.json — check permissions.'),
+            ClaudeHooksInstaller::STATUS_INSTALLED => $emit('Updated .claude/settings.local.json hooks for this profile'),
+            ClaudeHooksInstaller::STATUS_WRITE_FAILED => $error('Failed to write .claude/settings.local.json — check permissions.'),
             default => null,
         };
 

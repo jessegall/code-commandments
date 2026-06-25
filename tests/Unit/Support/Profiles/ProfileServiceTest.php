@@ -54,7 +54,7 @@ class ProfileServiceTest extends TestCase
 
     private function settingsEvents(): array
     {
-        $settings = json_decode((string) @file_get_contents($this->dir . '/.claude/settings.json'), true);
+        $settings = json_decode((string) @file_get_contents($this->dir . '/.claude/settings.local.json'), true);
 
         return is_array($settings) ? array_keys($settings['hooks'] ?? []) : [];
     }
@@ -137,7 +137,7 @@ class ProfileServiceTest extends TestCase
         $this->assertFileDoesNotExist($this->dir . '/.git/hooks/commit-msg');
         $this->assertStringNotContainsString(ClaudeMdInstaller::BEGIN, $this->claudeMd());
         $this->assertStringNotContainsString('## Code Commandments', $this->claudeMd());
-        // No package-owned hooks remain in settings.json.
+        // No package-owned hooks remain in settings.local.json.
         $this->assertSame([], $this->settingsEvents());
     }
 

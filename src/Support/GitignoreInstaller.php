@@ -38,6 +38,7 @@ final class GitignoreInstaller
         '.commandments/',
         '.commandments-reports.json',
         '.commandments-last-synced',
+        '.claude/settings.local.json', // our hook wiring + briefing live here — local, never commit
         '.claude/plan-active',
         '.claude/hooks/stop-hook.sh', // generated per profile — never commit
         'HANDOFF.md',

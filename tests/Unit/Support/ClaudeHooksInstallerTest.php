@@ -68,9 +68,12 @@ class ClaudeHooksInstallerTest extends TestCase
 
     public function test_reassert_adds_a_missing_hook_to_an_existing_settings_file(): void
     {
-        // Simulate an OLD consumer whose settings.json predates handoff-detect.
-        $file = $this->dir . '/.claude/settings.json';
-        file_put_contents($file, json_encode([
+        // Simulate an OLD consumer whose COMMITTED settings.json predates both the
+        // local-settings move and handoff-detect. reassert migrates our hooks OUT of
+        // the committed file and writes the current set to the LOCAL settings.local.json.
+        $committed = $this->dir . '/.claude/settings.json';
+        $local = $this->dir . '/.claude/settings.local.json';
+        file_put_contents($committed, json_encode([
             'hooks' => [
                 'SessionStart' => [
                     ['hooks' => [['type' => 'command', 'command' => 'vendor/bin/commandments scripture 2>/dev/null || true']]],
@@ -81,9 +84,12 @@ class ClaudeHooksInstallerTest extends TestCase
         $status = ClaudeHooksInstaller::reassert($this->dir, false);
         $this->assertSame(ClaudeHooksInstaller::STATUS_INSTALLED, $status);
 
-        $hooks = json_decode((string) file_get_contents($file), true)['hooks'];
-        $session = $this->commands($hooks, 'SessionStart');
-        // The new hook was added…
+        // Our hooks are GONE from the committed file (migrated out).
+        $committedHooks = json_decode((string) file_get_contents($committed), true)['hooks'] ?? [];
+        $this->assertNotContains('vendor/bin/commandments scripture 2>/dev/null || true', $this->commands($committedHooks, 'SessionStart'));
+
+        // The current set lives in the local file: the new hook was added…
+        $session = $this->commands(json_decode((string) file_get_contents($local), true)['hooks'], 'SessionStart');
         $this->assertContains('sh .claude/hooks/handoff-detect.sh 2>/dev/null || true', $session);
         // …without duplicating the pre-existing one.
         $this->assertSame(1, count(array_filter($session, fn ($c) => str_contains($c, 'scripture'))));
@@ -187,5 +193,36 @@ class ClaudeHooksInstallerTest extends TestCase
             ClaudeHooksInstaller::reassert($this->dir, false),
         );
         $this->assertFileDoesNotExist($this->dir . '/.claude/settings.json');
+        $this->assertFileDoesNotExist($this->dir . '/.claude/settings.local.json');
+    }
+
+    public function test_migrate_strips_our_entries_from_committed_keeping_consumer_entries(): void
+    {
+        // A consumer hook whose script name merely CONTAINS a retired one
+        // (grind-keep-going.sh vs the retired keep-going.sh) must NOT be mistaken
+        // for ours — only OUR runner/scripts are migrated out of the committed file.
+        $committed = $this->dir . '/.claude/settings.json';
+        file_put_contents($committed, json_encode([
+            'permissions' => ['allow' => ['Bash(ls)']],
+            'instructions' => 'This project uses Code Commandments to enforce coding standards.',
+            'hooks' => [
+                'SessionStart' => [
+                    ['hooks' => [['type' => 'command', 'command' => 'vendor/bin/commandments scripture 2>/dev/null || true']]],
+                ],
+                'Stop' => [
+                    ['hooks' => [['type' => 'command', 'command' => 'sh .claude/hooks/grind-keep-going.sh']]],
+                ],
+            ],
+        ]));
+
+        $this->assertTrue(ClaudeHooksInstaller::migrateCommittedSettings($this->dir));
+
+        $after = json_decode((string) file_get_contents($committed), true);
+        // Consumer keys + their look-alike hook survive.
+        $this->assertArrayHasKey('permissions', $after);
+        $this->assertSame('sh .claude/hooks/grind-keep-going.sh', $after['hooks']['Stop'][0]['hooks'][0]['command']);
+        // OUR runner hook + seeded instructions are gone.
+        $this->assertArrayNotHasKey('SessionStart', $after['hooks']);
+        $this->assertArrayNotHasKey('instructions', $after);
     }
 }

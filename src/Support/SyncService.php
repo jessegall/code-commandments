@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Support\Skills\SkillReporter;
 
 /**
  * The shared logic behind `sync`'s auto-refresh side-effects — scaffold, skills,
- * .gitignore, the handoff helper, the plan-loop scripts, the settings.json hook
+ * .gitignore, the handoff helper, the plan-loop scripts, the settings.local.json hook
  * wiring, and the CLAUDE.md section. ONE implementation both the artisan
  * {@see \JesseGall\CodeCommandments\Commands\SyncCommand} and the standalone
  * {@see \JesseGall\CodeCommandments\Console\SyncConsoleCommand} call, so there is
@@ -140,7 +140,7 @@ final class SyncService
         }
 
         // Future-proof a package update: RE-ENTER the active profile so every
-        // profile-owned hook (the stop-hook.sh contents, the settings.json
+        // profile-owned hook (the stop-hook.sh contents, the settings.local.json
         // wiring, the git gate) is regenerated from the just-updated package —
         // an old hook script can never linger across an update. Silent: this is
         // a refresh, not a user-initiated switch.
@@ -163,7 +163,7 @@ final class SyncService
     }
 
     /**
-     * Refresh ONLY the active profile's bundle (git hooks, settings.json wiring,
+     * Refresh ONLY the active profile's bundle (git hooks, settings.local.json wiring,
      * CLAUDE.md section) to the current package version — and persist the inferred
      * selection so a legacy consumer becomes an explicit `phased`. A `disabled`
      * consumer is a no-op that removes nothing; this is what stops a package update

@@ -240,9 +240,9 @@ final class ClaudeMdInstaller
     }
 
     /**
-     * The settings.json `instructions` block — the SAME content for both runners,
-     * centralized here so the artisan and standalone wirings can't diverge (audit
-     * #16 REPORT-IS-NOT-A-DODGE drift, #19 absolve-reason drift).
+     * The settings.local.json `instructions` block — the SAME content for both
+     * runners, centralized here so the artisan and standalone wirings can't diverge
+     * (audit #16 REPORT-IS-NOT-A-DODGE drift, #19 absolve-reason drift).
      *
      */
     public static function settingsInstructions(string $basePath): string

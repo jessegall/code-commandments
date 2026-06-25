@@ -413,9 +413,9 @@ php artisan commandments:install-hooks
 vendor/bin/commandments init
 ```
 
-Both commands create `.claude/settings.json` with hooks and a `CLAUDE.md` file. The standalone version uses `vendor/bin/commandments` instead of `php artisan`.
+Both commands write the hook wiring + briefing to `.claude/settings.local.json` — the **gitignored, per-developer** local settings file, never the committed `settings.json` — so your checked-in settings stay ours-free. (A legacy consumer whose hooks were committed in `settings.json` is migrated automatically on the next sync/profile write.) The standalone version uses `vendor/bin/commandments` instead of `php artisan`.
 
-Example hooks configuration:
+Example hooks configuration (in `.claude/settings.local.json`):
 
 ```json
 {
