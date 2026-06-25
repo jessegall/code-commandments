@@ -20,6 +20,7 @@ class SkillRegistryTest extends TestCase
     /** The backend subjects shipped (frontend/Vue is deferred). */
     private const EXPECTED_SLUGS = [
         'option',
+        'boundary-typing',
         'invariants',
         'registry',
         'set',
@@ -41,7 +42,7 @@ class SkillRegistryTest extends TestCase
     {
         $slugs = array_map(fn (Skill $s) => $s->slug, SkillRegistry::all());
 
-        $this->assertCount(16, $slugs, 'backend skills.');
+        $this->assertCount(17, $slugs, 'backend skills.');
         $this->assertSame(self::EXPECTED_SLUGS, $slugs, 'Catalogue slugs/order drifted from the spec.');
     }
 

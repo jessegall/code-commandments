@@ -38,6 +38,14 @@ final class SkillRegistry
                 ],
             ),
             new Skill(
+                slug: 'boundary-typing',
+                introducedIn: '3.14.0',
+                purpose: 'Type a value honestly at a deserialization / internal seam instead of punting it nullable / mixed / T|array / T|false / an empty-literal for downstream code to re-coerce: the assert-vs-make-nullable-vs-absolve decision for a required slot filled with `?? \'\'`, an all-nullable boundary DTO, a `?T` field the class\'s own rules() marks required, a `T|array` or `mixed` seam, a `T|false` found-or-not return, a null-guard on a non-nullable value, and a discriminated mixed-payload tagged-union. The BoundaryTyping discipline (TypeHonesty).',
+                prophets: [
+                    'TypeHonesty',
+                ],
+            ),
+            new Skill(
                 slug: 'invariants',
                 introducedIn: '2.5.0',
                 purpose: 'Distinguish genuine absence (model with Option) from an invariant violation (fail loud): closed-set match/default, every-caller-de-nulls means make it total, swallowed not-found, find/has/get + ...OrFail companions.',
