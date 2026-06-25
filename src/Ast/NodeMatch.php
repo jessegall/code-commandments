@@ -9,6 +9,8 @@ use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Function_;
 use PhpParser\NodeFinder;
 
 /**
@@ -70,6 +72,27 @@ final class NodeMatch
     public function enclosingFunction(): ?FunctionLike
     {
         return $this->walkUp(static fn (Node $node): bool => $node instanceof FunctionLike);
+    }
+
+    public function enclosingFunctionName(): ?string
+    {
+        $function = $this->enclosingFunction();
+
+        return ($function instanceof ClassMethod || $function instanceof Function_)
+            ? $function->name->toString()
+            : null;
+    }
+
+    /**
+     * The declaration this match sits in: `Class::method`, or `Class` when not
+     * inside a method.
+     */
+    public function scope(): string
+    {
+        $class = $this->enclosingClassName() ?? '(file)';
+        $method = $this->enclosingFunctionName();
+
+        return $method === null ? $class : "{$class}::{$method}";
     }
 
     /**
