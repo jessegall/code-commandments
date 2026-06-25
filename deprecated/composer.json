@@ -1,0 +1,79 @@
+{
+    "name": "jessegall/code-commandments",
+    "description": "A Laravel package for enforcing code commandments through prophets who judge and absolve transgressions",
+    "keywords": [
+        "laravel",
+        "code-quality",
+        "static-analysis",
+        "linting",
+        "commandments"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jesse Gall",
+            "email": "jessegall@example.com"
+        }
+    ],
+    "bin": [
+        "bin/commandments"
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/filesystem": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "jessegall/php-types": "^1.12.0",
+        "nikic/php-parser": "^5.0",
+        "symfony/console": "^6.0|^7.0|^8.0",
+        "symfony/finder": "^6.0|^7.0|^8.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0",
+        "spatie/laravel-data": "^4.23"
+    },
+    "scripts": {
+        "judge:self": "php bin/commandments judge -c commandments.self.php",
+        "judge:self:next": "php bin/commandments judge -c commandments.self.php --next",
+        "issues": "bash scripts/open-issues.sh",
+        "issues:new": "bash scripts/new-issues.sh",
+        "update-consumers": "bash scripts/update-consumers.sh",
+        "readme": "php scripts/generate-readme.php",
+        "readme:check": "php scripts/generate-readme.php --check",
+        "hints": "php scripts/generate-prophet-method-hints.php"
+    },
+    "scripts-descriptions": {
+        "judge:self": "Run the prophets against this package's own src/ (dogfooding).",
+        "judge:self:next": "Walk the package's own findings one at a time.",
+        "issues": "List every open issue (prophet-reports AND feature requests/bugs) WITH its body and all comments — the one command for triaging inbound issues; always read comments.",
+        "issues:new": "Show only NEW open issues since the last check (tracked in .commandments/seen-issues) with body+comments + the response protocol. Use `--seed` to baseline. Drive on a loop: /loop 5m composer issues:new.",
+        "update-consumers": "Run `composer require --dev jessegall/code-commandments` in each .env-registered consumer — that pins ^latest and fires the consumer's post-update sync (prophets/scaffold/skills/hooks/CLAUDE.md). Leaves changes uncommitted for you to review and push.",
+        "readme": "Regenerate the auto-generated README sections (prophet + command tables) from the source classes.",
+        "readme:check": "Fail if the auto-generated README sections are stale (run in the pre-commit hook / CI).",
+        "hints": "Regenerate the @method IntelliSense hints on each prophet from its config keys."
+    },
+    "autoload": {
+        "psr-4": {
+            "JesseGall\\CodeCommandments\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JesseGall\\CodeCommandments\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JesseGall\\CodeCommandments\\CodeCommandmentsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
