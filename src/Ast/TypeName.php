@@ -63,6 +63,26 @@ final class TypeName
         return null;
     }
 
+    /**
+     * Is the type a nullable `array` — `?array` or `array | null`?
+     */
+    public static function isNullableArray(?Node $type): bool
+    {
+        if ($type instanceof NullableType) {
+            return $type->type instanceof Identifier && $type->type->toString() === 'array';
+        }
+
+        if ($type instanceof UnionType && self::unionHasNull($type)) {
+            foreach ($type->types as $member) {
+                if ($member instanceof Identifier && $member->toString() === 'array') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private static function singleClassOfUnion(UnionType $type): ?string
     {
         $classes = [];

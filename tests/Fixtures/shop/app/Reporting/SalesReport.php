@@ -4,6 +4,7 @@ namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Detectors\Backend\ArrayReturnBagDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\NullableCollectionReturnDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Repositories\OrderRepository;
 
@@ -45,5 +46,20 @@ final class SalesReport
             'orders' => $this->orders->countSince($window),
             'revenue' => $this->orders->revenueSince($window),
         ];
+    }
+
+    /**
+     * @return array<int, int>|null
+     */
+    #[Sinful(NullableCollectionReturnDetector::class)]
+    public function topProductIds(int $limit): ?array
+    {
+        $ids = $this->orders->topProductIds($limit);
+
+        if ($ids === []) {
+            return null;
+        }
+
+        return $ids;
     }
 }
