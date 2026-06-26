@@ -33,6 +33,7 @@ use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\InterpolatedString;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
@@ -406,6 +407,22 @@ class AstNode
             || $this->isNull()
             || ($this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'false')
             || ($this->node instanceof Array_ && $this->node->items === []);
+    }
+
+    /**
+     * Is this a `throw new X("…message…")` — an exception built with a literal
+     * (or interpolated) message string at the throw site, rather than a named
+     * factory carrying domain values?
+     */
+    public function isThrownWithMessage(): bool
+    {
+        if (! $this->node instanceof New_ || ! $this->parent()->isThrow()) {
+            return false;
+        }
+
+        $args = $this->arguments();
+
+        return isset($args[0]) && ($args[0]->value instanceof String_ || $args[0]->value instanceof InterpolatedString);
     }
 
     /**
