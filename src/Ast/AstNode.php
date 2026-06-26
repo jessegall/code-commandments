@@ -268,6 +268,16 @@ class AstNode
     }
 
     /**
+     * Is this a function/method declared to return a nullable array (`?array` /
+     * `array | null`) — a collection modelled as "the list, or null"?
+     */
+    public function returnsNullableArray(): bool
+    {
+        return ($this->node instanceof ClassMethod || $this->node instanceof Function_)
+            && TypeName::isNullableArray($this->node->returnType);
+    }
+
+    /**
      * Is this a `match`/`switch` whose subject is `->value` — a backed enum
      * unwrapped to its scalar to be dispatched on (a homeless enum method)?
      * `value` is the language's enum accessor, not a guessed name.
