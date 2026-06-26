@@ -4,6 +4,7 @@ namespace Shop\Shipping;
 
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\MessageAtThrowDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Shipment;
 
@@ -15,6 +16,7 @@ final class TrackingFormatter
 {
     #[Sinful(InlineThrowDetector::class)]
     #[Sinful(GenericExceptionDetector::class)]
+    #[Sinful(MessageAtThrowDetector::class)]
     public function carrierName(Shipment $shipment): string
     {
         return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();

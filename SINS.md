@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 21 detectors shipping.**
+**Status: 22 detectors shipping.**
 
 ---
 
@@ -54,7 +54,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Sin | Status |
 |---|---|
 | `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type | ✅ `GenericExceptionDetector` |
-| Message string built at the throw site (no domain values / named factory) | ⬜ `MessageAtThrowDetector` |
+| Message string built at the throw site (no domain values / named factory) | ✅ `MessageAtThrowDetector` |
 | `catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow) | ✅ `SwallowCatchDetector` |
 | Wrapping a caught exception without passing it as `previous`/cause | ⬜ |
 
