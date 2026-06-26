@@ -36,6 +36,7 @@ use PhpParser\Node\Scalar\InterpolatedString;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassConst;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Do_;
@@ -447,6 +448,48 @@ class AstNode
         }
 
         return $paragraphs >= 2;
+    }
+
+    /**
+     * Is this a "const class" of scalars — a class whose entire body is scalar
+     * class constants (no methods, no properties)? A closed set of values hand-
+     * rolled as constants instead of a native backed enum.
+     */
+    public function isScalarConstClass(): bool
+    {
+        if (! $this->node instanceof Class_) {
+            return false;
+        }
+
+        $constants = 0;
+
+        foreach ($this->node->stmts as $stmt) {
+            if ($stmt instanceof ClassConst) {
+                foreach ($stmt->consts as $const) {
+                    if (! new self($const->value)->isScalarLiteral()) {
+                        return false;
+                    }
+
+                    $constants++;
+                }
+
+                continue;
+            }
+
+            return false; // a method, property, or anything else — not a pure const class
+        }
+
+        return $constants >= 2;
+    }
+
+    /**
+     * Is this a scalar literal — a string, int, or float?
+     */
+    public function isScalarLiteral(): bool
+    {
+        return $this->node instanceof String_
+            || $this->node instanceof Int_
+            || $this->node instanceof Float_;
     }
 
     /**
