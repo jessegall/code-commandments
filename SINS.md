@@ -41,6 +41,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Inline comment that just restates the code | ⬜ |
 | Multi-paragraph class docblock (class too big) | ✅ `BloatedDocblockDetector` |
 | Docblock not present-tense "what it is now" + tags | 〰️ |
+| Docblock that only restates the typed signature (`@param Type $x`, no description) | ✅ `CeremonyDocblockDetector` |
 
 ## enums-with-behaviour
 | Sin | Status |
@@ -49,6 +50,8 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Closed set as raw string literals / a `const` class of scalars (not a native enum) | ✅ `ConstClassEnumDetector` |
 | `match` over string literals that mirror an existing enum's cases | ✅ `StringMatchMirrorsEnumDetector` |
 | `match` `default` that returns `null`/`''`/`[]` instead of throwing | ✅ `MatchDefaultReturnsNullDetector` |
+| `in_array($x, [literals])` whose literals mirror an existing enum's cases | ✅ `InArrayMirrorsEnumDetector` |
+| `$x === Enum::A \|\| $x === Enum::B` — a hand-rolled case-group test | ✅ `EnumCaseOrChainDetector` |
 
 ## exceptions
 | Sin | Status |
@@ -72,6 +75,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | `if` nested 3-deep (a pyramid — hoist guards / extract) | ✅ `DeepNestingDetector` |
 | Loop body (multi-statement) wrapped in an `if` instead of `continue` guard | ✅ `LoopInvertedGuardDetector` |
 | `else` after an `if` branch that already returns/throws (redundant) | ✅ `RedundantElseDetector` |
+| Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) | ✅ `NestedTernaryDetector` |
 | Precondition checked inline/buried instead of an early guard at the top | 〰️ |
 
 ## laravel-idioms
@@ -113,6 +117,6 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | String-indexing (`$arr['key']`) a structured array param (an unborn type) | ✅ `ArrayBagDetector` |
 | Returning a multi-field string-keyed array literal (a bag that should be a value object) | ✅ `ArrayReturnBagDetector` |
 | Returning a raw decoded boundary array (`json_decode(...)`) untyped | ✅ `RawDecodedArrayReturnDetector` |
-| 3+ values threaded as separate params (a data clump → one object) | ⬜ `DataClumpDetector` |
+| 3+ values threaded as separate params (a data clump → one object) | ✅ `DataClumpDetector` |
 | A primitive carrying hidden rules/validation (primitive obsession) | ⬜ |
 | Type introduced downstream after the loose data has been threaded around | 〰️ (this is `fix-at-the-source` applied) |
