@@ -1,5 +1,19 @@
 # Guide for Claude / AI agents working in this repo
 
+> ## ⚠️ v4 rewrite in progress (branch `v4`)
+>
+> We are rebuilding code-commandments as **"a compiler for architecture"**: a
+> family of skills (`skills/` — the source-of-truth teaching layer) paired with
+> thin **Sin Detectors** (`src/Detectors/`) over a fluent AST engine (`src/Ast/`).
+> The old v3 prophet/scroll system described below this banner now lives in
+> `deprecated/` and is **reference only**.
+>
+> **📍 The roadmap is [`SINS.md`](SINS.md) — the single source of truth for which
+> sins each skill teaches and which have a detector.** Read it before adding a
+> detector, and **update it (flip the row to ✅) whenever one ships.** Coverage is
+> enforced by `tests/Detectors/FixtureDetectorTest` (every detector is marked in
+> the Shop fixture AND fires on ≥3 diverse scenarios). 15 detectors shipping.
+
 This is **code-commandments** — a static-analysis tool that judges PHP + frontend
 codebases against a configurable set of rules ("prophets"). It runs as both a
 Laravel artisan command and a standalone CLI.
