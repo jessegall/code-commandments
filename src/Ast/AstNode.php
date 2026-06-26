@@ -11,6 +11,7 @@ use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -25,6 +26,8 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\Scalar\Float_;
+use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -91,6 +94,37 @@ class AstNode
     public function isNull(): bool
     {
         return $this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'null';
+    }
+
+    /**
+     * Is this an empty/zero "fake" literal — `''`, `[]`, `0`, `0.0`, `false`?
+     * The kind of value manufactured to fill a slot when the real one is absent.
+     */
+    public function isEmptyLiteral(): bool
+    {
+        return match (true) {
+            $this->node instanceof String_ => $this->node->value === '',
+            $this->node instanceof Array_ => $this->node->items === [],
+            $this->node instanceof Int_ => $this->node->value === 0,
+            $this->node instanceof Float_ => $this->node->value === 0.0,
+            $this->node instanceof ConstFetch => $this->node->name->toLowerString() === 'false',
+            default => false,
+        };
+    }
+
+    /**
+     * Does this expression fill a call/constructor argument (seen through any
+     * surrounding casts, e.g. `foo(name: (int) ($x ?? 0))`)?
+     */
+    public function fillsArgument(): bool
+    {
+        $current = $this->parent();
+
+        while ($current->node instanceof Cast) {
+            $current = $current->parent();
+        }
+
+        return $current->node instanceof Arg;
     }
 
     /**

@@ -22,4 +22,22 @@ final class NotificationChannels
     {
         return $this->channels[$key] ?? null;
     }
+
+    public function has(string $key): bool
+    {
+        return isset($this->channels[$key]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function names(): array
+    {
+        return array_keys($this->channels);
+    }
+
+    public function flush(): void
+    {
+        $this->channels = [];
+    }
 }
