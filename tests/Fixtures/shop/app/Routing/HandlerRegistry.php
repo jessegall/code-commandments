@@ -31,9 +31,11 @@ final class HandlerRegistry
     public function for(string $event): ?callable
     {
         foreach ($this->aliases as $alias => $canonical) {
-            if ($alias === $event) {
-                $event = $canonical;
+            if ($alias !== $event) {
+                continue;
             }
+
+            $event = $canonical;
         }
 
         return $this->handlers[$event] ?? null;

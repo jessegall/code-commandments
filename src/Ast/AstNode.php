@@ -45,6 +45,7 @@ use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
+use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Switch_;
@@ -555,6 +556,31 @@ class AstNode
         return $this->node instanceof String_
             || $this->node instanceof Int_
             || $this->node instanceof Float_;
+    }
+
+    /**
+     * Is this an `if` that is the SOLE statement of its enclosing loop — the whole
+     * body wrapped in a condition instead of an inverted `continue` guard?
+     */
+    public function isSoleLoopBodyGuard(): bool
+    {
+        if (! $this->node instanceof If_ || $this->node->else !== null || $this->node->elseifs !== []) {
+            return false;
+        }
+
+        $loop = $this->parent()->node;
+
+        $body = match (true) {
+            $loop instanceof Foreach_, $loop instanceof For_, $loop instanceof While_ => $loop->stmts,
+            default => null,
+        };
+
+        // The whole loop body is this one `if` — and it buries real WORK (≥2
+        // statements), not a one-line filter-collect or a search `return`.
+        return $body !== null
+            && count($body) === 1
+            && $body[0] === $this->node
+            && count($this->node->stmts) >= 2;
     }
 
     /**
