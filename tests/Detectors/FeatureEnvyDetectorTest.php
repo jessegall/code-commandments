@@ -116,4 +116,40 @@ final class FeatureEnvyDetectorTest extends TestCase
 
         $this->assertSame([], (new FeatureEnvyDetector)->find(Codebase::fromString($code)));
     }
+
+    public function test_separates_orchestration_from_envy_by_collaborator_delegation(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        final class Report { public array $errors = []; public array $rows = []; }
+        // ORCHESTRATION, not envy: each element is handed to THIS object's own
+        // collaborator (console IO) — moving it onto Report would invert the dep.
+        final class Renderer {
+            public function render(Report $report): void {
+                if ($report->errors === []) {
+                    return;
+                }
+                foreach ($report->errors as $error) {
+                    $this->line('  - '.$error);
+                }
+            }
+            private function line(string $s): void {}
+        }
+        // ENVY: self-recursive walk of the object's own tree — belongs on Report.
+        final class Walker {
+            public function collect(Report $report, array &$out): void {
+                foreach ($report->rows as $row) {
+                    if ($report->errors === []) {
+                        $out[] = $row;
+                    }
+                    $this->collect($row, $out);
+                }
+            }
+        }
+        PHP;
+
+        $hits = (new FeatureEnvyDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['Walker::collect'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
 }

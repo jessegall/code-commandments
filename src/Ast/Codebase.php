@@ -265,6 +265,19 @@ final class Codebase
     }
 
     /**
+     * Is $class extended by any class in the codebase — i.e. a base, not a leaf?
+     * A class with subclasses cannot be `final`.
+     */
+    public function hasSubclass(?string $class): bool
+    {
+        if ($class === null) {
+            return false;
+        }
+
+        return in_array(ltrim($class, '\\'), $this->parentMap(), true);
+    }
+
+    /**
      * @return array<string, string>  child FQCN => parent FQCN
      */
     private function parentMap(): array
