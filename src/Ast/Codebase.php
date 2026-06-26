@@ -40,7 +40,17 @@ final class Codebase
     /** @var array<string, string>|null  child FQCN => parent FQCN */
     private ?array $parentMap = null;
 
+    private ?CodebaseIndex $index = null;
+
     private function __construct(private readonly array $files) {}
+
+    /**
+     * The call graph over these files (who calls what, receiver types). Built once.
+     */
+    public function index(): CodebaseIndex
+    {
+        return $this->index ??= new CodebaseIndex($this);
+    }
 
     /**
      * Parse every `.php` file under the given files/directories.
