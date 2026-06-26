@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 47 detectors shipping.**
+**Status: 48 detectors shipping.**
 
 Every cleanly + low-FP detectable sin now has a detector. The rows below still
 marked 🧠/〰️ were each evaluated against real consumer codebases (workflows,
@@ -114,6 +114,11 @@ false-positive side against. They stay skill-only until that changes.
 |---|---|
 | Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object: iterate its collection, query it (`array_reduce`/`in_array` over `$obj->coll()`, any chain depth), or read-then-mutate it | ✅ `FeatureEnvyDetector` (semantic, no name lists; `ChainResolver` follows nested objects; flat-scalar Strategies, mappers, polymorphic components & request boundaries exempt; orchestration — a loop handing each element to a `$this->` collaborator — exempt; mutation co-fires with `ModelMutationAtCallSite` — both real) |
 | Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator (`$this->registry->get($node->key)->reservedOutputNames`) | ✅ `KeyedLookupEnvyDetector` (`Support\LookupEnvy`: one owned param used only as a lookup key, returns a fact, fetch-and-read via a `$this` collaborator, no construction — the indirect form the direct checks miss) |
+
+## pass-the-object
+| Sin | Status |
+|---|---|
+| Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging; the caller should resolve once and pass the object | ✅ `ParamResolvedFromParamDetector` (`Support\ParamResolution`: container object param + scalar key param, single-key unpack captured into a local, and the container is a PURE ENCAPSULATOR — used nowhere but the unpack, else only cheap `$owner->prop` reads; enum/reflection containers & request boundaries exempt) |
 
 ## type-honesty
 | Sin | Status |
