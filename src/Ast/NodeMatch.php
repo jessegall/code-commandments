@@ -62,10 +62,14 @@ final class NodeMatch
     }
 
     /**
-     * The class/interface/trait/enum this match sits in, or null at file scope.
+     * The class/interface/trait/enum this match sits in (or is), or null at file scope.
      */
     public function enclosingClass(): ?ClassLike
     {
+        if ($this->node instanceof ClassLike) {
+            return $this->node;
+        }
+
         return $this->walkUp(static fn (Node $node): bool => $node instanceof ClassLike);
     }
 
@@ -84,10 +88,14 @@ final class NodeMatch
     }
 
     /**
-     * The function/method/closure this match sits in, or null at class/file scope.
+     * The function/method/closure this match sits in (or is), or null at class/file scope.
      */
     public function enclosingFunction(): ?FunctionLike
     {
+        if ($this->node instanceof FunctionLike) {
+            return $this->node;
+        }
+
         return $this->walkUp(static fn (Node $node): bool => $node instanceof FunctionLike);
     }
 

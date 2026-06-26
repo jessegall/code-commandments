@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
@@ -29,6 +31,8 @@ final class FixtureDetectorTest extends TestCase
             new ContainerReachDetector,
             new GenericExceptionDetector,
             new InlineThrowDetector,
+            new ArchaeologyCommentDetector,
+            new ConfigReadDetector,
         ];
 
         foreach (new FixtureVerifier()->verify($codebase, $detectors) as $result) {

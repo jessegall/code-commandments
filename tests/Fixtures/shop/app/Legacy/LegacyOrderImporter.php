@@ -2,6 +2,8 @@
 
 namespace Shop\Legacy;
 
+use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 
 /**
@@ -13,6 +15,7 @@ use Shop\Models\Customer;
  *
  * TODO: remove once the legacy importer is fully decommissioned.
  */
+#[Sinful(ArchaeologyCommentDetector::class)]
 final class LegacyOrderImporter
 {
     // previously this returned an array, now it returns a Customer or null
