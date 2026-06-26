@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_35 detectors across 11 skills._
+_36 detectors across 11 skills._
 
 ### `absence`
 
@@ -103,6 +103,7 @@ _35 detectors across 11 skills._
 | `IfElseLadderDetector` | An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch. |
 | `InlineThrowDetector` | A `?? throw` buried inside a larger expression — fed into a call or dereferenced on the same line instead of guarded at the top. |
 | `LoopInvertedGuardDetector` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
+| `NestedTernaryDetector` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
 | `RedundantElseDetector` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
 
 ### `laravel-idioms`

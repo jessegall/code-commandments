@@ -23,6 +23,7 @@ use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
 use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\Ternary;
 use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
@@ -579,6 +580,37 @@ class AstNode
         return $this->node instanceof String_
             || $this->node instanceof Int_
             || $this->node instanceof Float_;
+    }
+
+    /**
+     * Is this the OUTERMOST node of a nested ternary — a `?:` with another `?:` in
+     * its branches and no enclosing ternary of its own? Chained ternaries hide
+     * control flow in one unreadable expression; reach for `match`/guard clauses.
+     */
+    public function isOutermostNestedTernary(): bool
+    {
+        if (! $this->node instanceof Ternary) {
+            return false;
+        }
+
+        // Only the root of the chain is flagged, so one tree yields one finding.
+        $parent = $this->node->getAttribute('parent');
+
+        while ($parent instanceof Node && ! $parent instanceof FunctionLike) {
+            if ($parent instanceof Ternary) {
+                return false;
+            }
+
+            $parent = $parent->getAttribute('parent');
+        }
+
+        foreach ([$this->node->if, $this->node->else] as $branch) {
+            if ($branch instanceof Node && (new NodeFinder)->findInstanceOf($branch, Ternary::class) !== []) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
