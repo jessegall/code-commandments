@@ -595,6 +595,26 @@ class AstNode
     }
 
     /**
+     * Does this array literal have at least one value that is itself an array — a
+     * NESTED structure (a config / schema / payload tree) rather than a flat
+     * record of fields? Flat records are value-object candidates; trees are not.
+     */
+    public function hasNestedArrayValue(): bool
+    {
+        if (! $this->node instanceof Array_) {
+            return false;
+        }
+
+        foreach ($this->node->items as $item) {
+            if ($item instanceof ArrayItem && $item->value instanceof Array_) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Is this `$x['literal']` — an array indexed by a string-literal key?
      */
     public function arrayKeyIsString(): bool
