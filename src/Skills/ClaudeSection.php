@@ -28,17 +28,31 @@ final class ClaudeSection
         every architecture/style decision — read the relevant one (via the Skill tool)
         before writing or reviewing code.
 
-        **Leave it cleaner than you found it — the gentleman's duty.** When you touch a
-        file (or even read past a sin while working in it), fix it; do not excuse it as
-        "pre-existing baseline." Every finding on code you come across is yours to resolve
-        — or, if it is a genuine false positive, say so and why. Resolve, don't rationalise.
+        ### ⚠️ THE MOST IMPORTANT RULE — TRACE TO THE SOURCE
 
-        **Prefer cleaning up the code over laundering the problem.** When several call
-        sites need fixing, fix them. Do NOT add a wrapper, constructor override, cast, or
-        suppression that hides the smell internally just to avoid touching them. A shortcut
-        that makes the code *pass* while growing it is the wrong move; the real fix touches
-        the call sites — even when one is awkward to reach. This is `fix-at-the-source`
-        applied as a work ethic.
+        **Every sin has an origin. Fix it THERE, never where it surfaces.** A finding is a
+        symptom; before you change a line, trace upstream to where the bad value, missing
+        type, or wrong shape is BORN, and fix it at that origin. Then the symptom — and
+        usually several others you hadn't found — disappears on its own.
+
+        This is the rule the detectors exist to serve. Honour it on EVERY fix:
+
+        - Do NOT silence the symptom. A `?? default`, a cast, a null-check, a wrapper, a
+          constructor override, a try/catch, or removing a type to satisfy a detector is
+          laundering the problem, not solving it — and it grows the code while hiding the
+          smell. That is the wrong move even when the real fix is awkward to reach.
+        - Ask "where does this value/shape come from?" and walk back until you reach the
+          birthplace. Fix is at the birthplace. If the honest fix touches many call sites,
+          touch them — that breadth IS the bug surfacing, not a reason to wrap it.
+        - If a finding is a genuine false positive, say so and why. Never rationalise a
+          real one as "pre-existing baseline."
+
+        When in doubt, load `fix-at-the-source` and re-read it. It is the parent move
+        behind every other skill.
+
+        **Leave it cleaner than you found it — the gentleman's duty.** When you touch a
+        file (or even read past a sin while working in it), fix it at the source per the
+        rule above. Every finding on code you come across is yours to resolve.
 
         **MANDATORY LOAD — load these at the start of every coding session, before you
         explore-to-plan or edit a single line** (via the Skill tool):
