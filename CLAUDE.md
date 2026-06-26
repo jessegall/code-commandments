@@ -41,7 +41,7 @@ have a detector. Flip a row to ✅ when a detector ships.
 
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `commandments-sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. |
+| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B] [--git]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `commandments-sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--git` reports only sins in files changed/created in the working tree (the whole path is still parsed so cross-file detectors stay correct; only the output is scoped). |
 | `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `bin/commandments install` | Wire a consumer: composer sync hook + a `UserPromptSubmit` reminder of the cardinal rule + gitignore, then sync. Idempotent. |
