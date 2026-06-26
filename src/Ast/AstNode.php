@@ -10,6 +10,7 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\Node\Expr\BinaryOp\NotIdentical;
@@ -27,6 +28,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
@@ -137,6 +139,38 @@ class AstNode
             return ($parent->left === $this->node || $parent->right === $this->node)
                 && $other instanceof ConstFetch
                 && $other->name->toLowerString() === 'null';
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this expression's result de-nulled — directly ({@see isDeNulled}) OR via
+     * the variable it's assigned to (`$x = finder(); if ($x === null) …` / `$x?->`)
+     * somewhere in the same function? The everyday form of "every caller checks it".
+     */
+    public function resultIsDeNulled(): bool
+    {
+        if ($this->isDeNulled()) {
+            return true;
+        }
+
+        $parent = $this->parent()->node;
+
+        if (! $parent instanceof Assign || ! $parent->var instanceof Variable || ! is_string($parent->var->name)) {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf([$function], Variable::class) as $use) {
+            if ($use !== $parent->var && $use->name === $parent->var->name && new self($use)->isDeNulled()) {
+                return true;
+            }
         }
 
         return false;

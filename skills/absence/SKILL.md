@@ -38,6 +38,13 @@ Ask these **in order** and stop at the first yes.
    **`Option<T>`.** Construct with `Option::some()` / `Option::none()` / `Option::fromNullable()`; consume
    with `unwrapOr()` / `match()` / `map()` — branching on an Option is normal, that's how you use one.
 
+   **Option vs. a bare null — decide on *blast radius* (how far the value travels).** If the maybe-missing
+   value flows through more than one consumer, it is an **`Option`**: the absence rides *in the type* and
+   every consumer is forced to handle it — you can't thread a raw null outward and forget one site. If it
+   is a single **local lookup checked right where it's produced** (one caller, one `=== null`, done), a
+   bare `null` is honest — an `Option` there is ceremony. The smell the tools flag: a `?T` that *travels*
+   (every caller re-`=== null`s / `?->`s it). That null should have been a value, a throw, or an `Option`.
+
 4. **Is it a genuinely optional *input* the caller may omit?**
    An optional parameter or config value. → Prefer a **Null Object default** or a real default value in the
    signature over a nullable normalised in the body. A bare `?T $x = null` that the body immediately
