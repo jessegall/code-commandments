@@ -8,11 +8,14 @@ namespace JesseGall\CodeCommandments\Cli;
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
  * call to the consumer's composer `post-update-cmd` and `post-install-cmd` so the
  * skills + CLAUDE.md briefing refresh automatically on every `composer
- * update`/`install`, then runs an initial sync. Idempotent.
+ * update`/`install`, wires a `UserPromptSubmit` hook that re-injects the cardinal
+ * rule every turn, then runs an initial sync. Idempotent.
  */
 final class Install
 {
     private const string HOOK = '@php vendor/bin/commandments sync';
+
+    private const string REMIND_HOOK = 'php vendor/bin/commandments remind';
 
     public function run(array $args): int
     {
@@ -25,13 +28,59 @@ final class Install
         }
 
         $wired = $this->wireComposerScripts($composerPath);
+        $reminded = $this->wireReminderHook(getcwd() . '/.claude/settings.json');
         $this->ensureGitignored(getcwd() . '/.gitignore');
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"
             : "✓ composer hooks already wired.\n");
 
+        fwrite(STDOUT, $reminded
+            ? "✓ Wired the trace-to-the-source reminder into the UserPromptSubmit hook.\n"
+            : "✓ UserPromptSubmit reminder already wired.\n");
+
         return (new Sync)->run($args);
+    }
+
+    /**
+     * Register `commandments remind` as a `UserPromptSubmit` hook so the cardinal
+     * rule is re-injected on every turn. Idempotent; leaves any other hooks intact.
+     */
+    private function wireReminderHook(string $path): bool
+    {
+        /** @var array<string, mixed> $settings */
+        $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
+        $hooks = is_array($settings['hooks'] ?? null) ? $settings['hooks'] : [];
+        $prompts = is_array($hooks['UserPromptSubmit'] ?? null) ? $hooks['UserPromptSubmit'] : [];
+
+        if ($this->mentionsReminder($prompts)) {
+            return false;
+        }
+
+        $prompts[] = ['hooks' => [['type' => 'command', 'command' => self::REMIND_HOOK]]];
+        $hooks['UserPromptSubmit'] = $prompts;
+        $settings['hooks'] = $hooks;
+
+        @mkdir(dirname($path), 0755, true);
+        file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+
+        return true;
+    }
+
+    /**
+     * @param  list<mixed>  $groups
+     */
+    private function mentionsReminder(array $groups): bool
+    {
+        foreach ($groups as $group) {
+            foreach ((is_array($group) ? $group['hooks'] ?? [] : []) as $hook) {
+                if (is_array($hook) && str_contains((string) ($hook['command'] ?? ''), 'commandments remind')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
