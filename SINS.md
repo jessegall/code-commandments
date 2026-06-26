@@ -112,7 +112,7 @@ false-positive side against. They stay skill-only until that changes.
 ## tell-dont-ask
 | Sin | Status |
 |---|---|
-| Exiled behaviour / feature envy — a method that reaches through ONE other owned object's structure (loops its collection) to do work that belongs ON that object, accessing it more than its own state | ✅ `FeatureEnvyDetector` (semantic: iterates an owned param's collection, accessed more than `$this`, no construction, not a polymorphic contract method — flat-scalar policies/Strategies are exempt) |
+| Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object: iterate its collection, query it (`array_reduce`/`in_array` over `$obj->coll()`, any chain depth), or read-then-mutate it | ✅ `FeatureEnvyDetector` (semantic, no name lists; `ChainResolver` follows nested objects; flat-scalar Strategies, mappers, polymorphic components & request boundaries exempt; mutation co-fires with `ModelMutationAtCallSite` — both real) |
 
 ## spatie-data
 | Sin | Status |
