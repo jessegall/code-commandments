@@ -41,9 +41,16 @@ have a detector. Flip a row to ✅ when a detector ships.
 
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B]` | Scan a codebase; print sins grouped by the skill that fixes them. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. |
+| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `commandments-sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. |
+| `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
+
+**Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large
+tree), so judge ONCE, then work the generated `commandments-sins.md` line-by-line:
+read the section's skill, fix the sin at `file:line`, **delete that line**, repeat.
+Don't re-run judge between fixes — re-run only at the end to confirm (a clean run
+deletes the file).
 
 ## Conventions
 

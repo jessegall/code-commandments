@@ -51,8 +51,17 @@ final class ClaudeSection
 
         {$keepInMind}
 
-        Find sins with `vendor/bin/commandments judge src` (add `--skill=NAME` to scope to
-        one group); fix each at the source per its skill, then re-run until clean.
+        **Finding and fixing sins — the checklist workflow.** Run
+        `vendor/bin/commandments judge src` ONCE (add `--skill=NAME` to scope to one
+        group). A full scan is slow, so it writes the findings to a checklist file —
+        `commandments-sins.md` — and that file, not repeated scans, is how you work:
+
+        1. Open `commandments-sins.md`. Each line is one sin: `file:line`, the scope, and
+           the detector, grouped under the skill that teaches the fix.
+        2. Go top to bottom, ONE line at a time: read that section's skill, fix the sin at
+           the source, then **delete that line from the file.** Do not re-run judge between
+           fixes — the open checklist is your source of truth.
+        3. When the file is empty, run judge once more to confirm (a clean run deletes it).
         MD;
 
         return self::BEGIN . "\n" . $body . "\n" . self::END;
