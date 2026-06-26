@@ -19,6 +19,8 @@ that's fine — the engine parses, it does not load them.
 | **exceptions** — named factories | `*NotFoundException::for*`, `PaymentDeclinedException::forToken` | `new \RuntimeException("…")` in `PaymentProcessor::charge`, `new \LogicException("…")` in `RefundService::reasonFor` |
 | **value-objects** / **fix-at-the-source** — god-DTO | honest `OrderData`/`ProductData`/`CustomerData` | all-nullable `RawWebhookPayload` + `WebhookDecoder` re-validating it |
 | **value-objects** — primitive obsession | `Sku`, `Email`, `Money` value objects | raw string sku/email/amount threaded in `ProductImporter`/`CustomerService` |
+| **value-objects** — string-keyed bag return | typed DTOs / value objects | `PricingService::breakdown` (returns a `['subtotal'=>…,'tax'=>…,'total'=>…]` array literal), `InvoiceService::render` (string-indexes the bag) |
+| **value-objects** — raw decoded API surface | `CourierGateway::track` (wraps `json_decode` in `TrackingStatus::from(...)`) | `ParcelTracker::track` (returns `json_decode($body, true)` straight out of the boundary) |
 | **spatie-data** — `::from` not `new` | `OrderPresenter::present` (`::from`) | `OrderPresenter::legacyPresent` (`new`), `ProductImporter`, `OrderAssembler` |
 | **spatie-data** — no manual hydration / collect | `OrderData` w/ `#[DataCollectionOf]` | `OrderAssembler` (field-by-field + `new OrderLineData` in a loop) |
 | **enums-with-behaviour** | `OrderStatus::isTerminal/label`, `ProductCategory::taxRate` | `OrderPresenter::badge` (`match` on `->value` at the call site), `'pending'`/`'paid'` string literals in `OrderController`/`OrderService` |
