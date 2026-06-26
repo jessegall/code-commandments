@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 43 detectors shipping.**
+**Status: 44 detectors shipping.**
 
 Every cleanly + low-FP detectable sin now has a detector. The rows below still
 marked 🧠/〰️ were each evaluated against real consumer codebases (workflows,
@@ -129,6 +129,7 @@ false-positive side against. They stay skill-only until that changes.
 |---|---|
 | String-indexing (`$arr['key']`) a structured array param (an unborn type) | ✅ `ArrayBagDetector` |
 | Returning a multi-field string-keyed array literal (a bag that should be a value object) | ✅ `ArrayReturnBagDetector` |
+| Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` (also from a closure/arrow) — bundling independent values as a keyless list the caller destructures by position | ✅ `PositionalTupleReturnDetector` (≥3 items, ≥2 distinct variable roots; single-source projections/literal lists exempt) |
 | Returning a raw decoded boundary array (`json_decode(...)`) untyped | ✅ `RawDecodedArrayReturnDetector` |
 | 3+ values threaded as separate params (a data clump → one object) | ✅ `DataClumpDetector` |
 | A primitive carrying hidden rules/validation (primitive obsession) | 〰️ "this string has hidden rules" is a semantic judgement, not a structural fact — any heuristic (regex on a string, length checks) over-fires on ordinary primitives |

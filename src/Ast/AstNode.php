@@ -11,6 +11,7 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
@@ -288,6 +289,75 @@ class AstNode
     public function isReturnedValue(): bool
     {
         return $this->parent()->node instanceof Return_;
+    }
+
+    /**
+     * Is this expression the return value of a function — a `return <here>;` or the
+     * body of an arrow function (`fn () => <here>`), which returns implicitly?
+     */
+    public function isReturnExpression(): bool
+    {
+        $parent = $this->parent()->node;
+
+        return $parent instanceof Return_
+            || ($parent instanceof ArrowFunction && $parent->expr === $this->node);
+    }
+
+    /**
+     * Is this a POSITIONAL TUPLE — a keyless array literal of three-plus items that
+     * bundles two-or-more DISTINCT variables (`[$node, $key, $inputs, $outputs]`)?
+     * Several independent values smuggled as a list to dodge a value object; the
+     * caller must destructure by position, where order is unchecked and unnamed. A
+     * single-source projection (`[$row->a, $row->b, $row->c]` — one variable) or a
+     * list of literals is a collection, not a tuple, and is left alone.
+     */
+    public function isPositionalTuple(): bool
+    {
+        if (! $this->node instanceof Array_ || count($this->node->items) < 3) {
+            return false;
+        }
+
+        $variableRoots = [];
+
+        foreach ($this->node->items as $item) {
+            if (! $item instanceof ArrayItem || $item->key !== null) {
+                return false;
+            }
+
+            $root = self::variableRoot($item->value);
+
+            if ($root !== null) {
+                $variableRoots[$root] = true;
+            }
+        }
+
+        return count($variableRoots) >= 2;
+    }
+
+    /**
+     * The name of the variable an expression is ultimately rooted in (`$x`,
+     * `$x->a->b()`, `$x['k']` all root in `x`), or null when it isn't rooted in a
+     * variable (a literal, a static call, a free function call).
+     */
+    private static function variableRoot(Node $expr): ?string
+    {
+        while (true) {
+            if ($expr instanceof Variable) {
+                return is_string($expr->name) ? $expr->name : null;
+            }
+
+            if ($expr instanceof PropertyFetch
+                || $expr instanceof NullsafePropertyFetch
+                || $expr instanceof MethodCall
+                || $expr instanceof NullsafeMethodCall
+                || $expr instanceof ArrayDimFetch) {
+                $expr = $expr->var;
+
+                continue;
+            }
+
+            return null;
+        }
     }
 
     /**
