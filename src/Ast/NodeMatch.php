@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\NodeFinder;
 
@@ -67,6 +68,33 @@ final class NodeMatch extends AstNode
         }
 
         return $interactions;
+    }
+
+    /**
+     * Is this expression's result de-nulled — directly ({@see isDeNulled}), or via
+     * the variable it's assigned to anywhere in the function? The assigned-variable
+     * case is answered by tracing that variable: if any stop on its journey is a
+     * null guard, the result is being checked for absence downstream.
+     */
+    public function resultIsDeNulled(): bool
+    {
+        if ($this->isDeNulled()) {
+            return true;
+        }
+
+        $parent = $this->parent()->node;
+
+        if (! $parent instanceof Assign || ! $parent->var instanceof Variable) {
+            return false;
+        }
+
+        foreach (new self($parent->var, $this->file)->trace() as $interaction) {
+            if ($interaction->deNulls()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
