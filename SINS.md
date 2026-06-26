@@ -90,8 +90,8 @@ false-positive side against. They stay skill-only until that changes.
 | Sin | Status |
 |---|---|
 | Raw `->input()/->get()/->query()` on a Request | ✅ `RawRequestInputDetector` |
-| `app()`/`resolve()` reach inside a container-resolved class | ✅ `ContainerReachDetector` |
-| Laravel facade call (`Cache::`, `Log::`, `Mail::` …) | ✅ `FacadeCallDetector` |
+| `app()`/`resolve()` reach inside a container-resolved class | ✅ `ContainerReachDetector` (only a literal target — `app(Foo::class)`; `app($runtimeClassString)` is unresolvable by DI, so exempt) |
+| Laravel facade call (`Cache::`, `Log::`, `Mail::` …) | ✅ `FacadeCallDetector` (a `ServiceProvider` boot seam is exempt — wiring the framework through facades is its job) |
 | `config('…')` read inside a class | ✅ `ConfigReadDetector` |
 | `new <Service>` inside a class instead of constructor injection | 〰️ prototyped + dropped: "instantiated AND injected somewhere" is necessary-but-not-sufficient and over-fired badly (196 hits — value objects, `::for` factories, DTOs); no clean structural service-vs-value signal |
 | Untyped `->get()` on a Fluent/ValueBag (should be a typed accessor) | 🧠 needs receiver-type resolution to know the `->get()` target is a Fluent/ValueBag and not an unrelated collection |
@@ -112,7 +112,7 @@ false-positive side against. They stay skill-only until that changes.
 ## tell-dont-ask
 | Sin | Status |
 |---|---|
-| Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object: iterate its collection, query it (`array_reduce`/`in_array` over `$obj->coll()`, any chain depth), or read-then-mutate it | ✅ `FeatureEnvyDetector` (semantic, no name lists; `ChainResolver` follows nested objects; flat-scalar Strategies, mappers, polymorphic components & request boundaries exempt; mutation co-fires with `ModelMutationAtCallSite` — both real) |
+| Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object: iterate its collection, query it (`array_reduce`/`in_array` over `$obj->coll()`, any chain depth), or read-then-mutate it | ✅ `FeatureEnvyDetector` (semantic, no name lists; `ChainResolver` follows nested objects; flat-scalar Strategies, mappers, polymorphic components & request boundaries exempt; orchestration — a loop handing each element to a `$this->` collaborator — exempt; mutation co-fires with `ModelMutationAtCallSite` — both real) |
 | Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator (`$this->registry->get($node->key)->reservedOutputNames`) | ✅ `KeyedLookupEnvyDetector` (`Support\LookupEnvy`: one owned param used only as a lookup key, returns a fact, fetch-and-read via a `$this` collaborator, no construction — the indirect form the direct checks miss) |
 
 ## type-honesty
@@ -124,10 +124,10 @@ false-positive side against. They stay skill-only until that changes.
 ## spatie-data
 | Sin | Status |
 |---|---|
-| `new <Data subclass>` instead of `::from()` / a `fromX()` factory | ✅ `NewDataObjectDetector` |
+| `new <Data subclass>` instead of `::from()` / a `fromX()` factory | ✅ `NewDataObjectDetector` (only on a RICH class — casts, name maps, nested Data, `fromX()` — where `new` skips the pipeline; a plain scalar Data class is fine to `new`, via `Support\DataClassShape`) |
 | All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) | ✅ `AllNullableDataDetector` |
 | Collections hydrated with `::from()` in a loop instead of `#[DataCollectionOf]` + `::collect()` | ✅ `ManualHydrationLoopDetector` |
-| Data class not `final` / props not `readonly` promoted | ✅ `NonFinalDataDetector` (final; readonly TBD) |
+| Data class not `final` / props not `readonly` promoted | ✅ `NonFinalDataDetector` (final; readonly TBD — a morphable base that IS extended is exempt, since `final` + `extends` is fatal) |
 | `fromX()` object factory missing its `@method static static from(T)` (or the array shape wrongly documented) | 〰️ |
 | snake_case boundary without one class-level `#[MapInputName]` | 🧠 needs to know the boundary's input keys are snake_case (the wire shape), which isn't visible from the Data class declaration alone |
 

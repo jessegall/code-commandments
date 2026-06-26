@@ -196,10 +196,19 @@ final class FeatureEnvy
         // …AND operates on the object's internals — iterating its collection (a
         // query that belongs on it) or mutating its state (read-then-mutate, the
         // canonical DateTime->modify() form). Both are Move-Method candidates.
-        $operatesOnInternals = $this->traversesStructureOf($method, $param)
-            || $this->mutates($method, $param);
+        $iterates = $this->traversesStructureOf($method, $param);
+        $mutates = $this->mutates($method, $param);
 
-        return $operatesOnInternals ? $paramTypes[$param] : null;
+        // Orchestration, not envy: a loop over the owner's collection whose
+        // per-element work is handed to one of THIS object's own collaborators
+        // (console IO, an injected catalog) is the orchestrator doing its OWN job
+        // over a collection — moving the loop onto the owner would invert the
+        // dependency. Self-recursion doesn't count; that genuinely belongs there.
+        if ($iterates && ! $mutates && $this->delegatesElementToCollaborator($method, $param)) {
+            return null;
+        }
+
+        return $iterates || $mutates ? $paramTypes[$param] : null;
     }
 
     /**
@@ -246,6 +255,46 @@ final class FeatureEnvy
         foreach ((new NodeFinder)->findInstanceOf($method->stmts, Foreach_::class) as $loop) {
             if ($this->isMemberAccessOf($loop->expr, $param)) {
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * In a `foreach ($param->coll as $el)`, is each element $el handed to one of
+     * THIS object's own collaborators — `$this->collaborator($el, …)` — rather than
+     * worked on through its own data? That is orchestration (the owner of the loop
+     * does its job over the collection), not envy. A call to the enclosing method
+     * itself (recursion) is excluded: that genuinely belongs on the owner.
+     */
+    private function delegatesElementToCollaborator(ClassMethod $method, string $param): bool
+    {
+        $self = $method->name->toString();
+        $finder = new NodeFinder;
+
+        foreach ($finder->findInstanceOf($method->stmts, Foreach_::class) as $loop) {
+            if (! $this->isMemberAccessOf($loop->expr, $param)) {
+                continue;
+            }
+
+            $element = $loop->valueVar;
+
+            if (! $element instanceof Variable || ! is_string($element->name)) {
+                continue;
+            }
+
+            foreach ($finder->findInstanceOf($loop->stmts, MethodCall::class) as $call) {
+                if (! $call->var instanceof Variable || $call->var->name !== 'this'
+                    || ! $call->name instanceof Identifier || $call->name->toString() === $self) {
+                    continue;
+                }
+
+                foreach ($finder->findInstanceOf($call->args, Variable::class) as $arg) {
+                    if ($arg->name === $element->name) {
+                        return true;
+                    }
+                }
             }
         }
 

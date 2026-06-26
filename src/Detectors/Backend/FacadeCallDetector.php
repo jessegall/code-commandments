@@ -16,10 +16,16 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  *
  * The signal is the framework's own facade namespace, resolved from the file's
  * imports — not a hand-kept list of facade names.
+ *
+ * A `ServiceProvider` is exempt: wiring the framework at boot (routes, event
+ * listeners, bindings) through facades is the provider's sanctioned job, and a
+ * provider's `register()`/`boot()` has nothing to inject into.
  */
 final class FacadeCallDetector implements Detector
 {
     private const string FACADE_NAMESPACE = 'Illuminate\\Support\\Facades\\';
+
+    private const string SERVICE_PROVIDER = 'Illuminate\\Support\\ServiceProvider';
 
     public function skill(): string
     {
@@ -31,6 +37,7 @@ final class FacadeCallDetector implements Detector
         return $codebase
             ->whereStaticCall()
             ->where(static fn (AstNode $node): bool => str_starts_with($node->staticCallClass() ?? '', self::FACADE_NAMESPACE))
+            ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::SERVICE_PROVIDER))
             ->get();
     }
 }

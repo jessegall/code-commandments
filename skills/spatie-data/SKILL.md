@@ -49,8 +49,29 @@ $input = new InspectTraceInput($id, T_Int::ZERO, 10);                  // avoid 
 factories. `new` bypasses all of it and binds you to positional args. Routing construction through
 `::from()` keeps it uniform and mapped, and keeps the construction *shape* in the one documented place.
 
-**The one place `new` is right** — a **default value in a constructor signature**, exactly as the docs
-show. That is a default, not construction-from-input:
+**`new` is fine on a PLAIN data class.** The rule is about not *silently bypassing a pipeline*. If the
+class has no pipeline to bypass — only scalar/enum promoted props, no `#[WithCast]`/`#[WithCastable]`,
+no `#[MapInputName]`/`#[MapName]`, no `#[DataCollectionOf]`, no nested `Data` prop, no `casts()`, no
+`fromX()` factory — then `::from()` and `new` do exactly the same thing, and `new` (with named args) is
+honest and clearer:
+
+```php
+final class TagData extends Data {            // plain: scalars only
+    public function __construct(public string $id, public string $label) {}
+}
+$tag = new TagData(id: $id, label: $label);   // fine — nothing for ::from() to map or cast
+```
+
+The sin is `new` on a **rich** class — one that *does* carry casts, name maps, nested Data, or a magic
+factory — where the raw `new` quietly skips that work:
+
+```php
+$money = MoneyData::from(['cents' => $c]);    // good — runs the #[WithCast]
+$money = new MoneyData($c);                   // sin — skips the cast the class declares
+```
+
+**The other place `new` is always right** — a **default value in a constructor signature**, even on a rich
+class. That is a default, not construction-from-input:
 
 ```php
 public function __construct(
