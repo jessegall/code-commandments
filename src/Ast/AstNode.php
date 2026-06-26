@@ -11,10 +11,12 @@ use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\Cast;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -776,6 +778,74 @@ class AstNode
         }
 
         return $literals;
+    }
+
+    /**
+     * If this node is the OUTERMOST `||` chain, the class FQCN that two-or-more of
+     * its `===`/`!==` operands compare against (`$x === Foo::A || $x === Foo::B`).
+     * Returns null when the chain isn't a same-class constant membership test. The
+     * caller decides whether that class is a backed enum worth a group method.
+     */
+    public function orChainComparedClass(): ?string
+    {
+        if (! $this->node instanceof BooleanOr) {
+            return null;
+        }
+
+        if ($this->node->getAttribute('parent') instanceof BooleanOr) {
+            return null;
+        }
+
+        $counts = [];
+
+        foreach ($this->flattenOr($this->node) as $operand) {
+            $class = self::comparedConstClass($operand);
+
+            if ($class !== null) {
+                $counts[$class] = ($counts[$class] ?? 0) + 1;
+            }
+        }
+
+        foreach ($counts as $class => $count) {
+            if ($count >= 2) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<Node>
+     */
+    private function flattenOr(BooleanOr $node): array
+    {
+        $operands = [];
+
+        foreach ([$node->left, $node->right] as $side) {
+            if ($side instanceof BooleanOr) {
+                $operands = array_merge($operands, $this->flattenOr($side));
+            } else {
+                $operands[] = $side;
+            }
+        }
+
+        return $operands;
+    }
+
+    private static function comparedConstClass(Node $operand): ?string
+    {
+        if (! $operand instanceof Identical && ! $operand instanceof NotIdentical) {
+            return null;
+        }
+
+        foreach ([$operand->left, $operand->right] as $side) {
+            if ($side instanceof ClassConstFetch && $side->class instanceof Name) {
+                return $side->class->toString();
+            }
+        }
+
+        return null;
     }
 
     private static function scalarLiteral(Node $expr): ?string
