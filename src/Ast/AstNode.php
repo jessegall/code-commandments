@@ -30,10 +30,12 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Catch_;
+use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_;
@@ -288,6 +290,38 @@ class AstNode
         }
 
         return $count;
+    }
+
+    /**
+     * For a class declaration: does its constructor promote at least one property
+     * and is EVERY promoted property optional (nullable or defaulted)? An all-
+     * optional record whose type tells no truth about what's actually required.
+     */
+    public function everyConstructorParamOptional(): bool
+    {
+        if (! $this->node instanceof Class_) {
+            return false;
+        }
+
+        $constructor = $this->node->getMethod('__construct');
+
+        if ($constructor === null) {
+            return false;
+        }
+
+        $promoted = array_filter($constructor->params, static fn (Param $param): bool => $param->flags !== 0);
+
+        if ($promoted === []) {
+            return false;
+        }
+
+        foreach ($promoted as $param) {
+            if ($param->default === null && ! TypeName::isNullable($param->type)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
