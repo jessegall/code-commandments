@@ -37,6 +37,10 @@
             "JesseGall\\CodeCommandments\\Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "readme": "@php scripts/generate-readme.php",
+        "judge": "@php bin/commandments judge"
+    },
     "config": {
         "sort-packages": true
     },
