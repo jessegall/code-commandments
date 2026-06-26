@@ -3,6 +3,7 @@
 namespace Shop\Legacy;
 
 use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\ManufacturedFakeFillDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 
@@ -28,6 +29,7 @@ final class LegacyOrderImporter
     /**
      * @param  array<int, array<string, mixed>>  $rows
      */
+    #[Sinful(ManufacturedFakeFillDetector::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {
