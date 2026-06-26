@@ -4,11 +4,13 @@ namespace Shop\Services;
 
 use Illuminate\Support\Facades\Mail;
 use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class NotificationService
 {
     #[Sinful(ConfigReadDetector::class)]
+    #[Sinful(FacadeCallDetector::class)]
     public function notify(string $email, string $type): void
     {
         $template = config('shop.templates.' . $type);
