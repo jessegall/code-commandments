@@ -26,6 +26,7 @@ use JesseGall\CodeCommandments\Cli\Judge;
         Usage:
           commandments judge [path] [--skill=NAME] [--detector=NAME]
           commandments judge --list
+          commandments sync     # publish skills + refresh the CLAUDE.md briefing
 
         Options:
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
@@ -41,11 +42,13 @@ use JesseGall\CodeCommandments\Cli\Judge;
         exit(0);
     }
 
-    if ($command !== 'judge') {
-        fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
+    exit(match ($command) {
+        'judge' => (new Judge)->run($args),
+        'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
+        default => (static function () use ($command): int {
+            fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
 
-        exit(2);
-    }
-
-    exit((new Judge)->run($args));
+            return 2;
+        })(),
+    });
 })($argv);
