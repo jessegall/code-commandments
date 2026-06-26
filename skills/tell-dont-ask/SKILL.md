@@ -116,6 +116,38 @@ hand**. Two traps that aren't fixes, just relocations:
 - **Adding a thin forwarder** on a collaborator that just re-exposes another object's data. If the object you
   were given (`$node`) can answer it — directly or by delegating to its own descriptor once — that is the home.
 
+```php
+// Bad — keyed-lookup envy: the node is a key into the registry's internals
+final class ReservedOutputNames
+{
+    public function __construct(private readonly NodeDescriptorRegistry $registry) {}
+
+    public function isReserved(WorkflowNode $node, string $name): bool
+    {
+        $names = $this->registry->has($node->key)            // has()?get() dance, reaching in
+            ? $this->registry->get($node->key)->reservedOutputNames
+            : [];
+        return in_array($name, $names, true);
+    }
+}
+```
+
+```php
+// Good — the fact lives on the descriptor (the data owner); the caller resolves it
+// ONCE as an Option, then TELLS it. No registry query, no has()?get().
+final class NodeDescriptor
+{
+    public function isReservedOutputName(string $name): bool
+    {
+        return in_array($name, $this->reservedOutputNames, true);
+    }
+}
+
+// at the one call site that has the node:
+$descriptor = $this->descriptors->tryDescriptorForNode(new NodeContext($node));   // Option<NodeDescriptor>
+$reserved   = $descriptor->map(fn (NodeDescriptor $d) => $d->isReservedOutputName($name))->unwrapOr(false);
+```
+
 ## What is NOT this sin
 
 The boundaries matter — over-applying this turns every collaborator call into a false alarm.
