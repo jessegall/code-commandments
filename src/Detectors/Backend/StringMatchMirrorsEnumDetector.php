@@ -32,28 +32,7 @@ final class StringMatchMirrorsEnumDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->armConditionLiterals() !== [])
             ->reject(static fn (AstNode $node): bool => $node->isMatchOnEnumValue())
-            ->where(static fn (AstNode $node): bool => self::mirrorsAnEnum($node->armConditionLiterals(), $enums))
+            ->where(static fn (AstNode $node): bool => Enums::mirroredBy($node->armConditionLiterals(), $enums))
             ->get();
-    }
-
-    /**
-     * @param  list<string>  $literals
-     * @param  array<string, list<string>>  $enums
-     */
-    private static function mirrorsAnEnum(array $literals, array $enums): bool
-    {
-        $literals = array_unique($literals);
-
-        if (count($literals) < 2) {
-            return false;
-        }
-
-        foreach ($enums as $cases) {
-            if (array_diff($literals, $cases) === []) {
-                return true; // every arm literal is a case of this enum
-            }
-        }
-
-        return false;
     }
 }

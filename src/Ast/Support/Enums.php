@@ -56,6 +56,30 @@ final class Enums
         return $map;
     }
 
+    /**
+     * Do these two-plus literals all belong to a single backed enum's cases — i.e.
+     * are they an enum's values spelled out as loose strings/ints?
+     *
+     * @param  list<string>  $literals
+     * @param  array<string, list<string>>  $casesByEnum
+     */
+    public static function mirroredBy(array $literals, array $casesByEnum): bool
+    {
+        $literals = array_unique($literals);
+
+        if (count($literals) < 2) {
+            return false;
+        }
+
+        foreach ($casesByEnum as $cases) {
+            if (array_diff($literals, $cases) === []) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function literal(object $expr): ?string
     {
         return match (true) {
