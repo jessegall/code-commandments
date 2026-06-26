@@ -10,12 +10,17 @@ use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
- * `commandments judge [path] [--skill=NAME] [--detector=NAME] [--list]`
+ * `commandments judge [path] [--skill=NAME] [--detector=NAME] [--git] [--list]`
  *
  * Scans a path, runs the Sin Detectors, and prints each finding as
  * `file:line  Class::method`, grouped by the SKILL that teaches the fix — so an
  * agent can read one skill and resolve the whole group. Filter to a skill (group)
  * or a single detector to scope a fixing pass.
+ *
+ * `--git` reports ONLY sins in files changed or created in the working tree (git
+ * diff vs HEAD + untracked). The whole path is still parsed — cross-file detectors
+ * need the full type/class graph to be correct — but only findings that land in a
+ * touched file are shown, so you judge just what you're working on.
  *
  * By default it also writes a Markdown checklist (`commandments-sins.md`) — the
  * intended workflow is to judge ONCE, then work that file line-by-line (a full
@@ -49,15 +54,37 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options['path'], $detectors, $options['exclude'], $options['checklist']);
+        return $this->judge($options['path'], $detectors, $options['exclude'], $options['checklist'], $options['git']);
     }
 
     /**
      * @param  list<Detector>  $detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, array $detectors, array $exclude, ?string $checklist): int
+    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, bool $git): int
     {
+        $changed = null;
+
+        if ($git) {
+            $changed = $this->gitChangedFiles($path);
+
+            if ($changed === null) {
+                fwrite(STDERR, "Not a git repository (or git unavailable): {$path}\n");
+
+                return 2;
+            }
+
+            if ($changed === []) {
+                if ($checklist !== null && is_file($checklist)) {
+                    @unlink($checklist);
+                }
+
+                $this->line("\033[32m✓ No changed files to judge.\033[0m");
+
+                return 0;
+            }
+        }
+
         $codebase = Codebase::scan($path);
 
         /** @var array<string, list<array{detector: string, match: NodeMatch}>> $bySkill */
@@ -66,6 +93,10 @@ final class Judge
         foreach ($detectors as $detector) {
             foreach ($detector->find($codebase) as $match) {
                 if ($this->isExcluded($match->file->path, $exclude)) {
+                    continue;
+                }
+
+                if ($changed !== null && ! $this->isChanged($match->file->path, $changed)) {
                     continue;
                 }
 
@@ -173,7 +204,7 @@ final class Judge
     }
 
     /**
-     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>, checklist: ?string}
+     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>, checklist: ?string, git: bool}
      */
     private function parse(array $args): array
     {
@@ -181,6 +212,7 @@ final class Judge
         $skill = null;
         $detector = null;
         $list = false;
+        $git = false;
         $exclude = [];
 
         // By default the findings are written to a checklist file the agent prunes
@@ -190,6 +222,8 @@ final class Judge
         foreach ($args as $arg) {
             if ($arg === '--list') {
                 $list = true;
+            } elseif ($arg === '--git') {
+                $git = true;
             } elseif ($arg === '--no-checklist') {
                 $checklist = null;
             } elseif (str_starts_with($arg, '--checklist=')) {
@@ -205,7 +239,58 @@ final class Judge
             }
         }
 
-        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude, 'checklist' => $checklist];
+        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude, 'checklist' => $checklist, 'git' => $git];
+    }
+
+    /**
+     * The files changed or created in the working tree, as a set of absolute paths:
+     * tracked changes vs HEAD plus untracked files (deletions excluded). Returns the
+     * empty set in a clean repo, or null when $path is not inside a git repository.
+     *
+     * @return array<string, true>|null
+     */
+    private function gitChangedFiles(string $path): ?array
+    {
+        $dir = is_dir($path) ? $path : dirname($path);
+        $root = trim((string) @shell_exec('git -C ' . escapeshellarg($dir) . ' rev-parse --show-toplevel 2>/dev/null'));
+
+        if ($root === '') {
+            return null;
+        }
+
+        $tracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' diff --name-only --diff-filter=d HEAD 2>/dev/null');
+        $untracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' ls-files --others --exclude-standard 2>/dev/null');
+
+        $set = [];
+
+        foreach (preg_split('/\R/', $tracked . "\n" . $untracked) ?: [] as $relative) {
+            $relative = trim($relative);
+
+            if ($relative === '' || ! str_ends_with($relative, '.php')) {
+                continue;
+            }
+
+            $absolute = realpath($root . '/' . $relative);
+
+            if ($absolute !== false) {
+                $set[$absolute] = true;
+            }
+        }
+
+        return $set;
+    }
+
+    /**
+     * Is a finding's file one of the git-changed files? Compared by absolute path,
+     * since scanned paths are relative to the judged directory.
+     *
+     * @param  array<string, true>  $changed
+     */
+    private function isChanged(string $file, array $changed): bool
+    {
+        $absolute = realpath($file);
+
+        return $absolute !== false && isset($changed[$absolute]);
     }
 
     /**
