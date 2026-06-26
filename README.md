@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_28 detectors across 11 skills._
+_29 detectors across 11 skills._
 
 ### `absence`
 
@@ -98,6 +98,7 @@ _28 detectors across 11 skills._
 | Detector | What it flags |
 |---|---|
 | `InlineThrowDetector` | A `?? throw` buried inside a larger expression — fed into a call or dereferenced on the same line instead of guarded at the top. |
+| `LoopInvertedGuardDetector` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
 
 ### `laravel-idioms`
 
