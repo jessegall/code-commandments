@@ -2,6 +2,8 @@
 
 namespace Shop\Checkout;
 
+use JesseGall\CodeCommandments\Detectors\Backend\ArrayReturnBagDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Repositories\OrderRepository;
 
 /**
@@ -14,6 +16,7 @@ final class PricingService
     /**
      * @return array<string, int>
      */
+    #[Sinful(ArrayReturnBagDetector::class)]
     public function breakdown(int $orderId): array
     {
         $subtotal = $this->orders->findOrFail($orderId)->total_cents;
