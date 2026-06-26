@@ -19,6 +19,9 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class Judge
 {
+    /** @var array<string, bool> */
+    private array $generated = [];
+
     public function run(array $args): int
     {
         $options = $this->parse($args);
@@ -41,13 +44,14 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options['path'], $detectors);
+        return $this->judge($options['path'], $detectors, $options['exclude']);
     }
 
     /**
      * @param  list<Detector>  $detectors
+     * @param  list<string>  $exclude
      */
-    private function judge(string $path, array $detectors): int
+    private function judge(string $path, array $detectors, array $exclude): int
     {
         $codebase = Codebase::scan($path);
 
@@ -56,6 +60,10 @@ final class Judge
 
         foreach ($detectors as $detector) {
             foreach ($detector->find($codebase) as $match) {
+                if ($this->isExcluded($match->file->path, $exclude)) {
+                    continue;
+                }
+
                 $bySkill[$detector->skill()][] = ['detector' => $this->shortName($detector), 'match' => $match];
             }
         }
@@ -123,7 +131,7 @@ final class Judge
     }
 
     /**
-     * @return array{path: string, skill: ?string, detector: ?string, list: bool}
+     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>}
      */
     private function parse(array $args): array
     {
@@ -131,6 +139,7 @@ final class Judge
         $skill = null;
         $detector = null;
         $list = false;
+        $exclude = [];
 
         foreach ($args as $arg) {
             if ($arg === '--list') {
@@ -139,12 +148,32 @@ final class Judge
                 $skill = substr($arg, 8);
             } elseif (str_starts_with($arg, '--detector=')) {
                 $detector = substr($arg, 11);
+            } elseif (str_starts_with($arg, '--exclude=')) {
+                $exclude = array_values(array_filter(explode(',', substr($arg, 10))));
             } elseif (! str_starts_with($arg, '--')) {
                 $path = $arg;
             }
         }
 
-        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list];
+        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude];
+    }
+
+    /**
+     * Generated code (`@code-commandments-generated`) is regenerated, not hand-
+     * authored, so fixing a finding there is futile — it's skipped. So is any path
+     * matching a `--exclude` fragment.
+     *
+     * @param  list<string>  $exclude
+     */
+    private function isExcluded(string $path, array $exclude): bool
+    {
+        foreach ($exclude as $fragment) {
+            if ($fragment !== '' && str_contains($path, $fragment)) {
+                return true;
+            }
+        }
+
+        return $this->generated[$path] ??= str_contains((string) @file_get_contents($path), '@code-commandments-generated');
     }
 
     private function shortName(Detector $detector): string
