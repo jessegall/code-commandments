@@ -189,6 +189,14 @@ class AstNode
     }
 
     /**
+     * Is this a concrete class declaration that is NOT `final`?
+     */
+    public function isNonFinalClass(): bool
+    {
+        return $this->node instanceof Class_ && ! $this->node->isFinal() && ! $this->node->isAbstract();
+    }
+
+    /**
      * Is this node the left-hand side of an assignment (`$this = …`)?
      */
     public function isAssignmentTarget(): bool
