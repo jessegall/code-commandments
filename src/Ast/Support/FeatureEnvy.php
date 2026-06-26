@@ -130,6 +130,14 @@ final class FeatureEnvy
     }
 
     /**
+     * Is this method feature envy — should it move onto the object it operates on?
+     */
+    public function isEnviedOwner(AstNode $match): bool
+    {
+        return $this->enviedOwner($match) !== null;
+    }
+
+    /**
      * The FQCN of the object this method is envious of, or null when it isn't.
      */
     public function enviedOwner(AstNode $match): ?string
