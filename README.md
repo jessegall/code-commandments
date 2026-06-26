@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_37 detectors across 11 skills._
+_38 detectors across 11 skills._
 
 ### `absence`
 
@@ -69,6 +69,7 @@ _37 detectors across 11 skills._
 |---|---|
 | `ArchaeologyCommentDetector` | A comment that narrates the code's past — `// previously...`, `// changed from...`, `// now it returns...`. |
 | `BloatedDocblockDetector` | A class whose docblock runs to multiple paragraphs. |
+| `CeremonyDocblockDetector` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
 
 ### `enums-with-behaviour`
 

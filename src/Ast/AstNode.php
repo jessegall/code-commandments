@@ -30,9 +30,11 @@ use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\UnionType;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
@@ -543,6 +545,80 @@ class AstNode
     }
 
     /**
+     * Does this function/method carry a "ceremony" docblock — one with NO prose
+     * summary whose every tag merely restates the typed signature (`@param Type
+     * $x` with no description, on an already-typed param; an optional bare
+     * `@return Type`)? Such a block is pure noise the signature already says. A
+     * description, a generic/shape refinement (`<`, `{`, `|`), or any other tag
+     * (`@throws`, `@deprecated`, …) means it earns its keep and is left alone.
+     */
+    public function hasCeremonyDocblock(): bool
+    {
+        if (! $this->node instanceof ClassMethod && ! $this->node instanceof Function_) {
+            return false;
+        }
+
+        $doc = $this->node->getDocComment();
+
+        if ($doc === null) {
+            return false;
+        }
+
+        $nativeTypes = [];
+
+        foreach ($this->node->params as $param) {
+            $type = self::typeToString($param->type);
+
+            if ($type !== null && $param->var instanceof Variable && is_string($param->var->name)) {
+                $nativeTypes[$param->var->name] = $type;
+            }
+        }
+
+        $nativeReturn = self::typeToString($this->node->getReturnType());
+
+        $restatements = 0;
+
+        foreach (preg_split('/\R/', $doc->getText()) ?: [] as $line) {
+            $line = trim(ltrim(trim($line), '/*'));
+
+            if ($line === '') {
+                continue;
+            }
+
+            if (! str_starts_with($line, '@')) {
+                return false; // a prose summary — real documentation.
+            }
+
+            if (preg_match('/^@param\s+(\S+)\s+\$(\w+)\s*(.*)$/', $line, $m) === 1) {
+                $name = $m[2];
+
+                // Only a pure restatement: a description or a doc-type that differs
+                // at all from the native type (a refinement like `T`, `Foo[]`,
+                // `array<…>`) means the tag adds information and earns its keep.
+                if (trim($m[3]) !== '' || ! isset($nativeTypes[$name]) || self::typeKey($m[1]) !== $nativeTypes[$name]) {
+                    return false;
+                }
+
+                $restatements++;
+
+                continue;
+            }
+
+            if (preg_match('/^@return\s+(\S+)\s*(.*)$/', $line, $m) === 1) {
+                if (trim($m[2]) !== '' || $nativeReturn === null || self::typeKey($m[1]) !== $nativeReturn) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            return false; // any other tag (@throws, @deprecated, @see, …) earns its keep.
+        }
+
+        return $restatements >= 1;
+    }
+
+    /**
      * Is this a "const class" of scalars — a class whose entire body is scalar
      * class constants (no methods, no properties)? A closed set of values hand-
      * rolled as constants instead of a native backed enum.
@@ -846,6 +922,51 @@ class AstNode
         }
 
         return null;
+    }
+
+    /**
+     * Render a native type declaration to a normalised key (lowercased, leading
+     * `?` and `\` stripped, union members sorted) so it can be compared against a
+     * docblock type. Returns null when there is no native type.
+     */
+    private static function typeToString(?Node $type): ?string
+    {
+        if ($type === null) {
+            return null;
+        }
+
+        if ($type instanceof NullableType) {
+            $inner = self::typeToString($type->type);
+
+            return $inner === null ? null : self::typeKey('?' . $inner);
+        }
+
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
+            $glue = $type instanceof UnionType ? '|' : '&';
+            $parts = array_map(static fn (Node $part): string => (string) self::typeToString($part), $type->types);
+
+            return self::typeKey(implode($glue, $parts));
+        }
+
+        if ($type instanceof Name || $type instanceof Identifier) {
+            return self::typeKey($type->toString());
+        }
+
+        return null;
+    }
+
+    private static function typeKey(string $type): string
+    {
+        $type = strtolower(ltrim($type, '?\\'));
+        $type = str_replace('null|', '', str_replace('|null', '', $type));
+
+        if (str_contains($type, '|')) {
+            $parts = array_filter(array_map(static fn (string $p): string => ltrim($p, '\\'), explode('|', $type)));
+            sort($parts);
+            $type = implode('|', $parts);
+        }
+
+        return $type;
     }
 
     private static function scalarLiteral(Node $expr): ?string
