@@ -31,6 +31,7 @@ final class ArrayReturnBagDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->stringKeyCount() >= 2)
             ->where(static fn (AstNode $node): bool => $node->isReturnedValue())
+            ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
             ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::FORM_REQUEST))
             ->get();
     }
