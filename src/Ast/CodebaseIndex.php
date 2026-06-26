@@ -5,10 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
-use PhpParser\Node;
-use PhpParser\Node\Expr\MethodCall;
-use PhpParser\Node\Expr\NullsafeMethodCall;
-use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
 
@@ -50,27 +46,20 @@ final class CodebaseIndex
 
     /**
      * Every call site `->$method(...)` whose receiver resolves to $fqcn (or a
-     * subclass of it).
+     * subclass of it). Calls are found through the engine's own `whereMethod`
+     * selector, then narrowed by the resolved receiver type.
      *
      * @return list<NodeMatch>
      */
     public function callersOf(string $fqcn, string $method): array
     {
         $callers = [];
-        $finder = new NodeFinder;
 
-        foreach ($this->codebase->files() as $file) {
-            $calls = $finder->find($file->ast, static fn (Node $node): bool =>
-                ($node instanceof MethodCall || $node instanceof NullsafeMethodCall)
-                && $node->name instanceof Identifier
-                && $node->name->toString() === $method);
+        foreach ($this->codebase->whereMethod($method)->get() as $call) {
+            $receiver = ReceiverResolver::typeOf($call);
 
-            foreach ($calls as $call) {
-                $receiver = ReceiverResolver::typeOf(new NodeMatch($call, $file));
-
-                if ($receiver !== null && ($receiver === $fqcn || $this->codebase->extends($receiver, $fqcn))) {
-                    $callers[] = new NodeMatch($call, $file);
-                }
+            if ($receiver !== null && ($receiver === $fqcn || $this->codebase->extends($receiver, $fqcn))) {
+                $callers[] = $call;
             }
         }
 
