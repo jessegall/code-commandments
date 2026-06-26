@@ -23,7 +23,7 @@ final class ConfigReadDetector implements Detector
     {
         return $codebase
             ->whereFunction('config')
-            ->where(static fn (AstNode $node): bool => $node->enclosingClassName() !== null)
+            ->where(static fn (AstNode $node): bool => $node->isEnclosedInClass())
             ->get();
     }
 }

@@ -17,7 +17,9 @@ use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
+use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\UnionType;
+use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
@@ -35,6 +37,9 @@ final class Codebase
     /**
      * @param  list<ParsedFile>  $files
      */
+    /** @var array<string, string>|null  child FQCN => parent FQCN */
+    private ?array $parentMap = null;
+
     private function __construct(private readonly array $files) {}
 
     /**
@@ -177,6 +182,56 @@ final class Codebase
     public function files(): array
     {
         return $this->files;
+    }
+
+    /**
+     * Does $class extend $parent (directly or transitively) within the codebase?
+     */
+    public function extends(?string $class, string $parent): bool
+    {
+        if ($class === null) {
+            return false;
+        }
+
+        $class = ltrim($class, '\\');
+        $parent = ltrim($parent, '\\');
+        $parents = $this->parentMap();
+        $seen = [];
+
+        while (isset($parents[$class]) && ! isset($seen[$class])) {
+            $seen[$class] = true;
+            $class = $parents[$class];
+
+            if ($class === $parent) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<string, string>  child FQCN => parent FQCN
+     */
+    private function parentMap(): array
+    {
+        if ($this->parentMap !== null) {
+            return $this->parentMap;
+        }
+
+        $map = [];
+        $finder = new NodeFinder;
+
+        foreach ($this->files as $file) {
+            foreach ($finder->find($file->ast, static fn (Node $node): bool => $node instanceof Class_) as $class) {
+                /** @var Class_ $class */
+                if ($class->extends instanceof Name && ($class->namespacedName ?? null) !== null) {
+                    $map[$class->namespacedName->toString()] = $class->extends->toString();
+                }
+            }
+        }
+
+        return $this->parentMap = $map;
     }
 
     private static function typeContains(?Node $type, string $want): bool

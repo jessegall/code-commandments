@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\FixtureVerifier;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,7 @@ final class FixtureDetectorTest extends TestCase
             new InlineThrowDetector,
             new ArchaeologyCommentDetector,
             new ConfigReadDetector,
+            new NewDataObjectDetector,
         ];
 
         foreach (new FixtureVerifier()->verify($codebase, $detectors) as $result) {
