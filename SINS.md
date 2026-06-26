@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 27 detectors shipping.**
+**Status: 28 detectors shipping.**
 
 ---
 
@@ -100,7 +100,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | `new <Data subclass>` instead of `::from()` / a `fromX()` factory | ✅ `NewDataObjectDetector` |
 | All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) | ✅ `AllNullableDataDetector` |
 | Collections hydrated with `::from()` in a loop instead of `#[DataCollectionOf]` + `::collect()` | ✅ `ManualHydrationLoopDetector` |
-| Data class not `final` / props not `readonly` promoted | ⬜ |
+| Data class not `final` / props not `readonly` promoted | ✅ `NonFinalDataDetector` (final; readonly TBD) |
 | `fromX()` object factory missing its `@method static static from(T)` (or the array shape wrongly documented) | 〰️ |
 | snake_case boundary without one class-level `#[MapInputName]` | ⬜ |
 
