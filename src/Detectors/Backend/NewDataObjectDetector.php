@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
-use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
@@ -23,10 +22,6 @@ final class NewDataObjectDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase
-            ->whereNew()
-            ->reject(static fn (AstNode $node): bool => $node->newClassName() === null)
-            ->where(static fn (AstNode $node): bool => $codebase->extends($node->newClassName(), self::DATA))
-            ->get();
+        return $codebase->whereNewExtending(self::DATA)->get();
     }
 }
