@@ -147,6 +147,27 @@ class AstNode
     }
 
     /**
+     * Classify what happens to a variable AT THIS occurrence — written, passed,
+     * called on, null-checked, returned… The per-stop verdict behind {@see trace}.
+     */
+    public function interactionKind(): InteractionKind
+    {
+        $parent = $this->parent()->node;
+
+        return match (true) {
+            $parent instanceof Assign && $parent->var === $this->node => InteractionKind::Assigned,
+            ($parent instanceof Identical || $parent instanceof NotIdentical) && $this->isDeNulled() => InteractionKind::NullChecked,
+            $parent instanceof Coalesce && $parent->left === $this->node => InteractionKind::Coalesced,
+            ($parent instanceof NullsafeMethodCall || $parent instanceof NullsafePropertyFetch) && $parent->var === $this->node => InteractionKind::Nullsafe,
+            $this->isReturnedValue() => InteractionKind::Returned,
+            $this->isCallReceiver() => InteractionKind::MethodCall,
+            $parent instanceof PropertyFetch && $parent->var === $this->node => InteractionKind::PropertyFetch,
+            $this->isCallArgument() => InteractionKind::Argument,
+            default => InteractionKind::Read,
+        };
+    }
+
+    /**
      * Is this expression's result de-nulled — directly ({@see isDeNulled}) OR via
      * the variable it's assigned to (`$x = finder(); if ($x === null) …` / `$x?->`)
      * somewhere in the same function? The everyday form of "every caller checks it".
