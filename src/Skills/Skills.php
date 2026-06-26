@@ -28,6 +28,7 @@ final class Skills
             new Skill('exceptions', 'throwing or catching: named `::for()` factory exceptions, never swallow a failure.', Tier::KeepInMind),
             new Skill('enums-with-behaviour', 'a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site).', Tier::KeepInMind),
             new Skill('role-vocabulary', 'a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract.', Tier::KeepInMind),
+            new Skill('tell-dont-ask', "behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`\$node->edges()`, not `EdgeDetector::detect(\$node)`). A Strategy over flat scalar fields is the exception.", Tier::KeepInMind),
             new Skill('concurrent-state', 'state shared across requests/workers (`::for($id): Concurrent<self>`).', Tier::KeepInMind),
         ];
     }
