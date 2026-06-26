@@ -18,6 +18,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
@@ -47,6 +48,9 @@ final class Codebase
      */
     /** @var array<string, string>|null  child FQCN => parent FQCN */
     private ?array $parentMap = null;
+
+    /** @var list<string>|null  every enum FQCN in the codebase */
+    private ?array $enumNames = null;
 
     private ?CodebaseIndex $index = null;
 
@@ -262,6 +266,42 @@ final class Codebase
         }
 
         return false;
+    }
+
+    /**
+     * Is $class declared as an enum in the codebase? An enum is a behaviour-bearing
+     * value, not a container to resolve from.
+     */
+    public function isEnum(?string $class): bool
+    {
+        if ($class === null) {
+            return false;
+        }
+
+        return in_array(ltrim($class, '\\'), $this->enumNames(), true);
+    }
+
+    /**
+     * @return list<string>  every enum FQCN declared in the codebase
+     */
+    private function enumNames(): array
+    {
+        if ($this->enumNames !== null) {
+            return $this->enumNames;
+        }
+
+        $names = [];
+        $finder = new NodeFinder;
+
+        foreach ($this->files as $file) {
+            foreach ($finder->findInstanceOf($file->ast, Enum_::class) as $enum) {
+                if (($enum->namespacedName ?? null) !== null) {
+                    $names[] = $enum->namespacedName->toString();
+                }
+            }
+        }
+
+        return $this->enumNames = $names;
     }
 
     /**

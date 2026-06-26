@@ -30,6 +30,7 @@ final class Skills
             new Skill('role-vocabulary', 'a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract.', Tier::KeepInMind),
             new Skill('tell-dont-ask', "behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`\$node->edges()`, not `EdgeDetector::detect(\$node)`). A Strategy over flat scalar fields is the exception.", Tier::KeepInMind),
             new Skill('type-honesty', "a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`.", Tier::KeepInMind),
+            new Skill('pass-the-object', "demand the resolved type you need, not an id plus its container: a method that takes `(Workflow \$workflow, string \$nodeId)` then unpacks `\$workflow->graph->nodeById(\$nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure).", Tier::KeepInMind),
             new Skill('concurrent-state', 'state shared across requests/workers (`::for($id): Concurrent<self>`).', Tier::KeepInMind),
         ];
     }
