@@ -603,6 +603,48 @@ class AstNode
     }
 
     /**
+     * The string/int literals used as `match`/`switch` arm conditions — e.g.
+     * `'pending'`, `'paid'` in `match ($x) { 'pending' => …, 'paid' => … }`.
+     *
+     * @return list<string>
+     */
+    public function armConditionLiterals(): array
+    {
+        $literals = [];
+
+        if ($this->node instanceof Match_) {
+            foreach ($this->node->arms as $arm) {
+                foreach ($arm->conds ?? [] as $cond) {
+                    $literal = self::scalarLiteral($cond);
+
+                    if ($literal !== null) {
+                        $literals[] = $literal;
+                    }
+                }
+            }
+        } elseif ($this->node instanceof Switch_) {
+            foreach ($this->node->cases as $case) {
+                $literal = $case->cond === null ? null : self::scalarLiteral($case->cond);
+
+                if ($literal !== null) {
+                    $literals[] = $literal;
+                }
+            }
+        }
+
+        return $literals;
+    }
+
+    private static function scalarLiteral(Node $expr): ?string
+    {
+        return match (true) {
+            $expr instanceof String_ => $expr->value,
+            $expr instanceof Int_ => (string) $expr->value,
+            default => null,
+        };
+    }
+
+    /**
      * Is this a `match`/`switch` whose subject is `->value` — a backed enum
      * unwrapped to its scalar to be dispatched on (a homeless enum method)?
      * `value` is the language's enum accessor, not a guessed name.
