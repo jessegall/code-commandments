@@ -120,7 +120,7 @@ _44 detectors across 12 skills._
 | `FacadeCallDetector` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
 | `MassUpdateAtCallSiteDetector` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
 | `ModelMutationAtCallSiteDetector` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
-| `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`) on a Request from outside the request class. |
+| `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
 
 ### `role-vocabulary`
 
