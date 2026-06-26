@@ -28,6 +28,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\Float_;
@@ -417,6 +418,31 @@ class AstNode
             || $this->isNull()
             || ($this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'false')
             || ($this->node instanceof Array_ && $this->node->items === []);
+    }
+
+    /**
+     * Is this a `throw new X(...)` inside a `catch` that does NOT pass the caught
+     * exception on as its cause — the original stack trace dropped on the floor?
+     */
+    public function isRethrowWithoutCause(): bool
+    {
+        if (! $this->node instanceof New_ || ! $this->parent()->isThrow()) {
+            return false;
+        }
+
+        $catch = $this->walkUp(static fn (Node $node): bool => $node instanceof Catch_);
+
+        if (! $catch instanceof Catch_ || ! $catch->var instanceof Variable || ! is_string($catch->var->name)) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($this->node->args, Variable::class) as $variable) {
+            if ($variable->name === $catch->var->name) {
+                return false; // the caught exception is passed on
+            }
+        }
+
+        return true;
     }
 
     /**
