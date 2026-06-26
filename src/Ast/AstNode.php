@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\ArrayItem;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\MethodCall;
@@ -23,6 +25,7 @@ use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\Function_;
+use PhpParser\Node\Stmt\Return_;
 
 /**
  * A node wrapped with fluent, language-level predicates. Navigation never
@@ -92,6 +95,34 @@ class AstNode
     public function newClassName(): ?string
     {
         return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class->toString() : null;
+    }
+
+    /**
+     * Is this node the value of a `return` statement?
+     */
+    public function isReturnedValue(): bool
+    {
+        return $this->parent()->node instanceof Return_;
+    }
+
+    /**
+     * How many string-literal keys this array literal has (0 if not an array).
+     */
+    public function stringKeyCount(): int
+    {
+        if (! $this->node instanceof Array_) {
+            return 0;
+        }
+
+        $count = 0;
+
+        foreach ($this->node->items as $item) {
+            if ($item instanceof ArrayItem && $item->key instanceof String_) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

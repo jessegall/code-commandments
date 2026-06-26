@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Detectors;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\ArrayReturnBagDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
@@ -37,6 +38,7 @@ final class FixtureDetectorTest extends TestCase
             new ConfigReadDetector,
             new NewDataObjectDetector,
             new ArrayBagDetector,
+            new ArrayReturnBagDetector,
         ];
 
         foreach (new FixtureVerifier()->verify($codebase, $detectors) as $result) {
