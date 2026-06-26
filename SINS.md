@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 32 detectors shipping.**
+**Status: 33 detectors shipping.**
 
 ---
 
@@ -83,7 +83,8 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | `new <Service>` inside a class instead of constructor injection | ⬜ `NewServiceInClassDetector` |
 | Untyped `->get()` on a Fluent/ValueBag (should be a typed accessor) | ⬜ |
 | Raw `->where('col', …)` expressing a concept repeated at call sites (should be a scope) | ⬜ `RawWhereShouldBeScopeDetector` |
-| Bare `update([...])` / set-property-then-`save()` at a call site (should be an intention method) | ✅ `ModelMutationAtCallSiteDetector` |
+| Set-property-then-`save()` at a call site (should be an intention method) | ✅ `ModelMutationAtCallSiteDetector` |
+| Bare `$model->update([...])` mass-array update at a call site | ✅ `MassUpdateAtCallSiteDetector` |
 
 ## role-vocabulary
 | Sin | Status |
