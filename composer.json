@@ -9,6 +9,9 @@
         "commandments"
     ],
     "type": "library",
+    "bin": [
+        "bin/commandments"
+    ],
     "license": "MIT",
     "authors": [
         {
