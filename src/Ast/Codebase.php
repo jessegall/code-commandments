@@ -147,6 +147,15 @@ final class Codebase
     }
 
     /**
+     * Class declarations extending $parent (directly or transitively) — the
+     * declaration-side mirror of {@see whereNewExtending}.
+     */
+    public function whereClassExtending(string $parent): Query
+    {
+        return $this->whereClass()->where(fn (AstNode $node): bool => $this->extends($node->enclosingClassName(), $parent));
+    }
+
+    /**
      * `#[Attr(...)]` usages, matched by short name or fully-qualified name.
      */
     public function whereAttribute(string $name): Query
