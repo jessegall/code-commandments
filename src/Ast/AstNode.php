@@ -441,6 +441,26 @@ class AstNode
     }
 
     /**
+     * Is this `$x->update([...])` on something other than `$this` — a bare mass
+     * array-update on another object (a model at a call site, not the model's own
+     * intention method)?
+     */
+    public function isMassArrayUpdate(): bool
+    {
+        if (! $this->node instanceof MethodCall || ! $this->node->name instanceof Identifier || $this->node->name->toString() !== 'update') {
+            return false;
+        }
+
+        if ($this->node->var instanceof Variable && $this->node->var->name === 'this') {
+            return false;
+        }
+
+        $args = $this->arguments();
+
+        return isset($args[0]) && $args[0]->value instanceof Array_;
+    }
+
+    /**
      * Is this a `throw new X(...)` inside a `catch` that does NOT pass the caught
      * exception on as its cause — the original stack trace dropped on the floor?
      */

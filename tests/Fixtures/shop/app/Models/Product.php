@@ -13,4 +13,16 @@ class Product extends Model
     {
         return Money::ofCents($this->price_cents);
     }
+
+    /**
+     * The righteous home for the mutation: a named method on the model that owns
+     * the `update([...])` — `$this`, so the call-site detector leaves it alone.
+     */
+    public function markPublished(): void
+    {
+        $this->update([
+            'published' => true,
+            'published_at' => now(),
+        ]);
+    }
 }
