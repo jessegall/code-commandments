@@ -4,6 +4,7 @@ namespace Shop\Services;
 
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\MessageAtThrowDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Order;
 
@@ -20,6 +21,7 @@ final class RefundService
 
     #[Sinful(GenericExceptionDetector::class)]
     #[Sinful(InlineThrowDetector::class)]
+    #[Sinful(MessageAtThrowDetector::class)]
     public function reasonFor(Order $order): string
     {
         return strtoupper($order->refund_reason ?? throw new \LogicException('A refunded order must carry a reason.'));
