@@ -11,6 +11,16 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class RateLadder
 {
+    public function __construct(
+        private readonly string $country = 'NL',
+        private readonly int $freeThresholdCents = 5_000,
+    ) {}
+
+    public function freeShipping(int $orderCents): bool
+    {
+        return $orderCents >= $this->freeThresholdCents && $this->country === 'NL';
+    }
+
     #[Sinful(IfElseLadderDetector::class)]
     public function band(int $grams): string
     {
@@ -27,11 +37,7 @@ final class RateLadder
 
     public function isHeavy(int $grams): bool
     {
-        if ($grams > 10_000) {
-            return true;
-        } else {
-            return false;
-        }
+        return $grams > 10_000;
     }
 
     public function surchargeCents(int $grams): int
