@@ -4,6 +4,7 @@ namespace Shop\Services;
 
 use Illuminate\Support\Facades\Log;
 use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -11,6 +12,7 @@ final class PaymentProcessor
 {
     #[Sinful(ContainerReachDetector::class)]
     #[Sinful(GenericExceptionDetector::class)]
+    #[Sinful(FacadeCallDetector::class)]
     public function charge(string $token, int $amountCents): bool
     {
         $gateway = app(PaymentGatewayRegistry::class)->get('default');
