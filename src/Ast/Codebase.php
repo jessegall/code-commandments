@@ -13,7 +13,11 @@ use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
+use PhpParser\Node\NullableType;
+use PhpParser\Node\Param;
+use PhpParser\Node\UnionType;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
@@ -107,6 +111,19 @@ final class Codebase
     }
 
     /**
+     * Parameters type-hinted with the given class (a constructor param means the
+     * container injects it — i.e. the class is container-resolved). Honours
+     * nullable and union/intersection types.
+     */
+    public function whereParamType(string $class): Query
+    {
+        $want = ltrim($class, '\\');
+
+        return new Query($this, static fn (Node $node): bool =>
+            $node instanceof Param && self::typeContains($node->type, $want));
+    }
+
+    /**
      * `#[Attr(...)]` usages, matched by short name or fully-qualified name.
      */
     public function whereAttribute(string $name): Query
@@ -142,6 +159,27 @@ final class Codebase
     public function files(): array
     {
         return $this->files;
+    }
+
+    private static function typeContains(?Node $type, string $want): bool
+    {
+        if ($type instanceof Name) {
+            return $type->toString() === $want;
+        }
+
+        if ($type instanceof NullableType) {
+            return self::typeContains($type->type, $want);
+        }
+
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
+            foreach ($type->types as $member) {
+                if (self::typeContains($member, $want)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static function shortName(string $fqcn): string

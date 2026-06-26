@@ -29,7 +29,7 @@ final class FixtureDetectorTest extends TestCase
             new GenericExceptionDetector,
         ];
 
-        foreach ((new FixtureVerifier)->verify($codebase, $detectors) as $result) {
+        foreach (new FixtureVerifier()->verify($codebase, $detectors) as $result) {
             $this->assertSame([], $result->missed, "{$result->detector} missed marked sins");
             $this->assertSame([], $result->unexpected, "{$result->detector} flagged unmarked code (a false positive, or an unmarked #[Sinful])");
         }
