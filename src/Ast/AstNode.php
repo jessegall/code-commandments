@@ -16,6 +16,7 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\Function_;
 
 /**
@@ -120,6 +121,14 @@ class AstNode
         }
 
         return $this->walkUp(static fn (Node $node): bool => $node instanceof ClassLike);
+    }
+
+    /**
+     * Is the enclosing declaration an enum (which the container can never build)?
+     */
+    public function isInEnum(): bool
+    {
+        return $this->enclosingClass() instanceof Enum_;
     }
 
     /**

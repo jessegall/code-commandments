@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
-use PhpParser\Node\Stmt\Enum_;
 
 /**
  * Reaching into the container with `app()` / `resolve()` from a class the
@@ -29,28 +28,28 @@ final class ContainerReachDetector implements Detector
     {
         return $codebase
             ->whereFunction('app', 'resolve')
-            ->where(function (AstNode $node) use ($codebase): bool {
-                $class = $node->enclosingClassName();
-
-                if ($class === null || $node->enclosingClass() instanceof Enum_) {
-                    return false;
-                }
-
-                return $this->isContainerResolved($codebase, $class);
-            })
+            ->reject(static fn (AstNode $node): bool => $node->isInEnum())
+            ->where(fn (AstNode $node): bool => $this->isContainerResolved($codebase, $node))
             ->get();
     }
 
-    private function isContainerResolved(Codebase $codebase, string $class): bool
+    private function isContainerResolved(Codebase $codebase, AstNode $node): bool
     {
-        // Injected as a constructor dependency somewhere → the container builds it.
-        $injected = $codebase->whereParamType($class)
+        $class = $node->enclosingClassName();
+
+        return $class !== null
+            && ($this->injectedAsDependency($codebase, $class) || $this->neverInstantiatedByHand($codebase, $class));
+    }
+
+    private function injectedAsDependency(Codebase $codebase, string $class): bool
+    {
+        return $codebase->whereParamType($class)
             ->where(static fn (AstNode $node): bool => $node->enclosingFunctionName() === '__construct')
             ->count() > 0;
+    }
 
-        // ...or never instantiated by hand, so the container is its only source.
-        $neverNewed = $codebase->whereNew($class)->count() === 0;
-
-        return $injected || $neverNewed;
+    private function neverInstantiatedByHand(Codebase $codebase, string $class): bool
+    {
+        return $codebase->whereNew($class)->count() === 0;
     }
 }
