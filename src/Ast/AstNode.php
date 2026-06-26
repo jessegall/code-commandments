@@ -11,6 +11,8 @@ use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\BinaryOp\Identical;
+use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
@@ -110,6 +112,34 @@ class AstNode
             $this->node instanceof ConstFetch => $this->node->name->toLowerString() === 'false',
             default => false,
         };
+    }
+
+    /**
+     * Is this expression's result immediately de-nulled by the caller — consumed
+     * with `?->`, `?? …`, or compared `=== null` / `!== null`? The tell that a
+     * `?T` return is being null-checked at the call site instead of at the source.
+     */
+    public function isDeNulled(): bool
+    {
+        $parent = $this->parent()->node;
+
+        if (($parent instanceof NullsafeMethodCall || $parent instanceof NullsafePropertyFetch) && $parent->var === $this->node) {
+            return true;
+        }
+
+        if ($parent instanceof Coalesce && $parent->left === $this->node) {
+            return true;
+        }
+
+        if ($parent instanceof Identical || $parent instanceof NotIdentical) {
+            $other = $parent->left === $this->node ? $parent->right : $parent->left;
+
+            return ($parent->left === $this->node || $parent->right === $this->node)
+                && $other instanceof ConstFetch
+                && $other->name->toLowerString() === 'null';
+        }
+
+        return false;
     }
 
     /**
