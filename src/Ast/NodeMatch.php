@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\NodeFinder;
 
 /**
@@ -35,6 +36,37 @@ final class NodeMatch extends AstNode
     public function location(): string
     {
         return "{$this->file->path}:{$this->line()}";
+    }
+
+    /**
+     * Trace this variable through its enclosing function: every place it travels
+     * to, in source order, each classified as an {@see Interaction}. Returns an
+     * empty trace when this match is not a (named) variable.
+     *
+     * @return list<Interaction>
+     */
+    public function trace(): array
+    {
+        if (! $this->node instanceof Variable || ! is_string($this->node->name)) {
+            return [];
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return [];
+        }
+
+        $interactions = [];
+
+        foreach ((new NodeFinder)->findInstanceOf([$function], Variable::class) as $occurrence) {
+            if ($occurrence->name === $this->node->name) {
+                $match = new self($occurrence, $this->file);
+                $interactions[] = new Interaction($match, $match->interactionKind());
+            }
+        }
+
+        return $interactions;
     }
 
     /**
