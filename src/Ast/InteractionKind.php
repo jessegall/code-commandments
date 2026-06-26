@@ -22,6 +22,9 @@ enum InteractionKind: string
     /** `$x->prop` — a property is read off it. */
     case PropertyFetch = 'property-fetch';
 
+    /** `$x->prop = …` — a property is written on it. */
+    case PropertyWrite = 'property-write';
+
     /** `$x === null` / `$x !== null` — compared against null. */
     case NullChecked = 'null-checked';
 
