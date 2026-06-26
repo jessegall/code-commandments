@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Detectors;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\FixtureVerifier;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,7 @@ final class FixtureDetectorTest extends TestCase
             new RawRequestInputDetector,
             new ContainerReachDetector,
             new GenericExceptionDetector,
+            new InlineThrowDetector,
         ];
 
         foreach (new FixtureVerifier()->verify($codebase, $detectors) as $result) {
