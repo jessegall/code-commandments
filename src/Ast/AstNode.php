@@ -559,6 +559,30 @@ class AstNode
     }
 
     /**
+     * Is this an `if` nested three-deep — two or more enclosing `if`s within the
+     * same function? A pyramid of conditions begging for guard clauses / extraction.
+     */
+    public function isDeeplyNestedIf(): bool
+    {
+        if (! $this->node instanceof If_) {
+            return false;
+        }
+
+        $depth = 0;
+        $node = $this->node->getAttribute('parent');
+
+        while ($node instanceof Node && ! $node instanceof FunctionLike) {
+            if ($node instanceof If_) {
+                $depth++;
+            }
+
+            $node = $node->getAttribute('parent');
+        }
+
+        return $depth >= 2;
+    }
+
+    /**
      * Is this an `if` / `elseif` ladder of four-plus branches (an `if` with two or
      * more `elseif`s)? A long ladder is dispatch in disguise — a `match`, a method
      * on the type, or polymorphism.
