@@ -30,4 +30,9 @@ final class CustomerService
 
         return 'Hello, ' . Cache::get('name:' . $customer->id, $customer->name);
     }
+
+    public function isRegistered(string $email): bool
+    {
+        return $this->find($email) !== null;
+    }
 }

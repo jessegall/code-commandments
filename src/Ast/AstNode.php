@@ -33,6 +33,7 @@ use PhpParser\Node\NullableType;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_;
@@ -313,6 +314,39 @@ class AstNode
         $args = $this->arguments();
 
         return isset($args[0]) && new self($args[0]->value)->isNull();
+    }
+
+    /**
+     * Is this a `catch` that swallows the failure into absence — an empty body,
+     * or whose only effect is `return null/false/[]` (or `return;`)? A catch that
+     * logs, rethrows, or does real recovery is not a swallow.
+     */
+    public function isSwallowedCatch(): bool
+    {
+        if (! $this->node instanceof Catch_) {
+            return false;
+        }
+
+        if ($this->node->stmts === []) {
+            return true;
+        }
+
+        if (count($this->node->stmts) !== 1 || ! $this->node->stmts[0] instanceof Return_) {
+            return false;
+        }
+
+        return new self($this->node->stmts[0]->expr)->isAbsenceValue();
+    }
+
+    /**
+     * Is this an absence value — `null`, `false`, an empty array, or nothing?
+     */
+    public function isAbsenceValue(): bool
+    {
+        return $this->node === null
+            || $this->isNull()
+            || ($this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'false')
+            || ($this->node instanceof Array_ && $this->node->items === []);
     }
 
     private static function shortName(string $fqcn): string

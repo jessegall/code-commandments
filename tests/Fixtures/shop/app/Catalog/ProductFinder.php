@@ -23,4 +23,9 @@ final class ProductFinder
     {
         return $this->byBarcode($barcode)?->name ?? 'Unknown product';
     }
+
+    public function inStock(string $barcode): bool
+    {
+        return $this->byBarcode($barcode) !== null;
+    }
 }

@@ -13,14 +13,14 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 18 detectors shipping.**
+**Status: 19 detectors shipping.**
 
 ---
 
 ## absence
 | Sin | Status |
 |---|---|
-| Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) | ✅ `DeNulledFinderDetector` (call-graph: every caller de-nulls) |
+| Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) | ✅ `DeNulledFinderDetector` (call-graph blast radius: de-nulled at ≥2 sites) |
 | `Option<T>` used as a nullable costume — `?Option`, `Option \| null`, `unwrapOr(null)` | ✅ `OptionAsNullableDetector` |
 | "Nothing" with a natural empty form returned as `null` (`array \| null` → should be `[]`) | ✅ `NullableCollectionReturnDetector` |
 | `?? <empty literal>` filling a required slot (manufactured fake) | ✅ `ManufacturedFakeFillDetector` (fix-at-the-source) |
@@ -55,7 +55,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 |---|---|
 | `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type | ✅ `GenericExceptionDetector` |
 | Message string built at the throw site (no domain values / named factory) | ⬜ `MessageAtThrowDetector` |
-| `catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow) | ⬜ `SwallowCatchDetector` |
+| `catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow) | ✅ `SwallowCatchDetector` |
 | Wrapping a caught exception without passing it as `previous`/cause | ⬜ |
 
 ## fix-at-the-source
