@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_32 detectors across 11 skills._
+_33 detectors across 11 skills._
 
 ### `absence`
 
@@ -110,6 +110,7 @@ _32 detectors across 11 skills._
 | `ConfigReadDetector` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
 | `ContainerReachDetector` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
 | `FacadeCallDetector` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
+| `MassUpdateAtCallSiteDetector` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
 | `ModelMutationAtCallSiteDetector` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
 | `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`) on a Request from outside the request class. |
 
