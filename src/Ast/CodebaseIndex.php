@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
-use PhpParser\Node\Stmt\ClassMethod;
-use PhpParser\NodeFinder;
 
 /**
- * The call graph: who calls what, and the types that flow into a call's receiver.
- * Built once per {@see Codebase} and used by detectors that must reason across
- * files — e.g. "this `?T` finder is de-nulled by all its callers".
+ * The call graph: who calls what. Built once per {@see Codebase} and used by
+ * detectors that must reason across files — e.g. "this `?T` finder is de-nulled
+ * by all its callers".
  *
  * Receiver typing is delegated to {@see ReceiverResolver} (the same conservative
  * `$this` / typed-param / `$this->typedProperty` resolution the query engine uses);
@@ -20,29 +18,6 @@ use PhpParser\NodeFinder;
 final class CodebaseIndex
 {
     public function __construct(private readonly Codebase $codebase) {}
-
-    /**
-     * Every method whose return type is a nullable class (`?C` / `C | null`) — a
-     * finder that resolves to a value-or-null.
-     *
-     * @return list<NodeMatch>
-     */
-    public function nullableObjectFinders(): array
-    {
-        $finders = [];
-        $finder = new NodeFinder;
-
-        foreach ($this->codebase->files() as $file) {
-            foreach ($finder->findInstanceOf($file->ast, ClassMethod::class) as $method) {
-                /** @var ClassMethod $method */
-                if (TypeName::nullableClass($method->returnType) !== null) {
-                    $finders[] = new NodeMatch($method, $file);
-                }
-            }
-        }
-
-        return $finders;
-    }
 
     /**
      * Every call site `->$method(...)` whose receiver resolves to $fqcn (or a

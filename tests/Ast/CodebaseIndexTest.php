@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Ast;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use PHPUnit\Framework\TestCase;
 
 final class CodebaseIndexTest extends TestCase
 {
-    public function test_finds_nullable_object_finders(): void
+    public function test_method_declaration_selector_finds_nullable_object_finders(): void
     {
         $code = <<<'PHP'
         <?php
@@ -22,7 +23,10 @@ final class CodebaseIndexTest extends TestCase
         }
         PHP;
 
-        $finders = Codebase::fromString($code)->index()->nullableObjectFinders();
+        $finders = Codebase::fromString($code)
+            ->whereMethodDeclaration()
+            ->where(static fn (AstNode $node): bool => $node->returnsNullableObject())
+            ->get();
         $names = array_map(static fn (NodeMatch $m): string => $m->enclosingFunctionName() ?? '?', $finders);
 
         // only the ?Workflow finder — not the total findOrFail, not the ?string scalar

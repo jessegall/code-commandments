@@ -167,10 +167,22 @@ class AstNode
             ($parent instanceof NullsafeMethodCall || $parent instanceof NullsafePropertyFetch) && $parent->var === $this->node => InteractionKind::Nullsafe,
             $this->isReturnedValue() => InteractionKind::Returned,
             $this->isCallReceiver() => InteractionKind::MethodCall,
-            $parent instanceof PropertyFetch && $parent->var === $this->node => InteractionKind::PropertyFetch,
+            $parent instanceof PropertyFetch && $parent->var === $this->node => new self($parent)->isAssignmentTarget()
+                ? InteractionKind::PropertyWrite
+                : InteractionKind::PropertyFetch,
             $this->isCallArgument() => InteractionKind::Argument,
             default => InteractionKind::Read,
         };
+    }
+
+    /**
+     * Is this node the left-hand side of an assignment (`$this = …`)?
+     */
+    public function isAssignmentTarget(): bool
+    {
+        $parent = $this->parent()->node;
+
+        return $parent instanceof Assign && $parent->var === $this->node;
     }
 
     /**
@@ -304,6 +316,16 @@ class AstNode
     {
         return ($this->node instanceof ClassMethod || $this->node instanceof Function_)
             && TypeName::isNullableArray($this->node->returnType);
+    }
+
+    /**
+     * Is this a function/method declared to return a nullable CLASS (`?C` /
+     * `C | null`) — a finder that resolves to a value-or-null?
+     */
+    public function returnsNullableObject(): bool
+    {
+        return ($this->node instanceof ClassMethod || $this->node instanceof Function_)
+            && TypeName::nullableClass($this->node->returnType) !== null;
     }
 
     /**

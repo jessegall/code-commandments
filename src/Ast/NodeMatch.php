@@ -98,6 +98,31 @@ final class NodeMatch extends AstNode
     }
 
     /**
+     * For a method call `$x->m()`: is the receiver variable `$x` mutated by a
+     * property write (`$x->prop = …`) elsewhere in the same function? Found by
+     * tracing the receiver and looking for a {@see InteractionKind::PropertyWrite}.
+     *
+     * `$this` is excluded: a model writing its own fields then `$this->save()` is
+     * the intention method itself — the right home, not a call-site mutation.
+     */
+    public function receiverMutatedNearby(): bool
+    {
+        $receiver = $this->node->var ?? null;
+
+        if (! $receiver instanceof Variable || $receiver->name === 'this') {
+            return false;
+        }
+
+        foreach (new self($receiver, $this->file)->trace() as $interaction) {
+            if ($interaction->kind === InteractionKind::PropertyWrite) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Is there a call to $name within $lines of this match, in the same file?
      */
     public function near(string $name, int $lines = 5): bool

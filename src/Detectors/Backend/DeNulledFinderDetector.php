@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
@@ -31,25 +32,29 @@ final class DeNulledFinderDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        $index = $codebase->index();
-        $sins = [];
+        return $codebase
+            ->whereMethodDeclaration()
+            ->where(static fn (AstNode $node): bool => $node->returnsNullableObject())
+            ->where(static fn (AstNode $node): bool => self::deNulledByEveryCallerAndTravels($codebase, $node))
+            ->get();
+    }
 
-        foreach ($index->nullableObjectFinders() as $finder) {
-            $class = $finder->enclosingClassName();
-            $method = $finder->enclosingFunctionName();
+    /**
+     * The blast-radius check: the finder's result is de-nulled at every resolved
+     * call site, and it reaches at least two of them (it travels).
+     */
+    private static function deNulledByEveryCallerAndTravels(Codebase $codebase, AstNode $finder): bool
+    {
+        $class = $finder->enclosingClassName();
+        $method = $finder->enclosingFunctionName();
 
-            if ($class === null || $method === null) {
-                continue;
-            }
-
-            $callers = $index->callersOf($class, $method);
-            $deNulled = array_filter($callers, static fn (NodeMatch $caller): bool => $caller->resultIsDeNulled());
-
-            if (count($deNulled) >= self::TRAVELS && count($deNulled) === count($callers)) {
-                $sins[] = $finder;
-            }
+        if ($class === null || $method === null) {
+            return false;
         }
 
-        return $sins;
+        $callers = $codebase->index()->callersOf($class, $method);
+        $deNulled = array_filter($callers, static fn (NodeMatch $caller): bool => $caller->resultIsDeNulled());
+
+        return count($deNulled) >= self::TRAVELS && count($deNulled) === count($callers);
     }
 }
