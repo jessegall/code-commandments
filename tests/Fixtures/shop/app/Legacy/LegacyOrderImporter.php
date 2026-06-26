@@ -44,4 +44,9 @@ final class LegacyOrderImporter
             }
         }
     }
+
+    public function emailKnown(string $email): bool
+    {
+        return $this->findCustomer($email)?->exists ?? false;
+    }
 }

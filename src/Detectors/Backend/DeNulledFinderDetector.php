@@ -9,18 +9,21 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
- * A `?T` finder whose every caller de-nulls the result (`finder()?->…`,
- * `=== null`, `?? default`). The absence is being decided at every call site
- * instead of at the source: model it in the type — resolve-or-throw if presence
- * is assumed, an `Option<T>` for a genuine miss, an empty/Null-Object otherwise.
- * Points at absence.
+ * A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked
+ * (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. The
+ * absence is being re-decided everywhere the value lands instead of at the
+ * source: model it in the type — resolve-or-throw if presence is assumed, an
+ * `Option<T>` for a genuine miss, an empty/Null-Object otherwise. Points at absence.
  *
- * Measure-and-suppress via the call graph: a `?T` finder with NO resolved callers
- * is unknown (not flagged), and one with a caller that uses the value raw is
- * left alone — only "every caller checks it" is the lie worth surfacing.
+ * Blast radius via the call graph: a finder with no resolved callers is unknown
+ * (not flagged), and a SINGLE local caller that checks it on the spot is an
+ * honest null (not flagged). Only when the `?T` reaches ≥2 sites that each guard
+ * it — the "every caller re-checks the same value" lie — is it worth surfacing.
  */
 final class DeNulledFinderDetector implements Detector
 {
+    private const int TRAVELS = 2;
+
     public function skill(): string
     {
         return 'absence';
@@ -40,12 +43,9 @@ final class DeNulledFinderDetector implements Detector
             }
 
             $callers = $index->callersOf($class, $method);
+            $deNulled = array_filter($callers, static fn (NodeMatch $caller): bool => $caller->resultIsDeNulled());
 
-            if ($callers === []) {
-                continue;
-            }
-
-            if (array_all($callers, static fn (NodeMatch $caller): bool => $caller->resultIsDeNulled())) {
+            if (count($deNulled) >= self::TRAVELS && count($deNulled) === count($callers)) {
                 $sins[] = $finder;
             }
         }
