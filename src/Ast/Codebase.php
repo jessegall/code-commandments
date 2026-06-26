@@ -33,6 +33,9 @@ final class Codebase
      */
     private function __construct(private readonly array $files) {}
 
+    /**
+     * Parse every `.php` file under the given files/directories.
+     */
     public static function scan(string ...$paths): self
     {
         $files = [];
@@ -50,6 +53,9 @@ final class Codebase
         return new self($files);
     }
 
+    /**
+     * Parse a single in-memory source string (handy for unit tests).
+     */
     public static function fromString(string $code, string $path = 'memory.php'): self
     {
         return new self([self::parse($code, $path)]);
@@ -129,6 +135,8 @@ final class Codebase
     }
 
     /**
+     * The parsed files the queries run over.
+     *
      * @return list<ParsedFile>
      */
     public function files(): array

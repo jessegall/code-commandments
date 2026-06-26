@@ -4,6 +4,7 @@ namespace Shop\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Services\PaymentProcessor;
@@ -11,6 +12,7 @@ use Shop\Services\PaymentProcessor;
 class CheckoutController extends Controller
 {
     #[Sinful(RawRequestInputDetector::class)]
+    #[Sinful(ContainerReachDetector::class)]
     public function pay(Request $request): array
     {
         $processor = app(PaymentProcessor::class);

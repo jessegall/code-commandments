@@ -134,11 +134,17 @@ final class Query
         return array_map(static fn (NodeMatch $match): string => $match->location(), $this->get());
     }
 
+    /**
+     * How many matches the pattern has.
+     */
     public function count(): int
     {
         return count($this->get());
     }
 
+    /**
+     * The first match, or null when the pattern matches nothing.
+     */
     public function first(): ?NodeMatch
     {
         return $this->get()[0] ?? null;
