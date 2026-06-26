@@ -35,17 +35,27 @@ final class Install
     }
 
     /**
-     * Generated skills are regenerated on every sync — keep them out of the repo.
+     * Published skills are regenerated on every sync and the judge checklist is a
+     * transient working file — keep both out of the repo.
      */
     private function ensureGitignored(string $path): void
     {
-        $entry = '.claude/skills/commandments-*/';
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
+        $entries = [
+            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*/',
+            '# code-commandments judge checklist (transient — regenerated per run)' => 'commandments-sins.md',
+        ];
 
-        if (! str_contains($existing, $entry)) {
+        foreach ($entries as $comment => $entry) {
+            if (str_contains($existing, $entry)) {
+                continue;
+            }
+
             $prefix = ($existing !== '' && ! str_ends_with($existing, "\n")) ? "\n" : '';
-            file_put_contents($path, $existing . $prefix . "\n# code-commandments published skills (regenerated on composer update)\n{$entry}\n");
+            $existing .= $prefix . "\n{$comment}\n{$entry}\n";
         }
+
+        file_put_contents($path, $existing);
     }
 
     private function wireComposerScripts(string $path): bool
