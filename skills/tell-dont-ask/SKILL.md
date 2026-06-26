@@ -133,8 +133,8 @@ final class ReservedOutputNames
 ```
 
 ```php
-// Good — the fact lives on the descriptor (the data owner); the caller resolves it
-// ONCE as an Option, then TELLS it. No registry query, no has()?get().
+// Good — the fact lives on the descriptor (the data owner); resolve it once, then TELL it.
+// No registry query, no has()?get() dance.
 final class NodeDescriptor
 {
     public function isReservedOutputName(string $name): bool
@@ -144,8 +144,10 @@ final class NodeDescriptor
 }
 
 // at the one call site that has the node:
-$descriptor = $this->descriptors->tryDescriptorForNode(new NodeContext($node));   // Option<NodeDescriptor>
-$reserved   = $descriptor->map(fn (NodeDescriptor $d) => $d->isReservedOutputName($name))->unwrapOr(false);
+$descriptor = $this->descriptors->descriptorForNode($node);   // resolve-or-throw, not a has()?get()
+if ($descriptor->isReservedOutputName($name)) {
+    // …
+}
 ```
 
 ## What is NOT this sin
