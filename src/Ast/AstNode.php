@@ -38,11 +38,15 @@ use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Do_;
 use PhpParser\Node\Stmt\Enum_;
+use PhpParser\Node\Stmt\For_;
+use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Switch_;
+use PhpParser\Node\Stmt\While_;
 
 /**
  * A node wrapped with fluent, language-level predicates. Navigation never
@@ -402,6 +406,18 @@ class AstNode
             || $this->isNull()
             || ($this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'false')
             || ($this->node instanceof Array_ && $this->node->items === []);
+    }
+
+    /**
+     * Is this node inside a loop (`for` / `foreach` / `while` / `do-while`)?
+     */
+    public function isWithinLoop(): bool
+    {
+        return $this->walkUp(static fn (Node $node): bool =>
+            $node instanceof Foreach_
+            || $node instanceof For_
+            || $node instanceof While_
+            || $node instanceof Do_) !== null;
     }
 
     private static function shortName(string $fqcn): string
