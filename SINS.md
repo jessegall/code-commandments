@@ -24,7 +24,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | `Option<T>` used as a nullable costume — `?Option`, `Option \| null`, `unwrapOr(null)` | ✅ `OptionAsNullableDetector` |
 | "Nothing" with a natural empty form returned as `null` (`array \| null` → should be `[]`) | ✅ `NullableCollectionReturnDetector` |
 | `?? <empty literal>` filling a required slot (manufactured fake) | ✅ `ManufacturedFakeFillDetector` (fix-at-the-source) |
-| Nullable callback normalised in the body instead of a Null Object default | ⬜ |
+| Nullable callback normalised in the body instead of a Null Object default | ✅ `NullableCallbackDetector` |
 
 ## concurrent-state
 | Sin | Status |

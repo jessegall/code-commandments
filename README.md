@@ -47,13 +47,14 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_39 detectors across 11 skills._
+_40 detectors across 11 skills._
 
 ### `absence`
 
 | Detector | What it flags |
 |---|---|
 | `DeNulledFinderDetector` | A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. |
+| `NullableCallbackDetector` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
 | `NullableCollectionReturnDetector` | A method declared to return `?array` / `array \| null` — a collection modelled as "the list, or null", forcing every caller to guard before iterating. |
 | `OptionAsNullableDetector` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
 
