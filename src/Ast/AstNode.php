@@ -37,6 +37,7 @@ use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\Function_;
+use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Switch_;
 
@@ -275,6 +276,50 @@ class AstNode
     {
         return ($this->node instanceof ClassMethod || $this->node instanceof Function_)
             && TypeName::isNullableArray($this->node->returnType);
+    }
+
+    /**
+     * Does this declaration (param, property, or return) type something as a
+     * nullable `Option` — `?Option` / `Option | null` — an Option wearing a null
+     * costume?
+     */
+    public function declaresNullableOption(): bool
+    {
+        $type = match (true) {
+            $this->node instanceof Param => $this->node->type,
+            $this->node instanceof Property => $this->node->type,
+            $this->node instanceof ClassMethod, $this->node instanceof Function_ => $this->node->returnType,
+            default => null,
+        };
+
+        $class = TypeName::nullableClass($type);
+
+        return $class !== null && self::shortName($class) === 'Option';
+    }
+
+    /**
+     * Is this `->unwrapOr(null)` — collapsing an Option straight back to a nullable?
+     */
+    public function isUnwrapOrNull(): bool
+    {
+        if (! $this->node instanceof MethodCall && ! $this->node instanceof NullsafeMethodCall) {
+            return false;
+        }
+
+        if (! $this->node->name instanceof Identifier || $this->node->name->toString() !== 'unwrapOr') {
+            return false;
+        }
+
+        $args = $this->arguments();
+
+        return isset($args[0]) && new self($args[0]->value)->isNull();
+    }
+
+    private static function shortName(string $fqcn): string
+    {
+        $parts = explode('\\', $fqcn);
+
+        return end($parts);
     }
 
     /**
