@@ -17,6 +17,11 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class DataClumpDetector implements Detector
 {
+    public function skill(): string
+    {
+        return 'value-objects';
+    }
+
     public function find(Codebase $codebase): array
     {
         $byClump = [];
@@ -42,11 +47,6 @@ final class DataClumpDetector implements Detector
         }
 
         return $findings;
-    }
-
-    public function skill(): string
-    {
-        return 'value-objects';
     }
 
     /**
