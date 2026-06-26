@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
-use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Ast\AstNode;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\NullsafeMethodCall;
@@ -22,7 +22,7 @@ use PhpParser\Node\Stmt\Property;
  */
 final class ReceiverResolver
 {
-    public static function typeOf(NodeMatch $match): ?string
+    public static function typeOf(AstNode $match): ?string
     {
         $node = $match->node;
 
@@ -50,7 +50,7 @@ final class ReceiverResolver
         return null;
     }
 
-    private static function paramType(NodeMatch $match, string $var): ?string
+    private static function paramType(AstNode $match, string $var): ?string
     {
         $function = $match->enclosingFunction();
 
@@ -67,7 +67,7 @@ final class ReceiverResolver
         return null;
     }
 
-    private static function propertyType(NodeMatch $match, string $name): ?string
+    private static function propertyType(AstNode $match, string $name): ?string
     {
         $class = $match->enclosingClass();
 

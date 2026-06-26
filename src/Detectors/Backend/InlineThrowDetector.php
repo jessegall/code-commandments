@@ -25,8 +25,9 @@ final class InlineThrowDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase->where(static fn (AstNode $node): bool =>
-            ($node->coalesceRight()?->isThrow() ?? false)
-            && ($node->isCallArgument() || $node->isCallReceiver()))->get();
+        return $codebase
+            ->where(static fn (AstNode $node): bool => $node->coalesceRight()->isThrow())
+            ->where(static fn (AstNode $node): bool => $node->isCallArgument() || $node->isCallReceiver())
+            ->get();
     }
 }

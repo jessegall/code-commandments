@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
@@ -23,7 +23,7 @@ final class ConfigReadDetector implements Detector
     {
         return $codebase
             ->whereFunction('config')
-            ->where(static fn (NodeMatch $match): bool => $match->enclosingClassName() !== null)
+            ->where(static fn (AstNode $node): bool => $node->enclosingClassName() !== null)
             ->get();
     }
 }
