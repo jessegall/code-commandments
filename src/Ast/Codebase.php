@@ -116,6 +116,16 @@ final class Codebase
     }
 
     /**
+     * `new X(...)` where X extends $parent (directly or transitively) — e.g.
+     * every `new <Spatie Data subclass>`. Dynamic `new $var` (no resolvable
+     * name) is skipped, since it can't be a known subclass.
+     */
+    public function whereNewExtending(string $parent): Query
+    {
+        return $this->whereNew()->where(fn (AstNode $node): bool => $this->extends($node->newClassName(), $parent));
+    }
+
+    /**
      * Parameters type-hinted with the given class (a constructor param means the
      * container injects it — i.e. the class is container-resolved). Honours
      * nullable and union/intersection types.
