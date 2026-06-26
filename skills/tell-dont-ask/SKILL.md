@@ -17,12 +17,23 @@ tree of parts** — to work out something the object should answer itself, while
 than its own (`$this`) state. The fix is Fowler's **Move Method**: the loop belongs on the object whose
 collection it walks, so `$node->edges()` replaces `EdgeDetector::detect($node)`.
 
-**Structure, not surface.** The tell is *operating on the object's internals* — `foreach ($obj->items …)`,
-a recursive walk of `$obj->left`/`$obj->right`. A method that only reads the object's **flat scalar fields**
-to compute a value — a grade, a label, a yes/no — is an **external policy**, not envy. That's a *Strategy*,
-the documented exception to this smell: scoring, formatting, and classifying legitimately live in their own
-class, because the rule can vary independently of the data. Reading fields is fine; *walking the object's
-structure to do its work* is the sin.
+**Structure, not surface.** The tell is *operating on the object's internals* — three shapes:
+
+1. **Iterate** its collection — `foreach ($node->outputs …)`, a recursive walk of `$block->left`/`->right`.
+2. **Query** its collection from outside — `array_reduce($order->lines(), …)`,
+   `in_array($branch, $ctx->descriptor->handleNames())`. You exported its collection to run the
+   aggregate/membership/search out here; the answer belongs on the object (`$order->total()`,
+   `$descriptor->hasBranch($branch)`). This holds **however deep the object is nested** — follow the chain
+   to the object that owns the data.
+3. **Mutate** its state — `$account->frozen = true; $account->strikes++` from another class. Reaching in to
+   set its fields is read-then-mutate envy (the canonical `clone $date; $date->modify(…)`); the transition
+   belongs on the object (`$account->freeze()`). *(At a Laravel model + `save()`, this is also the
+   [`laravel-idioms`](../laravel-idioms/SKILL.md) model-mutation sin — both are real; fix once, on the model.)*
+
+A method that only reads the object's **flat scalar fields** to compute a value — a grade, a label, a
+yes/no — is an **external policy**, not envy. That's a *Strategy*, the documented exception: scoring,
+formatting, and classifying legitimately live in their own class, because the rule can vary independently of
+the data. Reading fields is fine; *operating on the object's internals* is the sin.
 
 **Why it's a sin:**
 
