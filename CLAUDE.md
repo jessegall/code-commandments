@@ -12,7 +12,24 @@
 > sins each skill teaches and which have a detector.** Read it before adding a
 > detector, and **update it (flip the row to ✅) whenever one ships.** Coverage is
 > enforced by `tests/Detectors/FixtureDetectorTest` (every detector is marked in
-> the Shop fixture AND fires on ≥3 diverse scenarios). 15 detectors shipping.
+> the Shop fixture AND fires on ≥3 diverse scenarios). 28 detectors shipping.
+>
+> ## 🛠️ Building detectors? READ AND LOAD these skills FIRST
+>
+> Before writing or changing any detector, **load the engine skills** (via the
+> Skill tool) — they are the source-of-truth for how the v4 engine and fixture
+> harness work:
+>
+> 1. **`writing-detectors`** — how to author a `Detector` end-to-end (start here).
+> 2. **`detector-engine`** — the fluent AST DSL (`Codebase`/`Query`/`AstNode`/
+>    `NodeMatch`, the call graph, the variable trace) and **where a new helper
+>    belongs** (the layering rule).
+> 3. **`detector-fixtures`** — the self-checking Shop fixture: `#[Sinful]` markers
+>    ARE the spec, the ≥3-diverse-scenarios rule, righteous twins.
+>
+> Cardinal rules they encode: **AST/semantic over names**, one check per
+> `where`/`reject`, validate on the workflows codebase for false positives, and
+> **don't port the v3 prophets 1:1 — curate the best, the v4 system is better.**
 
 This is **code-commandments** — a static-analysis tool that judges PHP + frontend
 codebases against a configurable set of rules ("prophets"). It runs as both a
