@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Presenters;
 
+use JesseGall\CodeCommandments\Detectors\Backend\EnumValueMatchDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\OrderData;
@@ -30,6 +31,7 @@ final class OrderPresenter
         return $order->status->label();
     }
 
+    #[Sinful(EnumValueMatchDetector::class)]
     public function badge(Order $order): string
     {
         return match ($order->status->value) {
