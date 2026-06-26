@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Support\Nodes;
 use JesseGall\CodeCommandments\Detectors\Detector;
-use PhpParser\Node;
 
 /**
  * A `?? throw` buried inside a larger expression — fed into a call or
@@ -26,8 +25,8 @@ final class InlineThrowDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase->where(static fn (Node $node): bool =>
-            Nodes::isThrow(Nodes::coalesceRight($node))
-            && (Nodes::isCallArgument($node) || Nodes::isCallReceiver($node)))->get();
+        return $codebase->where(static fn (AstNode $node): bool =>
+            ($node->coalesceRight()?->isThrow() ?? false)
+            && ($node->isCallArgument() || $node->isCallReceiver()))->get();
     }
 }

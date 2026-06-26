@@ -142,13 +142,31 @@ final class Codebase
     }
 
     /**
-     * Raw escape hatch: select nodes by your own predicate.
+     * Any node carrying a comment that matches the given regex (line or doc
+     * comment). The finding sits on the commented declaration.
+     */
+    public function whereComment(string $pattern): Query
+    {
+        return new Query($this, static function (Node $node) use ($pattern): bool {
+            foreach ($node->getComments() as $comment) {
+                if (preg_match($pattern, $comment->getText()) === 1) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * Raw escape hatch: select nodes by your own predicate over a fluent
+     * {@see AstNode}.
      *
-     * @param  \Closure(Node): bool  $test
+     * @param  \Closure(AstNode): bool  $test
      */
     public function where(\Closure $test): Query
     {
-        return new Query($this, $test);
+        return new Query($this, static fn (Node $node): bool => $test(new AstNode($node)));
     }
 
     /**
