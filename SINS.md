@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 44 detectors shipping.**
+**Status: 45 detectors shipping.**
 
 Every cleanly + low-FP detectable sin now has a detector. The rows below still
 marked 🧠/〰️ were each evaluated against real consumer codebases (workflows,
@@ -113,6 +113,7 @@ false-positive side against. They stay skill-only until that changes.
 | Sin | Status |
 |---|---|
 | Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object: iterate its collection, query it (`array_reduce`/`in_array` over `$obj->coll()`, any chain depth), or read-then-mutate it | ✅ `FeatureEnvyDetector` (semantic, no name lists; `ChainResolver` follows nested objects; flat-scalar Strategies, mappers, polymorphic components & request boundaries exempt; mutation co-fires with `ModelMutationAtCallSite` — both real) |
+| Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator (`$this->registry->get($node->key)->reservedOutputNames`) | ✅ `KeyedLookupEnvyDetector` (`Support\LookupEnvy`: one owned param used only as a lookup key, returns a fact, fetch-and-read via a `$this` collaborator, no construction — the indirect form the direct checks miss) |
 
 ## spatie-data
 | Sin | Status |

@@ -17,7 +17,7 @@ tree of parts** — to work out something the object should answer itself, while
 than its own (`$this`) state. The fix is Fowler's **Move Method**: the loop belongs on the object whose
 collection it walks, so `$node->edges()` replaces `EdgeDetector::detect($node)`.
 
-**Structure, not surface.** The tell is *operating on the object's internals* — three shapes:
+**Structure, not surface.** The tell is *operating on the object's internals* — four shapes:
 
 1. **Iterate** its collection — `foreach ($node->outputs …)`, a recursive walk of `$block->left`/`->right`.
 2. **Query** its collection from outside — `array_reduce($order->lines(), …)`,
@@ -29,6 +29,12 @@ collection it walks, so `$node->edges()` replaces `EdgeDetector::detect($node)`.
    set its fields is read-then-mutate envy (the canonical `clone $date; $date->modify(…)`); the transition
    belongs on the object (`$account->freeze()`). *(At a Laravel model + `save()`, this is also the
    [`laravel-idioms`](../laravel-idioms/SKILL.md) model-mutation sin — both are real; fix once, on the model.)*
+4. **Key into it** — use the object's *identity* to look up a fact about it through a collaborator:
+   `$this->registry->get($node->key)->reservedOutputNames`, `$this->descriptors->descriptorFor($node->key)->isBodyHandle($port)`.
+   The object is being treated as a key into its own data; the answer belongs ON it
+   (`$node->reservedOutputNames()`, `$node->isControlHandle($port)`). This is the *indirect* form — the
+   data isn't on the object, but it's reachable from the object's identity, so the method should be too.
+   It holds however many collaborators sit in between.
 
 A method that only reads the object's **flat scalar fields** to compute a value — a grade, a label, a
 yes/no — is an **external policy**, not envy. That's a *Strategy*, the documented exception: scoring,

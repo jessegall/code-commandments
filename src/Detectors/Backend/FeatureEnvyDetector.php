@@ -32,7 +32,7 @@ final class FeatureEnvyDetector implements Detector
 
         return $codebase
             ->whereMethodDeclaration()
-            ->where(static fn (AstNode $node): bool => $envy->enviedOwner($node) !== null)
+            ->where(static fn (AstNode $node): bool => $envy->isEnviedOwner($node))
             ->get();
     }
 }
