@@ -11,13 +11,16 @@ use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
@@ -922,6 +925,101 @@ class AstNode
         }
 
         return null;
+    }
+
+    /**
+     * Does this function/method take a nullable callback defaulting to `null`
+     * (`?callable $cb = null`, `Closure|null $cb = null`) that the body then
+     * null-normalises — a null-check, `??`, or truthiness guard before calling
+     * it? That branch is a Null Object asking to be the default: pass a no-op
+     * callable so the call site is unconditional.
+     */
+    public function hasNullNormalisedNullableCallback(): bool
+    {
+        if (! $this->node instanceof ClassMethod && ! $this->node instanceof Function_) {
+            return false;
+        }
+
+        foreach ($this->node->params as $param) {
+            if (! self::isNullableCallbackWithNullDefault($param) || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
+                continue;
+            }
+
+            // The guard must exist to avoid CALLING a null callback — so the param
+            // is both null-checked and invoked. That is exactly the case a no-op
+            // Null Object default dissolves; a stored/forwarded callback is not.
+            if ($this->normalisesNullFor($param->var->name) && $this->isInvoked($param->var->name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isInvoked(string $paramName): bool
+    {
+        foreach ((new NodeFinder)->findInstanceOf($this->node, FuncCall::class) as $call) {
+            // Called directly (`$cb(…)`) or via a coalesced default (`($cb ?? …)(…)`).
+            $target = $call->name instanceof Coalesce ? $call->name->left : $call->name;
+
+            if ($target instanceof Variable && $target->name === $paramName) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function isNullableCallbackWithNullDefault(Param $param): bool
+    {
+        $isNull = $param->default instanceof ConstFetch && $param->default->name->toLowerString() === 'null';
+
+        if (! $isNull) {
+            return false;
+        }
+
+        // Both spellings of a nullable callback: `?callable` (NullableType) and
+        // `callable|null` (UnionType with a null member).
+        $candidates = match (true) {
+            $param->type instanceof NullableType => [$param->type->type],
+            $param->type instanceof UnionType => $param->type->types,
+            default => [],
+        };
+
+        foreach ($candidates as $candidate) {
+            $name = $candidate instanceof Identifier || $candidate instanceof Name ? $candidate->toString() : '';
+
+            if (in_array(strtolower(self::shortName($name)), ['callable', 'closure'], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function normalisesNullFor(string $paramName): bool
+    {
+        foreach ((new NodeFinder)->findInstanceOf($this->node, Variable::class) as $variable) {
+            if ($variable->name !== $paramName) {
+                continue;
+            }
+
+            $parent = $variable->getAttribute('parent');
+
+            $isNullGuard = ($parent instanceof Identical || $parent instanceof NotIdentical)
+                || ($parent instanceof Coalesce && $parent->left === $variable)
+                || $parent instanceof BooleanNot
+                || $parent instanceof BooleanAnd
+                || $parent instanceof BooleanOr
+                || ($parent instanceof If_ && $parent->cond === $variable)
+                || ($parent instanceof Ternary && $parent->cond === $variable);
+
+            if ($isNullGuard) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
