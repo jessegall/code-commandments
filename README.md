@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_42 detectors across 11 skills._
+_43 detectors across 12 skills._
 
 ### `absence`
 
@@ -136,6 +136,12 @@ _42 detectors across 11 skills._
 | `ManualHydrationLoopDetector` | `<Data>::from(...)` called inside a loop — hydrating a collection one item at a time. |
 | `NewDataObjectDetector` | Constructing a Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips name mapping, casts, and validation. |
 | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
+
+### `tell-dont-ask`
+
+| Detector | What it flags |
+|---|---|
+| `FeatureEnvyDetector` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
 
 ### `value-objects`
 

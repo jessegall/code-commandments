@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 40 detectors shipping.**
+**Status: 43 detectors shipping.**
 
 Every cleanly + low-FP detectable sin now has a detector. The rows below still
 marked 🧠/〰️ were each evaluated against real consumer codebases (workflows,
@@ -108,6 +108,11 @@ false-positive side against. They stay skill-only until that changes.
 | A `*Resolver` doing `\|\|`/`&&` predicate chains instead of `anyOf`/`allOf` first-match | 〰️ a bare `\|\|`/`&&` in a `*Resolver` is overwhelmingly ordinary boolean logic, not a predicate-dispatch chain — no structural signal separates the sin from legitimate conditionals |
 | Classification by a `const [...]` list of class-name strings instead of a marker interface/type | 〰️ to avoid firing on legitimate registration arrays it must be gated on an `in_array($x::class, self::CONST)` membership test — zero such usages across both consumers, so no FP-side to validate |
 | A role class doing two jobs (resolution/assembly smuggled into a registry/data class) | 〰️ |
+
+## tell-dont-ask
+| Sin | Status |
+|---|---|
+| Exiled behaviour / feature envy — a method that reaches through ONE other owned object's structure (loops its collection) to do work that belongs ON that object, accessing it more than its own state | ✅ `FeatureEnvyDetector` (semantic: iterates an owned param's collection, accessed more than `$this`, no construction, not a polymorphic contract method — flat-scalar policies/Strategies are exempt) |
 
 ## spatie-data
 | Sin | Status |
