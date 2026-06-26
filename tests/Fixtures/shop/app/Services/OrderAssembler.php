@@ -2,12 +2,15 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\OrderData;
 use Shop\Data\OrderLineData;
 use Shop\Models\Order;
 
 final class OrderAssembler
 {
+    #[Sinful(NewDataObjectDetector::class)]
     public function assemble(Order $order): OrderData
     {
         $lines = [];
