@@ -36,6 +36,15 @@ collection it walks, so `$node->edges()` replaces `EdgeDetector::detect($node)`.
    data isn't on the object, but it's reachable from the object's identity, so the method should be too.
    It holds however many collaborators sit in between.
 
+   **Home it on the data, not the store.** The fix is to move the behaviour onto the object the lookup
+   *resolves to* — the descriptor / value the key returns (`$descriptor->reservesOutput($name)`), or, better,
+   the object you already hold whose identity you keyed with (`$node->reservedOutputNames()` — the node
+   delegates to its descriptor *once*, in one place). Do **NOT** push a `reservedOutputNamesFor($key)` query
+   onto the **registry / store**. A `*Registry` is a *keyed store* — its job is `get`/`has`; adding a domain
+   query there just relocates the same `has()?get()` dance inside the store and leaves every caller still
+   *asking* with a raw key instead of *telling* the object. Ask: *which object already has the answer (or can
+   get it in one hop)?* — that is the target, never the lookup table you went through.
+
 A method that only reads the object's **flat scalar fields** to compute a value — a grade, a label, a
 yes/no — is an **external policy**, not envy. That's a *Strategy*, the documented exception: scoring,
 formatting, and classifying legitimately live in their own class, because the rule can vary independently of
@@ -96,6 +105,16 @@ $edges = $node->edges();
 
 Move the computation onto the object whose data it consumes. The external method delegates to it
 (`return $node->edges();`) or disappears. If the external class has nothing left, delete it.
+
+**Pick the right home — the data owner, not a pass-through.** The target is the object that actually *owns*
+the data (the domain entity, or the value a key resolves to), and ideally the object **you already have in
+hand**. Two traps that aren't fixes, just relocations:
+
+- **Pushing it onto the keyed store / registry** you looked through (`Registry::reservedOutputNamesFor($key)`).
+  A store's contract is `get`/`has`; a domain query bolted on still leaves callers handing it a raw key
+  instead of asking the object. Move it onto the thing the key *identifies* instead.
+- **Adding a thin forwarder** on a collaborator that just re-exposes another object's data. If the object you
+  were given (`$node`) can answer it — directly or by delegating to its own descriptor once — that is the home.
 
 ## What is NOT this sin
 
