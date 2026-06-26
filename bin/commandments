@@ -1,0 +1,49 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use JesseGall\CodeCommandments\Cli\Judge;
+
+(static function (array $argv): void {
+    foreach ([
+        __DIR__ . '/../vendor/autoload.php',   // run from the package
+        __DIR__ . '/../../../autoload.php',     // run as vendor/bin in a consumer
+    ] as $autoload) {
+        if (is_file($autoload)) {
+            require $autoload;
+            break;
+        }
+    }
+
+    $command = $argv[1] ?? 'judge';
+    $args = array_slice($argv, 2);
+
+    if (in_array($command, ['-h', '--help', 'help'], true)) {
+        fwrite(STDOUT, <<<TXT
+        Code Commandments — a compiler for architecture.
+
+        Usage:
+          commandments judge [path] [--skill=NAME] [--detector=NAME]
+          commandments judge --list
+
+        Options:
+          --skill=NAME      only run detectors for one skill (group), e.g. spatie-data
+          --detector=NAME   only run one detector (partial name match)
+          --list            list every detector grouped by skill
+
+        Exit code is 1 when sins are found, 0 when clean.
+
+        TXT);
+
+        exit(0);
+    }
+
+    if ($command !== 'judge') {
+        fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
+
+        exit(2);
+    }
+
+    exit((new Judge)->run($args));
+})($argv);

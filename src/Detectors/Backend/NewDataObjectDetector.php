@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
  * Constructing a Spatie `Data` object with `new` instead of `::from()` — the
  * raw `new` skips name mapping, casts, and validation. Points at spatie-data.
+ *
+ * A `new` in PARAMETER-DEFAULT position (`function f(Summary $s = new Summary())`)
+ * is exempt — that is the one place the skill permits `new`, including a Data
+ * class initialising another Data's default.
  */
 final class NewDataObjectDetector implements Detector
 {
@@ -22,6 +27,9 @@ final class NewDataObjectDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase->whereNewExtending(self::DATA)->get();
+        return $codebase
+            ->whereNewExtending(self::DATA)
+            ->reject(static fn (AstNode $node): bool => $node->isParameterDefault())
+            ->get();
     }
 }

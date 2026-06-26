@@ -178,6 +178,17 @@ class AstNode
     }
 
     /**
+     * Is this node a parameter's default value (`function f($x = <here>)`)? A
+     * `new` in default position is the one place the spatie-data skill permits it.
+     */
+    public function isParameterDefault(): bool
+    {
+        $parent = $this->parent()->node;
+
+        return $parent instanceof Param && $parent->default === $this->node;
+    }
+
+    /**
      * Is this node the left-hand side of an assignment (`$this = …`)?
      */
     public function isAssignmentTarget(): bool
