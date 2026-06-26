@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Detectors\Backend\EnumValueMatchDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\NullableRegistryLookupDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawDecodedArrayReturnDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\FixtureVerifier;
@@ -43,6 +44,7 @@ final class FixtureDetectorTest extends TestCase
             new ArrayReturnBagDetector,
             new RawDecodedArrayReturnDetector,
             new EnumValueMatchDetector,
+            new NullableRegistryLookupDetector,
         ];
 
         foreach (new FixtureVerifier()->verify($codebase, $detectors) as $result) {

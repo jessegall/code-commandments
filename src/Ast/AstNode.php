@@ -11,6 +11,7 @@ use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\Match_;
@@ -73,6 +74,33 @@ class AstNode
     public function coalesceRight(): self
     {
         return new self($this->node instanceof Coalesce ? $this->node->right : null);
+    }
+
+    /**
+     * The left-hand side of a `??`, or an empty node when this is not a coalesce.
+     */
+    public function coalesceLeft(): self
+    {
+        return new self($this->node instanceof Coalesce ? $this->node->left : null);
+    }
+
+    /**
+     * Is this the `null` literal?
+     */
+    public function isNull(): bool
+    {
+        return $this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'null';
+    }
+
+    /**
+     * Is this `$this->prop[$key]` — a lookup into a keyed store the class owns?
+     */
+    public function isOwnedKeyedLookup(): bool
+    {
+        return $this->node instanceof ArrayDimFetch
+            && $this->node->var instanceof PropertyFetch
+            && $this->node->var->var instanceof Variable
+            && $this->node->var->var->name === 'this';
     }
 
     /**
