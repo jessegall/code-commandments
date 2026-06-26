@@ -13,14 +13,14 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 15 detectors shipping.**
+**Status: 16 detectors shipping.**
 
 ---
 
 ## absence
 | Sin | Status |
 |---|---|
-| Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) | 🧠 needs call graph |
+| Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) | ✅ `DeNulledFinderDetector` (call-graph: every caller de-nulls) |
 | `Option<T>` used as a nullable costume — `?Option`, `Option \| null`, `unwrapOr(null)`, an Option that only ever `some()` | 🔜 `OptionAsNullableDetector` |
 | "Nothing" with a natural empty form returned as `null` (`array \| null` → should be `[]`) | 🔜 `NullableCollectionReturnDetector` |
 | `?? <empty literal>` filling a required slot (manufactured fake) | ✅ `ManufacturedFakeFillDetector` (fix-at-the-source) |

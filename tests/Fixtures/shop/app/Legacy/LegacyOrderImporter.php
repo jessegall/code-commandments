@@ -3,6 +3,7 @@
 namespace Shop\Legacy;
 
 use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\DeNulledFinderDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ManufacturedFakeFillDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
@@ -20,6 +21,7 @@ use Shop\Models\Customer;
 final class LegacyOrderImporter
 {
     // previously this returned an array, now it returns a Customer or null
+    #[Sinful(DeNulledFinderDetector::class)]
     public function findCustomer(string $email): ?Customer
     {
         // loop over all customers and find the matching one
