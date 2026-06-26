@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
 use PhpParser\Node\Stmt\Enum_;
 
@@ -29,10 +29,10 @@ final class ContainerReachDetector implements Detector
     {
         return $codebase
             ->whereFunction('app', 'resolve')
-            ->where(function (NodeMatch $match) use ($codebase): bool {
-                $class = $match->enclosingClassName();
+            ->where(function (AstNode $node) use ($codebase): bool {
+                $class = $node->enclosingClassName();
 
-                if ($class === null || $match->enclosingClass() instanceof Enum_) {
+                if ($class === null || $node->enclosingClass() instanceof Enum_) {
                     return false;
                 }
 
@@ -45,7 +45,7 @@ final class ContainerReachDetector implements Detector
     {
         // Injected as a constructor dependency somewhere → the container builds it.
         $injected = $codebase->whereParamType($class)
-            ->where(static fn (NodeMatch $match): bool => $match->enclosingFunctionName() === '__construct')
+            ->where(static fn (AstNode $node): bool => $node->enclosingFunctionName() === '__construct')
             ->count() > 0;
 
         // ...or never instantiated by hand, so the container is its only source.

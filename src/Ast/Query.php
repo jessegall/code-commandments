@@ -9,15 +9,14 @@ use PhpParser\Node;
 use PhpParser\NodeFinder;
 
 /**
- * A fluent pattern over the codebase: a node selector plus chained filters.
- * Filters narrow the matched nodes by context — what the call is used on, what
- * sits near it, which class it lives in. Terminals run the pattern and return
- * rich {@see NodeMatch} results (or their locations).
+ * A fluent pattern over the codebase: a node selector plus chained checks. Each
+ * `where`/`reject` is one check over a fluent {@see AstNode}; they AND together.
+ * Terminals run the pattern and return rich {@see NodeMatch} results.
  */
 final class Query
 {
     /**
-     * @var list<\Closure(NodeMatch): bool>
+     * @var list<\Closure(AstNode): bool>
      */
     private array $filters = [];
 
@@ -30,6 +29,30 @@ final class Query
     ) {}
 
     /**
+     * Keep matches passing the check.
+     *
+     * @param  \Closure(AstNode): bool  $check
+     */
+    public function where(\Closure $check): self
+    {
+        $this->filters[] = $check;
+
+        return $this;
+    }
+
+    /**
+     * Keep matches that do NOT pass the check (the inverse of {@see where}).
+     *
+     * @param  \Closure(AstNode): bool  $check
+     */
+    public function reject(\Closure $check): self
+    {
+        $this->filters[] = static fn (AstNode $node): bool => ! $check($node);
+
+        return $this;
+    }
+
+    /**
      * Keep calls whose receiver resolves to $class — and drop calls made from
      * INSIDE $class (a request reading its own input is fine; the smell is
      * outside code reaching in).
@@ -38,19 +61,17 @@ final class Query
     {
         $target = ltrim($class, '\\');
 
-        $this->filters[] = static function (NodeMatch $match) use ($target): bool {
-            $enclosing = $match->enclosingClassName();
+        return $this->where(static function (AstNode $node) use ($target): bool {
+            $enclosing = $node->enclosingClassName();
 
             if ($enclosing !== null && self::isA($enclosing, $target)) {
                 return false;
             }
 
-            $receiver = ReceiverResolver::typeOf($match);
+            $receiver = ReceiverResolver::typeOf($node);
 
             return $receiver !== null && self::isA($receiver, $target);
-        };
-
-        return $this;
+        });
     }
 
     /**
@@ -60,10 +81,8 @@ final class Query
     {
         $target = ltrim($class, '\\');
 
-        $this->filters[] = static fn (NodeMatch $match): bool =>
-            ($enclosing = $match->enclosingClassName()) !== null && self::isA($enclosing, $target);
-
-        return $this;
+        return $this->where(static fn (AstNode $node): bool =>
+            ($enclosing = $node->enclosingClassName()) !== null && self::isA($enclosing, $target));
     }
 
     /**
@@ -73,10 +92,8 @@ final class Query
     {
         $target = ltrim($class, '\\');
 
-        $this->filters[] = static fn (NodeMatch $match): bool =>
-            ($enclosing = $match->enclosingClassName()) === null || ! self::isA($enclosing, $target);
-
-        return $this;
+        return $this->where(static fn (AstNode $node): bool =>
+            ($enclosing = $node->enclosingClassName()) === null || ! self::isA($enclosing, $target));
     }
 
     /**
@@ -84,19 +101,7 @@ final class Query
      */
     public function inProximityOf(string $name, int $lines = 5): self
     {
-        $this->filters[] = static fn (NodeMatch $match): bool => $match->near($name, $lines);
-
-        return $this;
-    }
-
-    /**
-     * Granular escape hatch: keep matches passing your own predicate.
-     *
-     * @param  \Closure(NodeMatch): bool  $predicate
-     */
-    public function where(\Closure $predicate): self
-    {
-        $this->filters[] = $predicate;
+        $this->filters[] = static fn (AstNode $node): bool => $node instanceof NodeMatch && $node->near($name, $lines);
 
         return $this;
     }
@@ -134,17 +139,11 @@ final class Query
         return array_map(static fn (NodeMatch $match): string => $match->location(), $this->get());
     }
 
-    /**
-     * How many matches the pattern has.
-     */
     public function count(): int
     {
         return count($this->get());
     }
 
-    /**
-     * The first match, or null when the pattern matches nothing.
-     */
     public function first(): ?NodeMatch
     {
         return $this->get()[0] ?? null;

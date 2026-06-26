@@ -35,8 +35,9 @@ final class GenericExceptionDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase->where(static fn (AstNode $node): bool =>
-            in_array($node->newClassName(), self::GENERIC, true)
-            && ($node->parent()?->isThrow() ?? false))->get();
+        return $codebase
+            ->where(static fn (AstNode $node): bool => in_array($node->newClassName(), self::GENERIC, true))
+            ->where(static fn (AstNode $node): bool => $node->parent()->isThrow())
+            ->get();
     }
 }
