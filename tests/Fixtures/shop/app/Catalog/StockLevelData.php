@@ -30,6 +30,10 @@ class StockLevelData extends Data
 
     public function status(): string
     {
-        return $this->available() === 0 ? 'out-of-stock' : ($this->isLow() ? 'low' : 'ok');
+        return match (true) {
+            $this->available() === 0 => 'out-of-stock',
+            $this->isLow() => 'low',
+            default => 'ok',
+        };
     }
 }
