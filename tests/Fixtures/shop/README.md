@@ -28,4 +28,7 @@ that's fine — the engine parses, it does not load them.
 | **absence** | resolve-or-throw in `*Repository`/`OrderService::find` | `CustomerService::find` / `LegacyOrderImporter::findCustomer` (`?T` finder every caller de-nulls) |
 | **role-vocabulary** | `PaymentGatewayRegistry extends Registry` (get throws) | `NotificationChannels` (hand-rolled keyed store, `get()` returns null) |
 | **documentation** | one-line docblocks throughout | `LegacyOrderImporter` (bloated docblock + `// previously…` / `// changed from…` archaeology) |
-| **concurrent-state** | `CheckoutSession::for(): Concurrent<self>` | `Cache::get()` in `CustomerService::greeting` |
+| **concurrent-state** | `CheckoutSession::for(): Concurrent<self>` (composition) | `CartSession extends Concurrent` (inheritance), `Cache::get()` in `CustomerService::greeting` |
+| **laravel-idioms** — facade calls | constructor DI of contracts | `Mail::`/`Log::`/`Cache::` in `NotificationService`/`PaymentProcessor`/`CustomerService` |
+| **enums-with-behaviour** — match on `->value` | `OrderStatus`/`ProductCategory` methods | `OrderPresenter::badge` (`match ($order->status->value)`) |
+| **role-vocabulary** — nullable lookup | `Registry::get` (resolve-or-throw) | `NotificationChannels::get` (`?? null`) |

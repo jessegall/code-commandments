@@ -139,6 +139,14 @@ final class Codebase
     }
 
     /**
+     * Every class declaration. Refine with `extends`/predicates on the node.
+     */
+    public function whereClass(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof Class_);
+    }
+
+    /**
      * `#[Attr(...)]` usages, matched by short name or fully-qualified name.
      */
     public function whereAttribute(string $name): Query
