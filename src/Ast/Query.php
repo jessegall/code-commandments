@@ -53,24 +53,29 @@ final class Query
     }
 
     /**
-     * Keep calls whose receiver resolves to $class — and drop calls made from
-     * INSIDE $class (a request reading its own input is fine; the smell is
-     * outside code reaching in).
+     * Keep calls whose receiver resolves to any of $classes (a class or a base it
+     * extends) — and drop calls made from INSIDE one of them (a request reading its
+     * own input is fine; the smell is outside code reaching in).
      */
-    public function isUsedOn(string $class): self
+    public function isUsedOn(string ...$classes): self
     {
-        $target = ltrim($class, '\\');
+        $targets = array_map(static fn (string $class): string => ltrim($class, '\\'), $classes);
 
-        return $this->where(static function (AstNode $node) use ($target): bool {
+        return $this->where(static function (AstNode $node) use ($targets): bool {
             $enclosing = $node->enclosingClassName();
-
-            if ($enclosing !== null && self::isA($enclosing, $target)) {
-                return false;
-            }
-
             $receiver = ReceiverResolver::typeOf($node);
 
-            return $receiver !== null && self::isA($receiver, $target);
+            foreach ($targets as $target) {
+                if ($enclosing !== null && self::isA($enclosing, $target)) {
+                    return false;
+                }
+
+                if ($receiver !== null && self::isA($receiver, $target)) {
+                    return true;
+                }
+            }
+
+            return false;
         });
     }
 
