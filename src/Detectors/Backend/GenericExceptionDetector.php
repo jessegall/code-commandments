@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Support\Nodes;
 use JesseGall\CodeCommandments\Detectors\Detector;
-use PhpParser\Node;
 
 /**
  * Throwing a generic SPL/base exception (`throw new \RuntimeException(...)`)
@@ -36,8 +35,8 @@ final class GenericExceptionDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase->where(static fn (Node $node): bool =>
-            in_array(Nodes::newClassName($node), self::GENERIC, true)
-            && Nodes::isThrow(Nodes::parentOf($node)))->get();
+        return $codebase->where(static fn (AstNode $node): bool =>
+            in_array($node->newClassName(), self::GENERIC, true)
+            && ($node->parent()?->isThrow() ?? false))->get();
     }
 }
