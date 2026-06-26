@@ -64,6 +64,14 @@ final class TypeName
     }
 
     /**
+     * Is the type nullable at all — `?X` or a union containing `null`?
+     */
+    public static function isNullable(?Node $type): bool
+    {
+        return $type instanceof NullableType || ($type instanceof UnionType && self::unionHasNull($type));
+    }
+
+    /**
      * Is the type a nullable `array` — `?array` or `array | null`?
      */
     public static function isNullableArray(?Node $type): bool
