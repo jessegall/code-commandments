@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 24 detectors shipping.**
+**Status: 25 detectors shipping.**
 
 ---
 
@@ -46,7 +46,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Sin | Status |
 |---|---|
 | `match`/`switch` over an enum's `->value` at a call site (homeless method) | ✅ `EnumValueMatchDetector` |
-| Closed set as raw string literals / a `const` class of scalars (not a native enum) | ⬜ `ConstClassEnumDetector` / string-set |
+| Closed set as raw string literals / a `const` class of scalars (not a native enum) | ✅ `ConstClassEnumDetector` |
 | `match` over string literals that mirror an existing enum's cases | ⬜ |
 | `match` `default` that returns `null`/`''`/`[]` instead of throwing | ⬜ |
 
