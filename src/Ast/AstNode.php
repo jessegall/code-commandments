@@ -389,6 +389,26 @@ class AstNode
     }
 
     /**
+     * Is this a `match` whose `default` arm returns an absence value
+     * (`null`/`false`/`[]`) instead of throwing? An unhandled case silently
+     * swallowed — a missing case is a bug, and the default should say so.
+     */
+    public function isMatchWithAbsenceDefault(): bool
+    {
+        if (! $this->node instanceof Match_) {
+            return false;
+        }
+
+        foreach ($this->node->arms as $arm) {
+            if ($arm->conds === null) {
+                return new self($arm->body)->isAbsenceValue();
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Is this an absence value — `null`, `false`, an empty array, or nothing?
      */
     public function isAbsenceValue(): bool
