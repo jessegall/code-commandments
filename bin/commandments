@@ -26,6 +26,7 @@ use JesseGall\CodeCommandments\Cli\Judge;
         Usage:
           commandments judge [path] [--skill=NAME] [--detector=NAME]
           commandments judge --list
+          commandments install  # wire the composer post-update hook, then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
 
         Options:
@@ -45,6 +46,7 @@ use JesseGall\CodeCommandments\Cli\Judge;
     exit(match ($command) {
         'judge' => (new Judge)->run($args),
         'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
+        'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
         default => (static function () use ($command): int {
             fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
 
