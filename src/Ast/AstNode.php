@@ -393,6 +393,41 @@ class AstNode
     }
 
     /**
+     * Does this class-like declaration carry a multi-PARAGRAPH docblock — two or
+     * more blank-line-separated runs of prose? An essay on a class is the class
+     * asking to be split.
+     */
+    public function hasMultiParagraphDocblock(): bool
+    {
+        if (! $this->node instanceof ClassLike) {
+            return false;
+        }
+
+        $doc = $this->node->getDocComment();
+
+        if ($doc === null) {
+            return false;
+        }
+
+        $paragraphs = 0;
+        $inParagraph = false;
+
+        foreach (preg_split('/\R/', $doc->getText()) ?: [] as $line) {
+            $line = trim(ltrim(trim($line), '/*'));
+            $isProse = $line !== '' && ! str_starts_with($line, '@');
+
+            if ($isProse && ! $inParagraph) {
+                $paragraphs++;
+                $inParagraph = true;
+            } elseif ($line === '') {
+                $inParagraph = false;
+            }
+        }
+
+        return $paragraphs >= 2;
+    }
+
+    /**
      * Is this node inside a loop (`for` / `foreach` / `while` / `do-while`)?
      */
     public function isWithinLoop(): bool
