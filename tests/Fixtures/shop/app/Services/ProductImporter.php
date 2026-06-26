@@ -2,6 +2,8 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
 use Shop\Enums\ProductCategory;
 use Shop\Models\Product;
@@ -11,6 +13,7 @@ final class ProductImporter
     /**
      * @param  array<int, array<string, mixed>>  $rows
      */
+    #[Sinful(NewDataObjectDetector::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {

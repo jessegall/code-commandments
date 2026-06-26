@@ -2,6 +2,8 @@
 
 namespace Shop\Http\Presenters;
 
+use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\OrderData;
 use Shop\Models\Order;
 
@@ -12,6 +14,7 @@ final class OrderPresenter
         return OrderData::from($order);
     }
 
+    #[Sinful(NewDataObjectDetector::class)]
     public function legacyPresent(Order $order): OrderData
     {
         return new OrderData(

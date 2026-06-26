@@ -124,6 +124,14 @@ class AstNode
     }
 
     /**
+     * Is this node inside a class (not at file scope)?
+     */
+    public function isEnclosedInClass(): bool
+    {
+        return $this->enclosingClass() !== null;
+    }
+
+    /**
      * Is the enclosing declaration an enum (which the container can never build)?
      */
     public function isInEnum(): bool
