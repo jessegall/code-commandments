@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 28 detectors shipping.**
+**Status: 29 detectors shipping.**
 
 ---
 
@@ -69,7 +69,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 |---|---|
 | `?? throw` / `=== null ? …` feeding further work on the same line (inline throw mid-expression) | ✅ `InlineThrowDetector` |
 | if/elseif/else ladder or ≥2-deep nesting (should hoist a guard / extract) | ⬜ `DeepNestingDetector` |
-| Loop body wrapped in an `if` instead of `continue` guard | ⬜ |
+| Loop body (multi-statement) wrapped in an `if` instead of `continue` guard | ✅ `LoopInvertedGuardDetector` |
 | Precondition checked inline/buried instead of an early guard at the top | 〰️ |
 
 ## laravel-idioms
