@@ -7,13 +7,18 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\Throw_;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\NullableType;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_;
@@ -87,6 +92,46 @@ class AstNode
     public function newClassName(): ?string
     {
         return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class->toString() : null;
+    }
+
+    /**
+     * Is this `$x['literal']` — an array indexed by a string-literal key?
+     */
+    public function arrayKeyIsString(): bool
+    {
+        return $this->node instanceof ArrayDimFetch && $this->node->dim instanceof String_;
+    }
+
+    /**
+     * The name of the variable being indexed (`$bag` in `$bag['x']`), or null.
+     */
+    public function arrayBaseName(): ?string
+    {
+        return $this->node instanceof ArrayDimFetch
+            && $this->node->var instanceof Variable
+            && is_string($this->node->var->name)
+            ? $this->node->var->name
+            : null;
+    }
+
+    /**
+     * Is $name a parameter of the enclosing function typed `array`?
+     */
+    public function enclosingParamIsArray(string $name): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return false;
+        }
+
+        foreach ($function->getParams() as $param) {
+            if ($param->var instanceof Variable && $param->var->name === $name) {
+                return self::isArrayType($param->type);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -186,6 +231,15 @@ class AstNode
         $method = $this->enclosingFunctionName();
 
         return $method === null ? $class : "{$class}::{$method}";
+    }
+
+    private static function isArrayType(?Node $type): bool
+    {
+        if ($type instanceof NullableType) {
+            return self::isArrayType($type->type);
+        }
+
+        return $type instanceof Identifier && $type->name === 'array';
     }
 
     private function walkUp(callable $test): ?Node
