@@ -58,4 +58,18 @@ final class CodebaseQueryTest extends TestCase
         $this->assertCount(1, $hits);
         $this->assertSame('App\Outside', $hits[0]->enclosingClassName());
     }
+
+    public function test_where_param_type_finds_typed_parameters_and_their_scope(): void
+    {
+        $code = '<?php namespace A; class S {} class C { public function __construct(private \A\S $s, int $n) {} public function m(\A\S $x) {} }';
+
+        $all = Codebase::fromString($code)->whereParamType('A\S')->get();
+        $this->assertCount(2, $all, 'the ctor param and the method param');
+
+        $ctorOnly = Codebase::fromString($code)
+            ->whereParamType('A\S')
+            ->where(static fn (NodeMatch $m): bool => $m->enclosingFunctionName() === '__construct')
+            ->get();
+        $this->assertCount(1, $ctorOnly);
+    }
 }
