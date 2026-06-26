@@ -28,11 +28,13 @@ use JesseGall\CodeCommandments\Cli\Judge;
           commandments judge --list
 
         Options:
-          --skill=NAME      only run detectors for one skill (group), e.g. spatie-data
-          --detector=NAME   only run one detector (partial name match)
-          --list            list every detector grouped by skill
+          --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
+          --detector=NAME    only run one detector (partial name match)
+          --exclude=A,B      skip findings in paths containing any fragment
+          --list             list every detector grouped by skill
 
-        Exit code is 1 when sins are found, 0 when clean.
+        Files marked @code-commandments-generated are skipped automatically
+        (they are regenerated, not hand-authored). Exit code 1 when sins found.
 
         TXT);
 
