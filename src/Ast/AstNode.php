@@ -559,6 +559,16 @@ class AstNode
     }
 
     /**
+     * Is this an `if` / `elseif` ladder of four-plus branches (an `if` with two or
+     * more `elseif`s)? A long ladder is dispatch in disguise — a `match`, a method
+     * on the type, or polymorphism.
+     */
+    public function isIfElseLadder(): bool
+    {
+        return $this->node instanceof If_ && count($this->node->elseifs) >= 2;
+    }
+
+    /**
      * Is this an `if` that is the SOLE statement of its enclosing loop — the whole
      * body wrapped in a condition instead of an inverted `continue` guard?
      */

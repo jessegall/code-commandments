@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 30 detectors shipping.**
+**Status: 31 detectors shipping.**
 
 ---
 
@@ -68,7 +68,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Sin | Status |
 |---|---|
 | `?? throw` / `=== null ? …` feeding further work on the same line (inline throw mid-expression) | ✅ `InlineThrowDetector` |
-| if/elseif/else ladder or ≥2-deep nesting (should hoist a guard / extract) | ⬜ `DeepNestingDetector` |
+| if/elseif ladder of 4+ branches (should be match/dispatch) | ✅ `IfElseLadderDetector` |
 | Loop body (multi-statement) wrapped in an `if` instead of `continue` guard | ✅ `LoopInvertedGuardDetector` |
 | Precondition checked inline/buried instead of an early guard at the top | 〰️ |
 
