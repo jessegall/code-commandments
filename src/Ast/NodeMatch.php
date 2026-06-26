@@ -25,18 +25,24 @@ final class NodeMatch
         public readonly ParsedFile $file,
     ) {}
 
+    /**
+     * The 1-based line where this match begins.
+     */
     public function line(): int
     {
         return $this->node->getStartLine();
     }
 
+    /**
+     * The match's `path:line`, the form a finding is reported as.
+     */
     public function location(): string
     {
         return "{$this->file->path}:{$this->line()}";
     }
 
     /**
-     * The called name when this match is a call node.
+     * The called name when this match is a call node, else null.
      */
     public function callName(): ?string
     {
@@ -44,6 +50,8 @@ final class NodeMatch
     }
 
     /**
+     * The match's call / attribute arguments (variadic placeholders dropped).
+     *
      * @return list<Arg>
      */
     public function arguments(): array
@@ -53,11 +61,17 @@ final class NodeMatch
         return array_values(array_filter($args, static fn ($arg): bool => $arg instanceof Arg));
     }
 
+    /**
+     * The class/interface/trait/enum this match sits in, or null at file scope.
+     */
     public function enclosingClass(): ?ClassLike
     {
         return $this->walkUp(static fn (Node $node): bool => $node instanceof ClassLike);
     }
 
+    /**
+     * The fully-qualified name of the enclosing class, or null at file scope.
+     */
     public function enclosingClassName(): ?string
     {
         $class = $this->enclosingClass();
@@ -69,11 +83,17 @@ final class NodeMatch
         return ($class->namespacedName ?? null)?->toString() ?? $class->name?->toString();
     }
 
+    /**
+     * The function/method/closure this match sits in, or null at class/file scope.
+     */
     public function enclosingFunction(): ?FunctionLike
     {
         return $this->walkUp(static fn (Node $node): bool => $node instanceof FunctionLike);
     }
 
+    /**
+     * The enclosing method/function name, or null for a closure or file scope.
+     */
     public function enclosingFunctionName(): ?string
     {
         $function = $this->enclosingFunction();
