@@ -159,14 +159,14 @@ final class Codebase
     }
 
     /**
-     * Raw escape hatch: select nodes by your own predicate over a fluent
-     * {@see AstNode}.
+     * Open a pattern selecting every node, checked by your own predicate over a
+     * fluent {@see AstNode}. Chain more `where`/`reject` to refine.
      *
-     * @param  \Closure(AstNode): bool  $test
+     * @param  \Closure(AstNode): bool  $check
      */
-    public function where(\Closure $test): Query
+    public function where(\Closure $check): Query
     {
-        return new Query($this, static fn (Node $node): bool => $test(new AstNode($node)));
+        return (new Query($this, static fn (Node $node): bool => true))->where($check);
     }
 
     /**
