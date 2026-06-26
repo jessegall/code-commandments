@@ -16,6 +16,11 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * `file:line  Class::method`, grouped by the SKILL that teaches the fix — so an
  * agent can read one skill and resolve the whole group. Filter to a skill (group)
  * or a single detector to scope a fixing pass.
+ *
+ * By default it also writes a Markdown checklist (`commandments-sins.md`) — the
+ * intended workflow is to judge ONCE, then work that file line-by-line (a full
+ * scan is slow), deleting each line as its sin is fixed. `--no-checklist` prints
+ * only; `--checklist=FILE` retargets it.
  */
 final class Judge
 {
@@ -44,14 +49,14 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options['path'], $detectors, $options['exclude']);
+        return $this->judge($options['path'], $detectors, $options['exclude'], $options['checklist']);
     }
 
     /**
      * @param  list<Detector>  $detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, array $detectors, array $exclude): int
+    private function judge(string $path, array $detectors, array $exclude, ?string $checklist): int
     {
         $codebase = Codebase::scan($path);
 
@@ -69,6 +74,10 @@ final class Judge
         }
 
         if ($bySkill === []) {
+            if ($checklist !== null && is_file($checklist)) {
+                @unlink($checklist);
+            }
+
             $this->line("\033[32m✓ No sins found.\033[0m");
 
             return 0;
@@ -91,7 +100,40 @@ final class Judge
         $skills = count($bySkill);
         $this->line("\n\033[1m{$total} sins\033[0m across {$skills} " . ($skills === 1 ? 'skill' : 'skills') . ".");
 
+        if ($checklist !== null) {
+            file_put_contents($checklist, $this->checklist($path, $bySkill, $total));
+            $this->line("\033[2m↳ checklist written to {$checklist} — fix each item, then delete its line\033[0m");
+        }
+
         return 1;
+    }
+
+    /**
+     * Render the findings as a Markdown task list the agent works through and
+     * prunes line-by-line: read the skill, fix the sin, delete the line.
+     *
+     * @param  array<string, list<array{detector: string, match: NodeMatch}>>  $bySkill
+     */
+    private function checklist(string $path, array $bySkill, int $total): string
+    {
+        $out = "# Code Commandments — {$total} sins to fix\n\n"
+            . "A checklist. Work through it ONE sin at a time, top to bottom:\n\n"
+            . "1. Read the skill named in the section header (it teaches the fix).\n"
+            . "2. Open the `file:line` and fix the sin at the source.\n"
+            . "3. **Delete that line from this file.**\n\n"
+            . "When the list is empty, run `commandments judge` again to confirm "
+            . "(a clean run deletes this file).\n";
+
+        foreach ($bySkill as $skill => $findings) {
+            $out .= "\n## {$skill}  — read `skills/{$skill}/SKILL.md`\n\n";
+
+            foreach ($findings as $finding) {
+                $location = $this->relative($path, $finding['match']->location());
+                $out .= "- [ ] `{$location}`  {$finding['match']->scope()}  [{$finding['detector']}]\n";
+            }
+        }
+
+        return $out;
     }
 
     private function list(): int
@@ -131,7 +173,7 @@ final class Judge
     }
 
     /**
-     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>}
+     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>, checklist: ?string}
      */
     private function parse(array $args): array
     {
@@ -141,9 +183,17 @@ final class Judge
         $list = false;
         $exclude = [];
 
+        // By default the findings are written to a checklist file the agent prunes
+        // line-by-line; `--no-checklist` prints only, `--checklist=FILE` retargets.
+        $checklist = 'commandments-sins.md';
+
         foreach ($args as $arg) {
             if ($arg === '--list') {
                 $list = true;
+            } elseif ($arg === '--no-checklist') {
+                $checklist = null;
+            } elseif (str_starts_with($arg, '--checklist=')) {
+                $checklist = substr($arg, 12);
             } elseif (str_starts_with($arg, '--skill=')) {
                 $skill = substr($arg, 8);
             } elseif (str_starts_with($arg, '--detector=')) {
@@ -155,7 +205,7 @@ final class Judge
             }
         }
 
-        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude];
+        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude, 'checklist' => $checklist];
     }
 
     /**
