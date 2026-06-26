@@ -35,9 +35,12 @@ use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\InterpolatedString;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\Break_;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassConst;
+use PhpParser\Node\Stmt\Continue_;
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Do_;
@@ -576,6 +579,31 @@ class AstNode
         return $this->node instanceof String_
             || $this->node instanceof Int_
             || $this->node instanceof Float_;
+    }
+
+    /**
+     * Is this an `if`/`else` whose `if` branch already exits (ends in
+     * `return`/`throw`/`continue`/`break`), making the `else` redundant? Drop the
+     * `else` and let the happy path continue unindented.
+     */
+    public function hasRedundantElse(): bool
+    {
+        if (! $this->node instanceof If_ || $this->node->else === null || $this->node->elseifs !== []) {
+            return false;
+        }
+
+        $statements = $this->node->stmts;
+
+        if ($statements === []) {
+            return false;
+        }
+
+        $last = end($statements);
+
+        return $last instanceof Return_
+            || $last instanceof Continue_
+            || $last instanceof Break_
+            || ($last instanceof Expression && $last->expr instanceof Throw_);
     }
 
     /**

@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 33 detectors shipping.**
+**Status: 34 detectors shipping.**
 
 ---
 
@@ -71,6 +71,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | if/elseif ladder of 4+ branches (should be match/dispatch) | ✅ `IfElseLadderDetector` |
 | `if` nested 3-deep (a pyramid — hoist guards / extract) | ✅ `DeepNestingDetector` |
 | Loop body (multi-statement) wrapped in an `if` instead of `continue` guard | ✅ `LoopInvertedGuardDetector` |
+| `else` after an `if` branch that already returns/throws (redundant) | ✅ `RedundantElseDetector` |
 | Precondition checked inline/buried instead of an early guard at the top | 〰️ |
 
 ## laravel-idioms
