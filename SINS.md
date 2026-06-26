@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 22 detectors shipping.**
+**Status: 23 detectors shipping.**
 
 ---
 
@@ -39,7 +39,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 |---|---|
 | History/archaeology comments ("previously / used to / refactored / changed from", task refs) | ✅ `ArchaeologyCommentDetector` |
 | Inline comment that just restates the code | ⬜ |
-| Multi-paragraph class docblock (class too big) | ⬜ `BloatedDocblockDetector` |
+| Multi-paragraph class docblock (class too big) | ✅ `BloatedDocblockDetector` |
 | Docblock not present-tense "what it is now" + tags | 〰️ |
 
 ## enums-with-behaviour
