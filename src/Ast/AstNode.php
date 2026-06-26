@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
+use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
@@ -347,6 +348,31 @@ class AstNode
     public function isFunctionDeclaration(): bool
     {
         return $this->node instanceof ClassMethod || $this->node instanceof Function_;
+    }
+
+    /**
+     * A formatting-blind fingerprint of this whole function/method — its
+     * signature, body, and modifiers serialised structurally so spacing, newlines,
+     * and comments don't change it. Two declarations with the same hash are the
+     * same code. Empty string when this isn't a function declaration.
+     */
+    public function structuralHash(): string
+    {
+        return $this->isFunctionDeclaration() ? StructuralHash::of($this->node) : '';
+    }
+
+    /**
+     * How many AST nodes make up this function/method's body — a size proxy used
+     * to ignore trivial declarations (one-line getters, empty stubs) that are
+     * legitimately alike. Zero for a non-function or a bodyless declaration.
+     */
+    public function bodyNodeCount(): int
+    {
+        if (! $this->isFunctionDeclaration() || $this->node->stmts === null) {
+            return 0;
+        }
+
+        return count((new NodeFinder)->find($this->node->stmts, static fn (Node $node): bool => true));
     }
 
     /**

@@ -71,6 +71,7 @@ false-positive side against. They stay skill-only until that changes.
 | Sin | Status |
 |---|---|
 | `?? <default>` / `?? ''` / nullable / repeated guard papering over an absent value at the consumer | ✅ `ManufacturedFakeFillDetector` (the argument-fill form) |
+| Copy-pasted code — two+ functions with an identical AST (formatting/comments aside) | ✅ `DuplicateFunctionDetector` (structural hash of the whole function) |
 | The process — name the symptom, trace upstream, fix at the origin, delete the symptom | 〰️ taught, not detected (the parent move behind the other detectors) |
 
 ## guard-clauses-and-flow

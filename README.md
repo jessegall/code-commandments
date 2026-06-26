@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_40 detectors across 11 skills._
+_41 detectors across 11 skills._
 
 ### `absence`
 
@@ -96,6 +96,7 @@ _40 detectors across 11 skills._
 
 | Detector | What it flags |
 |---|---|
+| `DuplicateFunctionDetector` | Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count). |
 | `ManufacturedFakeFillDetector` | Filling an argument with a manufactured fake on absence — `name: $row['name'] ?? ''`, `(int) ($row['id'] ?? 0)`. |
 
 ### `guard-clauses-and-flow`
