@@ -456,6 +456,104 @@ class AstNode
     }
 
     /**
+     * Does this method SAVE one of its own properties to a local and later RESTORE
+     * it from that local — `$prev = $this->scope; … $this->scope = $prev;`? That
+     * dance only makes sense when the field is per-call scratch state mutated for
+     * the duration of the call; the data is really an input that should be passed.
+     */
+    public function savesAndRestoresOwnState(): bool
+    {
+        if (! $this->isFunctionDeclaration() || $this->node->stmts === null) {
+            return false;
+        }
+
+        // Dynamic scope, not scratch state: a method that brackets a callable it was
+        // HANDED (`bind($target, $callback)`, `withinMutation(…, $callback)`) sets the
+        // field for the duration of code it doesn't own — you can't thread a parameter
+        // into a closure's transitive callees. That's the Context pattern, not a lie.
+        if ($this->acceptsCallable()) {
+            return false;
+        }
+
+        $savedInto = [];      // property name => local var it was saved into
+        $restoredFrom = [];   // property name => list of local vars written back
+
+        foreach ((new NodeFinder)->findInstanceOf($this->node->stmts, Assign::class) as $assign) {
+            $target = self::thisPropertyName($assign->var);
+            $source = self::thisPropertyName($assign->expr);
+
+            if ($source !== null && $assign->var instanceof Variable && is_string($assign->var->name)) {
+                $savedInto[$source] = $assign->var->name;
+            }
+
+            if ($target !== null && $assign->expr instanceof Variable && is_string($assign->expr->name)) {
+                $restoredFrom[$target][] = $assign->expr->name;
+            }
+        }
+
+        foreach ($savedInto as $property => $local) {
+            if (in_array($local, $restoredFrom[$property] ?? [], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this function declare a parameter typed `callable` or `Closure`? Such a
+     * method runs code it was handed — the hallmark of the dynamic-scope pattern.
+     */
+    private function acceptsCallable(): bool
+    {
+        foreach ($this->node->params as $param) {
+            foreach (self::typeNames($param->type) as $name) {
+                if ($name === 'callable' || $name === 'Closure') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The simple names inside a (possibly nullable/union/intersection) type hint.
+     *
+     * @return list<string>
+     */
+    private static function typeNames(?Node $type): array
+    {
+        if ($type instanceof NullableType) {
+            return self::typeNames($type->type);
+        }
+
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
+            return array_merge(...array_map(self::typeNames(...), $type->types));
+        }
+
+        if ($type instanceof Identifier) {
+            return [$type->toString()];
+        }
+
+        if ($type instanceof Name) {
+            return [$type->getLast()];
+        }
+
+        return [];
+    }
+
+    private static function thisPropertyName(Node $expr): ?string
+    {
+        return $expr instanceof PropertyFetch
+            && $expr->var instanceof Variable
+            && $expr->var->name === 'this'
+            && $expr->name instanceof Identifier
+                ? $expr->name->toString()
+                : null;
+    }
+
+    /**
      * Is this a function/method declared to return a nullable array (`?array` /
      * `array | null`) — a collection modelled as "the list, or null"?
      */
