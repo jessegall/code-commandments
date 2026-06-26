@@ -47,7 +47,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_43 detectors across 12 skills._
+_44 detectors across 12 skills._
 
 ### `absence`
 
@@ -150,6 +150,7 @@ _43 detectors across 12 skills._
 | `ArrayBagDetector` | An `array` parameter read by a string-literal key (`$bag['total']`) — a structured bag that should be a typed value object. |
 | `ArrayReturnBagDetector` | Returning a multi-field, string-keyed array literal — a structured bag that should be a typed value object. |
 | `DataClumpDetector` | The same three-or-more value parameters (`string $shopId, string $userId, string $channelId`) threaded through two-or-more signatures in different classes. |
+| `PositionalTupleReturnDetector` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` (also from a closure / arrow fn) — bundles several independent values as a keyless list the caller must destructure by position. |
 | `RawDecodedArrayReturnDetector` | Returning a freshly-decoded payload straight out of a boundary — the raw `array` from `json_decode(...)` crossing back into the app untyped. |
 
 <!-- END: detectors -->
