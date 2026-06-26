@@ -13,7 +13,13 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 34 detectors shipping.**
+**Status: 40 detectors shipping.**
+
+Every cleanly + low-FP detectable sin now has a detector. The rows below still
+marked 🧠/〰️ were each evaluated against real consumer codebases (workflows,
+smart-farmers) and deferred for a concrete reason — they need the call graph,
+over-fire structurally, or have no real-world signal to validate the
+false-positive side against. They stay skill-only until that changes.
 
 ---
 
@@ -30,15 +36,15 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Sin | Status |
 |---|---|
 | Class `extends Concurrent` instead of composing `Concurrent<self>` | ✅ `ConcurrentSubclassDetector` |
-| `Cache::get/put` with a hand-built key for cross-process state (should be a `::for()` domain object) | ⬜ (today only the raw `Cache::` facade is caught) |
-| Pure accessor on the handle not marked `#[ReadonlyMethod]` | ⬜ |
+| `Cache::get/put` with a hand-built key for cross-process state (should be a `::for()` domain object) | 〰️ the raw `Cache::` facade is already caught by `FacadeCallDetector`; isolating the hand-built-key refinement adds noise over signal |
+| Pure accessor on the handle not marked `#[ReadonlyMethod]` | 🧠 needs handle-type resolution (which class is the Concurrent handle) to know which methods are accessors |
 | `$c->count++` / `$c->items[] = …` on the handle (lost-update race) | 🧠 needs handle-type resolution |
 
 ## documentation
 | Sin | Status |
 |---|---|
 | History/archaeology comments ("previously / used to / refactored / changed from", task refs) | ✅ `ArchaeologyCommentDetector` |
-| Inline comment that just restates the code | ⬜ |
+| Inline comment that just restates the code | 〰️ restatement-vs-explanation can't be told apart structurally — any heuristic over-fires on legitimate intent comments |
 | Multi-paragraph class docblock (class too big) | ✅ `BloatedDocblockDetector` |
 | Docblock not present-tense "what it is now" + tags | 〰️ |
 | Docblock that only restates the typed signature (`@param Type $x`, no description) | ✅ `CeremonyDocblockDetector` |
@@ -85,9 +91,9 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | `app()`/`resolve()` reach inside a container-resolved class | ✅ `ContainerReachDetector` |
 | Laravel facade call (`Cache::`, `Log::`, `Mail::` …) | ✅ `FacadeCallDetector` |
 | `config('…')` read inside a class | ✅ `ConfigReadDetector` |
-| `new <Service>` inside a class instead of constructor injection | ⬜ `NewServiceInClassDetector` |
-| Untyped `->get()` on a Fluent/ValueBag (should be a typed accessor) | ⬜ |
-| Raw `->where('col', …)` expressing a concept repeated at call sites (should be a scope) | ⬜ `RawWhereShouldBeScopeDetector` |
+| `new <Service>` inside a class instead of constructor injection | 〰️ prototyped + dropped: "instantiated AND injected somewhere" is necessary-but-not-sufficient and over-fired badly (196 hits — value objects, `::for` factories, DTOs); no clean structural service-vs-value signal |
+| Untyped `->get()` on a Fluent/ValueBag (should be a typed accessor) | 🧠 needs receiver-type resolution to know the `->get()` target is a Fluent/ValueBag and not an unrelated collection |
+| Raw `->where('col', …)` expressing a concept repeated at call sites (should be a scope) | 🧠 the sin IS the repetition across call sites — needs the call graph to count, else a one-off `->where` is a false positive |
 | Set-property-then-`save()` at a call site (should be an intention method) | ✅ `ModelMutationAtCallSiteDetector` |
 | Bare `$model->update([...])` mass-array update at a call site | ✅ `MassUpdateAtCallSiteDetector` |
 
@@ -95,10 +101,10 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Sin | Status |
 |---|---|
 | A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw) | ✅ `NullableRegistryLookupDetector` |
-| Hand-rolled keyed store / set / first-match chain not named/based as `*Registry`/`*Set`/`*Resolver` | ⬜ (role inference) |
-| A `*Set` exposing a keyed `get(string)` (that's a Registry) | ⬜ |
-| A `*Resolver` doing `\|\|`/`&&` predicate chains instead of `anyOf`/`allOf` first-match | ⬜ |
-| Classification by a `const [...]` list of class-name strings instead of a marker interface/type | ⬜ |
+| Hand-rolled keyed store / set / first-match chain not named/based as `*Registry`/`*Set`/`*Resolver` | 〰️ role inference from shape alone (a private array + add/get) collides with countless legitimate classes; no low-FP structural signal |
+| A `*Set` exposing a keyed `get(string)` (that's a Registry) | 〰️ cleanly detectable (name + `get(string)` shape) but zero real-world signal across both consumers (all `*Set`s are properly unkeyed) — nothing to validate the FP side against; revisit if a case appears |
+| A `*Resolver` doing `\|\|`/`&&` predicate chains instead of `anyOf`/`allOf` first-match | 〰️ a bare `\|\|`/`&&` in a `*Resolver` is overwhelmingly ordinary boolean logic, not a predicate-dispatch chain — no structural signal separates the sin from legitimate conditionals |
+| Classification by a `const [...]` list of class-name strings instead of a marker interface/type | 〰️ to avoid firing on legitimate registration arrays it must be gated on an `in_array($x::class, self::CONST)` membership test — zero such usages across both consumers, so no FP-side to validate |
 | A role class doing two jobs (resolution/assembly smuggled into a registry/data class) | 〰️ |
 
 ## spatie-data
@@ -109,7 +115,7 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Collections hydrated with `::from()` in a loop instead of `#[DataCollectionOf]` + `::collect()` | ✅ `ManualHydrationLoopDetector` |
 | Data class not `final` / props not `readonly` promoted | ✅ `NonFinalDataDetector` (final; readonly TBD) |
 | `fromX()` object factory missing its `@method static static from(T)` (or the array shape wrongly documented) | 〰️ |
-| snake_case boundary without one class-level `#[MapInputName]` | ⬜ |
+| snake_case boundary without one class-level `#[MapInputName]` | 🧠 needs to know the boundary's input keys are snake_case (the wire shape), which isn't visible from the Data class declaration alone |
 
 ## value-objects
 | Sin | Status |
@@ -118,5 +124,5 @@ Keep this current: when a detector ships, flip its row to ✅ with the class nam
 | Returning a multi-field string-keyed array literal (a bag that should be a value object) | ✅ `ArrayReturnBagDetector` |
 | Returning a raw decoded boundary array (`json_decode(...)`) untyped | ✅ `RawDecodedArrayReturnDetector` |
 | 3+ values threaded as separate params (a data clump → one object) | ✅ `DataClumpDetector` |
-| A primitive carrying hidden rules/validation (primitive obsession) | ⬜ |
+| A primitive carrying hidden rules/validation (primitive obsession) | 〰️ "this string has hidden rules" is a semantic judgement, not a structural fact — any heuristic (regex on a string, length checks) over-fires on ordinary primitives |
 | Type introduced downstream after the loose data has been threaded around | 〰️ (this is `fix-at-the-source` applied) |
