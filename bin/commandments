@@ -5,7 +5,27 @@ declare(strict_types=1);
 
 use JesseGall\CodeCommandments\Cli\Judge;
 
-(static function (array $argv): void {
+$toBytes = static function (string $limit): int {
+    $limit = trim($limit);
+    $value = (int) $limit;
+
+    return match (strtolower(substr($limit, -1))) {
+        'g' => $value * 1024 * 1024 * 1024,
+        'm' => $value * 1024 * 1024,
+        'k' => $value * 1024,
+        default => $value,
+    };
+};
+
+(static function (array $argv) use ($toBytes): void {
+    // Parsing a whole codebase into ASTs is memory-hungry; lift the default 128M
+    // ceiling so a large source tree doesn't abort mid-scan. Respect an operator's
+    // higher limit (or an unlimited -1) if one is already set.
+    $current = trim((string) ini_get('memory_limit'));
+    if ($current !== '-1' && $toBytes($current) < 1024 * 1024 * 1024) {
+        ini_set('memory_limit', '1G');
+    }
+
     foreach ([
         __DIR__ . '/../vendor/autoload.php',   // run from the package
         __DIR__ . '/../../../autoload.php',     // run as vendor/bin in a consumer
