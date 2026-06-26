@@ -18,6 +18,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -154,6 +155,15 @@ final class Codebase
     public function whereClass(): Query
     {
         return new Query($this, static fn (Node $node): bool => $node instanceof Class_);
+    }
+
+    /**
+     * Every method declaration. Refine with predicates on the node (return type,
+     * name, …).
+     */
+    public function whereMethodDeclaration(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof ClassMethod);
     }
 
     /**

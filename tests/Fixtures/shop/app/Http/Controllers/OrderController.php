@@ -4,6 +4,7 @@ namespace Shop\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Detectors\Backend\ModelMutationAtCallSiteDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateOrderRequest;
@@ -28,6 +29,7 @@ class OrderController extends Controller
         return Order::query()->where('status', $status)->where('customer_id', $customerId)->get()->all();
     }
 
+    #[Sinful(ModelMutationAtCallSiteDetector::class)]
     public function markPaid(Request $request, Order $order): Order
     {
         $order->status = 'paid';
