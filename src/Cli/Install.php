@@ -25,12 +25,27 @@ final class Install
         }
 
         $wired = $this->wireComposerScripts($composerPath);
+        $this->ensureGitignored(getcwd() . '/.gitignore');
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"
             : "✓ composer hooks already wired.\n");
 
         return (new Sync)->run($args);
+    }
+
+    /**
+     * Generated skills are regenerated on every sync — keep them out of the repo.
+     */
+    private function ensureGitignored(string $path): void
+    {
+        $entry = '.claude/skills/commandments-*/';
+        $existing = is_file($path) ? (string) file_get_contents($path) : '';
+
+        if (! str_contains($existing, $entry)) {
+            $prefix = ($existing !== '' && ! str_ends_with($existing, "\n")) ? "\n" : '';
+            file_put_contents($path, $existing . $prefix . "\n# code-commandments published skills (regenerated on composer update)\n{$entry}\n");
+        }
     }
 
     private function wireComposerScripts(string $path): bool
