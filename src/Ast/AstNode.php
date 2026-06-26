@@ -14,9 +14,9 @@ use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
-use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\Node\Expr\BinaryOp\NotIdentical;
+use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\ConstFetch;
@@ -342,12 +342,20 @@ class AstNode
     }
 
     /**
+     * Is this node a function or method declaration (not a closure)?
+     */
+    public function isFunctionDeclaration(): bool
+    {
+        return $this->node instanceof ClassMethod || $this->node instanceof Function_;
+    }
+
+    /**
      * Is this a function/method declared to return a nullable array (`?array` /
      * `array | null`) — a collection modelled as "the list, or null"?
      */
     public function returnsNullableArray(): bool
     {
-        return ($this->node instanceof ClassMethod || $this->node instanceof Function_)
+        return $this->isFunctionDeclaration()
             && TypeName::isNullableArray($this->node->returnType);
     }
 
@@ -357,7 +365,7 @@ class AstNode
      */
     public function returnsNullableObject(): bool
     {
-        return ($this->node instanceof ClassMethod || $this->node instanceof Function_)
+        return $this->isFunctionDeclaration()
             && TypeName::nullableClass($this->node->returnType) !== null;
     }
 
@@ -557,7 +565,7 @@ class AstNode
      */
     public function hasCeremonyDocblock(): bool
     {
-        if (! $this->node instanceof ClassMethod && ! $this->node instanceof Function_) {
+        if (! $this->isFunctionDeclaration()) {
             return false;
         }
 
@@ -936,7 +944,7 @@ class AstNode
      */
     public function hasNullNormalisedNullableCallback(): bool
     {
-        if (! $this->node instanceof ClassMethod && ! $this->node instanceof Function_) {
+        if (! $this->isFunctionDeclaration()) {
             return false;
         }
 
@@ -1033,7 +1041,7 @@ class AstNode
      */
     public function valueParamSignature(): array
     {
-        if (! $this->node instanceof ClassMethod && ! $this->node instanceof Function_) {
+        if (! $this->isFunctionDeclaration()) {
             return [];
         }
 
@@ -1094,7 +1102,7 @@ class AstNode
     private static function typeKey(string $type): string
     {
         $type = strtolower(ltrim($type, '?\\'));
-        $type = str_replace('null|', '', str_replace('|null', '', $type));
+        $type = str_replace(['|null', 'null|'], '', $type);
 
         if (str_contains($type, '|')) {
             $parts = array_filter(array_map(static fn (string $p): string => ltrim($p, '\\'), explode('|', $type)));
