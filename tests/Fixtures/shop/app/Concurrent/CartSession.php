@@ -14,5 +14,28 @@ use JesseGall\Concurrent\Concurrent;
 #[Sinful(ConcurrentSubclassDetector::class)]
 final class CartSession extends Concurrent
 {
-    public int $itemCount = 0;
+    /** @var array<int, int> */
+    public array $quantities = [];
+
+    public ?string $couponCode = null;
+
+    public function add(int $productId, int $quantity): void
+    {
+        $this->quantities[$productId] = ($this->quantities[$productId] ?? 0) + $quantity;
+    }
+
+    public function drop(int $productId): void
+    {
+        unset($this->quantities[$productId]);
+    }
+
+    public function applyCoupon(string $code): void
+    {
+        $this->couponCode = $code;
+    }
+
+    public function totalItems(): int
+    {
+        return array_sum($this->quantities);
+    }
 }

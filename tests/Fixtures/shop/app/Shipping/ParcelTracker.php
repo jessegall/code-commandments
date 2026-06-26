@@ -23,4 +23,11 @@ final class ParcelTracker
 
         return json_decode($body, true);
     }
+
+    public function isDelivered(string $trackingCode): bool
+    {
+        $status = $this->http->get("https://courier.test/v1/track/{$trackingCode}/status");
+
+        return str_contains($status, 'delivered');
+    }
 }
