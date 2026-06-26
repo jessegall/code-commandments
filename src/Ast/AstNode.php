@@ -925,6 +925,44 @@ class AstNode
     }
 
     /**
+     * The signature of this function/method's VALUE parameters — its
+     * scalar-typed params (`string`/`int`/`float`/`bool`) rendered as a sorted
+     * `"type $name"` list, but only when there are three or more (a data clump).
+     * Returns an empty list otherwise. A clump recurring across signatures is the
+     * tell that these fields are really one object.
+     *
+     * @return list<string>
+     */
+    public function valueParamSignature(): array
+    {
+        if (! $this->node instanceof ClassMethod && ! $this->node instanceof Function_) {
+            return [];
+        }
+
+        $fields = [];
+
+        foreach ($this->node->params as $param) {
+            if (! $param->type instanceof Identifier || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
+                continue;
+            }
+
+            $type = strtolower($param->type->toString());
+
+            if (in_array($type, ['string', 'int', 'float', 'bool'], true)) {
+                $fields[] = $type . ' $' . $param->var->name;
+            }
+        }
+
+        if (count($fields) < 3) {
+            return [];
+        }
+
+        sort($fields);
+
+        return $fields;
+    }
+
+    /**
      * Render a native type declaration to a normalised key (lowercased, leading
      * `?` and `\` stripped, union members sorted) so it can be compared against a
      * docblock type. Returns null when there is no native type.
