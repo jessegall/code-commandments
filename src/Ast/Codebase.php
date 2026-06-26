@@ -25,6 +25,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
 use PhpParser\ParserFactory;
+use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -35,6 +36,12 @@ use RecursiveIteratorIterator;
  */
 final class Codebase
 {
+    /**
+     * Directories never descended into during a scan — dependency and VCS trees
+     * that aren't code under review.
+     */
+    private const array SKIP_DIRS = ['vendor', 'node_modules', '.git'];
+
     /**
      * @param  list<ParsedFile>  $files
      */
@@ -333,11 +340,15 @@ final class Codebase
             return;
         }
 
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
-        );
+        $directory = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
 
-        foreach ($files as $file) {
+        // Never descend into dependency / VCS trees — they aren't code under review
+        // and parsing them all exhausts memory on a project-root scan.
+        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file): bool {
+            return ! ($file->isDir() && in_array($file->getFilename(), self::SKIP_DIRS, true));
+        });
+
+        foreach (new RecursiveIteratorIterator($pruned) as $file) {
             if ($file->isFile() && $file->getExtension() === 'php') {
                 yield $file->getPathname();
             }
