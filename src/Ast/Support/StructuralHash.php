@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast\Support;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\FunctionLike;
+use PhpParser\Node\Scalar\Float_;
+use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\String_;
 
 /**
  * A formatting-blind fingerprint of an AST subtree. It serialises a node by its
@@ -12,33 +17,63 @@ use PhpParser\Node;
  * and never reads attributes (line numbers, comments, whitespace live there). So
  * two functions that differ only in spacing, newlines, or comments hash the same;
  * a real difference in code changes the hash.
+ *
+ * {@see normalized} goes one step fuzzier: it also blanks variable names and
+ * scalar literal values, so two functions with the same SHAPE that differ only in
+ * their variable names or constants (a type-2 clone) hash the same.
  */
 final class StructuralHash
 {
     public static function of(Node $node): string
     {
-        return sha1(self::serialize($node));
+        return sha1(self::serialize($node, false));
     }
 
-    private static function serialize(Node $node): string
+    public static function normalized(Node $node): string
     {
+        return sha1(self::serialize($node, true));
+    }
+
+    private static function serialize(Node $node, bool $normalize): string
+    {
+        if ($normalize) {
+            $blanked = match (true) {
+                $node instanceof Variable && is_string($node->name) => 'Variable(name:s:$)',
+                $node instanceof String_ => 'String_(value:s:_)',
+                $node instanceof Int_, $node instanceof Float_ => 'Num(value:n:_)',
+                default => null,
+            };
+
+            if ($blanked !== null) {
+                return $blanked;
+            }
+        }
+
         $parts = [self::shortName($node::class)];
 
         foreach ($node->getSubNodeNames() as $name) {
-            $parts[] = $name . ':' . self::value($node->$name);
+            // Redundant methods wear different names (`resolveWritable` vs
+            // `resolveReadonly`), so a shape hash blanks the declaration's own name.
+            if ($normalize && $name === 'name' && $node instanceof FunctionLike) {
+                $parts[] = 'name:s:_';
+
+                continue;
+            }
+
+            $parts[] = $name . ':' . self::value($node->$name, $normalize);
         }
 
         return '(' . implode(',', $parts) . ')';
     }
 
-    private static function value(mixed $value): string
+    private static function value(mixed $value, bool $normalize): string
     {
         if ($value instanceof Node) {
-            return self::serialize($value);
+            return self::serialize($value, $normalize);
         }
 
         if (is_array($value)) {
-            return '[' . implode(',', array_map(self::value(...), $value)) . ']';
+            return '[' . implode(',', array_map(static fn (mixed $item): string => self::value($item, $normalize), $value)) . ']';
         }
 
         return match (true) {

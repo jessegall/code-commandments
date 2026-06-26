@@ -362,6 +362,16 @@ class AstNode
     }
 
     /**
+     * Like {@see structuralHash} but fuzzier — variable names and scalar literals
+     * are blanked, so two functions with the same SHAPE that differ only in their
+     * variable names or constants (a near-duplicate / type-2 clone) hash the same.
+     */
+    public function shapeHash(): string
+    {
+        return $this->isFunctionDeclaration() ? StructuralHash::normalized($this->node) : '';
+    }
+
+    /**
      * How many AST nodes make up this function/method's body — a size proxy used
      * to ignore trivial declarations (one-line getters, empty stubs) that are
      * legitimately alike. Zero for a non-function or a bodyless declaration.
