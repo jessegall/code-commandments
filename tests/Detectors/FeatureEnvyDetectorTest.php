@@ -31,6 +31,47 @@ final class FeatureEnvyDetectorTest extends TestCase
         $this->assertSame(['Totaller::total'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
 
+    public function test_flags_an_external_collection_query_through_a_nested_object(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        final class Descriptor {
+            public function handleNames(): array { return ['then', 'else']; }
+        }
+        final class Context {
+            public function __construct(public readonly Descriptor $descriptor) {}
+        }
+        final class Guard {
+            public function permits(Context $context, string $branch): bool {
+                return in_array($branch, $context->descriptor->handleNames(), true);
+            }
+        }
+        PHP;
+
+        $hits = (new FeatureEnvyDetector)->find(Codebase::fromString($code));
+
+        // The chain resolver follows $context->descriptor to the real owner.
+        $this->assertSame(['Guard::permits'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
+
+    public function test_flags_a_method_that_mutates_a_foreign_objects_state(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        final class Account { public bool $frozen = false; public int $strikes = 0; }
+        final class Sanctioner {
+            public function freeze(Account $account): void {
+                $account->strikes = $account->strikes + 1;
+                $account->frozen = true;
+            }
+        }
+        PHP;
+
+        $hits = (new FeatureEnvyDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['Sanctioner::freeze'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
+
     public function test_leaves_the_righteous_twins_alone(): void
     {
         $code = <<<'PHP'

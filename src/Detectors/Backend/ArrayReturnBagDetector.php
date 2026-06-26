@@ -14,12 +14,19 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  *
  * A one-field wrapper (`['ok' => $x]`) and a list (`[1, 2, 3]`) are left alone:
  * the smell is a named-field record travelling as a loose array. Framework
- * boundary classes (a FormRequest's `rules()`) return arrays by contract, so
- * they're excluded.
+ * boundary classes return arrays by contract (a FormRequest's `rules()`, an MCP
+ * tool's / request's schema), so they're excluded.
  */
 final class ArrayReturnBagDetector implements Detector
 {
-    private const string FORM_REQUEST = 'Illuminate\\Foundation\\Http\\FormRequest';
+    /**
+     * Framework boundary bases whose subclasses return arrays by contract.
+     */
+    private const array BOUNDARY_BASES = [
+        'Illuminate\\Foundation\\Http\\FormRequest',
+        'Laravel\\Mcp\\Request',
+        'Laravel\\Mcp\\Server\\Tool',
+    ];
 
     public function skill(): string
     {
@@ -32,7 +39,18 @@ final class ArrayReturnBagDetector implements Detector
             ->where(static fn (AstNode $node): bool => $node->stringKeyCount() >= 2)
             ->where(static fn (AstNode $node): bool => $node->isReturnedValue())
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
-            ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::FORM_REQUEST))
+            ->reject(static fn (AstNode $node): bool => self::isBoundary($codebase, $node->enclosingClassName()))
             ->get();
+    }
+
+    private static function isBoundary(Codebase $codebase, ?string $class): bool
+    {
+        foreach (self::BOUNDARY_BASES as $base) {
+            if ($codebase->extends($class, $base)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

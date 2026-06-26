@@ -58,6 +58,14 @@ deletes the file).
 
 - **AST/semantic detection over name matching** — always; derive the answer from
   the AST / resolved type, never a class/method/variable name or a hardcoded list.
+- **Overlap is allowed — do NOT strip a detector to avoid it.** One piece of code
+  can genuinely be several sins (e.g. set-property-then-`save()` is BOTH
+  `ModelMutationAtCallSite` AND read-then-mutate `FeatureEnvy`). Two detectors
+  firing on the same `file:line` is correct when both sins are real — each points
+  at a different skill/fix. `#[Sinful]` is `IS_REPEATABLE`: a fixture method may
+  carry multiple markers (and a detector may have more than 3 marked locations —
+  ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid detection
+  just because another detector also flags it; double-mark the fixture instead.
 - Commit messages carry **no `Co-Authored-By`** trailer.
 - `deprecated/` holds the previous prophet/scroll system — **reference only**, do
   not build on it or port it one-to-one.

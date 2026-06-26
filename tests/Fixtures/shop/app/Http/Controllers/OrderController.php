@@ -4,6 +4,7 @@ namespace Shop\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ModelMutationAtCallSiteDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -30,6 +31,7 @@ class OrderController extends Controller
     }
 
     #[Sinful(ModelMutationAtCallSiteDetector::class)]
+    #[Sinful(FeatureEnvyDetector::class)]
     public function markPaid(Request $request, Order $order): Order
     {
         $order->status = 'paid';
