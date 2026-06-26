@@ -717,6 +717,35 @@ class AstNode
         return $literals;
     }
 
+    /**
+     * The scalar values of the array literal passed as argument $index — e.g.
+     * `['a', 'b']` in `in_array($x, ['a', 'b'])`.
+     *
+     * @return list<string>
+     */
+    public function argumentArrayLiterals(int $index): array
+    {
+        $args = $this->arguments();
+
+        if (! isset($args[$index]) || ! $args[$index]->value instanceof Array_) {
+            return [];
+        }
+
+        $literals = [];
+
+        foreach ($args[$index]->value->items as $item) {
+            if ($item instanceof ArrayItem) {
+                $literal = self::scalarLiteral($item->value);
+
+                if ($literal !== null) {
+                    $literals[] = $literal;
+                }
+            }
+        }
+
+        return $literals;
+    }
+
     private static function scalarLiteral(Node $expr): ?string
     {
         return match (true) {
