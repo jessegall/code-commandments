@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Support\Nodes;
 use JesseGall\CodeCommandments\Detectors\Detector;
 use PhpParser\Node;
-use PhpParser\Node\Arg;
-use PhpParser\Node\Expr\BinaryOp\Coalesce;
-use PhpParser\Node\Expr\MethodCall;
-use PhpParser\Node\Expr\NullsafeMethodCall;
-use PhpParser\Node\Expr\Throw_;
 
 /**
  * A `?? throw` buried inside a larger expression — fed into a call or
@@ -30,16 +26,8 @@ final class InlineThrowDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase->where(static function (Node $node): bool {
-            if (! $node instanceof Coalesce || ! $node->right instanceof Throw_) {
-                return false;
-            }
-
-            $parent = $node->getAttribute('parent');
-
-            // Fed into a call argument, or dereferenced as a call receiver.
-            return $parent instanceof Arg
-                || (($parent instanceof MethodCall || $parent instanceof NullsafeMethodCall) && $parent->var === $node);
-        })->get();
+        return $codebase->where(static fn (Node $node): bool =>
+            Nodes::isThrow(Nodes::coalesceRight($node))
+            && (Nodes::isCallArgument($node) || Nodes::isCallReceiver($node)))->get();
     }
 }
