@@ -14,6 +14,7 @@ use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
@@ -127,6 +128,17 @@ class AstNode
     public function newClassName(): ?string
     {
         return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class->toString() : null;
+    }
+
+    /**
+     * The resolved class name of a `Class::method(...)` static call, or null.
+     * Names are resolved at parse time, so this is fully qualified.
+     */
+    public function staticCallClass(): ?string
+    {
+        return $this->node instanceof StaticCall && $this->node->class instanceof Name
+            ? $this->node->class->toString()
+            : null;
     }
 
     /**

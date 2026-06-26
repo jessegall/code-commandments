@@ -4,6 +4,7 @@ namespace Shop\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
@@ -16,6 +17,7 @@ final class CustomerService
     }
 
     #[Sinful(RawRequestInputDetector::class)]
+    #[Sinful(FacadeCallDetector::class)]
     public function greeting(Request $request): string
     {
         $customer = $this->find($request->input('email'));
