@@ -13,7 +13,10 @@ use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
@@ -26,6 +29,7 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Return_;
+use PhpParser\Node\Stmt\Switch_;
 
 /**
  * A node wrapped with fluent, language-level predicates. Navigation never
@@ -123,6 +127,24 @@ class AstNode
         }
 
         return $count;
+    }
+
+    /**
+     * Is this a `match`/`switch` whose subject is `->value` — a backed enum
+     * unwrapped to its scalar to be dispatched on (a homeless enum method)?
+     * `value` is the language's enum accessor, not a guessed name.
+     */
+    public function isMatchOnEnumValue(): bool
+    {
+        $subject = match (true) {
+            $this->node instanceof Match_ => $this->node->cond,
+            $this->node instanceof Switch_ => $this->node->cond,
+            default => null,
+        };
+
+        return ($subject instanceof PropertyFetch || $subject instanceof NullsafePropertyFetch)
+            && $subject->name instanceof Identifier
+            && $subject->name->toString() === 'value';
     }
 
     /**
