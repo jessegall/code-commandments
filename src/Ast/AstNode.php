@@ -284,6 +284,37 @@ class AstNode
     }
 
     /**
+     * The method name of a `Class::method(...)` static call, or null.
+     */
+    public function staticCallMethod(): ?string
+    {
+        return $this->node instanceof StaticCall && $this->node->name instanceof Identifier
+            ? $this->node->name->toString()
+            : null;
+    }
+
+    /**
+     * For a function call (`app(...)`/`resolve(...)`), is the first argument a
+     * statically-known class reference — a `Foo::class` constant or a string
+     * literal? A variable argument is a runtime class-string the container can't
+     * be replaced with constructor DI, so it is NOT a literal.
+     */
+    public function firstArgIsClassLiteral(): bool
+    {
+        if (! $this->node instanceof FuncCall) {
+            return false;
+        }
+
+        $first = $this->node->args[0] ?? null;
+
+        if (! $first instanceof Arg) {
+            return false;
+        }
+
+        return $first->value instanceof ClassConstFetch || $first->value instanceof String_;
+    }
+
+    /**
      * Is this node the value of a `return` statement?
      */
     public function isReturnedValue(): bool
