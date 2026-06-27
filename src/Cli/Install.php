@@ -15,7 +15,10 @@ final class Install
 {
     private const string HOOK = '@php vendor/bin/commandments sync';
 
-    private const string REMIND_HOOK = 'php vendor/bin/commandments remind';
+    // Anchored at $CLAUDE_PROJECT_DIR (the absolute project root the harness gives
+    // every hook) — a relative `vendor/bin/...` silently dies when Claude's working
+    // directory isn't the project root, and the reminder never reaches the agent.
+    private const string REMIND_HOOK = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind';
 
     public function run(array $args): int
     {
@@ -44,7 +47,9 @@ final class Install
 
     /**
      * Register `commandments remind` as a `UserPromptSubmit` hook so the cardinal
-     * rule is re-injected on every turn. Idempotent; leaves any other hooks intact.
+     * rule is re-injected on every turn. Idempotent, and MIGRATING: an older remind
+     * hook wired with a relative path (which dies off-root) is rewritten to the
+     * current cwd-robust command. Other hooks are left intact.
      */
     private function wireReminderHook(string $path): bool
     {
@@ -53,34 +58,50 @@ final class Install
         $hooks = is_array($settings['hooks'] ?? null) ? $settings['hooks'] : [];
         $prompts = is_array($hooks['UserPromptSubmit'] ?? null) ? $hooks['UserPromptSubmit'] : [];
 
-        if ($this->mentionsReminder($prompts)) {
+        $alreadyCurrent = false;
+        $rebuilt = [];
+
+        // Strip every existing remind hook; we re-add exactly one current group below.
+        // A group left with no hooks is dropped; non-remind hooks are preserved.
+        foreach ($prompts as $group) {
+            if (! is_array($group) || ! is_array($group['hooks'] ?? null)) {
+                $rebuilt[] = $group;
+
+                continue;
+            }
+
+            $kept = [];
+
+            foreach ($group['hooks'] as $hook) {
+                $command = is_array($hook) ? (string) ($hook['command'] ?? '') : '';
+
+                if (str_contains($command, 'commandments remind')) {
+                    $alreadyCurrent = $alreadyCurrent || $command === self::REMIND_HOOK;
+
+                    continue;
+                }
+
+                $kept[] = $hook;
+            }
+
+            if ($kept !== []) {
+                $group['hooks'] = $kept;
+                $rebuilt[] = $group;
+            }
+        }
+
+        if ($alreadyCurrent) {
             return false;
         }
 
-        $prompts[] = ['hooks' => [['type' => 'command', 'command' => self::REMIND_HOOK]]];
-        $hooks['UserPromptSubmit'] = $prompts;
+        $rebuilt[] = ['hooks' => [['type' => 'command', 'command' => self::REMIND_HOOK]]];
+        $hooks['UserPromptSubmit'] = $rebuilt;
         $settings['hooks'] = $hooks;
 
         @mkdir(dirname($path), 0755, true);
         file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
 
         return true;
-    }
-
-    /**
-     * @param  list<mixed>  $groups
-     */
-    private function mentionsReminder(array $groups): bool
-    {
-        foreach ($groups as $group) {
-            foreach ((is_array($group) ? $group['hooks'] ?? [] : []) as $hook) {
-                if (is_array($hook) && str_contains((string) ($hook['command'] ?? ''), 'commandments remind')) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     /**
