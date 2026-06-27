@@ -13,7 +13,7 @@ skill-only).
 
 Keep this current: when a detector ships, flip its row to ✅ with the class name.
 
-**Status: 48 detectors shipping.**
+**Status: 49 detectors shipping.**
 
 Every cleanly + low-FP detectable sin now has a detector. The rows below still
 marked 🧠/〰️ were each evaluated against real consumer codebases (workflows,
@@ -90,6 +90,7 @@ false-positive side against. They stay skill-only until that changes.
 | Sin | Status |
 |---|---|
 | Raw `->input()/->get()/->query()` on a Request | ✅ `RawRequestInputDetector` |
+| Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` / `(string) $request->string('id')` in a handler/tool, instead of a named getter on a request class | ✅ `RequestAccessorRecastDetector` (`isUsedOn` exempts reads from inside the request class — the named accessor itself; covers the HTTP `Request`, `FormRequest`, and MCP `Request` + their subclasses) |
 | `app()`/`resolve()` reach inside a container-resolved class | ✅ `ContainerReachDetector` (only a literal target — `app(Foo::class)`; `app($runtimeClassString)` is unresolvable by DI, so exempt) |
 | Laravel facade call (`Cache::`, `Log::`, `Mail::` …) | ✅ `FacadeCallDetector` (a `ServiceProvider` boot seam is exempt — wiring the framework through facades is its job) |
 | `config('…')` read inside a class | ✅ `ConfigReadDetector` |
