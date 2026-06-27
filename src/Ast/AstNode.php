@@ -85,6 +85,25 @@ class AstNode
     }
 
     /**
+     * Is this expression immediately re-coerced back to a bare string by its parent
+     * — `<expr>->toString()` or `(string) <expr>`? The tell that a typed accessor's
+     * value is being flattened at the call site instead of read through a named getter.
+     */
+    public function isReCoercedToString(): bool
+    {
+        $parent = $this->parent()->node;
+
+        if ($parent instanceof MethodCall
+            && $parent->var === $this->node
+            && $parent->name instanceof Identifier
+            && $parent->name->toString() === 'toString') {
+            return true;
+        }
+
+        return $parent instanceof Cast\String_ && $parent->expr === $this->node;
+    }
+
+    /**
      * Is this a `throw` expression?
      */
     public function isThrow(): bool
