@@ -60,17 +60,18 @@ final class Query
     public function isUsedOn(string ...$classes): self
     {
         $targets = array_map(static fn (string $class): string => ltrim($class, '\\'), $classes);
+        $codebase = $this->codebase;
 
-        return $this->where(static function (AstNode $node) use ($targets): bool {
+        return $this->where(static function (AstNode $node) use ($targets, $codebase): bool {
             $enclosing = $node->enclosingClassName();
             $receiver = ReceiverResolver::typeOf($node);
 
             foreach ($targets as $target) {
-                if ($enclosing !== null && self::isA($enclosing, $target)) {
+                if ($enclosing !== null && self::isA($codebase, $enclosing, $target)) {
                     return false;
                 }
 
-                if ($receiver !== null && self::isA($receiver, $target)) {
+                if ($receiver !== null && self::isA($codebase, $receiver, $target)) {
                     return true;
                 }
             }
@@ -154,16 +155,20 @@ final class Query
         return $this->get()[0] ?? null;
     }
 
-    private static function isA(string $class, string $target): bool
+    private static function isA(Codebase $codebase, string $class, string $target): bool
     {
         if ($class === $target) {
             return true;
         }
 
+        // Autoloadable code: resolve via reflection (also catches `implements`). A
+        // parsed-only codebase (the fixture, or any tree we don't load) falls back
+        // to the class graph the engine already built — a subclass declared in the
+        // codebase still resolves, no autoloading required.
         if (class_exists($class) || interface_exists($class)) {
             return is_a($class, $target, true);
         }
 
-        return false;
+        return $codebase->extends($class, $target);
     }
 }
