@@ -45,8 +45,46 @@ final class CreateWorkflowRequest extends FormRequest
 $request->name();   // typed, intention-revealing — not $request->input('name')
 ```
 
-Return the typed accessor **directly** — don't `(string)`-cast or `->toString()` a `->string()` back to a
-bare string; pass the `Stringable` along.
+The named accessor is the **one place** the type is settled. Inside it, return the typed value — the
+`Stringable` from `->string()`, or `->toString()` once if the field is a plain `string`. The sin is doing
+that coercion **at the call site** (`$request->string('id')->toString()` scattered through a handler): that
+re-reads raw input by key and is the same mistake as `->input()`. Read the named accessor instead.
+
+**MCP tools too.** A tool's input is a request like any other — don't reach into the raw request inside
+`handle()`. Give each tool a **named request class** (extending your MCP request base, the analogue of
+`FormRequest`) with `rules()` and named accessors, and read *that*:
+
+```php
+// Bad — raw, untyped reads scattered through the tool body
+$dispatcher->rename(
+    $request->string('id')->toString(),
+    $request->string('nodeId')->toString(),
+    $request->string('from')->toString(),
+);
+
+// Good — one named request class per tool: keys, rules, and types in one place
+final class RenameSocketRequest extends ToolRequest
+{
+    /** @return array<string, list<string>> */
+    public function rules(): array
+    {
+        return [
+            'id'     => ['required', 'string'],
+            'nodeId' => ['required', 'string'],
+            'from'   => ['required', 'string'],
+        ];
+    }
+
+    public function workflowId(): string { return $this->string('id')->toString(); }
+    public function nodeId(): string     { return $this->string('nodeId')->toString(); }
+    public function fromSocket(): string { return $this->string('from')->toString(); }
+}
+
+// in the tool — the body reads intentions, not string keys
+$dispatcher->rename($request->workflowId(), $request->nodeId(), $request->fromSocket());
+```
+
+Every MCP tool gets its own named request — never `->string('key')->toString()` inline in the tool.
 
 ## Rule 2 — Fluent / value bag: typed accessors, never `->get()`
 
