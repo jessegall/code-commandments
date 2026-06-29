@@ -49,6 +49,19 @@ final class SwitchCaseDetectorTest extends TestCase
         $this->assertCount(0, $found);
     }
 
+    public function test_ignores_a_compound_condition_branch(): void
+    {
+        // A branch testing two values (||) is not a single case — not a switch.
+        $found = $this->find(<<<'VUE'
+            <template>
+              <div v-if="type === 'int'">int</div>
+              <div v-else-if="type === 'int' || type === 'float'">number</div>
+            </template>
+            VUE);
+
+        $this->assertCount(0, $found);
+    }
+
     public function test_ignores_non_equality_conditions(): void
     {
         $found = $this->find(<<<'VUE'
