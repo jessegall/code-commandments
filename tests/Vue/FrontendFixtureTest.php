@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Vue;
 
+use JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseDetector;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
@@ -26,7 +27,7 @@ final class FrontendFixtureTest extends TestCase
      */
     private function detectors(): array
     {
-        return [new SwitchCaseDetector()];
+        return [new SwitchCaseDetector(), new DuplicateElementDetector()];
     }
 
     public function test_each_detector_flags_exactly_its_marked_elements(): void
