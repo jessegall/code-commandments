@@ -50,4 +50,3 @@ phpcs.xml
 .commandments/
 .ast-cache/
 scratch-scan.md
-commandments-sins.md
