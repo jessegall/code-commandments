@@ -17,8 +17,6 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * copy-on-write-shared AST and ships its findings back over a socket pair. The
  * parent merges them. `--parallel=1`, or a build without `pcntl`/socket pairs,
  * takes the sequential path.
- *
- * @phpstan-type Finding array{detector: string, skill: string, file: string, location: string, scope: string}
  */
 final class DetectorRunner
 {
@@ -142,13 +140,7 @@ final class DetectorRunner
             $skill = $detector->skill();
 
             foreach ($detector->find($codebase) as $match) {
-                $findings[] = [
-                    'detector' => $short,
-                    'skill' => $skill,
-                    'file' => $match->file->path,
-                    'location' => $match->location(),
-                    'scope' => $match->scope(),
-                ];
+                $findings[] = new Finding($short, $skill, $match->file->path, $match->location(), $match->scope());
             }
         }
 

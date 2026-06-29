@@ -9,8 +9,6 @@ namespace JesseGall\CodeCommandments\Cli;
  * skill that fixes each sin) and the Markdown checklist the agent prunes line by
  * line. Findings are grouped by skill and ordered by `file:line`, so the output is
  * identical no matter how the detector workers interleaved.
- *
- * @phpstan-import-type Finding from DetectorRunner
  */
 final class SinReport
 {
@@ -27,13 +25,13 @@ final class SinReport
         $bySkill = [];
 
         foreach ($findings as $finding) {
-            $bySkill[$finding['skill']][] = $finding;
+            $bySkill[$finding->skill][] = $finding;
         }
 
         ksort($bySkill);
 
         foreach ($bySkill as $skill => $group) {
-            usort($group, static fn (array $a, array $b): int => strnatcmp($a['location'], $b['location']));
+            usort($group, static fn (Finding $a, Finding $b): int => strnatcmp($a->location, $b->location));
             $bySkill[$skill] = $group;
         }
 
@@ -63,8 +61,8 @@ final class SinReport
             $lines[] = "  \033[2m↳ read the {$skill} skill (skills/{$skill}/SKILL.md) before fixing\033[0m";
 
             foreach ($findings as $finding) {
-                $location = $this->relative($finding['location']);
-                $lines[] = "  \033[36m{$location}\033[0m  {$finding['scope']}  \033[2m[{$finding['detector']}]\033[0m";
+                $location = $this->relative($finding->location);
+                $lines[] = "  \033[36m{$location}\033[0m  {$finding->scope}  \033[2m[{$finding->detector}]\033[0m";
             }
         }
 
@@ -92,8 +90,8 @@ final class SinReport
             $out .= "\n## {$skill}  — read `skills/{$skill}/SKILL.md`\n\n";
 
             foreach ($findings as $finding) {
-                $location = $this->relative($finding['location']);
-                $out .= "- [ ] `{$location}`  {$finding['scope']}  [{$finding['detector']}]\n";
+                $location = $this->relative($finding->location);
+                $out .= "- [ ] `{$location}`  {$finding->scope}  [{$finding->detector}]\n";
             }
         }
 
