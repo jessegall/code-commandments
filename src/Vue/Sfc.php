@@ -23,6 +23,7 @@ final class Sfc
      */
     private function __construct(
         public readonly string $path,
+        public readonly string $source,
         public readonly array $blocks,
         public readonly Element $template,
     ) {}
@@ -72,11 +73,11 @@ final class Sfc
             $blocks[] = new Block($tag, Attributes::parse($match[2]), $content, $line);
 
             if ($tag === 'template' && $template === null) {
-                $template = new Tokenizer()->tokenize($content, substr_count($source, "\n", 0, $openEnd) + 1);
+                $template = new Tokenizer()->tokenize($content, substr_count($source, "\n", 0, $openEnd) + 1, $openEnd);
             }
         }
 
-        return new self($path, $blocks, $template ?? new Element('#root', [], [], 1));
+        return new self($path, $source, $blocks, $template ?? new Element('#root', [], [], 1));
     }
 
     /**

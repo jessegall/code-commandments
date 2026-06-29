@@ -8,11 +8,15 @@ namespace JesseGall\CodeCommandments\Vue;
  * Turns the inner HTML of a Vue `<template>` into a tree of {@see Element} nodes.
  *
  * A hand-written, forgiving scanner — not a spec HTML5 parser: it tracks line
- * numbers (so a finding can point at `file:line`), keeps Vue's directive
- * attributes intact, honours quotes (so `>` inside `:x="a > b"` doesn't end a tag),
- * treats `{{ … }}`/text as text nodes, drops comments, and closes HTML void
- * elements and self-closing tags without a matching end tag. Mismatched or stray
- * end tags are tolerated rather than fatal.
+ * numbers AND byte spans (so findings point at `file:line` and a {@see
+ * \JesseGall\CodeCommandments\Cli\Rewriting\SwitchCaseScribe} can splice the
+ * source), keeps Vue's directive attributes intact, honours quotes (so `>` inside
+ * `:x="a > b"` doesn't end a tag), treats `{{ … }}`/text as text nodes, drops
+ * comments, and closes HTML void elements and self-closing tags without a matching
+ * end tag. Mismatched or stray end tags are tolerated rather than fatal.
+ *
+ * Spans are reported in the coordinates of the SFC source — pass the byte offset
+ * the template content starts at.
  */
 final class Tokenizer
 {
@@ -21,14 +25,25 @@ final class Tokenizer
         'link', 'meta', 'param', 'source', 'track', 'wbr',
     ];
 
+    private string $html = '';
+
+    private int $lineOffset = 1;
+
+    private int $byteOffset = 0;
+
+    /** @var list<array{tag: string, attributes: array<string, string|null>, line: int, start: int, children: list<Element>}> */
+    private array $stack = [];
+
     /**
-     * @param  int  $lineOffset  the source line the template content starts on, so
-     *                           element lines map back to the `.vue` file
+     * @param  int  $lineOffset  the source line the template content starts on
+     * @param  int  $byteOffset  the source byte offset the template content starts at
      */
-    public function tokenize(string $html, int $lineOffset = 1): Element
+    public function tokenize(string $html, int $lineOffset = 1, int $byteOffset = 0): Element
     {
-        /** @var list<array{tag: string, attributes: array<string, string|null>, line: int, children: list<Element>}> $stack */
-        $stack = [['tag' => '#root', 'attributes' => [], 'line' => $lineOffset, 'children' => []]];
+        $this->html = $html;
+        $this->lineOffset = $lineOffset;
+        $this->byteOffset = $byteOffset;
+        $this->stack = [$this->frame('#root', [], $lineOffset, $byteOffset)];
 
         $length = strlen($html);
         $pos = 0;
@@ -37,7 +52,7 @@ final class Tokenizer
             $lt = strpos($html, '<', $pos);
             $textEnd = $lt === false ? $length : $lt;
 
-            $this->emitText($stack, substr($html, $pos, $textEnd - $pos), $pos, $html, $lineOffset);
+            $this->emitText(substr($html, $pos, $textEnd - $pos), $pos);
 
             if ($lt === false) {
                 break;
@@ -45,33 +60,45 @@ final class Tokenizer
 
             if (substr($html, $lt, 4) === '<!--') {
                 $end = strpos($html, '-->', $lt);
-                $pos = $end === false ? $length : $end + 3;
+                $textEnd = $end === false ? $length : $end;
+                $close = $end === false ? $length : $end + 3;
+
+                $this->append(new Element(
+                    '#comment',
+                    [],
+                    [],
+                    substr_count($html, "\n", 0, $lt) + $this->lineOffset,
+                    trim(substr($html, $lt + 4, $textEnd - ($lt + 4))),
+                    $lt + $this->byteOffset,
+                    $close + $this->byteOffset,
+                ));
+
+                $pos = $close;
 
                 continue;
             }
 
             if (substr($html, $lt, 2) === '</') {
-                $pos = $this->closeTag($stack, $html, $lt);
+                $pos = $this->closeTag($lt);
 
                 continue;
             }
 
             if (preg_match('/\G<([a-zA-Z][\w.\-:]*)/A', $html, $match, 0, $lt) !== 1) {
-                // A stray '<' (e.g. inside an interpolation) — treat it as text.
-                $this->emitText($stack, '<', $lt, $html, $lineOffset);
+                $this->emitText('<', $lt);
                 $pos = $lt + 1;
 
                 continue;
             }
 
-            $pos = $this->openTag($stack, $html, $lt, $match[1], $lineOffset);
+            $pos = $this->openTag($lt, $match[1]);
         }
 
-        while (count($stack) > 1) {
-            $this->fold($stack);
+        while (count($this->stack) > 1) {
+            $this->fold($length);
         }
 
-        $root = new Element('#root', [], $stack[0]['children'], $lineOffset);
+        $root = new Element('#root', [], $this->stack[0]['children'], $this->lineOffset, '', $this->byteOffset, $length + $this->byteOffset);
 
         foreach ($root->children as $child) {
             $child->parent = $root;
@@ -80,17 +107,14 @@ final class Tokenizer
         return $root;
     }
 
-    /**
-     * @param  list<array{tag: string, attributes: array<string, string|null>, line: int, children: list<Element>}>  $stack
-     */
-    private function openTag(array &$stack, string $html, int $lt, string $tag, int $lineOffset): int
+    private function openTag(int $lt, string $tag): int
     {
-        $length = strlen($html);
+        $length = strlen($this->html);
         $i = $lt + 1 + strlen($tag);
         $quote = null;
 
         while ($i < $length) {
-            $char = $html[$i];
+            $char = $this->html[$i];
 
             if ($quote !== null) {
                 if ($char === $quote) {
@@ -105,33 +129,31 @@ final class Tokenizer
             $i++;
         }
 
-        $inner = substr($html, $lt + 1 + strlen($tag), $i - ($lt + 1 + strlen($tag)));
+        $inner = substr($this->html, $lt + 1 + strlen($tag), $i - ($lt + 1 + strlen($tag)));
         $selfClosing = str_ends_with(rtrim($inner), '/');
         $attributes = Attributes::parse($selfClosing ? substr(rtrim($inner), 0, -1) : $inner);
-        $line = substr_count($html, "\n", 0, $lt) + $lineOffset;
+        $line = substr_count($this->html, "\n", 0, $lt) + $this->lineOffset;
+        $start = $lt + $this->byteOffset;
 
         if ($selfClosing || in_array(strtolower($tag), self::VOID, true)) {
-            $stack[count($stack) - 1]['children'][] = new Element($tag, $attributes, [], $line);
+            $this->append(new Element($tag, $attributes, [], $line, '', $start, $i + 1 + $this->byteOffset));
         } else {
-            $stack[] = ['tag' => $tag, 'attributes' => $attributes, 'line' => $line, 'children' => []];
+            $this->stack[] = $this->frame($tag, $attributes, $line, $start);
         }
 
         return $i + 1;
     }
 
-    /**
-     * @param  list<array{tag: string, attributes: array<string, string|null>, line: int, children: list<Element>}>  $stack
-     */
-    private function closeTag(array &$stack, string $html, int $lt): int
+    private function closeTag(int $lt): int
     {
-        $gt = strpos($html, '>', $lt);
-        $end = $gt === false ? strlen($html) : $gt + 1;
-        $tag = trim(substr($html, $lt + 2, ($gt === false ? strlen($html) : $gt) - ($lt + 2)));
+        $gt = strpos($this->html, '>', $lt);
+        $end = $gt === false ? strlen($this->html) : $gt + 1;
+        $tag = trim(substr($this->html, $lt + 2, ($gt === false ? strlen($this->html) : $gt) - ($lt + 2)));
 
-        for ($depth = count($stack) - 1; $depth >= 1; $depth--) {
-            if ($stack[$depth]['tag'] === $tag) {
-                while (count($stack) - 1 >= $depth) {
-                    $this->fold($stack);
+        for ($depth = count($this->stack) - 1; $depth >= 1; $depth--) {
+            if ($this->stack[$depth]['tag'] === $tag) {
+                while (count($this->stack) - 1 >= $depth) {
+                    $this->fold($end);
                 }
 
                 break;
@@ -142,33 +164,50 @@ final class Tokenizer
     }
 
     /**
-     * Pop the top frame, build its {@see Element}, wire its children's parent, and
-     * append it to the frame below.
-     *
-     * @param  list<array{tag: string, attributes: array<string, string|null>, line: int, children: list<Element>}>  $stack
+     * Pop the top frame, build its {@see Element} (closing at $endInHtml), wire its
+     * children's parent, and append it to the frame below.
      */
-    private function fold(array &$stack): void
+    private function fold(int $endInHtml): void
     {
-        $frame = array_pop($stack);
-        $element = new Element($frame['tag'], $frame['attributes'], $frame['children'], $frame['line']);
+        $frame = array_pop($this->stack);
+        $element = new Element(
+            $frame['tag'],
+            $frame['attributes'],
+            $frame['children'],
+            $frame['line'],
+            '',
+            $frame['start'],
+            $endInHtml + $this->byteOffset,
+        );
 
         foreach ($element->children as $child) {
             $child->parent = $element;
         }
 
-        $stack[count($stack) - 1]['children'][] = $element;
+        $this->append($element);
     }
 
-    /**
-     * @param  list<array{tag: string, attributes: array<string, string|null>, line: int, children: list<Element>}>  $stack
-     */
-    private function emitText(array &$stack, string $text, int $offset, string $html, int $lineOffset): void
+    private function emitText(string $text, int $offset): void
     {
         if (trim($text) === '') {
             return;
         }
 
-        $line = substr_count($html, "\n", 0, $offset) + $lineOffset;
-        $stack[count($stack) - 1]['children'][] = new Element('#text', [], [], $line, $text);
+        $line = substr_count($this->html, "\n", 0, $offset) + $this->lineOffset;
+        $start = $offset + $this->byteOffset;
+        $this->append(new Element('#text', [], [], $line, $text, $start, $start + strlen($text)));
+    }
+
+    private function append(Element $element): void
+    {
+        $this->stack[count($this->stack) - 1]['children'][] = $element;
+    }
+
+    /**
+     * @return array{tag: string, attributes: array<string, string|null>, line: int, start: int, children: list<Element>}
+     */
+    private function frame(string $tag, array $attributes, int $line, int $start): array
+    {
+        return ['tag' => $tag, 'attributes' => $attributes, 'line' => $line, 'start' => $start, 'children' => []];
     }
 }
