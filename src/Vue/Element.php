@@ -95,4 +95,58 @@ class Element
 
         return $index === false ? [] : array_values(array_slice($siblings, $index + 1));
     }
+
+    /**
+     * A fingerprint of this subtree by STRUCTURE, not source: tag, attributes (order-
+     * independent, values included), and children recursively — with formatting and
+     * whitespace normalised away and comments ignored. Two blocks with the same
+     * fingerprint are identical markup wherever they sit, on whatever lines.
+     */
+    public function structureHash(): string
+    {
+        return md5($this->canonical());
+    }
+
+    /**
+     * How many elements this subtree contains (itself included) — a size to floor
+     * out trivial look-alikes from real extractable chunks.
+     */
+    public function subtreeSize(): int
+    {
+        $size = $this->isElement() ? 1 : 0;
+
+        foreach ($this->children as $child) {
+            $size += $child->subtreeSize();
+        }
+
+        return $size;
+    }
+
+    private function canonical(): string
+    {
+        if ($this->isText()) {
+            $text = (string) preg_replace('/\s+/', ' ', trim($this->text));
+
+            return $text === '' ? '' : "T:{$text}";
+        }
+
+        if (! $this->isElement()) {
+            return '';
+        }
+
+        $attributes = $this->attributes;
+        ksort($attributes);
+
+        $pairs = [];
+        foreach ($attributes as $name => $value) {
+            $pairs[] = $value === null ? $name : "{$name}={$value}";
+        }
+
+        $children = '';
+        foreach ($this->children as $child) {
+            $children .= $child->canonical();
+        }
+
+        return 'E:' . $this->tag . '[' . implode(',', $pairs) . '](' . $children . ')';
+    }
 }
