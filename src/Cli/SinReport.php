@@ -31,7 +31,13 @@ final class SinReport
         ksort($bySkill);
 
         foreach ($bySkill as $skill => $group) {
-            usort($group, static fn (Finding $a, Finding $b): int => strnatcmp($a->location, $b->location));
+            // A TOTAL order — location, then detector, then scope — so two findings at
+            // the same file:line break their tie deterministically, and the report is
+            // byte-identical no matter what order the (parallel) workers drained in.
+            usort($group, static fn (Finding $a, Finding $b): int =>
+                strnatcmp($a->location, $b->location)
+                    ?: strcmp($a->detector, $b->detector)
+                    ?: strcmp($a->scope, $b->scope));
             $bySkill[$skill] = $group;
         }
 
