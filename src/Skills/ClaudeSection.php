@@ -67,7 +67,9 @@ final class ClaudeSection
 
         **Finding and fixing sins — the checklist workflow.** Run
         `vendor/bin/commandments judge src` ONCE (add `--skill=NAME` to scope to one
-        group). A full scan is slow, so it writes the findings to a checklist file —
+        group; add `--branch` to judge only the files new/changed on your branch vs
+        `main`, or `--git` for just your uncommitted working-tree changes). A full
+        scan is slow, so it writes the findings to a checklist file —
         `commandments-sins.md` — and that file, not repeated scans, is how you work:
 
         1. Open `commandments-sins.md`. Each line is one sin: `file:line`, the scope, and

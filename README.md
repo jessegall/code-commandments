@@ -36,6 +36,10 @@ vendor/bin/commandments judge src
 vendor/bin/commandments judge src --skill=exceptions
 vendor/bin/commandments judge src --detector=SwallowCatch
 
+# scope to what you changed: only your branch's files vs main, or just the working tree
+vendor/bin/commandments judge src --branch        # new/changed on this branch vs main (--branch=BASE to override)
+vendor/bin/commandments judge src --git           # uncommitted working-tree changes only
+
 # skip paths; list everything
 vendor/bin/commandments judge src --exclude=Generated,vendor
 vendor/bin/commandments judge --list
