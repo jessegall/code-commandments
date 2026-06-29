@@ -1654,6 +1654,15 @@ class AstNode
     }
 
     /**
+     * Is this node OUTSIDE any class — i.e. at file/script scope (a route file,
+     * a config script, a global helper), where there is no object to inject into?
+     */
+    public function isOutsideClass(): bool
+    {
+        return $this->enclosingClass() === null;
+    }
+
+    /**
      * The function/method/closure this node sits in (or is), or null.
      */
     public function enclosingFunction(): ?FunctionLike
