@@ -52,6 +52,9 @@ final class Codebase
     /** @var array<string, list<string>>|null  class FQCN => directly-implemented interface FQCNs */
     private ?array $interfaceMap = null;
 
+    /** @var array<string, Class_>|null  class FQCN => declaration node */
+    private ?array $classNodeMap = null;
+
     /** @var list<string>|null  every enum FQCN in the codebase */
     private ?array $enumNames = null;
 
@@ -309,6 +312,79 @@ final class Codebase
         }
 
         return false;
+    }
+
+    /**
+     * Does `$class::$method` OVERRIDE a method declared by an ancestor (a parent
+     * class or an implemented interface) — so its return type is the ancestor's
+     * contract, not the author's to change? Resolved via reflection when the class
+     * is autoloadable (catching a vendor ancestor), else via the parsed class graph
+     * (an in-codebase ancestor) — mirroring how the engine resolves `isA`.
+     */
+    public function overridesMethod(?string $class, string $method): bool
+    {
+        if ($class === null || $method === '') {
+            return false;
+        }
+
+        $class = ltrim($class, '\\');
+
+        if (class_exists($class)) {
+            $parent = get_parent_class($class);
+
+            if ($parent !== false && method_exists($parent, $method)) {
+                return true;
+            }
+
+            foreach (class_implements($class) ?: [] as $interface) {
+                if (method_exists($interface, $method)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $parents = $this->parentMap();
+        $nodes = $this->classNodeMap();
+        $seen = [];
+        $current = $parents[$class] ?? null;
+
+        while ($current !== null && ! isset($seen[$current])) {
+            $seen[$current] = true;
+
+            if (($nodes[$current] ?? null)?->getMethod($method) !== null) {
+                return true;
+            }
+
+            $current = $parents[$current] ?? null;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<string, Class_>  class FQCN => declaration node
+     */
+    private function classNodeMap(): array
+    {
+        if ($this->classNodeMap !== null) {
+            return $this->classNodeMap;
+        }
+
+        $map = [];
+        $finder = new NodeFinder;
+
+        foreach ($this->files as $file) {
+            foreach ($finder->findInstanceOf($file->ast, Class_::class) as $class) {
+                /** @var Class_ $class */
+                if (($class->namespacedName ?? null) !== null) {
+                    $map[$class->namespacedName->toString()] = $class;
+                }
+            }
+        }
+
+        return $this->classNodeMap = $map;
     }
 
     /**
