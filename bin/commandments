@@ -76,6 +76,12 @@ $toBytes = static function (string $limit): int {
           --no-checklist     print only, don't write the checklist file
           --list             list every detector grouped by skill
 
+        With no [path], judge scans the source roots listed in
+        .commandments/backend.canon — auto-generated on first run from your
+        composer.json PSR-4 map (plus app/src), so scaffolding like database/,
+        storage/ and config/ isn't judged. Edit that file to tune what's in scope;
+        pass an explicit [path] to scan it directly instead.
+
         By default judge writes a Markdown checklist (.commandments/sins.md). Judge
         ONCE, then work that file line-by-line — a full scan is slow — deleting
         each line as you fix its sin. Re-run judge at the end to confirm.
