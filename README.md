@@ -51,7 +51,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_49 detectors across 14 skills._
+_50 detectors across 14 skills._
 
 ### `absence`
 
@@ -144,6 +144,7 @@ _49 detectors across 14 skills._
 | Detector | What it flags |
 |---|---|
 | `AllNullableDataDetector` | A Spatie Data class whose every promoted field is optional — nullable or defaulted. |
+| `DataMethodHintCollisionDetector` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
 | `ManualHydrationLoopDetector` | `<Data>::from(...)` called inside a loop — hydrating a collection one item at a time. |
 | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
 | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
