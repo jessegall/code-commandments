@@ -1,6 +1,6 @@
 ---
 name: spatie-data
-description: How to write a Spatie Data class — final, public readonly promoted props; construct via `::from([...])` not `new` (except a `new` default value in the constructor); document only `fromX()` object factories with `@method` (never the array shape); never hand-hydrate field-by-field; typed collections via `#[DataCollectionOf]` + `::collect()`; honest field types (no all-nullable DTO); `Optional` vs `?T` vs default; class-level `#[MapInputName]`; `#[WithCast]`; validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator, or a `#[...]` data attribute.
+description: How to write a Spatie Data class — final, public readonly promoted props; construct via `::from([...])` not `new` (except a `new` default value in the constructor); magic factories MUST be named `from<Type>` (the prefix is required to dispatch); document the magic `from`/`collect` overloads with `@method` naming `from`/`collect` — never the factory's own name (that re-declares a real method) nor the array shape; never hand-hydrate field-by-field; typed collections via `#[DataCollectionOf]` + `::collect()`; honest field types (no all-nullable DTO); `Optional` vs `?T` vs default; class-level `#[MapInputName]`; `#[WithCast]`; validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator, or a `#[...]` data attribute.
 ---
 
 # Spatie Data — let the class build itself
@@ -83,14 +83,27 @@ Never hand-roll the mapping: a static `fromArray()`/`fromRow()` reading keys one
 `new self(...)` re-implements what `::from()` already does. If a source genuinely needs conversion, write
 an explicit magic factory — `public static function fromUser(User $user): self`.
 
-## Document `fromX()` object factories with `@method` — never the array shape
+## Document the magic `::from()`/`::collect()` overloads with `@method` — never the factory or the array shape
 
-`::from()` **magically dispatches** to any `fromX(T $x)` factory whose parameter type matches the payload
-(the resolver tests each method's `accepts()`), so `ProfileData::from($user)` silently calls `fromUser`.
-The IDE and the reader cannot see that from the constructor. So:
+`::from()` **magically dispatches** to a custom factory whose parameter type matches the payload, so
+`ProfileData::from($user)` silently runs `fromUser($user)`. The IDE and the reader cannot see that hidden
+overload from the constructor — that, and only that, is what `@method` is for.
 
-**Each `fromX(T)` *object* factory gets a matching `@method static static from(T $x)` line** — that
-surfaces the hidden construction shapes.
+**Two hard rules the docs nail down — get either wrong and the magic doesn't exist:**
+
+1. **A magic factory's name MUST begin with `from`** (and cannot be exactly `from`). The dispatcher only
+   considers public-static `from*` methods. A factory named `forCredential`, `ofUser`, `createFromRow`,
+   `make…` is **invisible to `::from()`** — callers must invoke it directly and it gets no polymorphism.
+   If you want `::from($x)` to route to it, **rename it `from<Type>`** (`forCredential(Credential $c)` →
+   `fromCredential`). Multiple args are fine: `fromMultiple(string $t, string $a)` answers
+   `ProfileData::from($t, $a)`.
+2. **The `@method` line documents `from` — NEVER the factory's own name.** Writing
+   `@method static static fromCredential(...)` (or `forCredential(...)`) re-declares a method the class
+   *already* has, so the IDE reports **"Method with same name already defined in this class."** The
+   concrete `from<Type>` is visible from its real signature; the *invisible* thing — the one the annotation
+   must describe — is the `::from(<that type>)` overload. So the tag always names `from`.
+
+**Each `from<Type>(T)` *object* factory gets one matching `@method static static from(T $x)` line.**
 
 **Do NOT `@method`-document the array shape.** `::from([...])` from an array is the default; the
 constructor already shows the keys it takes, so a verbose `@method static static from(array{a?: …, b?: …})`
@@ -98,7 +111,7 @@ just duplicates it as noise. Only the *non-array* factory types earn a `@method`
 
 ```php
 /**
- * @method static static from(User $user)   // the magic fromUser() shape — NOT the array
+ * @method static static from(User $user)   // the magic fromUser() overload — NOT the array, NOT "fromUser"
  */
 final class ProfileData extends Data
 {
@@ -115,11 +128,11 @@ final class ProfileData extends Data
 }
 ```
 
-> **`FromArrayOnly` is optional.** The codebase currently mixes in a `FromArrayOnly` trait that makes
-> `::from()` array-only (no model/request magic) and adds `::make()` / `::forArray()`. That is a separate,
-> orthogonal choice from the use-`::from`-not-`new` rule above — keep it if you want predictable array-only
-> construction, drop it if you'd rather use Spatie's native `::from()` polymorphism. Either way, the
-> construction-style rule is the same.
+```php
+// WRONG — both of these re-declare a real method → "Method with same name already defined in this class"
+/** @method static static fromUser(User $user) */   // names the concrete factory, not the magic from()
+/** @method static static forUser(User $user)  */   // and `forUser` wouldn't dispatch via ::from() at all
+```
 
 ## Honest field types — this is where most damage happens
 
@@ -159,9 +172,24 @@ $songs = SongData::collect($rows);   // array in -> array of SongData
 - **`#[DataCollectionOf(X::class)]`** (or a `/** @var X[] */` docblock) on the property is **required** —
   element typing drives both hydration and nested validation (`songs.*.title`). A `::from()` inside a
   `foreach`/`array_map` is the tell you forgot it.
-- **`::collect()` is magic, like `::from()`** — and **shape-preserving**: array → array, `Collection` →
-  `Collection`, a paginator stays a paginator (with its `meta`). Force a target with
+- **`::collect()` is magic, like `::from()`** — and **shape-preserving**: whatever collection type you pass
+  in comes back out, holding the data objects. `array` → `array`, `Illuminate\Support\Collection` →
+  `Collection`, an Eloquent collection → Eloquent collection, a `LengthAwarePaginator`/`CursorPaginator`
+  stays that paginator. The optional second arg casts a **non-paginator** collection into a target type:
   `SongData::collect($rows, DataCollection::class)`.
+- **Document `collect()` with a *conditional* `@method`, never a flat `static[]`.** A flat array return
+  lies the moment a caller passes a `Collection`. Encode the shape-preservation so the IDE/PHPStan infers
+  the real return from the argument:
+
+  ```php
+  /**
+   * @method static static from(User $user)
+   * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+   */
+  ```
+
+  PhpStorm renders the conditional as the union (`Collection<int, static>|array<int, static>`), still honest;
+  PHPStan/Psalm resolve the exact branch. Only annotate `collect()` when the class is actually `::collect()`-ed.
 - A source needing conversion gets a **`collectX()`** method (mirrors `fromX()`); document it the same way.
 
 ## Mapping, casts, validation — the bits you actually use
@@ -191,7 +219,9 @@ if you think you need one, you probably want a typed accessor / method on the cl
 ```
 Spatie Data
 - [ ] Built via ::from([...]) (or a fromX() factory), never `new` — except a `new` default value in the signature.
-- [ ] Each fromX() OBJECT factory has a `@method static static from(T $x)`; the array shape is NOT @method-documented.
+- [ ] Every magic factory is named from<Type> (the prefix is REQUIRED to dispatch; forX/ofX/makeX won't).
+- [ ] Each from<Type>() OBJECT factory has a `@method static static from(T $x)` naming `from` — NOT the factory's own name (that re-declares a real method → IDE "already defined"); the array shape is NOT @method-documented.
+- [ ] A `::collect()`-ed class documents collect() with the conditional (array vs Collection) @method, not a flat static[].
 - [ ] final class; public readonly promoted props (except a #[WithCast] property, which can't be readonly).
 - [ ] Required fields are non-nullable/no-default (from() throws on miss); optional is a DELIBERATE Optional/?T/default.
 - [ ] NOT an all-nullable DTO — the type tells the truth about what's required.
