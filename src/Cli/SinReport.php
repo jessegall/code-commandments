@@ -85,19 +85,22 @@ final class SinReport
     public function checklist(): string
     {
         $out = "# Code Commandments — {$this->total} sins to fix\n\n"
-            . "A checklist. Work through it ONE sin at a time, top to bottom:\n\n"
+            . "**This file is your worklist, and DELETION is how you work it.** Each line "
+            . "below is one unfixed sin. Go top to bottom, ONE at a time:\n\n"
             . "1. Read the skill named in the section header (it teaches the fix).\n"
             . "2. Open the `file:line` and fix the sin at the source.\n"
-            . "3. **Delete that line from this file.**\n\n"
-            . "When the list is empty, run `commandments judge` again to confirm "
-            . "(a clean run deletes this file).\n";
+            . "3. **Delete its line from this file** — do NOT tick it, mark it, or strike it "
+            . "through. A fixed sin leaves no trace; the line is simply gone.\n\n"
+            . "The shrinking file IS your progress — every line you delete is a sin resolved. "
+            . "When no lines remain, you're done: re-run `commandments judge` to confirm (a "
+            . "clean run deletes this file).\n";
 
         foreach ($this->bySkill as $skill => $findings) {
             $out .= "\n## {$skill}  — read `skills/{$skill}/SKILL.md`\n\n";
 
             foreach ($findings as $finding) {
                 $location = $this->relative($finding->location);
-                $out .= "- [ ] `{$location}`  {$finding->scope}  [{$finding->detector}]\n";
+                $out .= "- `{$location}`  {$finding->scope}  [{$finding->detector}]\n";
             }
         }
 
