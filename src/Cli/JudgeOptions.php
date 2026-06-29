@@ -22,11 +22,13 @@ final class JudgeOptions
         public readonly ?string $checklist,
         public readonly int $parallel,
         public readonly bool $benchmark,
+        public readonly bool $pathGiven,
     ) {}
 
     public static function fromArgs(array $args): self
     {
         $path = '.';
+        $pathGiven = false;
         $skill = null;
         $detector = null;
         $list = false;
@@ -58,9 +60,10 @@ final class JudgeOptions
                 $exclude = array_values(array_filter(explode(',', substr($arg, 10))));
             } elseif (! str_starts_with($arg, '--')) {
                 $path = $arg;
+                $pathGiven = true;
             }
         }
 
-        return new self(rtrim($path, '/'), $skill, $detector, $list, $exclude, $checklist, $parallel, $benchmark);
+        return new self(rtrim($path, '/'), $skill, $detector, $list, $exclude, $checklist, $parallel, $benchmark, $pathGiven);
     }
 }

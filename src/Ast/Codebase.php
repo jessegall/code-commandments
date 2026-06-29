@@ -41,7 +41,10 @@ final class Codebase
      * Directories never descended into during a scan — dependency and VCS trees
      * that aren't code under review.
      */
-    private const array SKIP_DIRS = ['vendor', 'node_modules', '.git', 'tests', 'test', '.claude'];
+    // Dirs never descended into, anywhere — dependency trees that aren't code under
+    // review. (Hidden `.dirs` and symlinks are pruned separately; WHICH source roots
+    // to scan is the canon's job, not a denylist's.)
+    private const array SKIP_DIRS = ['vendor', 'node_modules'];
 
     /**
      * @param  list<ParsedFile>  $files
@@ -115,16 +118,27 @@ final class Codebase
     }
 
     /**
-     * Parse every `.php` file under the given path. Parsing is the slow part of a
+     * Parse every `.php` file under the given path(s). Parsing is the slow part of a
      * run, so an optional `$onProgress(int $done, int $total)` is called per file —
      * the caller (e.g. the judge progress bar) can show real progress instead of a
-     * frozen "parsing…". Files are enumerated up front so `$total` is known.
+     * frozen "parsing…". Files are enumerated up front so `$total` is known. Several
+     * source roots (the canon) can be scanned at once; a file shared by two roots is
+     * parsed once.
      *
+     * @param  string|list<string>  $path  one source root, or several
      * @param  \Closure(int, int): void|null  $onProgress
      */
-    public static function scan(string $path, ?\Closure $onProgress = null): self
+    public static function scan(string|array $path, ?\Closure $onProgress = null): self
     {
-        $paths = iterator_to_array(self::phpFilesIn($path), false);
+        $paths = [];
+
+        foreach ((array) $path as $root) {
+            foreach (self::phpFilesIn($root) as $file) {
+                $paths[$file] = true;
+            }
+        }
+
+        $paths = array_keys($paths);
         $total = count($paths);
         $files = [];
 
@@ -605,7 +619,14 @@ final class Codebase
                 return false;
             }
 
-            return ! in_array($file->getFilename(), self::SKIP_DIRS, true);
+            $name = $file->getFilename();
+
+            // Hidden dirs (.git, .idea, .claude, …) are tooling, not source.
+            if (str_starts_with($name, '.')) {
+                return false;
+            }
+
+            return ! in_array($name, self::SKIP_DIRS, true);
         });
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {
