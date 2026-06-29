@@ -5,14 +5,24 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Hints;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Cli\Scope\BranchChanges;
+use JesseGall\CodeCommandments\Cli\Scope\ChangeScope;
+use JesseGall\CodeCommandments\Cli\Scope\EntireCodebase;
+use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
+use JesseGall\CodeCommandments\Cli\Scope\WorkingTreeChanges;
 
 /**
- * `commandments hints [path] [--dry-run] [--dry-run=FILE]`
+ * `commandments hints [path] [--changes] [--branch[=BASE]] [--dry-run[=FILE]]`
  *
  * Brings every Spatie `Data` class's magic surface in line with the spatie-data
  * skill (see {@see DataHintRewriter}): renames non-`from…` object factories to
  * `from<Type>` and rewrites their call sites to `::from(...)`, then regenerates the
  * `@method from(...)` / `collect(...)` docblock hints.
+ *
+ * The whole path is parsed for cross-file correctness. `--changes` / `--branch`
+ * scope the run to the files you've touched, but a scoped run is **docblock-only**:
+ * it refreshes `@method` hints on those files and never renames (a rename's call
+ * sites can live outside the scope). Renaming is a whole-tree operation only.
  *
  * By DEFAULT it writes the changes to disk. `--dry-run` instead prints a unified
  * diff of what it WOULD change (review before applying — the rename can't tell a
@@ -31,7 +41,15 @@ final class Hints
             return 2;
         }
 
-        $changes = new DataHintRewriter()->rewrite(Codebase::scan($options['path']));
+        try {
+            $onlyFiles = $this->scope($options)->restrictTo($options['path']);
+        } catch (ScopeUnavailable $unavailable) {
+            fwrite(STDERR, $unavailable->getMessage() . "\n");
+
+            return 2;
+        }
+
+        $changes = new DataHintRewriter()->rewrite(Codebase::scan($options['path']), $onlyFiles);
 
         if ($changes === []) {
             $this->out("\033[32m✓ Data @method hints already current — nothing to rewrite.\033[0m\n");
@@ -103,13 +121,30 @@ final class Hints
     }
 
     /**
-     * @return array{path: string, dryRun: bool, dryRunFile: ?string}
+     * The file scope: whole tree by default, or — with `--changes`/`--branch` — only
+     * the files you've touched (docblock-only). Mirrors `judge`'s scoping.
+     *
+     * @param  array{changes: bool, branch: ?string, ...}  $options
+     */
+    private function scope(array $options): ChangeScope
+    {
+        return match (true) {
+            $options['branch'] !== null => new BranchChanges($options['branch']),
+            $options['changes'] => new WorkingTreeChanges,
+            default => new EntireCodebase,
+        };
+    }
+
+    /**
+     * @return array{path: string, dryRun: bool, dryRunFile: ?string, changes: bool, branch: ?string}
      */
     private function parse(array $args): array
     {
         $path = '.';
         $dryRun = false;
         $dryRunFile = null;
+        $changes = false;
+        $branch = null;
 
         foreach ($args as $arg) {
             if ($arg === '--dry-run') {
@@ -117,12 +152,18 @@ final class Hints
             } elseif (str_starts_with($arg, '--dry-run=')) {
                 $dryRun = true;
                 $dryRunFile = substr($arg, 10);
+            } elseif ($arg === '--changes' || $arg === '--git') {
+                $changes = true;
+            } elseif ($arg === '--branch') {
+                $branch = 'main';
+            } elseif (str_starts_with($arg, '--branch=')) {
+                $branch = substr($arg, 9);
             } elseif (! str_starts_with($arg, '--')) {
                 $path = $arg;
             }
         }
 
-        return ['path' => rtrim($path, '/'), 'dryRun' => $dryRun, 'dryRunFile' => $dryRunFile];
+        return ['path' => rtrim($path, '/'), 'dryRun' => $dryRun, 'dryRunFile' => $dryRunFile, 'changes' => $changes, 'branch' => $branch];
     }
 
     private function relative(string $path, string $base): string
