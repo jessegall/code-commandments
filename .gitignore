@@ -50,4 +50,3 @@ phpcs.xml
 .commandments/
 .ast-cache/
 workflows-scan.md
-commandments-sins.md

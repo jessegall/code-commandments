@@ -11,9 +11,10 @@ use JesseGall\CodeCommandments\Skills\Skills;
  * `commandments sync` — refresh the consumer's code-commandments integration so a
  * `composer update` always lands the current skills and briefing. Idempotent:
  *
- *  - publishes each teaching skill into `.claude/skills/commandments-<slug>/`, and
+ *  - publishes each teaching skill into `.claude/skills/commandments-<slug>/`,
  *  - injects the auto-managed "Skills — load before you work" block into CLAUDE.md
- *    (see {@see ClaudeSection}).
+ *    (see {@see ClaudeSection}), and
+ *  - keeps the package's generated artifacts gitignored.
  *
  * Runs in the consumer's working directory (where `composer update` runs).
  */
@@ -26,10 +27,58 @@ final class Sync
 
         $published = $this->publishSkills($packageSkills, $consumer);
         $this->injectClaudeSection($consumer);
+        $this->ensureGitignored("{$consumer}/.gitignore");
+        $this->removeLegacyArtifacts($consumer);
 
         fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");
 
         return 0;
+    }
+
+    /**
+     * Delete artifacts the package wrote at their OLD locations, now that generated
+     * files live under `.commandments/`. Runs on every sync so a consumer migrates
+     * automatically on `composer update`. The files are generated/gitignored, so
+     * removing them is always safe.
+     */
+    private function removeLegacyArtifacts(string $consumer): void
+    {
+        foreach (['commandments-sins.md'] as $legacy) {
+            $path = "{$consumer}/{$legacy}";
+
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+    }
+
+    /**
+     * Everything the package generates is regenerated, not hand-authored — the judge
+     * checklist and any future state live under `.commandments/` (one ignored
+     * folder); the published skills must sit in `.claude/skills/` for the Skill tool
+     * to find them, so they're ignored there. Re-asserted on every sync so consumers
+     * pick it up on `composer update`. Idempotent.
+     */
+    private function ensureGitignored(string $path): void
+    {
+        $existing = is_file($path) ? (string) file_get_contents($path) : '';
+        $entries = [
+            '# code-commandments generated artifacts (judge checklist + state)' => '.commandments/',
+            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*/',
+        ];
+
+        foreach ($entries as $comment => $entry) {
+            if (str_contains($existing, $entry)) {
+                continue;
+            }
+
+            $prefix = ($existing !== '' && ! str_ends_with($existing, "\n")) ? "\n" : '';
+            $existing .= $prefix . "\n{$comment}\n{$entry}\n";
+        }
+
+        if ($existing !== '') {
+            file_put_contents($path, $existing);
+        }
     }
 
     private function publishSkills(string $source, string $consumer): int
