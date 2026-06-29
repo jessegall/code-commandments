@@ -55,7 +55,7 @@ $toBytes = static function (string $limit): int {
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
           --detector=NAME    only run one detector (partial name match)
           --exclude=A,B      skip findings in paths containing any fragment
-          --git              only report sins in files changed in the working tree
+          --changes          only report sins in files changed in the working tree (alias: --git)
           --branch[=BASE]    only report sins new/changed on this branch vs BASE (default: main)
           --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
           --checklist=FILE   write the checklist here (default: commandments-sins.md)

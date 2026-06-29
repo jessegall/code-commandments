@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
- * `commandments judge [path] [--skill=NAME] [--detector=NAME] [--git] [--branch[=BASE]] [--parallel=N] [--list]`
+ * `commandments judge [path] [--skill=NAME] [--detector=NAME] [--changes] [--branch[=BASE]] [--parallel=N] [--list]`
  *
  * Scans a path, runs the Sin Detectors, and prints each finding as
  * `file:line  Class::method`, grouped by the SKILL that teaches the fix — so an
@@ -214,7 +214,8 @@ final class Judge
         foreach ($args as $arg) {
             if ($arg === '--list') {
                 $list = true;
-            } elseif ($arg === '--git') {
+            } elseif ($arg === '--changes' || $arg === '--git') {
+                // `--git` is the original spelling, kept as a quiet alias for `--changes`.
                 $git = true;
             } elseif ($arg === '--branch') {
                 $branch = 'main';
