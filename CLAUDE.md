@@ -74,6 +74,8 @@ have a detector. Flip a row to ✅ when a detector ships.
 | `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `bin/commandments hints [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]]` | Auto-fix Spatie `Data` magic surface: rename non-`from…` object factories to `from<Type>` + rewrite call sites to `::from(...)`, and regenerate `@method from(...)`/`collect(...)` docblock hints. **Default applies; `--dry-run[=FILE]` previews a unified diff.** `--changes`/`--branch` scope to touched files but force **docblock-only** mode (no renames — a rename's call sites can live outside the scope); renaming is whole-tree only. |
+| `bin/commandments report --detector=NAME --reason="…" [--file=PATH] [--line=N]` | File a `[detector-report]` GitHub issue for a false positive / wrong rule (via `gh`). |
+| `bin/commandments feature-request --title="…" --reason="…"` | File a `[feature-request]` GitHub issue proposing a new/changed rule (via `gh`). |
 | `bin/commandments install` | Wire a consumer: composer sync hook + a `UserPromptSubmit` reminder of the cardinal rule + gitignore, then sync. Idempotent. |
 | `bin/commandments remind` | Emit the cardinal rule as a `UserPromptSubmit` hook payload (re-injects "trace to the source" every turn). |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
