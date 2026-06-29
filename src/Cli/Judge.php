@@ -18,9 +18,12 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * or a single detector to scope a fixing pass.
  *
  * `--git` reports ONLY sins in files changed or created in the working tree (git
- * diff vs HEAD + untracked). The whole path is still parsed — cross-file detectors
- * need the full type/class graph to be correct — but only findings that land in a
- * touched file are shown, so you judge just what you're working on.
+ * diff vs HEAD + untracked). `--branch[=BASE]` instead scopes to every file new or
+ * changed on the current branch compared to BASE (default `main`) — committed AND
+ * uncommitted — via the merge-base, so it needs no separate worktree. The whole
+ * path is still parsed — cross-file detectors need the full type/class graph to be
+ * correct — but only findings that land in a touched file are shown, so you judge
+ * just what you're working on.
  *
  * By default it also writes a Markdown checklist (`commandments-sins.md`) — the
  * intended workflow is to judge ONCE, then work that file line-by-line (a full
@@ -54,35 +57,44 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options['path'], $detectors, $options['exclude'], $options['checklist'], $options['git']);
+        if ($options['branch'] !== null) {
+            $changed = $this->gitBranchFiles($options['path'], $options['branch']);
+
+            if ($changed === null) {
+                fwrite(STDERR, "Not a git repository, or base ref '{$options['branch']}' not found: {$options['path']}\n");
+
+                return 2;
+            }
+        } elseif ($options['git']) {
+            $changed = $this->gitChangedFiles($options['path']);
+
+            if ($changed === null) {
+                fwrite(STDERR, "Not a git repository (or git unavailable): {$options['path']}\n");
+
+                return 2;
+            }
+        } else {
+            $changed = null;
+        }
+
+        return $this->judge($options['path'], $detectors, $options['exclude'], $options['checklist'], $changed);
     }
 
     /**
      * @param  list<Detector>  $detectors
      * @param  list<string>  $exclude
+     * @param  array<string, true>|null  $changed  Restrict findings to these files (absolute paths); null = no filter.
      */
-    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, bool $git): int
+    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, ?array $changed): int
     {
-        $changed = null;
-
-        if ($git) {
-            $changed = $this->gitChangedFiles($path);
-
-            if ($changed === null) {
-                fwrite(STDERR, "Not a git repository (or git unavailable): {$path}\n");
-
-                return 2;
+        if ($changed === []) {
+            if ($checklist !== null && is_file($checklist)) {
+                @unlink($checklist);
             }
 
-            if ($changed === []) {
-                if ($checklist !== null && is_file($checklist)) {
-                    @unlink($checklist);
-                }
+            $this->line("\033[32m✓ No changed files to judge.\033[0m");
 
-                $this->line("\033[32m✓ No changed files to judge.\033[0m");
-
-                return 0;
-            }
+            return 0;
         }
 
         $codebase = Codebase::scan($path);
@@ -204,7 +216,7 @@ final class Judge
     }
 
     /**
-     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>, checklist: ?string, git: bool}
+     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>, checklist: ?string, git: bool, branch: ?string}
      */
     private function parse(array $args): array
     {
@@ -213,6 +225,7 @@ final class Judge
         $detector = null;
         $list = false;
         $git = false;
+        $branch = null;
         $exclude = [];
 
         // By default the findings are written to a checklist file the agent prunes
@@ -224,6 +237,10 @@ final class Judge
                 $list = true;
             } elseif ($arg === '--git') {
                 $git = true;
+            } elseif ($arg === '--branch') {
+                $branch = 'main';
+            } elseif (str_starts_with($arg, '--branch=')) {
+                $branch = substr($arg, 9);
             } elseif ($arg === '--no-checklist') {
                 $checklist = null;
             } elseif (str_starts_with($arg, '--checklist=')) {
@@ -239,7 +256,7 @@ final class Judge
             }
         }
 
-        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude, 'checklist' => $checklist, 'git' => $git];
+        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude, 'checklist' => $checklist, 'git' => $git, 'branch' => $branch];
     }
 
     /**
@@ -251,19 +268,70 @@ final class Judge
      */
     private function gitChangedFiles(string $path): ?array
     {
-        $dir = is_dir($path) ? $path : dirname($path);
-        $root = trim((string) @shell_exec('git -C ' . escapeshellarg($dir) . ' rev-parse --show-toplevel 2>/dev/null'));
+        $root = $this->gitRoot($path);
 
-        if ($root === '') {
+        if ($root === null) {
             return null;
         }
 
         $tracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' diff --name-only --diff-filter=d HEAD 2>/dev/null');
         $untracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' ls-files --others --exclude-standard 2>/dev/null');
 
+        return $this->pathSet($root, $tracked . "\n" . $untracked);
+    }
+
+    /**
+     * The files new or changed on the current branch compared to $base (e.g. `main`):
+     * everything that differs from the merge-base down to the working tree — so both
+     * committed-on-branch and uncommitted changes — plus untracked files. Uses the
+     * merge-base, so it needs no separate worktree or checkout of $base. Returns the
+     * empty set when the branch matches $base, or null when $path is not in a git
+     * repository or $base is not a known ref.
+     *
+     * @return array<string, true>|null
+     */
+    private function gitBranchFiles(string $path, string $base): ?array
+    {
+        $root = $this->gitRoot($path);
+
+        if ($root === null) {
+            return null;
+        }
+
+        $mergeBase = trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' merge-base ' . escapeshellarg($base) . ' HEAD 2>/dev/null'));
+
+        if ($mergeBase === '') {
+            return null;
+        }
+
+        $tracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' diff --name-only --diff-filter=d ' . escapeshellarg($mergeBase) . ' 2>/dev/null');
+        $untracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' ls-files --others --exclude-standard 2>/dev/null');
+
+        return $this->pathSet($root, $tracked . "\n" . $untracked);
+    }
+
+    /**
+     * The git toplevel containing $path, or null when $path is not in a repository.
+     */
+    private function gitRoot(string $path): ?string
+    {
+        $dir = is_dir($path) ? $path : dirname($path);
+        $root = trim((string) @shell_exec('git -C ' . escapeshellarg($dir) . ' rev-parse --show-toplevel 2>/dev/null'));
+
+        return $root === '' ? null : $root;
+    }
+
+    /**
+     * Resolve newline-separated repo-relative paths from git into a set of absolute
+     * `.php` paths (non-PHP files dropped, since detectors only judge PHP).
+     *
+     * @return array<string, true>
+     */
+    private function pathSet(string $root, string $lines): array
+    {
         $set = [];
 
-        foreach (preg_split('/\R/', $tracked . "\n" . $untracked) ?: [] as $relative) {
+        foreach (preg_split('/\R/', $lines) ?: [] as $relative) {
             $relative = trim($relative);
 
             if ($relative === '' || ! str_ends_with($relative, '.php')) {
