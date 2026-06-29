@@ -28,6 +28,8 @@ final class ArrayReturnBagDetector implements Detector
         'Laravel\\Mcp\\Server\\Tool',
     ];
 
+    private const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
+
     public function skill(): string
     {
         return 'value-objects';
@@ -40,6 +42,7 @@ final class ArrayReturnBagDetector implements Detector
             ->where(static fn (AstNode $node): bool => $node->isReturnedValue())
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
             ->reject(static fn (AstNode $node): bool => self::isBoundary($codebase, $node->enclosingClassName()))
+            ->reject(static fn (AstNode $node): bool => self::isModelCasts($codebase, $node))
             ->get();
     }
 
@@ -52,5 +55,16 @@ final class ArrayReturnBagDetector implements Detector
         }
 
         return false;
+    }
+
+    /**
+     * Eloquent's `casts()` hook returns a config map (`['col' => CastClass::class]`)
+     * the framework reads as a raw array — it cannot be a value object. The `casts`
+     * name is the framework's contract, gated on the class actually being a Model.
+     */
+    private static function isModelCasts(Codebase $codebase, AstNode $node): bool
+    {
+        return $node->enclosingFunctionName() === 'casts'
+            && $codebase->extends($node->enclosingClassName(), self::MODEL);
     }
 }

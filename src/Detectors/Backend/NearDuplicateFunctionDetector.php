@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
@@ -26,6 +27,17 @@ final class NearDuplicateFunctionDetector implements Detector
      */
     private const int MIN_BODY_NODES = 20;
 
+    /**
+     * Framework request bases whose `rules()` is a validation-array hook: every
+     * subclass's `rules()` shares the same `['field' => [...]]` skeleton by contract,
+     * so structural similarity is inherent, not duplication to extract.
+     */
+    private const array REQUEST_BASES = [
+        'Illuminate\\Foundation\\Http\\FormRequest',
+        'Laravel\\Mcp\\Request',
+        'Laravel\\Mcp\\Server\\Tool',
+    ];
+
     public function skill(): string
     {
         return 'fix-at-the-source';
@@ -38,6 +50,10 @@ final class NearDuplicateFunctionDetector implements Detector
 
         foreach ($codebase->whereMethodDeclaration()->get() as $match) {
             if ($match->bodyNodeCount() < self::MIN_BODY_NODES) {
+                continue;
+            }
+
+            if ($this->isRequestRules($codebase, $match)) {
                 continue;
             }
 
@@ -62,5 +78,20 @@ final class NearDuplicateFunctionDetector implements Detector
         }
 
         return $findings;
+    }
+
+    private function isRequestRules(Codebase $codebase, NodeMatch $match): bool
+    {
+        if ($match->enclosingFunctionName() !== 'rules') {
+            return false;
+        }
+
+        foreach (self::REQUEST_BASES as $base) {
+            if ($codebase->extends($match->enclosingClassName(), $base)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
