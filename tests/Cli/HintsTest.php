@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Cli\Hints\DataHintRewriter;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
 use PHPUnit\Framework\TestCase;
 
@@ -247,6 +249,68 @@ final class HintsTest extends TestCase
         ob_get_clean();
 
         $this->assertSame($before, $this->read($dir, 'Widget.php'));
+    }
+
+    public function test_scoped_run_is_docblock_only_restricted_to_the_given_files(): void
+    {
+        $dir = $this->project([
+            'OrderData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Order;
+                use Demo\Models\Credential;
+
+                final class OrderData extends Data
+                {
+                    public function __construct(public readonly int $id) {}
+
+                    public static function fromModel(Order $order): self
+                    {
+                        return self::from(['id' => $order->id]);
+                    }
+
+                    public static function forCredential(Credential $credential): self
+                    {
+                        return self::from(['id' => $credential->id]);
+                    }
+                }
+                PHP,
+            'TagData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Tag;
+
+                final class TagData extends Data
+                {
+                    public function __construct(public readonly string $label) {}
+
+                    public static function ofTag(Tag $tag): self
+                    {
+                        return new self($tag->label);
+                    }
+                }
+                PHP,
+        ]);
+
+        // Only OrderData.php is "changed" → docblock-only, scoped to it.
+        $changes = new DataHintRewriter()->rewrite(
+            Codebase::scan($dir),
+            [$dir . '/OrderData.php' => true],
+        );
+
+        // The out-of-scope file is never rewritten.
+        $this->assertArrayNotHasKey($dir . '/TagData.php', $changes);
+
+        $order = $changes[$dir . '/OrderData.php'] ?? '';
+        // documents the dispatchable from* factory…
+        $this->assertStringContainsString('@method static static from(Order $order)', $order);
+        // …does NOT rename the non-from factory (no whole-tree call-site visibility)…
+        $this->assertStringContainsString('public static function forCredential(Credential $credential)', $order);
+        $this->assertStringNotContainsString('fromCredential', $order);
+        // …and does NOT document the non-dispatchable one.
+        $this->assertStringNotContainsString('from(Credential $credential)', $order);
     }
 
     /**
