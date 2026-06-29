@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Hints\DataHintRewriter;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
+use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -295,9 +296,9 @@ final class HintsTest extends TestCase
         ]);
 
         // Only OrderData.php is "changed" → docblock-only, scoped to it.
-        $changes = new DataHintRewriter()->rewrite(
+        $changes = new DataHintRewriter()->rewrites(
             Codebase::scan($dir),
-            [$dir . '/OrderData.php' => true],
+            Scope::restrictedTo([$dir . '/OrderData.php']),
         );
 
         // The out-of-scope file is never rewritten.
