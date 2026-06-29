@@ -17,6 +17,19 @@ Two layers:
 Detectors are proven against a self-checking fixture (`tests/Fixtures/shop`) where
 `#[Sinful(Detector::class)]` markers ARE the test spec.
 
+### Two front-ends, ONE detector DSL — non-negotiable
+
+There are two parse engines: the **backend** AST over PHP (`src/Ast/`, php-parser)
+and the **frontend** AST over Vue `.vue` SFCs (`src/Vue/`, our own tokenizer — built
+from scratch, no Node, no v3 reuse). They parse different languages, but a detector
+**MUST read the same** either way: a frontend detector composes the **exact same
+fluent query syntax** as a backend one — a selector opens a `Query`, `where`/`reject`
+narrow it (one check per line), a terminal returns rich matches that know their
+`file:line`. Same shape, same rules (AST/semantic over names; compose the engine,
+never poke the tree), just over Vue `Element`s instead of PHP nodes. If a frontend
+detector doesn't look like a backend detector, the engine is wrong — fix the engine,
+not the detector. (Frontend scope is the `frontend.canon`, sibling to `backend.canon`.)
+
 ## ⚠️ Building or changing a detector? LOAD THESE SKILLS FIRST — mandatory
 
 Before you write or touch any detector, load these via the **Skill tool**:
