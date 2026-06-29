@@ -21,6 +21,7 @@ use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ClassConstFetch;
+use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -1109,6 +1110,49 @@ class AstNode
             || $node instanceof For_
             || $node instanceof While_
             || $node instanceof Do_) !== null;
+    }
+
+    /**
+     * Is this call `array_map`'s per-item callback — either inside the closure/arrow
+     * fn passed to it (`array_map(fn ($r) => X::from($r), $rows)`) or passed as a
+     * first-class callable (`array_map(X::from(...), $rows)`)? `array_map` over a
+     * list is the same item-by-item mapping a loop is — Spatie's `::collect()` does
+     * it in one pass.
+     */
+    public function isWithinArrayMap(): bool
+    {
+        $closure = $this->walkUp(static fn (Node $node): bool => $node instanceof Closure || $node instanceof ArrowFunction);
+
+        if ($closure !== null && self::isArrayMapArgument($closure->getAttribute('parent'))) {
+            return true;
+        }
+
+        return self::isArrayMapArgument($this->node?->getAttribute('parent'));
+    }
+
+    /**
+     * Is this node inside a loop OR an `array_map` callback — the two shapes the
+     * spatie-data skill names as per-item hydration that `::collect()` replaces.
+     */
+    public function isPerItemHydration(): bool
+    {
+        return $this->isWithinLoop() || $this->isWithinArrayMap();
+    }
+
+    /**
+     * Is $node an argument to an `array_map(...)` call?
+     */
+    private static function isArrayMapArgument(?Node $node): bool
+    {
+        if (! $node instanceof Arg) {
+            return false;
+        }
+
+        $call = $node->getAttribute('parent');
+
+        return $call instanceof FuncCall
+            && $call->name instanceof Name
+            && $call->name->toString() === 'array_map';
     }
 
     private static function shortName(string $fqcn): string

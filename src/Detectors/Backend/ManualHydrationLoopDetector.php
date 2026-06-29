@@ -9,10 +9,11 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
- * `<Data>::from(...)` called inside a loop — hydrating a collection one item at a
- * time. Spatie does this in one pass: a `#[DataCollectionOf]` property plus
- * `::collect()`. The loop is the mapping that belongs to the framework. Points at
- * spatie-data.
+ * `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/
+ * `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`,
+ * `array_map(fn ($r) => X::from($r), $rows)`). Spatie does this in one pass: a
+ * `#[DataCollectionOf]` property plus `::collect()`. The loop/map is the mapping
+ * that belongs to the framework. Points at spatie-data.
  */
 final class ManualHydrationLoopDetector implements Detector
 {
@@ -28,7 +29,7 @@ final class ManualHydrationLoopDetector implements Detector
         return $codebase
             ->whereStaticCall('from')
             ->where(static fn (AstNode $node): bool => $codebase->extends($node->staticCallClass(), self::DATA))
-            ->where(static fn (AstNode $node): bool => $node->isWithinLoop())
+            ->where(static fn (AstNode $node): bool => $node->isPerItemHydration())
             ->get();
     }
 }
