@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
  * `commandments hints [path] [--changes] [--branch[=BASE]] [--dry-run[=FILE]]`
  *
  * Brings every Spatie `Data` class's magic surface in line with the spatie-data
- * skill (see {@see DataHintRewriter}): renames non-`from…` object factories to
+ * skill (see {@see DataHintScribe}): renames non-`from…` object factories to
  * `from<Type>` and rewrites their call sites to `::from(...)`, then regenerates the
  * `@method from(...)` / `collect(...)` docblock hints.
  *
@@ -48,7 +48,7 @@ final class Hints
             return 2;
         }
 
-        $rewrites = new DataHintRewriter()->rewrites(Codebase::scan($options->path), $scope);
+        $rewrites = new DataHintScribe()->rewrites(Codebase::scan($options->path), $scope);
 
         if ($rewrites === []) {
             $this->out("\033[32m✓ Data @method hints already current — nothing to rewrite.\033[0m\n");
