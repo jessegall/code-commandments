@@ -18,12 +18,22 @@ $toBytes = static function (string $limit): int {
 };
 
 (static function (array $argv) use ($toBytes): void {
-    // Parsing a whole codebase into ASTs is memory-hungry; lift the default 128M
-    // ceiling so a large source tree doesn't abort mid-scan. Respect an operator's
-    // higher limit (or an unlimited -1) if one is already set.
+    // Parsing a whole codebase into ASTs (and bucketing its nodes) is memory-hungry;
+    // lift the default 128M ceiling so a large source tree doesn't abort mid-scan.
+    // Default 2G; override with `--memory=4G` (or `--memory=-1` for no limit). An
+    // operator's already-higher limit (or an unlimited -1) is respected.
+    $requested = '2G';
+    foreach ($argv as $arg) {
+        if (str_starts_with($arg, '--memory=')) {
+            $requested = trim(substr($arg, 9)) ?: $requested;
+        }
+    }
+
     $current = trim((string) ini_get('memory_limit'));
-    if ($current !== '-1' && $toBytes($current) < 1024 * 1024 * 1024) {
-        ini_set('memory_limit', '1G');
+    if ($requested === '-1') {
+        ini_set('memory_limit', '-1');
+    } elseif ($current !== '-1' && $toBytes($current) < $toBytes($requested)) {
+        ini_set('memory_limit', $requested);
     }
 
     foreach ([
@@ -61,6 +71,7 @@ $toBytes = static function (string $limit): int {
           --changes          only report sins in files changed in the working tree (alias: --git)
           --branch[=BASE]    only report sins new/changed on this branch vs BASE (default: main)
           --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
+          --memory=LIMIT     memory ceiling for the run (default: 2G; -1 for no limit)
           --checklist=FILE   write the checklist here (default: .commandments/sins.md)
           --no-checklist     print only, don't write the checklist file
           --list             list every detector grouped by skill
