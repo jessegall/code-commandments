@@ -132,9 +132,10 @@ false-positive side against. They stay skill-only until that changes.
 |---|---|
 | `new <Data subclass>` instead of `::from()` / a `fromX()` factory | ✅ `NewDataObjectDetector` (only on a RICH class — casts, name maps, nested Data, `fromX()` — where `new` skips the pipeline; a plain scalar Data class is fine to `new`, via `Support\DataClassShape`) |
 | All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) | ✅ `AllNullableDataDetector` |
-| Collections hydrated with `::from()` in a loop instead of `#[DataCollectionOf]` + `::collect()` | ✅ `ManualHydrationLoopDetector` |
+| Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` | ✅ `ManualHydrationLoopDetector` (in a `foreach`/`for`/`while` loop OR as an `array_map` callback — both the first-class-callable `array_map(X::from(...), …)` and the closure `array_map(fn ($r) => X::from($r), …)` forms) |
 | Data class not `final` / props not `readonly` promoted | ✅ `NonFinalDataDetector` (final; readonly TBD — a morphable base that IS extended is exempt, since `final` + `extends` is fatal) |
-| `fromX()` object factory missing its `@method static static from(T)` (or the array shape wrongly documented) | 〰️ |
+| `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — IDE "Method with same name already defined" | ✅ `DataMethodHintCollisionDetector` (docblock `@method` name ∩ declared method names; parens-in-conditional-return-type safe) |
+| `fromX()` object factory missing its `@method static static from(T)` (or the array shape wrongly documented) | 〰️ detection deferred (a *missing* hint is low-signal); the `commandments hints` rewriter GENERATES the correct `@method from(...)`/`collect(...)` lines and renames mis-prefixed factories |
 | snake_case boundary without one class-level `#[MapInputName]` | 🧠 needs to know the boundary's input keys are snake_case (the wire shape), which isn't visible from the Data class declaration alone |
 
 ## value-objects

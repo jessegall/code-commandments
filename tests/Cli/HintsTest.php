@@ -1,0 +1,300 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Tests\Cli;
+
+use JesseGall\CodeCommandments\Cli\Hints\Hints;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Real end-to-end tests for the `hints` rewriter: each test writes actual PHP files
+ * into a throwaway temp project, runs the command so it rewrites them ON DISK, then
+ * asserts the file contents. Every temp project is removed in tearDown.
+ */
+final class HintsTest extends TestCase
+{
+    /** @var list<string> */
+    private array $projects = [];
+
+    private const string DATA_STUB = "<?php\nnamespace Spatie\\LaravelData { class Data {} }\n";
+
+    protected function tearDown(): void
+    {
+        foreach ($this->projects as $dir) {
+            $this->deleteDir($dir);
+        }
+
+        $this->projects = [];
+    }
+
+    public function test_renames_non_from_factory_rewrites_call_sites_and_fixes_the_method_tag(): void
+    {
+        $dir = $this->project([
+            'CredentialData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Credential;
+
+                /**
+                 * The view of a stored credential.
+                 *
+                 * @method static static forCredential(Credential $credential)
+                 */
+                final class CredentialData extends Data
+                {
+                    public function __construct(public readonly string $id) {}
+
+                    public static function forCredential(Credential $credential): self
+                    {
+                        return self::from(['id' => $credential->id]);
+                    }
+                }
+                PHP,
+            'Caller.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                class Caller
+                {
+                    public function show($credential)
+                    {
+                        return CredentialData::forCredential($credential);
+                    }
+                }
+                PHP,
+        ]);
+
+        $this->apply($dir);
+
+        $data = $this->read($dir, 'CredentialData.php');
+        $caller = $this->read($dir, 'Caller.php');
+
+        // factory renamed to a from-prefixed name…
+        $this->assertStringContainsString('public static function fromCredential(Credential $credential): self', $data);
+        // …the @method documents the magic `from`, not the concrete name…
+        $this->assertStringContainsString('@method static static from(Credential $credential)', $data);
+        // …the collision name is gone entirely…
+        $this->assertStringNotContainsString('forCredential', $data);
+        // …and call sites dispatch through ::from().
+        $this->assertStringContainsString('CredentialData::from($credential)', $caller);
+        $this->assertStringNotContainsString('forCredential', $caller);
+    }
+
+    public function test_documents_a_from_prefixed_factory_without_renaming_it(): void
+    {
+        $dir = $this->project([
+            'AgentData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Agent;
+
+                final class AgentData extends Data
+                {
+                    public function __construct(public readonly int $id) {}
+
+                    public static function fromModel(Agent $agent): self
+                    {
+                        return self::from(['id' => $agent->id]);
+                    }
+                }
+                PHP,
+            'Caller.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                class Caller
+                {
+                    public function show($agent)
+                    {
+                        return AgentData::fromModel($agent);
+                    }
+                }
+                PHP,
+        ]);
+
+        $this->apply($dir);
+
+        $data = $this->read($dir, 'AgentData.php');
+
+        // a from* factory is left named as-is, only documented…
+        $this->assertStringContainsString('public static function fromModel(Agent $agent): self', $data);
+        $this->assertStringContainsString('@method static static from(Agent $agent)', $data);
+        // …and its call sites are not touched.
+        $this->assertStringContainsString('AgentData::fromModel($agent)', $this->read($dir, 'Caller.php'));
+    }
+
+    public function test_adds_the_conditional_collect_hint_when_the_class_is_collected(): void
+    {
+        $dir = $this->project([
+            'RowData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+
+                final class RowData extends Data
+                {
+                    public function __construct(public readonly string $value) {}
+                }
+                PHP,
+            'Importer.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                class Importer
+                {
+                    public function rows(array $rows): array
+                    {
+                        return RowData::collect($rows);
+                    }
+                }
+                PHP,
+        ]);
+
+        $this->apply($dir);
+
+        $this->assertStringContainsString(
+            'collect(iterable $items)',
+            $this->read($dir, 'RowData.php'),
+        );
+        $this->assertStringContainsString('$items is \Illuminate\Support\Collection', $this->read($dir, 'RowData.php'));
+    }
+
+    public function test_synthesises_a_docblock_when_the_class_has_none(): void
+    {
+        $dir = $this->project([
+            'TagData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Tag;
+
+                final class TagData extends Data
+                {
+                    public function __construct(public readonly string $label) {}
+
+                    public static function make(Tag $tag): self
+                    {
+                        return new self($tag->label);
+                    }
+                }
+                PHP,
+        ]);
+
+        $this->apply($dir);
+
+        $data = $this->read($dir, 'TagData.php');
+
+        $this->assertStringContainsString('@method static static from(Tag $tag)', $data);
+        $this->assertStringContainsString('public static function fromTag(Tag $tag): self', $data);
+    }
+
+    public function test_dry_run_writes_nothing_and_prints_a_diff(): void
+    {
+        $dir = $this->project([
+            'CredentialData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Credential;
+
+                final class CredentialData extends Data
+                {
+                    public function __construct(public readonly string $id) {}
+
+                    public static function forCredential(Credential $credential): self
+                    {
+                        return self::from(['id' => $credential->id]);
+                    }
+                }
+                PHP,
+        ]);
+
+        $before = $this->read($dir, 'CredentialData.php');
+        $diffFile = $dir . '/changes.diff';
+
+        ob_start();
+        $code = new Hints()->run([$dir, '--dry-run=' . $diffFile]);
+        ob_get_clean();
+
+        $diff = (string) file_get_contents($diffFile);
+
+        $this->assertSame(0, $code);
+        $this->assertSame($before, $this->read($dir, 'CredentialData.php'), 'dry-run must not touch the file');
+        $this->assertStringContainsString('-    public static function forCredential', $diff);
+        $this->assertStringContainsString('+    public static function fromCredential', $diff);
+    }
+
+    public function test_leaves_non_data_classes_alone(): void
+    {
+        $dir = $this->project([
+            'Widget.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                class Widget
+                {
+                    public static function ofSize(int $n): self
+                    {
+                        return new self;
+                    }
+                }
+                PHP,
+        ]);
+
+        $before = $this->read($dir, 'Widget.php');
+
+        ob_start();
+        new Hints()->run([$dir]);
+        ob_get_clean();
+
+        $this->assertSame($before, $this->read($dir, 'Widget.php'));
+    }
+
+    /**
+     * Write the given files (plus the Spatie Data stub) into a fresh temp project.
+     *
+     * @param  array<string, string>  $files
+     */
+    private function project(array $files): string
+    {
+        $dir = sys_get_temp_dir() . '/cc-hints-' . uniqid('', true);
+        mkdir($dir, 0777, true);
+        $this->projects[] = $dir;
+
+        file_put_contents($dir . '/Spatie.php', self::DATA_STUB);
+
+        foreach ($files as $name => $contents) {
+            file_put_contents($dir . '/' . $name, $contents . "\n");
+        }
+
+        return $dir;
+    }
+
+    private function apply(string $dir): void
+    {
+        ob_start();
+        $code = new Hints()->run([$dir]);
+        ob_get_clean();
+
+        $this->assertSame(0, $code);
+
+        // The rewrite must never produce invalid PHP.
+        foreach (glob($dir . '/*.php') ?: [] as $file) {
+            exec('php -l ' . escapeshellarg($file) . ' 2>&1', $out, $status);
+            $this->assertSame(0, $status, "rewritten file does not parse: {$file}\n" . implode("\n", $out));
+        }
+    }
+
+    private function read(string $dir, string $name): string
+    {
+        return (string) file_get_contents($dir . '/' . $name);
+    }
+
+    private function deleteDir(string $dir): void
+    {
+        foreach (glob($dir . '/*') ?: [] as $file) {
+            is_dir($file) ? $this->deleteDir($file) : @unlink($file);
+        }
+
+        @rmdir($dir);
+    }
+}
