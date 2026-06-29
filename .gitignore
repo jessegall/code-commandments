@@ -49,3 +49,5 @@ phpcs.xml
 # code-commandments self-judgment runtime artifacts
 .commandments/
 .ast-cache/
+workflows-scan.md
+commandments-sins.md
