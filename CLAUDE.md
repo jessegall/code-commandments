@@ -70,7 +70,7 @@ have a detector. Flip a row to ✅ when a detector ships.
 
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B] [--changes] [--branch[=BASE]] [--parallel=N]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `commandments-sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--changes` (alias `--git`) reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. `--parallel=N` runs the detectors across N forked workers (default 8, capped at CPU cores; `--parallel=1` = sequential, also the fallback where `pcntl` is unavailable). |
+| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B] [--changes] [--branch[=BASE]] [--parallel=N]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `.commandments/sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--changes` (alias `--git`) reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. `--parallel=N` runs the detectors across N forked workers (default 8, capped at CPU cores; `--parallel=1` = sequential, also the fallback where `pcntl` is unavailable). |
 | `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `bin/commandments hints [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]]` | Auto-fix Spatie `Data` magic surface: rename non-`from…` object factories to `from<Type>` + rewrite call sites to `::from(...)`, and regenerate `@method from(...)`/`collect(...)` docblock hints. **Default applies; `--dry-run[=FILE]` previews a unified diff.** `--changes`/`--branch` scope to touched files but force **docblock-only** mode (no renames — a rename's call sites can live outside the scope); renaming is whole-tree only. |
@@ -79,7 +79,7 @@ have a detector. Flip a row to ✅ when a detector ships.
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
 
 **Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large
-tree), so judge ONCE, then work the generated `commandments-sins.md` line-by-line:
+tree), so judge ONCE, then work the generated `.commandments/sins.md` line-by-line:
 read the section's skill, fix the sin at `file:line`, **delete that line**, repeat.
 Don't re-run judge between fixes — re-run only at the end to confirm (a clean run
 deletes the file).

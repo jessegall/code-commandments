@@ -33,8 +33,9 @@ final class JudgeOptions
         $exclude = [];
 
         // By default the findings are written to a checklist file the agent prunes
-        // line-by-line; `--no-checklist` prints only, `--checklist=FILE` retargets.
-        $checklist = 'commandments-sins.md';
+        // line-by-line, under the package's `.commandments/` artifact folder (the
+        // whole folder is gitignored); `--no-checklist` prints only, `--checklist=FILE` retargets.
+        $checklist = '.commandments/sins.md';
 
         foreach ($args as $arg) {
             if ($arg === '--list') {
