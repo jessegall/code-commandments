@@ -40,6 +40,9 @@ vendor/bin/commandments judge src --detector=SwallowCatch
 vendor/bin/commandments judge src --branch        # new/changed on this branch vs main (--branch=BASE to override)
 vendor/bin/commandments judge src --git           # uncommitted working-tree changes only
 
+# detectors run across 8 workers by default (capped at CPU cores); --parallel=1 disables
+vendor/bin/commandments judge src --parallel=4
+
 # skip paths; list everything
 vendor/bin/commandments judge src --exclude=Generated,vendor
 vendor/bin/commandments judge --list
