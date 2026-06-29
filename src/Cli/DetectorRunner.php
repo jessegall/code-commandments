@@ -104,23 +104,83 @@ final class DetectorRunner
             $children[$pid] = ['sock' => $pair[0], 'count' => count($chunk)];
         }
 
+        // Drain in COMPLETION order, not fork order: select on all sockets and read
+        // whoever's ready, so a slow worker doesn't stall the progress bar behind it
+        // while later-finished workers wait their turn. Sockets are non-blocking; a
+        // worker's payload is buffered until its socket reaches EOF (it closed).
+        $buffers = [];
+
         foreach ($children as $pid => $child) {
-            $data = stream_get_contents($child['sock']);
-            fclose($child['sock']);
-            pcntl_waitpid($pid, $status);
+            stream_set_blocking($child['sock'], false);
+            $buffers[$pid] = '';
+        }
 
-            $partial = is_string($data) && $data !== '' ? unserialize($data) : [];
+        while ($children !== []) {
+            $read = array_column($children, 'sock');
+            $write = $except = null;
 
-            if (is_array($partial)) {
-                foreach ($partial as $finding) {
-                    $findings[] = $finding;
-                }
+            if (@stream_select($read, $write, $except, null) === false) {
+                break;
             }
 
-            $this->advanceBy($progress, $child['count']);
+            foreach ($read as $sock) {
+                $pid = $this->pidOf($children, $sock);
+
+                if ($pid === null) {
+                    continue;
+                }
+
+                $chunk = fread($sock, 65536);
+
+                if (is_string($chunk) && $chunk !== '') {
+                    $buffers[$pid] .= $chunk;
+                }
+
+                if (! feof($sock)) {
+                    continue;
+                }
+
+                fclose($sock);
+                pcntl_waitpid($pid, $status);
+
+                $partial = $buffers[$pid] !== '' ? unserialize($buffers[$pid]) : [];
+
+                if (is_array($partial)) {
+                    foreach ($partial as $finding) {
+                        $findings[] = $finding;
+                    }
+                }
+
+                $this->advanceBy($progress, $children[$pid]['count']);
+                unset($children[$pid], $buffers[$pid]);
+            }
+        }
+
+        // Reap anything left if select bailed out (rare).
+        foreach (array_keys($children) as $pid) {
+            @fclose($children[$pid]['sock']);
+            pcntl_waitpid($pid, $status);
         }
 
         return $findings;
+    }
+
+    /**
+     * The pid whose socket is $sock — `stream_select` re-keys the array it's handed,
+     * so look the worker up by socket identity.
+     *
+     * @param  array<int, array{sock: resource, count: int}>  $children
+     * @param  resource  $sock
+     */
+    private function pidOf(array $children, $sock): ?int
+    {
+        foreach ($children as $pid => $child) {
+            if ($child['sock'] === $sock) {
+                return $pid;
+            }
+        }
+
+        return null;
     }
 
     /**
