@@ -3,27 +3,87 @@
 
 declare(strict_types=1);
 
-@ini_set('memory_limit', '-1');
+use JesseGall\CodeCommandments\Cli\Judge;
 
-// Find the Composer autoloader
-$autoloadPaths = [
-    __DIR__ . '/../vendor/autoload.php',        // Running from package source
-    __DIR__ . '/../../../autoload.php',          // Installed as a Composer dependency
-];
+$toBytes = static function (string $limit): int {
+    $limit = trim($limit);
+    $value = (int) $limit;
 
-$autoloaded = false;
-foreach ($autoloadPaths as $autoloadPath) {
-    if (file_exists($autoloadPath)) {
-        require $autoloadPath;
-        $autoloaded = true;
-        break;
+    return match (strtolower(substr($limit, -1))) {
+        'g' => $value * 1024 * 1024 * 1024,
+        'm' => $value * 1024 * 1024,
+        'k' => $value * 1024,
+        default => $value,
+    };
+};
+
+(static function (array $argv) use ($toBytes): void {
+    // Parsing a whole codebase into ASTs is memory-hungry; lift the default 128M
+    // ceiling so a large source tree doesn't abort mid-scan. Respect an operator's
+    // higher limit (or an unlimited -1) if one is already set.
+    $current = trim((string) ini_get('memory_limit'));
+    if ($current !== '-1' && $toBytes($current) < 1024 * 1024 * 1024) {
+        ini_set('memory_limit', '1G');
     }
-}
 
-if (!$autoloaded) {
-    fwrite(STDERR, "Could not find Composer autoloader. Run 'composer install' first.\n");
-    exit(1);
-}
+    foreach ([
+        __DIR__ . '/../vendor/autoload.php',   // run from the package
+        __DIR__ . '/../../../autoload.php',     // run as vendor/bin in a consumer
+    ] as $autoload) {
+        if (is_file($autoload)) {
+            require $autoload;
+            break;
+        }
+    }
 
-$app = new \JesseGall\CodeCommandments\Console\Application();
-$app->run();
+    $command = $argv[1] ?? 'judge';
+    $args = array_slice($argv, 2);
+
+    if (in_array($command, ['-h', '--help', 'help'], true)) {
+        fwrite(STDOUT, <<<TXT
+        Code Commandments — a compiler for architecture.
+
+        Usage:
+          commandments judge [path] [--skill=NAME] [--detector=NAME]
+          commandments judge --list
+          commandments hints [path] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints
+          commandments install  # wire composer + the UserPromptSubmit reminder, then sync
+          commandments sync     # publish skills + refresh the CLAUDE.md briefing
+          commandments remind   # emit the cardinal rule as a UserPromptSubmit payload
+
+        Options:
+          --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
+          --detector=NAME    only run one detector (partial name match)
+          --exclude=A,B      skip findings in paths containing any fragment
+          --changes          only report sins in files changed in the working tree (alias: --git)
+          --branch[=BASE]    only report sins new/changed on this branch vs BASE (default: main)
+          --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
+          --checklist=FILE   write the checklist here (default: commandments-sins.md)
+          --no-checklist     print only, don't write the checklist file
+          --list             list every detector grouped by skill
+
+        By default judge writes a Markdown checklist (commandments-sins.md). Judge
+        ONCE, then work that file line-by-line — a full scan is slow — deleting
+        each line as you fix its sin. Re-run judge at the end to confirm.
+
+        Files marked @code-commandments-generated are skipped automatically
+        (they are regenerated, not hand-authored). Exit code 1 when sins found.
+
+        TXT);
+
+        exit(0);
+    }
+
+    exit(match ($command) {
+        'judge' => (new Judge)->run($args),
+        'hints' => (new JesseGall\CodeCommandments\Cli\Hints\Hints)->run($args),
+        'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
+        'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
+        'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),
+        default => (static function () use ($command): int {
+            fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
+
+            return 2;
+        })(),
+    });
+})($argv);

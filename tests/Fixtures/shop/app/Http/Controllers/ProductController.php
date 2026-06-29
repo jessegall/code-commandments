@@ -1,0 +1,34 @@
+<?php
+
+namespace Shop\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Shop\Http\Requests\CreateProductRequest;
+use Shop\Models\Product;
+use Shop\Repositories\ProductRepository;
+
+class ProductController extends Controller
+{
+    public function __construct(private readonly ProductRepository $products) {}
+
+    public function show(int $id): Product
+    {
+        return $this->products->findOrFail($id);
+    }
+
+    #[Sinful(RawRequestInputDetector::class)]
+    public function search(Request $request): array
+    {
+        $term = $request->input('q');
+        $category = $request->input('category');
+
+        return Product::query()
+            ->where('name', 'like', "%{$term}%")
+            ->where('category', $category)
+            ->get()
+            ->all();
+    }
+}
