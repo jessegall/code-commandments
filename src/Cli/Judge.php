@@ -63,14 +63,14 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options->path, $detectors, $options->exclude, $options->checklist, $scope, $options->parallel, $options->benchmark);
+        return $this->judge($options->path, $options->pathGiven, $detectors, $options->exclude, $options->checklist, $scope, $options->parallel, $options->benchmark);
     }
 
     /**
      * @param  list<Detector>  $detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark): int
+    private function judge(string $path, bool $pathGiven, array $detectors, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark): int
     {
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
@@ -79,10 +79,23 @@ final class Judge
             return 0;
         }
 
+        // An explicit path is scanned as given; otherwise the canon decides which
+        // source roots to judge (hydrated from the project on first run).
+        $roots = $path;
+
+        if (! $pathGiven) {
+            $canon = new Canon()->resolve($path);
+            $roots = $canon->paths;
+
+            if ($canon->hydrated) {
+                $this->line("\033[2m↳ wrote {$canon->file} — the backend source roots judged; edit it to adjust scope\033[0m");
+            }
+        }
+
         $progress = new ProgressBar;
 
         $parseStart = hrtime(true);
-        $codebase = Codebase::scan($path, static function (int $done, int $total) use ($progress): void {
+        $codebase = Codebase::scan($roots, static function (int $done, int $total) use ($progress): void {
             $progress->track($done, $total, 'parsing');
         });
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
