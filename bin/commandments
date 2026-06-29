@@ -46,6 +46,7 @@ $toBytes = static function (string $limit): int {
         Usage:
           commandments judge [path] [--skill=NAME] [--detector=NAME]
           commandments judge --list
+          commandments hints [path] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints
           commandments install  # wire composer + the UserPromptSubmit reminder, then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
           commandments remind   # emit the cardinal rule as a UserPromptSubmit payload
@@ -54,6 +55,9 @@ $toBytes = static function (string $limit): int {
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
           --detector=NAME    only run one detector (partial name match)
           --exclude=A,B      skip findings in paths containing any fragment
+          --changes          only report sins in files changed in the working tree (alias: --git)
+          --branch[=BASE]    only report sins new/changed on this branch vs BASE (default: main)
+          --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
           --checklist=FILE   write the checklist here (default: commandments-sins.md)
           --no-checklist     print only, don't write the checklist file
           --list             list every detector grouped by skill
@@ -72,6 +76,7 @@ $toBytes = static function (string $limit): int {
 
     exit(match ($command) {
         'judge' => (new Judge)->run($args),
+        'hints' => (new JesseGall\CodeCommandments\Cli\Hints\Hints)->run($args),
         'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
         'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
         'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),

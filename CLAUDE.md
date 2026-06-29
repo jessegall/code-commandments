@@ -34,6 +34,35 @@ TDD (red → green via `Codebase::fromString`); ≥3 genuinely-different fixture
 a righteous twin it must NOT flag; and **validate on a real codebase for false
 positives** before shipping. Curate the best detectors — don't pad.
 
+### ⛔ Calibrate against the real consumer apps — MANDATORY before any detector ships
+
+A green fixture proves the detector *can* fire; it does **not** prove it's right. A
+detector is not done until it has been run against the real consumer codebases and
+its hits read by eye:
+
+```
+bin/commandments judge ../workflows/src        --detector=YourDetector --no-checklist
+bin/commandments judge ../smart-farmers-pos/app --detector=YourDetector --no-checklist
+```
+
+Open the flagged `file:line`s and judge each **against the skill/our architecture —
+NEVER against what the consumer project happens to do.** The consumer apps are not
+ground truth: they contain real sins, code done wrong, and old style since changed
+your mind on. So a widespread pattern there is **not "convention" that excuses a
+finding** — and **volume alone proves nothing**: 400 hits can be 400 genuine sins
+(e.g. an app that never marks its DTOs `final`). Do not soften or drop a detector
+because it fires a lot.
+
+The ONLY thing that invalidates a detector is a genuine **false positive** — a
+pattern that is *correct under our architecture* yet gets flagged. When those
+appear, **tighten with a principled `reject` (never a name list), or drop the
+detector entirely.** Some ideas die here: if no AST signal separates the sin from a
+*legitimately valid* look-alike (the difference is only author *intent*), the
+detector is not viable — report why and cut it. That — not its hit count — is why
+`DataNonDispatchingFactoryDetector` was dropped: `AiMessage::user()` is a valid
+named constructor indistinguishable from a mis-prefixed factory. Calibrate every
+time, not "later".
+
 📍 **The roadmap is [`SINS.md`](SINS.md)** — every sin each skill teaches and which
 have a detector. Flip a row to ✅ when a detector ships.
 
@@ -41,7 +70,7 @@ have a detector. Flip a row to ✅ when a detector ships.
 
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B] [--git] [--branch[=BASE]]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `commandments-sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--git` reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. |
+| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B] [--changes] [--branch[=BASE]] [--parallel=N]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `commandments-sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--changes` (alias `--git`) reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. `--parallel=N` runs the detectors across N forked workers (default 8, capped at CPU cores; `--parallel=1` = sequential, also the fallback where `pcntl` is unavailable). |
 | `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `bin/commandments install` | Wire a consumer: composer sync hook + a `UserPromptSubmit` reminder of the cardinal rule + gitignore, then sync. Idempotent. |
