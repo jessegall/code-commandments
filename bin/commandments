@@ -47,7 +47,7 @@ $toBytes = static function (string $limit): int {
           commandments judge [path] [--skill=NAME] [--detector=NAME]
           commandments judge --list
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
-          commandments report --detector=NAME --reason="…" [--file=PATH] [--line=N]  # report a false positive / wrong rule
+          commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]  # report a false positive (with --detector) or a global bug
           commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
           commandments install  # wire composer + the UserPromptSubmit reminder, then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
