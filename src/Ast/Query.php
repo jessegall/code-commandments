@@ -6,12 +6,17 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use PhpParser\Node;
-use PhpParser\NodeFinder;
 
 /**
  * A fluent pattern over the codebase: a node selector plus chained checks. Each
  * `where`/`reject` is one check over a fluent {@see AstNode}; they AND together.
  * Terminals run the pattern and return rich {@see NodeMatch} results.
+ *
+ * A selector declares the node CLASSES it can match (e.g. a method call is a
+ * `MethodCall` or a `NullsafeMethodCall`). The query then visits only those nodes —
+ * pulled from the codebase's bucketed-by-type index, built once — instead of
+ * walking the whole tree on every call. That's what keeps a query run inside a
+ * per-candidate loop from going quadratic. A null type list means "any node".
  */
 final class Query
 {
@@ -22,10 +27,13 @@ final class Query
 
     /**
      * @param  \Closure(Node): bool  $selector
+     * @param  list<class-string<Node>>|null  $types  exact node classes the selector
+     *                                                 can match; null = any node
      */
     public function __construct(
         private readonly Codebase $codebase,
         private readonly \Closure $selector,
+        private readonly ?array $types = null,
     ) {}
 
     /**
@@ -117,21 +125,22 @@ final class Query
      */
     public function get(): array
     {
-        $finder = new NodeFinder;
         $matches = [];
 
-        foreach ($this->codebase->files() as $file) {
-            foreach ($finder->find($file->ast, $this->selector) as $node) {
-                $match = new NodeMatch($node, $file);
-
-                foreach ($this->filters as $filter) {
-                    if (! $filter($match)) {
-                        continue 2;
-                    }
-                }
-
-                $matches[] = $match;
+        foreach ($this->codebase->nodes($this->types) as [$node, $file]) {
+            if (! ($this->selector)($node)) {
+                continue;
             }
+
+            $match = new NodeMatch($node, $file);
+
+            foreach ($this->filters as $filter) {
+                if (! $filter($match)) {
+                    continue 2;
+                }
+            }
+
+            $matches[] = $match;
         }
 
         return $matches;
