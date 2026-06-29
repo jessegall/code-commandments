@@ -26,6 +26,11 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * MyCast::class`) — there is no container and no constructor to inject into — so a
  * facade (`Crypt::`, exactly as Laravel's own `encrypted` cast does) is the only way
  * to reach a service. Detected by the cast contract the class implements, not a name.
+ *
+ * A call OUTSIDE any class is exempt by the same logic: a route file, a config
+ * script, `bootstrap/app.php`, a global helper — there is no class and no
+ * constructor to inject into, so a facade is the idiom. Detected by the absence of
+ * an enclosing class, not by the file's path or name.
  */
 final class FacadeCallDetector implements Detector
 {
@@ -43,6 +48,7 @@ final class FacadeCallDetector implements Detector
         return $codebase
             ->whereStaticCall()
             ->where(static fn (AstNode $node): bool => str_starts_with($node->staticCallClass() ?? '', self::FACADE_NAMESPACE))
+            ->reject(static fn (AstNode $node): bool => $node->isOutsideClass())
             ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::SERVICE_PROVIDER))
             ->reject(static fn (AstNode $node): bool => EloquentCast::is($codebase, $node->enclosingClassName()))
             ->get();
