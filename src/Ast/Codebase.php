@@ -68,19 +68,28 @@ final class Codebase
     }
 
     /**
-     * Parse every `.php` file under the given files/directories.
+     * Parse every `.php` file under the given path. Parsing is the slow part of a
+     * run, so an optional `$onProgress(int $done, int $total)` is called per file —
+     * the caller (e.g. the judge progress bar) can show real progress instead of a
+     * frozen "parsing…". Files are enumerated up front so `$total` is known.
+     *
+     * @param  \Closure(int, int): void|null  $onProgress
      */
-    public static function scan(string ...$paths): self
+    public static function scan(string $path, ?\Closure $onProgress = null): self
     {
+        $paths = iterator_to_array(self::phpFilesIn($path), false);
+        $total = count($paths);
         $files = [];
 
-        foreach ($paths as $path) {
-            foreach (self::phpFilesIn($path) as $file) {
-                $code = @file_get_contents($file);
+        foreach ($paths as $index => $file) {
+            $code = @file_get_contents($file);
 
-                if ($code !== false) {
-                    $files[] = self::parse($code, $file);
-                }
+            if ($code !== false) {
+                $files[] = self::parse($code, $file);
+            }
+
+            if ($onProgress !== null) {
+                $onProgress($index + 1, $total);
             }
         }
 

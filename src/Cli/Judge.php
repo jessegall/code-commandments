@@ -80,9 +80,10 @@ final class Judge
         }
 
         $progress = new ProgressBar;
-        $progress->status("parsing {$path} …");
 
-        $codebase = Codebase::scan($path);
+        $codebase = Codebase::scan($path, static function (int $done, int $total) use ($progress): void {
+            $progress->track($done, $total, 'parsing');
+        });
 
         $findings = new DetectorRunner($parallel)->run($detectors, $codebase, $progress);
 
@@ -102,11 +103,38 @@ final class Judge
 
         if ($checklist !== null) {
             @mkdir(dirname($checklist), 0755, true);
+            $this->archive($checklist);
             file_put_contents($checklist, $report->checklist());
             $this->line("\033[2m↳ checklist written to {$checklist} — fix each item, then delete its line\033[0m");
         }
 
         return 1;
+    }
+
+    /**
+     * Before overwriting the checklist, preserve the previous one alongside it as
+     * `<name>-<when>.<ext>` (stamped with its own write time) — so a re-run never
+     * clobbers the report you were working through. Archives live in the gitignored
+     * `.commandments/` folder; clear them out whenever.
+     */
+    private function archive(string $checklist): void
+    {
+        if (! is_file($checklist)) {
+            return;
+        }
+
+        $ext = pathinfo($checklist, PATHINFO_EXTENSION);
+        $stem = $ext === '' ? $checklist : substr($checklist, 0, -(strlen($ext) + 1));
+        $stamp = date('Y-m-d_His', @filemtime($checklist) ?: time());
+
+        $archive = "{$stem}-{$stamp}" . ($ext === '' ? '' : ".{$ext}");
+
+        // A second run within the same second would collide — keep both.
+        for ($n = 2; is_file($archive); $n++) {
+            $archive = "{$stem}-{$stamp}-{$n}" . ($ext === '' ? '' : ".{$ext}");
+        }
+
+        @rename($checklist, $archive);
     }
 
     /**
