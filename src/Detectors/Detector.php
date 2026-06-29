@@ -6,19 +6,16 @@ namespace JesseGall\CodeCommandments\Detectors;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Detector as BaseDetector;
 
 /**
- * A Sin Detector: finds the locations of one skill's sins and points back at
- * that skill. It carries no fix and no rubric — the skill teaches; the detector
- * only finds. Identified by its class; markers reference it via `::class`.
+ * A BACKEND Sin Detector: finds the locations of one skill's sins in the PHP AST
+ * and points back at that skill. It carries no fix and no rubric — the skill
+ * teaches; the detector only finds. Identified by its class; markers reference it
+ * via `::class`. The frontend twin is {@see \JesseGall\CodeCommandments\Vue\Detector}.
  */
-interface Detector
+interface Detector extends BaseDetector
 {
-    /**
-     * The skill slug a finding points the agent at ("read this").
-     */
-    public function skill(): string;
-
     /**
      * Every location this detector considers a sin.
      *
