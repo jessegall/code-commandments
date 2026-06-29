@@ -97,12 +97,19 @@ final class Judge
             return 0;
         }
 
+        $progress = new ProgressBar;
+        $progress->status("parsing {$path} …");
+
         $codebase = Codebase::scan($path);
 
         /** @var array<string, list<array{detector: string, match: NodeMatch}>> $bySkill */
         $bySkill = [];
 
+        $progress->start(count($detectors));
+
         foreach ($detectors as $detector) {
+            $progress->advance($this->shortName($detector));
+
             foreach ($detector->find($codebase) as $match) {
                 if ($this->isExcluded($match->file->path, $exclude)) {
                     continue;
@@ -115,6 +122,8 @@ final class Judge
                 $bySkill[$detector->skill()][] = ['detector' => $this->shortName($detector), 'match' => $match];
             }
         }
+
+        $progress->finish();
 
         if ($bySkill === []) {
             if ($checklist !== null && is_file($checklist)) {
