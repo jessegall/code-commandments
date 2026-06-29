@@ -46,6 +46,7 @@ $toBytes = static function (string $limit): int {
         Usage:
           commandments judge [path] [--skill=NAME] [--detector=NAME]
           commandments judge --list
+          commandments hints [path] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints
           commandments install  # wire composer + the UserPromptSubmit reminder, then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
           commandments remind   # emit the cardinal rule as a UserPromptSubmit payload
@@ -75,6 +76,7 @@ $toBytes = static function (string $limit): int {
 
     exit(match ($command) {
         'judge' => (new Judge)->run($args),
+        'hints' => (new JesseGall\CodeCommandments\Cli\Hints\Hints)->run($args),
         'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
         'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
         'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),
