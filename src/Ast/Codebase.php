@@ -41,7 +41,7 @@ final class Codebase
      * Directories never descended into during a scan — dependency and VCS trees
      * that aren't code under review.
      */
-    private const array SKIP_DIRS = ['vendor', 'node_modules', '.git'];
+    private const array SKIP_DIRS = ['vendor', 'node_modules', '.git', 'tests', 'test', '.claude'];
 
     /**
      * @param  list<ParsedFile>  $files
@@ -543,8 +543,9 @@ final class Codebase
 
         $directory = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
 
-        // Never descend into dependency / VCS trees — they aren't code under review
-        // and parsing them all exhausts memory on a project-root scan.
+        // Never descend into dependency / VCS / test / tooling trees — they aren't
+        // app code under review, and parsing them all exhausts memory on a
+        // project-root scan. (`tests`, `.claude`, etc. are excluded by default.)
         $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file): bool {
             return ! ($file->isDir() && in_array($file->getFilename(), self::SKIP_DIRS, true));
         });
