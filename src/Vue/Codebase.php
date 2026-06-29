@@ -60,6 +60,16 @@ final class Codebase
     }
 
     /**
+     * The parsed components — what a scribe rewrites.
+     *
+     * @return list<Sfc>
+     */
+    public function components(): array
+    {
+        return $this->components;
+    }
+
+    /**
      * Every real element (text and the fragment root excluded).
      */
     public function whereElement(): Query

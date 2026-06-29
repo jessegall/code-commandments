@@ -16,7 +16,7 @@ final class ElementMatch extends Element
 {
     public function __construct(public readonly Element $node, public readonly Sfc $sfc)
     {
-        parent::__construct($node->tag, $node->attributes, $node->children, $node->line, $node->text);
+        parent::__construct($node->tag, $node->attributes, $node->children, $node->line, $node->text, $node->start, $node->end);
 
         $this->parent = $node->parent;
     }

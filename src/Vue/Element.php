@@ -21,6 +21,8 @@ class Element
     /**
      * @param  array<string, string|null>  $attributes  directive name => value (null = valueless)
      * @param  list<Element>  $children
+     * @param  int  $start  byte offset of this node's `<` in the SFC source
+     * @param  int  $end    byte offset just past this node (after `>` / `</tag>`)
      */
     public function __construct(
         public readonly string $tag,
@@ -28,6 +30,8 @@ class Element
         public readonly array $children,
         public readonly int $line,
         public readonly string $text = '',
+        public readonly int $start = 0,
+        public readonly int $end = 0,
     ) {}
 
     public function isText(): bool
@@ -40,12 +44,18 @@ class Element
         return $this->tag === '#root';
     }
 
+    public function isComment(): bool
+    {
+        return $this->tag === '#comment';
+    }
+
     /**
-     * A real element — not text, not the fragment root.
+     * A real element — not text, comment, or the fragment root (the synthetic nodes
+     * all use a `#`-prefixed tag).
      */
     public function isElement(): bool
     {
-        return ! $this->isText() && ! $this->isRoot();
+        return ! str_starts_with($this->tag, '#');
     }
 
     public function hasAttribute(string $name): bool
