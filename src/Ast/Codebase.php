@@ -60,6 +60,9 @@ final class Codebase
 
     private ?CodebaseIndex $index = null;
 
+    /** @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null */
+    private ?array $nodeBuckets = null;
+
     private function __construct(private readonly array $files) {}
 
     /**
@@ -68,6 +71,47 @@ final class Codebase
     public function index(): CodebaseIndex
     {
         return $this->index ??= new CodebaseIndex($this);
+    }
+
+    /**
+     * Every [node, file] pair of the given exact node classes — pulled from an
+     * index bucketed by node type and walked ONCE, then cached for the codebase's
+     * life. Pass null for every node.
+     *
+     * This is the engine's anti-quadratic guarantee: a selector visits only the
+     * nodes of its own kind (every `new`, every parameter, …), so a query run once
+     * per candidate scans a small bucket — not the whole tree on every call.
+     *
+     * @param  list<class-string<Node>>|null  $types
+     * @return iterable<array{0: Node, 1: ParsedFile}>
+     */
+    public function nodes(?array $types = null): iterable
+    {
+        $buckets = $this->nodeBuckets ??= $this->bucketNodes();
+
+        foreach ($types ?? array_keys($buckets) as $type) {
+            yield from $buckets[$type] ?? [];
+        }
+    }
+
+    /**
+     * Walk every file's AST once and bucket every node by its concrete class — the
+     * single shared index all selectors filter.
+     *
+     * @return array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>
+     */
+    private function bucketNodes(): array
+    {
+        $finder = new NodeFinder;
+        $buckets = [];
+
+        foreach ($this->files as $file) {
+            foreach ($finder->find($file->ast, static fn (): bool => true) as $node) {
+                $buckets[$node::class][] = [$node, $file];
+            }
+        }
+
+        return $buckets;
     }
 
     /**
@@ -115,7 +159,8 @@ final class Codebase
         return new Query($this, static fn (Node $node): bool =>
             ($node instanceof MethodCall || $node instanceof NullsafeMethodCall)
             && $node->name instanceof Identifier
-            && ($names === [] || in_array($node->name->toString(), $names, true)));
+            && ($names === [] || in_array($node->name->toString(), $names, true)),
+            [MethodCall::class, NullsafeMethodCall::class]);
     }
 
     /**
@@ -126,7 +171,8 @@ final class Codebase
         return new Query($this, static fn (Node $node): bool =>
             $node instanceof StaticCall
             && $node->name instanceof Identifier
-            && ($names === [] || in_array($node->name->toString(), $names, true)));
+            && ($names === [] || in_array($node->name->toString(), $names, true)),
+            [StaticCall::class]);
     }
 
     /**
@@ -137,7 +183,8 @@ final class Codebase
         return new Query($this, static fn (Node $node): bool =>
             $node instanceof FuncCall
             && $node->name instanceof Name
-            && ($names === [] || in_array($node->name->toString(), $names, true)));
+            && ($names === [] || in_array($node->name->toString(), $names, true)),
+            [FuncCall::class]);
     }
 
     /**
@@ -149,7 +196,8 @@ final class Codebase
 
         return new Query($this, static fn (Node $node): bool =>
             $node instanceof New_
-            && ($want === null || ($node->class instanceof Name && $node->class->toString() === $want)));
+            && ($want === null || ($node->class instanceof Name && $node->class->toString() === $want)),
+            [New_::class]);
     }
 
     /**
@@ -172,7 +220,7 @@ final class Codebase
         $want = ltrim($class, '\\');
 
         return new Query($this, static fn (Node $node): bool =>
-            $node instanceof Param && self::typeContains($node->type, $want));
+            $node instanceof Param && self::typeContains($node->type, $want), [Param::class]);
     }
 
     /**
@@ -180,7 +228,7 @@ final class Codebase
      */
     public function whereClass(): Query
     {
-        return new Query($this, static fn (Node $node): bool => $node instanceof Class_);
+        return new Query($this, static fn (Node $node): bool => $node instanceof Class_, [Class_::class]);
     }
 
     /**
@@ -189,7 +237,7 @@ final class Codebase
      */
     public function whereMethodDeclaration(): Query
     {
-        return new Query($this, static fn (Node $node): bool => $node instanceof ClassMethod);
+        return new Query($this, static fn (Node $node): bool => $node instanceof ClassMethod, [ClassMethod::class]);
     }
 
     /**
@@ -216,7 +264,7 @@ final class Codebase
             $resolved = $node->name->toString();
 
             return $resolved === $want || self::shortName($resolved) === $want;
-        });
+        }, [Attribute::class]);
     }
 
     /**
@@ -547,7 +595,17 @@ final class Codebase
         // app code under review, and parsing them all exhausts memory on a
         // project-root scan. (`tests`, `.claude`, etc. are excluded by default.)
         $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file): bool {
-            return ! ($file->isDir() && in_array($file->getFilename(), self::SKIP_DIRS, true));
+            if (! $file->isDir()) {
+                return true;
+            }
+
+            // Never descend a symlinked directory — it can point back up the tree
+            // (or at itself) and recurse forever.
+            if ($file->isLink()) {
+                return false;
+            }
+
+            return ! in_array($file->getFilename(), self::SKIP_DIRS, true);
         });
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {
