@@ -1,0 +1,107 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Cli;
+
+/**
+ * Renders the kept findings two ways: the coloured console report (grouped by the
+ * skill that fixes each sin) and the Markdown checklist the agent prunes line by
+ * line. Findings are grouped by skill and ordered by `file:line`, so the output is
+ * identical no matter how the detector workers interleaved.
+ *
+ * @phpstan-import-type Finding from DetectorRunner
+ */
+final class SinReport
+{
+    /** @var array<string, list<Finding>> */
+    private array $bySkill;
+
+    private int $total;
+
+    /**
+     * @param  list<Finding>  $findings
+     */
+    public function __construct(private readonly string $path, array $findings)
+    {
+        $bySkill = [];
+
+        foreach ($findings as $finding) {
+            $bySkill[$finding['skill']][] = $finding;
+        }
+
+        ksort($bySkill);
+
+        foreach ($bySkill as $skill => $group) {
+            usort($group, static fn (array $a, array $b): int => strnatcmp($a['location'], $b['location']));
+            $bySkill[$skill] = $group;
+        }
+
+        $this->bySkill = $bySkill;
+        $this->total = count($findings);
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->total === 0;
+    }
+
+    public function total(): int
+    {
+        return $this->total;
+    }
+
+    /**
+     * The coloured, grouped console report.
+     */
+    public function console(): string
+    {
+        $lines = [];
+
+        foreach ($this->bySkill as $skill => $findings) {
+            $lines[] = "\n\033[1;33m{$skill}\033[0m  (" . count($findings) . ')';
+            $lines[] = "  \033[2m↳ read the {$skill} skill (skills/{$skill}/SKILL.md) before fixing\033[0m";
+
+            foreach ($findings as $finding) {
+                $location = $this->relative($finding['location']);
+                $lines[] = "  \033[36m{$location}\033[0m  {$finding['scope']}  \033[2m[{$finding['detector']}]\033[0m";
+            }
+        }
+
+        $skills = count($this->bySkill);
+        $lines[] = "\n\033[1m{$this->total} sins\033[0m across {$skills} " . ($skills === 1 ? 'skill' : 'skills') . '.';
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The Markdown task list: read the skill, fix the sin at `file:line`, delete the
+     * line. When it's empty, a clean re-run deletes the file.
+     */
+    public function checklist(): string
+    {
+        $out = "# Code Commandments — {$this->total} sins to fix\n\n"
+            . "A checklist. Work through it ONE sin at a time, top to bottom:\n\n"
+            . "1. Read the skill named in the section header (it teaches the fix).\n"
+            . "2. Open the `file:line` and fix the sin at the source.\n"
+            . "3. **Delete that line from this file.**\n\n"
+            . "When the list is empty, run `commandments judge` again to confirm "
+            . "(a clean run deletes this file).\n";
+
+        foreach ($this->bySkill as $skill => $findings) {
+            $out .= "\n## {$skill}  — read `skills/{$skill}/SKILL.md`\n\n";
+
+            foreach ($findings as $finding) {
+                $location = $this->relative($finding['location']);
+                $out .= "- [ ] `{$location}`  {$finding['scope']}  [{$finding['detector']}]\n";
+            }
+        }
+
+        return $out;
+    }
+
+    private function relative(string $location): string
+    {
+        return str_starts_with($location, $this->path . '/') ? substr($location, strlen($this->path) + 1) : $location;
+    }
+}
