@@ -21,6 +21,7 @@ final class JudgeOptions
         public readonly array $exclude,
         public readonly ?string $checklist,
         public readonly int $parallel,
+        public readonly bool $benchmark,
     ) {}
 
     public static function fromArgs(array $args): self
@@ -30,6 +31,7 @@ final class JudgeOptions
         $detector = null;
         $list = false;
         $parallel = 8;
+        $benchmark = false;
         $exclude = [];
 
         // By default the findings are written to a checklist file the agent prunes
@@ -40,6 +42,8 @@ final class JudgeOptions
         foreach ($args as $arg) {
             if ($arg === '--list') {
                 $list = true;
+            } elseif ($arg === '--benchmark') {
+                $benchmark = true;
             } elseif (str_starts_with($arg, '--parallel=')) {
                 $parallel = max(1, (int) substr($arg, 11));
             } elseif ($arg === '--no-checklist') {
@@ -57,6 +61,6 @@ final class JudgeOptions
             }
         }
 
-        return new self(rtrim($path, '/'), $skill, $detector, $list, $exclude, $checklist, $parallel);
+        return new self(rtrim($path, '/'), $skill, $detector, $list, $exclude, $checklist, $parallel, $benchmark);
     }
 }
