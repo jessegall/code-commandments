@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use Closure;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Sharded;
 
 /**
  * A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked
@@ -21,7 +22,7 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * honest null (not flagged). Only when the `?T` reaches ≥2 sites that each guard
  * it — the "every caller re-checks the same value" lie — is it worth surfacing.
  */
-final class DeNulledFinderDetector implements Detector
+final class DeNulledFinderDetector implements Sharded
 {
     private const int TRAVELS = 2;
 
@@ -32,10 +33,36 @@ final class DeNulledFinderDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
+        return array_values(array_filter(
+            $this->candidates($codebase),
+            static fn (NodeMatch $finder): bool => self::deNulledByEveryCallerAndTravels($codebase, $finder),
+        ));
+    }
+
+    /**
+     * One task per candidate finder: each runs the (expensive) blast-radius check
+     * for a single `?T` method, so the call-graph work spreads across the pool.
+     */
+    public function shards(Codebase $codebase): array
+    {
+        return array_map(
+            static fn (NodeMatch $finder): Closure =>
+                static fn (): array => self::deNulledByEveryCallerAndTravels($codebase, $finder) ? [$finder] : [],
+            $this->candidates($codebase),
+        );
+    }
+
+    /**
+     * The cheap half: every method declaration that returns a nullable object —
+     * the finders whose blast radius is then worth measuring.
+     *
+     * @return list<NodeMatch>
+     */
+    private function candidates(Codebase $codebase): array
+    {
         return $codebase
             ->whereMethodDeclaration()
             ->where(static fn (AstNode $node): bool => $node->returnsNullableObject())
-            ->where(static fn (AstNode $node): bool => self::deNulledByEveryCallerAndTravels($codebase, $node))
             ->get();
     }
 
