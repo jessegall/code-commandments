@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Support\EloquentCast;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
@@ -20,6 +21,11 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * A `ServiceProvider` is exempt: wiring the framework at boot (routes, event
  * listeners, bindings) through facades is the provider's sanctioned job, and a
  * provider's `register()`/`boot()` has nothing to inject into.
+ *
+ * An Eloquent CAST is exempt too: Eloquent `new`-instantiates a cast (`'col' =>
+ * MyCast::class`) — there is no container and no constructor to inject into — so a
+ * facade (`Crypt::`, exactly as Laravel's own `encrypted` cast does) is the only way
+ * to reach a service. Detected by the cast contract the class implements, not a name.
  */
 final class FacadeCallDetector implements Detector
 {
@@ -38,6 +44,7 @@ final class FacadeCallDetector implements Detector
             ->whereStaticCall()
             ->where(static fn (AstNode $node): bool => str_starts_with($node->staticCallClass() ?? '', self::FACADE_NAMESPACE))
             ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::SERVICE_PROVIDER))
+            ->reject(static fn (AstNode $node): bool => EloquentCast::is($codebase, $node->enclosingClassName()))
             ->get();
     }
 }

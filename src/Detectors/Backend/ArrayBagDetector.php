@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Support\EloquentCast;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
@@ -14,6 +15,11 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  *
  * Dynamic-key (`$m[$key]`) and positional (`$cols[0]`) access is left alone:
  * those are a genuine map or tuple, not a named-field shape.
+ *
+ * An Eloquent CAST is exempt: the framework dictates its `$attributes` array
+ * parameter (`get`/`set($model, $key, $value, $attributes)`) and passes the raw row
+ * — reading it by key (`$attributes['type']`) is the only option, not a bag the
+ * author chose.
  */
 final class ArrayBagDetector implements Detector
 {
@@ -27,6 +33,7 @@ final class ArrayBagDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->arrayKeyIsString())
             ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName() ?? ''))
+            ->reject(static fn (AstNode $node): bool => EloquentCast::is($codebase, $node->enclosingClassName()))
             ->get();
     }
 }

@@ -44,8 +44,15 @@ final class ClaudeSection
         - Ask "where does this value/shape come from?" and walk back until you reach the
           birthplace. Fix is at the birthplace. If the honest fix touches many call sites,
           touch them — that breadth IS the bug surfacing, not a reason to wrap it.
-        - If a finding is a genuine false positive, say so and why. Never rationalise a
-          real one as "pre-existing baseline."
+        - If a finding is a genuine false positive, say so and why — and **report it** so
+          it gets fixed upstream instead of silently ignored:
+          `vendor/bin/commandments report --detector=NAME --reason="…" --file=PATH --line=N`.
+          Never rationalise a real finding as "pre-existing baseline."
+
+        **See a rule that's missing, or one that should catch more?** Propose it:
+        `vendor/bin/commandments feature-request --title="…" --reason="…"`. Reporting
+        false positives and requesting rules is how the disciplines get sharper — do it
+        whenever a finding is wrong or a gap is real, don't just work around it.
 
         When in doubt, load `fix-at-the-source` and re-read it. It is the parent move
         behind every other skill.
@@ -53,6 +60,14 @@ final class ClaudeSection
         **Leave it cleaner than you found it — the gentleman's duty.** When you touch a
         file (or even read past a sin while working in it), fix it at the source per the
         rule above. Every finding on code you come across is yours to resolve.
+
+        **Do the writing yourself — never delegate edits to a subagent.** You may
+        dispatch subagents ONLY for READ-ONLY work: research, codebase exploration,
+        search. EVERY write — every file edit, creation, or rewrite — must be done by
+        YOU directly, never handed to a spawned agent. A subagent holds these
+        disciplines and this project's context more shallowly than you do, so a
+        delegated edit is how violations slip in. Read-only fan-out is welcome; the
+        writing is yours alone.
 
         **MANDATORY LOAD — load these at the start of every coding session, before you
         explore-to-plan or edit a single line** (via the Skill tool):
