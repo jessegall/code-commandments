@@ -44,35 +44,59 @@ final class DataHintRewriter
         '@method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)';
 
     /**
+     * Rewrite the magic surface of every Data class under the codebase, returning
+     * `path => newContent` for changed files.
+     *
+     * With $onlyFiles (a `path => true` set — the working-tree/branch changes) it runs
+     * in **docblock-only** mode: it edits ONLY those files and does NOT rename
+     * factories or rewrite call sites, because a rename's call sites can live in files
+     * outside the scope that a partial run can't see. A scoped run therefore documents
+     * only already-`from…` (dispatchable) factories and leaves a mis-prefixed one for a
+     * whole-tree run.
+     *
+     * @param  array<string, true>|null  $onlyFiles  restrict edits to these files (docblock-only); null = whole tree, with renames
      * @return array<string, string>  path => new file content, for changed files only
      */
-    public function rewrite(Codebase $codebase): array
+    public function rewrite(Codebase $codebase, ?array $onlyFiles = null): array
     {
+        $docblockOnly = $onlyFiles !== null;
         $classes = $this->dataClasses($codebase);
         [$collectUsed, $calls] = $this->scanCalls($codebase);
 
-        $renames = $this->planRenames($classes);
+        $renames = $docblockOnly ? [] : $this->planRenames($classes);
 
         /** @var array<string, list<array{start: int, end: int, text: string}>> $editsByFile */
         $editsByFile = [];
 
         foreach ($classes as $fqcn => $class) {
+            if ($docblockOnly && ! isset($onlyFiles[$class['file']])) {
+                continue;
+            }
+
             $source = (string) @file_get_contents($class['file']);
 
-            foreach ($class['factories'] as $factory) {
-                $newName = $renames["{$fqcn}\0{$factory['name']}"] ?? null;
+            if (! $docblockOnly) {
+                foreach ($class['factories'] as $factory) {
+                    $newName = $renames["{$fqcn}\0{$factory['name']}"] ?? null;
 
-                if ($newName !== null) {
-                    $editsByFile[$class['file']][] = $this->replaceNode($factory['nameNode'], $newName);
+                    if ($newName !== null) {
+                        $editsByFile[$class['file']][] = $this->replaceNode($factory['nameNode'], $newName);
+                    }
                 }
             }
 
-            $editsByFile[$class['file']][] = $this->docblockEdit($class['node'], $source, $this->methodLines($class, $source, $collectUsed[$fqcn] ?? false));
+            $edit = $this->docblockEdit($class['node'], $source, $this->methodLines($class, $source, $collectUsed[$fqcn] ?? false, $docblockOnly));
+
+            if ($edit !== null) {
+                $editsByFile[$class['file']][] = $edit;
+            }
         }
 
-        foreach ($calls as $call) {
-            if (isset($renames["{$call['class']}\0{$call['method']}"])) {
-                $editsByFile[$call['file']][] = $this->replaceNode($call['nameNode'], 'from');
+        if (! $docblockOnly) {
+            foreach ($calls as $call) {
+                if (isset($renames["{$call['class']}\0{$call['method']}"])) {
+                    $editsByFile[$call['file']][] = $this->replaceNode($call['nameNode'], 'from');
+                }
             }
         }
 
@@ -147,11 +171,17 @@ final class DataHintRewriter
      * @param  array{factories: list<array{name: string, nameNode: Identifier, params: list<Node\Param>, isFrom: bool}>, ...}  $class
      * @return list<string>
      */
-    private function methodLines(array $class, string $source, bool $collectUsed): array
+    private function methodLines(array $class, string $source, bool $collectUsed, bool $docblockOnly): array
     {
         $lines = [];
 
         foreach ($class['factories'] as $factory) {
+            // Scoped (docblock-only) runs don't rename, so only an already-`from…`
+            // factory is dispatchable — documenting a mis-prefixed one would lie.
+            if ($docblockOnly && ! $factory['isFrom']) {
+                continue;
+            }
+
             $lines[] = "@method static static from({$this->paramsSource($factory['params'], $source)})";
         }
 
@@ -184,14 +214,18 @@ final class DataHintRewriter
      * is no docblock, synthesise one above the class.
      *
      * @param  list<string>  $methodLines
-     * @return array{start: int, end: int, text: string}
+     * @return array{start: int, end: int, text: string}|null  null when there is nothing to write
      */
-    private function docblockEdit(Class_ $class, string $source, array $methodLines): array
+    private function docblockEdit(Class_ $class, string $source, array $methodLines): ?array
     {
         $doc = $class->getDocComment();
         $indent = $this->indentOf($class, $source);
 
         if ($doc === null) {
+            if ($methodLines === []) {
+                return null;
+            }
+
             $insertAt = $this->lineStart($source, $class->getStartFilePos());
             $block = "{$indent}/**\n";
 
