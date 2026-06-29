@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Hints\DataHintRewriter;
+use JesseGall\CodeCommandments\Cli\Hints\DataHintScribe;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PHPUnit\Framework\TestCase;
@@ -296,7 +296,7 @@ final class HintsTest extends TestCase
         ]);
 
         // Only OrderData.php is "changed" → docblock-only, scoped to it.
-        $changes = new DataHintRewriter()->rewrites(
+        $changes = new DataHintScribe()->rewrites(
             Codebase::scan($dir),
             Scope::restrictedTo([$dir . '/OrderData.php']),
         );
