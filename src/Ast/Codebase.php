@@ -49,6 +49,9 @@ final class Codebase
     /** @var array<string, string>|null  child FQCN => parent FQCN */
     private ?array $parentMap = null;
 
+    /** @var array<string, list<string>>|null  class FQCN => directly-implemented interface FQCNs */
+    private ?array $interfaceMap = null;
+
     /** @var list<string>|null  every enum FQCN in the codebase */
     private ?array $enumNames = null;
 
@@ -269,6 +272,37 @@ final class Codebase
     }
 
     /**
+     * Does $class implement $interface — declared directly, or inherited from a
+     * parent class up the extends chain? (Interface-extends-interface is not walked;
+     * the common case is a class declaring the contract it fulfils, e.g. a cast
+     * implementing `CastsAttributes`.)
+     */
+    public function implements(?string $class, string $interface): bool
+    {
+        if ($class === null) {
+            return false;
+        }
+
+        $class = ltrim($class, '\\');
+        $interface = ltrim($interface, '\\');
+        $interfaces = $this->interfaceMap();
+        $parents = $this->parentMap();
+        $seen = [];
+
+        while ($class !== null && ! isset($seen[$class])) {
+            $seen[$class] = true;
+
+            if (in_array($interface, $interfaces[$class] ?? [], true)) {
+                return true;
+            }
+
+            $class = $parents[$class] ?? null;
+        }
+
+        return false;
+    }
+
+    /**
      * Is $class declared as an enum in the codebase? An enum is a behaviour-bearing
      * value, not a container to resolve from.
      */
@@ -339,6 +373,35 @@ final class Codebase
         }
 
         return $this->parentMap = $map;
+    }
+
+    /**
+     * @return array<string, list<string>>  class FQCN => directly-implemented interface FQCNs
+     */
+    private function interfaceMap(): array
+    {
+        if ($this->interfaceMap !== null) {
+            return $this->interfaceMap;
+        }
+
+        $map = [];
+        $finder = new NodeFinder;
+
+        foreach ($this->files as $file) {
+            foreach ($finder->find($file->ast, static fn (Node $node): bool => $node instanceof Class_) as $class) {
+                /** @var Class_ $class */
+                if (($class->namespacedName ?? null) === null) {
+                    continue;
+                }
+
+                $map[$class->namespacedName->toString()] = array_map(
+                    static fn (Name $name): string => $name->toString(),
+                    $class->implements,
+                );
+            }
+        }
+
+        return $this->interfaceMap = $map;
     }
 
     private static function typeContains(?Node $type, string $want): bool
