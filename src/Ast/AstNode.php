@@ -810,6 +810,65 @@ class AstNode
     }
 
     /**
+     * Does this class-like declaration carry a `@method` docblock tag whose method
+     * name matches a method it ACTUALLY declares? That re-declares a visible method
+     * the IDE already sees — "Method with same name already defined in this class".
+     * `@method` exists to describe the *invisible* magic overloads (Spatie's
+     * `::from()`/`::collect()`), so a tag naming a concrete method is always a bug.
+     */
+    public function docblockMethodTagRedeclaresRealMethod(): bool
+    {
+        if (! $this->node instanceof ClassLike) {
+            return false;
+        }
+
+        $doc = $this->node->getDocComment();
+
+        if ($doc === null) {
+            return false;
+        }
+
+        $declared = [];
+
+        foreach ($this->node->getMethods() as $method) {
+            $declared[strtolower($method->name->toString())] = true;
+        }
+
+        foreach (self::methodTagNames($doc->getText()) as $name) {
+            if (isset($declared[strtolower($name)])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The method names declared by `@method` tags in a docblock. The name is the
+     * identifier immediately before the parameter list, taken as the LAST `word(`
+     * on the line so a conditional return type's own parens
+     * (`@method ($x is A ? B : C) collect(...)`) don't fool it.
+     *
+     * @return list<string>
+     */
+    private static function methodTagNames(string $docblock): array
+    {
+        $names = [];
+
+        foreach (preg_split('/\R/', $docblock) ?: [] as $line) {
+            if (preg_match('/^\s*\*?\s*@method\b/', $line) !== 1) {
+                continue;
+            }
+
+            if (preg_match_all('/(\w+)\s*\(/', $line, $matches) >= 1) {
+                $names[] = (string) end($matches[1]);
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Does this function/method carry a "ceremony" docblock — one with NO prose
      * summary whose every tag merely restates the typed signature (`@param Type
      * $x` with no description, on an already-typed param; an optional bare
