@@ -21,6 +21,7 @@ use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ClassConstFetch;
+use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -810,6 +811,65 @@ class AstNode
     }
 
     /**
+     * Does this class-like declaration carry a `@method` docblock tag whose method
+     * name matches a method it ACTUALLY declares? That re-declares a visible method
+     * the IDE already sees — "Method with same name already defined in this class".
+     * `@method` exists to describe the *invisible* magic overloads (Spatie's
+     * `::from()`/`::collect()`), so a tag naming a concrete method is always a bug.
+     */
+    public function docblockMethodTagRedeclaresRealMethod(): bool
+    {
+        if (! $this->node instanceof ClassLike) {
+            return false;
+        }
+
+        $doc = $this->node->getDocComment();
+
+        if ($doc === null) {
+            return false;
+        }
+
+        $declared = [];
+
+        foreach ($this->node->getMethods() as $method) {
+            $declared[strtolower($method->name->toString())] = true;
+        }
+
+        foreach (self::methodTagNames($doc->getText()) as $name) {
+            if (isset($declared[strtolower($name)])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The method names declared by `@method` tags in a docblock. The name is the
+     * identifier immediately before the parameter list, taken as the LAST `word(`
+     * on the line so a conditional return type's own parens
+     * (`@method ($x is A ? B : C) collect(...)`) don't fool it.
+     *
+     * @return list<string>
+     */
+    private static function methodTagNames(string $docblock): array
+    {
+        $names = [];
+
+        foreach (preg_split('/\R/', $docblock) ?: [] as $line) {
+            if (preg_match('/^\s*\*?\s*@method\b/', $line) !== 1) {
+                continue;
+            }
+
+            if (preg_match_all('/(\w+)\s*\(/', $line, $matches) >= 1) {
+                $names[] = (string) end($matches[1]);
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Does this function/method carry a "ceremony" docblock — one with NO prose
      * summary whose every tag merely restates the typed signature (`@param Type
      * $x` with no description, on an already-typed param; an optional bare
@@ -1050,6 +1110,49 @@ class AstNode
             || $node instanceof For_
             || $node instanceof While_
             || $node instanceof Do_) !== null;
+    }
+
+    /**
+     * Is this call `array_map`'s per-item callback — either inside the closure/arrow
+     * fn passed to it (`array_map(fn ($r) => X::from($r), $rows)`) or passed as a
+     * first-class callable (`array_map(X::from(...), $rows)`)? `array_map` over a
+     * list is the same item-by-item mapping a loop is — Spatie's `::collect()` does
+     * it in one pass.
+     */
+    public function isWithinArrayMap(): bool
+    {
+        $closure = $this->walkUp(static fn (Node $node): bool => $node instanceof Closure || $node instanceof ArrowFunction);
+
+        if ($closure !== null && self::isArrayMapArgument($closure->getAttribute('parent'))) {
+            return true;
+        }
+
+        return self::isArrayMapArgument($this->node?->getAttribute('parent'));
+    }
+
+    /**
+     * Is this node inside a loop OR an `array_map` callback — the two shapes the
+     * spatie-data skill names as per-item hydration that `::collect()` replaces.
+     */
+    public function isPerItemHydration(): bool
+    {
+        return $this->isWithinLoop() || $this->isWithinArrayMap();
+    }
+
+    /**
+     * Is $node an argument to an `array_map(...)` call?
+     */
+    private static function isArrayMapArgument(?Node $node): bool
+    {
+        if (! $node instanceof Arg) {
+            return false;
+        }
+
+        $call = $node->getAttribute('parent');
+
+        return $call instanceof FuncCall
+            && $call->name instanceof Name
+            && $call->name->toString() === 'array_map';
     }
 
     private static function shortName(string $fqcn): string
