@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Hints;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Cli\Rewriting\Edit;
+use JesseGall\CodeCommandments\Cli\Rewriting\Rewriter;
+use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PhpParser\Node;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
@@ -36,7 +39,7 @@ use PhpParser\NodeFinder;
  * It reads each file's source from disk (by the parsed path) and returns
  * `path => newContent` for the files it changed; the caller writes or diffs them.
  */
-final class DataHintRewriter
+final class DataHintRewriter extends Rewriter
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
@@ -47,55 +50,54 @@ final class DataHintRewriter
      * Rewrite the magic surface of every Data class under the codebase, returning
      * `path => newContent` for changed files.
      *
-     * With $onlyFiles (a `path => true` set — the working-tree/branch changes) it runs
-     * in **docblock-only** mode: it edits ONLY those files and does NOT rename
+     * A scoped run (`$scope->isScoped()` — the working-tree/branch changes) runs in
+     * **docblock-only** mode: it edits ONLY the scoped files and does NOT rename
      * factories or rewrite call sites, because a rename's call sites can live in files
      * outside the scope that a partial run can't see. A scoped run therefore documents
      * only already-`from…` (dispatchable) factories and leaves a mis-prefixed one for a
      * whole-tree run.
      *
-     * @param  array<string, true>|null  $onlyFiles  restrict edits to these files (docblock-only); null = whole tree, with renames
      * @return array<string, string>  path => new file content, for changed files only
      */
-    public function rewrite(Codebase $codebase, ?array $onlyFiles = null): array
+    public function rewrites(Codebase $codebase, Scope $scope): array
     {
-        $docblockOnly = $onlyFiles !== null;
+        $docblockOnly = $scope->isScoped();
         $classes = $this->dataClasses($codebase);
         [$collectUsed, $calls] = $this->scanCalls($codebase);
 
         $renames = $docblockOnly ? [] : $this->planRenames($classes);
 
-        /** @var array<string, list<array{start: int, end: int, text: string}>> $editsByFile */
+        /** @var array<string, list<Edit>> $editsByFile */
         $editsByFile = [];
 
         foreach ($classes as $fqcn => $class) {
-            if ($docblockOnly && ! isset($onlyFiles[$class['file']])) {
+            if ($docblockOnly && ! $scope->includes($class->file)) {
                 continue;
             }
 
-            $source = (string) @file_get_contents($class['file']);
+            $source = (string) @file_get_contents($class->file);
 
             if (! $docblockOnly) {
-                foreach ($class['factories'] as $factory) {
-                    $newName = $renames["{$fqcn}\0{$factory['name']}"] ?? null;
+                foreach ($class->factories as $factory) {
+                    $newName = $renames["{$fqcn}\0{$factory->name}"] ?? null;
 
                     if ($newName !== null) {
-                        $editsByFile[$class['file']][] = $this->replaceNode($factory['nameNode'], $newName);
+                        $editsByFile[$class->file][] = $this->replaceNode($factory->nameNode, $newName);
                     }
                 }
             }
 
-            $edit = $this->docblockEdit($class['node'], $source, $this->methodLines($class, $source, $collectUsed[$fqcn] ?? false, $docblockOnly));
+            $edit = $this->docblockEdit($class->node, $source, $this->methodLines($class, $source, $collectUsed[$fqcn] ?? false, $docblockOnly));
 
             if ($edit !== null) {
-                $editsByFile[$class['file']][] = $edit;
+                $editsByFile[$class->file][] = $edit;
             }
         }
 
         if (! $docblockOnly) {
             foreach ($calls as $call) {
-                if (isset($renames["{$call['class']}\0{$call['method']}"])) {
-                    $editsByFile[$call['file']][] = $this->replaceNode($call['nameNode'], 'from');
+                if (isset($renames["{$call->class}\0{$call->method}"])) {
+                    $editsByFile[$call->file][] = $this->replaceNode($call->nameNode, 'from');
                 }
             }
         }
@@ -115,7 +117,7 @@ final class DataHintRewriter
     }
 
     /**
-     * @param  array<string, array{file: string, node: Class_, factories: list<array{name: string, nameNode: Identifier, params: list<Node\Param>, isFrom: bool}>}>  $classes
+     * @param  array<string, DataClass>  $classes
      * @return array<string, string>  "fqcn\0oldName" => newName
      */
     private function planRenames(array $classes): array
@@ -123,17 +125,17 @@ final class DataHintRewriter
         $renames = [];
 
         foreach ($classes as $fqcn => $class) {
-            $taken = array_map(static fn (ClassMethod $m): string => strtolower($m->name->toString()), $class['node']->getMethods());
+            $taken = array_map(static fn (ClassMethod $m): string => strtolower($m->name->toString()), $class->node->getMethods());
 
-            foreach ($class['factories'] as $factory) {
-                if ($factory['isFrom']) {
+            foreach ($class->factories as $factory) {
+                if ($factory->isFrom) {
                     continue;
                 }
 
-                $new = $this->deriveFromName($factory['params'], $taken);
+                $new = $this->deriveFromName($factory->params, $taken);
 
                 if ($new !== null) {
-                    $renames["{$fqcn}\0{$factory['name']}"] = $new;
+                    $renames["{$fqcn}\0{$factory->name}"] = $new;
                     $taken[] = strtolower($new);
                 }
             }
@@ -168,21 +170,20 @@ final class DataHintRewriter
      * The `@method` lines a class should carry: one `from(<params>)` per object
      * factory, plus the conditional `collect()` line when the class is collected.
      *
-     * @param  array{factories: list<array{name: string, nameNode: Identifier, params: list<Node\Param>, isFrom: bool}>, ...}  $class
      * @return list<string>
      */
-    private function methodLines(array $class, string $source, bool $collectUsed, bool $docblockOnly): array
+    private function methodLines(DataClass $class, string $source, bool $collectUsed, bool $docblockOnly): array
     {
         $lines = [];
 
-        foreach ($class['factories'] as $factory) {
+        foreach ($class->factories as $factory) {
             // Scoped (docblock-only) runs don't rename, so only an already-`from…`
             // factory is dispatchable — documenting a mis-prefixed one would lie.
-            if ($docblockOnly && ! $factory['isFrom']) {
+            if ($docblockOnly && ! $factory->isFrom) {
                 continue;
             }
 
-            $lines[] = "@method static static from({$this->paramsSource($factory['params'], $source)})";
+            $lines[] = "@method static static from({$this->paramsSource($factory->params, $source)})";
         }
 
         if ($collectUsed) {
@@ -214,9 +215,9 @@ final class DataHintRewriter
      * is no docblock, synthesise one above the class.
      *
      * @param  list<string>  $methodLines
-     * @return array{start: int, end: int, text: string}|null  null when there is nothing to write
+     * @return Edit|null  null when there is nothing to write
      */
-    private function docblockEdit(Class_ $class, string $source, array $methodLines): ?array
+    private function docblockEdit(Class_ $class, string $source, array $methodLines): ?Edit
     {
         $doc = $class->getDocComment();
         $indent = $this->indentOf($class, $source);
@@ -236,7 +237,7 @@ final class DataHintRewriter
             $block .= "{$indent} */\n";
 
             // A pure insertion replaces nothing: end before start so no char is eaten.
-            return ['start' => $insertAt, 'end' => $insertAt - 1, 'text' => $block];
+            return new Edit($insertAt, $insertAt - 1, $block);
         }
 
         $kept = [];
@@ -260,40 +261,11 @@ final class DataHintRewriter
 
         $kept[] = $closing;
 
-        return [
-            'start' => $doc->getStartFilePos(),
-            'end' => $doc->getEndFilePos(),
-            'text' => implode("\n", $kept),
-        ];
+        return new Edit($doc->getStartFilePos(), $doc->getEndFilePos(), implode("\n", $kept));
     }
 
     /**
-     * @return array{start: int, end: int, text: string}
-     */
-    private function replaceNode(Node $node, string $text): array
-    {
-        return ['start' => $node->getStartFilePos(), 'end' => $node->getEndFilePos(), 'text' => $text];
-    }
-
-    /**
-     * Apply byte-range replacements to a source string. Edits are applied from the
-     * end backwards so earlier offsets stay valid.
-     *
-     * @param  list<array{start: int, end: int, text: string}>  $edits
-     */
-    private function applyEdits(string $source, array $edits): string
-    {
-        usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
-
-        foreach ($edits as $edit) {
-            $source = substr($source, 0, $edit['start']) . $edit['text'] . substr($source, $edit['end'] + 1);
-        }
-
-        return $source;
-    }
-
-    /**
-     * @return array<string, array{file: string, node: Class_, factories: list<array{name: string, nameNode: Identifier, params: list<Node\Param>, isFrom: bool}>}>
+     * @return array<string, DataClass>  FQCN => the Data class
      */
     private function dataClasses(Codebase $codebase): array
     {
@@ -314,16 +286,16 @@ final class DataHintRewriter
                 foreach ($class->getMethods() as $method) {
                     if ($this->isObjectFactory($method, $fqcn)) {
                         $name = $method->name->toString();
-                        $factories[] = [
-                            'name' => $name,
-                            'nameNode' => $method->name,
-                            'params' => array_values($method->params),
-                            'isFrom' => str_starts_with($name, 'from') && $name !== 'from',
-                        ];
+                        $factories[] = new Factory(
+                            $name,
+                            $method->name,
+                            array_values($method->params),
+                            str_starts_with($name, 'from') && $name !== 'from',
+                        );
                     }
                 }
 
-                $classes[$fqcn] = ['file' => $file->path, 'node' => $class, 'factories' => $factories];
+                $classes[$fqcn] = new DataClass($file->path, $class, $factories);
             }
         }
 
@@ -385,7 +357,7 @@ final class DataHintRewriter
      * Scan every static call once: record which classes are `::collect()`-ed, and
      * every `Class::method(` site (resolved class FQCN) for the call-site rewrite.
      *
-     * @return array{0: array<string, true>, 1: list<array{class: string, method: string, nameNode: Identifier, file: string}>}
+     * @return array{0: array<string, true>, 1: list<CallSite>}
      */
     private function scanCalls(Codebase $codebase): array
     {
@@ -411,7 +383,7 @@ final class DataHintRewriter
                     $collectUsed[$class] = true;
                 }
 
-                $calls[] = ['class' => $class, 'method' => $method, 'nameNode' => $call->name, 'file' => $file->path];
+                $calls[] = new CallSite($class, $method, $call->name, $file->path);
             }
         }
 

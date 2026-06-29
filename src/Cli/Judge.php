@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Scope\BranchChanges;
-use JesseGall\CodeCommandments\Cli\Scope\ChangeScope;
-use JesseGall\CodeCommandments\Cli\Scope\EntireCodebase;
+use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
-use JesseGall\CodeCommandments\Cli\Scope\WorkingTreeChanges;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
@@ -21,8 +18,8 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * agent can read one skill and resolve the whole group. Filter to a skill (group)
  * or a single detector to scope a fixing pass.
  *
- * It orchestrates four collaborators: a {@see ChangeScope} (chosen by a `match` on
- * the flags) decides which files to report on; {@see Codebase} parses the path; the
+ * It orchestrates four collaborators: a {@see Scope} (resolved from the flags)
+ * decides which files to report on; {@see Codebase} parses the path; the
  * {@see DetectorRunner} runs the detectors (in parallel) into lightweight findings;
  * a {@see SinReport} renders the console output and the checklist.
  *
@@ -30,8 +27,6 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * intended workflow is to judge ONCE, then work that file line-by-line (a full
  * scan is slow), deleting each line as its sin is fixed. `--no-checklist` prints
  * only; `--checklist=FILE` retargets it.
- *
- * @phpstan-import-type Finding from DetectorRunner
  */
 final class Judge
 {
@@ -40,60 +35,44 @@ final class Judge
 
     public function run(array $args): int
     {
-        $options = $this->parse($args);
+        $options = JudgeOptions::fromArgs($args);
 
-        if ($options['list']) {
+        if ($options->list) {
             return $this->list();
         }
 
-        if (! is_dir($options['path'])) {
-            fwrite(STDERR, "Not a directory: {$options['path']}\n");
+        if (! is_dir($options->path)) {
+            fwrite(STDERR, "Not a directory: {$options->path}\n");
 
             return 2;
         }
 
-        $detectors = $this->select($options['skill'], $options['detector']);
+        $detectors = $this->select($options->skill, $options->detector);
 
         if ($detectors === []) {
-            fwrite(STDERR, "No detector matched --skill={$options['skill']} --detector={$options['detector']}\n");
+            fwrite(STDERR, "No detector matched --skill={$options->skill} --detector={$options->detector}\n");
 
             return 2;
         }
 
         try {
-            $changed = $this->scope($options)->restrictTo($options['path']);
+            $scope = Scope::fromArgs($args, $options->path);
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 
             return 2;
         }
 
-        return $this->judge($options['path'], $detectors, $options['exclude'], $options['checklist'], $changed, $options['parallel']);
-    }
-
-    /**
-     * Pick the file-scoping strategy from the flags. Most flags aren't strategies;
-     * only the change-scope axis (whole / working tree / branch) is.
-     *
-     * @param  array{git: bool, branch: ?string, ...}  $options
-     */
-    private function scope(array $options): ChangeScope
-    {
-        return match (true) {
-            $options['branch'] !== null => new BranchChanges($options['branch']),
-            $options['git'] => new WorkingTreeChanges,
-            default => new EntireCodebase,
-        };
+        return $this->judge($options->path, $detectors, $options->exclude, $options->checklist, $scope, $options->parallel);
     }
 
     /**
      * @param  list<Detector>  $detectors
      * @param  list<string>  $exclude
-     * @param  array<string, true>|null  $changed  Restrict findings to these files (absolute paths); null = no filter.
      */
-    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, ?array $changed, int $parallel): int
+    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, Scope $scope, int $parallel): int
     {
-        if ($changed === []) {
+        if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
             $this->line("\033[32m✓ No changed files to judge.\033[0m");
 
@@ -109,7 +88,7 @@ final class Judge
 
         $progress->finish();
 
-        $findings = $this->keep($findings, $exclude, $changed);
+        $findings = $this->keep($findings, $exclude, $scope);
 
         if ($findings === []) {
             $this->deleteChecklist($checklist);
@@ -130,24 +109,24 @@ final class Judge
     }
 
     /**
-     * Drop findings in generated/excluded files and, when a scope is active, those
-     * outside the changed set.
+     * Drop findings in generated/excluded files (always), and those out of scope.
+     * Exclusion and scope are separate concerns: exclude is the `--exclude` fragments
+     * plus the `@code-commandments-generated` marker; scope is the changed-file set.
      *
      * @param  list<Finding>  $findings
      * @param  list<string>  $exclude
-     * @param  array<string, true>|null  $changed
      * @return list<Finding>
      */
-    private function keep(array $findings, array $exclude, ?array $changed): array
+    private function keep(array $findings, array $exclude, Scope $scope): array
     {
         $kept = [];
 
         foreach ($findings as $finding) {
-            if ($this->isExcluded($finding['file'], $exclude)) {
+            if ($this->isExcluded($finding->file, $exclude)) {
                 continue;
             }
 
-            if ($changed !== null && ! $this->isChanged($finding['file'], $changed)) {
+            if (! $scope->includes($finding->file)) {
                 continue;
             }
 
@@ -191,67 +170,6 @@ final class Judge
 
             return $detector === null || stripos($this->shortName($candidate), $detector) !== false;
         }));
-    }
-
-    /**
-     * @return array{path: string, skill: ?string, detector: ?string, list: bool, exclude: list<string>, checklist: ?string, git: bool, branch: ?string, parallel: int}
-     */
-    private function parse(array $args): array
-    {
-        $path = '.';
-        $skill = null;
-        $detector = null;
-        $list = false;
-        $git = false;
-        $branch = null;
-        $parallel = 8;
-        $exclude = [];
-
-        // By default the findings are written to a checklist file the agent prunes
-        // line-by-line; `--no-checklist` prints only, `--checklist=FILE` retargets.
-        $checklist = 'commandments-sins.md';
-
-        foreach ($args as $arg) {
-            if ($arg === '--list') {
-                $list = true;
-            } elseif ($arg === '--changes' || $arg === '--git') {
-                // `--git` is the original spelling, kept as a quiet alias for `--changes`.
-                $git = true;
-            } elseif ($arg === '--branch') {
-                $branch = 'main';
-            } elseif (str_starts_with($arg, '--branch=')) {
-                $branch = substr($arg, 9);
-            } elseif (str_starts_with($arg, '--parallel=')) {
-                $parallel = max(1, (int) substr($arg, 11));
-            } elseif ($arg === '--no-checklist') {
-                $checklist = null;
-            } elseif (str_starts_with($arg, '--checklist=')) {
-                $checklist = substr($arg, 12);
-            } elseif (str_starts_with($arg, '--skill=')) {
-                $skill = substr($arg, 8);
-            } elseif (str_starts_with($arg, '--detector=')) {
-                $detector = substr($arg, 11);
-            } elseif (str_starts_with($arg, '--exclude=')) {
-                $exclude = array_values(array_filter(explode(',', substr($arg, 10))));
-            } elseif (! str_starts_with($arg, '--')) {
-                $path = $arg;
-            }
-        }
-
-        return ['path' => rtrim($path, '/'), 'skill' => $skill, 'detector' => $detector, 'list' => $list, 'exclude' => $exclude, 'checklist' => $checklist, 'git' => $git, 'branch' => $branch, 'parallel' => $parallel];
-    }
-
-    /**
-     * Is a finding's file one of the changed files? Compared by absolute path, since
-     * scanned paths are relative to the judged directory.
-     *
-     * @param  array<string, true>  $changed
-     */
-    private function isChanged(string $file, array $changed): bool
-    {
-        $absolute = realpath($file);
-
-        return $absolute !== false && isset($changed[$absolute]);
     }
 
     /**
