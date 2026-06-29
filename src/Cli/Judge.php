@@ -23,10 +23,10 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * {@see DetectorRunner} runs the detectors (in parallel) into lightweight findings;
  * a {@see SinReport} renders the console output and the checklist.
  *
- * By default it also writes a Markdown checklist (`commandments-sins.md`) — the
- * intended workflow is to judge ONCE, then work that file line-by-line (a full
- * scan is slow), deleting each line as its sin is fixed. `--no-checklist` prints
- * only; `--checklist=FILE` retargets it.
+ * By default it also writes a Markdown checklist (`.commandments/sins.md`, inside
+ * the gitignored `.commandments/` artifact folder) — the intended workflow is to
+ * judge ONCE, then work that file line-by-line (a full scan is slow), deleting each
+ * line as its sin is fixed. `--no-checklist` prints only; `--checklist=FILE` retargets it.
  */
 final class Judge
 {
@@ -101,6 +101,7 @@ final class Judge
         $this->line($report->console());
 
         if ($checklist !== null) {
+            @mkdir(dirname($checklist), 0755, true);
             file_put_contents($checklist, $report->checklist());
             $this->line("\033[2m↳ checklist written to {$checklist} — fix each item, then delete its line\033[0m");
         }
