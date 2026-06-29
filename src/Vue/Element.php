@@ -12,9 +12,9 @@ namespace JesseGall\CodeCommandments\Vue;
  * Attributes keep Vue's raw directive names (`v-if`, `:title`, `@click`,
  * `#default`); navigation up the tree is via {@see parent}, wired once the children
  * are built. Like the backend's AstNode this is a thin data node — fluent queries
- * sit in a layer above it.
+ * sit in a layer above it, and {@see ElementMatch} extends it to add `file:line`.
  */
-final class Element
+class Element
 {
     public ?Element $parent = null;
 
@@ -66,5 +66,23 @@ final class Element
     public function elements(): array
     {
         return array_values(array_filter($this->children, static fn (Element $child): bool => $child->isElement()));
+    }
+
+    /**
+     * The element siblings that follow this one, in order (text skipped) — how a
+     * `v-if` / `v-else-if` / `v-else` chain is read off the tree.
+     *
+     * @return list<Element>
+     */
+    public function followingElements(): array
+    {
+        if ($this->parent === null) {
+            return [];
+        }
+
+        $siblings = $this->parent->elements();
+        $index = array_search($this, $siblings, true);
+
+        return $index === false ? [] : array_values(array_slice($siblings, $index + 1));
     }
 }
