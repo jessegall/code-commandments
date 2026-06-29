@@ -70,9 +70,9 @@ final class ClaudeSection
         group; add `--branch` to judge only the files new/changed on your branch vs
         `main`, or `--changes` for just your uncommitted working-tree changes). A full
         scan is slow, so it writes the findings to a checklist file —
-        `commandments-sins.md` — and that file, not repeated scans, is how you work:
+        `.commandments/sins.md` — and that file, not repeated scans, is how you work:
 
-        1. Open `commandments-sins.md`. Each line is one sin: `file:line`, the scope, and
+        1. Open `.commandments/sins.md`. Each line is one sin: `file:line`, the scope, and
            the detector, grouped under the skill that teaches the fix.
         2. Go top to bottom, ONE line at a time: read that section's skill, fix the sin at
            the source, then **delete that line from the file.** Do not re-run judge between

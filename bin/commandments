@@ -58,11 +58,11 @@ $toBytes = static function (string $limit): int {
           --changes          only report sins in files changed in the working tree (alias: --git)
           --branch[=BASE]    only report sins new/changed on this branch vs BASE (default: main)
           --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
-          --checklist=FILE   write the checklist here (default: commandments-sins.md)
+          --checklist=FILE   write the checklist here (default: .commandments/sins.md)
           --no-checklist     print only, don't write the checklist file
           --list             list every detector grouped by skill
 
-        By default judge writes a Markdown checklist (commandments-sins.md). Judge
+        By default judge writes a Markdown checklist (.commandments/sins.md). Judge
         ONCE, then work that file line-by-line — a full scan is slow — deleting
         each line as you fix its sin. Re-run judge at the end to confirm.
 
