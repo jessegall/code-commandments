@@ -63,14 +63,14 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options->path, $detectors, $options->exclude, $options->checklist, $scope, $options->parallel);
+        return $this->judge($options->path, $detectors, $options->exclude, $options->checklist, $scope, $options->parallel, $options->benchmark);
     }
 
     /**
      * @param  list<Detector>  $detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, Scope $scope, int $parallel): int
+    private function judge(string $path, array $detectors, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark): int
     {
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
@@ -81,13 +81,21 @@ final class Judge
 
         $progress = new ProgressBar;
 
+        $parseStart = hrtime(true);
         $codebase = Codebase::scan($path, static function (int $done, int $total) use ($progress): void {
             $progress->track($done, $total, 'parsing');
         });
+        $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
-        $findings = new DetectorRunner($parallel)->run($detectors, $codebase, $progress);
-
-        $progress->finish();
+        if ($benchmark) {
+            $bench = new Benchmark;
+            $findings = $bench->run($detectors, $codebase);
+            $progress->finish();
+            fwrite(STDERR, $bench->render($parseSeconds));
+        } else {
+            $findings = new DetectorRunner($parallel)->run($detectors, $codebase, $progress);
+            $progress->finish();
+        }
 
         $findings = $this->keep($findings, $exclude, $scope);
 
