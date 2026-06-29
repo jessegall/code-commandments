@@ -78,6 +78,7 @@ final class Fork
     private static function forked(array $items, Closure $fn, int $pool, ?Closure $onProgress): array
     {
         $keys = array_keys($items);
+        $parent = function_exists('posix_getpid') ? posix_getpid() : null;
 
         $shards = array_fill(0, $pool, []);
 
@@ -121,8 +122,17 @@ final class Fork
                 // Stream each result the moment it's ready, as a length-prefixed
                 // frame, so the parent can tick progress per item — not per shard.
                 foreach ($shard as $key) {
+                    // Don't grind on as an orphan: if the parent has died (its pid is
+                    // no longer ours), stop. Writing to the then-broken result socket
+                    // would also SIGPIPE us — this just bails sooner, mid-compute.
+                    if ($parent !== null && posix_getppid() !== $parent) {
+                        exit(0);
+                    }
+
                     $payload = serialize([$key, $fn($items[$key], $key)]);
-                    fwrite($pair[1], pack('N', strlen($payload)) . $payload);
+                    // Silenced: if the parent died mid-write the pipe is broken (EPIPE);
+                    // that's expected teardown, not an error worth a warning.
+                    @fwrite($pair[1], pack('N', strlen($payload)) . $payload);
                 }
 
                 fclose($pair[1]);
