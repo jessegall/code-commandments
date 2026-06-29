@@ -1498,6 +1498,38 @@ class AstNode
     }
 
     /**
+     * Is this array literal a projection of the enclosing object's OWN state — a
+     * non-empty keyed map whose every value is a `$this->field` read (`['accessToken'
+     * => $this->accessToken, …]`)? That is a `toArray()`/`toValues()` serializer
+     * turning a typed object into a persistence/presentation shape — which the
+     * value-objects skill exempts — not a loose bag of unrelated fields.
+     */
+    public function isSelfProjectionArray(): bool
+    {
+        if (! $this->node instanceof Array_ || $this->node->items === []) {
+            return false;
+        }
+
+        foreach ($this->node->items as $item) {
+            if (! $item instanceof ArrayItem || $item->key === null) {
+                return false;
+            }
+
+            $value = $item->value;
+
+            $isOwnField = ($value instanceof PropertyFetch || $value instanceof NullsafePropertyFetch)
+                && $value->var instanceof Variable
+                && $value->var->name === 'this';
+
+            if (! $isOwnField) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Does this array literal have at least one value that is itself an array — a
      * NESTED structure (a config / schema / payload tree) rather than a flat
      * record of fields? Flat records are value-object candidates; trees are not.
