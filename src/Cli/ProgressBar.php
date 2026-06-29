@@ -20,6 +20,8 @@ final class ProgressBar
 
     private int $current = 0;
 
+    private int $lastFilled = -1;
+
     private bool $active = false;
 
     /** @var resource */
@@ -57,8 +59,9 @@ final class ProgressBar
 
         $this->total = max(1, $total);
         $this->current = 0;
+        $this->lastFilled = -1;
         $this->active = true;
-        $this->render('');
+        $this->render('judging', '');
     }
 
     /**
@@ -71,7 +74,30 @@ final class ProgressBar
         }
 
         $this->current = min($this->total, $this->current + 1);
-        $this->render($label);
+        $this->render('judging', $label);
+    }
+
+    /**
+     * Draw a determinate bar straight from a (done, total) pair — for a phase the
+     * caller counts itself, e.g. parsing files. Only re-renders when the filled bar
+     * actually moves, so a per-file callback over thousands of files stays cheap.
+     */
+    public function track(int $done, int $total, string $phase): void
+    {
+        if (! $this->enabled()) {
+            return;
+        }
+
+        $this->active = true;
+        $this->total = max(1, $total);
+        $this->current = min($this->total, max(0, $done));
+
+        $filled = (int) round(self::WIDTH * $this->current / $this->total);
+
+        if ($filled !== $this->lastFilled || $this->current === $this->total) {
+            $this->lastFilled = $filled;
+            $this->render($phase, '');
+        }
     }
 
     /**
@@ -87,13 +113,14 @@ final class ProgressBar
         $this->active = false;
     }
 
-    private function render(string $label): void
+    private function render(string $phase, string $label): void
     {
         $filled = (int) round(self::WIDTH * $this->current / $this->total);
         $bar = str_repeat('█', $filled) . str_repeat('░', self::WIDTH - $filled);
 
         fwrite($this->stream, sprintf(
-            "\r\033[2K\033[2mjudging\033[0m [%s] %d/%d \033[2m%s\033[0m",
+            "\r\033[2K\033[2m%s\033[0m [%s] %d/%d \033[2m%s\033[0m",
+            $phase,
             $bar,
             $this->current,
             $this->total,
