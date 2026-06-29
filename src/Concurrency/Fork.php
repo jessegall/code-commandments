@@ -7,44 +7,25 @@ namespace JesseGall\CodeCommandments\Concurrency;
 use Closure;
 
 /**
- * Run a closure over every item of an iterable in parallel, across a pool of OS
- * processes, and get back the accumulated results in input order — a `map` whose
- * iterations run on different cores.
+ * A `map` whose iterations run in parallel across forked processes:
  *
- *     $results = Fork::map($candidates, static fn ($c) => expensiveCheck($c));
+ *     $results = Fork::map($items, static fn ($x) => expensive($x));
  *
- * PHP has no shared-memory threads in a stock build, so "parallel" here means
- * `pcntl_fork`. The win comes from copy-on-write: everything the parent built
- * before the fork — a parsed AST, an index, the `$items` themselves — is shared
- * with each child for free; only each item's (small, serializable) RETURN value
- * travels back over a socket. So the closure may close over a huge `$codebase`
- * without paying to copy it.
- *
- * Two guard rails keep it safe to drop in anywhere:
- *   - **Sequential fallback** — fewer than two items, forking unavailable
- *     (Windows / hardened CLI), or a pool of one ⇒ a plain `array_map`, same result.
- *   - **Nesting guard** — once inside a forked child, a nested `Fork::map` also runs
- *     sequentially, so a parallel detector called from a parallel runner can't fork
- *     a bomb. The outermost `map` owns the cores.
- *
- * A worker that dies (fork/pair failure, crash) has its shard re-run inline in the
- * parent, so a partial failure degrades to slower — never to missing results.
+ * Copy-on-write shares everything built before the fork (a parsed AST, an index)
+ * with each child for free; only each item's serializable RETURN value travels
+ * back over a socket. Runs sequentially when forking is unavailable, fewer than two
+ * items, or already inside a fork (the nesting guard); a worker that fails to fork
+ * re-runs its shard inline.
  */
 final class Fork
 {
-    /** True inside a forked child — makes a nested {@see map()} run sequentially. */
     private static bool $inWorker = false;
 
     /**
-     * Apply $fn to each item, in parallel, and return the results keyed by the
-     * original keys (insertion order preserved). The closure receives `($value,
-     * $key)`; its return value must be serializable (it crosses a process
-     * boundary) — return plain data, never an AST node or a resource.
-     *
-     * Pass $onProgress to be told, IN THE PARENT, how many items a worker just
-     * finished — fired once per shard as its results arrive (or per item on the
-     * sequential path). It's for a progress bar; it never sees the results and must
-     * not assume an order.
+     * Apply $fn to each item in parallel, returning results under the original keys
+     * in input order. The return value crosses a process boundary, so it must be
+     * serializable. $onProgress, if given, is called in the PARENT with the number
+     * of items just finished (for a progress bar).
      *
      * @template TKey of array-key
      * @template TIn
@@ -52,7 +33,7 @@ final class Fork
      * @param  iterable<TKey, TIn>  $items
      * @param  Closure(TIn, TKey): TOut  $fn
      * @param  int|null  $workers  pool size; defaults to the CPU core count
-     * @param  Closure(int): void|null  $onProgress  parent-side: items just completed
+     * @param  Closure(int): void|null  $onProgress
      * @return array<TKey, TOut>
      */
     public static function map(iterable $items, Closure $fn, ?int $workers = null, ?Closure $onProgress = null): array
@@ -69,15 +50,10 @@ final class Fork
     }
 
     /**
-     * @template TKey of array-key
-     * @template TIn
-     * @template TOut
-     * @param  array<TKey, TIn>  $items
-     * @param  Closure(TIn, TKey): TOut  $fn
-     * @param  Closure(int): void|null  $onProgress
-     * @return array<TKey, TOut>
+     * @param  array<array-key, mixed>  $items
+     * @return array<array-key, mixed>
      */
-    private static function sequential(array $items, Closure $fn, ?Closure $onProgress = null): array
+    private static function sequential(array $items, Closure $fn, ?Closure $onProgress): array
     {
         $out = [];
 
@@ -93,23 +69,16 @@ final class Fork
     }
 
     /**
-     * Round-robin the items across $pool shards, fork a worker per shard, and merge
-     * the results back. Round-robin (not contiguous chunks) so a cluster of
-     * expensive items spreads across workers instead of landing on one.
+     * Round-robin the items across $pool shards (so heavy items spread instead of
+     * clustering), fork a worker per shard, and merge the results back in input order.
      *
-     * @template TKey of array-key
-     * @template TIn
-     * @template TOut
-     * @param  array<TKey, TIn>  $items
-     * @param  Closure(TIn, TKey): TOut  $fn
-     * @param  Closure(int): void|null  $onProgress
-     * @return array<TKey, TOut>
+     * @param  array<array-key, mixed>  $items
+     * @return array<array-key, mixed>
      */
-    private static function forked(array $items, Closure $fn, int $pool, ?Closure $onProgress = null): array
+    private static function forked(array $items, Closure $fn, int $pool, ?Closure $onProgress): array
     {
         $keys = array_keys($items);
 
-        /** @var list<list<TKey>> $shards */
         $shards = array_fill(0, $pool, []);
 
         foreach ($keys as $i => $key) {
@@ -133,13 +102,13 @@ final class Fork
                     fclose($pair[1]);
                 }
 
-                // Forking failed — run this shard inline so results stay complete.
+                // Fork failed — run this shard inline so results stay complete.
                 foreach ($shard as $key) {
                     $results[$key] = $fn($items[$key], $key);
-                }
 
-                if ($onProgress !== null) {
-                    $onProgress(count($shard));
+                    if ($onProgress !== null) {
+                        $onProgress(1);
+                    }
                 }
 
                 continue;
@@ -149,12 +118,13 @@ final class Fork
                 self::$inWorker = true;
                 fclose($pair[0]);
 
-                $slice = [];
+                // Stream each result the moment it's ready, as a length-prefixed
+                // frame, so the parent can tick progress per item — not per shard.
                 foreach ($shard as $key) {
-                    $slice[$key] = $fn($items[$key], $key);
+                    $payload = serialize([$key, $fn($items[$key], $key)]);
+                    fwrite($pair[1], pack('N', strlen($payload)) . $payload);
                 }
 
-                fwrite($pair[1], serialize($slice));
                 fclose($pair[1]);
                 exit(0);
             }
@@ -167,8 +137,6 @@ final class Fork
             $results[$key] = $value;
         }
 
-        // Restore input order — round-robin shards and completion-order draining
-        // both scramble it; the caller asked for a map, so hand back map order.
         $ordered = [];
         foreach ($keys as $key) {
             if (array_key_exists($key, $results)) {
@@ -180,16 +148,15 @@ final class Fork
     }
 
     /**
-     * Read every worker's serialized shard, in COMPLETION order (not fork order):
-     * `stream_select` hands back whichever socket is ready, so one slow worker
-     * never stalls draining the others. Each worker's payload is buffered until its
-     * socket hits EOF (the child closed it).
+     * Read the workers' result frames in COMPLETION order (`stream_select`), so one
+     * slow worker never stalls draining the others. Each whole frame is one finished
+     * item: collect its result and tick progress by 1 — so the bar moves per item,
+     * not per shard. Partial frames are buffered until the rest arrives.
      *
      * @param  array<int, resource>  $children  pid => read socket
-     * @param  Closure(int): void|null  $onProgress
      * @return array<array-key, mixed>
      */
-    private static function drain(array $children, ?Closure $onProgress = null): array
+    private static function drain(array $children, ?Closure $onProgress): array
     {
         $buffers = [];
 
@@ -221,25 +188,33 @@ final class Fork
                     $buffers[$pid] .= $chunk;
                 }
 
+                // Pull every complete frame out of the buffer (4-byte length + payload).
+                while (strlen($buffers[$pid]) >= 4) {
+                    $length = unpack('N', substr($buffers[$pid], 0, 4))[1];
+
+                    if (strlen($buffers[$pid]) < 4 + $length) {
+                        break;
+                    }
+
+                    $frame = @unserialize(substr($buffers[$pid], 4, $length));
+                    $buffers[$pid] = substr($buffers[$pid], 4 + $length);
+
+                    if (is_array($frame)) {
+                        [$key, $value] = $frame;
+                        $results[$key] = $value;
+
+                        if ($onProgress !== null) {
+                            $onProgress(1);
+                        }
+                    }
+                }
+
                 if (! feof($sock)) {
                     continue;
                 }
 
                 fclose($sock);
                 pcntl_waitpid($pid, $status);
-
-                $slice = $buffers[$pid] !== '' ? @unserialize($buffers[$pid]) : [];
-
-                if (is_array($slice)) {
-                    foreach ($slice as $key => $value) {
-                        $results[$key] = $value;
-                    }
-
-                    if ($onProgress !== null) {
-                        $onProgress(count($slice));
-                    }
-                }
-
                 unset($children[$pid], $buffers[$pid]);
             }
         }
@@ -253,10 +228,6 @@ final class Fork
         return $results;
     }
 
-    /**
-     * The CPU core count — the natural pool size. Falls back to 1 (forking off) when
-     * it can't be read.
-     */
     private static function cpuCount(): int
     {
         foreach (['nproc 2>/dev/null', 'sysctl -n hw.ncpu 2>/dev/null'] as $command) {
@@ -270,10 +241,6 @@ final class Fork
         return 1;
     }
 
-    /**
-     * Is process forking available on this build? (`pcntl` + socket pairs — absent
-     * on Windows and some hardened CLIs, where `map` runs sequentially.)
-     */
     private static function canFork(): bool
     {
         return function_exists('pcntl_fork')
