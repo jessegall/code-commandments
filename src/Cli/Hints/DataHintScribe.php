@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Hints;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Rewriting\Edit;
-use JesseGall\CodeCommandments\Cli\Rewriting\Rewriter;
+use JesseGall\CodeCommandments\Cli\Rewriting\Scribe;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PhpParser\Node;
 use PhpParser\Node\Expr\New_;
@@ -39,7 +39,7 @@ use PhpParser\NodeFinder;
  * It reads each file's source from disk (by the parsed path) and returns
  * `path => newContent` for the files it changed; the caller writes or diffs them.
  */
-final class DataHintRewriter extends Rewriter
+final class DataHintScribe extends Scribe
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
