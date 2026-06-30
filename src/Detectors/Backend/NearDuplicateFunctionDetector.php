@@ -40,7 +40,7 @@ final class NearDuplicateFunctionDetector implements Detector
 
     public function skill(): string
     {
-        return 'fix-at-the-source';
+        return 'backend/fix-at-the-source';
     }
 
     public function find(Codebase $codebase): array

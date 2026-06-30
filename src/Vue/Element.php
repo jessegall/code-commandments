@@ -132,6 +132,69 @@ class Element
     }
 
     /**
+     * Is this a `<template>` that only makes sense inside its parent — a slot
+     * (`#name` / `v-slot`) or a `v-else` / `v-else-if` continuation? Such a block
+     * can't stand alone as a component root; an extraction must lift its CONTENT, not
+     * the wrapper.
+     */
+    public function isContextBound(): bool
+    {
+        if (strtolower($this->tag) !== 'template') {
+            return false;
+        }
+
+        if ($this->hasAttribute(Directive::Else) || $this->hasAttribute(Directive::ElseIf)) {
+            return true;
+        }
+
+        foreach (array_keys($this->attributes) as $name) {
+            if (str_starts_with($name, '#') || $name === 'v-slot' || str_starts_with($name, 'v-slot:')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Every element in this subtree, self excluded, in document order — the whole
+     * reach of a component when walking it for clusters.
+     *
+     * @return list<Element>
+     */
+    public function descendants(): array
+    {
+        $descendants = [];
+
+        foreach ($this->elements() as $child) {
+            $descendants[] = $child;
+
+            foreach ($child->descendants() as $deeper) {
+                $descendants[] = $deeper;
+            }
+        }
+
+        return $descendants;
+    }
+
+    /**
+     * This element then each ancestor up to the root — the spine used to find the
+     * lowest common ancestor of a set of elements (their shared extraction boundary).
+     *
+     * @return list<Element>
+     */
+    public function ancestry(): array
+    {
+        $spine = [];
+
+        for ($node = $this; $node !== null; $node = $node->parent) {
+            $spine[] = $node;
+        }
+
+        return $spine;
+    }
+
+    /**
      * The element siblings that follow this one, in order (text skipped) — how a
      * `v-if` / `v-else-if` / `v-else` chain is read off the tree.
      *

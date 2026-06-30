@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Rewriting;
+namespace JesseGall\CodeCommandments\Scribes;
 
 /**
  * Renders a rewriter's `path => newContent` map as a unified diff against the files'

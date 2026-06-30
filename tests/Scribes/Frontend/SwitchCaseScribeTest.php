@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Rewriting\Frontend;
+namespace JesseGall\CodeCommandments\Tests\Scribes\Frontend;
 
-use JesseGall\CodeCommandments\Cli\Rewriting\Frontend\SwitchCaseScribe;
+use JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseDetector;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use PHPUnit\Framework\TestCase;
@@ -70,7 +70,7 @@ final class SwitchCaseScribeTest extends TestCase
         $this->apply();
         $once = file_get_contents($this->dir . '/Card.vue');
 
-        $this->assertSame([], new SwitchCaseScribe()->rewrites(Codebase::scan($this->dir)), 'a second pass finds nothing to fix');
+        $this->assertSame([], new SwitchCaseScribe()->rewrite(new SwitchCaseDetector()->find(Codebase::scan($this->dir))), 'a second pass finds nothing to fix');
         $this->apply();
         $this->assertSame($once, file_get_contents($this->dir . '/Card.vue'));
     }
@@ -80,7 +80,7 @@ final class SwitchCaseScribeTest extends TestCase
         $original = "<template>\n  <div v-if=\"open\">x</div>\n  <div v-else>y</div>\n</template>\n";
         $this->write('Plain.vue', $original);
 
-        $this->assertSame([], new SwitchCaseScribe()->rewrites(Codebase::scan($this->dir)));
+        $this->assertSame([], new SwitchCaseScribe()->rewrite(new SwitchCaseDetector()->find(Codebase::scan($this->dir))));
         $this->assertSame($original, file_get_contents($this->dir . '/Plain.vue'));
     }
 
@@ -94,7 +94,9 @@ final class SwitchCaseScribeTest extends TestCase
 
     private function apply(): void
     {
-        foreach (new SwitchCaseScribe()->rewrites(Codebase::scan($this->dir)) as $path => $content) {
+        $findings = new SwitchCaseDetector()->find(Codebase::scan($this->dir));
+
+        foreach (new SwitchCaseScribe()->rewrite($findings) as $path => $content) {
             file_put_contents($path, $content);
         }
     }

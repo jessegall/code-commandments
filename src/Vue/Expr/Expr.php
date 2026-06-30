@@ -77,6 +77,158 @@ final class Expr
     }
 
     /**
+     * The ROOT identifiers this expression reads — the base of every member chain
+     * (`order.customer.name` → `order`), each bare identifier, call callees and
+     * arguments. The free variables a block depends on, so extracting it into a
+     * component knows what to take as props.
+     *
+     * @return list<string>
+     */
+    public function roots(): array
+    {
+        $roots = match ($this->kind) {
+            self::IDENTIFIER => [(string) $this->get('name')],
+            self::MEMBER => $this->child('object')->roots(),
+            self::INDEX => array_merge($this->child('object')->roots(), $this->child('index')->roots()),
+            self::CALL => array_merge($this->child('callee')->roots(), $this->rootsOf($this->children('arguments'))),
+            self::UNARY => $this->child('argument')->roots(),
+            self::BINARY => array_merge($this->child('left')->roots(), $this->child('right')->roots()),
+            self::CONDITIONAL => array_merge($this->child('test')->roots(), $this->child('then')->roots(), $this->child('else')->roots()),
+            self::ARRAY => $this->rootsOf($this->children('elements')),
+            self::OBJECT => $this->rootsOf($this->children('values')),
+            self::ARROW => $this->child('body')->roots(),
+            default => [],
+        };
+
+        return array_values(array_unique($roots));
+    }
+
+    /**
+     * The bare functions this expression CALLS — `Number($e)`, `emit('x')`,
+     * `clearOverride()` → `['Number','emit','clearOverride']`. These are behaviour
+     * (JS globals, emits, handlers), not data: an extracted component takes data as
+     * props, so a root that's merely a call callee is not one. Method calls
+     * (`form.post()`) don't count — their receiver (`form`) is still data.
+     *
+     * @return list<string>
+     */
+    public function calledFunctions(): array
+    {
+        $names = [];
+        $this->gatherCalled($names);
+
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * @param  list<string>  $names
+     */
+    private function gatherCalled(array &$names): void
+    {
+        if ($this->kind === self::CALL) {
+            $callee = $this->props['callee'] ?? null;
+
+            if ($callee instanceof self && $callee->kind === self::IDENTIFIER) {
+                $names[] = (string) $callee->get('name');
+            }
+        }
+
+        foreach ($this->subExpressions() as $child) {
+            $child->gatherCalled($names);
+        }
+    }
+
+    /**
+     * Every member-access CHAIN as its segments — `order.customer.name` →
+     * `['order','customer','name']`. The whole-path view (vs {@see roots}, just the
+     * base), used to find the mid-object a deep reach should take as a prop.
+     *
+     * @return list<list<string>>
+     */
+    public function chains(): array
+    {
+        $chains = [];
+        $this->gatherChains($chains);
+
+        return $chains;
+    }
+
+    /**
+     * @param  list<list<string>>  $chains
+     */
+    private function gatherChains(array &$chains): void
+    {
+        // A call's RECEIVER is data, but the method itself is not a field:
+        // `order.customer.greet()` reaches the data `order.customer`, not `…greet`.
+        if ($this->kind === self::CALL) {
+            $callee = $this->props['callee'] ?? null;
+
+            if ($callee instanceof self) {
+                $receiver = $callee->is(self::MEMBER) || $callee->is(self::INDEX) ? $callee->child('object') : $callee;
+                $receiver->gatherChains($chains);
+            }
+
+            foreach ($this->children('arguments') as $argument) {
+                $argument->gatherChains($chains);
+            }
+
+            return;
+        }
+
+        $segments = $this->chainSegments();
+
+        if ($segments !== null) {
+            if (count($segments) >= 2) {
+                $chains[] = $segments;
+            }
+
+            return; // a pure chain — its object is already included
+        }
+
+        foreach ($this->subExpressions() as $child) {
+            $child->gatherChains($chains);
+        }
+    }
+
+    /**
+     * This node as a pure identifier/member path, or null if it isn't one.
+     *
+     * @return list<string>|null
+     */
+    private function chainSegments(): ?array
+    {
+        return match ($this->kind) {
+            self::IDENTIFIER => [(string) $this->get('name')],
+            self::MEMBER => ($base = $this->child('object')->chainSegments()) !== null
+                ? array_merge($base, [(string) $this->get('property')])
+                : null,
+            default => null,
+        };
+    }
+
+    /**
+     * @return list<self>
+     */
+    private function subExpressions(): array
+    {
+        $children = [];
+
+        foreach ($this->props as $value) {
+            if ($value instanceof self) {
+                $children[] = $value;
+            } elseif (is_array($value)) {
+                foreach ($value as $item) {
+                    if ($item instanceof self) {
+                        $children[] = $item;
+                    }
+                }
+            }
+        }
+
+        return $children;
+    }
+
+    /**
      * A reconstructed source string for this expression — enough to compare two
      * subjects (`field.type` === `field.type`). Best-effort for the shapes a switch
      * subject takes (identifiers and member chains).
@@ -158,5 +310,20 @@ final class Expr
         }
 
         return $max;
+    }
+
+    /**
+     * @param  list<self>  $nodes
+     * @return list<string>
+     */
+    private function rootsOf(array $nodes): array
+    {
+        $roots = [];
+
+        foreach ($nodes as $node) {
+            $roots = array_merge($roots, $node->roots());
+        }
+
+        return $roots;
     }
 }

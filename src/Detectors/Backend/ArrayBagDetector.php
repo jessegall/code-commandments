@@ -25,7 +25,7 @@ final class ArrayBagDetector implements Detector
 {
     public function skill(): string
     {
-        return 'value-objects';
+        return 'backend/value-objects';
     }
 
     public function find(Codebase $codebase): array

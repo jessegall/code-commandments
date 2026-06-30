@@ -13,7 +13,7 @@ defineProps<{ customer: Customer }>();
 
     <div class="account__profile">
       <h2 class="account__section">Profile</h2>
-      <!-- @sin DeepDataReachDetector -->
+      <!-- Righteous: a LONE deep reach (one field off customer.profile) is no cluster. -->
       <p class="account__name">{{ customer.profile.displayName }}</p>
       <p class="account__handle">{{ customer.handle }}</p>
     </div>
@@ -24,11 +24,13 @@ defineProps<{ customer: Customer }>();
       <p class="account__phone">{{ customer.phone }}</p>
     </div>
 
+    <!-- A cluster: customer.billing read in three fields → extract <AccountBilling :billing>. -->
+    <!-- @sin DeepDataReachDetector -->
     <div class="account__billing">
       <h2 class="account__section">Billing</h2>
-      <!-- @sin DeepDataReachDetector -->
-      <p class="account__plan">{{ customer.billing.plan.name }}</p>
-      <p class="account__renews">{{ customer.renewsAt }}</p>
+      <p class="account__plan">{{ customer.billing.plan }}</p>
+      <p class="account__amount">{{ customer.billing.amount }}</p>
+      <p class="account__renews">{{ customer.billing.renewsAt }}</p>
     </div>
 
     <div class="account__preferences">

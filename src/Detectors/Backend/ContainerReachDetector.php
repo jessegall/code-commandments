@@ -26,7 +26,7 @@ final class ContainerReachDetector implements Detector
 {
     public function skill(): string
     {
-        return 'laravel-idioms';
+        return 'backend/laravel-idioms';
     }
 
     public function find(Codebase $codebase): array

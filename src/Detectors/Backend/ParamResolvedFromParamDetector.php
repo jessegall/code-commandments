@@ -43,7 +43,7 @@ final class ParamResolvedFromParamDetector implements Detector
 
     public function skill(): string
     {
-        return 'pass-the-object';
+        return 'backend/pass-the-object';
     }
 
     public function find(Codebase $codebase): array

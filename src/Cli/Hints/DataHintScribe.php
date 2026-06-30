@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Hints;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Rewriting\Edit;
-use JesseGall\CodeCommandments\Cli\Rewriting\Scribe;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
+use JesseGall\CodeCommandments\Scribes\Edit;
+use JesseGall\CodeCommandments\Scribes\Scribe;
 use PhpParser\Node;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;

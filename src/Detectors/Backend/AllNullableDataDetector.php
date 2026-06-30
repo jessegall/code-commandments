@@ -21,7 +21,7 @@ final class AllNullableDataDetector implements Detector
 
     public function skill(): string
     {
-        return 'spatie-data';
+        return 'backend/spatie-data';
     }
 
     public function find(Codebase $codebase): array

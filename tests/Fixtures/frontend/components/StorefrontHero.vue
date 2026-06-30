@@ -11,10 +11,11 @@ defineProps<{ storefront: Storefront }>();
       <span class="hero__status">{{ storefront.open }}</span>
     </div>
 
-    <div class="hero__banner">
-      <!-- @sin DeepDataReachDetector -->
-      <h1 class="hero__headline">{{ storefront.campaign.banner.title }}</h1>
-      <p class="hero__sub">{{ storefront.tagline }}</p>
+    <!-- A cluster: storefront.campaign read in three fields → extract <HeroBanner :campaign>. -->
+    <!-- @sin DeepDataReachDetector -->
+    <div class="hero__banner" :style="storefront.campaign.theme">
+      <h1 class="hero__headline">{{ storefront.campaign.title }}</h1>
+      <p class="hero__sub">{{ storefront.campaign.subtitle }}</p>
     </div>
 
     <nav class="hero__nav">
@@ -27,7 +28,7 @@ defineProps<{ storefront: Storefront }>();
 
     <div class="hero__promo">
       <h2 class="hero__promo-title">Featured</h2>
-      <!-- @sin DeepDataReachDetector -->
+      <!-- Righteous: a LONE deep reach (one field off storefront.featured) is no cluster. -->
       <p class="hero__promo-text">{{ storefront.featured.product.name }}</p>
       <p class="hero__promo-price">{{ storefront.featuredPrice }}</p>
     </div>

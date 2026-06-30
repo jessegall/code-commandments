@@ -17,7 +17,7 @@ final class BloatedDocblockDetector implements Detector
 {
     public function skill(): string
     {
-        return 'documentation';
+        return 'backend/documentation';
     }
 
     public function find(Codebase $codebase): array

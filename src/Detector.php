@@ -11,7 +11,7 @@ namespace JesseGall\CodeCommandments;
  * for {@see Detectors\Detector}, Vue elements for {@see Vue\Detector}).
  *
  * A detector finds ONE sin and names the skill that teaches the fix; it carries no
- * fix logic (that's a {@see Cli\Rewriting\Scribe}, named via {@see Detectors\Repentable}).
+ * fix logic (that's a {@see Scribes\Scribe}, named via {@see Detectors\Repentable}).
  */
 interface Detector
 {

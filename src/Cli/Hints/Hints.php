@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Hints;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Rewriting\RewriteApplier;
-use JesseGall\CodeCommandments\Cli\Rewriting\UnifiedDiff;
+use JesseGall\CodeCommandments\Scribes\RewriteApplier;
+use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 

@@ -17,7 +17,7 @@ final class DeepNestingDetector implements Detector
 {
     public function skill(): string
     {
-        return 'guard-clauses-and-flow';
+        return 'backend/guard-clauses-and-flow';
     }
 
     public function find(Codebase $codebase): array

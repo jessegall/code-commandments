@@ -30,7 +30,7 @@ final class GenericExceptionDetector implements Detector
 
     public function skill(): string
     {
-        return 'exceptions';
+        return 'backend/exceptions';
     }
 
     public function find(Codebase $codebase): array

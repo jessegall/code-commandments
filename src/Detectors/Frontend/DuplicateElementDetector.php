@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
 use JesseGall\CodeCommandments\Vue\Element;
@@ -19,13 +21,18 @@ use JesseGall\CodeCommandments\Vue\ElementMatch;
  * repeated `<br>` or empty `<div>`), and only the LARGEST duplicated block is
  * flagged — its inner pieces are duplicated too, but extracting the whole is the fix.
  */
-final class DuplicateElementDetector implements Detector
+final class DuplicateElementDetector implements Detector, Repentable
 {
     private const int FLOOR = 3;
 
     public function skill(): string
     {
-        return 'vue-components';
+        return 'frontend/vue-components';
+    }
+
+    public function scribe(): ExtractComponentScribe
+    {
+        return ExtractComponentScribe::forDuplicates();
     }
 
     public function find(Codebase $components): array

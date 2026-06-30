@@ -21,7 +21,7 @@ final class NullableRegistryLookupDetector implements Detector
 {
     public function skill(): string
     {
-        return 'role-vocabulary';
+        return 'backend/role-vocabulary';
     }
 
     public function find(Codebase $codebase): array
