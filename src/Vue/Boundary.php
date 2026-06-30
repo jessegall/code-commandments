@@ -276,6 +276,16 @@ final class Boundary
     }
 
     /**
+     * Does the lifted chunk render `<slot>`s? If so the chunk consumes slots from the host,
+     * and the call site must FORWARD the host's slots to the new component — otherwise the
+     * slotted bodies render empty (the extracted component's `<slot>`s get nothing).
+     */
+    public function rendersSlots(): bool
+    {
+        return $this->node->renders('slot');
+    }
+
+    /**
      * The values the boundary WRITES — two-way state, not read-only input. A value is written
      * when it is `v-model[:arg]="x"`-bound, OR assigned in a handler (`@click="x = true"`).
      * Lifted out, each such value must become a `defineModel` (bound with `v-model` at the call
