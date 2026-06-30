@@ -81,6 +81,29 @@ final class EngineQueryTest extends TestCase
         $this->assertSame('<div class="card">x</div>', $written, 'only the content slice, directive untouched');
     }
 
+    public function test_source_omitting_collapses_a_directive_alone_on_its_line(): void
+    {
+        // A directive on its OWN line must take the whole line with it — no blank line left.
+        $source = "<template>\n<div\n    v-if=\"open\"\n    class=\"card\"\n>x</div>\n</template>";
+        $div = Codebase::fromString($source)->whereTag('div')->first();
+
+        $written = $div->sourceOmitting($source, $div->start, $div->end, ['v-if']);
+
+        $this->assertSame("<div\n    class=\"card\"\n>x</div>", $written);
+        $this->assertStringNotContainsString("\n\n", $written, 'no blank line where the directive was');
+    }
+
+    public function test_source_omitting_keeps_the_line_of_an_inline_directive(): void
+    {
+        // Inline beside other attributes — only the directive (and its space) goes; the line stays.
+        $source = '<template><div v-if="open" class="card">x</div></template>';
+        $div = Codebase::fromString($source)->whereTag('div')->first();
+
+        $written = $div->sourceOmitting($source, $div->start, $div->end, ['v-if']);
+
+        $this->assertSame('<div class="card">x</div>', $written);
+    }
+
     public function test_sfc_elements_scopes_a_query_to_one_component_subtree(): void
     {
         $sfc = Codebase::fromString(
