@@ -360,14 +360,16 @@ final class Boundary
 
     /**
      * The iterable a loop variable ranges over (`group.charts` for `chart`), anywhere
-     * in the boundary — so the variable's type can be the iterable's element type.
+     * in the boundary — so the variable's type can be the iterable's element type. Only
+     * the FIRST alias is an element: in `(item, index) in list` the 2nd/3rd aliases are
+     * the numeric index / object key, not members, so they don't take the element type.
      */
     public function iterableOf(string $var): ?string
     {
         foreach ([$this->node, ...$this->node->descendants()] as $element) {
             $for = $element->attribute(Directive::For);
 
-            if ($for !== null && in_array($var, self::loopVars($for), true)) {
+            if ($for !== null && (self::loopVars($for)[0] ?? null) === $var) {
                 return Parser::parseFor($for)->get('iterable')->source();
             }
         }
