@@ -54,4 +54,19 @@ final class ScriptTest extends TestCase
         $this->assertNull((new Script('const busy = ref(props.busy);'))->declaredType('busy'));
         $this->assertNull((new Script('const items = ref([]);'))->declaredType('items'));
     }
+
+    public function test_a_computed_boolean_getter_is_inferred(): void
+    {
+        // The dominant computed shape: a comparison / logical chain — boolean, no generic.
+        $this->assertSame('boolean', (new Script('const isReadOnly = computed(() => schema.value?.readOnly === true);'))->declaredType('isReadOnly'));
+        $this->assertSame('boolean', (new Script('const isEmpty = computed(() => a.value.length === 0 && b.value.length === 0);'))->declaredType('isEmpty'));
+        $this->assertSame('boolean', (new Script('const hidden = computed(() => !visible.value);'))->declaredType('hidden'));
+    }
+
+    public function test_a_computed_with_an_unresolvable_body_stays_unknown(): void
+    {
+        // The body is a bare member/call — sound inference can't type it, so we don't guess.
+        $this->assertNull((new Script('const label = computed(() => schema.value.label);'))->declaredType('label'));
+        $this->assertNull((new Script('const rows = computed(() => items.value.map(toRow));'))->declaredType('rows'));
+    }
 }
