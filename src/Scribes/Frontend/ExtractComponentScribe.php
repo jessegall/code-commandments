@@ -381,7 +381,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
     {
-        $draft->edit($boundary->contentSpan(), self::usage($name, $bindings, $boundary->carried()));
+        $draft->edit($boundary->contentSpan(), self::usage($name, $bindings, $boundary->carried(), $boundary->models()));
         self::import($draft, $boundary->sfc, $component, $name);
     }
 
@@ -392,8 +392,9 @@ final class ExtractComponentScribe extends RepentScribe
      *
      * @param  array<string, string>  $bindings  prop name => the expression to pass
      * @param  array<string, string|null>  $carried  the structural directives to keep here
+     * @param  list<string>  $models  props the child WRITES — bound with `v-model`, not `:`
      */
-    private static function usage(string $name, array $bindings, array $carried = []): string
+    private static function usage(string $name, array $bindings, array $carried = [], array $models = []): string
     {
         $attributes = [];
 
@@ -402,7 +403,9 @@ final class ExtractComponentScribe extends RepentScribe
         }
 
         foreach ($bindings as $prop => $expression) {
-            $attributes[] = ':' . self::kebab($prop) . "=\"{$expression}\"";
+            $attributes[] = in_array($prop, $models, true)
+                ? 'v-model:' . self::kebab($prop) . "=\"{$expression}\""
+                : ':' . self::kebab($prop) . "=\"{$expression}\"";
         }
 
         return $attributes === [] ? "<{$name} />" : "<{$name} " . implode(' ', $attributes) . ' />';
@@ -524,14 +527,21 @@ final class ExtractComponentScribe extends RepentScribe
         $script = new Script($boundary->sfc->scriptContent());
         $types = $this->resolveTypes($boundary, $props, $script, $prefix, $reachProp);
 
-        $defineProps = $props === []
-            ? ''
-            : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: {$types[$p]}", $props)) . " }>();\n";
+        // A prop the chunk WRITES (v-model) is two-way state — a defineModel, not a prop;
+        // Vue forbids writing a plain prop, so it must be split out.
+        $models = array_values(array_intersect($props, $boundary->models()));
+        $readProps = array_values(array_diff($props, $models));
 
-        $imports = self::usedImports($script, $markup . "\n" . $defineProps);
+        $defineModels = implode('', array_map(static fn (string $m): string => "const {$m} = defineModel<{$types[$m]}>('{$m}');\n", $models));
+        $defineProps = $readProps === []
+            ? ''
+            : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: {$types[$p]}", $readProps)) . " }>();\n";
+
+        $scriptSetup = $defineModels . $defineProps;
+        $imports = self::usedImports($script, $markup . "\n" . $scriptSetup);
         $head = $imports === '' ? '' : "{$imports}\n\n";
 
-        return "<script setup lang=\"ts\">\n{$head}{$defineProps}</script>\n\n<template>\n{$markup}\n</template>\n";
+        return "<script setup lang=\"ts\">\n{$head}{$scriptSetup}</script>\n\n<template>\n{$markup}\n</template>\n";
     }
 
     /**
