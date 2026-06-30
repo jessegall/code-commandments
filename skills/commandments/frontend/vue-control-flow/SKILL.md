@@ -34,6 +34,7 @@ The element reads as one thing (content + styling), the `<template>` as another
 ## Rules
 
 - Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag.
+- Never put `v-if` on a `v-for` element; filter in a computed, or wrap the `v-for` in a `<template>` and put the `v-if` on the child.
 - Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.
 
 ## Bad → good
@@ -45,6 +46,18 @@ The element reads as one thing (content + styling), the `<template>` as another
 // Good
 <template v-if="status === 'paid'">
   <span class="badge badge-green">Paid</span>
+</template>
+```
+
+```vue
+// Bad
+<li v-for="tag in tags" v-if="tag.visible" :key="tag.id" class="review-tag">{{ tag.label }}</li>
+
+// Good
+<template v-for="tag in tags" :key="tag.id">
+  <template v-if="tag.visible">
+    <li class="review-tag">{{ tag.label }}</li>
+  </template>
 </template>
 ```
 
@@ -64,11 +77,13 @@ The element reads as one thing (content + styling), the `<template>` as another
 ## When it fires
 
 - `v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>` — `ControlFlowOnElementDetector`
+- `v-for` and `v-if` on the SAME element — the condition is re-evaluated every iteration — `LoopWithConditionDetector`
 - A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`) — `SwitchCaseDetector`
 
 ## Checklist
 
 - [ ] Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag.
+- [ ] Never put `v-if` on a `v-for` element; filter in a computed, or wrap the `v-for` in a `<template>` and put the `v-if` on the child.
 - [ ] Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.
 
 ## Related skills

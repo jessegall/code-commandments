@@ -11,7 +11,8 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/engine-pulse.sh" }
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/engine-pulse.sh" },
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/elegance-pulse.sh" }
         ]
       }
     ]
