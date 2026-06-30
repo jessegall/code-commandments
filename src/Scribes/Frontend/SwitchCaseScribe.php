@@ -51,12 +51,14 @@ final class SwitchCaseScribe extends RepentScribe
                 default => Directive::ElseIf,
             };
             $name = $branch['key'] ?? 'default';
-            $stripped = $this->withoutDirective(substr($span->source, $element->start, $element->end - $element->start), $directive);
+            // The branch source with its structural directive spliced out by its KNOWN span.
+            $stripped = $element->sourceOmitting($span->source, $element->start, $element->end, [$directive]);
 
-            // A branch that is already a <template> becomes the slot itself (don't
-            // nest a second <template>); any other element is wrapped in one.
-            $slots[] = strtolower($element->tag) === 'template'
-                ? "{$indent}    " . preg_replace('/^<template\b/', "<template #{$name}", $stripped, 1)
+            // A branch that is already a <template> becomes the slot itself (don't nest a
+            // second <template>): write the slot name in right after the tag — at the tag's
+            // own length, not by re-scanning for `<template`. Any other element is wrapped.
+            $slots[] = $element->isTemplate()
+                ? "{$indent}    " . self::withSlot($stripped, $element->tag, $name)
                 : "{$indent}    <template #{$name}>{$stripped}</template>";
         }
 
@@ -65,10 +67,13 @@ final class SwitchCaseScribe extends RepentScribe
             . "\n{$indent}</SwitchCase>";
     }
 
-    private function withoutDirective(string $elementSource, string|Directive $directive): string
+    /**
+     * Insert a `#slot` name into a `<template>` opening tag, right after the tag name.
+     */
+    private static function withSlot(string $templateSource, string $tag, string $slot): string
     {
-        $pattern = '/\s+' . preg_quote(Directive::name($directive), '/') . '(?:\s*=\s*"[^"]*"|\s*=\s*\'[^\']*\')?/';
+        $afterTag = strlen('<' . $tag);
 
-        return preg_replace($pattern, '', $elementSource, 1) ?? $elementSource;
+        return substr($templateSource, 0, $afterTag) . " #{$slot}" . substr($templateSource, $afterTag);
     }
 }

@@ -30,7 +30,9 @@ final class WrapControlFlowScribe extends RepentScribe
         foreach ($findings as $element) {
             $span = $element->span();
             $carried = $this->carried($element);
-            $inner = $this->indentInner($this->strip($span->text(), array_keys($carried)));
+            // The element's source with the carried directives spliced out by their KNOWN
+            // spans (the AST write engine), then nested one level into the new <template>.
+            $inner = $this->indentInner($element->sourceOmitting($span->source, $span->start, $span->end, array_keys($carried)));
             $indent = $span->lineIndent();
 
             $draft->edit($span, "<template {$this->attributes($carried)}>\n{$indent}  {$inner}\n{$indent}</template>");
@@ -78,20 +80,6 @@ final class WrapControlFlowScribe extends RepentScribe
         }
 
         return implode(' ', $attributes);
-    }
-
-    /**
-     * The element's source with the given attributes removed from its opening tag.
-     *
-     * @param  list<string>  $attributes
-     */
-    private function strip(string $source, array $attributes): string
-    {
-        foreach ($attributes as $attribute) {
-            $source = preg_replace('/\s+' . preg_quote($attribute, '/') . '(?:\s*=\s*"[^"]*"|\s*=\s*\'[^\']*\')?/', '', $source, 1) ?? $source;
-        }
-
-        return $source;
     }
 
     /**
