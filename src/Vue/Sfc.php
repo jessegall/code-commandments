@@ -106,6 +106,24 @@ final class Sfc
     }
 
     /**
+     * The combined body of EVERY `<script>` block (a component may have both a plain
+     * `<script>` and a `<script setup>`), so imports/types are read whichever block
+     * they live in.
+     */
+    public function scriptContent(): string
+    {
+        $parts = [];
+
+        foreach ($this->blocks as $block) {
+            if ($block->tag === 'script') {
+                $parts[] = $block->content;
+            }
+        }
+
+        return implode("\n", $parts);
+    }
+
+    /**
      * The byte offset where the `<script setup>` body begins (preferring a `setup`
      * block, else any `<script>`) — where a scribe splices a component import. Null
      * when the component has no script block at all.
