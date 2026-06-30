@@ -81,6 +81,26 @@ final class EngineQueryTest extends TestCase
         $this->assertSame('<div class="card">x</div>', $written, 'only the content slice, directive untouched');
     }
 
+    public function test_parse_for_reads_a_v_for_binding_off_the_token_stream(): void
+    {
+        $bare = Parser::parseFor('item in items');
+        $this->assertSame(['item'], $bare->get('aliases'));
+        $this->assertSame('in', $bare->get('keyword'));
+        $this->assertSame('items', $bare->get('iterable')->source());
+
+        // Grouping parens collect their names; the `of` keyword is honoured; the iterable
+        // is a real member expression, not a string.
+        $indexed = Parser::parseFor('(chart, i) of group.charts');
+        $this->assertSame(['chart', 'i'], $indexed->get('aliases'));
+        $this->assertSame('of', $indexed->get('keyword'));
+        $this->assertSame('group.charts', $indexed->get('iterable')->source());
+
+        // A destructuring pattern is a binding, not a usable loop-var name — its inner names
+        // are skipped, the trailing index survives.
+        $destructured = Parser::parseFor('({ id, name }, index) in rows');
+        $this->assertSame(['index'], $destructured->get('aliases'));
+    }
+
     public function test_expr_as_chain_returns_a_pure_member_path_or_null(): void
     {
         $this->assertSame(['order', 'customer', 'name'], Parser::parse('order.customer.name')->asChain());

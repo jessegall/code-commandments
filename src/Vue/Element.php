@@ -138,6 +138,32 @@ class Element
     }
 
     /**
+     * Every binding expression for a directive FAMILY — the directive itself and its arg /
+     * modifier variants (`v-model`, `v-model:title`, `v-model.lazy`). A node knows its own
+     * directives, so the prefix match for the family lives here, not in a detector scanning
+     * attribute names by hand.
+     *
+     * @return list<string>
+     */
+    public function directiveBindings(Directive $directive): array
+    {
+        $prefix = $directive->value;
+        $bindings = [];
+
+        foreach ($this->attributes as $name => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if ($name === $prefix || str_starts_with($name, $prefix . ':') || str_starts_with($name, $prefix . '.')) {
+                $bindings[] = $value;
+            }
+        }
+
+        return $bindings;
+    }
+
+    /**
      * Is this a directive / bound attribute — one that carries a JS EXPRESSION
      * (`:x`, `@e`, `v-if`) rather than a literal string (`class`, `href`)?
      */

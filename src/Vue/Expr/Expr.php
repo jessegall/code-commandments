@@ -27,6 +27,7 @@ final class Expr
     public const string ARRAY = 'array';
     public const string OBJECT = 'object';
     public const string ARROW = 'arrow';
+    public const string FOR = 'for';            // v-for: aliases (in|of) iterable
     public const string UNKNOWN = 'unknown';
 
     /**
