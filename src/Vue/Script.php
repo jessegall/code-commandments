@@ -544,10 +544,11 @@ final class Script
     }
 
     /**
-     * Read `key: Type;` fields from the opening `{` at $i until its matching `}`. A METHOD
-     * member (`name(args): R`) is skipped whole — its parameters are NOT fields, so a param
-     * sharing a field's name (`step` in `goToStep(step: string)` beside `step: Ref<string>`)
-     * can never overwrite the real field.
+     * Read the members of a `{ … }` opening at $i until its matching `}`. A `key: Type`
+     * data field keeps its type; a METHOD member (`name(args): R`) is recorded as the
+     * function type `(args) => R` — and consumed WHOLE, so a parameter sharing a field's
+     * name (`step` in `goToStep(step: string)` beside `step: Ref<string>`) can never leak
+     * out and overwrite the real field.
      *
      * @return array<string, string>
      */
@@ -570,8 +571,9 @@ final class Script
                 $i++;
             }
 
-            // `name(…)` is a method — skip its signature (params + return) to the terminator.
+            // `name(…): R` is a method — its binding-site type is the function `(…) => R`.
             if ($this->isPunct($i, '(')) {
+                $types[$name] = $this->functionType($i) ?? 'unknown';
                 $i = $this->matchingParen($i) + 1;
 
                 while ($i < $count && ! $this->isPunct($i, ';') && ! $this->isPunct($i, '}')) {
