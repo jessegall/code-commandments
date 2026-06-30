@@ -174,6 +174,32 @@ final class Expr
     }
 
     /**
+     * The TS type this expression DENOTES when it is a literal — `false` → `boolean`,
+     * `0` → `number`, `'x'` → `string`, `null`/`undefined` → themselves. Null for anything
+     * that isn't a primitive literal (an identifier, call, array, object — only a real type
+     * checker could resolve those). Lets the script reader type an inferred `ref(false)`
+     * without a generic, instead of falling back to `unknown`.
+     */
+    public function literalType(): ?string
+    {
+        if ($this->kind !== self::LITERAL) {
+            return null;
+        }
+
+        $raw = (string) $this->get('raw');
+        $first = $raw[0] ?? '';
+
+        return match (true) {
+            $raw === 'true', $raw === 'false' => 'boolean',
+            $raw === 'null' => 'null',
+            $raw === 'undefined' => 'undefined',
+            $first === '"', $first === "'", $first === '`' => 'string',
+            is_numeric($raw) => 'number',
+            default => null,
+        };
+    }
+
+    /**
      * @param  list<list<string>>  $chains
      */
     private function gatherChains(array &$chains): void
