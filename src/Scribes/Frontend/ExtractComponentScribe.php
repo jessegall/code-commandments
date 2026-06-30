@@ -76,7 +76,7 @@ final class ExtractComponentScribe extends RepentScribe
         foreach ($this->groups($findings) as $members) {
             $boundary = Boundary::for($members[0]);
             $props = self::withLoopVars($boundary, $boundary->props());
-            $name = self::unique($boundary->name(), $used);
+            $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
             $draft->add($component, self::render($props, $boundary->markup()));
@@ -100,7 +100,7 @@ final class ExtractComponentScribe extends RepentScribe
         foreach ($findings as $finding) {
             $boundary = Boundary::for($finding);
             $props = self::withLoopVars($boundary, $boundary->props());
-            $name = self::unique($boundary->name(), $used);
+            $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
             $draft->add($component, self::render($props, $boundary->markup()));
@@ -122,7 +122,7 @@ final class ExtractComponentScribe extends RepentScribe
             $boundary = Boundary::for($finding);
             [$prefix, $prop] = self::midObject($finding);
             $props = self::withLoopVars($boundary, self::reachProps($boundary, $finding, $prefix, $prop));
-            $name = self::unique($prop !== '' ? ucfirst($prop) . 'Section' : $boundary->name(), $used);
+            $name = self::unique(dirname($finding->file()), $prop !== '' ? ucfirst($prop) . 'Section' : $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
             $markup = $prefix === []
@@ -287,18 +287,22 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
+     * A component name not yet used IN THAT DIRECTORY — two `MetricSection`s in
+     * different folders are both fine (different files); only same-folder siblings
+     * collide and get suffixed.
+     *
      * @param  array<string, true>  $used
      */
-    private static function unique(string $name, array &$used): string
+    private static function unique(string $dir, string $name, array &$used): string
     {
         $candidate = $name;
         $n = 2;
 
-        while (isset($used[$candidate])) {
+        while (isset($used["{$dir}\0{$candidate}"])) {
             $candidate = $name . $n++;
         }
 
-        $used[$candidate] = true;
+        $used["{$dir}\0{$candidate}"] = true;
 
         return $candidate;
     }
