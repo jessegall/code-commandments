@@ -43,6 +43,17 @@ class Element
         return $this->tag === '#text';
     }
 
+    /**
+     * Is this a STATIC text node — real text with no `{{ … }}` interpolation? Decided by the
+     * interpolation parser, not a `{{` string scan: a dynamic title can't name a component.
+     */
+    public function isStaticText(): bool
+    {
+        return $this->isText()
+            && trim($this->text) !== ''
+            && Interpolation::extract($this->text) === [];
+    }
+
     public function isRoot(): bool
     {
         return $this->tag === '#root';

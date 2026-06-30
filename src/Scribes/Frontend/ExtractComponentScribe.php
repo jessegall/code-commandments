@@ -247,7 +247,7 @@ final class ExtractComponentScribe extends RepentScribe
             }
 
             foreach ($element->children as $child) {
-                if ($child->isText() && trim($child->text) !== '' && ! str_contains($child->text, '{{')) {
+                if ($child->isStaticText()) {
                     return trim($child->text);
                 }
             }
