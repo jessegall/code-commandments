@@ -265,6 +265,25 @@ final class Boundary
         return self::loopVars($this->node->attribute(Directive::For));
     }
 
+    /**
+     * The iterable a loop variable ranges over (`group.charts` for `chart`), anywhere
+     * in the boundary — so the variable's type can be the iterable's element type.
+     */
+    public function iterableOf(string $var): ?string
+    {
+        foreach ([$this->node, ...$this->node->descendants()] as $element) {
+            $for = $element->attribute(Directive::For);
+
+            if ($for !== null && in_array($var, self::loopVars($for), true)) {
+                $separator = str_contains($for, ' in ') ? ' in ' : ' of ';
+
+                return trim(substr(strstr($for, $separator) ?: '', strlen($separator)));
+            }
+        }
+
+        return null;
+    }
+
     private function span(): Span
     {
         return new Span($this->sfc->path, $this->sfc->source, $this->node->start, $this->node->end);

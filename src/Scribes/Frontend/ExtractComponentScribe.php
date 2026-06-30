@@ -80,7 +80,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($boundary->sfc, $props, $boundary->markup()));
+            $draft->add($component, self::render($boundary, $props, $boundary->markup()));
 
             foreach ($members as $occurrence) {
                 $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($props));
@@ -104,7 +104,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($boundary->sfc, $props, $boundary->markup()));
+            $draft->add($component, self::render($boundary, $props, $boundary->markup()));
             $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
         }
 
@@ -130,7 +130,7 @@ final class ExtractComponentScribe extends RepentScribe
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            $draft->add($component, self::render($boundary->sfc, $props, $markup));
+            $draft->add($component, self::render($boundary, $props, $markup, $prefix, $prop));
             $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
         }
 
@@ -281,19 +281,117 @@ final class ExtractComponentScribe extends RepentScribe
      *
      * @param  list<string>  $props
      */
-    private static function render(Sfc $sfc, array $props, string $markup): string
+    private static function render(Boundary $boundary, array $props, string $markup, array $prefix = [], string $reachProp = ''): string
     {
-        $script = new Script($sfc->scriptContent());
-        $types = $script->propTypes();
+        $script = new Script($boundary->sfc->scriptContent());
+        $types = self::resolveTypes($boundary, $props, $script, $prefix, $reachProp);
 
         $defineProps = $props === []
             ? ''
-            : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: " . ($types[$p] ?? 'unknown'), $props)) . " }>();\n";
+            : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: {$types[$p]}", $props)) . " }>();\n";
 
         $imports = self::usedImports($script, $markup . "\n" . $defineProps);
         $head = $imports === '' ? '' : "{$imports}\n\n";
 
         return "<script setup lang=\"ts\">\n{$head}{$defineProps}</script>\n\n<template>\n{$markup}\n</template>\n";
+    }
+
+    /**
+     * A real TS type for each prop, from the source's declared prop types: a loop
+     * variable gets its iterable's ELEMENT type, the deep-reach mid-object an indexed
+     * type (`Order['customer']`), a forwarded prop its own type — else `unknown`.
+     *
+     * @param  list<string>  $props
+     * @param  list<string>  $prefix
+     * @return array<string, string>
+     */
+    private static function resolveTypes(Boundary $boundary, array $props, Script $script, array $prefix, string $reachProp): array
+    {
+        $source = $script->propTypes();
+        $types = [];
+
+        foreach ($props as $prop) {
+            $iterable = $boundary->iterableOf($prop);
+
+            if ($prop === $reachProp && $prefix !== []) {
+                $types[$prop] = self::accessType($prefix, $source);
+            } elseif ($iterable !== null && ($segments = self::segments($iterable)) !== null) {
+                $types[$prop] = self::elementType(self::accessType($segments, $source));
+            } else {
+                $types[$prop] = $source[$prop] ?? 'unknown';
+            }
+        }
+
+        return $types;
+    }
+
+    /**
+     * The type of a member-access path off a typed root: `[order, customer]` over
+     * `order: Order` → `Order['customer']`. `unknown` when the root isn't typed.
+     *
+     * @param  list<string>  $segments
+     * @param  array<string, string>  $source
+     */
+    private static function accessType(array $segments, array $source): string
+    {
+        if (! isset($source[$segments[0]])) {
+            return 'unknown';
+        }
+
+        $type = $source[$segments[0]];
+
+        foreach (array_slice($segments, 1) as $segment) {
+            $type = "{$type}['{$segment}']";
+        }
+
+        return $type;
+    }
+
+    /**
+     * The element type of an iterable type: `Agent[]` → `Agent`; otherwise an indexed
+     * access (`Group['charts']` → `Group['charts'][number]`).
+     */
+    private static function elementType(string $type): string
+    {
+        if ($type === 'unknown') {
+            return 'unknown';
+        }
+
+        return str_ends_with($type, '[]') ? substr($type, 0, -2) : "{$type}[number]";
+    }
+
+    /**
+     * A member-access expression as its segments, or null if it isn't a pure chain
+     * (a call / index makes the element type unresolvable here).
+     *
+     * @return list<string>|null
+     */
+    private static function segments(string $expression): ?array
+    {
+        $parts = array_map(trim(...), explode('.', trim($expression)));
+
+        foreach ($parts as $part) {
+            if (! self::isIdentifier($part)) {
+                return null;
+            }
+        }
+
+        return $parts;
+    }
+
+    private static function isIdentifier(string $value): bool
+    {
+        if ($value === '' || (! ctype_alpha($value[0]) && $value[0] !== '_' && $value[0] !== '$')) {
+            return false;
+        }
+
+        for ($i = 1; $i < strlen($value); $i++) {
+            if (! ctype_alnum($value[$i]) && $value[$i] !== '_' && $value[$i] !== '$') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
