@@ -27,6 +27,8 @@ class Element
      * @param  list<Element>  $children
      * @param  int  $start  byte offset of this node's `<` in the SFC source
      * @param  int  $end    byte offset just past this node (after `>` / `</tag>`)
+     * @param  array<string, array{int, int}>  $attributeSpans  name => absolute [start, end) of the
+     *         attribute in the SFC source, so the write engine removes a directive by its span.
      */
     public function __construct(
         public readonly string $tag,
@@ -36,7 +38,59 @@ class Element
         public readonly string $text = '',
         public readonly int $start = 0,
         public readonly int $end = 0,
+        public readonly array $attributeSpans = [],
     ) {}
+
+    /**
+     * The absolute `[start, end)` source span of attribute $name — where the write engine
+     * splices to remove a directive — or null when it isn't present / wasn't lexed with a span.
+     *
+     * @return array{int, int}|null
+     */
+    public function attributeSpan(string|Directive $name): ?array
+    {
+        return $this->attributeSpans[$name instanceof Directive ? $name->value : $name] ?? null;
+    }
+
+    /**
+     * The source slice `[$from, $to)` with each named attribute removed by its KNOWN span
+     * (each swallowing the space before it, so no `<div  >` gap is left). The AST write that
+     * replaces a regex directive-strip: only attributes whose span sits inside the slice are
+     * cut, so a directive carried OUT to a call site (a `<template>`'s, outside its content)
+     * is left untouched.
+     *
+     * @param  list<string|Directive>  $names
+     */
+    public function sourceOmitting(string $source, int $from, int $to, array $names): string
+    {
+        $cuts = [];
+
+        foreach ($names as $name) {
+            $span = $this->attributeSpan($name);
+
+            if ($span === null || $span[0] < $from || $span[1] > $to) {
+                continue;
+            }
+
+            $start = $span[0];
+            while ($start > $from && ($source[$start - 1] === ' ' || $source[$start - 1] === "\t")) {
+                $start--;
+            }
+
+            $cuts[] = [$start, $span[1]];
+        }
+
+        // Splice end-first so earlier offsets stay valid.
+        usort($cuts, static fn (array $a, array $b): int => $b[0] <=> $a[0]);
+
+        $text = substr($source, $from, $to - $from);
+
+        foreach ($cuts as [$start, $end]) {
+            $text = substr($text, 0, $start - $from) . substr($text, $end - $from);
+        }
+
+        return $text;
+    }
 
     public function isText(): bool
     {

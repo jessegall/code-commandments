@@ -278,13 +278,13 @@ final class Boundary
      */
     public function markup(): string
     {
-        $markup = $this->contentSpan()->reindent();
+        // Drop the carried directives by their KNOWN spans, then reindent the result — the
+        // AST write engine, no regex. (For a <template> boundary the directives sit on the
+        // wrapper, OUTSIDE the content span, so they're already gone.)
+        $span = $this->contentSpan();
+        $stripped = $this->node->sourceOmitting($span->source, $span->start, $span->end, array_keys($this->carried()));
 
-        foreach (array_keys($this->carried()) as $directive) {
-            $markup = preg_replace('/\s+' . preg_quote($directive, '/') . '(?:\s*=\s*"[^"]*"|\s*=\s*\'[^\']*\')?/', '', $markup, 1) ?? $markup;
-        }
-
-        return $markup;
+        return Span::reindentText($stripped, $span->column());
     }
 
     /**

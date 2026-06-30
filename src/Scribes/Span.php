@@ -54,16 +54,32 @@ final class Span
     }
 
     /**
+     * The column this span begins on — the width of the indentation before its first line.
+     */
+    public function column(): int
+    {
+        $lineStart = strrpos(substr($this->source, 0, $this->start), "\n");
+
+        return $this->start - ($lineStart === false ? 0 : $lineStart + 1);
+    }
+
+    /**
      * This span's text re-indented to sit cleanly at a new base indent — the original
      * column is stripped from every continuation line, then $base is applied. Lifting
      * a nested block out to the top of a new file without dragging its old indentation.
      */
     public function reindent(string $base = '    '): string
     {
-        $lineStart = strrpos(substr($this->source, 0, $this->start), "\n");
-        $column = $this->start - ($lineStart === false ? 0 : $lineStart + 1);
+        return self::reindentText($this->text(), $this->column(), $base);
+    }
 
-        $lines = explode("\n", $this->text());
+    /**
+     * Re-indent an arbitrary block of $text whose first line sat at $column — so the write
+     * engine can splice a span (e.g. drop a directive) and THEN reindent the result.
+     */
+    public static function reindentText(string $text, int $column, string $base = '    '): string
+    {
+        $lines = explode("\n", $text);
         $out = [$base . $lines[0]];
 
         foreach (array_slice($lines, 1) as $line) {
