@@ -30,6 +30,34 @@ never poke the tree), just over Vue `Element`s instead of PHP nodes. If a fronte
 detector doesn't look like a backend detector, the engine is wrong — fix the engine,
 not the detector. (Frontend scope is the `frontend.canon`, sibling to `backend.canon`.)
 
+**Everything the backend does, the frontend does the same way.** A frontend detector
+follows the identical process: build it AST-first, prove it on the `.vue` self-
+checking fixture (`tests/Fixtures/shop-frontend`), calibrate on the consumers' real
+`.vue`, and curate. The Vue side has the matching layers — `Vue\Codebase` →
+`Vue\Query` → `Vue\ElementMatch` (the template AST), `Vue\Expr\*` (a real JS-
+expression AST: lexer + Pratt parser over binding/interpolation expressions), the
+`Vue\Detector` base (sibling of `Detectors\Detector`, both extend the root
+`Detector`), `Detectors\Frontend\*` detectors, and `Cli\Rewriting\Frontend\*` scribes
+(backend scribes live in `Cli\Rewriting\Backend\*`). Keep that symmetry: a thing
+belongs in the `Backend`/`Frontend` folder of its concern.
+
+### 🚫 NO regex for structure — build an engine tool instead
+
+Reaching for a regex to read code structure (a member chain, a method call, a
+binding, an equality, nesting depth) is almost always the wrong choice — it's the
+hack the backend never makes (it has php-parser). The frontend has its OWN parsers:
+the `Vue\` tokenizer for templates and `Vue\Expr\Parser` for the JS inside bindings.
+**Parse it into the AST and query the AST.** If the predicate you need isn't there,
+add a tool to the engine (a method on `Element` / `Expr`, a selector on the
+`Query`/`Codebase`) so detectors compose it fluently — never scrape it with a regex
+in the detector. Regex is for genuine text/delimiter scanning only (splitting `{{ }}`
+delimiters, lexing tokens) — not for understanding the code. A regex over an
+expression is a smell that the engine is missing a tool; write the tool.
+
+The `#[Sinful]` markers fixture is the spec for backend; the `<!-- @sin Detector -->`
+comment fixture is the spec for frontend. Lean on the fixtures + a focused unit test
+per mechanism, exactly like the backend.
+
 ## ⚠️ Building or changing a detector? LOAD THESE SKILLS FIRST — mandatory
 
 Before you write or touch any detector, load these via the **Skill tool**:

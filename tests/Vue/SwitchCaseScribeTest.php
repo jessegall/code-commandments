@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Vue;
 
-use JesseGall\CodeCommandments\Cli\Rewriting\SwitchCaseScribe;
+use JesseGall\CodeCommandments\Cli\Rewriting\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseDetector;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use PHPUnit\Framework\TestCase;

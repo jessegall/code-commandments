@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Rewriting;
+namespace JesseGall\CodeCommandments\Cli\Rewriting\Frontend;
 
 use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseChain;
 use JesseGall\CodeCommandments\Vue\Codebase;
+use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
@@ -88,7 +89,11 @@ final class SwitchCaseScribe
 
         foreach ($chain->branches as $index => $branch) {
             $element = $branch['element'];
-            $directive = $index === 0 ? 'v-if' : ($branch['key'] === null ? 'v-else' : 'v-else-if');
+            $directive = match (true) {
+                $index === 0 => Directive::If,
+                $branch['key'] === null => Directive::Else,
+                default => Directive::ElseIf,
+            };
             $name = $branch['key'] ?? 'default';
             $stripped = $this->withoutDirective(substr($source, $element->start, $element->end - $element->start), $directive);
 
@@ -106,9 +111,9 @@ final class SwitchCaseScribe
         return substr($source, 0, $start) . $replacement . substr($source, $end);
     }
 
-    private function withoutDirective(string $elementSource, string $directive): string
+    private function withoutDirective(string $elementSource, string|Directive $directive): string
     {
-        $pattern = '/\s+' . preg_quote($directive, '/') . '(?:\s*=\s*"[^"]*"|\s*=\s*\'[^\']*\')?/';
+        $pattern = '/\s+' . preg_quote(Directive::name($directive), '/') . '(?:\s*=\s*"[^"]*"|\s*=\s*\'[^\']*\')?/';
 
         return preg_replace($pattern, '', $elementSource, 1) ?? $elementSource;
     }
