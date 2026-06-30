@@ -33,6 +33,12 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * script, `bootstrap/app.php`, a global helper — there is no class and no
  * constructor to inject into, so a facade is the idiom. Detected by the absence of
  * an enclosing class, not by the file's path or name.
+ *
+ * A `::fake()` call is exempt: `Mail::fake()`/`Bus::fake()`/`Event::fake()` install a
+ * test double by swapping the container binding (`static::swap(new …Fake)`). There is
+ * no instance/contract form — `fake()` exists ONLY as the facade static — so there is
+ * nothing to inject; relocating it merely launders the same call. Same rationale as the
+ * provider exemption: the facade IS the sanctioned mechanism for installing the double.
  */
 final class FacadeCallDetector implements Detector
 {
@@ -50,6 +56,7 @@ final class FacadeCallDetector implements Detector
         return $codebase
             ->whereStaticCall()
             ->where(static fn (AstNode $node): bool => str_starts_with($node->staticCallClass() ?? '', self::FACADE_NAMESPACE))
+            ->reject(static fn (AstNode $node): bool => $node->staticCallMethod() === 'fake')
             ->reject(static fn (AstNode $node): bool => $node->isOutsideClass())
             ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::SERVICE_PROVIDER))
             ->reject(static fn (AstNode $node): bool => EloquentCast::is($codebase, $node->enclosingClassName()))

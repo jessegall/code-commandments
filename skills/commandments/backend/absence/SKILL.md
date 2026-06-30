@@ -82,7 +82,6 @@ If you can't point at one of those, you do **not** have an honest null — go ba
   _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
 - Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
   _Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`._
-- Return an empty collection for "nothing", never `?array`/`array | null`.
 - Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
   _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
@@ -145,26 +144,6 @@ public function runWith(Closure $work, Closure $onRetry): mixed
 
 ```php
 // Bad
-public function topProductIds(int $limit): ?array
-{
-    $ids = $this->orders->topProductIds($limit);
-
-    if ($ids === []) {
-        return null;
-    }
-
-    return $ids;
-}
-
-// Good
-public function bestProductIds(int $limit): array
-{
-    return $this->orders->topProductIds($limit);
-}
-```
-
-```php
-// Bad
 public function locate(string $email): ?Option
 {
     return Option::none();
@@ -181,14 +160,12 @@ public function locateHonestly(string $email): Option
 
 - Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
 - Nullable callback normalised in the body instead of a Null Object default — `NullableCallbackDetector`
-- "Nothing" with a natural empty form returned as `null` (`array | null` → should be `[]`) — `NullableCollectionReturnDetector`
 - `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)` — `OptionAsNullableDetector`
 
 ## Checklist
 
 - [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
 - [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
-- [ ] Return an empty collection for "nothing", never `?array`/`array | null`.
 - [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
 
 ## Related skills

@@ -64,4 +64,45 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
 
         $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
     }
+
+    public function test_exempts_the_schema_declaration_hook_on_mcp_tool_subclasses(): void
+    {
+        // Two structurally-identical schema() hooks: flagged on a plain class, but exempt
+        // when the class is an MCP Tool (schema() is its by-contract field declaration).
+        $body = static fn (string $a, string $b): string => <<<PHP
+            public function schema(\$schema): array {
+                return [
+                    '{$a}' => \$schema->string()->description('one')->required(),
+                    '{$b}' => \$schema->string()->description('two')->required(),
+                    'flag' => \$schema->boolean()->description('three')->required(),
+                    'mode' => \$schema->string()->description('four')->required(),
+                    'count' => \$schema->integer()->description('five')->required(),
+                ];
+            }
+            PHP;
+
+        $plain = <<<PHP
+        <?php
+        class ToolA { {$body('alpha', 'beta')} }
+        class ToolB { {$body('gamma', 'delta')} }
+        PHP;
+
+        $onTool = <<<PHP
+        <?php
+        namespace Laravel\\Mcp\\Server { class Tool {} }
+        namespace App {
+            use Laravel\\Mcp\\Server\\Tool;
+            class ToolA extends Tool { {$body('alpha', 'beta')} }
+            class ToolB extends Tool { {$body('gamma', 'delta')} }
+        }
+        PHP;
+
+        $plainHits = (new NearDuplicateFunctionDetector)->find(Codebase::fromString($plain));
+        $toolHits = (new NearDuplicateFunctionDetector)->find(Codebase::fromString($onTool));
+
+        // On a plain class the near-duplicate schema() pair IS flagged…
+        $this->assertNotSame([], $plainHits);
+        // …but on MCP Tool subclasses the by-contract hook is exempt.
+        $this->assertSame([], $toolHits);
+    }
 }

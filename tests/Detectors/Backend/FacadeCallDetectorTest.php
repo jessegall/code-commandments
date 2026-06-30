@@ -65,4 +65,32 @@ final class FacadeCallDetectorTest extends TestCase
 
         $this->assertSame(['App\\Reporter::log'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_leaves_testing_facade_fake_installers_alone(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        namespace App;
+
+        use Illuminate\Support\Facades\Mail;
+        use Illuminate\Support\Facades\Bus;
+        use Illuminate\Support\Facades\Cache;
+
+        class SandboxRunner
+        {
+            public function run(): void
+            {
+                // ::fake() swaps the container binding — no injectable contract form…
+                Mail::fake();
+                Bus::fake();
+                // …but an ordinary facade reach in the same method is STILL a sin.
+                Cache::get('k');
+            }
+        }
+        PHP;
+
+        $hits = (new FacadeCallDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['App\\SandboxRunner::run'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
 }

@@ -32,6 +32,8 @@ final class ManualHydrationLoopDetector implements Detector
             ->whereStaticCall('from')
             ->where(static fn (AstNode $node): bool => $codebase->extends($node->staticCallClass(), self::DATA))
             ->where(static fn (AstNode $node): bool => $node->isPerItemHydration())
+            ->reject(static fn (AstNode $node): bool => $node->isWithinTolerantCatch())
+            ->reject(static fn (AstNode $node): bool => $node->isKeyedMapAssignment())
             ->get();
     }
 }

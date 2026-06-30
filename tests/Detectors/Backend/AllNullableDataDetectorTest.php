@@ -32,6 +32,14 @@ final class AllNullableDataDetectorTest extends TestCase
             class NotData {
                 public function __construct(public readonly ?string $x = null) {}
             }
+            // an accumulator — every field optional, but non-nullable with a zero
+            // identity; the type tells the truth, so NOT a sin.
+            class Tally extends Data {
+                public function __construct(
+                    public readonly int $read = 0,
+                    public readonly int $skipped = 0,
+                ) {}
+            }
         }
         PHP;
 

@@ -42,4 +42,22 @@ final class FacetService
     {
         return [];
     }
+
+    /**
+     * A JSON-Schema contract shape serialized to a search provider — `type` + the schema
+     * vocabulary, properties keyed by arbitrary user facet names. Not a fixed-field bag,
+     * so NOT this sin (no marker): it can't sensibly become a typed value object.
+     *
+     * @param  array<string, mixed>  $properties
+     * @return array<string, mixed>
+     */
+    public function facetSchema(array $properties): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => $properties,
+            'required' => ['categories'],
+            'additionalProperties' => false,
+        ];
+    }
 }

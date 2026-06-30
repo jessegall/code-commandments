@@ -43,4 +43,46 @@ final class ProductImportMapper
     {
         return ProductData::collect($rows);
     }
+
+    /**
+     * A TOLERANT decoder — each entry is decoded in its own try/catch and a malformed
+     * row is skipped, not fatal. `::collect()` is all-or-nothing (one bad row throws),
+     * so it cannot express the skip — NOT this sin.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, ProductData>
+     */
+    public function tolerant(array $rows): array
+    {
+        $products = [];
+
+        foreach ($rows as $row) {
+            try {
+                $products[] = ProductData::from($row);
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return $products;
+    }
+
+    /**
+     * Builds a KEYED map — keyed by a computed sku, merged into each item. `::collect()`
+     * returns a LIST and cannot key by a computed value, so this is NOT the one-pass
+     * mapping the skill replaces.
+     *
+     * @param  array<string, array<string, mixed>>  $entries
+     * @return array<string, ProductData>
+     */
+    public function keyedBySku(array $entries): array
+    {
+        $catalog = [];
+
+        foreach ($entries as $sku => $entry) {
+            $catalog[$sku] = ProductData::from([...$entry, 'sku' => $sku]);
+        }
+
+        return $catalog;
+    }
 }
