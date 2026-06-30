@@ -18,43 +18,74 @@ final class ComponentLibrary
     /**
      * @param  list<array{path: string, name: string, shape: string, fields: array<string, list<string>>}>  $components
      */
-    private function __construct(private readonly array $components) {}
+    private function __construct(private array $components) {}
 
     public static function from(Codebase $codebase): self
     {
         $components = [];
 
         foreach ($codebase->components() as $sfc) {
-            $root = self::root($sfc);
+            $fingerprint = self::fingerprint($sfc);
 
-            if ($root === null) {
-                continue;
+            if ($fingerprint !== null) {
+                $components[] = $fingerprint;
             }
-
-            $props = (new Script($sfc->scriptContent()))->propTypes();
-            $byPrefix = self::fieldsByPrefix(self::chains($root));
-
-            // keep only the prefixes that are a declared prop (the component's surface)
-            $fields = [];
-            foreach ($byPrefix as $prefix => $set) {
-                if (isset($props[$prefix]) && count($set) >= 2) {
-                    $fields[$prefix] = $set;
-                }
-            }
-
-            if ($fields === []) {
-                continue;
-            }
-
-            $components[] = [
-                'path' => $sfc->path,
-                'name' => self::componentName($sfc->path),
-                'shape' => $root->shapeSignature(),
-                'fields' => $fields,
-            ];
         }
 
         return new self($components);
+    }
+
+    /**
+     * Teach the library about a component the scribe just DRAFTED — so the next finding in
+     * the same run reuses it instead of creating an identical duplicate (the `Foo`/`Foo2`
+     * bug). The source is fingerprinted exactly as an on-disk component would be, so reuse is
+     * consistent whether the component existed before the run or was created during it.
+     */
+    public function register(string $path, string $source): void
+    {
+        $fingerprint = self::fingerprint(Sfc::parse($source, $path));
+
+        if ($fingerprint !== null) {
+            $this->components[] = $fingerprint;
+        }
+    }
+
+    /**
+     * One component's reuse fingerprint — its root skeleton plus the field-set it displays
+     * per declared prop — or null when it isn't a single-rooted component that surfaces a
+     * matchable object (≥2 fields off a prop).
+     *
+     * @return array{path: string, name: string, shape: string, fields: array<string, list<string>>}|null
+     */
+    private static function fingerprint(Sfc $sfc): ?array
+    {
+        $root = self::root($sfc);
+
+        if ($root === null) {
+            return null;
+        }
+
+        $props = (new Script($sfc->scriptContent()))->propTypes();
+        $byPrefix = self::fieldsByPrefix(self::chains($root));
+
+        // keep only the prefixes that are a declared prop (the component's surface)
+        $fields = [];
+        foreach ($byPrefix as $prefix => $set) {
+            if (isset($props[$prefix]) && count($set) >= 2) {
+                $fields[$prefix] = $set;
+            }
+        }
+
+        if ($fields === []) {
+            return null;
+        }
+
+        return [
+            'path' => $sfc->path,
+            'name' => self::componentName($sfc->path),
+            'shape' => $root->shapeSignature(),
+            'fields' => $fields,
+        ];
     }
 
     /**

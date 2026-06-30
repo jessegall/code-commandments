@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Detectors\Frontend\DeepDataReachDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector;
 use JesseGall\CodeCommandments\Vue\Codebase;
+use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -199,6 +200,26 @@ final class ExtractComponentScribeTest extends TestCase
 
         $this->assertContains("{$dir}/DataSection.vue", $paths);
         $this->assertContains("{$dir}/DataSection2.vue", $paths);
+    }
+
+    public function test_identical_extractions_in_one_directory_reuse_one_component(): void
+    {
+        // Two sibling files with the SAME extractable block. The first creates
+        // CustomerSection; the second must REUSE it (the library learns about a component
+        // the moment it's drafted, mid-run) — not create a CustomerSection2 duplicate.
+        $dir = $this->tempDir();
+        $filler = str_repeat("  <p>row</p>\n", 55);
+        $file = "<template>\n  <div>\n{$filler}  <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n";
+        file_put_contents("{$dir}/PanelA.vue", $file);
+        file_put_contents("{$dir}/PanelB.vue", $file);
+
+        $detector = new DeepDataReachDetector();
+        $codebase = Codebase::scan($dir);
+        $scribe = $detector->scribe()->withLibrary(ComponentLibrary::from($codebase));
+        $paths = array_keys($scribe->rewrite($detector->find($codebase)));
+
+        $this->assertContains("{$dir}/CustomerSection.vue", $paths);
+        $this->assertEmpty(preg_grep('/CustomerSection2\.vue$/', $paths), 'the identical block must reuse, not duplicate into CustomerSection2');
     }
 
     private function deepComponent(string $leaf): string
