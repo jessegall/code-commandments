@@ -314,11 +314,11 @@ final class ExtractComponentScribe extends RepentScribe
             $iterable = $boundary->iterableOf($prop);
 
             if ($prop === $reachProp && $prefix !== []) {
-                $types[$prop] = self::accessType($prefix, $source);
+                $types[$prop] = self::accessType($prefix, $source, $script);
             } elseif ($iterable !== null && ($segments = self::segments($iterable)) !== null) {
-                $types[$prop] = self::elementType(self::accessType($segments, $source));
+                $types[$prop] = self::elementType(self::accessType($segments, $source, $script));
             } else {
-                $types[$prop] = $source[$prop] ?? 'unknown';
+                $types[$prop] = $source[$prop] ?? $script->declaredType($prop) ?? 'unknown';
             }
         }
 
@@ -326,19 +326,20 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
-     * The type of a member-access path off a typed root: `[order, customer]` over
-     * `order: Order` → `Order['customer']`. `unknown` when the root isn't typed.
+     * The type of a member-access path off its root: `[order, customer]` → `Order['customer']`,
+     * where the root's type is a declared prop OR a traced local. `unknown` if the root
+     * can't be typed.
      *
      * @param  list<string>  $segments
      * @param  array<string, string>  $source
      */
-    private static function accessType(array $segments, array $source): string
+    private static function accessType(array $segments, array $source, Script $script): string
     {
-        if (! isset($source[$segments[0]])) {
+        $type = $source[$segments[0]] ?? $script->declaredType($segments[0]);
+
+        if ($type === null) {
             return 'unknown';
         }
-
-        $type = $source[$segments[0]];
 
         foreach (array_slice($segments, 1) as $segment) {
             $type = "{$type}['{$segment}']";

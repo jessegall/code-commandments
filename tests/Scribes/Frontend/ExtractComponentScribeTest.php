@@ -128,6 +128,21 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString("import type { Order } from '@/types';", $component);
     }
 
+    public function test_traces_a_local_computed_to_type_a_loop_variable(): void
+    {
+        // `groups` isn't a prop — it's `const groups = computed<Group[]>(…)`. Tracing
+        // that declaration types the `group` loop variable as `Group`.
+        $src = "<script setup lang=\"ts\">\nimport type { Group } from '@/types';\nconst groups = computed<Group[]>(() => []);\n</script>\n"
+            . "<template>\n  <ul>\n"
+            . '    <li v-for="group in groups" :key="group.id">' . str_repeat('<div>', 11) . '{{ group.name }}' . str_repeat('</div>', 11) . "</li>\n"
+            . "    <li class=\"footer\">end</li>\n"
+            . "  </ul>\n</template>\n";
+
+        $components = $this->components($this->extract(new DeepNestedDetector, $src));
+
+        $this->assertStringContainsString('group: Group', reset($components));
+    }
+
     public function test_types_a_loop_variable_as_the_iterable_element_type(): void
     {
         // `interface Props { agents: Agent[] }` → a v-for="agent in agents" list item
