@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\NewDataObjectScribe;
 
 /**
  * Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the
@@ -24,13 +26,18 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * A `new` in PARAMETER-DEFAULT position (`function f(Summary $s = new Summary())`)
  * is exempt — the one place the skill permits `new` regardless of shape.
  */
-final class NewDataObjectDetector implements Detector
+final class NewDataObjectDetector implements Detector, Repentable
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
     public function sin(): Sin
     {
         return new NewDataObject();
+    }
+
+    public function scribe(): string
+    {
+        return NewDataObjectScribe::class;
     }
 
     public function find(Codebase $codebase): array

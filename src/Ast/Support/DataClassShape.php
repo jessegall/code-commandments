@@ -43,9 +43,70 @@ final class DataClassShape
     ];
 
     /**
+     * Attributes that REMAP the input key a property is hydrated from — so `::from()`
+     * expects the mapped name, not the PHP property name. A `new Foo(prop: …)` → `Foo::from(
+     * ['prop' => …])` rewrite is only sound when NONE of these are in play (a value cast like
+     * `WithCast` keeps the key, so it stays safe).
+     */
+    private const array NAME_MAPPING_ATTRIBUTES = [
+        'MapInputName',
+        'MapName',
+    ];
+
+    /**
      * @param  array<string, Class_>  $classes  FQCN => declaration
      */
     private function __construct(private readonly array $classes) {}
+
+    /**
+     * The class declaration for $fqcn if it lives in the scanned codebase, else null —
+     * a fixer that can't see the declaration can't prove its rewrite safe.
+     */
+    public function classFor(?string $fqcn): ?Class_
+    {
+        return $fqcn === null ? null : ($this->classes[ltrim($fqcn, '\\')] ?? null);
+    }
+
+    /**
+     * Does the named class (or an ancestor) REMAP any input name — a class-level mapper or a
+     * `MapInputName`/`MapName` on any property or promoted param? If so, `::from()` keys by the
+     * mapped name, so a property-name-keyed rewrite would silently mismap; the fixer must skip.
+     *
+     * @param  array<string, true>  $seen  cycle guard across the parent walk
+     */
+    public function remapsInputNames(?string $fqcn, array $seen = []): bool
+    {
+        if ($fqcn === null) {
+            return false;
+        }
+
+        $fqcn = ltrim($fqcn, '\\');
+        $class = $this->classes[$fqcn] ?? null;
+
+        if ($class === null || isset($seen[$fqcn])) {
+            return false;
+        }
+
+        $seen[$fqcn] = true;
+
+        if ($this->hasMappingAttribute($class->attrGroups)) {
+            return true;
+        }
+
+        foreach ($class->getProperties() as $property) {
+            if ($this->hasMappingAttribute($property->attrGroups)) {
+                return true;
+            }
+        }
+
+        foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+            if ($this->hasMappingAttribute($param->attrGroups)) {
+                return true;
+            }
+        }
+
+        return $class->extends instanceof Name && $this->remapsInputNames($class->extends->toString(), $seen);
+    }
 
     public static function forCodebase(Codebase $codebase): self
     {
@@ -120,9 +181,26 @@ final class DataClassShape
      */
     private function hasRichAttribute(array $groups): bool
     {
+        return $this->hasAttribute($groups, self::RICH_ATTRIBUTES);
+    }
+
+    /**
+     * @param  list<AttributeGroup>  $groups
+     */
+    private function hasMappingAttribute(array $groups): bool
+    {
+        return $this->hasAttribute($groups, self::NAME_MAPPING_ATTRIBUTES);
+    }
+
+    /**
+     * @param  list<AttributeGroup>  $groups
+     * @param  list<string>  $names
+     */
+    private function hasAttribute(array $groups, array $names): bool
+    {
         foreach ($groups as $group) {
             foreach ($group->attrs as $attribute) {
-                if (in_array(self::shortName($attribute->name->toString()), self::RICH_ATTRIBUTES, true)) {
+                if (in_array(self::shortName($attribute->name->toString()), $names, true)) {
                     return true;
                 }
             }

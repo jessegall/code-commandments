@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\ManualHydrationLoop;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\ManualHydrationLoopScribe;
 
 /**
  * `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/
@@ -17,13 +19,18 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * `#[DataCollectionOf]` property plus `::collect()`. The loop/map is the mapping
  * that belongs to the framework. Points at spatie-data.
  */
-final class ManualHydrationLoopDetector implements Detector
+final class ManualHydrationLoopDetector implements Detector, Repentable
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
     public function sin(): Sin
     {
         return new ManualHydrationLoop();
+    }
+
+    public function scribe(): string
+    {
+        return ManualHydrationLoopScribe::class;
     }
 
     public function find(Codebase $codebase): array
