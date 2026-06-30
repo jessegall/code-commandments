@@ -164,11 +164,12 @@ final class Script
     }
 
     /**
-     * The names declared as LOCALS in the script — `const`/`let`/`var`, both simple
-     * (`const x = …`) and destructured (`const { a, b } = …` → `a`, `b`, the aliased binding
-     * for `{ a: b }`). These SHADOW a same-named prop: `const modelValue = useVModel(props,
-     * 'modelValue')` makes the template's `modelValue` the writable local, not the read-only
-     * prop — so a detector reasoning about prop writes can exclude them.
+     * The names declared as LOCALS in the script — `const`/`let`/`var` (simple and
+     * destructured `{ a, b }` / aliased `{ a: b }`), plus `function name` declarations. These
+     * are the parent `<script setup>` bindings: a same-named one SHADOWS a prop (`const
+     * modelValue = useVModel(props, 'modelValue')` is the writable local, not the prop), and a
+     * `function`/arrow among them is a callable the template may reference — what an extraction
+     * must rewire as an emit rather than leave dangling.
      *
      * @return list<string>
      */
@@ -178,6 +179,13 @@ final class Script
         $count = count($this->tokens);
 
         for ($i = 0; $i < $count; $i++) {
+            // `function name(…)` / `async function name(…)` — a declared callable.
+            if ($this->isId($i, 'function') && ($this->tokens[$i + 1]['kind'] ?? null) === Token::IDENTIFIER) {
+                $names[] = $this->tokens[$i + 1]['value'];
+
+                continue;
+            }
+
             if (! $this->isDeclarator($i) || ($this->tokens[$i + 1] ?? null) === null) {
                 continue;
             }

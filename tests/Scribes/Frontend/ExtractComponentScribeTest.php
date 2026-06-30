@@ -351,6 +351,50 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('<slot :name="name" v-bind="slotProps" />', $callSite);
     }
 
+    public function test_a_handler_call_to_a_parent_function_is_forwarded_as_an_emit(): void
+    {
+        // Issue #257: a handler that CALLS a parent-local function — `@click="copyJson('nodes')"`
+        // — was lifted verbatim, but `copyJson` is undefined in the child, so the button became a
+        // silent no-op. It must become `$emit('copyJson', 'nodes')` in the child, a `defineEmits`
+        // declaration there, and `@copy-json="copyJson"` at the call site.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>Export</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<div class="body"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div>'
+            . '<DialogFooter><Button @click="copyJson(\'nodes\')">Copy</Button></DialogFooter></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nfunction copyJson(scope: string) { navigator.clipboard.writeText(scope); }\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = $this->components($files);
+
+        $this->assertNotEmpty($created, 'the dialog should be extracted');
+        $component = reset($created);
+
+        $this->assertStringContainsString("@click=\"\$emit('copyJson', 'nodes')\"", $component, 'the handler call becomes an emit');
+        $this->assertStringContainsString('defineEmits<{ copyJson: [unknown] }>();', $component, 'the event is declared');
+
+        $this->assertStringContainsString('@copy-json="copyJson"', $files['component.vue'], 'the call site re-binds the event to the parent function');
+    }
+
+    public function test_a_parent_function_reached_outside_a_clean_handler_refuses_extraction(): void
+    {
+        // A parent function used in an interpolation (not a forwardable handler) can't be emitted
+        // up — `{{ formatBlurb() }}` would dangle as undefined in the child. The extraction must
+        // refuse rather than produce a broken component.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>Export</DialogTitle><DialogDescription>{{ formatBlurb() }}</DialogDescription></DialogHeader>'
+            . '<div class="body"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div>'
+            . '<DialogFooter><Button>OK</Button></DialogFooter></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nfunction formatBlurb() { return 'x'; }\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+
+        $this->assertEmpty($this->components($files), 'an un-forwardable parent reach must refuse the extraction');
+    }
+
     public function test_a_multi_loop_container_is_not_named_after_one_of_its_loops(): void
     {
         // A dialog containing TWO v-fors is a section/dialog, not "a list" — naming it

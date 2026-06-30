@@ -151,6 +151,10 @@ final class ExtractComponentScribe extends RepentScribe
         foreach ($this->groups($findings) as $members) {
             $boundary = Boundary::for($members[0]);
 
+            if (! $boundary->extractable()) {
+                continue;
+            }
+
             if (($reuse = $this->library?->match($boundary)) !== null) {
                 foreach ($members as $occurrence) {
                     $this->placeReuse($draft, Boundary::for($occurrence), $reuse);
@@ -186,6 +190,10 @@ final class ExtractComponentScribe extends RepentScribe
         foreach ($findings as $finding) {
             $boundary = Boundary::for($finding);
 
+            if (! $boundary->extractable()) {
+                continue;
+            }
+
             if ($this->reused($draft, $boundary)) {
                 continue;
             }
@@ -215,6 +223,10 @@ final class ExtractComponentScribe extends RepentScribe
 
         foreach ($findings as $finding) {
             $boundary = Boundary::for($finding);
+
+            if (! $boundary->extractable()) {
+                continue;
+            }
 
             if ($this->reused($draft, $boundary)) {
                 continue;
@@ -308,6 +320,10 @@ final class ExtractComponentScribe extends RepentScribe
         foreach ($findings as $finding) {
             $boundary = Boundary::for($finding);
 
+            if (! $boundary->extractable()) {
+                continue;
+            }
+
             if ($this->reused($draft, $boundary)) {
                 continue;
             }
@@ -381,7 +397,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
     {
-        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->rendersSlots(), $boundary->contentSpan()->column());
+        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->rendersSlots(), $boundary->contentSpan()->column(), array_keys($boundary->emitEvents()));
         $draft->edit($boundary->contentSpan(), $usage);
         self::import($draft, $boundary->sfc, $component, $name);
     }
@@ -396,8 +412,9 @@ final class ExtractComponentScribe extends RepentScribe
      * @param  list<string>  $models  props the child WRITES — bound with `v-model`, not `:`
      * @param  bool  $forwardsSlots  the chunk renders `<slot>`s — forward the host's slots
      * @param  int  $column  the call site's indentation, for the slot-forwarding block
+     * @param  list<string>  $emits  events the child emits — the parent re-binds each to its own function
      */
-    private static function usage(string $name, array $bindings, array $carried = [], array $models = [], bool $forwardsSlots = false, int $column = 0): string
+    private static function usage(string $name, array $bindings, array $carried = [], array $models = [], bool $forwardsSlots = false, int $column = 0, array $emits = []): string
     {
         $attributes = [];
 
@@ -409,6 +426,12 @@ final class ExtractComponentScribe extends RepentScribe
             $attributes[] = in_array($prop, $models, true)
                 ? 'v-model:' . self::kebab($prop) . "=\"{$expression}\""
                 : ':' . self::kebab($prop) . "=\"{$expression}\"";
+        }
+
+        // A handler call that became an `$emit` in the child is re-bound to the original
+        // parent function here (`@copy-json="copyJson"`), closing the loop.
+        foreach ($emits as $event) {
+            $attributes[] = '@' . self::kebab($event) . "=\"{$event}\"";
         }
 
         $open = $attributes === [] ? "<{$name}" : "<{$name} " . implode(' ', $attributes);
@@ -555,11 +578,37 @@ final class ExtractComponentScribe extends RepentScribe
             ? ''
             : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: {$types[$p]}", $readProps)) . " }>();\n";
 
-        $scriptSetup = $defineModels . $defineProps;
+        // Handler calls to a parent function are forwarded as emits ({@see Boundary::emits}); the
+        // child declares them so `$emit` in the lifted markup is typed.
+        $defineEmits = self::defineEmits($boundary->emitEvents());
+
+        $scriptSetup = $defineModels . $defineProps . $defineEmits;
         $imports = self::usedImports($script, $markup . "\n" . $scriptSetup);
         $head = $imports === '' ? '' : "{$imports}\n\n";
 
         return "<script setup lang=\"ts\">\n{$head}{$scriptSetup}</script>\n\n<template>\n{$markup}\n</template>\n";
+    }
+
+    /**
+     * The `defineEmits<{ … }>()` declaration for the events the child forwards, each typed by
+     * its arity — `['copyJson' => 1]` → `defineEmits<{ copyJson: [unknown] }>();`. The lifted
+     * markup calls the built-in `$emit`, so no binding is captured; this only types the events.
+     *
+     * @param  array<string, int>  $events
+     */
+    private static function defineEmits(array $events): string
+    {
+        if ($events === []) {
+            return '';
+        }
+
+        $signatures = [];
+
+        foreach ($events as $name => $arity) {
+            $signatures[] = "{$name}: [" . implode(', ', array_fill(0, $arity, 'unknown')) . ']';
+        }
+
+        return 'defineEmits<{ ' . implode('; ', $signatures) . " }>();\n";
     }
 
     /**
