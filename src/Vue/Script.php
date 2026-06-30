@@ -115,6 +115,43 @@ final class Script
     }
 
     /**
+     * The first string argument of a call to $callee — `import.meta.glob('./Pages/**\/*.vue')`
+     * via `callStringArg('glob')` → `./Pages/**\/*.vue`. A generic between the callee and `(`
+     * (`glob<T>(…)`) is stepped over. Null when there's no such call. Reads the Inertia page
+     * glob (and the like) off the AST, not by scraping the entry file.
+     */
+    public function callStringArg(string $callee): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isId($i, $callee)) {
+                continue;
+            }
+
+            $open = $i + 1;
+
+            while ($open < $count && ! $this->isPunct($open, '(')) {
+                $open++; // step over a `<Generic>` between the callee and its argument list
+            }
+
+            if ($open >= $count) {
+                continue;
+            }
+
+            $close = $this->matchingParen($open);
+
+            for ($k = $open + 1; $k < $close; $k++) {
+                if ($this->tokens[$k]['kind'] === 'string') {
+                    return $this->unquoteString($this->tokens[$k]['value']);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * The fields of an `interface`/`type` DECLARED in this script — `{ a: T; m(): R }` →
      * `['a' => 'T', 'm' => '() => R']`. Empty when the type isn't an object shape declared
      * here (an enum union, or imported/re-exported — {@see TypeResolver} follows those).
