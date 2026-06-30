@@ -22,10 +22,12 @@ final class Query
     private array $filters = [];
 
     /**
+     * @param  Closure(): list<array{Element, Sfc}>  $nodes  the [element, owning component]
+     *         pairs this query draws from — the whole codebase, or one component's subtree
      * @param  Closure(Element): bool  $selector
      */
     public function __construct(
-        private readonly Codebase $codebase,
+        private readonly Closure $nodes,
         private readonly Closure $selector,
     ) {}
 
@@ -59,6 +61,18 @@ final class Query
         $directive = Directive::name($name);
 
         $this->filters[] = static fn (ElementMatch $match): bool => $match->hasAttribute($directive);
+
+        return $this;
+    }
+
+    /**
+     * Keep elements carrying a directive FAMILY — the directive or any of its arg /
+     * modifier variants (`v-model`, `v-model:title`, `v-model.lazy`). Composes the node's
+     * own {@see Element::directiveBindings} so the family match lives on the AST.
+     */
+    public function withDirectiveFamily(Directive $directive): self
+    {
+        $this->filters[] = static fn (ElementMatch $match): bool => $match->directiveBindings($directive) !== [];
 
         return $this;
     }
@@ -155,7 +169,7 @@ final class Query
     {
         $matches = [];
 
-        foreach ($this->codebase->nodes() as [$element, $sfc]) {
+        foreach (($this->nodes)() as [$element, $sfc]) {
             if (! ($this->selector)($element)) {
                 continue;
             }
