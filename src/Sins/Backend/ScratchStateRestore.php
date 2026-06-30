@@ -14,7 +14,8 @@ final class ScratchStateRestore extends Sin
         parent::__construct(
             name: 'scratch-state-restore',
             skill: TypeHonesty::class,
-            description: "Scratch state on `\$this` — a method that saves one of its own fields to a local and restores it (`\$prev = \$this->scope; … \$this->scope = \$prev`), the field really a per-call input"
+            description: "Scratch state on `\$this` — a method that saves one of its own fields to a local and restores it (`\$prev = \$this->scope; … \$this->scope = \$prev`), the field really a per-call input",
+            rule: "Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state."
         );
     }
 }

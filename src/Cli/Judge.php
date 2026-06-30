@@ -7,8 +7,11 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
+use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 
 /**
  * `commandments judge [path] [--skill=NAME] [--sin=NAME] [--changes] [--branch[=BASE]] [--parallel=N] [--list]`
@@ -47,9 +50,10 @@ final class Judge
             return 2;
         }
 
-        $detectors = $this->select($options->skill, $options->sin);
+        $detectors = $this->select(Catalog::backend(), $options->skill, $options->sin);
+        $frontend = $this->select(Catalog::frontend(), $options->skill, $options->sin);
 
-        if ($detectors === []) {
+        if ($detectors === [] && $frontend === []) {
             fwrite(STDERR, "No detector matched --skill={$options->skill} --sin={$options->sin}\n");
 
             return 2;
@@ -63,14 +67,45 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options->path, $options->pathGiven, $detectors, $options->exclude, $options->checklist, $scope, $options->parallel, $options->benchmark);
+        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $options->checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands($args, $options));
     }
 
     /**
-     * @param  list<Detector>  $detectors
+     * The `repent` command (scope and all) for each auto-fixable sin — a {@see Repentable}
+     * detector's, so the report can advertise the one-liner that fixes it. The scope
+     * mirrors this judge run: the same path and the same `--changes`/`--branch` flag.
+     *
+     * @return array<string, string>  sin name => repent command
+     */
+    private function fixCommands(array $args, JudgeOptions $options): array
+    {
+        $scope = $options->pathGiven ? [$options->path] : [];
+
+        foreach ($args as $arg) {
+            if (in_array($arg, ['--changes', '--git', '--branch'], true) || str_starts_with($arg, '--branch=')) {
+                $scope[] = $arg;
+            }
+        }
+
+        $prefix = $scope === [] ? '' : implode(' ', $scope) . ' ';
+        $commands = [];
+
+        foreach (Catalog::frontend() as $detector) {
+            if ($detector instanceof Repentable) {
+                $name = $detector->sin()->name();
+                $commands[$name] = "vendor/bin/commandments repent {$prefix}--sin={$name}";
+            }
+        }
+
+        return $commands;
+    }
+
+    /**
+     * @param  list<Detector>  $detectors  backend (PHP) detectors
+     * @param  list<\JesseGall\CodeCommandments\Vue\Detector>  $frontend  Vue detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, bool $pathGiven, array $detectors, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark): int
+    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable): int
     {
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
@@ -110,6 +145,10 @@ final class Judge
             $progress->finish();
         }
 
+        // The Vue detectors run over the SAME roots — `judge` is engine-agnostic, so a
+        // path with `.vue` files reports its frontend sins alongside the backend ones.
+        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend));
+
         $findings = $this->keep($findings, $exclude, $scope);
 
         if ($findings === []) {
@@ -119,7 +158,7 @@ final class Judge
             return 0;
         }
 
-        $report = new SinReport($path, $findings);
+        $report = new SinReport($path, $findings, $fixable);
         $this->line($report->console());
 
         if ($checklist !== null) {
@@ -192,7 +231,8 @@ final class Judge
         $bySkill = [];
 
         foreach (Catalog::all() as $detector) {
-            $bySkill[$detector->sin()->slug()][] = $this->shortName($detector);
+            $parts = explode('\\', $detector::class);
+            $bySkill[$detector->sin()->slug()][] = end($parts);
         }
 
         ksort($bySkill);
@@ -209,11 +249,43 @@ final class Judge
     }
 
     /**
+     * The Vue detectors' findings over the roots — scanned once, reduced to the same
+     * lightweight {@see Finding}s the backend produces (a Vue {@see ElementMatch} already
+     * knows its `file:line` and scope).
+     *
+     * @param  string|list<string>  $roots
+     * @param  list<\JesseGall\CodeCommandments\Vue\Detector>  $frontend
+     * @return list<Finding>
+     */
+    private function frontendFindings(string|array $roots, array $frontend): array
+    {
+        if ($frontend === []) {
+            return [];
+        }
+
+        $codebase = VueCodebase::scan($roots);
+        $findings = [];
+
+        foreach ($frontend as $detector) {
+            $sin = $detector->sin();
+            $parts = explode('\\', $detector::class);
+            $short = end($parts);
+
+            foreach ($detector->find($codebase) as $match) {
+                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope());
+            }
+        }
+
+        return $findings;
+    }
+
+    /**
+     * @param  list<Detector>  $detectors
      * @return list<Detector>
      */
-    private function select(?string $skill, ?string $sin): array
+    private function select(array $detectors, ?string $skill, ?string $sin): array
     {
-        return array_values(array_filter(Catalog::all(), static function (Detector $candidate) use ($skill, $sin): bool {
+        return array_values(array_filter($detectors, static function (RootDetector $candidate) use ($skill, $sin): bool {
             if ($skill !== null && $candidate->sin()->slug() !== $skill) {
                 return false;
             }

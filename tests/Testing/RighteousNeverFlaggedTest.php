@@ -35,7 +35,7 @@ final class RighteousNeverFlaggedTest extends TestCase
         $codebase = Codebase::scan(self::FIXTURE);
         $righteous = SinMarkers::in($codebase, 'Righteous');
 
-        foreach (Catalog::all() as $detector) {
+        foreach (Catalog::backend() as $detector) {
             $this->assertNotSame(
                 [],
                 $this->forDetector($righteous, $detector),
@@ -51,7 +51,7 @@ final class RighteousNeverFlaggedTest extends TestCase
 
         $violations = [];
 
-        foreach (Catalog::all() as $detector) {
+        foreach (Catalog::backend() as $detector) {
             foreach ($detector->find($codebase) as $finding) {
                 foreach ($righteous as $marker) {
                     if ($marker->covers($finding->enclosingClassName() ?? '(file)', $finding->enclosingFunctionName())) {

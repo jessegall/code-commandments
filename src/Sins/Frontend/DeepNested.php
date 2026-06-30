@@ -14,7 +14,8 @@ final class DeepNested extends Sin
         parent::__construct(
             name: 'deep-nested',
             skill: VueComponents::class,
-            description: "Template markup nested far too deep — extract a subtree as its own component"
+            description: "Template markup nested far too deep — extract a subtree as its own component",
+            rule: "Extract a far-too-deeply-nested subtree into its own component."
         );
     }
 }

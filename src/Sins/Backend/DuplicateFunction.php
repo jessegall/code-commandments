@@ -14,7 +14,8 @@ final class DuplicateFunction extends Sin
         parent::__construct(
             name: 'duplicate-function',
             skill: FixAtTheSource::class,
-            description: "Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)"
+            description: "Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)",
+            rule: "Extract copy-pasted code — two functions with an identical AST must become one."
         );
     }
 }

@@ -14,11 +14,21 @@ use JesseGall\CodeCommandments\Detector as RootDetector;
 final class Catalog
 {
     /**
-     * The backend (PHP AST) detectors — what `judge` runs over a PHP codebase.
+     * Every detector, both engines — backend then frontend.
      *
      * @return list<Detector>
      */
     public static function all(): array
+    {
+        return [...self::backend(), ...self::frontend()];
+    }
+
+    /**
+     * The backend (PHP AST) detectors — run over an {@see \JesseGall\CodeCommandments\Ast\Codebase}.
+     *
+     * @return list<Detector>
+     */
+    public static function backend(): array
     {
         return self::discover('Backend');
     }

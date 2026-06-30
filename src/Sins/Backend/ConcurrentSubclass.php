@@ -14,7 +14,9 @@ final class ConcurrentSubclass extends Sin
         parent::__construct(
             name: 'concurrent-subclass',
             skill: ConcurrentState::class,
-            description: "Class `extends Concurrent` instead of composing `Concurrent<self>`"
+            description: "Class `extends Concurrent` instead of composing `Concurrent<self>`",
+            rule: "Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.",
+            suggestion: "Compose `Concurrent<self>` behind a `::for(\$id)` factory."
         );
     }
 }

@@ -23,7 +23,7 @@ use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 $root = dirname(__DIR__);
 $check = in_array('--check', $argv, true);
 
-$examples = FixtureExamples::extract(Codebase::scan("{$root}/tests/Fixtures/backend"), Detectors::all())
+$examples = FixtureExamples::extract(Codebase::scan("{$root}/tests/Fixtures/backend"), Detectors::backend())
     + VueFixtureExamples::extract(VueCodebase::scan("{$root}/tests/Fixtures/frontend"), Detectors::frontend());
 
 $renderer = new SkillRenderer();

@@ -14,7 +14,9 @@ final class EnumValueMatch extends Sin
         parent::__construct(
             name: 'enum-value-match',
             skill: EnumsWithBehaviour::class,
-            description: "`match`/`switch` over an enum's `->value` at a call site (homeless method)"
+            description: "`match`/`switch` over an enum's `->value` at a call site (homeless method)",
+            rule: "Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.",
+            suggestion: "A method on the backed enum (`\$x->label()`, `\$x->isPaid()`)."
         );
     }
 }

@@ -5,41 +5,56 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Skills;
 
 /**
- * One teaching skill — the source of truth its `SKILL.md` is GENERATED from. It owns
- * the entry descriptor ({@see $title}, frontmatter {@see $description}, the `>`
- * {@see $tagline}), the teaching {@see body} (principle + forms, authored once as a
- * nowdoc), and the {@see related} footer. The "Bad → good" and "When it fires"
- * sections are NOT stored here — they are projected from the skill's
- * {@see \JesseGall\CodeCommandments\Sins\Sin}s (each sin owns its bad→good example and
- * one-line description), so the docs can't drift from the detectors.
+ * One teaching skill — the source of truth its `SKILL.md` is GENERATED from, with a
+ * FIXED section layout shared by every skill. The hand-written part is reduced to
+ * conceptual prose + the entry descriptor; everything ENUMERABLE (the rules, the
+ * bad→good examples, the "when it fires" rows, the checklist) is projected from this
+ * skill's {@see \JesseGall\CodeCommandments\Sins\Sin}s, so the docs can never hardcode a
+ * count or drift from the detectors.
  *
- * Each skill is its OWN class under `Skills/{Backend,Frontend}/`, the way each sin is
- * its own class under `Sins/` and each detector under `Detectors/` — registered by
- * existing, discovered by {@see Catalog}. A consumer's own `Skills/` class auto-enrols.
+ * Each skill is its OWN class under `Skills/{Backend,Frontend}/`, the way each sin is its
+ * own class under `Sins/` and each detector under `Detectors/` — discovered by
+ * {@see Catalog}. A consumer's own `Skills/` class auto-enrols.
  */
 abstract class Skill
 {
     public function __construct(
         public readonly string $slug,
-        public readonly string $title,
-        public readonly string $description,
-        public readonly string $tagline,
-        public readonly string $summary,
         public readonly Tier $tier,
         public readonly int $order,
     ) {}
 
     /**
-     * The teaching prose — the principle and forms — between the tagline and the
-     * generated "Bad → good" section. Authored once as a nowdoc per skill.
+     * The `# {title}` H1.
      */
-    abstract public function body(): string;
+    abstract public function title(): string;
 
     /**
-     * The related skills, each a `class-string<Skill>` => one-line note. Rendered into
-     * the "Relationship to the other skills" footer with the link GENERATED from the
-     * target skill's current slug — reference a skill by CLASS, never a slug string, so
-     * a renamed skill can never leave a stale link.
+     * The frontmatter `description:` — the trigger blurb: when to load this skill.
+     */
+    abstract public function description(): string;
+
+    /**
+     * The one-line `>` blockquote under the title — the punchy summary of the rule.
+     */
+    abstract public function intro(): string;
+
+    /**
+     * The terse one-liner shown in the consumer briefing (`ClaudeSection`), not in the
+     * `SKILL.md` itself.
+     */
+    abstract public function summary(): string;
+
+    /**
+     * The `## The principle` prose — the conceptual "why" ONLY. No rule list, no code
+     * examples, no hardcoded counts (all generated from the sins).
+     */
+    abstract public function principle(): string;
+
+    /**
+     * The related skills, each `class-string<Skill>` => one-line note. Rendered into the
+     * footer with the link GENERATED from the target skill's current slug — reference a
+     * skill by CLASS, never a slug string, so a rename never leaves a stale link.
      *
      * @return array<class-string<Skill>, string>
      */
@@ -53,6 +68,6 @@ abstract class Skill
      */
     public function bullet(): string
     {
-        return "- **`{$this->slug}`** — {$this->summary}";
+        return "- **`{$this->slug}`** — {$this->summary()}";
     }
 }

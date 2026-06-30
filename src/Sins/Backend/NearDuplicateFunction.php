@@ -14,7 +14,8 @@ final class NearDuplicateFunction extends Sin
         parent::__construct(
             name: 'near-duplicate-function',
             skill: FixAtTheSource::class,
-            description: "Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)"
+            description: "Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)",
+            rule: "Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function."
         );
     }
 }

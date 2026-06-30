@@ -14,7 +14,9 @@ final class IfElseLadder extends Sin
         parent::__construct(
             name: 'if-else-ladder',
             skill: GuardClausesAndFlow::class,
-            description: "if/elseif ladder of 4+ branches (should be match/dispatch)"
+            description: "if/elseif ladder of 4+ branches (should be match/dispatch)",
+            rule: "Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.",
+            suggestion: "A `match`, a method on the type, or polymorphic dispatch."
         );
     }
 }

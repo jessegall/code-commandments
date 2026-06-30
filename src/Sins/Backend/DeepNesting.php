@@ -14,7 +14,8 @@ final class DeepNesting extends Sin
         parent::__construct(
             name: 'deep-nesting',
             skill: GuardClausesAndFlow::class,
-            description: "`if` nested 3-deep (a pyramid — hoist guards / extract)"
+            description: "`if` nested 3-deep (a pyramid — hoist guards / extract)",
+            rule: "Flatten with guard clauses — never nest `if`s three deep into a pyramid."
         );
     }
 }

@@ -14,7 +14,9 @@ final class WrappingWithoutCause extends Sin
         parent::__construct(
             name: 'wrapping-without-cause',
             skill: Exceptions::class,
-            description: "Wrapping a caught exception without passing it as `previous`/cause"
+            description: "Wrapping a caught exception without passing it as `previous`/cause",
+            rule: "When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace.",
+            suggestion: "Pass the caught exception as `previous: \$e`."
         );
     }
 }

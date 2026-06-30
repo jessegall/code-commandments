@@ -13,21 +13,35 @@ final class ConcurrentState extends Skill
     {
         parent::__construct(
             slug: 'backend/concurrent-state',
-            title: "Concurrent state — a plain object behind `::for()`",
-            description: "How to model state shared across processes (web request ↔ queue worker ↔ cron) — a plain domain class with behaviour methods plus a static `::for(\$id): Concurrent<self>` factory that owns the cache key, default, and TTL (jessegall/concurrent). Read this FIRST whenever you reach for `Cache::get/put` with a hand-built key, a static/global for cross-request state, a polled status / progress / counter / pointer shared between a request and a worker, or `new Concurrent(...)`.",
-            tagline: "State shared across processes is not a pile of `Cache::get`/`put` calls with a key you reinvent at every
-site. It is a **domain object** with behaviour methods, handed to you thread-safe by one factory.",
-            summary: "state shared across requests/workers (`::for(\$id): Concurrent<self>`).",
             tier: Tier::KeepInMind,
             order: 14,
         );
     }
 
-    public function body(): string
+    public function title(): string
     {
-        return <<<'BODY'
-## The principle
+        return "Concurrent state — a plain object behind `::for()`";
+    }
 
+    public function description(): string
+    {
+        return "How to model state shared across processes (web request ↔ queue worker ↔ cron) — a plain domain class with behaviour methods plus a static `::for(\$id): Concurrent<self>` factory that owns the cache key, default, and TTL (jessegall/concurrent). Read this FIRST whenever you reach for `Cache::get/put` with a hand-built key, a static/global for cross-request state, a polled status / progress / counter / pointer shared between a request and a worker, or `new Concurrent(...)`.";
+    }
+
+    public function intro(): string
+    {
+        return "State shared across processes is not a pile of `Cache::get`/`put` calls with a key you reinvent at every
+site. It is a **domain object** with behaviour methods, handed to you thread-safe by one factory.";
+    }
+
+    public function summary(): string
+    {
+        return "state shared across requests/workers (`::for(\$id): Concurrent<self>`).";
+    }
+
+    public function principle(): string
+    {
+        return <<<'PRINCIPLE'
 When a web request, a queue worker, and a cron job all touch the same state (a turn's status the frontend
 polls, a run's progress timeline, a counter, a claimed "current" pointer), the naive version scatters
 cache keys, forgets to lock, and races on every read-modify-write. `jessegall/concurrent` wraps the value
@@ -37,55 +51,7 @@ atomically.** Your job is to keep the *domain* clean and let one factory hide th
 The house pattern (and the one you want): the wrapped value is a **plain class** — `extends Concurrent` is
 *not* used — and a static **`::for($identity): Concurrent<self>`** factory returns the thread-safe handle.
 
-## The pattern
-
-```php
-use JesseGall\Concurrent\Concurrent;
-
-/**
- * Transient per-turn status the frontend polls until the round-trip lands.
- */
-class AssistantTurnState                       // a plain domain object — NOT `extends Concurrent`
-{
-    private const int TTL = 600;
-
-    private TurnStatus $status = TurnStatus::Idle;
-    private string | null $error = null;
-
-    /**
-     * The shared, thread-safe handle for one conversation turn.
-     *
-     * @return Concurrent<self>
-     */
-    public static function for(string $conversationId, string $turnId): Concurrent
-    {
-        return new Concurrent(
-            key: "ai-turn:{$conversationId}:{$turnId}",   // key derivation lives HERE, once
-            default: new self,
-            ttl: self::TTL,
-        );
-    }
-
-    // behaviour, not plumbing — tell-don't-ask:
-    public function markPending(): void { $this->status = TurnStatus::Pending; $this->error = null; }
-    public function markFailed(string $error): void { $this->status = TurnStatus::Failed; $this->error = $error; }
-
-    #[ReadonlyMethod]                          // a pure read — skip the write-lock
-    public function snapshot(): AssistantTurnStatus
-    {
-        return new AssistantTurnStatus($this->status, $this->error);
-    }
-}
-```
-
-Callers never see a cache key or `new Concurrent` — they ask the class for the handle and tell it what to do:
-
-```php
-AssistantTurnState::for($conversation->id, $request->turnId)->markPending();   // atomic write
-$status = AssistantTurnState::for($conversation->id, $turnId)->snapshot();      // lock-free read
-```
-
-## Why this shape
+### Why this shape
 
 - **The domain class stays a plain object.** Private state + behaviour methods (`markPending`,
   `snapshot`). Zero cache/lock plumbing in the methods — you call `->markPending()`, never
@@ -98,7 +64,7 @@ $status = AssistantTurnState::for($conversation->id, $turnId)->snapshot();      
   plain object). `@return Concurrent<self>` + the proxy's `@mixin TValue` still give callers full
   completion on the domain methods through the wrapper.
 
-## Mechanics you must respect
+### Mechanics you must respect
 
 - **A method call on the handle is an atomic write** — lock → run the method on the wrapped value → write
   back → release. Locks are re-entrant, so nested writes in one method share one lock.
@@ -113,20 +79,8 @@ $status = AssistantTurnState::for($conversation->id, $turnId)->snapshot();      
   - `$c->items[] = $x` → PHP appends to a copy; the cache never sees it. Use a by-ref callback.
 - For plain shared structures, the package ships `ConcurrentMap / Set / Counter / Queue / List` — reach
   for those instead of hand-rolling a wrapped array.
-
-## Checklist
-
-```
-Concurrent state
-- [ ] Cross-process state is a plain domain class with behaviour methods — NOT Cache::get/put at call sites.
-- [ ] A static ::for($id): Concurrent<self> factory owns the key, default, and TTL (one place).
-- [ ] The class does NOT `extends Concurrent` — composition via the Concurrent<self> return.
-- [ ] Pure accessors are #[ReadonlyMethod]; read-modify-write goes through a callback.
-- [ ] No `$c->count++` / `$c->items[] = …` on the handle (use a callback or a ConcurrentCounter/List).
-```
-BODY;
+PRINCIPLE;
     }
-
 
     public function related(): array
     {

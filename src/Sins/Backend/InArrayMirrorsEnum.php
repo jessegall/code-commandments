@@ -14,7 +14,9 @@ final class InArrayMirrorsEnum extends Sin
         parent::__construct(
             name: 'in-array-mirrors-enum',
             skill: EnumsWithBehaviour::class,
-            description: "`in_array(\$x, [literals])` whose literals mirror an existing enum's cases"
+            description: "`in_array(\$x, [literals])` whose literals mirror an existing enum's cases",
+            rule: "Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.",
+            suggestion: "Use the enum (`Enum::tryFrom(\$x)` / a `cases()` check)."
         );
     }
 }

@@ -14,7 +14,9 @@ final class CompoundInlineComponent extends Sin
         parent::__construct(
             name: 'compound-inline-component',
             skill: VueComponents::class,
-            description: "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component"
+            description: "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component",
+            rule: "Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component.",
+            suggestion: "Extract to a `<{Object}{Action}Dialog>` component; pass `v-model` + props."
         );
     }
 }

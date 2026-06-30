@@ -14,7 +14,9 @@ final class ModelMutationAtCallSite extends Sin
         parent::__construct(
             name: 'model-mutation-at-call-site',
             skill: LaravelIdioms::class,
-            description: "Set-property-then-`save()` at a call site (should be an intention method)"
+            description: "Set-property-then-`save()` at a call site (should be an intention method)",
+            rule: "Mutate a model through an intention method; don't set-property-then-`save()` at a call site.",
+            suggestion: "An intention method on the model (`\$order->suspend(\$reason)`)."
         );
     }
 }

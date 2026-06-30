@@ -14,7 +14,8 @@ final class AllNullableData extends Sin
         parent::__construct(
             name: 'all-nullable-data',
             skill: SpatieData::class,
-            description: "All-nullable \"god\" DTO — every field `?T`/defaulted (type doesn't tell the truth)"
+            description: "All-nullable \"god\" DTO — every field `?T`/defaulted (type doesn't tell the truth)",
+            rule: "A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null."
         );
     }
 }

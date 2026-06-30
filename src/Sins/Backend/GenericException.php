@@ -14,7 +14,9 @@ final class GenericException extends Sin
         parent::__construct(
             name: 'generic-exception',
             skill: Exceptions::class,
-            description: "`throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type"
+            description: "`throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type",
+            rule: "Throw a NAMED domain exception, never a bare SPL `Exception`/`RuntimeException`.",
+            suggestion: "A named exception class with a static `::for(\$values)` factory that writes the message."
         );
     }
 }
