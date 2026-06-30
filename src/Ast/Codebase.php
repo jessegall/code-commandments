@@ -586,12 +586,12 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         } catch (\PhpParser\Error) {
             // A file that doesn't parse (a syntax error, a stub, a partial edit) is not
             // worth crashing the whole run for — skip its contents and carry on.
-            return new ParsedFile($path, []);
+            return new ParsedFile($path, [], $code);
         }
 
         $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
 
-        return new ParsedFile($path, $traverser->traverse($ast));
+        return new ParsedFile($path, $traverser->traverse($ast), $code);
     }
 
     /**

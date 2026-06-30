@@ -6,7 +6,8 @@ namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Detectors\Repentable;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Scribes\Backend\DetectorStep as BackendDetectorStep;
+use JesseGall\CodeCommandments\Scribes\Frontend\DetectorStep as FrontendDetectorStep;
 
 /**
  * The ordered list of rewriting steps `repent` runs — a Laravel-middleware-style chain
@@ -45,12 +46,20 @@ final class ScribeChain
         $fixers = [];
         $extractors = [];
 
+        // Backend (PHP AST) Repentables — all in-place fixers.
+        foreach (Detectors::backend() as $detector) {
+            if ($detector instanceof Repentable) {
+                $fixers[] = new BackendDetectorStep($detector);
+            }
+        }
+
+        // Frontend (Vue) Repentables — fixers in place, extractors run last.
         foreach (Detectors::frontend() as $detector) {
             if (! $detector instanceof Repentable) {
                 continue;
             }
 
-            $step = new DetectorStep($detector);
+            $step = new FrontendDetectorStep($detector);
             $step->extractsComponents() ? $extractors[] = $step : $fixers[] = $step;
         }
 

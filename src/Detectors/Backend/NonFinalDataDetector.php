@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\NonFinalDataScribe;
 
 /**
  * A Spatie `Data` class that is not declared `final`. A DTO is a value, not a base
@@ -19,13 +21,18 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * `final` plus `extends` is a fatal error, so flagging it points at an impossible
  * fix. Only a sealable leaf is a sin.
  */
-final class NonFinalDataDetector implements Detector
+final class NonFinalDataDetector implements Detector, Repentable
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
     public function sin(): Sin
     {
         return new NonFinalData();
+    }
+
+    public function scribe(): string
+    {
+        return NonFinalDataScribe::class;
     }
 
     public function find(Codebase $codebase): array

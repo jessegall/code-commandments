@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
+use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Variable;
@@ -37,6 +38,21 @@ final class NodeMatch extends AstNode
     public function location(): string
     {
         return "{$this->file->path}:{$this->line()}";
+    }
+
+    /**
+     * This match's position AS a {@see Span} — the seam the scribe layer rewrites
+     * through, the backend mirror of {@see \JesseGall\CodeCommandments\Vue\ElementMatch::span()}.
+     * php-parser end offsets are INCLUSIVE; a {@see Span} end is EXCLUSIVE, hence `+ 1`.
+     */
+    public function span(): Span
+    {
+        return new Span(
+            $this->file->path,
+            $this->file->source,
+            $this->node->getStartFilePos(),
+            $this->node->getEndFilePos() + 1,
+        );
     }
 
     /**
