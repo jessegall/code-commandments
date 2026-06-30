@@ -42,8 +42,21 @@ final class UnifiedDiff
         @unlink($new);
 
         $relative = str_starts_with($path, $base . '/') ? substr($path, strlen($base) + 1) : $path;
-        $raw = (string) preg_replace('/^--- .*$/m', "--- a/{$relative}", $raw, 1);
 
-        return (string) preg_replace('/^\+\+\+ .*$/m', "+++ b/{$relative}", $raw, 1);
+        // Re-title the two `diff -u` header lines — replace each by its known prefix, no regex.
+        $lines = explode("\n", $raw);
+        $headers = ['--- ' => "--- a/{$relative}", '+++ ' => "+++ b/{$relative}"];
+
+        foreach ($headers as $prefix => $replacement) {
+            foreach ($lines as $index => $line) {
+                if (str_starts_with($line, $prefix)) {
+                    $lines[$index] = $replacement;
+
+                    break;
+                }
+            }
+        }
+
+        return implode("\n", $lines);
     }
 }
