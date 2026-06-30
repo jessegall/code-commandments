@@ -327,6 +327,30 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('v-model:dismissed="dismissed"', $files['component.vue']);
     }
 
+    public function test_a_chunk_that_renders_slots_forwards_the_host_slots(): void
+    {
+        // The bug: extracting a chunk that renders `<slot>` left the call site self-closing,
+        // so the host's named slots never reached the new component and bodies went empty.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>Title</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<div class="body"><slot name="lead" /><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div>'
+            . '<DialogFooter><Button>OK</Button></DialogFooter></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = $this->components($files);
+
+        $this->assertNotEmpty($created, 'the dialog should be extracted');
+        $this->assertStringContainsString('<slot name="lead"', reset($created), 'the extracted component still renders the slot');
+
+        // The call site is NOT self-closing — it forwards the host's slots transparently.
+        $callSite = $files['component.vue'];
+        $this->assertStringContainsString('v-for="(_, name) in $slots"', $callSite);
+        $this->assertStringContainsString('<slot :name="name" v-bind="slotProps" />', $callSite);
+    }
+
     public function test_a_multi_loop_container_is_not_named_after_one_of_its_loops(): void
     {
         // A dialog containing TWO v-fors is a section/dialog, not "a list" — naming it

@@ -381,7 +381,8 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
     {
-        $draft->edit($boundary->contentSpan(), self::usage($name, $bindings, $boundary->carried(), $boundary->models()));
+        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->rendersSlots(), $boundary->contentSpan()->column());
+        $draft->edit($boundary->contentSpan(), $usage);
         self::import($draft, $boundary->sfc, $component, $name);
     }
 
@@ -393,8 +394,10 @@ final class ExtractComponentScribe extends RepentScribe
      * @param  array<string, string>  $bindings  prop name => the expression to pass
      * @param  array<string, string|null>  $carried  the structural directives to keep here
      * @param  list<string>  $models  props the child WRITES — bound with `v-model`, not `:`
+     * @param  bool  $forwardsSlots  the chunk renders `<slot>`s — forward the host's slots
+     * @param  int  $column  the call site's indentation, for the slot-forwarding block
      */
-    private static function usage(string $name, array $bindings, array $carried = [], array $models = []): string
+    private static function usage(string $name, array $bindings, array $carried = [], array $models = [], bool $forwardsSlots = false, int $column = 0): string
     {
         $attributes = [];
 
@@ -408,7 +411,22 @@ final class ExtractComponentScribe extends RepentScribe
                 : ':' . self::kebab($prop) . "=\"{$expression}\"";
         }
 
-        return $attributes === [] ? "<{$name} />" : "<{$name} " . implode(' ', $attributes) . ' />';
+        $open = $attributes === [] ? "<{$name}" : "<{$name} " . implode(' ', $attributes);
+
+        if (! $forwardsSlots) {
+            return "{$open} />";
+        }
+
+        // The chunk consumes slots — pass the host's slots through transparently, so a named
+        // slot the host fills still reaches the extracted component's `<slot>` (issue: slots
+        // were dropped when the call site was self-closing).
+        $indent = str_repeat(' ', $column);
+
+        return "{$open}>\n"
+            . "{$indent}    <template v-for=\"(_, name) in \$slots\" :key=\"name\" #[name]=\"slotProps\">\n"
+            . "{$indent}        <slot :name=\"name\" v-bind=\"slotProps\" />\n"
+            . "{$indent}    </template>\n"
+            . "{$indent}</{$name}>";
     }
 
     /**
