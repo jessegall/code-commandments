@@ -164,6 +164,44 @@ final class Script
     }
 
     /**
+     * The names declared as LOCALS in the script — `const`/`let`/`var`, both simple
+     * (`const x = …`) and destructured (`const { a, b } = …` → `a`, `b`, the aliased binding
+     * for `{ a: b }`). These SHADOW a same-named prop: `const modelValue = useVModel(props,
+     * 'modelValue')` makes the template's `modelValue` the writable local, not the read-only
+     * prop — so a detector reasoning about prop writes can exclude them.
+     *
+     * @return list<string>
+     */
+    public function localNames(): array
+    {
+        $names = [];
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isDeclarator($i) || ($this->tokens[$i + 1] ?? null) === null) {
+                continue;
+            }
+
+            $next = $i + 1;
+
+            if ($this->tokens[$next]['kind'] === Token::IDENTIFIER) {
+                $names[] = $this->tokens[$next]['value'];
+            } elseif ($this->isPunct($next, Token::BRACE_OPEN) || $this->isPunct($next, Token::BRACKET_OPEN)) {
+                $close = $this->matchingParen($next);
+
+                for ($k = $next + 1; $k < $close; $k++) {
+                    // A binding is an id that is NOT a key (`{ a: b }` binds `b`, not `a`).
+                    if ($this->tokens[$k]['kind'] === Token::IDENTIFIER && ! $this->isPunct($k + 1, ':')) {
+                        $names[] = $this->tokens[$k]['value'];
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
      * The modules this script RE-EXPORTS from — every `export … from '…'` specifier
      * (`export * from './generated'`, `export { X } from './x'`). The edges to follow when a
      * type isn't declared locally — a barrel points onward to where it really lives.

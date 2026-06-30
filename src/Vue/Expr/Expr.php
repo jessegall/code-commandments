@@ -28,6 +28,7 @@ final class Expr
     public const string OBJECT = 'object';
     public const string ARROW = 'arrow';
     public const string FOR = 'for';            // v-for: aliases (in|of) iterable
+    public const string ASSIGN = 'assign';      // target = value (an event handler write)
     public const string UNKNOWN = 'unknown';
 
     /**
@@ -98,6 +99,7 @@ final class Expr
             self::ARRAY => $this->rootsOf($this->children('elements')),
             self::OBJECT => $this->rootsOf($this->children('values')),
             self::ARROW => $this->child('body')->roots(),
+            self::ASSIGN => array_merge($this->child('target')->roots(), $this->child('value')->roots()),
             default => [],
         };
 

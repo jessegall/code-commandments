@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import type { Settings } from '@/types';
 
-defineProps<{ settings: Settings }>();
+defineProps<{ settings: Settings; expanded: boolean }>();
+
+const panelOpen = ref(false);
 </script>
 
 <template>
@@ -37,5 +40,16 @@ defineProps<{ settings: Settings }>();
 
     <!-- @righteous DeepNested -->
     <SettingsCardBody :settings="settings" />
+
+    <!-- Writing the `expanded` PROP — read-only, so the v-model fails. -->
+    <!-- @sin PropMutation -->
+    <Collapsible v-model:open="expanded">
+      <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+    </Collapsible>
+
+    <!-- @righteous PropMutation -->
+    <Collapsible v-model:open="panelOpen">
+      <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+    </Collapsible>
   </article>
 </template>
