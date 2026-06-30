@@ -57,7 +57,7 @@ $toBytes = static function (string $limit): int {
           commandments judge [path] [--skill=NAME] [--detector=NAME]
           commandments judge --list
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
-          commandments scribe [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # run the source Scribes (Data hints, redundant arrow-fn return types, …)
+          commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
           commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]  # report a false positive (with --detector) or a global bug
           commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
           commandments install  # wire composer + the UserPromptSubmit reminder, then sync
@@ -97,7 +97,7 @@ $toBytes = static function (string $limit): int {
     exit(match ($command) {
         'judge' => (new Judge)->run($args),
         'hints' => (new JesseGall\CodeCommandments\Cli\Hints\Hints)->run($args),
-        'scribe' => (new JesseGall\CodeCommandments\Cli\Scribe)->run($args),
+        'repent' => (new JesseGall\CodeCommandments\Cli\Repent)->run($args),
         'report' => (new JesseGall\CodeCommandments\Cli\Report)->run($args),
         'feature-request' => (new JesseGall\CodeCommandments\Cli\FeatureRequest)->run($args),
         'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
