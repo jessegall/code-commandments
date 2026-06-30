@@ -48,3 +48,23 @@ matching slot renders, falling back to `#default`.
 - **Is NOT** (leave it a conditional): range/predicate guards (`stock > 10`), a
   compound branch (`role === 'editor' || role === 'author'`), branches over different
   subjects, or a lone `v-if`. These aren't a single-value dispatch.
+
+## Control flow goes on `<template>`, never on a real element
+
+A `v-if` / `v-else-if` / `v-else` / `v-for` is STRUCTURE — which DOM renders — and it
+belongs on a `<template>` wrapper, not bolted onto the element it happens to guard:
+
+```vue
+<!-- ✗ structure tangled into the element -->
+<div v-if="open" class="panel">…</div>
+<li v-for="item in items" :key="item.id" class="row">{{ item.name }}</li>
+
+<!-- ✓ structure on the template, the element stays pure content -->
+<template v-if="open"><div class="panel">…</div></template>
+<template v-for="item in items" :key="item.id"><li class="row">{{ item.name }}</li></template>
+```
+
+The element reads as one thing (content + styling), the `<template>` as another
+(when / how-many). `repent` auto-wraps these — a `v-for` takes its `:key` along.
+(`v-show` is exempt: it toggles `display` on a real node and can't live on a
+`<template>`, which renders nothing.)
