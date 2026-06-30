@@ -23,11 +23,12 @@ final class ClaudeSection
         $body = <<<MD
         ## Skills — load before you work
 
-        Code style in this package lives in the code-commandments skills under
-        `.claude/skills/commandments/` (split `backend/` and `frontend/`). Two tiers.
-        They are the source of truth for
-        every architecture/style decision — read the relevant one (via the Skill tool)
-        before writing or reviewing code.
+        Code style in this package lives in the code-commandments skills, installed under
+        `.claude/skills/` and loaded **via the Skill tool by the exact id in each bullet
+        below** — `commandments-backend-<name>` / `commandments-frontend-<name>` (e.g.
+        `commandments-backend-absence`). They are the source of truth for every
+        architecture/style decision — read the relevant one before writing or reviewing
+        code. Two tiers.
 
         ### ⚠️ THE MOST IMPORTANT RULE — TRACE TO THE SOURCE
 
@@ -55,7 +56,7 @@ final class ClaudeSection
         false positives and requesting rules is how the disciplines get sharper — do it
         whenever a finding is wrong or a gap is real, don't just work around it.
 
-        When in doubt, load `fix-at-the-source` and re-read it. It is the parent move
+        When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
         behind every other skill.
 
         **Leave it cleaner than you found it — the gentleman's duty.** When you touch a

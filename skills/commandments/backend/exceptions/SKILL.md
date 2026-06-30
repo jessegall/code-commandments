@@ -1,5 +1,5 @@
 ---
-name: exceptions
+name: commandments-backend-exceptions
 description: How to fail — throw NAMED exceptions via static factories (`Thing::for($x)`), never a message string at the throw site, and never swallow a failure into null/false/[]/Option::none(). Read this FIRST whenever you write a `throw`, a `try`/`catch`, an exception class, or are deciding what to do when something goes wrong. Fail hard and named, at the source.
 ---
 

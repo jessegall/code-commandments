@@ -91,7 +91,10 @@ final class Sync
 
         foreach (Skills::all() as $skill) {
             $from = "{$source}/{$skill->slug}";
-            $to = "{$consumer}/.claude/skills/commandments/{$skill->slug}";
+            // FLAT, one level deep — Claude Code discovers `.claude/skills/<id>/SKILL.md`
+            // and the directory name IS the Skill-tool invocation (`commandments-backend-absence`).
+            // A nested `commandments/backend/absence/` is never found.
+            $to = "{$consumer}/.claude/skills/{$skill->id()}";
 
             if (is_dir($from)) {
                 $this->copyDir($from, $to);
@@ -103,13 +106,17 @@ final class Sync
     }
 
     /**
-     * Remove skills published under the OLD flat scheme (`.claude/skills/commandments-<slug>/`)
-     * now that they live nested under `.claude/skills/commandments/`. Published skills
-     * are regenerated and gitignored, so deleting them is always safe; the hyphen-glob
-     * never matches the new `commandments/` dir (no hyphen).
+     * Clear previously-published skills before republishing the current flat set: the
+     * broken NESTED scheme (`.claude/skills/commandments/`) and any stale flat
+     * `commandments-*` dirs (so a renamed/dropped skill doesn't linger). Published skills
+     * are regenerated and gitignored, so deleting them is always safe.
      */
     private function removeLegacySkills(string $consumer): void
     {
+        if (is_dir("{$consumer}/.claude/skills/commandments")) {
+            $this->deleteDir("{$consumer}/.claude/skills/commandments");
+        }
+
         foreach (glob("{$consumer}/.claude/skills/commandments-*", GLOB_ONLYDIR) ?: [] as $stale) {
             $this->deleteDir($stale);
         }

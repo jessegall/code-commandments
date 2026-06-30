@@ -21,7 +21,7 @@ final class ClaudeSectionTest extends TestCase
         $this->assertStringContainsString('KEEP IN MIND', $block);
 
         foreach (Skills::all() as $skill) {
-            $this->assertStringContainsString("`{$skill->slug}`", $block, "{$skill->slug} missing from the briefing");
+            $this->assertStringContainsString("`{$skill->id()}`", $block, "{$skill->id()} missing from the briefing");
         }
     }
 

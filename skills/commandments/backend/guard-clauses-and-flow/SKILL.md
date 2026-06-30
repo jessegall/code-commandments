@@ -1,5 +1,5 @@
 ---
-name: guard-clauses-and-flow
+name: commandments-backend-guard-clauses-and-flow
 description: How a method body is shaped — validate preconditions at the TOP with early return/throw, keep the body flat (no if/elseif/else ladders, no deep nesting), and run the happy path last. NEVER bury a check inline (`($x ?? throw …)->y()`) or in a nested branch. Read this BEFORE writing a method body, a precondition/null check, an `if`, or anything that throws or returns early.
 ---
 

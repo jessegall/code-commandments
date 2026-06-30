@@ -1,5 +1,5 @@
 ---
-name: pass-the-object
+name: commandments-backend-pass-the-object
 description: Demand the resolved type you need, not an id plus its container. When a method takes a container object AND a key into it, then resolves the key against the container (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`), the lookup is misplaced — the caller passed both, so the caller already holds everything the lookup needs. Resolve at the caller and hand over the resolved OBJECT, and let the caller own the "not found" failure. Read this when a method signature pairs a domain object with a string/int id it then looks up inside.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: role-vocabulary
+name: commandments-backend-role-vocabulary
 description: The three recurring structural roles — Registry (keyed store), Set (membership), Resolver (first-match dispatch) — each with a name and a contract. If a class IS one of these shapes, name it `*Registry`/`*Set`/`*Resolver` and extend the scaffolded base; if it's NAMED one, it must behave like one. Read this BEFORE you hand-roll a keyed store / lookup table, an add-and-iterate collection, or an if/elseif chain that picks the first matching handler — or name a class `*Registry`/`*Set`/`*Resolver`.
 ---
 

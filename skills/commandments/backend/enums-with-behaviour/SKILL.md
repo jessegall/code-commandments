@@ -1,5 +1,5 @@
 ---
-name: enums-with-behaviour
+name: commandments-backend-enums-with-behaviour
 description: How a closed set of values is modelled — a native backed enum (never raw strings or a const class), with the knowledge keyed off its cases living ON the enum as methods, not re-inlined as a `match`/`switch` at every call site. Read this BEFORE you write a fixed set of string/int values, a `match`/`switch` over an enum (or over strings that mirror one), a `const` class of scalars, or a string field whose values are a closed set.
 ---
 
