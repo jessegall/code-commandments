@@ -113,7 +113,70 @@ final class Boundary
             return ucfirst($object) . 'Section';
         }
 
-        return $this->node->tag !== strtolower($this->node->tag) ? $this->node->tag . 'Part' : 'ExtractedSection';
+        if (($heading = $this->headingName()) !== null) {
+            return $heading . 'Section'; // a static block — name it after its heading
+        }
+
+        if (($class = $this->semanticName()) !== null) {
+            return $class . 'Section'; // …or its semantic (BEM) class
+        }
+
+        return $this->node->tag !== strtolower($this->node->tag) ? $this->node->tag . 'Part' : 'Section';
+    }
+
+    /**
+     * A PascalCase name from the boundary's first heading text (`<h2>Advanced settings</h2>`
+     * → `AdvancedSettings`), or null when it has none.
+     */
+    private function headingName(): ?string
+    {
+        foreach ([$this->node, ...$this->node->descendants()] as $element) {
+            if (! in_array(strtolower($element->tag), ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)) {
+                continue;
+            }
+
+            foreach ($element->children as $child) {
+                if ($child->isText() && ($name = self::pascal($child->text)) !== '') {
+                    return $name;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * A PascalCase name from the boundary's first semantic class — a BEM-ish one with a
+     * `__`/`-`/`_` separator (`field-grid__row` → `FieldGridRow`); a bare utility class
+     * (`flex`) is no name.
+     */
+    private function semanticName(): ?string
+    {
+        $class = strtok((string) $this->node->attribute('class'), ' ');
+
+        if ($class === false || ! (str_contains($class, '__') || str_contains($class, '-') || str_contains($class, '_'))) {
+            return null;
+        }
+
+        $name = self::pascal(str_replace(['__', '-', '_'], ' ', $class));
+
+        return $name !== '' ? $name : null;
+    }
+
+    /**
+     * Words → PascalCase, keeping only identifier characters.
+     */
+    private static function pascal(string $text): string
+    {
+        $name = '';
+
+        foreach (preg_split('/[^A-Za-z0-9]+/', trim($text)) ?: [] as $word) {
+            if ($word !== '' && ctype_alpha($word[0])) {
+                $name .= ucfirst(strtolower($word));
+            }
+        }
+
+        return $name;
     }
 
     /**

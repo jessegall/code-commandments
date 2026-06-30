@@ -4,31 +4,23 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
-use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
-use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
-use JesseGall\CodeCommandments\Detectors\Repentable;
-use JesseGall\CodeCommandments\Scribes\Catalog as Scribes;
-use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
+use JesseGall\CodeCommandments\Scribes\ScribeChain;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
-use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
-use JesseGall\CodeCommandments\Vue\Detector;
 
 /**
  * `commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]`
  *
  * Repents the sins — the CLI that RUNS the Scribes (the "scribe" is the code, `repent`
- * is the verb). Two kinds of rewriter, one command:
- *   - the **maintenance Scribes** ({@see Scribes}) over the PHP AST — Spatie Data magic,
- *     redundant arrow-fn return types — scope-aware via `--changes`/`--branch`;
- *   - the **Repentable detectors'** scribes over the Vue components — extract a
- *     component, hoist a `v-if` chain to `<SwitchCase>` — fed each detector's own
- *     findings (it never re-queries).
+ * is the verb). It walks the {@see ScribeChain}: the in-place fixers (Spatie Data hints,
+ * redundant returns, `<SwitchCase>`, control-flow wrapping) then the component
+ * EXTRACTORS, each re-scanning so it sees the previous step's edits. The chain's order
+ * is the consumer's to change — see {@see chain} and `.commandments/repent.php`.
  *
  * By DEFAULT it writes; `--dry-run[=FILE]` previews a unified diff. `--only=NAME` runs
- * a single rewriter (partial match on a Scribe name or a frontend Detector name).
+ * the chain steps whose name matches (a Scribe or frontend Detector name).
  */
 final class Repent
 {
@@ -59,16 +51,9 @@ final class Repent
     {
         $written = [];
 
-        foreach ($this->maintenance($only) as $scribe) {
-            // Re-scan per scribe so a later one sees an earlier one's edits.
-            $written = array_merge($written, new RewriteApplier()->apply($scribe->rewrites(AstCodebase::scan($path), $scope)));
-        }
-
-        $components = VueCodebase::scan($path);
-
-        foreach ($this->repentable($only) as $detector) {
-            $rewrites = $this->scribe($detector)->rewrite($detector->find($components));
-            $written = array_merge($written, new RewriteApplier()->apply($rewrites));
+        foreach ($this->chain($only)->steps() as $step) {
+            // Each step re-scans, so it sees every earlier step's applied edits.
+            $written = array_merge($written, new RewriteApplier()->apply($step->run($path, $scope)));
         }
 
         $written = array_values(array_unique($written));
@@ -93,14 +78,8 @@ final class Repent
     {
         $diff = '';
 
-        foreach ($this->maintenance($only) as $scribe) {
-            $diff .= new UnifiedDiff()->of($scribe->rewrites(AstCodebase::scan($path), $scope), $path);
-        }
-
-        $components = VueCodebase::scan($path);
-
-        foreach ($this->repentable($only) as $detector) {
-            $diff .= new UnifiedDiff()->of($this->scribe($detector)->rewrite($detector->find($components)), $path);
+        foreach ($this->chain($only)->steps() as $step) {
+            $diff .= new UnifiedDiff()->of($step->run($path, $scope), $path);
         }
 
         if ($diff === '') {
@@ -122,50 +101,24 @@ final class Repent
     }
 
     /**
-     * The maintenance Scribes matching --only.
-     *
-     * @return list<\JesseGall\CodeCommandments\Scribes\Scribe>
+     * The chain to run — the default ordering, handed to the consumer's
+     * `.commandments/repent.php` (a `fn (ScribeChain): ScribeChain`) to reorder if they
+     * have one, then narrowed by `--only`.
      */
-    private function maintenance(?string $only): array
+    private function chain(?string $only): ScribeChain
     {
-        return array_values(array_filter(
-            Scribes::all(),
-            static fn ($scribe): bool => $only === null || stripos($scribe->name(), $only) !== false,
-        ));
-    }
+        $chain = ScribeChain::default();
+        $config = getcwd() . '/.commandments/repent.php';
 
-    /**
-     * The Repentable frontend detectors matching --only (by detector OR scribe name).
-     *
-     * @return list<Detector&Repentable>
-     */
-    private function repentable(?string $only): array
-    {
-        return array_values(array_filter(
-            Detectors::frontend(),
-            fn (Detector $detector): bool => $detector instanceof Repentable
-                && ($only === null
-                    || stripos($this->basename($detector), $only) !== false
-                    || stripos($this->scribe($detector)->name(), $only) !== false),
-        ));
-    }
+        if (is_file($config)) {
+            $customise = require $config;
 
-    private function scribe(Detector&Repentable $detector): RepentScribe
-    {
-        $spec = $detector->scribe();
-
-        if (is_string($spec)) {
-            return new $spec();
+            if (is_callable($customise) && ($customised = $customise($chain)) instanceof ScribeChain) {
+                $chain = $customised;
+            }
         }
 
-        return $spec instanceof RepentScribe ? $spec : $spec();
-    }
-
-    private function basename(object $object): string
-    {
-        $parts = explode('\\', $object::class);
-
-        return end($parts);
+        return $chain->matching($only);
     }
 
     /**
