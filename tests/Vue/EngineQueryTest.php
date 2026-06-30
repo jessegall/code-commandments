@@ -115,6 +115,17 @@ final class EngineQueryTest extends TestCase
         $this->assertSame(['index'], $destructured->get('aliases'));
     }
 
+    public function test_prop_bindings_returns_only_bound_props_as_expressions(): void
+    {
+        $child = Codebase::fromString('<template><Child :total="order.sum" label="x" @click="go" v-if="ok"/></template>')
+            ->whereTag('Child')->first();
+
+        $bindings = $child->propBindings();
+
+        $this->assertSame(['total'], array_keys($bindings), 'static attr, event and directive excluded');
+        $this->assertSame('order.sum', $bindings['total']->source());
+    }
+
     public function test_object_entries_pairs_each_key_with_its_value(): void
     {
         $object = Parser::parse("{ '@x': resolve(s, 'x'), n: 1, [computed]: 2 }");

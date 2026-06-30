@@ -164,6 +164,40 @@ class Element
     }
 
     /**
+     * The component PROPS this element binds, each to its parsed expression — `:title="t"`
+     * / `v-bind:count="n"` → `['title' => <t>, 'count' => <n>]`. Events (`@`), directives
+     * (`v-if`), slots (`#`) and static attributes are not prop bindings, so they're excluded;
+     * a dynamic arg (`:[key]`) has no static name and is skipped. The edge data of the
+     * component graph — what a parent passes a child.
+     *
+     * @return array<string, Expr>
+     */
+    public function propBindings(): array
+    {
+        $bindings = [];
+
+        foreach ($this->attributes as $name => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            $prop = match (true) {
+                str_starts_with($name, ':') => substr($name, 1),
+                str_starts_with($name, 'v-bind:') => substr($name, 7),
+                default => null,
+            };
+
+            if ($prop === null || $prop === '' || $prop[0] === '[') {
+                continue;
+            }
+
+            $bindings[$prop] = Parser::parse($value);
+        }
+
+        return $bindings;
+    }
+
+    /**
      * Is this a directive / bound attribute — one that carries a JS EXPRESSION
      * (`:x`, `@e`, `v-if`) rather than a literal string (`class`, `href`)?
      */
