@@ -52,9 +52,9 @@ final class Script
             for (; $j < $count; $j++) {
                 $token = $this->tokens[$j];
 
-                if (($token['kind'] === 'id' && $token['value'] === 'from')
-                    || $token['kind'] === 'string'
-                    || ($token['kind'] === 'punct' && ($token['value'] === '=' || $token['value'] === ';'))) {
+                if (($token['kind'] === Token::IDENTIFIER && $token['value'] === 'from')
+                    || $token['kind'] === Token::STRING
+                    || ($token['kind'] === Token::PUNCTUATION && ($token['value'] === '=' || $token['value'] === ';'))) {
                     break;
                 }
             }
@@ -88,9 +88,9 @@ final class Script
             for (; $j < $count; $j++) {
                 $token = $this->tokens[$j];
 
-                if (($token['kind'] === 'id' && $token['value'] === 'from')
-                    || $token['kind'] === 'string'
-                    || ($token['kind'] === 'punct' && ($token['value'] === '=' || $token['value'] === ';'))) {
+                if (($token['kind'] === Token::IDENTIFIER && $token['value'] === 'from')
+                    || $token['kind'] === Token::STRING
+                    || ($token['kind'] === Token::PUNCTUATION && ($token['value'] === '=' || $token['value'] === ';'))) {
                     break;
                 }
             }
@@ -100,7 +100,7 @@ final class Script
             }
 
             for ($k = $j + 1; $k < $count; $k++) {
-                if ($this->tokens[$k]['kind'] === 'string') {
+                if ($this->tokens[$k]['kind'] === Token::STRING) {
                     return $this->unquoteString($this->tokens[$k]['value']);
                 }
             }
@@ -142,7 +142,7 @@ final class Script
             $close = $this->matchingParen($open);
 
             for ($k = $open + 1; $k < $close; $k++) {
-                if ($this->tokens[$k]['kind'] === 'string') {
+                if ($this->tokens[$k]['kind'] === Token::STRING) {
                     return $this->unquoteString($this->tokens[$k]['value']);
                 }
             }
@@ -185,7 +185,7 @@ final class Script
                     continue;
                 }
 
-                if (($this->tokens[$j + 1] ?? null) !== null && $this->tokens[$j + 1]['kind'] === 'string') {
+                if (($this->tokens[$j + 1] ?? null) !== null && $this->tokens[$j + 1]['kind'] === Token::STRING) {
                     $specifiers[] = $this->unquoteString($this->tokens[$j + 1]['value']);
                 }
 
@@ -209,7 +209,7 @@ final class Script
         for ($k = $from; $k < $to; $k++) {
             $token = $this->tokens[$k];
 
-            if ($token['kind'] !== 'id' || $token['value'] === 'type') {
+            if ($token['kind'] !== Token::IDENTIFIER || $token['value'] === 'type') {
                 continue;
             }
 
@@ -237,11 +237,11 @@ final class Script
 
         if ($this->isId($j, 'from')) {
             for ($k = $j + 1; $k < $count; $k++) {
-                if ($this->tokens[$k]['kind'] === 'string') {
+                if ($this->tokens[$k]['kind'] === Token::STRING) {
                     return [$this->tokens[$k]['end'], $k];
                 }
             }
-        } elseif (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === 'string') {
+        } elseif (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === Token::STRING) {
             return [$this->tokens[$j]['end'], $j];
         }
 
@@ -272,7 +272,7 @@ final class Script
                 return $this->readFields($i + 3); // defineProps<{ … }>()
             }
 
-            if (($this->tokens[$i + 2] ?? null) !== null && $this->tokens[$i + 2]['kind'] === 'id') {
+            if (($this->tokens[$i + 2] ?? null) !== null && $this->tokens[$i + 2]['kind'] === Token::IDENTIFIER) {
                 return $this->namedTypeFields($this->tokens[$i + 2]['value']); // defineProps<Props>()
             }
         }
@@ -380,7 +380,7 @@ final class Script
             for (; $j < $count && ! $this->isPunct($j, '}'); $j++) {
                 // A binding is an id that is NOT a key (a key is followed by `:`, its binding
                 // is the id after the `:`). So `{ targets: ours }` binds `ours`, not `targets`.
-                if ($this->tokens[$j]['kind'] === 'id' && ! $this->isPunct($j + 1, ':')) {
+                if ($this->tokens[$j]['kind'] === Token::IDENTIFIER && ! $this->isPunct($j + 1, ':')) {
                     $keys[] = $this->tokens[$j]['value'];
                 }
             }
@@ -393,7 +393,7 @@ final class Script
 
             $j += $this->isId($j + 1, 'await') ? 2 : 1;
 
-            if (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === 'id'
+            if (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === Token::IDENTIFIER
                 && $this->isPunct($j + 1, '(') && in_array($name, $keys, true)) {
                 return $this->tokens[$j]['value'];
             }
@@ -518,9 +518,9 @@ final class Script
             for ($j = $i + 3; $j < $count; $j++) {
                 $value = $this->tokens[$j]['value'];
 
-                if (in_array($value, ['(', '[', '{'], true)) {
+                if (Token::opensGroup($value)) {
                     $depth++;
-                } elseif (in_array($value, [')', ']', '}'], true)) {
+                } elseif (Token::closesGroup($value)) {
                     $depth--;
                 } elseif ($depth === 0 && $value === ';') {
                     $to = $this->tokens[$j]['start'];
@@ -539,7 +539,7 @@ final class Script
     private function isReactiveValue(int $i): bool
     {
         return ($this->tokens[$i] ?? null) !== null
-            && $this->tokens[$i]['kind'] === 'id'
+            && $this->tokens[$i]['kind'] === Token::IDENTIFIER
             && in_array($this->tokens[$i]['value'], ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'], true);
     }
 
@@ -602,9 +602,9 @@ final class Script
         for (; $i < $count && $depth > 0; $i++) {
             $value = $this->tokens[$i]['value'];
 
-            if (in_array($value, ['<', '(', '[', '{'], true)) {
+            if (Token::opensType($value)) {
                 $depth++;
-            } elseif (in_array($value, ['>', ')', ']', '}'], true) && --$depth === 0) {
+            } elseif (Token::closesType($value) && --$depth === 0) {
                 break;
             }
 
@@ -652,9 +652,9 @@ final class Script
         for ($i = $open; $i < $count; $i++) {
             $value = $this->tokens[$i]['value'];
 
-            if (in_array($value, ['(', '[', '{'], true)) {
+            if (Token::opensGroup($value)) {
                 $depth++;
-            } elseif (in_array($value, [')', ']', '}'], true) && --$depth === 0) {
+            } elseif (Token::closesGroup($value) && --$depth === 0) {
                 return $i;
             }
         }
@@ -676,9 +676,9 @@ final class Script
         for (; $i < $count; $i++) {
             $value = $this->tokens[$i]['value'];
 
-            if (in_array($value, ['(', '[', '{', '<'], true)) {
+            if (Token::opensType($value)) {
                 $depth++;
-            } elseif (in_array($value, [')', ']', '}', '>'], true) && --$depth === 0) {
+            } elseif (Token::closesType($value) && --$depth === 0) {
                 return [implode('', array_slice($pieces, 1)), $i + 1];
             }
 
@@ -703,7 +703,7 @@ final class Script
         $count = count($this->tokens);
 
         while ($i < $count && ! $this->isPunct($i, '}')) {
-            if ($this->tokens[$i]['kind'] !== 'id') {
+            if ($this->tokens[$i]['kind'] !== Token::IDENTIFIER) {
                 $i++;
 
                 continue;
@@ -759,9 +759,9 @@ final class Script
                 break;
             }
 
-            if (in_array($value, ['<', '(', '[', '{'], true)) {
+            if (Token::opensType($value)) {
                 $depth++;
-            } elseif (in_array($value, ['>', ')', ']', '}'], true)) {
+            } elseif (Token::closesType($value)) {
                 $depth--;
             }
 
@@ -798,19 +798,19 @@ final class Script
             } elseif ($char === '"' || $char === "'" || $char === '`') {
                 $start = $i;
                 $i = $this->skipString($source, $i, $char, $length);
-                $tokens[] = ['kind' => 'string', 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
+                $tokens[] = ['kind' => Token::STRING, 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
             } elseif (ctype_alpha($char) || $char === '_' || $char === '$') {
                 $start = $i;
                 while ($i < $length && (ctype_alnum($source[$i]) || $source[$i] === '_' || $source[$i] === '$')) {
                     $i++;
                 }
-                $tokens[] = ['kind' => 'id', 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
+                $tokens[] = ['kind' => Token::IDENTIFIER, 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
             } elseif (ctype_digit($char)) {
                 while ($i < $length && (ctype_alnum($source[$i]) || $source[$i] === '.')) {
                     $i++;
                 }
             } else {
-                $tokens[] = ['kind' => 'punct', 'value' => $char, 'start' => $i, 'end' => $i + 1];
+                $tokens[] = ['kind' => Token::PUNCTUATION, 'value' => $char, 'start' => $i, 'end' => $i + 1];
                 $i++;
             }
         }
@@ -838,11 +838,11 @@ final class Script
 
     private function isId(int $i, string $value): bool
     {
-        return ($this->tokens[$i] ?? null) !== null && $this->tokens[$i]['kind'] === 'id' && $this->tokens[$i]['value'] === $value;
+        return ($this->tokens[$i] ?? null) !== null && $this->tokens[$i]['kind'] === Token::IDENTIFIER && $this->tokens[$i]['value'] === $value;
     }
 
     private function isPunct(int $i, string $value): bool
     {
-        return ($this->tokens[$i] ?? null) !== null && $this->tokens[$i]['kind'] === 'punct' && $this->tokens[$i]['value'] === $value;
+        return ($this->tokens[$i] ?? null) !== null && $this->tokens[$i]['kind'] === Token::PUNCTUATION && $this->tokens[$i]['value'] === $value;
     }
 }
