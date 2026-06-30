@@ -1,0 +1,12 @@
+# Keep the shipped dist lean: dev-only paths never reach a consumer's vendor/.
+# The SKILL.md generator reads tests/Fixtures, so generation runs ONLY here in the
+# package (the repo has tests/); consumers receive the pre-generated skills/ via
+# `commandments sync` and never regenerate.
+/tests            export-ignore
+/scripts          export-ignore
+/deprecated       export-ignore
+/.github          export-ignore
+/.gitattributes   export-ignore
+/.gitignore       export-ignore
+/phpunit.xml      export-ignore
+/.commandments    export-ignore
