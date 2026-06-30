@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
+use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\Vue\Sfc;
 use JesseGall\CodeCommandments\Vue\Script;
 
@@ -44,6 +45,8 @@ final class ExtractComponentScribe extends RepentScribe
 
     private ?ComponentLibrary $library = null;
 
+    private ?PropTypes $propTypes = null;
+
     private function __construct(private readonly string $strategy) {}
 
     /**
@@ -54,6 +57,18 @@ final class ExtractComponentScribe extends RepentScribe
     public function withLibrary(?ComponentLibrary $library): self
     {
         $this->library = $library;
+
+        return $this;
+    }
+
+    /**
+     * Hand the scribe the codebase's top-down prop typing, so a forwarded prop the source
+     * can't type LOCALLY is traced up the render tree to its origin instead of falling back
+     * to `unknown`. Null disables the cross-component trace (local resolution only).
+     */
+    public function withPropTypes(?PropTypes $propTypes): self
+    {
+        $this->propTypes = $propTypes;
 
         return $this;
     }
@@ -148,7 +163,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            if (! $this->create($draft, $boundary, $component, self::render($boundary, $props, $boundary->markup()))) {
+            if (! $this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
                 continue;
             }
 
@@ -179,7 +194,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            if ($this->create($draft, $boundary, $component, self::render($boundary, $props, $boundary->markup()))) {
+            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
                 $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
             }
         }
@@ -209,7 +224,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), self::compoundName($boundary), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            if ($this->create($draft, $boundary, $component, self::render($boundary, $props, $boundary->markup()))) {
+            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
                 $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
             }
         }
@@ -306,7 +321,7 @@ final class ExtractComponentScribe extends RepentScribe
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            if ($this->create($draft, $boundary, $component, self::render($boundary, $props, $markup, $prefix, $prop))) {
+            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $markup, $prefix, $prop))) {
                 $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
             }
         }
@@ -504,10 +519,10 @@ final class ExtractComponentScribe extends RepentScribe
      *
      * @param  list<string>  $props
      */
-    private static function render(Boundary $boundary, array $props, string $markup, array $prefix = [], string $reachProp = ''): string
+    private function render(Boundary $boundary, array $props, string $markup, array $prefix = [], string $reachProp = ''): string
     {
         $script = new Script($boundary->sfc->scriptContent());
-        $types = self::resolveTypes($boundary, $props, $script, $prefix, $reachProp);
+        $types = $this->resolveTypes($boundary, $props, $script, $prefix, $reachProp);
 
         $defineProps = $props === []
             ? ''
@@ -528,7 +543,7 @@ final class ExtractComponentScribe extends RepentScribe
      * @param  list<string>  $prefix
      * @return array<string, string>
      */
-    private static function resolveTypes(Boundary $boundary, array $props, Script $script, array $prefix, string $reachProp): array
+    private function resolveTypes(Boundary $boundary, array $props, Script $script, array $prefix, string $reachProp): array
     {
         $source = $script->propTypes();
         $types = [];
@@ -544,6 +559,7 @@ final class ExtractComponentScribe extends RepentScribe
                 $types[$prop] = $source[$prop]
                     ?? $script->declaredType($prop)
                     ?? self::tracedType($boundary, $script, $prop)
+                    ?? $this->propTypes?->typeOf($boundary->sfc, $prop) // trace up the render tree
                     ?? 'unknown';
             }
         }

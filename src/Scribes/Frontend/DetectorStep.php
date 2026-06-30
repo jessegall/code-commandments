@@ -9,8 +9,10 @@ use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\DetectorStep as BaseDetectorStep;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
+use JesseGall\CodeCommandments\Vue\ComponentGraph;
 use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Vue\PropTypes;
 
 /**
  * Runs a {@see Repentable} FRONTEND detector's scribe over the Vue components, fed the
@@ -27,9 +29,11 @@ final class DetectorStep extends BaseDetectorStep
         $codebase = VueCodebase::scan($path);
         $scribe = $this->scribe();
 
-        // An extractor reuses an existing component before creating a duplicate.
+        // An extractor reuses an existing component before creating a duplicate, and traces a
+        // forwarded prop up the render tree (the graph) when the source can't type it locally.
         if ($scribe instanceof ExtractComponentScribe) {
             $scribe->withLibrary(ComponentLibrary::from($codebase));
+            $scribe->withPropTypes(new PropTypes(ComponentGraph::of($codebase)));
         }
 
         // Honour the scope (a `--repent=ID` checklist, a `--changes`/`--branch` set):
