@@ -46,6 +46,79 @@ final class Parser
         return $parser->expression();
     }
 
+    /**
+     * Parse a `v-for` binding into its own node — `(item, index) in group.charts` →
+     * FOR{aliases: ['item','index'], keyword: 'in', iterable: <member group.charts>}. The
+     * directive's grammar, read off the TOKEN stream (the keyword is a token, the alias list
+     * is the names before it, the iterable is a real expression) — the engine's answer to
+     * "what does this loop bind and range over", replacing an explode on `in`/`,`.
+     */
+    public static function parseFor(string $source): Expr
+    {
+        $parser = new self($source);
+        $aliases = $parser->forAliases();
+        $keyword = $parser->forKeyword();
+        $iterable = $parser->expression();
+
+        return new Expr(Expr::FOR, ['aliases' => $aliases, 'keyword' => $keyword, 'iterable' => $iterable]);
+    }
+
+    /**
+     * The loop variables — the bare identifiers on the LHS, before the `in`/`of` keyword.
+     * Names inside a destructuring `{…}`/`[…]` are bindings, not usable loop-var names, so
+     * they're skipped; the grouping `(item, index)` parens are not destructuring, so their
+     * names ARE collected.
+     *
+     * @return list<string>
+     */
+    private function forAliases(): array
+    {
+        $aliases = [];
+        $bracket = 0;     // any nesting — the keyword sits at depth 0
+        $destructure = 0; // only {} / [] — names within are patterns, not loop vars
+
+        while (! $this->isEof()) {
+            $token = $this->peek();
+
+            if ($bracket === 0 && $token['type'] === 'name' && ($token['value'] === 'in' || $token['value'] === 'of')) {
+                break; // the keyword — LHS is done
+            }
+
+            if ($token['type'] === 'punct') {
+                if ($token['value'] === '(' || $token['value'] === '{' || $token['value'] === '[') {
+                    $bracket++;
+                    if ($token['value'] !== '(') {
+                        $destructure++;
+                    }
+                } elseif ($token['value'] === ')' || $token['value'] === '}' || $token['value'] === ']') {
+                    $bracket--;
+                    if ($token['value'] !== ')') {
+                        $destructure--;
+                    }
+                }
+            } elseif ($token['type'] === 'name' && $destructure === 0) {
+                $aliases[] = $token['value'];
+            }
+
+            $this->next();
+        }
+
+        return $aliases;
+    }
+
+    private function forKeyword(): string
+    {
+        $token = $this->peek();
+
+        if ($token['type'] === 'name' && ($token['value'] === 'in' || $token['value'] === 'of')) {
+            $this->next();
+
+            return $token['value'];
+        }
+
+        return 'in';
+    }
+
     // ---- parser ---------------------------------------------------------------
 
     private function expression(): Expr

@@ -368,9 +368,7 @@ final class Boundary
             $for = $element->attribute(Directive::For);
 
             if ($for !== null && in_array($var, self::loopVars($for), true)) {
-                [, $iterable] = self::splitFor($for);
-
-                return $iterable;
+                return Parser::parseFor($for)->get('iterable')->source();
             }
         }
 
@@ -435,43 +433,7 @@ final class Boundary
             return [];
         }
 
-        [$binding] = self::splitFor($expression);
-        $names = array_map(static fn (string $part): string => trim($part, " (){}[]\t"), explode(',', $binding));
-
-        // Keep only clean identifiers — destructured / aliased forms aren't usable names.
-        return array_values(array_filter($names, self::isIdentifier(...)));
-    }
-
-    /**
-     * Split a `v-for` expression into [binding, iterable] — `(item, i) in list` → ['(item,
-     * i)', 'list']. The directive's own grammar (`x in y` / `x of y`), split on its keyword.
-     *
-     * @return array{string, string}
-     */
-    private static function splitFor(string $expression): array
-    {
-        $separator = str_contains($expression, ' in ') ? ' in ' : ' of ';
-        $parts = explode($separator, $expression, 2);
-
-        return [trim($parts[0]), trim($parts[1] ?? '')];
-    }
-
-    /**
-     * A bare JS identifier — char by char, no regex.
-     */
-    private static function isIdentifier(string $value): bool
-    {
-        if ($value === '' || (! ctype_alpha($value[0]) && $value[0] !== '_' && $value[0] !== '$')) {
-            return false;
-        }
-
-        for ($i = 1, $length = strlen($value); $i < $length; $i++) {
-            if (! ctype_alnum($value[$i]) && $value[$i] !== '_' && $value[$i] !== '$') {
-                return false;
-            }
-        }
-
-        return true;
+        return Parser::parseFor($expression)->get('aliases');
     }
 
     /**
@@ -483,9 +445,7 @@ final class Boundary
             return [];
         }
 
-        [, $iterable] = self::splitFor($expression);
-
-        return $iterable === '' ? [] : Parser::parse($iterable)->roots();
+        return Parser::parseFor($expression)->get('iterable')->roots();
     }
 
     /**

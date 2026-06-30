@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Sfc;
@@ -136,12 +137,8 @@ final class DeepReachCluster
         $roots = [];
 
         foreach ($component->template->descendants() as $element) {
-            foreach ($element->attributes as $name => $value) {
-                if ($value === null || ! str_starts_with($name, 'v-model')) {
-                    continue;
-                }
-
-                foreach (Parser::parse($value)->roots() as $root) {
+            foreach ($element->directiveBindings(Directive::Model) as $binding) {
+                foreach (Parser::parse($binding)->roots() as $root) {
                     $roots[] = $root;
                 }
             }
