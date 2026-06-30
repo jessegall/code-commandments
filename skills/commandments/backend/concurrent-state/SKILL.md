@@ -5,6 +5,8 @@ description: How to model state shared across processes (web request ↔ queue w
 
 # Concurrent state — a plain object behind `::for()`
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > State shared across processes is not a pile of `Cache::get`/`put` calls with a key you reinvent at every
 > site. It is a **domain object** with behaviour methods, handed to you thread-safe by one factory.
 

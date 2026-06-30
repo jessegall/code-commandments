@@ -5,6 +5,8 @@ description: Use the framework's typed/injected mechanisms and keep behaviour on
 
 # Laravel idioms — typed access, injected deps, behaviour on the model
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > The framework already hands you typed input, typed bags, wired-up dependencies, query scopes, and a model
 > to hang behaviour on. Reach for those. Raw `->input()`, untyped `->get()`, `app()`-in-a-method, a
 > repeated `where()` chain, and a column-poke-then-`save()` are all the same mistake: throwing away a

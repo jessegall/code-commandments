@@ -5,6 +5,8 @@ description: The three recurring structural roles — Registry (keyed store), Se
 
 # Role vocabulary — the name is the contract
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > Three shapes recur everywhere: a keyed store, a membership set, a first-match dispatcher. Each has a
 > name and a contract. Use the name, extend the base, and honour the contract — a `*Registry` that returns
 > `null`, or a `*Resolver` that doesn't dispatch, is a lie.

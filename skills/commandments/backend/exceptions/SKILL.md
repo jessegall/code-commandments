@@ -5,6 +5,8 @@ description: How to fail — throw NAMED exceptions via static factories (`Thing
 
 # Exceptions — fail hard, fix once
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > **Fail hard, fix once** beats *fail gracefully, debug forever.* A loud, named, contextual failure is a
 > five-minute fix. A swallowed one is a silent wrong result you chase for a week.
 

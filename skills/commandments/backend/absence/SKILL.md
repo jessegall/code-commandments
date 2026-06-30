@@ -5,6 +5,8 @@ description: Decide how a value that might not be there is modelled — throw vs
 
 # Absence — model "might not be there" honestly
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > `null` is not a way to model absence. It is the *absence of a decision* about absence. Make the decision.
 
 ## The principle

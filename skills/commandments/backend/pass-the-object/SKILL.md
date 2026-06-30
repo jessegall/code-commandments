@@ -5,6 +5,8 @@ description: Demand the resolved type you need, not an id plus its container. Wh
 
 # Pass the object, not its id
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > A method that takes `(Workflow $workflow, string $nodeId)` and starts with
 > `$workflow->graph->nodeById($nodeId)` is asking for the wrong things. It needs the
 > **node**. The caller named the id and holds the workflow — so the caller should
