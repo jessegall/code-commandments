@@ -57,7 +57,8 @@ class Element
      * (each swallowing the space before it, so no `<div  >` gap is left). The AST write that
      * replaces a regex directive-strip: only attributes whose span sits inside the slice are
      * cut, so a directive carried OUT to a call site (a `<template>`'s, outside its content)
-     * is left untouched.
+     * is left untouched. A directive that sat ALONE on its line takes the whole line with it
+     * (its trailing newline too), so no blank line is left behind.
      *
      * @param  list<string|Directive>  $names
      */
@@ -77,7 +78,24 @@ class Element
                 $start--;
             }
 
-            $cuts[] = [$start, $span[1]];
+            // When the directive was alone on its line — line start before it, only whitespace
+            // then a newline after it — swallow that trailing newline so its line collapses
+            // entirely rather than leaving a blank one. An inline directive (other content
+            // follows before the newline) keeps its line.
+            $end = $span[1];
+
+            if ($start === $from || $source[$start - 1] === "\n") {
+                $scan = $end;
+                while ($scan < $to && ($source[$scan] === ' ' || $source[$scan] === "\t")) {
+                    $scan++;
+                }
+
+                if ($scan < $to && $source[$scan] === "\n") {
+                    $end = $scan + 1;
+                }
+            }
+
+            $cuts[] = [$start, $end];
         }
 
         // Splice end-first so earlier offsets stay valid.
