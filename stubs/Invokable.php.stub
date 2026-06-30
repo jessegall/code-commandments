@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {namespace};
+
+/**
+ * A callable as a first-class object — the seam that lets an optional callback default to
+ * a no-op ({@see NoOp}) instead of a nullable normalised in the body. Type a parameter
+ * `Invokable`, default it to `new NoOp`, and call it with `($this->callback)(...)`.
+ */
+interface Invokable
+{
+    public function __invoke(mixed ...$arguments): mixed;
+}

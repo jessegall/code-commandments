@@ -20,8 +20,9 @@ final class SinReport
     /**
      * @param  list<Finding>  $findings
      * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it (scope included)
+     * @param  array<string, string>  $scaffoldable  sin name => the `scaffold` command that generates the helper its fix uses
      */
-    public function __construct(private readonly string $path, array $findings, private readonly array $fixable = [])
+    public function __construct(private readonly string $path, array $findings, private readonly array $fixable = [], private readonly array $scaffoldable = [])
     {
         $bySkill = [];
 
@@ -75,6 +76,10 @@ final class SinReport
             foreach ($this->fixCommands($findings) as $command) {
                 $lines[] = "  \033[32m↳ auto-fixable: {$command}\033[0m";
             }
+
+            foreach ($this->scaffoldCommands($findings) as $command) {
+                $lines[] = "  \033[32m↳ scaffold the helper: {$command}\033[0m";
+            }
         }
 
         $skills = count($this->bySkill);
@@ -112,6 +117,10 @@ final class SinReport
                 $out .= "> ✎ Auto-fixable — run `{$command}` to repent these for you.\n\n";
             }
 
+            foreach ($this->scaffoldCommands($findings) as $command) {
+                $out .= "> 🛠 Scaffold the helper its fix uses — run `{$command}`.\n\n";
+            }
+
             foreach ($findings as $finding) {
                 // The FULL path (not display-relative) so `--repent=ID` can resolve it.
                 $out .= "- `{$finding->location}`  {$finding->scope}  [{$finding->detector}]\n";
@@ -134,6 +143,26 @@ final class SinReport
         foreach ($findings as $finding) {
             if (isset($this->fixable[$finding->sin])) {
                 $commands[$finding->sin] = $this->fixable[$finding->sin];
+            }
+        }
+
+        return array_values($commands);
+    }
+
+    /**
+     * The distinct `scaffold` commands for sins (in a group's findings) whose fix uses a
+     * generic helper the package can generate.
+     *
+     * @param  list<Finding>  $findings
+     * @return list<string>
+     */
+    private function scaffoldCommands(array $findings): array
+    {
+        $commands = [];
+
+        foreach ($findings as $finding) {
+            if (isset($this->scaffoldable[$finding->sin])) {
+                $commands[$finding->sin] = $this->scaffoldable[$finding->sin];
             }
         }
 

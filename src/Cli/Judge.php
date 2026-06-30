@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 
 /**
@@ -71,7 +72,28 @@ final class Judge
         // would clobber the very file it's reading. Force `--no-checklist` there.
         $checklist = Scope::repent($args) !== null ? null : $options->checklist;
 
-        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands());
+        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands(), $this->scaffoldCommands());
+    }
+
+    /**
+     * The `scaffold` command for each sin whose fix uses a generic, package-providable
+     * helper ({@see Sin::scaffolds}), so the report can advertise the one-liner that
+     * generates it.
+     *
+     * @return array<string, string>  sin name => scaffold command
+     */
+    private function scaffoldCommands(): array
+    {
+        $commands = [];
+
+        foreach (Sins::every() as $sin) {
+            if ($sin->scaffolds() !== []) {
+                $name = $sin->name();
+                $commands[$name] = "vendor/bin/commandments scaffold --sin={$name}";
+            }
+        }
+
+        return $commands;
     }
 
     /**
@@ -101,7 +123,7 @@ final class Judge
      * @param  list<\JesseGall\CodeCommandments\Vue\Detector>  $frontend  Vue detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable): int
+    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable): int
     {
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
@@ -154,7 +176,7 @@ final class Judge
             return 0;
         }
 
-        $report = new SinReport($path, $findings, $fixable);
+        $report = new SinReport($path, $findings, $fixable, $scaffoldable);
         $this->line($report->console());
 
         if ($checklist !== null) {
