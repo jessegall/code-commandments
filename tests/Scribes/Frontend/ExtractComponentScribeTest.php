@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Scribes\Frontend;
 
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepDataReachDetector;
+use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use PHPUnit\Framework\TestCase;
@@ -99,6 +100,68 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString("import CustomerSection from './CustomerSection.vue';", $source);
         $this->assertStringContainsString('<CustomerSection :customer="order.customer" />', $source);
         $this->assertStringNotContainsString('order.customer.fullName', $source);
+    }
+
+    public function test_same_name_in_different_directories_is_not_suffixed(): void
+    {
+        // Two unrelated deep components in two folders both extract a `DataSection`.
+        // Different folders, different files — neither may be renamed `DataSection2`.
+        $dir = $this->tempDir();
+        mkdir("{$dir}/a");
+        mkdir("{$dir}/b");
+        file_put_contents("{$dir}/a/PanelA.vue", $this->deepComponent('data.value'));
+        file_put_contents("{$dir}/b/CardB.vue", $this->deepComponent('data.value'));
+
+        $detector = new DeepNestedDetector();
+        $paths = array_keys($detector->scribe()->rewrite($detector->find(Codebase::scan($dir))));
+
+        $this->assertContains("{$dir}/a/DataSection.vue", $paths);
+        $this->assertContains("{$dir}/b/DataSection.vue", $paths);
+        $this->assertEmpty(preg_grep('/DataSection2\.vue$/', $paths), 'no cross-directory suffix');
+    }
+
+    public function test_two_collisions_in_one_directory_are_suffixed(): void
+    {
+        // Two deep sections in ONE file both name `DataSection` — a genuine same-folder
+        // clash, so the second IS disambiguated.
+        $dir = $this->tempDir();
+        $body = $this->deepNest('data.value') . "\n  " . $this->deepNest('data.label');
+        file_put_contents("{$dir}/Twin.vue", "<template>\n  {$body}\n</template>\n");
+
+        $detector = new DeepNestedDetector();
+        $paths = array_keys($detector->scribe()->rewrite($detector->find(Codebase::scan($dir))));
+
+        $this->assertContains("{$dir}/DataSection.vue", $paths);
+        $this->assertContains("{$dir}/DataSection2.vue", $paths);
+    }
+
+    private function deepComponent(string $leaf): string
+    {
+        return "<template>\n  {$this->deepNest($leaf)}\n  <footer>end</footer>\n</template>\n";
+    }
+
+    private function deepNest(string $leaf): string
+    {
+        return '<section>' . str_repeat('<div>', 13) . "<p>{{ {$leaf} }}</p>" . str_repeat('</div>', 13) . '</section>';
+    }
+
+    private function tempDir(): string
+    {
+        $dir = sys_get_temp_dir() . '/cc_extract_' . uniqid();
+        mkdir($dir, 0777, true);
+        $this->cleanup[] = $dir;
+
+        return $dir;
+    }
+
+    /** @var list<string> */
+    private array $cleanup = [];
+
+    protected function tearDown(): void
+    {
+        foreach ($this->cleanup as $dir) {
+            exec('rm -rf ' . escapeshellarg($dir));
+        }
     }
 
     private function onlyDeepReach(string $body): string
