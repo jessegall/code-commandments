@@ -14,7 +14,8 @@ final class NullableCollectionReturn extends Sin
         parent::__construct(
             name: 'nullable-collection-return',
             skill: Absence::class,
-            description: "\"Nothing\" with a natural empty form returned as `null` (`array | null` → should be `[]`)"
+            description: "\"Nothing\" with a natural empty form returned as `null` (`array | null` → should be `[]`)",
+            rule: "Return an empty collection for \"nothing\", never `?array`/`array | null`."
         );
     }
 }

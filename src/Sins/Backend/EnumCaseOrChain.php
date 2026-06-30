@@ -14,7 +14,9 @@ final class EnumCaseOrChain extends Sin
         parent::__construct(
             name: 'enum-case-or-chain',
             skill: EnumsWithBehaviour::class,
-            description: "`\$x === Enum::A || \$x === Enum::B` — a hand-rolled case-group test"
+            description: "`\$x === Enum::A || \$x === Enum::B` — a hand-rolled case-group test",
+            rule: "Put case-group membership on the enum (a method); don't hand-roll `\$x === Enum::A || \$x === Enum::B`.",
+            suggestion: "A membership method on the enum (`\$x->isFinal()`)."
         );
     }
 }

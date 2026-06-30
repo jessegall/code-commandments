@@ -14,7 +14,9 @@ final class NestedTernary extends Sin
         parent::__construct(
             name: 'nested-ternary',
             skill: GuardClausesAndFlow::class,
-            description: "Nested/chained ternary `\$a ? \$b : (\$c ? \$d : \$e)` (hidden control flow)"
+            description: "Nested/chained ternary `\$a ? \$b : (\$c ? \$d : \$e)` (hidden control flow)",
+            rule: "Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `\$a ? \$b : (\$c ? \$d : \$e)`.",
+            suggestion: "A `match`, or early-return guards."
         );
     }
 }

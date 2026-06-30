@@ -14,7 +14,8 @@ final class RedundantElse extends Sin
         parent::__construct(
             name: 'redundant-else',
             skill: GuardClausesAndFlow::class,
-            description: "`else` after an `if` branch that already returns/throws (redundant)"
+            description: "`else` after an `if` branch that already returns/throws (redundant)",
+            rule: "Drop the `else` after an `if` branch that already returns/throws/continues/breaks."
         );
     }
 }

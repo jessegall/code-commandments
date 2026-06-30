@@ -14,7 +14,8 @@ final class ControlFlowOnElement extends Sin
         parent::__construct(
             name: 'control-flow-on-element',
             skill: VueControlFlow::class,
-            description: "`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`"
+            description: "`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`",
+            rule: "Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag."
         );
     }
 }

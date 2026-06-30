@@ -14,7 +14,8 @@ final class LoopInvertedGuard extends Sin
         parent::__construct(
             name: 'loop-inverted-guard',
             skill: GuardClausesAndFlow::class,
-            description: "Loop body (multi-statement) wrapped in an `if` instead of `continue` guard"
+            description: "Loop body (multi-statement) wrapped in an `if` instead of `continue` guard",
+            rule: "Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`."
         );
     }
 }

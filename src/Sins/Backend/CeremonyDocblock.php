@@ -14,7 +14,8 @@ final class CeremonyDocblock extends Sin
         parent::__construct(
             name: 'ceremony-docblock',
             skill: Documentation::class,
-            description: "Docblock that only restates the typed signature (`@param Type \$x`, no description)"
+            description: "Docblock that only restates the typed signature (`@param Type \$x`, no description)",
+            rule: "A docblock must add meaning beyond the signature — drop `@param Type \$x` lines that only restate an already-typed parameter."
         );
     }
 }

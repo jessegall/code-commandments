@@ -20,7 +20,7 @@ nesting. The shape itself documents the contract.
 The opposite — burying a check inside an expression, or wrapping the happy path in `if (ok) { … }` — hides
 the contract and pushes the body rightward until it's unreadable.
 
-## When to use this skill
+### When to use this skill
 
 Reach for this the moment you are about to write:
 
@@ -29,101 +29,16 @@ Reach for this the moment you are about to write:
 - an `if/elseif/else` chain, or a branch nested two-deep;
 - anything that **throws or returns early**.
 
-## Rule 1 — guard at the top, never inline
+## Rules
 
-Validate at the entrance with `if (…) { return; }` or `if (…) { throw …; }`. **Do not jam a check into a
-larger expression**, and do not bury it in the middle of the body.
-
-```php
-// Bad — the check is smuggled into an expression; the throw is hidden mid-line
-return [
-    'createdAt' => ($message->created_at ?? throw new \LogicException(
-        'A persisted message must carry a created_at timestamp.'
-    ))->toIso8601String(),
-];
-
-// Good — the precondition is a guard at the top; the body trusts it
-if ($message->created_at === null) {
-    throw MissingTimestampException::forMessage($message->id);
-}
-
-return ['createdAt' => $message->created_at->toIso8601String()];
-```
-
-A bare `return $this->items[$key] ?? throw …;` as the *entire* statement of a simple lookup is fine — the
-throw is the whole expression, not hidden inside one. The smell is a `?? throw` (or a `=== null ? … : …`)
-**feeding further work on the same line.**
-
-> *How* to throw — named exception, static factory — is the [`exceptions`](../exceptions/SKILL.md) skill.
-> *Whether* a missing value should throw at all (vs Option / empty / a default) is
-> [`absence`](../absence/SKILL.md). This skill is only about *where* the check goes: the top.
-
-## Rule 2 — flat body: early returns, no ladders, no nesting
-
-Once you've guarded, the body stays at one indentation level.
-
-- **No `if/elseif/else` ladders.** Use a sequence of guards (`if (…) return/continue/throw;`), or a `match`
-  for value-based dispatch.
-- **No two-deep nesting.** A nested `if` is a guard waiting to be hoisted, or a block waiting to become a
-  named method.
-- **In a loop, guard with `continue`** instead of wrapping the body in an `if`.
-
-```php
-// Bad — nested, happy path buried, arrow-code
-public function decode(Entry $entry): Action
-{
-    if ($entry->isValid()) {
-        if ($entry->type !== null) {
-            return $this->build($entry);
-        }
-    }
-    throw UnusableEntryException::make();
-}
-
-// Good — guards out, happy path flat and last
-public function decode(Entry $entry): Action
-{
-    if (! $entry->isValid() || $entry->type === null) {
-        throw UnusableEntryException::make();
-    }
-
-    return $this->build($entry);
-}
-```
-
-```php
-// Bad — if/continue's inverse: the whole loop body wrapped in a condition
-foreach ($entries as $entry) {
-    if ($entry->isUsable()) {
-        $decoded[] = $this->decode($entry);
-    }
-}
-
-// Good — guard with continue, body flat
-foreach ($entries as $entry) {
-    if (! $entry->isUsable()) {
-        continue;
-    }
-
-    $decoded[] = $this->decode($entry);
-}
-```
-
-## Rule 3 — happy path last
-
-The successful outcome is the final, unindented statement of the method — never tucked inside an `else` or
-a nested `if`. If you find the happy path indented, a guard is missing.
-
-## Checklist
-
-```
-Guard clauses & flow
-- [ ] Every precondition is a guard at the TOP (early return/throw) — not inline, not buried.
-- [ ] No `?? throw` / `=== null ? …` feeding further work on the same line.
-- [ ] No if/elseif/else ladder; no two-deep nesting (hoist a guard or extract a method).
-- [ ] Loops guard with `continue`, not a body-wrapping `if`.
-- [ ] The happy path is the last, unindented statement.
-```
+- Flatten with guard clauses — never nest `if`s three deep into a pyramid.
+- Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
+  _A `match`, a method on the type, or polymorphic dispatch._
+- Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
+- Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
+- Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
+  _A `match`, or early-return guards._
+- Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
 
 ## Bad → good
 
@@ -289,7 +204,16 @@ public function available(array $products): array
 - Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
 - `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
 
-## Relationship to the other skills
+## Checklist
+
+- [ ] Flatten with guard clauses — never nest `if`s three deep into a pyramid.
+- [ ] Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
+- [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
+- [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
+- [ ] Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
+- [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
+
+## Related skills
 
 - [`backend/exceptions`](../exceptions/SKILL.md) — *how* a guard throws (named factory, never a message string).
 - [`backend/absence`](../absence/SKILL.md) — *whether* a missing value is a guard-and-throw at all, vs Option / empty / default.

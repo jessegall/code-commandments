@@ -11,49 +11,28 @@ description: How to document — and mostly NOT. Docblocks are 1–2 lines (3 ma
 > is a last resort. Neither is a changelog, a tutorial, or a story about the refactor. Most code needs no
 > inline comment at all.
 
-## This fires the moment you type `/**` or `//`
+## The principle
 
-Before you write a single doc or comment, check it against the four rules below. If it doesn't pass,
-**don't write it.**
+A docblock and a comment are not free: every line a reader must scan is a tax on understanding, and a
+line that restates the code, or narrates how it got here, is pure tax with no return. The bar is high —
+write a doc only when it tells the reader something the code itself does not.
 
-## The rules
+Docs are still **wanted**, not banned. A short docblock on a class or method is good and expected: one
+sentence saying what it *is* or *does*, plus the `@param` / `@return` / `@throws` type contract. Keep it to
+a line or two, present-tense, about the code as it is now — never *how* it works internally, *why* it
+changed, or what it *used to* be. Git holds the history; when you replace code you replace it, you don't
+annotate the grave.
 
-1. **Method and class docblocks are fine — and expected. Write one.** A short docblock on a class or
-   method is good and welcome; the conciseness rule is not "don't write docs". But it **MUST** follow the
-   rest of this rule: **1–2 lines (3 only if truly needed), present-tense, about the code now** — one
-   sentence saying what the class/method *is* or *does*, plus `@param` / `@return` / `@throws` for the type
-   contract. Nothing about *how* it works internally, *why it was changed*, or what it *used to* be.
+Inline comments are the rarest of all — default to none. The code already says *what* it does; the only
+comment worth writing explains a non-obvious **why** the code can't: a hidden invariant, a workaround for an
+external bug, a constraint the reader can't infer. (A structural section divider in a large class is fine
+if the codebase already uses them — structural, not narrative.) Everything else: don't write it.
 
-2. **Inline comments are RARE — default to none.** Write one only when the *why* is non-obvious: a hidden
-   invariant, a workaround, an external constraint. **Never restate *what* the code does** — the code
-   already says that.
+## Rules
 
-3. **NEVER document the past.** No `// previously…`, `// changed from…`, `// used to be…`, `// now we…`,
-   `// refactored to…`, no plan-phase or task references. A comment describes the present code; **git holds
-   the history.** When you replace code, you replace it — you don't annotate the grave.
-
-4. **No long class docblocks.** One sentence: what the class is. If you need a paragraph to explain it, the
-   class is doing too much — fix that, don't document around it.
-
-## The only comments worth writing
-
-- **A non-obvious *why*** — a hidden invariant, a workaround for an external bug, a constraint the reader
-  can't infer from the code.
-- A **structural section divider** in a large class, if the codebase already uses them
-  (`// ----------[ Section ]----------`). Structural, not narrative.
-
-Everything else: delete it, or don't write it.
-
-## Checklist
-
-```
-Documentation
-- [ ] Docblock is 1–2 lines, present-tense, about what the code IS/does now (+ @param/@return/@throws).
-- [ ] No history: no "previously / used to / now we / changed / refactored", no task/phase references.
-- [ ] No inline comment that restates what the code already says.
-- [ ] Any inline comment that survives explains a non-obvious WHY (or is a structural divider).
-- [ ] No multi-paragraph class docblock (if it needs one, the class is too big).
-```
+- Comment what the code IS now, never its history — no "previously/used to/changed from" or task-ref archaeology.
+- Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
+- A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
 
 ## Bad → good
 
@@ -143,6 +122,12 @@ public function awardLabel(int $points, string $name): string
 - Multi-paragraph class docblock (class too big) — `BloatedDocblockDetector`
 - Docblock that only restates the typed signature (`@param Type $x`, no description) — `CeremonyDocblockDetector`
 
-## Relationship to the other skills
+## Checklist
+
+- [ ] Comment what the code IS now, never its history — no "previously/used to/changed from" or task-ref archaeology.
+- [ ] Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
+- [ ] A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
+
+## Related skills
 
 - [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — fix the shape instead of documenting the workaround. A doc should never be the thing keeping a confusing design legible.
