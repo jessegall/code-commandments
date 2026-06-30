@@ -29,12 +29,12 @@ use JesseGall\CodeCommandments\Vue\Sfc;
  */
 final class DeepReachCluster
 {
-    private const int MIN_DEPTH = 2; // property hops past the root: order.customer.name
+    public const int MIN_DEPTH = 2; // property hops past the root: order.customer.name
 
     private const int MIN_FIELDS = 2; // distinct fields read off the shared object
 
     /** Accessors that read reactive state / a count, not a nested data shape. */
-    private const array TRANSPARENT = ['value', 'length'];
+    public const array TRANSPARENT = ['value', 'length'];
 
     /**
      * @param  list<Element>  $reaches  the distinct elements that reach into $object
@@ -42,43 +42,72 @@ final class DeepReachCluster
     private function __construct(
         public readonly string $object,
         private readonly array $reaches,
+        public readonly Sfc $sfc,
     ) {}
 
     /**
-     * Every deep-reach cluster in a component.
+     * Group the deep-reaching elements the detector SELECTED (via the fluent query) into
+     * clusters — one per shared nested object read in ≥{@see MIN_FIELDS} distinct fields,
+     * scoped per component, reactive roots excluded (R1). The detector composes the query;
+     * this is the group-by over its results, the frontend twin of the backend's shape-hash
+     * grouping detectors.
      *
+     * @param  list<\JesseGall\CodeCommandments\Vue\ElementMatch>  $candidates
      * @return list<self>
      */
-    public static function in(Sfc $component): array
+    public static function cluster(array $candidates): array
     {
-        $reactive = self::reactiveRoots($component);
-        $groups = [];
+        $clusters = [];
 
-        foreach ($component->template->descendants() as $element) {
-            foreach ($element->expressions() as $expression) {
-                foreach ($expression->chains() as $chain) {
-                    $chain = self::material($chain);
+        foreach (self::byComponent($candidates) as $component) {
+            $reactive = self::reactiveRoots($component['sfc']);
+            $objects = [];
 
-                    if (count($chain) <= self::MIN_DEPTH || in_array($chain[0], $reactive, true)) {
-                        continue; // F3 too shallow, or R1 a reactive root
+            foreach ($component['elements'] as $element) {
+                foreach ($element->expressions() as $expression) {
+                    foreach ($expression->chains() as $chain) {
+                        $chain = self::material($chain);
+
+                        if (count($chain) <= self::MIN_DEPTH || in_array($chain[0], $reactive, true)) {
+                            continue; // F3 too shallow, or R1 a reactive root
+                        }
+
+                        // Group on the REAL tree node (not the query's match copy) so the
+                        // boundary's lowest-common-ancestor walk runs over the live tree.
+                        $object = "{$chain[0]}.{$chain[1]}";
+                        $objects[$object]['fields'][implode('.', $chain)] = true;
+                        $objects[$object]['reaches'][spl_object_id($element->node)] = $element->node;
                     }
+                }
+            }
 
-                    $object = "{$chain[0]}.{$chain[1]}";
-                    $groups[$object]['fields'][implode('.', $chain)] = true;
-                    $groups[$object]['reaches'][spl_object_id($element)] = $element;
+            foreach ($objects as $object => $group) {
+                if (count($group['fields']) >= self::MIN_FIELDS) {
+                    $clusters[] = new self($object, array_values($group['reaches']), $component['sfc']);
                 }
             }
         }
 
-        $clusters = [];
+        return $clusters;
+    }
 
-        foreach ($groups as $object => $group) {
-            if (count($group['fields']) >= self::MIN_FIELDS) {
-                $clusters[] = new self($object, array_values($group['reaches']));
-            }
+    /**
+     * The candidates grouped by their component — a cluster never spans files.
+     *
+     * @param  list<\JesseGall\CodeCommandments\Vue\ElementMatch>  $candidates
+     * @return list<array{sfc: Sfc, elements: list<\JesseGall\CodeCommandments\Vue\ElementMatch>}>
+     */
+    private static function byComponent(array $candidates): array
+    {
+        $components = [];
+
+        foreach ($candidates as $candidate) {
+            $key = spl_object_id($candidate->sfc);
+            $components[$key]['sfc'] = $candidate->sfc;
+            $components[$key]['elements'][] = $candidate;
         }
 
-        return $clusters;
+        return array_values($components);
     }
 
     /**
