@@ -9,7 +9,7 @@ namespace JesseGall\CodeCommandments\Vue;
  *
  * A hand-written, forgiving scanner — not a spec HTML5 parser: it tracks line
  * numbers AND byte spans (so findings point at `file:line` and a {@see
- * \JesseGall\CodeCommandments\Cli\Rewriting\Frontend\SwitchCaseScribe} can splice the
+ * \JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe} can splice the
  * source), keeps Vue's directive attributes intact, honours quotes (so `>` inside
  * `:x="a > b"` doesn't end a tag), treats `{{ … }}`/text as text nodes, drops
  * comments, and closes HTML void elements and self-closing tags without a matching

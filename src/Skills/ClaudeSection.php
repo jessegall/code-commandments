@@ -24,7 +24,8 @@ final class ClaudeSection
         ## Skills — load before you work
 
         Code style in this package lives in the code-commandments skills under
-        `.claude/skills/commandments-*`. Two tiers. They are the source of truth for
+        `.claude/skills/commandments/` (split `backend/` and `frontend/`). Two tiers.
+        They are the source of truth for
         every architecture/style decision — read the relevant one (via the Skill tool)
         before writing or reviewing code.
 

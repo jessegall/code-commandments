@@ -19,7 +19,7 @@ final class ConcurrentSubclassDetector implements Detector
 
     public function skill(): string
     {
-        return 'concurrent-state';
+        return 'backend/concurrent-state';
     }
 
     public function find(Codebase $codebase): array

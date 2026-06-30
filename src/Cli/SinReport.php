@@ -64,7 +64,7 @@ final class SinReport
 
         foreach ($this->bySkill as $skill => $findings) {
             $lines[] = "\n\033[1;33m{$skill}\033[0m  (" . count($findings) . ')';
-            $lines[] = "  \033[2m↳ read the {$skill} skill (skills/{$skill}/SKILL.md) before fixing\033[0m";
+            $lines[] = "  \033[2m↳ read the {$skill} skill (skills/commandments/{$skill}/SKILL.md) before fixing\033[0m";
 
             foreach ($findings as $finding) {
                 $location = $this->relative($finding->location);
@@ -96,7 +96,7 @@ final class SinReport
             . "clean run deletes this file).\n";
 
         foreach ($this->bySkill as $skill => $findings) {
-            $out .= "\n## {$skill}  — read `skills/{$skill}/SKILL.md`\n\n";
+            $out .= "\n## {$skill}  — read `skills/commandments/{$skill}/SKILL.md`\n\n";
 
             foreach ($findings as $finding) {
                 $location = $this->relative($finding->location);

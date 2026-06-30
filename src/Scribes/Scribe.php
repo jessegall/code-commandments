@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Rewriting;
+namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
