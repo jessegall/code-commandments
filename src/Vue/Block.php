@@ -7,8 +7,9 @@ namespace JesseGall\CodeCommandments\Vue;
 /**
  * A top-level block of a Vue single-file component — `<script>`, `<template>` or
  * `<style>` — with its raw attributes (`setup`, `lang="ts"`, `scoped`), its inner
- * content, and the 1-based line it opens on (the order of blocks is a sin all its
- * own: script belongs before template).
+ * content, the 1-based line it opens on (the order of blocks is a sin all its own:
+ * script belongs before template), and the byte offset its inner content starts at
+ * (just past the opening tag — where an import is spliced in).
  */
 final class Block
 {
@@ -20,6 +21,7 @@ final class Block
         public readonly array $attributes,
         public readonly string $content,
         public readonly int $line,
+        public readonly int $start = 0,
     ) {}
 
     public function hasAttribute(string $name): bool

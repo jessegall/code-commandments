@@ -76,20 +76,51 @@ final class ExtractComponentScribeTest extends TestCase
     public function test_duplicate_blocks_collapse_to_one_component_with_their_free_vars(): void
     {
         $block = '<DialogClose class="close"><X class="icon" /><span>{{ label }}</span></DialogClose>';
-        $files = $this->extract(new DuplicateElementDetector, "<template><div>{$block}</div><aside>{$block}</aside></template>");
+        $files = $this->extract(new DuplicateElementDetector, "<script setup>\n</script>\n<template><div>{$block}</div><aside>{$block}</aside></template>");
 
-        $this->assertCount(1, $files);
-        $this->assertStringContainsString('label: unknown', reset($files));
+        $components = $this->components($files);
+
+        $this->assertCount(1, $components, 'one component for the two duplicates');
+        $this->assertStringContainsString('label: unknown', reset($components));
+    }
+
+    public function test_rewrites_the_call_site_and_imports_the_component(): void
+    {
+        $files = $this->extract(
+            new DeepDataReachDetector,
+            "<script setup lang=\"ts\">\nconst order = useOrder();\n</script>\n<template>\n  <div>\n"
+            . str_repeat("    <p>row</p>\n", 55)
+            . "    <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n",
+        );
+
+        $source = $files['component.vue'];
+
+        // the source imports the component and replaces the lifted markup with its usage
+        $this->assertStringContainsString("import CustomerSection from './CustomerSection.vue';", $source);
+        $this->assertStringContainsString('<CustomerSection :customer="order.customer" />', $source);
+        $this->assertStringNotContainsString('order.customer.fullName', $source);
     }
 
     private function onlyDeepReach(string $body): string
     {
         $filler = str_repeat("  <p>row</p>\n", 55);
         $files = $this->extract(new DeepDataReachDetector, "<template>\n  <div>\n{$filler}  {$body}\n  </div>\n</template>");
+        $components = $this->components($files);
 
-        $this->assertCount(1, $files, 'expected exactly one extracted component');
+        $this->assertCount(1, $components, 'expected exactly one extracted component');
 
-        return reset($files);
+        return reset($components);
+    }
+
+    /**
+     * The newly-created component files (everything but the refactored source).
+     *
+     * @param  array<string, string>  $files
+     * @return array<string, string>
+     */
+    private function components(array $files): array
+    {
+        return array_filter($files, static fn (string $path): bool => $path !== 'component.vue', ARRAY_FILTER_USE_KEY);
     }
 
     /**
