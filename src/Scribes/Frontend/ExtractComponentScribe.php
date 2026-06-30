@@ -539,11 +539,61 @@ final class ExtractComponentScribe extends RepentScribe
             } elseif ($iterable !== null && ($segments = self::segments($iterable)) !== null) {
                 $types[$prop] = self::elementType(self::accessType($segments, $source, $script));
             } else {
-                $types[$prop] = $source[$prop] ?? $script->declaredType($prop) ?? 'unknown';
+                $types[$prop] = $source[$prop]
+                    ?? $script->declaredType($prop)
+                    ?? self::tracedType($boundary, $script, $prop)
+                    ?? 'unknown';
             }
         }
 
         return $types;
+    }
+
+    /**
+     * A prop traced THROUGH a composable: `const { step } = useWizardState(…)` →
+     * `useWizardState`'s declared return interface → its `step` field, ref-unwrapped. The
+     * binding's import is resolved to the composable's file, which is parsed and read. Null
+     * when the chain breaks (not destructured, an unresolved/aliased import, an inferred
+     * return) — only a real type checker could close those, and we never guess.
+     */
+    private static function tracedType(Boundary $boundary, Script $script, string $prop): ?string
+    {
+        $callee = $script->destructuredCall($prop);
+
+        if ($callee === null) {
+            return null;
+        }
+
+        $specifier = $script->importSpecifier($callee);
+        $module = $specifier === null ? $script : self::loadModule($boundary->sfc->path, $specifier);
+        $interface = $module?->returnTypeName($callee);
+
+        return $interface === null ? null : $module->fieldType($interface, $prop);
+    }
+
+    /**
+     * The {@see Script} of a RELATIVE module specifier resolved against the importing file —
+     * `./useX`, `../composables/useX`, trying the `.ts`/`.tsx`/`/index.ts` a bundler would.
+     * Null for a bare/aliased specifier (`@app/…`, `vue`) or a file that isn't there; those
+     * need bundler config we don't read here.
+     */
+    private static function loadModule(string $fromFile, string $specifier): ?Script
+    {
+        if ($specifier === '' || $specifier[0] !== '.') {
+            return null; // bare or aliased — not a relative path we can resolve unaided
+        }
+
+        $base = dirname($fromFile) . '/' . $specifier;
+
+        foreach (['.ts', '.tsx', '/index.ts'] as $extension) {
+            $path = realpath($base . $extension);
+
+            if ($path !== false && is_file($path)) {
+                return new Script((string) file_get_contents($path));
+            }
+        }
+
+        return null;
     }
 
     /**

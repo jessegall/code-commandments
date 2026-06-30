@@ -70,6 +70,51 @@ final class Script
     }
 
     /**
+     * The module a name is imported FROM — `import { useX } from './useX'` → `./useX` for
+     * `useX`. The middle hop of a composable trace: find the file that declares the
+     * composable. Null when the name isn't imported (locally declared, or absent).
+     */
+    public function importSpecifier(string $name): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isId($i, 'import')) {
+                continue;
+            }
+
+            $j = $i + 1;
+
+            for (; $j < $count; $j++) {
+                $token = $this->tokens[$j];
+
+                if (($token['kind'] === 'id' && $token['value'] === 'from')
+                    || $token['kind'] === 'string'
+                    || ($token['kind'] === 'punct' && ($token['value'] === '=' || $token['value'] === ';'))) {
+                    break;
+                }
+            }
+
+            if (! in_array($name, $this->bindingNames($i + 1, $j), true) || ! $this->isId($j, 'from')) {
+                continue;
+            }
+
+            for ($k = $j + 1; $k < $count; $k++) {
+                if ($this->tokens[$k]['kind'] === 'string') {
+                    return $this->unquoteString($this->tokens[$k]['value']);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function unquoteString(string $raw): string
+    {
+        return strlen($raw) >= 2 ? substr($raw, 1, -1) : $raw;
+    }
+
+    /**
      * The names an import binds, from the tokens in `[$from, $to)` — default, `* as ns`,
      * and the `{ a, b as c }` named set; `type` and aliasing handled.
      *
@@ -232,6 +277,119 @@ final class Script
         return null;
     }
 
+    /**
+     * The function a name is destructured from — `const { step, fields } = useWizardState(…)`
+     * → `useWizardState` for `step`. The first hop of a composable trace: a binding pulled
+     * out of a composable's return, so its type lives in that composable. Null when the name
+     * isn't object-destructured from a call. An `= await call()` is seen through.
+     */
+    public function destructuredCall(string $name): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isDeclarator($i) || ! $this->isPunct($i + 1, '{')) {
+                continue;
+            }
+
+            $j = $i + 2;
+            $keys = [];
+
+            for (; $j < $count && ! $this->isPunct($j, '}'); $j++) {
+                // A binding is an id that is NOT a key (a key is followed by `:`, its binding
+                // is the id after the `:`). So `{ targets: ours }` binds `ours`, not `targets`.
+                if ($this->tokens[$j]['kind'] === 'id' && ! $this->isPunct($j + 1, ':')) {
+                    $keys[] = $this->tokens[$j]['value'];
+                }
+            }
+
+            $j++; // past `}`
+
+            if (! $this->isPunct($j, '=')) {
+                continue;
+            }
+
+            $j += $this->isId($j + 1, 'await') ? 2 : 1;
+
+            if (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === 'id'
+                && $this->isPunct($j + 1, '(') && in_array($name, $keys, true)) {
+                return $this->tokens[$j]['value'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * A function's DECLARED return type name — `function useX(): WizardState` or
+     * `const useX = (): WizardState =>` → `WizardState`. Null when the function isn't found
+     * or has no return annotation (an inferred return — only a type checker could resolve it).
+     */
+    public function returnTypeName(string $function): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if ($this->isId($i, 'function') && $this->isId($i + 1, $function) && $this->isPunct($i + 2, '(')) {
+                return $this->returnAfterParams($i + 2);
+            }
+
+            if ($this->isDeclarator($i) && $this->isId($i + 1, $function) && $this->isPunct($i + 2, '=') && $this->isPunct($i + 3, '(')) {
+                return $this->returnAfterParams($i + 3);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The return type annotated after a parameter list opening at $openParen — the `: R`
+     * that follows the matching `)`. Null when there is none.
+     */
+    private function returnAfterParams(int $openParen): ?string
+    {
+        $after = $this->matchingParen($openParen) + 1;
+
+        if (! $this->isPunct($after, ':')) {
+            return null;
+        }
+
+        [$type] = $this->readReturnType($after + 1);
+
+        return $type !== '' ? $type : null;
+    }
+
+    /**
+     * The type of one field of a named `interface`/`type` in this script, as seen at a
+     * binding site — a `Ref<T>` field unwraps to `T` (the value, the way the template sees
+     * it). Null when the type or field isn't found. The last hop of a composable trace.
+     */
+    public function fieldType(string $type, string $field): ?string
+    {
+        $fields = $this->namedTypeFields($type);
+
+        return isset($fields[$field]) ? $this->unwrapRef($fields[$field]) : null;
+    }
+
+    /** A `Ref<T>` / `ComputedRef<T>` (etc.) unwrapped to its value type `T`, as in the template. */
+    private function unwrapRef(string $type): string
+    {
+        foreach (['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef'] as $wrapper) {
+            $prefix = $wrapper . '<';
+
+            if (str_starts_with($type, $prefix) && str_ends_with($type, '>')) {
+                return substr($type, strlen($prefix), -1);
+            }
+        }
+
+        return $type;
+    }
+
+    private function isDeclarator(int $i): bool
+    {
+        return $this->isId($i, 'const') || $this->isId($i, 'let') || $this->isId($i, 'var');
+    }
+
     /** Vue reactivity wrappers whose `<T>` IS the value type seen in the template. */
     private function isReactiveValue(int $i): bool
     {
@@ -386,7 +544,10 @@ final class Script
     }
 
     /**
-     * Read `key: Type;` fields from the opening `{` at $i until its matching `}`.
+     * Read `key: Type;` fields from the opening `{` at $i until its matching `}`. A METHOD
+     * member (`name(args): R`) is skipped whole — its parameters are NOT fields, so a param
+     * sharing a field's name (`step` in `goToStep(step: string)` beside `step: Ref<string>`)
+     * can never overwrite the real field.
      *
      * @return array<string, string>
      */
@@ -407,6 +568,17 @@ final class Script
 
             if ($this->isPunct($i, '?')) {
                 $i++;
+            }
+
+            // `name(…)` is a method — skip its signature (params + return) to the terminator.
+            if ($this->isPunct($i, '(')) {
+                $i = $this->matchingParen($i) + 1;
+
+                while ($i < $count && ! $this->isPunct($i, ';') && ! $this->isPunct($i, '}')) {
+                    $i++;
+                }
+
+                continue;
             }
 
             if (! $this->isPunct($i, ':')) {
