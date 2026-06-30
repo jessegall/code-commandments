@@ -41,21 +41,22 @@ final class DeepDataReachDetector implements Detector, Repentable
 
     public function find(Codebase $components): array
     {
+        // Compose the query for the candidates — deep-reaching elements in sizeable templates
+        // — then group them into clusters and take each cluster's boundary.
+        $candidates = $components
+            ->whereElement()
+            ->inTemplateOfAtLeast(self::MIN_TEMPLATE_LINES)
+            ->reachesAtLeast(DeepReachCluster::MIN_DEPTH, DeepReachCluster::TRANSPARENT)
+            ->get();
+
         $findings = [];
 
-        foreach ($components->components() as $component) {
-            if ($component->templateLineCount() < self::MIN_TEMPLATE_LINES) {
-                continue;
-            }
+        foreach (DeepReachCluster::cluster($candidates) as $cluster) {
+            $boundary = $cluster->boundary();
 
-            foreach (DeepReachCluster::in($component) as $cluster) {
-                $boundary = $cluster->boundary();
-
-                if ($boundary->isRoot()) {
-                    continue; // the reaches span the whole template — too diffuse to be one component
-                }
-
-                $findings[] = new ElementMatch($boundary, $component);
+            // A cluster spanning the whole template is too diffuse to be one component.
+            if (! $boundary->isRoot()) {
+                $findings[] = new ElementMatch($boundary, $cluster->sfc);
             }
         }
 
