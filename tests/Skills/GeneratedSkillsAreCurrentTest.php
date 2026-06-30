@@ -25,7 +25,7 @@ final class GeneratedSkillsAreCurrentTest extends TestCase
     public function test_every_skill_md_matches_the_generated_output(): void
     {
         $root = dirname(__DIR__, 2);
-        $examples = FixtureExamples::extract(Codebase::scan("{$root}/tests/Fixtures/backend"), Detectors::all())
+        $examples = FixtureExamples::extract(Codebase::scan("{$root}/tests/Fixtures/backend"), Detectors::backend())
             + VueFixtureExamples::extract(VueCodebase::scan("{$root}/tests/Fixtures/frontend"), Detectors::frontend());
         $renderer = new SkillRenderer();
 

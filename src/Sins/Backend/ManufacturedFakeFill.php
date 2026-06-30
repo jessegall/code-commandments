@@ -14,7 +14,9 @@ final class ManufacturedFakeFill extends Sin
         parent::__construct(
             name: 'manufactured-fake-fill',
             skill: FixAtTheSource::class,
-            description: "`?? <empty literal>` filling a required slot (manufactured fake)"
+            description: "`?? <empty literal>` filling a required slot (manufactured fake)",
+            rule: "Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.",
+            suggestion: "Throw a named exception at the boundary, or bake a real default into the signature."
         );
     }
 }

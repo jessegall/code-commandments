@@ -14,7 +14,9 @@ final class ConstClassEnum extends Sin
         parent::__construct(
             name: 'const-class-enum',
             skill: EnumsWithBehaviour::class,
-            description: "Closed set as raw string literals / a `const` class of scalars (not a native enum)"
+            description: "Closed set as raw string literals / a `const` class of scalars (not a native enum)",
+            rule: "Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.",
+            suggestion: "A native `enum X: string` with the values as cases."
         );
     }
 }

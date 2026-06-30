@@ -32,6 +32,8 @@ abstract class Sin
         public readonly string $name,
         string $skill,
         public readonly string $description,
+        public readonly string $rule,
+        public readonly ?string $suggestion = null,
     ) {
         $this->skill = $skill;
     }
@@ -61,14 +63,34 @@ abstract class Sin
     }
 
     /**
-     * The one-line "what the sin is" — the row the generated `SKILL.md` projects. The
-     * sin's bad → good code example is NOT stored here — it is sourced from the fixture
-     * (the `#[Sinful]` bad code and its `#[Righteous]` twin) via
+     * The one-line "what the sin is" — the symptom the detector flags (the `## When it
+     * fires` row). The bad → good code example is NOT stored here — it is sourced from
+     * the fixture (the `#[Sinful]` bad code and its `#[Righteous]` twin) via
      * {@see \JesseGall\CodeCommandments\Testing\FixtureExamples}, so it's real and tested.
      */
     public function description(): string
     {
         return $this->description;
+    }
+
+    /**
+     * The loud positive directive this sin enforces — the `## Rules` bullet and the
+     * `## Checklist` item the generated skill projects. (Stated as the rule, not the
+     * symptom: "Throw a NAMED exception", not "you threw a bare SPL".)
+     */
+    public function rule(): string
+    {
+        return $this->rule;
+    }
+
+    /**
+     * An optional concrete hint beyond the rule — the reusable pattern/construct to
+     * reach for (`a no-op invokable: ClosureFactory::noOp()`), shown under the rule.
+     * Names the construct, so a future scaffold can generate exactly it.
+     */
+    public function suggestion(): ?string
+    {
+        return $this->suggestion;
     }
 
     /**

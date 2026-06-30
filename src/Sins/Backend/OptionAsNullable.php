@@ -14,7 +14,9 @@ final class OptionAsNullable extends Sin
         parent::__construct(
             name: 'option-as-nullable',
             skill: Absence::class,
-            description: "`Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`"
+            description: "`Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`",
+            rule: "Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.",
+            suggestion: "Wrap at the seam with `Option::fromNullable(\$x)`, then consume with `match`/`unwrapOr`."
         );
     }
 }

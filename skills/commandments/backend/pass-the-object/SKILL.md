@@ -32,55 +32,10 @@ Why it's the caller's job:
 - **It couples the method to the container's lookup API** (`$workflow->graph->nodeById`)
   for no reason — the method only ever wanted the node.
 
-## The smell → the fix
-
-```php
-// Bad — takes the container + a key, resolves the key inside, then orchestrates.
-public function request(Workflow $workflow, string $nodeId): RemoteAgentSchemaRequest
-{
-    $node = $workflow->graph->nodeById($nodeId)->unwrapOrElse(
-        static fn () => throw UnknownNodeDescriptorException::forKey($nodeId),
-    );
-
-    $config    = RemoteAgentNodeConfig::fromNode($node);
-    $triggerId = $config->agentTriggerId()->unwrapOrElse(
-        static fn () => throw RemoteAgentNodeException::noTriggerConfigured($nodeId),
-    );
-
-    $request = RemoteAgentSchemaRequest::open($workflow->id, $nodeId);
-    $this->providers->for($config->providerType())->dispatch(/* … */);
-
-    return $request;
-}
-```
-
-```php
-// Good — the caller resolved the node, its config, the provider and trigger, and
-// hands over the finished facts. The service demands exactly what it uses; no graph
-// lookup, no "unknown node" failure to own, no `$workflow` it only wanted for an id.
-public function request(
-    string $workflowId,
-    string $nodeId,
-    RemoteAgentProviderType $provider,
-    string $triggerId,
-): RemoteAgentSchemaRequest {
-    $request = RemoteAgentSchemaRequest::open($workflowId, $nodeId);
-
-    $this->providers->for($provider)->dispatch(new WorkspaceAgentDispatch(
-        triggerId: $triggerId,
-        conversationKey: $this->key(),
-        input: SchemaRequestPromptComposer::compose($request->id),
-        idempotencyKey: $this->key(),
-    ));
-
-    return $request;
-}
-```
-
-The caller now resolves once, where the id was born, and every downstream method is
+The caller resolves once, where the id was born, and every downstream method is
 honest about its inputs.
 
-## What is NOT this sin
+### What is NOT this sin
 
 - **A Registry / Repository keying into its OWN store** — `for($type)` returning
   `$this->providers[$type->value] ?? throw …`. Looking a value up by key against
@@ -97,12 +52,17 @@ honest about its inputs.
   is only when a method resolves an id **and then orchestrates** on the result while
   pretending it needed the container.
 
-## The tell
+### The tell
 
 A method signature pairs a domain object with a `string`/`int` id, and the body's
 first move is `$thatObject->…->somethingById($thatId)`. Ask: *did the caller already
 have what it needs to resolve this?* If yes, move the lookup to the caller and change
 the parameter to the resolved type.
+
+## Rules
+
+- Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
+  _Take the resolved object as the param; resolve once in the caller._
 
 ## Bad → good
 
@@ -125,3 +85,12 @@ public function priceForVariant(Variant $variant): int
 ## When it fires
 
 - Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging — `ParamResolvedFromParamDetector`
+
+## Checklist
+
+- [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
+
+## Related skills
+
+- [`backend/value-objects`](../value-objects/SKILL.md) — the object you pass IS the resolved type — give data a type, don't thread an id + its container.
+- [`backend/tell-dont-ask`](../tell-dont-ask/SKILL.md) — unpacking a container param to work its target is feature envy on the container.

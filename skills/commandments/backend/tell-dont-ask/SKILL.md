@@ -11,7 +11,9 @@ description: Behaviour belongs with the data it operates on (feature envy, Fowle
 > somewhere else — a separate class reaching in to read its fields and derive a result — the behaviour
 > has been **exiled** from its home. Move it back: `$node->edges()`, not `EdgeDetector::detect($node)`.
 
-## The sin: exiled behaviour (feature envy)
+## The principle
+
+### The sin: exiled behaviour (feature envy)
 
 This is the classic **feature envy** smell (Fowler): *a method more interested in another object's data than
 its own.* It **reaches through one other object's internal structure — iterating its collection, walking its
@@ -59,51 +61,7 @@ the data. Reading fields is fine; *operating on the object's internals* is the s
   the object**.
 - The object goes **anemic** — it carries the data, but the behaviour that defines it lives elsewhere.
 
-```php
-// Bad — a node's edges are intrinsic node knowledge, exiled into a separate detector
-final class WorkflowNodeEdgeDetector
-{
-    public function detect(WorkflowNode $node): array
-    {
-        $edges = [];
-        foreach ($node->getOutputs() as $output) {
-            foreach ($node->getConnections() as $connection) {
-                if ($connection->fromPort() === $output->name()) {
-                    $edges[] = $connection->target();
-                }
-            }
-        }
-        return $edges;          // every read is $node->… ; nothing of $this
-    }
-}
-
-// callers
-$edges = $this->edgeDetector->detect($node);
-```
-
-```php
-// Good — the knowledge lives where the data lives
-final class WorkflowNode
-{
-    public function edges(): array
-    {
-        $edges = [];
-        foreach ($this->outputs as $output) {
-            foreach ($this->connections as $connection) {
-                if ($connection->fromPort() === $output->name) {
-                    $edges[] = $connection->target;
-                }
-            }
-        }
-        return $edges;
-    }
-}
-
-// callers just ask
-$edges = $node->edges();
-```
-
-## The fix
+### The fix
 
 Move the computation onto the object whose data it consumes. The external method delegates to it
 (`return $node->edges();`) or disappears. If the external class has nothing left, delete it.
@@ -118,41 +76,7 @@ hand**. Two traps that aren't fixes, just relocations:
 - **Adding a thin forwarder** on a collaborator that just re-exposes another object's data. If the object you
   were given (`$node`) can answer it — directly or by delegating to its own descriptor once — that is the home.
 
-```php
-// Bad — keyed-lookup envy: the node is a key into the registry's internals
-final class ReservedOutputNames
-{
-    public function __construct(private readonly NodeDescriptorRegistry $registry) {}
-
-    public function isReserved(WorkflowNode $node, string $name): bool
-    {
-        $names = $this->registry->has($node->key)            // has()?get() dance, reaching in
-            ? $this->registry->get($node->key)->reservedOutputNames
-            : [];
-        return in_array($name, $names, true);
-    }
-}
-```
-
-```php
-// Good — the fact lives on the descriptor (the data owner); resolve it once, then TELL it.
-// No registry query, no has()?get() dance.
-final class NodeDescriptor
-{
-    public function isReservedOutputName(string $name): bool
-    {
-        return in_array($name, $this->reservedOutputNames, true);
-    }
-}
-
-// at the one call site that has the node:
-$descriptor = $this->descriptors->descriptorForNode($node);   // resolve-or-throw, not a has()?get()
-if ($descriptor->isReservedOutputName($name)) {
-    // …
-}
-```
-
-## What is NOT this sin
+### What is NOT this sin
 
 The boundaries matter — over-applying this turns every collaborator call into a false alarm.
 
@@ -174,12 +98,19 @@ The boundaries matter — over-applying this turns every collaborator call into 
 - **Pure formatting / presentation** — assembling the fields into a display value
   (`sprintf('%dg %d×%d', $d->grams, $d->w, $d->h)`). It renders the object; it doesn't walk it.
 
-## The tell
+### The tell
 
 The smell is a **loop over another object's collection** (or a recursive walk of its parts) inside a class
 that isn't that object — `foreach ($line->children …)`, `containsAggregate($block->left)`. It's working the
 object's internals from the outside. Ask: *does the object I'm walking already hold everything this needs?*
 If yes — and you're reaching past its surface into its structure — that's where the method belongs.
+
+## Rules
+
+- Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
+  _Move the method onto the object (`$node->edges()`)._
+- Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
+  _Move the lookup onto the object that owns the identity._
 
 ## Bad → good
 
@@ -219,3 +150,13 @@ public function forItemDirect(CatalogItem $item): array
 
 - Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object — `FeatureEnvyDetector`
 - Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator — `KeyedLookupEnvyDetector`
+
+## Checklist
+
+- [ ] Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
+- [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
+
+## Related skills
+
+- [`backend/value-objects`](../value-objects/SKILL.md) — behaviour belongs on the typed object that owns the data.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — move the method to where the data lives, not a downstream class that walks it.

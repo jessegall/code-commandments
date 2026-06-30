@@ -14,7 +14,9 @@ final class ArrayBag extends Sin
         parent::__construct(
             name: 'array-bag',
             skill: ValueObjects::class,
-            description: "String-indexing (`\$arr['key']`) a structured array param (an unborn type)"
+            description: "String-indexing (`\$arr['key']`) a structured array param (an unborn type)",
+            rule: "Give a structured array a typed value object — never read a named field by string key off an `array` param.",
+            suggestion: "A Spatie `Data` object built via `::from(\$array)`."
         );
     }
 }

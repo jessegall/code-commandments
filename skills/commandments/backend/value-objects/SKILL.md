@@ -12,59 +12,35 @@ description: WHEN to give data a type instead of passing it loose — an `array<
 
 ## The principle
 
-A loose `array` or a fistful of separate parameters has no contract: nothing says which keys exist, what's
-required, or what binds the values together — so every reader re-derives it (and gets it slightly wrong).
-Wrapping the cluster in a typed object puts the shape, the required fields, and the rules that bind them in
-**one place the type enforces**. The data stops being a convention everyone has to remember and becomes a
-thing the compiler checks.
+Data that travels together is a **thing**, not a loose pile of arrays and primitives. The moment a cluster
+of values is passed around, returned, or reached into by string keys, it wants a name and a type — the type
+IS the documentation, the validation, and the contract, all enforced by the compiler instead of by every
+reader's memory.
 
-This is the *introduce-the-type* decision. Two homes for it:
+Reach for a type the moment you are about to: pass or return an `array<string, mixed>` keyed bag (its keys
+are an undocumented contract — make them a type); thread three-or-more values that always travel together —
+a *data clump* wearing separate parameter slots; reach into a structured array by string key
+(`$entry['title']`) — a typed object that hasn't been born yet; grow an already-crowded signature (group
+the related arguments into one object instead of adding the fourth); or pass a bare primitive that is really
+a concept — a `string $email`, a `string $currency` + `int $amount`, a `string $key` with format rules → a
+value object that owns its own validation.
 
-- **A DTO** (a Spatie `Data` class) — boundary / transfer data: input off a request, an LLM reply, a wire
-  payload; output to JSON. Shape-focused, array-constructible. → write it per the
-  [`spatie-data`](../spatie-data/SKILL.md) skill.
-- **A value object** (`final readonly`, private ctor + a static factory) — a domain concept with
-  behaviour and invariants: `Money`, `Email`, `BranchKey`. Identity by value; methods like `equals()`,
-  `withX()`, a validated factory.
+Introduce the type **where the data is born** — at the boundary that first receives it, the method that
+first assembles it — not three frames downstream after it has been threaded around as a bag. A value object
+introduced late just relabels data everyone already mishandled. This is fix-at-the-source applied to shape.
 
-Both are typed, immutable, named. Pick by role.
+## Rules
 
-## When to introduce a type
-
-Reach for one the moment you are about to:
-
-1. **Pass or return an `array<string,mixed>`** (or any untyped array used as a keyed bag). The keys are an
-   undocumented contract — make them a type. (Workflows wraps the genuinely-dynamic case in a typed
-   `ValueBag`, not a raw array.)
-2. **Thread 3+ values that always travel together** — a *data clump*. If `$nodeId, $x, $y` or
-   `$title, $icon, $group` move through call after call as separate args, they are one object wearing three
-   parameter slots.
-3. **Reach into a structured array by string key** — `$entry['title']`, `$opts['icon']`. String-indexing a
-   structured shape is a typed object that hasn't been born yet.
-4. **Add a parameter to an already-crowded signature** (roughly 4+). Group the related ones into an object
-   instead of growing the list.
-5. **Pass a bare primitive that is really a concept** — primitive obsession. A `string $email`, a
-   `string $currency` + `int $amount`, a `string $key` with format rules → a value object that owns its
-   validation.
-
-## Introduce it at the source
-
-Create the type **where the data is born** — at the boundary that first receives it, the method that first
-assembles it — not three frames downstream after it's been threaded around as a bag. A value object
-introduced late just relabels data everyone already mis-handled. (This is
-[`fix-at-the-source`](../fix-at-the-source/SKILL.md) applied to shape.)
-
-## Checklist
-
-```
-Value objects
-- [ ] No array<string,mixed> / untyped keyed-bag passed or returned — it's a typed object.
-- [ ] No 3+ values threaded together as separate params — they're one object (a data clump).
-- [ ] No string-indexing (`$arr['key']`) on a structured array — that's an unborn type.
-- [ ] No primitive carrying hidden rules — it's a value object that owns its validation.
-- [ ] The type is introduced AT THE SOURCE, not after the loose data has been threaded around.
-- [ ] Picked the right home: a Spatie Data DTO (boundary/transfer) vs a final readonly value object (domain concept).
-```
+- Give a structured array a typed value object — never read a named field by string key off an `array` param.
+  _A Spatie `Data` object built via `::from($array)`._
+- Return a typed value object, not a multi-field string-keyed array literal.
+  _Return a Spatie `Data` object via `::from(...)`._
+- Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
+  _A value object the params fold into (`Money::of()`, `NodePosition`)._
+- Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
+  _A small `readonly` result object._
+- Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
+  _Decode into a Spatie `Data` object: `X::from(json_decode(...))`._
 
 ## Bad → good
 
@@ -206,7 +182,15 @@ public function ratesTyped(string $base, array $symbols): RateTable
 - Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
 - Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
 
-## Relationship to the other skills
+## Checklist
+
+- [ ] Give a structured array a typed value object — never read a named field by string key off an `array` param.
+- [ ] Return a typed value object, not a multi-field string-keyed array literal.
+- [ ] Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
+- [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
+- [ ] Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
+
+## Related skills
 
 - [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — introduce the type where the data is born, not downstream.
 - [`backend/spatie-data`](../spatie-data/SKILL.md) — once you've decided it's a DTO, that skill is *how* to write it (and its honest-field-types rule keeps the new type from being a fresh all-nullable bag).
