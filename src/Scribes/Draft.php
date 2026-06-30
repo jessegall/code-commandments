@@ -99,13 +99,9 @@ final class Draft
         foreach ($this->items as $item) {
             $replacement = $text($item);
 
-            if ($replacement === null) {
-                continue;
+            if ($replacement !== null) {
+                $this->edit($item->span(), $replacement);
             }
-
-            $span = $item->span();
-            $this->sources[$span->path] = $span->source;
-            $this->edits[$span->path][] = ['start' => $span->start, 'end' => $span->end, 'text' => $replacement];
         }
 
         return $this;
@@ -113,7 +109,6 @@ final class Draft
 
     /**
      * Draft a new file per item — the closure returns `[path, content]` (null skips).
-     * A path already drafted is uniquified (`Foo.vue` → `Foo2.vue`) so nothing clobbers.
      *
      * @param  callable(mixed): ?array{0: string, 1: string}  $file
      */
@@ -122,13 +117,40 @@ final class Draft
         foreach ($this->items as $item) {
             $drafted = $file($item);
 
-            if ($drafted === null) {
-                continue;
+            if ($drafted !== null) {
+                $this->add($drafted[0], $drafted[1]);
             }
-
-            [$path, $content] = $drafted;
-            $this->creates[$this->free($path)] = $content;
         }
+
+        return $this;
+    }
+
+    /**
+     * Replace one byte span with new text — the imperative primitive behind {@see replace},
+     * for when a strategy needs the span explicit (e.g. the call site it lifts a
+     * component OUT of, distinct from the new file it creates).
+     */
+    public function edit(Span $span, string $text): self
+    {
+        $this->sources[$span->path] = $span->source;
+        $edit = ['start' => $span->start, 'end' => $span->end, 'text' => $text];
+
+        // Identical edits collapse — two occurrences importing the same component at
+        // the same offset is one import, not two.
+        if (! in_array($edit, $this->edits[$span->path] ?? [], true)) {
+            $this->edits[$span->path][] = $edit;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Draft a new file — the imperative primitive behind {@see create}. A path already
+     * drafted is uniquified (`Foo.vue` → `Foo2.vue`) so nothing clobbers.
+     */
+    public function add(string $path, string $content): self
+    {
+        $this->creates[$this->free($path)] = $content;
 
         return $this;
     }

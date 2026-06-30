@@ -195,6 +195,38 @@ class Element
     }
 
     /**
+     * How deeply this element is nested — its own level counting from the top (a
+     * top-level element is 1). The fragment root and text/comment ancestors don't count.
+     */
+    public function depth(): int
+    {
+        $depth = 0;
+
+        for ($node = $this; $node !== null; $node = $node->parent) {
+            if ($node->isElement()) {
+                $depth++;
+            }
+        }
+
+        return $depth;
+    }
+
+    /**
+     * The number of element levels in this subtree — a leaf is 1, a parent is one more
+     * than its tallest child. The "how much is still nested below here" measure.
+     */
+    public function height(): int
+    {
+        $max = 0;
+
+        foreach ($this->elements() as $child) {
+            $max = max($max, $child->height());
+        }
+
+        return $max + 1;
+    }
+
+    /**
      * The element siblings that follow this one, in order (text skipped) — how a
      * `v-if` / `v-else-if` / `v-else` chain is read off the tree.
      *
