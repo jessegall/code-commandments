@@ -154,6 +154,25 @@ final class Expr
     }
 
     /**
+     * This expression AS a pure member chain — `order.customer.name` → `['order','customer',
+     * 'name']` — or null when it isn't one (a call, an index, an operator anywhere makes it
+     * not a plain data path). The AST answer to "is this a clean property chain, and what are
+     * its segments", replacing an `explode('.')` + identifier-by-identifier check.
+     *
+     * @return list<string>|null
+     */
+    public function asChain(): ?array
+    {
+        return match ($this->kind) {
+            self::IDENTIFIER => [(string) $this->get('name')],
+            self::MEMBER => ($base = $this->child('object')->asChain()) !== null
+                ? array_merge($base, [(string) $this->get('property')])
+                : null,
+            default => null,
+        };
+    }
+
+    /**
      * @param  list<list<string>>  $chains
      */
     private function gatherChains(array &$chains): void
@@ -175,7 +194,7 @@ final class Expr
             return;
         }
 
-        $segments = $this->chainSegments();
+        $segments = $this->asChain();
 
         if ($segments !== null) {
             if (count($segments) >= 2) {
@@ -188,22 +207,6 @@ final class Expr
         foreach ($this->subExpressions() as $child) {
             $child->gatherChains($chains);
         }
-    }
-
-    /**
-     * This node as a pure identifier/member path, or null if it isn't one.
-     *
-     * @return list<string>|null
-     */
-    private function chainSegments(): ?array
-    {
-        return match ($this->kind) {
-            self::IDENTIFIER => [(string) $this->get('name')],
-            self::MEMBER => ($base = $this->child('object')->chainSegments()) !== null
-                ? array_merge($base, [(string) $this->get('property')])
-                : null,
-            default => null,
-        };
     }
 
     /**

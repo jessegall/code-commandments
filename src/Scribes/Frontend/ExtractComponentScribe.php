@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Vue\ComponentReuse;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
+use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Sfc;
 use JesseGall\CodeCommandments\Vue\Script;
 
@@ -589,30 +590,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private static function segments(string $expression): ?array
     {
-        $parts = array_map(trim(...), explode('.', trim($expression)));
-
-        foreach ($parts as $part) {
-            if (! self::isIdentifier($part)) {
-                return null;
-            }
-        }
-
-        return $parts;
-    }
-
-    private static function isIdentifier(string $value): bool
-    {
-        if ($value === '' || (! ctype_alpha($value[0]) && $value[0] !== '_' && $value[0] !== '$')) {
-            return false;
-        }
-
-        for ($i = 1; $i < strlen($value); $i++) {
-            if (! ctype_alnum($value[$i]) && $value[$i] !== '_' && $value[$i] !== '$') {
-                return false;
-            }
-        }
-
-        return true;
+        return Parser::parse($expression)->asChain();
     }
 
     /**
