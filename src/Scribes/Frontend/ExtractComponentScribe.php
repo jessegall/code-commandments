@@ -184,10 +184,30 @@ final class ExtractComponentScribe extends RepentScribe
         }
 
         foreach ($bindings as $prop => $expression) {
-            $attributes[] = ":{$prop}=\"{$expression}\"";
+            $attributes[] = ':' . self::kebab($prop) . "=\"{$expression}\"";
         }
 
         return $attributes === [] ? "<{$name} />" : "<{$name} " . implode(' ', $attributes) . ' />';
+    }
+
+    /**
+     * A camelCase prop as a kebab-case template attribute (`rateLimit` → `rate-limit`).
+     */
+    private static function kebab(string $name): string
+    {
+        $out = '';
+
+        for ($i = 0; $i < strlen($name); $i++) {
+            $char = $name[$i];
+
+            if (ctype_upper($char)) {
+                $out .= ($i > 0 ? '-' : '') . strtolower($char);
+            } else {
+                $out .= $char;
+            }
+        }
+
+        return $out;
     }
 
     /**
