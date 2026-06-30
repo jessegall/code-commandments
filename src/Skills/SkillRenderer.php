@@ -49,7 +49,9 @@ final class SkillRenderer
 
     private function frontmatter(Skill $skill): string
     {
-        return "---\nname: {$this->tail($skill->slug)}\ndescription: {$skill->description()}\n---";
+        // The `name` is display-only (the DIRECTORY name is the Skill-tool invocation),
+        // but we set it to the flat id so the `/skills` listing matches what you load.
+        return "---\nname: {$skill->id()}\ndescription: {$skill->description()}\n---";
     }
 
     private function blockquote(string $text): string

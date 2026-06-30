@@ -64,10 +64,21 @@ abstract class Skill
     }
 
     /**
-     * The skill rendered as a briefing bullet.
+     * The skill's flat, loadable id — the `.claude/skills/<id>/` directory it's published
+     * to AND its `SKILL.md` frontmatter `name`, so the Skill tool can find it. Claude Code
+     * discovers skills one level deep, so the engine/slug is flattened with `-`:
+     * `backend/absence` → `commandments-backend-absence`.
+     */
+    public function id(): string
+    {
+        return 'commandments-' . str_replace('/', '-', $this->slug);
+    }
+
+    /**
+     * The skill rendered as a briefing bullet — by the id the Skill tool loads.
      */
     public function bullet(): string
     {
-        return "- **`{$this->slug}`** — {$this->summary()}";
+        return "- **`{$this->id()}`** — {$this->summary()}";
     }
 }

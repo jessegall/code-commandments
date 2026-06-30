@@ -1,5 +1,5 @@
 ---
-name: spatie-data
+name: commandments-backend-spatie-data
 description: How to write a Spatie Data class — final, public readonly promoted props; construct via `::from([...])` not `new` (except a `new` default value in the constructor); magic factories MUST be named `from<Type>` (the prefix is required to dispatch); document the magic `from`/`collect` overloads with `@method` naming `from`/`collect` — never the factory's own name (that re-declares a real method) nor the array shape; never hand-hydrate field-by-field; typed collections via `#[DataCollectionOf]` + `::collect()`; honest field types (no all-nullable DTO); `Optional` vs `?T` vs default; class-level `#[MapInputName]`; `#[WithCast]`; validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator, or a `#[...]` data attribute.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: vue-control-flow
+name: commandments-frontend-vue-control-flow
 description: Dispatch on a single value with the published <SwitchCase :value> component (a slot per case), never a v-if / v-else-if chain that re-tests the SAME subject against a different literal. A chain of `x === 'a'` / `x === 'b'` is one decision wearing many conditionals. Read this BEFORE writing a v-if/v-else-if chain in a Vue template.
 ---
 
