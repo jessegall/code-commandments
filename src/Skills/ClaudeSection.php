@@ -102,6 +102,13 @@ final class ClaudeSection
         (optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
         last judge run's checklist, so it fixes exactly what was reported; review the diff
         with `--dry-run` first.
+
+        **Scaffoldable sins.** A few sins are fixed by reaching for a generic helper the
+        project may not have yet (e.g. a no-op invokable for a nullable callback). For
+        those the report advertises `vendor/bin/commandments scaffold --sin=NAME`, which
+        generates the helper into your source root with its namespace set. Scaffold the
+        construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
+        fixes call sites).
         MD;
 
         return self::BEGIN . "\n" . $body . "\n" . self::END;

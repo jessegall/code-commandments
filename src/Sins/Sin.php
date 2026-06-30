@@ -94,6 +94,19 @@ abstract class Sin
     }
 
     /**
+     * The reusable helper(s) this sin's fix needs and the package can generate — the
+     * construct {@see suggestion} names. Most sins return none (their fix is
+     * domain-specific); a sin with a GENERIC helper overrides this. Written into the
+     * consumer by the `scaffold` command.
+     *
+     * @return list<Scaffold>
+     */
+    public function scaffolds(): array
+    {
+        return [];
+    }
+
+    /**
      * Does this sin answer to the `--sin=<query>` the user typed? Lenient: both sides
      * are reduced to lowercase alphanumerics, so `array-bag`, `ArrayBag` and `arraybag`
      * all select the `array-bag` sin.

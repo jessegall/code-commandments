@@ -81,7 +81,7 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 - Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
   _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
 - Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
-  _Create a reusable no-op invokable (`Invokable::noOp()` / `ClosureFactory::noOp()`) and default the param to it._
+  _Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`._
 - Return an empty collection for "nothing", never `?array`/`array | null`.
 - Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
   _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
