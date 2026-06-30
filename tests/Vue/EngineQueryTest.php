@@ -115,6 +115,16 @@ final class EngineQueryTest extends TestCase
         $this->assertSame(['index'], $destructured->get('aliases'));
     }
 
+    public function test_object_entries_pairs_each_key_with_its_value(): void
+    {
+        $object = Parser::parse("{ '@x': resolve(s, 'x'), n: 1, [computed]: 2 }");
+        $entries = $object->objectEntries();
+
+        $this->assertSame(['@x', 'n'], array_keys($entries), 'string + identifier keys kept; computed dropped');
+        $this->assertSame('resolve', $entries['@x']->get('callee')->get('name'));
+        $this->assertSame('1', $entries['n']->get('raw'));
+    }
+
     public function test_expr_as_chain_returns_a_pure_member_path_or_null(): void
     {
         $this->assertSame(['order', 'customer', 'name'], Parser::parse('order.customer.name')->asChain());

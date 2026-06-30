@@ -273,6 +273,35 @@ final class Expr
     }
 
     /**
+     * An object literal's `key => value` entries — `{ '@x': resolve(s, 'x'), n: 1 }` →
+     * `['@x' => <call>, 'n' => <literal>]`. Spread and computed-key entries (no static key)
+     * are omitted. The structural reader for a config object (Vite `resolve.alias`, a Spatie
+     * map) instead of scraping it.
+     *
+     * @return array<string, self>
+     */
+    public function objectEntries(): array
+    {
+        if ($this->kind !== self::OBJECT) {
+            return [];
+        }
+
+        $keys = $this->props['keys'] ?? [];
+        $values = $this->props['values'] ?? [];
+        $entries = [];
+
+        foreach ($values as $i => $value) {
+            $key = $keys[$i] ?? null;
+
+            if (is_string($key) && $value instanceof self) {
+                $entries[$key] = $value;
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
      * @param  list<list<string>>  $chains
      */
     private function gatherChains(array &$chains): void
