@@ -5,38 +5,25 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Support;
 
 use JesseGall\CodeCommandments\Testing\Diversity;
-use JesseGall\CodeCommandments\Testing\DetectorResult;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The ONE self-checking-fixture test, shared by every engine. Both the backend
- * (`#[Sinful]` markers) and frontend (`<!-- @sin -->` comments) fixtures are the
- * same flow — every detector must flag exactly its marked sins and fire on at least
- * three mutually-diverse scenarios — so the flow and its assertions live here once.
+ * (`#[Sinful]` markers) and frontend (`<!-- @sin -->` comments) are the same flow —
+ * every detector must flag exactly its marked sins and fire on at least three
+ * mutually-diverse scenarios — so the flow and its assertions live here once.
  *
- * A subclass supplies only what differs between engines: the per-detector marker
- * verification, and each detector's findings as diversity scenarios. The diversity
- * engine ({@see Diversity}) and the result shape ({@see DetectorResult}) are shared.
+ * A subclass supplies only its {@see Fixture}; all engine-specific logic is behind
+ * that (a {@see \JesseGall\CodeCommandments\Testing\MarkerVerifier} +
+ * {@see \JesseGall\CodeCommandments\Testing\ScenarioResolver}).
  */
 abstract class FixtureTestCase extends TestCase
 {
-    /**
-     * Run every detector over the fixture and check it against its markers.
-     *
-     * @return list<DetectorResult>
-     */
-    abstract protected function markerResults(): array;
-
-    /**
-     * Each detector's findings reduced to diversity scenarios.
-     *
-     * @return array<string, list<array{file: string, source: string}>>  detector => scenarios
-     */
-    abstract protected function scenarios(): array;
+    abstract protected function fixture(): Fixture;
 
     public function test_detectors_flag_exactly_their_marked_sins(): void
     {
-        $results = $this->markerResults();
+        $results = $this->fixture()->markerResults();
 
         $this->assertNotEmpty($results, 'no detectors were verified against the fixture');
 
@@ -50,7 +37,7 @@ abstract class FixtureTestCase extends TestCase
     {
         $diversity = new Diversity();
 
-        foreach ($this->scenarios() as $detector => $scenarios) {
+        foreach ($this->fixture()->scenarios() as $detector => $scenarios) {
             $largest = $diversity->largestGroup($scenarios);
 
             $this->assertGreaterThanOrEqual(

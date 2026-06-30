@@ -30,6 +30,20 @@ never poke the tree), just over Vue `Element`s instead of PHP nodes. If a fronte
 detector doesn't look like a backend detector, the engine is wrong — fix the engine,
 not the detector. (Frontend scope is the `frontend.canon`, sibling to `backend.canon`.)
 
+**The two engines are the SAME system; ONLY the detection/parse algorithm differs.**
+Backend and frontend each have a codebase, a fluent query, detectors, scribes, a
+canon, and a self-checking fixture — and that is not a coincidence to maintain by
+hand, it is the architecture. Everything that is NOT "how do I parse / how do I
+detect / how do I fix" must be engine-agnostic and operate on base types: the CLI
+commands (`judge`, `scribe`) don't care backend-vs-frontend, the runner/report work
+on the abstract `Finding` (already just strings), the fixture harness
+({@see FixtureTestCase}) and the diversity engine ({@see Diversity}) are shared, the
+canon is one mechanism (`backend.canon` / `frontend.canon`). **NEVER write the same
+machinery twice for the two engines — if something is backend-only today, abstract it
+behind a base type so the frontend reuses it; do not copy it.** When you reach for
+copy-paste between engines, stop: the shared thing belongs in a base class / shared
+`Testing`/`Cli` component, parameterised by the one hook that genuinely differs.
+
 **Everything the backend does, the frontend does the same way.** A frontend detector
 follows the identical process: build it AST-first, prove it on the `.vue` self-
 checking fixture (`tests/Fixtures/shop-frontend`), calibrate on the consumers' real

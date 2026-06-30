@@ -16,7 +16,7 @@ use RecursiveIteratorIterator;
  * {@see Query}. The element nodes of every template are flattened once and cached,
  * so a selector filters a list rather than re-walking each tree.
  */
-final class Codebase
+final class Codebase implements \JesseGall\CodeCommandments\Codebase
 {
     /** @var list<array{0: Element, 1: Sfc}>|null */
     private ?array $nodes = null;

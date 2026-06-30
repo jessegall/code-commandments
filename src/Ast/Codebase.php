@@ -35,7 +35,7 @@ use RecursiveIteratorIterator;
  * parents linked) and opens fluent {@see Query} builders over them. Each
  * `where*()` selects a kind of node; chain filters on the returned Query.
  */
-final class Codebase
+final class Codebase implements \JesseGall\CodeCommandments\Codebase
 {
     /**
      * Directories never descended into during a scan — dependency and VCS trees
