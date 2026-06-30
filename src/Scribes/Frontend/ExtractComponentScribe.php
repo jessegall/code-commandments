@@ -9,11 +9,13 @@ use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Vue\Boundary;
+use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Vue\ComponentReuse;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Vue\ModuleResolver;
 use JesseGall\CodeCommandments\Vue\Sfc;
 use JesseGall\CodeCommandments\Vue\Script;
 
@@ -572,28 +574,22 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
-     * The {@see Script} of a RELATIVE module specifier resolved against the importing file —
-     * `./useX`, `../composables/useX`, trying the `.ts`/`.tsx`/`/index.ts` a bundler would.
-     * Null for a bare/aliased specifier (`@app/…`, `vue`) or a file that isn't there; those
-     * need bundler config we don't read here.
+     * The {@see Script} of a module specifier resolved against the importing file — relative,
+     * aliased (`@app/composables/useX`), or a barrel `index.*`, via the {@see ModuleResolver}
+     * (project aliases discovered from the Vite config). A `.vue` module contributes its
+     * `<script>`. Null for a bare/`node_modules` specifier or a file that isn't there.
      */
     private static function loadModule(string $fromFile, string $specifier): ?Script
     {
-        if ($specifier === '' || $specifier[0] !== '.') {
-            return null; // bare or aliased — not a relative path we can resolve unaided
+        $path = ModuleResolver::forFile($fromFile)->resolve($fromFile, $specifier);
+
+        if ($path === null) {
+            return null;
         }
 
-        $base = dirname($fromFile) . '/' . $specifier;
+        $source = (string) file_get_contents($path);
 
-        foreach (['.ts', '.tsx', '/index.ts'] as $extension) {
-            $path = realpath($base . $extension);
-
-            if ($path !== false && is_file($path)) {
-                return new Script((string) file_get_contents($path));
-            }
-        }
-
-        return null;
+        return new Script(str_ends_with($path, '.vue') ? Codebase::fromString($source, $path)->components()[0]->scriptContent() : $source);
     }
 
     /**

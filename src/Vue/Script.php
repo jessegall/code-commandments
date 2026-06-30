@@ -390,6 +390,69 @@ final class Script
         return $this->isId($i, 'const') || $this->isId($i, 'let') || $this->isId($i, 'var');
     }
 
+    /**
+     * The SOURCE of the object literal that follows `key:` — `objectAfter('alias')` over
+     * `resolve: { alias: { … } }` returns the `{ … }` text, for the expression engine to
+     * parse into an AST. Null when there's no such object. (Used to read a Vite/TS config's
+     * alias map structurally, never by regex.)
+     */
+    public function objectAfter(string $key): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if ($this->isId($i, $key) && $this->isPunct($i + 1, ':') && $this->isPunct($i + 2, '{')) {
+                $close = $this->matchingParen($i + 2);
+
+                return substr($this->source, $this->tokens[$i + 2]['start'], $this->tokens[$close]['end'] - $this->tokens[$i + 2]['start']);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The SOURCE of a declarator's initializer — `const src = path.resolve(dir, 'x')` →
+     * `path.resolve(dir, 'x')`, read up to the statement's top-level `;`. Null when the name
+     * isn't declared. Lets the config reader resolve a base variable to its expression.
+     */
+    public function declaratorValue(string $name): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isDeclarator($i) || ! $this->isId($i + 1, $name) || ! $this->isPunct($i + 2, '=')) {
+                continue;
+            }
+
+            if (($this->tokens[$i + 3] ?? null) === null) {
+                return null;
+            }
+
+            $from = $this->tokens[$i + 3]['start'];
+            $depth = 0;
+            $to = $this->tokens[$count - 1]['end'];
+
+            for ($j = $i + 3; $j < $count; $j++) {
+                $value = $this->tokens[$j]['value'];
+
+                if (in_array($value, ['(', '[', '{'], true)) {
+                    $depth++;
+                } elseif (in_array($value, [')', ']', '}'], true)) {
+                    $depth--;
+                } elseif ($depth === 0 && $value === ';') {
+                    $to = $this->tokens[$j]['start'];
+
+                    break;
+                }
+            }
+
+            return trim(substr($this->source, $from, $to - $from));
+        }
+
+        return null;
+    }
+
     /** Vue reactivity wrappers whose `<T>` IS the value type seen in the template. */
     private function isReactiveValue(int $i): bool
     {

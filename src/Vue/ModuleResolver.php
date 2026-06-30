@@ -23,6 +23,12 @@ final class ModuleResolver
 {
     private const array EXTENSIONS = ['.ts', '.tsx', '.vue', '.js', '/index.ts', '/index.tsx', '/index.vue', '/index.js'];
 
+    /** Markers whose nearest ancestor directory is the project root. */
+    private const array ROOT_MARKERS = ['vite.config.ts', 'vite.config.js', 'vite.config.mjs', 'vite.config.mts', 'package.json'];
+
+    /** @var array<string, self>  one resolver per project root, aliases discovered once */
+    private static array $byRoot = [];
+
     /** @var list<array{prefix: string, dir: string}>  longest prefix first */
     private array $aliases;
 
@@ -40,6 +46,37 @@ final class ModuleResolver
         usort($entries, static fn (array $a, array $b): int => strlen($b['prefix']) <=> strlen($a['prefix']));
 
         $this->aliases = $entries;
+    }
+
+    /**
+     * The resolver for the project a file belongs to — its root is the nearest ancestor with
+     * a Vite config / `package.json`, and its aliases are discovered from that config once and
+     * cached. The entry point for tracing imports across a real codebase.
+     */
+    public static function forFile(string $file): self
+    {
+        $root = self::projectRoot(dirname($file));
+
+        return self::$byRoot[$root] ??= new self(ViteAliases::discover($root));
+    }
+
+    private static function projectRoot(string $dir): string
+    {
+        while (true) {
+            foreach (self::ROOT_MARKERS as $marker) {
+                if (is_file($dir . '/' . $marker)) {
+                    return $dir;
+                }
+            }
+
+            $parent = dirname($dir);
+
+            if ($parent === $dir) {
+                return $dir; // filesystem root — no project markers, resolve relatives only
+            }
+
+            $dir = $parent;
+        }
     }
 
     /**

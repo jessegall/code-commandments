@@ -327,13 +327,18 @@ final class Parser
     {
         $this->expect('{');
         $values = [];
+        $keys = [];
 
         while (! $this->isPunct('}') && ! $this->isEof()) {
-            // key
-            $this->next();
+            $token = $this->peek();
+            $key = in_array($token['type'], ['name', 'str', 'num'], true)
+                ? ($token['type'] === 'str' ? $this->unquote($token['value']) : (string) $token['value'])
+                : null;
+            $this->next(); // consume the key (an identifier, string, number, or computed token)
 
             if ($this->isPunct(':')) {
                 $this->next();
+                $keys[] = $key;            // aligned with $values — only pushed for real `key: value` pairs
                 $values[] = $this->expression();
             }
 
@@ -346,7 +351,7 @@ final class Parser
 
         $this->expect('}');
 
-        return new Expr(Expr::OBJECT, ['values' => $values]);
+        return new Expr(Expr::OBJECT, ['values' => $values, 'keys' => $keys]);
     }
 
     /**
