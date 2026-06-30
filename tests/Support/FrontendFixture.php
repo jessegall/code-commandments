@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Support;
 
-use JesseGall\CodeCommandments\Detectors\Frontend\DeepDataReachDetector;
-use JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector;
-use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseDetector;
+use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Testing\CommentMarkerVerifier;
 use JesseGall\CodeCommandments\Testing\ComponentScenarioResolver;
 use JesseGall\CodeCommandments\Vue\Codebase;
@@ -38,7 +36,7 @@ final class FrontendFixture implements Fixture
      */
     private function detectors(): array
     {
-        return [new SwitchCaseDetector(), new DuplicateElementDetector(), new DeepDataReachDetector()];
+        return Catalog::frontend();
     }
 
     private function codebase(): Codebase

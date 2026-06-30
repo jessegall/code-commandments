@@ -5,35 +5,34 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Frontend;
 
 use Closure;
+use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
-use JesseGall\CodeCommandments\Vue\Directive;
+use JesseGall\CodeCommandments\Vue\Boundary;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
+use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**
- * The one fix BOTH the duplicate-element and deep-data-reach detectors point at:
- * extract a chunk of template into its own component. They differ only in WHICH chunk
- * and WHAT it takes as props, so each detector hands this scribe back tuned for its
- * case — `ExtractComponentScribe::forDuplicates()` / `::forDeepReach()` — and the
- * runner feeds in that detector's findings.
+ * The one fix the duplicate-element, deep-data-reach AND deep-nesting detectors all
+ * point at: extract a chunk of template into its own component. Each detector hands
+ * this scribe back tuned for its case — `forDuplicates()` / `forDeepReach()` /
+ * `forNesting()` — and the runner feeds in that detector's findings.
  *
- *   - **Duplicates:** the repeated blocks `collapse` (by structure) to one component,
- *     its FREE variables as props, the markup lifted verbatim.
- *   - **Deep reach:** the reaching element becomes a component taking the MID-OBJECT
- *     as a prop (`order.customer.name` → prop `customer`), the chains rewritten
- *     relative so the child reaches one level, not three — flattening the reach.
- *
- * Each strategy is one fluent chain on the {@see \JesseGall\CodeCommandments\Scribes\Draft}
- * builder; re-indenting the lifted markup ({@see \JesseGall\CodeCommandments\Scribes\Span::reindent})
- * and keeping component names unique are the builder's job, so this scribe only
- * decides what to lift and what it takes as props.
+ * Every "where/whether/what-name/what-props" question is delegated to the shared
+ * {@see Boundary}, so all three strategies agree and there is one place to calibrate;
+ * the scribe only adds the per-strategy difference (collapse duplicates, flatten a
+ * deep reach). The extraction is COMPLETE: it drafts the new component, rewrites the
+ * call site to `<TheComponent :prop="…" />`, AND imports it into that file — so the
+ * result compiles.
  */
 final class ExtractComponentScribe extends RepentScribe
 {
     private const string DUPLICATES = 'duplicates';
 
     private const string DEEP_REACH = 'deep-reach';
+
+    private const string NESTING = 'nesting';
 
     private function __construct(private readonly string $strategy) {}
 
@@ -47,25 +46,68 @@ final class ExtractComponentScribe extends RepentScribe
         return new self(self::DEEP_REACH);
     }
 
+    public static function forNesting(): self
+    {
+        return new self(self::NESTING);
+    }
+
     /**
      * @param  list<ElementMatch>  $findings
      */
     public function rewrite(array $findings): array
     {
-        return $this->strategy === self::DUPLICATES
-            ? $this->duplicates($findings)
-            : $this->deepReach($findings);
+        return match ($this->strategy) {
+            self::DUPLICATES => $this->duplicates($findings),
+            self::DEEP_REACH => $this->deepReach($findings),
+            default => $this->nesting($findings),
+        };
     }
+
+    // ---- strategies -----------------------------------------------------------
 
     /**
      * @param  list<ElementMatch>  $findings
      */
     private function duplicates(array $findings): array
     {
-        return $this->draft($findings)
-            ->collapse(static fn (ElementMatch $block): string => $block->structureHash())
-            ->create(fn (ElementMatch $block): array => $this->file($block, self::freeVariables($block), self::markup($block)))
-            ->rewrites();
+        $draft = $this->draft([]);
+        $used = [];
+
+        foreach ($this->groups($findings) as $members) {
+            $boundary = Boundary::for($members[0]);
+            $props = self::withLoopVars($boundary, $boundary->props());
+            $name = self::unique($boundary->name(), $used);
+            $component = $members[0]->sibling("{$name}.vue");
+
+            $draft->add($component, self::render($props, $boundary->markup()));
+
+            foreach ($members as $occurrence) {
+                $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($props));
+            }
+        }
+
+        return $draft->rewrites();
+    }
+
+    /**
+     * @param  list<ElementMatch>  $findings
+     */
+    private function nesting(array $findings): array
+    {
+        $draft = $this->draft([]);
+        $used = [];
+
+        foreach ($findings as $finding) {
+            $boundary = Boundary::for($finding);
+            $props = self::withLoopVars($boundary, $boundary->props());
+            $name = self::unique($boundary->name(), $used);
+            $component = $finding->sibling("{$name}.vue");
+
+            $draft->add($component, self::render($props, $boundary->markup()));
+            $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+        }
+
+        return $draft->rewrites();
     }
 
     /**
@@ -73,104 +115,164 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function deepReach(array $findings): array
     {
-        return $this->draft($findings)
-            ->create(fn (ElementMatch $block): array => $this->reachComponent($block))
-            ->rewrites();
-    }
+        $draft = $this->draft([]);
+        $used = [];
 
-    /**
-     * A deep-reach cluster's component: the boundary lifted, its shared object
-     * flattened to a prop, and EVERY free variable the markup still reads passed in —
-     * so the draft actually compiles, not just the mid-object.
-     *
-     * @return array{0: string, 1: string}  [path, content]
-     */
-    private function reachComponent(ElementMatch $block): array
-    {
-        [$prefix, $prop] = self::midObject($block);
+        foreach ($findings as $finding) {
+            $boundary = Boundary::for($finding);
+            [$prefix, $prop] = self::midObject($finding);
+            $props = self::withLoopVars($boundary, self::reachProps($boundary, $finding, $prefix, $prop));
+            $name = self::unique($prop !== '' ? ucfirst($prop) . 'Section' : $boundary->name(), $used);
+            $component = $finding->sibling("{$name}.vue");
 
-        $markup = $prefix === []
-            ? self::markup($block)
-            : str_replace(implode('.', $prefix), $prop, self::markup($block));
+            $markup = $prefix === []
+                ? $boundary->markup()
+                : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-        return $this->file($block, self::reachProps($block, $prefix, $prop), $markup);
-    }
-
-    /**
-     * The props a deep-reach component needs: the block's free variables, with the
-     * flattened object's root dropped ONLY when every reach through it went via the
-     * mid-object (so `$prop` fully replaces it), and `$prop` itself added.
-     *
-     * @param  list<string>  $prefix
-     * @return list<string>
-     */
-    private static function reachProps(ElementMatch $block, array $prefix, string $prop): array
-    {
-        $free = self::freeVariables($block);
-
-        if ($prefix === []) {
-            return $free;
+            $draft->add($component, self::render($props, $markup));
+            $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
         }
 
-        $root = $prefix[0];
-        $rootReadElsewhere = false;
-
-        foreach (self::chains($block) as $chain) {
-            if (($chain[0] ?? null) === $root && array_slice($chain, 0, count($prefix)) !== $prefix) {
-                $rootReadElsewhere = true; // the root is still read shallowly — keep it as a prop too
-                break;
-            }
-        }
-
-        $props = $rootReadElsewhere ? $free : array_values(array_diff($free, [$root]));
-
-        return in_array($prop, $props, true) ? $props : [...$props, $prop];
+        return $draft->rewrites();
     }
 
     /**
-     * The new component file a block becomes — its path beside the source, and a
-     * `<script setup>` + `<template>` body.
+     * Findings grouped by structure — duplicates of one block share a group.
+     *
+     * @param  list<ElementMatch>  $findings
+     * @return list<list<ElementMatch>>
+     */
+    private function groups(array $findings): array
+    {
+        $byShape = [];
+
+        foreach ($findings as $match) {
+            $byShape[$match->structureHash()][] = $match;
+        }
+
+        return array_values($byShape);
+    }
+
+    // ---- the call site --------------------------------------------------------
+
+    /**
+     * Rewrite a boundary's call site to use the component, and import it into the file.
+     *
+     * @param  array<string, string>  $bindings
+     */
+    private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
+    {
+        $draft->edit($boundary->contentSpan(), self::usage($name, $bindings, $boundary->carried()));
+        self::import($draft, $boundary->sfc, $component, $name);
+    }
+
+    /**
+     * The `<Component v-if … :prop="binding" … />` that replaces the lifted chunk —
+     * carrying the structural directive (so a conditional/list keeps working) and
+     * passing each prop.
+     *
+     * @param  array<string, string>  $bindings  prop name => the expression to pass
+     * @param  array<string, string|null>  $carried  the structural directives to keep here
+     */
+    private static function usage(string $name, array $bindings, array $carried = []): string
+    {
+        $attributes = [];
+
+        foreach ($carried as $directive => $value) {
+            $attributes[] = $value === null ? $directive : "{$directive}=\"{$value}\"";
+        }
+
+        foreach ($bindings as $prop => $expression) {
+            $attributes[] = ":{$prop}=\"{$expression}\"";
+        }
+
+        return $attributes === [] ? "<{$name} />" : "<{$name} " . implode(' ', $attributes) . ' />';
+    }
+
+    /**
+     * The component's props plus, when its own `v-for` is carried out to the call site,
+     * the loop variables it now receives instead of binding.
      *
      * @param  list<string>  $props
-     * @return array{0: string, 1: string}  [path, content]
+     * @return list<string>
      */
-    private function file(ElementMatch $block, array $props, string $markup): array
+    private static function withLoopVars(Boundary $boundary, array $props): array
     {
-        $name = self::componentName($block, $props);
+        if (! isset($boundary->carried()['v-for'])) {
+            return $props;
+        }
 
-        return [$block->sibling("{$name}.vue"), self::render($props, $markup)];
+        return array_values(array_unique([...$props, ...$boundary->ownLoopVars()]));
     }
 
     /**
-     * The block's markup re-indented for the new file — unwrapping a context-bound
-     * `<template>` (a slot or `v-else`) to its CONTENT, since the wrapper can't be a
-     * component root.
+     * Import the freshly-created component into the file it was lifted out of — spliced
+     * at the top of `<script setup>` (or a fresh one when the file has no script block).
      */
-    private static function markup(ElementMatch $block): string
+    private static function import(Draft $draft, Sfc $sfc, string $component, string $name): void
     {
-        return self::contentSpan($block)->reindent();
+        $statement = "import {$name} from '" . self::relativeImport($sfc->path, $component) . "';\n";
+        $start = $sfc->scriptContentStart();
+
+        $draft->edit(
+            new Span($sfc->path, $sfc->source, $start ?? 0, $start ?? 0),
+            $start !== null ? "\n{$statement}" : "<script setup lang=\"ts\">\n{$statement}</script>\n\n",
+        );
     }
 
     /**
-     * The span to lift: the block itself, or — when the block is a context-bound
-     * `<template>` — the span of its element children (its inner content).
+     * A relative ES import specifier from one file to another (`./Foo.vue`, `../ui/Foo.vue`).
      */
-    private static function contentSpan(ElementMatch $block): Span
+    private static function relativeImport(string $from, string $to): string
     {
-        if (! $block->isContextBound()) {
-            return $block->span();
+        if (dirname($from) === dirname($to)) {
+            return './' . basename($to);
         }
 
-        $children = $block->elements();
+        $fromDir = array_values(array_filter(explode('/', dirname($from)), static fn (string $p): bool => $p !== '' && $p !== '.'));
+        $toDir = array_values(array_filter(explode('/', dirname($to)), static fn (string $p): bool => $p !== '' && $p !== '.'));
 
-        if ($children === []) {
-            return $block->span();
+        $shared = 0;
+
+        while (isset($fromDir[$shared], $toDir[$shared]) && $fromDir[$shared] === $toDir[$shared]) {
+            $shared++;
         }
 
-        $last = $children[count($children) - 1];
+        $up = str_repeat('../', count($fromDir) - $shared) ?: './';
+        $down = implode('/', array_slice($toDir, $shared));
 
-        return new Span($block->file(), $block->sfc->source, $children[0]->start, $last->end);
+        return $up . ($down !== '' ? "{$down}/" : '') . basename($to);
     }
+
+    /**
+     * @param  list<string>  $props
+     * @return array<string, string>
+     */
+    private static function selfBindings(array $props): array
+    {
+        return array_combine($props, $props);
+    }
+
+    /**
+     * Deep-reach bindings: the flattened prop is passed its ORIGINAL path
+     * (`:customer="order.customer"`); every other prop is passed by its own name.
+     *
+     * @param  list<string>  $props
+     * @param  list<string>  $prefix
+     * @return array<string, string>
+     */
+    private static function reachBindings(array $props, array $prefix, string $prop): array
+    {
+        $bindings = [];
+
+        foreach ($props as $name) {
+            $bindings[$name] = $name === $prop && $prefix !== [] ? implode('.', $prefix) : $name;
+        }
+
+        return $bindings;
+    }
+
+    // ---- rendering ------------------------------------------------------------
 
     /**
      * @param  list<string>  $props
@@ -184,13 +286,29 @@ final class ExtractComponentScribe extends RepentScribe
         return "<script setup lang=\"ts\">\n{$defineProps}</script>\n\n<template>\n{$markup}\n</template>\n";
     }
 
-    // ---- deep-reach strategy --------------------------------------------------
+    /**
+     * @param  array<string, true>  $used
+     */
+    private static function unique(string $name, array &$used): string
+    {
+        $candidate = $name;
+        $n = 2;
+
+        while (isset($used[$candidate])) {
+            $candidate = $name . $n++;
+        }
+
+        $used[$candidate] = true;
+
+        return $candidate;
+    }
+
+    // ---- deep-reach analysis --------------------------------------------------
 
     /**
      * The shared object a deep-reach cluster takes as a prop: the common prefix of its
      * deep chains, stopped one short of the leaf. `order.customer.name` +
-     * `order.customer.email` → prefix `['order','customer']`, prop `customer`. Returns
-     * an empty prefix (no flatten) when the block holds no deep chain.
+     * `order.customer.email` → prefix `['order','customer']`, prop `customer`.
      *
      * @return array{0: list<string>, 1: string}  [prefix, prop]
      */
@@ -210,22 +328,50 @@ final class ExtractComponentScribe extends RepentScribe
             $shortest = min($shortest, count($chain));
         }
 
-        // Stop one short of the leaf, so the prop is the OBJECT being read, not a field.
         $mid = array_slice($prefix, 0, min(count($prefix), $shortest - 1));
 
         return [$mid, $mid[count($mid) - 1] ?? ''];
     }
 
     /**
-     * Every member chain across the block's expressions.
+     * The props a deep-reach component needs: the boundary's free variables, with the
+     * flattened object's root dropped ONLY when every reach through it went via the
+     * mid-object (so `$prop` fully replaces it), and `$prop` itself added.
      *
+     * @param  list<string>  $prefix
+     * @return list<string>
+     */
+    private static function reachProps(Boundary $boundary, ElementMatch $block, array $prefix, string $prop): array
+    {
+        $free = $boundary->props();
+
+        if ($prefix === []) {
+            return $free;
+        }
+
+        $root = $prefix[0];
+        $rootReadElsewhere = false;
+
+        foreach (self::chains($block) as $chain) {
+            if (($chain[0] ?? null) === $root && array_slice($chain, 0, count($prefix)) !== $prefix) {
+                $rootReadElsewhere = true;
+                break;
+            }
+        }
+
+        $props = $rootReadElsewhere ? $free : array_values(array_diff($free, [$root]));
+
+        return in_array($prop, $props, true) ? $props : [...$props, $prop];
+    }
+
+    /**
      * @return list<list<string>>
      */
     private static function chains(ElementMatch $block): array
     {
         $chains = [];
 
-        self::eachElement($block, static function (Element $element) use (&$chains): void {
+        self::each($block, static function (Element $element) use (&$chains): void {
             foreach ($element->expressions() as $expression) {
                 $chains = array_merge($chains, $expression->chains());
             }
@@ -254,75 +400,17 @@ final class ExtractComponentScribe extends RepentScribe
         return $prefix;
     }
 
-    // ---- props + naming -------------------------------------------------------
-
-    /**
-     * The free variables the block reads (expression roots) minus the ones it binds
-     * itself (`v-for` items) — the props the extracted component needs.
-     *
-     * @return list<string>
-     */
-    private static function freeVariables(ElementMatch $block): array
-    {
-        $reads = [];
-        $bound = [];
-        $called = [];
-
-        self::eachElement($block, static function (Element $element) use (&$reads, &$bound, &$called): void {
-            foreach (self::loopVars($element->attribute(Directive::For)) as $var) {
-                $bound[] = $var;
-            }
-
-            foreach ($element->expressions() as $expression) {
-                $reads = array_merge($reads, $expression->roots());
-                $called = array_merge($called, $expression->calledFunctions());
-            }
-        });
-
-        // `$event`, `$slots`, … are template-provided globals, never props.
-        $reads = array_filter($reads, static fn (string $root): bool => ! str_starts_with($root, '$'));
-
-        return array_values(array_diff(array_unique($reads), $bound, $called));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function loopVars(?string $expression): array
-    {
-        if ($expression === null) {
-            return [];
-        }
-
-        $separator = str_contains($expression, ' in ') ? ' in ' : ' of ';
-        $left = trim(strstr($expression, $separator, true) ?: '', " ()\t");
-
-        return array_values(array_filter(array_map(trim(...), explode(',', $left))));
-    }
-
-    /**
-     * @param  list<string>  $props
-     */
-    private static function componentName(ElementMatch $block, array $props): string
-    {
-        if ($block->tag !== strtolower($block->tag)) {
-            return $block->tag . 'Group';
-        }
-
-        return $props === [] ? 'ExtractedSection' : ucfirst($props[0]) . 'Section';
-    }
-
     /**
      * @param  Closure(Element): void  $visit
      */
-    private static function eachElement(Element $node, Closure $visit): void
+    private static function each(Element $node, Closure $visit): void
     {
         if ($node->isElement()) {
             $visit($node);
         }
 
         foreach ($node->children as $child) {
-            self::eachElement($child, $visit);
+            self::each($child, $visit);
         }
     }
 }

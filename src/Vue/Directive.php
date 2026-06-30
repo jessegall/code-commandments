@@ -26,6 +26,19 @@ enum Directive: string
     case Cloak = 'v-cloak';
 
     /**
+     * The directives that shape a node's STRUCTURE — a conditional branch (`v-if` /
+     * `v-else-if` / `v-else`) or a loop (`v-for`). When a chunk carrying one is lifted
+     * into a component, the directive must travel to the call site (the branch/list
+     * stays where the chunk was), not into the component.
+     *
+     * @return list<self>
+     */
+    public static function structural(): array
+    {
+        return [self::If, self::ElseIf, self::Else, self::For];
+    }
+
+    /**
      * Normalise a `string|Directive` to a directive attribute name — throwing if a
      * string isn't a known directive, so a typo'd `'v-fi'` fails loud instead of
      * silently matching nothing.

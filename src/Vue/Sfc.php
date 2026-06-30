@@ -60,7 +60,7 @@ final class Sfc
             $line = substr_count($source, "\n", 0, $lt) + 1;
 
             if ($match[3] === '/') {
-                $blocks[] = new Block($tag, Attributes::parse($match[2]), '', $line);
+                $blocks[] = new Block($tag, Attributes::parse($match[2]), '', $line, $openEnd);
                 $i = $openEnd;
 
                 continue;
@@ -70,7 +70,7 @@ final class Sfc
                 ? self::readTemplate($source, $openEnd)
                 : self::readRaw($source, $openEnd, $tag);
 
-            $blocks[] = new Block($tag, Attributes::parse($match[2]), $content, $line);
+            $blocks[] = new Block($tag, Attributes::parse($match[2]), $content, $line, $openEnd);
 
             if ($tag === 'template' && $template === null) {
                 $template = new Tokenizer()->tokenize($content, substr_count($source, "\n", 0, $openEnd) + 1, $openEnd);
@@ -103,6 +103,30 @@ final class Sfc
         }
 
         return null;
+    }
+
+    /**
+     * The byte offset where the `<script setup>` body begins (preferring a `setup`
+     * block, else any `<script>`) — where a scribe splices a component import. Null
+     * when the component has no script block at all.
+     */
+    public function scriptContentStart(): ?int
+    {
+        $fallback = null;
+
+        foreach ($this->blocks as $block) {
+            if ($block->tag !== 'script') {
+                continue;
+            }
+
+            if ($block->hasAttribute('setup')) {
+                return $block->start;
+            }
+
+            $fallback ??= $block->start;
+        }
+
+        return $fallback;
     }
 
     /**
