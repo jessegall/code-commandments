@@ -2,8 +2,10 @@
 
 namespace Shop\Support;
 
+use JesseGall\CodeCommandments\Sins\Backend\NullableCallback;
+
 use Closure;
-use JesseGall\CodeCommandments\Detectors\Backend\NullableCallbackDetector;
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class RetryRunner
@@ -18,7 +20,7 @@ final class RetryRunner
      *
      * @return T
      */
-    #[Sinful(NullableCallbackDetector::class)]
+    #[Sinful(NullableCallback::class)]
     public function run(Closure $work, Closure | null $onRetry = null): mixed
     {
         while (true) {
@@ -30,6 +32,32 @@ final class RetryRunner
                 if ($onRetry) {
                     $onRetry($this->attempts);
                 }
+
+                if ($this->attempts >= 3) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    /**
+     * @template T
+     *
+     * @param  Closure(): T  $work
+     * @param  Closure(int): void  $onRetry  a no-op closure stands in when the caller doesn't care
+     *
+     * @return T
+     */
+    #[Righteous(NullableCallback::class)]
+    public function runWith(Closure $work, Closure $onRetry): mixed
+    {
+        while (true) {
+            $this->attempts++;
+
+            try {
+                return $work();
+            } catch (\Throwable $e) {
+                $onRetry($this->attempts);
 
                 if ($this->attempts >= 3) {
                     throw $e;

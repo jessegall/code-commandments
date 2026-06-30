@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ParamResolvedFromParamDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -12,7 +13,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class LineShipper
 {
-    #[Sinful(ParamResolvedFromParamDetector::class)]
+    #[Sinful(ParamResolvedFromParam::class)]
     public function labelFor(Order $order, string $lineId): string
     {
         $line = $order->lineById($lineId);

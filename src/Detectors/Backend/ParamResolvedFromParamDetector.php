@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\ParamResolution;
@@ -41,9 +43,9 @@ final class ParamResolvedFromParamDetector implements Detector
         'Laravel\\Mcp\\Request',
     ];
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/pass-the-object';
+        return new ParamResolvedFromParam();
     }
 
     public function find(Codebase $codebase): array

@@ -35,46 +35,6 @@ Before you write a single doc or comment, check it against the four rules below.
 4. **No long class docblocks.** One sentence: what the class is. If you need a paragraph to explain it, the
    class is doing too much — fix that, don't document around it.
 
-## Bad → good
-
-```php
-// Bad — narrates the change; pure noise
-// Previously this hydrated a RawAssistantAction; now we parse the array directly.
-$id = $entry->string('id');
-
-// Good
-$id = $entry->string('id');
-```
-
-```php
-// Bad — a class docblock telling a story
-/**
- * This class is responsible for decoding assistant actions. It was extracted from
- * WorkflowAssistantService during the phase-3 refactor. It takes the raw structured
- * reply from the model, normalises each entry, dispatches by type, and ... (10 lines)
- */
-
-// Good
-/**
- * Decodes the structured `actions[]` reply into typed actions.
- */
-```
-
-```php
-// Bad — restating what the code obviously does
-// loop over each entry and decode it
-foreach ($entries as $entry) { ... }
-
-// Good — no comment
-foreach ($entries as $entry) { ... }
-```
-
-```php
-// Good — a rare, earned comment: the WHY isn't visible in the code
-// Smaller models stringify nested objects; decode before treating as a map.
-$value = is_string($value) ? json_decode($value, true) : $value;
-```
-
 ## The only comments worth writing
 
 - **A non-obvious *why*** — a hidden invariant, a workaround for an external bug, a constraint the reader
@@ -95,8 +55,94 @@ Documentation
 - [ ] No multi-paragraph class docblock (if it needs one, the class is too big).
 ```
 
+## Bad → good
+
+```php
+// Bad
+public function search(array $filters): array
+{
+    $perPage = config('shop.catalog.per_page');
+
+    // used to filter in PHP, moved to the query builder in v3
+    $term = $filters['q'];
+    $sort = $filters['sort'];
+
+    return $this->run($term, $sort, $perPage);
+}
+
+// Good
+public function searchSorted(string $term): array
+{
+    // map the public sort flag to the indexed column
+    $sort = $term === '' ? 'rank' : 'relevance';
+
+    return $this->run($term, $sort, $this->settings->perPage);
+}
+```
+
+```php
+// Bad
+final class LegacyOrderImporter
+{
+    // previously this returned an array, now it returns a Customer or null
+    public function findCustomer(string $email): ?Customer
+    {
+        // loop over all customers and find the matching one
+        return Customer::query()->where('email', $email)->first();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    public function import(array $rows): void
+    {
+        foreach ($rows as $row) {
+            $customer = $this->findCustomer($row['email'] ?? '');
+
+            // changed from update() to direct assignment in v2
+            if ($customer !== null) {
+                $customer->imported = true;
+                $customer->save();
+            }
+        }
+    }
+
+    public function emailKnown(string $email): bool
+    {
+        return $this->findCustomer($email)?->exists ?? false;
+    }
+}
+
+// Good
+final class TidyOrderImporter
+{
+    public function import(string $email): void
+    {
+        Customer::query()->where('email', $email)->firstOrFail();
+    }
+}
+```
+
+```php
+// Bad
+public function award(int $points, string $name): string
+{
+    return $name . ':' . $points;
+}
+
+// Good
+public function awardLabel(int $points, string $name): string
+{
+    return $name . ':' . $points;
+}
+```
+
+## When it fires
+
+- History/archaeology comments ("previously / used to / refactored / changed from", task refs) — `ArchaeologyCommentDetector`
+- Multi-paragraph class docblock (class too big) — `BloatedDocblockDetector`
+- Docblock that only restates the typed signature (`@param Type $x`, no description) — `CeremonyDocblockDetector`
+
 ## Relationship to the other skills
 
-When a comment is tempted to explain *why a value is shaped oddly*, that's usually a
-[`fix-at-the-source`](../fix-at-the-source/SKILL.md) smell — fix the shape instead of documenting the
-workaround. A doc should never be the thing keeping a confusing design legible.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — fix the shape instead of documenting the workaround. A doc should never be the thing keeping a confusing design legible.

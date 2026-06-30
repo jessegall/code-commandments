@@ -2,12 +2,13 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class FailureScanner
 {
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function containsFailure(LogLine $line): bool
     {
         if ($line->level === 'error') {

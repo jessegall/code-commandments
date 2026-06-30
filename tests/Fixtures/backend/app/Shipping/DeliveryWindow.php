@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NestedTernaryDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NestedTernary;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,7 +14,7 @@ final class DeliveryWindow
 {
     public function __construct(private readonly bool $express = false) {}
 
-    #[Sinful(NestedTernaryDetector::class)]
+    #[Sinful(NestedTernary::class)]
     public function estimateDays(int $distanceKm): int
     {
         return $this->express

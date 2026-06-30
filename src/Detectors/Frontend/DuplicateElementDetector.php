@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Frontend\DuplicateElement;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
@@ -25,9 +27,9 @@ final class DuplicateElementDetector implements Detector, Repentable
 {
     private const int FLOOR = 3;
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'frontend/vue-components';
+        return new DuplicateElement();
     }
 
     public function scribe(): ExtractComponentScribe

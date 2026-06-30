@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Skills;
 
+use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\ClaudeSection;
-use JesseGall\CodeCommandments\Skills\Skills;
 use JesseGall\CodeCommandments\Skills\Tier;
 use PHPUnit\Framework\TestCase;
 

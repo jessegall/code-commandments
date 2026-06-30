@@ -2,13 +2,14 @@
 
 namespace Shop\Legacy;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ConstClassEnumDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ConstClassEnum;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * Payment states as loose string constants — a closed set that should be a backed enum.
  */
-#[Sinful(ConstClassEnumDetector::class)]
+#[Sinful(ConstClassEnum::class)]
 final class PaymentStatuses
 {
     /** Authorisation requested, awaiting the gateway. */

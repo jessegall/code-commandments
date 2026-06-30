@@ -2,14 +2,15 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NonFinalDataDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
 /**
  * A customer profile DTO that forgot to seal itself.
  */
-#[Sinful(NonFinalDataDetector::class)]
+#[Sinful(NonFinalData::class)]
 class OpenProfileData extends Data
 {
     public function __construct(

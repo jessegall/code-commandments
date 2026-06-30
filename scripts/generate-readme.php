@@ -37,7 +37,7 @@ $shortName = static fn (Detector $detector): string => (new ReflectionClass($det
 $bySkill = [];
 
 foreach (Catalog::all() as $detector) {
-    $bySkill[$detector->skill()][] = $detector;
+    $bySkill[$detector->sin()->slug()][] = $detector;
 }
 
 ksort($bySkill);

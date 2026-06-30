@@ -2,8 +2,10 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\ModelMutationAtCallSiteDetector;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+use JesseGall\CodeCommandments\Sins\Backend\ModelMutationAtCallSite;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 
@@ -13,12 +15,24 @@ use Shop\Models\Customer;
  */
 final class CustomerUpdater
 {
-    #[Sinful(ModelMutationAtCallSiteDetector::class)]
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(ModelMutationAtCallSite::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function suspend(Customer $customer, string $reason): void
     {
         $customer->suspended = true;
         $customer->suspended_reason = $reason;
         $customer->save();
+    }
+
+    #[Righteous(ModelMutationAtCallSite::class)]
+    public function suspendNamed(Customer $customer, string $reason): void
+    {
+        $customer->suspend($reason);
+    }
+
+    #[Righteous(FeatureEnvy::class)]
+    public function suspendByTelling(Customer $customer, string $reason): void
+    {
+        $customer->suspend($reason);
     }
 }

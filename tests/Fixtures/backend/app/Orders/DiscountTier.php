@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\IfElseLadderDetector;
+use JesseGall\CodeCommandments\Sins\Backend\IfElseLadder;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -10,7 +11,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class DiscountTier
 {
-    #[Sinful(IfElseLadderDetector::class)]
+    #[Sinful(IfElseLadder::class)]
     public function percent(int $lifetimeCents): int
     {
         if ($lifetimeCents >= 1_000_000) {

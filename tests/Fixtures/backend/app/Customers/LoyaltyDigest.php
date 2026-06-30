@@ -2,7 +2,9 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class LoyaltyDigest
@@ -43,7 +45,7 @@ final class LoyaltyDigest
         return $this->points;
     }
 
-    #[Sinful(DuplicateFunctionDetector::class)]
+    #[Sinful(DuplicateFunction::class)]
     public function fingerprint(int $base, int $count): string
     {
         $total = $base;
@@ -53,5 +55,11 @@ final class LoyaltyDigest
         }
 
         return md5((string) $total);
+    }
+
+    #[Righteous(DuplicateFunction::class)]
+    public function checksum(int $base, int $count): string
+    {
+        return $this->fingerprint($base, $count);
     }
 }

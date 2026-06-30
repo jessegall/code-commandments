@@ -2,12 +2,13 @@
 
 namespace Shop\Notifications;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NullableCallbackDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NullableCallback;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class OrderNotifier
 {
-    #[Sinful(NullableCallbackDetector::class)]
+    #[Sinful(NullableCallback::class)]
     public function dispatch(string $message, ?callable $onSent = null): void
     {
         // ... send the message ...

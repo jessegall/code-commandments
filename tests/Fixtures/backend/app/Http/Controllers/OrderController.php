@@ -2,11 +2,12 @@
 
 namespace Shop\Http\Controllers;
 
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+use JesseGall\CodeCommandments\Sins\Backend\ModelMutationAtCallSite;
+use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\ModelMutationAtCallSiteDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateOrderRequest;
 use Shop\Models\Order;
@@ -21,7 +22,7 @@ class OrderController extends Controller
         return $this->orders->place($request->customerId(), $request->lines());
     }
 
-    #[Sinful(RawRequestInputDetector::class)]
+    #[Sinful(RawRequestInput::class)]
     public function filter(Request $request): array
     {
         $status = $request->input('status');
@@ -30,8 +31,8 @@ class OrderController extends Controller
         return Order::query()->where('status', $status)->where('customer_id', $customerId)->get()->all();
     }
 
-    #[Sinful(ModelMutationAtCallSiteDetector::class)]
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(ModelMutationAtCallSite::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function markPaid(Request $request, Order $order): Order
     {
         $order->status = 'paid';

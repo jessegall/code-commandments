@@ -139,8 +139,8 @@ final class Repent
                 $dryRunFile = substr($arg, 10);
             } elseif (str_starts_with($arg, '--only=')) {
                 $only = substr($arg, 7);
-            } elseif (str_starts_with($arg, '--detector=')) {
-                $only = substr($arg, 11);
+            } elseif (str_starts_with($arg, '--sin=')) {
+                $only = substr($arg, 6);
             } elseif (! str_starts_with($arg, '--')) {
                 $path = $arg;
             }

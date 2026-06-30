@@ -2,7 +2,8 @@
 
 namespace Shop\Concurrent;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ConcurrentSubclassDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ConcurrentSubclass;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\Concurrent\Concurrent;
 
@@ -11,7 +12,7 @@ use JesseGall\Concurrent\Concurrent;
  * domain object is welded to the Concurrent API. The righteous twin is
  * CheckoutSession (plain object + ::for()).
  */
-#[Sinful(ConcurrentSubclassDetector::class)]
+#[Sinful(ConcurrentSubclass::class)]
 final class CartSession extends Concurrent
 {
     /** @var array<int, int> */

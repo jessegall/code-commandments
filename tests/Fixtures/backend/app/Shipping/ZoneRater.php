@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ParamResolvedFromParamDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -14,7 +15,7 @@ final class ZoneRater
 {
     private const int REMOTE_SURCHARGE = 250;
 
-    #[Sinful(ParamResolvedFromParamDetector::class)]
+    #[Sinful(ParamResolvedFromParam::class)]
     public function rate(RateCard $card, string $zoneCode): int
     {
         $zone = $card->zoneByCode($zoneCode);

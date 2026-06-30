@@ -2,7 +2,8 @@
 
 namespace Shop\Checkout;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DeepNestingDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DeepNesting;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 use Shop\Models\Order;
@@ -13,7 +14,7 @@ use Shop\Models\Order;
  */
 final class EligibilityChecker
 {
-    #[Sinful(DeepNestingDetector::class)]
+    #[Sinful(DeepNesting::class)]
     public function canCheckout(Customer $customer, Order $order): bool
     {
         if ($customer->active) {

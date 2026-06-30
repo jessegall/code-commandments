@@ -2,7 +2,8 @@
 
 namespace Shop\Realtime;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ConcurrentSubclassDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ConcurrentSubclass;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\Concurrent\Concurrent;
 
@@ -10,7 +11,7 @@ use JesseGall\Concurrent\Concurrent;
  * Cross-process stock counter — again a subclass of the proxy rather than a plain
  * object handed out thread-safe by a factory.
  */
-#[Sinful(ConcurrentSubclassDetector::class)]
+#[Sinful(ConcurrentSubclass::class)]
 final class StockCounter extends Concurrent
 {
     public int $available = 0;

@@ -2,7 +2,9 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Detectors\Backend\OptionAsNullableDetector;
+use JesseGall\CodeCommandments\Sins\Backend\OptionAsNullable;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\PhpTypes\Option;
 
@@ -13,12 +15,13 @@ use JesseGall\PhpTypes\Option;
  */
 final class CustomerLocator
 {
-    #[Sinful(OptionAsNullableDetector::class)]
+    #[Sinful(OptionAsNullable::class)]
     public function locate(string $email): ?Option
     {
         return Option::none();
     }
 
+    #[Righteous(OptionAsNullable::class)]
     public function locateHonestly(string $email): Option
     {
         return Option::fromNullable($email === '' ? null : $email);

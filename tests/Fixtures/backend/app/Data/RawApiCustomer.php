@@ -2,7 +2,8 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Detectors\Backend\AllNullableDataDetector;
+use JesseGall\CodeCommandments\Sins\Backend\AllNullableData;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -11,7 +12,7 @@ use Spatie\LaravelData\Data;
  * the DTO promises nothing — callers must re-check `id`/`email` that should be
  * guaranteed.
  */
-#[Sinful(AllNullableDataDetector::class)]
+#[Sinful(AllNullableData::class)]
 final class RawApiCustomer extends Data
 {
     public function __construct(

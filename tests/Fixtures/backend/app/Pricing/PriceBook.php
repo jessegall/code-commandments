@@ -2,7 +2,8 @@
 
 namespace Shop\Pricing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NullableRegistryLookupDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NullableRegistryLookup;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -31,7 +32,7 @@ final class PriceBook
         $this->prices[$code] = (int) ($current * (100 - $percent) / 100);
     }
 
-    #[Sinful(NullableRegistryLookupDetector::class)]
+    #[Sinful(NullableRegistryLookup::class)]
     public function priceFor(string $sku): ?int
     {
         $code = strtoupper(trim($sku));

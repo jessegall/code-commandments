@@ -75,9 +75,9 @@ final class DetectorRunner
 
         foreach ($detectors as $detector) {
             $short = $this->shortName($detector);
-            $skill = $detector->skill();
+            $sin = $detector->sin();
 
-            $tasks[] = static fn (): array => self::findings($short, $skill, $detector->find($codebase));
+            $tasks[] = static fn (): array => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase));
         }
 
         return $tasks;
@@ -90,12 +90,12 @@ final class DetectorRunner
      * @param  list<\JesseGall\CodeCommandments\Ast\NodeMatch>  $matches
      * @return list<Finding>
      */
-    private static function findings(string $detector, string $skill, array $matches): array
+    private static function findings(string $detector, string $skill, string $sin, array $matches): array
     {
         $findings = [];
 
         foreach ($matches as $match) {
-            $findings[] = new Finding($detector, $skill, $match->file->path, $match->location(), $match->scope());
+            $findings[] = new Finding($detector, $skill, $sin, $match->file->path, $match->location(), $match->scope());
         }
 
         return $findings;

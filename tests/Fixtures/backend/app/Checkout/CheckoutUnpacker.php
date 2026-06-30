@@ -2,7 +2,8 @@
 
 namespace Shop\Checkout;
 
-use JesseGall\CodeCommandments\Detectors\Backend\PositionalTupleReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\PositionalTupleReturn;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class CheckoutUnpacker
@@ -10,7 +11,7 @@ final class CheckoutUnpacker
     /**
      * @return array{0: string, 1: list<string>, 2: int, 3: string}
      */
-    #[Sinful(PositionalTupleReturnDetector::class)]
+    #[Sinful(PositionalTupleReturn::class)]
     public function unpack(string $reference): array
     {
         $parts = explode(':', $reference);

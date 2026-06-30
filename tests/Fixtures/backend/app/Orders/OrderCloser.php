@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MassUpdateAtCallSiteDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MassUpdateAtCallSite;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Order;
 
@@ -12,7 +13,7 @@ use Shop\Models\Order;
  */
 final class OrderCloser
 {
-    #[Sinful(MassUpdateAtCallSiteDetector::class)]
+    #[Sinful(MassUpdateAtCallSite::class)]
     public function close(Order $order, string $reason): void
     {
         $order->update([

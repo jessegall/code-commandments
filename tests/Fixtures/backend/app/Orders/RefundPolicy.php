@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\RedundantElseDetector;
+use JesseGall\CodeCommandments\Sins\Backend\RedundantElse;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Order;
 
@@ -12,7 +13,7 @@ use Shop\Models\Order;
  */
 final class RefundPolicy
 {
-    #[Sinful(RedundantElseDetector::class)]
+    #[Sinful(RedundantElse::class)]
     public function window(Order $order): string
     {
         if ($order->status === 'shipped') {

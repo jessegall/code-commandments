@@ -54,42 +54,6 @@ assembles it — not three frames downstream after it's been threaded around as 
 introduced late just relabels data everyone already mis-handled. (This is
 [`fix-at-the-source`](../fix-at-the-source/SKILL.md) applied to shape.)
 
-## Bad → good
-
-```php
-// Bad — an options bag: undocumented keys, string-indexed, re-validated by every caller
-public function renderCard(array $opts): string
-{
-    $title = $opts['title'] ?? '';
-    $icon  = $opts['icon'] ?? 'default';
-    // ...
-}
-
-// Good — a type: the shape is the signature, required is required
-public function renderCard(CardOptions $opts): string
-{
-    // $opts->title, $opts->icon — typed, present, no re-derivation
-}
-```
-
-```php
-// Bad — a data clump: three params that always travel together
-public function move(string $nodeId, float $x, float $y): void { ... }
-$graph->move($id, $x, $y);
-$layout->place($id, $x, $y);
-
-// Good — one concept, one object
-public function move(NodePosition $pos): void { ... }
-```
-
-```php
-// Bad — primitive obsession: a string that has rules nobody enforces
-public function charge(string $currency, int $amountCents): void { ... }
-
-// Good — a value object that owns its invariants
-public function charge(Money $amount): void { ... }   // Money::of('EUR', 1299), ->add(), ->equals()
-```
-
 ## Checklist
 
 ```
@@ -102,9 +66,148 @@ Value objects
 - [ ] Picked the right home: a Spatie Data DTO (boundary/transfer) vs a final readonly value object (domain concept).
 ```
 
+## Bad → good
+
+```php
+// Bad
+public function render(array $breakdown): string
+{
+    return sprintf(
+        'Subtotal %d, tax %d, total %d',
+        $breakdown['subtotal'],
+        $breakdown['tax'],
+        $breakdown['total'],
+    );
+}
+
+// Good
+public function renderTotals(PriceBreakdown $breakdown): string
+{
+    return sprintf(
+        'Subtotal %d, tax %d, total %d',
+        $breakdown->subtotal,
+        $breakdown->tax,
+        $breakdown->total,
+    );
+}
+```
+
+```php
+// Bad
+public function daily(int $day): array
+{
+    $currency = config('shop.currency');
+    $gross = $this->orders->grossForDay($day);
+
+    return [
+        'currency' => $currency,
+        'gross' => $gross,
+        'net' => (int) round($gross * 0.79),
+    ];
+}
+
+// Good
+public function dailyReport(int $day): DailyReport
+{
+    $gross = $this->orders->grossForDay($day);
+
+    return new DailyReport(
+        gross: $gross,
+        net: (int) round($gross * 0.79),
+    );
+}
+```
+
+```php
+// Bad
+public function record(string $shopId, string $userId, string $channelId): string
+{
+    return implode(self::SEPARATOR, [$shopId, $userId, $channelId]);
+}
+
+// Good
+public function recordAccess(AccessContext $context): string
+{
+    return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
+}
+```
+
+```php
+// Bad
+public function partition(array $rows): array
+{
+    $valid = [];
+    $invalid = [];
+    $errors = [];
+
+    foreach ($rows as $row) {
+        if ($row === '') {
+            $errors[] = 'empty row';
+        } elseif (str_contains($row, ';')) {
+            $valid[] = $row;
+        } else {
+            $invalid[] = $row;
+        }
+    }
+
+    return [$valid, $invalid, $errors];
+}
+
+// Good
+public function partitionTyped(array $rows): Partitioned
+{
+    $valid = [];
+    $invalid = [];
+    $errors = [];
+
+    foreach ($rows as $row) {
+        if ($row === '') {
+            $errors[] = 'empty row';
+        } elseif (str_contains($row, ';')) {
+            $valid[] = $row;
+        } else {
+            $invalid[] = $row;
+        }
+    }
+
+    return new Partitioned($valid, $invalid, $errors);
+}
+```
+
+```php
+// Bad
+public function rates(string $base, array $symbols): array
+{
+    $query = http_build_query([
+        'base' => $base,
+        'symbols' => implode(',', $symbols),
+    ]);
+
+    return json_decode($this->http->get("https://fx.test/latest?{$query}"), true);
+}
+
+// Good
+public function ratesTyped(string $base, array $symbols): RateTable
+{
+    $query = http_build_query([
+        'base' => $base,
+        'symbols' => implode(',', $symbols),
+    ]);
+
+    return RateTable::from(json_decode($this->http->get("https://fx.test/latest?{$query}"), true));
+}
+```
+
+## When it fires
+
+- String-indexing (`$arr['key']`) a structured array param (an unborn type) — `ArrayBagDetector`
+- Returning a multi-field string-keyed array literal (a bag that should be a value object) — `ArrayReturnBagDetector`
+- 3+ values threaded as separate params (a data clump → one object) — `DataClumpDetector`
+- Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
+- Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
+
 ## Relationship to the other skills
 
-- [`fix-at-the-source`](../fix-at-the-source/SKILL.md) — introduce the type where the data is born, not downstream.
-- [`spatie-data`](../spatie-data/SKILL.md) — once you've decided it's a DTO, that skill is *how* to write it
-  (and its honest-field-types rule keeps the new type from being a fresh all-nullable bag).
-- [`absence`](../absence/SKILL.md) — the new type's fields still answer "can this be missing?" honestly.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — introduce the type where the data is born, not downstream.
+- [`backend/spatie-data`](../spatie-data/SKILL.md) — once you've decided it's a DTO, that skill is *how* to write it (and its honest-field-types rule keeps the new type from being a fresh all-nullable bag).
+- [`backend/absence`](../absence/SKILL.md) — the new type's fields still answer "can this be missing?" honestly.

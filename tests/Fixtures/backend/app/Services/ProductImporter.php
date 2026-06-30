@@ -2,8 +2,9 @@
 
 namespace Shop\Services;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ManufacturedFakeFillDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
+use JesseGall\CodeCommandments\Sins\Backend\NewDataObject;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
 use Shop\Enums\ProductCategory;
@@ -14,8 +15,8 @@ final class ProductImporter
     /**
      * @param  array<int, array<string, mixed>>  $rows
      */
-    #[Sinful(NewDataObjectDetector::class)]
-    #[Sinful(ManufacturedFakeFillDetector::class)]
+    #[Sinful(NewDataObject::class)]
+    #[Sinful(ManufacturedFakeFill::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {

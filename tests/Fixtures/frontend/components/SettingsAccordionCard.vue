@@ -9,7 +9,7 @@ defineProps<{ settings: Settings }>();
     <h2 class="settings-card__title">Advanced settings</h2>
 
     <!-- 13 levels deep with 4 still below the boundary → extract the body. -->
-    <!-- @sin DeepNestedDetector -->
+    <!-- @sin DeepNested -->
     <div class="settings-card__body">
       <div class="accordion">
         <div class="accordion__item">
@@ -34,5 +34,8 @@ defineProps<{ settings: Settings }>();
         </div>
       </div>
     </div>
+
+    <!-- @righteous DeepNested -->
+    <SettingsCardBody :settings="settings" />
   </article>
 </template>

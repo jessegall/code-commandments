@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\ContainerReach;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
@@ -24,9 +26,9 @@ use JesseGall\CodeCommandments\Detectors\Support\Container;
  */
 final class ContainerReachDetector implements Detector
 {
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/laravel-idioms';
+        return new ContainerReach();
     }
 
     public function find(Codebase $codebase): array

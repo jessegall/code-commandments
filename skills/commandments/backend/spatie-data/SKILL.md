@@ -231,11 +231,169 @@ Spatie Data
 - [ ] snake_case boundary -> one class-level #[MapInputName(SnakeCaseMapper::class)]; #[TypeScript] on FE-shared shapes.
 ```
 
+## Bad → good
+
+```php
+// Bad
+final class LegacyImportRow extends Data
+{
+    public function __construct(
+        public readonly string $sku = '',
+        public readonly int $quantity = 0,
+        public readonly ?int $priceCents = null,
+        public readonly ?string $note = null,
+    ) {}
+
+    public function lineTotal(): int
+    {
+        return $this->quantity * ($this->priceCents ?? 0);
+    }
+}
+
+// Good
+final class ImportRow extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $quantity,
+        public readonly ?int $priceCents = null,
+        public readonly ?string $note = null,
+    ) {}
+
+    public function lineTotal(): int
+    {
+        return $this->quantity * ($this->priceCents ?? 0);
+    }
+}
+```
+
+```php
+// Bad
+final class CouponData extends Data
+{
+    public string $code;
+
+    public int $percentOff;
+
+    public static function rules(): array
+    {
+        return [
+            'code' => ['required', 'string'],
+            'percentOff' => ['required', 'integer', 'min:1', 'max:100'],
+        ];
+    }
+}
+
+// Good
+final class VoucherData extends Data
+{
+    public string $code;
+
+    public static function fromCode(string $code): static
+    {
+        return new static(code: $code);
+    }
+}
+```
+
+```php
+// Bad
+public function importBatch(array $rows): array
+{
+    $customers = [];
+    $total = count($rows);
+
+    for ($i = 0; $i < $total; $i++) {
+        $customer = CustomerData::from($rows[$i]);
+        $this->mailer->send($customer->email, 'Welcome', 'Thanks for joining.');
+        $customers[$i] = $customer;
+    }
+
+    return $customers;
+}
+
+// Good
+public function importBatchCleanly(array $rows): iterable
+{
+    $customers = CustomerData::collect($rows);
+
+    foreach ($customers as $customer) {
+        $this->mailer->send($customer->email, 'Welcome', 'Thanks for joining.');
+    }
+
+    return $customers;
+}
+```
+
+```php
+// Bad
+public function build(Customer $customer): CustomerData
+{
+    return new CustomerData(
+        id: $customer->id,
+        name: $customer->name,
+        email: $customer->email,
+    );
+}
+
+// Good
+public function buildFrom(Customer $customer): CustomerData
+{
+    return CustomerData::from($customer);
+}
+```
+
+```php
+// Bad
+class StockLevelData extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $onHand,
+        public readonly int $reserved,
+    ) {}
+
+    public function available(): int
+    {
+        return max(0, $this->onHand - $this->reserved);
+    }
+
+    public function isLow(): bool
+    {
+        return $this->available() < 5;
+    }
+
+    public function status(): string
+    {
+        return match (true) {
+            $this->available() === 0 => 'out-of-stock',
+            $this->isLow() => 'low',
+            default => 'ok',
+        };
+    }
+}
+
+// Good
+final class StockSnapshotData extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $available,
+        public readonly string $status,
+    ) {}
+}
+```
+
+## When it fires
+
+- All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) — `AllNullableDataDetector`
+- `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — `DataMethodHintCollisionDetector`
+- Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `ManualHydrationLoopDetector`
+- `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
+- Data class not `final` / props not `readonly` promoted — `NonFinalDataDetector`
+
 ## Relationship to the other skills
 
-- [`fix-at-the-source`](../fix-at-the-source/SKILL.md) — a Data class IS a boundary; type it total so consumers
-  don't re-validate. The all-nullable DTO is the canonical symptom-deferral.
-- [`absence`](../absence/SKILL.md) — owns the `Optional` vs `?T` vs default decision; this skill only gives the
-  Spatie mechanics for each.
-- [`exceptions`](../exceptions/SKILL.md) — a required field missing at `::from()` should fail hard; surface it
-  named when you catch the framework's exception at a tolerant boundary.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.
+- [`backend/absence`](../absence/SKILL.md) — owns the `Optional` vs `?T` vs default decision; this skill only gives the Spatie mechanics for each.
+- [`backend/exceptions`](../exceptions/SKILL.md) — a required field missing at `::from()` should fail hard; surface it named when you catch the framework's exception at a tolerant boundary.

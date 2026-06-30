@@ -98,8 +98,8 @@ detector is not done until it has been run against the real consumer codebases a
 its hits read by eye:
 
 ```
-bin/commandments judge ../workflows/src        --detector=YourDetector --no-checklist
-bin/commandments judge ../smart-farmers-pos/app --detector=YourDetector --no-checklist
+bin/commandments judge ../workflows/src        --sin=your-sin --no-checklist
+bin/commandments judge ../smart-farmers-pos/app --sin=your-sin --no-checklist
 ```
 
 Open the flagged `file:line`s and judge each **against the skill/our architecture —
@@ -120,14 +120,17 @@ detector is not viable — report why and cut it. That — not its hit count —
 named constructor indistinguishable from a mis-prefixed factory. Calibrate every
 time, not "later".
 
-📍 **The roadmap is [`SINS.md`](SINS.md)** — every sin each skill teaches and which
-have a detector. Flip a row to ✅ when a detector ships.
+📍 **Sins are first-class.** Each sin is its OWN class under `src/Sins/{backend,frontend}/`
+(name + skill slug + description), discovered by `Sins\Catalog` — the sin twin of
+`Detectors\Catalog`. A detector *references* its sin (`sin(): Sin { return new ArrayBag(); }`),
+never declares one inline. `judge --sin=<name>` filters to it (the retired `--detector`).
+The generated `SKILL.md` "when it fires" rows project from the registered sins.
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--skill=NAME] [--detector=NAME] [--exclude=A,B] [--changes] [--branch[=BASE]] [--parallel=N]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `.commandments/sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--changes` (alias `--git`) reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. `--parallel=N` runs the detectors across N forked workers (default 8, capped at CPU cores; `--parallel=1` = sequential, also the fallback where `pcntl` is unavailable). |
+| `bin/commandments judge [path] [--skill=NAME] [--sin=NAME] [--exclude=A,B] [--changes] [--branch[=BASE]] [--parallel=N]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `.commandments/sins.md` checklist. Non-zero exit when sins are found. Files marked `@code-commandments-generated` are skipped. `--changes` (alias `--git`) reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. `--parallel=N` runs the detectors across N forked workers (default 8, capped at CPU cores; `--parallel=1` = sequential, also the fallback where `pcntl` is unavailable). |
 | `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `bin/commandments hints [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]]` | Auto-fix Spatie `Data` magic surface: rename non-`from…` object factories to `from<Type>` + rewrite call sites to `::from(...)`, and regenerate `@method from(...)`/`collect(...)` docblock hints. **Default applies; `--dry-run[=FILE]` previews a unified diff.** `--changes`/`--branch` scope to touched files but force **docblock-only** mode (no renames — a rename's call sites can live outside the scope); renaming is whole-tree only. |

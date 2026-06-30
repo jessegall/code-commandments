@@ -2,7 +2,8 @@
 
 namespace Shop\Support;
 
-use JesseGall\CodeCommandments\Detectors\Backend\BloatedDocblockDetector;
+use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,7 +14,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * Note that the underlying library is not thread-safe, so a single instance must
  * never be shared across queued jobs — construct a fresh one per job.
  */
-#[Sinful(BloatedDocblockDetector::class)]
+#[Sinful(BloatedDocblock::class)]
 final class PdfRenderer
 {
     /** @var list<string> */

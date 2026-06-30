@@ -13,13 +13,16 @@ defineProps<{ order: Order }>();
     </header>
 
     <!-- A cluster: order.customer read in three fields → extract <OrderCustomer :customer>. -->
-    <!-- @sin DeepDataReachDetector -->
+    <!-- @sin DeepDataReach -->
     <section class="order-detail__customer">
       <h2 class="section-title">Customer</h2>
       <p class="customer-name">{{ order.customer.fullName }}</p>
       <p class="customer-email">{{ order.customer.email }}</p>
       <p class="customer-phone">{{ order.customer.phone }}</p>
     </section>
+
+    <!-- @righteous DeepDataReach -->
+    <OrderCustomer :customer="order.customer" />
 
     <section class="order-detail__shipping">
       <h2 class="section-title">Shipping to</h2>
@@ -31,7 +34,7 @@ defineProps<{ order: Order }>();
     <section class="order-detail__items">
       <h2 class="section-title">Items</h2>
       <ul class="item-list">
-        <!-- @sin ControlFlowOnElementDetector -->
+        <!-- @sin ControlFlowOnElement -->
         <li v-for="item in order.items" :key="item.id" class="item-row">
           <span class="item-name">{{ item.name }}</span>
           <span class="item-qty">{{ item.quantity }}</span>

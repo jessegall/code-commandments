@@ -2,7 +2,9 @@
 
 namespace Shop\Mcp;
 
-use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
+use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Laravel\Mcp\Request;
 
@@ -12,11 +14,20 @@ use Laravel\Mcp\Request;
  */
 final class RenameWorkflowTool
 {
-    #[Sinful(RawRequestInputDetector::class)]
+    #[Sinful(RawRequestInput::class)]
     public function handle(Request $request): string
     {
         $id = $request->get('id');
         $name = $request->get('name');
+
+        return $id . ':' . $name;
+    }
+
+    #[Righteous(RawRequestInput::class)]
+    public function handleTyped(Request $request): string
+    {
+        $id = $request->string('id');
+        $name = $request->string('name');
 
         return $id . ':' . $name;
     }

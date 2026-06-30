@@ -2,7 +2,9 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MatchDefaultReturnsNullDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
 
@@ -12,7 +14,7 @@ use Shop\Models\Product;
  */
 final class PriorityLabel
 {
-    #[Sinful(MatchDefaultReturnsNullDetector::class)]
+    #[Sinful(MatchDefaultReturnsNull::class)]
     public function for(Product $product): ?string
     {
         return match ($product->priority) {
@@ -20,6 +22,21 @@ final class PriorityLabel
             2 => 'normal',
             3 => 'low',
             default => null,
+        };
+    }
+
+    /**
+     * The default arm throws a named exception, so an unhandled priority fails
+     * loudly instead of being swallowed into null.
+     */
+    #[Righteous(MatchDefaultReturnsNull::class)]
+    public function strictFor(Product $product): string
+    {
+        return match ($product->priority) {
+            1 => 'urgent',
+            2 => 'normal',
+            3 => 'low',
+            default => throw UnknownPriority::for($product->priority),
         };
     }
 }

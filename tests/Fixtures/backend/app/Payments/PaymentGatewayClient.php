@@ -2,7 +2,8 @@
 
 namespace Shop\Payments;
 
-use JesseGall\CodeCommandments\Detectors\Backend\WrappingWithoutCauseDetector;
+use JesseGall\CodeCommandments\Sins\Backend\WrappingWithoutCause;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Exceptions\IntegrationException;
 
@@ -12,7 +13,7 @@ use Shop\Exceptions\IntegrationException;
  */
 final class PaymentGatewayClient
 {
-    #[Sinful(WrappingWithoutCauseDetector::class)]
+    #[Sinful(WrappingWithoutCause::class)]
     public function charge(string $token, int $amountCents): string
     {
         try {

@@ -2,7 +2,8 @@
 
 namespace Shop\Repositories;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NullableCollectionReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NullableCollectionReturn;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Enums\ProductCategory;
 use Shop\Exceptions\ProductNotFoundException;
@@ -21,7 +22,7 @@ final class ProductRepository
     /**
      * @return array<int, string>|null
      */
-    #[Sinful(NullableCollectionReturnDetector::class)]
+    #[Sinful(NullableCollectionReturn::class)]
     public function skus(ProductCategory $category): ?array
     {
         $skus = Product::query()->where('category', $category)->pluck('sku')->all();

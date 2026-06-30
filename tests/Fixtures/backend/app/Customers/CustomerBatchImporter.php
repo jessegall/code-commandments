@@ -2,7 +2,9 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ManualHydrationLoopDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ManualHydrationLoop;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\Mailer;
 use Shop\Data\CustomerData;
@@ -19,7 +21,7 @@ final class CustomerBatchImporter
      * @param  array<int, array<string, mixed>>  $rows
      * @return array<int, CustomerData>
      */
-    #[Sinful(ManualHydrationLoopDetector::class)]
+    #[Sinful(ManualHydrationLoop::class)]
     public function importBatch(array $rows): array
     {
         $customers = [];
@@ -29,6 +31,22 @@ final class CustomerBatchImporter
             $customer = CustomerData::from($rows[$i]);
             $this->mailer->send($customer->email, 'Welcome', 'Thanks for joining.');
             $customers[$i] = $customer;
+        }
+
+        return $customers;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return iterable<int, CustomerData>
+     */
+    #[Righteous(ManualHydrationLoop::class)]
+    public function importBatchCleanly(array $rows): iterable
+    {
+        $customers = CustomerData::collect($rows);
+
+        foreach ($customers as $customer) {
+            $this->mailer->send($customer->email, 'Welcome', 'Thanks for joining.');
         }
 
         return $customers;

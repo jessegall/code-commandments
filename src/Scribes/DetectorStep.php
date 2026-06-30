@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
+use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Vue\Detector;
 
 /**
@@ -29,12 +30,29 @@ final class DetectorStep implements ScribeStep
 
     public function run(string $path, Scope $scope): array
     {
-        return $this->scribe()->rewrite($this->detector->find(VueCodebase::scan($path)));
+        $codebase = VueCodebase::scan($path);
+        $scribe = $this->scribe();
+
+        // An extractor reuses an existing component before creating a duplicate.
+        if ($scribe instanceof ExtractComponentScribe) {
+            $scribe->withLibrary(ComponentLibrary::from($codebase));
+        }
+
+        return $scribe->rewrite($this->detector->find($codebase));
     }
 
     public function extractsComponents(): bool
     {
         return $this->scribe() instanceof ExtractComponentScribe;
+    }
+
+    /**
+     * Does the detector behind this step find the `--sin=<query>` named? Lets `repent
+     * --sin=switch-case` scope to a step the same lenient way `judge --sin=` does.
+     */
+    public function matchesSin(string $query): bool
+    {
+        return $this->detector->sin()->matches($query);
     }
 
     private function scribe(): RepentScribe

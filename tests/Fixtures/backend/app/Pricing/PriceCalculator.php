@@ -2,7 +2,8 @@
 
 namespace Shop\Pricing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NullableCallbackDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NullableCallback;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -14,7 +15,7 @@ final class PriceCalculator
 {
     public function __construct(private readonly int $vatPercent = 21) {}
 
-    #[Sinful(NullableCallbackDetector::class)]
+    #[Sinful(NullableCallback::class)]
     public function lineTotal(int $cents, int $quantity, callable | null $round = null): int
     {
         $gross = $cents * $quantity;

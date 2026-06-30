@@ -2,7 +2,9 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DeNulledFinderDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
 
@@ -13,7 +15,7 @@ use Shop\Models\Product;
  */
 final class ProductFinder
 {
-    #[Sinful(DeNulledFinderDetector::class)]
+    #[Sinful(DeNulledFinder::class)]
     public function byBarcode(string $barcode): ?Product
     {
         return Product::query()->where('barcode', $barcode)->first();
@@ -27,5 +29,16 @@ final class ProductFinder
     public function inStock(string $barcode): bool
     {
         return $this->byBarcode($barcode) !== null;
+    }
+
+    /**
+     * Resolve-or-throw: a scanned barcode must exist, so the absence is decided
+     * once at the source and the return type tells the truth.
+     */
+    #[Righteous(DeNulledFinder::class)]
+    public function requireByBarcode(string $barcode): Product
+    {
+        return Product::query()->where('barcode', $barcode)->first()
+            ?? throw ProductNotFound::forBarcode($barcode);
     }
 }

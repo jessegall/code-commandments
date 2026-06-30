@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Frontend\DeepNested;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Boundary;
@@ -28,9 +30,9 @@ final class DeepNestedDetector implements Detector, Repentable
 
     private const int MAX_REMAINING = 3; // with MORE levels than this still below it
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'frontend/vue-components';
+        return new DeepNested();
     }
 
     public function scribe(): ExtractComponentScribe

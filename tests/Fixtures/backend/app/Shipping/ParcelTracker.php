@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\RawDecodedArrayReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\RawDecodedArrayReturn;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\HttpClient;
 
@@ -16,7 +17,7 @@ final class ParcelTracker
     /**
      * @return array<string, mixed>
      */
-    #[Sinful(RawDecodedArrayReturnDetector::class)]
+    #[Sinful(RawDecodedArrayReturn::class)]
     public function track(string $trackingCode): array
     {
         $body = $this->http->get("https://courier.test/v1/track/{$trackingCode}");

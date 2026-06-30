@@ -2,7 +2,8 @@
 
 namespace Shop\Notifications;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ContainerReach;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class SmsDispatcher
 {
-    #[Sinful(ContainerReachDetector::class)]
+    #[Sinful(ContainerReach::class)]
     public function send(string $to, string $body): void
     {
         $gateway = app(\Shop\Contracts\SmsGateway::class);

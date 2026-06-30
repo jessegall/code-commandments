@@ -2,7 +2,8 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DataMethodHintCollisionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DataMethodHintCollision;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Order;
 use Spatie\LaravelData\Data;
@@ -12,7 +13,7 @@ use Spatie\LaravelData\Data;
  *
  * @method static static fromOrder(Order $order)
  */
-#[Sinful(DataMethodHintCollisionDetector::class)]
+#[Sinful(DataMethodHintCollision::class)]
 final class InvoiceData extends Data
 {
     public function __construct(

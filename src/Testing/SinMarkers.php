@@ -19,11 +19,11 @@ final class SinMarkers
     /**
      * @return list<Marker>
      */
-    public static function in(Codebase $codebase): array
+    public static function in(Codebase $codebase, string $attribute = 'Sinful'): array
     {
         $markers = [];
 
-        foreach ($codebase->whereAttribute('Sinful')->get() as $match) {
+        foreach ($codebase->whereAttribute($attribute)->get() as $match) {
             $detector = self::detector($match);
 
             if ($detector === null) {

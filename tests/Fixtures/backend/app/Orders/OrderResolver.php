@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\OptionAsNullableDetector;
+use JesseGall\CodeCommandments\Sins\Backend\OptionAsNullable;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\PhpTypes\Option;
 
@@ -15,7 +16,7 @@ final class OrderResolver
     /**
      * @param  Option<\Shop\Models\Order>  $order
      */
-    #[Sinful(OptionAsNullableDetector::class)]
+    #[Sinful(OptionAsNullable::class)]
     public function emailFor(Option $order): ?string
     {
         return $order->unwrapOr(null)?->customer_email;

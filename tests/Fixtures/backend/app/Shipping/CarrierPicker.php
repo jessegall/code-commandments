@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\StringMatchMirrorsEnumDetector;
+use JesseGall\CodeCommandments\Sins\Backend\StringMatchMirrorsEnum;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -10,7 +11,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class CarrierPicker
 {
-    #[Sinful(StringMatchMirrorsEnumDetector::class)]
+    #[Sinful(StringMatchMirrorsEnum::class)]
     public function carrier(string $method): string
     {
         switch ($method) {

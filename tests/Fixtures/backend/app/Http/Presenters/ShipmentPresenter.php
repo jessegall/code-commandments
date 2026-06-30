@@ -2,7 +2,8 @@
 
 namespace Shop\Http\Presenters;
 
-use JesseGall\CodeCommandments\Detectors\Backend\EnumValueMatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Shipment;
 
@@ -12,7 +13,7 @@ use Shop\Models\Shipment;
  */
 final class ShipmentPresenter
 {
-    #[Sinful(EnumValueMatchDetector::class)]
+    #[Sinful(EnumValueMatch::class)]
     public function icon(Shipment $shipment): string
     {
         $base = match ($shipment->method->value) {

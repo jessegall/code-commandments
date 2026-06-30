@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\EnumCaseOrChainDetector;
+use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
+
 use Shop\Enums\ShippingMethod;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -15,7 +16,7 @@ final class CarrierRouter
         return $this->needsCourier($method) ? 'courier-api' : 'in-store';
     }
 
-    #[Sinful(EnumCaseOrChainDetector::class)]
+    #[Sinful(EnumCaseOrChain::class)]
     private function needsCourier(ShippingMethod $method): bool
     {
         return $method === ShippingMethod::Standard || $method === ShippingMethod::Express;
