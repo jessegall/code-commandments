@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Scribes\Frontend;
 
+use JesseGall\CodeCommandments\Detectors\Frontend\CompoundInlineComponentDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepDataReachDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector;
@@ -220,6 +221,34 @@ final class ExtractComponentScribeTest extends TestCase
 
         $this->assertContains("{$dir}/CustomerSection.vue", $paths);
         $this->assertEmpty(preg_grep('/CustomerSection2\.vue$/', $paths), 'the identical block must reuse, not duplicate into CustomerSection2');
+    }
+
+    public function test_a_dynamic_compound_title_does_not_become_the_component_name(): void
+    {
+        // The DialogTitle is a binding expression, not static text. It must NOT be pascal-
+        // cased into a monster name — the compound falls back to its structural name.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . "<DialogTitle>{{ selected ? selected.name : (scoped ? 'Add account' : 'Add credential') }}</DialogTitle>"
+            . '<DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<form><Label>A</Label><Input :model-value="a" /><Label>B</Label><Input :model-value="b" />'
+            . '<Label>C</Label><Input :model-value="c" /><Button>Save</Button></form></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/ui/dialog';\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $codebase = Codebase::fromString($sfc);
+        $files = $detector->scribe()->rewrite($detector->find($codebase));
+        $created = array_keys($this->components($files));
+
+        $this->assertNotEmpty($created, 'the dialog should still be extracted');
+        foreach ($created as $path) {
+            $name = basename($path, '.vue');
+            // A sane structural name, NOT the pascal-cased ternary expression.
+            $this->assertLessThan(28, strlen($name), "monster name from a dynamic title: {$name}");
+            $this->assertStringNotContainsString('AddAccount', $name);
+            $this->assertStringNotContainsString('AddCredential', $name);
+            $this->assertStringNotContainsString('Scoped', $name);
+        }
     }
 
     private function deepComponent(string $leaf): string
