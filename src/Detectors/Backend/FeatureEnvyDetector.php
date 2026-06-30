@@ -23,7 +23,7 @@ final class FeatureEnvyDetector implements Detector
 {
     public function skill(): string
     {
-        return 'tell-dont-ask';
+        return 'backend/tell-dont-ask';
     }
 
     public function find(Codebase $codebase): array

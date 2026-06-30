@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Rewriting;
+namespace JesseGall\CodeCommandments\Scribes;
 
 /**
  * Writes a rewriter's `path => newContent` map to disk — the "execute" half of a

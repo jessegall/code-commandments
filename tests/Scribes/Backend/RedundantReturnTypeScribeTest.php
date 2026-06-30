@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Rewriting\Backend;
+namespace JesseGall\CodeCommandments\Tests\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Rewriting\Backend\RedundantReturnTypeScribe;
+use JesseGall\CodeCommandments\Scribes\Backend\RedundantReturnTypeScribe;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PHPUnit\Framework\TestCase;
 

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Rewriting\Catalog;
-use JesseGall\CodeCommandments\Cli\Rewriting\RewriteApplier;
-use JesseGall\CodeCommandments\Cli\Rewriting\UnifiedDiff;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
+use JesseGall\CodeCommandments\Scribes\Catalog;
+use JesseGall\CodeCommandments\Scribes\RewriteApplier;
+use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 
 /**
  * `commandments scribe [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]`
@@ -82,7 +82,7 @@ final class Scribe
     }
 
     /**
-     * @param  list<\JesseGall\CodeCommandments\Cli\Rewriting\Scribe>  $scribes
+     * @param  list<\JesseGall\CodeCommandments\Scribes\Scribe>  $scribes
      */
     private function preview(array $scribes, string $path, Scope $scope, ?string $file): int
     {
@@ -111,7 +111,7 @@ final class Scribe
     }
 
     /**
-     * @return list<\JesseGall\CodeCommandments\Cli\Rewriting\Scribe>
+     * @return list<\JesseGall\CodeCommandments\Scribes\Scribe>
      */
     private function select(?string $only): array
     {

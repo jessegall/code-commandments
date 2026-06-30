@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
+use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
  * A `v-if` / `v-else-if` [/ `v-else`] chain read off the template as a switch: one
  * subject, equality-tested against a case per branch. Shared by the detector (which
- * just asks "is this a chain?") and the {@see \JesseGall\CodeCommandments\Cli\Rewriting\Frontend\SwitchCaseScribe}
+ * just asks "is this a chain?") and the {@see \JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe}
  * (which needs the subject, the case keys, and each branch element to rewrite).
  *
  * {@see at} returns null unless the head is a `v-if` equality whose every `v-else-if`
@@ -29,9 +31,22 @@ final class SwitchCaseChain
     private function __construct(
         public readonly string $subject,
         public readonly array $branches,
+        private readonly ElementMatch $head,
     ) {}
 
-    public static function at(Element $head): ?self
+    /**
+     * Where the whole chain sits — its head's file/source, spanning the first branch's
+     * `<` to past the last — so a scribe replaces it through the same {@see Span} seam
+     * any other finding uses.
+     */
+    public function span(): Span
+    {
+        $tail = $this->branches[count($this->branches) - 1]['element'];
+
+        return new Span($this->head->file(), $this->head->sfc->source, $this->head->start, $tail->end);
+    }
+
+    public static function at(ElementMatch $head): ?self
     {
         if (! $head->hasAttribute(Directive::If)) {
             return null;
@@ -67,7 +82,7 @@ final class SwitchCaseChain
 
         $cases = count(array_filter($branches, static fn (array $branch): bool => $branch['key'] !== null));
 
-        return $cases >= self::CASES ? new self($subject, $branches) : null;
+        return $cases >= self::CASES ? new self($subject, $branches, $head) : null;
     }
 
     /**

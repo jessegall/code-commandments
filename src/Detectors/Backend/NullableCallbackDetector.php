@@ -18,7 +18,7 @@ final class NullableCallbackDetector implements Detector
 {
     public function skill(): string
     {
-        return 'absence';
+        return 'backend/absence';
     }
 
     public function find(Codebase $codebase): array

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Rewriting;
+namespace JesseGall\CodeCommandments\Scribes;
 
 /**
  * One byte-range replacement in a source string: replace `[start, end]` (inclusive

@@ -6,10 +6,12 @@ against a set of architectural disciplines and reports each violation ("sin") as
 
 Two layers:
 
-- **Skills** (`skills/`) — the teaching layer, one per architectural subject
-  (`absence`, `value-objects`, `spatie-data`, `exceptions`, `enums-with-behaviour`,
-  `laravel-idioms`, `role-vocabulary`, `concurrent-state`, `documentation`,
-  `fix-at-the-source`). The source of truth for what good looks like.
+- **Skills** (`skills/commandments/{backend,frontend}/<slug>/`) — the teaching layer,
+  one per architectural subject, split by engine. Backend: `backend/absence`,
+  `backend/value-objects`, `backend/spatie-data`, `backend/laravel-idioms`,
+  `backend/fix-at-the-source`, … Frontend: `frontend/vue-components`,
+  `frontend/vue-control-flow`. The slug (engine-prefixed) is what a detector's
+  `skill()` returns. The source of truth for what good looks like.
 - **Sin Detectors** (`src/Detectors/`) — thin finders over a fluent AST engine
   (`src/Ast/`). Each detector finds ONE sin and names the skill that fixes it; it
   has no fix logic. Auto-discovered by `Detectors\Catalog`.
@@ -51,8 +53,8 @@ checking fixture (`tests/Fixtures/shop-frontend`), calibrate on the consumers' r
 `Vue\Query` → `Vue\ElementMatch` (the template AST), `Vue\Expr\*` (a real JS-
 expression AST: lexer + Pratt parser over binding/interpolation expressions), the
 `Vue\Detector` base (sibling of `Detectors\Detector`, both extend the root
-`Detector`), `Detectors\Frontend\*` detectors, and `Cli\Rewriting\Frontend\*` scribes
-(backend scribes live in `Cli\Rewriting\Backend\*`). Keep that symmetry: a thing
+`Detector`), `Detectors\Frontend\*` detectors, and `Scribes\Frontend\*` scribes
+(backend scribes live in `Scribes\Backend\*`). Keep that symmetry: a thing
 belongs in the `Backend`/`Frontend` folder of its concern.
 
 ### 🚫 NO regex for structure — build an engine tool instead
@@ -129,7 +131,7 @@ have a detector. Flip a row to ✅ when a detector ships.
 | `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
 | `bin/commandments judge --list` | List every detector grouped by skill. |
 | `bin/commandments hints [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]]` | Auto-fix Spatie `Data` magic surface: rename non-`from…` object factories to `from<Type>` + rewrite call sites to `::from(...)`, and regenerate `@method from(...)`/`collect(...)` docblock hints. **Default applies; `--dry-run[=FILE]` previews a unified diff.** `--changes`/`--branch` scope to touched files but force **docblock-only** mode (no renames — a rename's call sites can live outside the scope); renaming is whole-tree only. |
-| `bin/commandments scribe [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]` | Run the **Scribes** (`src/Cli/Rewriting/` — the source rewriters, `Catalog`-rolled) over a path: Spatie Data hints, redundant arrow-fn return types, …. Default applies; `--dry-run[=FILE]` previews a unified diff; `--only=NAME` runs one Scribe; `--changes`/`--branch` scope which files are edited. (`hints` is the focused Data-only entry.) |
+| `bin/commandments scribe [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]` | Run the **Scribes** (`src/Scribes/` — the source rewriters, `Catalog`-rolled) over a path: Spatie Data hints, redundant arrow-fn return types, …. Default applies; `--dry-run[=FILE]` previews a unified diff; `--only=NAME` runs one Scribe; `--changes`/`--branch` scope which files are edited. (`hints` is the focused Data-only entry.) |
 | `bin/commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]` | File a GitHub issue (via `gh`): a `[detector-report]` (false positive / wrong rule) when `--detector` is given, else a `[bug-report]` for a global bug. Only `--reason` is required. |
 | `bin/commandments feature-request --title="…" --reason="…"` | File a `[feature-request]` GitHub issue proposing a new/changed rule (via `gh`). |
 | `bin/commandments install` | Wire a consumer: composer sync hook + a `UserPromptSubmit` reminder of the cardinal rule + gitignore, then sync. Idempotent. |

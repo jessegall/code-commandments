@@ -18,7 +18,7 @@ final class ConstClassEnumDetector implements Detector
 {
     public function skill(): string
     {
-        return 'enums-with-behaviour';
+        return 'backend/enums-with-behaviour';
     }
 
     public function find(Codebase $codebase): array

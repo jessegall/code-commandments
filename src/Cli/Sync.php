@@ -11,7 +11,9 @@ use JesseGall\CodeCommandments\Skills\Skills;
  * `commandments sync` — refresh the consumer's code-commandments integration so a
  * `composer update` always lands the current skills and briefing. Idempotent:
  *
- *  - publishes each teaching skill into `.claude/skills/commandments-<slug>/`,
+ *  - publishes each teaching skill into `.claude/skills/commandments/<slug>/` — the
+ *    slug is engine-prefixed (`backend/value-objects`, `frontend/vue-components`), so
+ *    the whole package lives under one `commandments/` namespace dir,
  *  - injects the auto-managed "Skills — load before you work" block into CLAUDE.md
  *    (see {@see ClaudeSection}), and
  *  - keeps the package's generated artifacts gitignored.
@@ -23,7 +25,7 @@ final class Sync
     public function run(array $args): int
     {
         $consumer = getcwd();
-        $packageSkills = dirname(__DIR__, 2) . '/skills';
+        $packageSkills = dirname(__DIR__, 2) . '/skills/commandments';
 
         $published = $this->publishSkills($packageSkills, $consumer);
         $this->injectClaudeSection($consumer);
@@ -64,7 +66,7 @@ final class Sync
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
         $entries = [
             '# code-commandments generated artifacts (judge checklist + state)' => '.commandments/',
-            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*/',
+            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments/',
         ];
 
         foreach ($entries as $comment => $entry) {
@@ -83,11 +85,13 @@ final class Sync
 
     private function publishSkills(string $source, string $consumer): int
     {
+        $this->removeLegacySkills($consumer);
+
         $count = 0;
 
         foreach (Skills::all() as $skill) {
             $from = "{$source}/{$skill->slug}";
-            $to = "{$consumer}/.claude/skills/commandments-{$skill->slug}";
+            $to = "{$consumer}/.claude/skills/commandments/{$skill->slug}";
 
             if (is_dir($from)) {
                 $this->copyDir($from, $to);
@@ -96,6 +100,19 @@ final class Sync
         }
 
         return $count;
+    }
+
+    /**
+     * Remove skills published under the OLD flat scheme (`.claude/skills/commandments-<slug>/`)
+     * now that they live nested under `.claude/skills/commandments/`. Published skills
+     * are regenerated and gitignored, so deleting them is always safe; the hyphen-glob
+     * never matches the new `commandments/` dir (no hyphen).
+     */
+    private function removeLegacySkills(string $consumer): void
+    {
+        foreach (glob("{$consumer}/.claude/skills/commandments-*", GLOB_ONLYDIR) ?: [] as $stale) {
+            $this->deleteDir($stale);
+        }
     }
 
     private function injectClaudeSection(string $consumer): void
@@ -122,6 +139,23 @@ final class Sync
         if ($updated !== $existing) {
             file_put_contents($path, $updated);
         }
+    }
+
+    private function deleteDir(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+
+        /** @var \SplFileInfo $item */
+        foreach (new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        ) as $item) {
+            $item->isDir() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
+        }
+
+        @rmdir($dir);
     }
 
     private function copyDir(string $from, string $to): void

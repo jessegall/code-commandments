@@ -4,41 +4,59 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
- * In a sizeable template, an element that reaches DEEP into nested data — a binding
- * or interpolation like `data.user.firstName` (two+ property hops past the root).
- * The element knows the whole data shape; that's Law of Demeter in the markup, and a
- * sign it wants to be its own component taking the mid-object as a prop (so it
- * reaches `user.firstName`, not `data.user.firstName`). Points at vue-components.
+ * A CLUSTER of deep data reaches that share one nested object — an element binding or
+ * interpolating `order.customer.name`, `order.customer.email`, … from several places
+ * in a sizeable template. Those elements all know the whole shape of `order`; that's
+ * Law of Demeter in the markup, and the shared object (`order.customer`) wants to be
+ * its own component taking the mid-object as a prop. Points at vue-components.
  *
- * Depth is read off the parsed JS expression AST via the engine's `reachesAtLeast`
- * filter, not a regex — so a method call (`order.customer.greet()`), a ref unwrap
- * and a dotted string literal (`route('a.b.c')`) are understood structurally, not
- * pattern-matched. Gated on size: a deep reach in a tiny component isn't worth a file.
+ * The finding is the cluster's BOUNDARY — the lowest common ancestor of the reaches,
+ * the element the extract-scribe lifts — not each leaf. A lone deep reach, a reach
+ * into a `v-model`-bound (reactive) root, or a reach in a tiny component is NOT a sin;
+ * the rulebook lives in {@see DeepReachCluster}. Depth, chains and the reactive-root
+ * test are all read off the parsed JS expression AST, never a regex or a name list.
  */
-final class DeepDataReachDetector implements Detector
+final class DeepDataReachDetector implements Detector, Repentable
 {
     private const int MIN_TEMPLATE_LINES = 50;
 
-    private const int MIN_DEPTH = 2; // property hops past the root: data.user.firstName
-
-    /** Accessors that read reactive state / a count, not a nested data shape. */
-    private const array TRANSPARENT = ['value', 'length'];
-
     public function skill(): string
     {
-        return 'vue-components';
+        return 'frontend/vue-components';
+    }
+
+    public function scribe(): ExtractComponentScribe
+    {
+        return ExtractComponentScribe::forDeepReach();
     }
 
     public function find(Codebase $components): array
     {
-        return $components
-            ->whereElement()
-            ->inTemplateOfAtLeast(self::MIN_TEMPLATE_LINES)
-            ->reachesAtLeast(self::MIN_DEPTH, self::TRANSPARENT)
-            ->get();
+        $findings = [];
+
+        foreach ($components->components() as $component) {
+            if ($component->templateLineCount() < self::MIN_TEMPLATE_LINES) {
+                continue;
+            }
+
+            foreach (DeepReachCluster::in($component) as $cluster) {
+                $boundary = $cluster->boundary();
+
+                if ($boundary->isRoot()) {
+                    continue; // the reaches span the whole template — too diffuse to be one component
+                }
+
+                $findings[] = new ElementMatch($boundary, $component);
+            }
+        }
+
+        return $findings;
     }
 }

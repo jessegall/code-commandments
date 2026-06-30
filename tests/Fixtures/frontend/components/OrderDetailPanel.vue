@@ -12,20 +12,20 @@ defineProps<{ order: Order }>();
       <OrderStatusBadge :status="order.status" />
     </header>
 
+    <!-- A cluster: order.customer read in three fields → extract <OrderCustomer :customer>. -->
+    <!-- @sin DeepDataReachDetector -->
     <section class="order-detail__customer">
       <h2 class="section-title">Customer</h2>
-      <!-- @sin DeepDataReachDetector -->
       <p class="customer-name">{{ order.customer.fullName }}</p>
-      <!-- @sin DeepDataReachDetector -->
       <p class="customer-email">{{ order.customer.email }}</p>
+      <p class="customer-phone">{{ order.customer.phone }}</p>
     </section>
 
     <section class="order-detail__shipping">
       <h2 class="section-title">Shipping to</h2>
-      <!-- @sin DeepDataReachDetector -->
+      <!-- Righteous: a LONE deep reach (one field off order.shipping) is no cluster. -->
       <p class="shipping-city">{{ order.shipping.address.city }}</p>
-      <!-- @sin DeepDataReachDetector -->
-      <p class="shipping-method">{{ order.shipping.method }}</p>
+      <p class="shipping-method">{{ order.method }}</p>
     </section>
 
     <section class="order-detail__items">
@@ -52,7 +52,7 @@ defineProps<{ order: Order }>();
         <span class="total-label">Total</span>
         <span class="total-value">{{ order.total }}</span>
       </div>
-      <!-- @sin DeepDataReachDetector -->
+      <!-- Righteous: a single deep reach into order.invoice, reached once. -->
       <a class="invoice-link" :href="order.invoice.downloadUrl">Download invoice</a>
     </footer>
   </article>

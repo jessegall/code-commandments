@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
-use JesseGall\CodeCommandments\Cli\Rewriting\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
-use JesseGall\CodeCommandments\Vue\Element;
+use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
  * A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a
@@ -24,7 +24,7 @@ final class SwitchCaseDetector implements Detector, Repentable
 {
     public function skill(): string
     {
-        return 'vue-control-flow';
+        return 'frontend/vue-control-flow';
     }
 
     public function scribe(): string
@@ -37,7 +37,7 @@ final class SwitchCaseDetector implements Detector, Repentable
         return $components
             ->whereElement()
             ->withDirective(Directive::If)
-            ->where(static fn (Element $element): bool => SwitchCaseChain::at($element) !== null)
+            ->where(static fn (ElementMatch $element): bool => SwitchCaseChain::at($element) !== null)
             ->get();
     }
 }

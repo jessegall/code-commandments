@@ -21,7 +21,7 @@ final class MaskedInvariantDetector implements Detector
 {
     public function skill(): string
     {
-        return 'type-honesty';
+        return 'backend/type-honesty';
     }
 
     public function find(Codebase $codebase): array
