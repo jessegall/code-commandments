@@ -256,7 +256,9 @@ final class Boundary
      */
     public function contentSpan(): Span
     {
-        if (! $this->node->isContextBound()) {
+        // A `<template>` (slot, v-if/v-for, or bare) is a fragment wrapper — never a valid
+        // component root. Lift its CONTENT; its directives ride out to the call site.
+        if (! $this->node->isTemplate()) {
             return $this->span();
         }
 
