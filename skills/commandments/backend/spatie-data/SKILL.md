@@ -155,15 +155,15 @@ if you think you need one, you probably want a typed accessor / method on the cl
 final class LegacyImportRow extends Data
 {
     public function __construct(
-        public readonly string $sku = '',
-        public readonly int $quantity = 0,
+        public readonly ?string $sku = null,
+        public readonly ?int $quantity = null,
         public readonly ?int $priceCents = null,
         public readonly ?string $note = null,
     ) {}
 
     public function lineTotal(): int
     {
-        return $this->quantity * ($this->priceCents ?? 0);
+        return ($this->quantity ?? 0) * ($this->priceCents ?? 0);
     }
 }
 

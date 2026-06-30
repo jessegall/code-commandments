@@ -30,14 +30,19 @@ final class NearDuplicateFunctionDetector implements Detector
     private const int MIN_BODY_NODES = 20;
 
     /**
-     * Framework request bases whose `rules()` is a validation-array hook: every
-     * subclass's `rules()` shares the same `['field' => [...]]` skeleton by contract,
-     * so structural similarity is inherent, not duplication to extract.
+     * Framework contract bases mapped to their per-subclass DECLARATION HOOKS — methods
+     * each subclass must re-declare to state its own field contract (`rules()` for a
+     * request's validation array; `schema()` for an MCP tool's input schema). Every
+     * subclass's hook shares the same `['field' => …]` skeleton BY CONTRACT, so the
+     * similarity is inherent — it can no more be parameterised into one shared method than
+     * `rules()` can. These are the framework's own hook names, not a suffix heuristic.
+     *
+     * @var array<string, list<string>>
      */
-    private const array REQUEST_BASES = [
-        'Illuminate\\Foundation\\Http\\FormRequest',
-        'Laravel\\Mcp\\Request',
-        'Laravel\\Mcp\\Server\\Tool',
+    private const array CONTRACT_HOOKS = [
+        'Illuminate\\Foundation\\Http\\FormRequest' => ['rules'],
+        'Laravel\\Mcp\\Request' => ['rules'],
+        'Laravel\\Mcp\\Server\\Tool' => ['rules', 'schema'],
     ];
 
     public function sin(): Sin
@@ -55,7 +60,7 @@ final class NearDuplicateFunctionDetector implements Detector
                 continue;
             }
 
-            if ($this->isRequestRules($codebase, $match)) {
+            if ($this->isContractDeclarationHook($codebase, $match)) {
                 continue;
             }
 
@@ -82,14 +87,12 @@ final class NearDuplicateFunctionDetector implements Detector
         return $findings;
     }
 
-    private function isRequestRules(Codebase $codebase, NodeMatch $match): bool
+    private function isContractDeclarationHook(Codebase $codebase, NodeMatch $match): bool
     {
-        if ($match->enclosingFunctionName() !== 'rules') {
-            return false;
-        }
+        $method = $match->enclosingFunctionName();
 
-        foreach (self::REQUEST_BASES as $base) {
-            if ($codebase->extends($match->enclosingClassName(), $base)) {
+        foreach (self::CONTRACT_HOOKS as $base => $hooks) {
+            if (in_array($method, $hooks, true) && $codebase->extends($match->enclosingClassName(), $base)) {
                 return true;
             }
         }

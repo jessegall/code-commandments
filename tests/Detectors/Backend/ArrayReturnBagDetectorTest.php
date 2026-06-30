@@ -42,4 +42,44 @@ final class ArrayReturnBagDetectorTest extends TestCase
 
         $this->assertSame(['S::bag'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_does_not_flag_a_json_schema_contract_shape(): void
+    {
+        // The schema skeleton uses variables for properties/required, so the literal-
+        // nesting reject can't see it — the 'type' + structural-keyword vocabulary can.
+        $code = <<<'PHP'
+        <?php
+        class Composer
+        {
+            public function responseFormat(array $properties, array $required): array
+            {
+                return [
+                    'type' => 'object',
+                    'properties' => $properties,
+                    'required' => $required,
+                    'additionalProperties' => false,
+                ];
+            }
+
+            public function enumField(array $values): array
+            {
+                return [
+                    'type' => 'string',
+                    'enum' => $values,
+                    'description' => 'one of the allowed values',
+                ];
+            }
+
+            // a genuine domain bag in the same class is still flagged
+            public function money(): array
+            {
+                return ['amount' => 1, 'currency' => 'EUR'];
+            }
+        }
+        PHP;
+
+        $hits = (new ArrayReturnBagDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['Composer::money'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
 }

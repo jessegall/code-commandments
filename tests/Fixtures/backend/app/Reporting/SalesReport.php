@@ -4,7 +4,6 @@ namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Sins\Backend\ConfigRead;
-use JesseGall\CodeCommandments\Sins\Backend\NullableCollectionReturn;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -51,21 +50,6 @@ final class SalesReport
     }
 
     /**
-     * @return array<int, int>|null
-     */
-    #[Sinful(NullableCollectionReturn::class)]
-    public function topProductIds(int $limit): ?array
-    {
-        $ids = $this->orders->topProductIds($limit);
-
-        if ($ids === []) {
-            return null;
-        }
-
-        return $ids;
-    }
-
-    /**
      * The same daily figures as a typed report value object — named fields, not a
      * loose string-keyed bag.
      */
@@ -85,7 +69,6 @@ final class SalesReport
      *
      * @return list<int>
      */
-    #[Righteous(NullableCollectionReturn::class)]
     public function bestProductIds(int $limit): array
     {
         return $this->orders->topProductIds($limit);

@@ -32,4 +32,14 @@ final class NotificationService
             $message->to($email);
         });
     }
+
+    /**
+     * `::fake()` installs a test double by swapping the container binding — there is no
+     * injectable contract form of it, so it is NOT a facade-reach sin (no twin marker:
+     * the canonical fix above is injection, not faking).
+     */
+    public function sandbox(): void
+    {
+        Mail::fake();
+    }
 }

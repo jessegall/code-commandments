@@ -54,7 +54,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_56 detectors across 16 skills._
+_55 detectors across 16 skills._
 
 ### `backend/absence`
 
@@ -62,7 +62,6 @@ _56 detectors across 16 skills._
 |---|---|
 | `DeNulledFinderDetector` | A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. |
 | `NullableCallbackDetector` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
-| `NullableCollectionReturnDetector` | A method declared to return `?array` / `array \| null` — a collection modelled as "the list, or null", forcing every caller to guard before iterating. |
 | `OptionAsNullableDetector` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
 
 ### `backend/concurrent-state`
@@ -146,7 +145,7 @@ _56 detectors across 16 skills._
 
 | Detector | What it flags |
 |---|---|
-| `AllNullableDataDetector` | A Spatie Data class whose every promoted field is optional — nullable or defaulted. |
+| `AllNullableDataDetector` | A Spatie Data class whose every promoted field is NULLABLE. |
 | `DataMethodHintCollisionDetector` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
 | `ManualHydrationLoopDetector` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
 | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |

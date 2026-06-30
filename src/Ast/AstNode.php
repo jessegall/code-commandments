@@ -63,6 +63,7 @@ use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Switch_;
+use PhpParser\Node\Stmt\TryCatch;
 use PhpParser\Node\Stmt\While_;
 
 /**
@@ -432,11 +433,106 @@ class AstNode
     }
 
     /**
-     * For a class declaration: does its constructor promote at least one property
-     * and is EVERY promoted property optional (nullable or defaulted)? An all-
-     * optional record whose type tells no truth about what's actually required.
+     * The string keys of this array literal — `['type' => …, 'properties' => …]`
+     * yields `['type', 'properties']`. Empty when not an array literal.
+     *
+     * @return list<string>
      */
-    public function everyConstructorParamOptional(): bool
+    public function stringKeys(): array
+    {
+        if (! $this->node instanceof Array_) {
+            return [];
+        }
+
+        $keys = [];
+
+        foreach ($this->node->items as $item) {
+            if ($item instanceof ArrayItem && $item->key instanceof String_) {
+                $keys[] = $item->key->value;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Is this array literal a JSON-Schema / external-contract node rather than a domain
+     * record? JSON Schema is a recursive, open-ended map keyed by the schema vocabulary
+     * (`type`/`properties`/`enum`/`items`/`required`/`description`/…), serialized straight
+     * to a provider or agent — not a fixed-field bag, and not sensibly a typed value
+     * object (it's the full recursive spec). The value-objects skill's serialization-shape
+     * exemption. The signal is the vocabulary itself, not a method name:
+     *
+     *  - a STRUCTURAL keyword (`properties`/`items`/`enum`/`required`/`additionalProperties`)
+     *    is present — an unambiguous schema container; or
+     *  - a `type` field whose literal value is a JSON primitive (`object`/`string`/…) — or
+     *    is computed, so not a domain constant — paired with another schema keyword.
+     *
+     * A domain bag whose `type` is a domain constant (`['type' => 'book', …]`) is NOT a
+     * schema and stays flagged.
+     */
+    public function looksLikeJsonSchema(): bool
+    {
+        if (! $this->node instanceof Array_) {
+            return false;
+        }
+
+        $keys = $this->stringKeys();
+        $structural = ['properties', 'items', 'enum', 'required', 'additionalProperties'];
+
+        if (array_intersect($structural, $keys) !== []) {
+            return true;
+        }
+
+        if (! in_array('type', $keys, true)) {
+            return false;
+        }
+
+        $type = $this->literalForKey('type');
+
+        // A literal `type` that is a domain constant (not a JSON primitive) is a bag.
+        if ($type !== null && ! in_array($type, ['object', 'array', 'string', 'integer', 'number', 'boolean', 'null'], true)) {
+            return false;
+        }
+
+        // `type` (primitive or computed) plus any other schema keyword = a schema node.
+        return array_intersect(['description', 'format', 'title', 'default', 'nullable'], $keys) !== [];
+    }
+
+    /**
+     * The literal string value bound to string key $key in this array literal, or null
+     * when the key is absent or its value isn't a plain string literal.
+     */
+    private function literalForKey(string $key): ?string
+    {
+        if (! $this->node instanceof Array_) {
+            return null;
+        }
+
+        foreach ($this->node->items as $item) {
+            if ($item instanceof ArrayItem
+                && $item->key instanceof String_
+                && $item->key->value === $key
+                && $item->value instanceof String_) {
+                return $item->value->value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * For a class declaration: does its constructor promote at least one property and is
+     * EVERY promoted property NULLABLE? Such a record's type tells no truth about what's
+     * required — every field admits null, so a consumer must re-validate what `::from()`
+     * should have guaranteed.
+     *
+     * A non-nullable property with a typed default (`int $x = 0`, `string $s = ''`) is NOT
+     * counted as a lie: it is an HONEST optional (a value object / accumulator with a
+     * sensible identity), and its presence means the class is not all-nullable. Only
+     * `?T`/`T|null` fields are the costume this flags.
+     */
+    public function everyConstructorParamNullable(): bool
     {
         if (! $this->node instanceof Class_) {
             return false;
@@ -455,7 +551,7 @@ class AstNode
         }
 
         foreach ($promoted as $param) {
-            if ($param->default === null && ! TypeName::isNullable($param->type)) {
+            if (! TypeName::isNullable($param->type)) {
                 return false;
             }
         }
@@ -602,16 +698,6 @@ class AstNode
             && $expr->name instanceof Identifier
                 ? $expr->name->toString()
                 : null;
-    }
-
-    /**
-     * Is this a function/method declared to return a nullable array (`?array` /
-     * `array | null`) — a collection modelled as "the list, or null"?
-     */
-    public function returnsNullableArray(): bool
-    {
-        return $this->isFunctionDeclaration()
-            && TypeName::isNullableArray($this->node->returnType);
     }
 
     /**
@@ -1137,6 +1223,67 @@ class AstNode
     public function isPerItemHydration(): bool
     {
         return $this->isWithinLoop() || $this->isWithinArrayMap();
+    }
+
+    /**
+     * Is this node inside a `try` whose `catch` SKIPS the failed item — a `continue`
+     * or `return` in a catch clause? That marks a TOLERANT decoder (drop a malformed
+     * entry and keep going); `::collect()` is all-or-nothing and throws on the first
+     * bad row, so it cannot express the per-entry skip. The try is matched only when
+     * it is itself inside a loop, so a method-level try/catch around the whole map
+     * doesn't grant the exemption.
+     */
+    public function isWithinTolerantCatch(): bool
+    {
+        $try = $this->walkUp(static fn (Node $node): bool => $node instanceof TryCatch);
+
+        if (! $try instanceof TryCatch || ! self::within($try, static fn (Node $n): bool =>
+            $n instanceof Foreach_ || $n instanceof For_ || $n instanceof While_ || $n instanceof Do_)) {
+            return false;
+        }
+
+        foreach ($try->catches as $catch) {
+            if ((new NodeFinder)->findFirst($catch->stmts, static fn (Node $n): bool =>
+                $n instanceof Continue_ || $n instanceof Return_) !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this node the right-hand side of an assignment into a KEYED map —
+     * `$out[$id] = X::from(...)`? `::collect()` returns a LIST; it cannot key by a
+     * computed value (nor merge that key into each item), so a keyed-map build is not
+     * the one-pass mapping the skill replaces. A plain list append (`$out[] = …`,
+     * empty dim) is NOT exempt — that IS what `::collect()` does.
+     */
+    public function isKeyedMapAssignment(): bool
+    {
+        $assign = $this->walkUp(static fn (Node $node): bool => $node instanceof Assign);
+
+        return $assign instanceof Assign
+            && $assign->var instanceof ArrayDimFetch
+            && $assign->var->dim !== null;
+    }
+
+    /**
+     * Walk up from $node (exclusive) testing each ancestor.
+     */
+    private static function within(Node $node, callable $test): bool
+    {
+        $current = $node->getAttribute('parent');
+
+        while ($current instanceof Node) {
+            if ($test($current)) {
+                return true;
+            }
+
+            $current = $current->getAttribute('parent');
+        }
+
+        return false;
     }
 
     /**
