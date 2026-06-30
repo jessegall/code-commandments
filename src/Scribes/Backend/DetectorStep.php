@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\DetectorStep as BaseDetectorStep;
+use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
 
 /**
  * Runs a {@see Repentable} BACKEND detector's scribe over the PHP AST, fed the detector's
@@ -24,6 +25,13 @@ final class DetectorStep extends BaseDetectorStep
     public function run(string $path, Scope $scope): array
     {
         $codebase = Codebase::scan($path);
+        $scribe = $this->scribe();
+
+        // A scribe that needs whole-program context (e.g. to resolve a target class's
+        // shape) gets the scanned codebase before it rewrites.
+        if ($scribe instanceof NeedsCodebase) {
+            $scribe->withCodebase($codebase);
+        }
 
         // Honour the scope: only repent sins in files the scope includes.
         $findings = array_values(array_filter(
@@ -31,7 +39,7 @@ final class DetectorStep extends BaseDetectorStep
             static fn ($match): bool => $scope->includes($match->file->path),
         ));
 
-        return $this->scribe()->rewrite($findings);
+        return $scribe->rewrite($findings);
     }
 
     protected function repentable(): RootDetector&Repentable

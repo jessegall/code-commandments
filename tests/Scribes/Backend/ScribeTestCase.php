@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use PHPUnit\Framework\TestCase;
 
@@ -31,7 +32,7 @@ abstract class ScribeTestCase extends TestCase
      */
     protected function fix(string $php): string
     {
-        $rewrites = $this->scribe()->rewrite($this->findings($php));
+        $rewrites = $this->applyScribe($php);
 
         return $rewrites === [] ? $php : (string) reset($rewrites);
     }
@@ -46,7 +47,26 @@ abstract class ScribeTestCase extends TestCase
 
     protected function rewrote(string $php): bool
     {
-        return $this->scribe()->rewrite($this->findings($php)) !== [];
+        return $this->applyScribe($php) !== [];
+    }
+
+    /**
+     * Run the detector + scribe over one in-memory file, wiring whole-codebase context to a
+     * {@see NeedsCodebase} scribe exactly as the {@see \JesseGall\CodeCommandments\Scribes\Backend\DetectorStep}
+     * does at runtime.
+     *
+     * @return array<string, string>
+     */
+    private function applyScribe(string $php): array
+    {
+        $codebase = Codebase::fromString($php);
+        $scribe = $this->scribe();
+
+        if ($scribe instanceof NeedsCodebase) {
+            $scribe->withCodebase($codebase);
+        }
+
+        return $scribe->rewrite($this->detector()->find($codebase));
     }
 
     /**
