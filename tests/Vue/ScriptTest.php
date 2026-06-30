@@ -69,4 +69,43 @@ final class ScriptTest extends TestCase
         $this->assertNull((new Script('const label = computed(() => schema.value.label);'))->declaredType('label'));
         $this->assertNull((new Script('const rows = computed(() => items.value.map(toRow));'))->declaredType('rows'));
     }
+
+    public function test_a_destructure_names_its_source_call(): void
+    {
+        $script = new Script('const { step, fields, restore } = useWizardState(base, id);');
+
+        $this->assertSame('useWizardState', $script->destructuredCall('step'));
+        $this->assertSame('useWizardState', $script->destructuredCall('restore'));
+        $this->assertNull($script->destructuredCall('absent'));
+    }
+
+    public function test_a_functions_declared_return_type_is_read(): void
+    {
+        $arrow = new Script('export const useThing = (x: string): ThingState => impl(x);');
+        $fn = new Script('export function useThing(x: string): ThingState { return impl(x); }');
+
+        $this->assertSame('ThingState', $arrow->returnTypeName('useThing'));
+        $this->assertSame('ThingState', $fn->returnTypeName('useThing'));
+    }
+
+    public function test_a_named_type_field_is_read_and_ref_unwrapped(): void
+    {
+        $script = new Script('interface WizardState { step: Ref<string>; fields: Ref<Record<string, unknown>>; ready: boolean; }');
+
+        // A field is a Ref in the source but unwraps to its value type at the binding site.
+        $this->assertSame('string', $script->fieldType('WizardState', 'step'));
+        $this->assertSame('Record<string,unknown>', $script->fieldType('WizardState', 'fields'));
+        $this->assertSame('boolean', $script->fieldType('WizardState', 'ready'));
+        $this->assertNull($script->fieldType('WizardState', 'missing'));
+    }
+
+    public function test_a_method_param_does_not_overwrite_a_same_named_field(): void
+    {
+        // The interface has BOTH `step: Ref<string>` and `goToStep(step: string)` — the
+        // method param must not corrupt the field. (Methods are skipped, not read as fields.)
+        $script = new Script('interface S { step: Ref<string>; goToStep(step: string): void; reset(): Promise<void>; }');
+
+        $this->assertSame('string', $script->fieldType('S', 'step'));
+        $this->assertNull($script->fieldType('S', 'goToStep'), 'a method is not a data field');
+    }
 }
