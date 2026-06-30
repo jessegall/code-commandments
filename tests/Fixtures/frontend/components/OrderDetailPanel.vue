@@ -31,6 +31,7 @@ defineProps<{ order: Order }>();
     <section class="order-detail__items">
       <h2 class="section-title">Items</h2>
       <ul class="item-list">
+        <!-- @sin ControlFlowOnElementDetector -->
         <li v-for="item in order.items" :key="item.id" class="item-row">
           <span class="item-name">{{ item.name }}</span>
           <span class="item-qty">{{ item.quantity }}</span>

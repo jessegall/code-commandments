@@ -64,6 +64,34 @@ final class Query
     }
 
     /**
+     * Keep elements carrying ANY of the given directives.
+     */
+    public function withAnyDirective(Directive ...$directives): self
+    {
+        $this->filters[] = static function (ElementMatch $match) use ($directives): bool {
+            foreach ($directives as $directive) {
+                if ($match->hasAttribute($directive)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        return $this;
+    }
+
+    /**
+     * Drop elements of the given tag (case-insensitive) — e.g. exempt `<template>`.
+     */
+    public function rejectTag(string $tag): self
+    {
+        $this->filters[] = static fn (ElementMatch $match): bool => strtolower($match->tag) !== strtolower($tag);
+
+        return $this;
+    }
+
+    /**
      * Keep elements whose subtree is at least $elements elements big — the floor
      * that separates a substantial block from a trivial look-alike.
      */

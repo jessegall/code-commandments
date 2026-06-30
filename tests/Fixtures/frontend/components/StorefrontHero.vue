@@ -20,6 +20,7 @@ defineProps<{ storefront: Storefront }>();
 
     <nav class="hero__nav">
       <ul class="hero__links">
+        <!-- @sin ControlFlowOnElementDetector -->
         <li v-for="link in storefront.links" :key="link.id" class="hero__link">
           <span class="hero__link-label">{{ link.label }}</span>
         </li>

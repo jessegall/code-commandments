@@ -59,21 +59,25 @@ final class CommentMarkerVerifier implements MarkerVerifier
      */
     private function collectMarked(Element $node, Sfc $component, string $detector, array &$marked): void
     {
-        $pending = null;
+        $pending = [];
 
         foreach ($node->children as $child) {
             if ($child->isComment()) {
-                $pending = preg_match('/@sin\s+(\w+)/', $child->text, $match) === 1 ? $match[1] : null;
+                // A run of `@sin` comments all mark the element that follows — markers
+                // are repeatable, so one element can be several detectors' sins.
+                if (preg_match('/@sin\s+(\w+)/', $child->text, $match) === 1) {
+                    $pending[] = $match[1];
+                }
 
                 continue;
             }
 
             if ($child->isElement()) {
-                if ($pending === $detector) {
+                if (in_array($detector, $pending, true)) {
                     $marked[] = $component->path . ':' . $child->line;
                 }
 
-                $pending = null;
+                $pending = [];
             }
 
             $this->collectMarked($child, $component, $detector, $marked);
