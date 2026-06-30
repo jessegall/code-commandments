@@ -202,6 +202,53 @@ final class Script
     }
 
     /**
+     * The variable a `defineProps` result is bound to — `const props = defineProps<…>()` or
+     * `const props = withDefaults(defineProps<…>(), …)` → `props`. Null when props aren't
+     * captured in a variable (a standalone `defineProps<…>()`, or a `const { x } = …`
+     * destructure — there is no object to read `props.x` off).
+     */
+    public function propsVariable(): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isDeclarator($i) || ($this->tokens[$i + 1]['kind'] ?? null) !== Token::IDENTIFIER || ! $this->isPunct($i + 2, '=')) {
+                continue;
+            }
+
+            $rhs = $i + 3;
+
+            if ($this->isId($rhs, 'withDefaults') && $this->isPunct($rhs + 1, '(')) {
+                $rhs += 2;
+            }
+
+            if ($this->isId($rhs, 'defineProps')) {
+                return $this->tokens[$i + 1]['value'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the script reads `$object.$member` anywhere — `accessesMember('props', 'user')`
+     * for a `props.user` access. Lets a detector tell a forwarded-only prop from one the
+     * script also consumes.
+     */
+    public function accessesMember(string $object, string $member): bool
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i + 2 < $count; $i++) {
+            if ($this->isId($i, $object) && $this->isPunct($i + 1, '.') && $this->isId($i + 2, $member)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * The modules this script RE-EXPORTS from — every `export … from '…'` specifier
      * (`export * from './generated'`, `export { X } from './x'`). The edges to follow when a
      * type isn't declared locally — a barrel points onward to where it really lives.
