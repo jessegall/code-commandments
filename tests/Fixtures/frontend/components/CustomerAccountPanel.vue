@@ -36,6 +36,7 @@ defineProps<{ customer: Customer }>();
     <div class="account__preferences">
       <h2 class="account__section">Preferences</h2>
       <ul class="account__prefs">
+        <!-- @sin ControlFlowOnElementDetector -->
         <li v-for="pref in customer.preferences" :key="pref.id" class="account__pref">
           <span class="account__pref-name">{{ pref.label }}</span>
           <span class="account__pref-value">{{ pref.enabled }}</span>
