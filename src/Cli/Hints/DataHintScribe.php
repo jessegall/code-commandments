@@ -95,10 +95,15 @@ final class DataHintScribe extends Scribe
         }
 
         if (! $docblockOnly) {
+            $sources = [];
+
             foreach ($calls as $call) {
-                if (isset($renames["{$call->class}\0{$call->method}"])) {
-                    $editsByFile[$call->file][] = $this->replaceNode($call->nameNode, 'from');
+                if (! isset($renames["{$call->class}\0{$call->method}"])) {
+                    continue;
                 }
+
+                $source = $sources[$call->file] ??= (string) @file_get_contents($call->file);
+                $editsByFile[$call->file][] = $this->rewriteCall($call, $source);
             }
         }
 
@@ -114,6 +119,31 @@ final class DataHintScribe extends Scribe
         }
 
         return $changed;
+    }
+
+    /**
+     * The edit for one renamed factory's call site. The factory takes one parameter, so the
+     * call carries a single argument that `from()` dispatches by type: a positional arg is a
+     * name-only `make($x)` → `from($x)` swap, and a NAMED arg drops its name (`from(name: $x)`
+     * is invalid) to become positional `from($x)`.
+     */
+    private function rewriteCall(CallSite $call, string $source): Edit
+    {
+        $args = $call->node->args;
+
+        if (count($args) === 1 && $args[0] instanceof Node\Arg && $args[0]->name !== null) {
+            $value = $this->slice($source, $args[0]->value);
+            $class = $this->slice($source, $call->node->class);
+
+            return $this->replaceNode($call->node, "{$class}::from({$value})");
+        }
+
+        return $this->replaceNode($call->nameNode, 'from');
+    }
+
+    private function slice(string $source, Node $node): string
+    {
+        return substr($source, $node->getStartFilePos(), $node->getEndFilePos() + 1 - $node->getStartFilePos());
     }
 
     /**
@@ -303,12 +333,16 @@ final class DataHintScribe extends Scribe
     }
 
     /**
-     * A public-static method that returns an instance of its own class and builds one
-     * in its body (`self::from(...)` / `new self(...)`) with at least one parameter.
+     * A public-static method that returns an instance of its own class and builds one in its
+     * body (`self::from(...)` / `new self(...)`) from EXACTLY ONE parameter. The single
+     * parameter is the whole point: `from()` dispatches by one argument's type, so a
+     * `from($source)` call can route to it. A multi-parameter method is a named constructor
+     * (`compose($a, $b, $c)`, `make($a, …, $p)`) — it can't be reached through `from()` and is
+     * left alone.
      */
     private function isObjectFactory(ClassMethod $method, string $fqcn): bool
     {
-        if (! $method->isPublic() || ! $method->isStatic() || $method->params === []) {
+        if (! $method->isPublic() || ! $method->isStatic() || count($method->params) !== 1) {
             return false;
         }
 
@@ -383,7 +417,7 @@ final class DataHintScribe extends Scribe
                     $collectUsed[$class] = true;
                 }
 
-                $calls[] = new CallSite($class, $method, $call->name, $file->path);
+                $calls[] = new CallSite($class, $method, $call->name, $file->path, $call);
             }
         }
 

@@ -31,6 +31,92 @@ final class HintsTest extends TestCase
         $this->projects = [];
     }
 
+    public function test_does_not_rename_a_multi_parameter_named_constructor(): void
+    {
+        // A factory with more than one parameter is a named constructor, not a `from()` target
+        // (from dispatches by ONE argument's type). It — and its call sites — must be untouched.
+        $dir = $this->project([
+            'OutputSocketData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+
+                final class OutputSocketData extends Data
+                {
+                    public function __construct(public readonly string $name, public readonly int $size) {}
+
+                    public static function make(string $name, int $size): self
+                    {
+                        return new self($name, $size);
+                    }
+                }
+                PHP,
+            'Builder.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                class Builder
+                {
+                    public function build()
+                    {
+                        return OutputSocketData::make(name: 'result', size: 3);
+                    }
+                }
+                PHP,
+        ]);
+
+        $this->apply($dir);
+
+        $data = $this->read($dir, 'OutputSocketData.php');
+        $builder = $this->read($dir, 'Builder.php');
+
+        // The multi-arg factory keeps its name, its call site, and gets no `@method from` hint.
+        $this->assertStringContainsString('public static function make(string $name, int $size)', $data);
+        $this->assertStringContainsString("OutputSocketData::make(name: 'result', size: 3)", $builder);
+        $this->assertStringNotContainsString('@method static static from(', $data);
+    }
+
+    public function test_strips_a_named_argument_from_a_single_param_factory_call(): void
+    {
+        // A single-param factory IS a `from()` target — a named call can't ride on
+        // `from(credential: $c)`, so the name is dropped to dispatch positionally: `from($c)`.
+        $dir = $this->project([
+            'CredentialData.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                use Spatie\LaravelData\Data;
+                use Demo\Models\Credential;
+
+                final class CredentialData extends Data
+                {
+                    public function __construct(public readonly string $id) {}
+
+                    public static function forCredential(Credential $credential): self
+                    {
+                        return self::from(['id' => $credential->id]);
+                    }
+                }
+                PHP,
+            'Caller.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+                class Caller
+                {
+                    public function show($credential)
+                    {
+                        return CredentialData::forCredential(credential: $credential);
+                    }
+                }
+                PHP,
+        ]);
+
+        $this->apply($dir);
+
+        $caller = $this->read($dir, 'Caller.php');
+
+        $this->assertStringContainsString('CredentialData::from($credential)', $caller);
+        $this->assertStringNotContainsString('credential:', $caller);
+    }
+
     public function test_renames_non_from_factory_rewrites_call_sites_and_fixes_the_method_tag(): void
     {
         $dir = $this->project([
