@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ categories: string[]; brands: string[] }>();
+defineProps<{ categories: string[]; brands: string[]; query: string }>();
 </script>
 
 <template>
@@ -11,7 +11,9 @@ defineProps<{ categories: string[]; brands: string[] }>();
 
     <div class="filters__search">
       <label class="filters__search-label" for="q">Search products</label>
-      <input id="q" class="filters__search-input" type="search" placeholder="Search" />
+      <!-- Two-way binding the `query` PROP — props are read-only. -->
+      <!-- @sin PropMutation -->
+      <input id="q" class="filters__search-input" type="search" placeholder="Search" v-model="query" />
     </div>
 
     <!-- @sin DuplicateElement -->

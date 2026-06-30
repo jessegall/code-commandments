@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ step: number }>();
+defineProps<{ step: number; dismissed: boolean }>();
 </script>
 
 <template>
@@ -21,5 +21,9 @@ defineProps<{ step: number }>();
       <!-- @sin ControlFlowOnElement -->
       <PaymentForm v-else-if="step === 3" />
     </section>
+
+    <!-- Assigning the `dismissed` PROP in a handler — a silent no-op. -->
+    <!-- @sin PropMutation -->
+    <button class="checkout__dismiss" @click="dismissed = true">Dismiss</button>
   </div>
 </template>

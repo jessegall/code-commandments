@@ -36,6 +36,7 @@ unit out, props in.
 - Pass the mid-object as a prop; don't reach deep into nested data from the template.
 - Extract a far-too-deeply-nested subtree into its own component.
 - Extract repeated identical markup into one component.
+- Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
 
 ## Bad → good
 
@@ -137,12 +138,25 @@ unit out, props in.
 </template>
 ```
 
+```vue
+// Bad
+<Collapsible v-model:open="expanded">
+  <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+</Collapsible>
+
+// Good
+<Collapsible v-model:open="panelOpen">
+  <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+</Collapsible>
+```
+
 ## When it fires
 
 - A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component — `CompoundInlineComponentDetector`
 - An element reaching DEEP into nested data — pass it the mid-object as a prop — `DeepDataReachDetector`
 - Template markup nested far too deep — extract a subtree as its own component — `DeepNestedDetector`
 - Identical markup repeated across the template — extract one component — `DuplicateElementDetector`
+- A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op) — `PropMutationDetector`
 
 ## Checklist
 
@@ -150,6 +164,7 @@ unit out, props in.
 - [ ] Pass the mid-object as a prop; don't reach deep into nested data from the template.
 - [ ] Extract a far-too-deeply-nested subtree into its own component.
 - [ ] Extract repeated identical markup into one component.
+- [ ] Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
 
 ## Related skills
 

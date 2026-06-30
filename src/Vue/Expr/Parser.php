@@ -26,7 +26,7 @@ final class Parser
 
     private const array PUNCTUATION = [
         '?.', '===', '!==', '==', '!=', '<=', '>=', '&&', '||', '??', '=>',
-        '.', '(', ')', '[', ']', '{', '}', ',', '?', ':', '!', '<', '>', '+', '-', '*', '/', '%',
+        '.', '(', ')', '[', ']', '{', '}', ',', '?', ':', '!', '<', '>', '+', '-', '*', '/', '%', '=',
     ];
 
     /** @var list<array{type: string, value: string}> */
@@ -122,6 +122,22 @@ final class Parser
     // ---- parser ---------------------------------------------------------------
 
     private function expression(): Expr
+    {
+        $left = $this->ternary();
+
+        // Assignment is the loosest binding and right-associative — `x = expr` (a `@click`
+        // handler writing a value). `==`/`===`/`<=`/`>=` are their own tokens, so a lone `=`
+        // here is only ever assignment.
+        if ($this->isPunct('=')) {
+            $this->next();
+
+            return new Expr(Expr::ASSIGN, ['target' => $left, 'value' => $this->expression()]);
+        }
+
+        return $left;
+    }
+
+    private function ternary(): Expr
     {
         $test = $this->binary(0);
 
