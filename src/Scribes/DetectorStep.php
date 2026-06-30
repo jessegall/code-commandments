@@ -38,7 +38,14 @@ final class DetectorStep implements ScribeStep
             $scribe->withLibrary(ComponentLibrary::from($codebase));
         }
 
-        return $scribe->rewrite($this->detector->find($codebase));
+        // Honour the scope (a `--repent=ID` checklist, a `--changes`/`--branch` set):
+        // only repent sins in files the scope includes.
+        $findings = array_values(array_filter(
+            $this->detector->find($codebase),
+            static fn ($match): bool => $scope->includes($match->file()),
+        ));
+
+        return $scribe->rewrite($findings);
     }
 
     public function extractsComponents(): bool

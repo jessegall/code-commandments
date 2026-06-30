@@ -113,8 +113,8 @@ final class SinReport
             }
 
             foreach ($findings as $finding) {
-                $location = $this->relative($finding->location);
-                $out .= "- `{$location}`  {$finding->scope}  [{$finding->detector}]\n";
+                // The FULL path (not display-relative) so `--repent=ID` can resolve it.
+                $out .= "- `{$finding->location}`  {$finding->scope}  [{$finding->detector}]\n";
             }
         }
 
