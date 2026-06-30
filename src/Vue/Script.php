@@ -115,6 +115,51 @@ final class Script
     }
 
     /**
+     * The fields of an `interface`/`type` DECLARED in this script — `{ a: T; m(): R }` →
+     * `['a' => 'T', 'm' => '() => R']`. Empty when the type isn't an object shape declared
+     * here (an enum union, or imported/re-exported — {@see TypeResolver} follows those).
+     *
+     * @return array<string, string>
+     */
+    public function typeFields(string $name): array
+    {
+        return $this->namedTypeFields($name);
+    }
+
+    /**
+     * The modules this script RE-EXPORTS from — every `export … from '…'` specifier
+     * (`export * from './generated'`, `export { X } from './x'`). The edges to follow when a
+     * type isn't declared locally — a barrel points onward to where it really lives.
+     *
+     * @return list<string>
+     */
+    public function reExports(): array
+    {
+        $count = count($this->tokens);
+        $specifiers = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isId($i, 'export')) {
+                continue;
+            }
+
+            for ($j = $i + 1; $j < $count && ! $this->isPunct($j, ';'); $j++) {
+                if (! $this->isId($j, 'from')) {
+                    continue;
+                }
+
+                if (($this->tokens[$j + 1] ?? null) !== null && $this->tokens[$j + 1]['kind'] === 'string') {
+                    $specifiers[] = $this->unquoteString($this->tokens[$j + 1]['value']);
+                }
+
+                break;
+            }
+        }
+
+        return array_values(array_unique($specifiers));
+    }
+
+    /**
      * The names an import binds, from the tokens in `[$from, $to)` — default, `* as ns`,
      * and the `{ a, b as c }` named set; `type` and aliasing handled.
      *
