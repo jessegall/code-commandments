@@ -581,7 +581,13 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
     private static function parse(string $code, string $path): ParsedFile
     {
-        $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($code) ?? [];
+        try {
+            $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($code) ?? [];
+        } catch (\PhpParser\Error) {
+            // A file that doesn't parse (a syntax error, a stub, a partial edit) is not
+            // worth crashing the whole run for — skip its contents and carry on.
+            return new ParsedFile($path, []);
+        }
 
         $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
 
