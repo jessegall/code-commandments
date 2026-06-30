@@ -43,7 +43,7 @@ final class Tokenizer
         $this->html = $html;
         $this->lineOffset = $lineOffset;
         $this->byteOffset = $byteOffset;
-        $this->stack = [$this->frame('#root', [], $lineOffset, $byteOffset)];
+        $this->stack = [$this->frame('#root', [], $lineOffset, $byteOffset, [])];
 
         $length = strlen($html);
         $pos = 0;
@@ -132,16 +132,34 @@ final class Tokenizer
         $inner = substr($this->html, $lt + 1 + strlen($tag), $i - ($lt + 1 + strlen($tag)));
         $selfClosing = str_ends_with(rtrim($inner), '/');
         $attributes = Attributes::parse($selfClosing ? substr(rtrim($inner), 0, -1) : $inner);
+        $spans = $this->spansOf($inner, $lt + 1 + strlen($tag) + $this->byteOffset);
         $line = substr_count($this->html, "\n", 0, $lt) + $this->lineOffset;
         $start = $lt + $this->byteOffset;
 
         if ($selfClosing || in_array(strtolower($tag), self::VOID, true)) {
-            $this->append(new Element($tag, $attributes, [], $line, '', $start, $i + 1 + $this->byteOffset));
+            $this->append(new Element($tag, $attributes, [], $line, '', $start, $i + 1 + $this->byteOffset, $spans));
         } else {
-            $this->stack[] = $this->frame($tag, $attributes, $line, $start);
+            $this->stack[] = $this->frame($tag, $attributes, $line, $start, $spans);
         }
 
         return $i + 1;
+    }
+
+    /**
+     * The absolute `[start, end)` source span of every attribute on a tag, keyed by name —
+     * the lexer's spans (relative to the attribute text) shifted to where the text sits.
+     *
+     * @return array<string, array{int, int}>
+     */
+    private function spansOf(string $inner, int $innerOffset): array
+    {
+        $spans = [];
+
+        foreach (Attributes::scan($inner) as $attribute) {
+            $spans[$attribute['name']] = [$innerOffset + $attribute['start'], $innerOffset + $attribute['end']];
+        }
+
+        return $spans;
     }
 
     private function closeTag(int $lt): int
@@ -178,6 +196,7 @@ final class Tokenizer
             '',
             $frame['start'],
             $endInHtml + $this->byteOffset,
+            $frame['attributeSpans'],
         );
 
         foreach ($element->children as $child) {
@@ -204,10 +223,11 @@ final class Tokenizer
     }
 
     /**
-     * @return array{tag: string, attributes: array<string, string|null>, line: int, start: int, children: list<Element>}
+     * @param  array<string, array{int, int}>  $attributeSpans
+     * @return array{tag: string, attributes: array<string, string|null>, line: int, start: int, children: list<Element>, attributeSpans: array<string, array{int, int}>}
      */
-    private function frame(string $tag, array $attributes, int $line, int $start): array
+    private function frame(string $tag, array $attributes, int $line, int $start, array $attributeSpans): array
     {
-        return ['tag' => $tag, 'attributes' => $attributes, 'line' => $line, 'start' => $start, 'children' => []];
+        return ['tag' => $tag, 'attributes' => $attributes, 'line' => $line, 'start' => $start, 'children' => [], 'attributeSpans' => $attributeSpans];
     }
 }
