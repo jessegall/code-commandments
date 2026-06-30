@@ -128,6 +128,23 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString("import type { Order } from '@/types';", $component);
     }
 
+    public function test_types_a_loop_variable_as_the_iterable_element_type(): void
+    {
+        // `interface Props { agents: Agent[] }` → a v-for="agent in agents" list item
+        // gets `agent: Agent`, not unknown (the type read off a NAMED interface).
+        $src = "<script setup lang=\"ts\">\nimport type { Agent } from '@/types';\ninterface Props { agents: Agent[] }\ndefineProps<Props>();\n</script>\n"
+            . "<template>\n  <ul>\n"
+            . '    <li v-for="agent in agents" :key="agent.id">' . str_repeat('<div>', 11) . '{{ agent.name }}' . str_repeat('</div>', 11) . "</li>\n"
+            . "    <li class=\"footer\">end</li>\n"
+            . "  </ul>\n</template>\n";
+
+        $components = $this->components($this->extract(new DeepNestedDetector, $src));
+        $component = reset($components);
+
+        $this->assertStringContainsString('agent: Agent', $component);
+        $this->assertStringContainsString("import type { Agent } from '@/types';", $component);
+    }
+
     private function deepComponentReading(string $root): string
     {
         $leaf = "{$root}.field.value";

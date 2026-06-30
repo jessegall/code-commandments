@@ -135,8 +135,39 @@ final class Script
         $count = count($this->tokens);
 
         for ($i = 0; $i < $count; $i++) {
-            if ($this->isId($i, 'defineProps') && $this->isPunct($i + 1, '<') && $this->isPunct($i + 2, '{')) {
+            if (! $this->isId($i, 'defineProps') || ! $this->isPunct($i + 1, '<')) {
+                continue;
+            }
+
+            if ($this->isPunct($i + 2, '{')) {
+                return $this->readFields($i + 3); // defineProps<{ … }>()
+            }
+
+            if (($this->tokens[$i + 2] ?? null) !== null && $this->tokens[$i + 2]['kind'] === 'id') {
+                return $this->namedTypeFields($this->tokens[$i + 2]['value']); // defineProps<Props>()
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * The fields of a named type used by `defineProps<Name>()` — its `interface Name {…}`
+     * or `type Name = {…}` declaration.
+     *
+     * @return array<string, string>
+     */
+    private function namedTypeFields(string $name): array
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if ($this->isId($i, 'interface') && $this->isId($i + 1, $name) && $this->isPunct($i + 2, '{')) {
                 return $this->readFields($i + 3);
+            }
+
+            if ($this->isId($i, 'type') && $this->isId($i + 1, $name) && $this->isPunct($i + 2, '=') && $this->isPunct($i + 3, '{')) {
+                return $this->readFields($i + 4);
             }
         }
 
