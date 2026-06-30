@@ -53,6 +53,34 @@ final class EngineQueryTest extends TestCase
         $this->assertNotSame([], $deep->whereElement()->nestedDeeperThan(8, 3)->get());
     }
 
+    public function test_source_omitting_removes_a_directive_by_its_span(): void
+    {
+        $source = '<template><div v-if="open" class="card" :title="t">x</div></template>';
+        $div = Codebase::fromString($source)->whereTag('div')->first();
+
+        // The write engine renders the element source without v-if — by its KNOWN span,
+        // swallowing the space before it, keeping every other attribute. No regex.
+        $written = $div->sourceOmitting($source, $div->start, $div->end, ['v-if']);
+
+        $this->assertStringContainsString('<div class="card" :title="t">', $written);
+        $this->assertStringNotContainsString('v-if', $written);
+        $this->assertStringNotContainsString('  ', $written, 'no double-space gap left behind');
+    }
+
+    public function test_source_omitting_leaves_a_directive_outside_the_slice_untouched(): void
+    {
+        // A directive carried OUT to a call site (on a wrapper outside the content slice) is
+        // not in [from, to), so it survives — the boundary between component and call site.
+        $source = '<template><template v-if="open"><div class="card">x</div></template></template>';
+        $wrapper = Codebase::fromString($source)->whereTag('template')->first();
+        $inner = $wrapper->children[0]; // the <div> content
+
+        $written = $wrapper->sourceOmitting($source, $inner->start, $inner->end, ['v-if']);
+
+        $this->assertStringContainsString('v-if="open"', $source);
+        $this->assertSame('<div class="card">x</div>', $written, 'only the content slice, directive untouched');
+    }
+
     public function test_expr_as_chain_returns_a_pure_member_path_or_null(): void
     {
         $this->assertSame(['order', 'customer', 'name'], Parser::parse('order.customer.name')->asChain());
