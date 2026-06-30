@@ -24,7 +24,9 @@ function apply() {}
           <Input v-model="query" type="search" placeholder="SKU or name" />
           <fieldset class="availability">
             <legend>Availability</legend>
-            <label><input type="checkbox" value="in-stock" /> In stock</label>
+            <!-- @sin LoopWithCondition -->
+            <!-- @sin ControlFlowOnElement -->
+            <label v-for="opt in options" v-if="opt.enabled" :key="opt.id"><input type="checkbox" :value="opt.value" /> {{ opt.label }}</label>
           </fieldset>
         </div>
         <SheetFooter>

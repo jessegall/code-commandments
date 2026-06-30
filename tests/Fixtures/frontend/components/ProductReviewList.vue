@@ -32,5 +32,18 @@ defineProps<{ productId: number }>();
         <p class="review-body">{{ review.body }}</p>
       </article>
     </template>
+
+    <ul class="review-tags">
+      <!-- @sin LoopWithCondition -->
+      <!-- @sin ControlFlowOnElement -->
+      <li v-for="tag in tags" v-if="tag.visible" :key="tag.id" class="review-tag">{{ tag.label }}</li>
+    </ul>
+
+    <!-- @righteous LoopWithCondition -->
+    <template v-for="tag in tags" :key="tag.id">
+      <template v-if="tag.visible">
+        <li class="review-tag">{{ tag.label }}</li>
+      </template>
+    </template>
   </section>
 </template>

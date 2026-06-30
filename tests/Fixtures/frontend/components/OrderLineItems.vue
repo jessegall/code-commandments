@@ -22,6 +22,12 @@ defineProps<{ orderId: number; currency: string }>();
         <td class="line-item__name">Sample product</td>
         <td class="line-item__qty">1</td>
       </tr>
+      <!-- @sin LoopWithCondition -->
+      <!-- @sin ControlFlowOnElement -->
+      <tr v-for="line in lines" v-if="line.quantity > 0" :key="line.id" class="line-item">
+        <td class="line-item__name">{{ line.name }}</td>
+        <td class="line-item__qty">{{ line.quantity }}</td>
+      </tr>
     </tbody>
   </table>
 </template>

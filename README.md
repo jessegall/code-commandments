@@ -54,7 +54,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_55 detectors across 16 skills._
+_56 detectors across 16 skills._
 
 ### `backend/absence`
 
@@ -189,6 +189,7 @@ _55 detectors across 16 skills._
 | Detector | What it flags |
 |---|---|
 | `ControlFlowOnElementDetector` | A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a real element or component instead of a `<template>`. |
+| `LoopWithConditionDetector` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
 | `SwitchCaseDetector` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
 
 <!-- END: detectors -->
