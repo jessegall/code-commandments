@@ -10,6 +10,14 @@ use PHPUnit\Framework\TestCase;
 
 final class CodebaseQueryTest extends TestCase
 {
+    public function test_a_file_that_does_not_parse_is_skipped_not_thrown(): void
+    {
+        // A syntax error must not crash the scan — the file just contributes nothing.
+        $codebase = Codebase::fromString('<?php class A { function f() { return * 5; } }', 'broken.php');
+
+        $this->assertCount(0, $codebase->whereMethod('input')->get());
+    }
+
     public function test_where_method_finds_calls_by_name(): void
     {
         $code = '<?php class A { function f($r) { $r->input("x"); $r->get("y"); $this->other(); } }';
