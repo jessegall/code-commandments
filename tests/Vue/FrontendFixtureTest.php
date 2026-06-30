@@ -4,35 +4,36 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Vue;
 
+use JesseGall\CodeCommandments\Detectors\Frontend\DeepDataReachDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseDetector;
+use JesseGall\CodeCommandments\Testing\DetectorResult;
+use JesseGall\CodeCommandments\Tests\Support\FixtureTestCase;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Sfc;
-use PHPUnit\Framework\TestCase;
 
 /**
- * The frontend self-checking fixture — the twin of FixtureDetectorTest for `.vue`.
- * `tests/Fixtures/shop-frontend` is a small Vue app that is never run, only parsed.
- * A `<!-- @sin DetectorName -->` comment marks the element that immediately follows
- * as a sin (the comment IS the spec, like `#[Sinful]` on a PHP node). Every detector
- * must flag exactly its marked elements — no misses, no surprises (the whole unmarked
- * fixture is the false-positive guard).
+ * The frontend self-checking fixture — same flow as the backend's (see {@see
+ * FixtureTestCase}), only over `.vue`. A `<!-- @sin DetectorName -->` comment marks
+ * the element that follows as a sin (the Vue analog of `#[Sinful]`); each detector
+ * must flag exactly its marked elements and fire on ≥3 diverse scenarios.
  */
-final class FrontendFixtureTest extends TestCase
+final class FrontendFixtureTest extends FixtureTestCase
 {
     /**
      * @return list<Detector>
      */
     private function detectors(): array
     {
-        return [new SwitchCaseDetector(), new DuplicateElementDetector()];
+        return [new SwitchCaseDetector(), new DuplicateElementDetector(), new DeepDataReachDetector()];
     }
 
-    public function test_each_detector_flags_exactly_its_marked_elements(): void
+    protected function markerResults(): array
     {
-        $codebase = Codebase::scan(__DIR__ . '/../Fixtures/shop-frontend');
+        $codebase = $this->fixture();
+        $results = [];
 
         foreach ($this->detectors() as $detector) {
             $name = (new \ReflectionClass($detector))->getShortName();
@@ -42,20 +43,34 @@ final class FrontendFixtureTest extends TestCase
                 $this->collectMarked($component->template, $component, $name, $expected);
             }
 
-            $actual = array_map(static fn ($match): string => $match->location(), $detector->find($codebase));
+            $flagged = array_map(static fn ($match): string => $match->location(), $detector->find($codebase));
 
-            sort($expected);
-            sort($actual);
-
-            $this->assertSame($expected, $actual, "{$name}: marked sins and flagged sins differ");
+            $results[] = new DetectorResult(
+                $name,
+                array_values(array_diff($expected, $flagged)),   // marked but not flagged
+                array_values(array_diff($flagged, $expected)),    // flagged but not marked
+            );
         }
+
+        return $results;
     }
 
-    public function test_the_fixture_actually_marks_something(): void
+    protected function scenarios(): array
     {
-        $codebase = Codebase::scan(__DIR__ . '/../Fixtures/shop-frontend');
+        $codebase = $this->fixture();
+        $scenarios = [];
 
-        $this->assertGreaterThanOrEqual(3, count(new SwitchCaseDetector()->find($codebase)), 'expect ≥3 diverse marked scenarios');
+        foreach ($this->detectors() as $detector) {
+            $name = (new \ReflectionClass($detector))->getShortName();
+            // The scenario is the enclosing COMPONENT (the frontend's "class"), so two
+            // findings in the same .vue collapse to one — mirroring the backend.
+            $scenarios[$name] = array_map(
+                static fn ($match): array => ['file' => $match->file(), 'source' => $match->sfc->source],
+                $detector->find($codebase),
+            );
+        }
+
+        return $scenarios;
     }
 
     /**
@@ -85,5 +100,10 @@ final class FrontendFixtureTest extends TestCase
 
             $this->collectMarked($child, $component, $detector, $expected);
         }
+    }
+
+    private function fixture(): Codebase
+    {
+        return Codebase::scan(__DIR__ . '/../Fixtures/shop-frontend');
     }
 }

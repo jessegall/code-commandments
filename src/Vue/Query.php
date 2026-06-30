@@ -50,6 +50,64 @@ final class Query
     }
 
     /**
+     * Keep elements carrying the given Vue directive (`Directive::If`, or its name).
+     * A non-directive string throws — use {@see where} with `hasAttribute()` for an
+     * arbitrary bound attribute like `:title`.
+     */
+    public function withDirective(string|Directive $name): self
+    {
+        $directive = Directive::name($name);
+
+        $this->filters[] = static fn (ElementMatch $match): bool => $match->hasAttribute($directive);
+
+        return $this;
+    }
+
+    /**
+     * Keep elements whose subtree is at least $elements elements big — the floor
+     * that separates a substantial block from a trivial look-alike.
+     */
+    public function ofAtLeastSize(int $elements): self
+    {
+        $this->filters[] = static fn (ElementMatch $match): bool => $match->subtreeSize() >= $elements;
+
+        return $this;
+    }
+
+    /**
+     * Keep elements whose component's `<template>` spans at least $lines — the
+     * "big enough that extracting is worth it" gate.
+     */
+    public function inTemplateOfAtLeast(int $lines): self
+    {
+        $this->filters[] = static fn (ElementMatch $match): bool => $match->sfc->templateLineCount() >= $lines;
+
+        return $this;
+    }
+
+    /**
+     * Keep elements that bind or interpolate a data chain reaching at least $depth
+     * property hops past its root (`data.user.firstName` is depth 2). $ignoring names
+     * pass-through accessors (`value`, `length`) that don't deepen the reach.
+     *
+     * @param  list<string>  $ignoring
+     */
+    public function reachesAtLeast(int $depth, array $ignoring = []): self
+    {
+        $this->filters[] = static function (ElementMatch $match) use ($depth, $ignoring): bool {
+            foreach ($match->expressions() as $expression) {
+                if ($expression->memberDepth($ignoring) >= $depth) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        return $this;
+    }
+
+    /**
      * @return list<ElementMatch>
      */
     public function get(): array
