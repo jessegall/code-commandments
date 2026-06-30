@@ -5,6 +5,8 @@ description: WHEN to give data a type instead of passing it loose — an `array<
 
 # Value objects — give related data a type
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > Data that travels together is a **thing**, not a loose pile of arrays and primitives. The moment a
 > cluster of values is passed around, returned, or reached into by string keys, it wants a name and a type.
 

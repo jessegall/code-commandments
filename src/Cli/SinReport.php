@@ -74,6 +74,7 @@ final class SinReport
 
         $skills = count($this->bySkill);
         $lines[] = "\n\033[1m{$this->total} sins\033[0m across {$skills} " . ($skills === 1 ? 'skill' : 'skills') . '.';
+        $lines[] = "\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m";
 
         return implode("\n", $lines);
     }
@@ -85,6 +86,10 @@ final class SinReport
     public function checklist(): string
     {
         $out = "# Code Commandments — {$this->total} sins to fix\n\n"
+            . "> 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. "
+            . "Before you change a line, trace the value to where it is BORN and fix it there; "
+            . "the symptom (and often others) then disappears on its own. Never silence it with a "
+            . "`?? default`, a cast, or a null-check.\n\n"
             . "**This file is your worklist, and DELETION is how you work it.** Each line "
             . "below is one unfixed sin. Go top to bottom, ONE at a time:\n\n"
             . "1. Read the skill named in the section header (it teaches the fix).\n"

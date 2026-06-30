@@ -5,6 +5,8 @@ description: How to document — and mostly NOT. Docblocks are 1–2 lines (3 ma
 
 # Documentation — concise, present-tense, rare
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > A docblock describes the **code as it is**, in as few words as possible — write one. An inline comment
 > is a last resort. Neither is a changelog, a tutorial, or a story about the refactor. Most code needs no
 > inline comment at all.

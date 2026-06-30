@@ -5,6 +5,8 @@ description: How a method body is shaped — validate preconditions at the TOP w
 
 # Guard clauses & flow — check at the top, then go straight
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > Decide the unhappy paths first, at the door, and leave. What's left is the happy path, flat and
 > unindented. A method should read top-to-bottom: *here's what would stop us → here's the work.*
 

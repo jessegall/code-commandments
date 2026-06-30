@@ -5,6 +5,8 @@ description: A type must tell the truth about the value. Don't fake optionality 
 
 # Type honesty — the type must not lie
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > A `?T` that is never actually null is a lie the whole codebase pays for. Every reader has to re-prove the
 > value is there — `?->`, `?? <default>`, an `if ($x === null)` — and one of those defaults silently answers
 > a question for a state that can't happen. Make the type say what the design guarantees.
