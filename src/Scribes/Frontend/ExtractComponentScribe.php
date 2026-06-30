@@ -110,6 +110,8 @@ final class ExtractComponentScribe extends RepentScribe
      */
     public function rewrite(array $findings): array
     {
+        $findings = $this->outermost($findings);
+
         return match ($this->strategy) {
             self::DUPLICATES => $this->duplicates($findings),
             self::DEEP_REACH => $this->deepReach($findings),
@@ -143,7 +145,9 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()));
+            if (! $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()))) {
+                continue;
+            }
 
             foreach ($members as $occurrence) {
                 $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($props));
@@ -172,8 +176,9 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()));
-            $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+            if ($this->create($draft, $component, self::render($boundary, $props, $boundary->markup()))) {
+                $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+            }
         }
 
         return $draft->rewrites();
@@ -201,8 +206,9 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), self::compoundName($boundary), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()));
-            $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+            if ($this->create($draft, $component, self::render($boundary, $props, $boundary->markup()))) {
+                $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+            }
         }
 
         return $draft->rewrites();
@@ -228,8 +234,10 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
-     * The text of the compound's title part — a descendant component whose tag ends in
-     * `Title` (`DialogTitle`, `CardTitle`).
+     * The STATIC text of the compound's title part — a descendant component whose tag ends
+     * in `Title` (`DialogTitle`, `CardTitle`). A dynamic title (`{{ … }}` interpolation) is
+     * not a usable name — pascal-casing a binding expression yields a monster — so it's
+     * ignored and the compound falls back to its structural name.
      */
     private static function compoundTitle(Element $node): string
     {
@@ -239,7 +247,7 @@ final class ExtractComponentScribe extends RepentScribe
             }
 
             foreach ($element->children as $child) {
-                if ($child->isText() && trim($child->text) !== '') {
+                if ($child->isText() && trim($child->text) !== '' && ! str_contains($child->text, '{{')) {
                     return trim($child->text);
                 }
             }
@@ -295,8 +303,9 @@ final class ExtractComponentScribe extends RepentScribe
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            $this->create($draft, $component, self::render($boundary, $props, $markup, $prefix, $prop));
-            $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
+            if ($this->create($draft, $component, self::render($boundary, $props, $markup, $prefix, $prop))) {
+                $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
+            }
         }
 
         return $draft->rewrites();
@@ -325,11 +334,44 @@ final class ExtractComponentScribe extends RepentScribe
      * Draft a new component file AND teach the library about it — so a later finding in this
      * same run reuses it instead of creating an identical sibling (the `Foo`/`Foo2` bug). The
      * library isn't refreshed from disk mid-run, so the scribe registers what it just made.
+     *
+     * Returns false WITHOUT drafting when the component would render a tag of its OWN name
+     * (`TypeList` whose template contains `<TypeList …>`) — a self-importing, self-referential
+     * file is never a clean extraction, so the whole finding is skipped (the detector still
+     * flags the underlying smell). The caller skips the call-site rewrite when this is false.
      */
-    private function create(Draft $draft, string $path, string $source): void
+    private function create(Draft $draft, string $path, string $source): bool
     {
+        if (self::rendersTag($source, basename($path, '.vue'))) {
+            return false;
+        }
+
         $draft->add($path, $source);
         $this->library?->register($path, $source);
+
+        return true;
+    }
+
+    /**
+     * Does this component source render an element `<$name …>` / `<$name>` / `<$name/>` — a
+     * self-reference? Tag-boundary aware so `<TypeList>` matches but `<TypeListItem>` doesn't.
+     */
+    private static function rendersTag(string $source, string $name): bool
+    {
+        $needle = "<{$name}";
+        $offset = 0;
+
+        while (($at = strpos($source, $needle, $offset)) !== false) {
+            $after = $source[$at + strlen($needle)] ?? ' ';
+
+            if ($after === ' ' || $after === '>' || $after === '/' || $after === "\n" || $after === "\t" || $after === "\r") {
+                return true;
+            }
+
+            $offset = $at + 1;
+        }
+
+        return false;
     }
 
     /**

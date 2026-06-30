@@ -29,6 +29,18 @@ final class Span
     }
 
     /**
+     * Does this span STRICTLY contain $other — same file, $other's range inside this one,
+     * and not the identical range? The geometry behind "is that finding nested in this one".
+     */
+    public function contains(self $other): bool
+    {
+        return $this->path === $other->path
+            && $this->start <= $other->start
+            && $other->end <= $this->end
+            && ($this->start !== $other->start || $this->end !== $other->end);
+    }
+
+    /**
      * The leading whitespace of the line this span begins on (its indentation), or ''
      * when something non-blank precedes it on that line.
      */
