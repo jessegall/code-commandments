@@ -81,6 +81,17 @@ final class Sfc
     }
 
     /**
+     * How many lines the `<template>` block spans — a proxy for "is this component
+     * big enough that a deep data reach is worth extracting".
+     */
+    public function templateLineCount(): int
+    {
+        $block = $this->block('template');
+
+        return $block === null ? 0 : substr_count($block->content, "\n") + 1;
+    }
+
+    /**
      * The first block of a tag, or null.
      */
     public function block(string $tag): ?Block

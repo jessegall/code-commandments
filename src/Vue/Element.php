@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\Interpolation;
+use JesseGall\CodeCommandments\Vue\Expr\Parser;
+
 /**
  * One node of a parsed Vue template: an element (`<div>`, `<MyComponent>`,
  * `<template>`), a text node (`tag === '#text'`), or the synthetic fragment root
@@ -58,14 +62,63 @@ class Element
         return ! str_starts_with($this->tag, '#');
     }
 
-    public function hasAttribute(string $name): bool
+    public function hasAttribute(string|Directive $name): bool
     {
-        return array_key_exists($name, $this->attributes);
+        return array_key_exists($name instanceof Directive ? $name->value : $name, $this->attributes);
     }
 
-    public function attribute(string $name): ?string
+    public function attribute(string|Directive $name): ?string
     {
-        return $this->attributes[$name] ?? null;
+        return $this->attributes[$name instanceof Directive ? $name->value : $name] ?? null;
+    }
+
+    /**
+     * Is this a directive / bound attribute — one that carries a JS EXPRESSION
+     * (`:x`, `@e`, `v-if`) rather than a literal string (`class`, `href`)?
+     */
+    public function isBindingName(string $name): bool
+    {
+        return str_starts_with($name, ':')
+            || str_starts_with($name, '@')
+            || str_starts_with($name, 'v-');
+    }
+
+    /**
+     * The parsed JS expression of a bound attribute, or null when it isn't one /
+     * has no value. The detector's gateway to reasoning over the binding as an AST.
+     */
+    public function binding(string $name): ?Expr
+    {
+        $value = $this->attributes[$name] ?? null;
+
+        return $value !== null && $this->isBindingName($name) ? Parser::parse($value) : null;
+    }
+
+    /**
+     * Every JS expression this element evaluates — its bound attributes plus the
+     * `{{ … }}` interpolations in its OWN text — each as an {@see Expr} tree.
+     *
+     * @return list<Expr>
+     */
+    public function expressions(): array
+    {
+        $expressions = [];
+
+        foreach ($this->attributes as $name => $value) {
+            if ($value !== null && $this->isBindingName($name)) {
+                $expressions[] = Parser::parse($value);
+            }
+        }
+
+        foreach ($this->children as $child) {
+            if ($child->isText()) {
+                foreach (Interpolation::extract($child->text) as $body) {
+                    $expressions[] = Parser::parse($body);
+                }
+            }
+        }
+
+        return $expressions;
     }
 
     /**

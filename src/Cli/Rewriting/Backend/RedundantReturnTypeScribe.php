@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Rewriting;
+namespace JesseGall\CodeCommandments\Cli\Rewriting\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Cli\Rewriting\Edit;
+use JesseGall\CodeCommandments\Cli\Rewriting\Scribe;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;

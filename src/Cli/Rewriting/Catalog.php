@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Rewriting;
 
 use JesseGall\CodeCommandments\Cli\Hints\DataHintScribe;
+use JesseGall\CodeCommandments\Cli\Rewriting\Backend\RedundantReturnTypeScribe;
 
 /**
  * The roll of Scribes the `scribe` command runs. (An explicit list, not a glob —

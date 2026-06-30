@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
-use JesseGall\CodeCommandments\Cli\Rewriting\SwitchCaseScribe;
+use JesseGall\CodeCommandments\Cli\Rewriting\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
 
 /**
@@ -35,7 +36,7 @@ final class SwitchCaseDetector implements Detector, Repentable
     {
         return $components
             ->whereElement()
-            ->where(static fn (Element $element): bool => $element->hasAttribute('v-if'))
+            ->withDirective(Directive::If)
             ->where(static fn (Element $element): bool => SwitchCaseChain::at($element) !== null)
             ->get();
     }

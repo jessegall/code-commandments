@@ -32,7 +32,7 @@ final class DuplicateElementDetector implements Detector
     {
         $candidates = $components
             ->whereElement()
-            ->where(static fn (Element $element): bool => $element->subtreeSize() >= self::FLOOR)
+            ->ofAtLeastSize(self::FLOOR)
             ->get();
 
         $repeated = $this->repeatedHashes($candidates);
