@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ArrayReturnBagDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -14,7 +15,7 @@ final class FacetService
     /**
      * @return array<string, mixed>
      */
-    #[Sinful(ArrayReturnBagDetector::class)]
+    #[Sinful(ArrayReturnBag::class)]
     public function facets(): array
     {
         return [

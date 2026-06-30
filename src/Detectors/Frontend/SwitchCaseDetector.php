@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Frontend\SwitchCase;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
@@ -22,9 +24,9 @@ use JesseGall\CodeCommandments\Vue\ElementMatch;
  */
 final class SwitchCaseDetector implements Detector, Repentable
 {
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'frontend/vue-control-flow';
+        return new SwitchCase();
     }
 
     public function scribe(): string

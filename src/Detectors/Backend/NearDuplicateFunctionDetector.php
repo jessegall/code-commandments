@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
@@ -38,9 +40,9 @@ final class NearDuplicateFunctionDetector implements Detector
         'Laravel\\Mcp\\Server\\Tool',
     ];
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/fix-at-the-source';
+        return new NearDuplicateFunction();
     }
 
     public function find(Codebase $codebase): array

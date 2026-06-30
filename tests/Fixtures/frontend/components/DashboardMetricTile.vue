@@ -10,7 +10,7 @@ defineProps<{ metric: Metric }>();
       <span class="tile__name">{{ metric.label }}</span>
     </header>
 
-    <!-- @sin DeepNestedDetector -->
+    <!-- @sin DeepNested -->
     <figure class="tile__viz">
       <div class="chart">
         <div class="chart__frame">

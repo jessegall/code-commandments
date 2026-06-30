@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\InArrayMirrorsEnumDetector;
+use JesseGall\CodeCommandments\Sins\Backend\InArrayMirrorsEnum;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -33,7 +34,7 @@ final class CategoryGuard
         return true;
     }
 
-    #[Sinful(InArrayMirrorsEnumDetector::class)]
+    #[Sinful(InArrayMirrorsEnum::class)]
     private function permits(string $category): bool
     {
         return in_array($category, ['apparel', 'electronics', 'food'], true);

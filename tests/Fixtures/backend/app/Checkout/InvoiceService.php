@@ -2,7 +2,9 @@
 
 namespace Shop\Checkout;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,7 +15,7 @@ final class InvoiceService
     /**
      * @param  array<string, int>  $breakdown
      */
-    #[Sinful(ArrayBagDetector::class)]
+    #[Sinful(ArrayBag::class)]
     public function render(array $breakdown): string
     {
         return sprintf(
@@ -21,6 +23,17 @@ final class InvoiceService
             $breakdown['subtotal'],
             $breakdown['tax'],
             $breakdown['total'],
+        );
+    }
+
+    #[Righteous(ArrayBag::class)]
+    public function renderTotals(PriceBreakdown $breakdown): string
+    {
+        return sprintf(
+            'Subtotal %d, tax %d, total %d',
+            $breakdown->subtotal,
+            $breakdown->tax,
+            $breakdown->total,
         );
     }
 }

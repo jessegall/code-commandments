@@ -2,7 +2,8 @@
 
 namespace Shop\Services;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NullableCollectionReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NullableCollectionReturn;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 use Shop\Models\Order;
@@ -19,7 +20,7 @@ final class OrderHistoryService
     /**
      * @return array<int, int>|null
      */
-    #[Sinful(NullableCollectionReturnDetector::class)]
+    #[Sinful(NullableCollectionReturn::class)]
     public function recentOrderIds(Customer $customer): ?array
     {
         $ids = $this->orders->recentIdsFor($customer->id);

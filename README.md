@@ -32,9 +32,9 @@ composer require --dev jessegall/code-commandments
 # scan a codebase — sins grouped by the skill that fixes them
 vendor/bin/commandments judge src
 
-# scope to one skill (group) or one detector
+# scope to one skill (group) or one sin
 vendor/bin/commandments judge src --skill=exceptions
-vendor/bin/commandments judge src --detector=SwallowCatch
+vendor/bin/commandments judge src --sin=swallow-catch
 
 # scope to what you changed: only your branch's files vs main, or just the working tree
 vendor/bin/commandments judge src --branch        # new/changed on this branch vs main (--branch=BASE to override)
@@ -56,7 +56,7 @@ Exit code is non-zero when sins are found. Files marked
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
 _50 detectors across 14 skills._
 
-### `absence`
+### `backend/absence`
 
 | Detector | What it flags |
 |---|---|
@@ -65,13 +65,13 @@ _50 detectors across 14 skills._
 | `NullableCollectionReturnDetector` | A method declared to return `?array` / `array \| null` — a collection modelled as "the list, or null", forcing every caller to guard before iterating. |
 | `OptionAsNullableDetector` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
 
-### `concurrent-state`
+### `backend/concurrent-state`
 
 | Detector | What it flags |
 |---|---|
 | `ConcurrentSubclassDetector` | A class that `extends Concurrent`. |
 
-### `documentation`
+### `backend/documentation`
 
 | Detector | What it flags |
 |---|---|
@@ -79,7 +79,7 @@ _50 detectors across 14 skills._
 | `BloatedDocblockDetector` | A class whose docblock runs to multiple paragraphs. |
 | `CeremonyDocblockDetector` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
 
-### `enums-with-behaviour`
+### `backend/enums-with-behaviour`
 
 | Detector | What it flags |
 |---|---|
@@ -90,7 +90,7 @@ _50 detectors across 14 skills._
 | `MatchDefaultReturnsNullDetector` | A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing. |
 | `StringMatchMirrorsEnumDetector` | A `match`/`switch` whose arm conditions are string/int literals that ARE an existing backed enum's case values — dispatching on the loose strings instead of the type that already seals them. |
 
-### `exceptions`
+### `backend/exceptions`
 
 | Detector | What it flags |
 |---|---|
@@ -99,7 +99,7 @@ _50 detectors across 14 skills._
 | `SwallowCatchDetector` | A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`. |
 | `WrappingWithoutCauseDetector` | Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from. |
 
-### `fix-at-the-source`
+### `backend/fix-at-the-source`
 
 | Detector | What it flags |
 |---|---|
@@ -107,7 +107,7 @@ _50 detectors across 14 skills._
 | `ManufacturedFakeFillDetector` | Filling an argument with a manufactured fake on absence — `name: $row['name'] ?? ''`, `(int) ($row['id'] ?? 0)`. |
 | `NearDuplicateFunctionDetector` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
 
-### `guard-clauses-and-flow`
+### `backend/guard-clauses-and-flow`
 
 | Detector | What it flags |
 |---|---|
@@ -118,7 +118,7 @@ _50 detectors across 14 skills._
 | `NestedTernaryDetector` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
 | `RedundantElseDetector` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
 
-### `laravel-idioms`
+### `backend/laravel-idioms`
 
 | Detector | What it flags |
 |---|---|
@@ -130,19 +130,19 @@ _50 detectors across 14 skills._
 | `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
 | `RequestAccessorRecastDetector` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
 
-### `pass-the-object`
+### `backend/pass-the-object`
 
 | Detector | What it flags |
 |---|---|
 | `ParamResolvedFromParamDetector` | A method that UNPACKS its target out of a container parameter — takes a container object AND a scalar key, resolves the key against the container (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`), and works on the resolved target while the container is only ever packaging. |
 
-### `role-vocabulary`
+### `backend/role-vocabulary`
 
 | Detector | What it flags |
 |---|---|
 | `NullableRegistryLookupDetector` | A class's own keyed store handing back `null` on a miss — `return $this->items[$key] ?? null`. |
 
-### `spatie-data`
+### `backend/spatie-data`
 
 | Detector | What it flags |
 |---|---|
@@ -152,21 +152,21 @@ _50 detectors across 14 skills._
 | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
 | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
 
-### `tell-dont-ask`
+### `backend/tell-dont-ask`
 
 | Detector | What it flags |
 |---|---|
 | `FeatureEnvyDetector` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
 | `KeyedLookupEnvyDetector` | Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`). |
 
-### `type-honesty`
+### `backend/type-honesty`
 
 | Detector | What it flags |
 |---|---|
 | `MaskedInvariantDetector` | `$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state. |
 | `ScratchStateRestoreDetector` | A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`. |
 
-### `value-objects`
+### `backend/value-objects`
 
 | Detector | What it flags |
 |---|---|
@@ -183,8 +183,8 @@ _50 detectors across 14 skills._
 A detector is a few lines of fluent AST query. Before writing one, load the
 project skills (via Claude Code's Skill tool): **`writing-detectors`**,
 **`detector-engine`**, **`detector-fixtures`**. The cardinal rule is AST/semantic
-detection over name matching. See [`CLAUDE.md`](CLAUDE.md) and the roadmap in
-[`SINS.md`](SINS.md).
+detection over name matching. See [`CLAUDE.md`](CLAUDE.md); each sin is its own class
+under `src/Sins/`, and a detector references one.
 
 ```php
 final class FacadeCallDetector implements Detector

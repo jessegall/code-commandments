@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\ModelMutationAtCallSite;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
@@ -24,9 +26,9 @@ final class ModelMutationAtCallSiteDetector implements Detector
 {
     private const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/laravel-idioms';
+        return new ModelMutationAtCallSite();
     }
 
     public function find(Codebase $codebase): array

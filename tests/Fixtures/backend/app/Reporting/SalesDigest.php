@@ -2,7 +2,8 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class SalesDigest
@@ -45,7 +46,7 @@ final class SalesDigest
         return sprintf('%s %d.%02d', $currency, $major, $minor);
     }
 
-    #[Sinful(DuplicateFunctionDetector::class)]
+    #[Sinful(DuplicateFunction::class)]
     public function fingerprint(int $base, int $count): string
     {
         $total = $base;

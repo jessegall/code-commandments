@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MaskedInvariantDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -36,7 +37,7 @@ final class GradeSelector
         return $kept;
     }
 
-    #[Sinful(MaskedInvariantDetector::class)]
+    #[Sinful(MaskedInvariant::class)]
     public function accepts(string $sku): bool
     {
         return $this->batch?->permits($sku) ?? false;

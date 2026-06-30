@@ -125,8 +125,172 @@ Guard clauses & flow
 - [ ] The happy path is the last, unindented statement.
 ```
 
+## Bad → good
+
+```php
+// Bad
+public function resolve(Product $product, array $overrides, string $region): int
+{
+    if (array_key_exists($region, $overrides)) {
+        if ($product->price_cents > 0) {
+            if ($overrides[$region] < $product->price_cents) {
+                return $overrides[$region];
+            }
+        }
+    }
+
+    return $product->price_cents;
+}
+
+// Good
+public function resolveFlat(Product $product, array $overrides, string $region): int
+{
+    if (! array_key_exists($region, $overrides)) {
+        return $product->price_cents;
+    }
+
+    if ($product->price_cents <= 0) {
+        return $product->price_cents;
+    }
+
+    return min($overrides[$region], $product->price_cents);
+}
+```
+
+```php
+// Bad
+public function band(int $grams): string
+{
+    if ($grams < 250) {
+        return 'letter';
+    } elseif ($grams < 2_000) {
+        return 'parcel-s';
+    } elseif ($grams < 10_000) {
+        return 'parcel-m';
+    } else {
+        return 'parcel-l';
+    }
+}
+
+// Good
+public function bandByMatch(int $grams): string
+{
+    return match (true) {
+        $grams < 250 => 'letter',
+        $grams < 2_000 => 'parcel-s',
+        $grams < 10_000 => 'parcel-m',
+        default => 'parcel-l',
+    };
+}
+```
+
+```php
+// Bad
+public function carrierName(Shipment $shipment): string
+{
+    return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
+}
+
+// Good
+public function carrierNameGuarded(Shipment $shipment): string
+{
+    if ($shipment->carrier === null) {
+        throw CarrierMissing::for($shipment->id);
+    }
+
+    return $shipment->carrier->displayName();
+}
+```
+
+```php
+// Bad
+public function process(array $rows): void
+{
+    foreach ($rows as $row) {
+        if ($row->total > 0) {
+            $this->normalise($row);
+            $this->persist($row);
+        }
+    }
+}
+
+// Good
+public function process(array $rows): void
+{
+    foreach ($rows as $row) {
+        if ($row->total <= 0) {
+            continue;
+        }
+
+        $this->normalise($row);
+        $this->persist($row);
+    }
+}
+```
+
+```php
+// Bad
+private function band(int $score): string
+{
+    return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
+}
+
+// Good
+private function bandMatched(int $score): string
+{
+    return match (true) {
+        $score >= 90 => 'A',
+        $score >= 75 => 'B',
+        default => 'C',
+    };
+}
+```
+
+```php
+// Bad
+public function inStock(array $products): array
+{
+    $available = [];
+
+    foreach ($products as $product) {
+        if ($product->stock <= 0) {
+            continue;
+        } else {
+            $available[] = $product;
+        }
+    }
+
+    return $available;
+}
+
+// Good
+public function available(array $products): array
+{
+    $available = [];
+
+    foreach ($products as $product) {
+        if ($product->stock <= 0) {
+            continue;
+        }
+
+        $available[] = $product;
+    }
+
+    return $available;
+}
+```
+
+## When it fires
+
+- `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`
+- if/elseif ladder of 4+ branches (should be match/dispatch) — `IfElseLadderDetector`
+- `?? throw` / `=== null ? …` feeding further work on the same line (inline throw mid-expression) — `InlineThrowDetector`
+- Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`
+- Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
+- `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
+
 ## Relationship to the other skills
 
-- [`exceptions`](../exceptions/SKILL.md) — *how* a guard throws (named factory, never a message string).
-- [`absence`](../absence/SKILL.md) — *whether* a missing value is a guard-and-throw at all, vs Option / empty / default.
-- [`fix-at-the-source`](../fix-at-the-source/SKILL.md) — if every caller re-guards the same value, the guard belongs upstream where the value is born.
+- [`backend/exceptions`](../exceptions/SKILL.md) — *how* a guard throws (named factory, never a message string).
+- [`backend/absence`](../absence/SKILL.md) — *whether* a missing value is a guard-and-throw at all, vs Option / empty / default.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — if every caller re-guards the same value, the guard belongs upstream where the value is born.

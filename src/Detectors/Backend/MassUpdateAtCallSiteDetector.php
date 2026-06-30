@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\MassUpdateAtCallSite;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
@@ -23,9 +25,9 @@ final class MassUpdateAtCallSiteDetector implements Detector
 {
     private const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/laravel-idioms';
+        return new MassUpdateAtCallSite();
     }
 
     public function find(Codebase $codebase): array

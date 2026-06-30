@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy as FeatureEnvySin;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\FeatureEnvy;
@@ -21,9 +23,9 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class FeatureEnvyDetector implements Detector
 {
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/tell-dont-ask';
+        return new FeatureEnvySin();
     }
 
     public function find(Codebase $codebase): array

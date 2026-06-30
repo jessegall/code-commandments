@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\Enums;
@@ -17,9 +19,9 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class EnumCaseOrChainDetector implements Detector
 {
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/enums-with-behaviour';
+        return new EnumCaseOrChain();
     }
 
     public function find(Codebase $codebase): array

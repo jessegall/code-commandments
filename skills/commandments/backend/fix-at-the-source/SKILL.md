@@ -157,3 +157,75 @@ Fix at the source
 Every other style rule — model absence with Option, guard at the top, throw named exceptions, seal a
 closed set as an enum — is *fix-at-the-source applied to one shape*. When any of them tempts you to patch
 the place you found the problem, return here: walk back to where the value was born, and fix it there.
+
+## Bad → good
+
+```php
+// Bad
+public function fingerprint(int $base, int $count): string
+{
+    $total = $base;
+
+    for ($i = 0; $i < $count; $i++) {
+        $total += $i * 2;
+    }
+
+    return md5((string) $total);
+}
+
+// Good
+public function checksum(int $base, int $count): string
+{
+    return $this->fingerprint($base, $count);
+}
+```
+
+```php
+// Bad
+public function normalize(array $row): void
+{
+    $this->products->upsert(
+        $row['sku'] ?? '',
+        $row['name'] ?? '',
+        (int) ($row['stock'] ?? 0),
+    );
+}
+
+// Good
+public function persist(ImportRow $row): void
+{
+    $this->products->upsert($row->sku, $row->name, $row->stock);
+}
+```
+
+```php
+// Bad
+public function accumulateFrom(int $start): int
+{
+    $total = $start;
+
+    foreach ($this->entries as $row) {
+        if ($row > 0) {
+            $total += $row * 5;
+        }
+    }
+
+    return $total;
+}
+
+// Good
+public function scoreFrom(int $start, int $weight): int
+{
+    return array_reduce(
+        array_filter($this->entries, static fn (int $row): bool => $row > 0),
+        static fn (int $total, int $row): int => $total + $row * $weight,
+        $start,
+    );
+}
+```
+
+## When it fires
+
+- Copy-pasted code — two+ functions with an identical AST (formatting/comments aside) — `DuplicateFunctionDetector`
+- `?? <empty literal>` filling a required slot (manufactured fake) — `ManufacturedFakeFillDetector`
+- Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone) — `NearDuplicateFunctionDetector`

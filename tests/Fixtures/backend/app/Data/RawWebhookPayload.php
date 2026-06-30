@@ -2,14 +2,15 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Detectors\Backend\AllNullableDataDetector;
+use JesseGall\CodeCommandments\Sins\Backend\AllNullableData;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
 /**
  * Raw view of an incoming webhook — every field nullable for tolerant decoding.
  */
-#[Sinful(AllNullableDataDetector::class)]
+#[Sinful(AllNullableData::class)]
 final class RawWebhookPayload extends Data
 {
     public function __construct(

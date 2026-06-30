@@ -180,3 +180,42 @@ The smell is a **loop over another object's collection** (or a recursive walk of
 that isn't that object — `foreach ($line->children …)`, `containsAggregate($block->left)`. It's working the
 object's internals from the outside. Ask: *does the object I'm walking already hold everything this needs?*
 If yes — and you're reaching past its surface into its structure — that's where the method belongs.
+
+## Bad → good
+
+```php
+// Bad
+public function suspend(Customer $customer, string $reason): void
+{
+    $customer->suspended = true;
+    $customer->suspended_reason = $reason;
+    $customer->save();
+}
+
+// Good
+public function suspendByTelling(Customer $customer, string $reason): void
+{
+    $customer->suspend($reason);
+}
+```
+
+```php
+// Bad
+public function forItem(CatalogItem $item): array
+{
+    return $this->registry->has($item->code)
+        ? $this->registry->get($item->code)->reservedSkus
+        : [];
+}
+
+// Good
+public function forItemDirect(CatalogItem $item): array
+{
+    return $item->reservedSkus();
+}
+```
+
+## When it fires
+
+- Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object — `FeatureEnvyDetector`
+- Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator — `KeyedLookupEnvyDetector`

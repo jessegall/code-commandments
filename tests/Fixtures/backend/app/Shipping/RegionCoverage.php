@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\KeyedLookupEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -19,7 +20,7 @@ final class RegionCoverage
         return 'region coverage via ' . ZoneTable::class;
     }
 
-    #[Sinful(KeyedLookupEnvyDetector::class)]
+    #[Sinful(KeyedLookupEnvy::class)]
     public function covers(Consignment $consignment, string $region): bool
     {
         return $this->zones->lookup($consignment->zoneId)->includes($region);

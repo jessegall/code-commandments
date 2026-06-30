@@ -115,7 +115,13 @@ final class ScribeChain
     public function matching(?string $match): self
     {
         if ($match !== null) {
-            $this->steps = array_values(array_filter($this->steps, static fn (ScribeStep $step): bool => stripos($step->name(), $match) !== false));
+            $this->steps = array_values(array_filter($this->steps, static function (ScribeStep $step) use ($match): bool {
+                if (stripos($step->name(), $match) !== false) {
+                    return true;
+                }
+
+                return $step instanceof DetectorStep && $step->matchesSin($match);
+            }));
         }
 
         return $this;

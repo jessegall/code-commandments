@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
@@ -26,9 +28,9 @@ final class RawRequestInputDetector implements Detector
         'Laravel\\Mcp\\Request',
     ];
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/laravel-idioms';
+        return new RawRequestInput();
     }
 
     public function find(Codebase $codebase): array

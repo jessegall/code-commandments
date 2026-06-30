@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Frontend\DeepDataReach;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
@@ -27,9 +29,9 @@ final class DeepDataReachDetector implements Detector, Repentable
 {
     private const int MIN_TEMPLATE_LINES = 50;
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'frontend/vue-components';
+        return new DeepDataReach();
     }
 
     public function scribe(): ExtractComponentScribe

@@ -8,7 +8,7 @@ defineProps<{ cart: Cart }>();
   <aside class="invoice">
     <p class="invoice__caption">Order summary</p>
 
-    <!-- @sin DeepNestedDetector -->
+    <!-- @sin DeepNested -->
     <section class="invoice__body">
       <article class="invoice__statement">
         <header class="invoice__masthead">

@@ -4,7 +4,7 @@ defineProps<{ column: string }>();
 
 <template>
   <td class="cell">
-    <!-- @sin SwitchCaseDetector -->
+    <!-- @sin SwitchCase -->
     <template v-if="column === 'price'">
       <strong>{{ '$' }}</strong>
       <PriceTag />

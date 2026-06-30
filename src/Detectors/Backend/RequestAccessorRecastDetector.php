@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\RequestAccessorRecast;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
@@ -31,9 +33,9 @@ final class RequestAccessorRecastDetector implements Detector
         'Laravel\\Mcp\\Request',
     ];
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/laravel-idioms';
+        return new RequestAccessorRecast();
     }
 
     public function find(Codebase $codebase): array

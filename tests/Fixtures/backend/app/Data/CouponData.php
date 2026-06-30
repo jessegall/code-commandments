@@ -2,7 +2,9 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DataMethodHintCollisionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DataMethodHintCollision;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -13,7 +15,7 @@ use Spatie\LaravelData\Data;
  *
  * @method static array rules()
  */
-#[Sinful(DataMethodHintCollisionDetector::class)]
+#[Sinful(DataMethodHintCollision::class)]
 final class CouponData extends Data
 {
     public string $code;
@@ -26,5 +28,22 @@ final class CouponData extends Data
             'code' => ['required', 'string'],
             'percentOff' => ['required', 'integer', 'min:1', 'max:100'],
         ];
+    }
+}
+
+/**
+ * A voucher whose `@method` hint describes only the invisible magic `::from()`,
+ * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+ *
+ * @method static static from(string $code)
+ */
+#[Righteous(DataMethodHintCollision::class)]
+final class VoucherData extends Data
+{
+    public string $code;
+
+    public static function fromCode(string $code): static
+    {
+        return new static(code: $code);
     }
 }

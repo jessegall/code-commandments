@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\KeyedLookupEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -16,7 +17,7 @@ final class PriorityCheck
 
     public function __construct(private readonly TierPolicies $policies) {}
 
-    #[Sinful(KeyedLookupEnvyDetector::class)]
+    #[Sinful(KeyedLookupEnvy::class)]
     public function rankOf(OrderTicket $ticket): int
     {
         return $this->policies->for($ticket->tier)->weight;

@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\PositionalTupleReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\PositionalTupleReturn;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class VariantResolver
@@ -13,7 +14,7 @@ final class VariantResolver
      *
      * @return array{0: list<string>, 1: list<string>, 2: list<string>}
      */
-    #[Sinful(PositionalTupleReturnDetector::class)]
+    #[Sinful(PositionalTupleReturn::class)]
     public function reconcile(array $skus, array $known): array
     {
         $matched = array_values(array_intersect($skus, $known));

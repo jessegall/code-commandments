@@ -2,7 +2,9 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\IfElseLadderDetector;
+use JesseGall\CodeCommandments\Sins\Backend\IfElseLadder;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -21,7 +23,7 @@ final class RateLadder
         return $orderCents >= $this->freeThresholdCents && $this->country === 'NL';
     }
 
-    #[Sinful(IfElseLadderDetector::class)]
+    #[Sinful(IfElseLadder::class)]
     public function band(int $grams): string
     {
         if ($grams < 250) {
@@ -33,6 +35,17 @@ final class RateLadder
         } else {
             return 'parcel-l';
         }
+    }
+
+    #[Righteous(IfElseLadder::class)]
+    public function bandByMatch(int $grams): string
+    {
+        return match (true) {
+            $grams < 250 => 'letter',
+            $grams < 2_000 => 'parcel-s',
+            $grams < 10_000 => 'parcel-m',
+            default => 'parcel-l',
+        };
     }
 
     public function isHeavy(int $grams): bool

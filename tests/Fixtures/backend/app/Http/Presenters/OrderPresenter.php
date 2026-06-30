@@ -2,8 +2,9 @@
 
 namespace Shop\Http\Presenters;
 
-use JesseGall\CodeCommandments\Detectors\Backend\EnumValueMatchDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
+use JesseGall\CodeCommandments\Sins\Backend\NewDataObject;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\OrderData;
 use Shop\Models\Order;
@@ -15,7 +16,7 @@ final class OrderPresenter
         return OrderData::from($order);
     }
 
-    #[Sinful(NewDataObjectDetector::class)]
+    #[Sinful(NewDataObject::class)]
     public function legacyPresent(Order $order): OrderData
     {
         return new OrderData(
@@ -31,7 +32,7 @@ final class OrderPresenter
         return $order->status->label();
     }
 
-    #[Sinful(EnumValueMatchDetector::class)]
+    #[Sinful(EnumValueMatch::class)]
     public function badge(Order $order): string
     {
         return match ($order->status->value) {

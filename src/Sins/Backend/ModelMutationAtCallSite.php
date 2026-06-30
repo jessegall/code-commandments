@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Sins\Backend;
+
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Skills\Backend\LaravelIdioms;
+
+final class ModelMutationAtCallSite extends Sin
+{
+    public function __construct()
+    {
+        parent::__construct(
+            name: 'model-mutation-at-call-site',
+            skill: LaravelIdioms::class,
+            description: "Set-property-then-`save()` at a call site (should be an intention method)"
+        );
+    }
+}

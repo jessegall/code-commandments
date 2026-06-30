@@ -2,7 +2,8 @@
 
 namespace Shop\Webhooks;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DeepNestingDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DeepNesting;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,7 +14,7 @@ final class SignatureVerifier
     /**
      * @param  array<string, string>  $headers
      */
-    #[Sinful(DeepNestingDetector::class)]
+    #[Sinful(DeepNesting::class)]
     public function verify(array $headers, string $secret): bool
     {
         foreach ($headers as $name => $value) {

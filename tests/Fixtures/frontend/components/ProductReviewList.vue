@@ -4,7 +4,7 @@ defineProps<{ productId: number }>();
 
 <template>
   <section class="reviews">
-    <!-- @sin DuplicateElementDetector -->
+    <!-- @sin DuplicateElement -->
     <article class="review-card">
       <header class="review-head">
         <Avatar class="size-8" />
@@ -13,7 +13,7 @@ defineProps<{ productId: number }>();
       <p class="review-body">Exactly as described, shipped fast.</p>
     </article>
 
-    <!-- @sin DuplicateElementDetector -->
+    <!-- @sin DuplicateElement -->
     <article class="review-card">
       <header class="review-head">
         <Avatar class="size-8" />
@@ -21,5 +21,16 @@ defineProps<{ productId: number }>();
       </header>
       <p class="review-body">Exactly as described, shipped fast.</p>
     </article>
+
+    <!-- @righteous DuplicateElement -->
+    <template v-for="review in reviews" :key="review.id">
+      <article class="review-card">
+        <header class="review-head">
+          <Avatar class="size-8" />
+          <strong class="review-author">{{ review.author }}</strong>
+        </header>
+        <p class="review-body">{{ review.body }}</p>
+      </article>
+    </template>
   </section>
 </template>

@@ -2,7 +2,9 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\EnumValueMatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
 
@@ -12,7 +14,7 @@ use Shop\Models\Product;
  */
 final class StockBadge
 {
-    #[Sinful(EnumValueMatchDetector::class)]
+    #[Sinful(EnumValueMatch::class)]
     public function colour(Product $product): string
     {
         switch ($product->category->value) {
@@ -25,6 +27,15 @@ final class StockBadge
             default:
                 return 'grey';
         }
+    }
+
+    /**
+     * The mapping lives ON the enum; the call site just asks for the colour.
+     */
+    #[Righteous(EnumValueMatch::class)]
+    public function colourViaEnum(Product $product): string
+    {
+        return $product->category->badgeColour();
     }
 
     public function inStockLabel(Product $product): string

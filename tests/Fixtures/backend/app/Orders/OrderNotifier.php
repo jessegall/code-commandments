@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\EnumValueMatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\Mailer;
 use Shop\Models\Order;
@@ -15,7 +16,7 @@ final class OrderNotifier
 {
     public function __construct(private readonly Mailer $mailer) {}
 
-    #[Sinful(EnumValueMatchDetector::class)]
+    #[Sinful(EnumValueMatch::class)]
     public function notify(Order $order): void
     {
         $this->mailer->send(

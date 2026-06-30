@@ -2,7 +2,8 @@
 
 namespace Shop\Routing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NullableRegistryLookupDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NullableRegistryLookup;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -27,7 +28,7 @@ final class HandlerRegistry
         $this->aliases[$from] = $to;
     }
 
-    #[Sinful(NullableRegistryLookupDetector::class)]
+    #[Sinful(NullableRegistryLookup::class)]
     public function for(string $event): ?callable
     {
         foreach ($this->aliases as $alias => $canonical) {

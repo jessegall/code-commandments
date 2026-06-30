@@ -16,7 +16,7 @@ final class JudgeOptions
     public function __construct(
         public readonly string $path,
         public readonly ?string $skill,
-        public readonly ?string $detector,
+        public readonly ?string $sin,
         public readonly bool $list,
         public readonly array $exclude,
         public readonly ?string $checklist,
@@ -30,7 +30,7 @@ final class JudgeOptions
         $path = '.';
         $pathGiven = false;
         $skill = null;
-        $detector = null;
+        $sin = null;
         $list = false;
         $parallel = 8;
         $benchmark = false;
@@ -54,8 +54,8 @@ final class JudgeOptions
                 $checklist = substr($arg, 12);
             } elseif (str_starts_with($arg, '--skill=')) {
                 $skill = substr($arg, 8);
-            } elseif (str_starts_with($arg, '--detector=')) {
-                $detector = substr($arg, 11);
+            } elseif (str_starts_with($arg, '--sin=')) {
+                $sin = substr($arg, 6);
             } elseif (str_starts_with($arg, '--exclude=')) {
                 $exclude = array_values(array_filter(explode(',', substr($arg, 10))));
             } elseif (! str_starts_with($arg, '--')) {
@@ -64,6 +64,6 @@ final class JudgeOptions
             }
         }
 
-        return new self(rtrim($path, '/'), $skill, $detector, $list, $exclude, $checklist, $parallel, $benchmark, $pathGiven);
+        return new self(rtrim($path, '/'), $skill, $sin, $list, $exclude, $checklist, $parallel, $benchmark, $pathGiven);
     }
 }

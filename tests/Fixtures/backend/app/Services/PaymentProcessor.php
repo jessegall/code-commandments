@@ -2,19 +2,20 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Sins\Backend\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
+use JesseGall\CodeCommandments\Sins\Backend\GenericException;
+use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
+
 use Illuminate\Support\Facades\Log;
-use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\MessageAtThrowDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class PaymentProcessor
 {
-    #[Sinful(ContainerReachDetector::class)]
-    #[Sinful(GenericExceptionDetector::class)]
-    #[Sinful(FacadeCallDetector::class)]
-    #[Sinful(MessageAtThrowDetector::class)]
+    #[Sinful(ContainerReach::class)]
+    #[Sinful(GenericException::class)]
+    #[Sinful(FacadeCall::class)]
+    #[Sinful(MessageAtThrow::class)]
     public function charge(string $token, int $amountCents): bool
     {
         $gateway = app(PaymentGatewayRegistry::class)->get('default');
@@ -28,7 +29,7 @@ final class PaymentProcessor
         return $gateway->send($token, $amountCents);
     }
 
-    #[Sinful(ContainerReachDetector::class)]
+    #[Sinful(ContainerReach::class)]
     public function capture(int $amountCents): void
     {
         $gateway = resolve(PaymentGatewayRegistry::class)->get('default');

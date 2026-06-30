@@ -2,7 +2,8 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Support\ReportFile;
 
@@ -13,7 +14,7 @@ use Shop\Support\ReportFile;
  */
 final class ReportArchiver
 {
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function archive(ReportFile $file): void
     {
         $file->name = 'archived-' . $file->name;

@@ -134,8 +134,97 @@ Exceptions
 - [ ] Failures are absorbed at ONE explicit boundary, and that absorption LOGS — it is never silent.
 ```
 
+## Bad → good
+
+```php
+// Bad
+public function carrierName(Shipment $shipment): string
+{
+    return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
+}
+
+// Good
+public function carrierNameNamed(Shipment $shipment): string
+{
+    return $shipment->carrier?->displayName()
+        ?? throw CarrierMissing::for($shipment->id);
+}
+```
+
+```php
+// Bad
+public function carrierName(Shipment $shipment): string
+{
+    return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
+}
+
+// Good
+public function carrierNameOrFail(Shipment $shipment): string
+{
+    $carrier = $shipment->carrier ?? throw CarrierMissing::for($shipment->id);
+
+    return $carrier->displayName();
+}
+```
+
+```php
+// Bad
+public function forecast(string $city): array
+{
+    try {
+        $body = $this->http->get("https://weather.test/{$city}");
+
+        return (array) json_decode($body, true);
+    } catch (\Throwable $e) {
+        return [];
+    }
+}
+
+// Good
+public function forecastOrThrow(string $city): array
+{
+    try {
+        $body = $this->http->get("https://weather.test/{$city}");
+
+        return (array) json_decode($body, true);
+    } catch (\Throwable $e) {
+        report($e);
+
+        throw $e;
+    }
+}
+```
+
+```php
+// Bad
+public function upload(string $path): void
+{
+    try {
+        $this->pushToBucket($path);
+    } catch (\Throwable $storageError) {
+        throw new IntegrationException($path);
+    }
+}
+
+// Good
+public function uploadChecked(string $path): void
+{
+    try {
+        $this->pushToBucket($path);
+    } catch (\Throwable $storageError) {
+        throw new IntegrationException($path, previous: $storageError);
+    }
+}
+```
+
+## When it fires
+
+- `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type — `GenericExceptionDetector`
+- Message string built at the throw site (no domain values / named factory) — `MessageAtThrowDetector`
+- `catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow) — `SwallowCatchDetector`
+- Wrapping a caught exception without passing it as `previous`/cause — `WrappingWithoutCauseDetector`
+
 ## Relationship to the other skills
 
-- Parent move: [`fix-at-the-source`](../fix-at-the-source/SKILL.md) — surface the failure where it's born.
-- [`absence`](../absence/SKILL.md) routes "missing = broken state" here for the *how* of throwing; this
-  skill routes "swallowed failure became an empty value" back there as the inverse smell.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — surface the failure where it's born.
+- [`backend/absence`](../absence/SKILL.md) — absence routes "missing = broken state" here for the *how* of throwing; this skill routes "swallowed failure became an empty value" back there as the inverse smell.

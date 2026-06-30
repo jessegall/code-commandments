@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -12,7 +13,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class BranchGuard
 {
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function permits(RoutingContext $context, string $branch): bool
     {
         return in_array($branch, $context->descriptor->handleNames(), true);

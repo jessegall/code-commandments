@@ -2,7 +2,8 @@
 
 namespace Shop\Checkout;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MaskedInvariantDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -29,7 +30,7 @@ final class CouponDesk
         }
     }
 
-    #[Sinful(MaskedInvariantDetector::class)]
+    #[Sinful(MaskedInvariant::class)]
     public function honours(string $coupon): bool
     {
         return $this->snapshot?->qualifiesFor($coupon) ?? false;

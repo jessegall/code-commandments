@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
@@ -25,9 +27,9 @@ final class DeNulledFinderDetector implements Detector
 {
     private const int TRAVELS = 2;
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/absence';
+        return new DeNulledFinder();
     }
 
     public function find(Codebase $codebase): array

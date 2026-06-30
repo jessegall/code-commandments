@@ -98,19 +98,6 @@ $status = AssistantTurnState::for($conversation->id, $turnId)->snapshot();      
 - For plain shared structures, the package ships `ConcurrentMap / Set / Counter / Queue / List` — reach
   for those instead of hand-rolling a wrapped array.
 
-## Bad → good
-
-```php
-// Bad — cache plumbing + a hand-built key smeared across sites, and a lost-update race
-$key = "ai-turn:{$conversationId}:{$turnId}";
-$state = Cache::get($key) ?? ['status' => 'idle'];
-$state['status'] = 'pending';              // another worker can interleave here
-Cache::put($key, $state, 600);
-
-// Good — a domain object behind ::for(); the write is atomic, the key lives in one place
-AssistantTurnState::for($conversationId, $turnId)->markPending();
-```
-
 ## Checklist
 
 ```
@@ -122,9 +109,41 @@ Concurrent state
 - [ ] No `$c->count++` / `$c->items[] = …` on the handle (use a callback or a ConcurrentCounter/List).
 ```
 
+## Bad → good
+
+```php
+// Bad
+final class LiveOrderTracker extends Concurrent
+{
+    public string $stage = 'received';
+
+    public function advance(string $stage): void
+    {
+        $this->stage = $stage;
+    }
+}
+
+// Good
+final class LiveOrderStage
+{
+    public string $stage = 'received';
+
+    public static function for(string $id): Concurrent
+    {
+        return Concurrent::for(new self());
+    }
+
+    public function advance(string $stage): void
+    {
+        $this->stage = $stage;
+    }
+}
+```
+
+## When it fires
+
+- Class `extends Concurrent` instead of composing `Concurrent<self>` — `ConcurrentSubclassDetector`
+
 ## Relationship to the other skills
 
-- The `::for(...)` factory is the same named-construction vocabulary as [`exceptions`](../exceptions/SKILL.md)
-  (`Thing::for($x)`) and the role factories — "the handle/instance *for* this identity".
-- Behaviour-on-the-object (mark methods, not `->set('status')`) is tell-don't-ask; the cache key in one
-  factory is single-source-of-truth — both the same instincts the rest of the guide enforces.
+- [`backend/exceptions`](../exceptions/SKILL.md) — "the handle/instance *for* this identity".

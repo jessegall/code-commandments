@@ -2,7 +2,9 @@
 
 namespace Shop\Integrations;
 
-use JesseGall\CodeCommandments\Detectors\Backend\SwallowCatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\HttpClient;
 
@@ -18,7 +20,7 @@ final class WeatherClient
     /**
      * @return array<string, mixed>
      */
-    #[Sinful(SwallowCatchDetector::class)]
+    #[Sinful(SwallowCatch::class)]
     public function forecast(string $city): array
     {
         try {
@@ -27,6 +29,23 @@ final class WeatherClient
             return (array) json_decode($body, true);
         } catch (\Throwable $e) {
             return [];
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[Righteous(SwallowCatch::class)]
+    public function forecastOrThrow(string $city): array
+    {
+        try {
+            $body = $this->http->get("https://weather.test/{$city}");
+
+            return (array) json_decode($body, true);
+        } catch (\Throwable $e) {
+            report($e);
+
+            throw $e;
         }
     }
 

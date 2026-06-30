@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
@@ -16,9 +18,9 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class SwallowCatchDetector implements Detector
 {
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/exceptions';
+        return new SwallowCatch();
     }
 
     public function find(Codebase $codebase): array

@@ -2,7 +2,8 @@
 
 namespace Shop\Support;
 
-use JesseGall\CodeCommandments\Detectors\Backend\RedundantElseDetector;
+use JesseGall\CodeCommandments\Sins\Backend\RedundantElse;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class AccessLevel
 {
-    #[Sinful(RedundantElseDetector::class)]
+    #[Sinful(RedundantElse::class)]
     public function resolve(bool $authenticated, int $role): int
     {
         if (! $authenticated) {

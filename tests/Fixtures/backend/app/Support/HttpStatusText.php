@@ -2,7 +2,8 @@
 
 namespace Shop\Support;
 
-use JesseGall\CodeCommandments\Detectors\Backend\IfElseLadderDetector;
+use JesseGall\CodeCommandments\Sins\Backend\IfElseLadder;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class HttpStatusText
 {
-    #[Sinful(IfElseLadderDetector::class)]
+    #[Sinful(IfElseLadder::class)]
     public function describe(int $status): string
     {
         if ($status >= 500) {

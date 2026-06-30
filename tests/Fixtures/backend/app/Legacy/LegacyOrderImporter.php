@@ -2,10 +2,12 @@
 
 namespace Shop\Legacy;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\BloatedDocblockDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\DeNulledFinderDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\ManufacturedFakeFillDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
+use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
+use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
+use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 
@@ -18,12 +20,12 @@ use Shop\Models\Customer;
  *
  * TODO: remove once the legacy importer is fully decommissioned.
  */
-#[Sinful(ArchaeologyCommentDetector::class)]
-#[Sinful(BloatedDocblockDetector::class)]
+#[Sinful(ArchaeologyComment::class)]
+#[Sinful(BloatedDocblock::class)]
 final class LegacyOrderImporter
 {
     // previously this returned an array, now it returns a Customer or null
-    #[Sinful(DeNulledFinderDetector::class)]
+    #[Sinful(DeNulledFinder::class)]
     public function findCustomer(string $email): ?Customer
     {
         // loop over all customers and find the matching one
@@ -33,7 +35,7 @@ final class LegacyOrderImporter
     /**
      * @param  array<int, array<string, mixed>>  $rows
      */
-    #[Sinful(ManufacturedFakeFillDetector::class)]
+    #[Sinful(ManufacturedFakeFill::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {
@@ -50,5 +52,17 @@ final class LegacyOrderImporter
     public function emailKnown(string $email): bool
     {
         return $this->findCustomer($email)?->exists ?? false;
+    }
+}
+
+/**
+ * Imports legacy orders from the old CSV export.
+ */
+#[Righteous(BloatedDocblock::class)]
+final class TidyOrderImporter
+{
+    public function import(string $email): void
+    {
+        Customer::query()->where('email', $email)->firstOrFail();
     }
 }

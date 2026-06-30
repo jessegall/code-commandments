@@ -36,7 +36,11 @@ final class SinfulMarkerVerifier implements MarkerVerifier
     private function check(Codebase $codebase, Detector $detector, array $markers): DetectorResult
     {
         $id = $detector::class;
-        $sinful = array_values(array_filter($markers, fn (Marker $m): bool => $m->detector === $id));
+        // A marker names this detector's SIN (`#[Sinful(ArrayBag::class)]`) — or, still,
+        // the detector itself — by class. Match either, so the sin-class markers and any
+        // legacy detector-class ones both resolve.
+        $names = [$id, $detector->sin()::class];
+        $sinful = array_values(array_filter($markers, static fn (Marker $m): bool => in_array($m->detector, $names, true)));
 
         $unexpected = [];
         $hit = [];

@@ -11,12 +11,12 @@ use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
- * `commandments judge [path] [--skill=NAME] [--detector=NAME] [--changes] [--branch[=BASE]] [--parallel=N] [--list]`
+ * `commandments judge [path] [--skill=NAME] [--sin=NAME] [--changes] [--branch[=BASE]] [--parallel=N] [--list]`
  *
  * Scans a path, runs the Sin Detectors, and prints each finding as
  * `file:line  Class::method`, grouped by the SKILL that teaches the fix — so an
  * agent can read one skill and resolve the whole group. Filter to a skill (group)
- * or a single detector to scope a fixing pass.
+ * or a single sin (`--sin=array-bag`) to scope a fixing pass.
  *
  * It orchestrates four collaborators: a {@see Scope} (resolved from the flags)
  * decides which files to report on; {@see Codebase} parses the path; the
@@ -47,10 +47,10 @@ final class Judge
             return 2;
         }
 
-        $detectors = $this->select($options->skill, $options->detector);
+        $detectors = $this->select($options->skill, $options->sin);
 
         if ($detectors === []) {
-            fwrite(STDERR, "No detector matched --skill={$options->skill} --detector={$options->detector}\n");
+            fwrite(STDERR, "No detector matched --skill={$options->skill} --sin={$options->sin}\n");
 
             return 2;
         }
@@ -192,7 +192,7 @@ final class Judge
         $bySkill = [];
 
         foreach (Catalog::all() as $detector) {
-            $bySkill[$detector->skill()][] = $this->shortName($detector);
+            $bySkill[$detector->sin()->slug()][] = $this->shortName($detector);
         }
 
         ksort($bySkill);
@@ -211,14 +211,14 @@ final class Judge
     /**
      * @return list<Detector>
      */
-    private function select(?string $skill, ?string $detector): array
+    private function select(?string $skill, ?string $sin): array
     {
-        return array_values(array_filter(Catalog::all(), function (Detector $candidate) use ($skill, $detector): bool {
-            if ($skill !== null && $candidate->skill() !== $skill) {
+        return array_values(array_filter(Catalog::all(), static function (Detector $candidate) use ($skill, $sin): bool {
+            if ($skill !== null && $candidate->sin()->slug() !== $skill) {
                 return false;
             }
 
-            return $detector === null || stripos($this->shortName($candidate), $detector) !== false;
+            return $sin === null || $candidate->sin()->matches($sin);
         }));
     }
 

@@ -2,7 +2,8 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\CeremonyDocblockDetector;
+use JesseGall\CodeCommandments\Sins\Backend\CeremonyDocblock;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class InvoiceNumberFormatter
@@ -13,7 +14,7 @@ final class InvoiceNumberFormatter
      * @param  int  $sequence
      * @return  string
      */
-    #[Sinful(CeremonyDocblockDetector::class)]
+    #[Sinful(CeremonyDocblock::class)]
     public function format(int $sequence): string
     {
         return sprintf('%s-%06d', $this->prefix, $sequence);

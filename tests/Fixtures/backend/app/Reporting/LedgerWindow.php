@@ -2,7 +2,9 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MaskedInvariantDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -21,10 +23,24 @@ final class LedgerWindow
         $this->period = new Period($from, $to);
     }
 
-    #[Sinful(MaskedInvariantDetector::class)]
+    #[Sinful(MaskedInvariant::class)]
     public function covers(string $date): bool
     {
         return $this->period?->includes($date) ?? false;
+    }
+
+    /**
+     * Resolve-or-throw: the invariant ("focus() ran first") is asserted, not papered
+     * over with a fake default for a state that can only be a bug.
+     */
+    #[Righteous(MaskedInvariant::class)]
+    public function coversOrFail(string $date): bool
+    {
+        if ($this->period === null) {
+            throw LedgerNotFocused::beforeCovers();
+        }
+
+        return $this->period->includes($date);
     }
 
     public function label(): string

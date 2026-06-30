@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -14,7 +15,7 @@ final class DelayedLegCollector
     /**
      * @return list<string>
      */
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function collect(Itinerary $itinerary): array
     {
         $delayed = [];

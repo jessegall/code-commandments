@@ -2,7 +2,9 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NestedTernaryDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NestedTernary;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class GradeCalculator
@@ -16,9 +18,23 @@ final class GradeCalculator
         return $passed ? $this->band($score) : 'fail';
     }
 
-    #[Sinful(NestedTernaryDetector::class)]
+    #[Sinful(NestedTernary::class)]
     private function band(int $score): string
     {
         return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
+    }
+
+    /**
+     * The same decision as a `match (true)` — each band reads on its own line, no
+     * precedence trap.
+     */
+    #[Righteous(NestedTernary::class)]
+    private function bandMatched(int $score): string
+    {
+        return match (true) {
+            $score >= 90 => 'A',
+            $score >= 75 => 'B',
+            default => 'C',
+        };
     }
 }

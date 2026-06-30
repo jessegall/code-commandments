@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NearDuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class RouteCostEstimator
@@ -42,7 +43,7 @@ final class RouteCostEstimator
         return implode(' > ', array_map(static fn (int $km): string => $km . 'km', $top));
     }
 
-    #[Sinful(NearDuplicateFunctionDetector::class)]
+    #[Sinful(NearDuplicateFunction::class)]
     public function estimateFrom(int $surcharge): int
     {
         $cost = $surcharge;

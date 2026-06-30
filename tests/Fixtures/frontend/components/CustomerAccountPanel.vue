@@ -25,7 +25,7 @@ defineProps<{ customer: Customer }>();
     </div>
 
     <!-- A cluster: customer.billing read in three fields → extract <AccountBilling :billing>. -->
-    <!-- @sin DeepDataReachDetector -->
+    <!-- @sin DeepDataReach -->
     <div class="account__billing">
       <h2 class="account__section">Billing</h2>
       <p class="account__plan">{{ customer.billing.plan }}</p>
@@ -36,7 +36,7 @@ defineProps<{ customer: Customer }>();
     <div class="account__preferences">
       <h2 class="account__section">Preferences</h2>
       <ul class="account__prefs">
-        <!-- @sin ControlFlowOnElementDetector -->
+        <!-- @sin ControlFlowOnElement -->
         <li v-for="pref in customer.preferences" :key="pref.id" class="account__pref">
           <span class="account__pref-name">{{ pref.label }}</span>
           <span class="account__pref-value">{{ pref.enabled }}</span>

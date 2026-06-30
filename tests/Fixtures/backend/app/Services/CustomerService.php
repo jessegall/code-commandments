@@ -2,24 +2,25 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
+use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
+use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use JesseGall\CodeCommandments\Detectors\Backend\DeNulledFinderDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
 
 final class CustomerService
 {
-    #[Sinful(DeNulledFinderDetector::class)]
+    #[Sinful(DeNulledFinder::class)]
     public function find(string $email): ?Customer
     {
         return Customer::query()->where('email', $email)->first();
     }
 
-    #[Sinful(RawRequestInputDetector::class)]
-    #[Sinful(FacadeCallDetector::class)]
+    #[Sinful(RawRequestInput::class)]
+    #[Sinful(FacadeCall::class)]
     public function greeting(Request $request): string
     {
         $customer = $this->find($request->input('email'));

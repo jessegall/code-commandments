@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\SwallowCatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class OrderSync
 {
-    #[Sinful(SwallowCatchDetector::class)]
+    #[Sinful(SwallowCatch::class)]
     public function push(int $orderId): ?string
     {
         try {

@@ -2,7 +2,8 @@
 
 namespace Shop\Support;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MatchDefaultReturnsNullDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -26,7 +27,7 @@ final class FeatureGate
         return $this->environment === 'production';
     }
 
-    #[Sinful(MatchDefaultReturnsNullDetector::class)]
+    #[Sinful(MatchDefaultReturnsNull::class)]
     public function enabled(string $flag): bool
     {
         return match ($flag) {

@@ -2,7 +2,8 @@
 
 namespace Shop\Shipping;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MatchDefaultReturnsNullDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -14,7 +15,7 @@ final class ZoneResolver
     /**
      * @return array<int, string>
      */
-    #[Sinful(MatchDefaultReturnsNullDetector::class)]
+    #[Sinful(MatchDefaultReturnsNull::class)]
     public function rates(string $country): array
     {
         return match ($country) {

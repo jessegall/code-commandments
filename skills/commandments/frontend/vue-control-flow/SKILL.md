@@ -68,3 +68,33 @@ The element reads as one thing (content + styling), the `<template>` as another
 (when / how-many). `repent` auto-wraps these — a `v-for` takes its `:key` along.
 (`v-show` is exempt: it toggles `display` on a real node and can't live on a
 `<template>`, which renders nothing.)
+
+## Bad → good
+
+```vue
+// Bad
+<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+
+// Good
+<template v-if="status === 'paid'">
+  <span class="badge badge-green">Paid</span>
+</template>
+```
+
+```vue
+// Bad
+<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+
+// Good
+<SwitchCase :value="status">
+  <template #paid><span class="badge badge-green">Paid</span></template>
+  <template #pending><span class="badge badge-amber">Pending</span></template>
+  <template #refunded><span class="badge badge-grey">Refunded</span></template>
+  <template #default><span class="badge">Unknown</span></template>
+</SwitchCase>
+```
+
+## When it fires
+
+- `v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>` — `ControlFlowOnElementDetector`
+- A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`) — `SwitchCaseDetector`

@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Skills;
 /**
  * Renders the auto-managed "Skills — load before you work" block injected into a
  * consumer's CLAUDE.md. The prose is fixed; the two skill lists are generated from
- * {@see Skills}, so adding or re-tiering a skill updates the briefing.
+ * {@see Catalog}, so adding or re-tiering a skill updates the briefing.
  */
 final class ClaudeSection
 {
@@ -101,6 +101,6 @@ final class ClaudeSection
 
     private static function bullets(Tier $tier): string
     {
-        return implode("\n", array_map(static fn (Skill $skill): string => $skill->bullet(), Skills::inTier($tier)));
+        return implode("\n", array_map(static fn (Skill $skill): string => $skill->bullet(), Catalog::inTier($tier)));
     }
 }

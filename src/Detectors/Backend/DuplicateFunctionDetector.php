@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
@@ -23,9 +25,9 @@ final class DuplicateFunctionDetector implements Detector
      */
     private const int MIN_BODY_NODES = 12;
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/fix-at-the-source';
+        return new DuplicateFunction();
     }
 
     public function find(Codebase $codebase): array

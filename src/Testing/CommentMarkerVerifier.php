@@ -33,10 +33,13 @@ final class CommentMarkerVerifier implements MarkerVerifier
 
         foreach ($detectors as $detector) {
             $name = (new \ReflectionClass($detector))->getShortName();
+            // A `<!-- @sin -->` comment names this detector's SIN (`@sin SwitchCase`) or,
+            // still, the detector (`@sin SwitchCaseDetector`). Accept either short name.
+            $names = [$name, (new \ReflectionClass($detector->sin()))->getShortName()];
 
             $marked = [];
             foreach ($codebase->components() as $component) {
-                $this->collectMarked($component->template, $component, $name, $marked);
+                $this->collectMarked($component->template, $component, $names, $marked);
             }
 
             $flagged = array_map(static fn ($match): string => $match->location(), $detector->find($codebase));
@@ -52,12 +55,13 @@ final class CommentMarkerVerifier implements MarkerVerifier
     }
 
     /**
-     * Record the location of every element preceded (as a sibling) by a
-     * `@sin {$detector}` comment.
+     * Record the location of every element preceded (as a sibling) by a `@sin` comment
+     * naming any of $names (the detector's sin or the detector).
      *
+     * @param  list<string>  $names
      * @param  list<string>  $marked
      */
-    private function collectMarked(Element $node, Sfc $component, string $detector, array &$marked): void
+    private function collectMarked(Element $node, Sfc $component, array $names, array &$marked): void
     {
         $pending = [];
 
@@ -73,14 +77,14 @@ final class CommentMarkerVerifier implements MarkerVerifier
             }
 
             if ($child->isElement()) {
-                if (in_array($detector, $pending, true)) {
+                if (array_intersect($names, $pending) !== []) {
                     $marked[] = $component->path . ':' . $child->line;
                 }
 
                 $pending = [];
             }
 
-            $this->collectMarked($child, $component, $detector, $marked);
+            $this->collectMarked($child, $component, $names, $marked);
         }
     }
 }

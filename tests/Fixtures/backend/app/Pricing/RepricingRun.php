@@ -2,7 +2,8 @@
 
 namespace Shop\Pricing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ScratchStateRestoreDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -17,7 +18,7 @@ final class RepricingRun
     /** @var list<string> */
     private array $trail = [];
 
-    #[Sinful(ScratchStateRestoreDetector::class)]
+    #[Sinful(ScratchStateRestore::class)]
     public function revalue(string $basis): void
     {
         $previous = $this->basis;

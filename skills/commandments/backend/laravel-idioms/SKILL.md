@@ -195,11 +195,152 @@ Laravel idioms
 - [ ] No bare update([...]) / set-then-save() at a call site — an intention-revealing method on the model.
 ```
 
+## Bad → good
+
+```php
+// Bad
+public function search(array $filters): array
+{
+    $perPage = config('shop.catalog.per_page');
+
+    // used to filter in PHP, moved to the query builder in v3
+    $term = $filters['q'];
+    $sort = $filters['sort'];
+
+    return $this->run($term, $sort, $perPage);
+}
+
+// Good
+public function searchTop(string $term, string $sort): array
+{
+    return $this->run($term, $sort, $this->settings->perPage);
+}
+```
+
+```php
+// Bad
+public function pay(Request $request): array
+{
+    $processor = app(PaymentProcessor::class);
+    $token = $request->input('token');
+
+    $result = $processor->charge($token, (int) $request->input('amount'));
+
+    return ['ok' => $result];
+}
+
+// Good
+public function payClean(PaymentProcessor $processor, string $token, int $amount): array
+{
+    return ['ok' => $processor->charge($token, $amount)];
+}
+```
+
+```php
+// Bad
+public function notify(string $email, string $type): void
+{
+    $template = config('shop.templates.' . $type);
+
+    Mail::raw($template, function ($message) use ($email) {
+        $message->to($email);
+    });
+}
+
+// Good
+public function notifyClean(string $email, string $template): void
+{
+    $this->mailer->raw($template, function ($message) use ($email) {
+        $message->to($email);
+    });
+}
+```
+
+```php
+// Bad
+public function verify(Customer $customer): void
+{
+    $customer->update([
+        'verified' => true,
+        'verified_at' => $this->now,
+    ]);
+}
+
+// Good
+public function verifyNamed(Customer $customer): void
+{
+    $customer->markVerified($this->now);
+}
+```
+
+```php
+// Bad
+public function suspend(Customer $customer, string $reason): void
+{
+    $customer->suspended = true;
+    $customer->suspended_reason = $reason;
+    $customer->save();
+}
+
+// Good
+public function suspendNamed(Customer $customer, string $reason): void
+{
+    $customer->suspend($reason);
+}
+```
+
+```php
+// Bad
+public function handle(Request $request): string
+{
+    $id = $request->get('id');
+    $name = $request->get('name');
+
+    return $id . ':' . $name;
+}
+
+// Good
+public function handleTyped(Request $request): string
+{
+    $id = $request->string('id');
+    $name = $request->string('name');
+
+    return $id . ':' . $name;
+}
+```
+
+```php
+// Bad
+public function handle(Request $request): string
+{
+    $nodeId = (string) $request->string('nodeId');
+    $direction = (string) $request->string('direction');
+
+    return $nodeId.'->'.$direction;
+}
+
+// Good
+public function handleNamed(MoveNodeRequest $request): string
+{
+    $nodeId = $request->nodeId();
+    $direction = $request->direction();
+
+    return $nodeId.'->'.$direction;
+}
+```
+
+## When it fires
+
+- `config('…')` read inside a class — `ConfigReadDetector`
+- `app()`/`resolve()` reach inside a container-resolved class — `ContainerReachDetector`
+- Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
+- Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
+- Set-property-then-`save()` at a call site (should be an intention method) — `ModelMutationAtCallSiteDetector`
+- Raw `->input()/->get()/->query()` on a Request — `RawRequestInputDetector`
+- Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` instead of a named getter on a request class — `RequestAccessorRecastDetector`
+
 ## Relationship to the other skills
 
-- [`value-objects`](../value-objects/SKILL.md) — a typed request getter / typed bag read returns the typed
-  value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge.
-- [`fix-at-the-source`](../fix-at-the-source/SKILL.md) — read input typed at the boundary so nothing
-  downstream re-coerces a `mixed`.
-- [`absence`](../absence/SKILL.md) — a typed accessor for an optional field still answers "can this be
-  missing?" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`.
+- [`backend/value-objects`](../value-objects/SKILL.md) — a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — read input typed at the boundary so nothing downstream re-coerces a `mixed`.
+- [`backend/absence`](../absence/SKILL.md) — a typed accessor for an optional field still answers "can this be missing?" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`.

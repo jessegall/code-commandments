@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ManualHydrationLoopDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ManualHydrationLoop;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
 
@@ -16,7 +17,7 @@ final class ProductImportMapper
      * @param  array<int, array<string, mixed>>  $rows
      * @return array<int, ProductData>
      */
-    #[Sinful(ManualHydrationLoopDetector::class)]
+    #[Sinful(ManualHydrationLoop::class)]
     public function map(array $rows): array
     {
         $products = [];

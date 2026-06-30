@@ -2,7 +2,8 @@
 
 namespace Shop\Integrations;
 
-use JesseGall\CodeCommandments\Detectors\Backend\RawDecodedArrayReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\RawDecodedArrayReturn;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -16,7 +17,7 @@ final class InventoryFeedClient
     /**
      * @return array<string, mixed>
      */
-    #[Sinful(RawDecodedArrayReturnDetector::class)]
+    #[Sinful(RawDecodedArrayReturn::class)]
     public function snapshot(): array
     {
         $path = rtrim($this->feedDirectory, '/') . '/inventory.json';

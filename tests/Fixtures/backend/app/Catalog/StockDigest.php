@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -47,7 +48,7 @@ final class StockDigest
         return array_sum($this->movements);
     }
 
-    #[Sinful(DuplicateFunctionDetector::class)]
+    #[Sinful(DuplicateFunction::class)]
     public function fingerprint(int $base, int $count): string
     {
         $total = $base;

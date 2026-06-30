@@ -2,7 +2,8 @@
 
 namespace Shop\Integrations;
 
-use JesseGall\CodeCommandments\Detectors\Backend\WrappingWithoutCauseDetector;
+use JesseGall\CodeCommandments\Sins\Backend\WrappingWithoutCause;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\HttpClient;
 use Shop\Exceptions\IntegrationException;
@@ -15,7 +16,7 @@ final class CourierApi
 {
     public function __construct(private readonly HttpClient $http) {}
 
-    #[Sinful(WrappingWithoutCauseDetector::class)]
+    #[Sinful(WrappingWithoutCause::class)]
     public function track(string $trackingCode): string
     {
         try {

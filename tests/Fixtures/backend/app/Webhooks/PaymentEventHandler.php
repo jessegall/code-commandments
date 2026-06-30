@@ -2,11 +2,12 @@
 
 namespace Shop\Webhooks;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\GenericExceptionDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\InlineThrowDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\MessageAtThrowDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
+use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
+use JesseGall\CodeCommandments\Sins\Backend\GenericException;
+use JesseGall\CodeCommandments\Sins\Backend\InlineThrow;
+use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -18,11 +19,11 @@ final class PaymentEventHandler
     /**
      * @param  array<string, mixed>  $event
      */
-    #[Sinful(ArchaeologyCommentDetector::class)]
-    #[Sinful(ArrayBagDetector::class)]
-    #[Sinful(InlineThrowDetector::class)]
-    #[Sinful(GenericExceptionDetector::class)]
-    #[Sinful(MessageAtThrowDetector::class)]
+    #[Sinful(ArchaeologyComment::class)]
+    #[Sinful(ArrayBag::class)]
+    #[Sinful(InlineThrow::class)]
+    #[Sinful(GenericException::class)]
+    #[Sinful(MessageAtThrow::class)]
     public function handle(array $event): void
     {
         // previously this lived inline in the StripeController

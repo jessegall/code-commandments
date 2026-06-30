@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
@@ -16,9 +18,9 @@ final class ArchaeologyCommentDetector implements Detector
 {
     private const string PATTERN = '/\b(previously|used to|formerly|originally|refactored|renamed|moved (from|to)|changed (from|to)|no longer|now (it|we|returns)|was extracted)\b/i';
 
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'backend/documentation';
+        return new ArchaeologyComment();
     }
 
     public function find(Codebase $codebase): array

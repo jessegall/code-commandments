@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ScratchStateRestoreDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -14,7 +15,7 @@ final class CursorSweep
 {
     private int $cursor = 0;
 
-    #[Sinful(ScratchStateRestoreDetector::class)]
+    #[Sinful(ScratchStateRestore::class)]
     public function sweep(int $start, int $end): int
     {
         $saved = $this->cursor;

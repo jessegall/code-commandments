@@ -2,7 +2,9 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NearDuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -36,7 +38,7 @@ final class WeightAggregator
         return $buckets;
     }
 
-    #[Sinful(NearDuplicateFunctionDetector::class)]
+    #[Sinful(NearDuplicateFunction::class)]
     public function accumulateFrom(int $start): int
     {
         $total = $start;
@@ -48,5 +50,19 @@ final class WeightAggregator
         }
 
         return $total;
+    }
+
+    /**
+     * The duplicated scorers collapsed into one parameterised pass — the per-entry
+     * weight is an argument, so there is no rhyming twin to extract.
+     */
+    #[Righteous(NearDuplicateFunction::class)]
+    public function scoreFrom(int $start, int $weight): int
+    {
+        return array_reduce(
+            array_filter($this->entries, static fn (int $row): bool => $row > 0),
+            static fn (int $total, int $row): int => $total + $row * $weight,
+            $start,
+        );
     }
 }

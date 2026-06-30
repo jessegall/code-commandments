@@ -2,7 +2,8 @@
 
 namespace Shop\Webhooks;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DataClump;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class OrderFeedPublisher
@@ -17,7 +18,7 @@ final class OrderFeedPublisher
         $this->pending[] = $payload;
     }
 
-    #[Sinful(DataClumpDetector::class)]
+    #[Sinful(DataClump::class)]
     public function publish(string $shopId, string $userId, string $channelId): int
     {
         $sent = count($this->pending);

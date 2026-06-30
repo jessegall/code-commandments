@@ -12,12 +12,12 @@ defineProps<{ orderId: number; currency: string }>();
       </tr>
     </thead>
     <tbody>
-      <!-- @sin DuplicateElementDetector -->
+      <!-- @sin DuplicateElement -->
       <tr class="line-item">
         <td class="line-item__name">Sample product</td>
         <td class="line-item__qty">1</td>
       </tr>
-      <!-- @sin DuplicateElementDetector -->
+      <!-- @sin DuplicateElement -->
       <tr class="line-item">
         <td class="line-item__name">Sample product</td>
         <td class="line-item__qty">1</td>

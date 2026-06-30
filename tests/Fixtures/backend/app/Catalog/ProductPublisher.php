@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\MassUpdateAtCallSiteDetector;
+use JesseGall\CodeCommandments\Sins\Backend\MassUpdateAtCallSite;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
 
@@ -12,7 +13,7 @@ use Shop\Models\Product;
  */
 final class ProductPublisher
 {
-    #[Sinful(MassUpdateAtCallSiteDetector::class)]
+    #[Sinful(MassUpdateAtCallSite::class)]
     public function publish(Product $product): void
     {
         $product->update([

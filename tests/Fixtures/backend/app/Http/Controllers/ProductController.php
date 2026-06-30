@@ -2,9 +2,10 @@
 
 namespace Shop\Http\Controllers;
 
+use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use JesseGall\CodeCommandments\Detectors\Backend\RawRequestInputDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateProductRequest;
 use Shop\Models\Product;
@@ -19,7 +20,7 @@ class ProductController extends Controller
         return $this->products->findOrFail($id);
     }
 
-    #[Sinful(RawRequestInputDetector::class)]
+    #[Sinful(RawRequestInput::class)]
     public function search(Request $request): array
     {
         $term = $request->input('q');

@@ -2,7 +2,9 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\WrappingWithoutCauseDetector;
+use JesseGall\CodeCommandments\Sins\Backend\WrappingWithoutCause;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Exceptions\IntegrationException;
 
@@ -12,13 +14,23 @@ use Shop\Exceptions\IntegrationException;
  */
 final class ExportUploader
 {
-    #[Sinful(WrappingWithoutCauseDetector::class)]
+    #[Sinful(WrappingWithoutCause::class)]
     public function upload(string $path): void
     {
         try {
             $this->pushToBucket($path);
         } catch (\Throwable $storageError) {
             throw new IntegrationException($path);
+        }
+    }
+
+    #[Righteous(WrappingWithoutCause::class)]
+    public function uploadChecked(string $path): void
+    {
+        try {
+            $this->pushToBucket($path);
+        } catch (\Throwable $storageError) {
+            throw new IntegrationException($path, previous: $storageError);
         }
     }
 
