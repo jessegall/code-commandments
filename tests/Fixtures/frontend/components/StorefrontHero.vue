@@ -50,6 +50,14 @@ defineProps<{ storefront: Storefront }>();
       </ul>
     </div>
 
+    <dl class="hero__stats">
+      <!-- @sin IndexAsKey -->
+      <template v-for="(value, label, index) in storefront.stats" :key="index">
+        <dt class="hero__stat-label">{{ label }}</dt>
+        <dd class="hero__stat-value">{{ value }}</dd>
+      </template>
+    </dl>
+
     <div class="hero__cta">
       <button class="hero__shop" type="button">Shop now</button>
       <button class="hero__learn" type="button">Learn more</button>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Customer } from '@/types';
+import type { Customer, CustomerOrder } from '@/types';
 
-defineProps<{ customer: Customer }>();
+defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
 </script>
 
 <template>
@@ -47,9 +47,20 @@ defineProps<{ customer: Customer }>();
     <div class="account__orders">
       <h2 class="account__section">Recent orders</h2>
       <ul class="account__order-list">
-        <li class="account__order">Order placed last week</li>
-        <li class="account__order">Order placed last month</li>
-        <li class="account__order">Order placed last quarter</li>
+        <!-- @sin IndexAsKey -->
+        <template v-for="(order, index) in orders" :key="index">
+          <li class="account__order">{{ order.reference }}</li>
+        </template>
+      </ul>
+    </div>
+
+    <div class="account__addresses">
+      <h2 class="account__section">Addresses</h2>
+      <ul class="account__address-list">
+        <!-- @righteous IndexAsKey -->
+        <template v-for="(address, index) in customer.addresses" :key="address.id">
+          <li class="account__address">{{ address.line }}</li>
+        </template>
       </ul>
     </div>
 
