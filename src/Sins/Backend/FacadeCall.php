@@ -14,7 +14,9 @@ final class FacadeCall extends Sin
         parent::__construct(
             name: 'facade-call',
             skill: LaravelIdioms::class,
-            description: "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)"
+            description: "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)",
+            rule: "Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.",
+            suggestion: "Constructor-inject the dependency behind its interface."
         );
     }
 }

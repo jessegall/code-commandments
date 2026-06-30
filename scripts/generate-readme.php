@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
-use JesseGall\CodeCommandments\Detectors\Detector;
 
 $readmePath = __DIR__ . '/../README.md';
 $begin = '<!-- BEGIN: detectors';

@@ -14,7 +14,9 @@ final class DataClump extends Sin
         parent::__construct(
             name: 'data-clump',
             skill: ValueObjects::class,
-            description: "3+ values threaded as separate params (a data clump → one object)"
+            description: "3+ values threaded as separate params (a data clump → one object)",
+            rule: "Bundle values that always travel together into one object; don't thread 3+ of them as separate params.",
+            suggestion: "A value object the params fold into (`Money::of()`, `NodePosition`)."
         );
     }
 }

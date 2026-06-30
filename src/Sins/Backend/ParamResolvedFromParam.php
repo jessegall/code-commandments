@@ -14,7 +14,9 @@ final class ParamResolvedFromParam extends Sin
         parent::__construct(
             name: 'param-resolved-from-param',
             skill: PassTheObject::class,
-            description: "Unpacking the target out of a container param — a method takes `(Workflow \$workflow, string \$nodeId)` and resolves `\$workflow->graph->nodeById(\$nodeId)`, then works on the target while the container is only packaging"
+            description: "Unpacking the target out of a container param — a method takes `(Workflow \$workflow, string \$nodeId)` and resolves `\$workflow->graph->nodeById(\$nodeId)`, then works on the target while the container is only packaging",
+            rule: "Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.",
+            suggestion: "Take the resolved object as the param; resolve once in the caller."
         );
     }
 }

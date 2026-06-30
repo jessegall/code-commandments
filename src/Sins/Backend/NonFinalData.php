@@ -14,7 +14,8 @@ final class NonFinalData extends Sin
         parent::__construct(
             name: 'non-final-data',
             skill: SpatieData::class,
-            description: "Data class not `final` / props not `readonly` promoted"
+            description: "Data class not `final` / props not `readonly` promoted",
+            rule: "Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base."
         );
     }
 }

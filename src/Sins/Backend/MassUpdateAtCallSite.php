@@ -14,7 +14,9 @@ final class MassUpdateAtCallSite extends Sin
         parent::__construct(
             name: 'mass-update-at-call-site',
             skill: LaravelIdioms::class,
-            description: "Bare `\$model->update([...])` mass-array update at a call site"
+            description: "Bare `\$model->update([...])` mass-array update at a call site",
+            rule: "Mutate a model through an intention method; never `\$model->update([...])` an anonymous array of columns at a call site.",
+            suggestion: "An intention method on the model (`\$order->markPaid()`)."
         );
     }
 }

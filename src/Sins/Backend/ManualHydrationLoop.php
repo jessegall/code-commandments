@@ -14,7 +14,9 @@ final class ManualHydrationLoop extends Sin
         parent::__construct(
             name: 'manual-hydration-loop',
             skill: SpatieData::class,
-            description: "Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()`"
+            description: "Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()`",
+            rule: "Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.",
+            suggestion: "`#[DataCollectionOf(X::class)]` + `X::collect(\$rows)`."
         );
     }
 }

@@ -13,20 +13,34 @@ final class FixAtTheSource extends Skill
     {
         parent::__construct(
             slug: 'backend/fix-at-the-source',
-            title: "Fix at the source",
-            description: "Find the root cause before changing anything — trace a value to where it is born and fix it THERE, never patch the symptom. Read this FIRST whenever you are asked to refactor, fix, clean up, improve, or review any code, file, class, or namespace — and specifically before adding a null check, a `?? default`, making a field nullable, absolving a finding, tolerating bad input downstream, or when the same value gets re-checked in many places. The root-cause-first move every other style rule defers to.",
-            tagline: "When a value is wrong where you found it, the bug is almost always where it was **born**. Fix it there, and the symptom disappears on its own.",
-            summary: "the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made.",
             tier: Tier::Mandatory,
             order: 1,
         );
     }
 
-    public function body(): string
+    public function title(): string
     {
-        return <<<'BODY'
-## The principle
+        return "Fix at the source";
+    }
 
+    public function description(): string
+    {
+        return "Find the root cause before changing anything — trace a value to where it is born and fix it THERE, never patch the symptom. Read this FIRST whenever you are asked to refactor, fix, clean up, improve, or review any code, file, class, or namespace — and specifically before adding a null check, a `?? default`, making a field nullable, absolving a finding, tolerating bad input downstream, or when the same value gets re-checked in many places. The root-cause-first move every other style rule defers to.";
+    }
+
+    public function intro(): string
+    {
+        return "When a value is wrong where you found it, the bug is almost always where it was **born**. Fix it there, and the symptom disappears on its own.";
+    }
+
+    public function summary(): string
+    {
+        return "the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made.";
+    }
+
+    public function principle(): string
+    {
+        return <<<'PRINCIPLE'
 A symptom is a null check, a `?? default`, a "make this field nullable", an `absolve`, a re-validation
 you keep writing in handler after handler. The temptation is to silence it *where you see it*. Don't.
 Every symptom is a value that arrived already wrong — under-typed, half-parsed, maybe-absent — because
@@ -44,7 +58,7 @@ Three ideas, one move:
 The downstream null check is not the problem to solve. It is the *evidence* pointing back at the
 problem, which lives upstream.
 
-## STOP — check this before you plan a single edit
+### STOP — check this before you plan a single edit
 
 Before you change anything, test your plan against these trip-wires. **If any is true, you are about to
 patch a symptom — stop and trace upstream instead:**
@@ -61,7 +75,7 @@ it rarely adds. If your diff is mostly *additions* of defensive code, you are pa
 Reduce your plan to **one origin change**. If you can't, you haven't found the source yet — keep tracing.
 Do **not** start editing consumers.
 
-## When to use this skill
+### When to use this skill
 
 Reach for this the moment you are about to:
 
@@ -74,7 +88,7 @@ Reach for this the moment you are about to:
 If a rule from another skill (absence, guards, exceptions, enums) tempts you to patch a consumer —
 **come here first.**
 
-## The move: trace upstream before you fix
+### The move: trace upstream before you fix
 
 1. **Name the symptom.** What are you about to write? (a null check, a default, a nullable field, an
    absolve, a repeated guard). Say it out loud.
@@ -88,62 +102,22 @@ If a rule from another skill (absence, guards, exceptions, enums) tempts you to 
    a decision made *at the source, by its real contract*, never a reflex downstream. "Optional" is a
    property of the domain, not a way to make a check go quiet.
 
-## Worked example: a boundary that defers its job
+### Worked example: a boundary that defers its job
 
 A decoder turns an inbound command into typed actions. The "raw" DTO makes **every** field optional, so
-it validates nothing — and every handler re-derives what it actually needs:
-
-```php
-// Bad — a boundary type that parses nothing: every field optional.
-final class RawCommand extends Data
-{
-    public function __construct(
-        public readonly string $type,
-        public readonly string | null $id = null,
-        public readonly string | null $target = null,
-        public readonly string | null $label = null,
-    ) {}
-}
-
-// ...so the handler re-validates, and manufactures a fake value to fill a required slot:
-public function handle(RawCommand $raw): Command
-{
-    if ($raw->id === null || $raw->target === null)
-    {
-        throw UnusableCommandException::incomplete();
-    }
-
-    return new MoveCommand(
-        id: $raw->id,
-        target: $raw->target,
-        label: $raw->label ?? '',   // a fake value, born here, trusted everywhere downstream
-    );
-}
-```
+it validates nothing — and every handler re-derives what it actually needs.
 
 **The symptom-patch (what NOT to do):** make `MoveCommand::$label` nullable so the `?? ''` can go, or
 add more `?? default`s, or `absolve` the finding. Each makes the type lie *more* and pushes the question
 further downstream. `RawCommand` stays — the phantom that started it all.
 
 **Fix at the source:** parse the raw input into the *total* command at the boundary. Required fields are
-read through accessors that throw *here*; the phantom DTO is deleted; handlers receive whole values:
-
-```php
-// Good — the boundary parses into a total type; the invalid state cannot be built.
-public function handle(ValueBag $input): Command
-{
-    return new MoveCommand(
-        id: $input->string('id'),         // missing 'id' throws HERE, at the source
-        target: $input->string('target'),
-        label: $input->string('label'),   // no fake default — a command with no label is a bad command
-    );
-}
-```
+read through accessors that throw *here*; the phantom DTO is deleted; handlers receive whole values.
 
 Now nothing downstream of the decoder holds a null check. The validation happens once, where the value
 is born, and every `Command` that exists is real.
 
-## Fixes that aren't fixes
+### Fixes that aren't fixes
 
 - **Making a required field nullable to silence a check.** "Display-only" does not mean "optional" — a
   label shown on a card can be *required*. Whether a field is nullable is decided by its source's
@@ -158,23 +132,16 @@ is born, and every `Command` that exists is real.
   quietly coerces the input (e.g. a `ValueBag` that accepts a looser key type to silence ~10 type errors),
   or scatter casts/`@phpstan-ignore`, to avoid touching them. That makes the code *pass* while growing it
   and hides the smell at the source. Fix the call sites — even the awkward one.
+PRINCIPLE;
+    }
 
-## Checklist
 
-```
-Fix at the source
-- [ ] I named the symptom I was about to write (null check / default / nullable / absolve / repeated guard).
-- [ ] I traced the value upstream to where it is born.
-- [ ] I asked whether the boundary could have produced a TOTAL value instead.
-- [ ] I fixed at the origin; the downstream symptom was DELETED, not silenced.
-- [ ] Any remaining nullable is justified by the SOURCE's real contract, not by quieting a check.
-```
-
-## How this relates to the other skills
-
-Every other style rule — model absence with Option, guard at the top, throw named exceptions, seal a
-closed set as an enum — is *fix-at-the-source applied to one shape*. When any of them tempts you to patch
-the place you found the problem, return here: walk back to where the value was born, and fix it there.
-BODY;
+    public function related(): array
+    {
+        return [
+            Absence::class => "deciding absence at the producer is this rule applied to the null channel.",
+            Exceptions::class => "surfacing a failure where it's born is this rule applied to the error channel.",
+            ValueObjects::class => "introducing the type at the source, not threading loose data downstream.",
+        ];
     }
 }

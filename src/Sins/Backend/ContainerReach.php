@@ -14,7 +14,9 @@ final class ContainerReach extends Sin
         parent::__construct(
             name: 'container-reach',
             skill: LaravelIdioms::class,
-            description: "`app()`/`resolve()` reach inside a container-resolved class"
+            description: "`app()`/`resolve()` reach inside a container-resolved class",
+            rule: "Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.",
+            suggestion: "Declare the dependency as a constructor parameter."
         );
     }
 }

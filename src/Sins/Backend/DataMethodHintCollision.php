@@ -14,7 +14,8 @@ final class DataMethodHintCollision extends Sin
         parent::__construct(
             name: 'data-method-hint-collision',
             skill: SpatieData::class,
-            description: "`@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`)"
+            description: "`@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`)",
+            rule: "A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision)."
         );
     }
 }

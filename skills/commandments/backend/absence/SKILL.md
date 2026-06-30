@@ -19,7 +19,7 @@ This is [`fix-at-the-source`](../fix-at-the-source/SKILL.md) applied to absence:
 the value is born**, not at every caller that de-nulls it. If several callers each `=== null` the same
 value, that is the producer's type lying — fix the producer.
 
-## The decision: what kind of absence is this?
+### The decision: what kind of absence is this?
 
 Ask these **in order** and stop at the first yes.
 
@@ -54,7 +54,7 @@ Ask these **in order** and stop at the first yes.
 
 5. **Otherwise** — you've reached the one honest `null` (below).
 
-## When `null` IS OK
+### When `null` IS OK
 
 Narrow, and almost always on an **input or a framework seam**, never on a domain return:
 
@@ -66,7 +66,7 @@ Narrow, and almost always on an **input or a framework seam**, never on a domain
 
 If you can't point at one of those, you do **not** have an honest null — go back to the decision.
 
-## When `null` is a BUG
+### When `null` is a BUG
 
 - A **return** typed `?T` that callers de-null (`=== null`, `?->`, `?? $d`). → Option, empty, or throw —
   decide at the source (step 1–3), don't make every caller decide.
@@ -76,16 +76,15 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 - An **`Option` used as a nullable**: `Option | null`, `?Option`, `unwrapOr(null)`, or an Option whose
   every return is `some()` (never `none()`). → That's a null wearing an Option costume; pick one model.
 
-## Checklist
+## Rules
 
-```
-Absence
-- [ ] I asked "is missing a broken state?" first — if yes, it THROWS, not returns null/Option.
-- [ ] A "nothing" with an empty form returns the empty collection / Null Object, not null.
-- [ ] A genuine miss is Option<T>; absence lives in the type, not in every caller.
-- [ ] Any surviving null is an optional INPUT or a framework seam — not a domain return.
-- [ ] No `?? <empty literal>` filling a required slot; no Option-as-nullable (`unwrapOr(null)`, `?Option`).
-```
+- Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
+  _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
+- Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
+  _Create a reusable no-op invokable (`Invokable::noOp()` / `ClosureFactory::noOp()`) and default the param to it._
+- Return an empty collection for "nothing", never `?array`/`array | null`.
+- Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
+  _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
 ## Bad → good
 
@@ -185,6 +184,13 @@ public function locateHonestly(string $email): Option
 - "Nothing" with a natural empty form returned as `null` (`array | null` → should be `[]`) — `NullableCollectionReturnDetector`
 - `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)` — `OptionAsNullableDetector`
 
-## Relationship to the other skills
+## Checklist
+
+- [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
+- [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
+- [ ] Return an empty collection for "nothing", never `?array`/`array | null`.
+- [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
+
+## Related skills
 
 - [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — The parent move is fix-at-the-source: decide absence at the producer, not at the callers.

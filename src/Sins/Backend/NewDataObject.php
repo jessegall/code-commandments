@@ -14,7 +14,9 @@ final class NewDataObject extends Sin
         parent::__construct(
             name: 'new-data-object',
             skill: SpatieData::class,
-            description: "`new <Data subclass>` instead of `::from()` / a `fromX()` factory"
+            description: "`new <Data subclass>` instead of `::from()` / a `fromX()` factory",
+            rule: "Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.",
+            suggestion: "`X::from(...)` (or a `fromY()` factory)."
         );
     }
 }

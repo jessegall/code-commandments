@@ -19,8 +19,9 @@ final class SinReport
 
     /**
      * @param  list<Finding>  $findings
+     * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it (scope included)
      */
-    public function __construct(private readonly string $path, array $findings)
+    public function __construct(private readonly string $path, array $findings, private readonly array $fixable = [])
     {
         $bySkill = [];
 
@@ -70,6 +71,10 @@ final class SinReport
                 $location = $this->relative($finding->location);
                 $lines[] = "  \033[36m{$location}\033[0m  {$finding->scope}  \033[2m[{$finding->detector}]\033[0m";
             }
+
+            foreach ($this->fixCommands($findings) as $command) {
+                $lines[] = "  \033[32m↳ auto-fixable: {$command}\033[0m";
+            }
         }
 
         $skills = count($this->bySkill);
@@ -103,6 +108,10 @@ final class SinReport
         foreach ($this->bySkill as $skill => $findings) {
             $out .= "\n## {$skill}  — read `skills/commandments/{$skill}/SKILL.md`\n\n";
 
+            foreach ($this->fixCommands($findings) as $command) {
+                $out .= "> ✎ Auto-fixable — run `{$command}` to repent these for you.\n\n";
+            }
+
             foreach ($findings as $finding) {
                 $location = $this->relative($finding->location);
                 $out .= "- `{$location}`  {$finding->scope}  [{$finding->detector}]\n";
@@ -110,6 +119,25 @@ final class SinReport
         }
 
         return $out;
+    }
+
+    /**
+     * The distinct `repent` commands for the auto-fixable sins among a group's findings.
+     *
+     * @param  list<Finding>  $findings
+     * @return list<string>
+     */
+    private function fixCommands(array $findings): array
+    {
+        $commands = [];
+
+        foreach ($findings as $finding) {
+            if (isset($this->fixable[$finding->sin])) {
+                $commands[$finding->sin] = $this->fixable[$finding->sin];
+            }
+        }
+
+        return array_values($commands);
     }
 
     private function relative(string $location): string

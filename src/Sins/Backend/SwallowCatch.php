@@ -14,7 +14,9 @@ final class SwallowCatch extends Sin
         parent::__construct(
             name: 'swallow-catch',
             skill: Exceptions::class,
-            description: "`catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow)"
+            description: "`catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow)",
+            rule: "Let a failure throw, or surface it named with the cause; never swallow a catch into `null`/`false`/`[]`/`none()` or an empty body.",
+            suggestion: "Rethrow wrapped (`previous: \$e`), or catch-log-skip at one named boundary."
         );
     }
 }

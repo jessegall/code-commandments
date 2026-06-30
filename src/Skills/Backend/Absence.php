@@ -13,20 +13,34 @@ final class Absence extends Skill
     {
         parent::__construct(
             slug: 'backend/absence',
-            title: "Absence — model \"might not be there\" honestly",
-            description: "Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug.",
-            tagline: "`null` is not a way to model absence. It is the *absence of a decision* about absence. Make the decision.",
-            summary: "modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw).",
             tier: Tier::KeepInMind,
             order: 7,
         );
     }
 
-    public function body(): string
+    public function title(): string
     {
-        return <<<'BODY'
-## The principle
+        return "Absence — model \"might not be there\" honestly";
+    }
 
+    public function description(): string
+    {
+        return "Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug.";
+    }
+
+    public function intro(): string
+    {
+        return "`null` is not a way to model absence. It is the *absence of a decision* about absence. Make the decision.";
+    }
+
+    public function summary(): string
+    {
+        return "modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw).";
+    }
+
+    public function principle(): string
+    {
+        return <<<'PRINCIPLE'
 A value that might not be there forces a question on every reader: *what does "not there" mean here?*
 Answer it **once, in the type**, so no reader has to guess. There are four real kinds of absence and one
 honest use of `null` — pick deliberately; never default to a bare nullable.
@@ -35,7 +49,7 @@ This is [`fix-at-the-source`](../fix-at-the-source/SKILL.md) applied to absence:
 the value is born**, not at every caller that de-nulls it. If several callers each `=== null` the same
 value, that is the producer's type lying — fix the producer.
 
-## The decision: what kind of absence is this?
+### The decision: what kind of absence is this?
 
 Ask these **in order** and stop at the first yes.
 
@@ -70,7 +84,7 @@ Ask these **in order** and stop at the first yes.
 
 5. **Otherwise** — you've reached the one honest `null` (below).
 
-## When `null` IS OK
+### When `null` IS OK
 
 Narrow, and almost always on an **input or a framework seam**, never on a domain return:
 
@@ -82,7 +96,7 @@ Narrow, and almost always on an **input or a framework seam**, never on a domain
 
 If you can't point at one of those, you do **not** have an honest null — go back to the decision.
 
-## When `null` is a BUG
+### When `null` is a BUG
 
 - A **return** typed `?T` that callers de-null (`=== null`, `?->`, `?? $d`). → Option, empty, or throw —
   decide at the source (step 1–3), don't make every caller decide.
@@ -91,20 +105,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
   drops the absence signal. Throw, or make the slot honestly optional. (See `fix-at-the-source`.)
 - An **`Option` used as a nullable**: `Option | null`, `?Option`, `unwrapOr(null)`, or an Option whose
   every return is `some()` (never `none()`). → That's a null wearing an Option costume; pick one model.
-
-## Checklist
-
-```
-Absence
-- [ ] I asked "is missing a broken state?" first — if yes, it THROWS, not returns null/Option.
-- [ ] A "nothing" with an empty form returns the empty collection / Null Object, not null.
-- [ ] A genuine miss is Option<T>; absence lives in the type, not in every caller.
-- [ ] Any surviving null is an optional INPUT or a framework seam — not a domain return.
-- [ ] No `?? <empty literal>` filling a required slot; no Option-as-nullable (`unwrapOr(null)`, `?Option`).
-```
-BODY;
+PRINCIPLE;
     }
-
 
     public function related(): array
     {
