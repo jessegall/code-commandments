@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\RedundantElse;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\RedundantElseScribe;
 
 /**
  * An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/
@@ -16,11 +18,16 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * unindented at the top level — the guard has already handled the other case.
  * Points at guard-clauses-and-flow.
  */
-final class RedundantElseDetector implements Detector
+final class RedundantElseDetector implements Detector, Repentable
 {
     public function sin(): Sin
     {
         return new RedundantElse();
+    }
+
+    public function scribe(): string
+    {
+        return RedundantElseScribe::class;
     }
 
     public function find(Codebase $codebase): array

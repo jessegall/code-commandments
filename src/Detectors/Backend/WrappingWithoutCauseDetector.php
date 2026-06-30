@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\WrappingWithoutCause;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\WrappingWithoutCauseScribe;
 
 /**
  * Throwing a new exception inside a `catch` without passing the caught one on as
@@ -16,11 +18,16 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * so the wrapped error lies about where it came from. Chain the cause. Points at
  * exceptions.
  */
-final class WrappingWithoutCauseDetector implements Detector
+final class WrappingWithoutCauseDetector implements Detector, Repentable
 {
     public function sin(): Sin
     {
         return new WrappingWithoutCause();
+    }
+
+    public function scribe(): string
+    {
+        return WrappingWithoutCauseScribe::class;
     }
 
     public function find(Codebase $codebase): array

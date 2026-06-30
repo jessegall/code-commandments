@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\NestedTernary;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\NestedTernaryScribe;
 
 /**
  * A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching
@@ -16,11 +18,16 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  * trap. Spell it as a `match (true)`, or lift the decision into guard clauses.
  * Points at guard-clauses-and-flow.
  */
-final class NestedTernaryDetector implements Detector
+final class NestedTernaryDetector implements Detector, Repentable
 {
     public function sin(): Sin
     {
         return new NestedTernary();
+    }
+
+    public function scribe(): string
+    {
+        return NestedTernaryScribe::class;
     }
 
     public function find(Codebase $codebase): array

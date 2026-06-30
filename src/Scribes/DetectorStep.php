@@ -4,67 +4,59 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
-use JesseGall\CodeCommandments\Cli\Scope\Scope;
+use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
-use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
-use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
-use JesseGall\CodeCommandments\Vue\ComponentLibrary;
-use JesseGall\CodeCommandments\Vue\Detector;
 
 /**
- * A chain step that runs a {@see Repentable} frontend detector's scribe over the Vue
- * components — fed the detector's own findings. {@see extractsComponents} tells the
- * chain whether this step CREATES files (an extraction) so the default order can run
- * those last, after the in-place fixers.
+ * A chain step that runs a {@see Repentable} detector's scribe over a codebase — fed the
+ * detector's OWN findings, never re-scanning. Engine-agnostic: the {@see Backend\DetectorStep}
+ * runs over the PHP AST and the {@see Frontend\DetectorStep} over the Vue components, but
+ * both resolve the scribe, scope the findings, and call {@see RepentScribe::rewrite} the
+ * same way — that shared machinery lives here.
+ *
+ * Each concrete step holds its engine's narrowly-typed detector and implements {@see run}
+ * (the scan differs per engine) plus {@see repentable} (the engine-neutral handle this base
+ * uses for `name()`/`--sin` matching/scribe resolution).
  */
-final class DetectorStep implements ScribeStep
+abstract class DetectorStep implements ScribeStep
 {
-    public function __construct(private readonly Detector&Repentable $detector) {}
+    /**
+     * The detector behind this step, as the engine-neutral root {@see Detector} (carrying
+     * the {@see Repentable} contract) — enough for the shared name/sin/scribe logic.
+     */
+    abstract protected function repentable(): Detector&Repentable;
 
     public function name(): string
     {
-        $parts = explode('\\', $this->detector::class);
+        $parts = explode('\\', $this->repentable()::class);
 
         return end($parts);
     }
 
-    public function run(string $path, Scope $scope): array
-    {
-        $codebase = VueCodebase::scan($path);
-        $scribe = $this->scribe();
-
-        // An extractor reuses an existing component before creating a duplicate.
-        if ($scribe instanceof ExtractComponentScribe) {
-            $scribe->withLibrary(ComponentLibrary::from($codebase));
-        }
-
-        // Honour the scope (a `--repent=ID` checklist, a `--changes`/`--branch` set):
-        // only repent sins in files the scope includes.
-        $findings = array_values(array_filter(
-            $this->detector->find($codebase),
-            static fn ($match): bool => $scope->includes($match->file()),
-        ));
-
-        return $scribe->rewrite($findings);
-    }
-
+    /**
+     * Most fixers rewrite in place; a frontend extractor overrides this to run last.
+     */
     public function extractsComponents(): bool
     {
-        return $this->scribe() instanceof ExtractComponentScribe;
+        return false;
     }
 
     /**
      * Does the detector behind this step find the `--sin=<query>` named? Lets `repent
-     * --sin=switch-case` scope to a step the same lenient way `judge --sin=` does.
+     * --sin=redundant-else` scope to a step the same lenient way `judge --sin=` does.
      */
     public function matchesSin(string $query): bool
     {
-        return $this->detector->sin()->matches($query);
+        return $this->repentable()->sin()->matches($query);
     }
 
-    private function scribe(): RepentScribe
+    /**
+     * Resolve the {@see RepentScribe} the detector names — a class-string, a configured
+     * instance, or a callable factory (the three {@see Repentable::scribe} forms).
+     */
+    protected function scribe(): RepentScribe
     {
-        $spec = $this->detector->scribe();
+        $spec = $this->repentable()->scribe();
 
         if (is_string($spec)) {
             return new $spec();

@@ -108,7 +108,8 @@ final class Judge
     {
         $commands = [];
 
-        foreach (Catalog::frontend() as $detector) {
+        // Both engines: any Repentable detector advertises the one-liner that fixes its sin.
+        foreach ([...Catalog::backend(), ...Catalog::frontend()] as $detector) {
             if ($detector instanceof Repentable) {
                 $name = $detector->sin()->name();
                 $commands[$name] = "vendor/bin/commandments repent --repent=latest --sin={$name}";
