@@ -102,6 +102,40 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringNotContainsString('order.customer.fullName', $source);
     }
 
+    public function test_carries_the_imports_the_extracted_markup_uses(): void
+    {
+        // The source imports Badge (used) and Unused (not). Only Badge travels, so the
+        // extracted component compiles where the app does not auto-import.
+        $src = "<script setup lang=\"ts\">\nimport { Badge } from '@/ui/badge';\nimport { Unused } from '@/x';\n</script>\n"
+            . "<template>\n  <div>\n" . str_repeat("    <p>row</p>\n", 55)
+            . "    <section><Badge>{{ order.customer.fullName }}</Badge><Badge>{{ order.customer.email }}</Badge></section>\n  </div>\n</template>\n";
+
+        $components = $this->components($this->extract(new DeepDataReachDetector, $src));
+        $component = reset($components);
+
+        $this->assertStringContainsString("import { Badge } from '@/ui/badge';", $component);
+        $this->assertStringNotContainsString('Unused', $component);
+    }
+
+    public function test_forwards_a_source_prop_type_instead_of_unknown(): void
+    {
+        // `order` is declared `order: Order` in the source → a deep nest that keeps
+        // `order` as a prop carries that type rather than `unknown`.
+        $components = $this->components($this->extract(new DeepNestedDetector, $this->deepComponentReading('order')));
+        $component = reset($components);
+
+        $this->assertStringContainsString('order: Order', $component);
+        $this->assertStringContainsString("import type { Order } from '@/types';", $component);
+    }
+
+    private function deepComponentReading(string $root): string
+    {
+        $leaf = "{$root}.field.value";
+
+        return "<script setup lang=\"ts\">\nimport type { Order } from '@/types';\ndefineProps<{ {$root}: Order }>();\n</script>\n"
+            . "<template>\n  " . $this->deepNest($leaf) . "\n  <footer>end</footer>\n</template>\n";
+    }
+
     public function test_same_name_in_different_directories_is_not_suffixed(): void
     {
         // Two unrelated deep components in two folders both extract a `DataSection`.
@@ -189,7 +223,7 @@ final class ExtractComponentScribeTest extends TestCase
     /**
      * @return array<string, string>
      */
-    private function extract(DeepDataReachDetector|DuplicateElementDetector $detector, string $sfc): array
+    private function extract(DeepDataReachDetector|DuplicateElementDetector|DeepNestedDetector $detector, string $sfc): array
     {
         $codebase = Codebase::fromString($sfc);
 
