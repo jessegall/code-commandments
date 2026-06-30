@@ -175,6 +175,125 @@ final class Script
     }
 
     /**
+     * The declared TS type of a top-level local, traced to its declaration — an
+     * explicit annotation (`const x: T`), a reactive value type (`computed<T>` /
+     * `ref<T>` etc., unwrapped as it is in the template), or a function's signature.
+     * Null when it can't be read off the source (an inferred const — only vue-tsc
+     * could resolve that).
+     */
+    public function declaredType(string $name): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if ($this->isId($i, 'function') && $this->isId($i + 1, $name) && $this->isPunct($i + 2, '(')) {
+                return $this->functionType($i + 2);
+            }
+
+            if (! $this->isId($i + 1, $name) || ! ($this->isId($i, 'const') || $this->isId($i, 'let') || $this->isId($i, 'var'))) {
+                continue;
+            }
+
+            $j = $i + 2;
+
+            if ($this->isPunct($j, ':')) {
+                [$type] = $this->readType($j + 1);
+
+                return $type !== '' ? $type : null;
+            }
+
+            // `= computed<T>(` / `= ref<T>(` — the reactive value type (unwrapped in template).
+            if ($this->isPunct($j, '=') && $this->isReactiveValue($j + 1) && $this->isPunct($j + 2, '<')) {
+                $generic = $this->readGeneric($j + 3);
+
+                if ($generic !== '') {
+                    return $generic;
+                }
+            }
+
+            // `= (params): R =>` / `= (params) =>` — an arrow function.
+            if ($this->isPunct($j, '=') && $this->isPunct($j + 1, '(')) {
+                return $this->functionType($j + 1);
+            }
+        }
+
+        return null;
+    }
+
+    /** Vue reactivity wrappers whose `<T>` IS the value type seen in the template. */
+    private function isReactiveValue(int $i): bool
+    {
+        return ($this->tokens[$i] ?? null) !== null
+            && $this->tokens[$i]['kind'] === 'id'
+            && in_array($this->tokens[$i]['value'], ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'], true);
+    }
+
+    /**
+     * The type of a function declared at the `(` token $i — `(params) => Return`.
+     */
+    private function functionType(int $i): ?string
+    {
+        [$params, $j] = $this->readBalanced($i);
+        $return = 'void';
+
+        if ($this->isPunct($j, ':')) {
+            [$return] = $this->readType($j + 1);
+        }
+
+        return "({$params}) => " . ($return !== '' ? $return : 'void');
+    }
+
+    /**
+     * The inner text of a `<…>` generic opened just before $i (depth 1), to its match.
+     */
+    private function readGeneric(int $i): string
+    {
+        $depth = 1;
+        $pieces = [];
+        $count = count($this->tokens);
+
+        for (; $i < $count && $depth > 0; $i++) {
+            $value = $this->tokens[$i]['value'];
+
+            if (in_array($value, ['<', '(', '[', '{'], true)) {
+                $depth++;
+            } elseif (in_array($value, ['>', ')', ']', '}'], true) && --$depth === 0) {
+                break;
+            }
+
+            $pieces[] = $value;
+        }
+
+        return implode('', $pieces);
+    }
+
+    /**
+     * The inner text of a balanced `(…)` opening at $i, and the index just past `)`.
+     *
+     * @return array{0: string, 1: int}
+     */
+    private function readBalanced(int $i): array
+    {
+        $depth = 0;
+        $pieces = [];
+        $count = count($this->tokens);
+
+        for (; $i < $count; $i++) {
+            $value = $this->tokens[$i]['value'];
+
+            if (in_array($value, ['(', '[', '{', '<'], true)) {
+                $depth++;
+            } elseif (in_array($value, [')', ']', '}', '>'], true) && --$depth === 0) {
+                return [implode('', array_slice($pieces, 1)), $i + 1];
+            }
+
+            $pieces[] = $value;
+        }
+
+        return [implode('', array_slice($pieces, 1)), $count];
+    }
+
+    /**
      * Read `key: Type;` fields from the opening `{` at $i until its matching `}`.
      *
      * @return array<string, string>
