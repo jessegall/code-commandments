@@ -14,186 +14,39 @@ description: Use the framework's typed/injected mechanisms and keep behaviour on
 
 ## The principle
 
-Forms of one rule — **lean on the framework's mechanism; keep behaviour where it belongs:**
+The framework already hands you typed input, typed bags, wired-up dependencies, query scopes, and a model to
+hang behaviour on. Reach for those. Raw `->input()`, an untyped `->get()`, `app()`-in-a-method, a `where()`
+chain repeated at call sites, and a column-poke-then-`save()` are all the same mistake: throwing away a
+type, a wire, or a name the framework was holding for you.
 
-1. **Request input** → typed accessors, exposed as named getters on the request class.
-2. **A Fluent / value bag** → typed accessors, never untyped `->get()`.
-3. **Every dependency** → a required constructor parameter, not resolved by hand.
-4. **Eloquent queries** → named scopes, not where-clauses repeated at call sites.
-5. **Eloquent mutations** → intention-revealing methods on the model, not a bare `update([...])` or
-   set-then-`save()` at the call site.
+Read request input through the request's **typed accessors**, exposed as **named getter methods on the
+request class** — the one place the type is settled, so every call site reads a typed value by intent
+instead of re-coercing `mixed`. An MCP tool's input is a request like any other: give each tool its own
+named request class (the analogue of a `FormRequest`), with its keys, rules and types in one place, and
+read *that* — never the raw request inside `handle()`.
 
-## Rule 1 — request: typed getters, never raw `->input()`
+Hold every dependency as a required constructor parameter, never resolved by hand from the container.
+Express a query concept that recurs across call sites as a **named Eloquent scope**, so the column knowledge
+lives in one place instead of being re-typed wherever you query. And mutate a model through
+**intention-revealing methods** (`$order->markPaid()`) that say what changed and why — not a bare
+`update([...])` or a set-property-then-`save()` smeared across the call site.
 
-Never read request data with `->input()` / `->get()` / `->query()` — they return `mixed`, so every caller
-re-coerces. Read it through the request's **typed accessors** (`->string()`, `->integer()`, `->boolean()`,
-`->date()`, `->enum()`, …) and expose each field as a **named getter method on the request class**, so call
-sites read a typed value by intent.
+## Rules
 
-```php
-// Bad — raw, untyped, re-coerced at every call site
-$name  = $request->input('name');              // mixed
-$limit = (int) $request->input('limit', 10);   // manual cast
-
-// Good — typed accessors behind named getters on the FormRequest
-final class CreateWorkflowRequest extends FormRequest
-{
-    public function name(): Stringable          { return $this->string('name'); }
-    public function limit(): int                { return $this->integer('limit'); }
-    public function status(): TurnStatus         { return $this->enum('status', TurnStatus::class); }
-}
-
-// call site
-$request->name();   // typed, intention-revealing — not $request->input('name')
-```
-
-The named accessor is the **one place** the type is settled. Inside it, return the typed value — the
-`Stringable` from `->string()`, or `->toString()` once if the field is a plain `string`. The sin is doing
-that coercion **at the call site** (`$request->string('id')->toString()` scattered through a handler): that
-re-reads raw input by key and is the same mistake as `->input()`. Read the named accessor instead.
-
-**MCP tools too.** A tool's input is a request like any other — don't reach into the raw request inside
-`handle()`. Give each tool a **named request class** (extending your MCP request base, the analogue of
-`FormRequest`) with `rules()` and named accessors, and read *that*:
-
-```php
-// Bad — raw, untyped reads scattered through the tool body
-$dispatcher->rename(
-    $request->string('id')->toString(),
-    $request->string('nodeId')->toString(),
-    $request->string('from')->toString(),
-);
-
-// Good — one named request class per tool: keys, rules, and types in one place
-final class RenameSocketRequest extends ToolRequest
-{
-    /** @return array<string, list<string>> */
-    public function rules(): array
-    {
-        return [
-            'id'     => ['required', 'string'],
-            'nodeId' => ['required', 'string'],
-            'from'   => ['required', 'string'],
-        ];
-    }
-
-    public function workflowId(): string { return $this->string('id')->toString(); }
-    public function nodeId(): string     { return $this->string('nodeId')->toString(); }
-    public function fromSocket(): string { return $this->string('from')->toString(); }
-}
-
-// in the tool — the body reads intentions, not string keys
-$dispatcher->rename($request->workflowId(), $request->nodeId(), $request->fromSocket());
-```
-
-Every MCP tool gets its own named request — never `->string('key')->toString()` inline in the tool.
-
-## Rule 2 — Fluent / value bag: typed accessors, never `->get()`
-
-A `Fluent` or a `ValueBag` exposes typed reads. `->get('key')` returns `mixed` and infers nothing — use
-the typed accessor so the type flows.
-
-```php
-// Bad — untyped; the caller has no idea what comes back
-$port = $bag->get('port');                 // mixed
-
-// Good — typed read; the type is inferred
-$port = $bag->string('port');              // string
-$count = $bag->integer('count');           // int
-```
-
-## Rule 3 — dependencies: REQUIRED constructor injection
-
-Every dependency is a **required constructor parameter** (non-nullable, no default). Inside a class you do
-**not** call `app()`, `resolve()`, `Container::getInstance()`, a facade, or `new SomeService(...)` — those
-hide the dependency, defeat substitution, and make the class untestable without booting the container.
-
-```php
-// Bad — dependencies resolved by hand, hidden from the signature
-final class WorkflowRunner
-{
-    public function run(string $id): void
-    {
-        $repo = app(WorkflowRepository::class);     // hidden dependency
-        $clock = Carbon::now();                       // facade reach
-    }
-}
-
-// Good — declared, injected, substitutable
-final class WorkflowRunner
-{
-    public function __construct(
-        private readonly WorkflowRepository $repository,
-        private readonly Clock $clock,
-    ) {}
-}
-```
-
-- Tests resolve services through the container (`$this->app->make(...)`), never `new` with hand-wired args.
-- Config is injected too: don't read `config('…')` in a class — inject the typed config object and add an
-  accessor (a `config()` read is the same untyped-`->get()` smell at the config layer).
-- **The only exception is where DI is genuinely impossible** — a queued job's runtime construction, a
-  static schema builder. Confine it there, and migrate to injection when the surrounding code is reworked.
-
-## Rule 4 — query through named scopes
-
-A `where(...)` chain that expresses a concept — "active", "for this user", "due" — is a **named scope** on
-the model, not a clause re-typed at every call site. The scope names the intent and keeps the column
-knowledge in one place.
-
-```php
-// Bad — the same conditions re-typed wherever you query
-Workflow::query()->where('user_id', $id)->where('status', 'active')->get();
-
-// Good — named scopes; the query reads as intent
-Workflow::forUser($id)->active()->get();
-
-// on the model
-public function scopeForUser(Builder $query, string $userId): void { $query->where('user_id', $userId); }
-public function scopeActive(Builder $query): void { $query->where('status', WorkflowStatus::Active); }
-```
-
-## Rule 5 — mutate through intention-revealing model methods
-
-Poking attributes then calling `save()`, or a bare `update([...])`, at a call site is an anemic model: the
-*what* (a state transition) is scattered as the *how* (which columns) across the codebase. Put the
-transition **on the model** as a method that names it and owns its invariants.
-
-```php
-// Bad — the transition is an untyped column-poke at the call site
-$workflow->status = 'published';
-$workflow->published_at = now();
-$workflow->save();
-// ...or the same as a bare array update
-$workflow->update(['status' => 'published', 'published_at' => now()]);
-
-// Good — a named transition that owns its rules
-$workflow->publish();
-
-// on the model
-public function publish(): void
-{
-    $this->status = WorkflowStatus::Published;
-    $this->published_at = $this->freshTimestamp();
-    $this->save();
-}
-```
-
-The call site says *what* happens (`->publish()`, `->markFailed($reason)`, `->incrementSequenceNumber()`);
-the model owns *how*, and the invariants that travel with it.
-
-## Checklist
-
-```
-Laravel idioms
-- [ ] No raw ->input()/->get()/->query() on a request — typed accessors behind named getters on the request.
-- [ ] No untyped ->get() on a Fluent/ValueBag — a typed accessor (->string/->integer/...) so the type flows.
-- [ ] Every dependency is a REQUIRED constructor parameter — no app()/resolve()/facade/new inside the class.
-- [ ] No config('…') read in a class — inject the typed config object.
-- [ ] Manual resolution only where DI is truly impossible (queued-job runtime, static builder), confined there.
-- [ ] No where-clause expressing a concept repeated at call sites — it's a named scope on the model.
-- [ ] No bare update([...]) / set-then-save() at a call site — an intention-revealing method on the model.
-```
+- Inject a typed config object; never read `config('…')` inside a class.
+  _Inject a typed config value object._
+- Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
+  _Declare the dependency as a constructor parameter._
+- Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
+  _Constructor-inject the dependency behind its interface._
+- Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
+  _An intention method on the model (`$order->markPaid()`)._
+- Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
+  _An intention method on the model (`$order->suspend($reason)`)._
+- Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
+  _A named getter on a `FormRequest` subclass (`$request->productId()`)._
+- Expose a named getter on a typed request class; don't re-coerce a typed accessor (`$request->string('id')->toString()`) at a call site.
+  _A named getter on a typed request class returning the coerced value._
 
 ## Bad → good
 
@@ -339,7 +192,17 @@ public function handleNamed(MoveNodeRequest $request): string
 - Raw `->input()/->get()/->query()` on a Request — `RawRequestInputDetector`
 - Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` instead of a named getter on a request class — `RequestAccessorRecastDetector`
 
-## Relationship to the other skills
+## Checklist
+
+- [ ] Inject a typed config object; never read `config('…')` inside a class.
+- [ ] Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
+- [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
+- [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
+- [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
+- [ ] Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
+- [ ] Expose a named getter on a typed request class; don't re-coerce a typed accessor (`$request->string('id')->toString()`) at a call site.
+
+## Related skills
 
 - [`backend/value-objects`](../value-objects/SKILL.md) — a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge.
 - [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — read input typed at the boundary so nothing downstream re-coerces a `mixed`.

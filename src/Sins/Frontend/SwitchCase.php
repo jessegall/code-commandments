@@ -14,7 +14,8 @@ final class SwitchCase extends Sin
         parent::__construct(
             name: 'switch-case',
             skill: VueControlFlow::class,
-            description: "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)"
+            description: "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)",
+            rule: "Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject."
         );
     }
 }

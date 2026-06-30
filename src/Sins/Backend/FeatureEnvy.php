@@ -14,7 +14,9 @@ final class FeatureEnvy extends Sin
         parent::__construct(
             name: 'feature-envy',
             skill: TellDontAsk::class,
-            description: "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
+            description: "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
+            rule: "Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.",
+            suggestion: "Move the method onto the object (`\$node->edges()`)."
         );
     }
 }

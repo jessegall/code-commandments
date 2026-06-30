@@ -25,7 +25,7 @@ Two moves, always together:
 Sealing the set without moving the behaviour just relocates the `match` statements; the win is the enum
 *answering for itself*.
 
-## When to use this skill
+### When to use this skill
 
 Reach for this the moment you write:
 
@@ -35,103 +35,20 @@ Reach for this the moment you write:
 - a **`const` class** of scalar values used as a closed set;
 - a **`string`/`int` property** whose value space is actually closed.
 
-## Rule 1 — the set is a native backed enum
+## Rules
 
-```php
-// Bad — a closed set as loose strings (and a const class is the same smell)
-if ($action->status === 'pending') { ... }
-const STATUS_PENDING = 'pending';
-
-// Good — a sealed type
-enum TurnStatus: string
-{
-    case Idle = 'idle';
-    case Pending = 'pending';
-    case Done = 'done';
-    case Failed = 'failed';
-}
-```
-
-A `string $status` field that only ever holds those values should be typed `TurnStatus $status`. A `match`
-over `'pending'`/`'done'` string literals that mirror an existing enum should dispatch on the enum instead.
-
-## Rule 2 — behaviour lives ON the case, not at the call site
-
-If you're matching an enum to pick a value or a branch, that mapping is the enum's job. Move it onto the
-type as a method with an exhaustive `match`; call sites just ask.
-
-```php
-// Bad — the same dispatch re-inlined wherever the enum shows up
-$class = match ($socket->shape) {
-    SocketShape::Data => DataSocket::class,
-    SocketShape::Select => SelectSocket::class,
-    SocketShape::ResourcePicker => ResourcePickerSocket::class,
-};
-
-// Good — the enum answers for itself; every call site is `$socket->shape->portClass()`
-enum SocketShape: string
-{
-    case Data = 'data';
-    case Select = 'select';
-    case ResourcePicker = 'resource_picker';
-
-    public function portClass(): string
-    {
-        return match ($this) {
-            self::Data => DataSocket::class,
-            self::Select => SelectSocket::class,
-            self::ResourcePicker => ResourcePickerSocket::class,
-        };
-    }
-}
-```
-
-Small constructor-style mappings belong on the enum too — `BoolEnum::fromBool()` / `->toBool()`,
-`Status::fromLabel()` — rather than a free function or an inline ternary at each site.
-
-## Rule 3 — `match` is exhaustive; an unhandled case throws
-
-A `match` over an enum lists **every** case (no `default` arm needed — PHP throws `UnhandledMatchError`
-on a miss, and adding a new case surfaces every site that must handle it). When you *do* write a
-`default`, it **throws a named exception** — never returns `null` / `''` / `[]` to paper over a case you
-forgot.
-
-```php
-// Bad — a default that swallows an unhandled case into a sentinel
-return match ($status) {
-    TurnStatus::Done => $result,
-    default => null,        // a new case silently returns null
-};
-
-// Good — exhaustive, or a throwing default
-return match ($status) {
-    TurnStatus::Done    => $result,
-    TurnStatus::Failed  => throw UnusableTurnException::for($status),
-    TurnStatus::Idle, TurnStatus::Pending => throw NotReadyException::for($status),
-};
-```
-
-(*Whether* an unhandled case is absence vs a thrown invariant is the [`absence`](../absence/SKILL.md) /
-[`exceptions`](../exceptions/SKILL.md) call; here the rule is just: never a silent `default`.)
-
-## Rule 4 — name reused subsets; compare null-safe
-
-- **A reused subset of cases gets a name on the enum** — `$status->isTerminal()` rather than
-  `in_array($status, [TurnStatus::Done, TurnStatus::Failed], true)` repeated at every site.
-- **Comparison goes through the case, null-safe.** Use the `CompareSelf`-style helper anchored on the
-  instance (`$socket->type->is(SocketType::Data)`) over chained `===`, so a nullable subject doesn't blow
-  up and the intent reads.
-
-## Checklist
-
-```
-Enums with behaviour
-- [ ] A closed set is a native backed enum — not raw strings, a const class, or an untyped string field.
-- [ ] Per-case values/decisions are METHODS on the enum (exhaustive match), not a match re-inlined at call sites.
-- [ ] No `match` over strings that mirror an existing enum's cases — dispatch on the enum.
-- [ ] `match` is exhaustive; any `default` THROWS a named exception, never returns null/''/[].
-- [ ] Reused case subsets are named on the enum; comparison is null-safe (anchored on the instance).
-```
+- Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.
+  _A native `enum X: string` with the values as cases._
+- Put case-group membership on the enum (a method); don't hand-roll `$x === Enum::A || $x === Enum::B`.
+  _A membership method on the enum (`$x->isFinal()`)._
+- Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
+  _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
+- Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
+  _Use the enum (`Enum::tryFrom($x)` / a `cases()` check)._
+- A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
+  _`default => throw Unhandled::for($x)`._
+- Dispatch over the enum's cases, not string/int literals that mirror its values.
+  _Dispatch via a method on the backed enum's cases._
 
 ## Bad → good
 
@@ -276,7 +193,16 @@ public function endpointClean(PaymentMethod $method): string
 - `match` `default` that returns `null`/`''`/`[]` instead of throwing — `MatchDefaultReturnsNullDetector`
 - `match` over string literals that mirror an existing enum's cases — `StringMatchMirrorsEnumDetector`
 
-## Relationship to the other skills
+## Checklist
+
+- [ ] Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.
+- [ ] Put case-group membership on the enum (a method); don't hand-roll `$x === Enum::A || $x === Enum::B`.
+- [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
+- [ ] Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
+- [ ] A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
+- [ ] Dispatch over the enum's cases, not string/int literals that mirror its values.
+
+## Related skills
 
 - [`backend/value-objects`](../value-objects/SKILL.md) — an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.
 - [`backend/absence`](../absence/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.

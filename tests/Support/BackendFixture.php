@@ -22,12 +22,12 @@ final class BackendFixture implements Fixture
 
     public function markerResults(): array
     {
-        return new SinfulMarkerVerifier()->verify($this->codebase(), Catalog::all());
+        return new SinfulMarkerVerifier()->verify($this->codebase(), Catalog::backend());
     }
 
     public function scenarios(): array
     {
-        return new ClassScenarioResolver()->resolve($this->codebase(), Catalog::all());
+        return new ClassScenarioResolver()->resolve($this->codebase(), Catalog::backend());
     }
 
     private function codebase(): Codebase

@@ -21,7 +21,7 @@ final class ProbeDetector implements Detector
         return new class extends Sin {
             public function __construct()
             {
-                parent::__construct(name: 'probe', skill: 'probe', description: 'probe');
+                parent::__construct(name: 'probe', skill: 'probe', description: 'probe', rule: 'probe');
             }
         };
     }

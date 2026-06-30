@@ -14,7 +14,8 @@ final class BloatedDocblock extends Sin
         parent::__construct(
             name: 'bloated-docblock',
             skill: Documentation::class,
-            description: "Multi-paragraph class docblock (class too big)"
+            description: "Multi-paragraph class docblock (class too big)",
+            rule: "Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much."
         );
     }
 }

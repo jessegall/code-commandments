@@ -14,7 +14,9 @@ final class ConfigRead extends Sin
         parent::__construct(
             name: 'config-read',
             skill: LaravelIdioms::class,
-            description: "`config('…')` read inside a class"
+            description: "`config('…')` read inside a class",
+            rule: "Inject a typed config object; never read `config('…')` inside a class.",
+            suggestion: "Inject a typed config value object."
         );
     }
 }
