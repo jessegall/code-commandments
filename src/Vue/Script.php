@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Vue\Expr\Parser;
+
 /**
  * A `<script setup>` block read structurally — the third parser in the engine, beside
  * the template {@see Tokenizer} and the expression {@see Expr\Parser}. It lexes the
@@ -211,6 +213,16 @@ final class Script
                 }
             }
 
+            // `= ref(false)` / `= ref('')` — no generic, so infer the value type from the
+            // initializer literal (the common case TS infers and vue-tsc would resolve).
+            if ($this->isPunct($j, '=') && $this->isReactiveValue($j + 1) && $this->isPunct($j + 2, '(')) {
+                $inferred = $this->reactiveInitType($j + 2);
+
+                if ($inferred !== null) {
+                    return $inferred;
+                }
+            }
+
             // `= (params): R =>` / `= (params) =>` — an arrow function.
             if ($this->isPunct($j, '=') && $this->isPunct($j + 1, '(')) {
                 return $this->functionType($j + 1);
@@ -297,6 +309,24 @@ final class Script
         }
 
         return implode('', $pieces);
+    }
+
+    /**
+     * The TS type of a reactive wrapper's value, inferred from its initializer literal —
+     * `ref(false)` → `boolean`, `ref('')` → `string`, `ref(0)` → `number`. The argument's
+     * SOURCE is sliced out by the parens' known byte offsets and handed to the expression
+     * engine, which infers the literal type; null for a non-literal initializer (an
+     * identifier, call, object — only a real type checker could resolve those).
+     */
+    private function reactiveInitType(int $openParen): ?string
+    {
+        [, $next] = $this->readBalanced($openParen);
+
+        $from = $this->tokens[$openParen]['end'];
+        $to = $this->tokens[$next - 1]['start'] ?? $from;
+        $argument = trim(substr($this->source, $from, $to - $from));
+
+        return $argument === '' ? null : Parser::parse($argument)->literalType();
     }
 
     /**

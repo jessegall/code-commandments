@@ -31,4 +31,27 @@ final class ScriptTest extends TestCase
 
         $this->assertSame('number', $script->declaredType('count'));
     }
+
+    public function test_an_inferred_ref_takes_the_type_of_its_initializer_literal(): void
+    {
+        // The gap behind `busy/importOpen/templatesOpen` extracting as `unknown`: a ref with
+        // no generic — TS infers the type, and now so do we, from the literal argument.
+        $this->assertSame('boolean', (new Script('const open = ref(false);'))->declaredType('open'));
+        $this->assertSame('string', (new Script("const name = ref('');"))->declaredType('name'));
+        $this->assertSame('number', (new Script('const total = shallowRef(0);'))->declaredType('total'));
+    }
+
+    public function test_an_explicit_ref_generic_still_wins_over_the_initializer(): void
+    {
+        $script = new Script('const id = ref<string | null>(null);');
+
+        $this->assertSame('string|null', $script->declaredType('id'));
+    }
+
+    public function test_a_non_literal_ref_initializer_stays_unresolved(): void
+    {
+        // `ref(props.busy)` — only a real type checker could resolve this; we don't guess.
+        $this->assertNull((new Script('const busy = ref(props.busy);'))->declaredType('busy'));
+        $this->assertNull((new Script('const items = ref([]);'))->declaredType('items'));
+    }
 }
