@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Vue\Boundary;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Sfc;
+use JesseGall\CodeCommandments\Vue\Script;
 
 /**
  * The one fix the duplicate-element, deep-data-reach AND deep-nesting detectors all
@@ -79,7 +80,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($props, $boundary->markup()));
+            $draft->add($component, self::render($boundary->sfc, $props, $boundary->markup()));
 
             foreach ($members as $occurrence) {
                 $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($props));
@@ -103,7 +104,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($props, $boundary->markup()));
+            $draft->add($component, self::render($boundary->sfc, $props, $boundary->markup()));
             $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
         }
 
@@ -129,7 +130,7 @@ final class ExtractComponentScribe extends RepentScribe
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            $draft->add($component, self::render($props, $markup));
+            $draft->add($component, self::render($boundary->sfc, $props, $markup));
             $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
         }
 
@@ -275,15 +276,72 @@ final class ExtractComponentScribe extends RepentScribe
     // ---- rendering ------------------------------------------------------------
 
     /**
+     * The component file: its `<script setup>` (the imports the markup/props actually
+     * use, carried from the source, plus typed props) and the lifted `<template>`.
+     *
      * @param  list<string>  $props
      */
-    private static function render(array $props, string $markup): string
+    private static function render(Sfc $sfc, array $props, string $markup): string
     {
+        $script = new Script($sfc->scriptContent());
+        $types = $script->propTypes();
+
         $defineProps = $props === []
             ? ''
-            : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: unknown", $props)) . " }>();\n";
+            : 'defineProps<{ ' . implode('; ', array_map(static fn (string $p): string => "{$p}: " . ($types[$p] ?? 'unknown'), $props)) . " }>();\n";
 
-        return "<script setup lang=\"ts\">\n{$defineProps}</script>\n\n<template>\n{$markup}\n</template>\n";
+        $imports = self::usedImports($script, $markup . "\n" . $defineProps);
+        $head = $imports === '' ? '' : "{$imports}\n\n";
+
+        return "<script setup lang=\"ts\">\n{$head}{$defineProps}</script>\n\n<template>\n{$markup}\n</template>\n";
+    }
+
+    /**
+     * The source's import statements whose bound name the component actually uses (in
+     * the markup or a prop type) — so it brings its children, helpers and types with
+     * it; the consumer apps don't auto-import.
+     */
+    private static function usedImports(Script $script, string $used): string
+    {
+        $kept = [];
+
+        foreach ($script->imports() as $import) {
+            foreach ($import['names'] as $name) {
+                if (self::mentions($used, $name)) {
+                    $kept[] = $import['statement'];
+
+                    break;
+                }
+            }
+        }
+
+        return implode("\n", $kept);
+    }
+
+    /**
+     * Does $name appear in $text as a whole word (not part of a longer identifier)?
+     */
+    private static function mentions(string $text, string $name): bool
+    {
+        $offset = 0;
+
+        while (($at = strpos($text, $name, $offset)) !== false) {
+            $before = $at === 0 ? ' ' : $text[$at - 1];
+            $after = $text[$at + strlen($name)] ?? ' ';
+
+            if (! self::isIdentifierChar($before) && ! self::isIdentifierChar($after)) {
+                return true;
+            }
+
+            $offset = $at + 1;
+        }
+
+        return false;
+    }
+
+    private static function isIdentifierChar(string $char): bool
+    {
+        return ctype_alnum($char) || $char === '_' || $char === '$';
     }
 
     /**
