@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
@@ -275,10 +276,11 @@ final class Boundary
     }
 
     /**
-     * The props the boundary WRITES — a value bound via `v-model[:arg]="x"` inside the chunk
-     * is two-way state, not read-only input. Lifted out, such a prop must be a `defineModel`
-     * (and bound with `v-model` at the call site), never a plain prop: Vue forbids writing a
-     * prop, so a `v-model` on one fails the build. The root of each `v-model` expression.
+     * The values the boundary WRITES — two-way state, not read-only input. A value is written
+     * when it is `v-model[:arg]="x"`-bound, OR assigned in a handler (`@click="x = true"`).
+     * Lifted out, each such value must become a `defineModel` (bound with `v-model` at the call
+     * site), never a plain prop: Vue forbids writing a prop, so a `v-model` on one fails the
+     * build and an assignment is a silent no-op. The root identifier of each write.
      *
      * @return list<string>
      */
@@ -287,9 +289,19 @@ final class Boundary
         $models = [];
 
         $this->each(static function (Element $element) use (&$models): void {
+            // `v-model[:arg]="x"` — a two-way binding.
             foreach ($element->directiveBindings(Directive::Model) as $expression) {
                 foreach (Parser::parse($expression)->roots() as $root) {
                     $models[] = $root;
+                }
+            }
+
+            // `@event="x = …"` — a handler assigning the value (the readonly-prop trap, #256).
+            foreach ($element->expressions() as $expression) {
+                if ($expression->is(Expr::ASSIGN)) {
+                    foreach ($expression->get('target')->roots() as $root) {
+                        $models[] = $root;
+                    }
                 }
             }
         });
