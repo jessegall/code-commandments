@@ -101,11 +101,28 @@ Role vocabulary
 - [ ] Classification is by marker interface / type, not a const list of class-name strings.
 ```
 
+## Bad → good
+
+```php
+// Bad
+public function get(string $key): ?object
+{
+    return $this->channels[$key] ?? null;
+}
+
+// Good
+public function resolve(string $key): object
+{
+    return $this->channels[$key] ?? throw UnknownChannel::forKey($key);
+}
+```
+
+## When it fires
+
+- A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw) — `NullableRegistryLookupDetector`
+
 ## Relationship to the other skills
 
-- [`absence`](../absence/SKILL.md) — a registry `get()` is resolve-or-throw, not an Option; that's the same
-  "missing must-exist thing throws" rule.
-- [`exceptions`](../exceptions/SKILL.md) — the named exception a registry throws on a miss
-  (`RegistryEntryNotFoundException::forKey($key)`).
-- [`value-objects`](../value-objects/SKILL.md) — these roles are typed structures; reach for one instead of
-  threading a raw `array` keyed store around.
+- [`backend/absence`](../absence/SKILL.md) — a registry `get()` is resolve-or-throw, not an Option; that's the same "missing must-exist thing throws" rule.
+- [`backend/exceptions`](../exceptions/SKILL.md) — the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`).
+- [`backend/value-objects`](../value-objects/SKILL.md) — these roles are typed structures; reach for one instead of threading a raw `array` keyed store around.

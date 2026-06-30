@@ -2,7 +2,9 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NewDataObject;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\CustomerData;
 use Shop\Models\Customer;
@@ -12,7 +14,7 @@ use Shop\Models\Customer;
  */
 final class CustomerProfileBuilder
 {
-    #[Sinful(NewDataObjectDetector::class)]
+    #[Sinful(NewDataObject::class)]
     public function build(Customer $customer): CustomerData
     {
         return new CustomerData(
@@ -20,5 +22,11 @@ final class CustomerProfileBuilder
             name: $customer->name,
             email: $customer->email,
         );
+    }
+
+    #[Righteous(NewDataObject::class)]
+    public function buildFrom(Customer $customer): CustomerData
+    {
+        return CustomerData::from($customer);
     }
 }

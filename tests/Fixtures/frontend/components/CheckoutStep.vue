@@ -13,12 +13,12 @@ defineProps<{ step: number }>();
     </nav>
 
     <section class="checkout__panel">
-      <!-- @sin SwitchCaseDetector -->
-      <!-- @sin ControlFlowOnElementDetector -->
+      <!-- @sin SwitchCase -->
+      <!-- @sin ControlFlowOnElement -->
       <CartReview v-if="step === 1" />
-      <!-- @sin ControlFlowOnElementDetector -->
+      <!-- @sin ControlFlowOnElement -->
       <ShippingForm v-else-if="step === 2" />
-      <!-- @sin ControlFlowOnElementDetector -->
+      <!-- @sin ControlFlowOnElement -->
       <PaymentForm v-else-if="step === 3" />
     </section>
   </div>

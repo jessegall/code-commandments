@@ -2,7 +2,8 @@
 
 namespace Shop\Pricing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NearDuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class TierScorer
@@ -30,7 +31,7 @@ final class TierScorer
         return sprintf('tier:%s(%d)', $this->bracket($value), $value);
     }
 
-    #[Sinful(NearDuplicateFunctionDetector::class)]
+    #[Sinful(NearDuplicateFunction::class)]
     public function scoreFrom(int $seed): int
     {
         $score = $seed;

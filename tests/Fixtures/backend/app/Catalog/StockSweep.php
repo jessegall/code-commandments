@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\LoopInvertedGuardDetector;
+use JesseGall\CodeCommandments\Sins\Backend\LoopInvertedGuard;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
 
@@ -15,7 +16,7 @@ final class StockSweep
     /**
      * @param  array<int, Product>  $products
      */
-    #[Sinful(LoopInvertedGuardDetector::class)]
+    #[Sinful(LoopInvertedGuard::class)]
     public function reorder(array $products): void
     {
         foreach ($products as $product) {

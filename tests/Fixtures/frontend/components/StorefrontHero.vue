@@ -12,7 +12,7 @@ defineProps<{ storefront: Storefront }>();
     </div>
 
     <!-- A cluster: storefront.campaign read in three fields → extract <HeroBanner :campaign>. -->
-    <!-- @sin DeepDataReachDetector -->
+    <!-- @sin DeepDataReach -->
     <div class="hero__banner" :style="storefront.campaign.theme">
       <h1 class="hero__headline">{{ storefront.campaign.title }}</h1>
       <p class="hero__sub">{{ storefront.campaign.subtitle }}</p>
@@ -20,7 +20,7 @@ defineProps<{ storefront: Storefront }>();
 
     <nav class="hero__nav">
       <ul class="hero__links">
-        <!-- @sin ControlFlowOnElementDetector -->
+        <!-- @sin ControlFlowOnElement -->
         <li v-for="link in storefront.links" :key="link.id" class="hero__link">
           <span class="hero__link-label">{{ link.label }}</span>
         </li>

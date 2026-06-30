@@ -90,3 +90,51 @@ You're re-proving, on every read, something the design already guarantees: `?->`
 `?? <literal>` whose branch can't be reached, a `$prev = $this->x; … $this->x = $prev`. Ask: *is this value
 ever actually absent here?* If no, the type is lying — move the value into the signature, a non-nullable
 field, or a value object, and delete the defence.
+
+## Bad → good
+
+```php
+// Bad
+public function covers(string $date): bool
+{
+    return $this->period?->includes($date) ?? false;
+}
+
+// Good
+public function coversOrFail(string $date): bool
+{
+    if ($this->period === null) {
+        throw LedgerNotFocused::beforeCovers();
+    }
+
+    return $this->period->includes($date);
+}
+```
+
+```php
+// Bad
+public function nest(string $segment, array $routes): array
+{
+    $parent = $this->prefix;
+    $this->prefix = ltrim($parent . '/' . $segment, '/');
+
+    try {
+        return array_map(fn (string $route): string => $this->prefix . '#' . $route, $routes);
+    } finally {
+        $this->prefix = $parent;
+    }
+}
+
+// Good
+public function nestUnder(string $prefix, string $segment, array $routes): array
+{
+    $nested = ltrim($prefix . '/' . $segment, '/');
+
+    return array_map(fn (string $route): string => $nested . '#' . $route, $routes);
+}
+```
+
+## When it fires
+
+- Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
+- Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`

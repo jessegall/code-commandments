@@ -2,20 +2,33 @@
 
 namespace Shop\Services;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConfigRead;
+use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
+
+use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Support\Facades\Mail;
-use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class NotificationService
 {
-    #[Sinful(ConfigReadDetector::class)]
-    #[Sinful(FacadeCallDetector::class)]
+    public function __construct(private readonly Mailer $mailer) {}
+
+    #[Sinful(ConfigRead::class)]
+    #[Sinful(FacadeCall::class)]
     public function notify(string $email, string $type): void
     {
         $template = config('shop.templates.' . $type);
 
         Mail::raw($template, function ($message) use ($email) {
+            $message->to($email);
+        });
+    }
+
+    #[Righteous(FacadeCall::class)]
+    public function notifyClean(string $email, string $template): void
+    {
+        $this->mailer->raw($template, function ($message) use ($email) {
             $message->to($email);
         });
     }

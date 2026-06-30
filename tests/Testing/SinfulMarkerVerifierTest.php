@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Testing;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Testing\SinfulMarkerVerifier;
 use PHPUnit\Framework\TestCase;
 
@@ -15,9 +16,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProbeDetector implements Detector
 {
-    public function skill(): string
+    public function sin(): Sin
     {
-        return 'probe';
+        return new class extends Sin {
+            public function __construct()
+            {
+                parent::__construct(name: 'probe', skill: 'probe', description: 'probe');
+            }
+        };
     }
 
     public function find(Codebase $codebase): array

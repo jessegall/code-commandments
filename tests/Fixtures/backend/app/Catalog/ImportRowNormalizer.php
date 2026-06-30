@@ -2,8 +2,10 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\ManufacturedFakeFillDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
+use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Repositories\ProductRepository;
 
@@ -18,8 +20,8 @@ final class ImportRowNormalizer
     /**
      * @param  array<string, mixed>  $row
      */
-    #[Sinful(ArrayBagDetector::class)]
-    #[Sinful(ManufacturedFakeFillDetector::class)]
+    #[Sinful(ArrayBag::class)]
+    #[Sinful(ManufacturedFakeFill::class)]
     public function normalize(array $row): void
     {
         $this->products->upsert(
@@ -27,5 +29,15 @@ final class ImportRowNormalizer
             $row['name'] ?? '',
             (int) ($row['stock'] ?? 0),
         );
+    }
+
+    /**
+     * Absence is decided at the source: a typed row guarantees its fields, so no
+     * empty-string / zero fake is manufactured here.
+     */
+    #[Righteous(ManufacturedFakeFill::class)]
+    public function persist(ImportRow $row): void
+    {
+        $this->products->upsert($row->sku, $row->name, $row->stock);
     }
 }

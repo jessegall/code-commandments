@@ -55,10 +55,10 @@ final class Benchmark
                 'bytes' => $bytes,
             ];
 
-            $skill = $detector->skill();
+            $sin = $detector->sin();
 
             foreach ($matches as $match) {
-                $findings[] = new Finding($short, $skill, $match->file->path, $match->location(), $match->scope());
+                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file->path, $match->location(), $match->scope());
             }
         }
 

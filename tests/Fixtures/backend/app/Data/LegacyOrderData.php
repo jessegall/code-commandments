@@ -2,14 +2,15 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NonFinalDataDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
 /**
  * An order DTO left open for subclassing — a value object that should be sealed.
  */
-#[Sinful(NonFinalDataDetector::class)]
+#[Sinful(NonFinalData::class)]
 class LegacyOrderData extends Data
 {
     public function __construct(

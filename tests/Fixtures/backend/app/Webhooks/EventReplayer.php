@@ -2,7 +2,8 @@
 
 namespace Shop\Webhooks;
 
-use JesseGall\CodeCommandments\Detectors\Backend\LoopInvertedGuardDetector;
+use JesseGall\CodeCommandments\Sins\Backend\LoopInvertedGuard;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class EventReplayer
 {
-    #[Sinful(LoopInvertedGuardDetector::class)]
+    #[Sinful(LoopInvertedGuard::class)]
     public function replay(\Iterator $events): int
     {
         $replayed = 0;

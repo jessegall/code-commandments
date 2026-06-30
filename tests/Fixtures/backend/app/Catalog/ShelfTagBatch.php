@@ -2,7 +2,8 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ManualHydrationLoopDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ManualHydrationLoop;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
 use Shop\Data\ShelfTagData;
@@ -14,7 +15,7 @@ use Shop\Data\ShelfTagData;
  */
 // Class-level marker: the arrow-fn form's `from()` has no NAMED enclosing function
 // (it lives in an anonymous fn), so it is attributed to the class, not a method.
-#[Sinful(ManualHydrationLoopDetector::class)]
+#[Sinful(ManualHydrationLoop::class)]
 final class ShelfTagBatch
 {
     /**

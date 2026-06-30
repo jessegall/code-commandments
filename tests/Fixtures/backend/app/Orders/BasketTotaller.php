@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\FeatureEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class BasketTotaller
 {
-    #[Sinful(FeatureEnvyDetector::class)]
+    #[Sinful(FeatureEnvy::class)]
     public function total(Basket $basket): int
     {
         $sum = 0;

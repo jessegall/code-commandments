@@ -2,7 +2,8 @@
 
 namespace Shop\Integrations;
 
-use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
+use JesseGall\CodeCommandments\Sins\Backend\DataClump;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,7 +14,7 @@ final class InventoryReconciler
 {
     public function __construct(private readonly int $batchSize = 100) {}
 
-    #[Sinful(DataClumpDetector::class)]
+    #[Sinful(DataClump::class)]
     public function reconcile(string $shopId, string $userId, string $channelId): bool
     {
         foreach ($this->chunks() as $chunk) {

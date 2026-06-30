@@ -133,11 +133,152 @@ Enums with behaviour
 - [ ] Reused case subsets are named on the enum; comparison is null-safe (anchored on the instance).
 ```
 
+## Bad → good
+
+```php
+// Bad
+final class PaymentStatuses
+{
+    /** Authorisation requested, awaiting the gateway. */
+    const PENDING = 'pending';
+
+    /** Funds held but not yet taken. */
+    const AUTHORISED = 'authorised';
+
+    /** Money moved; the order can ship. */
+    const CAPTURED = 'captured';
+
+    /** Reversed after capture. */
+    const REFUNDED = 'refunded';
+}
+
+// Good
+enum TaxBand: int
+{
+    case Standard = 2100;
+    case Reduced = 900;
+    case Zero = 0;
+}
+```
+
+```php
+// Bad
+public function clearsImmediately(PaymentMethod $method): bool
+{
+    if ($this->retries > 3) {
+        return false;
+    }
+
+    return $method === PaymentMethod::Card || $method === PaymentMethod::Ideal;
+}
+
+// Good
+public function clearsImmediatelyClean(PaymentMethod $method): bool
+{
+    if ($this->retries > 3) {
+        return false;
+    }
+
+    return $method->isInstant();
+}
+```
+
+```php
+// Bad
+public function colour(Product $product): string
+{
+    switch ($product->category->value) {
+        case 'food':
+            return 'green';
+        case 'electronics':
+            return 'blue';
+        case 'clothing':
+            return 'purple';
+        default:
+            return 'grey';
+    }
+}
+
+// Good
+public function colourViaEnum(Product $product): string
+{
+    return $product->category->badgeColour();
+}
+```
+
+```php
+// Bad
+public function allowed(string $method): bool
+{
+    return in_array($method, ['card', 'ideal', 'paypal'], true);
+}
+
+// Good
+public function allowedClean(string $method): bool
+{
+    return PaymentMethod::tryFrom($method) !== null;
+}
+```
+
+```php
+// Bad
+public function for(Product $product): ?string
+{
+    return match ($product->priority) {
+        1 => 'urgent',
+        2 => 'normal',
+        3 => 'low',
+        default => null,
+    };
+}
+
+// Good
+public function strictFor(Product $product): string
+{
+    return match ($product->priority) {
+        1 => 'urgent',
+        2 => 'normal',
+        3 => 'low',
+        default => throw UnknownPriority::for($product->priority),
+    };
+}
+```
+
+```php
+// Bad
+public function endpoint(string $method): string
+{
+    return match ($method) {
+        'card' => 'https://pay.test/card',
+        'ideal' => 'https://pay.test/ideal',
+        'paypal' => 'https://pay.test/paypal',
+        default => 'https://pay.test/fallback',
+    };
+}
+
+// Good
+public function endpointClean(PaymentMethod $method): string
+{
+    return match ($method) {
+        PaymentMethod::Card => 'https://pay.test/card',
+        PaymentMethod::Ideal => 'https://pay.test/ideal',
+        PaymentMethod::PayPal => 'https://pay.test/paypal',
+    };
+}
+```
+
+## When it fires
+
+- Closed set as raw string literals / a `const` class of scalars (not a native enum) — `ConstClassEnumDetector`
+- `$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test — `EnumCaseOrChainDetector`
+- `match`/`switch` over an enum's `->value` at a call site (homeless method) — `EnumValueMatchDetector`
+- `in_array($x, [literals])` whose literals mirror an existing enum's cases — `InArrayMirrorsEnumDetector`
+- `match` `default` that returns `null`/`''`/`[]` instead of throwing — `MatchDefaultReturnsNullDetector`
+- `match` over string literals that mirror an existing enum's cases — `StringMatchMirrorsEnumDetector`
+
 ## Relationship to the other skills
 
-- [`value-objects`](../value-objects/SKILL.md) — an enum is the closed-set member of "give data a type";
-  reach for it when the type's values are a fixed set.
-- [`absence`](../absence/SKILL.md) / [`exceptions`](../exceptions/SKILL.md) — a missing/unhandled case is a
-  throw, not a silent `default`.
-- [`fix-at-the-source`](../fix-at-the-source/SKILL.md) — seal the set where the value is born (a typed enum
-  field) so downstream code never re-parses a string.
+- [`backend/value-objects`](../value-objects/SKILL.md) — an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.
+- [`backend/absence`](../absence/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.
+- [`backend/exceptions`](../exceptions/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.
+- [`backend/fix-at-the-source`](../fix-at-the-source/SKILL.md) — seal the set where the value is born (a typed enum field) so downstream code never re-parses a string.

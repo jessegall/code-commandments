@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Vue\Boundary;
+use JesseGall\CodeCommandments\Vue\ComponentLibrary;
+use JesseGall\CodeCommandments\Vue\ComponentReuse;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Sfc;
@@ -35,7 +37,53 @@ final class ExtractComponentScribe extends RepentScribe
 
     private const string NESTING = 'nesting';
 
+    private const string COMPOUND = 'compound';
+
+    private ?ComponentLibrary $library = null;
+
     private function __construct(private readonly string $strategy) {}
+
+    /**
+     * Hand the scribe the codebase's existing components, so a boundary that an existing
+     * component already FITS is reused (imported + referenced) instead of creating a
+     * duplicate file. Null disables the check (always create).
+     */
+    public function withLibrary(?ComponentLibrary $library): self
+    {
+        $this->library = $library;
+
+        return $this;
+    }
+
+    /**
+     * Reuse an existing component for this boundary if one fits — returns true when it
+     * placed a `<Existing … />` reference (and imported it) instead of a new file.
+     */
+    private function reused(Draft $draft, Boundary $boundary): bool
+    {
+        $reuse = $this->library?->match($boundary);
+
+        if ($reuse === null) {
+            return false;
+        }
+
+        $this->placeReuse($draft, $boundary, $reuse);
+
+        return true;
+    }
+
+    /**
+     * Reference an existing component at a boundary's call site: a `<Existing … />` (with
+     * carried directives + bindings) plus an import, unless the file already has it.
+     */
+    private function placeReuse(Draft $draft, Boundary $boundary, ComponentReuse $reuse): void
+    {
+        $draft->edit($boundary->contentSpan(), self::usage($reuse->name, $reuse->bindings, $boundary->carried()));
+
+        if (! self::mentions($boundary->sfc->scriptContent(), $reuse->name)) {
+            self::import($draft, $boundary->sfc, $reuse->path, $reuse->name);
+        }
+    }
 
     public static function forDuplicates(): self
     {
@@ -52,6 +100,11 @@ final class ExtractComponentScribe extends RepentScribe
         return new self(self::NESTING);
     }
 
+    public static function forCompound(): self
+    {
+        return new self(self::COMPOUND);
+    }
+
     /**
      * @param  list<ElementMatch>  $findings
      */
@@ -60,6 +113,7 @@ final class ExtractComponentScribe extends RepentScribe
         return match ($this->strategy) {
             self::DUPLICATES => $this->duplicates($findings),
             self::DEEP_REACH => $this->deepReach($findings),
+            self::COMPOUND => $this->compound($findings),
             default => $this->nesting($findings),
         };
     }
@@ -76,6 +130,15 @@ final class ExtractComponentScribe extends RepentScribe
 
         foreach ($this->groups($findings) as $members) {
             $boundary = Boundary::for($members[0]);
+
+            if (($reuse = $this->library?->match($boundary)) !== null) {
+                foreach ($members as $occurrence) {
+                    $this->placeReuse($draft, Boundary::for($occurrence), $reuse);
+                }
+
+                continue;
+            }
+
             $props = self::withLoopVars($boundary, $boundary->props());
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
@@ -100,6 +163,11 @@ final class ExtractComponentScribe extends RepentScribe
 
         foreach ($findings as $finding) {
             $boundary = Boundary::for($finding);
+
+            if ($this->reused($draft, $boundary)) {
+                continue;
+            }
+
             $props = self::withLoopVars($boundary, $boundary->props());
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
@@ -112,6 +180,98 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
+     * Lift a compound primitive (`<Dialog>…`) into its own component, named for what it
+     * does — the same mechanics as {@see nesting}, with a {@see compoundName}.
+     *
+     * @param  list<ElementMatch>  $findings
+     */
+    private function compound(array $findings): array
+    {
+        $draft = $this->draft([]);
+        $used = [];
+
+        foreach ($findings as $finding) {
+            $boundary = Boundary::for($finding);
+
+            if ($this->reused($draft, $boundary)) {
+                continue;
+            }
+
+            $props = self::withLoopVars($boundary, $boundary->props());
+            $name = self::unique(dirname($finding->file()), self::compoundName($boundary), $used);
+            $component = $finding->sibling("{$name}.vue");
+
+            $draft->add($component, self::render($boundary, $props, $boundary->markup()));
+            $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+        }
+
+        return $draft->rewrites();
+    }
+
+    /**
+     * Name a compound for what it DOES: its title part's text plus the family tag —
+     * `<DialogTitle>Pair Reader</DialogTitle>` in a `<Dialog>` → `PairReaderDialog`. Falls
+     * back to the boundary's own intelligent name when there's no title.
+     */
+    private static function compoundName(Boundary $boundary): string
+    {
+        $title = self::compoundTitle($boundary->node);
+
+        if ($title === '') {
+            return $boundary->name();
+        }
+
+        $family = $boundary->node->tag;
+        $base = self::pascal($title);
+
+        return str_ends_with($base, $family) ? $base : $base . $family;
+    }
+
+    /**
+     * The text of the compound's title part — a descendant component whose tag ends in
+     * `Title` (`DialogTitle`, `CardTitle`).
+     */
+    private static function compoundTitle(Element $node): string
+    {
+        foreach ($node->descendants() as $element) {
+            if (! str_ends_with($element->tag, 'Title')) {
+                continue;
+            }
+
+            foreach ($element->children as $child) {
+                if ($child->isText() && trim($child->text) !== '') {
+                    return trim($child->text);
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Words → PascalCase, identifier characters only (no regex — the scribe stays in the
+     * no-regex layer).
+     */
+    private static function pascal(string $text): string
+    {
+        $out = '';
+        $word = '';
+
+        for ($i = 0; $i <= strlen($text); $i++) {
+            $char = $text[$i] ?? '';
+
+            if ($char !== '' && ctype_alnum($char)) {
+                $word .= $char;
+            } elseif ($word !== '') {
+                $out .= ucfirst(strtolower($word));
+                $word = '';
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<ElementMatch>  $findings
      */
     private function deepReach(array $findings): array
@@ -121,6 +281,11 @@ final class ExtractComponentScribe extends RepentScribe
 
         foreach ($findings as $finding) {
             $boundary = Boundary::for($finding);
+
+            if ($this->reused($draft, $boundary)) {
+                continue;
+            }
+
             [$prefix, $prop] = self::midObject($finding);
             $props = self::withLoopVars($boundary, self::reachProps($boundary, $finding, $prefix, $prop));
             $name = self::unique(dirname($finding->file()), $prop !== '' ? ucfirst($prop) . 'Section' : $boundary->name(), $used);

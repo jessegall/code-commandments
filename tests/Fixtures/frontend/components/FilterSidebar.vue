@@ -14,13 +14,13 @@ defineProps<{ categories: string[]; brands: string[] }>();
       <input id="q" class="filters__search-input" type="search" placeholder="Search" />
     </div>
 
-    <!-- @sin DuplicateElementDetector -->
+    <!-- @sin DuplicateElement -->
     <fieldset class="filter-group">
       <legend class="filter-legend">Brand</legend>
       <label class="filter-option"><input type="checkbox" /> Any brand</label>
     </fieldset>
 
-    <!-- @sin DuplicateElementDetector -->
+    <!-- @sin DuplicateElement -->
     <fieldset class="filter-group">
       <legend class="filter-legend">Brand</legend>
       <label class="filter-option"><input type="checkbox" /> Any brand</label>

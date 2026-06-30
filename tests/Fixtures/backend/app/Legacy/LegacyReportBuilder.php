@@ -2,7 +2,8 @@
 
 namespace Shop\Legacy;
 
-use JesseGall\CodeCommandments\Detectors\Backend\BloatedDocblockDetector;
+use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,7 +14,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * The grouping logic is shared with the dashboard widgets, so any change here
  * must be mirrored there until the two are unified.
  */
-#[Sinful(BloatedDocblockDetector::class)]
+#[Sinful(BloatedDocblock::class)]
 final class LegacyReportBuilder
 {
     public function build(int $month): string

@@ -2,7 +2,9 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\KeyedLookupEnvyDetector;
+use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -17,11 +19,23 @@ final class ReservedSkus
     /**
      * @return list<string>
      */
-    #[Sinful(KeyedLookupEnvyDetector::class)]
+    #[Sinful(KeyedLookupEnvy::class)]
     public function forItem(CatalogItem $item): array
     {
         return $this->registry->has($item->code)
             ? $this->registry->get($item->code)->reservedSkus
             : [];
+    }
+
+    /**
+     * The item knows its own reserved SKUs — ask it directly instead of using its
+     * code as a key back into a registry.
+     *
+     * @return list<string>
+     */
+    #[Righteous(KeyedLookupEnvy::class)]
+    public function forItemDirect(CatalogItem $item): array
+    {
+        return $item->reservedSkus();
     }
 }

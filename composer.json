@@ -39,6 +39,7 @@
     },
     "scripts": {
         "readme": "@php scripts/generate-readme.php",
+        "sins": "@php scripts/generate-skills.php",
         "judge": "@php bin/commandments judge"
     },
     "config": {

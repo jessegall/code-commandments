@@ -2,7 +2,8 @@
 
 namespace Shop\Notifications;
 
-use JesseGall\CodeCommandments\Detectors\Backend\SwallowCatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -16,7 +17,7 @@ final class SlackNotifier
 
     public function __construct(private readonly string $webhookUrl) {}
 
-    #[Sinful(SwallowCatchDetector::class)]
+    #[Sinful(SwallowCatch::class)]
     public function ping(string $message): void
     {
         foreach ($this->channels as $channel) {

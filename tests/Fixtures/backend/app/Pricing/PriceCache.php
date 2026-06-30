@@ -2,7 +2,8 @@
 
 namespace Shop\Pricing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\OptionAsNullableDetector;
+use JesseGall\CodeCommandments\Sins\Backend\OptionAsNullable;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\PhpTypes\Option;
 
@@ -10,7 +11,7 @@ use JesseGall\PhpTypes\Option;
  * Holds a memoised lookup as `Option | null` — both an Option AND a null, two
  * absence models stacked on one field.
  */
-#[Sinful(OptionAsNullableDetector::class)]
+#[Sinful(OptionAsNullable::class)]
 final class PriceCache
 {
     private Option | null $memoised = null;

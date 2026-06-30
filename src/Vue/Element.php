@@ -157,6 +157,32 @@ class Element
     }
 
     /**
+     * Is this a Vue COMPONENT — a PascalCase custom element (`<Dialog>`, `<UserCard>`)
+     * rather than a plain HTML tag (`<div>`) or a synthetic node?
+     */
+    public function isComponent(): bool
+    {
+        return $this->isElement() && $this->tag !== '' && ctype_upper($this->tag[0]);
+    }
+
+    /**
+     * The descendant components that belong to THIS component's compound family — those
+     * whose tag is this tag plus a suffix (`Dialog` → `DialogContent`, `DialogTitle`,
+     * `DialogFooter`). A root with two-or-more such parts is a library compound
+     * (Dialog/Card/Sheet/Tabs…) assembled inline — the fingerprint, derived from the
+     * tags themselves, no hardcoded list.
+     *
+     * @return list<Element>
+     */
+    public function compoundParts(): array
+    {
+        return array_values(array_filter(
+            $this->descendants(),
+            fn (Element $element): bool => $element->isComponent() && $element->tag !== $this->tag && str_starts_with($element->tag, $this->tag),
+        ));
+    }
+
+    /**
      * Every element in this subtree, self excluded, in document order — the whole
      * reach of a component when walking it for clusters.
      *
@@ -253,6 +279,39 @@ class Element
     public function structureHash(): string
     {
         return md5($this->canonical());
+    }
+
+    /**
+     * A binding-AGNOSTIC fingerprint: the same as {@see structureHash} but with every
+     * value erased — attribute values, class lists, and text content all dropped,
+     * keeping only the tag, the attribute NAMES, and the nesting. Two blocks share a
+     * shape signature when they render the same skeleton regardless of WHICH data they
+     * bind — the structural half of "does an existing component fit this extraction?".
+     */
+    public function shapeSignature(): string
+    {
+        return md5($this->shape());
+    }
+
+    private function shape(): string
+    {
+        if ($this->isText()) {
+            return trim($this->text) === '' ? '' : 'T';
+        }
+
+        if (! $this->isElement()) {
+            return '';
+        }
+
+        $names = array_keys($this->attributes);
+        sort($names);
+
+        $children = '';
+        foreach ($this->children as $child) {
+            $children .= $child->shape();
+        }
+
+        return 'E:' . $this->tag . '[' . implode(',', $names) . '](' . $children . ')';
     }
 
     /**

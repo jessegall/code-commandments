@@ -103,3 +103,25 @@ A method signature pairs a domain object with a `string`/`int` id, and the body'
 first move is `$thatObject->…->somethingById($thatId)`. Ask: *did the caller already
 have what it needs to resolve this?* If yes, move the lookup to the caller and change
 the parameter to the resolved type.
+
+## Bad → good
+
+```php
+// Bad
+public function priceFor(ProductCatalogue $catalogue, string $sku): int
+{
+    $variant = $catalogue->variantBySku($sku);
+
+    return $variant->basePriceCents() + $this->markupCents;
+}
+
+// Good
+public function priceForVariant(Variant $variant): int
+{
+    return $variant->basePriceCents() + $this->markupCents;
+}
+```
+
+## When it fires
+
+- Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging — `ParamResolvedFromParamDetector`

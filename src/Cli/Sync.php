@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Skills\ClaudeSection;
-use JesseGall\CodeCommandments\Skills\Skills;
+use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration so a

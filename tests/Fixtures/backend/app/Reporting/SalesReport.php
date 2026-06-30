@@ -2,9 +2,11 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ArrayReturnBagDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\ConfigReadDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\NullableCollectionReturnDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
+use JesseGall\CodeCommandments\Sins\Backend\ConfigRead;
+use JesseGall\CodeCommandments\Sins\Backend\NullableCollectionReturn;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Repositories\OrderRepository;
 
@@ -19,8 +21,8 @@ final class SalesReport
     /**
      * @return array<string, int|string>
      */
-    #[Sinful(ConfigReadDetector::class)]
-    #[Sinful(ArrayReturnBagDetector::class)]
+    #[Sinful(ConfigRead::class)]
+    #[Sinful(ArrayReturnBag::class)]
     public function daily(int $day): array
     {
         $currency = config('shop.currency');
@@ -36,8 +38,8 @@ final class SalesReport
     /**
      * @return array<string, int>
      */
-    #[Sinful(ConfigReadDetector::class)]
-    #[Sinful(ArrayReturnBagDetector::class)]
+    #[Sinful(ConfigRead::class)]
+    #[Sinful(ArrayReturnBag::class)]
     public function summary(): array
     {
         $window = config('shop.report.window');
@@ -51,7 +53,7 @@ final class SalesReport
     /**
      * @return array<int, int>|null
      */
-    #[Sinful(NullableCollectionReturnDetector::class)]
+    #[Sinful(NullableCollectionReturn::class)]
     public function topProductIds(int $limit): ?array
     {
         $ids = $this->orders->topProductIds($limit);
@@ -61,5 +63,31 @@ final class SalesReport
         }
 
         return $ids;
+    }
+
+    /**
+     * The same daily figures as a typed report value object — named fields, not a
+     * loose string-keyed bag.
+     */
+    #[Righteous(ArrayReturnBag::class)]
+    public function dailyReport(int $day): DailyReport
+    {
+        $gross = $this->orders->grossForDay($day);
+
+        return new DailyReport(
+            gross: $gross,
+            net: (int) round($gross * 0.79),
+        );
+    }
+
+    /**
+     * "Nothing" is the empty list, not null — callers iterate without guarding.
+     *
+     * @return list<int>
+     */
+    #[Righteous(NullableCollectionReturn::class)]
+    public function bestProductIds(int $limit): array
+    {
+        return $this->orders->topProductIds($limit);
     }
 }

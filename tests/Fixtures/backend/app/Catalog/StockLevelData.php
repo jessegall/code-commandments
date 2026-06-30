@@ -2,14 +2,16 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Detectors\Backend\NonFinalDataDetector;
+use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
 /**
  * Stock level transfer object, left non-final.
  */
-#[Sinful(NonFinalDataDetector::class)]
+#[Sinful(NonFinalData::class)]
 class StockLevelData extends Data
 {
     public function __construct(
@@ -36,4 +38,17 @@ class StockLevelData extends Data
             default => 'ok',
         };
     }
+}
+
+/**
+ * The same DTO sealed: a value type is a leaf, not a base to extend.
+ */
+#[Righteous(NonFinalData::class)]
+final class StockSnapshotData extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $available,
+        public readonly string $status,
+    ) {}
 }

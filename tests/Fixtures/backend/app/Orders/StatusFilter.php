@@ -2,7 +2,8 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Detectors\Backend\InArrayMirrorsEnumDetector;
+use JesseGall\CodeCommandments\Sins\Backend\InArrayMirrorsEnum;
+
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -11,7 +12,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class StatusFilter
 {
-    #[Sinful(InArrayMirrorsEnumDetector::class)]
+    #[Sinful(InArrayMirrorsEnum::class)]
     public function isOpen(string $status): bool
     {
         return in_array($status, ['pending', 'paid'], true);

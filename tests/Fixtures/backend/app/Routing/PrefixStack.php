@@ -2,7 +2,9 @@
 
 namespace Shop\Routing;
 
-use JesseGall\CodeCommandments\Detectors\Backend\ScratchStateRestoreDetector;
+use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -20,7 +22,7 @@ final class PrefixStack
      * @param  list<string>  $routes
      * @return list<string>
      */
-    #[Sinful(ScratchStateRestoreDetector::class)]
+    #[Sinful(ScratchStateRestore::class)]
     public function nest(string $segment, array $routes): array
     {
         $parent = $this->prefix;
@@ -31,5 +33,17 @@ final class PrefixStack
         } finally {
             $this->prefix = $parent;
         }
+    }
+
+    /**
+     * @param  list<string>  $routes
+     * @return list<string>
+     */
+    #[Righteous(ScratchStateRestore::class)]
+    public function nestUnder(string $prefix, string $segment, array $routes): array
+    {
+        $nested = ltrim($prefix . '/' . $segment, '/');
+
+        return array_map(fn (string $route): string => $nested . '#' . $route, $routes);
     }
 }

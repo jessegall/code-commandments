@@ -60,16 +60,109 @@ look back UP to the natural boundary (the top of the wrapper stack, or the `<li>
 list) and lift THAT — `{Item}List` / `{Item}ListItem` for a list, `{Object}Section`
 for a panel.
 
+## Bad → good
+
+```vue
+// Bad
+<Dialog v-model:open="open">
+  <DialogContent class="sm:max-w-md">
+    <DialogHeader>
+      <DialogTitle>Pair Reader</DialogTitle>
+      <DialogDescription>Enter the device name and reader model to pair.</DialogDescription>
+    </DialogHeader>
+    <form class="space-y-4" @submit.prevent="submit">
+      <div class="field">
+        <Label>Device name</Label>
+        <Input v-model="form.name" type="text" placeholder="Front counter" />
+      </div>
+      <div class="select-row">
+        <Label>Reader model</Label>
+        <select v-model="form.model" class="select">
+          <option value="s1">SumUp Solo</option>
+          <option value="s2">SumUp Air</option>
+        </select>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="open = false">Cancel</Button>
+        <Button type="submit">Pair reader</Button>
+      </DialogFooter>
+    </form>
+  </DialogContent>
+</Dialog>
+
+// Good
+<ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
+```
+
+```vue
+// Bad
+<section class="order-detail__customer">
+  <h2 class="section-title">Customer</h2>
+  <p class="customer-name">{{ order.customer.fullName }}</p>
+  <p class="customer-email">{{ order.customer.email }}</p>
+  <p class="customer-phone">{{ order.customer.phone }}</p>
+</section>
+
+// Good
+<OrderCustomer :customer="order.customer" />
+```
+
+```vue
+// Bad
+<div class="settings-card__body">
+  <div class="accordion">
+    <div class="accordion__item">
+      <div class="accordion__panel">
+        <div class="field-group">
+          <div class="field-grid">
+            <div class="field-grid__row">
+              <div class="field">
+                <div class="field__control">
+                  <div class="field__input-wrap">
+                    <div class="field__inner">
+                      <label class="field__label">{{ settings.profile.displayName }}</label>
+                      <input class="field__input" :value="settings.profile.handle" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+// Good
+<SettingsCardBody :settings="settings" />
+```
+
+```vue
+// Bad
+<article class="review-card">
+  <header class="review-head">
+    <Avatar class="size-8" />
+    <strong class="review-author">Verified buyer</strong>
+  </header>
+  <p class="review-body">Exactly as described, shipped fast.</p>
+</article>
+
+// Good
+<template v-for="review in reviews" :key="review.id">
+  <article class="review-card">
+    <header class="review-head">
+      <Avatar class="size-8" />
+      <strong class="review-author">{{ review.author }}</strong>
+    </header>
+    <p class="review-body">{{ review.body }}</p>
+  </article>
+</template>
+```
+
 ## When it fires
 
-- **Duplicate markup:** a block of ≥3 elements repeated; only the largest repeated
-  block is flagged (its inner pieces are repeated too — extract the whole).
-- **Deep reach:** in a template past ~50 lines, a cluster of ≥2 fields read off ONE
-  shared object (`order.customer.{name,email}`), reached past two+ hops; reached once,
-  a ref `.value`/`.length`, a method call, or a `v-model`-bound (reactive) root don't
-  count.
-- **Deep nesting:** an element nested >8 levels with >3 levels still beneath it; the
-  finding is the natural boundary it climbs back to.
-
-The `repent` command does the whole fix — drafts the component, rewrites the call site
-to `<TheComponent :prop="…" />`, and imports it into the file.
+- A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component — `CompoundInlineComponentDetector`
+- An element reaching DEEP into nested data — pass it the mid-object as a prop — `DeepDataReachDetector`
+- Template markup nested far too deep — extract a subtree as its own component — `DeepNestedDetector`
+- Identical markup repeated across the template — extract one component — `DuplicateElementDetector`

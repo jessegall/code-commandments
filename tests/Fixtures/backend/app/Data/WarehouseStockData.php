@@ -2,8 +2,9 @@
 
 namespace Shop\Data;
 
+use JesseGall\CodeCommandments\Sins\Backend\DataMethodHintCollision;
+
 use Illuminate\Support\Collection;
-use JesseGall\CodeCommandments\Detectors\Backend\DataMethodHintCollisionDetector;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -13,7 +14,7 @@ use Spatie\LaravelData\Data;
  *
  * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
  */
-#[Sinful(DataMethodHintCollisionDetector::class)]
+#[Sinful(DataMethodHintCollision::class)]
 final class WarehouseStockData extends Data
 {
     public function __construct(
