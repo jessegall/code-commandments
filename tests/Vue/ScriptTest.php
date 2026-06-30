@@ -102,10 +102,19 @@ final class ScriptTest extends TestCase
     public function test_a_method_param_does_not_overwrite_a_same_named_field(): void
     {
         // The interface has BOTH `step: Ref<string>` and `goToStep(step: string)` — the
-        // method param must not corrupt the field. (Methods are skipped, not read as fields.)
+        // method param must not corrupt the field (the method is consumed whole).
         $script = new Script('interface S { step: Ref<string>; goToStep(step: string): void; reset(): Promise<void>; }');
 
         $this->assertSame('string', $script->fieldType('S', 'step'));
-        $this->assertNull($script->fieldType('S', 'goToStep'), 'a method is not a data field');
+    }
+
+    public function test_an_interface_method_is_typed_as_its_signature(): void
+    {
+        // A destructured composable method is a function prop — typed as its signature.
+        $script = new Script('interface S { goToStep(step: string): void; reset(): Promise<void>; save(): void; }');
+
+        $this->assertSame('(step:string) => void', $script->fieldType('S', 'goToStep'));
+        $this->assertSame('() => Promise<void>', $script->fieldType('S', 'reset'));
+        $this->assertSame('() => void', $script->fieldType('S', 'save'));
     }
 }
