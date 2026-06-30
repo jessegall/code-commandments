@@ -300,6 +300,33 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('v-model:confirm-open="confirmOpen"', $callSite);
     }
 
+    public function test_an_assigned_value_becomes_a_model_not_a_readonly_prop(): void
+    {
+        // Issue #256: a value the chunk only ASSIGNS (no v-model) — `@click="dismissed = true"`
+        // — was lifted as a plain prop, making the assignment a silent no-op (readonly prop).
+        // It must become a defineModel so the write emits update: and reaches the parent.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>Confirm</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<div class="body"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div>'
+            . '<DialogFooter><Button @click="dismissed = true">Dismiss</Button>'
+            . '<Button @click="confirm">OK</Button></DialogFooter></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nconst dismissed = ref(false);\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $codebase = Codebase::fromString($sfc);
+        $files = $detector->scribe()->rewrite($detector->find($codebase));
+        $created = $this->components($files);
+
+        $this->assertNotEmpty($created, 'the dialog should be extracted');
+        $component = reset($created);
+
+        // `dismissed` is assigned in the chunk → a model, so the write actually propagates.
+        $this->assertStringContainsString("defineModel<boolean>('dismissed')", $component);
+        $this->assertStringNotContainsString('dismissed: boolean', $component, 'must not be a readonly prop');
+        $this->assertStringContainsString('v-model:dismissed="dismissed"', $files['component.vue']);
+    }
+
     public function test_a_multi_loop_container_is_not_named_after_one_of_its_loops(): void
     {
         // A dialog containing TWO v-fors is a section/dialog, not "a list" — naming it
