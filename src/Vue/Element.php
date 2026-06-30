@@ -437,10 +437,37 @@ class Element
             && $this->height() >= self::MIN_COMPONENT_DEPTH;
     }
 
+    /**
+     * Collapse every run of whitespace to one space — text normalisation for the structural
+     * signature, done char by char (no regex over the content).
+     */
+    private static function collapseWhitespace(string $text): string
+    {
+        $out = '';
+        $pendingSpace = false;
+
+        for ($i = 0, $length = strlen($text); $i < $length; $i++) {
+            if (ctype_space($text[$i])) {
+                $pendingSpace = $out !== '';
+
+                continue;
+            }
+
+            if ($pendingSpace) {
+                $out .= ' ';
+                $pendingSpace = false;
+            }
+
+            $out .= $text[$i];
+        }
+
+        return $out;
+    }
+
     private function canonical(): string
     {
         if ($this->isText()) {
-            $text = (string) preg_replace('/\s+/', ' ', trim($this->text));
+            $text = self::collapseWhitespace(trim($this->text));
 
             return $text === '' ? '' : "T:{$text}";
         }

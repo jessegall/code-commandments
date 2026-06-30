@@ -638,24 +638,43 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
-     * Does $name appear in $text as a whole word (not part of a longer identifier)?
+     * Does $name appear in $text as a whole word? Asked of the identifier TOKENS lexed out of
+     * $text — a set membership, not a scan-for-$name (so `Order` doesn't match `OrderItem`).
      */
     private static function mentions(string $text, string $name): bool
     {
-        $offset = 0;
+        return in_array($name, self::identifiers($text), true);
+    }
 
-        while (($at = strpos($text, $name, $offset)) !== false) {
-            $before = $at === 0 ? ' ' : $text[$at - 1];
-            $after = $text[$at + strlen($name)] ?? ' ';
+    /**
+     * Every identifier-like token in $text — a tiny lexer (the only char scanning allowed),
+     * so "does this mention X" becomes membership instead of hunting for X.
+     *
+     * @return list<string>
+     */
+    private static function identifiers(string $text): array
+    {
+        $tokens = [];
+        $current = '';
 
-            if (! self::isIdentifierChar($before) && ! self::isIdentifierChar($after)) {
-                return true;
+        for ($i = 0, $length = strlen($text); $i < $length; $i++) {
+            if (self::isIdentifierChar($text[$i])) {
+                $current .= $text[$i];
+
+                continue;
             }
 
-            $offset = $at + 1;
+            if ($current !== '') {
+                $tokens[] = $current;
+                $current = '';
+            }
         }
 
-        return false;
+        if ($current !== '') {
+            $tokens[] = $current;
+        }
+
+        return $tokens;
     }
 
     private static function isIdentifierChar(string $char): bool
