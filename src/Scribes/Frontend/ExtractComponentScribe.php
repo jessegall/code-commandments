@@ -143,7 +143,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($boundary, $props, $boundary->markup()));
+            $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()));
 
             foreach ($members as $occurrence) {
                 $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($props));
@@ -172,7 +172,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($boundary, $props, $boundary->markup()));
+            $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()));
             $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
         }
 
@@ -201,7 +201,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), self::compoundName($boundary), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            $draft->add($component, self::render($boundary, $props, $boundary->markup()));
+            $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()));
             $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
         }
 
@@ -295,7 +295,7 @@ final class ExtractComponentScribe extends RepentScribe
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            $draft->add($component, self::render($boundary, $props, $markup, $prefix, $prop));
+            $this->create($draft, $component, self::render($boundary, $props, $markup, $prefix, $prop));
             $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
         }
 
@@ -320,6 +320,17 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     // ---- the call site --------------------------------------------------------
+
+    /**
+     * Draft a new component file AND teach the library about it — so a later finding in this
+     * same run reuses it instead of creating an identical sibling (the `Foo`/`Foo2` bug). The
+     * library isn't refreshed from disk mid-run, so the scribe registers what it just made.
+     */
+    private function create(Draft $draft, string $path, string $source): void
+    {
+        $draft->add($path, $source);
+        $this->library?->register($path, $source);
+    }
 
     /**
      * Rewrite a boundary's call site to use the component, and import it into the file.
