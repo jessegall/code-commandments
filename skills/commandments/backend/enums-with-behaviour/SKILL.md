@@ -5,6 +5,8 @@ description: How a closed set of values is modelled — a native backed enum (ne
 
 # Enums with behaviour — seal the set, put the logic on the type
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > A closed set of values is a **type**, and what you *do* per value belongs **on** that type. The smell is
 > a set expressed as loose strings, or an enum whose cases are matched over and over at the call sites
 > instead of answering for themselves.

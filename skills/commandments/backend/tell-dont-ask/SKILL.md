@@ -5,6 +5,8 @@ description: Behaviour belongs with the data it operates on (feature envy, Fowle
 
 # Tell, don't ask — behaviour belongs with its data
 
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
 > An object that holds the data to answer a question should answer it. When the answer is computed
 > somewhere else — a separate class reaching in to read its fields and derive a result — the behaviour
 > has been **exiled** from its home. Move it back: `$node->edges()`, not `EdgeDetector::detect($node)`.
