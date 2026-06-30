@@ -67,33 +67,29 @@ final class Judge
             return 2;
         }
 
-        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $options->checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands($args, $options));
+        // Scoping to a checklist (`--repent=ID|latest`) must NOT write a new one — it
+        // would clobber the very file it's reading. Force `--no-checklist` there.
+        $checklist = Scope::repent($args) !== null ? null : $options->checklist;
+
+        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands());
     }
 
     /**
-     * The `repent` command (scope and all) for each auto-fixable sin — a {@see Repentable}
-     * detector's, so the report can advertise the one-liner that fixes it. The scope
-     * mirrors this judge run: the same path and the same `--changes`/`--branch` flag.
+     * The `repent` command for each auto-fixable sin — a {@see Repentable} detector's, so
+     * the report can advertise the one-liner that fixes it. It targets THIS run's
+     * checklist (`--repent=latest`), so the fix is scoped to exactly what was reported,
+     * with no scope to recompute.
      *
      * @return array<string, string>  sin name => repent command
      */
-    private function fixCommands(array $args, JudgeOptions $options): array
+    private function fixCommands(): array
     {
-        $scope = $options->pathGiven ? [$options->path] : [];
-
-        foreach ($args as $arg) {
-            if (in_array($arg, ['--changes', '--git', '--branch'], true) || str_starts_with($arg, '--branch=')) {
-                $scope[] = $arg;
-            }
-        }
-
-        $prefix = $scope === [] ? '' : implode(' ', $scope) . ' ';
         $commands = [];
 
         foreach (Catalog::frontend() as $detector) {
             if ($detector instanceof Repentable) {
                 $name = $detector->sin()->name();
-                $commands[$name] = "vendor/bin/commandments repent {$prefix}--sin={$name}";
+                $commands[$name] = "vendor/bin/commandments repent --repent=latest --sin={$name}";
             }
         }
 

@@ -82,11 +82,12 @@ final class ClaudeSection
         {$keepInMind}
 
         **Finding and fixing sins — the checklist workflow.** Run
-        `vendor/bin/commandments judge src` ONCE (add `--skill=NAME` to scope to one
-        group; add `--branch` to judge only the files new/changed on your branch vs
-        `main`, or `--changes` for just your uncommitted working-tree changes). A full
-        scan is slow, so it writes the findings to a checklist file —
-        `.commandments/sins.md` — and that file, not repeated scans, is how you work:
+        `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
+        scan: `judge resources/js` judges the **Vue frontend** (judge runs both engines),
+        `judge app/Http` a subtree. (Also `--skill=NAME` to scope to one group; `--branch`
+        for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
+        is slow, so it writes the findings to a checklist — `.commandments/sins.md` — and
+        that file, not repeated scans, is how you work:
 
         1. Open `.commandments/sins.md`. Each line is one sin: `file:line`, the scope, and
            the detector, grouped under the skill that teaches the fix.
@@ -94,6 +95,12 @@ final class ClaudeSection
            the source, then **delete that line from the file.** Do not re-run judge between
            fixes — the open checklist is your source of truth.
         3. When the file is empty, run judge once more to confirm (a clean run deletes it).
+
+        **Auto-fixable sins.** Some sins have a scribe that fixes them. The report
+        advertises the command — typically `vendor/bin/commandments repent --repent=latest`
+        (optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
+        last judge run's checklist, so it fixes exactly what was reported; review the diff
+        with `--dry-run` first.
         MD;
 
         return self::BEGIN . "\n" . $body . "\n" . self::END;

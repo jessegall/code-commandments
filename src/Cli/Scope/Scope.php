@@ -30,6 +30,7 @@ final class Scope
     public static function fromArgs(array $args, string $path): self
     {
         $strategy = match (true) {
+            ($id = self::repent($args)) !== null => new ChecklistScope($id),
             ($base = self::branch($args)) !== null => new BranchChanges($base),
             self::flag($args, '--changes', '--git') => new WorkingTreeChanges,
             default => new EntireCodebase,
@@ -115,6 +116,26 @@ final class Scope
         }
 
         return $set;
+    }
+
+    /**
+     * The `--repent[=ID|latest]` value (a bare `--repent` means `latest`), or null when
+     * absent. Public so a command can both scope to it AND react to it (judge skips
+     * writing a checklist when scoped to one — it would clobber the file it's reading).
+     */
+    public static function repent(array $args): ?string
+    {
+        foreach ($args as $arg) {
+            if ($arg === '--repent') {
+                return 'latest';
+            }
+
+            if (str_starts_with($arg, '--repent=')) {
+                return substr($arg, 9);
+            }
+        }
+
+        return null;
     }
 
     private static function branch(array $args): ?string

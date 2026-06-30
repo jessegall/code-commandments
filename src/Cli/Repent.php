@@ -122,7 +122,7 @@ final class Repent
     }
 
     /**
-     * @return array{path: string, dryRun: bool, dryRunFile: ?string, only: ?string}
+     * @return array{path: string, dryRun: bool, dryRunFile: ?string, only: ?string, repent: ?string}
      */
     private function parse(array $args): array
     {
