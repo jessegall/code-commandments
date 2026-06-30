@@ -176,6 +176,44 @@ final class Expr
     }
 
     /**
+     * This expression AS a direct, losslessly-reconstructible call — `copyJson('nodes', id)` →
+     * `['name' => 'copyJson', 'arguments' => ["'nodes'", 'id']]` — or null when it isn't one:
+     * the callee must be a bare function identifier (not `obj.method(…)`), and every argument
+     * must be a value {@see source} can render in full (a literal, identifier, or member/index
+     * chain — NOT a nested call or operator expression, which `source()` elides as `…`). The
+     * AST answer to "can this handler be forwarded verbatim as an `$emit`", instead of hand
+     * re-serialising the call.
+     *
+     * @return array{name: string, arguments: list<string>}|null
+     */
+    public function asCall(): ?array
+    {
+        if ($this->kind !== self::CALL) {
+            return null;
+        }
+
+        $callee = $this->child('callee');
+
+        if (! $callee->is(self::IDENTIFIER)) {
+            return null;
+        }
+
+        $arguments = [];
+
+        foreach ($this->children('arguments') as $argument) {
+            $source = $argument->source();
+
+            if ($source === '' || str_contains($source, '…')) {
+                return null;
+            }
+
+            $arguments[] = $source;
+        }
+
+        return ['name' => (string) $callee->get('name'), 'arguments' => $arguments];
+    }
+
+    /**
      * The TS type this expression DENOTES when it is a literal — `false` → `boolean`,
      * `0` → `number`, `'x'` → `string`, `null`/`undefined` → themselves. Null for anything
      * that isn't a primitive literal (an identifier, call, array, object — only a real type

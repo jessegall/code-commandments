@@ -34,6 +34,9 @@ final class Boundary
     /** Elements that are only valid inside a table — extracting them breaks structure. */
     private const array TABLE_BOUND = ['td', 'th', 'tr', 'tbody', 'thead', 'tfoot', 'caption', 'colgroup'];
 
+    /** @var array{edits: list<array{int, int, string}>, events: array<string, int>, safe: bool}|null */
+    private ?array $emits = null;
+
     private function __construct(
         public readonly Element $node,
         public readonly Sfc $sfc,
@@ -350,13 +353,114 @@ final class Boundary
      */
     public function markup(): string
     {
-        // Drop the carried directives by their KNOWN spans, then reindent the result — the
-        // AST write engine, no regex. (For a <template> boundary the directives sit on the
-        // wrapper, OUTSIDE the content span, so they're already gone.)
+        // The markup edits, all by KNOWN span (the AST write engine, no regex): rewrite each
+        // handler call to a parent function into an `$emit` ({@see emits}), and drop the carried
+        // directives. (For a <template> boundary the directives sit on the wrapper, OUTSIDE the
+        // content span, so they're already gone.)
         $span = $this->contentSpan();
-        $stripped = $this->node->sourceOmitting($span->source, $span->start, $span->end, array_keys($this->carried()));
+        $edits = array_values(array_filter(
+            $this->emits()['edits'],
+            static fn (array $edit): bool => $edit[0] >= $span->start && $edit[1] <= $span->end,
+        ));
 
-        return Span::reindentText($stripped, $span->column());
+        foreach (array_keys($this->carried()) as $name) {
+            $attribute = $this->node->attributeSpan($name);
+
+            if ($attribute === null || $attribute[0] < $span->start || $attribute[1] > $span->end) {
+                continue;
+            }
+
+            $edits[] = [...Element::removalSpan($span->source, $span->start, $span->end, $attribute[0], $attribute[1]), ''];
+        }
+
+        $spliced = Element::spliceSource($span->source, $span->start, $span->end, $edits);
+
+        return Span::reindentText($spliced, $span->column());
+    }
+
+    // ---- emit-up (handler calls to parent functions) --------------------------
+
+    /**
+     * Can this boundary be lifted WITHOUT breaking? A handler that CALLS a parent-local
+     * function (`@click="copyJson('nodes')"`) can be re-expressed as an `$emit` the parent
+     * listens for, but a parent function reached any OTHER way — a `:prop` binding, a `{{ }}`
+     * interpolation, a multi-statement handler — would dangle as undefined in the child. False
+     * when any such non-forwardable reach exists, so the scribe refuses rather than emit a
+     * silent no-op.
+     */
+    public function extractable(): bool
+    {
+        return $this->emits()['safe'];
+    }
+
+    /**
+     * The events the lifted child must `defineEmits`, each to its arity — `copyJson('a', b)` →
+     * `['copyJson' => 2]`. The parent listens for each (`@copy-json="copyJson"`) so the lifted
+     * handler call reaches its original function again.
+     *
+     * @return array<string, int>
+     */
+    public function emitEvents(): array
+    {
+        return $this->emits()['events'];
+    }
+
+    /**
+     * The plan for forwarding handler calls to PARENT-local functions as emits — they can't
+     * ride into the child (the function is defined in the parent `<script setup>`, undefined in
+     * the lifted component). Each clean handler call becomes an `$emit`: `@click="copyJson('a')"`
+     * → `@click="$emit('copyJson', 'a')"` in the child, `defineEmits<{ copyJson: […] }>()` there,
+     * `@copy-json="copyJson"` at the call site. Returns the markup `edits` (handler span → emit),
+     * the `events` to declare (name → arity), and `safe` — false when a parent function is
+     * reached by anything other than a cleanly-forwardable handler.
+     *
+     * @return array{edits: list<array{int, int, string}>, events: array<string, int>, safe: bool}
+     */
+    private function emits(): array
+    {
+        if ($this->emits !== null) {
+            return $this->emits;
+        }
+
+        $locals = (new Script($this->sfc->scriptContent()))->localNames();
+        $edits = [];
+        $events = [];
+        $rewrites = 0;
+        $reached = 0;
+
+        $this->each(function (Element $element) use (&$edits, &$events, &$rewrites, &$reached, $locals): void {
+            // Every expression that reaches a parent local — handlers, bindings, text.
+            foreach ($element->expressions() as $expression) {
+                if (array_intersect($expression->calledFunctions(), $locals) !== []) {
+                    $reached++;
+                }
+            }
+
+            // The clean event handlers among them — a direct call to a parent function — are
+            // the ones we can forward as an emit.
+            foreach ($element->eventBindings() as $name => $expression) {
+                $call = $expression->asCall();
+
+                if ($call === null || ! in_array($call['name'], $locals, true)) {
+                    continue;
+                }
+
+                $span = $element->attributeSpan($name);
+
+                if ($span === null) {
+                    continue;
+                }
+
+                $arguments = $call['arguments'] === [] ? '' : ', '.implode(', ', $call['arguments']);
+                $edits[] = [$span[0], $span[1], "{$name}=\"\$emit('{$call['name']}'{$arguments})\""];
+                $events[$call['name']] = max($events[$call['name']] ?? 0, count($call['arguments']));
+                $rewrites++;
+            }
+        });
+
+        // Safe only when EVERY parent-local reach is one of those clean handler rewrites; any
+        // other route would leave an undefined reference in the child.
+        return $this->emits = ['edits' => $edits, 'events' => $events, 'safe' => $rewrites === $reached];
     }
 
     /**

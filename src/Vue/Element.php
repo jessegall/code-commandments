@@ -64,7 +64,7 @@ class Element
      */
     public function sourceOmitting(string $source, int $from, int $to, array $names): string
     {
-        $cuts = [];
+        $edits = [];
 
         foreach ($names as $name) {
             $span = $this->attributeSpan($name);
@@ -73,38 +73,56 @@ class Element
                 continue;
             }
 
-            $start = $span[0];
-            while ($start > $from && ($source[$start - 1] === ' ' || $source[$start - 1] === "\t")) {
-                $start--;
-            }
-
-            // When the directive was alone on its line — line start before it, only whitespace
-            // then a newline after it — swallow that trailing newline so its line collapses
-            // entirely rather than leaving a blank one. An inline directive (other content
-            // follows before the newline) keeps its line.
-            $end = $span[1];
-
-            if ($start === $from || $source[$start - 1] === "\n") {
-                $scan = $end;
-                while ($scan < $to && ($source[$scan] === ' ' || $source[$scan] === "\t")) {
-                    $scan++;
-                }
-
-                if ($scan < $to && $source[$scan] === "\n") {
-                    $end = $scan + 1;
-                }
-            }
-
-            $cuts[] = [$start, $end];
+            [$start, $end] = self::removalSpan($source, $from, $to, $span[0], $span[1]);
+            $edits[] = [$start, $end, ''];
         }
 
-        // Splice end-first so earlier offsets stay valid.
-        usort($cuts, static fn (array $a, array $b): int => $b[0] <=> $a[0]);
+        return self::spliceSource($source, $from, $to, $edits);
+    }
+
+    /**
+     * The span to cut when removing an attribute: it swallows the space/tab before the
+     * attribute (so no `<div  >` gap), and — when the attribute sat ALONE on its line — its
+     * trailing newline too (so no blank line is left). An inline attribute keeps its line.
+     *
+     * @return array{int, int}
+     */
+    public static function removalSpan(string $source, int $from, int $to, int $start, int $end): array
+    {
+        while ($start > $from && ($source[$start - 1] === ' ' || $source[$start - 1] === "\t")) {
+            $start--;
+        }
+
+        if ($start === $from || $source[$start - 1] === "\n") {
+            $scan = $end;
+            while ($scan < $to && ($source[$scan] === ' ' || $source[$scan] === "\t")) {
+                $scan++;
+            }
+
+            if ($scan < $to && $source[$scan] === "\n") {
+                $end = $scan + 1;
+            }
+        }
+
+        return [$start, $end];
+    }
+
+    /**
+     * The slice `[$from, $to)` of $source with a set of `[start, end, replacement]` edits
+     * applied — the write engine's splicer: cut (replacement `''`) or rewrite (any text) a
+     * span by its KNOWN offsets, never a regex. Applied end-first so earlier offsets stay
+     * valid. Edits must not overlap.
+     *
+     * @param  list<array{int, int, string}>  $edits
+     */
+    public static function spliceSource(string $source, int $from, int $to, array $edits): string
+    {
+        usort($edits, static fn (array $a, array $b): int => $b[0] <=> $a[0]);
 
         $text = substr($source, $from, $to - $from);
 
-        foreach ($cuts as [$start, $end]) {
-            $text = substr($text, 0, $start - $from) . substr($text, $end - $from);
+        foreach ($edits as [$start, $end, $replacement]) {
+            $text = substr($text, 0, $start - $from) . $replacement . substr($text, $end - $from);
         }
 
         return $text;
@@ -211,6 +229,28 @@ class Element
 
             // Vue maps a kebab attribute to its camelCase prop (`:order-table` → `orderTable`).
             $bindings[self::camelize($prop)] = Parser::parse($value);
+        }
+
+        return $bindings;
+    }
+
+    /**
+     * The EVENT handlers this element binds, each to its parsed expression, keyed by the RAW
+     * attribute name — `@click="save()"` / `v-on:submit="go"` → `['@click' => <save()>,
+     * 'v-on:submit' => <go>]`. The raw name (not the event) is the key so the caller can find
+     * the handler's {@see attributeSpan} to rewrite it. The `@`/`v-on:` sibling of
+     * {@see propBindings}.
+     *
+     * @return array<string, Expr>
+     */
+    public function eventBindings(): array
+    {
+        $bindings = [];
+
+        foreach ($this->attributes as $name => $value) {
+            if ($value !== null && (str_starts_with($name, '@') || str_starts_with($name, 'v-on:'))) {
+                $bindings[$name] = Parser::parse($value);
+            }
         }
 
         return $bindings;
