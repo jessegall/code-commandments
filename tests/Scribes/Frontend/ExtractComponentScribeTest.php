@@ -63,6 +63,22 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringNotContainsString('clearOverride', $props);
     }
 
+    public function test_unwraps_a_structural_directive_template_so_the_root_is_a_real_element(): void
+    {
+        // A `<template v-if>` boundary must NOT become a component rooted in a bare
+        // `<template>` (invalid SFC) — lift its content; the v-if rides to the call site.
+        $src = $this->onlyDeepReach(
+            '<template v-if="ready"><div class="inner"><p>{{ stat.detail.a }}</p><p>{{ stat.detail.b }}</p></div></template>',
+        );
+
+        // The component root is the real element, never a bare/structural template…
+        $this->assertStringContainsString('<div class="inner">', $src);
+        $this->assertStringNotContainsString('v-if', $src);
+        // …so the SFC <template> is not immediately followed by another <template>.
+        $afterOpen = ltrim(substr($src, (int) strpos($src, '<template>') + strlen('<template>')));
+        $this->assertStringStartsWith('<div', $afterOpen);
+    }
+
     public function test_unwraps_a_context_bound_template_to_its_content(): void
     {
         // The cluster boundary is a slot `<template #panel>` — the component root must

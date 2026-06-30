@@ -145,7 +145,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            if (! $this->create($draft, $component, self::render($boundary, $props, $boundary->markup()))) {
+            if (! $this->create($draft, $boundary, $component, self::render($boundary, $props, $boundary->markup()))) {
                 continue;
             }
 
@@ -176,7 +176,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            if ($this->create($draft, $component, self::render($boundary, $props, $boundary->markup()))) {
+            if ($this->create($draft, $boundary, $component, self::render($boundary, $props, $boundary->markup()))) {
                 $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
             }
         }
@@ -206,7 +206,7 @@ final class ExtractComponentScribe extends RepentScribe
             $name = self::unique(dirname($finding->file()), self::compoundName($boundary), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            if ($this->create($draft, $component, self::render($boundary, $props, $boundary->markup()))) {
+            if ($this->create($draft, $boundary, $component, self::render($boundary, $props, $boundary->markup()))) {
                 $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
             }
         }
@@ -303,7 +303,7 @@ final class ExtractComponentScribe extends RepentScribe
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            if ($this->create($draft, $component, self::render($boundary, $props, $markup, $prefix, $prop))) {
+            if ($this->create($draft, $boundary, $component, self::render($boundary, $props, $markup, $prefix, $prop))) {
                 $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
             }
         }
@@ -335,43 +335,25 @@ final class ExtractComponentScribe extends RepentScribe
      * same run reuses it instead of creating an identical sibling (the `Foo`/`Foo2` bug). The
      * library isn't refreshed from disk mid-run, so the scribe registers what it just made.
      *
-     * Returns false WITHOUT drafting when the component would render a tag of its OWN name
-     * (`TypeList` whose template contains `<TypeList …>`) — a self-importing, self-referential
-     * file is never a clean extraction, so the whole finding is skipped (the detector still
-     * flags the underlying smell). The caller skips the call-site rewrite when this is false.
+     * Returns false WITHOUT drafting a self-referential extraction — one whose component file
+     * would BE its own source (a boundary in `UserSection.vue` named `UserSection`), or whose
+     * template renders a tag of its OWN name (`TypeList` containing `<TypeList …>`). Either
+     * makes a file that imports/renders itself, never a clean extraction, so the whole finding
+     * is skipped (the detector still flags the smell). The caller skips the call-site rewrite
+     * when this is false.
      */
-    private function create(Draft $draft, string $path, string $source): bool
+    private function create(Draft $draft, Boundary $boundary, string $path, string $content): bool
     {
-        if (self::rendersTag($source, basename($path, '.vue'))) {
+        // Self-referential — its file IS its own source, or its element TREE renders its own
+        // name (queried over the AST, never scanned out of the rendered string).
+        if ($path === $boundary->sfc->path || $boundary->node->renders(basename($path, '.vue'))) {
             return false;
         }
 
-        $draft->add($path, $source);
-        $this->library?->register($path, $source);
+        $draft->add($path, $content);
+        $this->library?->register($path, $content);
 
         return true;
-    }
-
-    /**
-     * Does this component source render an element `<$name …>` / `<$name>` / `<$name/>` — a
-     * self-reference? Tag-boundary aware so `<TypeList>` matches but `<TypeListItem>` doesn't.
-     */
-    private static function rendersTag(string $source, string $name): bool
-    {
-        $needle = "<{$name}";
-        $offset = 0;
-
-        while (($at = strpos($source, $needle, $offset)) !== false) {
-            $after = $source[$at + strlen($needle)] ?? ' ';
-
-            if ($after === ' ' || $after === '>' || $after === '/' || $after === "\n" || $after === "\t" || $after === "\r") {
-                return true;
-            }
-
-            $offset = $at + 1;
-        }
-
-        return false;
     }
 
     /**

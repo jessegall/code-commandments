@@ -137,6 +137,14 @@ class Element
      * can't stand alone as a component root; an extraction must lift its CONTENT, not
      * the wrapper.
      */
+    public function isTemplate(): bool
+    {
+        return strtolower($this->tag) === 'template';
+    }
+
+    /**
+     * @see isTemplate — a `<template>` is a fragment wrapper, never a valid component root.
+     */
     public function isContextBound(): bool
     {
         if (strtolower($this->tag) !== 'template') {
@@ -149,6 +157,21 @@ class Element
 
         foreach (array_keys($this->attributes) as $name) {
             if (str_starts_with($name, '#') || $name === 'v-slot' || str_starts_with($name, 'v-slot:')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this subtree render an element tagged $tag? The AST answer to "does this markup
+     * reference `<$tag>`" — a tree query, never a scan of the rendered source string.
+     */
+    public function renders(string $tag): bool
+    {
+        foreach ([$this, ...$this->descendants()] as $element) {
+            if ($element->isElement() && $element->tag === $tag) {
                 return true;
             }
         }
