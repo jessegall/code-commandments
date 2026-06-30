@@ -329,6 +329,26 @@ class Element
         return $size;
     }
 
+    /** A real component carries CONTENT (this many elements) … */
+    private const int MIN_COMPONENT_ELEMENTS = 6;
+
+    /** … AND its own internal STRUCTURE (this many levels — not a flat wrapper). */
+    private const int MIN_COMPONENT_DEPTH = 3;
+
+    /**
+     * Is this element substantial enough to earn its own component file? A component is a
+     * cohesive, structured unit — so it must have real CONTENT (≥ {@see MIN_COMPONENT_ELEMENTS}
+     * elements) AND its own internal STRUCTURE (≥ {@see MIN_COMPONENT_DEPTH} levels deep). A
+     * thin `<DialogClose><X/><span/></DialogClose>` (flat, 3 elements) is better left inline;
+     * a card / section / dialog with nested structure is worth lifting. The SINGLE-boundary
+     * extractors gate on this; duplication justifies its own (lower) floor separately.
+     */
+    public function substantial(): bool
+    {
+        return $this->subtreeSize() >= self::MIN_COMPONENT_ELEMENTS
+            && $this->height() >= self::MIN_COMPONENT_DEPTH;
+    }
+
     private function canonical(): string
     {
         if ($this->isText()) {

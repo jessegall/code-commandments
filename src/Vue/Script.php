@@ -237,10 +237,42 @@ final class Script
         $return = 'void';
 
         if ($this->isPunct($j, ':')) {
-            [$return] = $this->readType($j + 1);
+            [$return] = $this->readReturnType($j + 1);
         }
 
         return "({$params}) => " . ($return !== '' ? $return : 'void');
+    }
+
+    /**
+     * Read a FUNCTION's return type — like {@see readType}, but it stops at the function
+     * BODY (`{` for a declaration, `=>` for an arrow), so `(): Promise<void> { … }` yields
+     * `Promise<void>` and never swallows the body as an object type.
+     *
+     * @return array{0: string, 1: int}
+     */
+    private function readReturnType(int $i): array
+    {
+        $depth = 0;
+        $pieces = [];
+        $count = count($this->tokens);
+
+        for (; $i < $count; $i++) {
+            $value = $this->tokens[$i]['value'];
+
+            if ($depth === 0 && in_array($value, ['{', '=', ';', ',', '}'], true)) {
+                break; // the body brace, the `=>` arrow, or a terminator — the type ended.
+            }
+
+            if (in_array($value, ['<', '(', '['], true)) {
+                $depth++;
+            } elseif (in_array($value, ['>', ')', ']'], true)) {
+                $depth--;
+            }
+
+            $pieces[] = $value;
+        }
+
+        return [implode('', $pieces), $i];
     }
 
     /**
@@ -343,7 +375,8 @@ final class Script
         for (; $i < $count; $i++) {
             $value = $this->tokens[$i]['value'];
 
-            if ($depth === 0 && in_array($value, [';', ',', '}'], true)) {
+            // A depth-0 `=` starts an initializer (`: T = value`) — the type ended before it.
+            if ($depth === 0 && in_array($value, [';', ',', '}', '='], true)) {
                 break;
             }
 

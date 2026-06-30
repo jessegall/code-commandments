@@ -251,6 +251,32 @@ final class ExtractComponentScribeTest extends TestCase
         }
     }
 
+    public function test_a_multi_loop_container_is_not_named_after_one_of_its_loops(): void
+    {
+        // A dialog containing TWO v-fors is a section/dialog, not "a list" — naming it
+        // {firstLoopVar}List is wrong (and risks colliding with a child it renders). It
+        // must fall through to a structural name.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>{{ heading }}</DialogTitle>'
+            . '<DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<ul><li v-for="type in selected.types" :key="type.id">{{ type.name }}</li></ul>'
+            . '<ul><li v-for="field in selected.fields" :key="field.id">{{ field.label }}</li></ul>'
+            . '<footer><Button>Save</Button><Button>Cancel</Button></footer></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = array_keys($this->components($files));
+
+        $this->assertNotEmpty($created);
+        foreach ($created as $path) {
+            $name = basename($path, '.vue');
+            $this->assertStringNotContainsString('TypeList', $name);
+            $this->assertStringNotContainsString('FieldList', $name);
+        }
+    }
+
     private function deepComponent(string $leaf): string
     {
         return "<template>\n  {$this->deepNest($leaf)}\n  <footer>end</footer>\n</template>\n";

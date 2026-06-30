@@ -29,7 +29,6 @@ use JesseGall\CodeCommandments\Vue\Expr\Parser;
  */
 final class Boundary
 {
-    private const int MIN_SUBTREE = 4; // elements — smaller isn't worth a file
 
     /** Elements that are only valid inside a table — extracting them breaks structure. */
     private const array TABLE_BOUND = ['td', 'th', 'tr', 'tbody', 'thead', 'tfoot', 'caption', 'colgroup'];
@@ -65,7 +64,9 @@ final class Boundary
             return false;
         }
 
-        if ($this->node->subtreeSize() < self::MIN_SUBTREE) {
+        // Substantial enough to be a component — real content AND its own internal structure,
+        // never a thin/flat wrapper. One definition, shared with the other extractors.
+        if (! $this->node->substantial()) {
             return false;
         }
 
@@ -361,15 +362,26 @@ final class Boundary
 
     private function childLoopVar(): ?string
     {
+        $found = null;
+
         foreach ($this->node->descendants() as $element) {
             $vars = self::loopVars($element->attribute(Directive::For));
 
-            if ($vars !== []) {
-                return $vars[0];
+            if ($vars === []) {
+                continue;
             }
+
+            // More than one loop → this is a section/dialog that HAPPENS to contain lists,
+            // not itself "a list". Naming it `{firstLoopVar}List` is wrong (and can collide
+            // with a child it renders). Fall through to a structural name.
+            if ($found !== null) {
+                return null;
+            }
+
+            $found = $vars[0];
         }
 
-        return null;
+        return $found;
     }
 
     private function ancestorLoopVar(): ?string
