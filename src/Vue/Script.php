@@ -213,10 +213,10 @@ final class Script
                 }
             }
 
-            // `= ref(false)` / `= ref('')` — no generic, so infer the value type from the
-            // initializer literal (the common case TS infers and vue-tsc would resolve).
+            // `= ref(false)` / `= computed(() => a === b)` — no generic, so infer the value
+            // type from the initializer (the common case TS infers and vue-tsc would resolve).
             if ($this->isPunct($j, '=') && $this->isReactiveValue($j + 1) && $this->isPunct($j + 2, '(')) {
-                $inferred = $this->reactiveInitType($j + 2);
+                $inferred = $this->reactiveInitType($this->tokens[$j + 1]['value'], $j + 2);
 
                 if ($inferred !== null) {
                     return $inferred;
@@ -312,21 +312,51 @@ final class Script
     }
 
     /**
-     * The TS type of a reactive wrapper's value, inferred from its initializer literal —
-     * `ref(false)` → `boolean`, `ref('')` → `string`, `ref(0)` → `number`. The argument's
-     * SOURCE is sliced out by the parens' known byte offsets and handed to the expression
-     * engine, which infers the literal type; null for a non-literal initializer (an
-     * identifier, call, object — only a real type checker could resolve those).
+     * The TS type of a reactive wrapper's value, inferred from its initializer — `ref(false)`
+     * → `boolean`, `computed(() => a === b)` → `boolean`. The argument's SOURCE is sliced out
+     * by the parens' known byte offsets and handed to the expression engine: a `computed`
+     * getter's value is its callback's RETURN, every other wrapper's is the argument itself.
+     * Null for an initializer the engine can't infer soundly (an identifier, call, object).
      */
-    private function reactiveInitType(int $openParen): ?string
+    private function reactiveInitType(string $wrapper, int $openParen): ?string
     {
-        [, $next] = $this->readBalanced($openParen);
+        $close = $this->matchingParen($openParen);
 
         $from = $this->tokens[$openParen]['end'];
-        $to = $this->tokens[$next - 1]['start'] ?? $from;
+        $to = $this->tokens[$close]['start'] ?? $from;
         $argument = trim(substr($this->source, $from, $to - $from));
 
-        return $argument === '' ? null : Parser::parse($argument)->literalType();
+        if ($argument === '') {
+            return null;
+        }
+
+        $expression = Parser::parse($argument);
+
+        return $wrapper === 'computed' ? $expression->returnType() : $expression->inferType();
+    }
+
+    /**
+     * The index of the bracket that closes the one opening at $open — counting only
+     * round/square/curly brackets, NOT `<`/`>`. In an expression body `<`/`>` are the
+     * arrow `=>` and comparison operators, not delimiters, so counting them (as the
+     * type-level {@see readBalanced} must) would close the span early.
+     */
+    private function matchingParen(int $open): int
+    {
+        $depth = 0;
+        $count = count($this->tokens);
+
+        for ($i = $open; $i < $count; $i++) {
+            $value = $this->tokens[$i]['value'];
+
+            if (in_array($value, ['(', '[', '{'], true)) {
+                $depth++;
+            } elseif (in_array($value, [')', ']', '}'], true) && --$depth === 0) {
+                return $i;
+            }
+        }
+
+        return $count - 1;
     }
 
     /**

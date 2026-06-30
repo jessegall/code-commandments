@@ -200,6 +200,79 @@ final class Expr
     }
 
     /**
+     * The TS type of this expression's VALUE, where it can be inferred SOUNDLY without a
+     * type checker — a literal, a comparison/`!`/`typeof` (boolean/string), arithmetic
+     * (number), or a logical/ternary whose branches AGREE. Null whenever an operand is
+     * unknown (an identifier, call, member — we never guess what only vue-tsc could
+     * resolve). A function value (arrow) has no primitive value type — see {@see returnType}.
+     */
+    public function inferType(): ?string
+    {
+        return match ($this->kind) {
+            self::LITERAL => $this->literalType(),
+            self::UNARY => match ((string) $this->get('op')) {
+                '!' => 'boolean',
+                'typeof' => 'string',
+                '-', '+' => 'number',
+                default => null,
+            },
+            self::BINARY => $this->binaryType(),
+            self::CONDITIONAL => $this->unionType([$this->child('then'), $this->child('else')]),
+            default => null,
+        };
+    }
+
+    /**
+     * The inferred type a callback RETURNS — an arrow's body type (`() => a === 0` →
+     * `boolean`). For a `computed(() => …)` getter, this is the computed value's type.
+     * Null when it isn't an arrow or the body can't be inferred soundly.
+     */
+    public function returnType(): ?string
+    {
+        return $this->kind === self::ARROW ? $this->child('body')->inferType() : null;
+    }
+
+    /**
+     * The type of a binary expression: a comparison/equality is boolean, arithmetic is
+     * number, and `&&`/`||`/`??` take the type of their operands when they AGREE. `+` is
+     * left null — it is string concat OR addition, and only the operand types decide.
+     */
+    private function binaryType(): ?string
+    {
+        $op = (string) $this->get('op');
+
+        return match (true) {
+            in_array($op, ['===', '!==', '==', '!=', '<', '>', '<=', '>=', 'instanceof', 'in'], true) => 'boolean',
+            in_array($op, ['-', '*', '/', '%', '**'], true) => 'number',
+            in_array($op, ['&&', '||', '??'], true) => $this->unionType([$this->child('left'), $this->child('right')]),
+            default => null,
+        };
+    }
+
+    /**
+     * The union of the given nodes' inferred types — `boolean | boolean` collapses to
+     * `boolean`. Null if ANY operand is unknown, so a partial guess never escapes.
+     *
+     * @param  list<self>  $nodes
+     */
+    private function unionType(array $nodes): ?string
+    {
+        $types = [];
+
+        foreach ($nodes as $node) {
+            $type = $node->inferType();
+
+            if ($type === null) {
+                return null;
+            }
+
+            $types[$type] = true;
+        }
+
+        return $types === [] ? null : implode('|', array_keys($types));
+    }
+
+    /**
      * @param  list<list<string>>  $chains
      */
     private function gatherChains(array &$chains): void
