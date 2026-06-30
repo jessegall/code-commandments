@@ -136,6 +136,19 @@ final class Query
     }
 
     /**
+     * Keep elements nested DEEPER than $depth levels that still have MORE than $remaining
+     * levels of structure below them — a too-deep node burying substantial markup, the
+     * deep-nesting signal (so a deep but shallow-below leaf isn't flagged).
+     */
+    public function nestedDeeperThan(int $depth, int $remaining): self
+    {
+        $this->filters[] = static fn (ElementMatch $match): bool => $match->depth() > $depth;
+        $this->filters[] = static fn (ElementMatch $match): bool => $match->height() - 1 > $remaining;
+
+        return $this;
+    }
+
+    /**
      * @return list<ElementMatch>
      */
     public function get(): array

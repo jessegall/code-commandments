@@ -42,27 +42,17 @@ final class DeepNestedDetector implements Detector, Repentable
 
     public function find(Codebase $components): array
     {
-        $findings = [];
+        $boundaries = [];
 
-        foreach ($components->components() as $component) {
-            $boundaries = [];
+        foreach ($components->whereElement()->nestedDeeperThan(self::MAX_DEPTH, self::MAX_REMAINING)->get() as $element) {
+            // From each too-deep element climb to its natural boundary; dedup the shared ones.
+            $boundary = Boundary::at($element->node, $element->sfc)->root();
 
-            foreach ($component->template->descendants() as $element) {
-                if ($element->depth() <= self::MAX_DEPTH || $element->height() - 1 <= self::MAX_REMAINING) {
-                    continue; // not deep enough, or nothing substantial below it
-                }
-
-                // From the too-deep element, look back up for the natural boundary.
-                $boundary = Boundary::at($element, $component)->root();
-
-                if ($boundary->valid()) {
-                    $boundaries[spl_object_id($boundary->node)] ??= $boundary->match();
-                }
+            if ($boundary->valid()) {
+                $boundaries[spl_object_id($boundary->node)] ??= $boundary->match();
             }
-
-            $findings = array_merge($findings, array_values($boundaries));
         }
 
-        return $findings;
+        return array_values($boundaries);
     }
 }
