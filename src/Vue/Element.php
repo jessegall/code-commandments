@@ -191,10 +191,31 @@ class Element
                 continue;
             }
 
-            $bindings[$prop] = Parser::parse($value);
+            // Vue maps a kebab attribute to its camelCase prop (`:order-table` → `orderTable`).
+            $bindings[self::camelize($prop)] = Parser::parse($value);
         }
 
         return $bindings;
+    }
+
+    /** A kebab attribute name as its camelCase prop — `order-table` → `orderTable`. No regex. */
+    private static function camelize(string $name): string
+    {
+        $out = '';
+        $upper = false;
+
+        for ($i = 0, $length = strlen($name); $i < $length; $i++) {
+            if ($name[$i] === '-') {
+                $upper = true;
+
+                continue;
+            }
+
+            $out .= $upper ? strtoupper($name[$i]) : $name[$i];
+            $upper = false;
+        }
+
+        return $out;
     }
 
     /**
