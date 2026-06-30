@@ -136,8 +136,8 @@ final class DeepReachCluster
     {
         $roots = [];
 
-        foreach ($component->template->descendants() as $element) {
-            foreach ($element->directiveBindings(Directive::Model) as $binding) {
+        foreach ($component->elements()->withDirectiveFamily(Directive::Model)->get() as $match) {
+            foreach ($match->directiveBindings(Directive::Model) as $binding) {
                 foreach (Parser::parse($binding)->roots() as $root) {
                     $roots[] = $root;
                 }

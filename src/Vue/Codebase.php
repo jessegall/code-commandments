@@ -74,7 +74,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     public function whereElement(): Query
     {
-        return new Query($this, static fn (Element $element): bool => $element->isElement());
+        return new Query(fn (): array => $this->nodes(), static fn (Element $element): bool => $element->isElement());
     }
 
     /**
@@ -82,7 +82,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     public function whereTag(string ...$tags): Query
     {
-        return new Query($this, static fn (Element $element): bool => $element->isElement() && in_array($element->tag, $tags, true));
+        return new Query(fn (): array => $this->nodes(), static fn (Element $element): bool => $element->isElement() && in_array($element->tag, $tags, true));
     }
 
     /**

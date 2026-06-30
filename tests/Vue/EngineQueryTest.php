@@ -81,6 +81,20 @@ final class EngineQueryTest extends TestCase
         $this->assertSame('<div class="card">x</div>', $written, 'only the content slice, directive untouched');
     }
 
+    public function test_sfc_elements_scopes_a_query_to_one_component_subtree(): void
+    {
+        $sfc = Codebase::fromString(
+            '<template><form><input v-model="form.name"><input v-model.lazy="form.email"><span>x</span></form></template>'
+        )->components()[0];
+
+        // The subtree query composes the same DSL the codebase opens — here finding every
+        // element carrying a v-model FAMILY directive (plain, arg, or modifier).
+        $bound = $sfc->elements()->withDirectiveFamily(\JesseGall\CodeCommandments\Vue\Directive::Model)->get();
+
+        $this->assertCount(2, $bound, 'both v-model and v-model.lazy match the family');
+        $this->assertSame(['input', 'input'], array_map(static fn ($m): string => $m->tag, $bound));
+    }
+
     public function test_parse_for_reads_a_v_for_binding_off_the_token_stream(): void
     {
         $bare = Parser::parseFor('item in items');

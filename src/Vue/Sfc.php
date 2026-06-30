@@ -92,6 +92,18 @@ final class Sfc
     }
 
     /**
+     * A fluent query scoped to THIS component's template — the same {@see Query} the
+     * {@see Codebase} opens, but over one subtree, so a per-component gather composes the
+     * DSL (`$sfc->elements()->withDirective(...)->get()`) instead of hand-walking the tree.
+     */
+    public function elements(): Query
+    {
+        $nodes = array_map(fn (Element $element): array => [$element, $this], $this->template->descendants());
+
+        return new Query(static fn (): array => $nodes, static fn (Element $element): bool => $element->isElement());
+    }
+
+    /**
      * The first block of a tag, or null.
      */
     public function block(string $tag): ?Block
