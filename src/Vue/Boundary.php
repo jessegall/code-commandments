@@ -274,6 +274,29 @@ final class Boundary
         return array_values(array_diff(array_unique($reads), $bound, $called));
     }
 
+    /**
+     * The props the boundary WRITES — a value bound via `v-model[:arg]="x"` inside the chunk
+     * is two-way state, not read-only input. Lifted out, such a prop must be a `defineModel`
+     * (and bound with `v-model` at the call site), never a plain prop: Vue forbids writing a
+     * prop, so a `v-model` on one fails the build. The root of each `v-model` expression.
+     *
+     * @return list<string>
+     */
+    public function models(): array
+    {
+        $models = [];
+
+        $this->each(static function (Element $element) use (&$models): void {
+            foreach ($element->directiveBindings(Directive::Model) as $expression) {
+                foreach (Parser::parse($expression)->roots() as $root) {
+                    $models[] = $root;
+                }
+            }
+        });
+
+        return array_values(array_unique($models));
+    }
+
     // ---- markup ---------------------------------------------------------------
 
     /**

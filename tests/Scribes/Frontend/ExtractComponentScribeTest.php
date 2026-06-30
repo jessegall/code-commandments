@@ -267,6 +267,39 @@ final class ExtractComponentScribeTest extends TestCase
         }
     }
 
+    public function test_a_written_value_becomes_a_model_not_a_prop(): void
+    {
+        // The bug: a value the chunk WRITES — `v-model:open="confirmOpen"` plus
+        // `@click="confirmOpen = false"` — was forwarded as a plain prop, and Vue rejects a
+        // v-model on a prop (build error). It must be a defineModel, bound with v-model.
+        $popover = '<Popover v-model:open="confirmOpen"><PopoverTrigger as-child>'
+            . '<Button variant="destructive"><Trash2 class="size-3" />Delete node</Button></PopoverTrigger>'
+            . '<PopoverContent class="w-64"><header><h4>Confirm</h4></header>'
+            . '<p class="title">Delete {{ label }}?</p><p class="note">This cannot be undone.</p>'
+            . '<ul><li>One</li><li>Two</li></ul>'
+            . '<div class="actions"><Button @click="confirmOpen = false">Cancel</Button>'
+            . '<Button @click="remove">Delete</Button></div></PopoverContent></Popover>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Popover, PopoverTrigger, PopoverContent } from '@/ui/popover';\nconst confirmOpen = ref(false);\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$popover}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $codebase = Codebase::fromString($sfc);
+        $files = $detector->scribe()->rewrite($detector->find($codebase));
+        $created = $this->components($files);
+
+        $this->assertNotEmpty($created, 'the popover should be extracted');
+        $component = reset($created);
+
+        // confirmOpen is two-way state — a model, never a prop (Vue forbids writing a prop).
+        $this->assertStringContainsString("defineModel<boolean>('confirmOpen')", $component);
+        $this->assertStringNotContainsString('confirmOpen: boolean', $component, 'must not be in defineProps');
+        $this->assertStringContainsString('v-model:open="confirmOpen"', $component, 'the inner v-model still works on the model');
+
+        // The call site binds the model with v-model, the read-only `label`/`remove` with `:`.
+        $callSite = $files['component.vue'];
+        $this->assertStringContainsString('v-model:confirm-open="confirmOpen"', $callSite);
+    }
+
     public function test_a_multi_loop_container_is_not_named_after_one_of_its_loops(): void
     {
         // A dialog containing TWO v-fors is a section/dialog, not "a list" — naming it
