@@ -54,7 +54,7 @@ Exit code is non-zero when sins are found. Files marked
 ## Detectors
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_58 detectors across 16 skills._
+_59 detectors across 16 skills._
 
 ### `backend/absence`
 
@@ -183,6 +183,7 @@ _58 detectors across 16 skills._
 | `DeepDataReachDetector` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
 | `DeepNestedDetector` | A template nested far too deep — an element {@see MIN_DEPTH}+ levels in that still has {@see MIN_REMAINING}+ levels of markup beneath it. |
 | `DuplicateElementDetector` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
+| `PropDrillingDetector` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
 | `PropMutationDetector` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
 
 ### `frontend/vue-control-flow`

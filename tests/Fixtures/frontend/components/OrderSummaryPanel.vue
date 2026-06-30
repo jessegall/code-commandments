@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { Order } from '@/types';
+import type { Order, OrderBadge } from '@/types';
+import OrderBadgeBar from './OrderBadgeBar.vue';
 
-defineProps<{ order: Order }>();
+defineProps<{ order: Order; badge: OrderBadge }>();
 </script>
 
 <template>
@@ -29,5 +30,9 @@ defineProps<{ order: Order }>();
         <Button variant="ghost">Print</Button>
       </CardFooter>
     </Card>
+
+    <!-- `badge` is read nowhere here, and OrderBadgeBar just pipes it on — a drilling chain. -->
+    <!-- @sin PropDrilling -->
+    <OrderBadgeBar :badge="badge" />
   </div>
 </template>

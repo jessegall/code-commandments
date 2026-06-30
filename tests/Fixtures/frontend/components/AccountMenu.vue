@@ -1,5 +1,9 @@
 <script setup lang="ts">
-defineProps<{ role: string; membership: string }>();
+import type { Notification } from '@/types';
+import NotificationBell from './NotificationBell.vue';
+import UserAvatar from './UserAvatar.vue';
+
+defineProps<{ role: string; membership: string; notifications: Notification[]; avatarUrl: string }>();
 </script>
 
 <template>
@@ -15,5 +19,13 @@ defineProps<{ role: string; membership: string }>();
     <Badge v-if="role === 'admin'">Staff</Badge>
     <!-- @sin ControlFlowOnElement -->
     <Badge v-else-if="membership === 'gold'">Gold member</Badge>
+
+    <!-- `notifications` is read nowhere here, and NotificationBell pipes it on — a chain. -->
+    <!-- @sin PropDrilling -->
+    <NotificationBell :items="notifications" />
+
+    <!-- @righteous PropDrilling -->
+    <!-- `avatarUrl` is forwarded and unused here too, but UserAvatar CONSUMES it — composition. -->
+    <UserAvatar :src="avatarUrl" />
   </nav>
 </template>

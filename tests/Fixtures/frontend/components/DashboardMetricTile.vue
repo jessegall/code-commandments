@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { Metric } from '@/types';
+import type { Metric, TrendData } from '@/types';
+import MetricTrend from './MetricTrend.vue';
 
-defineProps<{ metric: Metric }>();
+defineProps<{ metric: Metric; trend: TrendData }>();
 </script>
 
 <template>
@@ -35,5 +36,9 @@ defineProps<{ metric: Metric }>();
         </div>
       </div>
     </figure>
+
+    <!-- `trend` is never used here — only piped through to the child. -->
+    <!-- @sin PropDrilling -->
+    <MetricTrend :trend="trend" />
   </section>
 </template>
