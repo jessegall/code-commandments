@@ -30,15 +30,19 @@ final class ConfigFile
          | code-commandments configuration — OPTIONAL.
          |
          | Every detector is enabled by default with sensible thresholds, so you don't have to
-         | touch this file. Turn rules off with `commandments disable/enable <sin>`, or edit the
-         | disable() call by hand. See the README "Configuration" section.
+         | touch this file. Turn rules off with `commandments disable/enable <sin>`, or by hand
+         | inside the disable() call below. See the README "Configuration" section.
          */
 
         return function (Config $config): void {
-            $config->disable();
+            // Silence rules — a Sin, a Detector, or a whole Skill class:
+            $config->disable(
+                // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
+            );
 
             // Add your own:
             //   $config->detector(\App\Commandments\NoRawSqlDetector::class);
+            //   $config->package(\App\Commandments\MyFrameworkPackage::class);
             //   $config->configure(fn (\JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector $d) => $d->maxDepth(10));
         };
 

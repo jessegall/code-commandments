@@ -46,7 +46,7 @@ final class ConfigFileTest extends TestCase
         $this->assertFalse($file->disable('Demo\\Foo'), 'already disabled');
 
         $this->assertSame(['Demo\\Foo'], $file->disabled());
-        $this->assertStringContainsString('$config->disable(\\Demo\\Foo::class)', $this->read($file));
+        $this->assertStringContainsString('\\Demo\\Foo::class', $this->read($file));
         $this->assertValidPhp($file);
     }
 
@@ -57,7 +57,7 @@ final class ConfigFileTest extends TestCase
         $file->disable('Demo\\Bar');
 
         $this->assertSame(['Demo\\Foo', 'Demo\\Bar'], $file->disabled());
-        $this->assertStringContainsString('$config->disable(\\Demo\\Foo::class, \\Demo\\Bar::class)', $this->read($file));
+        $this->assertStringContainsString('\\Demo\\Foo::class, \\Demo\\Bar::class', $this->read($file));
         $this->assertValidPhp($file);
     }
 
@@ -78,8 +78,7 @@ final class ConfigFileTest extends TestCase
         $file->disable('Demo\\Foo');
 
         $this->assertTrue($file->enable('Demo\\Foo'));
-        $this->assertSame([], $file->disabled());
-        $this->assertStringContainsString('$config->disable()', $this->read($file));
+        $this->assertSame([], $file->disabled(), 'the call is empty again');
         $this->assertValidPhp($file);
     }
 

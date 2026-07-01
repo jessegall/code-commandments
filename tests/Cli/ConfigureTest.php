@@ -41,7 +41,7 @@ final class ConfigureTest extends TestCase
         $this->assertSame(0, $this->exec('disable', 'non-final-data'));
 
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
-        $this->assertStringContainsString('$config->disable(\\' . NonFinalData::class . '::class)', $config);
+        $this->assertStringContainsString('\\' . NonFinalData::class . '::class', $config);
 
         $this->assertSame(0, $this->exec('enable', 'non-final-data'));
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
@@ -53,7 +53,7 @@ final class ConfigureTest extends TestCase
         $this->assertSame(0, $this->exec('disable', 'value-objects'));
 
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
-        $this->assertStringContainsString('$config->disable(\\' . ValueObjects::class . '::class)', $config);
+        $this->assertStringContainsString('\\' . ValueObjects::class . '::class', $config);
 
         $this->assertSame(0, $this->exec('enable', 'value-objects'));
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
