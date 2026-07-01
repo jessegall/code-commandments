@@ -165,7 +165,8 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class RefundService
 {
-    // this method MUST be flagged:
+    // the marker IS the assertion: SwallowCatchDetector must flag this method.
+    // if the detector doesn't fire here, the fixture test fails.
     #[Sinful(SwallowCatchDetector::class)]
     public function refund(Order $order): void
     {
@@ -181,11 +182,11 @@ final class RefundService
 ```vue
 <!-- tests/Fixtures/shop-frontend/components/UserBadge.vue -->
 <template>
-  <!-- the next element MUST be flagged: -->
+  <!-- the marker IS the assertion: the next element must be flagged -->
   <!-- @sin ControlFlowOnElementDetector -->
   <div v-if="user">{{ user.name }}</div>
 
-  <!-- a look-alike it must NOT flag: -->
+  <!-- the good-code example; if this gets flagged, the test fails -->
   <!-- @righteous ControlFlowOnElementDetector -->
   <template v-if="user"><div>{{ user.name }}</div></template>
 </template>
