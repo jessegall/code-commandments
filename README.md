@@ -82,17 +82,15 @@ commented `.commandments/config.php` scaffold. Then it's ready — `judge` away.
 # scan — sins grouped by the skill that fixes them. No path needed: with none,
 # judge uses the source roots in .commandments/backend.canon (written on first run).
 vendor/bin/commandments judge
-# ...or point it at a path
-vendor/bin/commandments judge src
+vendor/bin/commandments judge src                  # ...or point it at a path
 
 # scope to one skill (group) or one sin
 vendor/bin/commandments judge src --skill=exceptions
 vendor/bin/commandments judge src --sin=swallow-catch
 
-# only files new/changed on this branch vs main (--branch=BASE to override)
-vendor/bin/commandments judge src --branch
-# only uncommitted working-tree changes
-vendor/bin/commandments judge src --changes
+# scope to what you changed
+vendor/bin/commandments judge src --branch         # branch vs main (--branch=BASE to override)
+vendor/bin/commandments judge src --changes        # uncommitted working-tree changes
 
 # detectors run across 8 workers by default (capped at CPU cores); --parallel=1 disables
 vendor/bin/commandments judge src --parallel=4
@@ -410,12 +408,9 @@ It takes the same **scope** flags as `judge`, so you can auto-fix just what you
 touched:
 
 ```bash
-# only files changed in the working tree
-vendor/bin/commandments repent src --changes
-# only files new/changed on this branch vs main
-vendor/bin/commandments repent src --branch
-# ...vs a different base
-vendor/bin/commandments repent src --branch=develop
+vendor/bin/commandments repent src --changes            # only working-tree changes
+vendor/bin/commandments repent src --branch             # only branch changes vs main
+vendor/bin/commandments repent src --branch=develop     # ...vs a different base
 ```
 
 The whole tree is still parsed (so cross-file rewrites stay correct); only the
