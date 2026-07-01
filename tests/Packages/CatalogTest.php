@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Packages;
 
+use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Packages\Catalog;
 use JesseGall\CodeCommandments\Packages\LaravelPackage;
 use JesseGall\CodeCommandments\Packages\Package;
@@ -29,5 +30,24 @@ final class CatalogTest extends TestCase
         $this->assertContains('Illuminate\\Http\\Request', $boundaries);
         $this->assertContains('Illuminate\\Foundation\\Http\\FormRequest', $boundaries);
         $this->assertContains('Laravel\\Mcp\\Request', $boundaries);
+    }
+
+    public function test_contract_methods_expose_the_framework_hooks(): void
+    {
+        $codebase = Codebase::fromString(<<<'PHP'
+            <?php
+            namespace Illuminate\Foundation\Http { class FormRequest {} }
+            namespace App { class StoreOrder extends \Illuminate\Foundation\Http\FormRequest {} }
+            PHP);
+
+        $this->assertContains('rules', Catalog::contractMethods()['Illuminate\\Foundation\\Http\\FormRequest'] ?? []);
+        $this->assertTrue(Catalog::isContractMethod($codebase, 'App\\StoreOrder', 'rules'));
+        $this->assertFalse(Catalog::isContractMethod($codebase, 'App\\StoreOrder', 'somethingElse'));
+    }
+
+    public function test_array_returning_types_and_no_container_types_are_declared(): void
+    {
+        $this->assertContains('Illuminate\\Foundation\\Http\\FormRequest', Catalog::arrayReturningTypes());
+        $this->assertContains('Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes', Catalog::noContainerTypes());
     }
 }

@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Packages\Catalog as Packages;
 
 /**
  * Two-or-more functions/methods with the same SHAPE but not identical text — the
@@ -28,22 +29,6 @@ final class NearDuplicateFunctionDetector implements Detector
      * substance — not a one-line delegation or a short array that merely rhymes.
      */
     private const int MIN_BODY_NODES = 20;
-
-    /**
-     * Framework contract bases mapped to their per-subclass DECLARATION HOOKS — methods
-     * each subclass must re-declare to state its own field contract (`rules()` for a
-     * request's validation array; `schema()` for an MCP tool's input schema). Every
-     * subclass's hook shares the same `['field' => …]` skeleton BY CONTRACT, so the
-     * similarity is inherent — it can no more be parameterised into one shared method than
-     * `rules()` can. These are the framework's own hook names, not a suffix heuristic.
-     *
-     * @var array<string, list<string>>
-     */
-    private const array CONTRACT_HOOKS = [
-        'Illuminate\\Foundation\\Http\\FormRequest' => ['rules'],
-        'Laravel\\Mcp\\Request' => ['rules'],
-        'Laravel\\Mcp\\Server\\Tool' => ['rules', 'schema'],
-    ];
 
     public function sin(): Sin
     {
@@ -89,14 +74,6 @@ final class NearDuplicateFunctionDetector implements Detector
 
     private function isContractDeclarationHook(Codebase $codebase, NodeMatch $match): bool
     {
-        $method = $match->enclosingFunctionName();
-
-        foreach (self::CONTRACT_HOOKS as $base => $hooks) {
-            if (in_array($method, $hooks, true) && $codebase->extends($match->enclosingClassName(), $base)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Packages::isContractMethod($codebase, $match->enclosingClassName(), $match->enclosingFunctionName());
     }
 }

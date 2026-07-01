@@ -8,8 +8,8 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Packages\Catalog as Packages;
 
 /**
  * An `array` parameter read by a string-literal key (`$bag['total']`) — a
@@ -35,7 +35,7 @@ final class ArrayBagDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->arrayKeyIsString())
             ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName() ?? ''))
-            ->reject(static fn (LaravelNode $node): bool => $node->isEloquentCast())
+            ->reject(static fn (AstNode $node): bool => Packages::isConstructedWithoutContainer($codebase, $node->enclosingClassName()))
             ->get();
     }
 }

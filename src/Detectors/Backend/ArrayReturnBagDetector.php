@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Packages\Catalog as Packages;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
@@ -28,17 +29,6 @@ use JesseGall\CodeCommandments\Backend\Detector;
  */
 final class ArrayReturnBagDetector implements Detector
 {
-    /**
-     * Framework boundary bases whose subclasses return arrays by contract.
-     */
-    private const array BOUNDARY_BASES = [
-        'Illuminate\\Foundation\\Http\\FormRequest',
-        'Laravel\\Mcp\\Request',
-        'Laravel\\Mcp\\Server\\Tool',
-    ];
-
-    private const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
-
     public function sin(): Sin
     {
         return new ArrayReturnBag();
@@ -52,31 +42,9 @@ final class ArrayReturnBagDetector implements Detector
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
             ->reject(static fn (AstNode $node): bool => $node->looksLikeJsonSchema())
             ->reject(static fn (AstNode $node): bool => $node->isSelfProjectionArray())
-            ->reject(static fn (AstNode $node): bool => self::isBoundary($codebase, $node->enclosingClassName()))
-            ->reject(static fn (AstNode $node): bool => self::isModelCasts($codebase, $node))
+            ->reject(static fn (AstNode $node): bool => Packages::returnsArraysByContract($codebase, $node->enclosingClassName()))
+            ->reject(static fn (AstNode $node): bool => Packages::isContractMethod($codebase, $node->enclosingClassName(), $node->enclosingFunctionName()))
             ->reject(static fn (AstNode $node): bool => $codebase->overridesMethod($node->enclosingClassName(), $node->enclosingFunctionName() ?? ''))
             ->get();
-    }
-
-    private static function isBoundary(Codebase $codebase, ?string $class): bool
-    {
-        foreach (self::BOUNDARY_BASES as $base) {
-            if ($codebase->extends($class, $base)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Eloquent's `casts()` hook returns a config map (`['col' => CastClass::class]`)
-     * the framework reads as a raw array — it cannot be a value object. The `casts`
-     * name is the framework's contract, gated on the class actually being a Model.
-     */
-    private static function isModelCasts(Codebase $codebase, AstNode $node): bool
-    {
-        return $node->enclosingFunctionName() === 'casts'
-            && $codebase->extends($node->enclosingClassName(), self::MODEL);
     }
 }

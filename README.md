@@ -811,9 +811,17 @@ point of keeping it general), and it can't know about a framework *you* wrote a 
 for. That's what a **`Package`** is: the one place a package declares cross-detector facts,
 and the general rules read them from the registry — without ever naming your framework.
 
-A `Package` is its own class under `Packages/` (auto-enrolled, like everything else). Today
-it declares the framework's **boundary types** — the entry-point bases a structural rule
-should exempt:
+A `Package` is its own class under `Packages/` (auto-enrolled, like everything else). It
+overrides only the hooks its framework needs — each declares one kind of fact, and each
+is read by the general rules it applies to. Nothing is a blanket "skip"; every hook is a
+narrow, specific exemption:
+
+| Hook | What it declares | Read by (and what it exempts) |
+|---|---|---|
+| `boundaryTypes(): list<class-string>` | Framework **entry-point** bases — an HTTP/RPC request, the point where raw input crosses into your domain. | **feature-envy** (don't tell you to move behaviour *onto* a request) · **pass-the-object** (a method *taking* one is a boundary, allowed to unpack input from it). |
+| `contractMethods(): array<class-string, list<string>>` | Base class → the **methods** a subclass MUST declare, whose shape/array-return the framework dictates (`rules`, `schema`, `casts`). | **near-duplicate** (the shared skeleton across subclasses is inherent, not copy-paste) · **array-return-bag** (the mandated array isn't a bag). |
+| `arrayReturningTypes(): list<class-string>` | Bases whose **whole job** is handing the framework arrays (a `FormRequest`, an MCP tool). | **array-return-bag** (a subclass's array returns are contractual — class-level, robust to hooks a rule can't enumerate). |
+| `noContainerTypes(): list<class-string>` | Bases/contracts the framework **instantiates itself**, with no container or DI (an Eloquent cast). | **array-bag** (a loose array parameter is the framework's calling convention, nothing to inject). |
 
 ```php
 namespace App\Commandments;
@@ -828,12 +836,20 @@ final class AcmeRpcPackage extends Package
     {
         return [\Acme\Rpc\Endpoint::class, \Acme\Rpc\Handler::class];
     }
+
+    // Acme handlers declare a schema() array by contract — don't flag the shared shape,
+    // and don't call the array a bag
+    public function contractMethods(): array
+    {
+        return [\Acme\Rpc\Handler::class => ['schema']];
+    }
 }
 ```
 
-That's exactly how the built-in `LaravelPackage` exempts `Request`/`FormRequest`/MCP request
-handlers: it declares them boundaries, and the general detectors read
-`Packages\Catalog::boundaryTypes()` — they never mention Laravel.
+That's exactly how the built-in `LaravelPackage` exempts `Request`/`FormRequest`/MCP handlers,
+`rules()`/`schema()`/`casts()`, and Eloquent casts: it declares the facts, and the general
+detectors read `Packages\Catalog` — they never mention Laravel. Every hook is optional; a
+package declares only the ones that apply.
 
 ## License
 
