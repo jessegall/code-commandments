@@ -25,6 +25,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Skills](#skills)
 - [Sins & detectors](#sins--detectors)
 - [Auto-fixing](#auto-fixing)
+- [Scaffolding](#scaffolding)
 - [Developing detectors](#developing-detectors)
 - [License](#license)
 
@@ -463,8 +464,12 @@ _59 sins across 16 skills._
 Most fixes are domain-specific: the skill teaches the discipline, and your coding
 agent reads it and applies the fix at the source — that's the whole point, the tool
 is built to *drive an agent*, not to hand you a chore. But some sins have a single,
-mechanical correct fix, and for those the tool ships a **scribe**: code that rewrites
-the sin for you. The `repent` command runs them.
+mechanical correct fix, and for those the tool ships a **scribe**.
+
+A scribe is a small, deterministic rewriter: it edits the parsed **syntax tree**, not
+the text, so the change is exact and formatting-safe. There are two kinds — *whole-tree
+maintenance passes* that always run, and *per-sin fixes* tied to a specific detector
+(both are listed below). The `repent` command runs them all until nothing changes.
 
 For example, a backend `LoopInvertedGuard` — a whole loop body wrapped in an `if` —
 is rewritten to a `continue` guard so the body stays flat:
@@ -491,11 +496,23 @@ hoisted into a `<SwitchCase>`, one slot per case:
 
 <!-- after (repent) -->
 <SwitchCase :value="status">
-  <template #paid><span class="badge badge-green">Paid</span></template>
-  <template #pending><span class="badge badge-amber">Pending</span></template>
-  <template #default><span class="badge">Unknown</span></template>
+  <template #paid>
+    <span class="badge badge-green">Paid</span>
+  </template>
+  <template #pending>
+    <span class="badge badge-amber">Pending</span>
+  </template>
+  <template #default>
+    <span class="badge">Unknown</span>
+  </template>
 </SwitchCase>
 ```
+
+`<SwitchCase>` is a tiny utility component the package **provides** — generate it into
+your project with `commandments scaffold` (see [Scaffolding](#scaffolding)); `repent`
+then rewrites the chains to use it.
+
+### Running `repent`
 
 ```bash
 # preview every auto-fix as a unified diff — nothing is written
@@ -556,6 +573,30 @@ vendor/bin/commandments repent src --branch=develop     # ...vs a different base
 
 The whole tree is still parsed (so cross-file rewrites stay correct); only the
 files that get written are scoped.
+
+## Scaffolding
+
+Some fixes need a **reusable construct** to point at — a no-op invokable to default an
+optional callback to, a `<SwitchCase>` component to hoist a `v-if` chain into. Rather
+than make you hand-write it, the package ships it as a stub and generates it into your
+project:
+
+```bash
+# generate every helper the applicable sins need (idempotent — existing files are skipped)
+vendor/bin/commandments scaffold
+
+# ...or just one sin's construct
+vendor/bin/commandments scaffold --sin=switch-case
+vendor/bin/commandments scaffold --sin=nullable-callback --dry-run
+```
+
+A scaffold lands in the right root for its kind — a PHP helper under your PSR-4 source
+root with your namespace injected, a Vue component under `resources/js` — and is
+**never overwritten**, so it's safe to re-run and safe to edit afterwards.
+
+`scaffold` and `repent` compose: `scaffold` **creates the construct**, `repent`
+**rewrites the call sites** to use it. For `switch-case`, that's: scaffold the
+`<SwitchCase>` component once, then `repent` the `v-if`/`v-else-if` chains into it.
 
 ## Developing detectors
 
