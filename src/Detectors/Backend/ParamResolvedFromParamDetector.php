@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\ParamResolution;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;

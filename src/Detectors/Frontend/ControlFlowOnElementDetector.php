@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Frontend\ControlFlowOnElement;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\WrapControlFlowScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 
 /**

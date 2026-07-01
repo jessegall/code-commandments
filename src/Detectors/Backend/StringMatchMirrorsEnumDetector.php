@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\StringMatchMirrorsEnum;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\Enums;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A `match`/`switch` whose arm conditions are string/int literals that ARE an

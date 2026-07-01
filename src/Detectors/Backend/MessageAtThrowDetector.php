@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * `throw new X("…message…")` — the failure described with a prose string at the

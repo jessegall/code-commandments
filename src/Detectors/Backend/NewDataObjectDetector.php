@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\NewDataObject;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Backend\NewDataObjectScribe;
 

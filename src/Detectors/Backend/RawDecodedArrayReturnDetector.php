@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\RawDecodedArrayReturn;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Returning a freshly-decoded payload straight out of a boundary — the raw

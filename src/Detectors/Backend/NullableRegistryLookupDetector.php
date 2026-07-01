@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\NullableRegistryLookup;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A class's own keyed store handing back `null` on a miss — `return

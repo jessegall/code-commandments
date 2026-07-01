@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A method that SAVES one of its own properties to a local and RESTORES it

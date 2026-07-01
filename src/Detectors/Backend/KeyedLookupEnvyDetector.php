@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\LookupEnvy;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Feature envy through an indirect lookup — a method that uses an owned object's

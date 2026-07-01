@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
@@ -123,7 +123,7 @@ final class Judge
 
     /**
      * @param  list<Detector>  $detectors  backend (PHP) detectors
-     * @param  list<\JesseGall\CodeCommandments\Vue\Detector>  $frontend  Vue detectors
+     * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend  Vue detectors
      * @param  list<string>  $exclude
      */
     private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable, string $nodeClass): int
@@ -275,7 +275,7 @@ final class Judge
      * knows its `file:line` and scope).
      *
      * @param  string|list<string>  $roots
-     * @param  list<\JesseGall\CodeCommandments\Vue\Detector>  $frontend
+     * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
      * @return list<Finding>
      */
     private function frontendFindings(string|array $roots, array $frontend): array

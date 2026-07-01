@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ConstClassEnum;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A class that is nothing but scalar constants — a closed set of values hand-

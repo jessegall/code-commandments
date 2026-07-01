@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Detectors\Backend\NestedTernaryDetector;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Scribes\Backend\NestedTernaryScribe;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 

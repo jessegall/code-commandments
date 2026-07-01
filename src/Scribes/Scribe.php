@@ -10,7 +10,7 @@ use PhpParser\Node;
 
 /**
  * A Scribe emends the source — it computes the new content of every file it changes.
- * Like a {@see \JesseGall\CodeCommandments\Detectors\Detector}, the computation is
+ * Like a {@see \JesseGall\CodeCommandments\Backend\Detector}, the computation is
  * PURE: it returns data, it does not write to disk. Applying the result
  * ({@see RewriteApplier}) and rendering it ({@see UnifiedDiff}) are separate
  * collaborators the caller owns; {@see Catalog} is the roll of Scribes.

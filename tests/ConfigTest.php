@@ -8,14 +8,14 @@ use InvalidArgumentException;
 use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
-use JesseGall\CodeCommandments\Detectors\Detector as BackendDetector;
+use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
-use JesseGall\CodeCommandments\Vue\Detector as FrontendDetector;
+use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigTest extends TestCase

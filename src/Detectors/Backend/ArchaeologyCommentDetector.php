@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A comment that narrates the code's past — `// previously...`, `// changed

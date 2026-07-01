@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Our own integration harness: run each detector over the fixture and check its

@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Sins\Frontend\CompoundInlineComponent;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 
 /**
  * A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`,

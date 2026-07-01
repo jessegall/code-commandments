@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Sharded;
 
 /**

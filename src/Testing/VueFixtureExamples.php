@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Sfc;
 

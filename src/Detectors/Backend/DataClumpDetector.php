@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\DataClump;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Backend\Config\DataClumpConfig;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * The same three-or-more value parameters (`string $shopId, string $userId,

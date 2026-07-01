@@ -516,8 +516,8 @@ namespace App\Commandments;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-// a PHP detector; a Vue one implements JesseGall\CodeCommandments\Vue\Detector
-use JesseGall\CodeCommandments\Detectors\Detector;
+// a PHP detector; a Vue one implements JesseGall\CodeCommandments\Frontend\Detector
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 final class FacadeCallDetector implements Detector
@@ -559,7 +559,7 @@ namespace App\Commandments;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 // the node — a domain predicate composed from the engine's helpers

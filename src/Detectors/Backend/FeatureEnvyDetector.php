@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy as FeatureEnvySin;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\FeatureEnvy;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned

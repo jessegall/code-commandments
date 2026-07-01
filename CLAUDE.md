@@ -52,7 +52,7 @@ checking fixture (`tests/Fixtures/shop-frontend`), calibrate on a real `.vue`
 codebase, and curate. The Vue side has the matching layers — `Vue\Codebase` →
 `Vue\Query` → `Vue\ElementMatch` (the template AST), `Vue\Expr\*` (a real JS-
 expression AST: lexer + Pratt parser over binding/interpolation expressions), the
-`Vue\Detector` base (sibling of `Detectors\Detector`, both extend the root
+`Frontend\Detector` base (sibling of `Backend\Detector`, both extend the root
 `Detector`), `Detectors\Frontend\*` detectors, and `Scribes\Frontend\*` scribes
 (backend scribes live in `Scribes\Backend\*`). Keep that symmetry: a thing
 belongs in the `Backend`/`Frontend` folder of its concern.

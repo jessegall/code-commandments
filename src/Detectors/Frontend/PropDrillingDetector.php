@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Frontend;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
 use JesseGall\CodeCommandments\Vue\Script;

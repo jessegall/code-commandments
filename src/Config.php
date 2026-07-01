@@ -9,7 +9,7 @@ use Composer\InstalledVersions;
 use InvalidArgumentException;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
-use JesseGall\CodeCommandments\Vue\Detector as FrontendDetector;
+use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use ReflectionFunction;
 use ReflectionNamedType;
 
@@ -85,7 +85,7 @@ final class Config
 
     /**
      * Add a detector that lives in the consumer's own codebase (so the package's glob never sees
-     * it). Its {@see Sins\Sin} rides along via `sin()`; a `Vue\Detector` joins the frontend set,
+     * it). Its {@see Sins\Sin} rides along via `sin()`; a `Frontend\Detector` joins the frontend set,
      * anything else the backend set.
      *
      * @param  class-string<Detector>  ...$detectors

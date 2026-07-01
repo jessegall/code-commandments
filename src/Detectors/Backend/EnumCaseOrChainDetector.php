@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\Enums;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * `$x === Status::Pending || $x === Status::Paid` — a hand-rolled membership test

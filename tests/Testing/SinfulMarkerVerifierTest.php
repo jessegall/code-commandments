@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Testing;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Testing\SinfulMarkerVerifier;
 use PHPUnit\Framework\TestCase;

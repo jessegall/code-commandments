@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Boundary;
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 
 /**
  * A template nested far too deep — an element many levels in that still has several

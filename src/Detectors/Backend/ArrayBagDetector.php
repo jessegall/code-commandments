@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\EloquentCast;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * An `array` parameter read by a string-literal key (`$bag['total']`) — a

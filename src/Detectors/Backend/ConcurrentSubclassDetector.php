@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ConcurrentSubclass;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy —

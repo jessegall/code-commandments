@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Frontend\SwitchCase;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe;
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 

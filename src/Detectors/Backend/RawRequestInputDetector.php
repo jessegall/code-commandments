@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a

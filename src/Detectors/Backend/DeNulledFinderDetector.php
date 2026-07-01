@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked

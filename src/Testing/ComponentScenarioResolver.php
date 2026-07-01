@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**

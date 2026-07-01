@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Detector as RootDetector;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\DetectorStep as BaseDetectorStep;
 use JesseGall\CodeCommandments\Scribes\NeedsCodebase;

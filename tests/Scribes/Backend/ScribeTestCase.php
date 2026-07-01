@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use PHPUnit\Framework\TestCase;

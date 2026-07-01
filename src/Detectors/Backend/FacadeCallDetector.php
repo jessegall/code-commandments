@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\EloquentCast;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`.

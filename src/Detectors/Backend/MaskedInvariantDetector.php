@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\OwnStateMask;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * `$this->scratch?->call() ?? false` — defaulting a reach into the object's own

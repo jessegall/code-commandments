@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * A bare `$model->update([...])` on an Eloquent model at a call site — an

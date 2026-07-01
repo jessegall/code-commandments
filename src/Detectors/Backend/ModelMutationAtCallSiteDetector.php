@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Setting an Eloquent model's properties then calling `->save()` at a call site —

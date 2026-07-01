@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;

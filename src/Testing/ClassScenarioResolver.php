@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Testing;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * The backend {@see ScenarioResolver}: a finding's scenario is its enclosing CLASS —

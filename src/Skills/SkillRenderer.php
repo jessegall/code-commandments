@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Sins\Sin;
 

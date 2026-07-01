@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors;
 
 /**
  * A detector whose sin can be REPENTED — auto-fixed at the source. Implemented
- * alongside a backend {@see Detector} or a frontend {@see \JesseGall\CodeCommandments\Vue\Detector},
+ * alongside a backend {@see Detector} or a frontend {@see \JesseGall\CodeCommandments\Frontend\Detector},
  * it names the Scribe that rewrites the sin away.
  *
  * `judge` never fixes on its own — it only reports. The existing `scribe` command

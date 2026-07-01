@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\InArrayMirrorsEnum;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\Enums;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * `in_array($x, ['a', 'b', …])` whose literals ARE an existing backed enum's case

@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Two-or-more functions/methods with an identical AST — the same code copy-pasted,

@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Testing\CommentMarkerVerifier;
 use JesseGall\CodeCommandments\Testing\ComponentScenarioResolver;
 use JesseGall\CodeCommandments\Vue\Codebase;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 
 /**
  * The frontend fixture: the Shop `.vue` components under `tests/Fixtures/frontend`,

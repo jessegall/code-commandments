@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Testing;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Catalog;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Testing\Marker;
 use JesseGall\CodeCommandments\Testing\SinMarkers;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;

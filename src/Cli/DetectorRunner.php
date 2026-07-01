@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use Closure;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Concurrency\Fork;
-use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Runs the detectors over a parsed codebase and returns lightweight findings —

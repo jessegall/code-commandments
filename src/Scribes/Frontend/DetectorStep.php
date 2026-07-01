@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Scribes\DetectorStep as BaseDetectorStep;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use JesseGall\CodeCommandments\Vue\ComponentGraph;
 use JesseGall\CodeCommandments\Vue\ComponentLibrary;
-use JesseGall\CodeCommandments\Vue\Detector;
+use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\WorkingCopy;
 
