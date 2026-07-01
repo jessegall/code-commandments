@@ -14,8 +14,13 @@ use PhpParser\NodeFinder;
 /**
  * A matched node with its file — an {@see AstNode} that also knows where it is.
  * The result a query returns and a finding is reported as.
+ *
+ * NOT final on purpose: a project can SUBCLASS it (adding domain predicates like
+ * `isVehicleClause()`) and register that subclass via `Config::decorate`, so its own
+ * detectors read as cleanly as the built-ins. The query then wraps every match in that
+ * subclass ({@see Codebase::wrap}).
  */
-final class NodeMatch extends AstNode
+class NodeMatch extends AstNode
 {
     public function __construct(
         Node $node,

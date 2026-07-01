@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments;
 use Closure;
 use Composer\InstalledVersions;
 use InvalidArgumentException;
+use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Vue\Detector as FrontendDetector;
 use ReflectionFunction;
@@ -41,6 +42,33 @@ final class Config
 
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
+
+    /** @var class-string<NodeMatch> The AST-match class the query wraps every hit in. */
+    private string $nodeClass = NodeMatch::class;
+
+    /**
+     * Wrap every AST query match in your own {@see NodeMatch} subclass, so your detectors can
+     * read `$n->isVehicleClause()` instead of re-deriving it inline. Applied to the codebase
+     * before any detector runs, so both your custom rules and the built-ins see it.
+     *
+     * @param  class-string<NodeMatch>  $nodeClass
+     */
+    public function decorate(string $nodeClass): self
+    {
+        $this->nodeClass = $nodeClass;
+
+        return $this;
+    }
+
+    /**
+     * The AST-match class the project registered (a plain {@see NodeMatch} by default).
+     *
+     * @return class-string<NodeMatch>
+     */
+    public function nodeClass(): string
+    {
+        return $this->nodeClass;
+    }
 
     /**
      * Suppress a shipped detector — by its own class, or by the {@see Sins\Sin} class it points
