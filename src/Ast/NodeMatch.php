@@ -25,6 +25,7 @@ class NodeMatch extends AstNode
     public function __construct(
         Node $node,
         public readonly ParsedFile $file,
+        public readonly ?Codebase $codebase = null,
     ) {
         parent::__construct($node);
     }
@@ -83,7 +84,7 @@ class NodeMatch extends AstNode
 
         foreach ((new NodeFinder)->findInstanceOf([$function], Variable::class) as $occurrence) {
             if ($occurrence->name === $this->node->name) {
-                $match = new self($occurrence, $this->file);
+                $match = new self($occurrence, $this->file, $this->codebase);
                 $interactions[] = new Interaction($match, $match->interactionKind());
             }
         }
@@ -109,7 +110,7 @@ class NodeMatch extends AstNode
             return false;
         }
 
-        foreach (new self($parent->var, $this->file)->trace() as $interaction) {
+        foreach (new self($parent->var, $this->file, $this->codebase)->trace() as $interaction) {
             if ($interaction->deNulls()) {
                 return true;
             }
@@ -134,7 +135,7 @@ class NodeMatch extends AstNode
             return false;
         }
 
-        foreach (new self($receiver, $this->file)->trace() as $interaction) {
+        foreach (new self($receiver, $this->file, $this->codebase)->trace() as $interaction) {
             if ($interaction->kind === InteractionKind::PropertyWrite) {
                 return true;
             }

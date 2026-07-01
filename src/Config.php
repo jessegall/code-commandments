@@ -44,31 +44,34 @@ final class Config
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
 
-    /** @var class-string<NodeMatch> The AST-match class the query wraps every hit in. */
-    private string $nodeClass = NodeMatch::class;
+    /** @var list<class-string<NodeMatch>> The AST-node decorators the project registered. */
+    private array $nodeClasses = [];
 
     /**
-     * Wrap every AST query match in your own {@see NodeMatch} subclass, so your detectors can
-     * read `$n->isVehicleClause()` instead of re-deriving it inline. Applied to the codebase
-     * before any detector runs, so both your custom rules and the built-ins see it.
+     * Register your own {@see NodeMatch} subclass decorator(s), so your detectors can read
+     * `$n->isVehicleClause()` instead of re-deriving it inline. A `where`/`reject` closure that
+     * type-hints the decorator (`fn (VehicleNode $n) => …`) is handed that node — the engine picks
+     * the class off the closure by reflection, so you can register several and each detector uses
+     * whichever it type-hints. Variadic and repeatable; the FIRST registered is also the global
+     * default wrap.
      *
-     * @param  class-string<NodeMatch>  $nodeClass
+     * @param  class-string<NodeMatch>  ...$nodeClasses
      */
-    public function decorate(string $nodeClass): self
+    public function decorate(string ...$nodeClasses): self
     {
-        $this->nodeClass = $nodeClass;
+        $this->nodeClasses = [...$this->nodeClasses, ...$nodeClasses];
 
         return $this;
     }
 
     /**
-     * The AST-match class the project registered (a plain {@see NodeMatch} by default).
+     * The AST-node decorators the project registered (none by default).
      *
-     * @return class-string<NodeMatch>
+     * @return list<class-string<NodeMatch>>
      */
-    public function nodeClass(): string
+    public function nodeClasses(): array
     {
-        return $this->nodeClass;
+        return $this->nodeClasses;
     }
 
     /**

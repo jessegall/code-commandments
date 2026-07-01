@@ -21,7 +21,11 @@ use PhpParser\Node;
 final class Query
 {
     /**
-     * @var list<\Closure(AstNode): bool>
+     * Each filter paired with the decorator node its check type-hinted (or null for the base) —
+     * so a `fn (LaravelNode $n) => …` check is handed a `LaravelNode`, a plain `fn (AstNode $n)`
+     * the base match.
+     *
+     * @var list<array{0: \Closure(AstNode): bool, 1: class-string<NodeMatch>|null}>
      */
     private array $filters = [];
 
@@ -43,7 +47,7 @@ final class Query
      */
     public function where(\Closure $check): self
     {
-        $this->filters[] = $check;
+        $this->filters[] = [$check, self::nodeClassOf($check)];
 
         return $this;
     }
@@ -55,9 +59,29 @@ final class Query
      */
     public function reject(\Closure $check): self
     {
-        $this->filters[] = static fn (AstNode $node): bool => ! $check($node);
+        $this->filters[] = [static fn (AstNode $node): bool => ! $check($node), self::nodeClassOf($check)];
 
         return $this;
+    }
+
+    /**
+     * The decorator node a check type-hinted its parameter as — a {@see NodeMatch} subclass the
+     * match should be re-wrapped in for that check (`fn (LaravelNode $n) => …`). Null for the base
+     * `AstNode`/`NodeMatch` or an untyped/builtin parameter. Read once, off the closure's signature.
+     *
+     * @return class-string<NodeMatch>|null
+     */
+    private static function nodeClassOf(\Closure $check): ?string
+    {
+        $type = ((new \ReflectionFunction($check))->getParameters()[0] ?? null)?->getType();
+
+        if (! $type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+            return null;
+        }
+
+        $class = $type->getName();
+
+        return is_a($class, NodeMatch::class, true) && $class !== NodeMatch::class ? $class : null;
     }
 
     /**
@@ -115,7 +139,7 @@ final class Query
      */
     public function inProximityOf(string $name, int $lines = 5): self
     {
-        $this->filters[] = static fn (AstNode $node): bool => $node instanceof NodeMatch && $node->near($name, $lines);
+        $this->filters[] = [static fn (AstNode $node): bool => $node instanceof NodeMatch && $node->near($name, $lines), null];
 
         return $this;
     }
@@ -134,8 +158,10 @@ final class Query
 
             $match = $this->codebase->wrap($node, $file);
 
-            foreach ($this->filters as $filter) {
-                if (! $filter($match)) {
+            foreach ($this->filters as [$check, $as]) {
+                $argument = $as === null ? $match : $this->codebase->wrap($node, $file, $as);
+
+                if (! $check($argument)) {
                     continue 2;
                 }
             }

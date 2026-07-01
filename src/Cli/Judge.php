@@ -74,7 +74,7 @@ final class Judge
         // would clobber the very file it's reading. Force `--no-checklist` there.
         $checklist = Scope::repent($args) !== null ? null : $options->checklist;
 
-        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands(), $this->scaffoldCommands(), $config->nodeClass());
+        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands(), $this->scaffoldCommands(), $config->nodeClasses());
     }
 
     /**
@@ -125,8 +125,9 @@ final class Judge
      * @param  list<Detector>  $detectors  backend (PHP) detectors
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend  Vue detectors
      * @param  list<string>  $exclude
+     * @param  list<class-string<\JesseGall\CodeCommandments\Ast\NodeMatch>>  $nodeClasses
      */
-    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable, string $nodeClass): int
+    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable, array $nodeClasses): int
     {
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
@@ -153,7 +154,7 @@ final class Judge
         $parseStart = hrtime(true);
         $codebase = Codebase::scan($roots, static function (int $done, int $total) use ($progress): void {
             $progress->track($done, $total, 'parsing');
-        })->decorateWith($nodeClass);
+        })->decorateWith(...$nodeClasses);
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
         if ($benchmark) {

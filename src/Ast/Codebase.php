@@ -70,36 +70,48 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var array<string, string>|null */
     private ?array $sourceByPath = null;
 
-    /** @var class-string<NodeMatch> The class every query match is wrapped in — a project can swap it. */
-    private string $nodeClass = NodeMatch::class;
+    /** @var class-string<NodeMatch> The class a match is wrapped in by default (the base, unless a project sets a global). */
+    private string $defaultNode = NodeMatch::class;
 
     private function __construct(private readonly array $files) {}
 
     /**
-     * Wrap every future query match in $nodeClass (a {@see NodeMatch} subclass) — the hook a
-     * project uses to hang its own predicate methods on the node. No-ops back to the default
-     * when handed plain `NodeMatch::class`.
+     * Register {@see NodeMatch} subclass decorators — the hook a project uses to hang its own
+     * predicate methods on the node. A `where`/`reject` closure that TYPE-HINTS a decorator gets
+     * its match re-wrapped in that class for the check (so `fn (LaravelNode $n) => $n->isFacadeCall()`
+     * reads like a built-in — see {@see Query::where}); reflection on the closure picks the class,
+     * so no per-query wiring is needed. The FIRST registered class also becomes the default wrap
+     * for every match (untyped closures and the returned results), letting a project make one node
+     * the baseline. Any number can be registered; each must extend {@see NodeMatch}.
      *
-     * @param  class-string<NodeMatch>  $nodeClass
+     * @param  class-string<NodeMatch>  ...$nodeClasses
      */
-    public function decorateWith(string $nodeClass): self
+    public function decorateWith(string ...$nodeClasses): self
     {
-        if (! is_a($nodeClass, NodeMatch::class, true)) {
-            throw new \InvalidArgumentException("{$nodeClass} must extend " . NodeMatch::class . ' to decorate query matches.');
+        foreach ($nodeClasses as $nodeClass) {
+            if (! is_a($nodeClass, NodeMatch::class, true)) {
+                throw new \InvalidArgumentException("{$nodeClass} must extend " . NodeMatch::class . ' to decorate query matches.');
+            }
         }
 
-        $this->nodeClass = $nodeClass;
+        $this->defaultNode = $nodeClasses[0] ?? $this->defaultNode;
 
         return $this;
     }
 
     /**
-     * A query match for a node — an instance of the configured {@see decorateWith} class (a
-     * plain {@see NodeMatch} by default). The single place matches are built.
+     * A query match for a node — a {@see NodeMatch} (or the $as decorator a typed closure asked
+     * for, or the project's global default). The single place matches are built, and where the
+     * codebase hands itself to the node so a decorator can answer whole-program questions
+     * (`extends`, `implements`, receiver types) — the class graph a package predicate needs.
+     *
+     * @param  class-string<NodeMatch>|null  $as
      */
-    public function wrap(Node $node, ParsedFile $file): NodeMatch
+    public function wrap(Node $node, ParsedFile $file, ?string $as = null): NodeMatch
     {
-        return new $this->nodeClass($node, $file);
+        $class = $as ?? $this->defaultNode;
+
+        return new $class($node, $file, $this);
     }
 
     /**

@@ -52,10 +52,30 @@ final class NodeDecorationTest extends TestCase
         Codebase::fromString('<?php 1;')->decorateWith(\stdClass::class);
     }
 
-    public function test_config_carries_the_decorator(): void
+    public function test_a_typed_closure_gets_the_decorator_without_registration(): void
     {
-        $this->assertSame(NodeMatch::class, new Config()->nodeClass(), 'defaults to the base');
-        $this->assertSame(DecoratedNode::class, new Config()->decorate(DecoratedNode::class)->nodeClass());
+        // reflection picks the class off the closure's parameter — no decorateWith() needed, so a
+        // package's own node predicate works everywhere, including the fixture harness.
+        $flagged = Codebase::fromString('<?php new VehicleClause(); new Order();')
+            ->whereNew()
+            ->where(static fn (DecoratedNode $n): bool => $n->isVehicleClause())
+            ->get();
+
+        $this->assertCount(1, $flagged);
+        $this->assertContainsOnlyInstancesOf(NodeMatch::class, $flagged, 'the returned match is the base node');
+    }
+
+    public function test_the_node_can_reach_its_codebase(): void
+    {
+        $match = Codebase::fromString('<?php new Order();')->whereNew()->get()[0];
+
+        $this->assertInstanceOf(Codebase::class, $match->codebase);
+    }
+
+    public function test_config_carries_the_decorators(): void
+    {
+        $this->assertSame([], new Config()->nodeClasses(), 'none by default');
+        $this->assertSame([DecoratedNode::class], new Config()->decorate(DecoratedNode::class)->nodeClasses());
     }
 }
 
