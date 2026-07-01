@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments;
 use Closure;
 use Composer\InstalledVersions;
 use InvalidArgumentException;
-use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use ReflectionFunction;
@@ -16,18 +15,20 @@ use ReflectionNamedType;
 /**
  * A consumer's overrides to the shipped detector set — the runtime twin of the doc-generating
  * {@see Detectors\Catalog}. Loaded from `.commandments/config.php` (the CLI `require`s it, so it
- * works without any framework), which returns a `fn (Config): void` that composes three moves:
+ * works without any framework), which returns a `fn (Config): void` that composes its moves:
  *
  *   return function (Config $config): void {
  *       $config
  *           ->disable(NonFinalData::class, DeepNestingDetector::class)   // suppress a built-in
  *           ->detector(MyCustomDetector::class)                          // add your own finder
+ *           ->package(MyFrameworkPackage::class)                         // register its exemptions
  *           ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)); // tune a threshold
  *   };
  *
  * {@see disable} takes a Detector, Sin, OR Skill class (a sin drops every detector that points at
  * it; a skill drops every detector it teaches the fix for);
  * {@see detector} adds a detector living in the CONSUMER's codebase (the package can't glob it);
+ * {@see package} registers a consumer {@see Packages\Package} of cross-detector exemptions;
  * {@see configure} takes a closure whose FIRST PARAMETER TYPE names the detector to tune — the
  * matching instance is reflected out of the configured set and handed in, so the closure just
  * calls its fluent setters. The package's own {@see Detectors\Catalog} stays pure (the fixtures
@@ -46,36 +47,6 @@ final class Config
 
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
-
-    /** @var list<class-string<NodeMatch>> The AST-node decorators the project registered. */
-    private array $nodeClasses = [];
-
-    /**
-     * Register your own {@see NodeMatch} subclass decorator(s), so your detectors can read
-     * `$n->isVehicleClause()` instead of re-deriving it inline. A `where`/`reject` closure that
-     * type-hints the decorator (`fn (VehicleNode $n) => …`) is handed that node — the engine picks
-     * the class off the closure by reflection, so you can register several and each detector uses
-     * whichever it type-hints. Variadic and repeatable; the FIRST registered is also the global
-     * default wrap.
-     *
-     * @param  class-string<NodeMatch>  ...$nodeClasses
-     */
-    public function decorate(string ...$nodeClasses): self
-    {
-        $this->nodeClasses = [...$this->nodeClasses, ...$nodeClasses];
-
-        return $this;
-    }
-
-    /**
-     * The AST-node decorators the project registered (none by default).
-     *
-     * @return list<class-string<NodeMatch>>
-     */
-    public function nodeClasses(): array
-    {
-        return $this->nodeClasses;
-    }
 
     /**
      * Suppress shipped detectors — by a detector's own class, by the {@see Sins\Sin} class it

@@ -150,11 +150,10 @@ return function (Config $config): void {
 ```
 
 Each move is named for what it registers: `disable` (silence a rule), `detector` (add
-your own finder), `configure` (tune a threshold), plus `decorate` (add an AST-node
-vocabulary) and `package` (register a framework's exemptions) — the last two are covered
-under [Developing detectors](#developing-detectors). `configure` uses the closure's
-**first parameter type** to find the detector and hand it in, so you tune it by calling
-its own methods.
+your own finder), `configure` (tune a threshold), and `package` (register a framework's
+exemptions — covered under [Developing detectors](#developing-detectors)). `configure` uses
+the closure's **first parameter type** to find the detector and hand it in, so you tune it
+by calling its own methods.
 
 ## How detectors are tested
 
@@ -787,16 +786,13 @@ final class BareVehicleClauseDetector implements Detector
 }
 ```
 
-Then register the detector in your config. (Type-hinting `VehicleNode` in the closure is
-enough for the engine to inject it, so `decorate()` is optional — use it to *declare* your
-nodes, register several at once, and set the first as the global default wrap.)
+The node needs **no registration** — type-hinting `VehicleNode` in the closure is enough
+for the engine to inject it (that's why the built-in `LaravelNode`/`SpatieDataNode` work
+with no config). You only register the detector:
 
 ```php
 // .commandments/config.php
 return fn (Config $config) => $config
-    // optional — declare your vocabulary (register as many nodes as you like)
-    ->decorate(\App\Commandments\VehicleNode::class, \App\Commandments\GarageNode::class)
-    // the detector that speaks it
     ->detector(\App\Commandments\BareVehicleClauseDetector::class);
 ```
 
@@ -865,14 +861,6 @@ That's exactly how the built-in `LaravelPackage` tags `Request`/`FormRequest`/MC
 return fn (Config $config) => $config
     ->package(\App\Commandments\AcmePackage::class);
 ```
-
-> **What about the built-in `LaravelNode` / `SpatieDataNode` decorators — are those
-> registered?** No, and they don't need to be. A decorator node is injected purely by
-> **reflecting the `where` closure's parameter type**, so any `NodeMatch` subclass a detector
-> type-hints works with zero registration (that's why they work in the test fixture with no
-> config). `Config::decorate` is only for a consumer's *global default* wrap. Exemptions are
-> different — a detector can't "type-hint" a fact about your framework — which is why packages
-> exist and get registered.
 
 ### Your own exemption tags
 

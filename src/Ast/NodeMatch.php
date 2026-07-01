@@ -16,9 +16,9 @@ use PhpParser\NodeFinder;
  * The result a query returns and a finding is reported as.
  *
  * NOT final on purpose: a project can SUBCLASS it (adding domain predicates like
- * `isVehicleClause()`) and register that subclass via `Config::decorate`, so its own
- * detectors read as cleanly as the built-ins. The query then wraps every match in that
- * subclass ({@see Codebase::wrap}).
+ * `isVehicleClause()`) and TYPE-HINT that subclass in a `where` closure — the query reflects the
+ * closure's parameter and hands it that node ({@see Query::where}), no registration needed, so its
+ * own detectors read as cleanly as the built-ins.
  */
 class NodeMatch extends AstNode
 {

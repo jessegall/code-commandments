@@ -70,46 +70,21 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var array<string, string>|null */
     private ?array $sourceByPath = null;
 
-    /** @var class-string<NodeMatch> The class a match is wrapped in by default (the base, unless a project sets a global). */
-    private string $defaultNode = NodeMatch::class;
-
     private function __construct(private readonly array $files) {}
 
     /**
-     * Register {@see NodeMatch} subclass decorators — the hook a project uses to hang its own
-     * predicate methods on the node. A `where`/`reject` closure that TYPE-HINTS a decorator gets
-     * its match re-wrapped in that class for the check (so `fn (LaravelNode $n) => $n->isFacadeCall()`
-     * reads like a built-in — see {@see Query::where}); reflection on the closure picks the class,
-     * so no per-query wiring is needed. The FIRST registered class also becomes the default wrap
-     * for every match (untyped closures and the returned results), letting a project make one node
-     * the baseline. Any number can be registered; each must extend {@see NodeMatch}.
-     *
-     * @param  class-string<NodeMatch>  ...$nodeClasses
-     */
-    public function decorateWith(string ...$nodeClasses): self
-    {
-        foreach ($nodeClasses as $nodeClass) {
-            if (! is_a($nodeClass, NodeMatch::class, true)) {
-                throw new \InvalidArgumentException("{$nodeClass} must extend " . NodeMatch::class . ' to decorate query matches.');
-            }
-        }
-
-        $this->defaultNode = $nodeClasses[0] ?? $this->defaultNode;
-
-        return $this;
-    }
-
-    /**
-     * A query match for a node — a {@see NodeMatch} (or the $as decorator a typed closure asked
-     * for, or the project's global default). The single place matches are built, and where the
-     * codebase hands itself to the node so a decorator can answer whole-program questions
-     * (`extends`, `implements`, receiver types) — the class graph a package predicate needs.
+     * A query match for a node — a plain {@see NodeMatch}, or the $as decorator a typed `where`
+     * closure asked for (reflection on the closure picks the class, so a `fn (LaravelNode $n) => …`
+     * reads like a built-in — see {@see Query::where}; no registration needed). The single place
+     * matches are built, and where the codebase hands itself to the node so a decorator can answer
+     * whole-program questions (`extends`, `implements`, receiver types) — the class graph a package
+     * predicate needs.
      *
      * @param  class-string<NodeMatch>|null  $as
      */
     public function wrap(Node $node, ParsedFile $file, ?string $as = null): NodeMatch
     {
-        $class = $as ?? $this->defaultNode;
+        $class = $as ?? NodeMatch::class;
 
         return new $class($node, $file, $this);
     }
