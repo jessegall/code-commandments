@@ -25,7 +25,8 @@ use ReflectionNamedType;
  *           ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)); // tune a threshold
  *   };
  *
- * {@see disable} takes a Sin OR a Detector class (a sin drops every detector that points at it);
+ * {@see disable} takes a Detector, Sin, OR Skill class (a sin drops every detector that points at
+ * it; a skill drops every detector it teaches the fix for);
  * {@see register} adds a detector living in the CONSUMER's codebase (the package can't glob it);
  * {@see configure} takes a closure whose FIRST PARAMETER TYPE names the detector to tune — the
  * matching instance is reflected out of the configured set and handed in, so the closure just
@@ -71,8 +72,9 @@ final class Config
     }
 
     /**
-     * Suppress a shipped detector — by its own class, or by the {@see Sins\Sin} class it points
-     * at (which drops every detector for that sin).
+     * Suppress shipped detectors — by a detector's own class, by the {@see Sins\Sin} class it
+     * points at (drops every detector for that sin), or by a {@see Skills\Skill} class (drops
+     * every detector whose sin that skill teaches — silence a whole discipline in one line).
      *
      * @param  class-string  ...$classes
      */
@@ -168,12 +170,16 @@ final class Config
     }
 
     /**
-     * Is this detector suppressed — its own class disabled, or the sin it points at?
+     * Is this detector suppressed — its own class disabled, the sin it points at, or the skill
+     * that teaches the fix?
      */
     private function isDisabled(Detector $detector): bool
     {
+        $sin = $detector->sin();
+
         return in_array($detector::class, $this->disabled, true)
-            || in_array($detector->sin()::class, $this->disabled, true);
+            || in_array($sin::class, $this->disabled, true)
+            || in_array($sin->skill()::class, $this->disabled, true);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Configure;
 use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -45,6 +46,18 @@ final class ConfigureTest extends TestCase
         $this->assertSame(0, $this->exec('enable', 'non-final-data'));
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
         $this->assertStringNotContainsString(NonFinalData::class, $config, 'enable removed it again');
+    }
+
+    public function test_disable_a_whole_skill_by_slug(): void
+    {
+        $this->assertSame(0, $this->exec('disable', 'value-objects'));
+
+        $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
+        $this->assertStringContainsString('$config->disable(\\' . ValueObjects::class . '::class)', $config);
+
+        $this->assertSame(0, $this->exec('enable', 'value-objects'));
+        $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
+        $this->assertStringNotContainsString(ValueObjects::class, $config, 'enable removed the skill again');
     }
 
     public function test_an_unknown_sin_name_errors(): void

@@ -53,6 +53,17 @@ final class ConfigTest extends TestCase
         $this->assertSame([], $result['backend']);
     }
 
+    public function test_disable_by_skill_class_drops_every_detector_that_skill_teaches(): void
+    {
+        // ConfigTunableDetector's sin (ArrayBag) is taught by the ValueObjects skill —
+        // disabling the SKILL silences the whole discipline, this detector with it.
+        $config = new Config()->disable(ValueObjects::class);
+
+        $result = $config->apply([new ConfigTunableDetector], []);
+
+        $this->assertSame([], $result['backend']);
+    }
+
     public function test_register_adds_a_custom_detector_routed_to_its_engine(): void
     {
         $config = new Config()->register(ConfigTunableDetector::class, ConfigFrontendDetector::class);

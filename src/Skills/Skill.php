@@ -81,4 +81,17 @@ abstract class Skill
     {
         return "- **`{$this->id()}`** — {$this->summary()}";
     }
+
+    /**
+     * Does this skill answer to the query the user typed (the `enable`/`disable`/`--skill=`
+     * key)? Lenient, like {@see \JesseGall\CodeCommandments\Sins\Sin::matches}: both sides
+     * reduce to lowercase alphanumerics, so `value-objects`, `ValueObjects` and the full
+     * `backend/value-objects` slug all select the same skill.
+     */
+    public function matches(string $query): bool
+    {
+        $normalise = static fn (string $value): string => strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '', $value));
+
+        return str_contains($normalise($this->slug), $normalise($query));
+    }
 }
