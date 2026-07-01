@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Frontend\DeepNested;
+use JesseGall\CodeCommandments\Detectors\Frontend\Config\DeepNestedConfig;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Frontend\ExtractComponentScribe;
 use JesseGall\CodeCommandments\Vue\Boundary;
@@ -26,25 +27,7 @@ use JesseGall\CodeCommandments\Vue\Detector;
  */
 final class DeepNestedDetector implements Detector, Repentable
 {
-    private int $maxDepth = 8; // nested DEEPER than this is too deep
-
-    private int $maxRemaining = 3; // with MORE levels than this still below it
-
-    /** Tune how deep is "too deep" — an element nested deeper than this counts. */
-    public function maxDepth(int $levels): static
-    {
-        $this->maxDepth = $levels;
-
-        return $this;
-    }
-
-    /** Tune how much subtree beneath still makes it worth extracting. */
-    public function maxRemaining(int $levels): static
-    {
-        $this->maxRemaining = $levels;
-
-        return $this;
-    }
+    use DeepNestedConfig;
 
     public function sin(): Sin
     {

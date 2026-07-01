@@ -1,8 +1,8 @@
 # code-commandments — guide for AI agents
 
-**code-commandments is a compiler for architecture.** It judges a PHP codebase
-against a set of architectural disciplines and reports each violation ("sin") as a
-`file:line` that points at the skill which teaches the fix.
+**code-commandments is a compiler for architecture.** It judges a PHP **and** Vue
+codebase against a set of architectural disciplines and reports each violation
+("sin") as a `file:line` that points at the skill which teaches the fix.
 
 Two layers:
 
@@ -10,8 +10,8 @@ Two layers:
   one per architectural subject, split by engine. Backend: `backend/absence`,
   `backend/value-objects`, `backend/spatie-data`, `backend/laravel-idioms`,
   `backend/fix-at-the-source`, … Frontend: `frontend/vue-components`,
-  `frontend/vue-control-flow`. The slug (engine-prefixed) is what a detector's
-  `skill()` returns. The source of truth for what good looks like.
+  `frontend/vue-control-flow`. The engine-prefixed slug is what a detector's `Sin`
+  points at. The source of truth for what good looks like.
 - **Sin Detectors** (`src/Detectors/`) — thin finders over a fluent AST engine
   (`src/Ast/`). Each detector finds ONE sin and names the skill that fixes it; it
   has no fix logic. Auto-discovered by `Detectors\Catalog`.
@@ -23,7 +23,7 @@ Detectors are proven against a self-checking fixture (`tests/Fixtures/shop`) whe
 
 There are two parse engines: the **backend** AST over PHP (`src/Ast/`, php-parser)
 and the **frontend** AST over Vue `.vue` SFCs (`src/Vue/`, our own tokenizer — built
-from scratch, no Node, no v3 reuse). They parse different languages, but a detector
+from scratch, no Node). They parse different languages, but a detector
 **MUST read the same** either way: a frontend detector composes the **exact same
 fluent query syntax** as a backend one — a selector opens a `Query`, `where`/`reject`
 narrow it (one check per line), a terminal returns rich matches that know their
@@ -48,8 +48,8 @@ copy-paste between engines, stop: the shared thing belongs in a base class / sha
 
 **Everything the backend does, the frontend does the same way.** A frontend detector
 follows the identical process: build it AST-first, prove it on the `.vue` self-
-checking fixture (`tests/Fixtures/shop-frontend`), calibrate on the consumers' real
-`.vue`, and curate. The Vue side has the matching layers — `Vue\Codebase` →
+checking fixture (`tests/Fixtures/shop-frontend`), calibrate on a real `.vue`
+codebase, and curate. The Vue side has the matching layers — `Vue\Codebase` →
 `Vue\Query` → `Vue\ElementMatch` (the template AST), `Vue\Expr\*` (a real JS-
 expression AST: lexer + Pratt parser over binding/interpolation expressions), the
 `Vue\Detector` base (sibling of `Detectors\Detector`, both extend the root
@@ -91,34 +91,32 @@ TDD (red → green via `Codebase::fromString`); ≥3 genuinely-different fixture
 a righteous twin it must NOT flag; and **validate on a real codebase for false
 positives** before shipping. Curate the best detectors — don't pad.
 
-### ⛔ Calibrate against the real consumer apps — MANDATORY before any detector ships
+### ⛔ Calibrate against a real codebase — MANDATORY before any detector ships
 
 A green fixture proves the detector *can* fire; it does **not** prove it's right. A
-detector is not done until it has been run against the real consumer codebases and
-its hits read by eye:
+detector is not done until it has been run against a real-world codebase and its
+hits read by eye:
 
 ```
-bin/commandments judge ../app-a/src        --sin=your-sin --no-checklist
-bin/commandments judge ../app-b/app --sin=your-sin --no-checklist
+bin/commandments judge ../some-app/src --sin=your-sin --no-checklist
 ```
 
-Open the flagged `file:line`s and judge each **against the skill/our architecture —
-NEVER against what the consumer project happens to do.** The consumer apps are not
-ground truth: they contain real sins, code done wrong, and old style since changed
-your mind on. So a widespread pattern there is **not "convention" that excuses a
-finding** — and **volume alone proves nothing**: 400 hits can be 400 genuine sins
-(e.g. an app that never marks its DTOs `final`). Do not soften or drop a detector
-because it fires a lot.
+Open the flagged `file:line`s and judge each **against the skill/the architecture —
+NEVER against what the target project happens to do.** A real codebase is not ground
+truth: it contains real sins, code done wrong, and old style. So a widespread
+pattern there is **not "convention" that excuses a finding** — and **volume alone
+proves nothing**: 400 hits can be 400 genuine sins (e.g. an app that never marks its
+DTOs `final`). Do not soften or drop a detector because it fires a lot.
 
 The ONLY thing that invalidates a detector is a genuine **false positive** — a
-pattern that is *correct under our architecture* yet gets flagged. When those
+pattern that is *correct under the architecture* yet gets flagged. When those
 appear, **tighten with a principled `reject` (never a name list), or drop the
 detector entirely.** Some ideas die here: if no AST signal separates the sin from a
 *legitimately valid* look-alike (the difference is only author *intent*), the
-detector is not viable — report why and cut it. That — not its hit count — is why
-`DataNonDispatchingFactoryDetector` was dropped: `AiMessage::user()` is a valid
-named constructor indistinguishable from a mis-prefixed factory. Calibrate every
-time, not "later".
+detector is not viable — cut it. For example, a named constructor like
+`Money::zero()` is indistinguishable from a mis-prefixed factory, so a rule that
+would flag it can't tell the two apart and isn't viable. Calibrate every time, not
+"later".
 
 📍 **Sins are first-class.** Each sin is its OWN class under `src/Sins/{backend,frontend}/`
 (name + skill slug + description), discovered by `Sins\Catalog` — the sin twin of
@@ -160,6 +158,3 @@ deletes the file).
   carry multiple markers (and a detector may have more than 3 marked locations —
   ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid detection
   just because another detector also flags it; double-mark the fixture instead.
-- Commit messages carry **no `Co-Authored-By`** trailer.
-- `deprecated/` holds the previous prophet/scroll system — **reference only**, do
-  not build on it or port it one-to-one.
