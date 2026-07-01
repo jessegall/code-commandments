@@ -422,13 +422,15 @@ final class Boundary
             return $this->emits;
         }
 
-        $locals = (new Script($this->sfc->scriptContent()))->localNames();
+        $script = new Script($this->sfc->scriptContent());
+        $locals = $script->localNames();
+        $emit = $script->emitName();
         $edits = [];
         $events = [];
         $rewrites = 0;
         $reached = 0;
 
-        $this->each(function (Element $element) use (&$edits, &$events, &$rewrites, &$reached, $locals): void {
+        $this->each(function (Element $element) use (&$edits, &$events, &$rewrites, &$reached, $locals, $emit): void {
             // Every expression that reaches a parent local — handlers, bindings, text.
             foreach ($element->expressions() as $expression) {
                 if (array_intersect($expression->calledFunctions(), $locals) !== []) {
@@ -442,6 +444,14 @@ final class Boundary
                 $call = $expression->asCall();
 
                 if ($call === null || ! in_array($call['name'], $locals, true)) {
+                    continue;
+                }
+
+                // A handler calling the component's OWN emit (`emit('save')`) is itself an emit,
+                // not a forwardable function — rewriting it would mint an event literally named
+                // `emit`. Leave it, so the reach/rewrite mismatch refuses the extraction (a clean
+                // emit-reforward is a future enhancement).
+                if ($call['name'] === $emit) {
                     continue;
                 }
 

@@ -377,6 +377,28 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('@copy-json="copyJson"', $files['component.vue'], 'the call site re-binds the event to the parent function');
     }
 
+    public function test_a_handler_calling_the_components_own_emit_refuses_extraction(): void
+    {
+        // A handler that calls the component's OWN `defineEmits` binding — `@click="emit('close')"`
+        // — is already emitting an event, not calling a forwardable parent function. It must NOT
+        // be rewritten to `$emit('emit', 'close')` (an event literally named `emit`); the
+        // extraction refuses instead of minting garbage.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>Confirm</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<div class="body"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div>'
+            . '<DialogFooter><Button @click="emit(\'close\')">Cancel</Button></DialogFooter></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nconst emit = defineEmits<{ close: [] }>();\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+
+        $this->assertEmpty($this->components($files), "calling the component's own emit must refuse the extraction");
+        foreach ($files as $content) {
+            $this->assertStringNotContainsString("\$emit('emit'", $content, 'never mint an event named `emit`');
+        }
+    }
+
     public function test_a_parent_function_reached_outside_a_clean_handler_refuses_extraction(): void
     {
         // A parent function used in an interpolation (not a forwardable handler) can't be emitted
