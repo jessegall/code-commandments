@@ -15,6 +15,10 @@ require __DIR__ . '/../vendor/autoload.php';
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Catalog as Scribes;
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
+
+/** Package/framework-bound rules (Spatie Data, Laravel, concurrent) sort AFTER the universal ones. */
+$bound = static fn ($detector): int => (int) ($detector->sin() instanceof RequiresPackage);
 
 $readmePath = __DIR__ . '/../README.md';
 
@@ -52,7 +56,7 @@ foreach (Catalog::all() as $detector) {
     $bySkill[$detector->sin()->slug()][] = $detector;
 }
 
-ksort($bySkill);
+uksort($bySkill, static fn (string $a, string $b): int => [$bound($bySkill[$a][0]), $a] <=> [$bound($bySkill[$b][0]), $b]);
 
 $detectorTotal = array_sum(array_map('count', $bySkill));
 $lines = ["_{$detectorTotal} detectors across " . count($bySkill) . " skills._\n"];
@@ -75,7 +79,7 @@ $detectorsBlock = "\n" . implode("\n", $lines) . "\n";
 
 $repentables = array_values(array_filter(Catalog::all(), static fn ($d): bool => $d instanceof Repentable));
 
-usort($repentables, static fn ($a, $b): int => $a->sin()->slug() . $a->sin()->name() <=> $b->sin()->slug() . $b->sin()->name());
+usort($repentables, static fn ($a, $b): int => [$bound($a), $a->sin()->slug(), $a->sin()->name()] <=> [$bound($b), $b->sin()->slug(), $b->sin()->name()]);
 
 $maintenance = Scribes::all();
 

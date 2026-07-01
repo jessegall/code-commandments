@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend;
 
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\LaravelIdioms;
 
-final class RequestAccessorRecast extends Sin
+final class RequestAccessorRecast extends Sin implements RequiresPackage
 {
+    use RequiresLaravel;
+
     public function __construct()
     {
         parent::__construct(
