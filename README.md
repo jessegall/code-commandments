@@ -96,8 +96,8 @@ vendor/bin/commandments judge src --changes        # uncommitted working-tree ch
 # detectors run across 8 workers by default (capped at CPU cores); --parallel=1 disables
 vendor/bin/commandments judge src --parallel=4
 
-# skip paths; list everything
-vendor/bin/commandments judge src --exclude=Generated,vendor
+# skip paths (comma-separated fragments); list everything
+vendor/bin/commandments judge src --exclude=Generated,Legacy
 vendor/bin/commandments judge --list
 ```
 

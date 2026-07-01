@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Discovery;
+
 /**
  * Every teaching skill that ships, discovered from the `Backend/` and `Frontend/`
  * folders — the skill twin of {@see \JesseGall\CodeCommandments\Detectors\Catalog}
@@ -64,9 +66,7 @@ final class Catalog
     {
         $skills = [];
 
-        foreach (glob(__DIR__ . "/{$engine}/*.php") ?: [] as $file) {
-            $class = __NAMESPACE__ . "\\{$engine}\\" . basename($file, '.php');
-
+        foreach (Discovery::classes(__DIR__ . "/{$engine}", __NAMESPACE__ . "\\{$engine}") as $class) {
             if (is_subclass_of($class, Skill::class)) {
                 $skills[] = new $class;
             }

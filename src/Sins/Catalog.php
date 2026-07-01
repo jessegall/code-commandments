@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins;
 
+use JesseGall\CodeCommandments\Discovery;
+
 /**
  * Every sin that ships, discovered from the `Backend/` and `Frontend/` folders — the
  * sin twin of {@see \JesseGall\CodeCommandments\Detectors\Catalog}. A sin counts the
@@ -49,9 +51,7 @@ final class Catalog
     {
         $sins = [];
 
-        foreach (glob(__DIR__ . "/{$engine}/*.php") ?: [] as $file) {
-            $class = __NAMESPACE__ . "\\{$engine}\\" . basename($file, '.php');
-
+        foreach (Discovery::classes(__DIR__ . "/{$engine}", __NAMESPACE__ . "\\{$engine}") as $class) {
             if (is_subclass_of($class, Sin::class)) {
                 $sins[] = new $class;
             }

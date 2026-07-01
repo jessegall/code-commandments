@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Detectors;
 
 use JesseGall\CodeCommandments\Detector as RootDetector;
+use JesseGall\CodeCommandments\Discovery;
 
 /**
  * The single source of truth for every detector that ships. Discovered from the
- * `Backend/` and `Frontend/` directories, so a detector counts the moment its file
- * exists — there is no second list to keep in sync, nothing to forget to register.
+ * `Backend/` and `Frontend/` trees (recursively, so a package's `Backend/Laravel/`
+ * subfolder counts too), so a detector counts the moment its file exists — there is
+ * no second list to keep in sync, nothing to forget to register.
  */
 final class Catalog
 {
@@ -50,9 +52,7 @@ final class Catalog
     {
         $detectors = [];
 
-        foreach (glob(__DIR__ . "/{$engine}/*Detector.php") ?: [] as $file) {
-            $class = __NAMESPACE__ . "\\{$engine}\\" . basename($file, '.php');
-
+        foreach (Discovery::classes(__DIR__ . "/{$engine}", __NAMESPACE__ . "\\{$engine}", 'Detector') as $class) {
             if (is_subclass_of($class, RootDetector::class)) {
                 $detectors[] = new $class;
             }
