@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Sins\Scaffold as ScaffoldFile;
+use JesseGall\CodeCommandments\Sins\ScaffoldTarget;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
@@ -19,6 +20,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  */
 final class Scaffold
 {
+    /** Where a frontend scaffold (a Vue component) is written — the JS source root, by convention. */
+    private const string FRONTEND_ROOT = 'resources/js';
+
     public function run(array $args): int
     {
         $sin = $this->option($args, '--sin=');
@@ -42,8 +46,13 @@ final class Scaffold
             }
 
             foreach ($candidate->scaffolds() as $scaffold) {
-                $target = "{$dir}/{$scaffold->path}";
-                $code = $scaffold->render($this->namespaceFor($rootNamespace, $scaffold));
+                // A frontend scaffold (a Vue component) lands under the JS source root with no
+                // namespace to inject; a backend one under the PSR-4 root with its namespace.
+                $frontend = $scaffold->target === ScaffoldTarget::Frontend;
+                $target = $frontend
+                    ? getcwd() . '/' . self::FRONTEND_ROOT . '/' . $scaffold->path
+                    : "{$dir}/{$scaffold->path}";
+                $code = $scaffold->render($frontend ? '' : $this->namespaceFor($rootNamespace, $scaffold));
 
                 if (is_file($target)) {
                     $skipped[] = $target;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Frontend;
 
+use JesseGall\CodeCommandments\Sins\Scaffold;
+use JesseGall\CodeCommandments\Sins\ScaffoldTarget;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Frontend\VueControlFlow;
 
@@ -15,7 +17,15 @@ final class SwitchCase extends Sin
             name: 'switch-case',
             skill: VueControlFlow::class,
             description: "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)",
-            rule: "Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject."
+            rule: "Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.",
+            suggestion: "the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`."
         );
+    }
+
+    public function scaffolds(): array
+    {
+        return [
+            new Scaffold('components/SwitchCase.vue', 'vue/SwitchCase.vue', ScaffoldTarget::Frontend),
+        ];
     }
 }

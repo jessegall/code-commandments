@@ -17,12 +17,15 @@ final class Scaffold
     private const string STUBS = __DIR__ . '/../../stubs';
 
     /**
-     * @param  string  $path  the target sub-path under the consumer's source root, e.g. `Support/Invokable.php`
+     * @param  string  $path  the target sub-path under the source root, e.g. `Support/Invokable.php`
      * @param  string  $stub  the stub file under `stubs/`, e.g. `Invokable.php.stub`
+     * @param  ScaffoldTarget  $target  which source root to write into (and whether a namespace is
+     *                                   injected) — {@see ScaffoldTarget::Backend} by default
      */
     public function __construct(
         public readonly string $path,
         public readonly string $stub,
+        public readonly ScaffoldTarget $target = ScaffoldTarget::Backend,
     ) {}
 
     /**

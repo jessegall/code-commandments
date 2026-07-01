@@ -81,6 +81,24 @@ final class ScaffoldTest extends TestCase
         $this->assertFileDoesNotExist($dir . '/app/Support/Invokable.php');
     }
 
+    public function test_a_frontend_scaffold_lands_under_the_js_root_without_a_namespace(): void
+    {
+        $dir = $this->project();
+
+        $this->scaffold(['--sin=switch-case']);
+
+        $target = $dir . '/resources/js/components/SwitchCase.vue';
+
+        // Lands under the JS source root, not the PSR-4 app root…
+        $this->assertFileExists($target);
+        $this->assertFileDoesNotExist($dir . '/app/components/SwitchCase.vue');
+
+        // …as the real Vue component, with no namespace placeholder to inject.
+        $component = (string) file_get_contents($target);
+        $this->assertStringContainsString('<template>', $component);
+        $this->assertStringNotContainsString('{namespace}', $component);
+    }
+
     public function test_a_sin_without_a_scaffold_generates_nothing(): void
     {
         $dir = $this->project();
