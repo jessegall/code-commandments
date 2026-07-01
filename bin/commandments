@@ -54,7 +54,7 @@ $toBytes = static function (string $limit): int {
         Code Commandments — a compiler for architecture.
 
         Usage:
-          commandments judge [path] [--skill=NAME] [--sin=NAME]
+          commandments judge [path] [--skill=NAME] [--sin=NAME]   # no [path] → the .commandments/backend.canon source roots
           commandments judge --list
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
           commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase

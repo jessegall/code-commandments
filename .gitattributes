@@ -10,3 +10,4 @@
 /.gitignore       export-ignore
 /phpunit.xml      export-ignore
 /.commandments    export-ignore
+/.claude          export-ignore
