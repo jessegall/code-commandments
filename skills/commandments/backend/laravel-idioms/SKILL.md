@@ -189,8 +189,8 @@ public function handleNamed(MoveNodeRequest $request): string
 - Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
 - Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
 - Set-property-then-`save()` at a call site (should be an intention method) — `ModelMutationAtCallSiteDetector`
-- Raw `->input()/->get()/->query()` on a Request — `RawRequestInputDetector`
-- Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` instead of a named getter on a request class — `RequestAccessorRecastDetector`
+- Raw `->input()/->get()/->query()/->post()` on a Request — `RawRequestInputDetector`
+- Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class — `RequestAccessorRecastDetector`
 
 ## Checklist
 

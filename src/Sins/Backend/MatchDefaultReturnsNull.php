@@ -14,7 +14,7 @@ final class MatchDefaultReturnsNull extends Sin
         parent::__construct(
             name: 'match-default-returns-null',
             skill: EnumsWithBehaviour::class,
-            description: "`match` `default` that returns `null`/`''`/`[]` instead of throwing",
+            description: "`match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing",
             rule: "A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.",
             suggestion: "`default => throw Unhandled::for(\$x)`."
         );

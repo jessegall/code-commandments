@@ -174,7 +174,7 @@ one to prefer:
 - in Vue, a `<!-- @sin ... -->` comment.
 
 ```php
-// tests/Fixtures/shop/app/Orders/RefundService.php
+// tests/Fixtures/backend/app/Orders/RefundService.php
 use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -195,7 +195,7 @@ final class RefundService
 ```
 
 ```vue
-<!-- tests/Fixtures/shop-frontend/components/UserBadge.vue -->
+<!-- tests/Fixtures/frontend/components/UserBadge.vue -->
 <template>
   <!-- the marker IS the assertion: the next element must be flagged -->
   <!-- @sin ControlFlowOnElement -->

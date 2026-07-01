@@ -32,7 +32,7 @@ final class Fork
      * @template TOut
      * @param  iterable<TKey, TIn>  $items
      * @param  Closure(TIn, TKey): TOut  $fn
-     * @param  int|null  $workers  pool size; defaults to the CPU core count
+     * @param  int|null  $workers  pool size; defaults to, and is CAPPED at, the CPU core count
      * @param  Closure(int): void|null  $onProgress
      * @return array<TKey, TOut>
      */
@@ -40,7 +40,9 @@ final class Fork
     {
         $items = is_array($items) ? $items : iterator_to_array($items);
 
-        $pool = min($workers ?? self::cpuCount(), count($items));
+        // Never oversubscribe: the pool is at most one worker per CPU core (and never more than
+        // there are items), whatever the caller asked for.
+        $pool = min($workers ?? self::cpuCount(), self::cpuCount(), count($items));
 
         if ($pool < 2 || self::$inWorker || ! self::canFork()) {
             return self::sequential($items, $fn, $onProgress);

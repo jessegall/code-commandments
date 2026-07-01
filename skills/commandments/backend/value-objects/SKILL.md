@@ -178,7 +178,7 @@ public function ratesTyped(string $base, array $symbols): RateTable
 
 - String-indexing (`$arr['key']`) a structured array param (an unborn type) — `ArrayBagDetector`
 - Returning a multi-field string-keyed array literal (a bag that should be a value object) — `ArrayReturnBagDetector`
-- 3+ values threaded as separate params (a data clump → one object) — `DataClumpDetector`
+- The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) — `DataClumpDetector`
 - Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
 - Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
 

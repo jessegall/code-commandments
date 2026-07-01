@@ -17,7 +17,7 @@ final class RawRequestInput extends Sin implements RequiresPackage
         parent::__construct(
             name: 'raw-request-input',
             skill: LaravelIdioms::class,
-            description: "Raw `->input()/->get()/->query()` on a Request",
+            description: "Raw `->input()/->get()/->query()/->post()` on a Request",
             rule: "Read request input through a typed accessor (`\$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.",
             suggestion: "A named getter on a `FormRequest` subclass (`\$request->productId()`)."
         );

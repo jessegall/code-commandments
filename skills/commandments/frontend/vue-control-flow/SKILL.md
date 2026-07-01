@@ -92,7 +92,7 @@ The element reads as one thing (content + styling), the `<template>` as another
 
 - `v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>` — `ControlFlowOnElementDetector`
 - `:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted — `IndexAsKeyDetector`
-- `v-for` and `v-if` on the SAME element — the condition is re-evaluated every iteration — `LoopWithConditionDetector`
+- `v-for` and `v-if`/`v-else-if` on the SAME element — the condition is re-evaluated every iteration — `LoopWithConditionDetector`
 - A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`) — `SwitchCaseDetector`
 
 ## Checklist

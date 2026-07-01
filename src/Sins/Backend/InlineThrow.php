@@ -14,7 +14,7 @@ final class InlineThrow extends Sin
         parent::__construct(
             name: 'inline-throw',
             skill: GuardClausesAndFlow::class,
-            description: "`?? throw` / `=== null ? …` feeding further work on the same line (inline throw mid-expression)",
+            description: "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)",
             rule: "Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work."
         );
     }

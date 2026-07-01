@@ -14,7 +14,7 @@ final class LoopWithCondition extends Sin
         parent::__construct(
             name: 'loop-with-condition',
             skill: VueControlFlow::class,
-            description: "`v-for` and `v-if` on the SAME element — the condition is re-evaluated every iteration",
+            description: "`v-for` and `v-if`/`v-else-if` on the SAME element — the condition is re-evaluated every iteration",
             rule: "Never put `v-if` on a `v-for` element; filter in a computed, or wrap the `v-for` in a `<template>` and put the `v-if` on the child."
         );
     }

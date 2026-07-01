@@ -187,12 +187,12 @@ public function endpointClean(PaymentMethod $method): string
 
 ## When it fires
 
-- Closed set as raw string literals / a `const` class of scalars (not a native enum) — `ConstClassEnumDetector`
+- A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum — `ConstClassEnumDetector`
 - `$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test — `EnumCaseOrChainDetector`
 - `match`/`switch` over an enum's `->value` at a call site (homeless method) — `EnumValueMatchDetector`
 - `in_array($x, [literals])` whose literals mirror an existing enum's cases — `InArrayMirrorsEnumDetector`
-- `match` `default` that returns `null`/`''`/`[]` instead of throwing — `MatchDefaultReturnsNullDetector`
-- `match` over string literals that mirror an existing enum's cases — `StringMatchMirrorsEnumDetector`
+- `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing — `MatchDefaultReturnsNullDetector`
+- `match`/`switch` over string/int literals that mirror an existing backed enum's case values — `StringMatchMirrorsEnumDetector`
 
 ## Checklist
 

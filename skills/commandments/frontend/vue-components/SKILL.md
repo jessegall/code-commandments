@@ -162,10 +162,10 @@ unit out, props in.
 ## When it fires
 
 - A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component — `CompoundInlineComponentDetector`
-- An element reaching DEEP into nested data — pass it the mid-object as a prop — `DeepDataReachDetector`
+- A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop — `DeepDataReachDetector`
 - Template markup nested far too deep — extract a subtree as its own component — `DeepNestedDetector`
-- Identical markup repeated across the template — extract one component — `DuplicateElementDetector`
-- A prop is forwarded straight to a child component and used NOWHERE else — the component is a pass-through pipe — `PropDrillingDetector`
+- Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component — `DuplicateElementDetector`
+- A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits — `PropDrillingDetector`
 - A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op) — `PropMutationDetector`
 
 ## Checklist

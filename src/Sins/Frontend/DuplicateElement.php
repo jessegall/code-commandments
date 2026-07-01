@@ -14,7 +14,7 @@ final class DuplicateElement extends Sin
         parent::__construct(
             name: 'duplicate-element',
             skill: VueComponents::class,
-            description: "Identical markup repeated across the template — extract one component",
+            description: "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component",
             rule: "Extract repeated identical markup into one component."
         );
     }

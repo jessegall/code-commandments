@@ -14,7 +14,7 @@ final class StringMatchMirrorsEnum extends Sin
         parent::__construct(
             name: 'string-match-mirrors-enum',
             skill: EnumsWithBehaviour::class,
-            description: "`match` over string literals that mirror an existing enum's cases",
+            description: "`match`/`switch` over string/int literals that mirror an existing backed enum's case values",
             rule: "Dispatch over the enum's cases, not string/int literals that mirror its values.",
             suggestion: "Dispatch via a method on the backed enum's cases."
         );

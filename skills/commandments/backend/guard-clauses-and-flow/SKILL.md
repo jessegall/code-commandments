@@ -199,7 +199,7 @@ public function available(array $products): array
 
 - `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`
 - if/elseif ladder of 4+ branches (should be match/dispatch) — `IfElseLadderDetector`
-- `?? throw` / `=== null ? …` feeding further work on the same line (inline throw mid-expression) — `InlineThrowDetector`
+- `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `InlineThrowDetector`
 - Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`
 - Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
 - `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`

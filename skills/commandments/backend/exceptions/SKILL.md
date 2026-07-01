@@ -128,7 +128,7 @@ public function uploadChecked(string $path): void
 
 - `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type — `GenericExceptionDetector`
 - Message string built at the throw site (no domain values / named factory) — `MessageAtThrowDetector`
-- `catch` whose only effect is `return null/false/[]/none()`; empty catch (silent swallow) — `SwallowCatchDetector`
+- `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow) — `SwallowCatchDetector`
 - Wrapping a caught exception without passing it as `previous`/cause — `WrappingWithoutCauseDetector`
 
 ## Checklist

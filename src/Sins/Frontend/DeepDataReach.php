@@ -14,7 +14,7 @@ final class DeepDataReach extends Sin
         parent::__construct(
             name: 'deep-data-reach',
             skill: VueComponents::class,
-            description: "An element reaching DEEP into nested data — pass it the mid-object as a prop",
+            description: "A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop",
             rule: "Pass the mid-object as a prop; don't reach deep into nested data from the template."
         );
     }
