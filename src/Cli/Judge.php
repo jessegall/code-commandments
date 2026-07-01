@@ -209,6 +209,25 @@ final class Judge
         }
 
         @rename($checklist, $archive);
+        $this->pruneArchives($stem, $ext);
+    }
+
+    /** How many past checklists to keep alongside the live one. */
+    private const int KEEP_ARCHIVES = 5;
+
+    /**
+     * Keep only the {@see KEEP_ARCHIVES} most-recent archives (by write time) for this checklist,
+     * deleting the older ones — so `.commandments/` doesn't grow a checklist per run forever.
+     */
+    private function pruneArchives(string $stem, string $ext): void
+    {
+        $archives = glob($stem . '-*' . ($ext === '' ? '' : ".{$ext}")) ?: [];
+
+        usort($archives, static fn (string $a, string $b): int => (@filemtime($b) ?: 0) <=> (@filemtime($a) ?: 0));
+
+        foreach (array_slice($archives, self::KEEP_ARCHIVES) as $old) {
+            @unlink($old);
+        }
     }
 
     /**
