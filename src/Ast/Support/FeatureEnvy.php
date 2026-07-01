@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
-use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
+use JesseGall\CodeCommandments\Packages\Catalog as Packages;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
@@ -79,7 +79,6 @@ final class FeatureEnvy
      * request is an input carrier, not a home for domain logic; querying its data
      * is the contract, not envy.
      */
-    private const array BOUNDARY_BASES = LaravelNode::REQUEST_TYPES;
 
     /**
      * @param  array<string, true>  $ownedClasses          FQCN => true for every class declared in the codebase
@@ -393,7 +392,7 @@ final class FeatureEnvy
      */
     private function isBoundaryType(string $owner): bool
     {
-        foreach (self::BOUNDARY_BASES as $base) {
+        foreach (Packages::boundaryTypes() as $base) {
             if ($owner === $base || $this->codebase->extends($owner, $base)) {
                 return true;
             }

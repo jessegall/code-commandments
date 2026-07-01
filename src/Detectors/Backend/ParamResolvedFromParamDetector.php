@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
-use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
+use JesseGall\CodeCommandments\Packages\Catalog as Packages;
 
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
@@ -39,7 +39,6 @@ final class ParamResolvedFromParamDetector implements Detector
     /**
      * Request bases that mark a method as an HTTP/MCP boundary entry point.
      */
-    private const array BOUNDARY_BASES = LaravelNode::REQUEST_TYPES;
 
     public function sin(): Sin
     {
@@ -86,7 +85,7 @@ final class ParamResolvedFromParamDetector implements Detector
 
         $name = $type->toString();
 
-        foreach (self::BOUNDARY_BASES as $base) {
+        foreach (Packages::boundaryTypes() as $base) {
             if ($name === $base || $codebase->extends($name, $base)) {
                 return true;
             }
