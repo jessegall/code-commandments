@@ -43,8 +43,8 @@ Under the hood there are two layers:
 
 - **Skills** — the teaching layer, one per architectural subject. The source of
   truth for what "good" looks like. They're split by engine: backend
-  (`backend/absence`, `backend/value-objects`, `backend/spatie-data`,
-  `backend/laravel-idioms`, …) and frontend (`frontend/vue-components`,
+  (`backend/absence`, `backend/value-objects`, `backend/exceptions`,
+  `backend/guard-clauses-and-flow`, …) and frontend (`frontend/vue-components`,
   `frontend/vue-control-flow`).
 - **Sin Detectors** — small finders that read the code's syntax tree. Each detector
   finds **one** kind of sin and names the skill that fixes it — it carries no fix
@@ -222,12 +222,6 @@ _59 detectors across 16 skills._
 | `NullableCallback` | `NullableCallbackDetector` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
 | `OptionAsNullable` | `OptionAsNullableDetector` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
 
-### `backend/concurrent-state`
-
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ConcurrentSubclass` | `ConcurrentSubclassDetector` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
-
 ### `backend/documentation`
 
 | Sin | Detector | What it flags |
@@ -275,18 +269,6 @@ _59 detectors across 16 skills._
 | `NestedTernary` | `NestedTernaryDetector` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
 | `RedundantElse` | `RedundantElseDetector` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
 
-### `backend/laravel-idioms`
-
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ConfigRead` | `ConfigReadDetector` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
-| `ContainerReach` | `ContainerReachDetector` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
-| `FacadeCall` | `FacadeCallDetector` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
-| `MassUpdateAtCallSite` | `MassUpdateAtCallSiteDetector` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
-| `ModelMutationAtCallSite` | `ModelMutationAtCallSiteDetector` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
-| `RawRequestInput` | `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
-| `RequestAccessorRecast` | `RequestAccessorRecastDetector` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
-
 ### `backend/pass-the-object`
 
 | Sin | Detector | What it flags |
@@ -298,16 +280,6 @@ _59 detectors across 16 skills._
 | Sin | Detector | What it flags |
 |---|---|---|
 | `NullableRegistryLookup` | `NullableRegistryLookupDetector` | A class's own keyed store handing back `null` on a miss — `return $this->items[$key] ?? null`. |
-
-### `backend/spatie-data`
-
-| Sin | Detector | What it flags |
-|---|---|---|
-| `AllNullableData` | `AllNullableDataDetector` | A Spatie Data class whose every promoted field is NULLABLE. |
-| `DataMethodHintCollision` | `DataMethodHintCollisionDetector` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
-| `ManualHydrationLoop` | `ManualHydrationLoopDetector` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
-| `NewDataObject` | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
-| `NonFinalData` | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
 
 ### `backend/tell-dont-ask`
 
@@ -353,6 +325,34 @@ _59 detectors across 16 skills._
 | `LoopWithCondition` | `LoopWithConditionDetector` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
 | `SwitchCase` | `SwitchCaseDetector` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
 
+### `backend/concurrent-state`
+
+| Sin | Detector | What it flags |
+|---|---|---|
+| `ConcurrentSubclass` | `ConcurrentSubclassDetector` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
+
+### `backend/laravel-idioms`
+
+| Sin | Detector | What it flags |
+|---|---|---|
+| `ConfigRead` | `ConfigReadDetector` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
+| `ContainerReach` | `ContainerReachDetector` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
+| `FacadeCall` | `FacadeCallDetector` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
+| `MassUpdateAtCallSite` | `MassUpdateAtCallSiteDetector` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
+| `ModelMutationAtCallSite` | `ModelMutationAtCallSiteDetector` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
+| `RawRequestInput` | `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
+| `RequestAccessorRecast` | `RequestAccessorRecastDetector` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
+
+### `backend/spatie-data`
+
+| Sin | Detector | What it flags |
+|---|---|---|
+| `AllNullableData` | `AllNullableDataDetector` | A Spatie Data class whose every promoted field is NULLABLE. |
+| `DataMethodHintCollision` | `DataMethodHintCollisionDetector` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
+| `ManualHydrationLoop` | `ManualHydrationLoopDetector` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
+| `NewDataObject` | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
+| `NonFinalData` | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
+
 <!-- END: detectors -->
 
 ## Auto-fixing
@@ -390,15 +390,15 @@ _`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes._
 | `LoopInvertedGuard` | `backend/guard-clauses-and-flow` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
 | `NestedTernary` | `backend/guard-clauses-and-flow` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
 | `RedundantElse` | `backend/guard-clauses-and-flow` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
-| `ManualHydrationLoop` | `backend/spatie-data` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
-| `NewDataObject` | `backend/spatie-data` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
-| `NonFinalData` | `backend/spatie-data` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
 | `CompoundInlineComponent` | `frontend/vue-components` | Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component. |
 | `DeepDataReach` | `frontend/vue-components` | Pass the mid-object as a prop; don't reach deep into nested data from the template. |
 | `DeepNested` | `frontend/vue-components` | Extract a far-too-deeply-nested subtree into its own component. |
 | `DuplicateElement` | `frontend/vue-components` | Extract repeated identical markup into one component. |
 | `ControlFlowOnElement` | `frontend/vue-control-flow` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
 | `SwitchCase` | `frontend/vue-control-flow` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
+| `ManualHydrationLoop` | `backend/spatie-data` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
+| `NewDataObject` | `backend/spatie-data` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
+| `NonFinalData` | `backend/spatie-data` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes (a fixpoint), so one run
