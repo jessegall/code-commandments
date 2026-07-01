@@ -9,7 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Packages\Catalog as Packages;
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 
 /**
  * An `array` parameter read by a string-literal key (`$bag['total']`) — a
@@ -35,7 +36,7 @@ final class ArrayBagDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->arrayKeyIsString())
             ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName() ?? ''))
-            ->reject(static fn (AstNode $node): bool => Packages::isConstructedWithoutContainer($codebase, $node->enclosingClassName()))
+            ->reject(static fn (AstNode $node): bool => Exemptions::has(NoContainer::class, $codebase, $node->enclosingClassName()))
             ->get();
     }
 }

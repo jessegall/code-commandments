@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Packages;
+
+use JesseGall\CodeCommandments\Ast\Codebase;
+
+/**
+ * The open, tag-keyed exemption registry — how a package tells a detector "leave this alone",
+ * without either side importing the other. A package builds exemptions in {@see Package::register}
+ * (`$ex->exempt(Tag::class)->on(...)`), keyed by a tag class-string BOTH sides agree on; a detector
+ * asks {@see has} under its tag. The built-in tags live in {@see Tags}; a custom detector can use
+ * its own class as a tag and any package (yours or a third party's) can register against it.
+ *
+ * This is the twin of {@see Catalog} for cross-detector policy: one mechanism, extensible by
+ * anyone, no fixed list of exemption kinds.
+ */
+final class Exemptions
+{
+    /** @var array<class-string, Clause> tag => its clause */
+    private array $clauses = [];
+
+    /** The aggregated registry (every package's registrations), built once. */
+    private static ?self $registry = null;
+
+    /**
+     * Open (or continue) the exemption clause for a tag, to add rules to it.
+     *
+     * @param  class-string  $tag
+     */
+    public function exempt(string $tag): Clause
+    {
+        return $this->clauses[$tag] ??= new Clause();
+    }
+
+    /**
+     * Is ($class, $method) exempt under $tag across every registered package? The one call a
+     * detector makes — `Exemptions::has(Boundary::class, $codebase, $class)`.
+     *
+     * @param  class-string  $tag
+     */
+    public static function has(string $tag, Codebase $codebase, ?string $class, ?string $method = null): bool
+    {
+        $clause = self::registry()->clauses[$tag] ?? null;
+
+        return $clause !== null && $clause->matches($codebase, $class, $method);
+    }
+
+    private static function registry(): self
+    {
+        if (self::$registry !== null) {
+            return self::$registry;
+        }
+
+        $registry = new self();
+
+        foreach (Catalog::all() as $package) {
+            $package->register($registry);
+        }
+
+        return self::$registry = $registry;
+    }
+}

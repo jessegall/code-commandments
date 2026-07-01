@@ -9,7 +9,8 @@ use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Packages\Catalog as Packages;
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 
 /**
  * Two-or-more functions/methods with the same SHAPE but not identical text — the
@@ -74,6 +75,6 @@ final class NearDuplicateFunctionDetector implements Detector
 
     private function isContractDeclarationHook(Codebase $codebase, NodeMatch $match): bool
     {
-        return Packages::isContractMethod($codebase, $match->enclosingClassName(), $match->enclosingFunctionName());
+        return Exemptions::has(ContractMethod::class, $codebase, $match->enclosingClassName(), $match->enclosingFunctionName());
     }
 }

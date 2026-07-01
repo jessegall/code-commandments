@@ -5,51 +5,45 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Packages;
 
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
+use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;
+use JesseGall\CodeCommandments\Packages\Tags\Boundary;
+use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
+use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 
 /**
- * Laravel (and Laravel MCP): teaches the engine that an HTTP/MCP request is a framework boundary,
- * so general structural rules exempt a method that takes one — without themselves knowing Laravel
- * exists. The request bases live once, on {@see LaravelNode}; this package just surfaces them as a
- * cross-detector fact.
+ * Laravel (and Laravel MCP): teaches the engine which of its types are framework boundaries,
+ * contract hooks, config classes, and no-container casts — so general structural rules exempt them
+ * without knowing Laravel exists. The FQCNs live once, on {@see LaravelNode}.
  */
 final class LaravelPackage extends Package
 {
-    public function boundaryTypes(): array
-    {
-        return LaravelNode::REQUEST_TYPES;
-    }
+    private const string FORM_REQUEST = 'Illuminate\\Foundation\\Http\\FormRequest';
 
-    public function contractMethods(): array
-    {
-        return [
-            // A request's validation array, an MCP tool's input schema, a model's cast map — each
-            // a per-subclass array the framework reads by contract, its shape not the author's to
-            // choose. (The request/tool bases are ALSO array-returning types below; naming their
-            // hooks here is what near-duplicate reads for the shared-skeleton exemption.)
-            'Illuminate\\Foundation\\Http\\FormRequest' => ['rules'],
-            'Laravel\\Mcp\\Request' => ['rules'],
-            'Laravel\\Mcp\\Server\\Tool' => ['rules', 'schema'],
-            'Illuminate\\Database\\Eloquent\\Model' => ['casts'],
-        ];
-    }
+    private const string MCP_REQUEST = 'Laravel\\Mcp\\Request';
 
-    public function arrayReturningTypes(): array
-    {
-        // A FormRequest / MCP request / MCP tool exists to hand the framework arrays (rules,
-        // messages, attributes, schema, …) — so array-return-bag leaves the whole class alone,
-        // robust to hooks it can't enumerate. (A Model is NOT here — only its `casts()` is a
-        // contract, above; a Model returning an array elsewhere is a real bag.)
-        return [
-            'Illuminate\\Foundation\\Http\\FormRequest',
-            'Laravel\\Mcp\\Request',
-            'Laravel\\Mcp\\Server\\Tool',
-        ];
-    }
+    private const string MCP_TOOL = 'Laravel\\Mcp\\Server\\Tool';
 
-    public function noContainerTypes(): array
+    private const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
+
+    public function register(Exemptions $exemptions): void
     {
-        // Eloquent instantiates an attribute cast itself, with no container — the cast contracts
-        // live once on LaravelNode.
-        return LaravelNode::CAST_CONTRACTS;
+        // Entry points: a request is where raw input crosses in — don't move behaviour onto it,
+        // and a method taking one is a boundary that may unpack it.
+        $exemptions->exempt(Boundary::class)->classes(...LaravelNode::REQUEST_TYPES);
+
+        // Contract hooks: a per-subclass array the framework mandates, its shape not the author's.
+        $exemptions->exempt(ContractMethod::class)
+            ->on(self::FORM_REQUEST, 'rules')
+            ->on(self::MCP_REQUEST, 'rules')
+            ->on(self::MCP_TOOL, 'rules', 'schema')
+            ->on(self::MODEL, 'casts');
+
+        // Config classes whose whole job is returning arrays (rules/messages/attributes/schema/…) —
+        // exempt wholesale, robust to hooks a rule can't enumerate. (A Model is NOT here — only its
+        // casts() above; a Model returning an array elsewhere is a real bag.)
+        $exemptions->exempt(ArrayReturning::class)->classes(self::FORM_REQUEST, self::MCP_REQUEST, self::MCP_TOOL);
+
+        // No-container: Eloquent builds a cast itself, no DI — a loose array param is the convention.
+        $exemptions->exempt(NoContainer::class)->classes(...LaravelNode::CAST_CONTRACTS);
     }
 }

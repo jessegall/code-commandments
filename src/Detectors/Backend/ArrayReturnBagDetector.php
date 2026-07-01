@@ -8,7 +8,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Packages\Catalog as Packages;
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;
+use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
@@ -42,8 +44,8 @@ final class ArrayReturnBagDetector implements Detector
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
             ->reject(static fn (AstNode $node): bool => $node->looksLikeJsonSchema())
             ->reject(static fn (AstNode $node): bool => $node->isSelfProjectionArray())
-            ->reject(static fn (AstNode $node): bool => Packages::returnsArraysByContract($codebase, $node->enclosingClassName()))
-            ->reject(static fn (AstNode $node): bool => Packages::isContractMethod($codebase, $node->enclosingClassName(), $node->enclosingFunctionName()))
+            ->reject(static fn (AstNode $node): bool => Exemptions::has(ArrayReturning::class, $codebase, $node->enclosingClassName()))
+            ->reject(static fn (AstNode $node): bool => Exemptions::has(ContractMethod::class, $codebase, $node->enclosingClassName(), $node->enclosingFunctionName()))
             ->reject(static fn (AstNode $node): bool => $codebase->overridesMethod($node->enclosingClassName(), $node->enclosingFunctionName() ?? ''))
             ->get();
     }

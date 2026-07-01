@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
-use JesseGall\CodeCommandments\Packages\Catalog as Packages;
-
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
@@ -73,12 +73,6 @@ final class FeatureEnvy
         'in_array' => 1, 'array_search' => 1, 'array_filter' => 0,
         'array_reduce' => 0, 'array_column' => 0, 'array_sum' => 0,
     ];
-
-    /**
-     * Framework boundary bases you don't move behaviour ONTO — an HTTP / MCP
-     * request is an input carrier, not a home for domain logic; querying its data
-     * is the contract, not envy.
-     */
 
     /**
      * @param  array<string, true>  $ownedClasses          FQCN => true for every class declared in the codebase
@@ -387,18 +381,12 @@ final class FeatureEnvy
     }
 
     /**
-     * Is $owner a framework request/boundary type — a class you query but never
-     * move domain behaviour onto? {@see BOUNDARY_BASES}.
+     * Is $owner a framework request/boundary type — a class you query but never move domain
+     * behaviour onto? A {@see Boundary}-tagged type any package registered.
      */
     private function isBoundaryType(string $owner): bool
     {
-        foreach (Packages::boundaryTypes() as $base) {
-            if ($owner === $base || $this->codebase->extends($owner, $base)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Exemptions::has(Boundary::class, $this->codebase, $owner);
     }
 
     /**

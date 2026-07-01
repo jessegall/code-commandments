@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
-use JesseGall\CodeCommandments\Packages\Catalog as Packages;
-
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
 use JesseGall\CodeCommandments\Ast\AstNode;
@@ -83,14 +83,6 @@ final class ParamResolvedFromParamDetector implements Detector
             return false;
         }
 
-        $name = $type->toString();
-
-        foreach (Packages::boundaryTypes() as $base) {
-            if ($name === $base || $codebase->extends($name, $base)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Exemptions::has(Boundary::class, $codebase, $type->toString());
     }
 }
