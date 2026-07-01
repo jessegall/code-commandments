@@ -14,10 +14,10 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
 
 /**
- * A template nested far too deep — an element {@see $maxDepth}+ levels in that still
- * has {@see $maxRemaining}+ levels of markup beneath it. That depth is unreadable and
- * a sign a whole sub-tree wants to be its own component. Points at vue-components,
- * fixed by the same extract scribe.
+ * A template nested far too deep — an element many levels in that still has several
+ * more levels of markup beneath it. That depth is unreadable and a sign a whole
+ * sub-tree wants to be its own component. Points at vue-components, fixed by the same
+ * extract scribe. (Thresholds are tunable — see {@see Config\DeepNestedConfig}.)
  *
  * The finding is NOT the arbitrary deep element: from it we LOOK BACK up the tree for
  * the natural starting point — the top of the single-child wrapper stack the deep

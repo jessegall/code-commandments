@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend;
 
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\Absence;
 
-final class OptionAsNullable extends Sin
+final class OptionAsNullable extends Sin implements RequiresPackage
 {
     public function __construct()
     {
@@ -18,5 +19,10 @@ final class OptionAsNullable extends Sin
             rule: "Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.",
             suggestion: "Wrap at the seam with `Option::fromNullable(\$x)`, then consume with `match`/`unwrapOr`."
         );
+    }
+
+    public function requiredPackage(): string
+    {
+        return 'jessegall/php-types';
     }
 }

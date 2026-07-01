@@ -42,7 +42,8 @@ final class ReadmeIsCurrentTest extends TestCase
 
         foreach (Catalog::all() as $detector) {
             if ($detector instanceof Repentable) {
-                $this->assertStringContainsString("`{$detector->sin()->name()}`", $section, 'an auto-fixable sin is missing — run `composer readme`.');
+                $sin = (new \ReflectionClass($detector->sin()))->getShortName();
+                $this->assertStringContainsString("`{$sin}`", $section, 'an auto-fixable sin is missing — run `composer readme`.');
             }
         }
     }

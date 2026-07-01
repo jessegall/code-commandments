@@ -63,7 +63,7 @@ foreach ($bySkill as $skill => $detectors) {
     $lines[] = '|---|---|---|';
 
     foreach ($detectors as $detector) {
-        $lines[] = '| `' . $detector->sin()->name() . '` | `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
+        $lines[] = '| `' . $shortName($detector->sin()) . '` | `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
     }
 
     $lines[] = '';
@@ -100,7 +100,7 @@ $scribeLines[] = '|---|---|---|';
 
 foreach ($repentables as $detector) {
     $sin = $detector->sin();
-    $scribeLines[] = '| `' . $sin->name() . '` | `' . $sin->slug() . '` | ' . $cell($sin->rule) . ' |';
+    $scribeLines[] = '| `' . $shortName($sin) . '` | `' . $sin->slug() . '` | ' . $cell($sin->rule) . ' |';
 }
 
 $scribesBlock = "\n" . implode("\n", $scribeLines) . "\n";
