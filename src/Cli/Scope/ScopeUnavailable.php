@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
 use RuntimeException;
 
 /**
- * A `--git`/`--branch` scope could not be resolved — the path isn't in a git
+ * A `--changes`/`--branch` scope could not be resolved — the path isn't in a git
  * repository, git is unavailable, or the base ref doesn't exist. Its message is
  * printed to STDERR and the command exits non-zero.
  */

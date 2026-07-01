@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
 
 /**
  * Which files a judge run reports on. A strategy chosen by a `match` on the judge
- * flags: the whole codebase by default, or — with `--git` / `--branch` — only the
+ * flags: the whole codebase by default, or — with `--changes` / `--branch` — only the
  * files you've touched. The whole path is always parsed (cross-file detectors need
  * the full graph); a scope only narrows which findings are shown.
  */

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Hints;
 
 /**
  * The parsed options of a `hints` run — everything EXCEPT the scope flags
- * (`--changes`/`--git`/`--branch`), which {@see \JesseGall\CodeCommandments\Cli\Scope\Scope::fromArgs} owns.
+ * (`--changes`/`--branch`), which {@see \JesseGall\CodeCommandments\Cli\Scope\Scope::fromArgs} owns.
  */
 final class HintsOptions
 {

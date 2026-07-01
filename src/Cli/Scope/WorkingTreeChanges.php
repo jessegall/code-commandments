@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
 /**
- * The `--git` scope: report only on files changed or created in the working tree
+ * The `--changes` scope: report only on files changed or created in the working tree
  * (git diff vs HEAD + untracked).
  */
 final class WorkingTreeChanges implements ChangeScope

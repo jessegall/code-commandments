@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use Closure;
+use Composer\InstalledVersions;
 use InvalidArgumentException;
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Vue\Detector as FrontendDetector;
 use ReflectionFunction;
 use ReflectionNamedType;
@@ -103,21 +105,27 @@ final class Config
     }
 
     /**
-     * Apply the overrides to the shipped catalogs and hand back the effective sets, split by
-     * engine: the disabled ones dropped, the registered ones added, the configurators run.
+     * The effective detector sets for THIS project, split by engine: rules whose required
+     * package isn't installed are dropped, then the disabled ones, the registered ones are
+     * added, and the configurators run. `$installed` decides package availability — defaults to
+     * Composer's own installed set; tests inject a fake.
      *
      * @param  list<Detector>  $backend
      * @param  list<Detector>  $frontend
+     * @param  (callable(string, bool): bool)|null  $installed  ($package, $isFrontend) => present?
      * @return array{backend: list<Detector>, frontend: list<Detector>}
      */
-    public function apply(array $backend, array $frontend): array
+    public function apply(array $backend, array $frontend, ?callable $installed = null): array
     {
-        $detectors = array_filter([...$backend, ...$frontend], fn (Detector $d): bool => ! $this->isDisabled($d));
+        $installed ??= self::defaultPackageCheck();
+
+        $keep = fn (Detector $d): bool => $this->hasPackage($d, $installed) && ! $this->isDisabled($d);
+        $detectors = array_filter([...$backend, ...$frontend], $keep);
 
         foreach ($this->registered as $class) {
             $detector = new $class;
 
-            if (! $this->isDisabled($detector)) {
+            if ($keep($detector)) {
                 $detectors[] = $detector;
             }
         }
@@ -138,6 +146,53 @@ final class Config
     {
         return in_array($detector::class, $this->disabled, true)
             || in_array($detector->sin()::class, $this->disabled, true);
+    }
+
+    /**
+     * Is this detector's package present? A sin that doesn't {@see RequiresPackage} always is;
+     * one that does is kept only when `$installed` reports its package. The rule's engine picks
+     * the ecosystem — a frontend rule's package is an npm one, a backend rule's a Composer one.
+     *
+     * @param  callable(string, bool): bool  $installed
+     */
+    private function hasPackage(Detector $detector, callable $installed): bool
+    {
+        $sin = $detector->sin();
+
+        return ! $sin instanceof RequiresPackage
+            || $installed($sin->requiredPackage(), $detector instanceof FrontendDetector);
+    }
+
+    /**
+     * The default package check — Composer's installed set for a backend rule, the project's
+     * `package.json` for a frontend one. Both fall back to "present" when the manifest can't be
+     * read, so an unknown environment never over-filters.
+     *
+     * @return callable(string, bool): bool
+     */
+    private static function defaultPackageCheck(): callable
+    {
+        return static fn (string $package, bool $frontend): bool =>
+            $frontend ? self::inPackageJson($package) : self::inComposer($package);
+    }
+
+    private static function inComposer(string $package): bool
+    {
+        return ! class_exists(InstalledVersions::class) || InstalledVersions::isInstalled($package);
+    }
+
+    private static function inPackageJson(string $package): bool
+    {
+        $manifest = getcwd() . '/package.json';
+
+        if (! is_file($manifest)) {
+            return true;
+        }
+
+        $json = (array) json_decode((string) file_get_contents($manifest), true);
+        $dependencies = [...(array) ($json['dependencies'] ?? []), ...(array) ($json['devDependencies'] ?? [])];
+
+        return array_key_exists($package, $dependencies);
     }
 
     /**
