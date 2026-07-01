@@ -239,6 +239,30 @@ final class Script
     }
 
     /**
+     * The variable a `defineEmits` result is bound to — `const emit = defineEmits<…>()` →
+     * `emit`, or null when the component captures none (a standalone `defineEmits<…>()` whose
+     * template uses the built-in `$emit`). A handler that CALLS this binding (`emit('save')`) is
+     * itself emitting an event, not invoking a forwardable function — so an extraction must not
+     * mistake it for one and mint an event literally named `emit`.
+     */
+    public function emitName(): ?string
+    {
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (! $this->isDeclarator($i) || ($this->tokens[$i + 1]['kind'] ?? null) !== Token::IDENTIFIER || ! $this->isPunct($i + 2, '=')) {
+                continue;
+            }
+
+            if ($this->isId($i + 3, 'defineEmits')) {
+                return $this->tokens[$i + 1]['value'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Whether the script reads `$object.$member` anywhere — `accessesMember('props', 'user')`
      * for a `props.user` access. Lets a detector tell a forwarded-only prop from one the
      * script also consumes.
