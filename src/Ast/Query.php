@@ -132,7 +132,7 @@ final class Query
                 continue;
             }
 
-            $match = new NodeMatch($node, $file);
+            $match = $this->codebase->wrap($node, $file);
 
             foreach ($this->filters as $filter) {
                 if (! $filter($match)) {

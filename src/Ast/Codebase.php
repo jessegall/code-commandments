@@ -70,7 +70,37 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var array<string, string>|null */
     private ?array $sourceByPath = null;
 
+    /** @var class-string<NodeMatch> The class every query match is wrapped in — a project can swap it. */
+    private string $nodeClass = NodeMatch::class;
+
     private function __construct(private readonly array $files) {}
+
+    /**
+     * Wrap every future query match in $nodeClass (a {@see NodeMatch} subclass) — the hook a
+     * project uses to hang its own predicate methods on the node. No-ops back to the default
+     * when handed plain `NodeMatch::class`.
+     *
+     * @param  class-string<NodeMatch>  $nodeClass
+     */
+    public function decorateWith(string $nodeClass): self
+    {
+        if (! is_a($nodeClass, NodeMatch::class, true)) {
+            throw new \InvalidArgumentException("{$nodeClass} must extend " . NodeMatch::class . ' to decorate query matches.');
+        }
+
+        $this->nodeClass = $nodeClass;
+
+        return $this;
+    }
+
+    /**
+     * A query match for a node — an instance of the configured {@see decorateWith} class (a
+     * plain {@see NodeMatch} by default). The single place matches are built.
+     */
+    public function wrap(Node $node, ParsedFile $file): NodeMatch
+    {
+        return new $this->nodeClass($node, $file);
+    }
 
     /**
      * The call graph over these files (who calls what, receiver types). Built once.

@@ -424,6 +424,50 @@ what the AST/type **is**, never by a name or a hardcoded list. A rule bound to a
 package can also implement `RequiresPackage` on its sin, so it's skipped on projects
 that don't use that package.
 
+### Teaching the node your own vocabulary
+
+Your detectors can read as cleanly as the built-ins. Subclass `NodeMatch`, add a
+domain predicate composed from the engine's helpers, and register it with
+`Config::decorate` — the query then wraps *every* match in your class, so the
+predicate is just a method on the node:
+
+```php
+namespace App\Commandments;
+
+use JesseGall\CodeCommandments\Ast\NodeMatch;
+
+final class VehicleNode extends NodeMatch
+{
+    public function isVehicleClause(): bool
+    {
+        // your domain rule, composed from the engine — no regex, no name lists
+        $class = $this->newClassName() ?? '';
+
+        return str_starts_with($class, 'App\\Vehicles\\') && str_ends_with($class, 'Clause');
+    }
+}
+
+final class BareVehicleClauseDetector implements Detector
+{
+    public function sin(): Sin { return new BareVehicleClause(); }
+
+    public function find(Codebase $codebase): array
+    {
+        return $codebase
+            ->whereNew()
+            ->where(fn (VehicleNode $n) => $n->isVehicleClause())   // reads like a built-in
+            ->get();
+    }
+}
+```
+
+```php
+// .commandments/config.php
+return fn (Config $config) => $config
+    ->decorate(\App\Commandments\VehicleNode::class)                // hang your vocabulary on every node
+    ->register(\App\Commandments\BareVehicleClauseDetector::class); // ...and the detector that speaks it
+```
+
 ## License
 
 MIT.
