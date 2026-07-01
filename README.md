@@ -136,8 +136,9 @@ return function (Config $config): void {
         // Add a detector that lives in YOUR codebase.
         ->register(\App\Commandments\NoRawSqlDetector::class)
 
-        // Tune a threshold — name the detector you want as the argument, then set it.
-        ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10))
+        // Tune thresholds — name the detector, then set it. Its setters chain, so
+        // you can tune several knobs in one closure.
+        ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)->maxRemaining(2))
         ->configure(fn (DataClumpDetector $d) => $d->minClasses(3));
 };
 ```
