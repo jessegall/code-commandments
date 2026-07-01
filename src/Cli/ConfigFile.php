@@ -31,12 +31,16 @@ final class ConfigFile
     }
 
     /**
-     * Write the scaffold ONCE, if the file isn't there yet (an empty `paths()`, filled on the next
-     * judge). Returns true when it created one. The write itself is the {@see ConfigScribe}'s job.
+     * Write the scaffold ONCE, if the file isn't there yet — with the source roots already detected
+     * (composer PSR-4 + app/src), so a freshly-synced config declares its `paths()` immediately
+     * instead of waiting for the first judge to fill them. Returns true when it created one. The
+     * write itself is the {@see ConfigScribe}'s job.
      */
     public function scaffoldIfMissing(): bool
     {
-        return new ConfigScribe($this->path)->scaffold([]);
+        $root = dirname($this->path, 2); // <root>/.commandments/config.php → <root>
+
+        return new ConfigScribe($this->path)->scaffold(new SourceRoots()->detect($root));
     }
 
     /**
