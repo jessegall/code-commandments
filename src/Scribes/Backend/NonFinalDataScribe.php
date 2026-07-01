@@ -13,7 +13,7 @@ use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
 
 /**
- * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\NonFinalDataDetector}: a Spatie
+ * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\NonFinalDataDetector}: a Spatie
  * `Data` class is a leaf, so seal it `final` and make every promoted property `readonly` —
  * the immutable-DTO shape the spatie-data skill teaches. Two insertions, no reflow: `final `
  * before `class`, and `readonly ` on each promoted ctor param still missing it.

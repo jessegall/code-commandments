@@ -2,7 +2,7 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;

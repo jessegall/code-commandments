@@ -128,7 +128,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
-use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 
 return function (Config $config): void {
@@ -430,7 +430,7 @@ _59 sins across 16 skills._
 |---|---|
 | `AllNullableData` | A Spatie Data class whose every promoted field is NULLABLE. |
 | `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
-| `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
+| `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback. |
 | `NewDataObject` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
 | `NonFinalData` | A Spatie `Data` class that is not declared `final`. |
 

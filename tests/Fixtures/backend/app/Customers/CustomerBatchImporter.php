@@ -2,7 +2,7 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Sins\Backend\ManualHydrationLoop;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualHydrationLoop;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

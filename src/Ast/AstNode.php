@@ -1196,57 +1196,6 @@ class AstNode
         return self::isArrayMapArgument($this->node?->getAttribute('parent'));
     }
 
-    /**
-     * Is this node inside a loop OR an `array_map` callback — the two shapes the
-     * spatie-data skill names as per-item hydration that `::collect()` replaces.
-     */
-    public function isPerItemHydration(): bool
-    {
-        return $this->isWithinLoop() || $this->isWithinArrayMap();
-    }
-
-    /**
-     * Is this node inside a `try` whose `catch` SKIPS the failed item — a `continue`
-     * or `return` in a catch clause? That marks a TOLERANT decoder (drop a malformed
-     * entry and keep going); `::collect()` is all-or-nothing and throws on the first
-     * bad row, so it cannot express the per-entry skip. The try is matched only when
-     * it is itself inside a loop, so a method-level try/catch around the whole map
-     * doesn't grant the exemption.
-     */
-    public function isWithinTolerantCatch(): bool
-    {
-        $try = $this->walkUp(static fn (Node $node): bool => $node instanceof TryCatch);
-
-        if (! $try instanceof TryCatch || ! self::within($try, static fn (Node $n): bool =>
-            $n instanceof Foreach_ || $n instanceof For_ || $n instanceof While_ || $n instanceof Do_)) {
-            return false;
-        }
-
-        foreach ($try->catches as $catch) {
-            if ((new NodeFinder)->findFirst($catch->stmts, static fn (Node $n): bool =>
-                $n instanceof Continue_ || $n instanceof Return_) !== null) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Is this node the right-hand side of an assignment into a KEYED map —
-     * `$out[$id] = X::from(...)`? `::collect()` returns a LIST; it cannot key by a
-     * computed value (nor merge that key into each item), so a keyed-map build is not
-     * the one-pass mapping the skill replaces. A plain list append (`$out[] = …`,
-     * empty dim) is NOT exempt — that IS what `::collect()` does.
-     */
-    public function isKeyedMapAssignment(): bool
-    {
-        $assign = $this->walkUp(static fn (Node $node): bool => $node instanceof Assign);
-
-        return $assign instanceof Assign
-            && $assign->var instanceof ArrayDimFetch
-            && $assign->var->dim !== null;
-    }
 
     /**
      * Walk up from $node (exclusive) testing each ancestor.

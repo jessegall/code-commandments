@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Configure;
-use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use PHPUnit\Framework\TestCase;
 

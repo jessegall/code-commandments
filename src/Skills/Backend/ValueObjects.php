@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills\Backend;
 
+use JesseGall\CodeCommandments\Skills\Backend\Spatie\SpatieData;
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 

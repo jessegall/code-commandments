@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\DataMethodHintCollisionDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Spatie\DataMethodHintCollisionDetector;
 use PHPUnit\Framework\TestCase;
 
 final class DataMethodHintCollisionDetectorTest extends TestCase

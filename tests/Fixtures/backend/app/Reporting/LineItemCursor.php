@@ -2,7 +2,7 @@
 
 namespace Shop\Reporting;
 
-use JesseGall\CodeCommandments\Sins\Backend\ManualHydrationLoop;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualHydrationLoop;
 
 use Iterator;
 use JesseGall\CodeCommandments\Testing\Sinful;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Spatie\NewDataObjectDetector;
 use PHPUnit\Framework\TestCase;
 
 final class NewDataObjectDetectorTest extends TestCase

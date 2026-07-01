@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Sins\Backend;
+namespace JesseGall\CodeCommandments\Sins\Backend\Spatie;
 
 /**
  * Shared {@see \JesseGall\CodeCommandments\Sins\RequiresPackage} answer for the spatie-data

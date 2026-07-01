@@ -17,7 +17,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\VariadicPlaceholder;
 
 /**
- * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\ManualHydrationLoopDetector}: a
+ * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\ManualHydrationLoopDetector}: a
  * collection hydrated `Foo::from($item)` per item should be one `Foo::collect($items)` pass.
  *
  * Only the `array_map` shape is auto-fixed, because there the rewrite is a single, provably-

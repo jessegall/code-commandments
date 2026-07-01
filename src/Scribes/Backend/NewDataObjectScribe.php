@@ -14,7 +14,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 
 /**
- * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\NewDataObjectDetector}: a rich
+ * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\NewDataObjectDetector}: a rich
  * Spatie `Data` object built with `new` should go through `::from()` so the cast/map/nest
  * pipeline runs. Rewrites `new Foo(a: 1, b: 2)` → `Foo::from(['a' => 1, 'b' => 2])`,
  * resolving POSITIONAL arguments to property names via the constructor.

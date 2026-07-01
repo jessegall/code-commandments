@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\AllNullableDataDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Spatie\AllNullableDataDetector;
 use PHPUnit\Framework\TestCase;
 
 final class AllNullableDataDetectorTest extends TestCase

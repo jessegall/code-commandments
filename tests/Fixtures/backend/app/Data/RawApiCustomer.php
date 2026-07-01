@@ -2,7 +2,7 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Sins\Backend\AllNullableData;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\AllNullableData;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;

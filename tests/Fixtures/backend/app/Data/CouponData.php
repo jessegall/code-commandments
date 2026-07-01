@@ -2,7 +2,7 @@
 
 namespace Shop\Data;
 
-use JesseGall\CodeCommandments\Sins\Backend\DataMethodHintCollision;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataMethodHintCollision;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

@@ -2,7 +2,7 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Sins\Backend\NewDataObject;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NewDataObject;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

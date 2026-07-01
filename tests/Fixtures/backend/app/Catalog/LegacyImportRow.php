@@ -2,7 +2,7 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Sins\Backend\AllNullableData;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\AllNullableData;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
