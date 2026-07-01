@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
 
 /**
  * The resolved file scope of a command run — the single choke-point where the
- * `--changes`/`--git`/`--branch[=BASE]` flags become a concrete set of paths. Every
+ * `--changes`/`--branch[=BASE]` flags become a concrete set of paths. Every
  * command parses the whole tree for cross-file correctness, then asks the Scope
  * `includes($file)` to decide what it reports on / acts on; an unscoped run includes
  * everything.
@@ -32,7 +32,7 @@ final class Scope
         $strategy = match (true) {
             ($id = self::repent($args)) !== null => new ChecklistScope($id),
             ($base = self::branch($args)) !== null => new BranchChanges($base),
-            self::flag($args, '--changes', '--git') => new WorkingTreeChanges,
+            self::flag($args, '--changes') => new WorkingTreeChanges,
             default => new EntireCodebase,
         };
 

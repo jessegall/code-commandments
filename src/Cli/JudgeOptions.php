@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 /**
  * The parsed options of a `judge` run — every flag EXCEPT the scope flags
- * (`--changes`/`--git`/`--branch`), which {@see Scope\Scope::fromArgs} owns.
+ * (`--changes`/`--branch`), which {@see Scope\Scope::fromArgs} owns.
  */
 final class JudgeOptions
 {

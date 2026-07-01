@@ -66,7 +66,7 @@ vendor/bin/commandments judge src --sin=swallow-catch
 
 # scope to what you changed: only your branch's files vs main, or just the working tree
 vendor/bin/commandments judge src --branch        # new/changed on this branch vs main (--branch=BASE to override)
-vendor/bin/commandments judge src --changes       # uncommitted working-tree changes only (alias: --git)
+vendor/bin/commandments judge src --changes       # uncommitted working-tree changes only
 
 # detectors run across 8 workers by default (capped at CPU cores); --parallel=1 disables
 vendor/bin/commandments judge src --parallel=4
@@ -125,8 +125,19 @@ _`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes._
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes (a fixpoint), so one run
-fully converges — and `--dry-run` shows exactly what an apply would produce. Run
-it on the whole tree, or scope it with `--changes` / `--branch` like `judge`.
+fully converges — and `--dry-run` shows exactly what an apply would produce.
+
+It takes the same **scope** flags as `judge`, so you can auto-fix just what you
+touched:
+
+```bash
+vendor/bin/commandments repent src --changes            # only files changed in the working tree
+vendor/bin/commandments repent src --branch             # only files new/changed on this branch vs main
+vendor/bin/commandments repent src --branch=develop     # ...vs a different base
+```
+
+The whole tree is still parsed (so cross-file rewrites stay correct); only the
+files that get written are scoped.
 
 ## Configuration
 
@@ -158,7 +169,7 @@ return function (Config $config): void {
         // Silence a rule — by its Sin class (drops every detector for it) or a Detector class.
         ->disable(NonFinalData::class)
 
-        // Add a detector that lives in YOUR codebase (the package can't discover it).
+        // Add a detector that lives in YOUR codebase.
         ->register(\App\Commandments\NoRawSqlDetector::class)
 
         // Tune a threshold — name the detector you want as the argument, then set it.
@@ -377,20 +388,41 @@ project skills (via Claude Code's Skill tool): **`writing-detectors`**,
 detection over name matching. See [`CLAUDE.md`](CLAUDE.md); each sin is its own class
 under `src/Sins/`, and a detector references one.
 
+A detector composes the fluent query so it reads like a sentence — a selector opens
+it, `where`/`reject` narrow it (one check per line), a terminal returns the matches.
+`FacadeCallDetector` flags a Laravel facade call, then peels off every legitimate
+exception:
+
 ```php
+namespace App\Commandments; // in YOUR codebase — register it with `->register(FacadeCallDetector::class)`
+
+use JesseGall\CodeCommandments\Ast\AstNode;
+use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Detectors\Detector;  // a PHP detector; a Vue one implements JesseGall\CodeCommandments\Vue\Detector
+use JesseGall\CodeCommandments\Sins\Sin;
+
 final class FacadeCallDetector implements Detector
 {
-    public function skill(): string { return 'laravel-idioms'; }
+    public function sin(): Sin { return new FacadeCall(); }   // the sin it points at (skill + description)
 
     public function find(Codebase $codebase): array
     {
         return $codebase
-            ->whereStaticCall()
-            ->where(fn (AstNode $n): bool => str_starts_with($n->staticCallClass() ?? '', self::FACADE_NS))
+            ->whereStaticCall()                                                                  // every `X::y(...)`
+            ->where(fn (AstNode $n) => str_starts_with($n->staticCallClass() ?? '', 'Illuminate\\Support\\Facades\\')) // ...that's a facade
+            ->reject(fn (AstNode $n) => $n->staticCallMethod() === 'fake')                        // not `Mail::fake()` — a test double
+            ->reject(fn (AstNode $n) => $n->isOutsideClass())                                     // not in a route/config file
+            ->reject(fn (AstNode $n) => $codebase->extends($n->enclosingClassName(), 'Illuminate\\Support\\ServiceProvider')) // not in a provider
             ->get();
     }
 }
 ```
+
+Notice there's no list of facade names — it matches the framework's facade
+*namespace*, resolved from the file's imports. That's the cardinal rule: classify by
+what the AST/type **is**, never by a name or a hardcoded list. A rule bound to a
+package can also implement `RequiresPackage` on its sin, so it's skipped on projects
+that don't use that package.
 
 ## License
 

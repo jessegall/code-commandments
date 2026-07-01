@@ -11,7 +11,9 @@ use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
 use JesseGall\CodeCommandments\Detectors\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use JesseGall\CodeCommandments\Vue\Detector as FrontendDetector;
 use PHPUnit\Framework\TestCase;
@@ -120,6 +122,35 @@ final class ConfigTest extends TestCase
         $this->assertCount(1, $result['backend']);
     }
 
+    public function test_a_rule_for_an_absent_package_is_filtered_out(): void
+    {
+        $config = new Config();
+
+        $this->assertSame([], $config->apply([new ConfigPackagedDetector], [], static fn (): bool => false)['backend'], 'package absent → dropped');
+        $this->assertCount(1, $config->apply([new ConfigPackagedDetector], [], static fn (): bool => true)['backend'], 'package present → kept');
+    }
+
+    public function test_the_installed_check_receives_the_declared_package_name(): void
+    {
+        $seen = null;
+
+        new Config()->apply([new ConfigPackagedDetector], [], function (string $package) use (&$seen): bool {
+            $seen = $package;
+
+            return true;
+        });
+
+        $this->assertSame('acme/widgets', $seen);
+    }
+
+    public function test_a_rule_without_a_required_package_is_never_filtered(): void
+    {
+        // ConfigTunableDetector's sin isn't RequiresPackage — the installed check must be ignored.
+        $result = new Config()->apply([new ConfigTunableDetector], [], static fn (): bool => false);
+
+        $this->assertCount(1, $result['backend']);
+    }
+
     public function test_a_configured_threshold_changes_real_detection(): void
     {
         // The same 3-value clump recurs across TWO classes — flagged by default (min 2 classes).
@@ -186,6 +217,33 @@ final class ConfigFrontendDetector implements FrontendDetector
     }
 
     public function find(VueCodebase $components): array
+    {
+        return [];
+    }
+}
+
+/** A sin bound to a (fake) composer package — to exercise the RequiresPackage filter. */
+final class ConfigPackagedSin extends Sin implements RequiresPackage
+{
+    public function __construct()
+    {
+        parent::__construct('packaged-sin', ValueObjects::class, 'a packaged sin', 'do the thing');
+    }
+
+    public function requiredPackage(): string
+    {
+        return 'acme/widgets';
+    }
+}
+
+final class ConfigPackagedDetector implements BackendDetector
+{
+    public function sin(): Sin
+    {
+        return new ConfigPackagedSin;
+    }
+
+    public function find(AstCodebase $codebase): array
     {
         return [];
     }

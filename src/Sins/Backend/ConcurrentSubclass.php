@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend;
 
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\ConcurrentState;
 
-final class ConcurrentSubclass extends Sin
+final class ConcurrentSubclass extends Sin implements RequiresPackage
 {
     public function __construct()
     {
@@ -18,5 +19,10 @@ final class ConcurrentSubclass extends Sin
             rule: "Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.",
             suggestion: "Compose `Concurrent<self>` behind a `::for(\$id)` factory."
         );
+    }
+
+    public function requiredPackage(): string
+    {
+        return 'jessegall/concurrent';
     }
 }
