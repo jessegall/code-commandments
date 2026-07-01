@@ -13,8 +13,12 @@ use JesseGall\CodeCommandments\Scribes\Span;
  *
  * Tree navigation delegates to the original node ({@see $node}): a match is a copy,
  * so searching for "itself" among its parent's children must use the real object.
+ *
+ * NOT final on purpose — the frontend mirror of NodeMatch: a project SUBCLASSES it to hang
+ * domain predicates on the element, and a `where` closure that type-hints the subclass is handed
+ * it ({@see \JesseGall\CodeCommandments\Query::where}).
  */
-final class ElementMatch extends Element
+class ElementMatch extends Element
 {
     public function __construct(public readonly Element $node, public readonly Sfc $sfc)
     {

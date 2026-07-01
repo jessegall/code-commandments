@@ -5,34 +5,23 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
+use JesseGall\CodeCommandments\Query as BaseQuery;
 use PhpParser\Node;
 
 /**
- * A fluent pattern over the codebase: a node selector plus chained checks. Each
- * `where`/`reject` is one check over a fluent {@see AstNode}; they AND together.
- * Terminals run the pattern and return rich {@see NodeMatch} results.
+ * The backend fluent query over the PHP AST — the shared {@see BaseQuery} (`where`/`reject`, the
+ * filter loop, decorator injection) plus the backend selectors and the three engine hooks:
+ * candidates come from the codebase's bucketed-by-type node index (so a query visits only nodes of
+ * its own kind, never the whole tree), a match is a {@see NodeMatch}, and decorators extend it.
  *
- * A selector declares the node CLASSES it can match (e.g. a method call is a
- * `MethodCall` or a `NullsafeMethodCall`). The query then visits only those nodes —
- * pulled from the codebase's bucketed-by-type index, built once — instead of
- * walking the whole tree on every call. That's what keeps a query run inside a
- * per-candidate loop from going quadratic. A null type list means "any node".
+ * A selector declares the node CLASSES it can match (a method call is a `MethodCall` or a
+ * `NullsafeMethodCall`); `where`/`reject` see a {@see NodeMatch}.
  */
-final class Query
+final class Query extends BaseQuery
 {
     /**
-     * Each filter paired with the decorator node its check type-hinted (or null for the base) —
-     * so a `fn (LaravelNode $n) => …` check is handed a `LaravelNode`, a plain `fn (AstNode $n)`
-     * the base match.
-     *
-     * @var list<array{0: \Closure(AstNode): bool, 1: class-string<NodeMatch>|null}>
-     */
-    private array $filters = [];
-
-    /**
      * @param  \Closure(Node): bool  $selector
-     * @param  list<class-string<Node>>|null  $types  exact node classes the selector
-     *                                                 can match; null = any node
+     * @param  list<class-string<Node>>|null  $types  exact node classes the selector can match; null = any
      */
     public function __construct(
         private readonly Codebase $codebase,
@@ -41,60 +30,16 @@ final class Query
     ) {}
 
     /**
-     * Keep matches passing the check.
-     *
-     * @param  \Closure(AstNode): bool  $check
-     */
-    public function where(\Closure $check): self
-    {
-        $this->filters[] = [$check, self::nodeClassOf($check)];
-
-        return $this;
-    }
-
-    /**
-     * Keep matches that do NOT pass the check (the inverse of {@see where}).
-     *
-     * @param  \Closure(AstNode): bool  $check
-     */
-    public function reject(\Closure $check): self
-    {
-        $this->filters[] = [static fn (AstNode $node): bool => ! $check($node), self::nodeClassOf($check)];
-
-        return $this;
-    }
-
-    /**
-     * The decorator node a check type-hinted its parameter as — a {@see NodeMatch} subclass the
-     * match should be re-wrapped in for that check (`fn (LaravelNode $n) => …`). Null for the base
-     * `AstNode`/`NodeMatch` or an untyped/builtin parameter. Read once, off the closure's signature.
-     *
-     * @return class-string<NodeMatch>|null
-     */
-    private static function nodeClassOf(\Closure $check): ?string
-    {
-        $type = ((new \ReflectionFunction($check))->getParameters()[0] ?? null)?->getType();
-
-        if (! $type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-            return null;
-        }
-
-        $class = $type->getName();
-
-        return is_a($class, NodeMatch::class, true) && $class !== NodeMatch::class ? $class : null;
-    }
-
-    /**
-     * Keep calls whose receiver resolves to any of $classes (a class or a base it
-     * extends) — and drop calls made from INSIDE one of them (a request reading its
-     * own input is fine; the smell is outside code reaching in).
+     * Keep calls whose receiver resolves to any of $classes (a class or a base it extends) — and
+     * drop calls made from INSIDE one of them (a request reading its own input is fine; the smell
+     * is outside code reaching in).
      */
     public function isUsedOn(string ...$classes): self
     {
         $targets = array_map(static fn (string $class): string => ltrim($class, '\\'), $classes);
         $codebase = $this->codebase;
 
-        return $this->where(static function (AstNode $node) use ($targets, $codebase): bool {
+        return $this->filter(static function (AstNode $node) use ($targets, $codebase): bool {
             $enclosing = $node->enclosingClassName();
             $receiver = ReceiverResolver::typeOf($node);
 
@@ -118,9 +63,10 @@ final class Query
     public function withinClass(string $class): self
     {
         $target = ltrim($class, '\\');
+        $codebase = $this->codebase;
 
-        return $this->where(static fn (AstNode $node): bool =>
-            ($enclosing = $node->enclosingClassName()) !== null && self::isA($enclosing, $target));
+        return $this->filter(static fn (AstNode $node): bool =>
+            ($enclosing = $node->enclosingClassName()) !== null && self::isA($codebase, $enclosing, $target));
     }
 
     /**
@@ -129,9 +75,10 @@ final class Query
     public function notWithinClass(string $class): self
     {
         $target = ltrim($class, '\\');
+        $codebase = $this->codebase;
 
-        return $this->where(static fn (AstNode $node): bool =>
-            ($enclosing = $node->enclosingClassName()) === null || ! self::isA($enclosing, $target));
+        return $this->filter(static fn (AstNode $node): bool =>
+            ($enclosing = $node->enclosingClassName()) === null || ! self::isA($codebase, $enclosing, $target));
     }
 
     /**
@@ -139,55 +86,28 @@ final class Query
      */
     public function inProximityOf(string $name, int $lines = 5): self
     {
-        $this->filters[] = [static fn (AstNode $node): bool => $node instanceof NodeMatch && $node->near($name, $lines), null];
-
-        return $this;
+        return $this->filter(static fn (AstNode $node): bool => $node instanceof NodeMatch && $node->near($name, $lines));
     }
 
-    /**
-     * @return list<NodeMatch>
-     */
-    public function get(): array
+    protected function selected(): iterable
     {
-        $matches = [];
-
         foreach ($this->codebase->nodes($this->types) as [$node, $file]) {
-            if (! ($this->selector)($node)) {
-                continue;
+            if (($this->selector)($node)) {
+                yield [$node, $file];
             }
-
-            $match = $this->codebase->wrap($node, $file);
-
-            foreach ($this->filters as [$check, $as]) {
-                $argument = $as === null ? $match : $this->codebase->wrap($node, $file, $as);
-
-                if (! $check($argument)) {
-                    continue 2;
-                }
-            }
-
-            $matches[] = $match;
         }
-
-        return $matches;
     }
 
-    /**
-     * @return list<string>
-     */
-    public function locations(): array
+    protected function wrap(mixed $candidate, ?string $as): object
     {
-        return array_map(static fn (NodeMatch $match): string => $match->location(), $this->get());
+        [$node, $file] = $candidate;
+
+        return $this->codebase->wrap($node, $file, $as);
     }
 
-    public function count(): int
+    protected function matchClass(): string
     {
-        return count($this->get());
-    }
-
-    public function first(): ?NodeMatch
-    {
-        return $this->get()[0] ?? null;
+        return NodeMatch::class;
     }
 
     private static function isA(Codebase $codebase, string $class, string $target): bool
@@ -196,10 +116,9 @@ final class Query
             return true;
         }
 
-        // Autoloadable code: resolve via reflection (also catches `implements`). A
-        // parsed-only codebase (the fixture, or any tree we don't load) falls back
-        // to the class graph the engine already built — a subclass declared in the
-        // codebase still resolves, no autoloading required.
+        // Autoloadable code: resolve via reflection (also catches `implements`). A parsed-only
+        // codebase (the fixture, or any tree we don't load) falls back to the class graph the
+        // engine already built — a subclass declared in the codebase still resolves.
         if (class_exists($class) || interface_exists($class)) {
             return is_a($class, $target, true);
         }
