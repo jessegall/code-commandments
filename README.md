@@ -655,9 +655,14 @@ final class RawCarbonParseDetector implements Detector
 ### Your own AST vocabulary
 
 Want `$n->isBareVehicleClause()` to read as cleanly as a built-in predicate? Subclass
-`NodeMatch`, add the domain predicate composed from the engine's helpers, and register
-it with `Config::decorate` — the query then wraps *every* match in your class. Here it
-is with its sin (pointing at the `VehicleAssembly` skill above) and detector:
+`NodeMatch`, add the domain predicate composed from the engine's helpers, and **type-hint
+it in the `where` closure**. The engine reads the parameter type by reflection and hands
+that closure your node — `->where(fn (VehicleNode $n) => $n->isBareVehicleClause())` just
+works, no wiring. You can define **as many decorator nodes as you like**; each detector
+gets whichever it type-hints (exactly how the built-in `LaravelNode`, `SpatieDataNode`, …
+work — one node per package). Because the node also carries the `Codebase`, a predicate can
+answer whole-program questions (`$this->codebase->extends(…)`). Here it is with its sin
+(pointing at the `VehicleAssembly` skill above) and detector:
 
 ```php
 namespace App\Commandments;
@@ -709,14 +714,16 @@ final class BareVehicleClauseDetector implements Detector
 }
 ```
 
-Then register the node and the detector in your config:
+Then register the detector in your config. (Type-hinting `VehicleNode` in the closure is
+enough for the engine to inject it, so `decorate()` is optional — use it to *declare* your
+nodes, register several at once, and set the first as the global default wrap.)
 
 ```php
 // .commandments/config.php
 return fn (Config $config) => $config
-    // hang your vocabulary on every node
-    ->decorate(\App\Commandments\VehicleNode::class)
-    // ...and the detector that speaks it
+    // optional — declare your vocabulary (register as many nodes as you like)
+    ->decorate(\App\Commandments\VehicleNode::class, \App\Commandments\GarageNode::class)
+    // the detector that speaks it
     ->register(\App\Commandments\BareVehicleClauseDetector::class);
 ```
 
