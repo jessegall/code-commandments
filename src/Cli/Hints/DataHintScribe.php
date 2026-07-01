@@ -30,7 +30,9 @@ use PhpParser\NodeFinder;
  *     sites to `::from(...)`.
  *  2. Regenerates the class docblock's `@method` lines: one `@method static static
  *     from(<params>)` per object factory (documenting the magic overload, never the
- *     concrete name), replacing any existing `@method` lines (so a collision line is
+ *     concrete name), PLUS an `@method static static from(array $payload)` so the raw
+ *     array payload stays accepted (the typed lines are additive overloads, not a
+ *     narrowing) — replacing any existing `@method` lines (so a collision line is
  *     fixed in passing).
  *  3. Adds the shape-preserving conditional `@method … collect(iterable $items)`
  *     when the class is actually `::collect()`-ed somewhere.
@@ -213,6 +215,13 @@ final class DataHintScribe extends Scribe
             }
 
             $lines[] = "@method static static from({$this->paramsSource($factory->params, $source)})";
+        }
+
+        // `Data::from()` ALWAYS accepts the raw array payload as well — emit it as an extra
+        // overload so the typed factory line(s) stay ADDITIVE: a `from(['x' => …])` call isn't
+        // flagged by an IDE that would otherwise read the typed line as from()'s only signature.
+        if ($lines !== []) {
+            $lines[] = '@method static static from(array $payload)';
         }
 
         if ($collectUsed) {
