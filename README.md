@@ -74,12 +74,12 @@ vendor/bin/commandments install
 ```
 
 `install` wires the project up (idempotent): a composer hook that re-syncs the skills
-on every `composer update`; a `PostToolUse` hook that re-surfaces the cardinal rule
-(*trace every fix to its source*) every 25 tool uses; the `.gitignore` entries; and a
-commented `.commandments/config.php` scaffold. The heartbeat exists because a long
-agent session drifts — skills load early then slide out of context, and that rule is
-the first thing forgotten — so it re-anchors the agent cheaply, without re-injecting
-every turn.
+on every `composer update`; the `.gitignore` entries; a commented
+`.commandments/config.php` scaffold; and a **heartbeat** — a `PostToolUse` hook that
+re-surfaces the cardinal rule (*trace every fix to its source*) once every 25 tool
+uses. The heartbeat exists because a long agent session drifts — skills load early then
+slide out of context, and that rule is the first thing forgotten — so it re-anchors the
+agent cheaply, without re-injecting every turn.
 
 ## Usage
 
