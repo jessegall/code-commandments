@@ -156,21 +156,28 @@ final class Repent
      */
     private function converge(array $roots, Scope $scope, ?string $only): array
     {
-        $steps = $this->chain($only)->steps();
+        $steps = array_values($this->chain($only)->steps());
         $overlay = new WorkingCopy();
+        $progress = new ProgressBar();
 
         for ($sweep = 0; $sweep < self::MAX_SWEEPS; $sweep++) {
             $before = $overlay->changes();
 
-            foreach ($steps as $step) {
+            foreach ($steps as $index => $step) {
+                $sweepLabel = $sweep === 0 ? '' : ' (sweep ' . ($sweep + 1) . ')';
+                $progress->track($index, count($steps), 'repenting' . $sweepLabel . ' · ' . $step->name());
+
                 $overlay = $overlay->with($step->run($roots, $scope, $overlay));
             }
 
             if ($overlay->changes() === $before) {
+                $progress->finish();
+
                 return $overlay->changes();
             }
         }
 
+        $progress->finish();
         fwrite(STDERR, "\033[33m⚠ repent did not settle within " . self::MAX_SWEEPS . " sweeps; applying what converged.\033[0m\n");
 
         return $overlay->changes();
