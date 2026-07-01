@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Catalog as Scribes;
+use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,17 +17,17 @@ use PHPUnit\Framework\TestCase;
  */
 final class ReadmeIsCurrentTest extends TestCase
 {
-    public function test_every_detector_is_listed_in_the_readme(): void
+    public function test_every_sin_is_listed_in_the_readme(): void
     {
         $section = $this->section('detectors');
 
         foreach (Catalog::all() as $detector) {
-            $name = (new \ReflectionClass($detector))->getShortName();
+            $sin = (new \ReflectionClass($detector->sin()))->getShortName();
 
             $this->assertStringContainsString(
-                "`{$name}`",
+                "`{$sin}`",
                 $section,
-                "{$name} is missing from the README — run `composer readme`.",
+                "{$sin} is missing from the README — run `composer readme`.",
             );
         }
     }
@@ -45,6 +46,15 @@ final class ReadmeIsCurrentTest extends TestCase
                 $sin = (new \ReflectionClass($detector->sin()))->getShortName();
                 $this->assertStringContainsString("`{$sin}`", $section, 'an auto-fixable sin is missing — run `composer readme`.');
             }
+        }
+    }
+
+    public function test_every_skill_is_listed_in_the_readme(): void
+    {
+        $section = $this->section('skills');
+
+        foreach (Skills::all() as $skill) {
+            $this->assertStringContainsString("`{$skill->slug}`", $section, "{$skill->slug} is missing — run `composer readme`.");
         }
     }
 

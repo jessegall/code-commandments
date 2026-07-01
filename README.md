@@ -22,6 +22,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [How detectors are tested](#how-detectors-are-tested)
+- [Skills](#skills)
 - [Sins & detectors](#sins--detectors)
 - [Auto-fixing](#auto-fixing)
 - [Developing detectors](#developing-detectors)
@@ -203,15 +204,51 @@ three copies of the same shape).
 
 And the nice part: **any unmarked code is already "righteous."** The whole rest of
 the fixture is the false-positive guard — flagging an *unmarked* spot fails the run —
-so you don't scatter "good" markers around. You add exactly **one** `#[Righteous]` /
-`<!-- @righteous -->` per detector, and its only job is to source a concrete
-*good-code example* for the generated skill docs (the bad→good block). One is
-required; one is enough.
+so you don't have to mark "good" code at all. You just need **one** `#[Righteous]` /
+`<!-- @righteous -->` per detector: it sources the concrete *good-code example* for
+the generated skill docs (the bad→good block). That one is required; add more if
+they're illustrative.
+
+## Skills
+
+The teaching layer — one discipline each, the doc an agent reads to fix a sin. Every
+`SKILL.md` is generated from its class (`composer sins`).
+
+<!-- BEGIN: skills (auto-generated — run `composer readme`) -->
+_16 skills._
+
+### Backend
+
+| Skill | What it teaches |
+|---|---|
+| `backend/absence` | modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw). |
+| `backend/concurrent-state` | state shared across requests/workers (`::for($id): Concurrent<self>`). |
+| `backend/documentation` | concise, present-tense docs; rare inline comments; never narrate the past. |
+| `backend/enums-with-behaviour` | a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site). |
+| `backend/exceptions` | throwing or catching: named `::for()` factory exceptions, never swallow a failure. |
+| `backend/fix-at-the-source` | the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made. |
+| `backend/guard-clauses-and-flow` | validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline. |
+| `backend/laravel-idioms` | typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods. |
+| `backend/pass-the-object` | demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure). |
+| `backend/role-vocabulary` | a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract. |
+| `backend/spatie-data` | how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly. |
+| `backend/tell-dont-ask` | behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception. |
+| `backend/type-honesty` | a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`. |
+| `backend/value-objects` | give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.) |
+
+### Frontend
+
+| Skill | What it teaches |
+|---|---|
+| `frontend/vue-components` | extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop. |
+| `frontend/vue-control-flow` | dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject. |
+<!-- END: skills -->
 
 ## Sins & detectors
 
-Every sin (the `--sin=` key), the detector that finds it, and what it flags —
-grouped by the skill that teaches the fix.
+Every sin (the `--sin=` key) and what it flags, grouped by the skill that teaches
+the fix and split by engine. The detector that finds each is named `<Sin>Detector`
+(e.g. `SwallowCatch` → `SwallowCatchDetector`), so it's left off the table.
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
 _59 detectors across 16 skills._
@@ -220,144 +257,144 @@ _59 detectors across 16 skills._
 
 #### `backend/absence`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `DeNulledFinder` | `DeNulledFinderDetector` | A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. |
-| `NullableCallback` | `NullableCallbackDetector` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
-| `OptionAsNullable` | `OptionAsNullableDetector` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
+| Sin | What it flags |
+|---|---|
+| `DeNulledFinder` | A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. |
+| `NullableCallback` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
+| `OptionAsNullable` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
 
 #### `backend/documentation`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ArchaeologyComment` | `ArchaeologyCommentDetector` | A comment that narrates the code's past — `// previously...`, `// changed from...`, `// now it returns...`. |
-| `BloatedDocblock` | `BloatedDocblockDetector` | A class whose docblock runs to multiple paragraphs. |
-| `CeremonyDocblock` | `CeremonyDocblockDetector` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
+| Sin | What it flags |
+|---|---|
+| `ArchaeologyComment` | A comment that narrates the code's past — `// previously...`, `// changed from...`, `// now it returns...`. |
+| `BloatedDocblock` | A class whose docblock runs to multiple paragraphs. |
+| `CeremonyDocblock` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
 
 #### `backend/enums-with-behaviour`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ConstClassEnum` | `ConstClassEnumDetector` | A class that is nothing but scalar constants — a closed set of values hand- rolled as `const STATUS_PENDING = 'pending'` instead of a native backed enum. |
-| `EnumCaseOrChain` | `EnumCaseOrChainDetector` | `$x === Status::Pending \|\| $x === Status::Paid` — a hand-rolled membership test against two-or-more cases of the same backed enum. |
-| `EnumValueMatch` | `EnumValueMatchDetector` | A `match`/`switch` over a backed enum's `->value` at a call site — the enum unwrapped to a scalar so it can be dispatched on out here. |
-| `InArrayMirrorsEnum` | `InArrayMirrorsEnumDetector` | `in_array($x, ['a', 'b', …])` whose literals ARE an existing backed enum's case values — testing membership of a set the type already seals. |
-| `MatchDefaultReturnsNull` | `MatchDefaultReturnsNullDetector` | A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing. |
-| `StringMatchMirrorsEnum` | `StringMatchMirrorsEnumDetector` | A `match`/`switch` whose arm conditions are string/int literals that ARE an existing backed enum's case values — dispatching on the loose strings instead of the type that already seals them. |
+| Sin | What it flags |
+|---|---|
+| `ConstClassEnum` | A class that is nothing but scalar constants — a closed set of values hand- rolled as `const STATUS_PENDING = 'pending'` instead of a native backed enum. |
+| `EnumCaseOrChain` | `$x === Status::Pending \|\| $x === Status::Paid` — a hand-rolled membership test against two-or-more cases of the same backed enum. |
+| `EnumValueMatch` | A `match`/`switch` over a backed enum's `->value` at a call site — the enum unwrapped to a scalar so it can be dispatched on out here. |
+| `InArrayMirrorsEnum` | `in_array($x, ['a', 'b', …])` whose literals ARE an existing backed enum's case values — testing membership of a set the type already seals. |
+| `MatchDefaultReturnsNull` | A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing. |
+| `StringMatchMirrorsEnum` | A `match`/`switch` whose arm conditions are string/int literals that ARE an existing backed enum's case values — dispatching on the loose strings instead of the type that already seals them. |
 
 #### `backend/exceptions`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `GenericException` | `GenericExceptionDetector` | Throwing a generic SPL/base exception (`throw new \RuntimeException(...)`) instead of a named domain exception. |
-| `MessageAtThrow` | `MessageAtThrowDetector` | `throw new X("…message…")` — the failure described with a prose string at the throw site instead of a named factory carrying domain VALUES (`throw OrderNotFound::forId($id)`). |
-| `SwallowCatch` | `SwallowCatchDetector` | A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`. |
-| `WrappingWithoutCause` | `WrappingWithoutCauseDetector` | Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from. |
+| Sin | What it flags |
+|---|---|
+| `GenericException` | Throwing a generic SPL/base exception (`throw new \RuntimeException(...)`) instead of a named domain exception. |
+| `MessageAtThrow` | `throw new X("…message…")` — the failure described with a prose string at the throw site instead of a named factory carrying domain VALUES (`throw OrderNotFound::forId($id)`). |
+| `SwallowCatch` | A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`. |
+| `WrappingWithoutCause` | Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from. |
 
 #### `backend/fix-at-the-source`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `DuplicateFunction` | `DuplicateFunctionDetector` | Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count). |
-| `ManufacturedFakeFill` | `ManufacturedFakeFillDetector` | Filling an argument with a manufactured fake on absence — `name: $row['name'] ?? ''`, `(int) ($row['id'] ?? 0)`. |
-| `NearDuplicateFunction` | `NearDuplicateFunctionDetector` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
+| Sin | What it flags |
+|---|---|
+| `DuplicateFunction` | Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count). |
+| `ManufacturedFakeFill` | Filling an argument with a manufactured fake on absence — `name: $row['name'] ?? ''`, `(int) ($row['id'] ?? 0)`. |
+| `NearDuplicateFunction` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
 
 #### `backend/guard-clauses-and-flow`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `DeepNesting` | `DeepNestingDetector` | An `if` nested three-deep — a pyramid of conditions. |
-| `IfElseLadder` | `IfElseLadderDetector` | An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch. |
-| `InlineThrow` | `InlineThrowDetector` | A `?? throw` buried inside a larger expression — fed into a call or dereferenced on the same line instead of guarded at the top. |
-| `LoopInvertedGuard` | `LoopInvertedGuardDetector` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
-| `NestedTernary` | `NestedTernaryDetector` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
-| `RedundantElse` | `RedundantElseDetector` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
+| Sin | What it flags |
+|---|---|
+| `DeepNesting` | An `if` nested three-deep — a pyramid of conditions. |
+| `IfElseLadder` | An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch. |
+| `InlineThrow` | A `?? throw` buried inside a larger expression — fed into a call or dereferenced on the same line instead of guarded at the top. |
+| `LoopInvertedGuard` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
+| `NestedTernary` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
+| `RedundantElse` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
 
 #### `backend/pass-the-object`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ParamResolvedFromParam` | `ParamResolvedFromParamDetector` | A method that UNPACKS its target out of a container parameter — takes a container object AND a scalar key, resolves the key against the container (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`), and works on the resolved target while the container is only ever packaging. |
+| Sin | What it flags |
+|---|---|
+| `ParamResolvedFromParam` | A method that UNPACKS its target out of a container parameter — takes a container object AND a scalar key, resolves the key against the container (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`), and works on the resolved target while the container is only ever packaging. |
 
 #### `backend/role-vocabulary`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `NullableRegistryLookup` | `NullableRegistryLookupDetector` | A class's own keyed store handing back `null` on a miss — `return $this->items[$key] ?? null`. |
+| Sin | What it flags |
+|---|---|
+| `NullableRegistryLookup` | A class's own keyed store handing back `null` on a miss — `return $this->items[$key] ?? null`. |
 
 #### `backend/tell-dont-ask`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `FeatureEnvy` | `FeatureEnvyDetector` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
-| `KeyedLookupEnvy` | `KeyedLookupEnvyDetector` | Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`). |
+| Sin | What it flags |
+|---|---|
+| `FeatureEnvy` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
+| `KeyedLookupEnvy` | Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`). |
 
 #### `backend/type-honesty`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `MaskedInvariant` | `MaskedInvariantDetector` | `$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state. |
-| `ScratchStateRestore` | `ScratchStateRestoreDetector` | A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`. |
+| Sin | What it flags |
+|---|---|
+| `MaskedInvariant` | `$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state. |
+| `ScratchStateRestore` | A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`. |
 
 #### `backend/value-objects`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ArrayBag` | `ArrayBagDetector` | An `array` parameter read by a string-literal key (`$bag['total']`) — a structured bag that should be a typed value object. |
-| `ArrayReturnBag` | `ArrayReturnBagDetector` | Returning a multi-field, string-keyed array literal — a structured bag that should be a typed value object. |
-| `DataClump` | `DataClumpDetector` | The same three-or-more value parameters (`string $shopId, string $userId, string $channelId`) threaded through two-or-more signatures in different classes. |
-| `PositionalTupleReturn` | `PositionalTupleReturnDetector` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` (also from a closure / arrow fn) — bundles several independent values as a keyless list the caller must destructure by position. |
-| `RawDecodedArrayReturn` | `RawDecodedArrayReturnDetector` | Returning a freshly-decoded payload straight out of a boundary — the raw `array` from `json_decode(...)` crossing back into the app untyped. |
+| Sin | What it flags |
+|---|---|
+| `ArrayBag` | An `array` parameter read by a string-literal key (`$bag['total']`) — a structured bag that should be a typed value object. |
+| `ArrayReturnBag` | Returning a multi-field, string-keyed array literal — a structured bag that should be a typed value object. |
+| `DataClump` | The same three-or-more value parameters (`string $shopId, string $userId, string $channelId`) threaded through two-or-more signatures in different classes. |
+| `PositionalTupleReturn` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` (also from a closure / arrow fn) — bundles several independent values as a keyless list the caller must destructure by position. |
+| `RawDecodedArrayReturn` | Returning a freshly-decoded payload straight out of a boundary — the raw `array` from `json_decode(...)` crossing back into the app untyped. |
 
 #### `backend/concurrent-state`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ConcurrentSubclass` | `ConcurrentSubclassDetector` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
+| Sin | What it flags |
+|---|---|
+| `ConcurrentSubclass` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
 
 #### `backend/laravel-idioms`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ConfigRead` | `ConfigReadDetector` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
-| `ContainerReach` | `ContainerReachDetector` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
-| `FacadeCall` | `FacadeCallDetector` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
-| `MassUpdateAtCallSite` | `MassUpdateAtCallSiteDetector` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
-| `ModelMutationAtCallSite` | `ModelMutationAtCallSiteDetector` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
-| `RawRequestInput` | `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
-| `RequestAccessorRecast` | `RequestAccessorRecastDetector` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
+| Sin | What it flags |
+|---|---|
+| `ConfigRead` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
+| `ContainerReach` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
+| `FacadeCall` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
+| `MassUpdateAtCallSite` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
+| `ModelMutationAtCallSite` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
+| `RawRequestInput` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
+| `RequestAccessorRecast` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
 
 #### `backend/spatie-data`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `AllNullableData` | `AllNullableDataDetector` | A Spatie Data class whose every promoted field is NULLABLE. |
-| `DataMethodHintCollision` | `DataMethodHintCollisionDetector` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
-| `ManualHydrationLoop` | `ManualHydrationLoopDetector` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
-| `NewDataObject` | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
-| `NonFinalData` | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
+| Sin | What it flags |
+|---|---|
+| `AllNullableData` | A Spatie Data class whose every promoted field is NULLABLE. |
+| `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
+| `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
+| `NewDataObject` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
+| `NonFinalData` | A Spatie `Data` class that is not declared `final`. |
 
 ### Frontend
 
 #### `frontend/vue-components`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `CompoundInlineComponent` | `CompoundInlineComponentDetector` | A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`, `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`) are filled with a substantial body right here in the parent template, instead of living in its own component. |
-| `DeepDataReach` | `DeepDataReachDetector` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
-| `DeepNested` | `DeepNestedDetector` | A template nested far too deep — an element many levels in that still has several more levels of markup beneath it. |
-| `DuplicateElement` | `DuplicateElementDetector` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
-| `PropDrilling` | `PropDrillingDetector` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
-| `PropMutation` | `PropMutationDetector` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
+| Sin | What it flags |
+|---|---|
+| `CompoundInlineComponent` | A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`, `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`) are filled with a substantial body right here in the parent template, instead of living in its own component. |
+| `DeepDataReach` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
+| `DeepNested` | A template nested far too deep — an element many levels in that still has several more levels of markup beneath it. |
+| `DuplicateElement` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
+| `PropDrilling` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
+| `PropMutation` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
 
 #### `frontend/vue-control-flow`
 
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ControlFlowOnElement` | `ControlFlowOnElementDetector` | A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a real element or component instead of a `<template>`. |
-| `IndexAsKey` | `IndexAsKeyDetector` | A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`. |
-| `LoopWithCondition` | `LoopWithConditionDetector` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
-| `SwitchCase` | `SwitchCaseDetector` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
+| Sin | What it flags |
+|---|---|
+| `ControlFlowOnElement` | A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a real element or component instead of a `<template>`. |
+| `IndexAsKey` | A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`. |
+| `LoopWithCondition` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
+| `SwitchCase` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
 
 <!-- END: detectors -->
 
@@ -431,19 +468,50 @@ files that get written are scoped.
 
 ## Developing detectors
 
-A detector is a few lines of fluent AST query. Before writing one, load the
-project skills (via Claude Code's Skill tool): **`writing-detectors`**,
-**`detector-engine`**, **`detector-fixtures`**. The cardinal rule is AST/semantic
-detection over name matching. See [`CLAUDE.md`](CLAUDE.md); each sin is its own class
-under `src/Sins/`, and a detector references one.
+A rule of your own is three small classes — a **skill** that teaches the fix, a
+**detector** that finds the sin, and (optionally) your own **AST vocabulary** so the
+detector reads like a built-in. Before you start, load the project skills via Claude
+Code's Skill tool: **`writing-detectors`**, **`detector-engine`**,
+**`detector-fixtures`**. The rule throughout: classify by what the AST/type **is**,
+never by a name or a hardcoded list.
 
-A detector composes the fluent query so it reads like a sentence — a selector opens
-it, `where`/`reject` narrow it (one check per line), a terminal returns the matches.
-`FacadeCallDetector` flags a Laravel facade call, then peels off every legitimate
-exception:
+### A skill
+
+The teaching half — the `SKILL.md` an agent reads to fix a sin. Each is its own class
+under `Skills/{Backend,Frontend}/` (auto-discovered by `Skills\Catalog`);
+`composer sins` renders it to a `SKILL.md`, with the bad→good block pulled straight
+from the fixture:
 
 ```php
-// in YOUR codebase — register it with `->register(FacadeCallDetector::class)`
+namespace App\Commandments;
+
+use JesseGall\CodeCommandments\Skills\Skill;
+use JesseGall\CodeCommandments\Skills\Tier;
+
+final class VehicleAssembly extends Skill
+{
+    public function __construct()
+    {
+        parent::__construct(slug: 'vehicle-assembly', tier: Tier::Mandatory, order: 1);
+    }
+
+    public function title(): string       { return 'Vehicle assembly — wire the wheels'; }
+    public function description(): string { return 'WHEN to build a vehicle clause: always through Vehicle::assemble(), which attaches its wheels and defaults.'; }
+    public function intro(): string       { return 'A clause is only whole once it has wheels — building one raw skips the assembler that attaches them.'; }
+    public function summary(): string     { return 'assemble clauses via Vehicle::assemble(); never `new` them raw.'; }
+    public function principle(): string   { return 'The assembler is the single place a clause becomes road-worthy: it wires the wheels, the defaults, the invariants. A raw `new` ships a clause that looks built but rolls on nothing.'; }
+}
+```
+
+### A detector
+
+A detector is a few lines of fluent AST query that reads like a sentence — a
+selector opens it, `where`/`reject` narrow it (one check per line), a terminal
+returns the matches. It references a **sin** (its own class under `Sins/`, which
+names the skill that fixes it). `FacadeCallDetector` flags a Laravel facade call,
+then peels off every legitimate exception:
+
+```php
 namespace App\Commandments;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
@@ -454,7 +522,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 
 final class FacadeCallDetector implements Detector
 {
-    // the sin it points at (skill + description)
+    // the sin it points at (names the skill + description)
     public function sin(): Sin { return new FacadeCall(); }
 
     public function find(Codebase $codebase): array
@@ -475,23 +543,16 @@ final class FacadeCallDetector implements Detector
 }
 ```
 
-Notice there's no list of facade names — it matches the framework's facade
-*namespace*, resolved from the file's imports. That's the cardinal rule: classify by
-what the AST/type **is**, never by a name or a hardcoded list. A rule bound to a
-package can also implement `RequiresPackage` on its sin, so it's skipped on projects
-that don't use that package.
+No list of facade names — it matches the framework's facade *namespace*, resolved
+from the file's imports. A rule bound to a package can also implement
+`RequiresPackage` on its sin, so it's skipped on projects that don't use that package.
 
-### Teaching the node your own vocabulary
+### Your own AST vocabulary
 
-Your detectors can read as cleanly as the built-ins. Subclass `NodeMatch`, add a
-domain predicate composed from the engine's helpers, and register it with
-`Config::decorate` — the query then wraps *every* match in your class, so the
-predicate is just a method on the node:
-
-Say your app has `App\Vehicles\*Clause` value objects that must be built through
-`Vehicle::assemble()` (which wires their wheels); constructing one raw with `new`
-leaves it wheel-less. Three small pieces — a node with the predicate, the sin it
-points at, and the detector that composes them:
+Want `$n->isBareVehicleClause()` to read as cleanly as a built-in predicate? Subclass
+`NodeMatch`, add the domain predicate composed from the engine's helpers, and register
+it with `Config::decorate` — the query then wraps *every* match in your class. Here it
+is with its sin (pointing at the `VehicleAssembly` skill above) and detector:
 
 ```php
 namespace App\Commandments;
@@ -500,9 +561,8 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 
-// your own node type — a domain predicate composed from the engine's helpers
+// the node — a domain predicate composed from the engine's helpers
 final class VehicleNode extends NodeMatch
 {
     public function isBareVehicleClause(): bool
@@ -514,20 +574,21 @@ final class VehicleNode extends NodeMatch
     }
 }
 
-// the sin it flags — name, the skill that teaches the fix (a shipped one, or your own), rule
+// the sin — points at the VehicleAssembly skill above
 final class BareVehicleClause extends Sin
 {
     public function __construct()
     {
         parent::__construct(
             name: 'bare-vehicle-clause',
-            skill: ValueObjects::class,
+            skill: VehicleAssembly::class,
             description: 'A vehicle clause built with `new` — it never declares its wheels',
             rule: 'Assemble a clause with `Vehicle::assemble()` so its wheels are wired; never `new` it raw.',
         );
     }
 }
 
+// the detector — composes the decorated node's predicate
 final class BareVehicleClauseDetector implements Detector
 {
     public function sin(): Sin { return new BareVehicleClause(); }
@@ -542,6 +603,8 @@ final class BareVehicleClauseDetector implements Detector
     }
 }
 ```
+
+Then register the node and the detector in your config:
 
 ```php
 // .commandments/config.php

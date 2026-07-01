@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Catalog as Scribes;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
+use JesseGall\CodeCommandments\Skills\Catalog as SkillsCatalog;
 
 /** Package/framework-bound rules (Spatie Data, Laravel, concurrent) sort AFTER the universal ones. */
 $bound = static fn ($detector): int => (int) ($detector->sin() instanceof RequiresPackage);
@@ -74,11 +75,11 @@ $engineDetectors = static function (string $engine) use ($bySkill, $shortName, $
         }
 
         $lines[] = "#### `{$skill}`\n";
-        $lines[] = '| Sin | Detector | What it flags |';
-        $lines[] = '|---|---|---|';
+        $lines[] = '| Sin | What it flags |';
+        $lines[] = '|---|---|';
 
         foreach ($detectors as $detector) {
-            $lines[] = '| `' . $shortName($detector->sin()) . '` | `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
+            $lines[] = '| `' . $shortName($detector->sin()) . '` | ' . $summary($detector) . ' |';
         }
 
         $lines[] = '';
@@ -151,7 +152,43 @@ $scribeLines = [
 
 $scribesBlock = "\n" . implode("\n", $scribeLines) . "\n";
 
-// ---- Splice both blocks in place ------------------------------------------
+// ---- Skills table (split by engine) ---------------------------------------
+
+$skillList = SkillsCatalog::all();
+usort($skillList, static fn ($a, $b): int => $a->slug <=> $b->slug);
+
+/**
+ * The compact `| Skill | What it teaches |` rows for one engine.
+ *
+ * @return list<string>
+ */
+$engineSkills = static function (string $engine) use ($skillList, $cell): array {
+    $lines = ['| Skill | What it teaches |', '|---|---|'];
+
+    foreach ($skillList as $skill) {
+        if (str_starts_with($skill->slug, "{$engine}/")) {
+            $lines[] = '| `' . $skill->slug . '` | ' . $cell((string) preg_replace('/\s+/', ' ', $skill->summary())) . ' |';
+        }
+    }
+
+    return $lines;
+};
+
+$skillLines = [
+    '_' . count($skillList) . ' skills._',
+    '',
+    '### Backend',
+    '',
+    ...$engineSkills('backend'),
+    '',
+    '### Frontend',
+    '',
+    ...$engineSkills('frontend'),
+];
+
+$skillsBlock = "\n" . implode("\n", $skillLines) . "\n";
+
+// ---- Splice all blocks in place -------------------------------------------
 
 /**
  * Replace the content between a `<!-- BEGIN: $name … -->` and `<!-- END: $name -->`.
@@ -174,6 +211,7 @@ $replaceSection = static function (string $readme, string $name, string $content
 $readme = (string) file_get_contents($readmePath);
 $updated = $replaceSection($readme, 'detectors', $detectorsBlock);
 $updated = $replaceSection($updated, 'scribes', $scribesBlock);
+$updated = $replaceSection($updated, 'skills', $skillsBlock);
 
 if ($updated === $readme) {
     echo "README already current.\n";
