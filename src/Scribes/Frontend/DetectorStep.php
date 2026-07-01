@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Vue\ComponentGraph;
 use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Vue\Detector;
 use JesseGall\CodeCommandments\Vue\PropTypes;
+use JesseGall\CodeCommandments\WorkingCopy;
 
 /**
  * Runs a {@see Repentable} FRONTEND detector's scribe over the Vue components, fed the
@@ -24,9 +25,9 @@ final class DetectorStep extends BaseDetectorStep
 {
     public function __construct(private readonly Detector&Repentable $detector) {}
 
-    public function run(string $path, Scope $scope): array
+    public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
     {
-        $codebase = VueCodebase::scan($path);
+        $codebase = VueCodebase::scan($path, $overlay);
         $scribe = $this->scribe();
 
         // An extractor reuses an existing component before creating a duplicate, and traces a

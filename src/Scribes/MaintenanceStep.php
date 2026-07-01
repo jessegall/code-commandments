@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
+use JesseGall\CodeCommandments\WorkingCopy;
 
 /**
  * A chain step that runs a self-querying maintenance {@see Scribe} over the PHP AST —
@@ -20,8 +21,8 @@ final class MaintenanceStep implements ScribeStep
         return $this->scribe->name();
     }
 
-    public function run(string $path, Scope $scope): array
+    public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
     {
-        return $this->scribe->rewrites(AstCodebase::scan($path), $scope);
+        return $this->scribe->rewrites(AstCodebase::scan($path, overlay: $overlay), $scope);
     }
 }

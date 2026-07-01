@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
@@ -66,6 +67,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null */
     private ?array $nodeBuckets = null;
 
+    /** @var array<string, string>|null */
+    private ?array $sourceByPath = null;
+
     private function __construct(private readonly array $files) {}
 
     /**
@@ -127,13 +131,18 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      *
      * @param  string|list<string>  $path  one source root, or several
      * @param  \Closure(int, int): void|null  $onProgress
+     * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
      */
-    public static function scan(string|array $path, ?\Closure $onProgress = null): self
+    public static function scan(string|array $path, ?\Closure $onProgress = null, WorkingCopy $overlay = new WorkingCopy()): self
     {
         $paths = [];
 
         foreach ((array) $path as $root) {
             foreach (self::phpFilesIn($root) as $file) {
+                $paths[$file] = true;
+            }
+
+            foreach ($overlay->createdUnder($root, '.php') as $file) {
                 $paths[$file] = true;
             }
         }
@@ -143,9 +152,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $files = [];
 
         foreach ($paths as $index => $file) {
-            $code = @file_get_contents($file);
+            $code = $overlay->read($file);
 
-            if ($code !== false) {
+            if ($code !== null) {
                 $files[] = self::parse($code, $file);
             }
 
@@ -317,6 +326,27 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function files(): array
     {
         return $this->files;
+    }
+
+    /**
+     * The SOURCE a file was parsed from — the overlay-aware content, so a scribe splices
+     * against exactly the bytes its node offsets index, never a stale `file_get_contents`
+     * (which, mid-`repent`, would predate the same run's earlier edits). Null when the
+     * codebase doesn't hold that path.
+     */
+    public function sourceOf(string $path): ?string
+    {
+        $this->sourceByPath ??= array_reduce(
+            $this->files,
+            static function (array $map, ParsedFile $file): array {
+                $map[$file->path] = $file->source;
+
+                return $map;
+            },
+            [],
+        );
+
+        return $this->sourceByPath[$path] ?? null;
     }
 
     /**
