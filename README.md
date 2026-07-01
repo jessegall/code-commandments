@@ -1,6 +1,6 @@
 # Code Commandments
 
-> A compiler for architecture.
+> An architecture linter for PHP & Vue — built to drive AI coding agents.
 
 **code-commandments** judges a PHP **and** Vue codebase against a set of
 architectural disciplines and reports each violation — a "sin" — as a `file:line`
@@ -186,11 +186,14 @@ whole fixture and fails if either:
 - an **unmarked** spot is flagged (a false positive).
 
 On top of that, each detector must fire on **≥3 genuinely different** examples (not
-three copies of the same shape), and every detector keeps a **"righteous twin"** —
-a look-alike that is *correct* and must **not** be flagged. That twin is what stops
-a detector from being trigger-happy. It's a simple idea that makes adding a
-detector safe: write the marker, and the fixture tells you the moment you break
-something.
+three copies of the same shape).
+
+And the nice part: **any unmarked code is already "righteous."** The whole rest of
+the fixture is the false-positive guard — flagging an *unmarked* spot fails the run —
+so you never have to mark "good" code. The `#[Righteous]` / `<!-- @righteous -->`
+marker is entirely **optional**, and used for one thing only: to pick a concrete
+*good-code example* for the generated skill docs (the bad→good block). One per
+detector is plenty.
 
 ## Sins & detectors
 
