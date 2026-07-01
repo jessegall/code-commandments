@@ -152,8 +152,10 @@ This is the part that keeps the detectors honest. Every detector is proven again
 a **self-checking fixture** — a small, deliberately-imperfect example app that is
 *never run*, only scanned.
 
-You mark the exact spots where a detector *should* fire — a `#[Sinful(...)]`
-attribute in PHP, a `<!-- @sin ... -->` comment in Vue:
+You mark the exact spots where a detector *should* fire:
+
+- in PHP, a `#[Sinful(...)]` attribute;
+- in Vue, a `<!-- @sin ... -->` comment.
 
 ```php
 // tests/Fixtures/shop/app/Orders/RefundService.php
