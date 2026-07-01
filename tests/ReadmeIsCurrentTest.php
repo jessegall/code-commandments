@@ -54,7 +54,8 @@ final class ReadmeIsCurrentTest extends TestCase
         $section = $this->section('skills');
 
         foreach (Skills::all() as $skill) {
-            $this->assertStringContainsString("`{$skill->slug}`", $section, "{$skill->slug} is missing — run `composer readme`.");
+            $class = (new \ReflectionClass($skill))->getShortName();
+            $this->assertStringContainsString("`{$class}`", $section, "{$skill->slug} ({$class}) is missing — run `composer readme`.");
         }
     }
 

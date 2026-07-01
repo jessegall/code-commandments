@@ -158,16 +158,16 @@ $skillList = SkillsCatalog::all();
 usort($skillList, static fn ($a, $b): int => $a->slug <=> $b->slug);
 
 /**
- * The compact `| Class | Slug | What it teaches |` rows for one engine.
+ * The compact `| Class | What it teaches |` rows for one engine.
  *
  * @return list<string>
  */
 $engineSkills = static function (string $engine) use ($skillList, $shortName, $cell): array {
-    $lines = ['| Class | Slug | What it teaches |', '|---|---|---|'];
+    $lines = ['| Class | What it teaches |', '|---|---|'];
 
     foreach ($skillList as $skill) {
         if (str_starts_with($skill->slug, "{$engine}/")) {
-            $lines[] = '| `' . $shortName($skill) . '` | `' . $skill->slug . '` | ' . $cell((string) preg_replace('/\s+/', ' ', $skill->summary())) . ' |';
+            $lines[] = '| `' . $shortName($skill) . '` | ' . $cell((string) preg_replace('/\s+/', ' ', $skill->summary())) . ' |';
         }
     }
 

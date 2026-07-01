@@ -150,6 +150,16 @@ deletes the file).
 
 - **AST/semantic detection over name matching** — always; derive the answer from
   the AST / resolved type, never a class/method/variable name or a hardcoded list.
+- **A package's AST knowledge lives on its OWN decorator node.** Everything specific to a
+  third-party package (Spatie Data, Laravel/Eloquent/MCP, jessegall/concurrent, php-types
+  `Option`) is a `NodeMatch`/`ElementMatch` subclass under `Ast\{Laravel,Spatie,Concurrent,PhpTypes}\*Node`
+  — the FQCNs stated ONCE — and a detector reaches it by **type-hinting the node in a `where`
+  closure** (`->where(fn (LaravelNode $n) => $n->isFacadeCall())`); the shared {@see Query} base
+  injects it by reflecting the closure's parameter type (same trick as `Config::configure`), so it
+  works on both engines with no wiring. That package's sin + detector + skill live in a per-package
+  subfolder (`Backend/Laravel/`, …), auto-enrolled by the recursive catalogs ({@see Discovery}). A
+  general detector must NOT reference a package node — if it needs a package concept only as an
+  *exemption*, pull it from the node's single source, never redeclare the literal.
 - **Overlap is allowed — do NOT strip a detector to avoid it.** One piece of code
   can genuinely be several sins (e.g. set-property-then-`save()` is BOTH
   `ModelMutationAtCallSite` AND read-then-mutate `FeatureEnvy`). Two detectors
