@@ -57,8 +57,10 @@ composer require --dev jessegall/code-commandments
 ## Usage
 
 ```bash
-# scan a codebase — sins grouped by the skill that fixes them
-vendor/bin/commandments judge src
+# scan — sins grouped by the skill that fixes them. No path needed: with none,
+# judge uses the source roots in .commandments/backend.canon (written on first run).
+vendor/bin/commandments judge
+vendor/bin/commandments judge src        # ...or point it at a path
 
 # scope to one skill (group) or one sin
 vendor/bin/commandments judge src --skill=exceptions
