@@ -8,29 +8,37 @@ that points at the **skill** which teaches the fix. It's built for driving an AI
 coding agent: the agent reads the skill, fixes at the source, and re-runs until
 clean.
 
-Two parse engines, one system: PHP files go through a php-parser AST, Vue SFCs
-through a purpose-built template + JS-expression AST (no Node, no regex for
-structure). A detector reads the same either way — the same fluent query — so the
-two sides stay symmetric.
+Think of it as a linter that cares about *architecture* rather than style. A
+linter tells you a line is too long; code-commandments tells you *this array
+should be a value object, and here's the discipline that explains why*.
 
-It pairs two layers:
+## How it works
 
-- **Skills** — the teaching layer, one per architectural subject, split by engine.
-  Backend (`backend/absence`, `backend/value-objects`, `backend/spatie-data`,
-  `backend/laravel-idioms`, `backend/type-honesty`, `backend/tell-dont-ask`, …) and
-  frontend (`frontend/vue-components`, `frontend/vue-control-flow`). The source of
-  truth for what good looks like.
-- **Sin Detectors** — thin finders over the fluent AST engine. Each finds **one**
-  sin and names the skill that fixes it; it carries no fix logic. Some are
-  auto-fixable — `repent` runs their scribes to rewrite the code.
+The loop is simple:
 
-Every detector is proven against a self-checking fixture (`#[Sinful]` attributes
-on the PHP side, `<!-- @sin -->` markers on the Vue side are the test spec), and
-must fire on ≥3 genuinely-different scenarios while leaving a righteous look-alike
-untouched.
+1. **Judge** — `commandments judge src` scans your code and prints every sin as a
+   `file:line`, grouped by the skill that teaches the fix.
+2. **Learn** — each sin points at a **skill**: a short doc describing the
+   discipline, with bad-vs-good examples. You (or your AI agent) read it.
+3. **Fix** — fix the sin at its source. Some sins are **auto-fixable** —
+   `commandments repent` rewrites them for you (see [Auto-fixing](#auto-fixing)).
+4. **Repeat** — re-run `judge` until it's clean (exit code `0`).
 
-The Detectors table below and each skill's `SKILL.md` are **generated** from the
-registered sins — run `composer readme` / `composer sins`; don't hand-edit them.
+Under the hood there are two layers:
+
+- **Skills** — the teaching layer, one per architectural subject. The source of
+  truth for what "good" looks like. They're split by engine: backend
+  (`backend/absence`, `backend/value-objects`, `backend/spatie-data`,
+  `backend/laravel-idioms`, …) and frontend (`frontend/vue-components`,
+  `frontend/vue-control-flow`).
+- **Sin Detectors** — small finders that read the code's syntax tree. Each detector
+  finds **one** kind of sin and names the skill that fixes it — it carries no fix
+  logic of its own. That separation is the whole point: detectors *find*, skills
+  *teach*, scribes *fix*.
+
+> The Detectors table further down, and each skill's `SKILL.md`, are **generated**
+> from the registered sins — run `composer readme` / `composer sins` to regenerate
+> them; don't hand-edit.
 
 ## Install
 
@@ -58,15 +66,64 @@ vendor/bin/commandments judge src --parallel=4
 # skip paths; list everything
 vendor/bin/commandments judge src --exclude=Generated,vendor
 vendor/bin/commandments judge --list
-
-# auto-fix the fixable sins (Spatie Data hints, redundant returns, Vue component
-# extraction, control-flow hoists); --dry-run previews a unified diff first
-vendor/bin/commandments repent src --dry-run
-vendor/bin/commandments repent resources/js
 ```
 
 Exit code is non-zero when sins are found. Files marked
 `@code-commandments-generated` are skipped automatically.
+
+## Auto-fixing
+
+Most sins are fixed by hand — the skill teaches *how*, because the right fix is
+usually domain-specific. But some sins have a single, mechanical correct fix, and
+for those the tool ships a **scribe**: code that rewrites the sin at its source.
+The `repent` command runs them.
+
+```bash
+# preview every auto-fix as a unified diff — nothing is written
+vendor/bin/commandments repent src --dry-run
+
+# apply them
+vendor/bin/commandments repent src
+vendor/bin/commandments repent resources/js
+```
+
+What `repent` can currently fix, for example:
+
+- **Spatie Data** — rename object factories to the `from<Type>` convention and
+  rewrite their call sites to `::from(...)`, and keep the `@method` docblock hints
+  in sync (the focused `commandments hints` command does just this part).
+- **Redundant arrow-fn return types** — strip a return type PHP already infers.
+- **Vue components** — extract an inline chunk into its own component (imports,
+  props, and call site included), and hoist a `v-if` chain into a `<SwitchCase>`.
+
+`repent` keeps applying scribes until nothing changes (a fixpoint), so one run
+fully converges — and `--dry-run` shows exactly what an apply would produce. Run
+it on the whole tree, or scope it with `--changes` / `--branch` like `judge`.
+
+## How detectors are tested
+
+This is the part that keeps the detectors honest. Every detector is proven against
+a **self-checking fixture** — a small, deliberately-imperfect example app that is
+*never run*, only scanned.
+
+You mark the exact spots where a detector *should* fire:
+
+- **PHP** — a `#[Sinful(SomeDetector::class)]` attribute on the offending class or
+  method.
+- **Vue** — a `<!-- @sin SomeDetector -->` comment above the offending element.
+
+Those markers **are** the test spec. The test harness runs every detector over the
+whole fixture and fails if either:
+
+- a marked spot is **missed** (the detector has a hole), or
+- an **unmarked** spot is flagged (a false positive).
+
+On top of that, each detector must fire on **≥3 genuinely different** examples (not
+three copies of the same shape), and every detector keeps a **"righteous twin"** —
+a look-alike that is *correct* and must **not** be flagged. That twin is what stops
+a detector from being trigger-happy. It's a simple idea that makes adding a
+detector safe: write the marker, and the fixture tells you the moment you break
+something.
 
 ## Detectors
 
