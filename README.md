@@ -280,7 +280,7 @@ _16 skills._
 
 ### Backend
 
-| Class | What it teaches |
+| Skill | What it teaches |
 |---|---|
 | `Absence` | modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw). |
 | `ConcurrentState` | state shared across requests/workers (`::for($id): Concurrent<self>`). |
@@ -299,7 +299,7 @@ _16 skills._
 
 ### Frontend
 
-| Class | What it teaches |
+| Skill | What it teaches |
 |---|---|
 | `VueComponents` | extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop. |
 | `VueControlFlow` | dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject. |
