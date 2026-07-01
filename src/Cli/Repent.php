@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
+use JesseGall\CodeCommandments\Detectors\Catalog;
+use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\ScribeChain;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
@@ -53,7 +55,8 @@ final class Repent
 
     private function apply(string $path, Scope $scope, ?string $only): int
     {
-        $written = new RewriteApplier()->apply($this->converge($path, $scope, $only));
+        $converged = $this->converge($path, $scope, $only);
+        $written = new RewriteApplier()->apply($converged);
 
         if ($written === []) {
             $this->out("\033[32m✓ Nothing to repent.\033[0m\n");
@@ -68,7 +71,40 @@ final class Repent
             $this->out('  ' . $this->relative($file, $path) . "\n");
         }
 
+        $this->scaffoldConstructs($converged, $written);
+
         return 0;
+    }
+
+    /**
+     * Generate the reusable constructs the fixes just applied depend on. A fix that rewrites toward
+     * a scaffolded helper (a `v-if` chain into `<SwitchCase>`) needs that helper to exist — so if a
+     * written file now uses one, {@see Scaffold} mints it (idempotent, so an existing one is left
+     * alone). `scaffold` and `repent` compose; running them in one command means a repented tree
+     * actually compiles instead of referencing a construct the project hasn't got yet.
+     *
+     * @param  array<string, string>  $converged  path => final content
+     * @param  list<string>  $written
+     */
+    private function scaffoldConstructs(array $converged, array $written): void
+    {
+        $output = implode("\n", array_map(static fn (string $file): string => $converged[$file] ?? '', $written));
+
+        foreach (Catalog::all() as $detector) {
+            if (! $detector instanceof Repentable) {
+                continue;
+            }
+
+            foreach ($detector->sin()->scaffolds() as $scaffold) {
+                // The construct is used when its name (the stub's file stem, e.g. `SwitchCase`)
+                // appears in what the fix wrote — only then is it needed, so nothing over-generates.
+                if (str_contains($output, pathinfo($scaffold->path, PATHINFO_FILENAME))) {
+                    new Scaffold()->run(['--sin=' . $detector->sin()->name()]);
+
+                    break;
+                }
+            }
+        }
     }
 
     private function preview(string $path, Scope $scope, ?string $only, ?string $file): int

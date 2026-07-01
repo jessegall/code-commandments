@@ -123,6 +123,35 @@ final class RepentTest extends TestCase
      * @param  list<string>  $args
      * @return array{code: int, out: string}
      */
+    public function test_repent_auto_scaffolds_the_construct_its_fix_introduces(): void
+    {
+        // A v-if/v-else-if switch chain: repent rewrites it into <SwitchCase> AND, because the fix
+        // now REFERENCES that component, mints the scaffolded component in the same run.
+        $dir = sys_get_temp_dir() . '/cc-repent-scaffold-' . uniqid('', true);
+        $this->projects[] = $dir;
+        mkdir($dir . '/resources/js/Pages', 0777, true);
+        file_put_contents($dir . '/composer.json', json_encode(['autoload' => ['psr-4' => ['App\\' => 'app/']]]));
+        file_put_contents($dir . '/resources/js/Pages/Badge.vue', <<<'VUE'
+            <template>
+              <span v-if="status === 'paid'">Paid</span>
+              <span v-else-if="status === 'pending'">Pending</span>
+              <span v-else>Unknown</span>
+            </template>
+            VUE);
+
+        $cwd = (string) getcwd();
+        chdir($dir);
+
+        try {
+            $this->repent(['resources/js']);
+        } finally {
+            chdir($cwd);
+        }
+
+        $this->assertFileExists($dir . '/resources/js/components/SwitchCase.vue', 'repent minted the component its fix introduced');
+        $this->assertStringContainsString('SwitchCase', (string) file_get_contents($dir . '/resources/js/Pages/Badge.vue'), 'the chain was rewritten to <SwitchCase>');
+    }
+
     private function repent(array $args): array
     {
         ob_start();

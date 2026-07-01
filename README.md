@@ -508,9 +508,9 @@ hoisted into a `<SwitchCase>`, one slot per case:
 </SwitchCase>
 ```
 
-`<SwitchCase>` is a tiny utility component the package **provides** — generate it into
-your project with `commandments scaffold` (see [Scaffolding](#scaffolding)); `repent`
-then rewrites the chains to use it.
+`<SwitchCase>` is a tiny utility component the package **provides**, and `repent`
+**scaffolds it for you automatically** the moment a fix introduces it — so the rewritten
+tree compiles, no extra step (see [Scaffolding](#scaffolding)).
 
 ### Running `repent`
 
@@ -594,9 +594,11 @@ A scaffold lands in the right root for its kind — a PHP helper under your PSR-
 root with your namespace injected, a Vue component under `resources/js` — and is
 **never overwritten**, so it's safe to re-run and safe to edit afterwards.
 
-`scaffold` and `repent` compose: `scaffold` **creates the construct**, `repent`
-**rewrites the call sites** to use it. For `switch-case`, that's: scaffold the
-`<SwitchCase>` component once, then `repent` the `v-if`/`v-else-if` chains into it.
+`scaffold` and `repent` compose — and `repent` runs `scaffold` **for you**: when a fix
+introduces a construct (rewriting a `v-if`/`v-else-if` chain into `<SwitchCase>`),
+`repent` mints that component in the same run, so the result compiles. Because scaffolding
+is idempotent, running `scaffold` yourself is only needed when you want the construct
+*before* repenting.
 
 ## Developing detectors
 
