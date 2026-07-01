@@ -19,6 +19,16 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class DataClumpDetector implements Detector
 {
+    private int $minClasses = 2; // the clump must recur across at least this many classes
+
+    /** Tune how many distinct classes must share the clump before it's flagged. */
+    public function minClasses(int $classes): static
+    {
+        $this->minClasses = $classes;
+
+        return $this;
+    }
+
     public function sin(): Sin
     {
         return new DataClump();
@@ -43,7 +53,7 @@ final class DataClumpDetector implements Detector
         $findings = [];
 
         foreach ($byClump as $matches) {
-            if ($this->distinctClasses($matches) >= 2) {
+            if ($this->distinctClasses($matches) >= $this->minClasses) {
                 array_push($findings, ...$matches);
             }
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\Backend\DetectorStep as BackendDetectorStep;
@@ -46,15 +47,19 @@ final class ScribeChain
         $fixers = [];
         $extractors = [];
 
+        // The project's config (disable / register / configure) shapes the detectors `repent`
+        // fixes too, so it agrees with `judge`.
+        $configured = Config::load()->apply(Detectors::backend(), Detectors::frontend());
+
         // Backend (PHP AST) Repentables — all in-place fixers.
-        foreach (Detectors::backend() as $detector) {
+        foreach ($configured['backend'] as $detector) {
             if ($detector instanceof Repentable) {
                 $fixers[] = new BackendDetectorStep($detector);
             }
         }
 
         // Frontend (Vue) Repentables — fixers in place, extractors run last.
-        foreach (Detectors::frontend() as $detector) {
+        foreach ($configured['frontend'] as $detector) {
             if (! $detector instanceof Repentable) {
                 continue;
             }

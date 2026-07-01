@@ -13,8 +13,8 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Detector;
 
 /**
- * A template nested far too deep — an element {@see MIN_DEPTH}+ levels in that still
- * has {@see MIN_REMAINING}+ levels of markup beneath it. That depth is unreadable and
+ * A template nested far too deep — an element {@see $maxDepth}+ levels in that still
+ * has {@see $maxRemaining}+ levels of markup beneath it. That depth is unreadable and
  * a sign a whole sub-tree wants to be its own component. Points at vue-components,
  * fixed by the same extract scribe.
  *
@@ -26,9 +26,25 @@ use JesseGall\CodeCommandments\Vue\Detector;
  */
 final class DeepNestedDetector implements Detector, Repentable
 {
-    private const int MAX_DEPTH = 8; // nested DEEPER than this is too deep
+    private int $maxDepth = 8; // nested DEEPER than this is too deep
 
-    private const int MAX_REMAINING = 3; // with MORE levels than this still below it
+    private int $maxRemaining = 3; // with MORE levels than this still below it
+
+    /** Tune how deep is "too deep" — an element nested deeper than this counts. */
+    public function maxDepth(int $levels): static
+    {
+        $this->maxDepth = $levels;
+
+        return $this;
+    }
+
+    /** Tune how much subtree beneath still makes it worth extracting. */
+    public function maxRemaining(int $levels): static
+    {
+        $this->maxRemaining = $levels;
+
+        return $this;
+    }
 
     public function sin(): Sin
     {
@@ -44,7 +60,7 @@ final class DeepNestedDetector implements Detector, Repentable
     {
         $boundaries = [];
 
-        foreach ($components->whereElement()->nestedDeeperThan(self::MAX_DEPTH, self::MAX_REMAINING)->get() as $element) {
+        foreach ($components->whereElement()->nestedDeeperThan($this->maxDepth, $this->maxRemaining)->get() as $element) {
             // From each too-deep element climb to its natural boundary; dedup the shared ones.
             $boundary = Boundary::at($element->node, $element->sfc)->root();
 
