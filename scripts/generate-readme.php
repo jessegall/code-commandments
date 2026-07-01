@@ -88,7 +88,7 @@ $engineDetectors = static function (string $engine) use ($bySkill, $shortName, $
     return $lines;
 };
 
-$lines = ["_{$detectorTotal} detectors across " . count($bySkill) . " skills._\n", "### Backend\n"];
+$lines = ["_{$detectorTotal} sins across " . count($bySkill) . " skills._\n", "### Backend\n"];
 $lines = [...$lines, ...$engineDetectors('backend'), "### Frontend\n", ...$engineDetectors('frontend')];
 
 $detectorsBlock = "\n" . implode("\n", $lines) . "\n";
@@ -158,16 +158,16 @@ $skillList = SkillsCatalog::all();
 usort($skillList, static fn ($a, $b): int => $a->slug <=> $b->slug);
 
 /**
- * The compact `| Skill | What it teaches |` rows for one engine.
+ * The compact `| Class | Slug | What it teaches |` rows for one engine.
  *
  * @return list<string>
  */
-$engineSkills = static function (string $engine) use ($skillList, $cell): array {
-    $lines = ['| Skill | What it teaches |', '|---|---|'];
+$engineSkills = static function (string $engine) use ($skillList, $shortName, $cell): array {
+    $lines = ['| Class | Slug | What it teaches |', '|---|---|---|'];
 
     foreach ($skillList as $skill) {
         if (str_starts_with($skill->slug, "{$engine}/")) {
-            $lines[] = '| `' . $skill->slug . '` | ' . $cell((string) preg_replace('/\s+/', ' ', $skill->summary())) . ' |';
+            $lines[] = '| `' . $shortName($skill) . '` | `' . $skill->slug . '` | ' . $cell((string) preg_replace('/\s+/', ' ', $skill->summary())) . ' |';
         }
     }
 

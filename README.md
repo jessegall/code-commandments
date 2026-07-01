@@ -75,7 +75,7 @@ vendor/bin/commandments install
 skills on every `composer update`; a `UserPromptSubmit` hook that reminds your agent
 of the rule above all — *a finding is a symptom, so trace it to where the bad value
 is born and fix it there, never at the call site*; the `.gitignore` entries; and a
-commented `.commandments/config.php` scaffold. Then it's ready — `judge` away.
+commented `.commandments/config.php` scaffold.
 
 ## Usage
 
@@ -154,21 +154,23 @@ This is the part that keeps the detectors honest. Every detector is proven again
 a **self-checking fixture** — a small, deliberately-imperfect example app that is
 *never run*, only scanned.
 
-You mark the exact spots where a detector *should* fire:
+You mark the exact spots where a detector *should* fire — by naming the **sin** (the
+stable, first-class concept). Naming the detector class works too, but the sin is the
+one to prefer:
 
 - in PHP, a `#[Sinful(...)]` attribute;
 - in Vue, a `<!-- @sin ... -->` comment.
 
 ```php
 // tests/Fixtures/shop/app/Orders/RefundService.php
-use JesseGall\CodeCommandments\Detectors\Backend\SwallowCatchDetector;
+use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class RefundService
 {
-    // the marker IS the assertion: SwallowCatchDetector must flag this method.
-    // if the detector doesn't fire here, the fixture test fails.
-    #[Sinful(SwallowCatchDetector::class)]
+    // the marker IS the assertion: the SwallowCatch detector must flag this method.
+    // if it doesn't fire here, the fixture test fails.
+    #[Sinful(SwallowCatch::class)]
     public function refund(Order $order): void
     {
         try {
@@ -184,12 +186,14 @@ final class RefundService
 <!-- tests/Fixtures/shop-frontend/components/UserBadge.vue -->
 <template>
   <!-- the marker IS the assertion: the next element must be flagged -->
-  <!-- @sin ControlFlowOnElementDetector -->
+  <!-- @sin ControlFlowOnElement -->
   <div v-if="user">{{ user.name }}</div>
 
   <!-- the good-code example; if this gets flagged, the test fails -->
-  <!-- @righteous ControlFlowOnElementDetector -->
-  <template v-if="user"><div>{{ user.name }}</div></template>
+  <!-- @righteous ControlFlowOnElement -->
+  <template v-if="user">
+    <div>{{ user.name }}</div>
+  </template>
 </template>
 ```
 
@@ -209,6 +213,53 @@ so you don't have to mark "good" code at all. You just need **one** `#[Righteous
 the generated skill docs (the bad→good block). That one is required; add more if
 they're illustrative.
 
+### Testing your own detectors
+
+The same harness proves the detectors *you* write. A custom detector declares where
+its own marked fixture files live by implementing `HasFixture` — put them anywhere in
+your repo, one directory per detector (several detectors may share one):
+
+```php
+use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Testing\HasFixture;
+
+final class NoRawSqlDetector implements Detector, HasFixture
+{
+    // the directory of .php files carrying #[Sinful(NoRawSql::class)] / #[Righteous] markers
+    public function fixturePath(): string
+    {
+        return __DIR__ . '/fixtures';
+    }
+
+    // sin() + find() as usual …
+}
+```
+
+Then a one-class test hands your detectors to a `DeclaredFixture` and extends the
+shipped `FixtureTestCase` — you get the exact checks the package runs on itself (every
+marked sin flagged, nothing unmarked flagged, ≥3 diverse scenarios):
+
+```php
+use JesseGall\CodeCommandments\Testing\DeclaredFixture;
+use JesseGall\CodeCommandments\Testing\Fixture;
+use JesseGall\CodeCommandments\Testing\FixtureTestCase;
+
+final class MyDetectorsTest extends FixtureTestCase
+{
+    protected function fixture(): Fixture
+    {
+        return new DeclaredFixture([
+            new NoRawSqlDetector(),
+            new NoDatePickerDetector(),   // a Frontend\Detector — .vue fixtures with <!-- @sin --> markers
+        ]);
+    }
+}
+```
+
+Frontend detectors work identically — implement `HasFixture`, point it at a directory
+of `.vue` files with `<!-- @sin -->` markers; `DeclaredFixture` routes each detector to
+its engine automatically.
+
 ## Skills
 
 The teaching layer — one discipline each, the doc an agent reads to fix a sin. Every
@@ -219,39 +270,39 @@ _16 skills._
 
 ### Backend
 
-| Skill | What it teaches |
-|---|---|
-| `backend/absence` | modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw). |
-| `backend/concurrent-state` | state shared across requests/workers (`::for($id): Concurrent<self>`). |
-| `backend/documentation` | concise, present-tense docs; rare inline comments; never narrate the past. |
-| `backend/enums-with-behaviour` | a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site). |
-| `backend/exceptions` | throwing or catching: named `::for()` factory exceptions, never swallow a failure. |
-| `backend/fix-at-the-source` | the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made. |
-| `backend/guard-clauses-and-flow` | validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline. |
-| `backend/laravel-idioms` | typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods. |
-| `backend/pass-the-object` | demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure). |
-| `backend/role-vocabulary` | a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract. |
-| `backend/spatie-data` | how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly. |
-| `backend/tell-dont-ask` | behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception. |
-| `backend/type-honesty` | a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`. |
-| `backend/value-objects` | give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.) |
+| Class | Slug | What it teaches |
+|---|---|---|
+| `Absence` | `backend/absence` | modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw). |
+| `ConcurrentState` | `backend/concurrent-state` | state shared across requests/workers (`::for($id): Concurrent<self>`). |
+| `Documentation` | `backend/documentation` | concise, present-tense docs; rare inline comments; never narrate the past. |
+| `EnumsWithBehaviour` | `backend/enums-with-behaviour` | a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site). |
+| `Exceptions` | `backend/exceptions` | throwing or catching: named `::for()` factory exceptions, never swallow a failure. |
+| `FixAtTheSource` | `backend/fix-at-the-source` | the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made. |
+| `GuardClausesAndFlow` | `backend/guard-clauses-and-flow` | validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline. |
+| `LaravelIdioms` | `backend/laravel-idioms` | typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods. |
+| `PassTheObject` | `backend/pass-the-object` | demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure). |
+| `RoleVocabulary` | `backend/role-vocabulary` | a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract. |
+| `SpatieData` | `backend/spatie-data` | how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly. |
+| `TellDontAsk` | `backend/tell-dont-ask` | behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception. |
+| `TypeHonesty` | `backend/type-honesty` | a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`. |
+| `ValueObjects` | `backend/value-objects` | give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.) |
 
 ### Frontend
 
-| Skill | What it teaches |
-|---|---|
-| `frontend/vue-components` | extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop. |
-| `frontend/vue-control-flow` | dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject. |
+| Class | Slug | What it teaches |
+|---|---|---|
+| `VueComponents` | `frontend/vue-components` | extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop. |
+| `VueControlFlow` | `frontend/vue-control-flow` | dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject. |
 <!-- END: skills -->
 
 ## Sins & detectors
 
 Every sin (the `--sin=` key) and what it flags, grouped by the skill that teaches
-the fix and split by engine. The detector that finds each is named `<Sin>Detector`
-(e.g. `SwallowCatch` → `SwallowCatchDetector`), so it's left off the table.
+the fix and split by engine. Each sin has one detector that finds it, named
+`<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_59 detectors across 16 skills._
+_59 sins across 16 skills._
 
 ### Backend
 
@@ -544,8 +595,53 @@ final class FacadeCallDetector implements Detector
 ```
 
 No list of facade names — it matches the framework's facade *namespace*, resolved
-from the file's imports. A rule bound to a package can also implement
-`RequiresPackage` on its sin, so it's skipped on projects that don't use that package.
+from the file's imports.
+
+A rule that only makes sense with a particular package declares that on its **sin**,
+via `RequiresPackage` — on a project without the package it's filtered out entirely
+(never runs, never shows in `--list`):
+
+```php
+namespace App\Commandments;
+
+use JesseGall\CodeCommandments\Ast\AstNode;
+use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
+use JesseGall\CodeCommandments\Sins\Sin;
+
+// RequiresPackage lives on the SIN, not the detector
+final class RawCarbonParse extends Sin implements RequiresPackage
+{
+    public function __construct()
+    {
+        parent::__construct(
+            name: 'raw-carbon-parse',
+            skill: DateHandling::class,
+            description: 'Carbon::parse() on a raw string — build the date through a typed factory instead',
+            rule: 'Build dates with CarbonImmutable::createFromFormat(); never Carbon::parse() untrusted input.',
+        );
+    }
+
+    // a Composer name for a backend sin (an npm name for a frontend one). No nesbot/carbon
+    // in the project → this rule is skipped: it never runs, lists, or reports.
+    public function requiredPackage(): string { return 'nesbot/carbon'; }
+}
+
+final class RawCarbonParseDetector implements Detector
+{
+    public function sin(): Sin { return new RawCarbonParse(); }
+
+    public function find(Codebase $codebase): array
+    {
+        return $codebase
+            ->whereStaticCall()
+            ->where(fn (AstNode $n) => $n->staticCallClassStartsWith('Carbon\\'))
+            ->where(fn (AstNode $n) => $n->staticCallMethodIs('parse'))
+            ->get();
+    }
+}
+```
 
 ### Your own AST vocabulary
 
