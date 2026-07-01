@@ -79,6 +79,14 @@ all every 25 tool uses — *a finding is a symptom, so trace it to where the bad
 is born and fix it there, never at the call site*; the `.gitignore` entries; and a
 commented `.commandments/config.php` scaffold.
 
+**Why re-surface it every 25 tool uses, when the skills already teach all this?**
+Because a long agent session *drifts*. The mandatory skills get loaded early, then
+slide out of the working context as the conversation grows — and the one rule that
+governs *how* every fix is made (trace to the source, don't launder the symptom) is
+exactly the thing an agent forgets under pressure. The heartbeat re-anchors it to the
+commandments, and nudges it to keep following the skills it loaded — at a fraction of
+the token cost of re-injecting on every single turn.
+
 ## Usage
 
 ```bash
