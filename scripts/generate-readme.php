@@ -113,11 +113,11 @@ $engineFixables = static function (string $engine) use ($repentables, $shortName
         return [];
     }
 
-    $lines = ['| Sin | Skill | The fix `repent` applies |', '|---|---|---|'];
+    $lines = ['| Sin | The fix `repent` applies |', '|---|---|'];
 
     foreach ($rows as $detector) {
         $sin = $detector->sin();
-        $lines[] = '| `' . $shortName($sin) . '` | `' . $sin->slug() . '` | ' . $cell($sin->rule) . ' |';
+        $lines[] = '| `' . $shortName($sin) . '` | ' . $cell($sin->rule) . ' |';
     }
 
     return $lines;

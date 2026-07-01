@@ -128,11 +128,15 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
 use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
+use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 
 return function (Config $config): void {
     $config
-        // Silence a rule — by its Sin class (drops every detector for it) or a Detector class.
+        // Silence a rule by its Sin class or Detector class.
         ->disable(NonFinalData::class)
+
+        // ...or silence a whole discipline by its Skill class.
+        ->disable(ValueObjects::class)
 
         // Add a detector that lives in YOUR codebase.
         ->register(\App\Commandments\NoRawSqlDetector::class)
@@ -480,26 +484,26 @@ Whole-tree PHP rewrites, run on every `repent`:
 
 ### Backend
 
-| Sin | Skill | The fix `repent` applies |
-|---|---|---|
-| `WrappingWithoutCause` | `backend/exceptions` | When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace. |
-| `LoopInvertedGuard` | `backend/guard-clauses-and-flow` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
-| `NestedTernary` | `backend/guard-clauses-and-flow` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
-| `RedundantElse` | `backend/guard-clauses-and-flow` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
-| `ManualHydrationLoop` | `backend/spatie-data` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
-| `NewDataObject` | `backend/spatie-data` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
-| `NonFinalData` | `backend/spatie-data` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
+| Sin | The fix `repent` applies |
+|---|---|
+| `WrappingWithoutCause` | When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace. |
+| `LoopInvertedGuard` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
+| `NestedTernary` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
+| `RedundantElse` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
+| `ManualHydrationLoop` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
+| `NewDataObject` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
+| `NonFinalData` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
 
 ### Frontend
 
-| Sin | Skill | The fix `repent` applies |
-|---|---|---|
-| `CompoundInlineComponent` | `frontend/vue-components` | Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component. |
-| `DeepDataReach` | `frontend/vue-components` | Pass the mid-object as a prop; don't reach deep into nested data from the template. |
-| `DeepNested` | `frontend/vue-components` | Extract a far-too-deeply-nested subtree into its own component. |
-| `DuplicateElement` | `frontend/vue-components` | Extract repeated identical markup into one component. |
-| `ControlFlowOnElement` | `frontend/vue-control-flow` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
-| `SwitchCase` | `frontend/vue-control-flow` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
+| Sin | The fix `repent` applies |
+|---|---|
+| `CompoundInlineComponent` | Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component. |
+| `DeepDataReach` | Pass the mid-object as a prop; don't reach deep into nested data from the template. |
+| `DeepNested` | Extract a far-too-deeply-nested subtree into its own component. |
+| `DuplicateElement` | Extract repeated identical markup into one component. |
+| `ControlFlowOnElement` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
+| `SwitchCase` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes (a fixpoint), so one run
