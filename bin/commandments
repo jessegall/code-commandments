@@ -61,6 +61,8 @@ $toBytes = static function (string $limit): int {
           commandments scaffold [--sin=NAME] [--dry-run]  # generate the reusable helper a sin's fix uses (namespace injected)
           commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]  # report a false positive (with --detector) or a global bug
           commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
+          commandments disable <sin>  # turn a rule off in .commandments/config.php
+          commandments enable <sin>   # turn it back on
           commandments install  # wire composer + the UserPromptSubmit reminder, then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
           commandments remind   # emit the cardinal rule as a UserPromptSubmit payload
@@ -105,6 +107,7 @@ $toBytes = static function (string $limit): int {
         'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
         'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
         'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),
+        'disable', 'enable' => (new JesseGall\CodeCommandments\Cli\Configure($command))->run($args),
         default => (static function () use ($command): int {
             fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
 

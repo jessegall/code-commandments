@@ -408,10 +408,10 @@ final class FacadeCallDetector implements Detector
     public function find(Codebase $codebase): array
     {
         return $codebase
-            ->whereStaticCall()                                                                  // every `X::y(...)`
-            ->where(fn (AstNode $n) => str_starts_with($n->staticCallClass() ?? '', 'Illuminate\\Support\\Facades\\')) // ...that's a facade
-            ->reject(fn (AstNode $n) => $n->staticCallMethod() === 'fake')                        // not `Mail::fake()` — a test double
-            ->reject(fn (AstNode $n) => $n->isOutsideClass())                                     // not in a route/config file
+            ->whereStaticCall()                                                            // every `X::y(...)`
+            ->where(fn (AstNode $n) => $n->staticCallClassStartsWith('Illuminate\\Support\\Facades\\')) // ...that's a facade
+            ->reject(fn (AstNode $n) => $n->staticCallMethodIs('fake'))                     // not `Mail::fake()` — a test double
+            ->reject(fn (AstNode $n) => $n->isOutsideClass())                               // not in a route/config file
             ->reject(fn (AstNode $n) => $codebase->extends($n->enclosingClassName(), 'Illuminate\\Support\\ServiceProvider')) // not in a provider
             ->get();
     }
