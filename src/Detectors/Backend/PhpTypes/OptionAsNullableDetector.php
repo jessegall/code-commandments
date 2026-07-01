@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Detectors\Backend;
+namespace JesseGall\CodeCommandments\Detectors\Backend\PhpTypes;
 
-use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Sins\Backend\OptionAsNullable;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\PhpTypes\OptionNode;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Sins\Backend\PhpTypes\OptionAsNullable;
+use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
  * An `Option` worn as a nullable — `?Option` / `Option | null`, or `unwrapOr(null)`
@@ -32,9 +33,11 @@ final class OptionAsNullableDetector implements Detector
     public function find(Codebase $codebase): array
     {
         return [
-            ...$codebase->where(static fn (AstNode $node): bool => $node->declaresNullableOption())->get(),
             ...$codebase
-                ->where(static fn (AstNode $node): bool => $node->isUnwrapOrNull())
+                ->where(static fn (OptionNode $node): bool => $node->declaresNullableOption())
+                ->get(),
+            ...$codebase
+                ->where(static fn (OptionNode $node): bool => $node->isUnwrapOrNull())
                 ->reject(static fn (AstNode $node): bool => $node->fillsArgument())
                 ->get(),
         ];

@@ -257,7 +257,7 @@ class Element
     }
 
     /** A kebab attribute name as its camelCase prop — `order-table` → `orderTable`. No regex. */
-    private static function camelize(string $name): string
+    protected static function camelize(string $name): string
     {
         $out = '';
         $upper = false;
@@ -520,7 +520,7 @@ class Element
         return md5($this->shape());
     }
 
-    private function shape(): string
+    protected function shape(): string
     {
         if ($this->isText()) {
             return trim($this->text) === '' ? '' : 'T';
@@ -557,10 +557,10 @@ class Element
     }
 
     /** A real component carries CONTENT (this many elements) … */
-    private const int MIN_COMPONENT_ELEMENTS = 6;
+    protected const int MIN_COMPONENT_ELEMENTS = 6;
 
     /** … AND its own internal STRUCTURE (this many levels — not a flat wrapper). */
-    private const int MIN_COMPONENT_DEPTH = 3;
+    protected const int MIN_COMPONENT_DEPTH = 3;
 
     /**
      * Is this element substantial enough to earn its own component file? A component is a
@@ -580,7 +580,7 @@ class Element
      * Collapse every run of whitespace to one space — text normalisation for the structural
      * signature, done char by char (no regex over the content).
      */
-    private static function collapseWhitespace(string $text): string
+    protected static function collapseWhitespace(string $text): string
     {
         $out = '';
         $pendingSpace = false;
@@ -603,7 +603,7 @@ class Element
         return $out;
     }
 
-    private function canonical(): string
+    protected function canonical(): string
     {
         if ($this->isText()) {
             $text = self::collapseWhitespace(trim($this->text));

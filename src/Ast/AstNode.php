@@ -408,7 +408,7 @@ class AstNode
      * `$x->a->b()`, `$x['k']` all root in `x`), or null when it isn't rooted in a
      * variable (a literal, a static call, a free function call).
      */
-    private static function variableRoot(Node $expr): ?string
+    protected static function variableRoot(Node $expr): ?string
     {
         while (true) {
             if ($expr instanceof Variable) {
@@ -520,7 +520,7 @@ class AstNode
      * The literal string value bound to string key $key in this array literal, or null
      * when the key is absent or its value isn't a plain string literal.
      */
-    private function literalForKey(string $key): ?string
+    protected function literalForKey(string $key): ?string
     {
         if (! $this->node instanceof Array_) {
             return null;
@@ -668,7 +668,7 @@ class AstNode
      * Does this function declare a parameter typed `callable` or `Closure`? Such a
      * method runs code it was handed — the hallmark of the dynamic-scope pattern.
      */
-    private function acceptsCallable(): bool
+    protected function acceptsCallable(): bool
     {
         foreach ($this->node->params as $param) {
             foreach (self::typeNames($param->type) as $name) {
@@ -686,7 +686,7 @@ class AstNode
      *
      * @return list<string>
      */
-    private static function typeNames(?Node $type): array
+    protected static function typeNames(?Node $type): array
     {
         if ($type instanceof NullableType) {
             return self::typeNames($type->type);
@@ -707,7 +707,7 @@ class AstNode
         return [];
     }
 
-    private static function thisPropertyName(Node $expr): ?string
+    protected static function thisPropertyName(Node $expr): ?string
     {
         return $expr instanceof PropertyFetch
             && $expr->var instanceof Variable
@@ -725,43 +725,6 @@ class AstNode
     {
         return $this->isFunctionDeclaration()
             && TypeName::nullableClass($this->node->returnType) !== null;
-    }
-
-    /**
-     * Does this declaration (param, property, or return) type something as a
-     * nullable `Option` — `?Option` / `Option | null` — an Option wearing a null
-     * costume?
-     */
-    public function declaresNullableOption(): bool
-    {
-        $type = match (true) {
-            $this->node instanceof Param => $this->node->type,
-            $this->node instanceof Property => $this->node->type,
-            $this->node instanceof ClassMethod, $this->node instanceof Function_ => $this->node->returnType,
-            default => null,
-        };
-
-        $class = TypeName::nullableClass($type);
-
-        return $class !== null && self::shortName($class) === 'Option';
-    }
-
-    /**
-     * Is this `->unwrapOr(null)` — collapsing an Option straight back to a nullable?
-     */
-    public function isUnwrapOrNull(): bool
-    {
-        if (! $this->node instanceof MethodCall && ! $this->node instanceof NullsafeMethodCall) {
-            return false;
-        }
-
-        if (! $this->node->name instanceof Identifier || $this->node->name->toString() !== 'unwrapOr') {
-            return false;
-        }
-
-        $args = $this->arguments();
-
-        return isset($args[0]) && new self($args[0]->value)->isNull();
     }
 
     /**
@@ -955,7 +918,7 @@ class AstNode
      *
      * @return list<string>
      */
-    private static function methodTagNames(string $docblock): array
+    protected static function methodTagNames(string $docblock): array
     {
         $names = [];
 
@@ -1288,7 +1251,7 @@ class AstNode
     /**
      * Walk up from $node (exclusive) testing each ancestor.
      */
-    private static function within(Node $node, callable $test): bool
+    protected static function within(Node $node, callable $test): bool
     {
         $current = $node->getAttribute('parent');
 
@@ -1306,7 +1269,7 @@ class AstNode
     /**
      * Is $node an argument to an `array_map(...)` call?
      */
-    private static function isArrayMapArgument(?Node $node): bool
+    protected static function isArrayMapArgument(?Node $node): bool
     {
         if (! $node instanceof Arg) {
             return false;
@@ -1319,7 +1282,7 @@ class AstNode
             && $call->name->toString() === 'array_map';
     }
 
-    private static function shortName(string $fqcn): string
+    protected static function shortName(string $fqcn): string
     {
         $parts = explode('\\', $fqcn);
 
@@ -1426,7 +1389,7 @@ class AstNode
     /**
      * @return list<Node>
      */
-    private function flattenOr(BooleanOr $node): array
+    protected function flattenOr(BooleanOr $node): array
     {
         $operands = [];
 
@@ -1441,7 +1404,7 @@ class AstNode
         return $operands;
     }
 
-    private static function comparedConstClass(Node $operand): ?string
+    protected static function comparedConstClass(Node $operand): ?string
     {
         if (! $operand instanceof Identical && ! $operand instanceof NotIdentical) {
             return null;
@@ -1485,7 +1448,7 @@ class AstNode
         return false;
     }
 
-    private function isInvoked(string $paramName): bool
+    protected function isInvoked(string $paramName): bool
     {
         foreach ((new NodeFinder)->findInstanceOf($this->node, FuncCall::class) as $call) {
             // Called directly (`$cb(…)`) or via a coalesced default (`($cb ?? …)(…)`).
@@ -1499,7 +1462,7 @@ class AstNode
         return false;
     }
 
-    private static function isNullableCallbackWithNullDefault(Param $param): bool
+    protected static function isNullableCallbackWithNullDefault(Param $param): bool
     {
         $isNull = $param->default instanceof ConstFetch && $param->default->name->toLowerString() === 'null';
 
@@ -1526,7 +1489,7 @@ class AstNode
         return false;
     }
 
-    private function normalisesNullFor(string $paramName): bool
+    protected function normalisesNullFor(string $paramName): bool
     {
         foreach ((new NodeFinder)->findInstanceOf($this->node, Variable::class) as $variable) {
             if ($variable->name !== $paramName) {
@@ -1594,7 +1557,7 @@ class AstNode
      * `?` and `\` stripped, union members sorted) so it can be compared against a
      * docblock type. Returns null when there is no native type.
      */
-    private static function typeToString(?Node $type): ?string
+    protected static function typeToString(?Node $type): ?string
     {
         if ($type === null) {
             return null;
@@ -1620,7 +1583,7 @@ class AstNode
         return null;
     }
 
-    private static function typeKey(string $type): string
+    protected static function typeKey(string $type): string
     {
         $type = strtolower(ltrim($type, '?\\'));
         $type = str_replace(['|null', 'null|'], '', $type);
@@ -1634,7 +1597,7 @@ class AstNode
         return $type;
     }
 
-    private static function scalarLiteral(Node $expr): ?string
+    protected static function scalarLiteral(Node $expr): ?string
     {
         return match (true) {
             $expr instanceof String_ => $expr->value,
@@ -1861,7 +1824,7 @@ class AstNode
         return $method === null ? $class : "{$class}::{$method}";
     }
 
-    private static function isArrayType(?Node $type): bool
+    protected static function isArrayType(?Node $type): bool
     {
         if ($type instanceof NullableType) {
             return self::isArrayType($type->type);
@@ -1870,7 +1833,7 @@ class AstNode
         return $type instanceof Identifier && $type->name === 'array';
     }
 
-    private function walkUp(callable $test): ?Node
+    protected function walkUp(callable $test): ?Node
     {
         $node = $this->node?->getAttribute('parent');
 

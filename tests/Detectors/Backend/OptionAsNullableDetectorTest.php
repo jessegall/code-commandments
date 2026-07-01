@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\OptionAsNullableDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\PhpTypes\OptionAsNullableDetector;
 use PHPUnit\Framework\TestCase;
 
 final class OptionAsNullableDetectorTest extends TestCase

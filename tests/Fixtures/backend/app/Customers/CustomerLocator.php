@@ -2,7 +2,7 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Sins\Backend\OptionAsNullable;
+use JesseGall\CodeCommandments\Sins\Backend\PhpTypes\OptionAsNullable;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
