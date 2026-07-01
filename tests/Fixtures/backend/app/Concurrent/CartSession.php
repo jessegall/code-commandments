@@ -2,7 +2,7 @@
 
 namespace Shop\Concurrent;
 
-use JesseGall\CodeCommandments\Sins\Backend\ConcurrentSubclass;
+use JesseGall\CodeCommandments\Sins\Backend\Concurrent\ConcurrentSubclass;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\Concurrent\Concurrent;

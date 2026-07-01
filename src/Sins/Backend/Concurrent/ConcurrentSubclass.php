@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Sins\Backend;
+namespace JesseGall\CodeCommandments\Sins\Backend\Concurrent;
 
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Skills\Backend\ConcurrentState;
+use JesseGall\CodeCommandments\Skills\Backend\Concurrent\ConcurrentState;
 
 final class ConcurrentSubclass extends Sin implements RequiresPackage
 {

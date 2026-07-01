@@ -2,7 +2,7 @@
 
 namespace Shop\Realtime;
 
-use JesseGall\CodeCommandments\Sins\Backend\ConcurrentSubclass;
+use JesseGall\CodeCommandments\Sins\Backend\Concurrent\ConcurrentSubclass;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

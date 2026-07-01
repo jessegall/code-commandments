@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Skills\Backend;
+namespace JesseGall\CodeCommandments\Skills\Backend\Concurrent;
 
+use JesseGall\CodeCommandments\Skills\Backend\Exceptions;
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 

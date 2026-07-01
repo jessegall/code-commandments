@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Detectors\Backend;
+namespace JesseGall\CodeCommandments\Detectors\Backend\Concurrent;
 
-use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Sins\Backend\ConcurrentSubclass;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Concurrent\ConcurrentNode;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Sins\Backend\Concurrent\ConcurrentSubclass;
+use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
  * A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy —
@@ -22,8 +23,6 @@ use JesseGall\CodeCommandments\Backend\Detector;
  */
 final class ConcurrentSubclassDetector implements Detector
 {
-    private const string CONCURRENT = 'JesseGall\\Concurrent\\Concurrent';
-
     public function sin(): Sin
     {
         return new ConcurrentSubclass();
@@ -32,7 +31,8 @@ final class ConcurrentSubclassDetector implements Detector
     public function find(Codebase $codebase): array
     {
         return $codebase
-            ->whereClassExtending(self::CONCURRENT)
+            ->whereClass()
+            ->where(static fn (ConcurrentNode $node): bool => $node->extendsConcurrent())
             ->get();
     }
 }
