@@ -30,9 +30,10 @@ if the codebase already uses them — structural, not narrative.) Everything els
 
 ## Rules
 
-- Comment what the code IS now, never its history — no "previously/used to/changed from" or task-ref archaeology.
+- Comment what the code IS now, never its history — no "formerly/used to be/refactored/no longer an X" archaeology; git holds the past.
 - Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
 - A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
+- State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 
 ## Bad → good
 
@@ -42,7 +43,7 @@ public function search(array $filters): array
 {
     $perPage = config('shop.catalog.per_page');
 
-    // used to filter in PHP, moved to the query builder in v3
+    // formerly filtered in PHP; refactored into the query builder in v3
     $term = $filters['q'];
     $sort = $filters['sort'];
 
@@ -52,7 +53,7 @@ public function search(array $filters): array
 // Good
 public function searchSorted(string $term): array
 {
-    // map the public sort flag to the indexed column
+    // the cached rank may no longer exist; the flag previously bound is used to scope the column
     $sort = $term === '' ? 'rank' : 'relevance';
 
     return $this->run($term, $sort, $this->settings->perPage);
@@ -116,17 +117,35 @@ public function awardLabel(int $points, string $name): string
 }
 ```
 
+```php
+// Bad
+public function get(string $code): SkuEntry
+{
+    // no magic here; a missing code yields an empty entry
+    return new SkuEntry();
+}
+
+// Good
+public function has(string $code): bool
+{
+    // a random probe key still reads cleanly through the same path
+    return $code !== '';
+}
+```
+
 ## When it fires
 
-- History/archaeology comments ("previously / used to / refactored / changed from", task refs) — `ArchaeologyCommentDetector`
+- History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted") — `ArchaeologyCommentDetector`
 - Multi-paragraph class docblock (class too big) — `BloatedDocblockDetector`
 - Docblock that only restates the typed signature (`@param Type $x`, no description) — `CeremonyDocblockDetector`
+- A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code") — `NegativeSpaceCommentDetector`
 
 ## Checklist
 
-- [ ] Comment what the code IS now, never its history — no "previously/used to/changed from" or task-ref archaeology.
+- [ ] Comment what the code IS now, never its history — no "formerly/used to be/refactored/no longer an X" archaeology; git holds the past.
 - [ ] Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
 - [ ] A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
+- [ ] State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 
 ## Related skills
 

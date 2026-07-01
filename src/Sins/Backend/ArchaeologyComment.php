@@ -14,8 +14,8 @@ final class ArchaeologyComment extends Sin
         parent::__construct(
             name: 'archaeology-comment',
             skill: Documentation::class,
-            description: "History/archaeology comments (\"previously / used to / refactored / changed from\", task refs)",
-            rule: "Comment what the code IS now, never its history — no \"previously/used to/changed from\" or task-ref archaeology."
+            description: "History/archaeology comments (\"formerly / used to be / refactored / no longer an X / was extracted\")",
+            rule: "Comment what the code IS now, never its history — no \"formerly/used to be/refactored/no longer an X\" archaeology; git holds the past."
         );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Shop\Reporting;
 
+use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
 use JesseGall\CodeCommandments\Sins\Backend\NestedTernary;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -11,8 +12,10 @@ final class GradeCalculator
 {
     private int $threshold = 60;
 
+    #[Sinful(NegativeSpaceComment::class)]
     public function summarise(int $score): string
     {
+        // not arbitrary — 60 is the configured pass mark
         $passed = $score >= $this->threshold;
 
         return $passed ? $this->band($score) : 'fail';

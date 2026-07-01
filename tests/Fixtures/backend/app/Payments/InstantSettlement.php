@@ -3,6 +3,7 @@
 namespace Shop\Payments;
 
 use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
+use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
 
 use Shop\Enums\PaymentMethod;
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -17,8 +18,10 @@ final class InstantSettlement
     public function __construct(private readonly int $retries = 0) {}
 
     #[Sinful(EnumCaseOrChain::class)]
+    #[Sinful(NegativeSpaceComment::class)]
     public function clearsImmediately(PaymentMethod $method): bool
     {
+        // not a coincidence — card and iDEAL both clear on the same rail
         if ($this->retries > 3) {
             return false;
         }

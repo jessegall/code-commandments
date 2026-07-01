@@ -25,7 +25,7 @@ class NodeMatch extends AstNode
     public function __construct(
         Node $node,
         public readonly ParsedFile $file,
-        public readonly ?Codebase $codebase = null,
+        public readonly Codebase $codebase,
     ) {
         parent::__construct($node);
     }

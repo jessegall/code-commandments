@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
-use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -27,7 +26,7 @@ final class MassUpdateAtCallSiteDetector implements Detector
     {
         return $codebase
             ->whereMethod('update')
-            ->where(static fn (AstNode $node): bool => $node->isMassArrayUpdate())
+            ->where(static fn (LaravelNode $node): bool => $node->isMassArrayUpdate())
             ->where(static fn (LaravelNode $node): bool => $node->receiverIsModel())
             ->get();
     }

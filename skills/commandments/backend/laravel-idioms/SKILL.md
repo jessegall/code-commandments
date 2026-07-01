@@ -56,7 +56,7 @@ public function search(array $filters): array
 {
     $perPage = config('shop.catalog.per_page');
 
-    // used to filter in PHP, moved to the query builder in v3
+    // formerly filtered in PHP; refactored into the query builder in v3
     $term = $filters['q'];
     $sort = $filters['sort'];
 

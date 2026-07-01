@@ -310,7 +310,7 @@ the fix and split by engine. Each sin has one detector that finds it, named
 `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_59 sins across 16 skills._
+_60 sins across 16 skills._
 
 ### Backend
 
@@ -326,9 +326,10 @@ _59 sins across 16 skills._
 
 | Sin | What it flags |
 |---|---|
-| `ArchaeologyComment` | A comment that narrates the code's past — `// previously...`, `// changed from...`, `// now it returns...`. |
+| `ArchaeologyComment` | A comment that narrates the code's past — `// formerly...`, `// used to be a...`, `// refactored into...`, `// no longer an X`. |
 | `BloatedDocblock` | A class whose docblock runs to multiple paragraphs. |
 | `CeremonyDocblock` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
+| `NegativeSpaceComment` | A comment that defends the code against a strawman — `// not random`, `// no magic here`, `// not a coincidence`, `// this isn't dead code`. |
 
 #### `backend/enums-with-behaviour`
 

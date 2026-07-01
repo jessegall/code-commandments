@@ -28,7 +28,7 @@ final class CatalogSearchService
     {
         $perPage = config('shop.catalog.per_page');
 
-        // used to filter in PHP, moved to the query builder in v3
+        // formerly filtered in PHP; refactored into the query builder in v3
         $term = $filters['q'];
         $sort = $filters['sort'];
 
@@ -47,14 +47,14 @@ final class CatalogSearchService
     }
 
     /**
-     * A comment that describes the present code, not its history.
+     * A comment that describes the present code and its runtime, in present tense.
      *
      * @return array<int, mixed>
      */
     #[Righteous(ArchaeologyComment::class)]
     public function searchSorted(string $term): array
     {
-        // map the public sort flag to the indexed column
+        // the cached rank may no longer exist; the flag previously bound is used to scope the column
         $sort = $term === '' ? 'rank' : 'relevance';
 
         return $this->run($term, $sort, $this->settings->perPage);

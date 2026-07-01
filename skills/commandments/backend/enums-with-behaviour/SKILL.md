@@ -82,6 +82,7 @@ enum TaxBand: int
 // Bad
 public function clearsImmediately(PaymentMethod $method): bool
 {
+    // not a coincidence — card and iDEAL both clear on the same rail
     if ($this->retries > 3) {
         return false;
     }

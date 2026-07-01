@@ -23,6 +23,6 @@ final class ConcurrentNode extends NodeMatch
      */
     public function extendsConcurrent(): bool
     {
-        return $this->codebase?->extends($this->enclosingClassName(), self::CONCURRENT) ?? false;
+        return $this->codebase->extends($this->enclosingClassName(), self::CONCURRENT);
     }
 }

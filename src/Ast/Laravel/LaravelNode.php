@@ -6,6 +6,10 @@ namespace JesseGall\CodeCommandments\Ast\Laravel;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
 
 /**
  * Laravel's (and Laravel MCP's) knowledge, as a node: the framework FQCNs live here once — the
@@ -52,7 +56,7 @@ final class LaravelNode extends NodeMatch
      */
     public function inServiceProvider(): bool
     {
-        return $this->codebase?->extends($this->enclosingClassName(), self::SERVICE_PROVIDER) ?? false;
+        return $this->codebase->extends($this->enclosingClassName(), self::SERVICE_PROVIDER);
     }
 
     /**
@@ -63,7 +67,7 @@ final class LaravelNode extends NodeMatch
     public function isEloquentCast(): bool
     {
         foreach (self::CAST_CONTRACTS as $contract) {
-            if ($this->codebase?->implements($this->enclosingClassName(), $contract) ?? false) {
+            if ($this->codebase->implements($this->enclosingClassName(), $contract)) {
                 return true;
             }
         }
@@ -79,6 +83,25 @@ final class LaravelNode extends NodeMatch
     {
         $type = ReceiverResolver::typeOf($this);
 
-        return $type !== null && ($this->codebase?->extends($type, self::MODEL) ?? false);
+        return $type !== null && $this->codebase->extends($type, self::MODEL);
+    }
+
+    /**
+     * Is this `$x->update([...])` on something other than `$this` — a bare mass array-update on
+     * another object (an Eloquent model at a call site, not the model's own intention method)?
+     */
+    public function isMassArrayUpdate(): bool
+    {
+        if (! $this->node instanceof MethodCall || ! $this->node->name instanceof Identifier || $this->node->name->toString() !== 'update') {
+            return false;
+        }
+
+        if ($this->node->var instanceof Variable && $this->node->var->name === 'this') {
+            return false;
+        }
+
+        $args = $this->arguments();
+
+        return isset($args[0]) && $args[0]->value instanceof Array_;
     }
 }

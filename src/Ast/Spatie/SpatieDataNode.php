@@ -34,7 +34,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function isDataClass(): bool
     {
-        return $this->codebase?->extends($this->enclosingClassName(), self::DATA) ?? false;
+        return $this->codebase->extends($this->enclosingClassName(), self::DATA);
     }
 
     /**
@@ -42,7 +42,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function isNewData(): bool
     {
-        return $this->codebase?->extends($this->newClassName(), self::DATA) ?? false;
+        return $this->codebase->extends($this->newClassName(), self::DATA);
     }
 
     /**
@@ -50,7 +50,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function onDataClass(): bool
     {
-        return $this->codebase?->extends($this->staticCallClass(), self::DATA) ?? false;
+        return $this->codebase->extends($this->staticCallClass(), self::DATA);
     }
 
     /**
@@ -60,8 +60,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function isRichData(): bool
     {
-        return $this->codebase !== null
-            && DataClassShape::forCodebase($this->codebase)->isRich($this->newClassName(), $this->codebase);
+        return DataClassShape::forCodebase($this->codebase)->isRich($this->newClassName(), $this->codebase);
     }
 
     /**

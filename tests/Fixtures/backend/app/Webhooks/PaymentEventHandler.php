@@ -26,7 +26,7 @@ final class PaymentEventHandler
     #[Sinful(MessageAtThrow::class)]
     public function handle(array $event): void
     {
-        // previously this lived inline in the StripeController
+        // formerly lived inline in the StripeController; was extracted here
         $type = $event['type'];
 
         $this->record($type, $event['id'] ?? throw new \InvalidArgumentException('event id is required'));
