@@ -79,7 +79,7 @@ final class Sync
             //     // Add a detector that lives in YOUR codebase.
             //     ->register(\App\Commandments\NoRawSqlDetector::class)
             //
-            //     // Tune a threshold — the detector is injected by the closure's type-hint.
+            //     // Tune a threshold — name the detector you want as the argument, then set it.
             //     ->configure(fn (\JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector $d) => $d->maxDepth(10));
         };
 
@@ -105,18 +105,19 @@ final class Sync
     /**
      * Everything the package GENERATES is regenerated, not hand-authored — the judge
      * checklist and any future state live under `.commandments/`, so its contents are
-     * ignored (but a project's hand-written `.commandments/config.php` / `repent.php`
-     * are kept tracked). The published skills must sit in `.claude/skills/` for the
-     * Skill tool to find them, so they're ignored there. Re-asserted on every sync so
-     * consumers pick it up on `composer update`. Idempotent.
+     * ignored. The ONE exception is `.commandments/config.php`, the project's own
+     * hand-written config, which stays tracked. The published skills must sit in
+     * `.claude/skills/` for the Skill tool to find them, so they're ignored there.
+     * Re-asserted on every sync so consumers pick it up on `composer update`. Idempotent.
      */
     private function ensureGitignored(string $path): void
     {
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
 
-        // Migrate an earlier bare `.commandments/` rule (which also hid the hand-authored config
-        // files) to the contents-only form below, which keeps `config.php` / `repent.php` tracked.
-        $stale = ['.commandments/', '# code-commandments generated artifacts (judge checklist + state)'];
+        // Strip earlier RULE forms so config.php is the only tracked exception: a bare
+        // `.commandments/` (which also hid config.php) and the earlier `!repent.php` negation.
+        // Comments are left as-is — harmless, and the current block re-adds its own below.
+        $stale = ['.commandments/', '!.commandments/repent.php'];
         $existing = implode("\n", array_filter(
             explode("\n", $existing),
             static fn (string $line): bool => ! in_array(trim($line), $stale, true),
@@ -124,10 +125,10 @@ final class Sync
 
         $entries = [
             // Ignore the generated artifacts (checklist + state), but NOT the config a project
-            // writes by hand — `.commandments/*` + negations, since a bare dir ignore can't be
-            // un-ignored per file.
-            '# code-commandments generated artifacts (checklist + state); config files stay tracked'
-                => ".commandments/*\n!.commandments/config.php\n!.commandments/repent.php",
+            // writes by hand — `.commandments/*` + a negation, since a bare dir ignore can't be
+            // un-ignored per file. `config.php` is the ONLY tracked file under the folder.
+            '# code-commandments generated artifacts (checklist + state); config.php stays tracked'
+                => ".commandments/*\n!.commandments/config.php",
             '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments/',
         ];
 

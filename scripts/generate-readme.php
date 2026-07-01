@@ -59,11 +59,11 @@ $lines = ["_{$detectorTotal} detectors across " . count($bySkill) . " skills._\n
 
 foreach ($bySkill as $skill => $detectors) {
     $lines[] = "### `{$skill}`\n";
-    $lines[] = '| Detector | What it flags |';
-    $lines[] = '|---|---|';
+    $lines[] = '| Sin | Detector | What it flags |';
+    $lines[] = '|---|---|---|';
 
     foreach ($detectors as $detector) {
-        $lines[] = '| `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
+        $lines[] = '| `' . $detector->sin()->name() . '` | `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
     }
 
     $lines[] = '';
