@@ -2,23 +2,35 @@
 
 > A compiler for architecture.
 
-**code-commandments** judges a PHP codebase against a set of architectural
-disciplines and reports each violation — a "sin" — as a `file:line` that points at
-the **skill** which teaches the fix. It's built for driving an AI coding agent:
-the agent reads the skill, fixes at the source, and re-runs until clean.
+**code-commandments** judges a PHP **and** Vue codebase against a set of
+architectural disciplines and reports each violation — a "sin" — as a `file:line`
+that points at the **skill** which teaches the fix. It's built for driving an AI
+coding agent: the agent reads the skill, fixes at the source, and re-runs until
+clean.
+
+Two parse engines, one system: PHP files go through a php-parser AST, Vue SFCs
+through a purpose-built template + JS-expression AST (no Node, no regex for
+structure). A detector reads the same either way — the same fluent query — so the
+two sides stay symmetric.
 
 It pairs two layers:
 
-- **Skills** — the teaching layer, one per architectural subject (`absence`,
-  `value-objects`, `spatie-data`, `exceptions`, `enums-with-behaviour`,
-  `laravel-idioms`, `role-vocabulary`, `concurrent-state`, `documentation`,
-  `fix-at-the-source`). The source of truth for what good looks like.
-- **Sin Detectors** — thin finders over a fluent AST engine. Each finds **one**
-  sin and names the skill that fixes it; it carries no fix logic.
+- **Skills** — the teaching layer, one per architectural subject, split by engine.
+  Backend (`backend/absence`, `backend/value-objects`, `backend/spatie-data`,
+  `backend/laravel-idioms`, `backend/type-honesty`, `backend/tell-dont-ask`, …) and
+  frontend (`frontend/vue-components`, `frontend/vue-control-flow`). The source of
+  truth for what good looks like.
+- **Sin Detectors** — thin finders over the fluent AST engine. Each finds **one**
+  sin and names the skill that fixes it; it carries no fix logic. Some are
+  auto-fixable — `repent` runs their scribes to rewrite the code.
 
-Every detector is proven against a self-checking fixture where `#[Sinful]`
-attributes are the test spec, and must fire on ≥3 genuinely-different scenarios
-while leaving a righteous look-alike untouched.
+Every detector is proven against a self-checking fixture (`#[Sinful]` attributes
+on the PHP side, `<!-- @sin -->` markers on the Vue side are the test spec), and
+must fire on ≥3 genuinely-different scenarios while leaving a righteous look-alike
+untouched.
+
+The Detectors table below and each skill's `SKILL.md` are **generated** from the
+registered sins — run `composer readme` / `composer sins`; don't hand-edit them.
 
 ## Install
 
@@ -46,6 +58,11 @@ vendor/bin/commandments judge src --parallel=4
 # skip paths; list everything
 vendor/bin/commandments judge src --exclude=Generated,vendor
 vendor/bin/commandments judge --list
+
+# auto-fix the fixable sins (Spatie Data hints, redundant returns, Vue component
+# extraction, control-flow hoists); --dry-run previews a unified diff first
+vendor/bin/commandments repent src --dry-run
+vendor/bin/commandments repent resources/js
 ```
 
 Exit code is non-zero when sins are found. Files marked
