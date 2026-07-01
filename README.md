@@ -126,16 +126,20 @@ itself:
 
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
 use JesseGall\CodeCommandments\Sins\Backend\NonFinalData;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 
 return function (Config $config): void {
     $config
-        // Silence a rule by its Sin class or Detector class.
+        // Silence a rule by its Sin class (drops the detector that finds it).
         ->disable(NonFinalData::class)
 
-        // ...or silence a whole discipline by its Skill class.
+        // ...or by a specific Detector class.
+        ->disable(FacadeCallDetector::class)
+
+        // ...or by a whole Skill class (every detector that discipline teaches).
         ->disable(ValueObjects::class)
 
         // Add a detector that lives in YOUR codebase.
