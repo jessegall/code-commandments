@@ -8,8 +8,8 @@ namespace JesseGall\CodeCommandments\Cli;
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
  * call to the consumer's composer `post-update-cmd` and `post-install-cmd` so the
  * skills + CLAUDE.md briefing refresh automatically on every `composer
- * update`/`install`, wires a `UserPromptSubmit` hook that re-injects the cardinal
- * rule every turn, then runs an initial sync. Idempotent.
+ * update`/`install`, wires a `PostToolUse` hook that surfaces the cardinal rule once
+ * every 25 tool uses, then runs an initial sync. Idempotent.
  */
 final class Install
 {
@@ -38,54 +38,62 @@ final class Install
             : "✓ composer hooks already wired.\n");
 
         fwrite(STDOUT, $reminded
-            ? "✓ Wired the trace-to-the-source reminder into the UserPromptSubmit hook.\n"
-            : "✓ UserPromptSubmit reminder already wired.\n");
+            ? "✓ Wired the trace-to-the-source reminder into the PostToolUse hook (every 25 tool uses).\n"
+            : "✓ PostToolUse reminder already wired.\n");
 
         return (new Sync)->run($args);
     }
 
     /**
-     * Register `commandments remind` as a `UserPromptSubmit` hook so the cardinal
-     * rule is re-injected on every turn. Idempotent, and MIGRATING: an older remind
-     * hook wired with a relative path (which dies off-root) is rewritten to the
-     * current cwd-robust command. Other hooks are left intact.
+     * Register `commandments remind` as a `PostToolUse` hook so the cardinal rule surfaces once
+     * every 25 tool uses. Idempotent, and MIGRATING: any older remind hook — including one wired
+     * under the previous `UserPromptSubmit` event — is stripped first, from every event, then the
+     * single current group is added under `PostToolUse`. Other hooks are left intact.
      */
     private function wireReminderHook(string $path): bool
     {
         /** @var array<string, mixed> $settings */
         $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
         $hooks = is_array($settings['hooks'] ?? null) ? $settings['hooks'] : [];
-        $prompts = is_array($hooks['UserPromptSubmit'] ?? null) ? $hooks['UserPromptSubmit'] : [];
 
         $alreadyCurrent = false;
-        $rebuilt = [];
 
-        // Strip every existing remind hook; we re-add exactly one current group below.
-        // A group left with no hooks is dropped; non-remind hooks are preserved.
-        foreach ($prompts as $group) {
-            if (! is_array($group) || ! is_array($group['hooks'] ?? null)) {
-                $rebuilt[] = $group;
+        // Strip every existing remind hook from every event (migrating off UserPromptSubmit).
+        foreach (['UserPromptSubmit', 'PostToolUse'] as $event) {
+            $groups = is_array($hooks[$event] ?? null) ? $hooks[$event] : [];
+            $rebuilt = [];
 
-                continue;
-            }
-
-            $kept = [];
-
-            foreach ($group['hooks'] as $hook) {
-                $command = is_array($hook) ? (string) ($hook['command'] ?? '') : '';
-
-                if (str_contains($command, 'commandments remind')) {
-                    $alreadyCurrent = $alreadyCurrent || $command === self::REMIND_HOOK;
+            foreach ($groups as $group) {
+                if (! is_array($group) || ! is_array($group['hooks'] ?? null)) {
+                    $rebuilt[] = $group;
 
                     continue;
                 }
 
-                $kept[] = $hook;
+                $kept = [];
+
+                foreach ($group['hooks'] as $hook) {
+                    $command = is_array($hook) ? (string) ($hook['command'] ?? '') : '';
+
+                    if (str_contains($command, 'commandments remind')) {
+                        $alreadyCurrent = $alreadyCurrent || ($event === 'PostToolUse' && $command === self::REMIND_HOOK);
+
+                        continue;
+                    }
+
+                    $kept[] = $hook;
+                }
+
+                if ($kept !== []) {
+                    $group['hooks'] = $kept;
+                    $rebuilt[] = $group;
+                }
             }
 
-            if ($kept !== []) {
-                $group['hooks'] = $kept;
-                $rebuilt[] = $group;
+            if ($rebuilt === []) {
+                unset($hooks[$event]);
+            } else {
+                $hooks[$event] = $rebuilt;
             }
         }
 
@@ -93,8 +101,9 @@ final class Install
             return false;
         }
 
-        $rebuilt[] = ['hooks' => [['type' => 'command', 'command' => self::REMIND_HOOK]]];
-        $hooks['UserPromptSubmit'] = $rebuilt;
+        $postToolUse = is_array($hooks['PostToolUse'] ?? null) ? $hooks['PostToolUse'] : [];
+        $postToolUse[] = ['hooks' => [['type' => 'command', 'command' => self::REMIND_HOOK]]];
+        $hooks['PostToolUse'] = $postToolUse;
         $settings['hooks'] = $hooks;
 
         @mkdir(dirname($path), 0755, true);
