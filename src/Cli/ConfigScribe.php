@@ -26,25 +26,23 @@ final class ConfigScribe
         /*
          | code-commandments configuration.
          |
-         | `paths()` lists the source roots `judge` and `repent` scan — auto-detected from
-         | composer.json (PSR-4 + app/src) on first run; edit it freely to adjust scope. Every
-         | detector is enabled by default; turn rules off with `commandments disable/enable <sin>`
-         | or by hand in the disable() call below.
+         | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
+         |             adjust scope, or run `commandments config reindex`).
+         | disable() — silence a rule by its Sin, Detector, or whole Skill class (or use
+         |             `commandments disable/enable <sin>`).
+         |
+         | Extend it inside the closure:
+         |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
+         |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
+         |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
          */
 
         return function (Config $config): void {
-            // The source roots scanned (auto-detected; edit to adjust scope):
             $config->paths(%ROOTS%);
 
-            // Silence rules — a Sin, a Detector, or a whole Skill class:
             $config->disable(
                 // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
             );
-
-            // Add your own:
-            //   $config->detector(\App\Commandments\NoRawSqlDetector::class);
-            //   $config->package(\App\Commandments\MyFrameworkPackage::class);
-            //   $config->configure(fn (\JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector $d) => $d->maxDepth(10));
         };
 
         PHP;
