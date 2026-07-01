@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -49,9 +50,10 @@ final class Judge
             return 2;
         }
 
-        // Apply the project's `.commandments/config.php` (disable / register / configure / decorate)
-        // to the shipped catalogs before the CLI `--skill`/`--sin` narrowing.
+        // Apply the project's `.commandments/config.php` (disable / detector / package / configure /
+        // decorate) to the shipped catalogs before the CLI `--skill`/`--sin` narrowing.
         $config = Config::load();
+        Exemptions::usePackages(...$config->packages());
         $configured = $config->apply(Catalog::backend(), Catalog::frontend());
         $detectors = $this->select($configured['backend'], $options->skill, $options->sin);
         $frontend = $this->select($configured['frontend'], $options->skill, $options->sin);

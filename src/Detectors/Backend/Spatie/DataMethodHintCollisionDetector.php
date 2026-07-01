@@ -12,9 +12,9 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataMethodHintCollision;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A Spatie `Data` class with a `@method` docblock tag that names a method the class
- * ACTUALLY declares — e.g. `@method static static fromCredential(...)` over a real
- * `fromCredential()`. The IDE reports "Method with same name already defined", because
+ * A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class
+ * ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real
+ * `fromCredential()`). The IDE reports "Method with same name already defined", because
  * `@method` is for the *invisible* magic overloads only: `::from()` dispatches to
  * `fromX()` factories and `::collect()` builds collections. The tag must describe
  * `from`/`collect`, never a concrete factory's own name. Points at spatie-data.

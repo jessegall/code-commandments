@@ -24,6 +24,9 @@ final class Exemptions
     /** The aggregated registry (every package's registrations), built once. */
     private static ?self $registry = null;
 
+    /** @var list<class-string<Package>> Consumer packages registered via config, beyond the shipped roster. */
+    private static array $extra = [];
+
     /**
      * Open (or continue) the exemption clause for a tag, to add rules to it.
      *
@@ -32,6 +35,19 @@ final class Exemptions
     public function exempt(string $tag): Clause
     {
         return $this->clauses[$tag] ??= new Clause();
+    }
+
+    /**
+     * Register the consumer's own {@see Package} classes (from `Config::package(...)`), beyond the
+     * shipped roster — the CLI calls this once, before any detector runs, so their exemptions are
+     * live for the scan. Rebuilds the aggregated registry on the next query.
+     *
+     * @param  class-string<Package>  ...$packages
+     */
+    public static function usePackages(string ...$packages): void
+    {
+        self::$extra = $packages;
+        self::$registry = null;
     }
 
     /**
@@ -55,7 +71,7 @@ final class Exemptions
 
         $registry = new self();
 
-        foreach (Catalog::all() as $package) {
+        foreach ([...Catalog::all(), ...array_map(static fn (string $class): Package => new $class, self::$extra)] as $package) {
             $package->register($registry);
         }
 

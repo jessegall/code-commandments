@@ -38,7 +38,7 @@ final class ConfigFile
             $config->disable();
 
             // Add your own:
-            //   $config->register(\App\Commandments\NoRawSqlDetector::class);
+            //   $config->detector(\App\Commandments\NoRawSqlDetector::class);
             //   $config->configure(fn (\JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector $d) => $d->maxDepth(10));
         };
 

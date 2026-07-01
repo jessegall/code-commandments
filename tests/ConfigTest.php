@@ -66,7 +66,7 @@ final class ConfigTest extends TestCase
 
     public function test_register_adds_a_custom_detector_routed_to_its_engine(): void
     {
-        $config = new Config()->register(ConfigTunableDetector::class, ConfigFrontendDetector::class);
+        $config = new Config()->detector(ConfigTunableDetector::class, ConfigFrontendDetector::class);
 
         $result = $config->apply([], []);
 
@@ -88,7 +88,7 @@ final class ConfigTest extends TestCase
     public function test_configure_a_registered_detector(): void
     {
         $config = new Config()
-            ->register(ConfigTunableDetector::class)
+            ->detector(ConfigTunableDetector::class)
             ->configure(fn (ConfigTunableDetector $d) => $d->limit(7));
 
         $result = $config->apply([], []);

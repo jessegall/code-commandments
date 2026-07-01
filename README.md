@@ -3,8 +3,8 @@
 > An architecture linter for PHP & Vue — built to drive AI coding agents.
 
 **code-commandments** judges a PHP **and** Vue codebase against a set of
-architectural disciplines and reports each violation — a "sin" — as a `file:line`
-that points at the **skill** which teaches the fix.
+architectural disciplines and reports each violation — a "sin" — as a `file:line` in
+your code, grouped under the **skill** that teaches the fix.
 
 It's built **first for AI coding agents**: point your agent at a codebase, and it
 reads the skill each sin names, fixes at the source, and re-runs until clean. You
@@ -51,7 +51,8 @@ Under the hood there are two layers:
 - **Sin Detectors** — small finders that read the code's syntax tree. Each detector
   finds **one** kind of sin and names the skill that fixes it — it carries no fix
   logic of its own. That separation is the whole point: detectors *find*, skills
-  *teach*, scribes *fix*.
+  *teach*, and — for the mechanically-fixable ones — *scribes* (deterministic
+  auto-fixers, see [Auto-fixing](#auto-fixing)) *fix*.
 
 > The tables further down (sins, detectors, auto-fixes), and each skill's
 > `SKILL.md`, are **generated** from the registered sins — run `composer readme` /
@@ -81,10 +82,11 @@ commented `.commandments/config.php` scaffold.
 ## Usage
 
 ```bash
-# scan — sins grouped by the skill that fixes them. No path needed: with none,
-# judge uses the source roots in .commandments/backend.canon (written on first run).
+# scan — sins grouped by the skill that fixes them. With no path, judge reads the
+# source roots from .commandments/backend.canon — a small list of directories to scan,
+# inferred from your composer.json and written on the first run (edit it to adjust scope).
 vendor/bin/commandments judge
-vendor/bin/commandments judge src                  # ...or point it at a path
+vendor/bin/commandments judge src                  # ...or point it at a path to override
 
 # scope to one skill (group) or one sin
 vendor/bin/commandments judge src --skill=exceptions
@@ -144,7 +146,7 @@ return function (Config $config): void {
         ->disable(ValueObjects::class)
 
         // Add a detector that lives in YOUR codebase.
-        ->register(\App\Commandments\NoRawSqlDetector::class)
+        ->detector(\App\Commandments\NoRawSqlDetector::class)
 
         // Tune thresholds — name the detector, then set it. Its setters chain, so
         // you can tune several knobs in one closure.
@@ -153,9 +155,12 @@ return function (Config $config): void {
 };
 ```
 
-`disable` / `register` / `configure` are the three moves. `configure` uses the
-closure's **first parameter type** to find the detector and hand it in, so you tune
-it by calling its own methods.
+Each move is named for what it registers: `disable` (silence a rule), `detector` (add
+your own finder), `configure` (tune a threshold), plus `decorate` (add an AST-node
+vocabulary) and `package` (register a framework's exemptions) — the last two are covered
+under [Developing detectors](#developing-detectors). `configure` uses the closure's
+**first parameter type** to find the detector and hand it in, so you tune it by calling
+its own methods.
 
 ## How detectors are tested
 
@@ -430,7 +435,7 @@ _59 sins across 16 skills._
 | Sin | What it flags |
 |---|---|
 | `AllNullableData` | A Spatie Data class whose every promoted field is NULLABLE. |
-| `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that names a method the class ACTUALLY declares — e.g. |
+| `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`). |
 | `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback. |
 | `NewDataObject` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
 | `NonFinalData` | A Spatie `Data` class that is not declared `final`. |
@@ -630,7 +635,7 @@ final class VehicleAssembly extends Skill
     }
 
     public function title(): string       { return 'Vehicle assembly — wire the wheels'; }
-    public function description(): string { return 'WHEN to build a vehicle clause: always through Vehicle::assemble(), which attaches its wheels and defaults.'; }
+    public function trigger(): string     { return 'WHEN to build a vehicle clause: always through Vehicle::assemble(), which attaches its wheels and defaults.'; }
     public function intro(): string       { return 'A clause is only whole once it has wheels — building one raw skips the assembler that attaches them.'; }
     public function summary(): string     { return 'assemble clauses via Vehicle::assemble(); never `new` them raw.'; }
     public function principle(): string   { return 'The assembler is the single place a clause becomes road-worthy: it wires the wheels, the defaults, the invariants. A raw `new` ships a clause that looks built but rolls on nothing.'; }
@@ -798,7 +803,7 @@ return fn (Config $config) => $config
     // optional — declare your vocabulary (register as many nodes as you like)
     ->decorate(\App\Commandments\VehicleNode::class, \App\Commandments\GarageNode::class)
     // the detector that speaks it
-    ->register(\App\Commandments\BareVehicleClauseDetector::class);
+    ->detector(\App\Commandments\BareVehicleClauseDetector::class);
 ```
 
 ### Teaching the engine about a package
@@ -856,11 +861,30 @@ final class AcmePackage extends Package
 ```
 
 That's exactly how the built-in `LaravelPackage` tags `Request`/`FormRequest`/MCP handlers,
-`rules()`/`schema()`/`casts()`, and Eloquent casts.
+`rules()`/`schema()`/`casts()`, and Eloquent casts — it ships inside the package, so it
+**auto-enrols** (like every built-in detector, sin, and skill). Your own `Package` lives in
+*your* codebase, which the package's glob never sees, so you register it in
+`.commandments/config.php` — the same file where you `disable`/`detector`/`configure`:
 
-**The tag can be anything** — including a detector's own class. Write a custom detector,
-publish its class as the tag, and any package (yours or a third party's) can register
-exemptions against it. Your detector just asks:
+```php
+// .commandments/config.php
+return fn (Config $config) => $config
+    ->package(\App\Commandments\AcmePackage::class);
+```
+
+> **What about the built-in `LaravelNode` / `SpatieDataNode` decorators — are those
+> registered?** No, and they don't need to be. A decorator node is injected purely by
+> **reflecting the `where` closure's parameter type**, so any `NodeMatch` subclass a detector
+> type-hints works with zero registration (that's why they work in the test fixture with no
+> config). `Config::decorate` is only for a consumer's *global default* wrap. Exemptions are
+> different — a detector can't "type-hint" a fact about your framework — which is why packages
+> exist and get registered.
+
+### Your own exemption tags
+
+A tag is just a class-string both sides agree on, so **it can be anything — including a
+detector's own class.** Write a custom detector, publish its class as the tag, and any
+package (yours or a third party's) can register exemptions against it. Your detector asks:
 
 ```php
 use JesseGall\CodeCommandments\Packages\Exemptions;
@@ -869,8 +893,10 @@ use JesseGall\CodeCommandments\Packages\Exemptions;
 ->reject(fn (AstNode $n) => Exemptions::has(self::class, $codebase, $n->enclosingClassName()))
 ```
 
-So two packages can exempt each other's types without either knowing the other exists —
-they only share a tag.
+If you want a *named* concept several detectors share (the way `Boundary` is read by both
+feature-envy and pass-the-object), ship an empty marker class as the tag and have each
+detector read it. Either way, two packages can exempt each other's types without either
+importing the other — they only share the tag.
 
 ## License
 

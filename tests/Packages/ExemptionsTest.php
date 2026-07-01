@@ -83,4 +83,32 @@ final class ExemptionsTest extends TestCase
 
         $this->assertFalse(Exemptions::has(self::class, $codebase, 'Foo'));
     }
+
+    public function test_a_consumer_package_registered_via_config_joins_the_registry(): void
+    {
+        $codebase = Codebase::fromString('<?php namespace App { class Widget {} }');
+
+        // Before registering: the consumer's own tag/class is unknown.
+        $this->assertFalse(Exemptions::has(self::class, $codebase, 'App\\Widget'));
+
+        Exemptions::usePackages(ConsumerPackage::class);
+
+        // Now its exemption is live — the same path the CLI takes from Config::package().
+        $this->assertTrue(Exemptions::has(ExemptionsTest::class, $codebase, 'App\\Widget'));
+    }
+
+    protected function tearDown(): void
+    {
+        // usePackages() sets a static; reset it so a consumer package can't leak into other tests.
+        Exemptions::usePackages();
+    }
+}
+
+/** A consumer's own package — registers an exemption under this test's class as the tag. */
+final class ConsumerPackage extends Package
+{
+    public function register(Exemptions $exemptions): void
+    {
+        $exemptions->exempt(ExemptionsTest::class)->classes('App\\Widget');
+    }
 }

@@ -21,13 +21,13 @@ use ReflectionNamedType;
  *   return function (Config $config): void {
  *       $config
  *           ->disable(NonFinalData::class, DeepNestingDetector::class)   // suppress a built-in
- *           ->register(MyCustomDetector::class)                          // add your own finder
+ *           ->detector(MyCustomDetector::class)                          // add your own finder
  *           ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)); // tune a threshold
  *   };
  *
  * {@see disable} takes a Detector, Sin, OR Skill class (a sin drops every detector that points at
  * it; a skill drops every detector it teaches the fix for);
- * {@see register} adds a detector living in the CONSUMER's codebase (the package can't glob it);
+ * {@see detector} adds a detector living in the CONSUMER's codebase (the package can't glob it);
  * {@see configure} takes a closure whose FIRST PARAMETER TYPE names the detector to tune — the
  * matching instance is reflected out of the configured set and handed in, so the closure just
  * calls its fluent setters. The package's own {@see Detectors\Catalog} stays pure (the fixtures
@@ -40,6 +40,9 @@ final class Config
 
     /** @var list<class-string<Detector>> Consumer detector classes to add. */
     private array $registered = [];
+
+    /** @var list<class-string<Packages\Package>> Consumer package classes to register exemptions from. */
+    private array $packages = [];
 
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
@@ -95,11 +98,37 @@ final class Config
      *
      * @param  class-string<Detector>  ...$detectors
      */
-    public function register(string ...$detectors): self
+    public function detector(string ...$detectors): self
     {
         $this->registered = [...$this->registered, ...$detectors];
 
         return $this;
+    }
+
+    /**
+     * Register a {@see Packages\Package} that lives in the consumer's own codebase (the package's
+     * glob only finds the built-in ones). Its {@see Packages\Package::register} exemptions then
+     * join the shared {@see Packages\Exemptions} registry — so your framework's types are exempt
+     * from the built-in rules, and a custom detector's tag can be fed by anyone.
+     *
+     * @param  class-string<Packages\Package>  ...$packages
+     */
+    public function package(string ...$packages): self
+    {
+        $this->packages = [...$this->packages, ...$packages];
+
+        return $this;
+    }
+
+    /**
+     * The consumer's own {@see Packages\Package} classes, as class-strings (none by default). The
+     * CLI hands these to {@see Packages\Exemptions::usePackages} before any detector runs.
+     *
+     * @return list<class-string<Packages\Package>>
+     */
+    public function packages(): array
+    {
+        return $this->packages;
     }
 
     /**

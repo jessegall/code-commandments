@@ -41,7 +41,10 @@ $summary = static function (object|string $subject) use ($cell): string {
         $text,
     );
     $text = trim((string) preg_replace('/\s+/', ' ', $text));
-    $first = preg_match('/^(.*?[.])(?:\s|$)/u', $text, $m) === 1 ? $m[1] : $text;
+    // The first sentence: a period that ENDS a sentence — followed by whitespace then a capital, or
+    // the end of the text. This skips mid-sentence abbreviations (`e.g.`, `i.e.`) whose period is
+    // followed by a lowercase word or a code span, so a cell never truncates on one.
+    $first = preg_match('/^(.*?[.])(?:\s+[A-Z]|\s*$)/u', $text, $m) === 1 ? $m[1] : $text;
 
     return $cell($first);
 };
