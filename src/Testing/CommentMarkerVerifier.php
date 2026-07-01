@@ -17,8 +17,7 @@ use JesseGall\CodeCommandments\Vue\Sfc;
  * sibling); a detector passes when it flags every marked element and nothing else.
  *
  * Same contract as the backend verifier — a list of {@see DetectorResult} — so the
- * shared {@see \JesseGall\CodeCommandments\Tests\Support\FixtureTestCase} treats both
- * engines identically.
+ * shared {@see FixtureTestCase} treats both engines identically.
  */
 final class CommentMarkerVerifier implements MarkerVerifier
 {
