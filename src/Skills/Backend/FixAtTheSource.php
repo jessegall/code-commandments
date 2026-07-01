@@ -23,7 +23,7 @@ final class FixAtTheSource extends Skill
         return "Fix at the source";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "Find the root cause before changing anything — trace a value to where it is born and fix it THERE, never patch the symptom. Read this FIRST whenever you are asked to refactor, fix, clean up, improve, or review any code, file, class, or namespace — and specifically before adding a null check, a `?? default`, making a field nullable, absolving a finding, tolerating bad input downstream, or when the same value gets re-checked in many places. The root-cause-first move every other style rule defers to.";
     }

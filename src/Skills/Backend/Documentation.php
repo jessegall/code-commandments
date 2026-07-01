@@ -23,7 +23,7 @@ final class Documentation extends Skill
         return "Documentation — concise, present-tense, rare";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "How to document — and mostly NOT. Docblocks are 1–2 lines (3 max), present-tense, about the code as it is NOW; inline comments are RARE and only ever explain a non-obvious *why*; NEVER narrate the past or a change (\"previously…\", \"used to…\", \"now we…\", \"refactored to…\"). Read this the MOMENT you are about to write a docblock (`/**`), an inline comment (`//`), or a class/method description.";
     }

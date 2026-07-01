@@ -23,7 +23,7 @@ final class Absence extends Skill
         return "Absence — model \"might not be there\" honestly";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug.";
     }

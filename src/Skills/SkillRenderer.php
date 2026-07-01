@@ -51,7 +51,7 @@ final class SkillRenderer
     {
         // The `name` is display-only (the DIRECTORY name is the Skill-tool invocation),
         // but we set it to the flat id so the `/skills` listing matches what you load.
-        return "---\nname: {$skill->id()}\ndescription: {$skill->description()}\n---";
+        return "---\nname: {$skill->id()}\ndescription: {$skill->trigger()}\n---";
     }
 
     private function blockquote(string $text): string

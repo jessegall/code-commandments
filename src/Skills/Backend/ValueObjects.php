@@ -24,7 +24,7 @@ final class ValueObjects extends Skill
         return "Value objects — give related data a type";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "WHEN to give data a type instead of passing it loose — an `array<string,mixed>` bag, 3+ values that always travel together (a data clump), a string-indexed structured array, primitive obsession, or a too-long parameter list all want a typed object. Read this BEFORE you pass or return an untyped array, add another parameter to a crowded signature, or write `\$arr['key']` on a structured array. (How to WRITE the class is `spatie-data`; this is when to make one.)";
     }

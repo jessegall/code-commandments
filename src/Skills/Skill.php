@@ -30,9 +30,11 @@ abstract class Skill
     abstract public function title(): string;
 
     /**
-     * The frontmatter `description:` — the trigger blurb: when to load this skill.
+     * WHEN to load this skill — the load condition, phrased as a trigger ("Read this BEFORE you
+     * …"). It becomes the SKILL.md frontmatter `description:` the Skill loader matches an agent's
+     * task against, so it names the situations that should pull the skill in, not what it teaches.
      */
-    abstract public function description(): string;
+    abstract public function trigger(): string;
 
     /**
      * The one-line `>` blockquote under the title — the punchy summary of the rule.

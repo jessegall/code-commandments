@@ -24,7 +24,7 @@ final class ConcurrentState extends Skill
         return "Concurrent state — a plain object behind `::for()`";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "How to model state shared across processes (web request ↔ queue worker ↔ cron) — a plain domain class with behaviour methods plus a static `::for(\$id): Concurrent<self>` factory that owns the cache key, default, and TTL (jessegall/concurrent). Read this FIRST whenever you reach for `Cache::get/put` with a hand-built key, a static/global for cross-request state, a polled status / progress / counter / pointer shared between a request and a worker, or `new Concurrent(...)`.";
     }

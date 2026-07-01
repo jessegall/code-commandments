@@ -23,7 +23,7 @@ final class TellDontAsk extends Skill
         return "Tell, don't ask — behaviour belongs with its data";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "Behaviour belongs with the data it operates on (feature envy, Fowler). If a method reaches through ONE other object's internal structure — looping its collection, walking its tree of parts — to work out something the object should answer itself, that logic is exiled from its home; Move the Method onto the object (`\$node->edges()`, not `EdgeDetector::detect(\$node)`). Read this BEFORE you write a `*Detector`/`*Walker`/`*Finder` that iterates one object's collection from the outside. NOTE the exception: a policy/Strategy over the object's flat scalar fields (a grade, a label, a classification) is NOT envy.";
     }

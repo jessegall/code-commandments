@@ -23,7 +23,7 @@ final class TypeHonesty extends Skill
         return "Type honesty — the type must not lie";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "A type must tell the truth about the value. Don't fake optionality — a `?T` / nullable that the design always has set, which the code then immediately defends against (`?->`, `?? <fake>`, null-checks) or stashes as mutable scratch state and restores. The defence is the tell that the type is lying. Make the type carry the certainty: pass the value as a parameter, hold it non-nullable, or wrap per-call context in a value object. Read this BEFORE you add a nullable field set later in a method, or reach for `\$this->scratch?->… ?? false`.";
     }

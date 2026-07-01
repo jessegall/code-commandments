@@ -23,7 +23,7 @@ final class VueComponents extends Skill
         return "Vue components — extract repetition and deep reaches";
     }
 
-    public function description(): string
+    public function trigger(): string
     {
         return "Extract a component when template markup REPEATS identically, or when an element in a large template reaches DEEP into nested data (data.user.firstName). Repeated markup is one component waiting to be born; a deep reach is a child that knows too much about the data shape and wants the mid-object as a prop. Read this BEFORE copy-pasting a block of template or reaching `a.b.c` in a sizeable component.";
     }
