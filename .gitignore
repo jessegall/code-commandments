@@ -28,8 +28,9 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Claude Code (generated per-project)
-.claude/
+# Claude Code (generated per-project) — but the dev skills are part of the package
+.claude/*
+!.claude/skills/
 CLAUDE.md
 
 # Package development
