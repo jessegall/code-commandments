@@ -488,19 +488,43 @@ domain predicate composed from the engine's helpers, and register it with
 `Config::decorate` — the query then wraps *every* match in your class, so the
 predicate is just a method on the node:
 
+Say your app has `App\Vehicles\*Clause` value objects that must be built through
+`Vehicle::assemble()` (which wires their wheels); constructing one raw with `new`
+leaves it wheel-less. Three small pieces — a node with the predicate, the sin it
+points at, and the detector that composes them:
+
 ```php
 namespace App\Commandments;
 
+use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Detectors\Detector;
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 
+// your own node type — a domain predicate composed from the engine's helpers
 final class VehicleNode extends NodeMatch
 {
-    public function isVehicleClause(): bool
+    public function isBareVehicleClause(): bool
     {
-        // your domain rule, composed from the engine — no regex, no name lists
+        // a `new App\Vehicles\…Clause(...)` — built raw, so it never declares its wheels
         $class = $this->newClassName() ?? '';
 
         return str_starts_with($class, 'App\\Vehicles\\') && str_ends_with($class, 'Clause');
+    }
+}
+
+// the sin it flags — name, the skill that teaches the fix (a shipped one, or your own), rule
+final class BareVehicleClause extends Sin
+{
+    public function __construct()
+    {
+        parent::__construct(
+            name: 'bare-vehicle-clause',
+            skill: ValueObjects::class,
+            description: 'A vehicle clause built with `new` — it never declares its wheels',
+            rule: 'Assemble a clause with `Vehicle::assemble()` so its wheels are wired; never `new` it raw.',
+        );
     }
 }
 
@@ -513,7 +537,7 @@ final class BareVehicleClauseDetector implements Detector
         return $codebase
             ->whereNew()
             // reads like a built-in
-            ->where(fn (VehicleNode $n) => $n->isVehicleClause())
+            ->where(fn (VehicleNode $n) => $n->isBareVehicleClause())
             ->get();
     }
 }
