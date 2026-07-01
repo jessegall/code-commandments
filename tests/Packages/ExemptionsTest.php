@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Packages;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Packages\Catalog;
 use JesseGall\CodeCommandments\Packages\Clause;
+use JesseGall\CodeCommandments\Packages\Exemption;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Packages\LaravelPackage;
 use JesseGall\CodeCommandments\Packages\Package;
@@ -23,6 +24,25 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExemptionsTest extends TestCase
 {
+    public function test_every_exemptable_detector_declares_real_exemption_tags(): void
+    {
+        $exemptable = array_filter(
+            \JesseGall\CodeCommandments\Detectors\Catalog::all(),
+            static fn (object $d): bool => $d instanceof \JesseGall\CodeCommandments\Packages\Exemptable,
+        );
+
+        $this->assertNotEmpty($exemptable, 'at least one detector should be exemptable');
+
+        foreach ($exemptable as $detector) {
+            $tags = $detector->exemptions();
+            $this->assertNotEmpty($tags, $detector::class . ' declares exemptions() but returns none');
+
+            foreach ($tags as $tag) {
+                $this->assertTrue(is_subclass_of($tag, Exemption::class), "{$tag} must be an Exemption subclass");
+            }
+        }
+    }
+
     public function test_packages_auto_enrol_from_the_folder(): void
     {
         $this->assertContainsOnlyInstancesOf(Package::class, Catalog::all());
@@ -81,7 +101,21 @@ final class ExemptionsTest extends TestCase
     {
         $codebase = Codebase::fromString('<?php class Foo {}');
 
-        $this->assertFalse(Exemptions::has(self::class, $codebase, 'Foo'));
+        $this->assertFalse(Exemptions::has(ConsumerExemption::class, $codebase, 'Foo'));
+    }
+
+    public function test_a_tag_that_is_not_an_exemption_is_rejected(): void
+    {
+        $codebase = Codebase::fromString('<?php class Foo {}');
+
+        $this->expectException(\InvalidArgumentException::class);
+        Exemptions::has(self::class, $codebase, 'Foo');
+    }
+
+    public function test_a_slug_resolves_to_its_exemption_class(): void
+    {
+        $this->assertSame(Boundary::class, Exemption::resolve('boundary'));
+        $this->assertSame(Boundary::class, Exemption::resolve(Boundary::class));
     }
 
     public function test_a_consumer_package_registered_via_config_joins_the_registry(): void
@@ -89,12 +123,12 @@ final class ExemptionsTest extends TestCase
         $codebase = Codebase::fromString('<?php namespace App { class Widget {} }');
 
         // Before registering: the consumer's own tag/class is unknown.
-        $this->assertFalse(Exemptions::has(self::class, $codebase, 'App\\Widget'));
+        $this->assertFalse(Exemptions::has(ConsumerExemption::class, $codebase, 'App\\Widget'));
 
         Exemptions::usePackages(ConsumerPackage::class);
 
         // Now its exemption is live — the same path the CLI takes from Config::package().
-        $this->assertTrue(Exemptions::has(ExemptionsTest::class, $codebase, 'App\\Widget'));
+        $this->assertTrue(Exemptions::has(ConsumerExemption::class, $codebase, 'App\\Widget'));
     }
 
     protected function tearDown(): void
@@ -104,11 +138,25 @@ final class ExemptionsTest extends TestCase
     }
 }
 
-/** A consumer's own package — registers an exemption under this test's class as the tag. */
+/** A consumer's own exemption tag — a custom tag MUST be its own {@see Exemption} subclass. */
+final class ConsumerExemption extends Exemption
+{
+    public function slug(): string
+    {
+        return 'consumer-widget';
+    }
+
+    public function description(): string
+    {
+        return 'A consumer type its own package exempts.';
+    }
+}
+
+/** A consumer's own package — registers an exemption under its own {@see ConsumerExemption} tag. */
 final class ConsumerPackage extends Package
 {
     public function register(Exemptions $exemptions): void
     {
-        $exemptions->exempt(ExemptionsTest::class)->classes('App\\Widget');
+        $exemptions->exempt(ConsumerExemption::class)->classes('App\\Widget');
     }
 }

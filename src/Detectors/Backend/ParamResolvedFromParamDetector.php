@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
@@ -34,7 +35,7 @@ use PhpParser\Node\Stmt\ClassMethod;
  * is exempt too: the key arrives as a route arg and there is no caller to hand an
  * object.
  */
-final class ParamResolvedFromParamDetector implements Detector
+final class ParamResolvedFromParamDetector implements Detector, Exemptable
 {
     /**
      * Request bases that mark a method as an HTTP/MCP boundary entry point.
@@ -43,6 +44,11 @@ final class ParamResolvedFromParamDetector implements Detector
     public function sin(): Sin
     {
         return new ParamResolvedFromParam();
+    }
+
+    public function exemptions(): array
+    {
+        return [Boundary::class];
     }
 
     public function find(Codebase $codebase): array

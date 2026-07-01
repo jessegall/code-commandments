@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\FeatureEnvy;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Packages\Exemptable;
+use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 
 /**
  * Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned
@@ -21,11 +23,16 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * Strategy over the object's flat scalar fields is the documented exception.
  * Points at tell-dont-ask.
  */
-final class FeatureEnvyDetector implements Detector
+final class FeatureEnvyDetector implements Detector, Exemptable
 {
     public function sin(): Sin
     {
         return new FeatureEnvySin();
+    }
+
+    public function exemptions(): array
+    {
+        return [Boundary::class];
     }
 
     public function find(Codebase $codebase): array

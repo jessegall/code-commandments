@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 
 /**
@@ -24,11 +25,16 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
  * — reading it by key (`$attributes['type']`) is the only option, not a bag the
  * author chose.
  */
-final class ArrayBagDetector implements Detector
+final class ArrayBagDetector implements Detector, Exemptable
 {
     public function sin(): Sin
     {
         return new ArrayBag();
+    }
+
+    public function exemptions(): array
+    {
+        return [NoContainer::class];
     }
 
     public function find(Codebase $codebase): array

@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -29,11 +30,16 @@ use JesseGall\CodeCommandments\Backend\Detector;
  *  - a method that OVERRIDES an ancestor (a parent class or interface, incl. a
  *    vendor one) whose `array` return it inherits and cannot change.
  */
-final class ArrayReturnBagDetector implements Detector
+final class ArrayReturnBagDetector implements Detector, Exemptable
 {
     public function sin(): Sin
     {
         return new ArrayReturnBag();
+    }
+
+    public function exemptions(): array
+    {
+        return [ArrayReturning::class, ContractMethod::class];
     }
 
     public function find(Codebase $codebase): array

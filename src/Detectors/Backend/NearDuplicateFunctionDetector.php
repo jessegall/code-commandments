@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 
 /**
@@ -21,7 +22,7 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
  * misses it can't see. A 12-body-node floor skips trivial look-alikes. Points at
  * fix-at-the-source.
  */
-final class NearDuplicateFunctionDetector implements Detector
+final class NearDuplicateFunctionDetector implements Detector, Exemptable
 {
     /**
      * Minimum body AST-node count to compare. Higher than the exact detector's
@@ -34,6 +35,11 @@ final class NearDuplicateFunctionDetector implements Detector
     public function sin(): Sin
     {
         return new NearDuplicateFunction();
+    }
+
+    public function exemptions(): array
+    {
+        return [ContractMethod::class];
     }
 
     public function find(Codebase $codebase): array

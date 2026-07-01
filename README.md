@@ -812,14 +812,17 @@ both agree on. It's an open system: a detector reads a tag, any package register
 it, and neither imports the other. Nothing is a blanket "skip"; every registration is a
 narrow, specific exemption.
 
-The built-in tags (`Packages\Tags\*`), and the general rules that read each:
+The built-in tags (`Packages\Tags\*`), and the general rules that read each. Each carries a
+**slug** — a short id you can pass to `exempt(...)` instead of the FQCN. Run `commandments
+exemptions` to print this list, or `commandments exemptions <sin|detector>` to see just the
+tags one detector honours:
 
-| Tag | What it means | Read by (and what it exempts) |
+| Tag (slug) | What it means | Read by (and what it exempts) |
 |---|---|---|
-| `Boundary` | A framework **entry point** — an HTTP/RPC request, where raw input crosses into your domain. | **feature-envy** (don't move behaviour *onto* a request) · **pass-the-object** (a method *taking* one may unpack input from it). |
-| `ContractMethod` | A **method** a subclass MUST declare, whose shape/array-return the framework dictates (`rules`, `schema`, `casts`). | **near-duplicate** (the shared skeleton is inherent, not copy-paste) · **array-return-bag** (the mandated array isn't a bag). |
-| `ArrayReturning` | A class whose **whole job** is handing the framework arrays (a `FormRequest`, an MCP tool). | **array-return-bag** (its array returns are contractual — class-level, robust to hooks a rule can't enumerate). |
-| `NoContainer` | A type the framework **instantiates itself**, no DI (an Eloquent cast). | **array-bag** (a loose array parameter is the framework's calling convention). |
+| `Boundary` (`boundary`) | A framework **entry point** — an HTTP/RPC request, where raw input crosses into your domain. | **feature-envy** (don't move behaviour *onto* a request) · **pass-the-object** (a method *taking* one may unpack input from it). |
+| `ContractMethod` (`contract-method`) | A **method** a subclass MUST declare, whose shape/array-return the framework dictates (`rules`, `schema`, `casts`). | **near-duplicate** (the shared skeleton is inherent, not copy-paste) · **array-return-bag** (the mandated array isn't a bag). |
+| `ArrayReturning` (`array-returning`) | A class whose **whole job** is handing the framework arrays (a `FormRequest`, an MCP tool). | **array-return-bag** (its array returns are contractual — class-level, robust to hooks a rule can't enumerate). |
+| `NoContainer` (`no-container`) | A type the framework **instantiates itself**, no DI (an Eloquent cast). | **array-bag** (a loose array parameter is the framework's calling convention). |
 
 A package registers in `register()`, building each tag's clause fluently — `classes()` for
 whole classes, `on(class, ...methods)` for specific methods, `methods()` for a name ignored
@@ -850,7 +853,9 @@ final class AcmePackage extends Package
 }
 ```
 
-That's exactly how the built-in `LaravelPackage` tags `Request`/`FormRequest`/MCP handlers,
+`exempt()` takes the tag class **or** its slug, so `exempt('boundary')` is the same as
+`exempt(Boundary::class)` — for a well-known tag you need only know the slug. That's exactly
+how the built-in `LaravelPackage` tags `Request`/`FormRequest`/MCP handlers,
 `rules()`/`schema()`/`casts()`, and Eloquent casts — it ships inside the package, so it
 **auto-enrols** (like every built-in detector, sin, and skill). Your own `Package` lives in
 *your* codebase, which the package's glob never sees, so you register it in
@@ -864,21 +869,38 @@ return fn (Config $config) => $config
 
 ### Your own exemption tags
 
-A tag is just a class-string both sides agree on, so **it can be anything — including a
-detector's own class.** Write a custom detector, publish its class as the tag, and any
-package (yours or a third party's) can register exemptions against it. Your detector asks:
+A tag is **always** an `Exemption` — so a custom one is its own subclass, naming itself with
+a `slug()` and explaining itself with a `description()` (the slug is what packages register
+against; the description is what `commandments exemptions` prints):
 
 ```php
-use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Exemption;
 
-// inside your detector's find()
-->reject(fn (AstNode $n) => Exemptions::has(self::class, $codebase, $n->enclosingClassName()))
+final class AcmeEntrypoint extends Exemption
+{
+    public function slug(): string        { return 'acme-entrypoint'; }
+    public function description(): string { return 'An Acme RPC endpoint — exempt from feature-envy.'; }
+}
 ```
 
-If you want a *named* concept several detectors share (the way `Boundary` is read by both
-feature-envy and pass-the-object), ship an empty marker class as the tag and have each
-detector read it. Either way, two packages can exempt each other's types without either
-importing the other — they only share the tag.
+Your detector reads it, any package (yours or a third party's) registers against it, and
+neither imports the other. Declare it via `Exemptable` so `commandments exemptions
+<detector>` can show what quiets it, then read it in `find()`:
+
+```php
+use JesseGall\CodeCommandments\Packages\{Exemptable, Exemptions};
+
+final class AcmeFeatureEnvyDetector implements Detector, Exemptable
+{
+    public function exemptions(): array { return [AcmeEntrypoint::class]; }   // what it honours
+
+    // …inside find():
+    ->reject(fn (AstNode $n) => Exemptions::has(AcmeEntrypoint::class, $codebase, $n->enclosingClassName()))
+}
+```
+
+Two packages can exempt each other's types without either importing the other — they only
+share the tag.
 
 ## License
 
