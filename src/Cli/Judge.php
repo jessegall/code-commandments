@@ -35,9 +35,6 @@ use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
  */
 final class Judge
 {
-    /** @var array<string, bool> */
-    private array $generated = [];
-
     public function run(array $args): int
     {
         $options = JudgeOptions::fromArgs($args);
@@ -222,9 +219,9 @@ final class Judge
     }
 
     /**
-     * Drop findings in generated/excluded files (always), and those out of scope.
-     * Exclusion and scope are separate concerns: exclude is the `--exclude` fragments
-     * plus the `@code-commandments-generated` marker; scope is the changed-file set.
+     * Drop findings in excluded files (a `--exclude` fragment) and those out of scope.
+     * Exclusion and scope are separate concerns: exclude is the `--exclude` fragments;
+     * scope is the changed-file set.
      *
      * @param  list<Finding>  $findings
      * @param  list<string>  $exclude
@@ -319,9 +316,7 @@ final class Judge
     }
 
     /**
-     * Generated code (`@code-commandments-generated`) is regenerated, not hand-
-     * authored, so fixing a finding there is futile — it's skipped. So is any path
-     * matching a `--exclude` fragment.
+     * Is this path excluded — matching any `--exclude` fragment?
      *
      * @param  list<string>  $exclude
      */
@@ -333,7 +328,7 @@ final class Judge
             }
         }
 
-        return $this->generated[$path] ??= str_contains((string) @file_get_contents($path), '@code-commandments-generated');
+        return false;
     }
 
     private function deleteChecklist(?string $checklist): void

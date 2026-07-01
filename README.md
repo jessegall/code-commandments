@@ -71,9 +71,10 @@ vendor/bin/commandments install
 ```
 
 `install` wires the project up (idempotent): a composer hook that re-syncs the
-skills on every `composer update`, a `UserPromptSubmit` reminder of the cardinal
-rule for your agent, the `.gitignore` entries, and a commented
-`.commandments/config.php` scaffold. Then it's ready — `judge` away.
+skills on every `composer update`; a `UserPromptSubmit` hook that reminds your agent
+of the rule above all — *a finding is a symptom, so trace it to where the bad value
+is born and fix it there, never at the call site*; the `.gitignore` entries; and a
+commented `.commandments/config.php` scaffold. Then it's ready — `judge` away.
 
 ## Usage
 
@@ -99,8 +100,7 @@ vendor/bin/commandments judge src --exclude=Generated,vendor
 vendor/bin/commandments judge --list
 ```
 
-Exit code is non-zero when sins are found. Files marked
-`@code-commandments-generated` are skipped automatically.
+Exit code is non-zero when sins are found.
 
 ## Configuration
 
@@ -116,9 +116,9 @@ your code — so on a project that doesn't use them, they never trigger and ther
 nothing to disable. You configure a rule to change it, never to make an
 irrelevant one harmless.
 
-A commented `.commandments/config.php` is scaffolded for you on install (nothing
-enabled). Edit it — it returns a closure given a `Config`; no framework required,
-the CLI loads the file itself:
+A commented `.commandments/config.php` is scaffolded for you on install. Edit it —
+it returns a closure given a `Config`; no framework required, the CLI loads the file
+itself:
 
 ```php
 <?php
