@@ -28,6 +28,19 @@ final class Canon
     private const array NOT_SOURCE = ['database', 'tests', 'test'];
 
     /**
+     * The source roots a CLI command scans: an explicit path exactly as given, otherwise the
+     * canon's roots ({@see resolve}, hydrated on first use). The ONE resolution `judge` and `repent`
+     * share, so a command can never scope differently from another — no command scans `tests/`
+     * unless the canon says so.
+     */
+    public function rootsFor(string $path, bool $pathGiven): CanonResolution
+    {
+        return $pathGiven
+            ? new CanonResolution([$path], false, '')
+            : $this->resolve($path);
+    }
+
+    /**
      * Resolve the source roots to scan under $root, reading the canon file or
      * hydrating it on first use.
      */

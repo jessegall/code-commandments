@@ -25,7 +25,7 @@ final class DetectorStep extends BaseDetectorStep
 {
     public function __construct(private readonly Detector&Repentable $detector) {}
 
-    public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
+    public function run(string|array $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
     {
         $codebase = VueCodebase::scan($path, $overlay);
         $scribe = $this->scribe();

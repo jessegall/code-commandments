@@ -139,15 +139,11 @@ final class Judge
 
         // An explicit path is scanned as given; otherwise the canon decides which
         // source roots to judge (hydrated from the project on first run).
-        $roots = $path;
+        $canon = new Canon()->rootsFor($path, $pathGiven);
+        $roots = $canon->paths;
 
-        if (! $pathGiven) {
-            $canon = new Canon()->resolve($path);
-            $roots = $canon->paths;
-
-            if ($canon->hydrated) {
-                $this->line("\033[2m↳ wrote {$canon->file} — the backend source roots judged; edit it to adjust scope\033[0m");
-            }
+        if ($canon->hydrated) {
+            $this->line("\033[2m↳ wrote {$canon->file} — the backend source roots judged; edit it to adjust scope\033[0m");
         }
 
         $progress = new ProgressBar;

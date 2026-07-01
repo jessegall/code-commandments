@@ -21,7 +21,7 @@ final class MaintenanceStep implements ScribeStep
         return $this->scribe->name();
     }
 
-    public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
+    public function run(string|array $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
     {
         return $this->scribe->rewrites(AstCodebase::scan($path, overlay: $overlay), $scope);
     }

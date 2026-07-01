@@ -81,7 +81,7 @@ final class ScribeChainTest extends TestCase
                 return $this->name;
             }
 
-            public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
+            public function run(string|array $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
             {
                 return [];
             }

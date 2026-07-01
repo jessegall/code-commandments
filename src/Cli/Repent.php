@@ -48,14 +48,21 @@ final class Repent
             return 2;
         }
 
+        // The SAME canon `judge` reads decides which source roots to rewrite — so `repent` never
+        // touches `tests/` (or anything outside the canon) that `judge` would never have flagged.
+        $roots = new Canon()->rootsFor($options['path'], $options['pathGiven'])->paths;
+
         return $options['dryRun']
-            ? $this->preview($options['path'], $scope, $options['only'], $options['dryRunFile'])
-            : $this->apply($options['path'], $scope, $options['only']);
+            ? $this->preview($options['path'], $roots, $scope, $options['only'], $options['dryRunFile'])
+            : $this->apply($options['path'], $roots, $scope, $options['only']);
     }
 
-    private function apply(string $path, Scope $scope, ?string $only): int
+    /**
+     * @param  list<string>  $roots  the canon source roots to scan and rewrite
+     */
+    private function apply(string $path, array $roots, Scope $scope, ?string $only): int
     {
-        $converged = $this->converge($path, $scope, $only);
+        $converged = $this->converge($roots, $scope, $only);
         $written = new RewriteApplier()->apply($converged);
 
         if ($written === []) {
@@ -107,11 +114,14 @@ final class Repent
         }
     }
 
-    private function preview(string $path, Scope $scope, ?string $only, ?string $file): int
+    /**
+     * @param  list<string>  $roots  the canon source roots to scan and rewrite
+     */
+    private function preview(string $path, array $roots, Scope $scope, ?string $only, ?string $file): int
     {
         // The converged result is diffed against pristine disk (converge writes nothing), so the
         // dry-run is exactly what an apply would produce — a fixpoint, not a single sweep.
-        $diff = new UnifiedDiff()->of($this->converge($path, $scope, $only), $path);
+        $diff = new UnifiedDiff()->of($this->converge($roots, $scope, $only), $path);
 
         if ($diff === '') {
             $this->out("\033[32m✓ Nothing to repent.\033[0m\n");
@@ -141,9 +151,10 @@ final class Repent
      * single command instead of leaving residue for a second `repent`. Capped so an oscillating
      * step can't spin forever.
      *
+     * @param  list<string>  $roots  the canon source roots to scan and rewrite
      * @return array<string, string>  path => final content
      */
-    private function converge(string $path, Scope $scope, ?string $only): array
+    private function converge(array $roots, Scope $scope, ?string $only): array
     {
         $steps = $this->chain($only)->steps();
         $overlay = new WorkingCopy();
@@ -152,7 +163,7 @@ final class Repent
             $before = $overlay->changes();
 
             foreach ($steps as $step) {
-                $overlay = $overlay->with($step->run($path, $scope, $overlay));
+                $overlay = $overlay->with($step->run($roots, $scope, $overlay));
             }
 
             if ($overlay->changes() === $before) {
@@ -192,6 +203,7 @@ final class Repent
     private function parse(array $args): array
     {
         $path = '.';
+        $pathGiven = false;
         $dryRun = false;
         $dryRunFile = null;
         $only = null;
@@ -208,10 +220,11 @@ final class Repent
                 $only = substr($arg, 6);
             } elseif (! str_starts_with($arg, '--')) {
                 $path = $arg;
+                $pathGiven = true;
             }
         }
 
-        return ['path' => rtrim($path, '/'), 'dryRun' => $dryRun, 'dryRunFile' => $dryRunFile, 'only' => $only];
+        return ['path' => rtrim($path, '/'), 'pathGiven' => $pathGiven, 'dryRun' => $dryRun, 'dryRunFile' => $dryRunFile, 'only' => $only];
     }
 
     private function relative(string $path, string $base): string
