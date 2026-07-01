@@ -15,11 +15,6 @@ final class Install
 {
     private const string HOOK = '@php vendor/bin/commandments sync';
 
-    // Anchored at $CLAUDE_PROJECT_DIR (the absolute project root the harness gives
-    // every hook) — a relative `vendor/bin/...` silently dies when Claude's working
-    // directory isn't the project root, and the reminder never reaches the agent.
-    private const string REMIND_HOOK = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind';
-
     public function run(array $args): int
     {
         $composerPath = getcwd() . '/composer.json';
@@ -31,7 +26,7 @@ final class Install
         }
 
         $wired = $this->wireComposerScripts($composerPath);
-        $reminded = $this->wireReminderHook(getcwd() . '/.claude/settings.json');
+        $reminded = ReminderHook::wire(getcwd() . '/.claude/settings.json');
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"
@@ -42,76 +37,6 @@ final class Install
             : "✓ PostToolUse reminder already wired.\n");
 
         return (new Sync)->run($args);
-    }
-
-    /**
-     * Register `commandments remind` as a `PostToolUse` hook so the cardinal rule surfaces once
-     * every 25 tool uses. Idempotent, and MIGRATING: we remove ONLY our own remind hook — matched
-     * by its command containing `commandments remind` — from both events (so an older one wired
-     * under `UserPromptSubmit` moves over), then add the single current group under `PostToolUse`.
-     * Every other hook the project has, in any event, is preserved untouched — we never strip a
-     * hook we didn't write.
-     */
-    private function wireReminderHook(string $path): bool
-    {
-        /** @var array<string, mixed> $settings */
-        $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
-        $hooks = is_array($settings['hooks'] ?? null) ? $settings['hooks'] : [];
-
-        $alreadyCurrent = false;
-
-        // Strip every existing remind hook from every event (migrating off UserPromptSubmit).
-        foreach (['UserPromptSubmit', 'PostToolUse'] as $event) {
-            $groups = is_array($hooks[$event] ?? null) ? $hooks[$event] : [];
-            $rebuilt = [];
-
-            foreach ($groups as $group) {
-                if (! is_array($group) || ! is_array($group['hooks'] ?? null)) {
-                    $rebuilt[] = $group;
-
-                    continue;
-                }
-
-                $kept = [];
-
-                foreach ($group['hooks'] as $hook) {
-                    $command = is_array($hook) ? (string) ($hook['command'] ?? '') : '';
-
-                    if (str_contains($command, 'commandments remind')) {
-                        $alreadyCurrent = $alreadyCurrent || ($event === 'PostToolUse' && $command === self::REMIND_HOOK);
-
-                        continue;
-                    }
-
-                    $kept[] = $hook;
-                }
-
-                if ($kept !== []) {
-                    $group['hooks'] = $kept;
-                    $rebuilt[] = $group;
-                }
-            }
-
-            if ($rebuilt === []) {
-                unset($hooks[$event]);
-            } else {
-                $hooks[$event] = $rebuilt;
-            }
-        }
-
-        if ($alreadyCurrent) {
-            return false;
-        }
-
-        $postToolUse = is_array($hooks['PostToolUse'] ?? null) ? $hooks['PostToolUse'] : [];
-        $postToolUse[] = ['hooks' => [['type' => 'command', 'command' => self::REMIND_HOOK]]];
-        $hooks['PostToolUse'] = $postToolUse;
-        $settings['hooks'] = $hooks;
-
-        @mkdir(dirname($path), 0755, true);
-        file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
-
-        return true;
     }
 
     private function wireComposerScripts(string $path): bool
