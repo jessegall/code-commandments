@@ -55,8 +55,8 @@ final class FacadeCallDetector implements Detector
     {
         return $codebase
             ->whereStaticCall()
-            ->where(static fn (AstNode $node): bool => str_starts_with($node->staticCallClass() ?? '', self::FACADE_NAMESPACE))
-            ->reject(static fn (AstNode $node): bool => $node->staticCallMethod() === 'fake')
+            ->where(static fn (AstNode $node): bool => $node->staticCallClassStartsWith(self::FACADE_NAMESPACE))
+            ->reject(static fn (AstNode $node): bool => $node->staticCallMethodIs('fake'))
             ->reject(static fn (AstNode $node): bool => $node->isOutsideClass())
             ->reject(static fn (AstNode $node): bool => $codebase->extends($node->enclosingClassName(), self::SERVICE_PROVIDER))
             ->reject(static fn (AstNode $node): bool => EloquentCast::is($codebase, $node->enclosingClassName()))

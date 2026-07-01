@@ -24,8 +24,8 @@ interface RequiresPackage
 {
     /**
      * The package this sin needs — a Composer `vendor/name` for a backend sin, an npm package
-     * name for a frontend sin. The rule is kept only when that package is present in the project
-     * being judged.
+     * name for a frontend sin. The sin is automatically filtered out — it never runs and never
+     * shows up — when that package isn't present in the project being judged.
      */
     public function requiredPackage(): string;
 }

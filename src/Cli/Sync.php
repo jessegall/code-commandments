@@ -39,51 +39,15 @@ final class Sync
     }
 
     /**
-     * Drop a commented-out `.commandments/config.php` the FIRST time we sync a consumer, so
-     * every project has the config surface discoverable in place — nothing is enabled by it
-     * (the whole example is commented; the returned closure is a no-op). Written once and never
-     * touched again, so a project's real edits are safe; delete it if you don't want one.
+     * Drop the commented-out `.commandments/config.php` scaffold the FIRST time we sync a
+     * consumer, so the config surface is discoverable in place — nothing is enabled by it. Written
+     * once and never touched again ({@see ConfigFile::scaffoldIfMissing}), so a project's real
+     * edits are safe; delete it if you don't want one.
      */
     private function ensureConfigStub(string $consumer): void
     {
-        $path = "{$consumer}/.commandments/config.php";
-
-        if (is_file($path)) {
-            return;
-        }
-
-        @mkdir(dirname($path), 0777, true);
-        file_put_contents($path, self::CONFIG_STUB);
+        ConfigFile::inProject($consumer)->scaffoldIfMissing();
     }
-
-    private const string CONFIG_STUB = <<<'PHP'
-        <?php
-
-        declare(strict_types=1);
-
-        use JesseGall\CodeCommandments\Config;
-
-        /*
-         | code-commandments configuration — OPTIONAL.
-         |
-         | Every detector is enabled by default with sensible thresholds, so you don't have to
-         | touch this file. Uncomment a line below to opt out of a rule, add a detector of your
-         | own, or tune a threshold. See the README "Configuration" section for the full list.
-         */
-
-        return function (Config $config): void {
-            // $config
-            //     // Silence a rule — by its Sin class (drops every detector for it) or a Detector class.
-            //     ->disable(\JesseGall\CodeCommandments\Sins\Backend\NonFinalData::class)
-            //
-            //     // Add a detector that lives in YOUR codebase.
-            //     ->register(\App\Commandments\NoRawSqlDetector::class)
-            //
-            //     // Tune a threshold — name the detector you want as the argument, then set it.
-            //     ->configure(fn (\JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector $d) => $d->maxDepth(10));
-        };
-
-        PHP;
 
     /**
      * Delete artifacts the package wrote at their OLD locations, now that generated

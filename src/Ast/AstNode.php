@@ -315,6 +315,23 @@ class AstNode
     }
 
     /**
+     * Is this a static call whose (fully-qualified) class begins with $prefix — the readable
+     * form of "a call into this namespace", e.g. `Illuminate\Support\Facades\`.
+     */
+    public function staticCallClassStartsWith(string $prefix): bool
+    {
+        return str_starts_with($this->staticCallClass() ?? '', $prefix);
+    }
+
+    /**
+     * Is this a static call to a method named $name — `X::fake()` → `staticCallMethodIs('fake')`.
+     */
+    public function staticCallMethodIs(string $name): bool
+    {
+        return $this->staticCallMethod() === $name;
+    }
+
+    /**
      * For a function call (`app(...)`/`resolve(...)`), is the first argument a
      * statically-known class reference — a `Foo::class` constant or a string
      * literal? A variable argument is a runtime class-string the container can't
