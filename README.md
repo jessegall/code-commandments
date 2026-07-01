@@ -40,6 +40,14 @@ Under the hood there are two layers:
 > from the registered sins — run `composer readme` / `composer sins` to regenerate
 > them; don't hand-edit.
 
+**You don't need the packages a rule is about.** Detectors match on real *types* —
+a Spatie `Data` subclass, a `jessegall/concurrent` proxy, an Eloquent model — so a
+rule for a package your project doesn't use simply never fires: with no such class
+in your code, there's nothing for it to match. Drop code-commandments into any
+PHP/Vue project and the detectors (and skills) for tools you don't have just sit
+dormant — you don't install, implement, or configure anything to make them
+harmless. You only ever see the sins that actually apply to your code.
+
 ## Install
 
 ```bash
@@ -87,25 +95,52 @@ vendor/bin/commandments repent src
 vendor/bin/commandments repent resources/js
 ```
 
-What `repent` can currently fix, for example:
+<!-- BEGIN: scribes (auto-generated — run `composer readme`) -->
+_`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes._
 
-- **Spatie Data** — rename object factories to the `from<Type>` convention and
-  rewrite their call sites to `::from(...)`, and keep the `@method` docblock hints
-  in sync (the focused `commandments hints` command does just this part).
-- **Redundant arrow-fn return types** — strip a return type PHP already infers.
-- **Vue components** — extract an inline chunk into its own component (imports,
-  props, and call site included), and hoist a `v-if` chain into a `<SwitchCase>`.
+**Maintenance passes** — run over the whole PHP tree:
+
+| Scribe | What it does |
+|---|---|
+| `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill. |
+| `RedundantReturnTypeScribe` | Strips a redundant explicit return type from a single-expression arrow function when the expression PROVABLY yields exactly that class. |
+
+**Auto-fixable sins** — a detector whose sin `repent` can rewrite away:
+
+| Sin | Skill | The fix `repent` applies |
+|---|---|---|
+| `wrapping-without-cause` | `backend/exceptions` | When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace. |
+| `loop-inverted-guard` | `backend/guard-clauses-and-flow` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
+| `nested-ternary` | `backend/guard-clauses-and-flow` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
+| `redundant-else` | `backend/guard-clauses-and-flow` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
+| `manual-hydration-loop` | `backend/spatie-data` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
+| `new-data-object` | `backend/spatie-data` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
+| `non-final-data` | `backend/spatie-data` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
+| `compound-inline-component` | `frontend/vue-components` | Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component. |
+| `deep-data-reach` | `frontend/vue-components` | Pass the mid-object as a prop; don't reach deep into nested data from the template. |
+| `deep-nested` | `frontend/vue-components` | Extract a far-too-deeply-nested subtree into its own component. |
+| `duplicate-element` | `frontend/vue-components` | Extract repeated identical markup into one component. |
+| `control-flow-on-element` | `frontend/vue-control-flow` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
+| `switch-case` | `frontend/vue-control-flow` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
+<!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes (a fixpoint), so one run
 fully converges — and `--dry-run` shows exactly what an apply would produce. Run
 it on the whole tree, or scope it with `--changes` / `--branch` like `judge`.
 
-## Configuring (optional)
+## Configuration
 
 **You don't have to configure anything.** Every detector is enabled out of the box
 with sensible defaults — install it and `judge` just works. Configuration is
 purely **opt-out / opt-in**: reach for it only when a project wants to silence a
 rule, tune a threshold, or add a detector of its own.
+
+And to say it again: even though code-commandments ships skills and detectors for
+specific packages (Spatie Data, `jessegall/concurrent`, …), you **don't** need any
+of them installed. Those rules only fire when the matching *type* is present in
+your code — so on a project that doesn't use them, they never trigger and there's
+nothing to disable. You configure a rule to change it, never to make an
+irrelevant one harmless.
 
 Drop a `.commandments/config.php` at your project root. It returns a closure given
 a `Config` — no framework required, the CLI loads it itself:
@@ -145,11 +180,35 @@ This is the part that keeps the detectors honest. Every detector is proven again
 a **self-checking fixture** — a small, deliberately-imperfect example app that is
 *never run*, only scanned.
 
-You mark the exact spots where a detector *should* fire:
+You mark the exact spots where a detector *should* fire — a `#[Sinful(...)]`
+attribute in PHP, a `<!-- @sin ... -->` comment in Vue:
 
-- **PHP** — a `#[Sinful(SomeDetector::class)]` attribute on the offending class or
-  method.
-- **Vue** — a `<!-- @sin SomeDetector -->` comment above the offending element.
+```php
+// tests/Fixtures/shop/app/Orders/RefundService.php
+final class RefundService
+{
+    #[Sinful(SwallowCatchDetector::class)]   // ← this method MUST be flagged
+    public function refund(Order $order): void
+    {
+        try {
+            $this->gateway->refund($order->id);
+        } catch (\Throwable) {
+            // swallowed into silence — the sin
+        }
+    }
+}
+```
+
+```vue
+<!-- tests/Fixtures/shop-frontend/components/UserBadge.vue -->
+<template>
+  <!-- @sin ControlFlowOnElementDetector -->      <!-- the NEXT element must be flagged -->
+  <div v-if="user">{{ user.name }}</div>
+
+  <!-- @righteous ControlFlowOnElementDetector --> <!-- a look-alike it must NOT flag -->
+  <template v-if="user"><div>{{ user.name }}</div></template>
+</template>
+```
 
 Those markers **are** the test spec. The test harness runs every detector over the
 whole fixture and fails if either:
@@ -181,7 +240,7 @@ _59 detectors across 16 skills._
 
 | Detector | What it flags |
 |---|---|
-| `ConcurrentSubclassDetector` | A class that `extends Concurrent`. |
+| `ConcurrentSubclassDetector` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
 
 ### `backend/documentation`
 
@@ -294,7 +353,7 @@ _59 detectors across 16 skills._
 |---|---|
 | `CompoundInlineComponentDetector` | A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`, `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`) are filled with a substantial body right here in the parent template, instead of living in its own component. |
 | `DeepDataReachDetector` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
-| `DeepNestedDetector` | A template nested far too deep — an element {@see $maxDepth}+ levels in that still has {@see $maxRemaining}+ levels of markup beneath it. |
+| `DeepNestedDetector` | A template nested far too deep — an element $maxDepth+ levels in that still has $maxRemaining+ levels of markup beneath it. |
 | `DuplicateElementDetector` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
 | `PropDrillingDetector` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
 | `PropMutationDetector` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
