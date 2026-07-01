@@ -48,9 +48,9 @@ final class Repent
             return 2;
         }
 
-        // The SAME canon `judge` reads decides which source roots to rewrite — so `repent` never
-        // touches `tests/` (or anything outside the canon) that `judge` would never have flagged.
-        $roots = new Canon()->rootsFor($options['path'], $options['pathGiven'])->paths;
+        // The SAME roots `judge` reads (config.php's paths()) decide what `repent` rewrites — so it
+        // never touches `tests/` (or anything outside the declared roots) that judge wouldn't flag.
+        $roots = new SourceRoots()->resolve($options['path'], $options['pathGiven']);
 
         return $options['dryRun']
             ? $this->preview($options['path'], $roots, $scope, $options['only'], $options['dryRunFile'])
@@ -58,7 +58,7 @@ final class Repent
     }
 
     /**
-     * @param  list<string>  $roots  the canon source roots to scan and rewrite
+     * @param  list<string>  $roots  the declared source roots to scan and rewrite
      */
     private function apply(string $path, array $roots, Scope $scope, ?string $only): int
     {
@@ -115,7 +115,7 @@ final class Repent
     }
 
     /**
-     * @param  list<string>  $roots  the canon source roots to scan and rewrite
+     * @param  list<string>  $roots  the declared source roots to scan and rewrite
      */
     private function preview(string $path, array $roots, Scope $scope, ?string $only, ?string $file): int
     {
@@ -151,7 +151,7 @@ final class Repent
      * single command instead of leaving residue for a second `repent`. Capped so an oscillating
      * step can't spin forever.
      *
-     * @param  list<string>  $roots  the canon source roots to scan and rewrite
+     * @param  list<string>  $roots  the declared source roots to scan and rewrite
      * @return array<string, string>  path => final content
      */
     private function converge(array $roots, Scope $scope, ?string $only): array

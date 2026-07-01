@@ -54,7 +54,7 @@ $toBytes = static function (string $limit): int {
         Code Commandments — a compiler for architecture.
 
         Usage:
-          commandments judge [path] [--skill=NAME] [--sin=NAME]   # no [path] → the .commandments/backend.canon source roots
+          commandments judge [path] [--skill=NAME] [--sin=NAME]   # no [path] → the source roots declared in .commandments/config.php
           commandments judge --list
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
           commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
@@ -63,6 +63,7 @@ $toBytes = static function (string $limit): int {
           commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
           commandments disable <sin>  # turn a rule off in .commandments/config.php
           commandments enable <sin>   # turn it back on
+          commandments config reindex  # re-detect the source roots and rewrite config.php's paths()
           commandments exemptions [<sin|detector>]  # list exemptions (all, or one detector's)
           commandments install  # wire composer + the UserPromptSubmit reminder, then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
@@ -80,11 +81,12 @@ $toBytes = static function (string $limit): int {
           --no-checklist     print only, don't write the checklist file
           --list             list every detector grouped by skill
 
-        With no [path], judge scans the source roots listed in
-        .commandments/backend.canon — auto-generated on first run from your
+        With no [path], judge scans the source roots declared by $config->paths(...)
+        in .commandments/config.php — auto-detected on first run from your
         composer.json PSR-4 map (plus app/src), so scaffolding like database/,
-        storage/ and config/ isn't judged. Edit that file to tune what's in scope;
-        pass an explicit [path] to scan it directly instead.
+        storage/ and config/ isn't judged. Edit that call (or run `commandments
+        config reindex` to re-detect) to tune what's in scope; pass an explicit
+        [path] to scan it directly instead.
 
         By default judge writes a Markdown checklist (.commandments/sins.md). Judge
         ONCE, then work that file line-by-line — a full scan is slow — deleting
@@ -109,6 +111,7 @@ $toBytes = static function (string $limit): int {
         'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
         'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),
         'disable', 'enable' => (new JesseGall\CodeCommandments\Cli\Configure($command))->run($args),
+        'config' => (new JesseGall\CodeCommandments\Cli\ConfigCommand)->run($args),
         'exemptions' => (new JesseGall\CodeCommandments\Cli\Exemptions)->run($args),
         default => (static function () use ($command): int {
             fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");

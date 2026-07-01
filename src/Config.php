@@ -48,6 +48,33 @@ final class Config
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
 
+    /** @var list<string> The source roots to scan (relative to the project). Empty ⇒ auto-detect + scaffold. */
+    private array $roots = [];
+
+    /**
+     * Declare the source roots `judge` and `repent` scan — the project's own list of directories,
+     * the ONE source of scan scope (both commands read it, so neither can scope differently). On a
+     * fresh project this call is auto-scaffolded from composer.json's PSR-4 map (plus `app`/`src`);
+     * edit it freely — add a root to scan more, drop one to stop.
+     */
+    public function paths(string ...$roots): self
+    {
+        $this->roots = [...$this->roots, ...$roots];
+
+        return $this;
+    }
+
+    /**
+     * The declared source roots (relative), or `[]` when the project hasn't declared any — in which
+     * case the caller auto-detects and scaffolds them into `config.php`.
+     *
+     * @return list<string>
+     */
+    public function sourceRoots(): array
+    {
+        return $this->roots;
+    }
+
     /**
      * Suppress shipped detectors — by a detector's own class, by the {@see Sins\Sin} class it
      * points at (drops every detector for that sin), or by a {@see Skills\Skill} class (drops
@@ -100,6 +127,16 @@ final class Config
     public function packages(): array
     {
         return $this->packages;
+    }
+
+    /**
+     * The consumer's own detector classes added via {@see detector} (none by default).
+     *
+     * @return list<class-string<Detector>>
+     */
+    public function registeredDetectors(): array
+    {
+        return $this->registered;
     }
 
     /**

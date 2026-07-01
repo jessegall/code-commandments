@@ -77,8 +77,8 @@ vendor/bin/commandments install
 
 ```bash
 # scan — sins grouped by the skill that fixes them. With no path, judge reads the
-# source roots from .commandments/backend.canon — a small list of directories to scan,
-# inferred from your composer.json and written on the first run (edit it to adjust scope).
+# source roots from $config->paths(...) in .commandments/config.php — auto-detected from
+# your composer.json on the first run (edit it, or run `commandments config reindex`, to adjust scope).
 vendor/bin/commandments judge
 vendor/bin/commandments judge src                  # ...or point it at a path to override
 
@@ -130,6 +130,9 @@ use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 
 return function (Config $config): void {
     $config
+        // The source roots judge and repent scan (auto-detected on first run).
+        ->paths('app', 'src')
+
         // Silence a rule by its Sin class (drops the detector that finds it).
         ->disable(NonFinalData::class)
 
@@ -149,11 +152,13 @@ return function (Config $config): void {
 };
 ```
 
-Each move is named for what it registers: `disable` (silence a rule), `detector` (add
-your own finder), `configure` (tune a threshold), and `package` (register a framework's
-exemptions — covered under [Developing detectors](#developing-detectors)). `configure` uses
-the closure's **first parameter type** to find the detector and hand it in, so you tune it
-by calling its own methods.
+Each move is named for what it registers: `paths` (the source roots to scan — auto-detected
+on first run from your composer.json, re-runnable with `commandments config reindex`),
+`disable` (silence a rule), `detector` (add your own finder), `configure` (tune a threshold),
+and `package` (register a framework's exemptions — covered under
+[Developing detectors](#developing-detectors)). `configure` uses the closure's **first
+parameter type** to find the detector and hand it in, so you tune it by calling its own
+methods. Run `commandments config` for a summary of what's in effect.
 
 ## How detectors are tested
 

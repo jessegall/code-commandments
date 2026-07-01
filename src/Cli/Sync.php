@@ -55,7 +55,7 @@ final class Sync
 
     /**
      * The `.commandments/` folder carries its OWN `.gitignore`: ignore everything generated in here
-     * (the checklist, canon, tool-use counter), keeping only the hand-written `config.php` and the
+     * (the checklist, archives, tool-use counter), keeping only the hand-written `config.php` and the
      * ignore file itself tracked. Self-contained — nothing about the folder leaks into the project's
      * root `.gitignore`. Idempotent.
      */

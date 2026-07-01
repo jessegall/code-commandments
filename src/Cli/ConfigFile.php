@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Scalar\String_;
 use RuntimeException;
 
 /**
@@ -19,35 +20,6 @@ use RuntimeException;
  */
 final class ConfigFile
 {
-    public const string TEMPLATE = <<<'PHP'
-        <?php
-
-        declare(strict_types=1);
-
-        use JesseGall\CodeCommandments\Config;
-
-        /*
-         | code-commandments configuration — OPTIONAL.
-         |
-         | Every detector is enabled by default with sensible thresholds, so you don't have to
-         | touch this file. Turn rules off with `commandments disable/enable <sin>`, or by hand
-         | inside the disable() call below. See the README "Configuration" section.
-         */
-
-        return function (Config $config): void {
-            // Silence rules — a Sin, a Detector, or a whole Skill class:
-            $config->disable(
-                // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
-            );
-
-            // Add your own:
-            //   $config->detector(\App\Commandments\NoRawSqlDetector::class);
-            //   $config->package(\App\Commandments\MyFrameworkPackage::class);
-            //   $config->configure(fn (\JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector $d) => $d->maxDepth(10));
-        };
-
-        PHP;
-
     public function __construct(public readonly string $path) {}
 
     /**
@@ -59,18 +31,32 @@ final class ConfigFile
     }
 
     /**
-     * Write the scaffold ONCE, if the file isn't there yet. Returns true when it created one.
+     * Write the scaffold ONCE, if the file isn't there yet (an empty `paths()`, filled on the next
+     * judge). Returns true when it created one. The write itself is the {@see ConfigScribe}'s job.
      */
     public function scaffoldIfMissing(): bool
     {
-        if (is_file($this->path)) {
-            return false;
+        return new ConfigScribe($this->path)->scaffold([]);
+    }
+
+    /**
+     * The source roots the config declares — read from the `paths()` call's string arguments.
+     *
+     * @return list<string>
+     */
+    public function paths(): array
+    {
+        if (! is_file($this->path)) {
+            return [];
         }
 
-        @mkdir(dirname($this->path), 0777, true);
-        file_put_contents($this->path, self::TEMPLATE);
+        foreach (Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('paths')->get() as $match) {
+            if ($match->node instanceof MethodCall) {
+                return self::argStrings($match->node);
+            }
+        }
 
-        return true;
+        return [];
     }
 
     /**
@@ -171,6 +157,24 @@ final class ConfigFile
         }
 
         return $classes;
+    }
+
+    /**
+     * The string-literal arguments in a `paths('app', 'src')` call.
+     *
+     * @return list<string>
+     */
+    private static function argStrings(MethodCall $call): array
+    {
+        $strings = [];
+
+        foreach ($call->args as $arg) {
+            if ($arg->value instanceof String_) {
+                $strings[] = $arg->value->value;
+            }
+        }
+
+        return $strings;
     }
 
     /**
