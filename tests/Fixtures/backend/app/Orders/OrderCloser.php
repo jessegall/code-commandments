@@ -2,7 +2,7 @@
 
 namespace Shop\Orders;
 
-use JesseGall\CodeCommandments\Sins\Backend\MassUpdateAtCallSite;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\MassUpdateAtCallSite;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Order;

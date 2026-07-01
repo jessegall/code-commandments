@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Support\EloquentCast;
+use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
@@ -35,7 +35,7 @@ final class ArrayBagDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->arrayKeyIsString())
             ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName() ?? ''))
-            ->reject(static fn (AstNode $node): bool => EloquentCast::is($codebase, $node->enclosingClassName()))
+            ->reject(static fn (LaravelNode $node): bool => $node->isEloquentCast())
             ->get();
     }
 }

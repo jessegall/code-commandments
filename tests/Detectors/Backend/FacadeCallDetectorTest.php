@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Laravel\FacadeCallDetector;
 use PHPUnit\Framework\TestCase;
 
 final class FacadeCallDetectorTest extends TestCase

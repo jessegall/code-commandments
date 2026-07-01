@@ -2,8 +2,8 @@
 
 namespace Shop\Services;
 
-use JesseGall\CodeCommandments\Sins\Backend\ContainerReach;
-use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
 use JesseGall\CodeCommandments\Sins\Backend\GenericException;
 use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
 

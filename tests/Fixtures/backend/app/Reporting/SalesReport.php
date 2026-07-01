@@ -3,7 +3,7 @@
 namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
-use JesseGall\CodeCommandments\Sins\Backend\ConfigRead;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\MassUpdateAtCallSiteDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Laravel\MassUpdateAtCallSiteDetector;
 use PHPUnit\Framework\TestCase;
 
 final class MassUpdateAtCallSiteDetectorTest extends TestCase

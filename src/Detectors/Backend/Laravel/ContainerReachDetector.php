@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Detectors\Backend;
+namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Sins\Backend\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;

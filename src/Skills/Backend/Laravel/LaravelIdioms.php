@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Skills\Backend;
+namespace JesseGall\CodeCommandments\Skills\Backend\Laravel;
 
+use JesseGall\CodeCommandments\Skills\Backend\Absence;
+use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
+use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 

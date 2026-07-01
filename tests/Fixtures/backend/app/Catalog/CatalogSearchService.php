@@ -4,7 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
-use JesseGall\CodeCommandments\Sins\Backend\ConfigRead;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

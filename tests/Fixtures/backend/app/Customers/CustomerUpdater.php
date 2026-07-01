@@ -3,7 +3,7 @@
 namespace Shop\Customers;
 
 use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
-use JesseGall\CodeCommandments\Sins\Backend\ModelMutationAtCallSite;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ModelMutationAtCallSite;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

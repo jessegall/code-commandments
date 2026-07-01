@@ -2,8 +2,8 @@
 
 namespace Shop\Services;
 
-use JesseGall\CodeCommandments\Sins\Backend\ConfigRead;
-use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
 
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Support\Facades\Mail;

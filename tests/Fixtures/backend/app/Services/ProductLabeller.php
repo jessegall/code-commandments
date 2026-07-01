@@ -2,7 +2,7 @@
 
 namespace Shop\Services;
 
-use JesseGall\CodeCommandments\Sins\Backend\RequestAccessorRecast;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RequestAccessorRecast;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateProductRequest;

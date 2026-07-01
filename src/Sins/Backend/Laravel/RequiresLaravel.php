@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Sins\Backend;
+namespace JesseGall\CodeCommandments\Sins\Backend\Laravel;
 
 /**
  * Shared {@see \JesseGall\CodeCommandments\Sins\RequiresPackage} answer for the laravel-idioms

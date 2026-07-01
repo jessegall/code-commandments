@@ -2,7 +2,7 @@
 
 namespace Shop\Http\Controllers;
 
-use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

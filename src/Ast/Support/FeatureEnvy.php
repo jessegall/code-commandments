@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
+
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
@@ -77,11 +79,7 @@ final class FeatureEnvy
      * request is an input carrier, not a home for domain logic; querying its data
      * is the contract, not envy.
      */
-    private const array BOUNDARY_BASES = [
-        'Illuminate\\Foundation\\Http\\FormRequest',
-        'Illuminate\\Http\\Request',
-        'Laravel\\Mcp\\Request',
-    ];
+    private const array BOUNDARY_BASES = LaravelNode::REQUEST_TYPES;
 
     /**
      * @param  array<string, true>  $ownedClasses          FQCN => true for every class declared in the codebase

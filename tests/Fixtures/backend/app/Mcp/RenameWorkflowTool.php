@@ -2,7 +2,7 @@
 
 namespace Shop\Mcp;
 
-use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

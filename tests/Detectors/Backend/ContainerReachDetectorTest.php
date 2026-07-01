@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\ContainerReachDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Laravel\ContainerReachDetector;
 use PHPUnit\Framework\TestCase;
 
 final class ContainerReachDetectorTest extends TestCase

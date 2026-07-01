@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Sins\Backend;
+namespace JesseGall\CodeCommandments\Sins\Backend\Laravel;
 
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Skills\Backend\LaravelIdioms;
+use JesseGall\CodeCommandments\Skills\Backend\Laravel\LaravelIdioms;
 
 final class RequestAccessorRecast extends Sin implements RequiresPackage
 {

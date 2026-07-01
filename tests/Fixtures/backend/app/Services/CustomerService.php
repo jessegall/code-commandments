@@ -3,8 +3,8 @@
 namespace Shop\Services;
 
 use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
-use JesseGall\CodeCommandments\Sins\Backend\FacadeCall;
-use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

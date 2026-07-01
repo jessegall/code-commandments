@@ -3,8 +3,8 @@
 namespace Shop\Http\Controllers;
 
 use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
-use JesseGall\CodeCommandments\Sins\Backend\ModelMutationAtCallSite;
-use JesseGall\CodeCommandments\Sins\Backend\RawRequestInput;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ModelMutationAtCallSite;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

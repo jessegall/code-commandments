@@ -2,7 +2,7 @@
 
 namespace Shop\Notifications;
 
-use JesseGall\CodeCommandments\Sins\Backend\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 

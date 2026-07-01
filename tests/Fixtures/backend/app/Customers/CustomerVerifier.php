@@ -2,7 +2,7 @@
 
 namespace Shop\Customers;
 
-use JesseGall\CodeCommandments\Sins\Backend\MassUpdateAtCallSite;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\MassUpdateAtCallSite;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;

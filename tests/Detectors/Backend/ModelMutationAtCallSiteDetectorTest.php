@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Backend\ModelMutationAtCallSiteDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Laravel\ModelMutationAtCallSiteDetector;
 use PHPUnit\Framework\TestCase;
 
 final class ModelMutationAtCallSiteDetectorTest extends TestCase

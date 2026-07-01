@@ -126,7 +126,7 @@ itself:
 
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\FacadeCallDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\Laravel\FacadeCallDetector;
 use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
@@ -418,11 +418,11 @@ _59 sins across 16 skills._
 |---|---|
 | `ConfigRead` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
 | `ContainerReach` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
-| `FacadeCall` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`, `Mail::raw(...)`. |
-| `MassUpdateAtCallSite` | A bare `$model->update([...])` on an Eloquent model at a call site — an anonymous array of column writes with no name and no home. |
-| `ModelMutationAtCallSite` | Setting an Eloquent model's properties then calling `->save()` at a call site — `$order->status = 'paid'; $order->save();`. |
-| `RawRequestInput` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
-| `RequestAccessorRecast` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
+| `FacadeCall` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`. |
+| `MassUpdateAtCallSite` | A mass `->update([...])` on an Eloquent model at a call site — an untyped array of attributes smuggling a mutation past the model's own methods. |
+| `ModelMutationAtCallSite` | Setting an Eloquent model's properties at a call site and then `->save()`-ing it — the mutation belongs behind an intention-revealing method on the model (`$order->markPaid()`), not smeared across the caller. |
+| `RawRequestInput` | An untyped read off a Laravel request — `->input(...)`, `->get(...)`, `->query(...)`, `->post(...)` on a `Request`/`FormRequest`/MCP request. |
+| `RequestAccessorRecast` | A typed request accessor immediately re-flattened to a bare string — `$request->string($k)->toString()` or `(string) $request->string($k)`. |
 
 #### `backend/spatie-data`
 

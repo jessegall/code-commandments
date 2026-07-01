@@ -2,7 +2,7 @@
 
 namespace Shop\Mcp;
 
-use JesseGall\CodeCommandments\Sins\Backend\RequestAccessorRecast;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RequestAccessorRecast;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
