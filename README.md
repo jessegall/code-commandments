@@ -466,6 +466,37 @@ is built to *drive an agent*, not to hand you a chore. But some sins have a sing
 mechanical correct fix, and for those the tool ships a **scribe**: code that rewrites
 the sin for you. The `repent` command runs them.
 
+For example, a backend `LoopInvertedGuard` — a whole loop body wrapped in an `if` —
+is rewritten to a `continue` guard so the body stays flat:
+
+```php
+// before                                    // after (repent)
+foreach ($rows as $row) {                     foreach ($rows as $row) {
+    if ($row->valid()) {                          if (! $row->valid()) {
+        $this->import($row);                          continue;
+    }                                             }
+}
+                                                  $this->import($row);
+                                              }
+```
+
+…and a frontend `SwitchCase` — a `v-if`/`v-else-if` chain re-testing one value — is
+hoisted into a `<SwitchCase>`, one slot per case:
+
+```vue
+<!-- before -->
+<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+<span v-else-if="status === 'pending'" class="badge badge-amber">Pending</span>
+<span v-else class="badge">Unknown</span>
+
+<!-- after (repent) -->
+<SwitchCase :value="status">
+  <template #paid><span class="badge badge-green">Paid</span></template>
+  <template #pending><span class="badge badge-amber">Pending</span></template>
+  <template #default><span class="badge">Unknown</span></template>
+</SwitchCase>
+```
+
 ```bash
 # preview every auto-fix as a unified diff — nothing is written
 vendor/bin/commandments repent src --dry-run
