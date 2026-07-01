@@ -254,7 +254,8 @@ final class MyDetectorsTest extends FixtureTestCase
     {
         return new DeclaredFixture([
             new NoRawSqlDetector(),
-            new NoDatePickerDetector(),   // a Frontend\Detector — .vue fixtures with <!-- @sin --> markers
+            // a Frontend\Detector — .vue fixtures with <!-- @sin --> markers
+            new NoDatePickerDetector(),
         ]);
     }
 }
