@@ -73,11 +73,6 @@ composer require --dev jessegall/code-commandments
 vendor/bin/commandments install
 ```
 
-`install` wires the project up (idempotent): a composer hook that re-syncs the skills
-on every `composer update`; the `.gitignore` entries; a commented
-`.commandments/config.php` scaffold; and a `PostToolUse` hook that reminds the agent
-of the commandments every 25 tool uses.
-
 ## Usage
 
 ```bash
