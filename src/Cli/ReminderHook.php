@@ -20,44 +20,36 @@ final class ReminderHook
     public const string COMMAND = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind';
 
     /**
-     * Ensure the reminder hook is wired under `PostToolUse` in $path. Returns whether it changed.
+     * Ensure the reminder hook is wired under `PostToolUse` in $path — and ONLY there. Returns
+     * whether it changed. Idempotent by CONTENT: it computes the desired settings and writes only
+     * when they differ, so it can never leave a stray/duplicate copy (an old `UserPromptSubmit` one)
+     * behind, no matter what state it starts from.
      */
     public static function wire(string $path): bool
     {
         /** @var array<string, mixed> $settings */
         $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
+        $before = json_encode($settings);
+
         $hooks = is_array($settings['hooks'] ?? null) ? $settings['hooks'] : [];
 
-        $alreadyCurrent = false;
-
-        // Strip every existing remind hook from every event (migrating off UserPromptSubmit).
-        foreach (['UserPromptSubmit', 'PostToolUse'] as $event) {
-            $groups = is_array($hooks[$event] ?? null) ? $hooks[$event] : [];
+        // Strip our remind hook from EVERY event — every other hook, in any event, is preserved.
+        foreach ($hooks as $event => $groups) {
             $rebuilt = [];
 
-            foreach ($groups as $group) {
+            foreach (is_array($groups) ? $groups : [] as $group) {
                 if (! is_array($group) || ! is_array($group['hooks'] ?? null)) {
                     $rebuilt[] = $group;
 
                     continue;
                 }
 
-                $kept = [];
+                $group['hooks'] = array_values(array_filter(
+                    $group['hooks'],
+                    static fn ($hook): bool => ! self::isOurs(is_array($hook) ? (string) ($hook['command'] ?? '') : ''),
+                ));
 
-                foreach ($group['hooks'] as $hook) {
-                    $command = is_array($hook) ? (string) ($hook['command'] ?? '') : '';
-
-                    if (str_contains($command, 'commandments remind')) {
-                        $alreadyCurrent = $alreadyCurrent || ($event === 'PostToolUse' && $command === self::COMMAND);
-
-                        continue;
-                    }
-
-                    $kept[] = $hook;
-                }
-
-                if ($kept !== []) {
-                    $group['hooks'] = $kept;
+                if ($group['hooks'] !== []) {
                     $rebuilt[] = $group;
                 }
             }
@@ -65,22 +57,33 @@ final class ReminderHook
             if ($rebuilt === []) {
                 unset($hooks[$event]);
             } else {
-                $hooks[$event] = $rebuilt;
+                $hooks[$event] = array_values($rebuilt);
             }
         }
 
-        if ($alreadyCurrent) {
+        // …then add exactly one, under PostToolUse.
+        $hooks['PostToolUse'][] = ['hooks' => [['type' => 'command', 'command' => self::COMMAND]]];
+        $settings['hooks'] = $hooks;
+
+        if (json_encode($settings) === $before) {
             return false;
         }
-
-        $postToolUse = is_array($hooks['PostToolUse'] ?? null) ? $hooks['PostToolUse'] : [];
-        $postToolUse[] = ['hooks' => [['type' => 'command', 'command' => self::COMMAND]]];
-        $hooks['PostToolUse'] = $postToolUse;
-        $settings['hooks'] = $hooks;
 
         @mkdir(dirname($path), 0755, true);
         file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
 
         return true;
     }
+
+    /**
+     * Is $command OUR reminder hook — a `commandments … remind` invocation? Matched by both tokens
+     * so it recognises every form the command has taken (`commandments remind`, the quoted
+     * `commandments" remind` anchored at `$CLAUDE_PROJECT_DIR`), and never the `commandments sync`
+     * hook. This is how a stale wiring is found and replaced.
+     */
+    private static function isOurs(string $command): bool
+    {
+        return str_contains($command, 'commandments') && str_contains($command, 'remind');
+    }
 }
+
