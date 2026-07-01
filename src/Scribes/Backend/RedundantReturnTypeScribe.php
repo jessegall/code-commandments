@@ -18,8 +18,8 @@ use PhpParser\Node\Stmt\Class_;
 use PhpParser\NodeFinder;
 
 /**
- * Strips the redundant explicit return type from a single-expression arrow function
- * when the expression PROVABLY yields exactly that class — noise the one-liner
+ * Strips a redundant explicit return type from a single-expression arrow function
+ * when the expression PROVABLY yields exactly that class. It's noise the one-liner
  * already makes obvious:
  *
  *   static fn (): Foo => Foo::make($x)   →   static fn () => Foo::make($x)

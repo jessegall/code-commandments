@@ -21,9 +21,8 @@ use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 
 /**
- * Computes the source rewrites that bring a Spatie `Data` class's magic surface in
- * line with the spatie-data skill, and returns the new content of every changed
- * file. It does three things:
+ * Brings a Spatie `Data` class's magic surface in line with the spatie-data skill.
+ * It does three things, returning the new content of every changed file:
  *
  *  1. Renames a `public static` object factory that builds an instance of itself
  *     but isn't `from…`-named (`forCredential(Credential $c)`) to `from<Type>`
