@@ -58,6 +58,9 @@ final class DataClassShape
      */
     private function __construct(private readonly array $classes) {}
 
+    /** Per-codebase memo — the class map is built ONCE per run, not once per `new` candidate. */
+    private static ?\WeakMap $memo = null;
+
     /**
      * The class declaration for $fqcn if it lives in the scanned codebase, else null —
      * a fixer that can't see the declaration can't prove its rewrite safe.
@@ -108,7 +111,20 @@ final class DataClassShape
         return $class->extends instanceof Name && $this->remapsInputNames($class->extends->toString(), $seen);
     }
 
+    /**
+     * The class map for a codebase — memoised, so building it (an AST walk over every file) happens
+     * once per run rather than once per `new` candidate the detector checks. Keyed by the codebase
+     * object via a {@see \WeakMap}, so the entry is released with the codebase and no object-id reuse
+     * can serve a stale map.
+     */
     public static function forCodebase(Codebase $codebase): self
+    {
+        self::$memo ??= new \WeakMap();
+
+        return self::$memo[$codebase] ??= self::build($codebase);
+    }
+
+    private static function build(Codebase $codebase): self
     {
         $classes = [];
         $finder = new NodeFinder;
