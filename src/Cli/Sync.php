@@ -55,17 +55,31 @@ final class Sync
     }
 
     /**
-     * Everything the package generates is regenerated, not hand-authored — the judge
-     * checklist and any future state live under `.commandments/` (one ignored
-     * folder); the published skills must sit in `.claude/skills/` for the Skill tool
-     * to find them, so they're ignored there. Re-asserted on every sync so consumers
-     * pick it up on `composer update`. Idempotent.
+     * Everything the package GENERATES is regenerated, not hand-authored — the judge
+     * checklist and any future state live under `.commandments/`, so its contents are
+     * ignored (but a project's hand-written `.commandments/config.php` / `repent.php`
+     * are kept tracked). The published skills must sit in `.claude/skills/` for the
+     * Skill tool to find them, so they're ignored there. Re-asserted on every sync so
+     * consumers pick it up on `composer update`. Idempotent.
      */
     private function ensureGitignored(string $path): void
     {
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
+
+        // Migrate an earlier bare `.commandments/` rule (which also hid the hand-authored config
+        // files) to the contents-only form below, which keeps `config.php` / `repent.php` tracked.
+        $stale = ['.commandments/', '# code-commandments generated artifacts (judge checklist + state)'];
+        $existing = implode("\n", array_filter(
+            explode("\n", $existing),
+            static fn (string $line): bool => ! in_array(trim($line), $stale, true),
+        ));
+
         $entries = [
-            '# code-commandments generated artifacts (judge checklist + state)' => '.commandments/',
+            // Ignore the generated artifacts (checklist + state), but NOT the config a project
+            // writes by hand — `.commandments/*` + negations, since a bare dir ignore can't be
+            // un-ignored per file.
+            '# code-commandments generated artifacts (checklist + state); config files stay tracked'
+                => ".commandments/*\n!.commandments/config.php\n!.commandments/repent.php",
             '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments/',
         ];
 

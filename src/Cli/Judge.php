@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
+use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Detector;
@@ -51,8 +52,11 @@ final class Judge
             return 2;
         }
 
-        $detectors = $this->select(Catalog::backend(), $options->skill, $options->sin);
-        $frontend = $this->select(Catalog::frontend(), $options->skill, $options->sin);
+        // Apply the project's `.commandments/config.php` (disable / register / configure) to the
+        // shipped catalogs before the CLI `--skill`/`--sin` narrowing.
+        $configured = Config::load()->apply(Catalog::backend(), Catalog::frontend());
+        $detectors = $this->select($configured['backend'], $options->skill, $options->sin);
+        $frontend = $this->select($configured['frontend'], $options->skill, $options->sin);
 
         if ($detectors === [] && $frontend === []) {
             fwrite(STDERR, "No detector matched --skill={$options->skill} --sin={$options->sin}\n");
