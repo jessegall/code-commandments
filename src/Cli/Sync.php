@@ -33,6 +33,7 @@ final class Sync
         $this->injectClaudeSection($consumer);
         $this->ensureGitignored("{$consumer}/.gitignore");
         $this->ensureConfigStub($consumer);
+        $this->ensureCommandmentsGitignore($consumer);
         ReminderHook::wire("{$consumer}/.claude/settings.json");
         $this->removeLegacyArtifacts($consumer);
 
@@ -50,6 +51,23 @@ final class Sync
     private function ensureConfigStub(string $consumer): void
     {
         ConfigFile::inProject($consumer)->scaffoldIfMissing();
+    }
+
+    /**
+     * The `.commandments/` folder carries its OWN `.gitignore`: ignore everything generated in here
+     * (the checklist, canon, tool-use counter), keeping only the hand-written `config.php` and the
+     * ignore file itself tracked. Self-contained — nothing about the folder leaks into the project's
+     * root `.gitignore`. Idempotent.
+     */
+    private function ensureCommandmentsGitignore(string $consumer): void
+    {
+        $path = "{$consumer}/.commandments/.gitignore";
+        $content = "# code-commandments generated state; config.php stays tracked\n*\n!.gitignore\n!config.php\n";
+
+        if (! is_file($path) || (string) file_get_contents($path) !== $content) {
+            @mkdir(dirname($path), 0777, true);
+            file_put_contents($path, $content);
+        }
     }
 
     /**
@@ -81,21 +99,19 @@ final class Sync
     {
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
 
-        // Strip earlier RULE forms so config.php is the only tracked exception: a bare
-        // `.commandments/` (which also hid config.php) and the earlier `!repent.php` negation.
-        // Comments are left as-is — harmless, and the current block re-adds its own below.
-        $stale = ['.commandments/', '!.commandments/repent.php'];
+        // Strip earlier RULE forms — the folder now carries its OWN `.commandments/.gitignore`
+        // (see {@see ensureCommandmentsGitignore}), so its rules no longer belong in the root: a
+        // bare `.commandments/`, the `.commandments/*` + `!config.php` pair, and the old
+        // `!repent.php` negation are all migrated out. Comments are left as-is (harmless).
+        $stale = ['.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php'];
         $existing = implode("\n", array_filter(
             explode("\n", $existing),
             static fn (string $line): bool => ! in_array(trim($line), $stale, true),
         ));
 
         $entries = [
-            // Ignore the generated artifacts (checklist + state), but NOT the config a project
-            // writes by hand — `.commandments/*` + a negation, since a bare dir ignore can't be
-            // un-ignored per file. `config.php` is the ONLY tracked file under the folder.
-            '# code-commandments generated artifacts (checklist + state); config.php stays tracked'
-                => ".commandments/*\n!.commandments/config.php",
+            // Only the published skills live OUTSIDE `.commandments/` (under `.claude/`), so this is
+            // the one root entry the package still manages.
             '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments/',
         ];
 
