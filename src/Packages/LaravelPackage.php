@@ -17,14 +17,6 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
  */
 final class LaravelPackage extends Package
 {
-    private const string FORM_REQUEST = 'Illuminate\\Foundation\\Http\\FormRequest';
-
-    private const string MCP_REQUEST = 'Laravel\\Mcp\\Request';
-
-    private const string MCP_TOOL = 'Laravel\\Mcp\\Server\\Tool';
-
-    private const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
-
     public function register(Exemptions $exemptions): void
     {
         // Entry points: a request is where raw input crosses in — don't move behaviour onto it,
@@ -33,15 +25,15 @@ final class LaravelPackage extends Package
 
         // Contract hooks: a per-subclass array the framework mandates, its shape not the author's.
         $exemptions->exempt(ContractMethod::class)
-            ->on(self::FORM_REQUEST, 'rules')
-            ->on(self::MCP_REQUEST, 'rules')
-            ->on(self::MCP_TOOL, 'rules', 'schema')
-            ->on(self::MODEL, 'casts');
+            ->on(LaravelNode::FORM_REQUEST, 'rules')
+            ->on(LaravelNode::MCP_REQUEST, 'rules')
+            ->on(LaravelNode::MCP_TOOL, 'rules', 'schema')
+            ->on(LaravelNode::MODEL, 'casts');
 
         // Config classes whose whole job is returning arrays (rules/messages/attributes/schema/…) —
         // exempt wholesale, robust to hooks a rule can't enumerate. (A Model is NOT here — only its
         // casts() above; a Model returning an array elsewhere is a real bag.)
-        $exemptions->exempt(ArrayReturning::class)->classes(self::FORM_REQUEST, self::MCP_REQUEST, self::MCP_TOOL);
+        $exemptions->exempt(ArrayReturning::class)->classes(LaravelNode::FORM_REQUEST, LaravelNode::MCP_REQUEST, LaravelNode::MCP_TOOL);
 
         // No-container: Eloquent builds a cast itself, no DI — a loose array param is the convention.
         $exemptions->exempt(NoContainer::class)->classes(...LaravelNode::CAST_CONTRACTS);

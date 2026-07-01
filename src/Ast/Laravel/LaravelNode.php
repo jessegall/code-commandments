@@ -28,12 +28,20 @@ final class LaravelNode extends NodeMatch
     /** The Eloquent model base. */
     public const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
 
+    /** The HTTP request base. */
+    public const string REQUEST = 'Illuminate\\Http\\Request';
+
+    /** The form-request base — a validated request, whose `rules()` shape the framework dictates. */
+    public const string FORM_REQUEST = 'Illuminate\\Foundation\\Http\\FormRequest';
+
+    /** Laravel MCP's request. */
+    public const string MCP_REQUEST = 'Laravel\\Mcp\\Request';
+
+    /** Laravel MCP's tool base — a request-like handler whose `rules()`/`schema()` are contractual. */
+    public const string MCP_TOOL = 'Laravel\\Mcp\\Server\\Tool';
+
     /** The HTTP/MCP request bases whose untyped reads are the smell. */
-    public const array REQUEST_TYPES = [
-        'Illuminate\\Http\\Request',
-        'Illuminate\\Foundation\\Http\\FormRequest',
-        'Laravel\\Mcp\\Request',
-    ];
+    public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 
     /** The Eloquent attribute-cast contracts — a cast has no container/DI, so it may use facades. */
     public const array CAST_CONTRACTS = [
