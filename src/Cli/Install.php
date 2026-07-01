@@ -46,9 +46,11 @@ final class Install
 
     /**
      * Register `commandments remind` as a `PostToolUse` hook so the cardinal rule surfaces once
-     * every 25 tool uses. Idempotent, and MIGRATING: any older remind hook — including one wired
-     * under the previous `UserPromptSubmit` event — is stripped first, from every event, then the
-     * single current group is added under `PostToolUse`. Other hooks are left intact.
+     * every 25 tool uses. Idempotent, and MIGRATING: we remove ONLY our own remind hook — matched
+     * by its command containing `commandments remind` — from both events (so an older one wired
+     * under `UserPromptSubmit` moves over), then add the single current group under `PostToolUse`.
+     * Every other hook the project has, in any event, is preserved untouched — we never strip a
+     * hook we didn't write.
      */
     private function wireReminderHook(string $path): bool
     {
