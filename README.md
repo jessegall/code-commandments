@@ -159,6 +159,9 @@ You mark the exact spots where a detector *should* fire:
 
 ```php
 // tests/Fixtures/shop/app/Orders/RefundService.php
+use JesseGall\CodeCommandments\Detectors\Backend\SwallowCatchDetector;
+use JesseGall\CodeCommandments\Testing\Sinful;
+
 final class RefundService
 {
     // this method MUST be flagged:
