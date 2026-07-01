@@ -136,8 +136,8 @@ The generated `SKILL.md` "when it fires" rows project from the registered sins.
 | `bin/commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]` | File a GitHub issue (via `gh`): a `[detector-report]` (false positive / wrong rule) when `--detector` is given, else a `[bug-report]` for a global bug. Only `--reason` is required. |
 | `bin/commandments feature-request --title="…" --reason="…"` | File a `[feature-request]` GitHub issue proposing a new/changed rule (via `gh`). |
 | `bin/commandments disable <sin>` / `enable <sin>` | Toggle a rule in the project's `.commandments/config.php`: resolve the sin id (lenient) to its `Sin` class and add/remove it in the `$config->disable(...)` call. Edited through the AST ({@see Cli\ConfigFile}), never text-scanned; the file stays valid PHP and the human's own `register`/`configure` lines are untouched. |
-| `bin/commandments install` | Wire a consumer: composer sync hook + a `UserPromptSubmit` reminder of the cardinal rule + gitignore, then sync. Idempotent. |
-| `bin/commandments remind` | Emit the cardinal rule as a `UserPromptSubmit` hook payload (re-injects "trace to the source" every turn). |
+| `bin/commandments install` | Wire a consumer: composer sync hook + a `PostToolUse` reminder of the cardinal rule (every 25 tool uses) + gitignore, then sync. Idempotent. |
+| `bin/commandments remind` | Emit the cardinal rule as a `PostToolUse` hook payload — counts tool uses in `.commandments/.remind-count` and surfaces "trace to the source" once every 25. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
 
 **Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large

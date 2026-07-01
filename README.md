@@ -74,8 +74,8 @@ vendor/bin/commandments install
 ```
 
 `install` wires the project up (idempotent): a composer hook that re-syncs the
-skills on every `composer update`; a `UserPromptSubmit` hook that reminds your agent
-of the rule above all — *a finding is a symptom, so trace it to where the bad value
+skills on every `composer update`; a `PostToolUse` hook that surfaces the rule above
+all every 25 tool uses — *a finding is a symptom, so trace it to where the bad value
 is born and fix it there, never at the call site*; the `.gitignore` entries; and a
 commented `.commandments/config.php` scaffold.
 
