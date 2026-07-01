@@ -67,7 +67,13 @@ harmless. You only ever see the sins that actually apply to your code.
 
 ```bash
 composer require --dev jessegall/code-commandments
+vendor/bin/commandments install
 ```
+
+`install` wires the project up (idempotent): a composer hook that re-syncs the
+skills on every `composer update`, a `UserPromptSubmit` reminder of the cardinal
+rule for your agent, the `.gitignore` entries, and a commented
+`.commandments/config.php` scaffold. Then it's ready — `judge` away.
 
 ## Usage
 
@@ -190,10 +196,10 @@ three copies of the same shape).
 
 And the nice part: **any unmarked code is already "righteous."** The whole rest of
 the fixture is the false-positive guard — flagging an *unmarked* spot fails the run —
-so you never have to mark "good" code. The `#[Righteous]` / `<!-- @righteous -->`
-marker is entirely **optional**, and used for one thing only: to pick a concrete
-*good-code example* for the generated skill docs (the bad→good block). One per
-detector is plenty.
+so you don't scatter "good" markers around. You add exactly **one** `#[Righteous]` /
+`<!-- @righteous -->` per detector, and its only job is to source a concrete
+*good-code example* for the generated skill docs (the bad→good block). One is
+required; one is enough.
 
 ## Sins & detectors
 
