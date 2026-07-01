@@ -47,7 +47,7 @@ $summary = static function (object|string $subject) use ($cell): string {
 
 $shortName = static fn (object|string $subject): string => (new ReflectionClass($subject))->getShortName();
 
-// ---- Detectors table ------------------------------------------------------
+// ---- Detectors table (split by engine) ------------------------------------
 
 /** @var array<string, list<\JesseGall\CodeCommandments\Detector>> $bySkill */
 $bySkill = [];
@@ -59,23 +59,40 @@ foreach (Catalog::all() as $detector) {
 uksort($bySkill, static fn (string $a, string $b): int => [$bound($bySkill[$a][0]), $a] <=> [$bound($bySkill[$b][0]), $b]);
 
 $detectorTotal = array_sum(array_map('count', $bySkill));
-$lines = ["_{$detectorTotal} detectors across " . count($bySkill) . " skills._\n"];
 
-foreach ($bySkill as $skill => $detectors) {
-    $lines[] = "### `{$skill}`\n";
-    $lines[] = '| Sin | Detector | What it flags |';
-    $lines[] = '|---|---|---|';
+/**
+ * The `#### slug` + tables for the skill groups of one engine.
+ *
+ * @return list<string>
+ */
+$engineDetectors = static function (string $engine) use ($bySkill, $shortName, $summary): array {
+    $lines = [];
 
-    foreach ($detectors as $detector) {
-        $lines[] = '| `' . $shortName($detector->sin()) . '` | `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
+    foreach ($bySkill as $skill => $detectors) {
+        if (! str_starts_with((string) $skill, "{$engine}/")) {
+            continue;
+        }
+
+        $lines[] = "#### `{$skill}`\n";
+        $lines[] = '| Sin | Detector | What it flags |';
+        $lines[] = '|---|---|---|';
+
+        foreach ($detectors as $detector) {
+            $lines[] = '| `' . $shortName($detector->sin()) . '` | `' . $shortName($detector) . '` | ' . $summary($detector) . ' |';
+        }
+
+        $lines[] = '';
     }
 
-    $lines[] = '';
-}
+    return $lines;
+};
+
+$lines = ["_{$detectorTotal} detectors across " . count($bySkill) . " skills._\n", "### Backend\n"];
+$lines = [...$lines, ...$engineDetectors('backend'), "### Frontend\n", ...$engineDetectors('frontend')];
 
 $detectorsBlock = "\n" . implode("\n", $lines) . "\n";
 
-// ---- Auto-fixing tables ---------------------------------------------------
+// ---- Auto-fixing tables (split by engine) ---------------------------------
 
 $repentables = array_values(array_filter(Catalog::all(), static fn ($d): bool => $d instanceof Repentable));
 
@@ -83,10 +100,34 @@ usort($repentables, static fn ($a, $b): int => [$bound($a), $a->sin()->slug(), $
 
 $maintenance = Scribes::all();
 
+/**
+ * The auto-fixable-sins table for one engine, or [] when it has none.
+ *
+ * @return list<string>
+ */
+$engineFixables = static function (string $engine) use ($repentables, $shortName, $cell): array {
+    $rows = array_values(array_filter($repentables, static fn ($d): bool => str_starts_with($d->sin()->slug(), "{$engine}/")));
+
+    if ($rows === []) {
+        return [];
+    }
+
+    $lines = ['| Sin | Skill | The fix `repent` applies |', '|---|---|---|'];
+
+    foreach ($rows as $detector) {
+        $sin = $detector->sin();
+        $lines[] = '| `' . $shortName($sin) . '` | `' . $sin->slug() . '` | ' . $cell($sin->rule) . ' |';
+    }
+
+    return $lines;
+};
+
 $scribeLines = [
     '_`repent` auto-fixes ' . count($repentables) . ' sins, plus ' . count($maintenance) . ' whole-tree maintenance passes._',
     '',
-    '**Maintenance passes** — run over the whole PHP tree:',
+    '### Maintenance passes',
+    '',
+    'Whole-tree PHP rewrites, run on every `repent`:',
     '',
     '| Scribe | What it does |',
     '|---|---|',
@@ -96,16 +137,17 @@ foreach ($maintenance as $scribe) {
     $scribeLines[] = '| `' . $shortName($scribe) . '` | ' . $summary($scribe) . ' |';
 }
 
-$scribeLines[] = '';
-$scribeLines[] = '**Auto-fixable sins** — a detector whose sin `repent` can rewrite away:';
-$scribeLines[] = '';
-$scribeLines[] = '| Sin | Skill | The fix `repent` applies |';
-$scribeLines[] = '|---|---|---|';
-
-foreach ($repentables as $detector) {
-    $sin = $detector->sin();
-    $scribeLines[] = '| `' . $shortName($sin) . '` | `' . $sin->slug() . '` | ' . $cell($sin->rule) . ' |';
-}
+$scribeLines = [
+    ...$scribeLines,
+    '',
+    '### Backend',
+    '',
+    ...$engineFixables('backend'),
+    '',
+    '### Frontend',
+    '',
+    ...$engineFixables('frontend'),
+];
 
 $scribesBlock = "\n" . implode("\n", $scribeLines) . "\n";
 

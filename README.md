@@ -216,7 +216,9 @@ grouped by the skill that teaches the fix.
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
 _59 detectors across 16 skills._
 
-### `backend/absence`
+### Backend
+
+#### `backend/absence`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -224,7 +226,7 @@ _59 detectors across 16 skills._
 | `NullableCallback` | `NullableCallbackDetector` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
 | `OptionAsNullable` | `OptionAsNullableDetector` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
 
-### `backend/documentation`
+#### `backend/documentation`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -232,7 +234,7 @@ _59 detectors across 16 skills._
 | `BloatedDocblock` | `BloatedDocblockDetector` | A class whose docblock runs to multiple paragraphs. |
 | `CeremonyDocblock` | `CeremonyDocblockDetector` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
 
-### `backend/enums-with-behaviour`
+#### `backend/enums-with-behaviour`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -243,7 +245,7 @@ _59 detectors across 16 skills._
 | `MatchDefaultReturnsNull` | `MatchDefaultReturnsNullDetector` | A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing. |
 | `StringMatchMirrorsEnum` | `StringMatchMirrorsEnumDetector` | A `match`/`switch` whose arm conditions are string/int literals that ARE an existing backed enum's case values — dispatching on the loose strings instead of the type that already seals them. |
 
-### `backend/exceptions`
+#### `backend/exceptions`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -252,7 +254,7 @@ _59 detectors across 16 skills._
 | `SwallowCatch` | `SwallowCatchDetector` | A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`. |
 | `WrappingWithoutCause` | `WrappingWithoutCauseDetector` | Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from. |
 
-### `backend/fix-at-the-source`
+#### `backend/fix-at-the-source`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -260,7 +262,7 @@ _59 detectors across 16 skills._
 | `ManufacturedFakeFill` | `ManufacturedFakeFillDetector` | Filling an argument with a manufactured fake on absence — `name: $row['name'] ?? ''`, `(int) ($row['id'] ?? 0)`. |
 | `NearDuplicateFunction` | `NearDuplicateFunctionDetector` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
 
-### `backend/guard-clauses-and-flow`
+#### `backend/guard-clauses-and-flow`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -271,33 +273,33 @@ _59 detectors across 16 skills._
 | `NestedTernary` | `NestedTernaryDetector` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
 | `RedundantElse` | `RedundantElseDetector` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
 
-### `backend/pass-the-object`
+#### `backend/pass-the-object`
 
 | Sin | Detector | What it flags |
 |---|---|---|
 | `ParamResolvedFromParam` | `ParamResolvedFromParamDetector` | A method that UNPACKS its target out of a container parameter — takes a container object AND a scalar key, resolves the key against the container (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`), and works on the resolved target while the container is only ever packaging. |
 
-### `backend/role-vocabulary`
+#### `backend/role-vocabulary`
 
 | Sin | Detector | What it flags |
 |---|---|---|
 | `NullableRegistryLookup` | `NullableRegistryLookupDetector` | A class's own keyed store handing back `null` on a miss — `return $this->items[$key] ?? null`. |
 
-### `backend/tell-dont-ask`
+#### `backend/tell-dont-ask`
 
 | Sin | Detector | What it flags |
 |---|---|---|
 | `FeatureEnvy` | `FeatureEnvyDetector` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
 | `KeyedLookupEnvy` | `KeyedLookupEnvyDetector` | Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`). |
 
-### `backend/type-honesty`
+#### `backend/type-honesty`
 
 | Sin | Detector | What it flags |
 |---|---|---|
 | `MaskedInvariant` | `MaskedInvariantDetector` | `$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state. |
 | `ScratchStateRestore` | `ScratchStateRestoreDetector` | A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`. |
 
-### `backend/value-objects`
+#### `backend/value-objects`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -307,33 +309,13 @@ _59 detectors across 16 skills._
 | `PositionalTupleReturn` | `PositionalTupleReturnDetector` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` (also from a closure / arrow fn) — bundles several independent values as a keyless list the caller must destructure by position. |
 | `RawDecodedArrayReturn` | `RawDecodedArrayReturnDetector` | Returning a freshly-decoded payload straight out of a boundary — the raw `array` from `json_decode(...)` crossing back into the app untyped. |
 
-### `frontend/vue-components`
-
-| Sin | Detector | What it flags |
-|---|---|---|
-| `CompoundInlineComponent` | `CompoundInlineComponentDetector` | A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`, `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`) are filled with a substantial body right here in the parent template, instead of living in its own component. |
-| `DeepDataReach` | `DeepDataReachDetector` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
-| `DeepNested` | `DeepNestedDetector` | A template nested far too deep — an element many levels in that still has several more levels of markup beneath it. |
-| `DuplicateElement` | `DuplicateElementDetector` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
-| `PropDrilling` | `PropDrillingDetector` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
-| `PropMutation` | `PropMutationDetector` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
-
-### `frontend/vue-control-flow`
-
-| Sin | Detector | What it flags |
-|---|---|---|
-| `ControlFlowOnElement` | `ControlFlowOnElementDetector` | A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a real element or component instead of a `<template>`. |
-| `IndexAsKey` | `IndexAsKeyDetector` | A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`. |
-| `LoopWithCondition` | `LoopWithConditionDetector` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
-| `SwitchCase` | `SwitchCaseDetector` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
-
-### `backend/concurrent-state`
+#### `backend/concurrent-state`
 
 | Sin | Detector | What it flags |
 |---|---|---|
 | `ConcurrentSubclass` | `ConcurrentSubclassDetector` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
 
-### `backend/laravel-idioms`
+#### `backend/laravel-idioms`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -345,7 +327,7 @@ _59 detectors across 16 skills._
 | `RawRequestInput` | `RawRequestInputDetector` | Raw, untyped request reads (`->input()`/`->get()`/`->query()`/`->post()`) on a request from outside the request class — use a typed accessor instead (`->string()`, `->integer()`, …). |
 | `RequestAccessorRecast` | `RequestAccessorRecastDetector` | Re-coercing a typed request accessor at a CALL SITE — `$request->string('id')->toString()` (or `(string) $request->string('id')`) in a handler/tool/service. |
 
-### `backend/spatie-data`
+#### `backend/spatie-data`
 
 | Sin | Detector | What it flags |
 |---|---|---|
@@ -354,6 +336,28 @@ _59 detectors across 16 skills._
 | `ManualHydrationLoop` | `ManualHydrationLoopDetector` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback (`array_map(X::from(...), $rows)`, `array_map(fn ($r) => X::from($r), $rows)`). |
 | `NewDataObject` | `NewDataObjectDetector` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
 | `NonFinalData` | `NonFinalDataDetector` | A Spatie `Data` class that is not declared `final`. |
+
+### Frontend
+
+#### `frontend/vue-components`
+
+| Sin | Detector | What it flags |
+|---|---|---|
+| `CompoundInlineComponent` | `CompoundInlineComponentDetector` | A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`, `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`) are filled with a substantial body right here in the parent template, instead of living in its own component. |
+| `DeepDataReach` | `DeepDataReachDetector` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
+| `DeepNested` | `DeepNestedDetector` | A template nested far too deep — an element many levels in that still has several more levels of markup beneath it. |
+| `DuplicateElement` | `DuplicateElementDetector` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
+| `PropDrilling` | `PropDrillingDetector` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
+| `PropMutation` | `PropMutationDetector` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
+
+#### `frontend/vue-control-flow`
+
+| Sin | Detector | What it flags |
+|---|---|---|
+| `ControlFlowOnElement` | `ControlFlowOnElementDetector` | A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a real element or component instead of a `<template>`. |
+| `IndexAsKey` | `IndexAsKeyDetector` | A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`. |
+| `LoopWithCondition` | `LoopWithConditionDetector` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
+| `SwitchCase` | `SwitchCaseDetector` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
 
 <!-- END: detectors -->
 
@@ -377,14 +381,16 @@ vendor/bin/commandments repent resources/js
 <!-- BEGIN: scribes (auto-generated — run `composer readme`) -->
 _`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes._
 
-**Maintenance passes** — run over the whole PHP tree:
+### Maintenance passes
+
+Whole-tree PHP rewrites, run on every `repent`:
 
 | Scribe | What it does |
 |---|---|
 | `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill. |
 | `RedundantReturnTypeScribe` | Strips a redundant explicit return type from a single-expression arrow function when the expression PROVABLY yields exactly that class. |
 
-**Auto-fixable sins** — a detector whose sin `repent` can rewrite away:
+### Backend
 
 | Sin | Skill | The fix `repent` applies |
 |---|---|---|
@@ -392,15 +398,20 @@ _`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes._
 | `LoopInvertedGuard` | `backend/guard-clauses-and-flow` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
 | `NestedTernary` | `backend/guard-clauses-and-flow` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
 | `RedundantElse` | `backend/guard-clauses-and-flow` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
+| `ManualHydrationLoop` | `backend/spatie-data` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
+| `NewDataObject` | `backend/spatie-data` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
+| `NonFinalData` | `backend/spatie-data` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
+
+### Frontend
+
+| Sin | Skill | The fix `repent` applies |
+|---|---|---|
 | `CompoundInlineComponent` | `frontend/vue-components` | Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component. |
 | `DeepDataReach` | `frontend/vue-components` | Pass the mid-object as a prop; don't reach deep into nested data from the template. |
 | `DeepNested` | `frontend/vue-components` | Extract a far-too-deeply-nested subtree into its own component. |
 | `DuplicateElement` | `frontend/vue-components` | Extract repeated identical markup into one component. |
 | `ControlFlowOnElement` | `frontend/vue-control-flow` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
 | `SwitchCase` | `frontend/vue-control-flow` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
-| `ManualHydrationLoop` | `backend/spatie-data` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
-| `NewDataObject` | `backend/spatie-data` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
-| `NonFinalData` | `backend/spatie-data` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes (a fixpoint), so one run
