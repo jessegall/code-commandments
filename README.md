@@ -801,6 +801,40 @@ return fn (Config $config) => $config
     ->register(\App\Commandments\BareVehicleClauseDetector::class);
 ```
 
+### Teaching the engine about a package
+
+Sometimes a *general* rule needs to know a fact about a **framework** — that a class is a
+request handler, an entry point, a boundary — so it doesn't false-positive on it. The
+built-in feature-envy rule, for instance, must not flag a controller action that reaches
+into its `Request`. But a general rule may **not** name a framework (that's the whole
+point of keeping it general), and it can't know about a framework *you* wrote a detector
+for. That's what a **`Package`** is: the one place a package declares cross-detector facts,
+and the general rules read them from the registry — without ever naming your framework.
+
+A `Package` is its own class under `Packages/` (auto-enrolled, like everything else). Today
+it declares the framework's **boundary types** — the entry-point bases a structural rule
+should exempt:
+
+```php
+namespace App\Commandments;
+
+use JesseGall\CodeCommandments\Packages\Package;
+
+final class AcmeRpcPackage extends Package
+{
+    // any method taking one of these is a boundary — feature-envy et al. leave it alone,
+    // without the general rule ever hearing the name "Acme"
+    public function boundaryTypes(): array
+    {
+        return [\Acme\Rpc\Endpoint::class, \Acme\Rpc\Handler::class];
+    }
+}
+```
+
+That's exactly how the built-in `LaravelPackage` exempts `Request`/`FormRequest`/MCP request
+handlers: it declares them boundaries, and the general detectors read
+`Packages\Catalog::boundaryTypes()` — they never mention Laravel.
+
 ## License
 
 MIT.
