@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Packages;
 
 use InvalidArgumentException;
+use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Discovery;
 
 /**
@@ -13,8 +14,8 @@ use JesseGall\CodeCommandments\Discovery;
  * itself with a {@see description}, so it's referable by a short slug (a package developer needs
  * only know `'boundary'`, not the FQCN) and listable by the `exemptions` command.
  *
- * A tag is ALWAYS an `Exemption` — a custom one your detector reads must be its OWN subclass of
- * this (with a slug + description), never a random class; {@see resolve} enforces that.
+ * A tag is ALWAYS an `Exemption`: a custom one is your detector's own subclass of this, with a
+ * slug + description. {@see resolve} maps a slug or subclass to its class.
  */
 abstract class Exemption
 {
@@ -25,22 +26,34 @@ abstract class Exemption
     abstract public function description(): string;
 
     /**
-     * Every built-in exemption class, discovered from `Tags/`.
+     * Every known exemption: the built-in tags under `Tags/`, plus each tag a detector declares it
+     * honours ({@see Exemptable}) — so a custom detector's own exemption is listable and its slug
+     * resolvable, the same as a built-in.
      *
      * @return list<class-string<self>>
      */
     public static function all(): array
     {
-        return array_values(array_filter(
+        $builtin = array_filter(
             Discovery::classes(__DIR__ . '/Tags', __NAMESPACE__ . '\\Tags'),
             static fn (string $class): bool => is_subclass_of($class, self::class),
-        ));
+        );
+
+        $declared = [];
+
+        foreach (Catalog::all() as $detector) {
+            if ($detector instanceof Exemptable) {
+                array_push($declared, ...$detector->exemptions());
+            }
+        }
+
+        return array_values(array_unique([...$builtin, ...$declared]));
     }
 
     /**
-     * The exemption class-string for a slug OR a class-string. A subclass of this passes through; a
-     * known {@see slug} resolves to its class. Anything else — a random class that is NOT an
-     * `Exemption`, or an unknown slug — is not a valid tag and throws: a tag is ALWAYS an exemption.
+     * Resolve a tag — an `Exemption` subclass or a {@see slug} — to its `Exemption` class. A
+     * subclass passes through; a known slug maps to its class; anything else throws, since a tag
+     * is always an exemption.
      *
      * @return class-string<self>
      */

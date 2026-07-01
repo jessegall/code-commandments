@@ -15,7 +15,7 @@ use ReflectionClass;
  * With no argument it lists every exemption tag (its slug + what it means). With a sin id or
  * detector name it lists the exemptions THAT detector honours — exactly what a package can register
  * (by slug or class) to quiet it. It reads each detector's own {@see Exemptable::exemptions}
- * declaration, so it can never drift from what the detector actually reads.
+ * declaration, so the list stays in sync with what the detector actually reads.
  */
 final class Exemptions
 {
