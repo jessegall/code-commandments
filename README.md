@@ -82,15 +82,17 @@ commented `.commandments/config.php` scaffold. Then it's ready — `judge` away.
 # scan — sins grouped by the skill that fixes them. No path needed: with none,
 # judge uses the source roots in .commandments/backend.canon (written on first run).
 vendor/bin/commandments judge
-vendor/bin/commandments judge src        # ...or point it at a path
+# ...or point it at a path
+vendor/bin/commandments judge src
 
 # scope to one skill (group) or one sin
 vendor/bin/commandments judge src --skill=exceptions
 vendor/bin/commandments judge src --sin=swallow-catch
 
-# scope to what you changed: only your branch's files vs main, or just the working tree
-vendor/bin/commandments judge src --branch        # new/changed on this branch vs main (--branch=BASE to override)
-vendor/bin/commandments judge src --changes       # uncommitted working-tree changes only
+# only files new/changed on this branch vs main (--branch=BASE to override)
+vendor/bin/commandments judge src --branch
+# only uncommitted working-tree changes
+vendor/bin/commandments judge src --changes
 
 # detectors run across 8 workers by default (capped at CPU cores); --parallel=1 disables
 vendor/bin/commandments judge src --parallel=4
@@ -408,9 +410,12 @@ It takes the same **scope** flags as `judge`, so you can auto-fix just what you
 touched:
 
 ```bash
-vendor/bin/commandments repent src --changes            # only files changed in the working tree
-vendor/bin/commandments repent src --branch             # only files new/changed on this branch vs main
-vendor/bin/commandments repent src --branch=develop     # ...vs a different base
+# only files changed in the working tree
+vendor/bin/commandments repent src --changes
+# only files new/changed on this branch vs main
+vendor/bin/commandments repent src --branch
+# ...vs a different base
+vendor/bin/commandments repent src --branch=develop
 ```
 
 The whole tree is still parsed (so cross-file rewrites stay correct); only the
@@ -430,25 +435,33 @@ it, `where`/`reject` narrow it (one check per line), a terminal returns the matc
 exception:
 
 ```php
-namespace App\Commandments; // in YOUR codebase — register it with `->register(FacadeCallDetector::class)`
+// in YOUR codebase — register it with `->register(FacadeCallDetector::class)`
+namespace App\Commandments;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Detectors\Detector;  // a PHP detector; a Vue one implements JesseGall\CodeCommandments\Vue\Detector
+// a PHP detector; a Vue one implements JesseGall\CodeCommandments\Vue\Detector
+use JesseGall\CodeCommandments\Detectors\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 final class FacadeCallDetector implements Detector
 {
-    public function sin(): Sin { return new FacadeCall(); }   // the sin it points at (skill + description)
+    // the sin it points at (skill + description)
+    public function sin(): Sin { return new FacadeCall(); }
 
     public function find(Codebase $codebase): array
     {
         return $codebase
-            ->whereStaticCall()                                                            // every `X::y(...)`
-            ->where(fn (AstNode $n) => $n->staticCallClassStartsWith('Illuminate\\Support\\Facades\\')) // ...that's a facade
-            ->reject(fn (AstNode $n) => $n->staticCallMethodIs('fake'))                     // not `Mail::fake()` — a test double
-            ->reject(fn (AstNode $n) => $n->isOutsideClass())                               // not in a route/config file
-            ->reject(fn (AstNode $n) => $codebase->extends($n->enclosingClassName(), 'Illuminate\\Support\\ServiceProvider')) // not in a provider
+            // every `X::y(...)`
+            ->whereStaticCall()
+            // ...that's a facade
+            ->where(fn (AstNode $n) => $n->staticCallClassStartsWith('Illuminate\\Support\\Facades\\'))
+            // not `Mail::fake()` — a test double
+            ->reject(fn (AstNode $n) => $n->staticCallMethodIs('fake'))
+            // not in a route/config file
+            ->reject(fn (AstNode $n) => $n->isOutsideClass())
+            // not in a provider
+            ->reject(fn (AstNode $n) => $codebase->extends($n->enclosingClassName(), 'Illuminate\\Support\\ServiceProvider'))
             ->get();
     }
 }
@@ -491,7 +504,8 @@ final class BareVehicleClauseDetector implements Detector
     {
         return $codebase
             ->whereNew()
-            ->where(fn (VehicleNode $n) => $n->isVehicleClause())   // reads like a built-in
+            // reads like a built-in
+            ->where(fn (VehicleNode $n) => $n->isVehicleClause())
             ->get();
     }
 }
@@ -500,8 +514,10 @@ final class BareVehicleClauseDetector implements Detector
 ```php
 // .commandments/config.php
 return fn (Config $config) => $config
-    ->decorate(\App\Commandments\VehicleNode::class)                // hang your vocabulary on every node
-    ->register(\App\Commandments\BareVehicleClauseDetector::class); // ...and the detector that speaks it
+    // hang your vocabulary on every node
+    ->decorate(\App\Commandments\VehicleNode::class)
+    // ...and the detector that speaks it
+    ->register(\App\Commandments\BareVehicleClauseDetector::class);
 ```
 
 ## License
