@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Detectors\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 use JesseGall\CodeCommandments\Scribes\DetectorStep as BaseDetectorStep;
 use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
+use JesseGall\CodeCommandments\WorkingCopy;
 
 /**
  * Runs a {@see Repentable} BACKEND detector's scribe over the PHP AST, fed the detector's
@@ -22,9 +23,9 @@ final class DetectorStep extends BaseDetectorStep
 {
     public function __construct(private readonly Detector&Repentable $detector) {}
 
-    public function run(string $path, Scope $scope): array
+    public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
     {
-        $codebase = Codebase::scan($path);
+        $codebase = Codebase::scan($path, overlay: $overlay);
         $scribe = $this->scribe();
 
         // A scribe that needs whole-program context (e.g. to resolve a target class's

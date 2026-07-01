@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
 use FilesystemIterator;
 use RecursiveCallbackFilterIterator;
@@ -35,8 +36,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      * Parse every `.vue` file under the given root(s).
      *
      * @param  string|list<string>  $path
+     * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
      */
-    public static function scan(string|array $path): self
+    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy()): self
     {
         $files = [];
 
@@ -44,14 +46,18 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             foreach (self::vueFilesIn($root) as $file) {
                 $files[$file] = true;
             }
+
+            foreach ($overlay->createdUnder($root, '.vue') as $file) {
+                $files[$file] = true;
+            }
         }
 
         $components = [];
 
         foreach (array_keys($files) as $file) {
-            $source = @file_get_contents($file);
+            $source = $overlay->read($file);
 
-            if ($source !== false) {
+            if ($source !== null) {
                 $components[] = Sfc::parse($source, $file);
             }
         }

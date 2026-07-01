@@ -48,7 +48,7 @@ final class RedundantReturnTypeScribe extends Scribe
                 continue;
             }
 
-            $source = (string) @file_get_contents($file->path);
+            $source = $file->source;
 
             foreach ($finder->findInstanceOf($file->ast, ArrowFunction::class) as $arrow) {
                 if ($this->isRedundant($arrow->returnType, $arrow->expr, $classes)) {
@@ -60,7 +60,7 @@ final class RedundantReturnTypeScribe extends Scribe
         $changed = [];
 
         foreach ($editsByFile as $file => $edits) {
-            $source = (string) @file_get_contents($file);
+            $source = $codebase->sourceOf($file) ?? '';
             $new = $this->applyEdits($source, $edits);
 
             if ($new !== $source) {

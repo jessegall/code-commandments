@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Scribes;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Scribes\ScribeChain;
 use JesseGall\CodeCommandments\Scribes\ScribeStep;
+use JesseGall\CodeCommandments\WorkingCopy;
 use PHPUnit\Framework\TestCase;
 
 final class ScribeChainTest extends TestCase
@@ -80,7 +81,7 @@ final class ScribeChainTest extends TestCase
                 return $this->name;
             }
 
-            public function run(string $path, Scope $scope): array
+            public function run(string $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array
             {
                 return [];
             }

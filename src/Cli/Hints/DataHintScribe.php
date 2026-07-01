@@ -75,7 +75,7 @@ final class DataHintScribe extends Scribe
                 continue;
             }
 
-            $source = (string) @file_get_contents($class->file);
+            $source = $codebase->sourceOf($class->file) ?? '';
 
             if (! $docblockOnly) {
                 foreach ($class->factories as $factory) {
@@ -102,7 +102,7 @@ final class DataHintScribe extends Scribe
                     continue;
                 }
 
-                $source = $sources[$call->file] ??= (string) @file_get_contents($call->file);
+                $source = $sources[$call->file] ??= $codebase->sourceOf($call->file) ?? '';
                 $editsByFile[$call->file][] = $this->rewriteCall($call, $source);
             }
         }
@@ -110,7 +110,7 @@ final class DataHintScribe extends Scribe
         $changed = [];
 
         foreach ($editsByFile as $file => $edits) {
-            $source = (string) @file_get_contents($file);
+            $source = $codebase->sourceOf($file) ?? '';
             $new = $this->applyEdits($source, $edits);
 
             if ($new !== $source) {

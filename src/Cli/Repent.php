@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\ScribeChain;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
+use JesseGall\CodeCommandments\WorkingCopy;
 
 /**
  * `commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]`
@@ -24,6 +25,9 @@ use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
  */
 final class Repent
 {
+    /** The fixpoint cap — a backstop against an oscillating step, far above any real chain depth. */
+    private const int MAX_SWEEPS = 10;
+
     public function run(array $args): int
     {
         $options = $this->parse($args);
@@ -49,14 +53,7 @@ final class Repent
 
     private function apply(string $path, Scope $scope, ?string $only): int
     {
-        $written = [];
-
-        foreach ($this->chain($only)->steps() as $step) {
-            // Each step re-scans, so it sees every earlier step's applied edits.
-            $written = array_merge($written, new RewriteApplier()->apply($step->run($path, $scope)));
-        }
-
-        $written = array_values(array_unique($written));
+        $written = new RewriteApplier()->apply($this->converge($path, $scope, $only));
 
         if ($written === []) {
             $this->out("\033[32m✓ Nothing to repent.\033[0m\n");
@@ -76,11 +73,9 @@ final class Repent
 
     private function preview(string $path, Scope $scope, ?string $only, ?string $file): int
     {
-        $diff = '';
-
-        foreach ($this->chain($only)->steps() as $step) {
-            $diff .= new UnifiedDiff()->of($step->run($path, $scope), $path);
-        }
+        // The converged result is diffed against pristine disk (converge writes nothing), so the
+        // dry-run is exactly what an apply would produce — a fixpoint, not a single sweep.
+        $diff = new UnifiedDiff()->of($this->converge($path, $scope, $only), $path);
 
         if ($diff === '') {
             $this->out("\033[32m✓ Nothing to repent.\033[0m\n");
@@ -98,6 +93,40 @@ final class Repent
         $this->out($diff);
 
         return 0;
+    }
+
+    /**
+     * Run the chain to a FIXPOINT over $path and return the converged `path => content` map,
+     * WITHOUT touching disk. Each sweep runs every step reading through the accumulated
+     * {@see WorkingCopy} overlay — so a step sees prior steps' AND prior sweeps' edits (and any
+     * file an extractor created) — until a whole sweep adds nothing new. A later step can
+     * enable an earlier one (a scribe that mints `::from()`/`::collect()` call sites the hint
+     * scribe then documents), so one sweep isn't always enough; the loop settles that in a
+     * single command instead of leaving residue for a second `repent`. Capped so an oscillating
+     * step can't spin forever.
+     *
+     * @return array<string, string>  path => final content
+     */
+    private function converge(string $path, Scope $scope, ?string $only): array
+    {
+        $steps = $this->chain($only)->steps();
+        $overlay = new WorkingCopy();
+
+        for ($sweep = 0; $sweep < self::MAX_SWEEPS; $sweep++) {
+            $before = $overlay->changes();
+
+            foreach ($steps as $step) {
+                $overlay = $overlay->with($step->run($path, $scope, $overlay));
+            }
+
+            if ($overlay->changes() === $before) {
+                return $overlay->changes();
+            }
+        }
+
+        fwrite(STDERR, "\033[33m⚠ repent did not settle within " . self::MAX_SWEEPS . " sweeps; applying what converged.\033[0m\n");
+
+        return $overlay->changes();
     }
 
     /**
