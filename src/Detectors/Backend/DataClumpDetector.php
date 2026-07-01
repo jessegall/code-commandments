@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\DataClump;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Detectors\Backend\Config\DataClumpConfig;
 use JesseGall\CodeCommandments\Detectors\Detector;
 
 /**
@@ -19,15 +20,7 @@ use JesseGall\CodeCommandments\Detectors\Detector;
  */
 final class DataClumpDetector implements Detector
 {
-    private int $minClasses = 2; // the clump must recur across at least this many classes
-
-    /** Tune how many distinct classes must share the clump before it's flagged. */
-    public function minClasses(int $classes): static
-    {
-        $this->minClasses = $classes;
-
-        return $this;
-    }
+    use DataClumpConfig;
 
     public function sin(): Sin
     {

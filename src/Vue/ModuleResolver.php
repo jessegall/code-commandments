@@ -10,8 +10,8 @@ namespace JesseGall\CodeCommandments\Vue;
  * shapes a bundler does:
  *
  *   - **relative** — `./useX`, `../../composables/useX`, against the importing file;
- *   - **aliased** — `@workflows/composables/useX`, against the project's alias map (longest
- *     prefix wins, so `@workflows/ui` beats `@workflows`);
+ *   - **aliased** — `@app/composables/useX`, against the project's alias map (longest
+ *     prefix wins, so `@app/ui` beats `@app`);
  *   - **barrel / extensionless** — trying `.ts`/`.tsx`/`.vue`/`.js` and an `index.*` folder
  *     entry, exactly as a bundler's module resolution would.
  *
