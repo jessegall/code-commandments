@@ -42,6 +42,37 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
         $this->assertSame(['A::sumA', 'A::sumB'], $scopes);
     }
 
+    public function test_does_not_flag_declarative_manifests_that_share_a_shape(): void
+    {
+        // Reported (#259): every node's outputs() shares the socket-declaration shape. A pure
+        // `return [ … ]` manifest DECLARES a shape — there's no logic to parameterise, and the
+        // classes are independent — so a shared shape across them is not a near-duplicate.
+        $code = <<<'PHP'
+        <?php
+        class OutputSocket { public static function make(string $n): self { return new self; } public function typed(string $t): self { return $this; } public function label(string $l): self { return $this; } public function describe(string $d): self { return $this; } }
+        class LoadAccountNode {
+            public function outputs(): array {
+                return [
+                    OutputSocket::make('account')->typed('account')->label('Account')->describe('the account'),
+                    OutputSocket::make('error')->typed('string')->label('Error')->describe('the error'),
+                    OutputSocket::make('status')->typed('bool')->label('Status')->describe('the status'),
+                ];
+            }
+        }
+        class SendEmailNode {
+            public function outputs(): array {
+                return [
+                    OutputSocket::make('sent')->typed('bool')->label('Sent')->describe('was it sent'),
+                    OutputSocket::make('message')->typed('string')->label('Message')->describe('the message'),
+                    OutputSocket::make('failure')->typed('string')->label('Failure')->describe('the failure'),
+                ];
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
+    }
+
     public function test_leaves_byte_identical_duplicates_to_the_exact_detector(): void
     {
         $code = <<<'PHP'
@@ -69,15 +100,18 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
     {
         // Two structurally-identical schema() hooks: flagged on a plain class, but exempt
         // when the class is an MCP Tool (schema() is its by-contract field declaration).
+        // A schema() that BUILDS its map with logic (not a bare `return [ … ]` manifest), so this
+        // isolates the by-contract exemption from the declarative-manifest skip.
         $body = static fn (string $a, string $b): string => <<<PHP
             public function schema(\$schema): array {
-                return [
-                    '{$a}' => \$schema->string()->description('one')->required(),
-                    '{$b}' => \$schema->string()->description('two')->required(),
-                    'flag' => \$schema->boolean()->description('three')->required(),
-                    'mode' => \$schema->string()->description('four')->required(),
-                    'count' => \$schema->integer()->description('five')->required(),
-                ];
+                \$fields = [];
+                \$fields['{$a}'] = \$schema->string()->description('one')->required();
+                \$fields['{$b}'] = \$schema->string()->description('two')->required();
+                foreach (\$this->extra() as \$key) {
+                    \$fields[\$key] = \$schema->string()->description('extra')->required();
+                }
+                \$fields['mode'] = \$schema->string()->description('four')->required();
+                return \$fields;
             }
             PHP;
 

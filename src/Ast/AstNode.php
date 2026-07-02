@@ -653,6 +653,24 @@ class AstNode
     }
 
     /**
+     * Is this declaration a pure MANIFEST — a body that is nothing but `return [ … ];`, a single
+     * return of an array literal? Such methods (`outputs()`, `rules()`, `casts()`, a config map)
+     * DECLARE a data shape; they have no control-flow skeleton to parameterise, so two that merely
+     * share that shape across independent classes are not a near-duplicate smell — factoring them
+     * would couple unrelated declarations. False for anything carrying logic.
+     */
+    public function returnsArrayLiteralOnly(): bool
+    {
+        if (! $this->isFunctionDeclaration() || $this->node->stmts === null) {
+            return false;
+        }
+
+        return count($this->node->stmts) === 1
+            && $this->node->stmts[0] instanceof Return_
+            && $this->node->stmts[0]->expr instanceof Array_;
+    }
+
+    /**
      * Does this method SAVE one of its own properties to a local and later RESTORE
      * it from that local — `$prev = $this->scope; … $this->scope = $prev;`? That
      * dance only makes sense when the field is per-call scratch state mutated for
