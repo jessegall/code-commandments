@@ -157,6 +157,23 @@ final class ScriptTest extends TestCase
         );
     }
 
+    public function test_readonly_as_a_property_name_is_not_eaten_as_a_modifier(): void
+    {
+        // The bug: `readonly?: boolean` — a property NAMED `readonly` — was parsed as the `readonly`
+        // MODIFIER, so the `?` became the property name and the prop surfaced as `'?' => 'boolean'`.
+        // `readonly` is a modifier only before a real property name, never before `?`/`:`/`(`.
+        $props = new Script('interface Props { readonly?: boolean; disabled?: boolean }' . "\n" . 'const props = defineProps<Props>();')->propTypes();
+
+        $this->assertSame(['readonly' => 'boolean', 'disabled' => 'boolean'], $props);
+    }
+
+    public function test_a_readonly_modifier_before_a_real_property_is_still_stripped(): void
+    {
+        $props = new Script('interface Props { readonly id: string; name: string }' . "\n" . 'const props = defineProps<Props>();')->propTypes();
+
+        $this->assertSame(['id' => 'string', 'name' => 'string'], $props);
+    }
+
     public function test_an_interface_method_is_typed_as_its_signature(): void
     {
         // A destructured composable method is a function prop — typed as its signature.

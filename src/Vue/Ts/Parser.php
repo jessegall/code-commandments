@@ -715,7 +715,10 @@ final class Parser
 
     private function parseTypeMember(bool $strict): Member
     {
-        $this->advanceIfId('readonly');
+        if ($this->atReadonlyModifier()) {
+            $this->advance();
+        }
+
         $name = $this->advance()->value;
         $optional = $this->advanceIfPunct('?');
 
@@ -1018,6 +1021,22 @@ final class Parser
         }
 
         return trim(substr($this->source, $start, $end - $start));
+    }
+
+    /**
+     * Is the current `readonly` the property MODIFIER, not a property literally NAMED `readonly`?
+     * It's the modifier only before a real member name — never before `?`/`:`/`(`, which mark
+     * `readonly` itself as the (optional / typed / method) property.
+     */
+    private function atReadonlyModifier(): bool
+    {
+        if (! $this->atId('readonly')) {
+            return false;
+        }
+
+        $next = $this->at(1);
+
+        return $next !== null && ! ($next->isPunct('?') || $next->isPunct(':') || $next->isPunct('('));
     }
 
     private function atThreeDots(): bool
