@@ -100,6 +100,24 @@ final class JudgeReminderTest extends TestCase
         rmdir($bare);
     }
 
+    public function test_a_clean_worktree_ignores_the_main_checkouts_changes(): void
+    {
+        // A dirty MAIN checkout: an unjudged change lives there, not in the worktree.
+        file_put_contents($this->repo . '/Service.php', "<?php\n");
+
+        // A FRESH worktree off HEAD — clean, nothing touched in it.
+        $worktree = sys_get_temp_dir() . '/cc-worktree-' . uniqid('', true);
+        $this->git('worktree add -q -b feature ' . escapeshellarg($worktree) . ' HEAD');
+
+        // The hook runs IN the worktree, but CLAUDE_PROJECT_DIR stays pinned to the main
+        // checkout. It must scope to the worktree (clean → silent), not the main dir.
+        $out = $this->runCliIn($worktree, ['CLAUDE_PROJECT_DIR' => $this->repo], ['hook_event_name' => 'Stop']);
+
+        $this->assertSame('', trim($out), 'a clean worktree must not nudge about the main checkout');
+
+        $this->git('worktree remove --force ' . escapeshellarg($worktree));
+    }
+
     public function test_pre_tool_use_injects_context_for_a_git_commit_but_ignores_other_bash(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
@@ -118,11 +136,22 @@ final class JudgeReminderTest extends TestCase
     /** @param array<string, mixed> $payload */
     private function runCli(array $payload): string
     {
+        return $this->runCliIn($this->repo, ['CLAUDE_PROJECT_DIR' => $this->repo], $payload);
+    }
+
+    /**
+     * Run the hook CLI with an explicit working directory and environment — so a test can
+     * drive it from a worktree while `CLAUDE_PROJECT_DIR` points at the main checkout.
+     *
+     * @param  array<string, string>  $env
+     * @param  array<string, mixed>  $payload
+     */
+    private function runCliIn(string $cwd, array $env, array $payload): string
+    {
         $bin = dirname(__DIR__, 2) . '/bin/commandments';
         $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-        $env = ['CLAUDE_PROJECT_DIR' => $this->repo, 'PATH' => getenv('PATH')];
 
-        $process = proc_open('php ' . escapeshellarg($bin) . ' judge-reminder', $descriptors, $pipes, $this->repo, $env);
+        $process = proc_open('php ' . escapeshellarg($bin) . ' judge-reminder', $descriptors, $pipes, $cwd, [...$env, 'PATH' => getenv('PATH')]);
         fwrite($pipes[0], json_encode($payload));
         fclose($pipes[0]);
         $out = (string) stream_get_contents($pipes[1]);

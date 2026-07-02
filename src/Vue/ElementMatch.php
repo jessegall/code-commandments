@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Scribes\Span;
 
 /**
@@ -18,7 +19,7 @@ use JesseGall\CodeCommandments\Scribes\Span;
  * domain predicates on the element, and a `where` closure that type-hints the subclass is handed
  * it ({@see \JesseGall\CodeCommandments\Query::where}).
  */
-class ElementMatch extends Element
+class ElementMatch extends Element implements Located
 {
     public function __construct(public readonly Element $node, public readonly Sfc $sfc)
     {

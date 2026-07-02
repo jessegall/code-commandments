@@ -7,7 +7,8 @@ namespace JesseGall\CodeCommandments;
 use Closure;
 use Composer\InstalledVersions;
 use InvalidArgumentException;
-use JesseGall\CodeCommandments\Sins\RequiresPackage;
+use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
+use JesseGall\CodeCommandments\Sins\RequiresNpmPackage;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use ReflectionFunction;
 use ReflectionNamedType;
@@ -223,31 +224,39 @@ final class Config
     }
 
     /**
-     * Is this detector's package present? A sin that doesn't {@see RequiresPackage} always is;
-     * one that does is kept only when `$installed` reports its package. The rule's engine picks
-     * the ecosystem — a frontend rule's package is an npm one, a backend rule's a Composer one.
+     * Is this detector's package present? A sin that requires no package always is; one that
+     * {@see RequiresComposerPackage} or {@see RequiresNpmPackage} is kept only when `$installed`
+     * reports its package in that ecosystem. The ecosystem is stated by the interface, not the
+     * rule's engine — a frontend sin may require a Composer package.
      *
-     * @param  callable(string, bool): bool  $installed
+     * @param  callable(string, string): bool  $installed  ($package, $ecosystem) => present?
      */
     private function hasPackage(Detector $detector, callable $installed): bool
     {
         $sin = $detector->sin();
 
-        return ! $sin instanceof RequiresPackage
-            || $installed($sin->requiredPackage(), $detector instanceof FrontendDetector);
+        if ($sin instanceof RequiresComposerPackage) {
+            return $installed($sin->requiredComposerPackage(), 'composer');
+        }
+
+        if ($sin instanceof RequiresNpmPackage) {
+            return $installed($sin->requiredNpmPackage(), 'npm');
+        }
+
+        return true;
     }
 
     /**
-     * The default package check — Composer's installed set for a backend rule, the project's
-     * `package.json` for a frontend one. Both fall back to "present" when the manifest can't be
-     * read, so an unknown environment never over-filters.
+     * The default package check — Composer's installed set for a Composer requirement, the
+     * project's `package.json` for an npm one. Both fall back to "present" when the manifest
+     * can't be read, so an unknown environment never over-filters.
      *
-     * @return callable(string, bool): bool
+     * @return callable(string, string): bool
      */
     private static function defaultPackageCheck(): callable
     {
-        return static fn (string $package, bool $frontend): bool =>
-            $frontend ? self::inPackageJson($package) : self::inComposer($package);
+        return static fn (string $package, string $ecosystem): bool =>
+            $ecosystem === 'npm' ? self::inPackageJson($package) : self::inComposer($package);
     }
 
     private static function inComposer(string $package): bool

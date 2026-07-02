@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
 use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
-use JesseGall\CodeCommandments\Sins\RequiresPackage;
+use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
@@ -234,14 +234,14 @@ final class ConfigFrontendDetector implements FrontendDetector
 }
 
 /** A sin bound to a (fake) composer package — to exercise the RequiresPackage filter. */
-final class ConfigPackagedSin extends Sin implements RequiresPackage
+final class ConfigPackagedSin extends Sin implements RequiresComposerPackage
 {
     public function __construct()
     {
         parent::__construct('packaged-sin', ValueObjects::class, 'a packaged sin', 'do the thing');
     }
 
-    public function requiredPackage(): string
+    public function requiredComposerPackage(): string
     {
         return 'acme/widgets';
     }

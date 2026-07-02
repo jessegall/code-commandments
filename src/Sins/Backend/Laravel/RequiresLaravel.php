@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Sins\Backend\Laravel;
 
 /**
- * Shared {@see \JesseGall\CodeCommandments\Sins\RequiresPackage} answer for the laravel-idioms
+ * Shared {@see \JesseGall\CodeCommandments\Sins\RequiresComposerPackage} answer for the laravel-idioms
  * sins: facades, Eloquent mutation, the `config()`/`app()` helpers and typed requests come from
  * Laravel's `illuminate/*` components. Keyed on `illuminate/support` — the foundational base every
  * component (and the full `laravel/framework`) depends on — so the rules apply to a full Laravel
@@ -13,7 +13,7 @@ namespace JesseGall\CodeCommandments\Sins\Backend\Laravel;
  */
 trait RequiresLaravel
 {
-    public function requiredPackage(): string
+    public function requiredComposerPackage(): string
     {
         return 'illuminate/support';
     }

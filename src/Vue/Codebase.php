@@ -22,10 +22,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var list<array{0: Element, 1: Sfc}>|null */
     private ?array $nodes = null;
 
+    /** @var list<TypeDeclaration>|null */
+    private ?array $typeDeclarations = null;
+
     /**
      * @param  list<Sfc>  $components
+     * @param  list<TypeDeclaration>  $standaloneTypes  types declared in `.ts` files (not in a component)
      */
-    private function __construct(private readonly array $components) {}
+    private function __construct(
+        private readonly array $components,
+        private readonly array $standaloneTypes = [],
+    ) {}
 
     public static function fromString(string $vue, string $path = 'component.vue'): self
     {
@@ -40,21 +47,30 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy()): self
     {
-        $files = [];
+        $vue = [];
+        $typeScript = [];
 
         foreach ((array) $path as $root) {
-            foreach (self::vueFilesIn($root) as $file) {
-                $files[$file] = true;
+            foreach (self::filesIn($root, 'vue') as $file) {
+                $vue[$file] = true;
+            }
+
+            foreach (self::filesIn($root, 'ts') as $file) {
+                $typeScript[$file] = true;
             }
 
             foreach ($overlay->createdUnder($root, '.vue') as $file) {
-                $files[$file] = true;
+                $vue[$file] = true;
+            }
+
+            foreach ($overlay->createdUnder($root, '.ts') as $file) {
+                $typeScript[$file] = true;
             }
         }
 
         $components = [];
 
-        foreach (array_keys($files) as $file) {
+        foreach (array_keys($vue) as $file) {
             $source = $overlay->read($file);
 
             if ($source !== null) {
@@ -62,7 +78,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             }
         }
 
-        return new self($components);
+        $standaloneTypes = [];
+
+        foreach (array_keys($typeScript) as $file) {
+            $source = $overlay->read($file);
+
+            if ($source !== null) {
+                $standaloneTypes = [...$standaloneTypes, ...TypeDeclaration::fromScript(new Script($source), $file, $source)];
+            }
+        }
+
+        return new self($components, $standaloneTypes);
     }
 
     /**
@@ -99,6 +125,45 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function where(Closure $check): Query
     {
         return $this->whereElement()->where($check);
+    }
+
+    /**
+     * Every TypeScript object type declared across the codebase — in a component's
+     * `<script>` block or a standalone `.ts` file. The declaration-space selector, the
+     * sibling of {@see whereElement}: it opens a {@see TypeQuery} the same way.
+     */
+    public function whereTypeDeclaration(): TypeQuery
+    {
+        return new TypeQuery(fn (): array => $this->typeDeclarations(), static fn (TypeDeclaration $declaration): bool => true);
+    }
+
+    /**
+     * Every declared type across the codebase — the standalone `.ts` types plus each
+     * component's `<script>`-block types — flattened once and cached.
+     *
+     * @return list<TypeDeclaration>
+     */
+    public function typeDeclarations(): array
+    {
+        return $this->typeDeclarations ??= $this->collectTypeDeclarations();
+    }
+
+    /**
+     * @return list<TypeDeclaration>
+     */
+    private function collectTypeDeclarations(): array
+    {
+        $declarations = $this->standaloneTypes;
+
+        foreach ($this->components as $component) {
+            foreach ($component->blocks as $block) {
+                if ($block->tag === 'script') {
+                    $declarations = [...$declarations, ...TypeDeclaration::fromScript(new Script($block->content), $component->path, $component->source, $block->start)];
+                }
+            }
+        }
+
+        return $declarations;
     }
 
     /**
@@ -139,10 +204,12 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * @return iterable<string>
      */
-    private static function vueFilesIn(string $path): iterable
+    private static function filesIn(string $path, string $extension): iterable
     {
         if (is_file($path)) {
-            yield $path;
+            if (pathinfo($path, PATHINFO_EXTENSION) === $extension) {
+                yield $path;
+            }
 
             return;
         }
@@ -164,7 +231,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         });
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {
-            if ($file->isFile() && $file->getExtension() === 'vue') {
+            if ($file->isFile() && $file->getExtension() === $extension) {
                 yield $file->getPathname();
             }
         }

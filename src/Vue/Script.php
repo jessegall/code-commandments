@@ -164,6 +164,65 @@ final class Script
     }
 
     /**
+     * Every object-shaped type DECLARED in this script — each `interface Name {…}` and
+     * `type Name = {…}` as its name, its field names, and the byte offset of its
+     * declaration keyword (so a caller maps it to a source line). The dual of
+     * {@see typeFields}, which resolves ONE known name; this enumerates them all, for a
+     * detector that must compare every hand-written type against a set of contracts.
+     *
+     * @return list<array{name: string, fields: list<string>, offset: int}>
+     */
+    public function declarations(): array
+    {
+        $declarations = [];
+        $count = count($this->tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if ($this->isId($i, 'interface') && $this->isIdentifier($i + 1) && $this->isPunct($i + 2, '{')) {
+                $declarations[] = $this->declaration($i, $i + 1, $i + 3);
+
+                continue;
+            }
+
+            if ($this->isId($i, 'type') && $this->isIdentifier($i + 1) && $this->isPunct($i + 2, '=') && $this->isPunct($i + 3, '{')) {
+                $declarations[] = $this->declaration($i, $i + 1, $i + 4);
+            }
+        }
+
+        return $declarations;
+    }
+
+    /**
+     * One declaration record — its name (the token at $nameAt), its field names (read
+     * from the `{` body at $bodyAt) and the source offset of its keyword (at $keywordAt).
+     *
+     * @return array{name: string, fields: list<string>, offset: int}
+     */
+    private function declaration(int $keywordAt, int $nameAt, int $bodyAt): array
+    {
+        return [
+            'name' => $this->tokens[$nameAt]['value'],
+            'fields' => array_keys($this->readFields($bodyAt)),
+            'offset' => $this->tokens[$keywordAt]['start'],
+        ];
+    }
+
+    private function isIdentifier(int $i): bool
+    {
+        return ($this->tokens[$i]['kind'] ?? null) === Token::IDENTIFIER;
+    }
+
+    /**
+     * Is there a line break in the source between byte offsets $from and $to — the
+     * whitespace gap the lexer dropped between two tokens? Genuine delimiter scanning,
+     * not structure: it recovers the member boundary TS marks with a newline.
+     */
+    private function newlineBetween(int $from, int $to): bool
+    {
+        return $to > $from && str_contains(substr($this->source, $from, $to - $from), "\n");
+    }
+
+    /**
      * The names declared as LOCALS in the script — `const`/`let`/`var` (simple and
      * destructured `{ a, b }` / aliased `{ a: b }`), plus `function name` declarations. These
      * are the parent `<script setup>` bindings: a same-named one SHADOWS a prop (`const
@@ -867,12 +926,21 @@ final class Script
         $depth = 0;
         $pieces = [];
         $count = count($this->tokens);
+        $previousEnd = null;
 
         for (; $i < $count; $i++) {
-            $value = $this->tokens[$i]['value'];
+            $token = $this->tokens[$i];
+            $value = $token['value'];
 
             // A depth-0 `=` starts an initializer (`: T = value`) — the type ended before it.
             if ($depth === 0 && in_array($value, [';', ',', '}', '='], true)) {
+                break;
+            }
+
+            // A depth-0 line break ends the type: interface/type members are newline-
+            // terminated when written without a `;`. A break INSIDE `{…}`/`(…)`/`<…>`
+            // (depth > 0) is part of a multi-line member, so it does not end the type.
+            if ($depth === 0 && $previousEnd !== null && $this->newlineBetween($previousEnd, $token['start'])) {
                 break;
             }
 
@@ -883,6 +951,7 @@ final class Script
             }
 
             $pieces[] = $value;
+            $previousEnd = $token['end'];
         }
 
         if ($i < $count && $this->isPunct($i, ';')) {

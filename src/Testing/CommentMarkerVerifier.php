@@ -28,17 +28,25 @@ final class CommentMarkerVerifier implements MarkerVerifier
      */
     public function verify(BaseCodebase $codebase, array $detectors): array
     {
+        // Declaration-space `@sin` markers (on a `type`/`interface`) — the counterpart of
+        // the template markers below, for a detector that flags a type, not an element.
+        $declarationMarks = DeclarationMarkers::in($codebase, 'sin');
+
         $results = [];
 
         foreach ($detectors as $detector) {
             $name = (new \ReflectionClass($detector))->getShortName();
-            // A `<!-- @sin -->` comment names this detector's SIN (`@sin SwitchCase`) or,
-            // still, the detector (`@sin SwitchCaseDetector`). Accept either short name.
+            // A `@sin` marker names this detector's SIN (`@sin SwitchCase`) or, still, the
+            // detector (`@sin SwitchCaseDetector`). Accept either short name.
             $names = [$name, (new \ReflectionClass($detector->sin()))->getShortName()];
 
             $marked = [];
             foreach ($codebase->components() as $component) {
                 $this->collectMarked($component->template, $component, $names, $marked);
+            }
+
+            foreach ($names as $named) {
+                $marked = [...$marked, ...($declarationMarks[$named] ?? [])];
             }
 
             $flagged = array_map(static fn ($match): string => $match->location(), $detector->find($codebase));

@@ -279,7 +279,7 @@ The teaching layer — one discipline each, the doc an agent reads to fix a sin.
 `SKILL.md` is generated from its class (`composer sins`).
 
 <!-- BEGIN: skills (auto-generated — run `composer readme`) -->
-_16 skills._
+_17 skills._
 
 ### Backend
 
@@ -304,6 +304,7 @@ _16 skills._
 
 | Skill | What it teaches |
 |---|---|
+| `MirroredServerType` | a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one. |
 | `VueComponents` | extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop. |
 | `VueControlFlow` | dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject. |
 <!-- END: skills -->
@@ -315,7 +316,7 @@ the fix and split by engine. Each sin has one detector that finds it, named
 `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_60 sins across 16 skills._
+_61 sins across 17 skills._
 
 ### Backend
 
@@ -460,6 +461,12 @@ _60 sins across 16 skills._
 | `IndexAsKey` | A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`. |
 | `LoopWithCondition` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
 | `SwitchCase` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
+
+#### `frontend/mirrored-server-type`
+
+| Sin | What it flags |
+|---|---|
+| `MirroredServerType` | A hand-written TypeScript type that mirrors a backend Spatie `Data` class — the same name and (spelling aside) the same fields. |
 
 <!-- END: detectors -->
 

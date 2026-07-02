@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Bridge\Bridge;
+use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
@@ -161,7 +163,7 @@ final class Judge
 
         // The Vue detectors run over the SAME roots — `judge` is engine-agnostic, so a
         // path with `.vue` files reports its frontend sins alongside the backend ones.
-        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend));
+        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend, $codebase));
 
         $findings = $this->keep($findings, $exclude, $scope);
 
@@ -290,13 +292,24 @@ final class Judge
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
      * @return list<Finding>
      */
-    private function frontendFindings(string|array $roots, array $frontend): array
+    private function frontendFindings(string|array $roots, array $frontend, Codebase $backend): array
     {
         if ($frontend === []) {
             return [];
         }
 
         $codebase = VueCodebase::scan($roots);
+
+        // The Bridge is the only place both engines meet: the backend publishes its
+        // Data shapes, the frontend detectors that ask for them receive them here.
+        $contracts = Bridge::gather($backend, $codebase);
+
+        foreach ($frontend as $detector) {
+            if ($detector instanceof ConsumesContracts) {
+                $detector->withContracts($contracts);
+            }
+        }
+
         $findings = [];
 
         foreach ($frontend as $detector) {

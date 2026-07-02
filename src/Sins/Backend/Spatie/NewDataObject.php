@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend\Spatie;
 
-use JesseGall\CodeCommandments\Sins\RequiresPackage;
+use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\Spatie\SpatieData;
 
-final class NewDataObject extends Sin implements RequiresPackage
+final class NewDataObject extends Sin implements RequiresComposerPackage
 {
     use RequiresSpatieData;
 

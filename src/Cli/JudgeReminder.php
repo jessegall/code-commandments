@@ -229,9 +229,19 @@ final class JudgeReminder
         return is_array($data) ? $data : [];
     }
 
+    /**
+     * The git worktree the hook is running in — so a worktree gets its OWN scope and its own
+     * batch marker, not the main checkout's. `CLAUDE_PROJECT_DIR` is pinned to the main
+     * checkout and shared across every worktree, so scoping to it makes a fresh worktree
+     * report the main checkout's changes and share its marker; resolving the toplevel of the
+     * current directory keeps each worktree distinct. Falls back to the project dir / cwd when
+     * the hook runs outside a repository.
+     */
     private function projectRoot(): string
     {
-        return getenv('CLAUDE_PROJECT_DIR') ?: getcwd();
+        $cwd = getcwd() ?: '.';
+
+        return $this->git->root($cwd) ?? (getenv('CLAUDE_PROJECT_DIR') ?: $cwd);
     }
 
     private static function markerFile(string $projectRoot): string

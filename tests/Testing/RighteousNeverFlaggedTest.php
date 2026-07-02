@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Testing;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Bridge\Bridge;
+use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Testing\DeclarationMarkers;
 use JesseGall\CodeCommandments\Testing\Marker;
 use JesseGall\CodeCommandments\Testing\SinMarkers;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
@@ -77,10 +80,15 @@ final class RighteousNeverFlaggedTest extends TestCase
     public function test_no_frontend_detector_flags_righteous_markup(): void
     {
         $codebase = VueCodebase::scan(self::FRONTEND);
+        $contracts = Bridge::gather(Codebase::scan(self::FRONTEND), $codebase);
         $righteous = $this->frontendRighteous();
         $violations = [];
 
         foreach (Catalog::frontend() as $detector) {
+            if ($detector instanceof ConsumesContracts) {
+                $detector->withContracts($contracts);
+            }
+
             $name = (new \ReflectionClass($detector->sin()))->getShortName();
             $marked = $righteous[$name] ?? [];
 
@@ -101,10 +109,17 @@ final class RighteousNeverFlaggedTest extends TestCase
      */
     private function frontendRighteous(): array
     {
+        $codebase = VueCodebase::scan(self::FRONTEND);
         $marked = [];
 
-        foreach (VueCodebase::scan(self::FRONTEND)->components() as $component) {
+        foreach ($codebase->components() as $component) {
             $this->collectRighteous($component->template, $component, $marked);
+        }
+
+        // Declaration-space `@righteous` twins (on a `type`/`interface`) — the counterpart
+        // of the template markers above, for a sin that lives on a type.
+        foreach (DeclarationMarkers::in($codebase, 'righteous') as $name => $locations) {
+            $marked[$name] = [...($marked[$name] ?? []), ...$locations];
         }
 
         return $marked;

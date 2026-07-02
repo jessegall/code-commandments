@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
+use PhpParser\Modifiers;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
@@ -574,6 +575,38 @@ class AstNode
         }
 
         return true;
+    }
+
+    /**
+     * The names of this class's PUBLIC fields — its public promoted constructor
+     * params and its public declared properties. That is the shape a Data class
+     * publishes as its payload; a non-class node has none.
+     *
+     * @return list<string>
+     */
+    public function publicFieldNames(): array
+    {
+        if (! $this->node instanceof Class_) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach ($this->node->getMethod('__construct')?->params ?? [] as $param) {
+            if (($param->flags & Modifiers::PUBLIC) !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
+                $names[] = $param->var->name;
+            }
+        }
+
+        foreach ($this->node->getProperties() as $property) {
+            if ($property->isPublic()) {
+                foreach ($property->props as $declared) {
+                    $names[] = $declared->name->toString();
+                }
+            }
+        }
+
+        return array_values(array_unique($names));
     }
 
     /**

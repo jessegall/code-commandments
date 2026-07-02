@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend\PhpTypes;
 
-use JesseGall\CodeCommandments\Sins\RequiresPackage;
+use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\Absence;
 
-final class OptionAsNullable extends Sin implements RequiresPackage
+final class OptionAsNullable extends Sin implements RequiresComposerPackage
 {
     public function __construct()
     {
@@ -21,7 +21,7 @@ final class OptionAsNullable extends Sin implements RequiresPackage
         );
     }
 
-    public function requiredPackage(): string
+    public function requiredComposerPackage(): string
     {
         return 'jessegall/php-types';
     }
