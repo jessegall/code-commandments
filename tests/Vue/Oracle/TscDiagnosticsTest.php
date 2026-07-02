@@ -41,6 +41,17 @@ final class TscDiagnosticsTest extends TestCase
         $this->assertSame(['mode' => '"a" | "b"'], TscDiagnostics::types($output));
     }
 
+    public function test_a_monster_type_is_dropped_in_favour_of_unknown(): void
+    {
+        // A composable's full structural type spelt inline reads worse than `unknown` — drop it.
+        $monster = '{ ' . str_repeat('field: ComputedRef<string>; ', 20) . '}';
+        $output = "f.vue(9,7): error TS2322: Type '{$monster}' is not assignable to type '__CcNo_ops'.\n"
+            . "f.vue(10,7): error TS2322: Type 'string | null' is not assignable to type '__CcNo_label'.";
+
+        // The monster is gone; the reasonable one stays.
+        $this->assertSame(['label' => 'string | null'], TscDiagnostics::types($output));
+    }
+
     public function test_a_checker_unknown_or_any_is_dropped_not_asserted(): void
     {
         // vue-tsc itself failing to type it tells us nothing the AST didn't already know.

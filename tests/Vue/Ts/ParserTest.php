@@ -187,6 +187,16 @@ final class ParserTest extends TestCase
         $this->assertNotNull($module->variable('x')?->typeAnnotation, 'it produced a type, did not crash');
     }
 
+    public function test_it_is_total_on_a_truncated_malformed_type(): void
+    {
+        // Regression: a checker can truncate a long type with `… N more …` / `{ …; x: y }`, leaving
+        // unbalanced, unparseable text. The parser must terminate (progress guaranteed), not spin to
+        // OOM re-entering at the same token.
+        $module = Parser::module('const x: { a: Foo<{ b: Ref<{ ...; 6 more ...; c: string }[], T | { ...; d: boolean }> = y;');
+
+        $this->assertNotNull($module->variable('x')?->typeAnnotation, 'it produced a type, did not hang');
+    }
+
     public function test_it_is_total_on_an_object_type_with_an_index_signature_and_arrow(): void
     {
         // Regression: the `=>` arrow's `>` corrupted the verbatim reader's depth count, so the

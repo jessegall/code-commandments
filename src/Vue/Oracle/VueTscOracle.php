@@ -122,6 +122,7 @@ final class VueTscOracle implements TypeOracle
             '--noEmit',
             '--skipLibCheck',
             '--pretty', 'false',
+            '--noErrorTruncation', // emit COMPLETE types in diagnostics, never `… N more …` (unparseable)
             '--incremental',
             '--tsBuildInfoFile', $this->buildInfo(),
         ];

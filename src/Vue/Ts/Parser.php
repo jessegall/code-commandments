@@ -508,8 +508,16 @@ final class Parser
             return $type;
         } catch (Unparsed) {
             $this->pos = $start;
+            $verbatim = $this->captureTypeVerbatim();
 
-            return new VerbatimType($this->captureTypeVerbatim());
+            // Guarantee progress: if the verbatim reader consumed nothing (a stray terminator that
+            // begins no type — e.g. a `...` from a truncated checker type), swallow one token so a
+            // caller can never re-enter parseType at the same spot and spin. Total, by construction.
+            if ($this->pos === $start && ! $this->eof()) {
+                $verbatim = $this->advance()->value;
+            }
+
+            return new VerbatimType($verbatim);
         } finally {
             $this->typeDepth--;
         }
