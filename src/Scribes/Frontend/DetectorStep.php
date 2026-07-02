@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use JesseGall\CodeCommandments\Vue\ComponentGraph;
 use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Frontend\Detector;
+use JesseGall\CodeCommandments\Vue\Oracle\VueTscOracle;
 use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\WorkingCopy;
 
@@ -35,6 +36,12 @@ final class DetectorStep extends BaseDetectorStep
         if ($scribe instanceof ExtractComponentScribe) {
             $scribe->withLibrary(ComponentLibrary::from($codebase));
             $scribe->withPropTypes(new PropTypes(ComponentGraph::of($codebase)));
+
+            // When the project ships `vue-tsc`, let a real checker resolve the props no AST rung
+            // could — a bonus rung, absent (a no-op) on projects without it.
+            if (($oracle = VueTscOracle::locate(is_array($path) ? ($path[0] ?? '') : $path)) !== null) {
+                $scribe->withOracle($oracle);
+            }
         }
 
         // Honour the scope (a `--repent=ID` checklist, a `--changes`/`--branch` set):

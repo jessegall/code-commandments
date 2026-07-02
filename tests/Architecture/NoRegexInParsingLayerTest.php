@@ -18,8 +18,10 @@ use PHPUnit\Framework\TestCase;
  *      understanding/write layer — the "fake regex" dodge (hunt for `<Tag`, scan the script
  *      for a name). The element/expression AST already knows positions; query it.
  *
- * The ONLY exemptions are the genuine LEXERS (where char/delimiter scanning IS the job) and
- * the byte-offset utility {@see \JesseGall\CodeCommandments\Scribes\Span} (newline math).
+ * The ONLY exemptions are the genuine LEXERS (where char/delimiter scanning IS the job), the
+ * byte-offset utility {@see \JesseGall\CodeCommandments\Scribes\Span} (newline math), and the
+ * compiler-diagnostic reader {@see \JesseGall\CodeCommandments\Vue\Oracle\TscDiagnostics} — which
+ * scans `vue-tsc`'s flat log OUTPUT, not source code, so text scanning is likewise its whole job.
  * Prefix/suffix classification (`str_starts_with`/`str_ends_with` on a name/FQCN/path) is
  * allowed — it reads a known token, it doesn't parse the source.
  */
@@ -29,8 +31,8 @@ final class NoRegexInParsingLayerTest extends TestCase
 
     private const array SCAN = ['strpos', 'strrpos', 'strstr'];
 
-    /** Lexers (and the offset util) — the only place raw scanning is the job. */
-    private const array LEXERS = ['Tokenizer.php', 'Sfc.php', 'Attributes.php', 'Script.php', 'Interpolation.php', 'Lexer.php', 'Parser.php', 'Span.php'];
+    /** Lexers, the offset util, and the compiler-output reader — the only places raw scanning is the job. */
+    private const array LEXERS = ['Tokenizer.php', 'Sfc.php', 'Attributes.php', 'Script.php', 'Interpolation.php', 'Lexer.php', 'Parser.php', 'Span.php', 'TscDiagnostics.php'];
 
     public function test_no_regex_in_the_detection_scribe_or_engine_layer(): void
     {

@@ -16,6 +16,8 @@ use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
+use JesseGall\CodeCommandments\Vue\Oracle\NullTypeOracle;
+use JesseGall\CodeCommandments\Vue\Oracle\TypeOracle;
 use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\Vue\Sfc;
 use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
@@ -48,7 +50,12 @@ final class ExtractComponentScribe extends RepentScribe
 
     private ?PropTypes $propTypes = null;
 
-    private function __construct(private readonly string $strategy) {}
+    private TypeOracle $oracle;
+
+    private function __construct(private readonly string $strategy)
+    {
+        $this->oracle = new NullTypeOracle();
+    }
 
     /**
      * Hand the scribe the codebase's existing components, so a boundary that an existing
@@ -70,6 +77,18 @@ final class ExtractComponentScribe extends RepentScribe
     public function withPropTypes(?PropTypes $propTypes): self
     {
         $this->propTypes = $propTypes;
+
+        return $this;
+    }
+
+    /**
+     * Hand the scribe a type oracle (real `vue-tsc`, when the project ships it), so a prop no AST
+     * rung could type is resolved by a real checker instead of falling to `unknown`. Defaults to
+     * {@see NullTypeOracle} — the checker is a bonus, never required.
+     */
+    public function withOracle(TypeOracle $oracle): self
+    {
+        $this->oracle = $oracle;
 
         return $this;
     }
@@ -681,7 +700,26 @@ final class ExtractComponentScribe extends RepentScribe
             }
         }
 
-        return $types;
+        return $this->consultOracle($boundary->sfc, $types);
+    }
+
+    /**
+     * Resolve any props the AST left `unknown` with the type oracle — ONE batched checker run for
+     * the whole component (never per-prop). A no-op under {@see NullTypeOracle} (the default), so
+     * behaviour is unchanged unless the project ships a real checker.
+     *
+     * @param  array<string, string>  $types
+     * @return array<string, string>
+     */
+    private function consultOracle(Sfc $component, array $types): array
+    {
+        $unknown = array_keys(array_filter($types, static fn (string $type): bool => $type === 'unknown'));
+
+        if ($unknown === []) {
+            return $types;
+        }
+
+        return [...$types, ...$this->oracle->resolve($component, $unknown)];
     }
 
     /**

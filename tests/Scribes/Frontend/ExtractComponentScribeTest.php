@@ -325,6 +325,34 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString(':label="props.label"', $files['component.vue'], 'the call site binds the parent expression');
     }
 
+    public function test_the_oracle_types_a_prop_no_ast_rung_could(): void
+    {
+        // A local `computed` with a member body is the classic vue-tsc-only unknown. When a checker
+        // is present it resolves it; the generated prop takes that type instead of `unknown`.
+        $popover = '<Popover><PopoverTrigger as-child><Button>Open</Button></PopoverTrigger>'
+            . '<PopoverContent class="w-64"><header><h4>Summary</h4></header>'
+            . '<p class="title">{{ blurb }}</p><p class="note">Detail</p>'
+            . '<ul><li>One</li><li>Two</li></ul>'
+            . '<div class="actions"><Button>Close</Button></div></PopoverContent></Popover>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Popover, PopoverTrigger, PopoverContent } from '@/ui/popover';\nconst blurb = computed(() => schema.value.label);\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$popover}\n  </div>\n</template>\n";
+
+        $oracle = new class implements \JesseGall\CodeCommandments\Vue\Oracle\TypeOracle {
+            public function resolve(\JesseGall\CodeCommandments\Vue\Sfc $component, array $names): array
+            {
+                return in_array('blurb', $names, true) ? ['blurb' => 'string | null'] : [];
+            }
+        };
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->withOracle($oracle)->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = $this->components($files);
+        $component = reset($created);
+
+        $this->assertStringContainsString('blurb: string | null', $component, 'the oracle resolved it');
+        $this->assertStringNotContainsString('blurb: unknown', $component);
+    }
+
     public function test_an_assigned_value_becomes_a_model_not_a_readonly_prop(): void
     {
         // Issue #256: a value the chunk only ASSIGNS (no v-model) — `@click="dismissed = true"`
