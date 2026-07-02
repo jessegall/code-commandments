@@ -126,6 +126,16 @@ final class ScriptTest extends TestCase
         $this->assertSame('string', $script->fieldType('S', 'step'));
     }
 
+    public function test_define_props_is_found_inside_with_defaults(): void
+    {
+        // `withDefaults(defineProps<Props>(), { … })` is a pervasive Vue pattern; the macro is the
+        // FIRST argument, not the top-level call. Missing it left every such component's props
+        // typed `unknown` after extraction.
+        $props = new Script('interface Props { a: string; b?: number | null }' . "\n" . 'const props = withDefaults(defineProps<Props>(), { b: 0 });')->propTypes();
+
+        $this->assertSame(['a' => 'string', 'b' => 'number | null'], $props);
+    }
+
     public function test_an_inferred_composable_return_is_typed_field_by_field(): void
     {
         // useX has NO declared return — its shape is inferred from `return { … }`. Each returned

@@ -402,13 +402,29 @@ final class Script
      */
     public function propTypes(): array
     {
-        $shape = $this->ast()->call('defineProps')?->firstTypeArgument();
+        $shape = $this->definePropsCall()?->firstTypeArgument();
 
         return match (true) {
             $shape instanceof ObjectType => $shape->fields(),          // defineProps<{ … }>()
             $shape instanceof NamedType => $this->typeFields($shape->name), // defineProps<Props>()
             default => [],
         };
+    }
+
+    /**
+     * The `defineProps<…>()` macro call — written directly, OR wrapped in
+     * `withDefaults(defineProps<…>(), …)` (where it's the first argument). Missing the wrapped form
+     * left every `withDefaults` component's props typed `unknown`.
+     */
+    private function definePropsCall(): ?CallExpr
+    {
+        if (($direct = $this->ast()->call('defineProps')) !== null) {
+            return $direct;
+        }
+
+        $wrapped = $this->ast()->call('withDefaults')?->arguments[0] ?? null;
+
+        return $wrapped !== null ? TsParser::module($wrapped)->call('defineProps') : null;
     }
 
     /**
