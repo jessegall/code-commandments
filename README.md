@@ -21,6 +21,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Install](#install)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [Hooks](#hooks)
 - [How detectors are tested](#how-detectors-are-tested)
 - [Skills](#skills)
 - [Sins & detectors](#sins--detectors)
@@ -96,6 +97,12 @@ vendor/bin/commandments judge src --parallel=4
 # skip paths (comma-separated fragments); list everything
 vendor/bin/commandments judge src --exclude=Generated,Legacy
 vendor/bin/commandments judge --list
+
+# executing an approved plan (see Hooks below)
+vendor/bin/commandments checks start          # run the project's start / phase / complete checks
+vendor/bin/commandments checks phase
+vendor/bin/commandments checks complete        # full gate — your checks, then `judge --branch`
+vendor/bin/commandments plan status            # is a plan active? / plan done — end it
 ```
 
 Exit code is non-zero when sins are found.
@@ -155,10 +162,82 @@ return function (Config $config): void {
 Each move is named for what it registers: `paths` (the source roots to scan — auto-detected
 on first run from your composer.json, re-runnable with `commandments config reindex`),
 `disable` (silence a rule), `detector` (add your own finder), `configure` (tune a threshold),
-and `package` (register a framework's exemptions — covered under
-[Developing detectors](#developing-detectors)). `configure` uses the closure's **first
+`package` (register a framework's exemptions — covered under
+[Developing detectors](#developing-detectors)), `hook` (register your own Claude Code hook —
+see [Hooks](#hooks)), and `planExecution` (the plan-execution profile — see [Hooks](#hooks)).
+`configure` uses the closure's **first
 parameter type** to find the detector and hand it in, so you tune it by calling its own
 methods. Run `commandments config` for a summary of what's in effect.
+
+## Hooks
+
+`install` (and every `composer update`, via `sync`) wires a small set of **Claude Code
+hooks** into `.claude/settings.json` — the cardinal-rule reminder, the "did you judge?"
+nudge (before a commit / at turn end), and the **plan-execution** hooks. They self-heal:
+a hook change reaches every project on the next `composer update`, never freezing at
+install time.
+
+**Your own hooks are never touched.** Every command we wire carries a stamp
+(`# @code-commandments-managed`). On re-wiring we strip *only* stamped commands and add
+the current set back — so a hook you wrote by hand in `settings.json`, even one that
+itself runs `commandments`, is always preserved.
+
+### Plan execution
+
+When you approve a plan, a `PostToolUse`/`ExitPlanMode` hook loads the
+`executing-plans` skill and injects your project's profile; the agent then branches,
+works phase-by-phase (scoped tests + `checks phase`, commit each), and runs the full
+gate — `checks complete`, which appends `judge --branch` — **once** at the end. Opt into
+`keepGoing()` and a `Stop` hook re-nudges "keep going" until `commandments plan done`
+(loop-safe, and self-clears an abandoned plan). All state is read live from config and
+scoped to the current git worktree. Configure it:
+
+```php
+use JesseGall\CodeCommandments\PlanExecution;
+
+$config->planExecution(fn (PlanExecution $plan) => $plan
+    ->branchFrom('main')            // base to cut from + judge --branch base
+    ->branchPrefix('plan/')         // the plan branch prefix
+    ->pushEachPhase()               // push after every phase (default: once at the end)
+    ->keepGoing()                   // Stop hook re-nudges until `plan done`
+    ->onStart('composer install')   // once, before the first phase
+    ->eachPhase('composer lint')    // after each phase — keep it fast
+    ->onComplete('composer test')); // the end gate; judge --branch runs after
+```
+
+On `composer update` a starter block is injected automatically, its `onComplete`
+inferred from your composer/npm scripts. Edit it freely.
+
+### Register your own hook
+
+Hooks are an **open set**, like detectors. Write a `Hook`, declare where it binds, and
+register it — it's wired and run exactly like a built-in (through
+`commandments hook '<class>'`), and it carries the same stamp:
+
+```php
+use JesseGall\CodeCommandments\Cli\Hook;
+use JesseGall\CodeCommandments\Cli\HookBinding;
+use JesseGall\CodeCommandments\Cli\HookEvent;
+
+final class AnnounceOnStop extends Hook
+{
+    public function bindings(): array
+    {
+        return [new HookBinding('Stop')];
+    }
+
+    protected function onStop(HookEvent $event): int
+    {
+        // …your logic; use $this->block()/$this->inject()/$this->pass()
+        return $this->pass();
+    }
+}
+```
+
+```php
+// in .commandments/config.php
+$config->hook(\App\Hooks\AnnounceOnStop::class);
+```
 
 ## How detectors are tested
 
