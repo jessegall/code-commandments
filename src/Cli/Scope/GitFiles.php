@@ -8,9 +8,12 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
  * Reads sets of judged files (`.php`/`.vue`, one per engine) out of git:
  * working-tree changes vs HEAD, or everything new/changed on the current branch
  * vs a base ref. Shared by the {@see WorkingTreeChanges} and {@see BranchChanges}
- * scopes.
+ * scopes, and by the {@see \JesseGall\CodeCommandments\Cli\HookIO} worktree resolution.
+ *
+ * Not final: it is the git seam a test substitutes to fix the root/HEAD/branch a hook sees
+ * ({@see \JesseGall\CodeCommandments\Tests\Cli\FakeGit}), instead of running real git.
  */
-final class GitFiles
+class GitFiles
 {
     /**
      * The git toplevel containing $path, or null when $path is not in a repository.
@@ -30,6 +33,15 @@ final class GitFiles
     public function head(string $root): string
     {
         return trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' rev-parse HEAD 2>/dev/null'));
+    }
+
+    /**
+     * The current branch name (e.g. `main`, `plan/foo`), or '' in a detached HEAD / non-repo.
+     * Used to tell when a plan branch has been merged back to its base.
+     */
+    public function currentBranch(string $root): string
+    {
+        return trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' rev-parse --abbrev-ref HEAD 2>/dev/null'));
     }
 
     /**

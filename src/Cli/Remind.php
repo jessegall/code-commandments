@@ -13,7 +13,7 @@ namespace JesseGall\CodeCommandments\Cli;
  *
  * The text is a tight distillation of `fix-at-the-source`; it stays short because it recurs.
  */
-final class Remind
+final class Remind extends Hook
 {
     private const int INTERVAL = 25;
 
@@ -26,27 +26,32 @@ final class Remind
         . 'And keep to the skills you loaded — they are the standard for every change, not a '
         . 'one-time read; re-open the relevant one before you touch its subject.';
 
-    public function run(array $args): int
+    /**
+     * The heartbeat: every PostToolUse counts one tool use, and the reminder surfaces once the
+     * count rolls over the interval — silent on the other 24, so it adds nothing to context. A
+     * manual invocation counts the same, so the count is testable outside the harness.
+     */
+    protected function onPostToolUse(HookEvent $event): int
     {
-        // Fire only when the tool-use count rolls over the interval; otherwise stay silent so the
-        // hook adds nothing to context on the other 24 tool uses.
         if ($this->bump() < self::INTERVAL) {
-            return 0;
+            return $this->pass();
         }
 
         $this->reset();
-
-        $payload = [
+        $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [
                 'hookEventName' => 'PostToolUse',
                 'additionalContext' => self::REMINDER,
             ],
-        ];
-
-        fwrite(STDOUT, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+        ]);
 
         return 0;
+    }
+
+    protected function onManualRun(HookEvent $event): int
+    {
+        return $this->onPostToolUse($event);
     }
 
     /**

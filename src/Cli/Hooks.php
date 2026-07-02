@@ -18,6 +18,10 @@ namespace JesseGall\CodeCommandments\Cli;
  * exactly the current set under their current events. So an older hook wired under the wrong event
  * (a `remind` under `UserPromptSubmit`) moves; every hook the project itself wrote, in any event, is
  * preserved untouched. Idempotent by CONTENT: it writes only when the settings actually change.
+ *
+ * The current set: the {@see Remind} heartbeat, the {@see JudgeReminder} nudge (Stop + PreToolUse on
+ * `git commit`), and the {@see PlanReminder} (PostToolUse on `ExitPlanMode` to open a plan, Stop to
+ * keep it going). Add one by adding a {@see HOOKS} row; the wiring is generic.
  */
 final class Hooks
 {
@@ -26,6 +30,8 @@ final class Hooks
     private const string REMIND = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind';
 
     private const string JUDGE = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" judge-reminder';
+
+    private const string PLAN = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" plan-reminder';
 
     /**
      * Our hooks as (event, command, matcher). A null matcher means "every call of the event"; a
@@ -37,6 +43,8 @@ final class Hooks
         ['event' => 'PostToolUse', 'command' => self::REMIND, 'matcher' => null],
         ['event' => 'Stop', 'command' => self::JUDGE, 'matcher' => null],
         ['event' => 'PreToolUse', 'command' => self::JUDGE, 'matcher' => 'Bash'],
+        ['event' => 'PostToolUse', 'command' => self::PLAN, 'matcher' => 'ExitPlanMode'],
+        ['event' => 'Stop', 'command' => self::PLAN, 'matcher' => null],
     ];
 
     public static function wire(string $path): bool

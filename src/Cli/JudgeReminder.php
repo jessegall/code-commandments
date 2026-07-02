@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
-use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
-
 /**
  * `commandments judge-reminder` — the "did you judge?" nudge, wired to two moments so a commit can't
  * slip past it: a `Stop` hook (turn about to end) and a `PreToolUse` hook on `git commit` (a commit
@@ -20,7 +18,7 @@ use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
  * clears the marker so the next batch starts over. Wired by {@see Hooks}, alongside the cardinal-rule
  * {@see Remind} heartbeat.
  */
-final class JudgeReminder
+final class JudgeReminder extends Hook
 {
     /** The base ref a `--branch` scope compares against — the same default as {@see Scope\Scope}. */
     private const string BASE = 'main';
@@ -28,35 +26,22 @@ final class JudgeReminder
     /** The marker section separator: the reminded file set sits above it, the explanation below. */
     private const string SEPARATOR = '-----';
 
-    public function __construct(private readonly GitFiles $git = new GitFiles) {}
-
-    public function run(array $args): int
+    protected function onPreToolUse(HookEvent $event): int
     {
-        $payload = $this->readPayload();
-        $root = $this->projectRoot();
-
-        if (($payload['hook_event_name'] ?? null) === 'PreToolUse') {
-            if (! $this->isGitCommit($payload)) {
-                return 0; // Some other Bash call — not our moment.
-            }
-
-            $reason = $this->reminder($root, 'before you commit');
-
-            if ($reason !== null) {
-                $this->inject($reason);
-            }
-
-            return 0;
+        if (! $this->isGitCommit($event)) {
+            return $this->pass(); // Some other Bash call — not our moment.
         }
 
-        // Stop (or a manual CLI run): block-and-continue for one more turn.
-        $reason = $this->reminder($root, 'before you wrap up');
+        $reason = $this->reminder($event->root, 'before you commit');
 
-        if ($reason !== null) {
-            $this->block($reason);
-        }
+        return $reason === null ? $this->pass() : $this->inject($event, $reason);
+    }
 
-        return 0;
+    protected function onStop(HookEvent $event): int
+    {
+        $reason = $this->reminder($event->root, 'before you wrap up');
+
+        return $reason === null ? $this->pass() : $this->block($reason);
     }
 
     /**
@@ -67,7 +52,7 @@ final class JudgeReminder
      */
     public function reminder(string $projectRoot, string $lead = 'before you wrap up'): ?string
     {
-        $root = $this->git->root($projectRoot);
+        $root = $this->git()->root($projectRoot);
 
         if ($root === null) {
             return null; // Not a git repository — nothing to scope a reminder to.
@@ -75,8 +60,8 @@ final class JudgeReminder
 
         // Prefer --branch when there's committed branch work beyond the working tree (its set is a
         // superset of the working-tree set), so the nudge covers the whole branch; else --changes.
-        $working = $this->git->changedVsHead($root);
-        $branch = $this->git->changedVsBranch($root, self::BASE) ?? $working;
+        $working = $this->git()->changedVsHead($root);
+        $branch = $this->git()->changedVsBranch($root, self::BASE) ?? $working;
         $useBranch = count($branch) > count($working);
         $files = array_keys($useBranch ? $branch : $working);
 
@@ -99,44 +84,17 @@ final class JudgeReminder
      * Is this PreToolUse payload a `git commit` about to run? A real commit, not `commit-graph` or a
      * `--dry-run` rehearsal. Recognises the shell verb; it does not parse code, so no engine is owed.
      */
-    private function isGitCommit(array $payload): bool
+    private function isGitCommit(HookEvent $event): bool
     {
-        if (($payload['tool_name'] ?? null) !== 'Bash') {
+        if (! $event->isTool('Bash')) {
             return false;
         }
 
-        $command = (string) ($payload['tool_input']['command'] ?? '');
+        $command = $event->command();
 
         return str_contains($command, 'git commit')
             && ! str_contains($command, 'commit-graph')
             && ! str_contains($command, '--dry-run');
-    }
-
-    /**
-     * A `Stop` block-and-continue: Claude sees $reason and gets one more turn to judge or finish.
-     */
-    private function block(string $reason): void
-    {
-        $this->emit(['decision' => 'block', 'reason' => $reason]);
-    }
-
-    /**
-     * A `PreToolUse` non-blocking nudge: the commit still runs; Claude reads $reason as context.
-     */
-    private function inject(string $reason): void
-    {
-        $this->emit(['hookSpecificOutput' => [
-            'hookEventName' => 'PreToolUse',
-            'additionalContext' => $reason,
-        ]]);
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function emit(array $payload): void
-    {
-        fwrite(STDOUT, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
     }
 
     private function reason(int $count, bool $useBranch, string $lead): string
@@ -210,38 +168,6 @@ final class JudgeReminder
         }
 
         return $paths;
-    }
-
-    /**
-     * The hook payload the harness pipes on STDIN, or an empty array for a manual CLI run (a TTY, or
-     * no data). Never blocks on a terminal.
-     *
-     * @return array<string, mixed>
-     */
-    private function readPayload(): array
-    {
-        if (stream_isatty(STDIN)) {
-            return [];
-        }
-
-        $data = json_decode((string) stream_get_contents(STDIN), true);
-
-        return is_array($data) ? $data : [];
-    }
-
-    /**
-     * The git worktree the hook is running in — so a worktree gets its OWN scope and its own
-     * batch marker, not the main checkout's. `CLAUDE_PROJECT_DIR` is pinned to the main
-     * checkout and shared across every worktree, so scoping to it makes a fresh worktree
-     * report the main checkout's changes and share its marker; resolving the toplevel of the
-     * current directory keeps each worktree distinct. Falls back to the project dir / cwd when
-     * the hook runs outside a repository.
-     */
-    private function projectRoot(): string
-    {
-        $cwd = getcwd() ?: '.';
-
-        return $this->git->root($cwd) ?? (getenv('CLAUDE_PROJECT_DIR') ?: $cwd);
     }
 
     private static function markerFile(string $projectRoot): string

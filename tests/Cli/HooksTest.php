@@ -62,6 +62,26 @@ final class HooksTest extends TestCase
         $this->assertSame(1, $this->countMatching('PostToolUse', 'remind'));
         $this->assertSame(1, $this->countMatching('Stop', 'judge-reminder'));
         $this->assertSame(1, $this->countMatching('PreToolUse', 'judge-reminder'));
+        $this->assertSame(1, $this->countMatching('PostToolUse', 'plan-reminder'));
+        $this->assertSame(1, $this->countMatching('Stop', 'plan-reminder'));
+    }
+
+    public function test_the_plan_reminder_post_tool_use_is_scoped_to_exit_plan_mode(): void
+    {
+        Hooks::wire($this->path);
+
+        $settings = (array) json_decode((string) file_get_contents($this->path), true);
+        $matchers = [];
+
+        foreach ((array) ($settings['hooks']['PostToolUse'] ?? []) as $group) {
+            foreach ((array) ($group['hooks'] ?? []) as $hook) {
+                if (str_ends_with((string) ($hook['command'] ?? ''), 'plan-reminder')) {
+                    $matchers[] = $group['matcher'] ?? null;
+                }
+            }
+        }
+
+        $this->assertSame(['ExitPlanMode'], $matchers, 'the plan-reminder PostToolUse fires only on ExitPlanMode');
     }
 
     public function test_the_pre_tool_use_hook_is_scoped_to_bash(): void
@@ -82,9 +102,11 @@ final class HooksTest extends TestCase
 
     private function countMatching(string $event, string $subcommand): int
     {
+        // Match on the trailing subcommand token so `remind` never counts `judge-reminder` /
+        // `plan-reminder` — the commands end with the exact subcommand they invoke.
         return count(array_filter(
             $this->commands($event),
-            static fn (string $c): bool => str_contains($c, 'commandments') && str_contains($c, $subcommand),
+            static fn (string $c): bool => str_contains($c, 'commandments') && str_ends_with($c, $subcommand),
         ));
     }
 
