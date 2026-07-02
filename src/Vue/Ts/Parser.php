@@ -100,7 +100,8 @@ final class Parser
 
     private function parseStatement(): ?Node
     {
-        if ($this->atId('import')) {
+        // `import` DECLARATION only — not `import.meta` / dynamic `import(…)`, which are expressions.
+        if ($this->atId('import') && ! ($this->at(1)?->isPunct('.') ?? false) && ! ($this->at(1)?->isPunct('(') ?? false)) {
             return $this->parseImport();
         }
 

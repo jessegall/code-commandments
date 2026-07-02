@@ -7,11 +7,14 @@ namespace JesseGall\CodeCommandments\Vue;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Ts\Node\CallExpr;
 use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\ImportDecl;
 use JesseGall\CodeCommandments\Vue\Ts\Node\KeywordType;
 use JesseGall\CodeCommandments\Vue\Ts\Node\Module;
 use JesseGall\CodeCommandments\Vue\Ts\Node\NamedType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\NamePattern;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectPattern;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
 
 /**
@@ -83,38 +86,14 @@ final class Script
      */
     public function imports(): array
     {
-        $imports = [];
-        $count = count($this->tokens);
+        return array_map(static function (ImportDecl $import): array {
+            $statement = $import->render();
 
-        for ($i = 0; $i < $count; $i++) {
-            if (! $this->isId($i, 'import')) {
-                continue;
-            }
-
-            $start = $this->tokens[$i]['start'];
-
-            // The binding part runs to the FIRST terminator: `from` (ES import),
-            // `=` (TS `import X = ns.Type`), `;`, or a string (side-effect import).
-            $j = $i + 1;
-
-            for (; $j < $count; $j++) {
-                $token = $this->tokens[$j];
-
-                if (($token['kind'] === Token::IDENTIFIER && $token['value'] === 'from')
-                    || $token['kind'] === Token::STRING
-                    || ($token['kind'] === Token::PUNCTUATION && ($token['value'] === '=' || $token['value'] === ';'))) {
-                    break;
-                }
-            }
-
-            $names = $this->bindingNames($i + 1, $j);
-            [$end, $i] = $this->statementEnd($j);
-
-            $statement = rtrim(substr($this->source, $start, $end - $start));
-            $imports[] = ['names' => $names, 'statement' => str_ends_with($statement, ';') ? $statement : "{$statement};"];
-        }
-
-        return $imports;
+            return [
+                'names' => array_keys($import->bindings),
+                'statement' => str_ends_with($statement, ';') ? $statement : "{$statement};",
+            ];
+        }, $this->ast()->imports);
     }
 
     /**
@@ -124,33 +103,9 @@ final class Script
      */
     public function importSpecifier(string $name): ?string
     {
-        $count = count($this->tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            if (! $this->isId($i, 'import')) {
-                continue;
-            }
-
-            $j = $i + 1;
-
-            for (; $j < $count; $j++) {
-                $token = $this->tokens[$j];
-
-                if (($token['kind'] === Token::IDENTIFIER && $token['value'] === 'from')
-                    || $token['kind'] === Token::STRING
-                    || ($token['kind'] === Token::PUNCTUATION && ($token['value'] === '=' || $token['value'] === ';'))) {
-                    break;
-                }
-            }
-
-            if (! in_array($name, $this->bindingNames($i + 1, $j), true) || ! $this->isId($j, 'from')) {
-                continue;
-            }
-
-            for ($k = $j + 1; $k < $count; $k++) {
-                if ($this->tokens[$k]['kind'] === Token::STRING) {
-                    return $this->unquoteString($this->tokens[$k]['value']);
-                }
+        foreach ($this->ast()->imports as $import) {
+            if (array_key_exists($name, $import->bindings) && $import->source !== null) {
+                return $import->source;
             }
         }
 
@@ -282,38 +237,7 @@ final class Script
      */
     public function localNames(): array
     {
-        $names = [];
-        $count = count($this->tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            // `function name(…)` / `async function name(…)` — a declared callable.
-            if ($this->isId($i, 'function') && ($this->tokens[$i + 1]['kind'] ?? null) === Token::IDENTIFIER) {
-                $names[] = $this->tokens[$i + 1]['value'];
-
-                continue;
-            }
-
-            if (! $this->isDeclarator($i) || ($this->tokens[$i + 1] ?? null) === null) {
-                continue;
-            }
-
-            $next = $i + 1;
-
-            if ($this->tokens[$next]['kind'] === Token::IDENTIFIER) {
-                $names[] = $this->tokens[$next]['value'];
-            } elseif ($this->isPunct($next, Token::BRACE_OPEN) || $this->isPunct($next, Token::BRACKET_OPEN)) {
-                $close = $this->matchingParen($next);
-
-                for ($k = $next + 1; $k < $close; $k++) {
-                    // A binding is an id that is NOT a key (`{ a: b }` binds `b`, not `a`).
-                    if ($this->tokens[$k]['kind'] === Token::IDENTIFIER && ! $this->isPunct($k + 1, ':')) {
-                        $names[] = $this->tokens[$k]['value'];
-                    }
-                }
-            }
-        }
-
-        return array_values(array_unique($names));
+        return array_values(array_unique($this->ast()->localNames()));
     }
 
     /**
@@ -324,21 +248,26 @@ final class Script
      */
     public function propsVariable(): ?string
     {
-        $count = count($this->tokens);
+        return $this->assignedFrom(static function (VariableDecl $decl): bool {
+            $callee = $decl->initCall?->callee;
 
-        for ($i = 0; $i < $count; $i++) {
-            if (! $this->isDeclarator($i) || ($this->tokens[$i + 1]['kind'] ?? null) !== Token::IDENTIFIER || ! $this->isPunct($i + 2, '=')) {
-                continue;
-            }
+            // `const props = defineProps(…)` or `const props = withDefaults(defineProps(…), …)`.
+            return $callee === 'defineProps'
+                || ($callee === 'withDefaults' && str_starts_with($decl->initCall->arguments[0] ?? '', 'defineProps'));
+        });
+    }
 
-            $rhs = $i + 3;
-
-            if ($this->isId($rhs, 'withDefaults') && $this->isPunct($rhs + 1, '(')) {
-                $rhs += 2;
-            }
-
-            if ($this->isId($rhs, 'defineProps')) {
-                return $this->tokens[$i + 1]['value'];
+    /**
+     * The name of the first `const NAME = …` whose initializer $matches — the binding a
+     * `defineProps`/`defineEmits` macro is captured in.
+     *
+     * @param  callable(VariableDecl): bool  $matches
+     */
+    private function assignedFrom(callable $matches): ?string
+    {
+        foreach ($this->ast()->body as $node) {
+            if ($node instanceof VariableDecl && $node->pattern instanceof NamePattern && $matches($node)) {
+                return $node->pattern->name;
             }
         }
 
@@ -354,19 +283,7 @@ final class Script
      */
     public function emitName(): ?string
     {
-        $count = count($this->tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            if (! $this->isDeclarator($i) || ($this->tokens[$i + 1]['kind'] ?? null) !== Token::IDENTIFIER || ! $this->isPunct($i + 2, '=')) {
-                continue;
-            }
-
-            if ($this->isId($i + 3, 'defineEmits')) {
-                return $this->tokens[$i + 1]['value'];
-            }
-        }
-
-        return null;
+        return $this->assignedFrom(static fn (VariableDecl $decl): bool => $decl->initCall?->callee === 'defineEmits');
     }
 
     /**
@@ -426,58 +343,12 @@ final class Script
      *
      * @return list<string>
      */
-    private function bindingNames(int $from, int $to): array
-    {
-        $names = [];
-
-        for ($k = $from; $k < $to; $k++) {
-            $token = $this->tokens[$k];
-
-            if ($token['kind'] !== Token::IDENTIFIER || $token['value'] === 'type') {
-                continue;
-            }
-
-            if ($token['value'] === 'as') {
-                array_pop($names); // the alias (next id) replaces the local before it
-
-                continue;
-            }
-
-            $names[] = $token['value'];
-        }
-
-        return array_values(array_unique($names));
-    }
-
     /**
      * Where an import statement ends, starting from its terminator token at $j: the
      * source string after `from`, the string itself (side-effect), else the next `;`.
      *
      * @return array{0: int, 1: int}  [end offset, index to resume the outer scan at]
      */
-    private function statementEnd(int $j): array
-    {
-        $count = count($this->tokens);
-
-        if ($this->isId($j, 'from')) {
-            for ($k = $j + 1; $k < $count; $k++) {
-                if ($this->tokens[$k]['kind'] === Token::STRING) {
-                    return [$this->tokens[$k]['end'], $k];
-                }
-            }
-        } elseif (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === Token::STRING) {
-            return [$this->tokens[$j]['end'], $j];
-        }
-
-        for ($k = $j; $k < $count; $k++) {
-            if ($this->isPunct($k, ';')) {
-                return [$this->tokens[$k]['end'], $k];
-            }
-        }
-
-        return [$this->tokens[min($j, $count - 1)]['end'] ?? 0, $count];
-    }
-
     /**
      * The `defineProps<{ name: Type; … }>()` field types.
      *
@@ -646,13 +517,6 @@ final class Script
     }
 
     /** Vue reactivity wrappers whose `<T>` IS the value type seen in the template. */
-    private function isReactiveValue(int $i): bool
-    {
-        return ($this->tokens[$i] ?? null) !== null
-            && $this->tokens[$i]['kind'] === Token::IDENTIFIER
-            && in_array($this->tokens[$i]['value'], ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'], true);
-    }
-
     /**
      * The type of a function declared at the `(` token $i — `(params) => Return`.
      */
@@ -703,27 +567,6 @@ final class Script
     /**
      * The inner text of a `<…>` generic opened just before $i (depth 1), to its match.
      */
-    private function readGeneric(int $i): string
-    {
-        $depth = 1;
-        $pieces = [];
-        $count = count($this->tokens);
-
-        for (; $i < $count && $depth > 0; $i++) {
-            $value = $this->tokens[$i]['value'];
-
-            if (Token::opensType($value)) {
-                $depth++;
-            } elseif (Token::closesType($value) && --$depth === 0) {
-                break;
-            }
-
-            $pieces[] = $value;
-        }
-
-        return implode('', $pieces);
-    }
-
     /**
      * The TS type of a reactive wrapper's value, inferred from its initializer — `ref(false)`
      * → `boolean`, `computed(() => a === b)` → `boolean`. The argument's SOURCE is sliced out
@@ -731,23 +574,6 @@ final class Script
      * getter's value is its callback's RETURN, every other wrapper's is the argument itself.
      * Null for an initializer the engine can't infer soundly (an identifier, call, object).
      */
-    private function reactiveInitType(string $wrapper, int $openParen): ?string
-    {
-        $close = $this->matchingParen($openParen);
-
-        $from = $this->tokens[$openParen]['end'];
-        $to = $this->tokens[$close]['start'] ?? $from;
-        $argument = trim(substr($this->source, $from, $to - $from));
-
-        if ($argument === '') {
-            return null;
-        }
-
-        $expression = Parser::parse($argument);
-
-        return $wrapper === 'computed' ? $expression->returnType() : $expression->inferType();
-    }
-
     /**
      * The index of the bracket that closes the one opening at $open — counting only
      * round/square/curly brackets, NOT `<`/`>`. In an expression body `<`/`>` are the
@@ -961,11 +787,6 @@ final class Script
         }
 
         return $length;
-    }
-
-    private function isKeyword(int $i, string $word): bool
-    {
-        return $this->isId($i, $word);
     }
 
     private function isId(int $i, string $value): bool
