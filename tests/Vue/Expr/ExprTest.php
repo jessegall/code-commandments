@@ -24,6 +24,16 @@ final class ExprTest extends TestCase
         $this->assertSame(['rows'], Parser::parse('rows.map(row => row.id)')->roots());
     }
 
+    public function test_roots_subtract_a_typescript_typed_arrow_parameter(): void
+    {
+        // The real leak: a TS-typed handler param — `(v: string | number) => …`. The type annotation
+        // must not stop the parser from binding `v`, nor leak `v` as a free read. The bound param is
+        // gone; the free reads that remain are the callees/reads (`Boundary` filters callees later).
+        $this->assertSame(['updateEntry', 'row', 'Number'], Parser::parse('(v: string | number) => updateEntry(row.key, { count: Number(v) })')->roots());
+        $this->assertSame(['emit'], Parser::parse('(val: boolean) => emit(val)')->roots());
+        $this->assertSame([], Parser::parse('(a: number, b: string) => a + b')->roots());
+    }
+
     public function test_roots_still_see_free_reads_alongside_an_arrow(): void
     {
         // An arrow body may legitimately read an outer variable — only the PARAMS are subtracted.

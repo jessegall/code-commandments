@@ -293,31 +293,141 @@ final class Parser
     {
         $this->expect('(');
 
-        // An empty `()` is only ever an arrow's parameter list.
-        if ($this->isPunct(')')) {
-            $this->next();
+        // A parenthesised group is an arrow's PARAMETER LIST when its matching `)` is followed by
+        // `=>`; otherwise it's a grouped expression. Deciding up front (not retroactively) lets us
+        // read TS-typed params — `(v: string | number) => …` — which the expression grammar can't,
+        // and whose annotation would otherwise leak the param name as a free read.
+        if ($this->closingParenLeadsToArrow()) {
+            $params = $this->arrowParameters();
+            $this->expect(')');
             $this->skipArrowMarker();
-
-            return new Expr(Expr::ARROW, ['params' => [], 'body' => $this->expression()]);
-        }
-
-        $params = [$this->expression()];
-
-        // Multi-parameter arrow: `(a, b) => …` — each param binds a name locally.
-        while ($this->isPunct(',')) {
-            $this->next();
-            $params[] = $this->expression();
-        }
-
-        $this->expect(')');
-
-        if ($this->isPunct('=>')) {
-            $this->next();
 
             return new Expr(Expr::ARROW, ['params' => $params, 'body' => $this->expression()]);
         }
 
-        return $params[0];
+        if ($this->isPunct(')')) {
+            $this->next();
+
+            return new Expr(Expr::UNKNOWN);
+        }
+
+        $inner = $this->expression();
+        $this->expect(')');
+
+        return $inner;
+    }
+
+    /**
+     * Does the `)` that closes the just-opened `(` come immediately before a `=>`? A pure token
+     * lookahead (depth-balanced over every bracket kind) that classifies the group as an arrow
+     * parameter list vs a grouped expression, without committing the parse.
+     */
+    private function closingParenLeadsToArrow(): bool
+    {
+        $depth = 0;
+
+        for ($i = $this->pos, $n = count($this->tokens); $i < $n; $i++) {
+            $token = $this->tokens[$i];
+
+            if ($token['type'] !== 'punct') {
+                continue;
+            }
+
+            if (in_array($token['value'], ['(', '[', '{'], true)) {
+                $depth++;
+            } elseif (in_array($token['value'], [')', ']', '}'], true)) {
+                if ($depth === 0) {
+                    $next = $this->tokens[$i + 1] ?? null;
+
+                    return $next !== null && $next['type'] === 'punct' && $next['value'] === '=>';
+                }
+
+                $depth--;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * An arrow's parameter names — each identifier (or the identifiers a destructuring pattern
+     * binds), with its `: Type` annotation and `= default` skipped. Returned as IDENTIFIER nodes so
+     * {@see Expr::roots} can subtract them from the body's free reads.
+     *
+     * @return list<Expr>
+     */
+    private function arrowParameters(): array
+    {
+        $params = [];
+
+        while (! $this->isPunct(')') && ! $this->isEof()) {
+            if ($this->isPunct('{') || $this->isPunct('[')) {
+                foreach ($this->patternNames() as $name) {
+                    $params[] = new Expr(Expr::IDENTIFIER, ['name' => $name]);
+                }
+            } elseif ($this->peek()['type'] === 'name') {
+                $params[] = new Expr(Expr::IDENTIFIER, ['name' => $this->peek()['value']]);
+                $this->next();
+            }
+
+            $this->skipToParamBoundary(); // a `: Type` annotation and/or `= default`
+
+            if ($this->isPunct(',')) {
+                $this->next();
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * The identifier names a destructuring pattern binds, consuming it to its matching close — a
+     * best-effort scan (aliases and defaults included) so every bound local is subtracted.
+     *
+     * @return list<string>
+     */
+    private function patternNames(): array
+    {
+        $names = [];
+        $depth = 0;
+
+        do {
+            if ($this->isPunct('{') || $this->isPunct('[')) {
+                $depth++;
+            } elseif ($this->isPunct('}') || $this->isPunct(']')) {
+                $depth--;
+            } elseif ($this->peek()['type'] === 'name') {
+                $names[] = $this->peek()['value'];
+            }
+
+            $this->next();
+        } while ($depth > 0 && ! $this->isEof());
+
+        return $names;
+    }
+
+    /**
+     * Skip a param's trailing `: Type` / `= default` up to the next top-level `,` or `)` — the
+     * boundary between this parameter and the next (bracket-balanced, so a nested `(…)`/`<…>` in
+     * the type doesn't end it early).
+     */
+    private function skipToParamBoundary(): void
+    {
+        $depth = 0;
+
+        while (! $this->isEof()) {
+            if ($depth === 0 && ($this->isPunct(',') || $this->isPunct(')'))) {
+                return;
+            }
+
+            if ($this->isPunct('(') || $this->isPunct('[') || $this->isPunct('{')) {
+                $depth++;
+            } elseif ($this->isPunct(')') || $this->isPunct(']') || $this->isPunct('}')) {
+                $depth--;
+            }
+
+            $this->next();
+        }
     }
 
     private function arrayLiteral(): Expr
