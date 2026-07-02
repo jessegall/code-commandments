@@ -48,9 +48,7 @@ final class PlanCommand
         $plan = Config::load($root)->planExecutionSettings();
         $keepGoing = $plan->stopPolicy()?->name ?? 'off';
 
-        fwrite(STDOUT, $marker->isActive()
-            ? "● Plan active (base `{$marker->baseBranch()}`).\n"
-            : "○ No plan active.\n");
+        fwrite(STDOUT, $marker->isActive() ? "● Plan active.\n" : "○ No plan active.\n");
         fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  keep-going: {$keepGoing}\n");
 
         return 0;

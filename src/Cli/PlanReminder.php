@@ -43,7 +43,7 @@ final class PlanReminder extends Hook
         }
 
         $plan = $this->profile($event);
-        PlanMarker::inWorktree($event->root)->activate($plan->baseBranch(), $this->git()->head($event->root));
+        PlanMarker::inWorktree($event->root)->activate($this->git()->head($event->root));
 
         return $this->inject($event, $this->approvedNudge($plan));
     }
@@ -51,15 +51,15 @@ final class PlanReminder extends Hook
     protected function onStop(HookEvent $event): int
     {
         $marker = PlanMarker::inWorktree($event->root);
-        $policy = $this->profile($event)->stopPolicy();
+        $plan = $this->profile($event);
 
-        if (! $marker->isActive() || $policy === null) {
+        if (! $marker->isActive() || $plan->stopPolicy() === null) {
             return $this->pass(); // No plan, or keep-going not enabled — the human's stop stands.
         }
 
         $branch = $this->git()->currentBranch($event->root);
 
-        if ($branch !== '' && $branch === $marker->baseBranch()) {
+        if ($branch !== '' && $branch === $plan->baseBranch()) {
             $marker->clear(); // Back on the base branch — the plan is merged or abandoned; done nudging.
 
             return $this->pass();
@@ -73,7 +73,7 @@ final class PlanReminder extends Hook
             return $this->pass();
         }
 
-        $capped = $policy === StopPolicy::RespectUserStops
+        $capped = $plan->stopPolicy() === StopPolicy::RespectUserStops
             ? $state->total > 1              // Nudge exactly once, then honour the stop.
             : $state->stuck > self::MAX_STUCK; // Grind on, unless spinning with no new commits.
 

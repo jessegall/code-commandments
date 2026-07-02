@@ -49,7 +49,7 @@ final class PlanReminderTest extends TestCase
 
     public function test_stop_is_silent_without_keep_going(): void
     {
-        $this->marker()->activate('main', 'sha0'); // No config → keepGoing off.
+        $this->marker()->activate('sha0'); // No config → keepGoing off.
 
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop']));
     }
@@ -57,7 +57,7 @@ final class PlanReminderTest extends TestCase
     public function test_stop_blocks_and_continues_when_keep_going_is_on(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        $this->marker()->activate('main', 'sha0');
+        $this->marker()->activate('sha0');
 
         $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'sha1');
 
@@ -68,7 +68,7 @@ final class PlanReminderTest extends TestCase
     public function test_stop_gives_up_after_the_stuck_cap_with_no_progress(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        $this->marker()->activate('main', 'sha0');
+        $this->marker()->activate('sha0');
 
         for ($i = 0; $i < 4; $i++) {
             $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'stuck'), "nudge {$i}");
@@ -80,7 +80,7 @@ final class PlanReminderTest extends TestCase
     public function test_progress_resets_the_stuck_counter(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        $this->marker()->activate('main', 'sha0');
+        $this->marker()->activate('sha0');
 
         // Every stop lands on a NEW head (a commit each phase) → never capped.
         for ($i = 0; $i < 8; $i++) {
@@ -91,7 +91,7 @@ final class PlanReminderTest extends TestCase
     public function test_keep_going_self_clears_after_the_absolute_cap(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        $this->marker()->activate('main', 'sha0');
+        $this->marker()->activate('sha0');
 
         // Progress every stop (new head) would dodge the stuck-cap forever — the absolute total cap
         // still stops it, and clears the marker so an abandoned plan can't linger.
@@ -106,7 +106,7 @@ final class PlanReminderTest extends TestCase
     public function test_respect_user_stops_nudges_only_once(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing(\JesseGall\CodeCommandments\StopPolicy::RespectUserStops));');
-        $this->marker()->activate('main', 'sha0');
+        $this->marker()->activate('sha0');
 
         $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha1'));
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha2'), "the human's stop stands after one nudge");
@@ -115,10 +115,21 @@ final class PlanReminderTest extends TestCase
     public function test_stop_clears_the_marker_once_back_on_the_base_branch(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        $this->marker()->activate('main', 'sha0');
+        $this->marker()->activate('sha0');
 
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], branch: 'main'));
         $this->assertFalse($this->marker()->isActive(), 'merged back to base — plan is over');
+    }
+
+    public function test_the_base_branch_is_read_live_from_config_not_snapshotted(): void
+    {
+        // The marker stores NO base. The "back on base ⇒ clear" check uses the base from config at
+        // firing time — so a base edited mid-plan (here `develop`) is honoured immediately.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->branchFrom(\'develop\')->keepGoing());');
+        $this->marker()->activate('sha0');
+
+        $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], branch: 'develop'));
+        $this->assertFalse($this->marker()->isActive(), 'cleared on the live base branch');
     }
 
     /**

@@ -28,7 +28,7 @@ final class PlanCommandTest extends TestCase
     public function test_done_clears_an_active_plan(): void
     {
         $marker = PlanMarker::inWorktree($this->root);
-        $marker->activate('main', 'sha0');
+        $marker->activate('sha0');
 
         $this->assertSame(0, $this->exec('done'));
         $this->assertFalse($marker->isActive(), 'the keep-going marker is cleared');
@@ -44,7 +44,7 @@ final class PlanCommandTest extends TestCase
     {
         $this->assertSame(0, $this->exec('status'));
 
-        PlanMarker::inWorktree($this->root)->activate('develop', 'sha0');
+        PlanMarker::inWorktree($this->root)->activate('sha0');
         $this->assertSame(0, $this->exec('status'));
     }
 

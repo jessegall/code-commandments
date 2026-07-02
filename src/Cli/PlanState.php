@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 /**
- * The persisted state of an active plan — the base branch it was cut from, the HEAD at the last
- * keep-going nudge, and the two nudge counters ({@see PlanMarker} reads/writes it). `stuck` is the
- * run of nudges since HEAD last moved (progress resets it); `total` is every nudge ever.
+ * The persisted state of an active plan — the HEAD at the last keep-going nudge and the two nudge
+ * counters ({@see PlanMarker} reads/writes it). Nothing config-derived is stored: the base branch,
+ * policy, and checks are read LIVE from `.commandments/config.php` on every hook firing, so editing
+ * them mid-plan takes effect at once. `stuck` is the run of nudges since HEAD last moved (progress
+ * resets it); `total` is every nudge ever.
  */
 final readonly class PlanState
 {
     public function __construct(
-        public string $base,
         public string $head,
         public int $stuck,
         public int $total,
@@ -26,6 +27,6 @@ final readonly class PlanState
     {
         $progressed = $head !== '' && $head !== $this->head;
 
-        return new self($this->base, $head, $progressed ? 1 : $this->stuck + 1, $this->total + 1);
+        return new self($head, $progressed ? 1 : $this->stuck + 1, $this->total + 1);
     }
 }

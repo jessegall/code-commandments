@@ -9,8 +9,9 @@ namespace JesseGall\CodeCommandments\Cli;
  * hook. Written when a plan is approved ({@see PlanReminder}), read on every stop to decide whether
  * to re-nudge, and cleared by `commandments plan done` ({@see PlanCommand}) or when the plan branch
  * is merged back to its base. It lives under the worktree's OWN `.commandments/`, so one worktree's
- * plan never nudges another. The persisted shape is the {@see PlanState} value object; the file
- * format mirrors the other hook markers: value lines, a separator, then a self-describing explanation.
+ * plan never nudges another. It stores ONLY the {@see PlanState} counters — nothing config-derived,
+ * so the base branch/policy stay live from config. The file format mirrors the other hook markers:
+ * value lines, a separator, then a self-describing explanation.
  */
 final class PlanMarker
 {
@@ -24,24 +25,16 @@ final class PlanMarker
     }
 
     /**
-     * Record that a plan is now active, cut from $baseBranch at $head, with the nudge counters reset.
+     * Record that a plan is now active at $head, with the nudge counters reset.
      */
-    public function activate(string $baseBranch, string $head): void
+    public function activate(string $head): void
     {
-        $this->save(new PlanState($baseBranch, $head, 0, 0));
+        $this->save(new PlanState($head, 0, 0));
     }
 
     public function isActive(): bool
     {
         return is_file($this->path);
-    }
-
-    /**
-     * The base branch the active plan was cut from, or '' when no plan is active.
-     */
-    public function baseBranch(): string
-    {
-        return $this->state()->base;
     }
 
     /**
@@ -68,11 +61,11 @@ final class PlanMarker
     {
         $lines = $this->valueLines();
 
-        if (count($lines) < 4) {
-            return new PlanState('', '', 0, 0);
+        if (count($lines) < 3) {
+            return new PlanState('', 0, 0);
         }
 
-        return new PlanState($lines[0], $lines[1], (int) $lines[2], (int) $lines[3]);
+        return new PlanState($lines[0], (int) $lines[1], (int) $lines[2]);
     }
 
     /**
@@ -103,7 +96,6 @@ final class PlanMarker
     {
         @mkdir(dirname($this->path), 0777, true);
         @file_put_contents($this->path, implode("\n", [
-            $state->base,
             $state->head,
             (string) $state->stuck,
             (string) $state->total,
@@ -114,9 +106,9 @@ final class PlanMarker
 
     private const string EXPLANATION = <<<'TXT'
         Active-plan marker for the code-commandments keep-going Stop hook (`commandments plan-reminder`).
-        The value lines above the separator are: the plan's base branch, the HEAD at the last nudge, the
-        consecutive no-progress nudge count, and the total nudge count. Written when a plan is approved,
-        read on every stop, cleared by `commandments plan done` or when the branch merges back. Safe to
-        delete — deleting it simply ends the keep-going nudges for this plan.
+        The value lines above the separator are: the HEAD at the last nudge, the consecutive no-progress
+        nudge count, and the total nudge count. Written when a plan is approved, read on every stop,
+        cleared by `commandments plan done` or when the branch merges back. Safe to delete — deleting it
+        simply ends the keep-going nudges for this plan.
         TXT;
 }
