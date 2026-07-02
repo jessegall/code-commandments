@@ -68,7 +68,7 @@ $toBytes = static function (string $limit): int {
           commandments install  # wire composer + the Claude Code hooks (reminder + judge nudge), then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
           commandments remind   # emit the cardinal rule as a PostToolUse payload
-          commandments judge-reminder  # emit the "did you judge?" nudge as a Stop payload
+          commandments judge-reminder  # emit the "did you judge?" nudge (Stop, or PreToolUse on git commit)
 
         Options:
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data

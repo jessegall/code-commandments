@@ -8,9 +8,10 @@ use JesseGall\CodeCommandments\Cli\JudgeReminder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The Stop-hook nudge fires ONCE per batch when judged files are touched, then stays silent — and
- * says nothing at all in a clean tree or outside a repo. Proven against a real temp git repo, since
- * the whole point is its reading of git state.
+ * The nudge fires ONCE per batch (keyed on the changed-file set) when judged files are touched, then
+ * stays silent — across a commit too — and says nothing in a clean tree or outside a repo. The
+ * PreToolUse path only speaks for a real `git commit`. Proven against a real temp git repo, since the
+ * whole point is its reading of git state.
  */
 final class JudgeReminderTest extends TestCase
 {
@@ -54,18 +55,39 @@ final class JudgeReminderTest extends TestCase
         $this->assertNull((new JudgeReminder)->reminder($this->repo));
     }
 
-    public function test_a_new_commit_opens_a_fresh_batch(): void
+    public function test_committing_the_same_files_stays_silent_no_double_nudge(): void
+    {
+        file_put_contents($this->repo . '/Service.php', "<?php\n");
+        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'first nudge');
+
+        // Commit the very files we nudged for. The SET is unchanged, so — even though HEAD moves and
+        // the finding now shows as committed branch work — there is nothing new: stay silent.
+        $this->git('add -A');
+        $this->git('commit -q -m work');
+
+        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'no second nudge for the same set across a commit');
+    }
+
+    public function test_touching_a_new_file_earns_a_fresh_nudge(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
         $this->assertNotNull((new JudgeReminder)->reminder($this->repo));
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent within the batch');
+        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent for the same set');
 
-        // Commit → HEAD moves → a fresh batch, and a fresh change earns a fresh nudge.
-        $this->git('add -A');
-        $this->git('commit -q -m work');
         file_put_contents($this->repo . '/Other.vue', "<template></template>\n");
+        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'a NEW file grows the set — nudge again');
+    }
 
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'a new HEAD + new change nudges again');
+    public function test_a_clean_tree_clears_the_marker_so_the_next_batch_starts_over(): void
+    {
+        file_put_contents($this->repo . '/Service.php', "<?php\n");
+        $this->assertNotNull((new JudgeReminder)->reminder($this->repo));
+
+        unlink($this->repo . '/Service.php'); // tree clean again
+        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent on a clean tree');
+
+        file_put_contents($this->repo . '/Service.php', "<?php\n"); // same path, fresh batch
+        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'the cleared marker lets the same path nudge again');
     }
 
     public function test_it_is_silent_outside_a_repository(): void
@@ -76,6 +98,39 @@ final class JudgeReminderTest extends TestCase
         $this->assertNull((new JudgeReminder)->reminder($bare));
 
         rmdir($bare);
+    }
+
+    public function test_pre_tool_use_injects_context_for_a_git_commit_but_ignores_other_bash(): void
+    {
+        file_put_contents($this->repo . '/Service.php', "<?php\n");
+
+        $commit = $this->runCli(['hook_event_name' => 'PreToolUse', 'tool_name' => 'Bash', 'tool_input' => ['command' => 'git commit -m wip']]);
+        $this->assertStringContainsString('additionalContext', $commit, 'a git commit gets a PreToolUse nudge');
+        $this->assertStringContainsString('before you commit', $commit);
+
+        // A fresh set (delete the marker the commit run wrote) so suppression can't mask the result.
+        @unlink($this->repo . '/.commandments/.judge-reminded');
+
+        $other = $this->runCli(['hook_event_name' => 'PreToolUse', 'tool_name' => 'Bash', 'tool_input' => ['command' => 'php artisan test']]);
+        $this->assertSame('', trim($other), 'a non-commit Bash call is ignored');
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function runCli(array $payload): string
+    {
+        $bin = dirname(__DIR__, 2) . '/bin/commandments';
+        $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+        $env = ['CLAUDE_PROJECT_DIR' => $this->repo, 'PATH' => getenv('PATH')];
+
+        $process = proc_open('php ' . escapeshellarg($bin) . ' judge-reminder', $descriptors, $pipes, $this->repo, $env);
+        fwrite($pipes[0], json_encode($payload));
+        fclose($pipes[0]);
+        $out = (string) stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        return $out;
     }
 
     private function commit(string $file, string $content): void

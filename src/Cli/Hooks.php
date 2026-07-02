@@ -7,10 +7,11 @@ namespace JesseGall\CodeCommandments\Cli;
 /**
  * Wires code-commandments' Claude Code hooks into the project's `.claude/settings.json` — shared by
  * {@see Install} (first setup) and {@see Sync} (every `composer update`), so the hooks self-heal to
- * the current wiring instead of freezing at install time. Two hooks, one mechanism:
+ * the current wiring instead of freezing at install time. Three hooks, one mechanism:
  *
  *  - the cardinal-rule heartbeat ({@see Remind}) under `PostToolUse`, and
- *  - the "did you judge?" nudge ({@see JudgeReminder}) under `Stop`.
+ *  - the "did you judge?" nudge ({@see JudgeReminder}) under both `Stop` (turn ending) and
+ *    `PreToolUse` matching `Bash` (a `git commit` about to run).
  *
  * Idempotent, and MIGRATING: it removes ONLY our own hooks — any command mentioning `commandments`
  * (never the composer-script `sync`, which isn't a settings hook) — from every event, then adds back
@@ -20,14 +21,22 @@ namespace JesseGall\CodeCommandments\Cli;
  */
 final class Hooks
 {
+    // Anchored at $CLAUDE_PROJECT_DIR (the absolute project root the harness gives every hook) — a
+    // relative `vendor/bin/...` silently dies when Claude's working directory isn't the project root.
+    private const string REMIND = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind';
+
+    private const string JUDGE = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" judge-reminder';
+
     /**
-     * Our hooks as (event → command). Anchored at $CLAUDE_PROJECT_DIR (the absolute project root the
-     * harness gives every hook) — a relative `vendor/bin/...` silently dies when Claude's working
-     * directory isn't the project root. Add a hook by adding a line here; the wiring is generic.
+     * Our hooks as (event, command, matcher). A null matcher means "every call of the event"; a
+     * matcher (e.g. `Bash`) scopes to that tool. Add a hook by adding a row here; the wiring is generic.
+     *
+     * @var list<array{event: string, command: string, matcher: ?string}>
      */
     private const array HOOKS = [
-        'PostToolUse' => 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind',
-        'Stop' => 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" judge-reminder',
+        ['event' => 'PostToolUse', 'command' => self::REMIND, 'matcher' => null],
+        ['event' => 'Stop', 'command' => self::JUDGE, 'matcher' => null],
+        ['event' => 'PreToolUse', 'command' => self::JUDGE, 'matcher' => 'Bash'],
     ];
 
     public static function wire(string $path): bool
@@ -38,8 +47,14 @@ final class Hooks
 
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);
 
-        foreach (self::HOOKS as $event => $command) {
-            $hooks[$event][] = ['hooks' => [['type' => 'command', 'command' => $command]]];
+        foreach (self::HOOKS as $hook) {
+            $group = ['hooks' => [['type' => 'command', 'command' => $hook['command']]]];
+
+            if ($hook['matcher'] !== null) {
+                $group = ['matcher' => $hook['matcher']] + $group;
+            }
+
+            $hooks[$hook['event']][] = $group;
         }
 
         $settings['hooks'] = $hooks;
