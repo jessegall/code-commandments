@@ -454,7 +454,14 @@ final class Script
             return new FunctionType($variable->initParams, $variable->initReturnType ?? new KeywordType('void'))->render();
         }
 
-        return $variable->initCall !== null ? $this->reactiveType($variable->initCall) : null;
+        if ($variable->initCall !== null) {
+            return $this->reactiveType($variable->initCall);
+        }
+
+        // A plain initializer with no call — infer its type where it's SOUND (a homogeneous literal
+        // array `[50, 100, 200]` → `number[]`, a comparison → `boolean`); null for anything only a
+        // checker could name.
+        return $variable->initRaw !== null ? Parser::parse($variable->initRaw)->inferType() : null;
     }
 
     /**

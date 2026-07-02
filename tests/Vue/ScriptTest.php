@@ -80,6 +80,23 @@ final class ScriptTest extends TestCase
         $this->assertSame('number', (new Script('const total = shallowRef(0);'))->declaredType('total'));
     }
 
+    public function test_a_homogeneous_literal_array_infers_its_element_type(): void
+    {
+        // `const pageSizes = [50, 100, 200]` extracted as `unknown`; TS widens it to `number[]`, and
+        // now so do we — soundly, from a homogeneous primitive-literal array.
+        $this->assertSame('number[]', (new Script('const pageSizes = [50, 100, 200];'))->declaredType('pageSizes'));
+        $this->assertSame('string[]', (new Script("const names = ['a', 'b'];"))->declaredType('names'));
+        $this->assertSame('boolean[]', (new Script('const flags = [true, false];'))->declaredType('flags'));
+    }
+
+    public function test_a_non_homogeneous_or_complex_literal_array_stays_unresolved(): void
+    {
+        // A mixed, object, or empty array is a union / needs a checker — we don't guess.
+        $this->assertNull((new Script('const mixed = [1, "a"];'))->declaredType('mixed'));
+        $this->assertNull((new Script('const objs = [{ a: 1 }];'))->declaredType('objs'));
+        $this->assertNull((new Script('const empty = [];'))->declaredType('empty'));
+    }
+
     public function test_an_explicit_ref_generic_still_wins_over_the_initializer(): void
     {
         $script = new Script('const id = ref<string | null>(null);');

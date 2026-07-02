@@ -258,8 +258,37 @@ final class Expr
             },
             self::BINARY => $this->binaryType(),
             self::CONDITIONAL => $this->unionType([$this->child('then'), $this->child('else')]),
+            self::ARRAY => $this->arrayType(),
             default => null,
         };
+    }
+
+    /**
+     * The type of an array literal — `T[]` when every element infers to the SAME primitive `T`
+     * (`[50, 100, 200]` → `number[]`), the way TS widens a homogeneous literal array. Null for an
+     * empty, heterogeneous, or unknown-element array — only a checker could name those.
+     */
+    private function arrayType(): ?string
+    {
+        $elements = $this->children('elements');
+
+        if ($elements === []) {
+            return null;
+        }
+
+        $element = null;
+
+        foreach ($elements as $node) {
+            $type = $node->inferType();
+
+            if ($type === null || ($element !== null && $type !== $element)) {
+                return null;
+            }
+
+            $element = $type;
+        }
+
+        return $element . '[]';
     }
 
     /**
