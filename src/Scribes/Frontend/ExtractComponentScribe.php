@@ -763,7 +763,12 @@ final class ExtractComponentScribe extends RepentScribe
         }
 
         foreach ($unknown as $name) {
-            $types[$name] = $this->resolved[$component->path][$name] ?? $types[$name];
+            if (isset($this->resolved[$component->path][$name])) {
+                // The checker reads the local's `<script>`-scope type; a template binding unwraps a
+                // `Ref`/`ComputedRef` to its value, so the prop takes the unwrapped type (as every
+                // AST rung already does).
+                $types[$name] = Script::unwrapRef($this->resolved[$component->path][$name]);
+            }
         }
 
         return $types;

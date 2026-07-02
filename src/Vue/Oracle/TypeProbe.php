@@ -54,7 +54,11 @@ final class TypeProbe
 
         foreach ($this->names as $name) {
             $type = self::MARKER . $name;
-            $out .= "type {$type} = { readonly __ccNever: '{$name}' };\n";
+            // A `string &`-branded impossible type: NOTHING is assignable to it, and — crucially —
+            // every source (object, array, primitive, union) fails as a uniform TS2322 "not
+            // assignable" carrying the resolved type, never a shape-specific "missing property"
+            // (TS2741) that an object target would provoke.
+            $out .= "type {$type} = string & { readonly __ccBrand: '{$name}' };\n";
             $out .= "const __cc_{$name}: {$type} = {$name};\n";
         }
 
