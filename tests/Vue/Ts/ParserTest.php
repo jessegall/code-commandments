@@ -167,6 +167,16 @@ final class ParserTest extends TestCase
         $this->assertSame('computed', $module->variable('x')?->initCall?->callee);
     }
 
+    public function test_it_is_total_on_an_object_type_with_an_index_signature_and_arrow(): void
+    {
+        // Regression: the `=>` arrow's `>` corrupted the verbatim reader's depth count, so the
+        // fallback ran off the end and the parser looped to OOM (found on a real defineSlots).
+        $module = Parser::module('defineSlots<{ default(props: { tab: string }): any; [key: string]: (props?: any) => any; }>();');
+
+        $this->assertCount(1, $module->body);
+        $this->assertSame('defineSlots', $module->body[0]->callee ?? null);
+    }
+
     private function normalise(string $type): string
     {
         return (string) preg_replace('/\s+/', ' ', trim($type));

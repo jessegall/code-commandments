@@ -86,12 +86,17 @@ final class Parser
         $body = [];
 
         while (! $this->eof()) {
+            $before = $this->pos;
             $node = $this->parseStatement();
 
             if ($node instanceof ImportDecl) {
                 $imports[] = $node;
             } elseif ($node !== null) {
                 $body[] = $node;
+            }
+
+            if ($this->pos === $before) {
+                $this->advance(); // the total-parser guarantee: a statement always makes progress
             }
         }
 
@@ -776,17 +781,23 @@ final class Parser
         while (! $this->eof()) {
             $token = $this->peek();
 
+            // The `=>` arrow is two tokens; its `>` is NOT a type close. Consume both intact so it
+            // never corrupts the depth count (the bug this whole rewrite exists to kill).
+            if ($token->isPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
+                $end = $this->at(1)->end;
+                $this->advance();
+                $this->advance();
+
+                continue;
+            }
+
             if ($depth === 0) {
-                if ($token->isPunct() && in_array($token->value, [',', ';', ')', ']', '}'], true)) {
-                    break;
+                if ($token->isPunct() && in_array($token->value, [',', ';', ')', ']', '}', '>'], true)) {
+                    break; // a terminator, or the `>` that closes an enclosing type-argument list
                 }
 
-                if ($token->isPunct('>')) {
-                    break; // closes an enclosing type-argument list
-                }
-
-                if ($token->isPunct('=') && ! ($this->at(1)?->isPunct('>') ?? false)) {
-                    break; // an initializer `=`, but not the arrow of a function type
+                if ($token->isPunct('=')) {
+                    break; // an initializer `=` (the arrow is handled above)
                 }
             }
 
@@ -847,6 +858,13 @@ final class Parser
 
         while (! $this->eof()) {
             $token = $this->peek();
+
+            if ($token->isPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
+                $this->advance();
+                $this->advance(); // the `=>` arrow, kept from corrupting the depth
+
+                continue;
+            }
 
             if ($depth === 0 && $token->isPunct() && in_array($token->value, [';', ',', '}'], true)) {
                 return;
