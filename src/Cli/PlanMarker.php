@@ -9,13 +9,8 @@ namespace JesseGall\CodeCommandments\Cli;
  * hook. Written when a plan is approved ({@see PlanReminder}), read on every stop to decide whether
  * to re-nudge, and cleared by `commandments plan done` ({@see PlanCommand}) or when the plan branch
  * is merged back to its base. It lives under the worktree's OWN `.commandments/`, so one worktree's
- * plan never nudges another.
- *
- * It also carries the loop-safety state. Two counters distinguish a productive plan from a stuck
- * one: `total` (every nudge, so {@see StopPolicy::RespectUserStops} can nudge exactly once) and
- * `stuck` (consecutive nudges with no new commit — it resets the moment HEAD moves, so a plan that
- * keeps committing is never capped, while an agent spinning without progress is). Format mirrors
- * the other hook markers: value lines, a separator, then a self-describing explanation.
+ * plan never nudges another. The persisted shape is the {@see PlanState} value object; the file
+ * format mirrors the other hook markers: value lines, a separator, then a self-describing explanation.
  */
 final class PlanMarker
 {
@@ -29,11 +24,11 @@ final class PlanMarker
     }
 
     /**
-     * Record that a plan is now active, cut from $baseBranch at $head. Resets the nudge counters.
+     * Record that a plan is now active, cut from $baseBranch at $head, with the nudge counters reset.
      */
     public function activate(string $baseBranch, string $head): void
     {
-        $this->write(['base' => $baseBranch, 'head' => $head, 'stuck' => 0, 'total' => 0]);
+        $this->save(new PlanState($baseBranch, $head, 0, 0));
     }
 
     public function isActive(): bool
@@ -46,26 +41,18 @@ final class PlanMarker
      */
     public function baseBranch(): string
     {
-        return (string) ($this->read()['base'] ?? '');
+        return $this->state()->base;
     }
 
     /**
-     * Count one keep-going nudge at the current HEAD and return the fresh counts. `stuck` resets to
-     * 1 whenever HEAD has moved since the last nudge (progress was made); otherwise it climbs.
-     *
-     * @return array{stuck: int, total: int}
+     * Count one keep-going nudge at $currentHead and return the fresh {@see PlanState}.
      */
-    public function recordNudge(string $currentHead): array
+    public function recordNudge(string $currentHead): PlanState
     {
-        $state = $this->read();
-        $progressed = $currentHead !== '' && $currentHead !== ($state['head'] ?? '');
+        $state = $this->state()->nudged($currentHead);
+        $this->save($state);
 
-        $stuck = $progressed ? 1 : (int) ($state['stuck'] ?? 0) + 1;
-        $total = (int) ($state['total'] ?? 0) + 1;
-
-        $this->write(['base' => (string) ($state['base'] ?? ''), 'head' => $currentHead, 'stuck' => $stuck, 'total' => $total]);
-
-        return ['stuck' => $stuck, 'total' => $total];
+        return $state;
     }
 
     public function clear(): void
@@ -74,9 +61,26 @@ final class PlanMarker
     }
 
     /**
-     * @return array{base?: string, head?: string, stuck?: int, total?: int}
+     * The persisted {@see PlanState}, or an empty one when there is no marker (or it's truncated
+     * below its four value lines) — absence is modelled as the empty state, never patched per-field.
      */
-    private function read(): array
+    private function state(): PlanState
+    {
+        $lines = $this->valueLines();
+
+        if (count($lines) < 4) {
+            return new PlanState('', '', 0, 0);
+        }
+
+        return new PlanState($lines[0], $lines[1], (int) $lines[2], (int) $lines[3]);
+    }
+
+    /**
+     * The value lines above the {@see SEPARATOR}, or [] when no marker file exists.
+     *
+     * @return list<string>
+     */
+    private function valueLines(): array
     {
         if (! is_file($this->path)) {
             return [];
@@ -92,25 +96,17 @@ final class PlanMarker
             $lines[] = $line;
         }
 
-        return [
-            'base' => $lines[0] ?? '',
-            'head' => $lines[1] ?? '',
-            'stuck' => (int) ($lines[2] ?? 0),
-            'total' => (int) ($lines[3] ?? 0),
-        ];
+        return $lines;
     }
 
-    /**
-     * @param  array{base: string, head: string, stuck: int, total: int}  $state
-     */
-    private function write(array $state): void
+    private function save(PlanState $state): void
     {
         @mkdir(dirname($this->path), 0777, true);
         @file_put_contents($this->path, implode("\n", [
-            $state['base'],
-            $state['head'],
-            (string) $state['stuck'],
-            (string) $state['total'],
+            $state->base,
+            $state->head,
+            (string) $state->stuck,
+            (string) $state->total,
             self::SEPARATOR,
             self::EXPLANATION,
         ]) . "\n");

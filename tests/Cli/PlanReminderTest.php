@@ -88,6 +88,21 @@ final class PlanReminderTest extends TestCase
         }
     }
 
+    public function test_keep_going_self_clears_after_the_absolute_cap(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        $this->marker()->activate('main', 'sha0');
+
+        // Progress every stop (new head) would dodge the stuck-cap forever — the absolute total cap
+        // still stops it, and clears the marker so an abandoned plan can't linger.
+        for ($i = 0; $i < 40; $i++) {
+            $this->fire(['hook_event_name' => 'Stop'], head: "sha{$i}");
+        }
+
+        $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha-final'));
+        $this->assertFalse($this->marker()->isActive(), 'the stale marker is cleared for good');
+    }
+
     public function test_respect_user_stops_nudges_only_once(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing(\JesseGall\CodeCommandments\StopPolicy::RespectUserStops));');

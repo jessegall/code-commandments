@@ -29,6 +29,13 @@ final class PlanReminder extends Hook
     /** Consecutive no-progress nudges before the keep-going Stop hook gives up, to never loop a stuck agent. */
     private const int MAX_STUCK = 4;
 
+    /**
+     * Absolute nudge ceiling: past this the marker is CLEARED, so a plan that was abandoned without a
+     * `plan done` (and keeps drawing unrelated commits, which would otherwise reset {@see MAX_STUCK})
+     * can never leave the keep-going hook nudging forever. No plan realistically stops this many times.
+     */
+    private const int MAX_TOTAL = 40;
+
     protected function onPostToolUse(HookEvent $event): int
     {
         if (! $event->isTool('ExitPlanMode')) {
@@ -58,10 +65,17 @@ final class PlanReminder extends Hook
             return $this->pass();
         }
 
-        $counts = $marker->recordNudge($this->git()->head($event->root));
+        $state = $marker->recordNudge($this->git()->head($event->root));
+
+        if ($state->total > self::MAX_TOTAL) {
+            $marker->clear(); // A plan this long was abandoned, not run — stop nudging for good.
+
+            return $this->pass();
+        }
+
         $capped = $policy === StopPolicy::RespectUserStops
-            ? $counts['total'] > 1              // Nudge exactly once, then honour the stop.
-            : $counts['stuck'] > self::MAX_STUCK; // Grind on, unless spinning with no new commits.
+            ? $state->total > 1              // Nudge exactly once, then honour the stop.
+            : $state->stuck > self::MAX_STUCK; // Grind on, unless spinning with no new commits.
 
         return $capped ? $this->pass() : $this->block($this->keepGoingNudge());
     }

@@ -55,11 +55,13 @@ final class ChecksInference
 
         foreach (self::CATEGORIES as $candidates) {
             foreach ($candidates as $name) {
-                if (in_array($name, $scriptNames, true)) {
-                    $commands[] = $format($name);
-
-                    break;
+                if (! in_array($name, $scriptNames, true)) {
+                    continue;
                 }
+
+                $commands[] = $format($name);
+
+                break;
             }
         }
 
