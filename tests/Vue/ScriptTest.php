@@ -126,6 +126,27 @@ final class ScriptTest extends TestCase
         $this->assertSame('string', $script->fieldType('S', 'step'));
     }
 
+    public function test_an_inferred_composable_return_is_typed_field_by_field(): void
+    {
+        // useX has NO declared return — its shape is inferred from `return { … }`. Each returned
+        // local is typed from the composable's own body (a ref's value, a function's signature),
+        // ref-unwrapped, the way a type checker infers it. This is what un-`unknown`s the bulk of
+        // composable-derived props.
+        $script = new Script(<<<'TS'
+            function useTaxTypes() {
+                const taxes = ref<TaxTypeData[]>([]);
+                function taxRate(taxId: string | null): number { return 0; }
+                function formatTaxLabel(tax: TaxTypeData): string { return ''; }
+                return { taxes, taxRate, formatTaxLabel };
+            }
+            TS);
+
+        $this->assertSame(
+            ['taxes' => 'TaxTypeData[]', 'taxRate' => '(taxId: string | null) => number', 'formatTaxLabel' => '(tax: TaxTypeData) => string'],
+            $script->inferredReturnFields('useTaxTypes'),
+        );
+    }
+
     public function test_an_interface_method_is_typed_as_its_signature(): void
     {
         // A destructured composable method is a function prop — typed as its signature.

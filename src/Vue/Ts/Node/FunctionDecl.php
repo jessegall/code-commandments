@@ -13,11 +13,16 @@ final class FunctionDecl extends Node
 {
     /**
      * @param  list<Param>  $params
+     * @param  ?array<string, ?string>  $returnObject  a `return { a, b: c }` shape — field => the
+     *   local it returns (null for a non-name value) — so an INFERRED return type can still be
+     *   resolved field-by-field from the composable's own declarations.
      */
     public function __construct(
         public readonly string $name,
         public readonly array $params,
         public readonly ?TypeNode $returnType = null,
+        public readonly ?array $returnObject = null,
+        public readonly string $bodySource = '',
     ) {}
 
     public function signature(): FunctionType

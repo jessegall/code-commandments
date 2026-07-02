@@ -684,9 +684,18 @@ final class ExtractComponentScribe extends RepentScribe
 
         $specifier = $script->importSpecifier($callee);
         $module = $specifier === null ? $script : self::loadModule($boundary->sfc->path, $specifier);
-        $interface = $module?->returnTypeName($callee);
 
-        return $interface === null ? null : $module->fieldType($interface, $prop);
+        if ($module === null) {
+            return null;
+        }
+
+        $interface = $module->returnTypeName($callee);
+
+        // Declared return → its field; inferred return → the field typed from the composable's own
+        // `return { … }` (a `ref`'s value, a `function`'s signature), the way vue-tsc infers it.
+        return $interface !== null
+            ? $module->fieldType($interface, $prop)
+            : ($module->inferredReturnFields($callee)[$prop] ?? null);
     }
 
     /**

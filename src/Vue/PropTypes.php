@@ -124,14 +124,16 @@ final class PropTypes
             return null;
         }
 
-        $returnType = TypeResolver::scriptOf($path)->returnTypeName($composable);
+        $composableScript = TypeResolver::scriptOf($path);
+        $returnType = $composableScript->returnTypeName($composable);
 
         if ($returnType === null) {
-            return null;
+            // Inferred return — resolve the field from the composable's own `return { … }`.
+            return $composableScript->inferredReturnFields($composable)[$name] ?? null;
         }
 
         $shape = Parser::type($returnType);
-        $fields = $shape instanceof ObjectType ? $shape->fields() : TypeResolver::fields($returnType, $path, TypeResolver::scriptOf($path));
+        $fields = $shape instanceof ObjectType ? $shape->fields() : TypeResolver::fields($returnType, $path, $composableScript);
 
         return isset($fields[$name]) ? Script::unwrapRef($fields[$name]) : null;
     }

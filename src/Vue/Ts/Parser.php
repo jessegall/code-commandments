@@ -294,9 +294,94 @@ final class Parser
             $returnType = $this->parseType();
         }
 
-        $this->skipBlock(); // the body `{ … }`
+        $bodyStart = ($this->peek()?->start ?? 0) + 1; // just past the opening `{`
+        $returnObject = $this->skipBodyCapturingReturn();
+        $bodyEnd = $this->lexemes[$this->pos - 1]->start ?? $bodyStart; // the closing `}`
+        $bodySource = $bodyEnd > $bodyStart ? substr($this->source, $bodyStart, $bodyEnd - $bodyStart) : '';
 
-        return new FunctionDecl($name, $params, $returnType);
+        return new FunctionDecl($name, $params, $returnType, $returnObject, $bodySource);
+    }
+
+    /**
+     * Skip a function body `{ … }`, but capture a top-level `return { … }` object's shape (field =>
+     * the local it returns) — so a composable with an INFERRED return type can still be typed
+     * field-by-field from its own declarations. Null when the body returns no object literal.
+     *
+     * @return ?array<string, ?string>
+     */
+    private function skipBodyCapturingReturn(): ?array
+    {
+        if (! $this->atPunct('{')) {
+            return null;
+        }
+
+        $this->advance(); // `{`
+        $depth = 1;
+        $returnObject = null;
+
+        while (! $this->eof() && $depth > 0) {
+            if ($depth === 1 && $this->atId('return') && ($this->at(1)?->isPunct('{') ?? false)) {
+                $this->advance(); // `return`
+                $returnObject = $this->parseObjectShape();
+
+                continue;
+            }
+
+            $token = $this->advance();
+
+            if ($token->isPunct('{')) {
+                $depth++;
+            } elseif ($token->isPunct('}')) {
+                $depth--;
+            }
+        }
+
+        return $returnObject;
+    }
+
+    /**
+     * A `{ a, b: c, ... }` object literal's shape — each field mapped to the LOCAL name it takes its
+     * value from (shorthand `a` → `a`; alias `b: c` → `c`; a complex value → null, unresolvable). A
+     * spread or method shorthand is skipped.
+     *
+     * @return array<string, ?string>
+     */
+    private function parseObjectShape(): array
+    {
+        $this->advance(); // `{`
+        $shape = [];
+
+        while (! $this->atPunct('}') && ! $this->eof()) {
+            $before = $this->pos;
+
+            if ($this->atThreeDots()) {
+                $this->advanceIfThreeDots();
+                $this->consumeExpression([',', '}']);
+            } elseif ($this->peek()?->isIdentifier() || ($this->peek()?->is(Token::STRING) ?? false)) {
+                $key = $this->advance()->value;
+
+                if (! $this->advanceIfPunct(':')) {
+                    $shape[$key] = $key; // shorthand `{ a }`
+                } elseif ($this->peek()?->isIdentifier() && (($this->at(1)?->isPunct(',') ?? false) || ($this->at(1)?->isPunct('}') ?? false))) {
+                    $shape[$key] = $this->advance()->value; // alias `{ a: b }`
+                } else {
+                    $shape[$key] = null; // a computed value — only a type checker could resolve it
+                    $this->consumeExpression([',', '}']);
+                }
+            } else {
+                $this->consumeExpression([',', '}']); // method shorthand / computed key
+            }
+
+            $this->advanceIfPunct(',');
+
+            if ($this->pos === $before) {
+                $this->advance();
+            }
+        }
+
+        $this->advanceIfPunct('}');
+
+        return $shape;
     }
 
     /**

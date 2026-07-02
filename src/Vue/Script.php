@@ -180,6 +180,39 @@ final class Script
     }
 
     /**
+     * The fields a composable with an INFERRED return type exposes — read from its `return { … }`
+     * object, each field typed from the composable's OWN declaration (a `ref`'s value type, a
+     * `function`'s signature), ref-unwrapped as the template sees it. This is what a type checker
+     * infers; it lets `const { taxes } = useTaxTypes()` resolve even when `useTaxTypes` has no
+     * declared return. Empty when the function returns no object literal.
+     *
+     * @return array<string, string>
+     */
+    public function inferredReturnFields(string $function): array
+    {
+        $declaration = $this->ast()->functionNamed($function);
+
+        if ($declaration?->returnObject === null) {
+            return [];
+        }
+
+        // The returned locals are declared INSIDE the composable's body — read them from a script
+        // scoped to that body (where a `const`/`function` is top-level and typeable).
+        $body = new self($declaration->bodySource);
+        $fields = [];
+
+        foreach ($declaration->returnObject as $field => $local) {
+            $type = $local !== null ? $body->declaredType($local) : null;
+
+            if ($type !== null) {
+                $fields[$field] = self::unwrapRef($type);
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
      * Every object-shaped type DECLARED in this script — each `interface Name {…}` and
      * `type Name = {…}` as its name, its field names, and the byte offset of its
      * declaration keyword (so a caller maps it to a source line). The dual of
