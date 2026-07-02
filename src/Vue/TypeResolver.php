@@ -68,7 +68,7 @@ final class TypeResolver
         return [];
     }
 
-    private static function scriptOf(string $path): Script
+    public static function scriptOf(string $path): Script
     {
         $source = (string) file_get_contents($path);
 

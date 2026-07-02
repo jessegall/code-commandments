@@ -167,6 +167,19 @@ final class Script
     }
 
     /**
+     * The local `interface`/`type` declarations (rendered source) reachable from $names, resolved
+     * transitively — what an extract carries into a child so a prop typed by a parent-local type
+     * still compiles. Skips names that are imported or built-in.
+     *
+     * @param  list<string>  $names
+     * @return array<string, string>
+     */
+    public function localTypes(array $names): array
+    {
+        return $this->ast()->localTypes($names);
+    }
+
+    /**
      * Every object-shaped type DECLARED in this script — each `interface Name {…}` and
      * `type Name = {…}` as its name, its field names, and the byte offset of its
      * declaration keyword (so a caller maps it to a source line). The dual of
@@ -431,11 +444,11 @@ final class Script
     {
         $fields = $this->typeFields($type);
 
-        return isset($fields[$field]) ? $this->unwrapRef($fields[$field]) : null;
+        return isset($fields[$field]) ? self::unwrapRef($fields[$field]) : null;
     }
 
     /** A `Ref<T>` / `ComputedRef<T>` (etc.) unwrapped to its value type `T`, as in the template. */
-    private function unwrapRef(string $type): string
+    public static function unwrapRef(string $type): string
     {
         foreach (['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef'] as $wrapper) {
             $prefix = $wrapper . '<';

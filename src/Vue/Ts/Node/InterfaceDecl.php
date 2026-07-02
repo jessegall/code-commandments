@@ -40,4 +40,21 @@ final class InterfaceDecl extends Node
 
         return "interface {$this->name}{$this->header} {\n{$body}\n}";
     }
+
+    /**
+     * The named types this interface's members reference — so carrying it into an extracted child
+     * can carry its dependencies too.
+     *
+     * @return list<string>
+     */
+    public function references(): array
+    {
+        $names = [];
+
+        foreach ($this->members as $member) {
+            $names = [...$names, ...$member->references()];
+        }
+
+        return $names;
+    }
 }

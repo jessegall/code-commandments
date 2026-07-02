@@ -31,4 +31,14 @@ final class TypeAliasDecl extends Node
     {
         return "type {$this->name}{$this->header} = {$this->type->render()};";
     }
+
+    /**
+     * The named types the aliased type references — for carrying its dependencies alongside it.
+     *
+     * @return list<string>
+     */
+    public function references(): array
+    {
+        return $this->type->references();
+    }
 }

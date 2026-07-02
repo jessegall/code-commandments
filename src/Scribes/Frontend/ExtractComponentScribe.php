@@ -18,6 +18,7 @@ use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
 use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\Vue\Sfc;
+use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**
@@ -585,8 +586,30 @@ final class ExtractComponentScribe extends RepentScribe
         $scriptSetup = $defineModels . $defineProps . $defineEmits;
         $imports = self::usedImports($script, $markup . "\n" . $scriptSetup);
         $head = $imports === '' ? '' : "{$imports}\n\n";
+        $carried = self::carriedTypes($script, $types);
 
-        return "<script setup lang=\"ts\">\n{$head}{$scriptSetup}</script>\n\n<template>\n{$markup}\n</template>\n";
+        return "<script setup lang=\"ts\">\n{$head}{$carried}{$scriptSetup}</script>\n\n<template>\n{$markup}\n</template>\n";
+    }
+
+    /**
+     * The parent-LOCAL type declarations the child's prop types depend on, rendered to carry along —
+     * a prop typed `EditableItem[]` needs the parent's `interface EditableItem` copied in, or the
+     * child won't compile (`Cannot find name 'EditableItem'`). Imported types travel via the
+     * carried imports instead; only names the parent declares locally are emitted here.
+     *
+     * @param  array<string, string>  $types  prop name => its rendered TS type
+     */
+    private static function carriedTypes(Script $script, array $types): string
+    {
+        $referenced = [];
+
+        foreach ($types as $type) {
+            $referenced = [...$referenced, ...TsParser::type($type)->references()];
+        }
+
+        $local = $script->localTypes($referenced);
+
+        return $local === [] ? '' : implode("\n\n", $local) . "\n\n";
     }
 
     /**

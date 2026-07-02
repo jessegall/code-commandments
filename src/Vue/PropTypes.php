@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
+use JesseGall\CodeCommandments\Vue\Ts\Parser;
 
 /**
  * Top-down prop typing over the {@see ComponentGraph} — the capstone. A component that can't
@@ -101,6 +103,36 @@ final class PropTypes
 
         return ($script->propTypes()[$name] ?? null)
             ?? $script->declaredType($name)
-            ?? $this->typeOf($scope, $name, $seen); // the scope's own prop — keep climbing
+            ?? $this->composableType($scope, $script, $name) // `const { taxes } = useTaxTypes()`
+            ?? $this->typeOf($scope, $name, $seen);          // the scope's own prop — keep climbing
+    }
+
+    /**
+     * The type of a local pulled out of a composable — `const { taxes } = useTaxTypes()`. Follow the
+     * import to the composable's file, read its declared return type, resolve THAT type's fields
+     * (across modules, like any type), and take the field for $name (unwrapping its `Ref`, as the
+     * template sees it). Null when the composable or its return type can't be read statically — an
+     * inferred return only a type checker could resolve.
+     */
+    private function composableType(Sfc $scope, Script $script, string $name): ?string
+    {
+        $composable = $script->destructuredCall($name);
+        $specifier = $composable !== null ? $script->importSpecifier($composable) : null;
+        $path = $specifier !== null ? ModuleResolver::forFile($scope->path)->resolve($scope->path, $specifier) : null;
+
+        if ($path === null) {
+            return null;
+        }
+
+        $returnType = TypeResolver::scriptOf($path)->returnTypeName($composable);
+
+        if ($returnType === null) {
+            return null;
+        }
+
+        $shape = Parser::type($returnType);
+        $fields = $shape instanceof ObjectType ? $shape->fields() : TypeResolver::fields($returnType, $path, TypeResolver::scriptOf($path));
+
+        return isset($fields[$name]) ? Script::unwrapRef($fields[$name]) : null;
     }
 }

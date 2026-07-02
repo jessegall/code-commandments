@@ -77,6 +77,43 @@ final class Module extends Node
     }
 
     /**
+     * The LOCAL type declarations (interface/type) reachable from $names, each `name => rendered
+     * source`, resolved transitively — a carried type's own type dependencies are carried too. A
+     * name that isn't declared locally (imported, or a built-in) is skipped: the child imports those
+     * or they need no declaration. This is what lets an extracted child keep a prop typed
+     * `EditableItem[]` compile — the parent-local `interface EditableItem` travels with it.
+     *
+     * @param  list<string>  $names
+     * @return array<string, string>
+     */
+    public function localTypes(array $names): array
+    {
+        $rendered = [];
+        $seen = [];
+        $queue = array_values(array_unique($names));
+
+        while ($queue !== []) {
+            $name = array_shift($queue);
+
+            if (isset($seen[$name])) {
+                continue;
+            }
+
+            $seen[$name] = true;
+            $declaration = $this->typeDeclaration($name);
+
+            if ($declaration === null) {
+                continue; // not a local declaration — imported or built-in
+            }
+
+            $rendered[$name] = $declaration->render();
+            $queue = [...$queue, ...$declaration->references()];
+        }
+
+        return $rendered;
+    }
+
+    /**
      * Every local name bound in the script — declaration patterns plus function names.
      *
      * @return list<string>
