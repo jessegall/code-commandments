@@ -37,16 +37,16 @@ final class ScriptTest extends TestCase
         // The bug: readType broke a function-type annotation at the arrow's `=`, truncating
         // `(id: string) => void` to `(id:string)` — invalid TS ('=>' expected) in the generated
         // component. The `=>` must be read as part of the type, not an initializer.
-        $this->assertSame('(id:string)=>void', new Script('const onPick: (id: string) => void = x;')->declaredType('onPick'));
-        $this->assertSame('(a:number,b:string)=>Promise<void>', new Script('const cb: (a: number, b: string) => Promise<void> = x;')->declaredType('cb'));
+        $this->assertSame('(id: string) => void', new Script('const onPick: (id: string) => void = x;')->declaredType('onPick'));
+        $this->assertSame('(a: number, b: string) => Promise<void>', new Script('const cb: (a: number, b: string) => Promise<void> = x;')->declaredType('cb'));
     }
 
     public function test_a_function_typed_prop_keeps_its_arrow(): void
     {
         $props = new Script('defineProps<{ onFoo: (a: number) => void; nested: (x: T) => (y: U) => R; label: string }>()')->propTypes();
 
-        $this->assertSame('(a:number)=>void', $props['onFoo']);
-        $this->assertSame('(x:T)=>(y:U)=>R', $props['nested'], 'curried arrows survive');
+        $this->assertSame('(a: number) => void', $props['onFoo']);
+        $this->assertSame('(x: T) => (y: U) => R', $props['nested'], 'curried arrows survive');
         $this->assertSame('string', $props['label']);
     }
 
@@ -63,7 +63,7 @@ final class ScriptTest extends TestCase
     {
         $script = new Script('const id = ref<string | null>(null);');
 
-        $this->assertSame('string|null', $script->declaredType('id'));
+        $this->assertSame('string | null', $script->declaredType('id'));
     }
 
     public function test_a_non_literal_ref_initializer_stays_unresolved(): void
@@ -112,7 +112,7 @@ final class ScriptTest extends TestCase
 
         // A field is a Ref in the source but unwraps to its value type at the binding site.
         $this->assertSame('string', $script->fieldType('WizardState', 'step'));
-        $this->assertSame('Record<string,unknown>', $script->fieldType('WizardState', 'fields'));
+        $this->assertSame('Record<string, unknown>', $script->fieldType('WizardState', 'fields'));
         $this->assertSame('boolean', $script->fieldType('WizardState', 'ready'));
         $this->assertNull($script->fieldType('WizardState', 'missing'));
     }
@@ -131,7 +131,7 @@ final class ScriptTest extends TestCase
         // A destructured composable method is a function prop — typed as its signature.
         $script = new Script('interface S { goToStep(step: string): void; reset(): Promise<void>; save(): void; }');
 
-        $this->assertSame('(step:string) => void', $script->fieldType('S', 'goToStep'));
+        $this->assertSame('(step: string) => void', $script->fieldType('S', 'goToStep'));
         $this->assertSame('() => Promise<void>', $script->fieldType('S', 'reset'));
         $this->assertSame('() => void', $script->fieldType('S', 'save'));
     }

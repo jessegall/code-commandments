@@ -245,6 +245,8 @@ final class Parser
         $type = null;
         $initRaw = null;
         $initCall = null;
+        $initParams = null;
+        $initReturnType = null;
 
         if ($this->atPunct(':')) {
             $this->advance();
@@ -253,10 +255,13 @@ final class Parser
 
         if ($this->atPunct('=')) {
             $this->advance();
+            $this->advanceIfId('await'); // `= await useX()` — trace through to the call
             $initStart = $this->peek()?->start ?? 0;
 
             if ($this->peek()?->isIdentifier() && ($this->at(1)?->isPunct('(') || $this->at(1)?->isPunct('<'))) {
                 $initCall = $this->tryCall();
+            } elseif ($this->atPunct('(')) {
+                [$initParams, $initReturnType] = $this->tryArrowSignature();
             }
 
             $initEnd = $this->consumeToStatementEnd();
@@ -265,7 +270,7 @@ final class Parser
             $this->consumeToStatementEnd();
         }
 
-        return new VariableDecl($keyword, $pattern, $type, $initRaw, $initCall);
+        return new VariableDecl($keyword, $pattern, $type, $initRaw, $initCall, $initParams, $initReturnType);
     }
 
     private function parseFunction(): FunctionDecl
@@ -286,6 +291,33 @@ final class Parser
         $this->skipBlock(); // the body `{ … }`
 
         return new FunctionDecl($name, $params, $returnType);
+    }
+
+    /**
+     * If the initializer is an arrow function, its `(params)(: R)? =>` signature — the params and
+     * the explicitly-annotated return (null when unannotated). Restores position and yields
+     * `[null, null]` when the initializer isn't an arrow (a plain value/object/call).
+     *
+     * @return array{0: ?list<Param>, 1: ?TypeNode}
+     */
+    private function tryArrowSignature(): array
+    {
+        $start = $this->pos;
+
+        try {
+            $params = $this->parseParams();
+            $returnType = $this->advanceIfPunct(':') ? $this->parseType() : null;
+
+            if ($this->atPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
+                return [$params, $returnType];
+            }
+        } catch (Unparsed) {
+            // not an arrow — fall through
+        }
+
+        $this->pos = $start;
+
+        return [null, null];
     }
 
     private function parsePattern(): Pattern

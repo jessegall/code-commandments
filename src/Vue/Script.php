@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Vue\Ts\Node\CallExpr;
+use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\KeywordType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\Module;
+use JesseGall\CodeCommandments\Vue\Ts\Node\NamedType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectPattern;
+use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
+use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
 
 /**
  * A `<script setup>` block read structurally — the third parser in the engine, beside
@@ -23,9 +31,49 @@ final class Script
     /** @var list<array{kind: string, value: string, start: int, end: int}> */
     private array $tokens;
 
+    /** Reactive wrappers whose value type is what the template sees — unwrapped. */
+    private const array REACTIVE = ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'];
+
+    private ?Module $ast = null;
+
     public function __construct(private readonly string $source)
     {
         $this->tokens = $this->lex($source);
+    }
+
+    /**
+     * The parsed syntax tree of this script — the {@see Module} the type-reading methods query
+     * instead of scanning tokens. Parsed once, lazily.
+     */
+    private function ast(): Module
+    {
+        return $this->ast ??= TsParser::module($this->source);
+    }
+
+    /**
+     * The type a reactive initializer exposes to the template — `ref<T>()`/`computed<T>()` → `T`
+     * (unwrapped), `ref(false)` → `boolean` (from the literal), `computed(() => a === b)` →
+     * `boolean` (from the expression). Null when the call isn't a reactive wrapper or can't be read.
+     */
+    private function reactiveType(CallExpr $call): ?string
+    {
+        if (! in_array($call->callee, self::REACTIVE, true)) {
+            return null;
+        }
+
+        if (($argument = $call->firstTypeArgument()) !== null) {
+            return $argument->render();
+        }
+
+        $expression = $call->arguments[0] ?? null;
+
+        if ($expression === null) {
+            return null;
+        }
+
+        $parsed = Parser::parse($expression);
+
+        return $call->callee === 'computed' ? $parsed->returnType() : $parsed->inferType();
     }
 
     /**
@@ -160,7 +208,7 @@ final class Script
      */
     public function typeFields(string $name): array
     {
-        return $this->namedTypeFields($name);
+        return $this->ast()->typeDeclaration($name)?->fields() ?? [];
     }
 
     /**
@@ -437,46 +485,13 @@ final class Script
      */
     public function propTypes(): array
     {
-        $count = count($this->tokens);
+        $shape = $this->ast()->call('defineProps')?->firstTypeArgument();
 
-        for ($i = 0; $i < $count; $i++) {
-            if (! $this->isId($i, 'defineProps') || ! $this->isPunct($i + 1, '<')) {
-                continue;
-            }
-
-            if ($this->isPunct($i + 2, '{')) {
-                return $this->readFields($i + 3); // defineProps<{ … }>()
-            }
-
-            if (($this->tokens[$i + 2] ?? null) !== null && $this->tokens[$i + 2]['kind'] === Token::IDENTIFIER) {
-                return $this->namedTypeFields($this->tokens[$i + 2]['value']); // defineProps<Props>()
-            }
-        }
-
-        return [];
-    }
-
-    /**
-     * The fields of a named type used by `defineProps<Name>()` — its `interface Name {…}`
-     * or `type Name = {…}` declaration.
-     *
-     * @return array<string, string>
-     */
-    private function namedTypeFields(string $name): array
-    {
-        $count = count($this->tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            if ($this->isId($i, 'interface') && $this->isId($i + 1, $name) && $this->isPunct($i + 2, '{')) {
-                return $this->readFields($i + 3);
-            }
-
-            if ($this->isId($i, 'type') && $this->isId($i + 1, $name) && $this->isPunct($i + 2, '=') && $this->isPunct($i + 3, '{')) {
-                return $this->readFields($i + 4);
-            }
-        }
-
-        return [];
+        return match (true) {
+            $shape instanceof ObjectType => $shape->fields(),          // defineProps<{ … }>()
+            $shape instanceof NamedType => $this->typeFields($shape->name), // defineProps<Props>()
+            default => [],
+        };
     }
 
     /**
@@ -488,51 +503,25 @@ final class Script
      */
     public function declaredType(string $name): ?string
     {
-        $count = count($this->tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            if ($this->isId($i, 'function') && $this->isId($i + 1, $name) && $this->isPunct($i + 2, '(')) {
-                return $this->functionType($i + 2);
-            }
-
-            if (! $this->isId($i + 1, $name) || ! ($this->isId($i, 'const') || $this->isId($i, 'let') || $this->isId($i, 'var'))) {
-                continue;
-            }
-
-            $j = $i + 2;
-
-            if ($this->isPunct($j, ':')) {
-                [$type] = $this->readType($j + 1);
-
-                return $type !== '' ? $type : null;
-            }
-
-            // `= computed<T>(` / `= ref<T>(` — the reactive value type (unwrapped in template).
-            if ($this->isPunct($j, '=') && $this->isReactiveValue($j + 1) && $this->isPunct($j + 2, '<')) {
-                $generic = $this->readGeneric($j + 3);
-
-                if ($generic !== '') {
-                    return $generic;
-                }
-            }
-
-            // `= ref(false)` / `= computed(() => a === b)` — no generic, so infer the value
-            // type from the initializer (the common case TS infers and vue-tsc would resolve).
-            if ($this->isPunct($j, '=') && $this->isReactiveValue($j + 1) && $this->isPunct($j + 2, '(')) {
-                $inferred = $this->reactiveInitType($this->tokens[$j + 1]['value'], $j + 2);
-
-                if ($inferred !== null) {
-                    return $inferred;
-                }
-            }
-
-            // `= (params): R =>` / `= (params) =>` — an arrow function.
-            if ($this->isPunct($j, '=') && $this->isPunct($j + 1, '(')) {
-                return $this->functionType($j + 1);
-            }
+        if (($function = $this->ast()->functionNamed($name)) !== null) {
+            return $function->signature()->render();
         }
 
-        return null;
+        $variable = $this->ast()->variable($name);
+
+        if ($variable === null) {
+            return null;
+        }
+
+        if ($variable->typeAnnotation !== null) {
+            return $variable->typeAnnotation->render();
+        }
+
+        if ($variable->initParams !== null) { // `= (params): R =>` — an arrow function
+            return new FunctionType($variable->initParams, $variable->initReturnType ?? new KeywordType('void'))->render();
+        }
+
+        return $variable->initCall !== null ? $this->reactiveType($variable->initCall) : null;
     }
 
     /**
@@ -543,39 +532,9 @@ final class Script
      */
     public function destructuredCall(string $name): ?string
     {
-        $count = count($this->tokens);
+        $variable = $this->ast()->variable($name);
 
-        for ($i = 0; $i < $count; $i++) {
-            if (! $this->isDeclarator($i) || ! $this->isPunct($i + 1, '{')) {
-                continue;
-            }
-
-            $j = $i + 2;
-            $keys = [];
-
-            for (; $j < $count && ! $this->isPunct($j, '}'); $j++) {
-                // A binding is an id that is NOT a key (a key is followed by `:`, its binding
-                // is the id after the `:`). So `{ targets: ours }` binds `ours`, not `targets`.
-                if ($this->tokens[$j]['kind'] === Token::IDENTIFIER && ! $this->isPunct($j + 1, ':')) {
-                    $keys[] = $this->tokens[$j]['value'];
-                }
-            }
-
-            $j++; // past `}`
-
-            if (! $this->isPunct($j, '=')) {
-                continue;
-            }
-
-            $j += $this->isId($j + 1, 'await') ? 2 : 1;
-
-            if (($this->tokens[$j] ?? null) !== null && $this->tokens[$j]['kind'] === Token::IDENTIFIER
-                && $this->isPunct($j + 1, '(') && in_array($name, $keys, true)) {
-                return $this->tokens[$j]['value'];
-            }
-        }
-
-        return null;
+        return $variable?->pattern instanceof ObjectPattern ? $variable->initCall?->callee : null;
     }
 
     /**
@@ -585,36 +544,11 @@ final class Script
      */
     public function returnTypeName(string $function): ?string
     {
-        $count = count($this->tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            if ($this->isId($i, 'function') && $this->isId($i + 1, $function) && $this->isPunct($i + 2, '(')) {
-                return $this->returnAfterParams($i + 2);
-            }
-
-            if ($this->isDeclarator($i) && $this->isId($i + 1, $function) && $this->isPunct($i + 2, '=') && $this->isPunct($i + 3, '(')) {
-                return $this->returnAfterParams($i + 3);
-            }
+        if (($declaration = $this->ast()->functionNamed($function)) !== null) {
+            return $declaration->returnType?->render();
         }
 
-        return null;
-    }
-
-    /**
-     * The return type annotated after a parameter list opening at $openParen — the `: R`
-     * that follows the matching `)`. Null when there is none.
-     */
-    private function returnAfterParams(int $openParen): ?string
-    {
-        $after = $this->matchingParen($openParen) + 1;
-
-        if (! $this->isPunct($after, ':')) {
-            return null;
-        }
-
-        [$type] = $this->readReturnType($after + 1);
-
-        return $type !== '' ? $type : null;
+        return $this->ast()->variable($function)?->initReturnType?->render();
     }
 
     /**
@@ -624,7 +558,7 @@ final class Script
      */
     public function fieldType(string $type, string $field): ?string
     {
-        $fields = $this->namedTypeFields($type);
+        $fields = $this->typeFields($type);
 
         return isset($fields[$field]) ? $this->unwrapRef($fields[$field]) : null;
     }
