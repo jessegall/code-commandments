@@ -34,6 +34,10 @@ final class ObjectType extends TypeNode
 
     public function render(): string
     {
+        if ($this->members === []) {
+            return '{}';
+        }
+
         return '{ ' . implode('; ', array_map(static fn (Member $m): string => $m->render(), $this->members)) . ' }';
     }
 
