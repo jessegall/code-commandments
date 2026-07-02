@@ -32,6 +32,24 @@ final class ScriptTest extends TestCase
         $this->assertSame('number', $script->declaredType('count'));
     }
 
+    public function test_an_explicit_function_type_annotation_keeps_its_arrow(): void
+    {
+        // The bug: readType broke a function-type annotation at the arrow's `=`, truncating
+        // `(id: string) => void` to `(id:string)` — invalid TS ('=>' expected) in the generated
+        // component. The `=>` must be read as part of the type, not an initializer.
+        $this->assertSame('(id:string)=>void', new Script('const onPick: (id: string) => void = x;')->declaredType('onPick'));
+        $this->assertSame('(a:number,b:string)=>Promise<void>', new Script('const cb: (a: number, b: string) => Promise<void> = x;')->declaredType('cb'));
+    }
+
+    public function test_a_function_typed_prop_keeps_its_arrow(): void
+    {
+        $props = new Script('defineProps<{ onFoo: (a: number) => void; nested: (x: T) => (y: U) => R; label: string }>()')->propTypes();
+
+        $this->assertSame('(a:number)=>void', $props['onFoo']);
+        $this->assertSame('(x:T)=>(y:U)=>R', $props['nested'], 'curried arrows survive');
+        $this->assertSame('string', $props['label']);
+    }
+
     public function test_an_inferred_ref_takes_the_type_of_its_initializer_literal(): void
     {
         // The gap behind `busy/importOpen/templatesOpen` extracting as `unknown`: a ref with

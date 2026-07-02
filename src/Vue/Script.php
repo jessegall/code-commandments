@@ -932,6 +932,18 @@ final class Script
             $token = $this->tokens[$i];
             $value = $token['value'];
 
+            // The `=>` of a function type is two tokens: the `=` is NOT an initializer and the
+            // `>` is NOT a generic close. Consume both so `(x: T) => R` reads whole — otherwise
+            // the arrow's `=` looks like a terminator and the type truncates to `(x: T)`.
+            if ($value === '=' && $this->isPunct($i + 1, '>')) {
+                $pieces[] = '=';
+                $pieces[] = '>';
+                $previousEnd = $this->tokens[$i + 1]['end'];
+                $i++;
+
+                continue;
+            }
+
             // A depth-0 `=` starts an initializer (`: T = value`) — the type ended before it.
             if ($depth === 0 && in_array($value, [';', ',', '}', '='], true)) {
                 break;
