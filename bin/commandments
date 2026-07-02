@@ -56,6 +56,8 @@ $toBytes = static function (string $limit): int {
         Usage:
           commandments judge [path] [--skill=NAME] [--sin=NAME]   # no [path] → the source roots declared in .commandments/config.php
           commandments judge --list
+          commandments checks [start|phase|complete] [--list]  # run the planExecution checks for a plan moment (complete appends judge --branch)
+          commandments plan [done|status]  # end the active plan (clears the keep-going nudge) / show it
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
           commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
           commandments scaffold [--sin=NAME] [--dry-run]  # generate the reusable helper a sin's fix uses (namespace injected)
@@ -69,6 +71,7 @@ $toBytes = static function (string $limit): int {
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
           commandments remind   # emit the cardinal rule as a PostToolUse payload
           commandments judge-reminder  # emit the "did you judge?" nudge (Stop, or PreToolUse on git commit)
+          commandments plan-reminder   # open a plan (PostToolUse/ExitPlanMode) + keep it going (Stop)
 
         Options:
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data

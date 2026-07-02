@@ -136,9 +136,26 @@ The generated `SKILL.md` "when it fires" rows project from the registered sins.
 | `bin/commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]` | File a GitHub issue (via `gh`): a `[detector-report]` (false positive / wrong rule) when `--detector` is given, else a `[bug-report]` for a global bug. Only `--reason` is required. |
 | `bin/commandments feature-request --title="…" --reason="…"` | File a `[feature-request]` GitHub issue proposing a new/changed rule (via `gh`). |
 | `bin/commandments disable <sin>` / `enable <sin>` | Toggle a rule in the project's `.commandments/config.php`: resolve the sin id (lenient) to its `Sin` class and add/remove it in the `$config->disable(...)` call. Edited through the AST ({@see Cli\ConfigFile}), never text-scanned; the file stays valid PHP and the human's own `register`/`configure` lines are untouched. |
-| `bin/commandments install` | Wire a consumer: composer sync hook + a `PostToolUse` reminder of the cardinal rule (every 25 tool uses) + gitignore, then sync. Idempotent. |
+| `bin/commandments install` | Wire a consumer: composer sync hook + the Claude Code hook suite (cardinal-rule reminder, judge nudge, plan-execution hooks) + gitignore, then sync. Every wired hook is stamped so re-wiring never touches the user's own hooks. Idempotent. |
 | `bin/commandments remind` | Emit the cardinal rule as a `PostToolUse` hook payload — counts tool uses in `.commandments/.remind-count` and surfaces "trace to the source" once every 25. |
+| `bin/commandments checks [start\|phase\|complete] [--list]` | Run the project's `planExecution()` checks for one moment of a plan (default `complete`). `start` runs once before the first phase, `phase` after each phase, `complete` at the end — and `complete` always appends `judge --branch`, so a plan can't finish unjudged. Runs each command in order, stops at the first failure; `--list` prints them. The `executing-plans` skill calls these as it grinds a plan. |
+| `bin/commandments plan [done\|status]` | `done` ends the active plan — clears the worktree's `.plan-active` marker so the keep-going Stop hook stops nudging (the `executing-plans` skill runs it once the end gate is clean). `status` reports whether a plan is active + the resolved profile. |
+| `bin/commandments plan-reminder` | The plan-execution hook (see below). Emits the "load the `executing-plans` skill" nudge on `PostToolUse`/`ExitPlanMode` (plan approved), and the keep-going block-and-continue on `Stop`. Wired by `install`/`sync`. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
+
+**Plan execution — the `executing-plans` discipline.** On plan approval a `PostToolUse`/
+`ExitPlanMode` hook loads the standalone `executing-plans` skill and injects the project's
+profile; the agent then branches, works phase-by-phase (scoped tests + `checks phase`, commit
+each), and runs the full gate (`checks complete`, which appends `judge --branch`) ONCE at the
+end. A `Stop` hook re-nudges "keep going" until `plan done` when the project opts into
+`keepGoing()` (loop-safe: a stuck-counter caps a spinning agent, HEAD movement resets it). All
+per-plan state (`.commandments/.plan-active`) is scoped to the current **worktree**, never
+`CLAUDE_PROJECT_DIR`. The profile is configured with `$config->planExecution(...)` — a
+`PlanExecution` builder (`branchFrom`/`branchPrefix`/`pushEachPhase`/`keepGoing` + `onStart`/
+`eachPhase`/`onComplete`) that `sync` auto-injects (AST, never overwriting) with its `onComplete`
+inferred from the project's composer/npm scripts. **Every hook we wire is stamped
+`@code-commandments-managed`; `sync` strips only stamped hooks, so a user's own hooks are never
+touched.**
 
 **Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large
 tree), so judge ONCE, then work the generated `.commandments/sins.md` line-by-line:
