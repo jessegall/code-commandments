@@ -25,6 +25,27 @@ final class ScriptTest extends TestCase
         $this->assertSame('() => User[]', $script->declaredType('load'));
     }
 
+    public function test_an_arrow_return_type_led_by_a_verbatim_keyword_stops_at_the_arrow(): void
+    {
+        // The bug: a return type starting with a VERBATIM keyword (`readonly`/`keyof`) went to the
+        // verbatim reader, which consumed the arrow-function's own `=> { … }` and the rest of the
+        // module — so `f` (and every later decl) lost its type. At depth 0 the `=>` ENDS the type.
+        $script = new Script('const f = (port: NodePortData): readonly WorkflowVariable[] => { return go(); }; const other = 1;');
+
+        $this->assertSame('(port: NodePortData) => readonly WorkflowVariable[]', $script->declaredType('f'));
+    }
+
+    public function test_a_function_return_type_led_by_a_verbatim_keyword_does_not_swallow_the_body(): void
+    {
+        // The bug: `function f(): readonly T[] { … }` — the `readonly`-led return type went to the
+        // verbatim reader, which read the body `{ … }` as an object type. A `{` after a COMPLETE type
+        // (here `]`) is the body, not the type.
+        $script = new Script('function compatibleVariables(port: NodePortData): readonly WorkflowVariable[] { return xs; }');
+
+        $this->assertSame('readonly WorkflowVariable[]', $script->returnTypeName('compatibleVariables'));
+        $this->assertSame('(port: NodePortData) => readonly WorkflowVariable[]', $script->declaredType('compatibleVariables'));
+    }
+
     public function test_a_plain_const_type_annotation_is_read(): void
     {
         $script = new Script('const count: number = 0;');

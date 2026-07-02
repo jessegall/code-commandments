@@ -865,13 +865,17 @@ final class Parser
         $depth = 0;
         $start = $this->peek()?->start ?? 0;
         $end = $start;
+        $prev = null;
 
         while (! $this->eof()) {
             $token = $this->peek();
 
-            // The `=>` arrow is two tokens; its `>` is NOT a type close. Consume both intact so it
-            // never corrupts the depth count (the bug this whole rewrite exists to kill).
-            if ($token->isPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
+            // The `=>` arrow is two tokens; its `>` is NOT a type close. Inside a nested region (a
+            // function-type param list, an object member) consume both intact so the `>` never
+            // corrupts the depth count (the bug this whole rewrite exists to kill). At depth 0 an
+            // `=>` instead ENDS the type — it is the arrow of the enclosing arrow function — so we
+            // let the `=` terminator below stop us, leaving the arrow for the caller.
+            if ($depth > 0 && $token->isPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
                 $end = $this->at(1)->end;
                 $this->advance();
                 $this->advance();
@@ -887,6 +891,13 @@ final class Parser
                 if ($token->isPunct('=')) {
                     break; // an initializer `=` (the arrow is handled above)
                 }
+
+                // A `{` that OPENS the type (an object/mapped type, first token or after a type
+                // operator like `keyof`/`&`) is part of it; but a `{` after a COMPLETE type is the
+                // enclosing function/arrow BODY, not the type — stop before it.
+                if ($token->isPunct('{') && $prev !== null && $this->completesType($prev)) {
+                    break;
+                }
             }
 
             if ($token->isPunct() && Token::opensType($token->value)) {
@@ -896,6 +907,7 @@ final class Parser
             }
 
             $end = $token->end;
+            $prev = $token;
             $this->advance();
         }
 
@@ -1021,6 +1033,24 @@ final class Parser
         }
 
         return trim(substr($this->source, $start, $end - $start));
+    }
+
+    /** Type-operator keywords that EXPECT a following type — a `{` after one still opens the type. */
+    private const array TYPE_OPERATORS = ['keyof', 'typeof', 'readonly', 'infer', 'in', 'extends', 'as', 'is', 'new', 'unique', 'abstract', 'asserts'];
+
+    /**
+     * Does this token COMPLETE a type — so a `{` right after it is a new construct (a function body),
+     * not a continuation? A type name, a string/number literal type, or a closing `]`/`>`/`)` does;
+     * a type-operator keyword (`keyof …`) does not (it still awaits its operand).
+     */
+    private function completesType(Lexeme $token): bool
+    {
+        if ($token->isIdentifier()) {
+            return ! in_array($token->value, self::TYPE_OPERATORS, true);
+        }
+
+        return $token->is(Token::STRING) || $token->is(Token::NUMBER)
+            || $token->isPunct(']') || $token->isPunct('>') || $token->isPunct(')');
     }
 
     /**
