@@ -29,21 +29,28 @@ final class VueTscOracleTest extends TestCase
         @rmdir($this->root);
     }
 
-    public function test_it_resolves_unknown_locals_from_the_checkers_diagnostics(): void
+    public function test_it_resolves_every_components_unknowns_in_one_pass(): void
     {
-        $component = $this->component('const pageSizes = magic();');
-        $runner = $this->runnerTyping(['pageSizes' => 'number[]']);
+        $widget = $this->component('Widget', 'const pageSizes = magic();');
+        $panel = $this->component('Panel', 'const label = magic();');
+        $runner = $this->runnerTyping(['pageSizes' => 'number[]', 'label' => 'string | null']);
 
-        $types = new VueTscOracle($this->root, $runner)->resolve($component, ['pageSizes']);
+        $types = new VueTscOracle($this->root, $runner)->resolveAll([
+            $widget->path => ['sfc' => $widget, 'names' => ['pageSizes']],
+            $panel->path => ['sfc' => $panel, 'names' => ['label']],
+        ]);
 
-        $this->assertSame(['pageSizes' => 'number[]'], $types);
+        $this->assertSame(['pageSizes' => 'number[]'], $types[$widget->path]);
+        $this->assertSame(['label' => 'string | null'], $types[$panel->path]);
+        $this->assertSame(1, $runner->runs, 'the checker ran exactly ONCE for both components');
     }
 
     public function test_it_runs_vue_tsc_incrementally_with_lib_check_skipped(): void
     {
         $runner = $this->runnerTyping([]);
+        $component = $this->component('Widget', 'const x = y();');
 
-        new VueTscOracle($this->root, $runner)->resolve($this->component('const x = y();'), ['x']);
+        new VueTscOracle($this->root, $runner)->resolveAll([$component->path => ['sfc' => $component, 'names' => ['x']]]);
 
         $this->assertStringEndsWith('/node_modules/.bin/vue-tsc', $runner->binary);
         $this->assertContains('--skipLibCheck', $runner->arguments);
@@ -52,11 +59,12 @@ final class VueTscOracleTest extends TestCase
         $this->assertSame($this->root, $runner->cwd);
     }
 
-    public function test_the_probe_file_is_written_beside_the_component_then_removed(): void
+    public function test_probe_files_are_written_beside_each_component_then_removed(): void
     {
         $runner = $this->runnerTyping([]);
+        $component = $this->component('Widget', 'const x = y();');
 
-        new VueTscOracle($this->root, $runner)->resolve($this->component('const x = y();'), ['x']);
+        new VueTscOracle($this->root, $runner)->resolveAll([$component->path => ['sfc' => $component, 'names' => ['x']]]);
 
         $this->assertNotNull($runner->probeContents, 'the checker saw a probe file');
         $this->assertStringContainsString('__CcNo_x', (string) $runner->probeContents);
@@ -92,18 +100,19 @@ final class VueTscOracleTest extends TestCase
         @rmdir($this->root . '/node_modules');
     }
 
-    private function component(string $body): Sfc
+    private function component(string $name, string $body): Sfc
     {
         $source = "<script setup lang=\"ts\">\n{$body}\n</script>\n<template><div /></template>\n";
-        $path = $this->root . '/src/Widget.vue';
+        $path = $this->root . "/src/{$name}.vue";
         file_put_contents($path, $source);
 
         return Sfc::parse($source, $path);
     }
 
     /**
-     * A fake runner that plays vue-tsc: it finds the probe our oracle wrote, records the call, and
-     * emits a `TS2322` diagnostic per name — exactly the shape {@see TscDiagnostics} reads.
+     * A fake runner that plays vue-tsc: in ONE call it finds every probe our oracle wrote, and for
+     * each emits a `TS2322` diagnostic per probed name it can type — exactly the shape (and file
+     * attribution) {@see TscDiagnostics} and the oracle read.
      *
      * @param  array<string, string>  $types
      */
@@ -117,6 +126,8 @@ final class VueTscOracleTest extends TestCase
 
             public string $cwd = '';
 
+            public int $runs = 0;
+
             public ?string $probeContents = null;
 
             /** @param array<string, string> $types */
@@ -127,15 +138,19 @@ final class VueTscOracleTest extends TestCase
                 $this->binary = $binary;
                 $this->arguments = $arguments;
                 $this->cwd = $cwd;
-
-                $probe = glob($cwd . '/src/__cc_probe_*.vue')[0] ?? null;
-                $base = $probe === null ? 'missing.vue' : basename($probe);
-                $this->probeContents = $probe === null ? null : file_get_contents($probe);
+                $this->runs++;
 
                 $lines = [];
 
-                foreach ($this->types as $name => $type) {
-                    $lines[] = "{$base}(9,7): error TS2322: Type '{$type}' is not assignable to type '" . TypeProbe::MARKER . "{$name}'.";
+                foreach (glob($cwd . '/src/__cc_probe_*.vue') ?: [] as $probe) {
+                    $contents = (string) file_get_contents($probe);
+                    $this->probeContents = $contents;
+
+                    foreach ($this->types as $name => $type) {
+                        if (str_contains($contents, TypeProbe::MARKER . $name)) {
+                            $lines[] = basename($probe) . "(9,7): error TS2322: Type '{$type}' is not assignable to type '" . TypeProbe::MARKER . "{$name}'.";
+                        }
+                    }
                 }
 
                 return implode("\n", $lines);

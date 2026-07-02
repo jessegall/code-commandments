@@ -338,9 +338,17 @@ final class ExtractComponentScribeTest extends TestCase
             . "<template>\n  <div>\n    <button>Open</button>\n    {$popover}\n  </div>\n</template>\n";
 
         $oracle = new class implements \JesseGall\CodeCommandments\Vue\Oracle\TypeOracle {
-            public function resolve(\JesseGall\CodeCommandments\Vue\Sfc $component, array $names): array
+            public function resolveAll(array $queries): array
             {
-                return in_array('blurb', $names, true) ? ['blurb' => 'string | null'] : [];
+                $resolved = [];
+
+                foreach ($queries as $path => $query) {
+                    if (in_array('blurb', $query['names'], true)) {
+                        $resolved[$path] = ['blurb' => 'string | null'];
+                    }
+                }
+
+                return $resolved;
             }
         };
 

@@ -48,23 +48,49 @@ final class VueTscOracle implements TypeOracle
         return is_file(self::binary($root));
     }
 
-    public function resolve(Sfc $component, array $names): array
+    public function resolveAll(array $queries): array
     {
-        $source = new TypeProbe($component, $names)->source();
+        $probes = $this->writeProbes($queries);
 
-        if ($source === null) {
+        if ($probes === []) {
             return [];
         }
-
-        $probe = $this->writeProbe($component, $source);
 
         try {
             $output = $this->runner->run(self::binary($this->root), $this->arguments(), $this->root);
         } finally {
-            @unlink($probe);
+            array_map('unlink', $probes);
         }
 
-        return TscDiagnostics::types($this->forFile($probe, $output));
+        $resolved = [];
+
+        foreach ($probes as $path => $probe) {
+            $resolved[$path] = TscDiagnostics::types($this->forFile($probe, $output));
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * A probe copy of every component beside the original, in one sweep — so a SINGLE checker run
+     * over the project resolves them all at once.
+     *
+     * @param  array<string, array{sfc: Sfc, names: list<string>}>  $queries
+     * @return array<string, string>  component path => the probe file written for it
+     */
+    private function writeProbes(array $queries): array
+    {
+        $probes = [];
+
+        foreach ($queries as $path => $query) {
+            $source = new TypeProbe($query['sfc'], $query['names'])->source();
+
+            if ($source !== null) {
+                $probes[$path] = $this->writeProbe($query['sfc'], $source);
+            }
+        }
+
+        return $probes;
     }
 
     /**

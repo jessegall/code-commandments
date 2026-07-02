@@ -16,7 +16,6 @@ use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
-use JesseGall\CodeCommandments\Vue\Oracle\NullTypeOracle;
 use JesseGall\CodeCommandments\Vue\Oracle\TypeOracle;
 use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\Vue\Sfc;
@@ -50,12 +49,15 @@ final class ExtractComponentScribe extends RepentScribe
 
     private ?PropTypes $propTypes = null;
 
-    private TypeOracle $oracle;
+    private ?TypeOracle $oracle = null;
 
-    private function __construct(private readonly string $strategy)
-    {
-        $this->oracle = new NullTypeOracle();
-    }
+    /** @var array<string, array{sfc: Sfc, names: list<string>}>|null */
+    private ?array $collector = null;
+
+    /** @var array<string, array<string, string>> */
+    private array $resolved = [];
+
+    private function __construct(private readonly string $strategy) {}
 
     /**
      * Hand the scribe the codebase's existing components, so a boundary that an existing
@@ -83,10 +85,10 @@ final class ExtractComponentScribe extends RepentScribe
 
     /**
      * Hand the scribe a type oracle (real `vue-tsc`, when the project ships it), so a prop no AST
-     * rung could type is resolved by a real checker instead of falling to `unknown`. Defaults to
-     * {@see NullTypeOracle} — the checker is a bonus, never required.
+     * rung could type is resolved by a real checker instead of falling to `unknown`. Absent by
+     * default — the checker is a bonus, never required.
      */
-    public function withOracle(TypeOracle $oracle): self
+    public function withOracle(?TypeOracle $oracle): self
     {
         $this->oracle = $oracle;
 
@@ -150,12 +152,42 @@ final class ExtractComponentScribe extends RepentScribe
     {
         $findings = $this->outermost($findings);
 
+        if ($this->oracle !== null) {
+            $this->prime($findings);
+        }
+
+        return $this->dispatch($findings);
+    }
+
+    /**
+     * @param  list<ElementMatch>  $findings
+     */
+    private function dispatch(array $findings): array
+    {
         return match ($this->strategy) {
             self::DUPLICATES => $this->duplicates($findings),
             self::DEEP_REACH => $this->deepReach($findings),
             self::COMPOUND => $this->compound($findings),
             default => $this->nesting($findings),
         };
+    }
+
+    /**
+     * ONE checker pass for the whole run: a dry render collects every prop the AST left `unknown`
+     * (grouped by component), the oracle resolves them ALL at once, and the resolved types are
+     * cached for the real render that follows. A throwaway AST render is far cheaper than a checker
+     * run per component — so the checker is invoked exactly once, not N times.
+     *
+     * @param  list<ElementMatch>  $findings
+     */
+    private function prime(array $findings): void
+    {
+        $this->collector = [];
+        $this->dispatch($findings); // resolveTypes records each component's unknowns via consultOracle
+        $queries = $this->collector;
+        $this->collector = null;
+
+        $this->resolved = $this->oracle?->resolveAll($queries) ?? [];
     }
 
     // ---- strategies -----------------------------------------------------------
@@ -704,9 +736,10 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     /**
-     * Resolve any props the AST left `unknown` with the type oracle — ONE batched checker run for
-     * the whole component (never per-prop). A no-op under {@see NullTypeOracle} (the default), so
-     * behaviour is unchanged unless the project ships a real checker.
+     * The oracle's touch-point in the type chain. During {@see prime}'s dry render it RECORDS each
+     * component's still-`unknown` props (for the single checker pass); during the real render it
+     * SERVES the types that pass resolved. A no-op when no oracle is set, so behaviour is unchanged
+     * unless the project ships a real checker.
      *
      * @param  array<string, string>  $types
      * @return array<string, string>
@@ -719,7 +752,21 @@ final class ExtractComponentScribe extends RepentScribe
             return $types;
         }
 
-        return [...$types, ...$this->oracle->resolve($component, $unknown)];
+        if ($this->collector !== null) {
+            $seen = $this->collector[$component->path]['names'] ?? [];
+            $this->collector[$component->path] = [
+                'sfc' => $component,
+                'names' => array_values(array_unique([...$seen, ...$unknown])),
+            ];
+
+            return $types;
+        }
+
+        foreach ($unknown as $name) {
+            $types[$name] = $this->resolved[$component->path][$name] ?? $types[$name];
+        }
+
+        return $types;
     }
 
     /**
