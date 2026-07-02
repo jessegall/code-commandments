@@ -275,7 +275,34 @@ final class Boundary
 
         $reads = array_filter($reads, static fn (string $root): bool => ! str_starts_with($root, '$'));
 
-        return array_values(array_diff(array_unique($reads), $bound, $called));
+        // A prop is reactive state the parent passes down — NOT a JS global (`Object.keys(…)`) and
+        // NOT an imported name (a component/util/constant the child imports itself). Excluding these
+        // stops the extraction minting bogus `Object`/`AUTO_ANIMATE_QUICK` props typed `unknown`.
+        return array_values(array_diff(array_unique($reads), $bound, $called, self::JS_GLOBALS, $this->importedNames()));
+    }
+
+    /** JS globals a template expression may reference; never props. */
+    private const array JS_GLOBALS = [
+        'Object', 'Array', 'Math', 'JSON', 'Number', 'String', 'Boolean', 'Date', 'RegExp', 'Map', 'Set',
+        'Symbol', 'Promise', 'console', 'window', 'document', 'globalThis', 'NaN', 'Infinity', 'undefined',
+        'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURIComponent', 'decodeURIComponent',
+    ];
+
+    /**
+     * The names imported into this component's `<script setup>` — a child that references one imports
+     * it itself (the scribe carries the import), so it is never forwarded as a prop.
+     *
+     * @return list<string>
+     */
+    private function importedNames(): array
+    {
+        $names = [];
+
+        foreach (new Script($this->sfc->scriptContent())->imports() as $import) {
+            $names = [...$names, ...$import['names']];
+        }
+
+        return $names;
     }
 
     /**
