@@ -65,9 +65,10 @@ $toBytes = static function (string $limit): int {
           commandments enable <sin>   # turn it back on
           commandments config reindex  # re-detect the source roots and rewrite config.php's paths()
           commandments exemptions [<sin|detector>]  # list exemptions (all, or one detector's)
-          commandments install  # wire composer + the UserPromptSubmit reminder, then sync
+          commandments install  # wire composer + the Claude Code hooks (reminder + judge nudge), then sync
           commandments sync     # publish skills + refresh the CLAUDE.md briefing
-          commandments remind   # emit the cardinal rule as a UserPromptSubmit payload
+          commandments remind   # emit the cardinal rule as a PostToolUse payload
+          commandments judge-reminder  # emit the "did you judge?" nudge as a Stop payload
 
         Options:
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
@@ -110,6 +111,7 @@ $toBytes = static function (string $limit): int {
         'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
         'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
         'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),
+        'judge-reminder' => (new JesseGall\CodeCommandments\Cli\JudgeReminder)->run($args),
         'disable', 'enable' => (new JesseGall\CodeCommandments\Cli\Configure($command))->run($args),
         'config' => (new JesseGall\CodeCommandments\Cli\ConfigCommand)->run($args),
         'exemptions' => (new JesseGall\CodeCommandments\Cli\Exemptions)->run($args),

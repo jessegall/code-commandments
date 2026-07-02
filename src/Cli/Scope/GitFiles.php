@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
 /**
- * Reads sets of `.php` files out of git: working-tree changes vs HEAD, or
- * everything new/changed on the current branch vs a base ref. Shared by the
- * {@see WorkingTreeChanges} and {@see BranchChanges} scopes.
+ * Reads sets of judged files (`.php`/`.vue`, one per engine) out of git:
+ * working-tree changes vs HEAD, or everything new/changed on the current branch
+ * vs a base ref. Shared by the {@see WorkingTreeChanges} and {@see BranchChanges}
+ * scopes.
  */
 final class GitFiles
 {
@@ -20,6 +21,15 @@ final class GitFiles
         $root = trim((string) @shell_exec('git -C ' . escapeshellarg($dir) . ' rev-parse --show-toplevel 2>/dev/null'));
 
         return $root === '' ? null : $root;
+    }
+
+    /**
+     * The current HEAD commit sha, or '' when there is none (a repo with no commits).
+     * A stable per-commit key: it changes exactly when a commit lands.
+     */
+    public function head(string $root): string
+    {
+        return trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' rev-parse HEAD 2>/dev/null'));
     }
 
     /**
@@ -58,9 +68,13 @@ final class GitFiles
         return $this->pathSet($root, $tracked . "\n" . $untracked);
     }
 
+    /** The extensions judge parses — one per engine (`.php` backend, `.vue` frontend). */
+    private const array JUDGED = ['.php', '.vue'];
+
     /**
-     * Resolve newline-separated repo-relative paths into a set of absolute `.php`
-     * paths (non-PHP dropped, since detectors only judge PHP).
+     * Resolve newline-separated repo-relative paths into a set of absolute paths the
+     * two engines judge (non-judged extensions dropped), so a scoped run narrows to
+     * touched source across BOTH front-ends, not PHP alone.
      *
      * @return array<string, true>
      */
@@ -71,7 +85,7 @@ final class GitFiles
         foreach (preg_split('/\R/', $lines) ?: [] as $relative) {
             $relative = trim($relative);
 
-            if ($relative === '' || ! str_ends_with($relative, '.php')) {
+            if ($relative === '' || ! $this->isJudged($relative)) {
                 continue;
             }
 
@@ -83,5 +97,19 @@ final class GitFiles
         }
 
         return $set;
+    }
+
+    /**
+     * Does $relative name a file one of the engines judges?
+     */
+    private function isJudged(string $relative): bool
+    {
+        foreach (self::JUDGED as $extension) {
+            if (str_ends_with($relative, $extension)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

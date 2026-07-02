@@ -8,8 +8,8 @@ namespace JesseGall\CodeCommandments\Cli;
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
  * call to the consumer's composer `post-update-cmd` and `post-install-cmd` so the
  * skills + CLAUDE.md briefing refresh automatically on every `composer
- * update`/`install`, wires a `PostToolUse` hook that surfaces the cardinal rule once
- * every 25 tool uses, then runs an initial sync. Idempotent.
+ * update`/`install`, wires our Claude Code hooks ({@see Hooks} — the cardinal-rule
+ * heartbeat and the "did you judge?" nudge), then runs an initial sync. Idempotent.
  */
 final class Install
 {
@@ -26,15 +26,15 @@ final class Install
         }
 
         $wired = $this->wireComposerScripts($composerPath);
-        $reminded = ReminderHook::wire(getcwd() . '/.claude/settings.json');
+        $hooked = Hooks::wire(getcwd() . '/.claude/settings.json');
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"
             : "✓ composer hooks already wired.\n");
 
-        fwrite(STDOUT, $reminded
-            ? "✓ Wired the trace-to-the-source reminder into the PostToolUse hook (every 25 tool uses).\n"
-            : "✓ PostToolUse reminder already wired.\n");
+        fwrite(STDOUT, $hooked
+            ? "✓ Wired the Claude Code hooks: the cardinal-rule reminder (PostToolUse) + the judge nudge (Stop).\n"
+            : "✓ Claude Code hooks already wired.\n");
 
         return (new Sync)->run($args);
     }

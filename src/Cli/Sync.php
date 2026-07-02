@@ -17,8 +17,8 @@ use JesseGall\CodeCommandments\Skills\Catalog as Skills;
  *  - injects the auto-managed "Skills — load before you work" block into CLAUDE.md
  *    (see {@see ClaudeSection}),
  *  - keeps the package's generated artifacts gitignored, and
- *  - re-wires the {@see ReminderHook} to the current event/command, so a hook change (like the
- *    move to `PostToolUse`) reaches every project on `composer update`, not only on `install`.
+ *  - re-wires our Claude Code {@see Hooks} to the current events/commands, so a hook change (a new
+ *    hook, or a move to `PostToolUse`) reaches every project on `composer update`, not only `install`.
  *
  * Runs in the consumer's working directory (where `composer update` runs).
  */
@@ -34,7 +34,7 @@ final class Sync
         $this->ensureGitignored("{$consumer}/.gitignore");
         $this->ensureConfigStub($consumer);
         $this->ensureCommandmentsGitignore($consumer);
-        ReminderHook::wire("{$consumer}/.claude/settings.json");
+        Hooks::wire("{$consumer}/.claude/settings.json");
         $this->removeLegacyArtifacts($consumer);
 
         fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");
