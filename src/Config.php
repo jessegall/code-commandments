@@ -49,6 +49,9 @@ final class Config
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
 
+    /** The {@see planExecution} closure that composes this project's {@see PlanExecution} profile. */
+    private ?Closure $planExecutionConfigurator = null;
+
     /** @var list<string> The source roots to scan (relative to the project). Empty ⇒ auto-detect + scaffold. */
     private array $roots = [];
 
@@ -150,6 +153,35 @@ final class Config
         $this->configurators[] = $configurator;
 
         return $this;
+    }
+
+    /**
+     * Declare the plan-execution profile — the branch strategy, push cadence, keep-going policy,
+     * and the checks a plan runs at each moment ({@see PlanExecution}). The closure is handed a
+     * fresh builder to compose; a `function (PlanExecution $plan) {…}` block and a fluent
+     * `fn ($plan) => $plan->…->…` arrow both work, since the builder is mutated in place.
+     */
+    public function planExecution(Closure $configurator): self
+    {
+        $this->planExecutionConfigurator = $configurator;
+
+        return $this;
+    }
+
+    /**
+     * The resolved plan-execution profile — a fresh {@see PlanExecution} with the project's
+     * configurator applied (an empty default profile when none was declared). Read by the
+     * `commandments checks` / `commandments plan` commands and the plan-reminder hook.
+     */
+    public function planExecutionSettings(): PlanExecution
+    {
+        $settings = new PlanExecution;
+
+        if ($this->planExecutionConfigurator !== null) {
+            ($this->planExecutionConfigurator)($settings);
+        }
+
+        return $settings;
     }
 
     /**
