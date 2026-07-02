@@ -103,6 +103,7 @@ $toBytes = static function (string $limit): int {
 
     exit(match ($command) {
         'judge' => (new Judge)->run($args),
+        'checks' => (new JesseGall\CodeCommandments\Cli\Checks)->run($args),
         'hints' => (new JesseGall\CodeCommandments\Cli\Hints\Hints)->run($args),
         'repent' => (new JesseGall\CodeCommandments\Cli\Repent)->run($args),
         'scaffold' => (new JesseGall\CodeCommandments\Cli\Scaffold)->run($args),
