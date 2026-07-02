@@ -46,6 +46,9 @@ final class Config
     /** @var list<class-string<Packages\Package>> Consumer package classes to register exemptions from. */
     private array $packages = [];
 
+    /** @var list<class-string<Cli\Hook>> Consumer Claude Code hook classes to wire alongside the built-ins. */
+    private array $hooks = [];
+
     /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
     private array $configurators = [];
 
@@ -131,6 +134,32 @@ final class Config
     public function packages(): array
     {
         return $this->packages;
+    }
+
+    /**
+     * Register a consumer's own Claude Code {@see Cli\Hook} class, wired into `.claude/settings.json`
+     * alongside the built-in hooks on `install`/`sync` — the same open-set pattern as {@see detector}
+     * and {@see package}. The hook declares its own events via `bindings()`, so it can react to any
+     * Claude Code moment (Stop, PostToolUse, …). Every wired hook is stamped, so re-wiring only ever
+     * touches ours, never a hook you hand-wrote in settings.
+     *
+     * @param  class-string<Cli\Hook>  ...$hooks
+     */
+    public function hook(string ...$hooks): self
+    {
+        $this->hooks = [...$this->hooks, ...$hooks];
+
+        return $this;
+    }
+
+    /**
+     * The consumer's own hook classes added via {@see hook} (none by default).
+     *
+     * @return list<class-string<Cli\Hook>>
+     */
+    public function hooks(): array
+    {
+        return $this->hooks;
     }
 
     /**

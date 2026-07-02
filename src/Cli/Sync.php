@@ -36,7 +36,7 @@ final class Sync
         $this->ensureConfigStub($consumer);
         $this->ensurePlanExecution($consumer);
         $this->ensureCommandmentsGitignore($consumer);
-        Hooks::wire("{$consumer}/.claude/settings.json");
+        Hooks::wire("{$consumer}/.claude/settings.json", Hooks::forProject($consumer));
         $this->removeLegacyArtifacts($consumer);
 
         fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");

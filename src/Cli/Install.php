@@ -26,7 +26,7 @@ final class Install
         }
 
         $wired = $this->wireComposerScripts($composerPath);
-        $hooked = Hooks::wire(getcwd() . '/.claude/settings.json');
+        $hooked = Hooks::wire(getcwd() . '/.claude/settings.json', Hooks::forProject(getcwd()));
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"

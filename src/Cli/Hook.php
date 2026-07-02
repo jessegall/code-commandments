@@ -21,6 +21,15 @@ abstract class Hook
 {
     public function __construct(protected readonly HookIO $io = new HookIO) {}
 
+    /**
+     * Where this hook binds into Claude Code's settings — the (event, matcher) pairs {@see Hooks}
+     * wires it under. A hook declares its own, so the wiring is data-driven from the classes; a
+     * consumer's registered hook joins the set just by returning its bindings here.
+     *
+     * @return list<HookBinding>
+     */
+    abstract public function bindings(): array;
+
     final public function run(array $args): int
     {
         return $this->handle(new HookEvent($this->io->payload(), $this->io->projectRoot()));

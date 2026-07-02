@@ -26,6 +26,11 @@ final class JudgeReminder extends Hook
     /** The marker section separator: the reminded file set sits above it, the explanation below. */
     private const string SEPARATOR = '-----';
 
+    public function bindings(): array
+    {
+        return [new HookBinding('Stop'), new HookBinding('PreToolUse', 'Bash')];
+    }
+
     protected function onPreToolUse(HookEvent $event): int
     {
         if (! $this->isGitCommit($event)) {

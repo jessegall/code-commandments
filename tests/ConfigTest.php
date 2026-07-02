@@ -178,6 +178,15 @@ final class ConfigTest extends TestCase
         $this->assertEmpty($configured['backend'][0]->find($codebase), 'raising min to 3 clears it — only 2 classes share it');
     }
 
+    public function test_hooks_register_and_return(): void
+    {
+        $this->assertSame([], new Config()->hooks(), 'none by default');
+        $this->assertSame(
+            [\JesseGall\CodeCommandments\Tests\Cli\FakeHook::class],
+            new Config()->hook(\JesseGall\CodeCommandments\Tests\Cli\FakeHook::class)->hooks(),
+        );
+    }
+
     private function project(?string $configPhp): string
     {
         $dir = sys_get_temp_dir() . '/cc-config-' . uniqid('', true);

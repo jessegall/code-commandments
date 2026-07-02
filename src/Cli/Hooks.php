@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Config;
+
 /**
  * Wires code-commandments' Claude Code hooks into the project's `.claude/settings.json` — shared by
  * {@see Install} (first setup) and {@see Sync} (every `composer update`), so the hooks self-heal to
- * the current wiring instead of freezing at install time. Three hooks, one mechanism:
- *
- *  - the cardinal-rule heartbeat ({@see Remind}) under `PostToolUse`, and
- *  - the "did you judge?" nudge ({@see JudgeReminder}) under both `Stop` (turn ending) and
- *    `PreToolUse` matching `Bash` (a `git commit` about to run).
+ * the current wiring instead of freezing at install time. The wiring is data-driven: each {@see Hook}
+ * declares its own {@see Hook::bindings} (event + matcher), and every hook — the {@see BUILTINS} plus
+ * any a consumer registered with `$config->hook(...)` — is wired the same way. Each is wired to run
+ * through the generic `commandments hook '<class>'` entry point ({@see HookRunner}).
  *
  * Idempotent, and MIGRATING: it removes ONLY the hooks WE stamped ({@see STAMP}) — from every event,
  * then adds back exactly the current set under their current events. So an older hook wired under the
@@ -19,20 +20,12 @@ namespace JesseGall\CodeCommandments\Cli;
  * in any event, even one that itself runs `commandments` — is left completely untouched, because it
  * carries no stamp. (A one-time migration also matches our PRE-stamp reminder hooks so they upgrade to
  * stamped.) Idempotent by CONTENT: it writes only when the settings actually change.
- *
- * The current set: the {@see Remind} heartbeat, the {@see JudgeReminder} nudge (Stop + PreToolUse on
- * `git commit`), and the {@see PlanReminder} (PostToolUse on `ExitPlanMode` to open a plan, Stop to
- * keep it going). Add one by adding a {@see HOOKS} row; the wiring is generic.
  */
 final class Hooks
 {
     // Anchored at $CLAUDE_PROJECT_DIR (the absolute project root the harness gives every hook) — a
     // relative `vendor/bin/...` silently dies when Claude's working directory isn't the project root.
-    private const string REMIND = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" remind';
-
-    private const string JUDGE = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" judge-reminder';
-
-    private const string PLAN = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" plan-reminder';
+    private const string BINARY = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments"';
 
     /**
      * The stamp appended to every command WE wire — a trailing shell comment (ignored when the hook
@@ -46,20 +39,32 @@ final class Hooks
     private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
 
     /**
-     * Our hooks as (event, command, matcher). A null matcher means "every call of the event"; a
-     * matcher (e.g. `Bash`) scopes to that tool. Add a hook by adding a row here; the wiring is generic.
+     * The hooks that ship with the package. A consumer adds its own via `$config->hook(...)`; both
+     * flow through {@see wire} the same way, wired from each hook's {@see Hook::bindings}.
      *
-     * @var list<array{event: string, command: string, matcher: ?string}>
+     * @var list<class-string<Hook>>
      */
-    private const array HOOKS = [
-        ['event' => 'PostToolUse', 'command' => self::REMIND, 'matcher' => null],
-        ['event' => 'Stop', 'command' => self::JUDGE, 'matcher' => null],
-        ['event' => 'PreToolUse', 'command' => self::JUDGE, 'matcher' => 'Bash'],
-        ['event' => 'PostToolUse', 'command' => self::PLAN, 'matcher' => 'ExitPlanMode'],
-        ['event' => 'Stop', 'command' => self::PLAN, 'matcher' => null],
-    ];
+    public const array BUILTINS = [Remind::class, JudgeReminder::class, PlanReminder::class];
 
-    public static function wire(string $path): bool
+    /**
+     * The hooks to wire for the project at $dir — the {@see BUILTINS} plus any it registered with
+     * `$config->hook(...)`. The one place the open set is assembled, so {@see Install}/{@see Sync}
+     * can't drift.
+     *
+     * @return list<class-string<Hook>>
+     */
+    public static function forProject(string $dir): array
+    {
+        return [...self::BUILTINS, ...Config::load($dir)->hooks()];
+    }
+
+    /**
+     * Wire $hookClasses (the {@see BUILTINS} by default; callers pass the built-ins PLUS a project's
+     * registered hooks) into the settings at $path. Returns true when the file actually changed.
+     *
+     * @param  list<class-string<Hook>>  $hookClasses
+     */
+    public static function wire(string $path, array $hookClasses = self::BUILTINS): bool
     {
         /** @var array<string, mixed> $settings */
         $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
@@ -67,14 +72,16 @@ final class Hooks
 
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);
 
-        foreach (self::HOOKS as $hook) {
-            $group = ['hooks' => [['type' => 'command', 'command' => $hook['command'] . ' ' . self::STAMP]]];
+        foreach ($hookClasses as $class) {
+            foreach (new $class()->bindings() as $binding) {
+                $group = ['hooks' => [['type' => 'command', 'command' => self::command($class)]]];
 
-            if ($hook['matcher'] !== null) {
-                $group = ['matcher' => $hook['matcher']] + $group;
+                if ($binding->matcher !== null) {
+                    $group = ['matcher' => $binding->matcher] + $group;
+                }
+
+                $hooks[$binding->event][] = $group;
             }
-
-            $hooks[$hook['event']][] = $group;
         }
 
         $settings['hooks'] = $hooks;
@@ -87,6 +94,17 @@ final class Hooks
         file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
 
         return true;
+    }
+
+    /**
+     * The stamped command that runs a hook class through the generic runner. The class is single-
+     * quoted so its namespace backslashes reach the CLI intact.
+     *
+     * @param  class-string<Hook>  $class
+     */
+    private static function command(string $class): string
+    {
+        return self::BINARY . " hook '" . $class . "' " . self::STAMP;
     }
 
     /**

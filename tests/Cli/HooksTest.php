@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hooks;
+use JesseGall\CodeCommandments\Cli\JudgeReminder;
+use JesseGall\CodeCommandments\Cli\PlanReminder;
+use JesseGall\CodeCommandments\Cli\Remind;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The hook wiring must converge to exactly our current set — one `remind` under `PostToolUse`, one
- * `judge-reminder` under `Stop`, one under `PreToolUse` matching `Bash` — from ANY starting state,
- * including a stale/duplicate copy under the wrong event, while never touching a hook it didn't write.
- * It runs on every `composer update` (via sync), so it has to be idempotent by content.
+ * The hook wiring must converge to exactly our current set — each built-in {@see Hook} wired under
+ * the events its `bindings()` declares — from ANY starting state, including a stale/duplicate copy
+ * under the wrong event, while never touching a hook it didn't write. It runs on every `composer
+ * update` (via sync), so it has to be idempotent by content.
  */
 final class HooksTest extends TestCase
 {
@@ -47,10 +50,10 @@ final class HooksTest extends TestCase
 
         Hooks::wire($this->path);
 
-        $this->assertSame(0, $this->countMatching('UserPromptSubmit', 'remind'), 'the stale remind is gone');
-        $this->assertSame(1, $this->countMatching('PostToolUse', 'remind'), 'exactly one remind, under PostToolUse');
-        $this->assertSame(1, $this->countMatching('Stop', 'judge-reminder'), 'exactly one judge-reminder, under Stop');
-        $this->assertSame(1, $this->countMatching('PreToolUse', 'judge-reminder'), 'exactly one judge-reminder, under PreToolUse');
+        $this->assertSame(0, $this->countMatching('UserPromptSubmit', Remind::class), 'the stale remind is gone');
+        $this->assertSame(1, $this->countMatching('PostToolUse', Remind::class), 'exactly one remind, under PostToolUse');
+        $this->assertSame(1, $this->countMatching('Stop', JudgeReminder::class), 'exactly one judge-reminder, under Stop');
+        $this->assertSame(1, $this->countMatching('PreToolUse', JudgeReminder::class), 'exactly one judge-reminder, under PreToolUse');
         $this->assertContains('my-own-hook', $this->commands('UserPromptSubmit'), 'the project\'s own hook is untouched');
         $this->assertContains('keep-me-too', $this->commands('Stop'), 'a foreign hook under Stop is preserved');
     }
@@ -59,11 +62,19 @@ final class HooksTest extends TestCase
     {
         $this->assertTrue(Hooks::wire($this->path), 'first wire writes');
         $this->assertFalse(Hooks::wire($this->path), 'a second wire is a no-op');
-        $this->assertSame(1, $this->countMatching('PostToolUse', 'remind'));
-        $this->assertSame(1, $this->countMatching('Stop', 'judge-reminder'));
-        $this->assertSame(1, $this->countMatching('PreToolUse', 'judge-reminder'));
-        $this->assertSame(1, $this->countMatching('PostToolUse', 'plan-reminder'));
-        $this->assertSame(1, $this->countMatching('Stop', 'plan-reminder'));
+        $this->assertSame(1, $this->countMatching('PostToolUse', Remind::class));
+        $this->assertSame(1, $this->countMatching('Stop', JudgeReminder::class));
+        $this->assertSame(1, $this->countMatching('PreToolUse', JudgeReminder::class));
+        $this->assertSame(1, $this->countMatching('PostToolUse', PlanReminder::class));
+        $this->assertSame(1, $this->countMatching('Stop', PlanReminder::class));
+    }
+
+    public function test_a_consumer_registered_hook_is_wired_under_its_binding(): void
+    {
+        Hooks::wire($this->path, [...Hooks::BUILTINS, FakeHook::class]);
+
+        $this->assertSame(1, $this->countMatching('Notification', FakeHook::class), 'the consumer hook is wired');
+        $this->assertSame(1, $this->countMatching('PostToolUse', Remind::class), 'the built-ins are still wired too');
     }
 
     public function test_a_users_own_commandments_hook_is_never_stripped(): void
@@ -87,7 +98,7 @@ final class HooksTest extends TestCase
 
         foreach ((array) ($settings['hooks']['PostToolUse'] ?? []) as $group) {
             foreach ((array) ($group['hooks'] ?? []) as $hook) {
-                if (str_contains((string) ($hook['command'] ?? ''), ' plan-reminder ')) {
+                if (str_contains((string) ($hook['command'] ?? ''), "'" . PlanReminder::class . "'")) {
                     $matchers[] = $group['matcher'] ?? null;
                 }
             }
@@ -112,13 +123,13 @@ final class HooksTest extends TestCase
         file_put_contents($this->path, json_encode($settings));
     }
 
-    private function countMatching(string $event, string $subcommand): int
+    private function countMatching(string $event, string $hookClass): int
     {
-        // Match the subcommand as a whole token (our stamped commands read `… commandments" <sub> #…`),
-        // so `remind` never counts `judge-reminder` / `plan-reminder`.
+        // Our stamped commands read `… commandments hook '<FQCN>' #…`; match the single-quoted FQCN
+        // so `Remind` never counts inside `PlanReminder`.
         return count(array_filter(
             $this->commands($event),
-            static fn (string $c): bool => str_contains($c, 'commandments') && str_contains($c, " {$subcommand} "),
+            static fn (string $c): bool => str_contains($c, 'commandments') && str_contains($c, "'{$hookClass}'"),
         ));
     }
 

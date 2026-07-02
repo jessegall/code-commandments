@@ -72,6 +72,7 @@ $toBytes = static function (string $limit): int {
           commandments remind   # emit the cardinal rule as a PostToolUse payload
           commandments judge-reminder  # emit the "did you judge?" nudge (Stop, or PreToolUse on git commit)
           commandments plan-reminder   # open a plan (PostToolUse/ExitPlanMode) + keep it going (Stop)
+          commandments hook <Class>    # run a wired hook class (built-in or a consumer's $config->hook(...))
 
         Options:
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
@@ -118,6 +119,7 @@ $toBytes = static function (string $limit): int {
         'judge-reminder' => (new JesseGall\CodeCommandments\Cli\JudgeReminder)->run($args),
         'plan-reminder' => (new JesseGall\CodeCommandments\Cli\PlanReminder)->run($args),
         'plan' => (new JesseGall\CodeCommandments\Cli\PlanCommand)->run($args),
+        'hook' => (new JesseGall\CodeCommandments\Cli\HookRunner)->run($args),
         'disable', 'enable' => (new JesseGall\CodeCommandments\Cli\Configure($command))->run($args),
         'config' => (new JesseGall\CodeCommandments\Cli\ConfigCommand)->run($args),
         'exemptions' => (new JesseGall\CodeCommandments\Cli\Exemptions)->run($args),

@@ -26,6 +26,11 @@ final class Remind extends Hook
         . 'And keep to the skills you loaded — they are the standard for every change, not a '
         . 'one-time read; re-open the relevant one before you touch its subject.';
 
+    public function bindings(): array
+    {
+        return [new HookBinding('PostToolUse')];
+    }
+
     /**
      * The heartbeat: every PostToolUse counts one tool use, and the reminder surfaces once the
      * count rolls over the interval — silent on the other 24, so it adds nothing to context. A

@@ -36,6 +36,11 @@ final class PlanReminder extends Hook
      */
     private const int MAX_TOTAL = 40;
 
+    public function bindings(): array
+    {
+        return [new HookBinding('PostToolUse', 'ExitPlanMode'), new HookBinding('Stop')];
+    }
+
     protected function onPostToolUse(HookEvent $event): int
     {
         if (! $event->isTool('ExitPlanMode')) {

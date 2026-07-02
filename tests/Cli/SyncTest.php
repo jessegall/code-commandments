@@ -48,9 +48,9 @@ final class SyncTest extends TestCase
             Config::load($this->consumer)->planExecutionSettings()->checksFor(Moment::Complete),
         );
 
-        // Both plan-reminder hooks are wired and stamped.
+        // The plan-reminder hook is wired (via the generic `hook '<class>'` runner) and stamped.
         $settings = (string) file_get_contents("{$this->consumer}/.claude/settings.json");
-        $this->assertStringContainsString('plan-reminder', $settings);
+        $this->assertStringContainsString('PlanReminder', $settings);
         $this->assertStringContainsString('@code-commandments-managed', $settings);
 
         // The published-skills glob covers the flat commandments-* dirs.
@@ -65,6 +65,23 @@ final class SyncTest extends TestCase
         $this->sync();
 
         $this->assertSame($before, (string) file_get_contents("{$this->consumer}/.commandments/config.php"));
+    }
+
+    public function test_a_consumer_registered_hook_is_wired_by_sync(): void
+    {
+        // A config that registers its own hook — sync must wire it alongside the built-ins.
+        @mkdir("{$this->consumer}/.commandments", 0777, true);
+        file_put_contents(
+            "{$this->consumer}/.commandments/config.php",
+            "<?php\nuse JesseGall\\CodeCommandments\\Config;\nreturn function (Config \$config): void {\n"
+            . "    \$config->hook(\\JesseGall\\CodeCommandments\\Tests\\Cli\\FakeHook::class);\n};\n",
+        );
+
+        $this->sync();
+
+        $settings = (string) file_get_contents("{$this->consumer}/.claude/settings.json");
+        $this->assertStringContainsString('FakeHook', $settings, 'the consumer hook is wired');
+        $this->assertStringContainsString('Notification', $settings, 'under its declared event');
     }
 
     private function sync(): void
