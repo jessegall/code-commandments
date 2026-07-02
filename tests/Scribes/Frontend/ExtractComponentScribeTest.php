@@ -300,6 +300,31 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('v-model:confirm-open="confirmOpen"', $callSite);
     }
 
+    public function test_a_props_variable_access_forwards_the_member_not_the_props_object(): void
+    {
+        // A chunk that reads `props.label` must forward `label` (typed from Props), not a bogus
+        // `props: unknown`; the child markup uses bare `label`, and the call site binds props.label.
+        $popover = '<Popover v-model:open="confirmOpen"><PopoverTrigger as-child>'
+            . '<Button variant="destructive"><Trash2 class="size-3" />Delete node</Button></PopoverTrigger>'
+            . '<PopoverContent class="w-64"><header><h4>Confirm</h4></header>'
+            . '<p class="title">Delete {{ props.label }}?</p><p class="note">This cannot be undone.</p>'
+            . '<ul><li>One</li><li>Two</li></ul>'
+            . '<div class="actions"><Button @click="confirmOpen = false">Cancel</Button>'
+            . '<Button @click="remove">Delete</Button></div></PopoverContent></Popover>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Popover, PopoverTrigger, PopoverContent } from '@/ui/popover';\ninterface Props { label: string }\nconst props = defineProps<Props>();\nconst confirmOpen = ref(false);\nfunction remove() {}\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$popover}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = $this->components($files);
+        $component = reset($created);
+
+        $this->assertStringContainsString('label: string', $component, 'the member is a typed prop');
+        $this->assertStringNotContainsString('props: unknown', $component, 'the props object is NOT a prop');
+        $this->assertStringNotContainsString('props.label', $component, 'the markup uses the bare prop');
+        $this->assertStringContainsString(':label="props.label"', $files['component.vue'], 'the call site binds the parent expression');
+    }
+
     public function test_an_assigned_value_becomes_a_model_not_a_readonly_prop(): void
     {
         // Issue #256: a value the chunk only ASSIGNS (no v-model) — `@click="dismissed = true"`

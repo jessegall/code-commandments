@@ -278,7 +278,76 @@ final class Boundary
         // A prop is reactive state the parent passes down — NOT a JS global (`Object.keys(…)`) and
         // NOT an imported name (a component/util/constant the child imports itself). Excluding these
         // stops the extraction minting bogus `Object`/`AUTO_ANIMATE_QUICK` props typed `unknown`.
-        return array_values(array_diff(array_unique($reads), $bound, $called, self::JS_GLOBALS, $this->importedNames()));
+        $props = array_values(array_diff(array_unique($reads), $bound, $called, self::JS_GLOBALS, $this->importedNames()));
+
+        return $this->unwrapPropsVariable($props);
+    }
+
+    /**
+     * The `defineProps` result variable is not itself a prop — its MEMBERS are. A chunk that reads
+     * `props.favicon`/`props.label` should forward `favicon`/`label` (each typed from the parent's
+     * props), not a bogus `props` prop typed `unknown`. Swap the props-variable root for the members
+     * the chunk actually accesses on it. (The scribe strips the `props.` prefix from the markup, and
+     * binds each member with {@see callSiteExpression}.)
+     *
+     * @param  list<string>  $props
+     * @return list<string>
+     */
+    private function unwrapPropsVariable(array $props): array
+    {
+        $variable = $this->propsVariable();
+
+        if ($variable === null || ! in_array($variable, $props, true)) {
+            return $props;
+        }
+
+        return array_values(array_unique([...array_diff($props, [$variable]), ...$this->propsVariableMembers()]));
+    }
+
+    /**
+     * The `const props = defineProps(…)` binding name, or null when the component captures none.
+     */
+    public function propsVariable(): ?string
+    {
+        return new Script($this->sfc->scriptContent())->propsVariable();
+    }
+
+    /**
+     * The members this chunk reads off the props-variable — `props.label` / `props.favicon` →
+     * `['label', 'favicon']`. These are the real props such a chunk forwards.
+     *
+     * @return list<string>
+     */
+    public function propsVariableMembers(): array
+    {
+        $variable = $this->propsVariable();
+
+        if ($variable === null) {
+            return [];
+        }
+
+        $members = [];
+
+        $this->each(static function (Element $element) use (&$members, $variable): void {
+            foreach ($element->expressions() as $expression) {
+                foreach ($expression->chains() as $chain) {
+                    if (($chain[0] ?? null) === $variable && isset($chain[1])) {
+                        $members[] = $chain[1];
+                    }
+                }
+            }
+        });
+
+        return array_values(array_unique($members));
+    }
+
+    /**
+     * The expression to bind a prop to at the CALL SITE, in the parent's scope — a props-member is
+     * bound `props.member` (the parent has no bare `member`), any other prop by its own name.
+     */
+    public function callSiteExpression(string $prop): string
+    {
+        return in_array($prop, $this->propsVariableMembers(), true) ? "{$this->propsVariable()}.{$prop}" : $prop;
     }
 
     /** JS globals a template expression may reference; never props. */

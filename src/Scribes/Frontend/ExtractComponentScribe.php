@@ -173,7 +173,7 @@ final class ExtractComponentScribe extends RepentScribe
             }
 
             foreach ($members as $occurrence) {
-                $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($props));
+                $this->place($draft, Boundary::for($occurrence), $component, $name, self::selfBindings($boundary, $props));
             }
         }
 
@@ -204,7 +204,7 @@ final class ExtractComponentScribe extends RepentScribe
             $component = $finding->sibling("{$name}.vue");
 
             if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
-                $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+                $this->place($draft, $boundary, $component, $name, self::selfBindings($boundary, $props));
             }
         }
 
@@ -238,7 +238,7 @@ final class ExtractComponentScribe extends RepentScribe
             $component = $finding->sibling("{$name}.vue");
 
             if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
-                $this->place($draft, $boundary, $component, $name, self::selfBindings($props));
+                $this->place($draft, $boundary, $component, $name, self::selfBindings($boundary, $props));
             }
         }
 
@@ -532,9 +532,19 @@ final class ExtractComponentScribe extends RepentScribe
      * @param  list<string>  $props
      * @return array<string, string>
      */
-    private static function selfBindings(array $props): array
+    /**
+     * @param  list<string>  $props
+     * @return array<string, string>  prop => the parent-scope expression to bind it to
+     */
+    private static function selfBindings(Boundary $boundary, array $props): array
     {
-        return array_combine($props, $props);
+        $bindings = [];
+
+        foreach ($props as $prop) {
+            $bindings[$prop] = $boundary->callSiteExpression($prop);
+        }
+
+        return $bindings;
     }
 
     /**
@@ -567,6 +577,13 @@ final class ExtractComponentScribe extends RepentScribe
     private function render(Boundary $boundary, array $props, string $markup, array $prefix = [], string $reachProp = ''): string
     {
         $script = new Script($boundary->sfc->scriptContent());
+
+        // The props-variable's members are forwarded as bare props ({@see Boundary::props}); strip the
+        // `props.` prefix from the lifted markup to match, so `props.label` reads the `label` prop.
+        if (($propsVariable = $script->propsVariable()) !== null) {
+            $markup = str_replace("{$propsVariable}.", '', $markup);
+        }
+
         $types = $this->resolveTypes($boundary, $props, $script, $prefix, $reachProp);
 
         // A prop the chunk WRITES (v-model) is two-way state — a defineModel, not a prop;
