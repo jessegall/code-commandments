@@ -57,10 +57,20 @@ final class Parser
     /** Type-level leads the grammar doesn't model — bail to verbatim so the whole region is kept. */
     private const array VERBATIM_LEADS = ['keyof', 'readonly', 'infer', 'unique', 'new', 'abstract', 'asserts'];
 
+    /**
+     * The deepest type nesting we recurse into before preserving the rest verbatim. Real component
+     * types nest a handful deep; a checker can emit far deeper (or a malformed region could recurse
+     * unboundedly), and the parser's contract is TOTAL — so past this we degrade to {@see VerbatimType}
+     * rather than blow the stack.
+     */
+    private const int MAX_TYPE_DEPTH = 256;
+
     /** @var list<Lexeme> */
     private array $lexemes;
 
     private int $pos = 0;
+
+    private int $typeDepth = 0;
 
     private function __construct(private readonly string $source)
     {
@@ -482,8 +492,13 @@ final class Parser
     private function parseType(): TypeNode
     {
         $start = $this->pos;
+        $this->typeDepth++;
 
         try {
+            if ($this->typeDepth > self::MAX_TYPE_DEPTH) { // pathologically nested — keep it verbatim
+                throw new Unparsed();
+            }
+
             $type = $this->parseUnion();
 
             if ($this->atId('extends')) { // a conditional type — not modelled; keep whole region
@@ -495,6 +510,8 @@ final class Parser
             $this->pos = $start;
 
             return new VerbatimType($this->captureTypeVerbatim());
+        } finally {
+            $this->typeDepth--;
         }
     }
 

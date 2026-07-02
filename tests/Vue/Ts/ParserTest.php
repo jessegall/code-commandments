@@ -176,6 +176,17 @@ final class ParserTest extends TestCase
         $this->assertSame('computed', $module->variable('x')?->initCall?->callee);
     }
 
+    public function test_it_is_total_on_a_pathologically_deep_type(): void
+    {
+        // Regression: a very deeply-nested generic (a checker can emit these; a malformed region can
+        // recurse unboundedly) blew the stack to OOM. Past a depth cap the parser preserves the
+        // region verbatim instead — still total, still terminating.
+        $deep = str_repeat('Box<', 5000) . 'number' . str_repeat('>', 5000);
+        $module = Parser::module("const x: {$deep} = y;");
+
+        $this->assertNotNull($module->variable('x')?->typeAnnotation, 'it produced a type, did not crash');
+    }
+
     public function test_it_is_total_on_an_object_type_with_an_index_signature_and_arrow(): void
     {
         // Regression: the `=>` arrow's `>` corrupted the verbatim reader's depth count, so the
