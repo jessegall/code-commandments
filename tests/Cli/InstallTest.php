@@ -115,7 +115,7 @@ final class InstallTest extends TestCase
     {
         foreach ($groups as $group) {
             foreach ((array) ($group['hooks'] ?? []) as $hook) {
-                if (str_contains((string) ($hook['command'] ?? ''), 'commandments" remind')) {
+                if (str_contains((string) ($hook['command'] ?? ''), "'" . \JesseGall\CodeCommandments\Cli\Remind::class . "'")) {
                     return true;
                 }
             }
