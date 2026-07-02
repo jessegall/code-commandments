@@ -13,11 +13,12 @@ namespace JesseGall\CodeCommandments\Cli;
  *  - the "did you judge?" nudge ({@see JudgeReminder}) under both `Stop` (turn ending) and
  *    `PreToolUse` matching `Bash` (a `git commit` about to run).
  *
- * Idempotent, and MIGRATING: it removes ONLY our own hooks — any command mentioning `commandments`
- * (never the composer-script `sync`, which isn't a settings hook) — from every event, then adds back
- * exactly the current set under their current events. So an older hook wired under the wrong event
- * (a `remind` under `UserPromptSubmit`) moves; every hook the project itself wrote, in any event, is
- * preserved untouched. Idempotent by CONTENT: it writes only when the settings actually change.
+ * Idempotent, and MIGRATING: it removes ONLY the hooks WE stamped ({@see STAMP}) — from every event,
+ * then adds back exactly the current set under their current events. So an older hook wired under the
+ * wrong event (a `remind` under `UserPromptSubmit`) moves; and CRUCIALLY, every hook the human wrote —
+ * in any event, even one that itself runs `commandments` — is left completely untouched, because it
+ * carries no stamp. (A one-time migration also matches our PRE-stamp reminder hooks so they upgrade to
+ * stamped.) Idempotent by CONTENT: it writes only when the settings actually change.
  *
  * The current set: the {@see Remind} heartbeat, the {@see JudgeReminder} nudge (Stop + PreToolUse on
  * `git commit`), and the {@see PlanReminder} (PostToolUse on `ExitPlanMode` to open a plan, Stop to
@@ -32,6 +33,17 @@ final class Hooks
     private const string JUDGE = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" judge-reminder';
 
     private const string PLAN = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments" plan-reminder';
+
+    /**
+     * The stamp appended to every command WE wire — a trailing shell comment (ignored when the hook
+     * runs), so {@see stripOurs} can recognise and replace exactly our own hooks and NEVER touch one
+     * the user wrote by hand, even if theirs also invokes `commandments`. This is the ONLY thing we
+     * strip; a hook without this stamp is the human's and is preserved untouched.
+     */
+    private const string STAMP = '# @code-commandments-managed';
+
+    /** Our reminder subcommands, for recognising PRE-stamp hooks we wrote so they migrate to stamped. */
+    private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
 
     /**
      * Our hooks as (event, command, matcher). A null matcher means "every call of the event"; a
@@ -56,7 +68,7 @@ final class Hooks
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);
 
         foreach (self::HOOKS as $hook) {
-            $group = ['hooks' => [['type' => 'command', 'command' => $hook['command']]]];
+            $group = ['hooks' => [['type' => 'command', 'command' => $hook['command'] . ' ' . self::STAMP]]];
 
             if ($hook['matcher'] !== null) {
                 $group = ['matcher' => $hook['matcher']] + $group;
@@ -117,12 +129,30 @@ final class Hooks
     }
 
     /**
-     * Is $command one of OURS — a `commandments` invocation? Matches every form our hooks have taken
-     * (quoted, anchored at `$CLAUDE_PROJECT_DIR`, any subcommand), so a stale wiring is found and
-     * replaced. The composer-script `sync` never appears in settings, so it is never in play here.
+     * Is $command one WE wrote — safe to strip and re-add? True for any command carrying our
+     * {@see STAMP}, and (for one-time migration of pre-stamp installs) for a bare `commandments`
+     * invocation ENDING in one of our own reminder {@see LEGACY_SUBCOMMANDS}. A hook the human wrote —
+     * even one that runs `commandments judge`/`repent`/`sync` — carries no stamp and doesn't end in a
+     * reminder subcommand, so it is NEVER matched here and is preserved untouched.
      */
     private static function isOurs(string $command): bool
     {
-        return str_contains($command, 'commandments');
+        if (str_contains($command, self::STAMP)) {
+            return true;
+        }
+
+        if (! str_contains($command, 'commandments')) {
+            return false;
+        }
+
+        $command = rtrim($command);
+
+        foreach (self::LEGACY_SUBCOMMANDS as $subcommand) {
+            if (str_ends_with($command, $subcommand)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

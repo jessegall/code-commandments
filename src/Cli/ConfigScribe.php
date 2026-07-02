@@ -112,6 +112,61 @@ final class ConfigScribe
     }
 
     /**
+     * Inject a `$config->planExecution(...)` block if the config has none yet — self-healing the
+     * plan-execution surface into an existing consumer on `composer update`, the way {@see ensurePaths}
+     * fills the scan roots. Idempotent: a config that already declares `planExecution` (the human's or
+     * a prior sync's) is left untouched. The block is spliced BEFORE the `disable()` call by node
+     * offset — the human's own lines stay exactly as they were — and carries $completionChecks
+     * (inferred from the project's scripts by {@see ChecksInference}) as its `onComplete` gate, with
+     * the other knobs as commented examples so the surface is discoverable.
+     *
+     * @param  list<string>  $completionChecks
+     */
+    public function ensurePlanExecution(array $completionChecks): void
+    {
+        if (! is_file($this->path) || $this->hasCall('planExecution')) {
+            return;
+        }
+
+        $anchor = $this->call('disable') ?? $this->call('paths');
+
+        if ($anchor === null) {
+            return; // A config edited past recognition — nothing safe to anchor to.
+        }
+
+        $source = (string) file_get_contents($this->path);
+        $at = $anchor->getStartFilePos();
+
+        file_put_contents($this->path, substr($source, 0, $at) . $this->renderPlanExecution($completionChecks) . substr($source, $at));
+    }
+
+    /**
+     * The `planExecution()` block spliced in before the anchor call. Its first line takes the
+     * anchor's existing indent; it ends with a blank line + a 4-space indent so the anchor stays
+     * exactly where it was. Explicit lines (not a heredoc) so the emitted indentation is exact.
+     *
+     * @param  list<string>  $checks
+     */
+    public function renderPlanExecution(array $checks): string
+    {
+        $onComplete = $checks === []
+            ? "// \$plan->onComplete('composer test');            // the end gate; judge --branch runs after"
+            : '$plan->onComplete(' . $this->renderRoots($checks) . ');';
+
+        $lines = [
+            '$config->planExecution(function (\JesseGall\CodeCommandments\PlanExecution $plan): void {',
+            "        // \$plan->branchFrom('main')->branchPrefix('plan/')->pushEachPhase();  // branch + push cadence",
+            '        // $plan->keepGoing();                          // re-nudge on stop until `plan done`',
+            "        // \$plan->onStart('composer install');          // once, before the first phase",
+            "        // \$plan->eachPhase('composer lint');           // after each phase — keep it fast",
+            "        {$onComplete}",
+            '    });',
+        ];
+
+        return implode("\n", $lines) . "\n\n    ";
+    }
+
+    /**
      * @param  list<string>  $roots
      */
     public function render(array $roots): string
@@ -149,12 +204,25 @@ final class ConfigScribe
 
     private function pathsCall(): ?MethodCall
     {
+        return $this->call('paths');
+    }
+
+    /**
+     * The first `$config-><method>(...)` call node in the config, or null when there is none.
+     */
+    private function call(string $method): ?MethodCall
+    {
         if (! is_file($this->path)) {
             return null;
         }
 
-        $match = Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('paths')->first();
+        $match = Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod($method)->first();
 
         return $match?->node instanceof MethodCall ? $match->node : null;
+    }
+
+    private function hasCall(string $method): bool
+    {
+        return $this->call($method) !== null;
     }
 }

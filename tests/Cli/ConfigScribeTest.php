@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\ConfigFile;
 use JesseGall\CodeCommandments\Cli\ConfigScribe;
+use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Moment;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -65,9 +67,60 @@ final class ConfigScribeTest extends TestCase
         $this->assertValidPhp();
     }
 
+    public function test_ensure_plan_execution_injects_a_block_with_inferred_checks(): void
+    {
+        $scribe = $this->scribe();
+        $scribe->scaffold(['app']);
+        ConfigFile::inProject($this->dir)->disable('Demo\\Foo');
+
+        $scribe->ensurePlanExecution(['composer test', 'composer lint']);
+
+        $this->assertValidPhp();
+        $this->assertSame(
+            ['composer test', 'composer lint'],
+            Config::load($this->dir)->planExecutionSettings()->checksFor(Moment::Complete),
+        );
+        // The human's own paths()/disable() lines are untouched.
+        $this->assertSame(['app'], ConfigFile::inProject($this->dir)->paths());
+        $this->assertSame(['Demo\\Foo'], ConfigFile::inProject($this->dir)->disabled());
+    }
+
+    public function test_ensure_plan_execution_is_idempotent(): void
+    {
+        $scribe = $this->scribe();
+        $scribe->scaffold(['app']);
+        $scribe->ensurePlanExecution(['composer test']);
+
+        $before = (string) file_get_contents($this->configPath());
+        $scribe->ensurePlanExecution(['composer something-else']); // a config with one already → no-op
+
+        $this->assertSame($before, (string) file_get_contents($this->configPath()));
+    }
+
+    public function test_ensure_plan_execution_with_no_checks_still_declares_the_surface(): void
+    {
+        $scribe = $this->scribe();
+        $scribe->scaffold(['app']);
+
+        $scribe->ensurePlanExecution([]);
+
+        $this->assertValidPhp();
+        $this->assertSame([], Config::load($this->dir)->planExecutionSettings()->checksFor(Moment::Complete));
+
+        // It counts as declared, so a later sync won't inject a second block.
+        $before = (string) file_get_contents($this->configPath());
+        $scribe->ensurePlanExecution(['composer test']);
+        $this->assertSame($before, (string) file_get_contents($this->configPath()));
+    }
+
     private function scribe(): ConfigScribe
     {
-        return new ConfigScribe($this->dir . '/.commandments/config.php');
+        return new ConfigScribe($this->configPath());
+    }
+
+    private function configPath(): string
+    {
+        return $this->dir . '/.commandments/config.php';
     }
 
     private function assertValidPhp(): void

@@ -27,12 +27,14 @@ final class Sync
     public function run(array $args): int
     {
         $consumer = getcwd();
-        $packageSkills = dirname(__DIR__, 2) . '/skills/commandments';
+        $packageRoot = dirname(__DIR__, 2);
 
-        $published = $this->publishSkills($packageSkills, $consumer);
+        $published = $this->publishSkills("{$packageRoot}/skills/commandments", $consumer)
+            + $this->publishStandaloneSkills("{$packageRoot}/skills", $consumer);
         $this->injectClaudeSection($consumer);
         $this->ensureGitignored("{$consumer}/.gitignore");
         $this->ensureConfigStub($consumer);
+        $this->ensurePlanExecution($consumer);
         $this->ensureCommandmentsGitignore($consumer);
         Hooks::wire("{$consumer}/.claude/settings.json");
         $this->removeLegacyArtifacts($consumer);
@@ -51,6 +53,17 @@ final class Sync
     private function ensureConfigStub(string $consumer): void
     {
         ConfigFile::inProject($consumer)->scaffoldIfMissing();
+    }
+
+    /**
+     * Self-heal the plan-execution surface into the consumer's config: a `$config->planExecution(...)`
+     * block, its `onComplete` gate inferred from the project's own composer/npm scripts. A no-op once
+     * the config already declares one (see {@see ConfigScribe::ensurePlanExecution}), so a project's
+     * edits survive every `composer update`.
+     */
+    private function ensurePlanExecution(string $consumer): void
+    {
+        ConfigScribe::inProject($consumer)->ensurePlanExecution(ChecksInference::detect($consumer));
     }
 
     /**
@@ -103,16 +116,18 @@ final class Sync
         // (see {@see ensureCommandmentsGitignore}), so its rules no longer belong in the root: a
         // bare `.commandments/`, the `.commandments/*` + `!config.php` pair, and the old
         // `!repent.php` negation are all migrated out. Comments are left as-is (harmless).
-        $stale = ['.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php'];
+        // Also migrate the earlier published-skills rule `.claude/skills/commandments/` — it never
+        // matched the FLAT `commandments-*` dirs skills actually publish to; the glob below does.
+        $stale = ['.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php', '.claude/skills/commandments/'];
         $existing = implode("\n", array_filter(
             explode("\n", $existing),
             static fn (string $line): bool => ! in_array(trim($line), $stale, true),
         ));
 
         $entries = [
-            // Only the published skills live OUTSIDE `.commandments/` (under `.claude/`), so this is
-            // the one root entry the package still manages.
-            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments/',
+            // Every published skill lives OUTSIDE `.commandments/` (flat under `.claude/skills/
+            // commandments-*/`), so this glob is the one root entry the package still manages.
+            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*/',
         ];
 
         foreach ($entries as $comment => $entry) {
@@ -141,6 +156,30 @@ final class Sync
             // and the directory name IS the Skill-tool invocation (`commandments-backend-absence`).
             // A nested `commandments/backend/absence/` is never found.
             $to = "{$consumer}/.claude/skills/{$skill->id()}";
+
+            if (is_dir($from)) {
+                $this->copyDir($from, $to);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * The standalone, hand-written skills — NOT the {@see Skills\Catalog} teaching skills projected
+     * from sins, but process skills that ship as-is (currently `executing-plans`). Each is published
+     * flat under `.claude/skills/commandments-<slug>/`, the same convention the teaching skills use.
+     */
+    private const array STANDALONE = ['executing-plans'];
+
+    private function publishStandaloneSkills(string $source, string $consumer): int
+    {
+        $count = 0;
+
+        foreach (self::STANDALONE as $slug) {
+            $from = "{$source}/{$slug}";
+            $to = "{$consumer}/.claude/skills/commandments-{$slug}";
 
             if (is_dir($from)) {
                 $this->copyDir($from, $to);

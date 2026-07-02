@@ -66,6 +66,18 @@ final class HooksTest extends TestCase
         $this->assertSame(1, $this->countMatching('Stop', 'plan-reminder'));
     }
 
+    public function test_a_users_own_commandments_hook_is_never_stripped(): void
+    {
+        // A human wired their OWN hook that runs `commandments judge` — no stamp, ends in `judge`,
+        // not one of our reminder subcommands. Wiring must preserve it, in its own event.
+        $ownHook = 'php vendor/bin/commandments judge --changes';
+        $this->write(['hooks' => ['PostToolUse' => [['hooks' => [['type' => 'command', 'command' => $ownHook]]]]]]);
+
+        Hooks::wire($this->path);
+
+        $this->assertContains($ownHook, $this->commands('PostToolUse'), "the user's own commandments hook survives");
+    }
+
     public function test_the_plan_reminder_post_tool_use_is_scoped_to_exit_plan_mode(): void
     {
         Hooks::wire($this->path);
@@ -75,7 +87,7 @@ final class HooksTest extends TestCase
 
         foreach ((array) ($settings['hooks']['PostToolUse'] ?? []) as $group) {
             foreach ((array) ($group['hooks'] ?? []) as $hook) {
-                if (str_ends_with((string) ($hook['command'] ?? ''), 'plan-reminder')) {
+                if (str_contains((string) ($hook['command'] ?? ''), ' plan-reminder ')) {
                     $matchers[] = $group['matcher'] ?? null;
                 }
             }
@@ -102,11 +114,11 @@ final class HooksTest extends TestCase
 
     private function countMatching(string $event, string $subcommand): int
     {
-        // Match on the trailing subcommand token so `remind` never counts `judge-reminder` /
-        // `plan-reminder` — the commands end with the exact subcommand they invoke.
+        // Match the subcommand as a whole token (our stamped commands read `… commandments" <sub> #…`),
+        // so `remind` never counts `judge-reminder` / `plan-reminder`.
         return count(array_filter(
             $this->commands($event),
-            static fn (string $c): bool => str_contains($c, 'commandments') && str_ends_with($c, $subcommand),
+            static fn (string $c): bool => str_contains($c, 'commandments') && str_contains($c, " {$subcommand} "),
         ));
     }
 
