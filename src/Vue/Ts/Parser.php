@@ -431,7 +431,7 @@ final class Parser
         $rest = null;
 
         while (! $this->atPunct('}') && ! $this->eof()) {
-            if ($this->atThreeDots()) {
+            if ($this->advanceIfThreeDots()) {
                 $rest = $this->advance()->value;
             } else {
                 $key = $this->advance()->value;

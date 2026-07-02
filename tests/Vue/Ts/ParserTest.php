@@ -148,6 +148,15 @@ final class ParserTest extends TestCase
         $this->assertSame(['a', 'b', 'd', 'e', 'f'], $module->localNames());
     }
 
+    public function test_an_object_rest_element_binds_its_name_not_a_dot(): void
+    {
+        // The bug: `{ a, ...rest }` consumed a single `.` of the `...`, leaking bogus `.` locals
+        // (`['a', '.', 'rest', '.']`) — a rest destructure poisoned every downstream name query.
+        $module = Parser::module('const { a, ...rest } = useThing();');
+
+        $this->assertSame(['a', 'rest'], $module->localNames());
+    }
+
     public function test_the_parser_is_total_on_gnarly_input(): void
     {
         // No exception, whatever we throw at it — the point of the verbatim floor.
