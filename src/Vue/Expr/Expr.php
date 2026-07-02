@@ -98,7 +98,7 @@ final class Expr
             self::CONDITIONAL => array_merge($this->child('test')->roots(), $this->child('then')->roots(), $this->child('else')->roots()),
             self::ARRAY => $this->rootsOf($this->children('elements')),
             self::OBJECT => $this->rootsOf($this->children('values')),
-            self::ARROW => $this->child('body')->roots(),
+            self::ARROW => array_values(array_diff($this->child('body')->roots(), $this->rootsOf($this->children('params')))),
             self::ASSIGN => array_merge($this->child('target')->roots(), $this->child('value')->roots()),
             default => [],
         };

@@ -249,8 +249,9 @@ final class Parser
 
             if ($this->isPunct('=>')) {
                 $this->next();
+                $param = new Expr(Expr::IDENTIFIER, ['name' => $token['value']]);
 
-                return new Expr(Expr::ARROW, ['body' => $this->expression()]);
+                return new Expr(Expr::ARROW, ['params' => [$param], 'body' => $this->expression()]);
             }
 
             return new Expr(Expr::IDENTIFIER, ['name' => $token['value']]);
@@ -297,15 +298,15 @@ final class Parser
             $this->next();
             $this->skipArrowMarker();
 
-            return new Expr(Expr::ARROW, ['body' => $this->expression()]);
+            return new Expr(Expr::ARROW, ['params' => [], 'body' => $this->expression()]);
         }
 
-        $inner = $this->expression();
+        $params = [$this->expression()];
 
-        // Multi-parameter arrow: `(a, b) => …` — keep parsing params, ignore them.
+        // Multi-parameter arrow: `(a, b) => …` — each param binds a name locally.
         while ($this->isPunct(',')) {
             $this->next();
-            $this->expression();
+            $params[] = $this->expression();
         }
 
         $this->expect(')');
@@ -313,10 +314,10 @@ final class Parser
         if ($this->isPunct('=>')) {
             $this->next();
 
-            return new Expr(Expr::ARROW, ['body' => $this->expression()]);
+            return new Expr(Expr::ARROW, ['params' => $params, 'body' => $this->expression()]);
         }
 
-        return $inner;
+        return $params[0];
     }
 
     private function arrayLiteral(): Expr
