@@ -46,6 +46,53 @@ final class ManualHydrationLoopDetectorTest extends TestCase
         $this->assertSame(['App\\Mapper::loop'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
 
+    public function test_does_not_flag_conditional_or_callback_construction(): void
+    {
+        // Reported (#258): the loop FILTERS and conditionally builds — an `if`-guarded construction,
+        // or a `::from()` inside an Option-gated callback. `::collect()` maps every row 1:1 and
+        // can't express the skip, so these aren't the manual-hydration smell. A straight per-row
+        // loop in the same class still is.
+        $code = <<<'PHP'
+        <?php
+        namespace Spatie\LaravelData { class Data {} }
+        namespace App {
+            use Spatie\LaravelData\Data;
+            class CandidateData extends Data {}
+            class Resolver {
+                public function guarded(array $palette): array {
+                    $out = [];
+                    foreach ($palette as $d) {
+                        if ($d->connectable()) {
+                            $out[] = CandidateData::from($d->value(), $d->kind());
+                        }
+                    }
+                    return $out;
+                }
+                public function callback(array $palette): array {
+                    $out = [];
+                    foreach ($palette as $d) {
+                        $d->option()->inspect(function ($v) use (&$out) {
+                            $out[] = CandidateData::from($v);
+                        });
+                    }
+                    return $out;
+                }
+                public function straight(array $rows): array {
+                    $out = [];
+                    foreach ($rows as $row) {
+                        $out[] = CandidateData::from($row);
+                    }
+                    return $out;
+                }
+            }
+        }
+        PHP;
+
+        $hits = (new ManualHydrationLoopDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['App\\Resolver::straight'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
+
     public function test_does_not_flag_a_tolerant_decode_loop_that_skips_bad_entries(): void
     {
         $code = <<<'PHP'

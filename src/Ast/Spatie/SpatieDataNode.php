@@ -8,11 +8,18 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\Closure;
+use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\Ternary;
 use PhpParser\Node\Stmt\Continue_;
 use PhpParser\Node\Stmt\Do_;
+use PhpParser\Node\Stmt\ElseIf_;
+use PhpParser\Node\Stmt\Else_;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
+use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\TryCatch;
 use PhpParser\Node\Stmt\While_;
@@ -70,6 +77,37 @@ final class SpatieDataNode extends NodeMatch
     public function isPerItemHydration(): bool
     {
         return $this->isWithinLoop() || $this->isWithinArrayMap();
+    }
+
+    /**
+     * Is this `::from()` NOT a straight per-row construction — guarded by a branch (`if`, `match`,
+     * `?:`) or buried in a nested callback (an `Option::inspect`/`->map`, etc.) between it and its
+     * loop, rather than run once per element? Such a loop FILTERS or conditionally builds, and
+     * `::collect()` maps every row 1:1 — it can't express the skip — so it is not the manual-
+     * hydration smell. `array_map`'s own callback is the recognised mapping idiom, so it is NOT
+     * treated as a nested callback here. Only meaningful inside a loop (the `array_map` path has
+     * no loop to gate against and returns false).
+     */
+    public function isConditionalConstruction(): bool
+    {
+        $loop = $this->walkUp(static fn (Node $node): bool =>
+            $node instanceof Foreach_ || $node instanceof For_ || $node instanceof While_ || $node instanceof Do_);
+
+        if ($loop === null) {
+            return false;
+        }
+
+        for ($node = $this->node?->getAttribute('parent'); $node instanceof Node && $node !== $loop; $node = $node->getAttribute('parent')) {
+            if ($node instanceof If_ || $node instanceof Else_ || $node instanceof ElseIf_ || $node instanceof Match_ || $node instanceof Ternary) {
+                return true;
+            }
+
+            if (($node instanceof Closure || $node instanceof ArrowFunction) && ! self::isArrayMapArgument($node->getAttribute('parent'))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

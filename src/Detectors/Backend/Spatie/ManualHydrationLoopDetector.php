@@ -36,6 +36,7 @@ final class ManualHydrationLoopDetector implements Detector, Repentable
             ->whereStaticCall('from')
             ->where(static fn (SpatieDataNode $node): bool => $node->onDataClass())
             ->where(static fn (SpatieDataNode $node): bool => $node->isPerItemHydration())
+            ->reject(static fn (SpatieDataNode $node): bool => $node->isConditionalConstruction())
             ->reject(static fn (SpatieDataNode $node): bool => $node->isWithinTolerantCatch())
             ->reject(static fn (SpatieDataNode $node): bool => $node->isKeyedMapAssignment())
             ->get();
