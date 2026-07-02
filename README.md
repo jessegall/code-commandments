@@ -664,6 +664,22 @@ vendor/bin/commandments repent src --branch=develop     # ...vs a different base
 The whole tree is still parsed (so cross-file rewrites stay correct); only the
 files that get written are scoped.
 
+### Prop types when extracting components
+
+When an extract scribe lifts a chunk into its own component, it types every prop it
+generates rather than emitting `defineProps<{ x: unknown }>()`. Types are resolved by
+**sound AST inference** first — a `ref`/`computed` literal, a homogeneous literal array
+(`[50, 100, 200]` → `number[]`), a destructured composable's return field, a loop
+variable's element type, a prop traced up the render tree to where the value originates.
+Nothing is guessed: if only a real type checker could resolve it, it stays `unknown`.
+
+If — and only if — the target project already ships **`vue-tsc`**, a last rung asks it
+to resolve whatever the AST couldn't (a member-typed `computed`, a `ref(props.x)`, a
+composable with an inferred return). This is never a dependency of the package; a project
+without `vue-tsc` gets exactly the AST inference and no more. The checker runs
+`--incremental` (a cached `.tsbuildinfo`) with `--skipLibCheck`, batched to one run per
+component — `repent` isn't interactive, so the extra pass is worth the precision.
+
 ## Scaffolding
 
 Some fixes need a **reusable construct** to point at — a no-op invokable to default an
