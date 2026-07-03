@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="888" viewBox="0 0 1120 888" font-family="SF Mono, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13">
+  <style>
+    text { white-space: pre; }
+    .t   { fill: #d6d8dd; }
+    .dim { fill: #7d8390; }
+    .yel { fill: #e5c07b; font-weight: 600; }
+    .cyn { fill: #56b6c2; }
+    .grn { fill: #98c379; }
+    .b   { font-weight: 600; }
+  </style>
+  <rect width="1120" height="888" rx="12" fill="#22252e"/>
+  <rect width="1120" height="36" rx="12" fill="#2e3340"/>
+  <rect y="24" width="1120" height="12" fill="#2e3340"/>
+  <circle cx="22" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="42" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="18" r="6" fill="#28c840"/>
+  <text x="560" y="22" text-anchor="middle" class="dim">claude</text>
+  <g xml:space="preserve">
+    <text x="24" y="66"><tspan class="dim">&gt; </tspan><tspan class="t">clean up the sins on this branch</tspan></text>
+
+    <text x="24" y="106"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments judge src --branch)</tspan></text>
+    <text x="24" y="126"><tspan class="dim">  ⎿ </tspan><tspan class="yel">backend/exceptions</tspan><tspan class="t">  (2)</tspan></text>
+    <text x="24" y="146"><tspan class="dim">      ↳ read the backend/exceptions skill before fixing</tspan></text>
+    <text x="24" y="166"><tspan class="cyn">      app/Payments/PayoutJournal.php:42</tspan><tspan class="t">  Shop\Payments\PayoutJournal::record  </tspan><tspan class="dim">[WrappingWithoutCauseDetector]</tspan></text>
+    <text x="24" y="186"><tspan class="cyn">      app/Webhooks/RefundWebhook.php:35</tspan><tspan class="t">  Shop\Webhooks\RefundWebhook::handle  </tspan><tspan class="dim">[WrappingWithoutCauseDetector]</tspan></text>
+    <text x="24" y="206"><tspan class="grn">      ↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=wrapping-without-cause</tspan></text>
+
+    <text x="24" y="246"><tspan class="yel">    backend/guard-clauses-and-flow</tspan><tspan class="t">  (2)</tspan></text>
+    <text x="24" y="266"><tspan class="dim">      ↳ read the backend/guard-clauses-and-flow skill before fixing</tspan></text>
+    <text x="24" y="286"><tspan class="cyn">      app/Orders/OrderCloser.php:27</tspan><tspan class="t">  Shop\Orders\OrderCloser::close  </tspan><tspan class="dim">[RedundantElseDetector]</tspan></text>
+    <text x="24" y="306"><tspan class="cyn">      app/Orders/RefundService.php:41</tspan><tspan class="t">  Shop\Orders\RefundService::refund  </tspan><tspan class="dim">[RedundantElseDetector]</tspan></text>
+    <text x="24" y="326"><tspan class="grn">      ↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=redundant-else</tspan></text>
+
+    <text x="24" y="366"><tspan class="yel">    backend/value-objects</tspan><tspan class="t">  (1)</tspan></text>
+    <text x="24" y="386"><tspan class="dim">      ↳ read the backend/value-objects skill before fixing</tspan></text>
+    <text x="24" y="406"><tspan class="cyn">      app/Reporting/SalesReport.php:30</tspan><tspan class="t">  Shop\Reporting\SalesReport::daily  </tspan><tspan class="dim">[ArrayReturnBagDetector]</tspan></text>
+
+    <text x="24" y="446"><tspan class="t b">    5 sins</tspan><tspan class="t"> across 3 skills.</tspan></text>
+    <text x="24" y="466"><tspan class="dim">    ↳ the rule above all: trace each sin to where it is BORN and fix it THERE — read fix-at-the-source.</tspan></text>
+    <text x="24" y="486"><tspan class="dim">    ↳ checklist written to .commandments/sins.md — fix each item, then delete its line</tspan></text>
+
+    <text x="24" y="526"><tspan class="t">⏺ Five sins. Four are auto-fixable — repenting those first.</tspan></text>
+
+    <text x="24" y="566"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments repent --repent=latest)</tspan></text>
+    <text x="24" y="586"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ Repented 4 files.</tspan></text>
+
+    <text x="24" y="626"><tspan class="grn">⏺ </tspan><tspan class="t b">Skill</tspan><tspan class="dim">(commandments-backend-value-objects)</tspan></text>
+    <text x="24" y="646"><tspan class="dim">  ⎿ Launching skill: commandments-backend-value-objects</tspan></text>
+
+    <text x="24" y="686"><tspan class="t">⏺ SalesReport::daily returns an array&lt;string,mixed&gt; bag — the shape is born here,</tspan></text>
+    <text x="24" y="706"><tspan class="t">  so the fix is a real type: a final DailySales Data class with typed properties,</tspan></text>
+    <text x="24" y="726"><tspan class="t">  and the call sites read -&gt;revenue instead of ['revenue'].</tspan></text>
+
+    <text x="24" y="766"><tspan class="grn">⏺ </tspan><tspan class="t b">Update</tspan><tspan class="dim">(app/Reporting/SalesReport.php)</tspan></text>
+
+    <text x="24" y="806"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments judge src --branch)</tspan></text>
+    <text x="24" y="826"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ No sins found.</tspan></text>
+
+    <text x="24" y="866"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -am "refactor: type SalesReport::daily as a DailySales value object")</tspan></text>
+  </g>
+</svg>
