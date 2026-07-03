@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="600" viewBox="0 0 660 600" font-family="SF Mono, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13">
+  <style>
+    text { white-space: pre; }
+    .t   { fill: #d6d8dd; }
+    .dim { fill: #7d8390; }
+    .grn { fill: #98c379; }
+    .b   { font-weight: 600; }
+  </style>
+  <rect width="660" height="600" rx="12" fill="#22252e"/>
+  <rect width="660" height="36" rx="12" fill="#2e3340"/>
+  <rect y="24" width="660" height="12" fill="#2e3340"/>
+  <circle cx="22" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="42" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="18" r="6" fill="#28c840"/>
+  <text x="330" y="22" text-anchor="middle" class="dim">claude</text>
+  <g xml:space="preserve">
+    <text x="24" y="66"><tspan class="dim">&gt; </tspan><tspan class="t">plan approved</tspan></text>
+
+    <text x="24" y="106"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git switch -c plan/typed-sales-reports)</tspan></text>
+    <text x="24" y="126"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments checks start)</tspan></text>
+    <text x="24" y="146"><tspan class="dim">  ⎿ ▶ composer install</tspan></text>
+
+    <text x="24" y="186"><tspan class="t">⏺ Phase 1: the DailySales value object …</tspan></text>
+
+    <text x="24" y="226"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments checks phase)</tspan></text>
+    <text x="24" y="246"><tspan class="dim">  ⎿ ▶ composer lint</tspan></text>
+    <text x="24" y="266"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -m "feat: DailySales value object")</tspan></text>
+
+    <text x="24" y="306"><tspan class="t">⏺ Phase 2: the report call sites …</tspan></text>
+
+    <text x="24" y="346"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments checks phase)</tspan></text>
+    <text x="24" y="366"><tspan class="dim">  ⎿ ▶ composer lint</tspan></text>
+    <text x="24" y="386"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -m "refactor: call sites read DailySales")</tspan></text>
+
+    <text x="24" y="426"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments checks complete)</tspan></text>
+    <text x="24" y="446"><tspan class="dim">  ⎿ ▶ composer test</tspan></text>
+    <text x="24" y="466"><tspan class="dim">    ▶ vendor/bin/commandments judge --branch</tspan></text>
+    <text x="24" y="486"><tspan class="dim">    </tspan><tspan class="grn">✓ No sins found.</tspan></text>
+
+    <text x="24" y="526"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments plan done)</tspan></text>
+    <text x="24" y="546"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ Plan marked done — the keep-going Stop nudge is cleared.</tspan></text>
+  </g>
+</svg>

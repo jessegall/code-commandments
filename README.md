@@ -40,7 +40,7 @@ The loop is simple:
 One pass of that loop, with an agent driving:
 
 <p align="center">
-  <img src="docs/agent-loop.svg" width="920" alt="An agent running one pass of the loop in a terminal: judge finds five sins across three skills, repent auto-fixes four, the agent fixes the last one at the source, judge comes back clean." />
+  <img src="docs/agent-loop.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, repent auto-fixes two, the agent fixes feature envy and an array bag at the source, judge comes back clean." />
 </p>
 
 Under the hood there are two layers:
@@ -155,13 +155,15 @@ A hook you wrote by hand is always preserved.
 
 ### Plan execution
 
-When you approve a plan, a `PostToolUse`/`ExitPlanMode` hook loads the
+Optional. When you approve a plan, a `PostToolUse`/`ExitPlanMode` hook loads the
 `executing-plans` skill with your project's profile. The agent branches, works
-phase by phase (scoped tests + `checks phase`, commit each), and runs the full
-gate (`checks complete`, which appends `judge --branch`) once at the end. Opt into
-`keepGoing()` and a `Stop` hook re-nudges until `commandments plan done`. All
-state is read live from config and scoped to the current git worktree. Configure
-it:
+phase by phase (`checks phase`, commit each), and runs the full gate
+(`checks complete`, which appends `judge --branch`) once at the end. Opt into
+`keepGoing()` and a `Stop` hook re-nudges until `commandments plan done`.
+
+The profile lives in `.commandments/config.php`, next to everything else. A
+starter block is injected on `composer update`, its `onComplete` inferred from
+your composer/npm scripts. Edit or remove it freely:
 
 ```php
 use JesseGall\CodeCommandments\PlanExecution;
@@ -176,8 +178,11 @@ $config->planExecution(fn (PlanExecution $plan) => $plan
     ->onComplete('composer test')); // the end gate; judge --branch runs after
 ```
 
-On `composer update` a starter block is injected automatically, its `onComplete`
-inferred from your composer/npm scripts. Edit it freely.
+A plan run in the terminal:
+
+<p align="center">
+  <img src="docs/plan-execution.svg" width="660" alt="An agent executing an approved plan: branch, two phases each ending in checks phase and a commit, then checks complete with judge --branch, then plan done." />
+</p>
 
 ### Register your own hook
 
