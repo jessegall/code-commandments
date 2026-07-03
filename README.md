@@ -40,7 +40,7 @@ The loop is simple:
 One pass of that loop, with an agent driving:
 
 <p align="center">
-  <img src="docs/agent-loop.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, repent auto-fixes two, the agent fixes feature envy and an array bag at the source, judge comes back clean." />
+  <img src="docs/agent-loop-session.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, repent auto-fixes two, the agent fixes feature envy and an array bag at the source, judge comes back clean." />
 </p>
 
 Under the hood there are two layers:
