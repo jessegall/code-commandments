@@ -358,34 +358,7 @@ The teaching layer — one discipline each, the doc an agent reads to fix a sin.
 `SKILL.md` is generated from its class (`composer sins`).
 
 <!-- BEGIN: skills (auto-generated — run `composer readme`) -->
-_17 skills._
-
-### Backend
-
-| Skill | What it teaches |
-|---|---|
-| `Absence` | modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw). |
-| `ConcurrentState` | state shared across requests/workers (`::for($id): Concurrent<self>`). |
-| `Documentation` | concise, present-tense docs; rare inline comments; never narrate the past. |
-| `EnumsWithBehaviour` | a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site). |
-| `Exceptions` | throwing or catching: named `::for()` factory exceptions, never swallow a failure. |
-| `FixAtTheSource` | the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made. |
-| `GuardClausesAndFlow` | validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline. |
-| `LaravelIdioms` | typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods. |
-| `PassTheObject` | demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure). |
-| `RoleVocabulary` | a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract. |
-| `SpatieData` | how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly. |
-| `TellDontAsk` | behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception. |
-| `TypeHonesty` | a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`. |
-| `ValueObjects` | give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.) |
-
-### Frontend
-
-| Skill | What it teaches |
-|---|---|
-| `MirroredServerType` | a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one. |
-| `VueComponents` | extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop. |
-| `VueControlFlow` | dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject. |
+_17 skills — full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
 ## Sins & detectors
@@ -395,158 +368,7 @@ the fix and split by engine. Each sin has one detector that finds it, named
 `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated — run `composer readme`) -->
-_61 sins across 17 skills._
-
-### Backend
-
-#### `backend/absence`
-
-| Sin | What it flags |
-|---|---|
-| `DeNulledFinder` | A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. |
-| `NullableCallback` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
-| `OptionAsNullable` | An `Option` worn as a nullable — `?Option` / `Option \| null`, or `unwrapOr(null)` collapsing it straight back to a null. |
-
-#### `backend/documentation`
-
-| Sin | What it flags |
-|---|---|
-| `ArchaeologyComment` | A comment that narrates the code's past — `// formerly...`, `// used to be a...`, `// refactored into...`, `// no longer an X`. |
-| `BloatedDocblock` | A class whose docblock runs to multiple paragraphs. |
-| `CeremonyDocblock` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
-| `NegativeSpaceComment` | A comment that defends the code against a strawman — `// not random`, `// no magic here`, `// not a coincidence`, `// this isn't dead code`. |
-
-#### `backend/enums-with-behaviour`
-
-| Sin | What it flags |
-|---|---|
-| `ConstClassEnum` | A class that is nothing but scalar constants — a closed set of values hand- rolled as `const STATUS_PENDING = 'pending'` instead of a native backed enum. |
-| `EnumCaseOrChain` | `$x === Status::Pending \|\| $x === Status::Paid` — a hand-rolled membership test against two-or-more cases of the same backed enum. |
-| `EnumValueMatch` | A `match`/`switch` over a backed enum's `->value` at a call site — the enum unwrapped to a scalar so it can be dispatched on out here. |
-| `InArrayMirrorsEnum` | `in_array($x, ['a', 'b', …])` whose literals ARE an existing backed enum's case values — testing membership of a set the type already seals. |
-| `MatchDefaultReturnsNull` | A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing. |
-| `StringMatchMirrorsEnum` | A `match`/`switch` whose arm conditions are string/int literals that ARE an existing backed enum's case values — dispatching on the loose strings instead of the type that already seals them. |
-
-#### `backend/exceptions`
-
-| Sin | What it flags |
-|---|---|
-| `GenericException` | Throwing a generic SPL/base exception (`throw new \RuntimeException(...)`) instead of a named domain exception. |
-| `MessageAtThrow` | `throw new X("…message…")` — the failure described with a prose string at the throw site instead of a named factory carrying domain VALUES (`throw OrderNotFound::forId($id)`). |
-| `SwallowCatch` | A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`. |
-| `WrappingWithoutCause` | Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from. |
-
-#### `backend/fix-at-the-source`
-
-| Sin | What it flags |
-|---|---|
-| `DuplicateFunction` | Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count). |
-| `ManufacturedFakeFill` | Filling an argument with a manufactured fake on absence — `name: $row['name'] ?? ''`, `(int) ($row['id'] ?? 0)`. |
-| `NearDuplicateFunction` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
-
-#### `backend/guard-clauses-and-flow`
-
-| Sin | What it flags |
-|---|---|
-| `DeepNesting` | An `if` nested three-deep — a pyramid of conditions. |
-| `IfElseLadder` | An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch. |
-| `InlineThrow` | A `?? throw` buried inside a larger expression — fed into a call or dereferenced on the same line instead of guarded at the top. |
-| `LoopInvertedGuard` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
-| `NestedTernary` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
-| `RedundantElse` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
-
-#### `backend/pass-the-object`
-
-| Sin | What it flags |
-|---|---|
-| `ParamResolvedFromParam` | A method that UNPACKS its target out of a container parameter — takes a container object AND a scalar key, resolves the key against the container (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`), and works on the resolved target while the container is only ever packaging. |
-
-#### `backend/role-vocabulary`
-
-| Sin | What it flags |
-|---|---|
-| `NullableRegistryLookup` | A class's own keyed store handing back `null` on a miss — `return $this->items[$key] ?? null`. |
-
-#### `backend/tell-dont-ask`
-
-| Sin | What it flags |
-|---|---|
-| `FeatureEnvy` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
-| `KeyedLookupEnvy` | Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`). |
-
-#### `backend/type-honesty`
-
-| Sin | What it flags |
-|---|---|
-| `MaskedInvariant` | `$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state. |
-| `ScratchStateRestore` | A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`. |
-
-#### `backend/value-objects`
-
-| Sin | What it flags |
-|---|---|
-| `ArrayBag` | An `array` parameter read by a string-literal key (`$bag['total']`) — a structured bag that should be a typed value object. |
-| `ArrayReturnBag` | Returning a multi-field, string-keyed array literal — a structured bag that should be a typed value object. |
-| `DataClump` | The same three-or-more value parameters (`string $shopId, string $userId, string $channelId`) threaded through two-or-more signatures in different classes. |
-| `PositionalTupleReturn` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` (also from a closure / arrow fn) — bundles several independent values as a keyless list the caller must destructure by position. |
-| `RawDecodedArrayReturn` | Returning a freshly-decoded payload straight out of a boundary — the raw `array` from `json_decode(...)` crossing back into the app untyped. |
-
-#### `backend/concurrent-state`
-
-| Sin | What it flags |
-|---|---|
-| `ConcurrentSubclass` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
-
-#### `backend/laravel-idioms`
-
-| Sin | What it flags |
-|---|---|
-| `ConfigRead` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
-| `ContainerReach` | Reaching into the container with `app()` / `resolve()` from a class the container itself resolves — the dependency belongs in the constructor. |
-| `FacadeCall` | A Laravel facade call — `Cache::get(...)`, `Log::info(...)`. |
-| `MassUpdateAtCallSite` | A mass `->update([...])` on an Eloquent model at a call site — an untyped array of attributes smuggling a mutation past the model's own methods. |
-| `ModelMutationAtCallSite` | Setting an Eloquent model's properties at a call site and then `->save()`-ing it — the mutation belongs behind an intention-revealing method on the model (`$order->markPaid()`), not smeared across the caller. |
-| `RawRequestInput` | An untyped read off a Laravel request — `->input(...)`, `->get(...)`, `->query(...)`, `->post(...)` on a `Request`/`FormRequest`/MCP request. |
-| `RequestAccessorRecast` | A typed request accessor immediately re-flattened to a bare string — `$request->string($k)->toString()` or `(string) $request->string($k)`. |
-
-#### `backend/spatie-data`
-
-| Sin | What it flags |
-|---|---|
-| `AllNullableData` | A Spatie Data class whose every promoted field is NULLABLE. |
-| `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`). |
-| `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback. |
-| `NewDataObject` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
-| `NonFinalData` | A Spatie `Data` class that is not declared `final`. |
-
-### Frontend
-
-#### `frontend/vue-components`
-
-| Sin | What it flags |
-|---|---|
-| `CompoundInlineComponent` | A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`, `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`) are filled with a substantial body right here in the parent template, instead of living in its own component. |
-| `DeepDataReach` | A CLUSTER of deep data reaches that share one nested object — an element binding or interpolating `order.customer.name`, `order.customer.email`, … from several places in a sizeable template. |
-| `DeepNested` | A template nested far too deep — an element many levels in that still has several more levels of markup beneath it. |
-| `DuplicateElement` | Two-or-more identical blocks of template markup — the same tags, attributes and children, copy-pasted (the comparison is by STRUCTURE, blind to formatting, whitespace and line numbers). |
-| `PropDrilling` | Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a child that doesn't either. |
-| `PropMutation` | A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event handler assigning to it (`@click="confirmingClose = true"`). |
-
-#### `frontend/vue-control-flow`
-
-| Sin | What it flags |
-|---|---|
-| `ControlFlowOnElement` | A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a real element or component instead of a `<template>`. |
-| `IndexAsKey` | A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`. |
-| `LoopWithCondition` | A `v-for` and a `v-if`/`v-else-if` on the SAME element. |
-| `SwitchCase` | A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a different case — a switch wearing conditionals. |
-
-#### `frontend/mirrored-server-type`
-
-| Sin | What it flags |
-|---|---|
-| `MirroredServerType` | A hand-written TypeScript type that mirrors a backend Spatie `Data` class — the same name and (spelling aside) the same fields. |
-
+_61 sins across 17 skills — full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## Auto-fixing
@@ -559,7 +381,8 @@ mechanical correct fix, and for those the tool ships a **scribe**.
 A scribe is a small, deterministic rewriter: it edits the parsed **syntax tree**, not
 the text, so the change is exact and formatting-safe. There are two kinds — *whole-tree
 maintenance passes* that always run, and *per-sin fixes* tied to a specific detector
-(both are listed below). The `repent` command runs them all until nothing changes.
+(both are listed in [README.scribes.md](README.scribes.md)). The `repent` command runs
+them all until nothing changes.
 
 For example, a backend `LoopInvertedGuard` — a whole loop body wrapped in an `if` —
 is rewritten to a `continue` guard so the body stays flat:
@@ -614,39 +437,7 @@ vendor/bin/commandments repent resources/js
 ```
 
 <!-- BEGIN: scribes (auto-generated — run `composer readme`) -->
-_`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes._
-
-### Maintenance passes
-
-Whole-tree PHP rewrites, run on every `repent`:
-
-| Scribe | What it does |
-|---|---|
-| `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill. |
-| `RedundantReturnTypeScribe` | Strips a redundant explicit return type from a single-expression arrow function when the expression PROVABLY yields exactly that class. |
-
-### Backend
-
-| Sin | The fix `repent` applies |
-|---|---|
-| `WrappingWithoutCause` | When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace. |
-| `LoopInvertedGuard` | Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`. |
-| `NestedTernary` | Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`. |
-| `RedundantElse` | Drop the `else` after an `if` branch that already returns/throws/continues/breaks. |
-| `ManualHydrationLoop` | Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop. |
-| `NewDataObject` | Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`. |
-| `NonFinalData` | Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base. |
-
-### Frontend
-
-| Sin | The fix `repent` applies |
-|---|---|
-| `CompoundInlineComponent` | Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component. |
-| `DeepDataReach` | Pass the mid-object as a prop; don't reach deep into nested data from the template. |
-| `DeepNested` | Extract a far-too-deeply-nested subtree into its own component. |
-| `DuplicateElement` | Extract repeated identical markup into one component. |
-| `ControlFlowOnElement` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
-| `SwitchCase` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
+_`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes — full tables in [README.scribes.md](README.scribes.md)._
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes (a fixpoint), so one run

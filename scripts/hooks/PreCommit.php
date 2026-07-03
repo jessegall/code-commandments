@@ -8,7 +8,7 @@ declare(strict_types=1);
  * the same contracts `ReadmeIsCurrentTest` and `GeneratedSkillsAreCurrentTest` enforce
  * in CI, just caught at commit time instead of after.
  *
- *   - README.md "Detectors" table  ← Detectors\Catalog        (generate-readme.php)
+ *   - README.md excerpts + README.{sins,scribes,skills}.md tables  ← Detectors\Catalog  (generate-readme.php)
  *   - skills/commandments/.../SKILL.md  ← Sins/ + Skills/ + fixtures  (generate-skills.php)
  *
  * Register it ONCE (writes .git/hooks/pre-commit → this script):
@@ -19,10 +19,10 @@ declare(strict_types=1);
  * git hook again.
  */
 
-/** path (relative to the repo root) that an artifact is generated into => its generator script. */
+/** generator script => paths (relative to the repo root) it generates into. */
 const GENERATORS = [
-    'README.md' => 'scripts/generate-readme.php',
-    'skills/commandments' => 'scripts/generate-skills.php',
+    'scripts/generate-readme.php' => ['README.md', 'README.sins.md', 'README.scribes.md', 'README.skills.md'],
+    'scripts/generate-skills.php' => ['skills/commandments'],
 ];
 
 $root = rtrim((string) shell_exec('git rev-parse --show-toplevel 2>/dev/null'), "\n");
@@ -42,7 +42,7 @@ if (in_array('--install', $argv, true)) {
 
 $restaged = [];
 
-foreach (GENERATORS as $path => $generator) {
+foreach (GENERATORS as $generator => $paths) {
     passthru('php ' . escapeshellarg("{$root}/{$generator}") . ' > /dev/null 2>&1', $generated);
 
     if ($generated !== 0) {
@@ -50,11 +50,13 @@ foreach (GENERATORS as $path => $generator) {
         exit(1);
     }
 
-    exec('git diff --quiet -- ' . escapeshellarg("{$root}/{$path}"), $_, $dirty);
+    foreach ($paths as $path) {
+        exec('git diff --quiet -- ' . escapeshellarg("{$root}/{$path}"), $_, $dirty);
 
-    if ($dirty !== 0) {
-        passthru('git add ' . escapeshellarg("{$root}/{$path}"));
-        $restaged[] = $path;
+        if ($dirty !== 0) {
+            passthru('git add ' . escapeshellarg("{$root}/{$path}"));
+            $restaged[] = $path;
+        }
     }
 }
 
