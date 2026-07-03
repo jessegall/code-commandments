@@ -9,18 +9,9 @@ use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration so a
- * `composer update` always lands the current skills and briefing. Idempotent:
- *
- *  - publishes each teaching skill into `.claude/skills/commandments/<slug>/` — the
- *    slug is engine-prefixed (`backend/value-objects`, `frontend/vue-components`), so
- *    the whole package lives under one `commandments/` namespace dir,
- *  - injects the auto-managed "Skills — load before you work" block into CLAUDE.md
- *    (see {@see ClaudeSection}),
- *  - keeps the package's generated artifacts gitignored, and
- *  - re-wires our Claude Code {@see Hooks} to the current events/commands, so a hook change (a new
- *    hook, or a move to `PostToolUse`) reaches every project on `composer update`, not only `install`.
- *
- * Runs in the consumer's working directory (where `composer update` runs).
+ * Publishes the current skills, CLAUDE.md briefing, config surface, and Claude Code hooks
+ * into the consumer on install and every `composer update`. Idempotent; runs in the
+ * consumer's working directory.
  */
 final class Sync
 {
@@ -35,6 +26,7 @@ final class Sync
         $this->ensureGitignored("{$consumer}/.gitignore");
         $this->ensureConfigStub($consumer);
         $this->ensurePlanExecution($consumer);
+        $this->ensureDisableMenus($consumer);
         $this->ensureCommandmentsGitignore($consumer);
         Hooks::wire("{$consumer}/.claude/settings.json", Hooks::forProject($consumer));
         $this->removeLegacyArtifacts($consumer);
@@ -64,6 +56,16 @@ final class Sync
     private function ensurePlanExecution(string $consumer): void
     {
         ConfigScribe::inProject($consumer)->ensurePlanExecution(ChecksInference::detect($consumer));
+    }
+
+    /**
+     * Self-heal the disable menus into the consumer's config: every skill and sin as a
+     * commented-out `disable()` argument. New entries are appended on every sync; the human's
+     * lines are never rewritten (see {@see DisableMenu}).
+     */
+    private function ensureDisableMenus(string $consumer): void
+    {
+        DisableMenu::inProject($consumer)->ensure();
     }
 
     /**

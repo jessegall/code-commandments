@@ -136,6 +136,10 @@ return function (Config $config): void {
 };
 ```
 
+The scaffold also carries two menus, `$disabledSkills` and `$disabledSins`: every
+shipped skill and sin as a commented-out `disable()` argument. Remove the `//` to
+turn a rule off. New rules are appended on `composer update`; your edits are kept.
+
 Each move is named for what it registers: `paths`, `disable`, `detector`,
 `configure`, `package` (see [Developing detectors](#developing-detectors)), `hook`
 and `planExecution` (see [Hooks](#hooks)). `configure` finds the detector by the
