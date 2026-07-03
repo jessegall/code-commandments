@@ -56,6 +56,6 @@
     <text x="24" y="806"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments judge src --branch)</tspan></text>
     <text x="24" y="826"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ No sins found.</tspan></text>
 
-    <text x="24" y="866"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -am "refactor: type SalesReport::daily as a DailySales value object")</tspan></text>
+    <text x="24" y="866"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(git commit -am "refactor: repent 4 sins, type SalesReport::daily as a DailySales value object")</tspan></text>
   </g>
 </svg>
