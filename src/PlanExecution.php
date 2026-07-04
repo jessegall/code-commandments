@@ -42,6 +42,11 @@ final class PlanExecution
 
     private ?StopPolicy $stopPolicy = null;
 
+    /** @var list<string> */
+    private array $constraints = [];
+
+    private bool $enforceEachPhase = false;
+
     /**
      * The branch a plan is cut from and judged against — the base for the new plan branch and the
      * `judge --branch=<base>` the end gate runs. Defaults to `main`.
@@ -123,6 +128,32 @@ final class PlanExecution
     }
 
     /**
+     * A CONSTRAINT the agent must respect for every plan run — a natural-language architectural
+     * invariant `judge` can't decide (e.g. "the frontend is presentation-only; all logic lives in the
+     * backend"). Unlike a check, it isn't a command that passes/fails; the agent verifies it by
+     * reviewing its own branch diff, and the `complete` gate blocks `plan done` until it does. Global
+     * (project-wide); a single run can add more with `commandments constraints add`. Repeatable.
+     */
+    public function constraint(string ...$rules): self
+    {
+        $this->constraints = [...$this->constraints, ...$rules];
+
+        return $this;
+    }
+
+    /**
+     * Force the constraint diff-check after EVERY phase, not just at completion. Off by default — a
+     * phase only gets a soft reminder, while completion is always the hard gate. Turn this on for a
+     * constraint so easily drifted that a mid-plan check earns its cost.
+     */
+    public function enforceConstraintsEachPhase(bool $enforce = true): self
+    {
+        $this->enforceEachPhase = $enforce;
+
+        return $this;
+    }
+
+    /**
      * The commands declared for one {@see Moment} — the single accessor the `checks` command
      * reads, so a new moment is one enum case + one bucket, not a new getter everywhere.
      *
@@ -158,5 +189,20 @@ final class PlanExecution
     public function stopPolicy(): ?StopPolicy
     {
         return $this->stopPolicy;
+    }
+
+    /**
+     * The global constraints — the invariants every plan in this project must hold to.
+     *
+     * @return list<string>
+     */
+    public function constraints(): array
+    {
+        return $this->constraints;
+    }
+
+    public function enforcesConstraintsEachPhase(): bool
+    {
+        return $this->enforceEachPhase;
     }
 }
