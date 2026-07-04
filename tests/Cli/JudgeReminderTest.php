@@ -48,6 +48,19 @@ final class JudgeReminderTest extends TestCase
         $this->assertNull((new JudgeReminder)->reminder($this->repo), 'the same batch is silent after one nudge');
     }
 
+    public function test_it_stays_silent_while_a_plan_is_active(): void
+    {
+        file_put_contents($this->repo . '/Service.php', "<?php\n");
+
+        // A plan judges once at the end (checks complete), committing each phase unjudged — so no nudge.
+        \JesseGall\CodeCommandments\Cli\PlanMarker::inWorktree($this->repo)->activate('HEAD');
+        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent while a plan runs');
+
+        // Once the plan is done, the nudge resumes.
+        \JesseGall\CodeCommandments\Cli\PlanMarker::inWorktree($this->repo)->clear();
+        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'nudges again after the plan ends');
+    }
+
     public function test_it_ignores_non_judged_files(): void
     {
         file_put_contents($this->repo . '/notes.txt', 'hi');
