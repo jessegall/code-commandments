@@ -6,12 +6,12 @@ namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Moment;
-use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\PlanProfile;
 
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
- * `commandments checks [start|phase|complete] [--list]` — run the {@see PlanExecution} checks for
+ * `commandments checks [start|phase|complete] [--list]` — run the {@see PlanProfile} checks for
  * one {@see Moment} of a plan. The `executing-plans` skill calls it at each moment: `start` before
  * the first phase, `phase` after each phase, `complete` (the default) at the very end. The
  * `complete` gate always appends `judge --branch`, so a plan can never finish unjudged.
@@ -49,7 +49,7 @@ final class Checks implements Command
      *
      * @return list<string>
      */
-    public function commands(Moment $moment, PlanExecution $plan): array
+    public function commands(Moment $moment, PlanProfile $plan): array
     {
         $commands = $plan->checksFor($moment);
 
@@ -70,7 +70,7 @@ final class Checks implements Command
      * declaring constraints, so a project that uses none never sees the line. Local-only constraints are
      * still enforced by the `plan done` gate + the executing-plans skill.
      */
-    private function appendsConstraintCheck(Moment $moment, PlanExecution $plan): bool
+    private function appendsConstraintCheck(Moment $moment, PlanProfile $plan): bool
     {
         if ($plan->constraints() === []) {
             return false;

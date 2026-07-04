@@ -7,14 +7,20 @@ namespace JesseGall\CodeCommandments\Tests;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Moment;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\StopPolicy;
 use PHPUnit\Framework\TestCase;
 
 final class PlanExecutionTest extends TestCase
 {
+    public function test_build_freezes_into_a_read_profile(): void
+    {
+        $this->assertInstanceOf(PlanProfile::class, new PlanExecution()->build());
+    }
+
     public function test_defaults_are_conservative(): void
     {
-        $plan = new PlanExecution;
+        $plan = new PlanExecution()->build();
 
         $this->assertSame('main', $plan->baseBranch());
         $this->assertSame('plan/', $plan->prefix());
@@ -34,14 +40,17 @@ final class PlanExecutionTest extends TestCase
         $this->assertSame($plan, $plan->onStart('a'));
         $this->assertSame($plan, $plan->eachPhase('b'));
         $this->assertSame($plan, $plan->onComplete('c'));
+        $this->assertSame($plan, $plan->constraint('x'));
+        $this->assertSame($plan, $plan->enforceConstraintsEachPhase());
     }
 
     public function test_check_buckets_accumulate_per_moment(): void
     {
-        $plan = new PlanExecution;
-        $plan->onStart('composer install')
+        $plan = new PlanExecution()
+            ->onStart('composer install')
             ->eachPhase('composer lint', 'composer types')
-            ->onComplete('composer test');
+            ->onComplete('composer test')
+            ->build();
 
         $this->assertSame(['composer install'], $plan->checksFor(Moment::Start));
         $this->assertSame(['composer lint', 'composer types'], $plan->checksFor(Moment::Phase));
@@ -50,10 +59,10 @@ final class PlanExecutionTest extends TestCase
 
     public function test_keep_going_records_its_policy(): void
     {
-        $this->assertSame(StopPolicy::UntilComplete, new PlanExecution()->keepGoing()->stopPolicy());
+        $this->assertSame(StopPolicy::UntilComplete, new PlanExecution()->keepGoing()->build()->stopPolicy());
         $this->assertSame(
             StopPolicy::RespectUserStops,
-            new PlanExecution()->keepGoing(StopPolicy::RespectUserStops)->stopPolicy(),
+            new PlanExecution()->keepGoing(StopPolicy::RespectUserStops)->build()->stopPolicy(),
         );
     }
 
@@ -93,19 +102,20 @@ final class PlanExecutionTest extends TestCase
 
     public function test_constraints_accumulate_and_are_off_by_default(): void
     {
-        $plan = new PlanExecution;
+        $default = new PlanExecution()->build();
+        $this->assertSame([], $default->constraints());
+        $this->assertFalse($default->enforcesConstraintsEachPhase(), 'phase enforcement is opt-in');
 
-        $this->assertSame([], $plan->constraints());
-        $this->assertFalse($plan->enforcesConstraintsEachPhase(), 'phase enforcement is opt-in');
-
-        $plan->constraint('Frontend is presentation-only.')
-            ->constraint('No new global facades.', 'No raw SQL in controllers.');
+        $plan = new PlanExecution()
+            ->constraint('Frontend is presentation-only.')
+            ->constraint('No new global facades.', 'No raw SQL in controllers.')
+            ->enforceConstraintsEachPhase()
+            ->build();
 
         $this->assertSame(
             ['Frontend is presentation-only.', 'No new global facades.', 'No raw SQL in controllers.'],
             $plan->constraints(),
         );
-        $this->assertSame($plan, $plan->enforceConstraintsEachPhase());
         $this->assertTrue($plan->enforcesConstraintsEachPhase());
     }
 }

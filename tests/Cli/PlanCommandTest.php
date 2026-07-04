@@ -58,7 +58,7 @@ final class PlanCommandTest extends TestCase
     public function test_done_is_blocked_until_constraints_are_verified(): void
     {
         PlanMarker::inWorktree($this->root)->activate('sha');
-        $constraints = PlanConstraints::inWorktree($this->root, new PlanExecution);
+        $constraints = PlanConstraints::inWorktree($this->root, new PlanExecution()->build());
         $constraints->addLocal('No frontend logic.');
 
         // Unverified → refused, marker survives.
@@ -69,13 +69,13 @@ final class PlanCommandTest extends TestCase
         $constraints->markVerified('sha');
         $this->assertSame(0, $this->exec('done'));
         $this->assertFalse(PlanMarker::inWorktree($this->root)->isActive());
-        $this->assertSame([], PlanConstraints::inWorktree($this->root, new PlanExecution)->local());
+        $this->assertSame([], PlanConstraints::inWorktree($this->root, new PlanExecution()->build())->local());
     }
 
     public function test_done_gate_is_stale_when_head_moved_since_verification(): void
     {
         PlanMarker::inWorktree($this->root)->activate('sha');
-        $constraints = PlanConstraints::inWorktree($this->root, new PlanExecution);
+        $constraints = PlanConstraints::inWorktree($this->root, new PlanExecution()->build());
         $constraints->addLocal('No frontend logic.');
         $constraints->markVerified('sha-old'); // verified, then a later commit moved HEAD to 'sha'
 

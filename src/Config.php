@@ -198,19 +198,18 @@ final class Config
     }
 
     /**
-     * The resolved plan-execution profile — a fresh {@see PlanExecution} with the project's
-     * configurator applied (an empty default profile when none was declared). Read by the
-     * `commandments checks` / `commandments plan` commands and the plan-reminder hook.
+     * The resolved {@see PlanProfile} — a fresh {@see PlanExecution} builder with the project's
+     * configurator applied (an empty default when none was declared), frozen for reading.
      */
-    public function planExecutionSettings(): PlanExecution
+    public function planExecutionSettings(): PlanProfile
     {
-        $settings = new PlanExecution;
+        $builder = new PlanExecution;
 
         if ($this->planExecutionConfigurator !== null) {
-            ($this->planExecutionConfigurator)($settings);
+            ($this->planExecutionConfigurator)($builder);
         }
 
-        return $settings;
+        return $builder->build();
     }
 
     /**
