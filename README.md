@@ -204,13 +204,31 @@ $config->planExecution(fn (PlanExecution $plan) => $plan
     ->keepGoing()                   // Stop hook re-nudges until `plan done`
     ->onStart('composer install')   // once, before the first phase
     ->eachPhase('composer lint')    // after each phase (keep it fast)
-    ->onComplete('composer test')); // the end gate; judge --branch runs after
+    ->onComplete('composer test')   // the end gate; judge --branch runs after
+    ->constraint('Money is always the Money value object — never a bare int or float.')
+    ->constraint('Domain code never imports from the HTTP layer.')
+    ->enforceConstraintsEachPhase()); // check constraints every phase, not just at the end
 ```
+
+**Constraints** are natural-language architectural invariants `judge` can't decide on
+its own — "money is always the Money value object", "every timestamp is stored in UTC",
+"no new dependency in the domain layer". The agent verifies them by reviewing its own
+branch diff, and the completion gate blocks `commandments plan done` until it has. By
+default a phase gets a soft reminder and completion is the hard gate;
+`enforceConstraintsEachPhase()` makes every phase a hard check too. Declare project-wide
+ones here; a single run can add its own with `commandments constraints add "…"`.
 
 A plan run in the terminal:
 
 <p align="center">
   <img src="docs/plan-execution.svg" width="660" alt="An agent executing an approved plan: branch, two phases each ending in checks phase and a commit, then checks complete with judge --branch, then plan done." />
+</p>
+
+The completion gate verifying the declared constraints against the branch diff before
+`plan done` is allowed:
+
+<p align="center">
+  <img src="docs/constraint-gate.svg" width="660" alt="The completion gate: composer test and judge --branch pass, then the agent reviews the branch diff against three declared constraints, confirms each, and plan done is allowed." />
 </p>
 
 ### Register your own hook

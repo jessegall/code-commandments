@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="500" viewBox="0 0 660 500" font-family="SF Mono, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13">
+  <style>
+    text { white-space: pre; }
+    .t   { fill: #d6d8dd; }
+    .dim { fill: #7d8390; }
+    .grn { fill: #98c379; }
+    .b   { font-weight: 600; }
+  </style>
+  <rect width="660" height="500" rx="12" fill="#22252e"/>
+  <rect width="660" height="36" rx="12" fill="#2e3340"/>
+  <rect y="24" width="660" height="12" fill="#2e3340"/>
+  <circle cx="22" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="42" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="18" r="6" fill="#28c840"/>
+  <text x="330" y="22" text-anchor="middle" class="dim">claude</text>
+  <g xml:space="preserve">
+    <text x="24" y="66"><tspan class="dim">&gt; </tspan><tspan class="t">finish the plan</tspan></text>
+
+    <text x="24" y="106"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments checks complete)</tspan></text>
+    <text x="24" y="126"><tspan class="dim">  ⎿ ▶ composer test  </tspan><tspan class="grn">✓ 2,577 passing</tspan></text>
+    <text x="24" y="146"><tspan class="dim">    ▶ vendor/bin/commandments judge --branch</tspan></text>
+    <text x="24" y="166"><tspan class="dim">    </tspan><tspan class="grn">✓ No sins found.</tspan></text>
+    <text x="24" y="186"><tspan class="dim">    ▶ vendor/bin/commandments constraints check</tspan></text>
+
+    <text x="24" y="226"><tspan class="t">⏺ Reviewing the branch diff against 3 constraints …</tspan></text>
+
+    <text x="24" y="266"><tspan class="grn">  ✓ </tspan><tspan class="t">Money is always the Money value object</tspan></text>
+    <text x="24" y="286"><tspan class="dim">      no bare int or float crosses a boundary in the diff</tspan></text>
+    <text x="24" y="316"><tspan class="grn">  ✓ </tspan><tspan class="t">Domain code never imports from the HTTP layer</tspan></text>
+    <text x="24" y="336"><tspan class="dim">      Domain/ has no Http\ imports in the changed files</tspan></text>
+    <text x="24" y="366"><tspan class="grn">  ✓ </tspan><tspan class="t">Every timestamp is stored in UTC</tspan></text>
+    <text x="24" y="386"><tspan class="dim">      new columns are timestampTz; casts are immutable_datetime</tspan></text>
+
+    <text x="24" y="426"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments plan done)</tspan></text>
+    <text x="24" y="446"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ Constraints verified at HEAD — plan marked done.</tspan></text>
+  </g>
+</svg>
