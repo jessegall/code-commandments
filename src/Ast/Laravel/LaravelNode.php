@@ -113,6 +113,26 @@ final class LaravelNode extends NodeMatch
     }
 
     /**
+     * The `Class::method` a THIN action delegates to — the resolved receiver type + method of its sole
+     * forwarding call — or null when the method does more than forward or the receiver can't be typed. The
+     * type-aware key two routes share when they are the same operation twice (both `return
+     * $this->exporter->export(...)` onto the same `WorkflowExporter::export`), immune to a coincidental
+     * property name.
+     */
+    public function thinDelegationTarget(): ?string
+    {
+        $call = $this->soleDelegationCall();
+
+        if ($call === null || ! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
+            return null;
+        }
+
+        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $this->enclosingClassName());
+
+        return $receiver === null ? null : RouteActions::key($receiver, $call->name->toString());
+    }
+
+    /**
      * The single method call a thin pass-through method delegates through — `return $this->x->m(...);` or
      * `$this->x->m(...);` as the method's ONLY statement — or null when the method does more than forward.
      */

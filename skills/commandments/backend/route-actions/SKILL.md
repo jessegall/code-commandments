@@ -52,10 +52,31 @@ need a second URL, make it a redirect, not a second binding onto the same handle
 
 ## Rules
 
+- One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
+  _Delete the duplicate action and point its route at the surviving one (or a redirect)._
 - A route action delegates INTO the domain (a service/action class), never sideways into another controller.
   _Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper._
 
 ## Bad → good
+
+```php
+// Bad
+public function build(ReportExportRequest $request): string
+{
+    return $this->builder->build($request);
+}
+
+// Good
+final class LabelController
+{
+    public function __construct(private readonly LabelPrinter $printer) {}
+
+    public function print(string $sku): string
+    {
+        return $this->printer->print($sku);
+    }
+}
+```
 
 ```php
 // Bad
@@ -78,10 +99,12 @@ final class ExportController
 
 ## When it fires
 
+- Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice — `DuplicateRouteActionDetector`
 - A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one — `RouteDelegatesToControllerDetector`
 
 ## Checklist
 
+- [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
 - [ ] A route action delegates INTO the domain (a service/action class), never sideways into another controller.
 
 ## Related skills

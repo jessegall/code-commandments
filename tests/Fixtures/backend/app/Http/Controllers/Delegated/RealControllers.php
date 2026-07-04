@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Controllers\Delegated;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicateRouteAction;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RouteDelegatesToController;
 use JesseGall\CodeCommandments\Testing\Righteous;
 
@@ -21,6 +22,7 @@ final class ExportController
     }
 }
 
+#[Righteous(DuplicateRouteAction::class)]
 final class LabelController
 {
     public function __construct(private readonly LabelPrinter $printer) {}
