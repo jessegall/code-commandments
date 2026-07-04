@@ -129,10 +129,8 @@ final class PlanExecution
 
     /**
      * A CONSTRAINT the agent must respect for every plan run — a natural-language architectural
-     * invariant `judge` can't decide (e.g. "the frontend is presentation-only; all logic lives in the
-     * backend"). Unlike a check, it isn't a command that passes/fails; the agent verifies it by
-     * reviewing its own branch diff, and the `complete` gate blocks `plan done` until it does. Global
-     * (project-wide); a single run can add more with `commandments constraints add`. Repeatable.
+     * invariant `judge` can't decide (e.g. "the frontend is presentation-only"). The agent verifies it
+     * by reviewing its own branch diff, and the `complete` gate blocks `plan done` until it does.
      */
     public function constraint(string ...$rules): self
     {
@@ -143,8 +141,7 @@ final class PlanExecution
 
     /**
      * Force the constraint diff-check after EVERY phase, not just at completion. Off by default — a
-     * phase only gets a soft reminder, while completion is always the hard gate. Turn this on for a
-     * constraint so easily drifted that a mid-plan check earns its cost.
+     * phase only gets a soft reminder, while completion is always the hard gate.
      */
     public function enforceConstraintsEachPhase(bool $enforce = true): self
     {

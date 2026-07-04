@@ -8,6 +8,8 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Sharded;
 
+use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
+use JesseGall\CodeCommandments\Cli\Judge\Finding;
 /**
  * The `--benchmark` profiler (hidden): runs every detector ONE AT A TIME, timing
  * each `find()` and watching memory, so you can see exactly where a judge run

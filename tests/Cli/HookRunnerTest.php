@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\HookRunner;
+use JesseGall\CodeCommandments\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Input;
 use PHPUnit\Framework\TestCase;
 
 /**
  * `commandments hook <FQCN>` is the entry point every wired hook runs through — it must run a real
- * {@see \JesseGall\CodeCommandments\Cli\Hook} and reject anything else cleanly (a mistyped/stale
+ * {@see \JesseGall\CodeCommandments\Hooks\Hook} and reject anything else cleanly (a mistyped/stale
  * wiring), never fatal.
  */
 final class HookRunnerTest extends TestCase

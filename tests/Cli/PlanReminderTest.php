@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\PlanMarker;
-use JesseGall\CodeCommandments\Cli\PlanReminder;
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use PHPUnit\Framework\TestCase;
 
 /**

@@ -5,18 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast\Support;
 
 /**
- * Is a file FROZEN — declared intentionally immutable, its shape deliberate and impossible to refactor
- * (a shipped schema migration that must stay standalone, a generated file, a legacy leaf)? A frozen file
- * is still SCANNED (the call graph and provenance engine need it) but is never a TARGET — never flagged
- * as sinful, never rewritten by a repenter.
- *
- * Freezing is FILE-level, three interchangeable markers anywhere in the source:
- *  - a `#[Frozen]` attribute (the consumer's own attribute, matched by short name — no wiring),
- *  - an `@frozen` docblock tag,
- *  - the {@see FILE_MARKER} stamp that `commandments freeze <path>` writes.
- *
- * A judge/repent-time policy read off raw source, so it needs no AST — the shared {@see \JesseGall\CodeCommandments\Cli\Scope\Targets}
- * asks it once per file.
+ * Is a file FROZEN — declared intentionally immutable? A frozen file is still SCANNED (the call graph and
+ * provenance engine need it) but is never a TARGET: never flagged, never rewritten. Freezing is file-level
+ * via any of three interchangeable markers: a `#[Frozen]` attribute, an `@frozen` docblock tag, or the
+ * {@see FILE_MARKER} stamp `commandments freeze <path>` writes.
  */
 final class Frozen
 {

@@ -12,19 +12,8 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualOutputTransform;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A `Data` computed slot whose getter hand-flattens a value object into a wire array —
- * `get => ['amount' => $this->order->priceInCents, 'currency' => $this->order->currency]`. The honest
- * type is erased to `array` and the shaping is copy-pasted onto every page; a `#[WithTransformer]` (with
- * a matching `#[TypeScriptType]`) should own the serialized shape declaratively. Points at page-objects.
- *
- * The discriminator is the receiver's resolved type — a single value object flattened, not a composite:
- * `$this`-composition resolves to the `Data` itself and a two-receiver body never shares, so both are
- * left alone by {@see SpatieDataNode::flattensValueObjectToArray()} without a name or a hardcoded list.
- *
- * A public slot's wire array reaches this sin three ways — a property-hook getter
- * (`public array $x { get => [ … ]; }`), a `#[Computed]` method returning the array, or a constructor
- * assignment to a public declared slot (`$this->x = [ … ]`) — all the same flatten, so all three are
- * queried and gated by the identical {@see SpatieDataNode::flattensValueObjectToArray()} predicate.
+ * Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a
+ * `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape.
  */
 final class ManualOutputTransformDetector implements Detector
 {

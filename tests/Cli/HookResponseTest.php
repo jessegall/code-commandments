@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\HookResponse;
+use JesseGall\CodeCommandments\Hooks\HookResponse;
 use PHPUnit\Framework\TestCase;
 
 final class HookResponseTest extends TestCase

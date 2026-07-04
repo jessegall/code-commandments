@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\ConfigScribe;
-use JesseGall\CodeCommandments\Cli\DisableMenu;
+use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
+use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;

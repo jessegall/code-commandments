@@ -109,7 +109,7 @@ abstract class Sin
     /**
      * Does this sin answer to a query by its OWN name? Lenient: both sides are reduced to lowercase
      * alphanumerics, so `array-bag`, `ArrayBag` and `arraybag` all select the `array-bag` sin. Kept to
-     * the name so skill-vs-sin resolution ({@see \JesseGall\CodeCommandments\Cli\Configure}) stays exact.
+     * the name so skill-vs-sin resolution ({@see \JesseGall\CodeCommandments\Cli\Config\Configure}) stays exact.
      */
     public function matches(string $query): bool
     {

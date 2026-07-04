@@ -567,11 +567,8 @@ class AstNode
 
     /**
      * The single RECEIVER every value in this array literal is fetched off — `['amount' => $o->cents,
-     * 'currency' => $o->code]` shares the receiver `$o`. Returns that receiver expression when EVERY
-     * item (two or more) is a property/method fetch off the identical receiver, else null: a literal
-     * value, a bare variable, or values drawn from two different receivers all break the share (they
-     * are a genuine composite, not one object flattened). The receiver is returned so a caller can
-     * resolve its TYPE — the difference between flattening a value object and composing own fields.
+     * 'currency' => $o->code]` shares `$o`. Returns that receiver when EVERY item (two or more) is a
+     * property/method fetch off the identical receiver, else null.
      */
     public static function sharedFetchReceiver(Array_ $array): ?Node
     {
@@ -609,9 +606,8 @@ class AstNode
     }
 
     /**
-     * A canonical string for a receiver chain (`$this->order`, `$row->wrapper()`), or null when it
-     * roots in something that isn't a plain variable/property/method chain — so two receivers can be
-     * compared for identity without walking nodes pairwise.
+     * A canonical string for a receiver chain (`$this->order`, `$row->wrapper()`), or null when it roots
+     * in something that isn't a plain variable/property/method chain.
      */
     private static function fetchPath(Node $expr): ?string
     {
@@ -943,8 +939,6 @@ class AstNode
     /**
      * This node read as a single {@see ClassField} — when it IS one field declaration: a promoted
      * constructor parameter or a declared property (its first declared name). Null for anything else.
-     * Lets a detector select field nodes ({@see Codebase::whereField}) and read their name/type/attributes
-     * through the same generic shape {@see fields} produces, so the finding sits on the field itself.
      */
     public function asField(): ?ClassField
     {
@@ -1084,10 +1078,8 @@ class AstNode
     }
 
     /**
-     * The single array literal this member's body EVALUATES TO, or null. Covers a computed slot's
-     * getter (`get => [ … ]` and `get { return [ … ]; }`) and a function/method that is nothing but
-     * `return [ … ];`. This is the output shape a `#[WithTransformer]` would own — a caller asks for
-     * the array to inspect what it is built from.
+     * The single array literal this member's body EVALUATES TO, or null. Covers a computed slot's getter
+     * (`get => [ … ]`, `get { return [ … ]; }`) and a function/method that is nothing but `return [ … ];`.
      */
     public function soleArrayLiteralOutput(): ?Array_
     {
@@ -1713,10 +1705,8 @@ class AstNode
     }
 
     /**
-     * Does this DECLARATION carry an attribute whose SHORT name matches one given — `#[Computed]`,
-     * `#[Hidden]`, … — read off the node's own attribute groups (a method, property, param, class,
-     * or hook). Short-name matching by design: the caller states the intent, the FQCN's home, once.
-     * False for a node type that can't carry attributes. (The per-field reader is {@see ClassField::hasAttribute}.)
+     * Does this DECLARATION (method, property, param, class, or hook) carry an attribute whose SHORT name
+     * matches one given — `#[Computed]`, `#[Hidden]`, …? (The per-field reader is {@see ClassField::hasAttribute}.)
      */
     public function hasAttribute(string ...$shortNames): bool
     {

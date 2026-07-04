@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\ChecksInference;
+use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
 use PHPUnit\Framework\TestCase;
 
 final class ChecksInferenceTest extends TestCase

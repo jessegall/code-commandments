@@ -11,15 +11,9 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A `Data` value-object property that is HAND-BUILT at every place its object is constructed — a
- * `new D(price: new Money(...))` / `D::from(['price' => new Money(...)])` at every call site. The
- * `simple → complex` mapping is then re-authored per caller; a `#[WithCast]` (or a `Castable` value
- * object) should own it once. Points at spatie-data.
- *
- * This is a CROSS-FILE detector: the property is only flagged when the whole-program
- * {@see \JesseGall\CodeCommandments\Ast\Spatie\DataConstructions} index shows EVERY construction site
- * hand-maps it — a single clean site (an opaque `::from($model)`, a passed-through value) spares it, so
- * a `Data` you can build straight from a model is never flagged.
+ * Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program
+ * {@see \JesseGall\CodeCommandments\Ast\Spatie\DataConstructions} index), where a `#[WithCast]` /
+ * `Castable` should own the mapping once.
  */
 final class ManualInputCastDetector implements Detector
 {

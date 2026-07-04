@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\HookDispatch;
+use JesseGall\CodeCommandments\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\PlanMarker;
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -18,14 +18,20 @@ final class HookDispatchTest extends TestCase
 {
     private string $root;
 
+    private string|false $priorProjectDir;
+
     protected function setUp(): void
     {
         $this->root = sys_get_temp_dir() . '/cc-dispatch-' . uniqid('', true);
         mkdir($this->root . '/.commandments', 0777, true);
+        // Scope the Remind heartbeat counter to this test's root so it's deterministic across runs.
+        $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
     }
 
     protected function tearDown(): void
     {
+        putenv($this->priorProjectDir === false ? 'CLAUDE_PROJECT_DIR' : 'CLAUDE_PROJECT_DIR=' . $this->priorProjectDir);
         exec('rm -rf ' . escapeshellarg($this->root));
     }
 

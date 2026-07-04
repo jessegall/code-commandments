@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Hook;
-use JesseGall\CodeCommandments\Cli\HookBinding;
+use JesseGall\CodeCommandments\Hooks\Hook;
+use JesseGall\CodeCommandments\Hooks\HookBinding;
 
 /**
  * A stand-in for a consumer's own registered {@see Hook} — binds to a distinct event so wiring it

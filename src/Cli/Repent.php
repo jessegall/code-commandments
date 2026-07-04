@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Scribes\ScribeChain;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\WorkingCopy;
 
+use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 /**
  * `commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]`
  *
