@@ -118,12 +118,13 @@ domain type flattened for the wire — reach for **`#[WithTransformer(SomeTransf
 property. The wrong move is a computed getter that hand-builds the reshaped array:
 
 ```
-// Wrong — the shape is buried in an imperative getter, and the honest `Money` type is lost.
-public array $price { get => ['amount' => $this->money->cents, 'currency' => $this->money->code]; }
+// Wrong — an Order's fields hand-flattened into a wire array; the honest type is lost, and the same
+// shape is copy-pasted onto every page that carries a price.
+public array $priceInEuro { get => ['amount' => $this->order->priceInCents, 'currency' => $this->order->currency]; }
 
-// Right — the slot keeps its real type; a transformer owns the wire shape declaratively.
-#[WithTransformer(MoneyTransformer::class)]
-public readonly Money $price;
+// Right — a real Money slot; a transformer owns the wire shape, and the TS type is declared to match it.
+#[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+public readonly Money $priceInEuro;
 ```
 
 A transformer is a tiny class implementing Spatie's `Transformer` —
@@ -131,8 +132,14 @@ A transformer is a tiny class implementing Spatie's `Transformer` —
 serialized form (`$value->cents . ' ' . $value->code`, an array, whatever the frontend needs). Applied
 per-property with `#[WithTransformer(X::class, ...args)]`, or registered as a global transformer in
 `config/data.php` for a whole type (a `Money`, a `Carbon`). Keeping the transform in a transformer means
-the property's PHP type stays honest, the `#[TypeScript]` type is derived from the *real* type, and the
-same shaping is reusable across every page that carries a `Money`.
+the property's PHP type stays honest and the same shaping is reusable across every page that carries a `Money`.
+
+**A transformer changes the wire shape, but NOT the generated TypeScript.** The typescript-transformer
+derives a property's TS type from its PHP type hint (`Money`), not from the transformer's output — so pair
+the transformer with **`#[TypeScriptType('string')]`** (PHP-type syntax) or **`#[LiteralTypeScriptType(...)]`**
+(raw TS, e.g. a reference to another generated type) declaring the transformed shape. Without it the frontend
+type silently stays `Money` while the wire carries a string. (A built-in like `Carbon`→`string` is already
+known to the generator; a custom value object is not — you must state it.)
 
 (For a *leaf* DTO the [`spatie-data`](../spatie-data/SKILL.md) skill says to avoid output transformers; a
 page object — the composed thing on the wire — is exactly where they earn their place.)

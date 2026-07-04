@@ -43,6 +43,7 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
+use PhpParser\Node\PropertyHook;
 use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\UnionType;
@@ -565,6 +566,75 @@ class AstNode
     }
 
     /**
+     * The single RECEIVER every value in this array literal is fetched off — `['amount' => $o->cents,
+     * 'currency' => $o->code]` shares the receiver `$o`. Returns that receiver expression when EVERY
+     * item (two or more) is a property/method fetch off the identical receiver, else null: a literal
+     * value, a bare variable, or values drawn from two different receivers all break the share (they
+     * are a genuine composite, not one object flattened). The receiver is returned so a caller can
+     * resolve its TYPE — the difference between flattening a value object and composing own fields.
+     */
+    public static function sharedFetchReceiver(Array_ $array): ?Node
+    {
+        if (count($array->items) < 2) {
+            return null;
+        }
+
+        $receiver = null;
+        $path = null;
+
+        foreach ($array->items as $item) {
+            if (! $item instanceof ArrayItem
+                || ! ($item->value instanceof PropertyFetch
+                    || $item->value instanceof NullsafePropertyFetch
+                    || $item->value instanceof MethodCall
+                    || $item->value instanceof NullsafeMethodCall)) {
+                return null;
+            }
+
+            $here = self::fetchPath($item->value->var);
+
+            if ($here === null) {
+                return null;
+            }
+
+            if ($path === null) {
+                $path = $here;
+                $receiver = $item->value->var;
+            } elseif ($here !== $path) {
+                return null;
+            }
+        }
+
+        return $receiver;
+    }
+
+    /**
+     * A canonical string for a receiver chain (`$this->order`, `$row->wrapper()`), or null when it
+     * roots in something that isn't a plain variable/property/method chain — so two receivers can be
+     * compared for identity without walking nodes pairwise.
+     */
+    private static function fetchPath(Node $expr): ?string
+    {
+        if ($expr instanceof Variable) {
+            return is_string($expr->name) ? '$' . $expr->name : null;
+        }
+
+        if ($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch) {
+            $base = self::fetchPath($expr->var);
+
+            return $base !== null && $expr->name instanceof Identifier ? $base . '->' . $expr->name->toString() : null;
+        }
+
+        if ($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) {
+            $base = self::fetchPath($expr->var);
+
+            return $base !== null && $expr->name instanceof Identifier ? $base . '->' . $expr->name->toString() . '()' : null;
+        }
+
+        return null;
+    }
+
+    /**
      * How many string-literal keys this array literal has (0 if not an array).
      */
     public function stringKeyCount(): int
@@ -871,6 +941,39 @@ class AstNode
     }
 
     /**
+     * This node read as a single {@see ClassField} — when it IS one field declaration: a promoted
+     * constructor parameter or a declared property (its first declared name). Null for anything else.
+     * Lets a detector select field nodes ({@see Codebase::whereField}) and read their name/type/attributes
+     * through the same generic shape {@see fields} produces, so the finding sits on the field itself.
+     */
+    public function asField(): ?ClassField
+    {
+        if ($this->node instanceof Param && $this->node->flags !== 0 && $this->node->var instanceof Variable && is_string($this->node->var->name)) {
+            return new ClassField(
+                name: $this->node->var->name,
+                type: $this->node->type,
+                attributeGroups: $this->node->attrGroups,
+                isPublic: ($this->node->flags & Modifiers::PUBLIC) !== 0,
+                isPromoted: true,
+                docComment: $this->node->getDocComment()?->getText(),
+            );
+        }
+
+        if ($this->node instanceof Property && $this->node->props !== []) {
+            return new ClassField(
+                name: $this->node->props[0]->name->toString(),
+                type: $this->node->type,
+                attributeGroups: $this->node->attrGroups,
+                isPublic: $this->node->isPublic(),
+                isPromoted: false,
+                docComment: $this->node->getDocComment()?->getText(),
+            );
+        }
+
+        return null;
+    }
+
+    /**
      * Is this an assignment to one of `$this`'s properties — `$this->foo = …`?
      */
     public function assignsThisProperty(): bool
@@ -977,13 +1080,37 @@ class AstNode
      */
     public function returnsArrayLiteralOnly(): bool
     {
-        if (! $this->isFunctionDeclaration() || $this->node->stmts === null) {
-            return false;
+        return $this->isFunctionDeclaration() && $this->soleArrayLiteralOutput() !== null;
+    }
+
+    /**
+     * The single array literal this member's body EVALUATES TO, or null. Covers a computed slot's
+     * getter (`get => [ … ]` and `get { return [ … ]; }`) and a function/method that is nothing but
+     * `return [ … ];`. This is the output shape a `#[WithTransformer]` would own — a caller asks for
+     * the array to inspect what it is built from.
+     */
+    public function soleArrayLiteralOutput(): ?Array_
+    {
+        if ($this->node instanceof PropertyHook) {
+            return $this->node->body instanceof Array_
+                ? $this->node->body
+                : self::soleReturnedArray($this->node->body);
         }
 
-        return count($this->node->stmts) === 1
-            && $this->node->stmts[0] instanceof Return_
-            && $this->node->stmts[0]->expr instanceof Array_;
+        return $this->isFunctionDeclaration() ? self::soleReturnedArray($this->node->stmts) : null;
+    }
+
+    /**
+     * The array literal of a body that is exactly `return [ … ];` — a one-statement block whose only
+     * statement returns an array literal. Null for anything else (no body, more statements, logic).
+     */
+    private static function soleReturnedArray(mixed $stmts): ?Array_
+    {
+        if (! is_array($stmts) || count($stmts) !== 1 || ! $stmts[0] instanceof Return_) {
+            return null;
+        }
+
+        return $stmts[0]->expr instanceof Array_ ? $stmts[0]->expr : null;
     }
 
     /**
@@ -1583,6 +1710,29 @@ class AstNode
         $parts = explode('\\', $fqcn);
 
         return end($parts);
+    }
+
+    /**
+     * Does this DECLARATION carry an attribute whose SHORT name matches one given — `#[Computed]`,
+     * `#[Hidden]`, … — read off the node's own attribute groups (a method, property, param, class,
+     * or hook). Short-name matching by design: the caller states the intent, the FQCN's home, once.
+     * False for a node type that can't carry attributes. (The per-field reader is {@see ClassField::hasAttribute}.)
+     */
+    public function hasAttribute(string ...$shortNames): bool
+    {
+        if ($this->node === null || ! property_exists($this->node, 'attrGroups')) {
+            return false;
+        }
+
+        foreach ($this->node->attrGroups as $group) {
+            foreach ($group->attrs as $attribute) {
+                if (in_array(self::shortName($attribute->name->toString()), $shortNames, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

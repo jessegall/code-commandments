@@ -7,11 +7,15 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Ast\Support\PageObject;
+use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
+use PhpParser\Node\Attribute;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\New_;
@@ -23,7 +27,9 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Continue_;
 use PhpParser\Node\UnionType;
 use PhpParser\Node\Stmt\Do_;
@@ -62,6 +68,57 @@ final class SpatieDataNode extends NodeMatch
 
     /** The attribute that keeps a property out of the serialized payload AND the generated TypeScript. */
     private const string HIDDEN = 'Hidden';
+
+    /**
+     * The built-in output transformers whose target TS type the typescript-transformer already knows
+     * (a `DateTimeInterface` → `string`, an `Arrayable` → its array) — so a `#[WithTransformer]` naming
+     * one needs no explicit TS type. A CUSTOM transformer's output shape is invisible to the generator.
+     */
+    private const array KNOWN_TS_TRANSFORMERS = [
+        'DateTimeInterfaceTransformer',
+        'ArrayableTransformer',
+    ];
+
+    /**
+     * Does this `#[WithTransformer(...)]` change a property's wire shape WITHOUT a paired
+     * `#[TypeScriptType]` / `#[LiteralTypeScriptType]` declaring it? The typescript-transformer derives a
+     * property's TS type from its PHP type, NOT from the transformer's output — so a custom transformer
+     * with no explicit TS type silently emits the wrong shape (the PHP type) to the frontend. A built-in
+     * transformer the generator already maps is exempt.
+     */
+    public function transformerLacksTsType(): bool
+    {
+        if (! $this->node instanceof Attribute) {
+            return false;
+        }
+
+        if (in_array($this->firstArgumentClassShortName($this->node), self::KNOWN_TS_TRANSFORMERS, true)) {
+            return false;
+        }
+
+        $carrier = $this->walkUp(static fn (Node $node): bool => $node instanceof Property || $node instanceof Param);
+
+        if ($carrier === null) {
+            return false;
+        }
+
+        $field = $this->codebase->wrap($carrier, $this->file)->asField();
+
+        return $field !== null && ! $field->hasAttribute('TypeScriptType', 'LiteralTypeScriptType');
+    }
+
+    /**
+     * The short class name of an attribute's first `X::class` argument — the transformer a
+     * `#[WithTransformer(X::class)]` names — or null when it isn't a class literal.
+     */
+    private function firstArgumentClassShortName(Attribute $attribute): ?string
+    {
+        $argument = $attribute->args[0]->value ?? null;
+
+        return $argument instanceof ClassConstFetch && $argument->class instanceof Name
+            ? self::shortName($argument->class->toString())
+            : null;
+    }
 
     /**
      * Is this class declaration a Spatie `Data` subclass?
@@ -139,6 +196,87 @@ final class SpatieDataNode extends NodeMatch
         $class = TypeName::class($type);
 
         return $class !== null && $this->codebase->extends($class, self::DATA);
+    }
+
+    /**
+     * Does this node hand-flatten a VALUE OBJECT into the wire array of a PUBLIC slot — a single array
+     * literal whose every value is fetched off the SAME single receiver, that receiver resolving to a
+     * non-`Data`, non-enum object (a value object)? The array can reach a public slot three ways, all the
+     * same sin: a getter hook (`public array $x { get => [ … ]; }`), a `#[Computed]` method returning it,
+     * or a constructor assignment to a public declared slot (`$this->x = [ … ]`). Any of them erases the
+     * honest type and copies the shape onto every page; a `#[WithTransformer]` should own it declaratively.
+     *
+     * The receiver checks fall out of the type resolution: `$this` resolves to this `Data` (rejected by
+     * the non-`Data` gate), a scalar/unresolved receiver yields no type (rejected), and two different
+     * receivers never share (so a genuine composite is left alone).
+     */
+    public function flattensValueObjectToArray(): bool
+    {
+        $array = $this->publicSlotArrayOutput();
+
+        if ($array === null) {
+            return false;
+        }
+
+        $receiver = self::sharedFetchReceiver($array);
+        $function = $this->enclosingFunction();
+
+        if ($receiver === null || $function === null) {
+            return false;
+        }
+
+        $type = TypeResolver::forCodebase($this->codebase)->typeOf($receiver, $function, $this->enclosingClassName());
+
+        return $type !== null
+            && ! $this->codebase->extends($type, self::DATA)
+            && ! $this->codebase->isEnum($type);
+    }
+
+    /**
+     * The array literal that produces a PUBLIC slot's value at this node — the body of a getter hook or
+     * `#[Computed]` method ({@see AstNode::soleArrayLiteralOutput}), or the right-hand side of a
+     * constructor assignment to a public declared slot ({@see assignedPropertyIsPublicSlot}). Null when
+     * the node produces no public-slot array (an internal helper, a private property, a scalar slot).
+     */
+    private function publicSlotArrayOutput(): ?Array_
+    {
+        if ($this->node instanceof Assign) {
+            return $this->node->expr instanceof Array_ && $this->assignedPropertyIsPublicSlot()
+                ? $this->node->expr
+                : null;
+        }
+
+        return $this->soleArrayLiteralOutput();
+    }
+
+    /**
+     * Is this field a PUBLIC value-object slot that is HAND-BUILT at every construction site of its
+     * `Data` — fed a `new VO(...)` / factory / inline-flattened value everywhere the object is made? Then
+     * the `simple → complex` mapping is copy-pasted across call sites; a `#[WithCast]` / `Castable` should
+     * own it once. Excludes a slot already carrying a cast attribute, a nested `Data` or enum (auto-built),
+     * and a scalar (nothing to cast) — read off the field's declared type via the whole-program
+     * {@see DataConstructions} index.
+     */
+    public function alwaysHandBuiltAtConstruction(): bool
+    {
+        $field = $this->asField();
+        $data = $this->enclosingClassName();
+
+        if ($field === null || ! $field->isPublic || $data === null || ! $this->isDataClass()) {
+            return false;
+        }
+
+        if ($field->hasAttribute('WithCast', 'WithCastAndTransformer', 'WithCastable')) {
+            return false;
+        }
+
+        $type = TypeName::class($field->type);
+
+        if ($type === null || $this->codebase->extends($type, self::DATA) || $this->codebase->isEnum($type)) {
+            return false;
+        }
+
+        return DataConstructions::forCodebase($this->codebase)->alwaysHandBuilt($data, $field->name);
     }
 
     /**
