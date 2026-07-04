@@ -18,16 +18,9 @@ use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
 
 /**
- * A `<script setup>` block read structurally — the third parser in the engine, beside
- * the template {@see Tokenizer} and the expression {@see Expr\Parser}. It lexes the
- * script into tokens (comments and string bodies skipped, so `from` inside a string
- * never confuses it) and reads the two things a scribe needs off that token stream,
- * never a regex over the text:
- *
- *   - {@see imports} — each import's bound names and its verbatim statement, so an
- *     extracted component can carry the children/helpers/types it actually uses;
- *   - {@see propTypes} — the `defineProps<{ … }>()` field types, so a forwarded prop
- *     keeps its real type instead of `unknown`.
+ * Reads `<script setup>` structurally — the engine's third parser. Lexes the script into tokens
+ * (comments and strings skipped) and reads imports (for extracted components) and propTypes
+ * (for forwarded props), never regex.
  */
 final class Script
 {
@@ -322,10 +315,8 @@ final class Script
 
     /**
      * The variable a `defineEmits` result is bound to — `const emit = defineEmits<…>()` →
-     * `emit`, or null when the component captures none (a standalone `defineEmits<…>()` whose
-     * template uses the built-in `$emit`). A handler that CALLS this binding (`emit('save')`) is
-     * itself emitting an event, not invoking a forwardable function — so an extraction must not
-     * mistake it for one and mint an event literally named `emit`.
+     * `emit`, or null when the component captures none. A handler calling this binding emits an
+     * event, so extraction reads it as an emit rather than minting a spurious event literal.
      */
     public function emitName(): ?string
     {

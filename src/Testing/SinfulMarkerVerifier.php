@@ -9,12 +9,9 @@ use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * Our own integration harness: run each detector over the fixture and check its
- * findings against the `#[Sinful]` markers in that same code. A detector passes
- * when it flags every marked sin and nothing else — anything it flags that is
- * not marked is a failure. Adding a test == adding a `#[Sinful]` in the fixture.
- *
- * The backend {@see MarkerVerifier} — the frontend twin is {@see CommentMarkerVerifier}.
+ * Integration harness: runs detectors over the fixture and checks findings against
+ * `#[Sinful]` markers. Passes when it flags every marked sin and nothing else. Backend
+ * verifier; frontend twin is {@see CommentMarkerVerifier}.
  */
 final class SinfulMarkerVerifier implements MarkerVerifier
 {

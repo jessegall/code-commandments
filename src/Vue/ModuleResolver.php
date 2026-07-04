@@ -5,19 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * Turns an import specifier into a real file on disk — the backbone of any whole-program
- * trace (the composable trace, and the entry-point component graph). It resolves the three
- * shapes a bundler does:
- *
- *   - **relative** — `./useX`, `../../composables/useX`, against the importing file;
- *   - **aliased** — `@app/composables/useX`, against the project's alias map (longest
- *     prefix wins, so `@app/ui` beats `@app`);
- *   - **barrel / extensionless** — trying `.ts`/`.tsx`/`.vue`/`.js` and an `index.*` folder
- *     entry, exactly as a bundler's module resolution would.
- *
- * A BARE specifier (`vue`, `lodash`) resolves to null — those live in `node_modules` and are
- * out of scope. The alias map is supplied (discovered once from the project config); this
- * class is pure path logic over it, so it is unit-testable without a real project.
+ * Resolves import specifiers to real files on disk—relative, aliased, and barrel/extensionless
+ * paths; bare specifiers resolve to null.
  */
 final class ModuleResolver
 {

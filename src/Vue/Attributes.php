@@ -5,14 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * Lexes the raw attribute text of a tag, preserving Vue's directive syntax verbatim —
- * `v-if`, `v-for`, `:title` (`v-bind`), `@click` (`v-on`), `#default` (`v-slot`). A
- * valueless attribute (`disabled`, `#default`, `v-pre`) carries a null value; `>` and
- * `=` inside a quoted value are honoured.
- *
- * {@see scan} is the lexer — it yields every attribute WITH its `[start, end)` span in the
- * raw text, so the write engine can remove a directive by its known span (never a regex).
- * {@see parse} is the name → value view over the same scan.
+ * Lexes raw tag attribute text, preserving Vue directive syntax (`v-if`, `v-for`, `:title`, `@click`, `#default`).
+ * Scan yields attributes with byte spans for write operations; parse returns name→value map.
  */
 final class Attributes
 {

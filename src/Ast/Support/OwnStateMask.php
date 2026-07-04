@@ -24,15 +24,9 @@ use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 
 /**
- * Finds `$this->scratch?->call() ?? false` — a nullsafe reach into the object's OWN
- * nullable state, coalesced to a fake default. When that field is TRANSIENT (set
- * inside a method, not just injected), it's an invariant that should hold at the
- * call site; defaulting it manufactures a wrong answer (`isControlHandle()` quietly
- * returns false) for a state that can only be a bug. Resolve-or-throw instead — or,
- * better, stop storing per-call state on `$this` so the field is never null.
- *
- * The TRANSIENT gate is the precision: a constructor-injected optional collaborator
- * defaulted with `?? …` is a Null-Object choice, not a masked invariant.
+ * Finds nullsafe reach into own-state masked with `?? <default>` — when the field is
+ * transient (set in a method, not injected), defaulting it manufactures wrong answers for
+ * state that's a bug. The TRANSIENT gate distinguishes this from a Null-Object choice.
  */
 final class OwnStateMask
 {

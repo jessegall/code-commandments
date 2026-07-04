@@ -5,16 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Skills;
 
 /**
- * One teaching skill — the source of truth its `SKILL.md` is GENERATED from, with a
- * FIXED section layout shared by every skill. The hand-written part is reduced to
- * conceptual prose + the entry descriptor; everything ENUMERABLE (the rules, the
- * bad→good examples, the "when it fires" rows, the checklist) is projected from this
- * skill's {@see \JesseGall\CodeCommandments\Sins\Sin}s, so the docs can never hardcode a
- * count or drift from the detectors.
- *
- * Each skill is its OWN class under `Skills/{Backend,Frontend}/`, the way each sin is its
- * own class under `Sins/` and each detector under `Detectors/` — discovered by
- * {@see Catalog}. A consumer's own `Skills/` class auto-enrols.
+ * One teaching skill: source of truth for its generated `SKILL.md`. Hand-written concept + descriptor
+ * only; enumerable sections (rules, examples, checklist) project from this skill's Sins via Catalog discovery.
  */
 abstract class Skill
 {

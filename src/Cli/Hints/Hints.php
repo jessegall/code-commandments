@@ -13,22 +13,9 @@ use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 
 /**
- * `commandments hints [path] [--changes] [--branch[=BASE]] [--dry-run[=FILE]]`
- *
- * Brings every Spatie `Data` class's magic surface in line with the spatie-data
- * skill (see {@see DataHintScribe}): renames non-`from…` object factories to
- * `from<Type>` and rewrites their call sites to `::from(...)`, then regenerates the
- * `@method from(...)` / `collect(...)` docblock hints.
- *
- * The whole path is parsed for cross-file correctness. `--changes` / `--branch`
- * scope the run to the files you've touched, but a scoped run is **docblock-only**:
- * it refreshes `@method` hints on those files and never renames (a rename's call
- * sites can live outside the scope). Renaming is a whole-tree operation only.
- *
- * By DEFAULT it writes the changes to disk. `--dry-run` instead prints a unified
- * diff of what it WOULD change (review before applying — the rename can't tell a
- * mis-prefixed factory from a legitimate named constructor); `--dry-run=FILE`
- * writes that diff to a file.
+ * Auto-fixes Spatie Data magic surface: renames non-`from…` factories to
+ * `from<Type>`, rewrites call sites, regenerates `@method` hints. Scoped runs are
+ * docblock-only; renames require whole-tree. Supports dry-run preview.
  */
 final class Hints implements Command
 {

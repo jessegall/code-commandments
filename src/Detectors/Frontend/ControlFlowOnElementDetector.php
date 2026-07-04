@@ -13,15 +13,9 @@ use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 
 /**
- * A control-flow directive — `v-if` / `v-else-if` / `v-else` / `v-for` — sitting on a
- * real element or component instead of a `<template>`. Mixing structure (which DOM
- * renders) with content (the element itself) makes a template harder to read and
- * couples the condition/loop to one tag; the structure belongs on a `<template>`
- * wrapper, the element stays pure content. Points at vue-control-flow.
- *
- * `v-show` is NOT flagged — it toggles `display` on a real element and cannot live on a
- * `<template>` (which renders no node). Only the directives that change the STRUCTURE
- * ({@see Directive::structural}) are the sin.
+ * Detects structural directives (`v-if`/`v-else-if`/`v-else`/`v-for`) on real elements
+ * instead of `<template>` wrappers — mixes structure (what renders) with content. Exempts
+ * `v-show` (affects real element only). Points at vue-control-flow.
  */
 final class ControlFlowOnElementDetector implements Detector, Repentable
 {

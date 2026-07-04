@@ -9,14 +9,8 @@ use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
- * Repents the {@see \JesseGall\CodeCommandments\Detectors\Frontend\ControlFlowOnElementDetector}
- * sin: lifts a control-flow directive off a real element onto a `<template>` wrapper.
- * `<div v-if="x" class="y">…</div>` becomes `<template v-if="x"><div class="y">…</div></template>`
- * — the structure moves to the template, the element stays pure content. A `v-for`
- * takes its `:key` with it (the key belongs on the `v-for`'d node).
- *
- * The element keeps every other attribute and its children; only the structural
- * directives are spliced out of its opening tag (last-first so offsets stay valid).
+ * Lifts control-flow directives off elements onto `<template>` wrappers. Moves structure to template,
+ * keeps content on element; `v-for` carries its `:key`.
  */
 final class WrapControlFlowScribe extends RepentScribe
 {

@@ -5,21 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes;
 
 /**
- * The fluent rewrite builder a {@see RepentScribe} composes — the scribe side of the
- * engine, and the mirror of the detector's query. A detector hands a scribe its
- * findings; the scribe OPENS a Draft over them and narrows/acts in the same shape a
- * query does: {@see from} opens it, {@see map} / {@see collapse} narrow the items
- * (like `where`/`reject`), {@see replace} / {@see create} describe the change, and
- * {@see rewrites} is the terminal that returns the `path => content` map. The domain
- * decision lives in the closure each step takes, exactly as `where(fn …)` does.
- *
- * It is engine-agnostic: an item is replaced through its own {@see Span} (`->span()`),
- * so a backend {@see \JesseGall\CodeCommandments\Ast\NodeMatch} and a frontend
- * {@see \JesseGall\CodeCommandments\Vue\ElementMatch} build rewrites identically. The
- * mechanics scribes used to hand-roll live here ONCE: edits to a file apply end-first
- * so earlier offsets stay valid, an edit overlapping an already-rewritten region (a
- * nested finding) is skipped, and a new file whose path is taken is uniquified. Pure
- * — it returns data, it never writes.
+ * The fluent rewrite builder for {@see RepentScribe} — the detector query's mirror. Composes
+ * {@see from}, {@see map}/{@see collapse}, {@see replace}/{@see create}, {@see rewrites} to map
+ * `path => content`. Engine-agnostic via {@see Span}; pure — returns data, never writes.
  */
 final class Draft
 {

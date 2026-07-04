@@ -7,15 +7,9 @@ namespace JesseGall\CodeCommandments\Concurrency;
 use Closure;
 
 /**
- * A `map` whose iterations run in parallel across forked processes:
- *
- *     $results = Fork::map($items, static fn ($x) => expensive($x));
- *
- * Copy-on-write shares everything built before the fork (a parsed AST, an index)
- * with each child for free; only each item's serializable RETURN value travels
- * back over a socket. Runs sequentially when forking is unavailable, fewer than two
- * items, or already inside a fork (the nesting guard); a worker that fails to fork
- * re-runs its shard inline.
+ * A `map` whose iterations run in parallel across forked processes. Copy-on-write shares
+ * pre-fork state with each child; only serializable return values travel back. Falls back to
+ * sequential when forking is unavailable, items < 2, or already inside a fork (nesting guard).
  */
 final class Fork
 {

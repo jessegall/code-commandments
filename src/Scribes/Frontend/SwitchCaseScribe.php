@@ -10,16 +10,9 @@ use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
- * Repents the {@see \JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseDetector}
- * sin: rewrites a `v-if` / `v-else-if` [/ `v-else`] dispatch chain into the published
- * `<SwitchCase :value>` component with a slot per case (`v-else` → `#default`).
- *
- * The detector already found the chain HEADS; this scribe starts from each one,
- * gathers its branches off that head ({@see SwitchCaseChain::at}), and emends the
- * head→tail span with the `<SwitchCase>` block — every branch keeps its own markup
- * and formatting, only the structural directive is stripped. End-first application
- * and nested-chain skipping are the {@see \JesseGall\CodeCommandments\Scribes\Draft}'s
- * job, so the scribe just describes each replacement.
+ * Repents v-if/else-if/v-else chains by rewriting to `<SwitchCase :value>` component
+ * with a named slot per case. Gathers branches from the head via {@see SwitchCaseChain::at},
+ * preserves markup/formatting, strips structural directives.
  */
 final class SwitchCaseScribe extends RepentScribe
 {

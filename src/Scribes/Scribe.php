@@ -9,14 +9,9 @@ use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PhpParser\Node;
 
 /**
- * A Scribe emends the source — it computes the new content of every file it changes.
- * Like a {@see \JesseGall\CodeCommandments\Backend\Detector}, the computation is
- * PURE: it returns data, it does not write to disk. Applying the result
- * ({@see RewriteApplier}) and rendering it ({@see UnifiedDiff}) are separate
- * collaborators the caller owns; {@see Catalog} is the roll of Scribes.
- *
- * The whole tree is parsed for cross-file correctness; the {@see Scope} restricts
- * which files a Scribe actually edits.
+ * Computes the new content of files it amends. Pure: returns data, never writes to disk. Applies
+ * to the whole tree for cross-file correctness; {@see Scope} restricts which files are actually
+ * edited. {@see Catalog} is the roll of Scribes; applying is a separate {@see RewriteApplier}.
  */
 abstract class Scribe
 {

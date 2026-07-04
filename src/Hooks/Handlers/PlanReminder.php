@@ -14,20 +14,9 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 /**
- * `commandments plan-reminder` — the plan-execution {@see Hook}, wired to two moments:
- *
- *  - **`PostToolUse` / `ExitPlanMode`** (a plan was just approved): records the active-plan
- *    {@see PlanMarker} and injects a nudge to load the `commandments-executing-plans` skill,
- *    concretised with THIS project's profile (branch strategy, push cadence, the `checks` commands,
- *    keep-going policy).
- *  - **`Stop`** (a turn ending): while a plan is active AND the project opted into
- *    {@see PlanProfile::keepGoing}, blocks-and-continues so the agent grinds on until the plan is
- *    done. Loop-safe — the {@see PlanMarker}'s stuck-counter caps a spinning agent, HEAD movement
- *    resets it, and {@see StopPolicy::RespectUserStops} nudges only once. Clears itself when the
- *    plan branch is back on its base (merged/abandoned), so it never leaks into later, unrelated work.
- *
- * Advisory throughout: it injects context and blocks-and-continues, never forces. A project that
- * never calls `keepGoing()` gets the approval nudge but no Stop nudge at all.
+ * The plan-execution {@see Hook} wired to `PostToolUse/ExitPlanMode` and `Stop`. Records the active
+ * plan via {@see PlanMarker} and injects the `commandments-executing-plans` skill nudge, then
+ * blocks-and-continues while a plan is active and `keepGoing()` opted in (loop-safe, self-clearing).
  */
 final class PlanReminder extends Hook
 {

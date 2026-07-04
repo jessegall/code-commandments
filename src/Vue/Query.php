@@ -8,14 +8,8 @@ use Closure;
 use JesseGall\CodeCommandments\Query as BaseQuery;
 
 /**
- * The frontend fluent query over the Vue template AST — the SAME shared {@see BaseQuery}
- * (`where`/`reject`, the filter loop, decorator injection) the backend uses, plus the frontend
- * selectors and the three engine hooks: candidates are the [element, owning component] pairs the
- * query draws from, a match is an {@see ElementMatch}, and decorators extend it. A frontend
- * detector reads exactly like a backend one — including `->where(fn (MyElementNode $n) => …)` — only
- * the nodes differ (Vue {@see Element}s instead of PHP).
- *
- * The selector sees the raw {@see Element}; `where`/`reject` see the {@see ElementMatch}.
+ * Frontend fluent query over the Vue template AST, mirroring backend BaseQuery with Vue Element
+ * matches; frontend detectors read like backend ones.
  */
 final class Query extends BaseQuery
 {

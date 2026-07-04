@@ -8,14 +8,9 @@ use PhpParser\Node;
 use PhpParser\Node\AttributeGroup;
 
 /**
- * One field of a class — a public/protected/private slot the class carries, sourced from
- * either a promoted constructor parameter or a declared property. Language-level and
- * codebase-agnostic: it knows its name, its declared type node, its attribute groups, its
- * visibility, and whether it was promoted — nothing about any framework's meaning for those.
- *
- * A framework decorator reads the field's ATTRIBUTES to decide policy (a Spatie `#[Hidden]`,
- * an injection attribute); the reader that produces these ({@see AstNode::fields()}) stays
- * generic so both engines and every package can reuse it.
+ * One class field — from a promoted constructor parameter or declared property — with its
+ * name, type, attributes, visibility, and promotion status. Framework decorators read the
+ * attributes to decide policy; the field itself stays generic so both engines can reuse it.
  */
 final class ClassField
 {

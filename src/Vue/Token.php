@@ -5,16 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * The shared token vocabulary for the script/expression readers — named punctuation instead
- * of bare `'('`/`'}'` literals, and the two senses of "bracket" the engine actually uses:
- *
- *   - {@see opensGroup} / {@see closesGroup} — EXPRESSION nesting, `()[]{}`. Angles are
- *     comparison/arrow operators here, NOT delimiters, so they're excluded (this is why a
- *     call argument's span mustn't count `<`/`>`).
- *   - {@see opensType} / {@see closesType} — TYPE nesting, `()[]{}<>`. In a type position a
- *     generic's `<…>` IS balanced, so it counts.
- *
- * Kinds mirror how {@see Script} tags its tokens. Pure vocabulary — no state.
+ * Shared token vocabulary for script/expression readers. Two nesting modes: expression
+ * (`()[]{}`, angles are operators) and type (`()[]{}<>`, generics balance). Pure vocabulary,
+ * no state.
  */
 final class Token
 {

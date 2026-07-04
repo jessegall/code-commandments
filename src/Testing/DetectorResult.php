@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 /**
- * One detector's verdict against the fixture's `#[Sinful]` markers.
- *
- * - `missed`: marked sins the detector failed to flag.
- * - `unexpected`: locations the detector flagged that are NOT marked sinful —
- *   a false positive (fix the detector) or an unmarked sin (mark it).
+ * One detector's verdict against the fixture's #[Sinful] markers: missed (false
+ * negatives) and unexpected (false positives).
  */
 final class DetectorResult
 {

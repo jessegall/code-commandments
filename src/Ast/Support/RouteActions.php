@@ -21,21 +21,7 @@ use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
 
-/**
- * The set of `(class, method)` pairs that are ROUTE ACTIONS — the entry points an HTTP request reaches.
- * There is no single clean signal for "controller" (a Laravel 11 base extends nothing), so this unions
- * every available one:
- *
- *  1. ROUTE-FILE registration — `Route::get('/x', [C::class, 'm'])` / `$router->post(..., C::class)`
- *     (invokable → `__invoke`). Ground truth, when the route files are in scan scope.
- *  2. STRUCTURAL — a public method whose signature takes an `Illuminate` request (a request handler).
- *  3. RESPONSE-REACHABLE — a public method that renders a page (`Inertia::render`/`inertia()`) or whose
- *     declared return type is response-bound (reuses {@see ResponseSurface}).
- *
- * `isAction(fqcn, method)` is membership in that union. Built ONCE per codebase (an AST walk, like
- * {@see ResponseSurface}) and memoised by the codebase object via a {@see \WeakMap}. The action-reading
- * helpers are static so the duplicate-route detector reads registrations the same way.
- */
+/** Set of route actions (class::method entry points) — unions three signals: route-file registration, structural, response-reachable. Built once per codebase and memoised. */
 final class RouteActions
 {
     private static ?\WeakMap $memo = null;

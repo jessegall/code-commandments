@@ -15,19 +15,8 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 
 /**
- * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\NewDataObjectDetector}: a rich
- * Spatie `Data` object built with `new` should go through `::from()` so the cast/map/nest
- * pipeline runs. Rewrites `new Foo(a: 1, b: 2)` → `Foo::from(['a' => 1, 'b' => 2])`,
- * resolving POSITIONAL arguments to property names via the constructor.
- *
- * It only rewrites where the result is PROVABLY equivalent — the filters are the whole
- * point of the scribe:
- *  - the target class must be VISIBLE in the codebase (else its shape can't be verified);
- *  - it must NOT remap input names (`#[MapInputName]`/`#[MapName]`) — `::from()` keys by the
- *    mapped name, so a property-name-keyed array would silently mismap;
- *  - every argument must resolve to a property name (a named arg, or a positional arg
- *    landing on a PROMOTED, non-variadic param). A spread or an unresolvable position is
- *    skipped. The detector still flags those — they just aren't auto-fixable.
+ * Rewrites `new Data()` to `::from()` where provably equivalent (class visible, no
+ * input-name remap, resolvable arguments).
  */
 final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
 {

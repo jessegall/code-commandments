@@ -10,13 +10,8 @@ use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Install;
 /**
- * `commandments remind` — the cardinal-rule reminder, fired as a `PostToolUse` hook. Rather than
- * re-inject on every turn (noisy) or once at session start (fades), it counts tool uses in a
- * marker file and surfaces the rule once every {@see INTERVAL}, then resets — a steady heartbeat
- * that keeps "trace to the source" present through a long session at a fraction of the token cost.
- * Wired by {@see Install}.
- *
- * The text is a tight distillation of `fix-at-the-source`; it stays short because it recurs.
+ * PostToolUse hook that counts tool uses and surfaces the cardinal rule once every
+ * INTERVAL—a steady heartbeat keeping 'trace to the source' present.
  */
 final class Remind extends Hook
 {

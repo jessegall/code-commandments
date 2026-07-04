@@ -19,21 +19,8 @@ use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\ClassMethod;
 
 /**
- * A method that UNPACKS its target out of a container parameter — takes a container
- * object AND a scalar key, resolves the key against the container
- * (`request(Workflow $workflow, string $nodeId)` doing `$workflow->graph->nodeById($nodeId)`),
- * and works on the resolved target while the container is only ever packaging. The
- * caller passed both and named the key, so the caller should resolve once and pass
- * the OBJECT — and own the "not found" failure. Demand the resolved type, not an id
- * plus its container. Points at pass-the-object.
- *
- * The precision is the "pure encapsulator" test in {@see ParamResolution}: the
- * container counts only when it is used nowhere but the unpack (otherwise just cheap
- * `$owner->prop` reads). A container used as a whole object downstream — graph
- * surgery on `$graph`, a registry keying into `$this` — is a genuine co-subject, not
- * packaging, and is left alone. An HTTP/MCP boundary (a method also taking a Request)
- * is exempt too: the key arrives as a route arg and there is no caller to hand an
- * object.
+ * Detects methods unpacking a target from a container parameter; pass the resolved object,
+ * not the container plus a key.
  */
 final class ParamResolvedFromParamDetector implements Detector, Exemptable
 {

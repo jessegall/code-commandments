@@ -22,26 +22,7 @@ use PhpParser\NodeVisitor\CloningVisitor;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\PrettyPrinter\Standard;
 
-/**
- * Resolves the constant-expression default that names a value type's **Null Object** — the
- * inert/identity instance an optional field should default to instead of `null`, so the DTO stops
- * lying (`?T = null`) and consumers stop null-checking.
- *
- * The identity is READ from the type's own declaration, never invented, in two ways:
- *   1. a **default-constructible** type (`new T()` — no constructor, or every parameter defaulted)
- *      yields its own resting state;
- *   2. a type that declares a canonical **Null Object factory** — a single `public static` method,
- *      taking no required arguments, whose body is `return new self(<constant expression>)` — yields
- *      that factory's body, inlined (`self`/`static` → the written type, `self::CONST` kept). This is
- *      the `Callback::noOp()` shape: the factory can't be CALLED in a default (PHP forbids it), but
- *      its returned expression is itself a legal default, so we inline it.
- *
- * A type with no discoverable identity yields null, and the caller leaves the field alone — the fix
- * there is a design decision (declare the Null Object), not a rewrite. PHP caps a default to a
- * constant expression (`new T(...)` with constant args, enum cases — NOT a `T::factory()` call), so
- * only an identity expressible that way is offered; a factory whose body isn't such an expression,
- * or that references another class's non-public constant, is skipped rather than mis-rendered.
- */
+/** Resolves the constant-expression default for a Null Object (from default constructor or factory); yields null if no identity exists. */
 final class NullObjectDefault
 {
     public function __construct(private readonly Codebase $codebase) {}

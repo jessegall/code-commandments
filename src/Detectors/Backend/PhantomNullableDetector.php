@@ -18,19 +18,9 @@ use PhpParser\Node\PropertyItem;
 use PhpParser\Node\Stmt\Class_;
 
 /**
- * A **phantom nullable** — a field typed `?T` (or `T | null`, `T | Optional | null`) whose value,
- * followed through the whole program by the {@see \JesseGall\CodeCommandments\Ast\ValueFlow}
- * provenance graph, is ALWAYS consumed as present (dereferenced, or landed in a non-nullable
- * parameter) and NOT ONCE guarded (`?->`, `?? `, `!== null`, a truthiness test) — anywhere in its
- * flow, however many hops downstream. The type says "this can be missing"; the usage proves it never
- * is. Make the field non-nullable and let it be required, so construction fails hard on a real miss
- * instead of every consumer re-checking a value that's always there. Points at type-honesty.
- *
- * Not just DTOs: EVERY nullable property of EVERY class is a candidate — a constructor-promoted one
- * and a plain declared `public ?T $x` alike. Usage-driven and conservative: it fires only on positive
- * presence-evidence with ZERO contradiction, and a guard anywhere in the value's provenance — or a
- * flow the graph can't resolve — leaves the field alone. The whole reasoning lives in `ValueFlow`;
- * this detector only names the candidate and reads the verdict.
+ * A field typed `?T` whose value is always consumed as present (never guarded) per the
+ * {@see ValueFlow} provenance graph. Conservative: fires only on positive presence-evidence with
+ * ZERO contradiction. Every nullable property of any class is a candidate.
  */
 final class PhantomNullableDetector implements ChainDetector
 {

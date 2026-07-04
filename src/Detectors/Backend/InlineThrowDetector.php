@@ -11,12 +11,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A `?? throw` buried inside a larger expression — fed into a call or
- * dereferenced on the same line instead of guarded at the top. Points at
- * guard-clauses-and-flow.
- *
- * A bare `return $x ?? throw ...;` (the throw is the whole expression) is fine;
- * the smell is `f($x ?? throw ...)` or `($x ?? throw ...)->y()`.
+ * Detects `?? throw` buried in a call arg or dereference, not bare return statements.
  */
 final class InlineThrowDetector implements Detector
 {

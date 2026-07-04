@@ -7,16 +7,8 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 use JesseGall\CodeCommandments\Ast\Codebase;
 
 /**
- * A PAGE OBJECT — the single composed `Data` a controller sends back for one page to render. Two
- * properties, together, tell it apart from an ordinary DTO:
- *
- *  1. it COMPOSES more than one nested `Data` ({@see DataClassShape::composesMultipleData()}) — a payload
- *     assembled from smaller slots, not a leaf; and
- *  2. it TRAVELS BACK in a response ({@see ResponseSurface::isResponseBound()}) — an internal aggregate,
- *     however large, is not a page object.
- *
- * Callers first establish the class IS `Data` (the detector's own `isDataClass()` gate); this policy adds
- * the two page-object conditions. Memoised per codebase — it only composes the two shared analyses.
+ * Identifies page objects: Data classes that compose multiple nested `Data` and bind to responses.
+ * Memoised per codebase.
  */
 final class PageObject
 {

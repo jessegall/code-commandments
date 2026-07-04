@@ -25,22 +25,8 @@ use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Benchmark;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 /**
- * `commandments judge [path] [--skill=NAME] [--sin=NAME] [--changes] [--branch[=BASE]] [--parallel=N] [--list]`
- *
- * Scans a path, runs the Sin Detectors, and prints each finding as
- * `file:line  Class::method`, grouped by the SKILL that teaches the fix — so an
- * agent can read one skill and resolve the whole group. Filter to a skill (group)
- * or a single sin (`--sin=array-bag`) to scope a fixing pass.
- *
- * It orchestrates four collaborators: a {@see Scope} (resolved from the flags)
- * decides which files to report on; {@see Codebase} parses the path; the
- * {@see DetectorRunner} runs the detectors (in parallel) into lightweight findings;
- * a {@see SinReport} renders the console output and the checklist.
- *
- * By default it also writes a Markdown checklist (`.commandments/sins.md`, inside
- * the gitignored `.commandments/` artifact folder) — the intended workflow is to
- * judge ONCE, then work that file line-by-line (a full scan is slow), deleting each
- * line as its sin is fixed. `--no-checklist` prints only; `--checklist=FILE` retargets it.
+ * Scans a path and runs Sin Detectors, outputting findings grouped by skill (filterable by --skill/--sin).
+ * Orchestrates Scope, Codebase, DetectorRunner (parallel), and SinReport; writes `.commandments/sins.md` checklist.
  */
 final class Judge implements Command
 {

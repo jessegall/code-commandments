@@ -14,26 +14,9 @@ use ReflectionFunction;
 use ReflectionNamedType;
 
 /**
- * A consumer's overrides to the shipped detector set — the runtime twin of the doc-generating
- * {@see Detectors\Catalog}. Loaded from `.commandments/config.php` (the CLI `require`s it, so it
- * works without any framework), which returns a `fn (Config): void` that composes its moves:
- *
- *   return function (Config $config): void {
- *       $config
- *           ->disable(NonFinalData::class, DeepNestingDetector::class)   // suppress a built-in
- *           ->detector(MyCustomDetector::class)                          // add your own finder
- *           ->package(MyFrameworkPackage::class)                         // register its exemptions
- *           ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)); // tune a threshold
- *   };
- *
- * {@see disable} takes a Detector, Sin, OR Skill class (a sin drops every detector that points at
- * it; a skill drops every detector it teaches the fix for);
- * {@see detector} adds a detector living in the CONSUMER's codebase (the package can't glob it);
- * {@see package} registers a consumer {@see Packages\Package} of cross-detector exemptions;
- * {@see configure} takes a closure whose FIRST PARAMETER TYPE names the detector to tune — the
- * matching instance is reflected out of the configured set and handed in, so the closure just
- * calls its fluent setters. The package's own {@see Detectors\Catalog} stays pure (the fixtures
- * and generated docs always run the defaults); this layer applies only at CLI runtime.
+ * Consumer overrides to the shipped detector set (loaded from .commandments/config.php).
+ * Methods: disable() suppresses by Detector/Sin/Skill class; detector() adds consumer
+ * detectors; package() registers exemptions; configure() tunes thresholds via closure param type.
  */
 final class Config
 {

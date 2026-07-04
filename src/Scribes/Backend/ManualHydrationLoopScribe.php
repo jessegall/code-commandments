@@ -17,19 +17,8 @@ use PhpParser\Node\Name;
 use PhpParser\Node\VariadicPlaceholder;
 
 /**
- * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\ManualHydrationLoopDetector}: a
- * collection hydrated `Foo::from($item)` per item should be one `Foo::collect($items)` pass.
- *
- * Only the `array_map` shape is auto-fixed, because there the rewrite is a single, provably-
- * equivalent expression swap:
- *  - `array_map(fn ($r) => Foo::from($r), $rows)` → `Foo::collect($rows)`
- *  - `array_map(Foo::from(...), $rows)`           → `Foo::collect($rows)`
- *
- * The callback must do NOTHING but map each item straight through `from()` — an arrow fn whose
- * single param is passed verbatim, or the first-class callable. A transforming callback
- * (`fn ($r) => Foo::from($r['data'])`), a multi-statement closure, or a `foreach` accumulator
- * (which needs its surrounding init/return collapsed) is left for a human — the detector still
- * flags it.
+ * Fixes manual hydration loops by rewriting `array_map(fn => Foo::from(...))` to `Foo::collect()`
+ * for passthrough callbacks only.
  */
 final class ManualHydrationLoopScribe extends RepentScribe
 {

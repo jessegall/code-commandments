@@ -14,13 +14,8 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\AllNullableData;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A Spatie Data class whose every promoted field is NULLABLE. The type then tells no
- * truth about what's actually required, so every consumer must re-validate what should
- * have been guaranteed at `::from()`. Make the required fields non-nullable; let `from()`
- * fail hard on a real miss. Points at spatie-data.
- *
- * A non-nullable field with a typed default (`int $x = 0`) is an HONEST optional — a
- * value object with a sensible identity — so a class holding even one is not flagged.
+ * Detects Spatie Data classes where every field is nullable; make required fields non-nullable
+ * so `from()` fails on a real miss.
  */
 final class AllNullableDataDetector implements Detector, Repentable
 {

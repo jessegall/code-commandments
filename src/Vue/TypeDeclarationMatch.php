@@ -7,13 +7,9 @@ namespace JesseGall\CodeCommandments\Vue;
 use JesseGall\CodeCommandments\Located;
 
 /**
- * A matched {@see TypeDeclaration} that knows WHERE it is — the {@see ElementMatch} of
- * declaration space, so a frontend detector over types reads `file:line` and `scope`
- * exactly like one over elements. A `where`/`reject` predicate receives this and asks
- * it for the declaration's {@see name} and {@see fields}.
- *
- * NOT final, mirroring {@see ElementMatch}: a detector may subclass it to hang domain
- * predicates on a declaration and type-hint the subclass in a `where` closure.
+ * A matched {@see TypeDeclaration} that knows WHERE it is — frontend detector's `file:line`
+ * and `scope` like {@see ElementMatch}. Mirrors ElementMatch: non-final, allow subclassing
+ * to hang domain predicates with type-hinted `where` closures.
  */
 class TypeDeclarationMatch implements Located
 {

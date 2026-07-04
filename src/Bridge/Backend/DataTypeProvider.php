@@ -9,12 +9,8 @@ use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
 use JesseGall\CodeCommandments\Bridge\TypeContract;
 
 /**
- * Publishes one {@see TypeContract} per Spatie `Data` class — its short name and the
- * public fields it exposes. That is the shape the frontend can generate from
- * (`#[TypeScript]`), so a hand-written TS type mirroring it is a duplicated contract.
- *
- * Composes the SAME fluent query a Spatie detector does — `whereClass()` narrowed by
- * `SpatieDataNode::isDataClass()` — so the `Data` FQCN stays stated once, on the node.
+ * Publishes TypeContracts from Spatie Data classes using the same fluent query
+ * pattern as detectors to keep the Data FQCN stated once.
  */
 final class DataTypeProvider implements ContractProvider
 {

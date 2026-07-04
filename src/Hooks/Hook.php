@@ -10,15 +10,9 @@ use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 /**
- * The shape every code-commandments Claude Code hook shares — the base {@see Remind},
- * {@see JudgeReminder}, and {@see PlanReminder} extend, so a hook is written by declaring WHAT it
- * does at each moment, never by re-plumbing HOW hooks read, dispatch, and respond.
- *
- * {@see run} (the CLI entrypoint, final) reads the payload, resolves the worktree, and dispatches
- * by event name to a per-moment handler. A subclass overrides only the moments it wires — the rest
- * {@see pass stay silent}. Responses go through the small vocabulary below ({@see block},
- * {@see inject}, {@see pass}) so behaviour reads uniformly across hooks, and git access is the
- * worktree-scoped {@see git} shared by them all.
+ * Base class for all code-commandments hooks. Subclasses declare the moments they wire;
+ * {@see handle} dispatches to moment handlers. Responses use {@see block}, {@see inject},
+ * {@see pass} for uniform behavior across hooks.
  */
 abstract class Hook
 {

@@ -10,8 +10,8 @@ Whole-tree PHP rewrites, run on every `repent`:
 
 | Scribe | What it does |
 |---|---|
-| `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill. |
-| `RedundantReturnTypeScribe` | Strips a redundant explicit return type from a single-expression arrow function when the expression PROVABLY yields exactly that class. |
+| `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill: renames object factories to `from<Type>`, regenerates `@method` docblock lines, and adds `@method collect()` when used. |
+| `RedundantReturnTypeScribe` | Strips redundant return types from arrow functions when the expression provably yields that exact class. |
 
 ### Backend
 

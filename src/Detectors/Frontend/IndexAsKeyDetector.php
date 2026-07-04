@@ -15,22 +15,9 @@ use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**
- * A `v-for` whose `:key` is the loop INDEX — `v-for="(item, index) in items" :key="index"`.
- * The index is positional, not identity: insert or reorder an item and every key shifts, so
- * Vue patches the wrong nodes and component state (inputs, focus, transitions) leaks across
- * rows. Key by something STABLE (`item.id`). Points at vue-control-flow.
- *
- * The numeric index is the LAST alias of the binding, read off the parsed `v-for` AST. The
- * shapes differ, and so does the certainty:
- *  - `(value, key, index)` — the 3rd alias is ALWAYS the numeric index, so keying by it is
- *    unambiguously the sin.
- *  - `(item, index)` — the 2nd alias is the numeric index for an ARRAY, but the property KEY
- *    for an OBJECT (`(value, key) in obj` keyed by `key` is correct). So this is flagged ONLY
- *    when the iterable is PROVABLY an array — resolved through the type engine, never guessed
- *    from the alias name.
- *
- * Only a `:key` that is EXACTLY the index identifier is flagged — `:key="item.id"` or a
- * composite key (`asChain()` is null) is left alone.
+ * Detects `v-for` keyed by numeric index (`:key="index"`), which shifts when items
+ * insert/reorder, breaking Vue patching and state. Only flags bare index identifier on
+ * provably-array iterables (2-form ambiguous over objects). Points at vue-control-flow.
  */
 final class IndexAsKeyDetector implements Detector
 {

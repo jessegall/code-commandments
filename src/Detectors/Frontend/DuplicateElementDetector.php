@@ -14,14 +14,8 @@ use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
- * Two-or-more identical blocks of template markup — the same tags, attributes and
- * children, copy-pasted (the comparison is by STRUCTURE, blind to formatting,
- * whitespace and line numbers). Repeated markup is one component waiting to be born:
- * extract it once and use it in each place. Points at vue-components.
- *
- * Only blocks of real substance count (a {@see FLOOR}-element floor skips a stray
- * repeated `<br>` or empty `<div>`), and only the LARGEST duplicated block is
- * flagged — its inner pieces are duplicated too, but extracting the whole is the fix.
+ * Detects identical template blocks (structural comparison, blind to formatting); only
+ * substantial blocks and the largest duplicate are flagged.
  */
 final class DuplicateElementDetector implements Detector, Repentable
 {

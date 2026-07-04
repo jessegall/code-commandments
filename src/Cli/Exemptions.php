@@ -10,12 +10,8 @@ use JesseGall\CodeCommandments\Packages\Exemption;
 use ReflectionClass;
 
 /**
- * `commandments exemptions [<sin|detector>]` — inspect the exemption system.
- *
- * With no argument it lists every exemption tag (its slug + what it means). With a sin id or
- * detector name it lists the exemptions THAT detector honours — exactly what a package can register
- * (by slug or class) to quiet it. It reads each detector's own {@see Exemptable::exemptions}
- * declaration, so the list stays in sync with what the detector actually reads.
+ * Lists exemption tags for a sin or detector. With no argument shows all tags; with a sin/detector
+ * name shows what exemptions that detector honours, kept in sync via {@see Exemptable::exemptions}.
  */
 final class Exemptions implements Command
 {

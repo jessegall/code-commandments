@@ -5,14 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * A parsed Vue single-file component: its top-level blocks in document order, and
- * the tokenized `<template>` tree.
- *
- * Block splitting is deliberately separate from template tokenizing — `<script>`
- * and `<style>` hold JS/TS and CSS, not HTML, so their bodies are read raw (up to
- * the matching end tag); only the template is parsed into {@see Element}s. The
- * outer `<template>` is found depth-aware, so nested `<template v-if>` inside it
- * doesn't end the block early.
+ * Parsed SFC with top-level blocks and tokenized template tree. Block splitting
+ * separate from template parsing (script/style raw, template parsed to Elements).
  */
 final class Sfc
 {

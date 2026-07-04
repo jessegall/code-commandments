@@ -8,15 +8,8 @@ use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
 
 /**
- * A chain step that runs a {@see Repentable} detector's scribe over a codebase — fed the
- * detector's OWN findings, never re-scanning. Engine-agnostic: the {@see Backend\DetectorStep}
- * runs over the PHP AST and the {@see Frontend\DetectorStep} over the Vue components, but
- * both resolve the scribe, scope the findings, and call {@see RepentScribe::rewrite} the
- * same way — that shared machinery lives here.
- *
- * Each concrete step holds its engine's narrowly-typed detector and implements {@see run}
- * (the scan differs per engine) plus {@see repentable} (the engine-neutral handle this base
- * uses for `name()`/`--sin` matching/scribe resolution).
+ * A chain step running a repentable detector's scribe over findings; concrete steps implement
+ * engine-specific scanning and repentable() resolution.
  */
 abstract class DetectorStep implements ScribeStep
 {

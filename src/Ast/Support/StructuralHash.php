@@ -12,15 +12,9 @@ use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 
 /**
- * A formatting-blind fingerprint of an AST subtree. It serialises a node by its
- * structure — node types and their sub-node values (names, operators, literals) —
- * and never reads attributes (line numbers, comments, whitespace live there). So
- * two functions that differ only in spacing, newlines, or comments hash the same;
- * a real difference in code changes the hash.
- *
- * {@see normalized} goes one step fuzzier: it also blanks variable names and
- * scalar literal values, so two functions with the same SHAPE that differ only in
- * their variable names or constants (a type-2 clone) hash the same.
+ * A formatting-blind fingerprint of an AST subtree by structure alone — node types and
+ * values, never attributes. Two functions differing only in spacing/comments hash the same.
+ * {@see normalized} also blanks variable names and values for type-2 clone detection.
  */
 final class StructuralHash
 {

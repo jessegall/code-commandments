@@ -9,13 +9,9 @@ use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Discovery;
 
 /**
- * One kind of exemption — the TAG a detector reads and a package registers against ({@see
- * Exemptions}). A concrete exemption (under `Tags/`) names itself with a {@see slug} and explains
- * itself with a {@see description}, so it's referable by a short slug (a package developer needs
- * only know `'boundary'`, not the FQCN) and listable by the `exemptions` command.
- *
- * A tag is ALWAYS an `Exemption`: a custom one is your detector's own subclass of this, with a
- * slug + description. {@see resolve} maps a slug or subclass to its class.
+ * An exemption tag — what a detector reads and a package registers. Concrete exemptions under
+ * `Tags/` name themselves with a {@see slug} and {@see description}, referable by short slug and
+ * listable by the `exemptions` command. Custom detectors subclass this with their own tags.
  */
 abstract class Exemption
 {

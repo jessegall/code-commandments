@@ -14,16 +14,9 @@ use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 
 /**
- * An `array` parameter read by a string-literal key (`$bag['total']`) — a
- * structured bag that should be a typed value object. Points at value-objects.
- *
- * Dynamic-key (`$m[$key]`) and positional (`$cols[0]`) access is left alone:
- * those are a genuine map or tuple, not a named-field shape.
- *
- * An Eloquent CAST is exempt: the framework dictates its `$attributes` array
- * parameter (`get`/`set($model, $key, $value, $attributes)`) and passes the raw row
- * — reading it by key (`$attributes['type']`) is the only option, not a bag the
- * author chose.
+ * An `array` read by string-literal keys — a structured bag that should be a typed value
+ * object. Dynamic/positional keys are genuine maps/tuples (left alone). Eloquent casts
+ * are exempt — the framework dictates the `$attributes` parameter.
  */
 final class ArrayBagDetector implements Detector, Exemptable
 {

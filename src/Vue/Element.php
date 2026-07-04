@@ -9,14 +9,8 @@ use JesseGall\CodeCommandments\Vue\Expr\Interpolation;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
- * One node of a parsed Vue template: an element (`<div>`, `<MyComponent>`,
- * `<template>`), a text node (`tag === '#text'`), or the synthetic fragment root
- * (`tag === '#root'`) that holds a template's top-level nodes.
- *
- * Attributes keep Vue's raw directive names (`v-if`, `:title`, `@click`,
- * `#default`); navigation up the tree is via {@see parent}, wired once the children
- * are built. Like the backend's AstNode this is a thin data node — fluent queries
- * sit in a layer above it, and {@see ElementMatch} extends it to add `file:line`.
+ * Template node (element, text, or fragment root) with raw directive names. Thin data
+ * node; fluent queries and file:line sit above it.
  */
 class Element
 {

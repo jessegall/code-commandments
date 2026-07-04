@@ -7,15 +7,8 @@ namespace JesseGall\CodeCommandments\Vue\Ts;
 use JesseGall\CodeCommandments\Vue\Token;
 
 /**
- * Turns a `<script setup>` source string into a flat stream of {@see Lexeme}s — the tokeniser the
- * {@see Parser} consumes. It recognises identifiers/keywords, string and template literals, numbers,
- * and single-character punctuation; whitespace and comments are dropped, but each lexeme keeps its
- * byte span so the parser can see the newline gaps the whitespace left behind.
- *
- * Punctuation is emitted one character at a time — so `=>`, `?.`, `&&`, `...` are two/three lexemes.
- * The parser composes them (an `=` followed by `>` is an arrow); this keeps the lexer trivial and
- * total. Unlike the old hand-scanner it DOES emit number lexemes, so literal types (`1 | 2`) and
- * tuple positions parse.
+ * Tokenizes `<script setup>` source into lexemes for the Parser; emits punctuation one character
+ * at a time and keeps byte spans.
  */
 final class Lexer
 {

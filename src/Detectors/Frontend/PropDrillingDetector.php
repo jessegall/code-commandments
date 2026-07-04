@@ -14,20 +14,9 @@ use JesseGall\CodeCommandments\Vue\Script;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**
- * Prop DRILLING — a prop threaded through a component that doesn't use it, on its way to a
- * child that doesn't either. The middle component is a dead pipe: `defineProps<{ user }>()`
- * whose `user` only appears as `<Child :user="user" />`, AND that `Child` ITSELF just forwards
- * it onward. The value passes through ≥2 conduits with no one along the way reading it — the
- * classic case for provide/inject or handing the leaf its data directly. Points at
- * vue-components.
- *
- * A single forward is NOT drilling — `<Button :disabled="disabled" />` is a component composing
- * its own UI, and `<Dialog :open="open" @update:open="…" />` is a controlled v-model proxy.
- * The CHAIN is what separates the sin: this flags a forward only when the child component
- * resolves (through the {@see ModuleResolver}) to one that is ALSO a conduit for the same prop.
- * A leaf / library child can't be confirmed a pipe, so composition is left alone — calibration
- * showed the single-component "forwarded + unused" signal can't tell drilling from composition,
- * so the graph hop is what makes it sound.
+ * Detects a prop threaded through ≥2 components unused. A single forward (component composition)
+ * is not drilling. The chain matters: flags a forward only when the child also pipes it onward,
+ * verified via {@see ModuleResolver} to separate drilling from composition.
  */
 final class PropDrillingDetector implements Detector
 {

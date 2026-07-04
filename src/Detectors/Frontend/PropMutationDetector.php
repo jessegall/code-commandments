@@ -15,16 +15,8 @@ use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**
- * A component WRITES one of its own props — `v-model="open"` bound to a prop, or an event
- * handler assigning to it (`@click="confirmingClose = true"`). Props are read-only input from
- * the parent: a `v-model` on a prop fails the Vue compiler, and an assignment is a silent
- * no-op (the click "works" but nothing changes). Two-way state belongs in a `defineModel`, or
- * the parent owns it and the child emits an `update:` event. Points at vue-components.
- *
- * Only a BARE prop write is flagged — `v-model="open"` / `prop = …`, where `asChain()` is the
- * single prop name. A name SHADOWED by a local (`const open = useVModel(props, 'open')`, a
- * `defineModel`, a `computed`) is the writable local, not the prop, so it is excluded — the
- * exact false positive the consumers' `useVModel` inputs would otherwise raise.
+ * Detects component writing its own props (v-model or assignment); only bare prop
+ * writes are flagged, not shadowed locals.
  */
 final class PropMutationDetector implements Detector
 {

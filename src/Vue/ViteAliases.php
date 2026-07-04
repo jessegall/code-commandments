@@ -8,17 +8,9 @@ use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
- * Discovers a project's import aliases from its Vite config so the {@see ModuleResolver} can
- * follow `@app/composables/useX` to a real file. The alias map is read STRUCTURALLY, never
- * scraped: {@see Script} locates the `resolve: { alias: { … } }` object by tokens, the
- * expression engine parses it into an AST, and each entry's value — `path.resolve(src, 'x')`,
- * `resolve(__dirname, 'y')`, or a bare base var — is evaluated against the project root by
- * walking the call/identifier nodes.
- *
- * Base variables resolve lazily through the same config (`const src = resolve(dir, 'js')`,
- * `const dir = dirname(fileURLToPath(import.meta.url))` → the project root). Anything the
- * walker can't reduce to a path is skipped, so an exotic config degrades to fewer aliases
- * (relative imports still resolve), never to a crash.
+ * Extracts import aliases from Vite config for {@see ModuleResolver}. Reads the alias map
+ * structurally via tokens + AST (not scraped), evaluating expressions against the project root.
+ * Unresolvable paths degrade gracefully; relative imports always resolve.
  */
 final class ViteAliases
 {

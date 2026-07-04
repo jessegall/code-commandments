@@ -20,14 +20,9 @@ use PhpParser\Node\Stmt\Enum_;
 use PhpParser\NodeFinder;
 
 /**
- * Resolves the static type a property/method chain ends in — `$param->a->b()->c`
- * walked one hop at a time through declared property types and no-arg method
- * return types. Built once per codebase; given the local parameter types it
- * answers "what owned object does this expression land on", at any depth, so a
- * detector can follow a value as it passes through nested objects.
- *
- * Best-effort and conservative: an untyped hop, a parameterised call, or a `$this`
- * root returns null rather than guess.
+ * Resolves a property/method chain's final type by walking hops through declared types —
+ * best-effort and conservative, returning null for untyped/parameterised hops. Detectors
+ * use it to follow values through nested objects one hop at a time.
  */
 final class ChainResolver
 {

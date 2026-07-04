@@ -30,18 +30,8 @@ use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\NodeFinder;
 
 /**
- * Best-effort static type of an expression, resolved through the RECEIVER CHAIN — the
- * "receiver of the receiver of the receiver". Where {@see ReceiverResolver} answers one hop
- * ($this, a typed param), this follows the whole chain: a local typed from its assignment
- * ORIGIN (`$x = Foo::from(...)`, `new Foo`, `$this->prop`, a typed method return), then a
- * property/method chain read off it (`$a->b->c()`), hop by hop, against a codebase-wide index
- * of field types, method return types, and parameter nullability.
- *
- * Best-effort by design: an unresolvable link yields null (the caller stays conservative rather
- * than guess), and the type is the DECLARED one — no flow-narrowing. It underpins usage-driven
- * rules that must know "what does this value actually flow into" — e.g. whether a nullable field
- * is ever read as if present. Names are fully-qualified (the parser resolved them); memoised per
- * codebase like {@see DataClassShape}.
+ * Resolves the declared type of an expression through the receiver chain (field/method hops),
+ * conservatively yielding null for unresolvable links. Underpins value-flow analysis.
  */
 final class TypeResolver
 {

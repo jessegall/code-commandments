@@ -7,15 +7,8 @@ namespace JesseGall\CodeCommandments\Packages;
 use JesseGall\CodeCommandments\Ast\Codebase;
 
 /**
- * The open, tag-keyed exemption registry — how a package tells a detector "leave this alone",
- * without either side importing the other. A package builds exemptions in {@see Package::register}
- * (`$ex->exempt(Tag::class)->on(...)`), keyed by a tag class-string BOTH sides agree on; a detector
- * asks {@see has} under its tag. The built-in tags live in {@see Tags}; a custom detector declares
- * its own {@see Exemption} subclass as a tag, and any package (yours or a third party's) can
- * register against it.
- *
- * This is the twin of {@see Catalog} for cross-detector policy: one mechanism, extensible by
- * anyone, no fixed list of exemption kinds.
+ * Tag-keyed exemption registry that decouples packages from detectors. Packages register
+ * exemptions via tag class-string, detectors query under a tag—extensible, no fixed list.
  */
 final class Exemptions
 {

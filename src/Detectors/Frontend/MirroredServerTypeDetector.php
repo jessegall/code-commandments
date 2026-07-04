@@ -15,16 +15,8 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\TypeDeclarationMatch;
 
 /**
- * A hand-written TypeScript type that mirrors a backend Spatie `Data` class — the same
- * name and (spelling aside) the same fields. That is a second source of truth for one
- * contract; the server should own it (`#[TypeScript]`) and the frontend generate from
- * it. Points at mirrored-server-type.
- *
- * The `Data` shapes reach this detector as {@see TypeContract}s the backend published
- * across the {@see \JesseGall\CodeCommandments\Bridge\Bridge} — so a FRONTEND detector
- * flags the duplicate without ever reading a PHP node itself. A thin type (fewer than
- * {@see MIN_FIELDS} fields) is dropped: at that size a name-and-shape match is a
- * coincidence, not a copy.
+ * Detects hand-written TypeScript types mirroring backend Spatie Data classes;
+ * the server should own the type and the frontend generate from it.
  */
 final class MirroredServerTypeDetector implements Detector, ConsumesContracts
 {

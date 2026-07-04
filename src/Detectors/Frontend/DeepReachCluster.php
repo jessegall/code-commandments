@@ -10,23 +10,9 @@ use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**
- * A cluster of deep data reaches that share one nested object — `order.customer.name`
- * AND `order.customer.email`, reaching `order.customer` from several places. THAT is
- * the component waiting to be born (it takes `customer` as a prop); a lone deep reach
- * is not. The sibling of {@see SwitchCaseChain}: shared by the
- * {@see DeepDataReachDetector} (which asks "are there clusters here?") and the extract
- * scribe (which lifts each one), so the two agree on what to pull out and where.
- *
- * The detection rulebook, all structural — no name lists:
- *   - **F1 cluster, not a leaf** — a shared object must be read in ≥{@see MIN_FIELDS}
- *     DISTINCT fields, else it's a single reach and ignored.
- *   - **F2 climb to the boundary** — the finding is the {@see boundary} (lowest common
- *     ancestor) of the reaching elements, not the leaf.
- *   - **F3 depth floor** — only chains reaching ≥{@see MIN_DEPTH} hops past the root
- *     count; {@see TRANSPARENT} accessors (`.value`/`.length`) don't deepen it.
- *   - **R1 reactive root reject** — a root that is `v-model`-bound anywhere is owned
- *     STATE (an Inertia `useForm`, a `ref`), not a domain object; reaching into your
- *     own state is no Demeter sin, so its chains are dropped.
+ * A cluster of deep reaches sharing one nested object — `order.customer.name` AND
+ * `order.customer.email` reach `order.customer` from several places. Groups reaches
+ * by depth, boundary, field count, and reactive root ownership per structural rules.
  */
 final class DeepReachCluster
 {

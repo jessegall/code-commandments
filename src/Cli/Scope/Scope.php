@@ -5,19 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
 /**
- * The resolved file scope of a command run — the single choke-point where the
- * `--changes`/`--branch[=BASE]` flags become a concrete set of paths. Every
- * command parses the whole tree for cross-file correctness, then asks the Scope
- * `includes($file)` to decide what it reports on / acts on; an unscoped run includes
- * everything.
- *
- * A Scope COMPOUNDS other {@see FileScope}s: `includes()` is their AND. Every scope is built with a
- * {@see FrozenScope} already inserted, so a frozen file is off-limits without any consumer knowing what
- * "frozen" is — it's just not in scope. New axes (ownership, generated code) drop in the same way.
- *
- * Paths are canonicalized with `realpath`, so a finding's scanned path (which may be
- * relative or unresolved) matches the git change-set (which is already absolute and
- * symlink-resolved) regardless of how the codebase was addressed.
+ * Resolves file scope for a command run from `--changes`/`--branch[=BASE]` flags, compounding
+ * other FileScopes with AND logic; paths canonicalized to match git change-sets.
  */
 final class Scope implements FileScope
 {

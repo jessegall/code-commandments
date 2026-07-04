@@ -36,16 +36,9 @@ use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Vue\Ts\Node\VerbatimType;
 
 /**
- * The recursive-descent parser for a `<script setup>` — tokens ({@see Lexer}) → a {@see Module}
- * tree. It models the constructs real components use: imports, `interface`/`type` declarations,
- * `const`/`let`/`var` (with destructuring and a structured initializer call), `function`s, macro and
- * composable calls, and the full TYPE grammar. The type grammar is precedence-respecting — union →
- * intersection → postfix (`[]`, indexed) → primary (paren/function/object/tuple/ref/keyword/literal/
- * typeof) — so the arrow of a function type is a first-class production and never truncates.
- *
- * "Can't fail": anything the grammar doesn't model (a conditional/mapped/template-literal type, an
- * exotic statement) is preserved via a bracket-balanced verbatim capture ({@see Unparsed} →
- * {@see VerbatimType}, {@see skipStatement}) rather than mis-parsed. The parser is total.
+ * Recursive-descent parser for `<script setup>` — tokens ({@see Lexer}) → {@see Module} tree.
+ * Models imports, declarations, calls, and full TYPE grammar (precedence-respecting with function
+ * type arrows). "Can't fail": unmodeled constructs preserved verbatim rather than mis-parsed. Total.
  */
 final class Parser
 {

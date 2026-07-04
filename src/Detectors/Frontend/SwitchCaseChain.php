@@ -12,14 +12,9 @@ use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
- * A `v-if` / `v-else-if` [/ `v-else`] chain read off the template as a switch: one
- * subject, equality-tested against a case per branch. Shared by the detector (which
- * just asks "is this a chain?") and the {@see \JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe}
- * (which needs the subject, the case keys, and each branch element to rewrite).
- *
- * {@see at} returns null unless the head is a `v-if` equality whose every `v-else-if`
- * tests the SAME subject, across at least two cases — so a genuine conditional (mixed
- * subjects, `>`/method guards, a lone `v-if`) is never mistaken for a switch.
+ * Reads a `v-if`/`v-else-if` chain as a switch: one subject, equality-tested per branch.
+ * {@see at} returns null unless every `v-else-if` tests the SAME subject across ≥2 cases.
+ * Shared by the detector and {@see SwitchCaseScribe}.
  */
 final class SwitchCaseChain
 {

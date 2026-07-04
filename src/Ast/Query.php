@@ -9,13 +9,8 @@ use JesseGall\CodeCommandments\Query as BaseQuery;
 use PhpParser\Node;
 
 /**
- * The backend fluent query over the PHP AST — the shared {@see BaseQuery} (`where`/`reject`, the
- * filter loop, decorator injection) plus the backend selectors and the three engine hooks:
- * candidates come from the codebase's bucketed-by-type node index (so a query visits only nodes of
- * its own kind, never the whole tree), a match is a {@see NodeMatch}, and decorators extend it.
- *
- * A selector declares the node CLASSES it can match (a method call is a `MethodCall` or a
- * `NullsafeMethodCall`); `where`/`reject` see a {@see NodeMatch}.
+ * Fluent query over the PHP AST — selects nodes by type, filters via `where`/`reject`,
+ * decorates matches as {@see NodeMatch}. Selectors declare the node classes they match.
  */
 final class Query extends BaseQuery
 {

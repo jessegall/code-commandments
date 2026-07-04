@@ -21,16 +21,8 @@ use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 
 /**
- * Decides whether a Spatie `Data` class is RICH — i.e. whether routing its
- * construction through `::from()` actually DOES something a raw `new` would skip:
- * a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory.
- *
- * A PLAIN Data class — only scalar/enum promoted props, no cast/map/nest/factory —
- * gains nothing from `::from()` over `new`, so `new` is honest there. The smell is
- * only `new` on a rich class, where it silently bypasses the framework pipeline.
- *
- * Richness is inherited: a subclass of a rich base is rich. Resolution walks the
- * codebase's own class declarations — no reflection, no runtime.
+ * Determines whether a Spatie `Data` class is rich — has casts, maps, nested hydration,
+ * or factories that `::from()` executes but `new` skips. Richness is inherited.
  */
 final class DataClassShape
 {

@@ -8,16 +8,9 @@ use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Scribes\Span;
 
 /**
- * A matched {@see Element} that knows WHERE it is — the backend's NodeMatch, for
- * Vue. It IS an Element (so a `where`/`reject` predicate reads the same), plus the
- * source component and a `file:line` location a finding can point at.
- *
- * Tree navigation delegates to the original node ({@see $node}): a match is a copy,
- * so searching for "itself" among its parent's children must use the real object.
- *
- * NOT final on purpose — the frontend mirror of NodeMatch: a project SUBCLASSES it to hang
- * domain predicates on the element, and a `where` closure that type-hints the subclass is handed
- * it ({@see \JesseGall\CodeCommandments\Query::where}).
+ * A matched {@see Element} that knows WHERE it is — Vue's {@see Located} twin of backend's
+ * {@see NodeMatch}: IS an Element (predicates read the same) plus source component and
+ * `file:line`. Non-final by design — subclass to hang domain predicates.
  */
 class ElementMatch extends Element implements Located
 {

@@ -14,13 +14,9 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\NewDataObject;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the
- * raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data
- * hydration, or a magic `fromX()` factory. Points at spatie-data.
- *
- * A PLAIN Data class (only scalar/enum props, no cast/map/nest/factory) is exempt:
- * there `::from()` and `new` are equivalent, so `new` tells no lie. A `new` in
- * PARAMETER-DEFAULT position is exempt — the one place the skill permits `new`.
+ * Detects `new Data(...)` instead of `::from(...)` — skips casts, name maps, nested
+ * hydration, and factories. Exempts plain Data (scalars/enums only) and parameter-default
+ * positions. Points at spatie-data.
  */
 final class NewDataObjectDetector implements Detector, Repentable
 {

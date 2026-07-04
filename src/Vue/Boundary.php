@@ -9,24 +9,8 @@ use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
- * Where, and whether, a chunk of template can become its own component — the one
- * reusable "extraction boundary" brain every extract detector and scribe shares
- * (duplicates, deep-reach, deep-nesting all ask the SAME questions). Wraps an element
- * in its component and answers them:
- *
- *   - {@see valid} — is this extractable at all? (not the whole fragment, has real
- *     substance, not a bare table cell that can't leave its table)
- *   - {@see root} — the NATURAL place to root the component: climb single-child
- *     wrappers to a branch point, so the component is one coherent thing
- *   - {@see name} — an intelligent name: a `v-for` list → `{Item}List`, a list item →
- *     `{Item}ListItem`, else the dominant data object it renders → `{Object}Section`
- *   - {@see props} — the free variables it needs (reads minus loop vars and called
- *     functions), the v-for iterable included
- *   - {@see contentSpan} / {@see markup} — the source to lift, unwrapping a
- *     context-bound `<template>` to its content
- *
- * Structural throughout — depth, children, expressions, never a tag-name heuristic
- * for classification (the `<ul>`/`<li>`/table checks are HTML semantics, not naming).
+ * Determines extraction boundaries for template chunks: whether extractable, natural root,
+ * intelligent naming, required props, and source span.
  */
 final class Boundary
 {
@@ -68,8 +52,7 @@ final class Boundary
             return false;
         }
 
-        // Substantial enough to be a component — real content AND its own internal structure,
-        // never a thin/flat wrapper. One definition, shared with the other extractors.
+        // Substantial: real content AND internal structure, the shared definition across all extractors.
         if (! $this->node->substantial()) {
             return false;
         }
@@ -82,7 +65,7 @@ final class Boundary
     /**
      * The natural element to root the component at: climb up through ancestors that
      * merely WRAP this one (a single element child) until the tree branches — so the
-     * component is a whole unit, not an arbitrary node mid-chain.
+     * boundary lands on the whole unit rather than a node mid-chain.
      */
     public function root(): self
     {

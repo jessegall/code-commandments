@@ -11,22 +11,8 @@ use JesseGall\CodeCommandments\Scribes\Backend\DetectorStep as BackendDetectorSt
 use JesseGall\CodeCommandments\Scribes\Frontend\DetectorStep as FrontendDetectorStep;
 
 /**
- * The ordered list of rewriting steps `repent` runs — a Laravel-middleware-style chain
- * the package consumer has FULL control over: {@see prepend} / {@see append} /
- * {@see before} / {@see after} / {@see replace} / {@see remove}, by step name.
- *
- * The DEFAULT order is two phases, because order is correctness here: the IN-PLACE
- * fixers run first (PHP maintenance, then the Vue structure fixers — `<SwitchCase>`,
- * control-flow wrapping), and the component EXTRACTORS run LAST. An extractor creates
- * files and rewrites call sites; running it last, on already-fixed markup, means no
- * later step rewrites the file it just edited (each step re-scans, so every one sees
- * the prior edits).
- *
- * A consumer reorders it from `.commandments/repent.php`:
- *
- *   return fn (ScribeChain $chain): ScribeChain => $chain
- *       ->remove('SwitchCaseDetector')
- *       ->before('DeepNestedDetector', new MyStep());
+ * Ordered list of rewriting steps (middleware-style) that consumer can reorder via
+ * {@see prepend}, {@see append}, {@see before}, etc. Default: in-place fixers first, extractors last.
  */
 final class ScribeChain
 {
