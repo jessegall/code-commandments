@@ -15,20 +15,8 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * Returning a multi-field, string-keyed array literal — a structured bag that
- * should be a typed value object. Points at value-objects.
- *
- * A one-field wrapper (`['ok' => $x]`) and a list (`[1, 2, 3]`) are left alone:
- * the smell is a named-field record travelling as a loose array. Several shapes are
- * exempt because the array isn't a bag the author chose:
- *  - framework boundary classes return arrays by contract (a FormRequest's
- *    `rules()`, an MCP tool's / request's schema; an Eloquent `casts()`);
- *  - a `toArray()`/`toValues()` SELF-SERIALIZER — every value a `$this->field` read
- *    — turns a typed object into a persistence/presentation shape (skill-sanctioned);
- *  - a JSON-Schema / external-contract skeleton (`'type' => 'object'` + `properties`/
- *    `enum`/…) — a recursive open-ended spec serialized to a provider, not a fixed bag;
- *  - a method that OVERRIDES an ancestor (a parent class or interface, incl. a
- *    vendor one) whose `array` return it inherits and cannot change.
+ * Detects multi-field string-keyed array returns (bags for value objects). Exempt: contract methods,
+ * self-serializers, JSON schemas, and method overrides. Points at value-objects.
  */
 final class ArrayReturnBagDetector implements Detector, Exemptable
 {

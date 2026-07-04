@@ -14,12 +14,8 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A Spatie `Data` class that is not declared `final`. A DTO is a value, not a base
- * to extend — leaving it open invites subclasses that quietly change its shape and
- * break the "the type tells the truth" contract. Seal it. Points at spatie-data.
- *
- * A Data class that other classes ACTUALLY extend (a morphable base) is exempt —
- * `final` plus `extends` is a fatal error, so flagging it points at an impossible fix.
+ * Detects non-final Spatie Data classes (DTOs are values, not bases). Exempt: classes that
+ * other classes actually extend. Points at spatie-data.
  */
 final class NonFinalDataDetector implements Detector, Repentable
 {

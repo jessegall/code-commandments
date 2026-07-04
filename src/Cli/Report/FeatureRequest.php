@@ -8,10 +8,7 @@ namespace JesseGall\CodeCommandments\Cli\Report;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
- * `commandments feature-request --title="…" --reason="…"`
- *
- * Files a `[feature-request]` issue proposing a new detector or an improvement —
- * the channel for "this rule is missing" or "this should also catch …".
+ * Files a [feature-request] GitHub issue proposing a new detector or improvement.
  */
 final class FeatureRequest implements Command
 {

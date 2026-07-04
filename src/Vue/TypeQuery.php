@@ -8,13 +8,8 @@ use Closure;
 use JesseGall\CodeCommandments\Query as BaseQuery;
 
 /**
- * The fluent query over DECLARATION space — the same shared {@see BaseQuery}
- * (`where`/`reject`, the filter loop, decorator injection) the template {@see Query}
- * uses, only its candidates are {@see TypeDeclaration}s and its match a
- * {@see TypeDeclarationMatch}. A detector over types reads exactly like one over
- * elements; just the nodes differ.
- *
- * The selector sees the raw {@see TypeDeclaration}; `where`/`reject` see the match.
+ * Fluent query over TypeDeclaration space, matching the template Query pattern: same where/reject/filter loop,
+ * just over type declarations instead of elements. Selector sees raw declarations; where/reject see matches.
  */
 final class TypeQuery extends BaseQuery
 {

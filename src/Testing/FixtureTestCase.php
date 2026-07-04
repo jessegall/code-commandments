@@ -8,15 +8,8 @@ use JesseGall\CodeCommandments\Detectors\ChainDetector;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The self-checking-fixture test, shared by every engine. Both the backend
- * (`#[Sinful]` markers) and frontend (`<!-- @sin -->` comments) run the same flow —
- * every detector must flag exactly its marked sins and fire on at least three
- * mutually-diverse scenarios — so the flow and its assertions live here once.
- *
- * A subclass supplies only its {@see Fixture}. To prove your OWN detectors, return a
- * {@see DeclaredFixture} over them and let each declare its directory via
- * {@see HasFixture}; the package proves its own catalog with a {@see BackendFixture}
- * / {@see FrontendFixture} pointed at the shared Shop app.
+ * Self-checking-fixture test shared by both engines. Backend (#[Sinful]) and frontend (<!-- @sin -->) run the same flow:
+ * detect exactly marked sins, ≥3 diverse scenarios. Subclass supplies its Fixture; the package proves its catalog.
  */
 abstract class FixtureTestCase extends TestCase
 {

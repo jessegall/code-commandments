@@ -12,16 +12,8 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A `?T` finder whose result TRAVELS and is de-nulled at every stop — checked
- * (`finder()?->…`, `=== null`, `?? default`) at two or more call sites. The
- * absence is being re-decided everywhere the value lands instead of at the
- * source: model it in the type — resolve-or-throw if presence is assumed, an
- * `Option<T>` for a genuine miss, an empty/Null-Object otherwise. Points at absence.
- *
- * Blast radius via the call graph: a finder with no resolved callers is unknown
- * (not flagged), and a SINGLE local caller that checks it on the spot is an
- * honest null (not flagged). Only when the `?T` reaches ≥2 sites that each guard
- * it — the "every caller re-checks the same value" lie — is it worth surfacing.
+ * Detects a nullable finder whose result is de-nulled at every call site (≥2 sites);
+ * absence should be decided at the source, not re-checked everywhere.
  */
 final class DeNulledFinderDetector implements Detector
 {

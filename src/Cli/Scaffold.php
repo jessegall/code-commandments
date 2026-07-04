@@ -10,13 +10,8 @@ use JesseGall\CodeCommandments\Sins\ScaffoldTarget;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * `commandments scaffold [--sin=NAME] [--dry-run]`
- *
- * Generates the reusable helper(s) a sin's fix needs — the construct its
- * {@see Sin::suggestion} names ({@see Sin::scaffolds}) — into the consumer's source root,
- * with their namespace injected. It CREATES a helper; `repent` fixes call SITES, so they
- * compose: scaffold the construct, then `repent` to use it. Idempotent — an existing file
- * is skipped, never overwritten.
+ * Generates reusable helpers (scaffolds) that a sin's fix needs, injected with namespace into source root.
+ * Pairs with `repent` for call-site fixing; idempotent and skips existing files.
  */
 final class Scaffold implements Command
 {

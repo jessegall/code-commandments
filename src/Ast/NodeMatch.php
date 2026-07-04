@@ -12,13 +12,9 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\NodeFinder;
 
 /**
- * A matched node with its file — an {@see AstNode} that also knows where it is.
- * The result a query returns and a finding is reported as.
- *
- * NOT final on purpose: a project can SUBCLASS it (adding domain predicates like
- * `isVehicleClause()`) and TYPE-HINT that subclass in a `where` closure — the query reflects the
- * closure's parameter and hands it that node ({@see Query::where}), no registration needed, so its
- * own detectors read as cleanly as the built-ins.
+ * A matched node with its file — an {@see AstNode} that knows where it is.
+ * Subclass to add domain predicates; type-hint the subclass in a `where` closure
+ * and the query will inject it without registration.
  */
 class NodeMatch extends AstNode
 {

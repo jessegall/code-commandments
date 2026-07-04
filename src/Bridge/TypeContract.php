@@ -5,18 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Bridge;
 
 /**
- * A type shape one engine OWNS and publishes across the {@see Bridge} — a name plus
- * its field names. The backend derives one per Spatie `Data` class; the frontend
- * asks each hand-written TS type "does a published contract MIRROR me?" so it can
- * flag the duplicate.
- *
- * Matching is spelling-insensitive on BOTH the name and the fields: a name and its
- * fields are compared by their {@see canonical} form (lowercased, separators
- * dropped), so `first_name`, `firstName` and `FirstName` are one field. A candidate
- * MIRRORS this contract when the names canonicalise equal AND the field sets overlap
- * by at least {@see MIN_OVERLAP} (Jaccard) — a near-copy that has drifted by a field
- * or two still counts; an unrelated shape that merely shares a couple of names does
- * not.
+ * A type shape published across the Bridge (name + fields), matched spelling-insensitively
+ * via canonical form; a candidate mirrors this when names canonicalise equal and field overlap
+ * meets the MIN_OVERLAP threshold.
  */
 final class TypeContract implements Contract
 {

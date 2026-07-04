@@ -11,15 +11,8 @@ use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 
 /**
- * A `v-for` and a `v-if`/`v-else-if` on the SAME element. Vue gives `v-if` higher priority
- * than `v-for`, so the condition can't even read the loop variable, and where it can it is
- * re-evaluated on every iteration — both a correctness trap and wasted work. The fix is to
- * filter the list in a computed, or hoist the `v-for` onto a `<template>` wrapper and put the
- * `v-if` on the child. Points at vue-control-flow.
- *
- * The correct form keeps the two directives on DIFFERENT elements (the `<template v-for>`
- * around a `v-if` child), so it never matches — no name list, no heuristic, just the two
- * directives sharing one tag.
+ * Detects `v-for` and `v-if`/`v-else-if` on the same element (Vue prioritizes if over for, causing
+ * correctness/performance issues). Filter in a computed or hoist to template+child. Points at vue-control-flow.
  */
 final class LoopWithConditionDetector implements Detector
 {

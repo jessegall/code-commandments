@@ -13,14 +13,8 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicateRouteAction;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * Two-or-more route actions, in DIFFERENT controllers, that thinly delegate to the SAME operation — each
- * a `return $this->exporter->export(...)` resolving to the same `WorkflowExporter::export`. They are the
- * same entry point twice: one operation deserving one way in. Points at route-actions.
- *
- * The key is the type-resolved delegation TARGET (not a body hash), so a coincidental property name can't
- * collide two unrelated thin actions. A target that is itself a registered controller action is left to
- * {@see RouteDelegatesToControllerDetector} (that's a controller wrapping a controller); this catches the
- * shared-service case it doesn't. Only groups spanning ≥2 controllers count.
+ * Detects duplicate thin delegations to the same service across ≥2 controllers.
+ * Uses type-resolved targets, distinguishing from body-hash collisions. Points at route-actions.
  */
 final class DuplicateRouteActionDetector implements Detector
 {

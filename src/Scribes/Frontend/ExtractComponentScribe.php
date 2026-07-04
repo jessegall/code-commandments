@@ -23,17 +23,8 @@ use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**
- * The one fix the duplicate-element, deep-data-reach AND deep-nesting detectors all
- * point at: extract a chunk of template into its own component. Each detector hands
- * this scribe back tuned for its case — `forDuplicates()` / `forDeepReach()` /
- * `forNesting()` — and the runner feeds in that detector's findings.
- *
- * Every "where/whether/what-name/what-props" question is delegated to the shared
- * {@see Boundary}, so all three strategies agree and there is one place to calibrate;
- * the scribe only adds the per-strategy difference (collapse duplicates, flatten a
- * deep reach). The extraction is COMPLETE: it drafts the new component, rewrites the
- * call site to `<TheComponent :prop="…" />`, AND imports it into that file — so the
- * result compiles.
+ * Shared fix for duplicate-element, deep-reach, and nesting detectors: extracts
+ * template to component via Boundary, rewrites call site, and imports into the file.
  */
 final class ExtractComponentScribe extends RepentScribe
 {

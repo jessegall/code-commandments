@@ -5,14 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * A TypeScript object type declared in the frontend — an `interface`/`type` with its
- * field names, and where it sits (`file:line`). The declaration-space twin of an
- * {@see Element}: what the {@see TypeQuery} draws from, so a detector reasons over the
- * types a codebase declares the same way it reasons over the elements it renders.
- *
- * It reads itself off a {@see Script} ({@see fromScript}) — the ONE place the engine
- * turns lexed type declarations into located values, whether the script is a `.vue`
- * block or a standalone `.ts` file.
+ * TypeScript object type (interface/type) with field names and file:line—declaration-space
+ * twin of Element. Reads off Script via fromScript.
  */
 final class TypeDeclaration
 {

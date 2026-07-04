@@ -7,15 +7,9 @@ namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\Cli\Sync;
 /**
- * Infers a project's end-gate check commands from the scripts it already declares — read from
- * `composer.json` (`composer <script>`) and `package.json` (`npm run <script>`). It is what
- * {@see Sync} feeds into the injected `planExecution()->onComplete(...)` so a freshly-wired
- * consumer has a sensible gate without hand-writing one; the human edits it freely after.
- *
- * Deliberately CONSERVATIVE: one command per category (test, then lint, then static analysis),
- * first match wins, so it never emits `composer test` AND `composer phpunit`. It only recognises
- * conventionally-named scripts — anything unusual is left for the human to add. Empty when a
- * project declares nothing recognisable.
+ * Infers a project's end-gate check commands from declared `composer.json` and `package.json`
+ * scripts — one per category, first match wins, conventional names only. Wires a sensible
+ * `planExecution()->onComplete(...)` default that the user edits freely.
  */
 final class ChecksInference
 {

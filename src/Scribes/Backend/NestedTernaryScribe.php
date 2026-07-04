@@ -11,13 +11,9 @@ use PhpParser\Node\Expr\Ternary;
 use PhpParser\NodeFinder;
 
 /**
- * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\NestedTernaryDetector}: an
- * else-chained ternary (`a ? b : (c ? d : e)`) hides its branching. Unfold it into a flat
- * `match (true) { a => b, c => d, default => e }` — the readable dispatch the skill teaches.
- *
- * Only the clean ELSE-chain is rewritten. A short ternary (`a ?: b`) or a chain nested in a
- * condition/THEN branch can't flatten to a flat match, so it is skipped (the detector still
- * flags it) — correctness over coverage.
+ * Unfolds else-chained ternaries (`a ? b : (c ? d : e)`) into flat `match (true) { ... }`.
+ * Only clean else-chains are rewritten; short ternaries or chains nested in conditions are
+ * skipped — correctness over coverage.
  */
 final class NestedTernaryScribe extends RepentScribe
 {

@@ -11,15 +11,9 @@ use JesseGall\CodeCommandments\Detectors\Sharded;
 use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
 use JesseGall\CodeCommandments\Cli\Judge\Finding;
 /**
- * The `--benchmark` profiler (hidden): runs every detector ONE AT A TIME, timing
- * each `find()` and watching memory, so you can see exactly where a judge run
- * spends itself and decide what to parallelize. It produces the SAME findings as
- * {@see DetectorRunner} — order doesn't change what's found — but trades the
- * parallel pool for honest per-detector numbers (a forked worker can't be timed
- * from the parent). A {@see Sharded} detector also reports its shard count: the
- * unit of parallel work, and the lever for spreading a heavy one across cores.
- *
- * The table goes to STDERR, so STDOUT stays the clean findings/checklist.
+ * The profiler that runs every detector one at a time, timing each `find()` call
+ * and memory usage. Produces the same findings as the parallel runner but with
+ * honest per-detector numbers. Table goes to STDERR, findings to STDOUT.
  */
 final class Benchmark
 {

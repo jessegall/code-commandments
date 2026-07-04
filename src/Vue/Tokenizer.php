@@ -5,18 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * Turns the inner HTML of a Vue `<template>` into a tree of {@see Element} nodes.
- *
- * A hand-written, forgiving scanner — not a spec HTML5 parser: it tracks line
- * numbers AND byte spans (so findings point at `file:line` and a {@see
- * \JesseGall\CodeCommandments\Scribes\Frontend\SwitchCaseScribe} can splice the
- * source), keeps Vue's directive attributes intact, honours quotes (so `>` inside
- * `:x="a > b"` doesn't end a tag), treats `{{ … }}`/text as text nodes, drops
- * comments, and closes HTML void elements and self-closing tags without a matching
- * end tag. Mismatched or stray end tags are tolerated rather than fatal.
- *
- * Spans are reported in the coordinates of the SFC source — pass the byte offset
- * the template content starts at.
+ * Parses Vue template HTML into Element tree. Hand-written, forgiving scanner (not HTML5-spec): tracks
+ * line+byte spans, preserves Vue directives, handles quotes/voids/self-closing tags, tolerates mismatches.
  */
 final class Tokenizer
 {

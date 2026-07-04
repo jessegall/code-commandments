@@ -14,14 +14,8 @@ use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
- * `commandments config [reindex]` — inspect and manage `.commandments/config.php`.
- *
- *   config          — print a human-friendly summary of the effective configuration (scan roots,
- *                     how many detectors run, custom detectors/packages) — a `php artisan about`
- *                     for this project's scope.
- *   config reindex  — re-detect the source roots from composer.json (PSR-4 + `app`/`src`) and
- *                     OVERWRITE `$config->paths(...)` with the fresh list. Everything else in the
- *                     config (disable/detector/…) is left untouched.
+ * Inspects and manages `.commandments/config.php`; `config` shows effective configuration,
+ * `reindex` refreshes source roots from composer.json.
  */
 final class ConfigCommand implements Command
 {

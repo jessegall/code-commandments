@@ -14,21 +14,8 @@ use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Property;
 
 /**
- * Repents {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\ConstructorOrchestrationDetector}:
- * a page object's imperative slot fill becomes a computed property hook. For each flagged
- * `$this->x = <expr>;` it deletes the constructor statement and turns the declared slot into a virtual
- * property that projects itself:
- *
- *   public readonly array $topBarCenter;            →  public array $topBarCenter { get => $this->topBar->center(); }
- *   $this->topBarCenter = $this->topBar->center();  →  (removed)
- *
- * A get-only virtual property IS computed in Spatie (excluded from the payload, evaluated on read), so
- * no `#[Computed]` attribute or import is needed. `readonly` is dropped — a virtual property has no
- * backing store to freeze.
- *
- * Only PROVABLY clean rewrites are applied: the slot must be a single declared property this scribe can
- * see, and the assignment must be a single line (a multi-line right-hand side is left for a human — the
- * detector still flags it). Everything the fix needs is read off the finding; no re-scan.
+ * Repents page-object slot fills into computed property hooks: `$this->x = expr;` becomes a virtual `get` property.
+ * Applies only to single-line assignments to declared properties; multi-line assignments are deferred.
  */
 final class ConstructorOrchestrationScribe extends RepentScribe
 {

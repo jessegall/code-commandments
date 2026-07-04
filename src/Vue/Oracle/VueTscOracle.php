@@ -7,13 +7,8 @@ namespace JesseGall\CodeCommandments\Vue\Oracle;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**
- * Resolves a component's still-`unknown` locals with the project's own `vue-tsc` — used ONLY when
- * the target ships it ({@see available}); it is never a package dependency. Writes a {@see TypeProbe}
- * copy beside the component (so its imports and tsconfig paths resolve identically), runs `vue-tsc`
- * through a {@see ProcessRunner} seam, and reads the resolved types back with {@see TscDiagnostics}.
- *
- * Speed is a non-goal (repent is not interactive), but the run is still `--incremental` (a
- * `.tsbuildinfo` cache makes re-runs cheap) and `--skipLibCheck` (the stdlib is not re-checked).
+ * Resolves unknown locals with the project's own vue-tsc (not a package dependency).
+ * Writes probe, runs vue-tsc, reads types back. Incremental with cache.
  */
 final class VueTscOracle implements TypeOracle
 {

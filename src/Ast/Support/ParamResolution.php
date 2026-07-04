@@ -23,20 +23,9 @@ use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 
 /**
- * Decides whether a method UNPACKS its target out of a container parameter — takes a
- * container object AND a scalar key, resolves the key against the container by a
- * single-key lookup (`$workflow->graph->nodeById($nodeId)`), captures the result, and
- * then works on THAT while the container is only ever packaging.
- *
- * The decisive question is *who the method is about*. If the resolved target is the
- * subject and the container is a PURE ENCAPSULATOR — touched nowhere but the unpack,
- * and otherwise only via cheap `$owner->prop` reads — then the caller (who passed
- * both, and named the key) should resolve once and hand over the OBJECT. The method
- * should demand the type it uses, not an id plus its container.
- *
- * The container being used as a whole object downstream (passed as an argument, or a
- * method receiver — graph surgery on `$graph`, a descriptor built from `$graph`)
- * means it's a genuine co-subject, not packaging: that is NOT this sin.
+ * Detects methods that unpack a target from a container parameter when the container
+ * is just packaging. The fix is to take the target directly, not the container plus a key.
+ * Excludes cases where the container is a genuine co-subject.
  */
 final class ParamResolution
 {

@@ -5,13 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Bridge;
 
 /**
- * Where the backend's type generator writes its output — a {@see Contract} the backend
- * publishes so a frontend detector can tell a GENERATED type from a hand-copied one. A
- * declaration inside this directory IS the single source of truth (the generator's
- * output), not a duplicate, so it must never be flagged.
- *
- * The path is read from the project's actual transformer configuration, so a non-default
- * output location is honoured.
+ * The generated-types output contract — a declaration here IS the single source of truth
+ * (the generator's output), never a duplicate. The path comes from the transformer config.
  */
 final class GeneratedTypes implements Contract
 {

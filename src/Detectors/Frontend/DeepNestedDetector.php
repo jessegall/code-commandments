@@ -14,16 +14,8 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Frontend\Detector;
 
 /**
- * A template nested far too deep — an element many levels in that still has several
- * more levels of markup beneath it. That depth is unreadable and a sign a whole
- * sub-tree wants to be its own component. Points at vue-components, fixed by the same
- * extract scribe. (Thresholds are tunable — see {@see Config\DeepNestedConfig}.)
- *
- * The finding is NOT the arbitrary deep element: from it we LOOK BACK up the tree for
- * the natural starting point — the top of the single-child wrapper stack the deep
- * branch sits in ({@see boundary}) — so the extracted component is a coherent unit and
- * lifting it flattens the host meaningfully. Depth and subtree height are read off the
- * element tree, never a heuristic on tag names.
+ * A template nested far too deep; identifies the natural extraction boundary by climbing
+ * from the deep element up the single-child wrapper stack for a coherent unit.
  */
 final class DeepNestedDetector implements Detector, Repentable
 {

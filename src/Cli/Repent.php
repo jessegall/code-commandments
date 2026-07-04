@@ -15,16 +15,9 @@ use JesseGall\CodeCommandments\WorkingCopy;
 
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 /**
- * `commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]`
- *
- * Repents the sins — the CLI that RUNS the Scribes (the "scribe" is the code, `repent`
- * is the verb). It walks the {@see ScribeChain}: the in-place fixers (Spatie Data hints,
- * redundant returns, `<SwitchCase>`, control-flow wrapping) then the component
- * EXTRACTORS, each re-scanning so it sees the previous step's edits. The chain's order
- * is the consumer's to change — see {@see chain} and `.commandments/repent.php`.
- *
- * By DEFAULT it writes; `--dry-run[=FILE]` previews a unified diff. `--only=NAME` runs
- * the chain steps whose name matches (a Scribe or frontend Detector name).
+ * Runs the Scribes through {@see ScribeChain}: in-place fixers then component extractors, each
+ * re-scanning prior edits. Writes by default; `--dry-run[=FILE]` previews a diff; `--only=NAME`
+ * runs matching chain steps. Configurable order via {@see chain} and `.commandments/repent.php`.
  */
 final class Repent implements Command
 {

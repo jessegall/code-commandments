@@ -11,15 +11,8 @@ use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Codebase;
 
 /**
- * A frontend fixture: a directory of `.vue`/`.ts` checked with `@sin` markers and
- * file-scoped diversity scenarios. Parameterised by the path to scan and the frontend
- * detectors to verify — the package points it at its own Shop components and full
- * catalog; a consumer points it at its own directory and custom detectors.
- *
- * A fixture is full-stack: any `.php` under it (a `server/` folder of `Data` classes)
- * is scanned as a backend codebase so its shapes reach the frontend detectors as
- * {@see \JesseGall\CodeCommandments\Bridge\Contract}s over the {@see Bridge} — exactly
- * as `judge` wires the two engines in production.
+ * A frontend fixture with `@sin` markers on `.vue`/`.ts` components; full-stack with optional
+ * `.php` backend shapes reaching frontend detectors via Bridge.
  */
 final class FrontendFixture implements Fixture
 {

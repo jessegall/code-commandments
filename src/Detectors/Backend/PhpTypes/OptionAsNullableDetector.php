@@ -12,16 +12,8 @@ use JesseGall\CodeCommandments\Sins\Backend\PhpTypes\OptionAsNullable;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * An `Option` worn as a nullable — `?Option` / `Option | null`, or `unwrapOr(null)`
- * collapsing it straight back to a null. Pick one model: an Option already encodes
- * absence, so nesting it in a null (or unwrapping to one) is a null in an Option
- * costume. Points at absence.
- *
- * `unwrapOr(null)` in ARGUMENT position is exempt: passing `$opt->unwrapOr(null)` to a
- * parameter is adapting the Option to an established nullable-sink API at the boundary
- * (e.g. a tri-state `?array` that discriminates on null) — it exposes no `?Option` type
- * of its own. The costume the skill warns about is a `?Option` you RETURN or STORE, so
- * only collapses in return/assignment position are flagged.
+ * Detects `?Option`, `Option | null`, and `unwrapOr(null)` collapsing absence; exempt
+ * in argument position, flagged only in return/assignment.
  */
 final class OptionAsNullableDetector implements Detector
 {

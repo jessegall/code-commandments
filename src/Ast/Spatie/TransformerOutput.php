@@ -16,23 +16,7 @@ use PhpParser\Node\Scalar\MagicConst;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeFinder;
 
-/**
- * Where `spatie/laravel-typescript-transformer` writes the frontend types it GENERATES
- * from `#[TypeScript]` classes — read from the project's own configuration, never
- * assumed. Two forms are understood, each resolved to the exact path it covers:
- *
- *   - the v3 fluent provider — `->outputDirectory(<expr>)` in a
- *     `TypeScriptTransformerApplicationServiceProvider` — resolves to that DIRECTORY
- *     (a writer drops one or many generated files into it); and
- *   - the classic config array — `'output_file' => <expr>` in
- *     `config/typescript-transformer.php` — resolves to that single FILE.
- *
- * The path `<expr>` is evaluated statically: string literals, `.` concatenation,
- * `dirname(__DIR__, n)` / `__DIR__` resolved from the file's own location, the Laravel
- * `*_path()` helpers resolved from the project root, and a local `$var` traced to its
- * assignment. An expression it can't evaluate yields null — better no exemption than a
- * wrong one.
- */
+/** Resolves where `spatie/laravel-typescript-transformer` writes generated types (fluent or config form); evaluates path expressions statically or yields null. */
 final class TransformerOutput
 {
     /**

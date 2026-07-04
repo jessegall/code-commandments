@@ -10,19 +10,8 @@ use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 /**
- * The plumbing every Claude Code hook command shares: read the JSON payload the harness pipes on
- * STDIN, emit a JSON response on STDOUT, and resolve the WORKTREE the hook is running in. Written
- * once here and reused by {@see Remind}, {@see JudgeReminder}, and {@see PlanReminder}, so the hook
- * mechanics never diverge between them.
- *
- * The worktree resolution is the load-bearing bit: `CLAUDE_PROJECT_DIR` is pinned to the main
- * checkout and SHARED across every worktree, so anchoring state to it makes a fresh worktree read
- * the main checkout's state and share its markers. Resolving the git toplevel of the current
- * directory instead gives each worktree its OWN root — so a plan running in one worktree never
- * nudges or clobbers another.
- *
- * Not final: it is the IO seam a test substitutes to feed a payload and capture emissions
- * ({@see \JesseGall\CodeCommandments\Tests\Cli\CapturingHookIO}), instead of driving STDIN/STDOUT.
+ * Shared plumbing for hook commands: reads JSON payload from STDIN, emits JSON response to STDOUT,
+ * resolves the worktree (git toplevel for worktree scope). Not final — tests substitute it to feed/capture.
  */
 class HookIO
 {

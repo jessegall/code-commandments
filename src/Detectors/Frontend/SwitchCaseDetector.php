@@ -14,13 +14,8 @@ use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
- * A `v-if` / `v-else-if` chain whose every branch tests the SAME value against a
- * different case — a switch wearing conditionals. Each `v-else-if` re-states the
- * subject and re-reads as a separate decision, when there is really one: dispatch
- * on a value. Hoist it to a `<SwitchCase :value>` with a slot per case (the
- * published component). Points at vue-control-flow.
- *
- * Repentable — {@see SwitchCaseScribe} rewrites the chain into `<SwitchCase>`.
+ * Detects `v-if`/`v-else-if` chains testing the same value against different cases (switch as conditionals).
+ * Hoist to `<SwitchCase :value>` with slots per case. Points at vue-control-flow; repentable.
  */
 final class SwitchCaseDetector implements Detector, Repentable
 {

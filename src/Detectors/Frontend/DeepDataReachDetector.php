@@ -13,17 +13,9 @@ use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
- * A CLUSTER of deep data reaches that share one nested object — an element binding or
- * interpolating `order.customer.name`, `order.customer.email`, … from several places
- * in a sizeable template. Those elements all know the whole shape of `order`; that's
- * Law of Demeter in the markup, and the shared object (`order.customer`) wants to be
- * its own component taking the mid-object as a prop. Points at vue-components.
- *
- * The finding is the cluster's BOUNDARY — the lowest common ancestor of the reaches,
- * the element the extract-scribe lifts — not each leaf. A lone deep reach, a reach
- * into a `v-model`-bound (reactive) root, or a reach in a tiny component is NOT a sin;
- * the rulebook lives in {@see DeepReachCluster}. Depth, chains and the reactive-root
- * test are all read off the parsed JS expression AST, never a regex or a name list.
+ * Detects clusters of deep data reaches (e.g., `order.customer.name`, `order.customer.email`) sharing
+ * one nested object. Returns the cluster's boundary (lowest common ancestor); lone reaches and reactive roots
+ * are exempt. Points at vue-components.
  */
 final class DeepDataReachDetector implements Detector, Repentable
 {

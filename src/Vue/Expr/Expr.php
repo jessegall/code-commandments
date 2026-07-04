@@ -5,14 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue\Expr;
 
 /**
- * One node of a parsed Vue binding expression — the JS inside `:x="…"`, `v-if="…"`
- * or `{{ … }}`. The template has its own AST ({@see \JesseGall\CodeCommandments\Vue\Element});
- * this is the second AST, over the JavaScript in the bindings, so a frontend
- * detector reasons about member chains and calls structurally instead of scraping
- * them with regex — the same way the backend reasons over php-parser nodes.
- *
- * A thin, kind-tagged node (like the backend's AstNode): {@see Parser} builds it,
- * predicates ({@see memberDepth}, {@see source}) sit on it.
+ * A node of parsed Vue binding expressions (JS in `:x="…"`, `v-if="…"`, `{{ … }}`). Second AST for frontend
+ * detectors to reason about member chains/calls structurally, matching backend's php-parser approach. Kind-tagged node with predicates.
  */
 final class Expr
 {

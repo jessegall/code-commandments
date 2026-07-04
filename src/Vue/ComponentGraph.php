@@ -5,16 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * The render tree of a whole codebase — which component renders which, and with what props.
- * Built once over a {@see Codebase}: for every component, each child element that resolves
- * (via its import) to another component becomes an EDGE carrying the props bound at that site
- * ({@see ComponentUsage}).
- *
- * Indexed by the CHILD, so {@see usagesOf} answers "who renders this component, passing what"
- * — the reverse lookup top-down prop typing needs: a component's own untyped prop is whatever
- * its parents bind to it, resolved in their scope. The roots ({@see PageRoots}) have no
- * incoming edges; their props come from the server. Every tag is resolved to a real file
- * through the {@see ModuleResolver}; a global/unresolved tag is simply not an edge.
+ * The render tree — which component renders which, with what props. Indexed by child component
+ * for reverse lookup: who renders this component, passing what. Every tag resolved to a real file
+ * via {@see ModuleResolver}; global/unresolved tags become no edge. Page roots have no incoming.
  */
 final class ComponentGraph
 {

@@ -9,16 +9,8 @@ use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
 use JesseGall\CodeCommandments\Vue\Ts\Parser;
 
 /**
- * Top-down prop typing over the {@see ComponentGraph} — the capstone. A component that can't
- * type its own prop locally gets it from ABOVE: walk to a parent that renders it, type the
- * expression bound there in that parent's scope, and recurse. A parent's binding is often its
- * OWN prop, so the walk climbs page → child → grandchild until it reaches a root whose props
- * are typed from the server. Everything resolves because you start from the top.
- *
- * Each hop reuses the engine already built — {@see Script} for a scope's declared props and
- * locals, {@see Expr} for the bound expression's shape (a member chain becomes an indexed
- * access `Root['field']`, a literal its own type). A visited-set guards the inevitable cycles;
- * an untypable hop simply yields null, never a guess.
+ * Top-down prop typing over ComponentGraph. A component that can't type its own prop walks to parents,
+ * typing the bound expression in each scope, until reaching a root. Reuses Script (scoped props) and Expr (shape inference); cycles are guarded.
  */
 final class PropTypes
 {

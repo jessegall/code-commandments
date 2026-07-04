@@ -12,14 +12,7 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A Laravel facade call — `Cache::get(...)`, `Log::info(...)`. A facade is a global reach into the
- * container wearing a static-method face: it hides the dependency, can't be substituted, and ties
- * the class to the framework. Inject the underlying contract instead. Points at laravel-idioms.
- *
- * Exempt: a `::fake()` test double (no instance form to inject); a call OUTSIDE any class (a route
- * or config file has nothing to inject into); a `ServiceProvider` (wiring at boot is its job); and
- * an Eloquent CAST (Eloquent `new`-instantiates it with no container) — each detected by the AST,
- * not a name.
+ * Detects Laravel facade calls that hide dependencies; inject the underlying contract instead.
  */
 final class FacadeCallDetector implements Detector
 {

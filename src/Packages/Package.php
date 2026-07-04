@@ -5,15 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Packages;
 
 /**
- * One third-party package's cross-cutting policy — the extension point where a package declares
- * facts that OTHER detectors must respect, so a general rule never hard-codes a framework's types.
- * Each package is its own class under `Packages/`, discovered by {@see Catalog} the way sins,
- * detectors, and skills are; a consumer's own `Packages\` class auto-enrols to teach the engine
- * about a framework the package doesn't ship for.
- *
- * A package registers EXEMPTIONS against tags — see {@see register}. The mechanism is open: a
- * detector reads a tag ({@see Exemptions::has}), a package registers against it, and neither names
- * the other.
+ * Extension point where packages register facts other detectors must respect. Each package
+ * under `Packages/` auto-enrolls via {@see Catalog}, and its {@see register} method exempts
+ * framework-specific types against tags so detectors stay generic.
  */
 abstract class Package
 {

@@ -7,20 +7,8 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 
 /**
- * The call graph: who calls what. Built ONCE per {@see Codebase} (the instance is
- * cached by {@see Codebase::index()}) and used by detectors that must reason across
- * files — e.g. "this `?T` finder is de-nulled by all its callers".
- *
- * The cost is one pass over every `->method(...)` call in the tree, bucketed by
- * method name; after that each {@see callersOf} is a hash lookup plus a receiver
- * filter, not a fresh whole-tree scan. That matters at scale: a detector that asks
- * for the callers of hundreds of methods used to re-scan the codebase hundreds of
- * times. {@see warm} builds the buckets eagerly so a parent process can populate
- * them once and let forked workers share them copy-on-write.
- *
- * Receiver typing is delegated to {@see ReceiverResolver} (the same conservative
- * `$this` / typed-param / `$this->typedProperty` resolution the query engine uses);
- * an unresolved receiver is simply not a match — the graph never guesses.
+ * The call graph: who calls what, cached per codebase and queried by receiver type.
+ * Receivers are resolved conservatively; unresolved ones are never guessed.
  */
 final class CodebaseIndex
 {

@@ -10,14 +10,9 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A comment that narrates the code's past — `// formerly...`, `// used to be
- * a...`, `// refactored into...`, `// no longer an X`. Git holds the history; the
- * comment should describe the present code. Points at the documentation skill.
- *
- * The trigger words are only the UNAMBIGUOUS archaeology markers: "previously",
- * "used to <do>", bare "no longer", "renamed", "moved" all carry legitimate
- * present-tense/domain readings ("previously bound", "used to scope", "no longer
- * exists on disk"), so they are excluded to keep the detector false-positive-free.
+ * Detects comments describing history instead of present code. Excludes ambiguous markers
+ * with legitimate present-tense readings ("previously bound", "used to scope"). Points at
+ * the documentation skill.
  */
 final class ArchaeologyCommentDetector implements Detector
 {

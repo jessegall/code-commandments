@@ -7,18 +7,9 @@ namespace JesseGall\CodeCommandments\Sins;
 use JesseGall\CodeCommandments\Skills\Skill;
 
 /**
- * One architectural sin — the thing a {@see \JesseGall\CodeCommandments\Detector}
- * finds, named and described. It owns the two facts that used to be a bare `skill()`
- * string on the detector: which teaching {@see Skill} fixes it (referenced by CLASS,
- * not a slug string — so it's refactor-safe and the slug lives in one place), and a
- * one-line {@see $description} of the sin itself.
- *
- * Each sin is its OWN class under `Sins/{Backend,Frontend}/`, registered there the
- * way each teaching skill is its own class under `Skills/` (see
- * {@see \JesseGall\CodeCommandments\Skills\Catalog}). A detector never declares a sin
- * inline — it *references* one ({@see Detector::sin} returns `new ArrayBag()`), and
- * the docs (the generated `SKILL.md` "when it fires" rows) are projected from the
- * registered sins, so they can't drift from the code.
+ * One architectural sin found by a {@see Detector}, owning the teaching {@see Skill}
+ * (CLASS-referenced for refactor-safety) and a one-line {@see $description}. Registered
+ * like {@see Skill}s; detectors *reference* them, never declare inline.
  */
 abstract class Sin
 {

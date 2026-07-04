@@ -13,19 +13,8 @@ use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Frontend\Detector;
 
 /**
- * A compound UI primitive assembled INLINE — a component (`<Dialog>`, `<Card>`,
- * `<Sheet>`, `<Tabs>`) whose family parts (`DialogContent`/`DialogTitle`/`DialogFooter`)
- * are filled with a substantial body right here in the parent template, instead of
- * living in its own component. The `<Dialog>…</Dialog>` welded into a settings page IS
- * a `PairingDialog`; lift it out.
- *
- * Structural, no name list: the fingerprint is a COMPONENT root with two-or-more
- * descendant components sharing its tag as a prefix (`Dialog` + `Dialog*`) — the shape
- * of every library compound — gated on a substantial inline body so a trivial confirm
- * dialog is left alone.
- *
- * Repentable — {@see ExtractComponentScribe} lifts it into a component named for what it
- * does (its title + family: `PairReaderDialog`).
+ * Detects compound UI primitives assembled inline (component root with ≥2 descendants
+ * sharing a prefix tag). Repentable via ExtractComponentScribe.
  */
 final class CompoundInlineComponentDetector implements Detector, Repentable
 {

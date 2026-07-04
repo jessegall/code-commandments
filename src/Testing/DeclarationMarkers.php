@@ -7,15 +7,9 @@ namespace JesseGall\CodeCommandments\Testing;
 use JesseGall\CodeCommandments\Vue\Codebase;
 
 /**
- * Declaration-space markers — the frontend analog of the template's `<!-- @sin -->`
- * comments and the backend's `#[Sinful]` attributes, for sins that live on a TYPE
- * rather than an element. A `// @sin Name` (or `@righteous Name`) comment on the
- * line(s) immediately above an `interface`/`type` marks that declaration, the way a
- * template comment marks the element that follows it.
- *
- * A declaration's location comes from the parsed {@see \JesseGall\CodeCommandments\Vue\TypeDeclaration}
- * (so it is the exact `file:line` a finding reports); the marker comment is read from
- * the raw source above it — comment text, not structure, so no parser is needed for it.
+ * Frontend analog of `<!-- @sin -->` comments and `#[Sinful]` attributes. A `// @sin Name` comment
+ * immediately above an `interface`/`type` marks that declaration from raw source (text-read, no parser).
+ * Location comes from parsed {@see TypeDeclaration}, giving the exact `file:line` a finding reports.
  */
 final class DeclarationMarkers
 {

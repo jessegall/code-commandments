@@ -5,15 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 /**
- * The coverage-diversity engine, shared by BOTH fixtures (backend and frontend):
- * the largest group of findings that are all pairwise DIVERSE — in different files
- * AND with less than `$maxSimilarity`% source overlap. A max-clique over the
- * diversity graph, so a finding that resembles everything can't mask a genuinely
- * diverse trio hiding behind it, and order doesn't change the answer.
- *
- * It is engine-agnostic on purpose: each fixture supplies `{file, source}` per
- * finding — what "the source of one scenario" is (a PHP class body, a Vue element's
- * markup) is the only thing that differs, and that's the caller's to decide.
+ * Diversity engine for both fixtures: finds the largest group of findings that are
+ * pairwise diverse (different files AND <60% source overlap). Engine-agnostic: each
+ * fixture supplies `{file, source}` per finding.
  */
 final class Diversity
 {

@@ -37,28 +37,9 @@ use PhpParser\Node\Stmt\Interface_;
 use PhpParser\NodeFinder;
 
 /**
- * Decides whether a method is EXILED BEHAVIOUR (feature envy): it reaches THROUGH
- * one other owned object's internal structure — iterating its collections or
- * navigating its composed parts — to reconstruct knowledge the object should
- * expose itself, using none of its own class's state. The classic smell (Fowler):
- * a method more interested in another object's data than its own; the fix is to
- * Move the Method onto that object (`$node->edges()`, not `EdgeDetector::detect`).
- *
- * Every test is a semantic signal — no method-name or query-function lists:
- *
- *   - reaches into exactly ONE parameter — typed as an owned class other than the
- *     host — and TRAVERSES its structure: a `foreach` over `$p->collection`, or a
- *     `$p->a->b` chain into its parts. Reading flat scalar fields to compute a
- *     value (a grade, a label, a decision) is an external policy — a Strategy, the
- *     documented exception — not envy;
- *   - touches NO `$this` member (a hollow shell — accessors that read own state
- *     are excluded, with no name list);
- *   - CONSTRUCTS nothing (a `new`/`T::from()` body is a mapper/factory building a
- *     new value, which also sweeps up constructors and named factories for free);
- *   - is not a polymorphic contract method (an interface impl / abstract override
- *     is Strategy/Visitor dispatch — it can't move onto the data);
- *   - returns a value, and envies just one subject (two-plus owned subjects is
- *     orchestration, not envy of one).
+ * Detects feature envy: methods that traverse another owned object's structure
+ * without touching `$this`. The fix is moving the method onto that object.
+ * Uses semantic signals only.
  */
 final class FeatureEnvy
 {

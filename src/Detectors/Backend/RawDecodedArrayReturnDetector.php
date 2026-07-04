@@ -11,14 +11,8 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * Returning a freshly-decoded payload straight out of a boundary — the raw
- * `array` from `json_decode(...)` crossing back into the app untyped. The
- * boundary is exactly where the shape is known; wrap it in a value object
- * (`TrackingStatus::from(json_decode(...))`) so the rest of the code never
- * touches a loose array. Points at value-objects.
- *
- * A decode handed straight to a DTO factory (`return Data::from(json_decode(...))`)
- * is the cure, not the smell — there the decode is an argument, not the return.
+ * Detects raw `json_decode(...)` arrays returned from boundaries. Wrap in value objects at the boundary;
+ * DTO factory calls (Data::from(json_decode(...))) are exempt. Points at value-objects.
  */
 final class RawDecodedArrayReturnDetector implements Detector
 {

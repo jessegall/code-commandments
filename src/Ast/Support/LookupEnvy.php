@@ -24,29 +24,8 @@ use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
 
 /**
- * The INDIRECT form of feature envy that a direct iterate/query/mutate check
- * can't see: a method that uses an owned object's IDENTITY as a lookup key to
- * fetch data about it through a collaborator, then reads a fact back —
- *
- *   public function forNode(WorkflowNode $node): array {
- *       return $this->registry->has($node->key)
- *           ? $this->registry->get($node->key)->reservedOutputNames : [];
- *   }
- *
- * The node is being treated as a key into someone else's store to answer a
- * question about the node — so the answer belongs ON the node
- * (`$node->reservedOutputNames()`). Every test is semantic, no name lists:
- *
- *   - exactly ONE owned parameter (a movable Move-Method target);
- *   - that param is used ONLY via its members (`$node->key`) — never passed whole;
- *     it's a lookup KEY, not a collaborator handed off / delegated to;
- *   - the method RETURNS A FACT (scalar / array), not an object or an action;
- *   - that fact flows from a FETCH-AND-READ: a call on a `$this` collaborator,
- *     keyed by the param's member, whose result is then navigated;
- *   - the method CONSTRUCTS nothing (a mapper/factory is not envy).
- *
- * Depth of the navigation is bounded only to keep the walk finite — a collaborator
- * "in between" is still envy, so depth is not used to discriminate.
+ * Indirect feature envy: detects when a method uses an owned object's identity as a lookup key
+ * to fetch data about it through a collaborator—the fact should be on the object.
  */
 final class LookupEnvy
 {

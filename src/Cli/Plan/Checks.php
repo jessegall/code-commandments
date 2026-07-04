@@ -11,14 +11,8 @@ use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
- * `commandments checks [start|phase|complete] [--list]` — run the {@see PlanProfile} checks for
- * one {@see Moment} of a plan. The `executing-plans` skill calls it at each moment: `start` before
- * the first phase, `phase` after each phase, `complete` (the default) at the very end. The
- * `complete` gate always appends `judge --branch`, so a plan can never finish unjudged.
- *
- * Commands run in order via {@see passthru}, streaming their own output, and the gate stops at the
- * first failure with that command's exit code — so the agent sees exactly what broke, fixes it at
- * the source, and re-runs. `--list` prints the resolved commands instead of running them.
+ * Runs PlanProfile checks for a plan moment (`start`, `phase`, `complete`); the `complete` gate
+ * appends `judge --branch` to ensure plans finish judged.
  */
 final class Checks implements Command
 {

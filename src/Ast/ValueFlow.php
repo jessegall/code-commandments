@@ -29,22 +29,9 @@ use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
 
 /**
- * The value-flow (provenance) graph — the third whole-program index, alongside the AST and the call
- * graph ({@see CodebaseIndex}). Where {@see Support\TypeResolver} answers "what type is this
- * expression", ValueFlow answers "where does this VALUE go" — it follows a field's value forward
- * through the program to every place it is finally consumed, and reports whether those consumptions
- * ASSUME the value is present or ACKNOWLEDGE it can be null ({@see FlowVerdict}).
- *
- * The forward walk crosses function boundaries: a field read assigned to a local, passed as an
- * argument (into the callee's parameter), returned (out to every call site), or written into another
- * object's field — each is an edge to follow, until the value reaches a terminal that decides
- * nil-vs-non-nil. A guard ANYWHERE in that closure means the field is legitimately optional.
- *
- * Built once per {@see Codebase} and cached on it (like `index()`); {@see warm} builds the field-read
- * index eagerly for copy-on-write fork sharing. CONSERVATIVE by construction — an edge it can't
- * resolve is dropped, never guessed — so incompleteness makes a caller MISS a finding, never invent
- * one. Termination: a visited-node set plus a visited-SLOT set (so a value cycling through fields
- * expands each slot once).
+ * The value-flow (provenance) graph — follows field values forward through the program
+ * to report whether they are assumed present or null. Conservative by construction: an
+ * edge it can't resolve is dropped, never guessed.
  */
 final class ValueFlow
 {

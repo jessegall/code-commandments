@@ -5,16 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * Resolves a TYPE NAME to its shape across the module graph — the "trace to the API". A
- * component references `WizardSnapshotData`; this follows the trail a bundler/type-checker
- * would: declared here? done. Imported (`import type { X } from '@app/types'`)? resolve the
- * module and look there. A barrel that only `export *`s onward? follow each re-export until
- * the real `export type X = { … }` is found — typically the generated server-Data file.
- *
- * Pure graph walk over {@see ModuleResolver} (relative/alias/barrel) + {@see Script} (the
- * type/import/re-export readers), with a visited-set so a cyclic barrel can't loop. Returns
- * the type's fields, or `[]` when the trail runs cold (an enum union, a node_modules type,
- * an unresolved alias) — never a guess.
+ * Resolves type names to their shapes across the module graph, following imports and re-exports;
+ * returns fields or [] when the trail runs cold.
  */
 final class TypeResolver
 {

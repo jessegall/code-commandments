@@ -5,13 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Bridge;
 
 /**
- * The bag of published {@see Contract}s a detector is handed ({@see ConsumesContracts})
- * — every fact the engines put on the {@see Bridge} this run, regardless of which
- * engine produced it. Immutable: {@see with} returns a widened copy, so gathering
- * from many providers never mutates a shared instance.
- *
- * A consumer pulls the KIND it cares about with {@see ofType} and reads that value;
- * the bag itself stays generic, knowing nothing of any particular contract.
+ * Immutable bag of published contracts. Consumers pull by type with {@see ofType};
+ * new contracts added via {@see with} return a widened copy, never mutating shared instances.
  */
 final class Contracts
 {

@@ -23,29 +23,9 @@ use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
 
 /**
- * The set of classes that TRAVEL BACK in an HTTP response — the ones a page actually sends to the
- * frontend. There is more than one way an object leaves the backend, so this looks at every response
- * boundary, not just Inertia:
- *
- *  1. a controller RETURNS it — the returned expression of a public method on a class that extends the
- *     framework `Controller`, whether the object is returned directly (`return EditorShell::for($id)`,
- *     a Spatie `Data` is `Responsable`) or nested in the returned array (`return ['shell' => …]`), plus
- *     the method's declared return type; and
- *  2. it is handed to a renderer — an argument of `Inertia::render(...)` or the `inertia(...)` helper.
- *
- * A boundary expression is resolved to a class two ways, so indirection doesn't hide a page object: the
- * INLINE construction (`X::from(...)` / `X::for(...)` / `new X`, at any depth) is read straight off the
- * AST, and every returned/argument expression (and each value of a returned/passed array) is also typed
- * through the {@see TypeResolver} provenance engine — so `$page = EditorShell::for($id); return $page;`
- * still resolves to `EditorShell`. (The call graph's `callersOf` and the field-nil `ValueFlow` answer
- * different questions — caller-by-receiver and forward null-provenance — so neither fits "reaches a
- * response"; expression typing does.)
- *
- * This is the load-bearing half of the page-object identity: a big composed `Data` that never reaches
- * a response is an internal aggregate, not a page object. Built ONCE per codebase (an AST walk, like
- * {@see DataClassShape}) and memoised by the codebase object via a {@see \WeakMap}. Records every
- * resolved class FQCN regardless of framework meaning — the caller ({@see PageObject}) decides which
- * of them are `Data`.
+ * Identifies classes that reach HTTP response boundaries (controller returns, Inertia::render
+ * arguments). Resolves indirection via AST and {@see TypeResolver} so indirect returns like
+ * `$page = EditorShell::for($id); return $page;` still resolve. Built once and memoised per codebase.
  */
 final class ResponseSurface
 {

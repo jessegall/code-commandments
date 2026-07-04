@@ -11,18 +11,8 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 /**
- * `commandments judge-reminder` — the "did you judge?" nudge, wired to two moments so a commit can't
- * slip past it: a `Stop` hook (turn about to end) and a `PreToolUse` hook on `git commit` (a commit
- * about to land, while the tree is still dirty and detectable — the case a Stop alone misses when the
- * commit is straight to the base branch). When judged files (`.php`/`.vue`) are touched but unchecked
- * it reminds — Stop blocks-and-continues once, PreToolUse injects context and lets the commit run;
- * neither forces, and both let Claude judge or acknowledge and move on.
- *
- * "Once per batch" is keyed on the changed-file SET, not HEAD: a set already reminded (the current
- * set is a subset of it) stays silent — including across the commit that would move HEAD — so the two
- * hooks never double up. Touching a NEW file grows the set and earns a fresh nudge; a clean tree
- * clears the marker so the next batch starts over. Wired by {@see Hooks}, alongside the cardinal-rule
- * {@see Remind} heartbeat.
+ * A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files
+ * are touched but unchecked, deduped per changed-file set.
  */
 final class JudgeReminder extends Hook
 {

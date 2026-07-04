@@ -5,13 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue\Oracle;
 
 /**
- * Reads the resolved types back out of a checker's diagnostics — the inverse of {@see TypeProbe}.
- * Each probe surfaces a `TS2322` assignability error of the shape
- *
- *   Type 'number[]' is not assignable to type '__CcNo_pageSizes'.
- *
- * whose SOURCE type (`number[]`) is the local's resolved type and whose TARGET (`__CcNo_pageSizes`)
- * names the local. Diagnostics are flat log text, not code — plain string scanning, no AST.
+ * Extracts resolved types from checker diagnostics — the inverse of {@see TypeProbe}. Parses
+ * `TS2322` assignability errors to map local names to their resolved types via string scanning.
  */
 final class TscDiagnostics
 {

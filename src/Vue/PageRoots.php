@@ -5,14 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * Discovers the PAGE COMPONENTS of an Inertia app — the roots of the render tree, the entry
- * points from which every prop type flows downward. The bootstrap declares them:
- * `app.ts` calls `import.meta.glob('./Pages/**\/*.vue')`, so the glob pattern (read off the
- * AST by {@see Script::callStringArg}, never scraped) names exactly the page set.
- *
- * The pattern's fixed prefix — everything before its first `*` — is the pages directory,
- * resolved against the entry file; every `.vue` beneath it is a page root. Empty when the
- * app isn't Inertia / has no such entry (a Blade-bootstrapped app needs its own adapter).
+ * Discovers page components in Inertia apps by reading the glob pattern from `app.ts`
+ * (never scraped). Every `.vue` beneath the pattern's fixed prefix directory is a page root.
+ * Empty for non-Inertia apps or apps without the entry.
  */
 final class PageRoots
 {

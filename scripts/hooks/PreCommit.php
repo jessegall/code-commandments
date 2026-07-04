@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 /**
- * The ONE pre-commit hook. Regenerates every auto-generated artifact from its source
- * of truth and re-stages whatever changed, so a commit always ships up-to-date docs —
- * the same contracts `ReadmeIsCurrentTest` and `GeneratedSkillsAreCurrentTest` enforce
+ * The ONE pre-commit hook. Enforces the documentation commandment on our own changed src
+ * (blocking the commit on any doc sin), then regenerates every auto-generated artifact from
+ * its source of truth and re-stages whatever changed — so a commit always ships up-to-date
+ * docs, the same contracts `ReadmeIsCurrentTest` and `GeneratedSkillsAreCurrentTest` enforce
  * in CI, just caught at commit time instead of after.
  *
  *   - README.md excerpts + README.{sins,scribes,skills}.md tables  ← Detectors\Catalog  (generate-readme.php)
@@ -38,6 +39,14 @@ if (in_array('--install', $argv, true)) {
     chmod($hook, 0o755);
     echo "✓ pre-commit hook installed (runs scripts/hooks/PreCommit.php)\n";
     exit(0);
+}
+
+// Enforce the documentation commandment on our own src — the rule we ship, applied to us.
+passthru('php ' . escapeshellarg("{$root}/bin/commandments") . ' judge src --skill=backend/documentation --changes --no-checklist', $docSins);
+
+if ($docSins !== 0) {
+    fwrite(STDERR, "\n✗ commit blocked: fix the documentation sins above (or --no-verify to bypass).\n");
+    exit(1);
 }
 
 $restaged = [];

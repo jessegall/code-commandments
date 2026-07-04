@@ -11,15 +11,9 @@ use JesseGall\CodeCommandments\Backend\Detector;
 
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 /**
- * Runs the detectors over a parsed codebase and returns lightweight findings —
- * everything the report needs and nothing that holds an AST node, so a finding can
- * cross a process boundary.
- *
- * The work is a flat pool of TASKS — one per detector — run in parallel by
- * {@see Fork::map} over the copy-on-write-shared AST. Each task runs a detector's
- * `find()` and returns already-flattened {@see Finding}s, so no AST node is ever
- * serialized across the boundary. `--parallel=1`, or a build without `pcntl`/socket
- * pairs, runs the same tasks sequentially.
+ * Runs detectors in parallel over a shared AST, returning serializable findings (AST nodes
+ * stay behind in workers). Work is divided into one task per detector, executed by
+ * {@see Fork::map}.
  */
 final class DetectorRunner
 {

@@ -21,24 +21,9 @@ use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 
 /**
- * Brings a Spatie `Data` class's magic surface in line with the spatie-data skill.
- * It does three things, returning the new content of every changed file:
- *
- *  1. Renames a `public static` object factory that builds an instance of itself
- *     but isn't `from…`-named (`forCredential(Credential $c)`) to `from<Type>`
- *     (`fromCredential`), so `::from()` can dispatch to it — and rewrites its call
- *     sites to `::from(...)`.
- *  2. Regenerates the class docblock's `@method` lines: one `@method static static
- *     from(<params>)` per object factory (documenting the magic overload, never the
- *     concrete name), PLUS an `@method static static from(array $payload)` so the raw
- *     array payload stays accepted (the typed lines are additive overloads, not a
- *     narrowing) — replacing any existing `@method` lines (so a collision line is
- *     fixed in passing).
- *  3. Adds the shape-preserving conditional `@method … collect(iterable $items)`
- *     when the class is actually `::collect()`-ed somewhere.
- *
- * It reads each file's source from disk (by the parsed path) and returns
- * `path => newContent` for the files it changed; the caller writes or diffs them.
+ * Brings a Spatie `Data` class's magic surface in line with the spatie-data skill:
+ * renames object factories to `from<Type>`, regenerates `@method` docblock lines,
+ * and adds `@method collect()` when used. Returns `path => newContent` for changed files.
  */
 final class DataHintScribe extends Scribe
 {

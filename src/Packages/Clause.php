@@ -7,15 +7,8 @@ namespace JesseGall\CodeCommandments\Packages;
 use JesseGall\CodeCommandments\Ast\Codebase;
 
 /**
- * One exemption tag's rules — the fluent thing a package builds with `exempt(Tag::class)`. It holds
- * three kinds of exemption and answers, for a finding, whether it's covered:
- *
- *  - whole classes ({@see classes} / {@see on} with no methods): a class extending/implementing one
- *    is exempt for ANY method;
- *  - class methods ({@see on} with methods): only those methods on subclasses of that base;
- *  - global methods ({@see methods}): a method NAME ignored on any class at all.
- *
- * A match is by extends OR implements, so a base class and a contract interface both work.
+ * Holds exemption rules for a tag—whole classes, class methods, global methods—answering
+ * whether a finding is covered by extends or implements.
  */
 final class Clause
 {

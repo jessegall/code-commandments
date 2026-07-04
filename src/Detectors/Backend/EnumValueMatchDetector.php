@@ -11,13 +11,8 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A `match`/`switch` over a backed enum's `->value` at a call site — the enum
- * unwrapped to a scalar so it can be dispatched on out here. That mapping is the
- * enum's own job: move it onto the case as a method with an exhaustive `match`,
- * and let the call site just ask. Points at enums-with-behaviour.
- *
- * A `match ($this)` inside the enum is exactly that method, so a match sitting in
- * an enum declaration is left alone.
+ * Detects `match`/`switch` over a backed enum's `->value` at a call site. That mapping belongs
+ * on the enum case as a method with an exhaustive `match`. Ignores `match ($this)` inside the enum.
  */
 final class EnumValueMatchDetector implements Detector
 {

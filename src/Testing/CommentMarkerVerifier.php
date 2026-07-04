@@ -11,13 +11,8 @@ use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**
- * The frontend twin of {@see SinfulMarkerVerifier}: run each detector over the `.vue`
- * fixture and check it against the `<!-- @sin DetectorName -->` comments — the Vue
- * analog of `#[Sinful]`. A comment marks the element that immediately follows it (a
- * sibling); a detector passes when it flags every marked element and nothing else.
- *
- * Same contract as the backend verifier — a list of {@see DetectorResult} — so the
- * shared {@see FixtureTestCase} treats both engines identically.
+ * Frontend twin of SinfulMarkerVerifier; runs detectors over Vue fixtures and checks them
+ * against `<!-- @sin DetectorName -->` comment markers.
  */
 final class CommentMarkerVerifier implements MarkerVerifier
 {

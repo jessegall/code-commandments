@@ -9,12 +9,8 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\CodeSnippet;
 /**
- * `commandments report --reason="…" [--detector=NAME] [--title="…"] [--file=PATH] [--line=N]`
- *
- * Files an issue so a problem gets fixed upstream instead of being silently ignored.
- * With `--detector` it's a `[detector-report]` (a false positive / wrong rule); the
- * detector is optional, so a GLOBAL bug (a crash, a CLI issue — anything not tied to
- * one detector) files as a `[bug-report]`. Only `--reason` is required.
+ * Files GitHub issues. With `--detector`, files a `[detector-report]` (false positive/wrong
+ * rule); without it, a `[bug-report]` for global issues. Only `--reason` required.
  */
 final class Report implements Command
 {

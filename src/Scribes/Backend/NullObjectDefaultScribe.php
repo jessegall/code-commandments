@@ -22,16 +22,9 @@ use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\UnionType;
 
 /**
- * Repents {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\AllNullableDataDetector}: an
- * all-nullable Data class where every optional field is `?T = null` is a lie the type tells. Where
- * the field's type has an honest **Null Object** (a resting/identity instance), reshape it to
- * `T = <that identity>` — non-nullable, so `::from()` carries no nulls and consumers stop
- * null-checking. The identity is READ from the value type ({@see NullObjectDefault}); it is never
- * invented.
- *
- * All-or-nothing per class: if ANY field's type has no expressible identity, the class is left
- * untouched — a half-migrated bag is less honest than the skill's hint, and the human declares the
- * missing Null Object (after which a re-run reshapes the whole class).
+ * Repents all-nullable Data classes by reshaping `?T = null` fields to `T = <identity>`
+ * where the type has an honest Null Object. All-or-nothing per class: if ANY field's type
+ * lacks a Null Object, leaves the class untouched.
  */
 final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebase
 {

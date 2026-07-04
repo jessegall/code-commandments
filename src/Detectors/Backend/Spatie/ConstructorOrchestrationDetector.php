@@ -14,19 +14,9 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A page object filling a PUBLIC slot imperatively in its constructor — `$this->docks =
- * $this->dockProjector->project();` — where a `#[Computed]` property hook would declare the slot
- * next to how it is projected. The fat assembly-line constructor is the smell; a self-contained
- * projection belongs in a `get` hook. Points at page-objects.
- *
- * The rejects keep it to the assignments that can SAFELY become a hook:
- *  - a deferred slot stays — whether the right-hand side is a `Lazy::…()`/`new DeferProp` or the slot's
- *    own type is `Lazy|…`/`…Prop` (a factory like `Table::asClosureLazy(): Lazy`); hoisting it into an
- *    eager `get` would destroy the deferral;
- *  - a right-hand side reading a constructor local/param stays — a `get` hook sees only `$this`, so
- *    an intermediate unwrapped once for reuse (the shared-`$menus` case) is legitimately imperative;
- *  - a branch-guarded assignment stays — it isn't a straight-line slot fill; and
- *  - a slot written more than once stays — it's built up in steps, not one expression.
+ * A page object imperatively filling a public slot in its constructor. Self-contained projections
+ * belong in a `#[Computed]` property hook's `get` method, not the assembly-line constructor. Rejects
+ * deferred/dependent/conditional/multi-step assignments that cannot safely become hooks.
  */
 final class ConstructorOrchestrationDetector implements Detector, Repentable
 {

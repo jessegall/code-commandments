@@ -18,20 +18,8 @@ use PhpParser\Node\Stmt\Class_;
 use PhpParser\NodeFinder;
 
 /**
- * Strips a redundant explicit return type from a single-expression arrow function
- * when the expression PROVABLY yields exactly that class. It's noise the one-liner
- * already makes obvious:
- *
- *   static fn (): Foo => Foo::make($x)   →   static fn () => Foo::make($x)
- *
- * Deliberately conservative, because a return type is not always redundant:
- *  - only an OBJECT type (a plain class `Name`) — scalar return types coerce at
- *    runtime (`fn (): int => "5"` returns int), so they are never touched; nullable,
- *    union, and `self`/`static`/`parent` types are left alone;
- *  - only when the expression yields EXACTLY that class — `new Foo(...)` of the same
- *    class, or `Foo::method(...)` whose method's declared return resolves to
- *    `self`/`static`/`Foo` (looked up in the codebase). A widening type (declaring a
- *    parent/interface) is kept; an unresolvable call (vendor, dynamic) is skipped.
+ * Strips redundant return types from arrow functions when the expression provably yields that exact class.
+ * Only applies to object types (not scalars/union/self/static/parent); validates exact match via `new Class(...)` or `Class::method(...)` resolution.
  */
 final class RedundantReturnTypeScribe extends Scribe
 {

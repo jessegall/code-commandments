@@ -10,10 +10,9 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A comment that defends the code against a strawman — `// not random`, `// no
- * magic here`, `// not a coincidence`, `// this isn't dead code`. It argues what
- * the code is NOT instead of stating what it IS: negative space that pre-empts a
- * misreading the code should make impossible on its own. Points at documentation.
+ * Detects comments that defend code against strawmen — a negation paired with a word like
+ * "random", "magic", or "coincidence", where the code should simply state what it IS.
+ * Points at documentation.
  */
 final class NegativeSpaceCommentDetector implements Detector
 {

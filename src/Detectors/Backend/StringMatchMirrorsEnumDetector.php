@@ -12,13 +12,9 @@ use JesseGall\CodeCommandments\Ast\Support\Enums;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A `match`/`switch` whose arm conditions are string/int literals that ARE an
- * existing backed enum's case values — dispatching on the loose strings instead
- * of the type that already seals them. Take the enum; match on its cases (or put
- * the behaviour on the case). Points at enums-with-behaviour.
- *
- * Only fires when a real enum mirrors the literals, and not on `match ($x->value)`
- * (that's the {@see EnumValueMatchDetector} homeless-method case).
+ * Detects `match`/`switch` arm conditions that are string/int literals mirroring an existing
+ * backed enum's case values. Dispatch on the type itself, not loose strings. Ignores
+ * `match ($x->value)` (see {@see EnumValueMatchDetector}).
  */
 final class StringMatchMirrorsEnumDetector implements Detector
 {

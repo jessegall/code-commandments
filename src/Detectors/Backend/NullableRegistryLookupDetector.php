@@ -11,13 +11,8 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
- * A class's own keyed store handing back `null` on a miss — `return
- * $this->items[$key] ?? null`. That is a registry that refuses to own its role:
- * a lookup that can't resolve should say so by throwing (resolve-or-throw), not
- * push an `?object` onto every caller to re-check. Points at role-vocabulary.
- *
- * A lookup into a *parameter* map (`$attributes[$key] ?? null`) is a caller-owned
- * dynamic bag, not a registry the class owns, so it's left alone.
+ * Detects registries returning null on miss (`$this->items[$key] ?? null`) instead of throwing.
+ * A lookup into a parameter map is exempt. Points at role-vocabulary.
  */
 final class NullableRegistryLookupDetector implements Detector
 {
