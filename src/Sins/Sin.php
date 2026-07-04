@@ -107,14 +107,34 @@ abstract class Sin
     }
 
     /**
-     * Does this sin answer to the `--sin=<query>` the user typed? Lenient: both sides
-     * are reduced to lowercase alphanumerics, so `array-bag`, `ArrayBag` and `arraybag`
-     * all select the `array-bag` sin.
+     * Does this sin answer to a query by its OWN name? Lenient: both sides are reduced to lowercase
+     * alphanumerics, so `array-bag`, `ArrayBag` and `arraybag` all select the `array-bag` sin. Kept to
+     * the name so skill-vs-sin resolution ({@see \JesseGall\CodeCommandments\Cli\Configure}) stays exact.
      */
     public function matches(string $query): bool
     {
-        $normalise = static fn (string $value): string => strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '', $value));
+        return str_contains(self::normalise($this->name), self::normalise($query));
+    }
 
-        return str_contains($normalise($this->name), $normalise($query));
+    /**
+     * Does this sin fall in the SCOPE a `--sin=<query>` selects — its own name OR its skill SLUG? So a
+     * group keyword like `--sin=page` scopes every sin under `backend/page-objects`, not only the one
+     * whose name happens to contain "page". Used by `judge` filtering, where casting wide is the point.
+     */
+    public function scopes(string $query): bool
+    {
+        $needle = self::normalise($query);
+
+        return str_contains(self::normalise($this->name), $needle)
+            || str_contains(self::normalise($this->slug()), $needle);
+    }
+
+    /**
+     * Reduce a value to lowercase alphanumerics — the lenient form both sides of a `--sin`/`--skill`
+     * match are compared in.
+     */
+    public static function normalise(string $value): string
+    {
+        return strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '', $value));
     }
 }

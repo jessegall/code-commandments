@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
@@ -342,11 +343,13 @@ final class Judge implements Command
     private function select(array $detectors, ?string $skill, ?string $sin): array
     {
         return array_values(array_filter($detectors, static function (RootDetector $candidate) use ($skill, $sin): bool {
-            if ($skill !== null && $candidate->sin()->slug() !== $skill) {
+            // `--skill` is a LENIENT slug match — `--skill=page` scopes `backend/page-objects`.
+            if ($skill !== null && ! str_contains(Sin::normalise($candidate->sin()->slug()), Sin::normalise($skill))) {
                 return false;
             }
 
-            return $sin === null || $candidate->sin()->matches($sin);
+            // `--sin` matches the sin's name OR its skill slug — `--sin=page` scopes the whole group.
+            return $sin === null || $candidate->sin()->scopes($sin);
         }));
     }
 
