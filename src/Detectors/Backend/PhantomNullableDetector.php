@@ -7,16 +7,17 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\TypeName;
-use JesseGall\CodeCommandments\Ast\ValueFlow;
 use JesseGall\CodeCommandments\Detectors\ChainDetector;
 use JesseGall\CodeCommandments\Sins\Backend\PhantomNullable;
 use JesseGall\CodeCommandments\Sins\Sin;
+use PhpParser\Node;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Param;
+use PhpParser\Node\PropertyItem;
 use PhpParser\Node\Stmt\Class_;
 
 /**
- * A **phantom nullable** — a promoted field typed `?T` (or `T|null`, `T|Optional|null`) whose value,
+ * A **phantom nullable** — a field typed `?T` (or `T | null`, `T | Optional | null`) whose value,
  * followed through the whole program by the {@see \JesseGall\CodeCommandments\Ast\ValueFlow}
  * provenance graph, is ALWAYS consumed as present (dereferenced, or landed in a non-nullable
  * parameter) and NOT ONCE guarded (`?->`, `?? `, `!== null`, a truthiness test) — anywhere in its
@@ -24,10 +25,11 @@ use PhpParser\Node\Stmt\Class_;
  * is. Make the field non-nullable and let it be required, so construction fails hard on a real miss
  * instead of every consumer re-checking a value that's always there. Points at type-honesty.
  *
- * Usage-driven and conservative: it fires only on positive presence-evidence with ZERO contradiction,
- * and a guard anywhere in the value's provenance — or a flow the graph can't resolve — leaves the
- * field alone. The whole reasoning lives in `ValueFlow`; this detector only names the candidate
- * (a nullable promoted field) and reads the verdict.
+ * Not just DTOs: EVERY nullable property of EVERY class is a candidate — a constructor-promoted one
+ * and a plain declared `public ?T $x` alike. Usage-driven and conservative: it fires only on positive
+ * presence-evidence with ZERO contradiction, and a guard anywhere in the value's provenance — or a
+ * flow the graph can't resolve — leaves the field alone. The whole reasoning lives in `ValueFlow`;
+ * this detector only names the candidate and reads the verdict.
  */
 final class PhantomNullableDetector implements ChainDetector
 {
@@ -38,11 +40,9 @@ final class PhantomNullableDetector implements ChainDetector
 
     public function chainPath(NodeMatch $finding, Codebase $codebase): array
     {
-        if (! $finding->node instanceof Param || ! $finding->node->var instanceof Variable || ! is_string($finding->node->var->name)) {
-            return [];
-        }
+        $field = self::fieldName($finding->node);
 
-        return $codebase->valueFlow()->chainPath($finding->enclosingClassName() ?? '', $finding->node->var->name);
+        return $field === null ? [] : $codebase->valueFlow()->chainPath($finding->enclosingClassName() ?? '', $field);
     }
 
     public function find(Codebase $codebase): array
@@ -59,9 +59,11 @@ final class PhantomNullableDetector implements ChainDetector
 
             $fqcn = ltrim(($node->namespacedName ?? null)?->toString() ?? '', '\\');
 
-            foreach ($node->getMethod('__construct')?->params ?? [] as $param) {
-                if ($this->isPhantom($param, $fqcn, $flow)) {
-                    $findings[] = new NodeMatch($param, $class->file, $codebase);
+            foreach ($this->nullableFields($node) as [$field, $name]) {
+                $verdict = $flow->verdict($fqcn, $name);
+
+                if ($verdict->assume >= 1 && $verdict->guard === 0) {
+                    $findings[] = new NodeMatch($field, $class->file, $codebase);
                 }
             }
         }
@@ -69,14 +71,42 @@ final class PhantomNullableDetector implements ChainDetector
         return $findings;
     }
 
-    private function isPhantom(Param $param, string $fqcn, ValueFlow $flow): bool
+    /**
+     * Every nullable field of $class — its constructor-PROMOTED params and its DECLARED properties —
+     * as `[declaration node, name]`.
+     *
+     * @return list<array{0: Node, 1: string}>
+     */
+    private function nullableFields(Class_ $class): array
     {
-        if ($param->flags === 0 || ! TypeName::isNullable($param->type) || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
-            return false;
+        $fields = [];
+
+        foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+            if ($param->flags !== 0 && TypeName::isNullable($param->type) && ($name = self::fieldName($param)) !== null) {
+                $fields[] = [$param, $name];
+            }
         }
 
-        $verdict = $flow->verdict($fqcn, $param->var->name);
+        foreach ($class->getProperties() as $property) {
+            foreach ($property->props as $declared) {
+                if (TypeName::isNullable($property->type)) {
+                    $fields[] = [$declared, $declared->name->toString()];
+                }
+            }
+        }
 
-        return $verdict->assume >= 1 && $verdict->guard === 0;
+        return $fields;
+    }
+
+    /**
+     * The field name behind a finding node — a promoted {@see Param} or a declared {@see PropertyItem}.
+     */
+    private static function fieldName(?Node $node): ?string
+    {
+        if ($node instanceof Param) {
+            return $node->var instanceof Variable && is_string($node->var->name) ? $node->var->name : null;
+        }
+
+        return $node instanceof PropertyItem ? $node->name->toString() : null;
     }
 }

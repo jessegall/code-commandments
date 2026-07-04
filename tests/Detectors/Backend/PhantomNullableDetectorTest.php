@@ -6,11 +6,13 @@ namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Backend\PhantomNullableDetector;
+use PhpParser\Node\Param;
 use PHPUnit\Framework\TestCase;
 
 /**
- * {@see PhantomNullableDetector} names a nullable promoted field and reads the ValueFlow verdict —
- * flagging only when the value is assumed present everywhere and guarded nowhere.
+ * {@see PhantomNullableDetector} names a nullable field — a promoted param OR a declared property —
+ * and reads the ValueFlow verdict, flagging only when the value is assumed present everywhere and
+ * guarded nowhere.
  */
 final class PhantomNullableDetectorTest extends TestCase
 {
@@ -19,7 +21,10 @@ final class PhantomNullableDetectorTest extends TestCase
     {
         $matches = new PhantomNullableDetector()->find(Codebase::fromString($php));
 
-        return array_values(array_map(static fn ($m): string => $m->node->var->name, $matches));
+        return array_values(array_map(
+            static fn ($m): string => $m->node instanceof Param ? $m->node->var->name : (string) $m->node->name,
+            $matches,
+        ));
     }
 
     public function test_flags_a_field_assumed_present_everywhere(): void
@@ -63,6 +68,24 @@ final class PhantomNullableDetectorTest extends TestCase
         PHP;
 
         $this->assertSame([], $this->fields($php));
+    }
+
+    public function test_flags_a_declared_property_not_just_a_promoted_param(): void
+    {
+        // A plain declared `public ?T $x` (not constructor-promoted) — a mutable pipeline-context
+        // property set later and then assumed present — is a phantom too.
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Bytes { public function size(): int { return 1; } }
+        class Context {
+            public ?Bytes $payload = null;
+            public function __construct(public readonly string $disk) {}
+        }
+        class WritePipe { public function run(Context $ctx): int { return $ctx->payload->size(); } }
+        PHP;
+
+        $this->assertSame(['payload'], $this->fields($php));
     }
 
     public function test_flags_an_inherited_field_read_through_a_subclass(): void

@@ -67,16 +67,13 @@ public function coversOrFail(string $date): bool
 
 ```php
 // Bad
-final class Order
+final class PackingSlip
 {
-    public function __construct(
-        public readonly ?ShippingAddress $shipTo,
-        public readonly string $reference,
-    ) {}
+    public ?ShippingAddress $deliverTo = null;
 
-    public function stage(PickList $pickList): void
+    public function attach(ShipmentLabel $label): void
     {
-        $pickList->deliverTo = $this->shipTo;
+        $label->deliverTo = $this->deliverTo;
     }
 }
 
@@ -116,7 +113,7 @@ public function nestUnder(string $prefix, string $segment, array $routes): array
 ## When it fires
 
 - Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
-- Phantom nullable — a promoted field typed `?T` whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
+- Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
 - Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`
 
 ## Checklist

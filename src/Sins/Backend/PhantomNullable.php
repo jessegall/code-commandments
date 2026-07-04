@@ -14,7 +14,7 @@ final class PhantomNullable extends Sin
         parent::__construct(
             name: 'phantom-nullable',
             skill: TypeHonesty::class,
-            description: "Phantom nullable — a promoted field typed `?T` whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens",
+            description: "Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens",
             rule: "If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss."
         );
     }

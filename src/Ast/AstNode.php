@@ -210,6 +210,12 @@ class AstNode
 
         $parent = $this->parent()->node;
 
+        // `isset($x[$k])` / `empty($x[$k])` / `$x[$k] ?? …` — indexing a null base short-circuits
+        // safely, so a guarded access GUARDS the base. The isset/coalesce wraps the access, not $x.
+        if ($parent instanceof ArrayDimFetch && $parent->var === $this->node) {
+            return new self($parent)->isNullGuardedUse();
+        }
+
         return $parent instanceof BooleanNot
             || $parent instanceof BooleanAnd
             || $parent instanceof BooleanOr
@@ -249,6 +255,73 @@ class AstNode
         }
 
         return false;
+    }
+
+    /**
+     * A `$this->field` read whose method OPENS with an early-return/throw guard clause on `$this`
+     * state (`if (! $this->started) { return; } … $this->field`). The object gates the read on its
+     * own lifecycle, so the field is legitimately conditionally-present — the classic event-sourcing
+     * aggregate, not a phantom. Only SELF reads count: an external `$other->field` read (how a plain
+     * data carrier is consumed) is unaffected, so a genuine passive-carrier phantom still fires.
+     * Over-clearing here only ever MISSES a phantom — the FP-safe direction.
+     */
+    public function isSelfReadGuardedByStateClause(): bool
+    {
+        if (! $this->node instanceof PropertyFetch) {
+            return false;
+        }
+
+        if (! ($this->node->var instanceof Variable && $this->node->var->name === 'this')) {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null || $function->getStmts() === null) {
+            return false;
+        }
+
+        $finder = new NodeFinder();
+
+        foreach ($function->getStmts() as $statement) {
+            if ($finder->findFirst([$statement], fn (Node $node): bool => $node === $this->node) !== null) {
+                return false; // reached the read's own statement — a guard must PRECEDE it
+            }
+
+            if (new self($statement)->isStateGuardClause()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** An `if (<reads $this state>) { return|throw|continue|break; }` bail-out guard clause. */
+    private function isStateGuardClause(): bool
+    {
+        if (! $this->node instanceof If_ || $this->node->else !== null || $this->node->elseifs !== []) {
+            return false;
+        }
+
+        $last = end($this->node->stmts);
+
+        $bailsOut = $last instanceof Return_
+            || $last instanceof Continue_
+            || $last instanceof Break_
+            || ($last instanceof Expression && $last->expr instanceof Throw_);
+
+        return $bailsOut && new self($this->node->cond)->readsThisState();
+    }
+
+    /** Does this expression read any `$this->…` property? */
+    private function readsThisState(): bool
+    {
+        return new NodeFinder()->findFirst(
+            [$this->node],
+            static fn (Node $node): bool => $node instanceof PropertyFetch
+                && $node->var instanceof Variable
+                && $node->var->name === 'this',
+        ) !== null;
     }
 
     /**

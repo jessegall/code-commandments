@@ -181,7 +181,7 @@ final class ValueFlow
 
             // A carrier (the value is inside an array under $key) is never itself a guard or a deref —
             // only the value it eventually yields is. A direct value ($key === null) is classified.
-            if ($key === null && $occurrence->isNullGuardedUse()) {
+            if ($key === null && ($occurrence->isNullGuardedUse() || $occurrence->isSelfReadGuardedByStateClause())) {
                 $guard[] = $occurrence;
             } elseif ($key === null && ($this->isDereferenced($node) || $this->flowsToNonNullableParam($occurrence))) {
                 $assume[] = $occurrence;

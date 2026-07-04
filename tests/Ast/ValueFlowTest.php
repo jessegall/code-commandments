@@ -152,4 +152,71 @@ final class ValueFlowTest extends TestCase
         }
         PHP));
     }
+
+    public function test_isset_on_an_index_of_the_field_guards_the_field(): void
+    {
+        // `isset($this->map[$k])` short-circuits on a null $map, so it ACKNOWLEDGES the null even
+        // though the isset wraps the element access, not the property. (Lazy-memo cache pattern.)
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Cache {
+            private ?array $map = null;
+            public function get(string $k): mixed {
+                if (! isset($this->map[$k])) { return null; }
+                return $this->map[$k];
+            }
+        }
+        PHP;
+
+        $v = Codebase::fromString($php)->valueFlow()->verdict('App\\Cache', 'map');
+
+        $this->assertGreaterThanOrEqual(1, $v->guard, 'isset on an index guards the base');
+    }
+
+    public function test_a_this_read_gated_by_a_state_guard_clause_is_guarded(): void
+    {
+        // The event-sourcing aggregate shape: `$this->id` is null until an event sets it, and every
+        // read is preceded by an early-return on sibling state — a legitimate conditional optional.
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Event { public function __construct(public readonly string $id) {} }
+        class Aggregate {
+            public private(set) ?string $id = null;
+            private bool $started = false;
+            public function finish(): void {
+                if (! $this->started) { return; }
+                $this->record(new Event(id: $this->id));
+            }
+            private function record(Event $e): void {}
+        }
+        PHP;
+
+        $v = Codebase::fromString($php)->valueFlow()->verdict('App\\Aggregate', 'id');
+
+        $this->assertGreaterThanOrEqual(1, $v->guard, 'the read is dominated by an if (! $this->started) return guard clause');
+    }
+
+    public function test_a_this_read_with_no_guard_clause_is_still_an_assume(): void
+    {
+        // Same self-read, but with NO preceding bail-out guard — a plain carrier, so it stays a phantom.
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Event { public function __construct(public readonly string $id) {} }
+        class Aggregate {
+            public private(set) ?string $id = null;
+            public function finish(): void {
+                $this->record(new Event(id: $this->id));
+            }
+            private function record(Event $e): void {}
+        }
+        PHP;
+
+        $v = Codebase::fromString($php)->valueFlow()->verdict('App\\Aggregate', 'id');
+
+        $this->assertSame(0, $v->guard, 'no guard clause precedes the read');
+        $this->assertGreaterThanOrEqual(1, $v->assume);
+    }
 }
