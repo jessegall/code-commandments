@@ -49,6 +49,12 @@ final class LaravelNode extends NodeMatch
     /** The framework controller base — a class whose public actions return an HTTP response. */
     public const string CONTROLLER = 'Illuminate\\Routing\\Controller';
 
+    /** The `Route` facade — `Route::get('/x', [C::class, 'm'])` registers a route action. */
+    public const string ROUTE = 'Illuminate\\Support\\Facades\\Route';
+
+    /** The route-registration verbs — the methods on `Route`/`$router` that bind a URL to an action. */
+    public const array ROUTE_VERBS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'match', 'any'];
+
     /** The HTTP/MCP request bases whose untyped reads are the smell. */
     public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 
