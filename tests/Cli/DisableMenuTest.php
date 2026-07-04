@@ -87,6 +87,57 @@ final class DisableMenuTest extends TestCase
         $this->assertValidPhp();
     }
 
+    public function test_ensure_regroups_a_backend_entry_that_drifted_into_frontend(): void
+    {
+        $this->scaffold();
+        DisableMenu::inProject($this->dir)->ensure();
+
+        // Simulate the old append bug: a backend skill sitting below the Frontend divider.
+        $line = '        // Skills\Backend\ValueObjects::class,';
+        $config = str_replace($line . "\n", '', $this->config());
+        $sep = '        ' . '// ----------[ Frontend ]----------';
+        $at = strpos($config, $sep);
+        $config = substr($config, 0, $at) . $line . "\n" . substr($config, $at);
+        $this->write($config);
+
+        DisableMenu::inProject($this->dir)->ensure();
+
+        $healed = $this->config();
+        $backendEntry = strpos($healed, 'Skills\Backend\ValueObjects::class');
+        $frontendDivider = strpos($healed, '// ----------[ Frontend ]----------');
+
+        $this->assertNotFalse($backendEntry);
+        $this->assertLessThan($frontendDivider, $backendEntry, 'the backend skill was regrouped above the Frontend divider');
+        $this->assertSame(1, substr_count($healed, 'Skills\Backend\ValueObjects::class'), 'not duplicated');
+        $this->assertStringContainsString("\n\n        // ----------[ Frontend ]----------", $healed, 'a blank line precedes the Frontend section');
+        $this->assertValidPhp();
+    }
+
+    public function test_regroup_preserves_an_uncommented_entry_and_moves_it_to_its_group(): void
+    {
+        $this->scaffold();
+        DisableMenu::inProject($this->dir)->ensure();
+
+        // An active (uncommented) backend sin, dropped below the Frontend divider.
+        $line = 'Sins\Backend\FeatureEnvy::class,';
+        $config = str_replace('        // ' . $line . "\n", '', $this->config());
+        $sep = '        ' . '// ----------[ Frontend ]----------';
+        // Second divider = the sins menu's (FeatureEnvy is a sin).
+        $at = strpos($config, $sep, strpos($config, $sep) + 1);
+        $config = substr($config, 0, $at) . '        ' . $line . "\n" . substr($config, $at);
+        $this->write($config);
+
+        DisableMenu::inProject($this->dir)->ensure();
+
+        $healed = $this->config();
+        $this->assertContains(FeatureEnvy::class, $this->disabled(), 'still disabled — the uncommented entry survived');
+        $this->assertSame(1, substr_count($healed, 'Sins\Backend\FeatureEnvy::class'), 'not duplicated');
+        // It sits above the sins menu's Frontend divider, still uncommented.
+        $entry = strpos($healed, "\n        Sins\Backend\FeatureEnvy::class,");
+        $this->assertNotFalse($entry, 'regrouped and still uncommented');
+        $this->assertValidPhp();
+    }
+
     public function test_ensure_upgrades_a_config_without_menus_and_keeps_its_lines(): void
     {
         $this->write(<<<'PHP'

@@ -19,8 +19,11 @@ use PhpParser\Node\Stmt\Use_;
  * The disable menus in `.commandments/config.php` — a `$disabledSkills` and a `$disabledSins`
  * closure, each one variadic `$config->disable(...)` call listing every shipped skill/sin as a
  * commented-out argument. Uncommenting a line disables that rule. `sync` re-ensures the menus on
- * every composer update: missing entries are appended commented, the human's lines are never
- * rewritten. Like every scribe it edits through the AST, splicing by node offset.
+ * every composer update: missing entries are added commented AND every entry is regrouped under the
+ * right `Backend`/`Frontend` divider (self-healing — a rule that drifted into the wrong section is
+ * moved back). An UNCOMMENTED entry — the human's active choice — is never removed, only regrouped;
+ * a menu carrying any unrecognized custom line is left to plain append, untouched. Like every scribe
+ * it edits through the AST, splicing by node offset.
  */
 final class DisableMenu
 {
@@ -29,6 +32,12 @@ final class DisableMenu
     private const string SINS_VAR = 'disabledSins';
 
     private const string PACKAGE_NS = 'JesseGall\\CodeCommandments\\';
+
+    private const string BACKEND_SEPARATOR = '// ----------[ Backend ]----------';
+
+    private const string FRONTEND_SEPARATOR = '// ----------[ Frontend ]----------';
+
+    private const string SUFFIX = '::class,';
 
     public function __construct(public readonly string $path) {}
 
@@ -56,8 +65,8 @@ final class DisableMenu
         $this->ensureDefinition(self::SINS_VAR, 'Uncomment a line to disable that single sin.', $this->sinRefs());
         $this->ensureUseClause();
         $this->ensureCalls();
-        $this->ensureEntries(self::SKILLS_VAR, $this->skillRefs());
-        $this->ensureEntries(self::SINS_VAR, $this->sinRefs());
+        $this->reconcile(self::SKILLS_VAR, $this->skillRefs());
+        $this->reconcile(self::SINS_VAR, $this->sinRefs());
     }
 
     // ----------[ Menu contents ]----------
@@ -150,7 +159,7 @@ final class DisableMenu
             ' */',
             "\${$var} = function (Config \$config): void {",
             '    $config->disable(',
-            ...array_map(static fn (string $entry): string => "        {$entry}", $this->entries($refs)),
+            ...array_map(static fn (string $entry): string => $entry === '' ? '' : "        {$entry}", $this->entries($refs)),
             '    );',
             '};',
         ];
@@ -166,16 +175,25 @@ final class DisableMenu
      */
     private function entries(array $refs): array
     {
-        $lines = ['// ----------[ Backend ]----------'];
-        $frontendSeen = false;
+        $backend = [];
+        $frontend = [];
 
         foreach ($refs as $ref) {
-            if (! $frontendSeen && str_contains($ref, '\\Frontend\\')) {
-                $frontendSeen = true;
-                $lines[] = '// ----------[ Frontend ]----------';
-            }
+            $line = "// {$ref}::class,";
 
-            $lines[] = "// {$ref}::class,";
+            if (str_contains($ref, '\\Frontend\\')) {
+                $frontend[] = $line;
+            } else {
+                $backend[] = $line;
+            }
+        }
+
+        $lines = [self::BACKEND_SEPARATOR, ...$backend];
+
+        if ($frontend !== []) {
+            $lines[] = '';
+            $lines[] = self::FRONTEND_SEPARATOR;
+            $lines = [...$lines, ...$frontend];
         }
 
         return $lines;
@@ -225,13 +243,123 @@ final class DisableMenu
     }
 
     /**
-     * Append every reference the menu's `disable(…)` call doesn't mention yet, commented out.
+     * Rebuild the menu's `disable(…)` argument list: add any canonical reference it lacks (commented),
+     * regroup every entry under the right Backend/Frontend divider, and PRESERVE each entry's
+     * commented/uncommented state (an uncommented rule the human disabled is kept, just moved to its
+     * group). A menu carrying an unrecognized custom line is not rebuilt — it falls back to a safe
+     * end-append, so hand-authored content is never dropped.
      *
-     * @param  list<string>  $refs
+     * @param  list<string>  $canonical
      */
-    private function ensureEntries(string $var, array $refs): void
+    private function reconcile(string $var, array $canonical): void
     {
-        foreach ($refs as $ref) {
+        $call = $this->menuDisableCall($var);
+
+        if ($call === null || ! $call->name instanceof \PhpParser\Node\Identifier) {
+            return;
+        }
+
+        $source = $this->source();
+        $open = strpos($source, '(', $call->name->getEndFilePos());
+        $close = $call->getEndFilePos();
+
+        if ($open === false || $close <= $open) {
+            return;
+        }
+
+        $entries = $this->parseEntries(substr($source, $open + 1, $close - $open - 1));
+
+        if ($entries === null) {
+            $this->appendMissing($var, $canonical); // custom content present — don't rebuild
+
+            return;
+        }
+
+        foreach ($canonical as $ref) {
+            $entries[$ref] ??= true; // a canonical rule the menu lacks, added commented
+        }
+
+        $this->replaceRange($open + 1, $close, "\n" . implode("\n", $this->groupedLines($entries)) . "\n    ");
+    }
+
+    /**
+     * The refs a `disable(…)` body already lists, mapped ref => commented?. Null when the body carries a
+     * line that is neither a `Ref::class,` entry, a divider, nor blank — a signal to leave it be.
+     *
+     * @return array<string, bool>|null
+     */
+    private function parseEntries(string $body): ?array
+    {
+        $entries = [];
+
+        foreach (explode("\n", $body) as $line) {
+            $trimmed = trim($line);
+
+            if ($trimmed === '' || str_contains($trimmed, '----------[')) {
+                continue; // blank or a divider — regenerated
+            }
+
+            $commented = str_starts_with($trimmed, '//');
+            $ref = $commented ? ltrim(substr($trimmed, 2)) : $trimmed;
+
+            if (! str_ends_with($ref, self::SUFFIX)) {
+                return null; // an unrecognized custom line — bail out of rebuilding
+            }
+
+            $ref = substr($ref, 0, -strlen(self::SUFFIX));
+
+            // An uncommented occurrence wins — never silently re-comment a rule the human disabled.
+            $entries[$ref] = ($entries[$ref] ?? true) && $commented;
+        }
+
+        return $entries;
+    }
+
+    /**
+     * The grouped, indented argument lines for a `disable(…)` body — Backend entries, a blank line, then
+     * Frontend entries, each carrying its preserved commented state and sorted within its group.
+     *
+     * @param  array<string, bool>  $entries  ref => commented?
+     * @return list<string>
+     */
+    private function groupedLines(array $entries): array
+    {
+        $backend = [];
+        $frontend = [];
+
+        foreach ($entries as $ref => $commented) {
+            $line = '        ' . ($commented ? '// ' : '') . $ref . self::SUFFIX;
+
+            if (str_contains($ref, '\\Frontend\\')) {
+                $frontend[$ref] = $line;
+            } else {
+                $backend[$ref] = $line;
+            }
+        }
+
+        ksort($backend);
+        ksort($frontend);
+
+        $lines = ['        ' . self::BACKEND_SEPARATOR, ...array_values($backend)];
+
+        if ($frontend !== []) {
+            $lines[] = '';
+            $lines[] = '        ' . self::FRONTEND_SEPARATOR;
+            $lines = [...$lines, ...array_values($frontend)];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * The safe fallback for a hand-edited menu: append every canonical reference it doesn't mention yet,
+     * commented, at the end — never rewriting what's there.
+     *
+     * @param  list<string>  $canonical
+     */
+    private function appendMissing(string $var, array $canonical): void
+    {
+        foreach ($canonical as $ref) {
             $call = $this->menuDisableCall($var);
 
             if ($call === null) {
@@ -265,6 +393,16 @@ final class DisableMenu
         $source = $this->source();
 
         file_put_contents($this->path, substr($source, 0, $at) . $text . substr($source, $at));
+    }
+
+    /**
+     * Replace the byte range [$start, $end) with $text.
+     */
+    private function replaceRange(int $start, int $end, string $text): void
+    {
+        $source = $this->source();
+
+        file_put_contents($this->path, substr($source, 0, $start) . $text . substr($source, $end));
     }
 
     /**
