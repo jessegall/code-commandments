@@ -63,6 +63,12 @@ final class JudgeReminder extends Hook
             return null; // Not a git repository — nothing to scope a reminder to.
         }
 
+        if (PlanMarker::inWorktree($root)->isActive()) {
+            return null; // A plan is running — the executing-plans discipline judges ONCE at the end
+            // (`checks complete` → `judge --branch`) and commits each phase unjudged on purpose, so a
+            // per-commit nudge is noise. It resumes once `plan done` clears the marker.
+        }
+
         // Prefer --branch when there's committed branch work beyond the working tree (its set is a
         // superset of the working-tree set), so the nudge covers the whole branch; else --changes.
         $working = $this->git()->changedVsHead($root);

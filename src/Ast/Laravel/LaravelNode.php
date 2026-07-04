@@ -6,10 +6,15 @@ namespace JesseGall\CodeCommandments\Ast\Laravel;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
+use JesseGall\CodeCommandments\Ast\Support\RouteActions;
+use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Stmt\Return_;
 
 /**
  * Laravel's (and Laravel MCP's) knowledge, as a node: the framework FQCNs live here once — the
@@ -49,6 +54,12 @@ final class LaravelNode extends NodeMatch
     /** The framework controller base — a class whose public actions return an HTTP response. */
     public const string CONTROLLER = 'Illuminate\\Routing\\Controller';
 
+    /** The `Route` facade — `Route::get('/x', [C::class, 'm'])` registers a route action. */
+    public const string ROUTE = 'Illuminate\\Support\\Facades\\Route';
+
+    /** The route-registration verbs — the methods on `Route`/`$router` that bind a URL to an action. */
+    public const array ROUTE_VERBS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'match', 'any'];
+
     /** The HTTP/MCP request bases whose untyped reads are the smell. */
     public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 
@@ -65,6 +76,80 @@ final class LaravelNode extends NodeMatch
     public function isFacadeCall(): bool
     {
         return $this->staticCallClassStartsWith(self::FACADE_NAMESPACE);
+    }
+
+    /**
+     * Is this method declaration a ROUTE ACTION — an HTTP entry point, by any of the union signals
+     * ({@see RouteActions})? Read on a `whereMethodDeclaration()` node (its own name is the action).
+     */
+    public function isRouteAction(): bool
+    {
+        return RouteActions::forCodebase($this->codebase)->isAction($this->enclosingClassName(), $this->enclosingFunctionName());
+    }
+
+    /**
+     * Is this method a THIN pass-through that forwards to ANOTHER controller — its whole body a single
+     * `return $this->other->action(...);` where `$this->other` is a different class whose method is a
+     * ROUTE-FILE-REGISTERED action (a real routed controller)? That is a controller wrapping a controller:
+     * a redundant entry point. Delegating into a domain SERVICE (a method that merely takes a request but
+     * has no route of its own) is the correct shape and is NOT flagged — hence the registered-action gate.
+     */
+    public function delegatesToRouteAction(): bool
+    {
+        $call = $this->soleDelegationCall();
+
+        if ($call === null || ! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
+            return false;
+        }
+
+        $self = $this->enclosingClassName();
+        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $self);
+
+        if ($receiver === null || ltrim($receiver, '\\') === ltrim((string) $self, '\\')) {
+            return false; // unresolved, or a self-call on the same controller
+        }
+
+        return RouteActions::forCodebase($this->codebase)->isRegisteredAction($receiver, $call->name->toString());
+    }
+
+    /**
+     * The `Class::method` a THIN action delegates to — the resolved receiver type + method of its sole
+     * forwarding call — or null when the method does more than forward or the receiver can't be typed. The
+     * type-aware key two routes share when they are the same operation twice (both `return
+     * $this->exporter->export(...)` onto the same `WorkflowExporter::export`), immune to a coincidental
+     * property name.
+     */
+    public function thinDelegationTarget(): ?string
+    {
+        $call = $this->soleDelegationCall();
+
+        if ($call === null || ! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
+            return null;
+        }
+
+        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $this->enclosingClassName());
+
+        return $receiver === null ? null : RouteActions::key($receiver, $call->name->toString());
+    }
+
+    /**
+     * The single method call a thin pass-through method delegates through — `return $this->x->m(...);` or
+     * `$this->x->m(...);` as the method's ONLY statement — or null when the method does more than forward.
+     */
+    private function soleDelegationCall(): ?MethodCall
+    {
+        if (! $this->node instanceof ClassMethod || count($this->node->stmts ?? []) !== 1) {
+            return null;
+        }
+
+        $statement = $this->node->stmts[0];
+        $expression = match (true) {
+            $statement instanceof Return_ => $statement->expr,
+            $statement instanceof Expression => $statement->expr,
+            default => null,
+        };
+
+        return $expression instanceof MethodCall ? $expression : null;
     }
 
     /**
