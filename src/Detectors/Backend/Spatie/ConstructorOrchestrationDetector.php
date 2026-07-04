@@ -8,6 +8,8 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\ConstructorOrchestrationScribe;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
 use JesseGall\CodeCommandments\Sins\Sin;
 
@@ -26,11 +28,16 @@ use JesseGall\CodeCommandments\Sins\Sin;
  *  - a branch-guarded assignment stays — it isn't a straight-line slot fill; and
  *  - a slot written more than once stays — it's built up in steps, not one expression.
  */
-final class ConstructorOrchestrationDetector implements Detector
+final class ConstructorOrchestrationDetector implements Detector, Repentable
 {
     public function sin(): Sin
     {
         return new ConstructorOrchestration();
+    }
+
+    public function scribe(): string
+    {
+        return ConstructorOrchestrationScribe::class;
     }
 
     public function find(Codebase $codebase): array
