@@ -33,7 +33,7 @@ final class JudgeOptions
         // By default the findings are written to a checklist file the agent prunes
         // line-by-line, under the package's `.commandments/` artifact folder (the
         // whole folder is gitignored); `--no-checklist` prints only, `--checklist=FILE` retargets.
-        $checklist = $input->hasFlag('no-checklist') ? null : $input->option('checklist', '.commandments/sins.md');
+        $checklist = $input->hasFlag('no-checklist') ? null : $input->option('checklist', Checklist::DEFAULT);
 
         return new self(
             path: rtrim($path ?? '.', '/'),

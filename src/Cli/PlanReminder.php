@@ -49,6 +49,8 @@ final class PlanReminder extends Hook
 
         $plan = $this->profile($event);
         PlanMarker::inWorktree($event->root)->activate($this->git()->head($event->root));
+        Checklist::inProject($event->root)->clearAll(); // a fresh plan starts from a clean slate — an
+        // older judge's worklist would be a stale reference; it regenerates on the plan's first scan.
 
         return $this->inject($event, $this->approvedNudge($plan));
     }

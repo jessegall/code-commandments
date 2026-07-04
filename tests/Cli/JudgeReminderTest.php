@@ -48,6 +48,44 @@ final class JudgeReminderTest extends TestCase
         $this->assertNull((new JudgeReminder)->reminder($this->repo), 'the same batch is silent after one nudge');
     }
 
+    public function test_it_nudges_to_finish_an_open_worklist_once_per_state(): void
+    {
+        mkdir($this->repo . '/.commandments', 0777, true);
+        $this->writeChecklist(['app/A.php:5  A::m  [X]', 'app/B.php:9  B::n  [Y]']);
+
+        $first = (new JudgeReminder)->reminder($this->repo);
+        $this->assertNotNull($first, 'an open worklist earns a nudge');
+        $this->assertStringContainsString('OPEN worklist', $first);
+        $this->assertStringContainsString('2 sins', $first);
+
+        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'the same unchanged worklist is not re-nudged');
+
+        // Working a line off re-arms the nudge — "keep going, 1 left".
+        $this->writeChecklist(['app/A.php:5  A::m  [X]']);
+        $again = (new JudgeReminder)->reminder($this->repo);
+        $this->assertNotNull($again, 'a worked-off line re-arms the nudge');
+        $this->assertStringContainsString('1 sin', $again);
+    }
+
+    public function test_an_empty_worklist_does_not_nudge(): void
+    {
+        mkdir($this->repo . '/.commandments', 0777, true);
+        file_put_contents($this->repo . '/.commandments/sins.md', "# Code Commandments\n\nAll clear.\n");
+
+        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'a worklist with no sin lines is done');
+    }
+
+    private function writeChecklist(array $sinLines): void
+    {
+        $body = "# Code Commandments — sins to fix\n\n## backend/absence\n\n";
+
+        foreach ($sinLines as $line) {
+            $body .= "- `{$line}`\n";
+        }
+
+        file_put_contents($this->repo . '/.commandments/sins.md', $body);
+    }
+
     public function test_it_stays_silent_while_a_plan_is_active(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");

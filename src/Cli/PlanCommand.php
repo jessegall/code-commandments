@@ -28,13 +28,13 @@ final class PlanCommand implements Command
         $marker = PlanMarker::inWorktree($root);
 
         return match ($input->firstArgument('status')) {
-            'done', 'finish', 'complete' => $this->done($marker),
+            'done', 'finish', 'complete' => $this->done($marker, $root),
             'status' => $this->status($marker, $root),
             default => $this->usage(),
         };
     }
 
-    private function done(PlanMarker $marker): int
+    private function done(PlanMarker $marker, string $root): int
     {
         if (! $marker->isActive()) {
             fwrite(STDOUT, "No active plan — nothing to finish.\n");
@@ -43,6 +43,8 @@ final class PlanCommand implements Command
         }
 
         $marker->clear();
+        Checklist::inProject($root)->clearAll(); // the plan is over — drop its worklist so no stale
+        // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");
 
         return 0;

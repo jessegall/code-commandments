@@ -69,6 +69,14 @@ final class JudgeReminder extends Hook
             // per-commit nudge is noise. It resumes once `plan done` clears the marker.
         }
 
+        // A leftover worklist from a prior `judge` takes priority over "did you judge?" — you already
+        // judged; the job now is to finish it, wave by wave.
+        $open = $this->openWorklist($projectRoot, $root, $lead);
+
+        if ($open !== null) {
+            return $open;
+        }
+
         // Prefer --branch when there's committed branch work beyond the working tree (its set is a
         // superset of the working-tree set), so the nudge covers the whole branch; else --changes.
         $working = $this->git()->changedVsHead($root);
@@ -106,6 +114,45 @@ final class JudgeReminder extends Hook
         return str_contains($command, 'git commit')
             && ! str_contains($command, 'commit-graph')
             && ! str_contains($command, '--dry-run');
+    }
+
+    /** The marker recording the worklist state last nudged about, so the same state isn't re-nudged. */
+    private const string CHECKLIST_MARKER = '.commandments/.remind-checklist';
+
+    /**
+     * The "finish your open worklist" nudge, or null. Fires when a prior `judge` left a
+     * `.commandments/sins.md` with sins still in it — once per distinct state, re-arming as lines are
+     * worked off (so it keeps saying "keep going, N left" without spamming an unchanged file). A cleared
+     * worklist forgets the marker.
+     */
+    private function openWorklist(string $projectRoot, string $root, string $lead): ?string
+    {
+        $checklist = Checklist::inProject($root);
+        $remaining = $checklist->remainingSins();
+        $marker = $root . '/' . self::CHECKLIST_MARKER;
+
+        if ($remaining === 0) {
+            @unlink($marker);
+
+            return null;
+        }
+
+        $fingerprint = $checklist->fingerprint();
+
+        if ($fingerprint !== null && @file_get_contents($marker) === $fingerprint) {
+            return null; // Same unchanged worklist already nudged — no new progress to react to.
+        }
+
+        @mkdir(dirname($marker), 0777, true);
+        @file_put_contents($marker, (string) $fingerprint);
+
+        $noun = $remaining === 1 ? 'sin' : 'sins';
+
+        return "Code Commandments — {$lead}: you have an OPEN worklist with {$remaining} {$noun} still in "
+            . '`.commandments/sins.md`. Finish it before you stop: work straight down — fix each at its '
+            . 'SOURCE, delete its line — and do NOT re-run judge, re-scan, or re-verify between fixes. '
+            . 'Only when the file is EMPTY, run `judge` again (wave by wave; a clean run deletes it). If '
+            . 'you are intentionally pausing here, just say so and carry on.';
     }
 
     private function reason(int $count, bool $useBranch, string $lead): string
