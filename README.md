@@ -407,7 +407,7 @@ vendor/bin/commandments repent resources/js
 ```
 
 <!-- BEGIN: scribes (auto-generated, run `composer readme`) -->
-_`repent` auto-fixes 13 sins, plus 2 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
+_`repent` auto-fixes 14 sins, plus 2 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes, so one run fully converges.

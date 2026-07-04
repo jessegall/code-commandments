@@ -578,6 +578,33 @@ class AstNode
     }
 
     /**
+     * Can this class be constructed with `new T()` — no constructor, or one whose every
+     * parameter is defaulted or variadic (nothing must be supplied)? That makes `new T()`
+     * a valid constant-expression default, and names the type's own resting state: the
+     * honest Null Object to default an optional field to instead of `null`.
+     */
+    public function constructorRequiresNoArguments(): bool
+    {
+        if (! $this->node instanceof Class_) {
+            return false;
+        }
+
+        $constructor = $this->node->getMethod('__construct');
+
+        if ($constructor === null) {
+            return true;
+        }
+
+        foreach ($constructor->params as $param) {
+            if ($param->default === null && ! $param->variadic) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * The names of this class's PUBLIC fields — its public promoted constructor
      * params and its public declared properties. That is the shape a Data class
      * publishes as its payload; a non-class node has none.

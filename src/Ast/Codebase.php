@@ -473,6 +473,21 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * The class declaration for $fqcn as a fluent {@see AstNode}, or an empty node when the
+     * class is a builtin or lives outside the scanned tree — so a caller resolving a field's
+     * type can ask the declaration questions (`constructorRequiresNoArguments()`) without a
+     * `?->`. Names arrive fully-qualified from the parser; a leading `\` is tolerated.
+     */
+    public function classNamed(?string $fqcn): AstNode
+    {
+        if ($fqcn === null) {
+            return new AstNode();
+        }
+
+        return new AstNode($this->classNodeMap()[ltrim($fqcn, '\\')] ?? null);
+    }
+
+    /**
      * @return array<string, Class_>  class FQCN => declaration node
      */
     private function classNodeMap(): array

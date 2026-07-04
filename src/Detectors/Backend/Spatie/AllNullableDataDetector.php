@@ -8,6 +8,8 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Scribes\Backend\NullObjectDefaultScribe;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\AllNullableData;
 use JesseGall\CodeCommandments\Sins\Sin;
 
@@ -20,11 +22,16 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * A non-nullable field with a typed default (`int $x = 0`) is an HONEST optional — a
  * value object with a sensible identity — so a class holding even one is not flagged.
  */
-final class AllNullableDataDetector implements Detector
+final class AllNullableDataDetector implements Detector, Repentable
 {
     public function sin(): Sin
     {
         return new AllNullableData();
+    }
+
+    public function scribe(): string
+    {
+        return NullObjectDefaultScribe::class;
     }
 
     public function find(Codebase $codebase): array

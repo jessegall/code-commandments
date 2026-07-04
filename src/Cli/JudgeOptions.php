@@ -23,6 +23,7 @@ final class JudgeOptions
         public readonly int $parallel,
         public readonly bool $benchmark,
         public readonly bool $pathGiven,
+        public readonly bool $ignorePackages = false,
     ) {}
 
     public static function fromArgs(array $args): self
@@ -34,6 +35,7 @@ final class JudgeOptions
         $list = false;
         $parallel = 8;
         $benchmark = false;
+        $ignorePackages = false;
         $exclude = [];
 
         // By default the findings are written to a checklist file the agent prunes
@@ -46,6 +48,8 @@ final class JudgeOptions
                 $list = true;
             } elseif ($arg === '--benchmark') {
                 $benchmark = true;
+            } elseif ($arg === '--ignore-package-requirements') {
+                $ignorePackages = true;
             } elseif (str_starts_with($arg, '--parallel=')) {
                 $parallel = max(1, (int) substr($arg, 11));
             } elseif ($arg === '--no-checklist') {
@@ -64,6 +68,6 @@ final class JudgeOptions
             }
         }
 
-        return new self(rtrim($path, '/'), $skill, $sin, $list, $exclude, $checklist, $parallel, $benchmark, $pathGiven);
+        return new self(rtrim($path, '/'), $skill, $sin, $list, $exclude, $checklist, $parallel, $benchmark, $pathGiven, $ignorePackages);
     }
 }

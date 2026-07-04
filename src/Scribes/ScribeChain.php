@@ -36,7 +36,11 @@ final class ScribeChain
     /**
      * The built-in chain: in-place fixers, then extractors last.
      */
-    public static function default(): self
+    /**
+     * @param  (callable(string, string): bool)|null  $installed  package-availability check —
+     *   pass `fn () => true` to ignore package requirements (cross-project calibration).
+     */
+    public static function default(?callable $installed = null): self
     {
         $chain = new self();
 
@@ -49,7 +53,7 @@ final class ScribeChain
 
         // The project's config (disable / register / configure) shapes the detectors `repent`
         // fixes too, so it agrees with `judge`.
-        $configured = Config::load()->apply(Detectors::backend(), Detectors::frontend());
+        $configured = Config::load()->apply(Detectors::backend(), Detectors::frontend(), $installed);
 
         // Backend (PHP AST) Repentables — all in-place fixers.
         foreach ($configured['backend'] as $detector) {

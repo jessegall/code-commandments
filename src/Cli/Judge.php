@@ -56,7 +56,12 @@ final class Judge
         // to the shipped catalogs before the CLI `--skill`/`--sin` narrowing.
         $config = Config::load();
         Exemptions::usePackages(...$config->packages());
-        $configured = $config->apply(Catalog::backend(), Catalog::frontend());
+
+        // `--ignore-package-requirements` lets one checkout judge ANY project's tree — a
+        // package-gated rule (Spatie/Laravel/…) is kept even though THIS project doesn't
+        // require the package. For cross-project calibration; user `disable()`s still apply.
+        $installed = $options->ignorePackages ? static fn (): bool => true : null;
+        $configured = $config->apply(Catalog::backend(), Catalog::frontend(), $installed);
         $detectors = $this->select($configured['backend'], $options->skill, $options->sin);
         $frontend = $this->select($configured['frontend'], $options->skill, $options->sin);
 
