@@ -41,9 +41,10 @@ final class RouteActions
     private static ?\WeakMap $memo = null;
 
     /**
-     * @param  array<string, true>  $actions  "Fqcn::method" => true
+     * @param  array<string, true>  $actions     "Fqcn::method" => true — the union of all signals
+     * @param  array<string, true>  $registered  "Fqcn::method" => true — bound in a route file only
      */
-    private function __construct(private readonly array $actions) {}
+    private function __construct(private readonly array $actions, private readonly array $registered) {}
 
     public static function forCodebase(Codebase $codebase): self
     {
@@ -58,6 +59,16 @@ final class RouteActions
     public function isAction(?string $fqcn, ?string $method): bool
     {
         return $fqcn !== null && $method !== null && isset($this->actions[self::key($fqcn, $method)]);
+    }
+
+    /**
+     * Is `$fqcn::$method` bound in a ROUTE FILE — the ground-truth signal that it is a real routed
+     * controller action (not merely a method that happens to take a request)? Requires the route files to
+     * be in scan scope; the caller stays conservative (no proof → not registered) when they aren't.
+     */
+    public function isRegisteredAction(?string $fqcn, ?string $method): bool
+    {
+        return $fqcn !== null && $method !== null && isset($this->registered[self::key($fqcn, $method)]);
     }
 
     /**
@@ -120,6 +131,7 @@ final class RouteActions
 
     private static function build(Codebase $codebase): self
     {
+        $registered = [];
         $actions = [];
         $finder = new NodeFinder;
         $surface = ResponseSurface::forCodebase($codebase);
@@ -127,6 +139,7 @@ final class RouteActions
         foreach ($codebase->files() as $file) {
             foreach ($finder->find($file->ast, self::isRegistration(...)) as $registration) {
                 foreach (self::actionsOf($registration) as $action) {
+                    $registered[$action] = true;
                     $actions[$action] = true;
                 }
             }
@@ -146,7 +159,7 @@ final class RouteActions
             }
         }
 
-        return new self($actions);
+        return new self($actions, $registered);
     }
 
     /**
