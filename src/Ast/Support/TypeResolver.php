@@ -6,9 +6,13 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
+use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\Ternary;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -110,6 +114,16 @@ final class TypeResolver
             return $receiver === null ? null : ($this->returnType[$receiver][$expr->name->toString()] ?? null);
         }
 
+        // `$a ?? $b` and `$c ? $a : $b` evaluate to one of their branches — the type of whichever
+        // branch we can resolve.
+        if ($expr instanceof Coalesce) {
+            return $this->resolve($expr->left, $locals, $selfFqcn) ?? $this->resolve($expr->right, $locals, $selfFqcn);
+        }
+
+        if ($expr instanceof Ternary) {
+            return $this->resolve($expr->if ?? $expr->cond, $locals, $selfFqcn) ?? $this->resolve($expr->else, $locals, $selfFqcn);
+        }
+
         return null;
     }
 
@@ -127,7 +141,9 @@ final class TypeResolver
             return $this->localCache[$id];
         }
 
-        $locals = [];
+        // A closure/arrow-fn inherits the types of the variables it CAPTURES from the enclosing
+        // scope — a captured var IS the outer one, so this is exact, not inference.
+        $locals = $this->capturedTypes($function, $selfFqcn);
 
         foreach ($function->getParams() as $param) {
             if ($param->var instanceof Variable && is_string($param->var->name)) {
@@ -142,6 +158,53 @@ final class TypeResolver
         }
 
         return $this->localCache[$id] = $locals;
+    }
+
+    /**
+     * The variable types a nested closure/arrow-fn carries in from its enclosing function — an arrow
+     * function auto-captures the whole outer scope by value; a closure captures only its `use (...)`
+     * variables. A plain function captures nothing.
+     *
+     * @return array<string, ?string>
+     */
+    private function capturedTypes(FunctionLike $function, ?string $selfFqcn): array
+    {
+        $enclosing = $this->enclosingFunction($function);
+
+        if ($enclosing === null) {
+            return [];
+        }
+
+        $outer = $this->localTypes($enclosing, $selfFqcn);
+
+        if ($function instanceof ArrowFunction) {
+            return $outer;
+        }
+
+        if (! $function instanceof Closure) {
+            return [];
+        }
+
+        $captured = [];
+
+        foreach ($function->uses as $use) {
+            if ($use->var instanceof Variable && is_string($use->var->name)) {
+                $captured[$use->var->name] = $outer[$use->var->name] ?? null;
+            }
+        }
+
+        return $captured;
+    }
+
+    private function enclosingFunction(FunctionLike $function): ?FunctionLike
+    {
+        for ($node = $function->getAttribute('parent'); $node !== null; $node = $node->getAttribute('parent')) {
+            if ($node instanceof FunctionLike) {
+                return $node;
+            }
+        }
+
+        return null;
     }
 
     private function index(Codebase $codebase): void
