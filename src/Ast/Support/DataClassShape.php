@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
+use JesseGall\CodeCommandments\Ast\ClassField;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
+use PhpParser\Node\Attribute;
 use PhpParser\Node\AttributeGroup;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
@@ -29,6 +34,9 @@ use PhpParser\NodeFinder;
  */
 final class DataClassShape
 {
+    /** The Spatie `Data` base — the FQCN this shape analyser tests fields and elements against. */
+    private const string DATA = 'Spatie\\LaravelData\\Data';
+
     /**
      * Attributes that make construction non-trivial — a cast, transform, name map,
      * or typed-collection hydration that `::from()` runs and `new` bypasses.
@@ -102,7 +110,7 @@ final class DataClassShape
             }
         }
 
-        foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+        foreach (AstNode::constructorParamsOf($class) as $param) {
             if ($this->hasMappingAttribute($param->attrGroups)) {
                 return true;
             }
@@ -174,7 +182,7 @@ final class DataClassShape
             }
         }
 
-        $constructor = $class->getMethod('__construct');
+        $constructor = AstNode::constructorOf($class);
 
         if ($constructor !== null) {
             foreach ($constructor->params as $param) {
@@ -255,7 +263,96 @@ final class DataClassShape
         return str_contains($short, 'DataCollection')
             || $short === 'Optional'
             || $short === 'Lazy'
-            || $codebase->extends($name, 'Spatie\\LaravelData\\Data');
+            || $codebase->extends($name, self::DATA);
+    }
+
+    /**
+     * Does this class COMPOSE more than one nested `Data` — at least two fields whose type is itself a
+     * `Data` subclass, or a typed collection of one (`#[DataCollectionOf(SomeData::class)]`)? That is the
+     * shape of a page object: a payload assembled from smaller Data slots, not a leaf DTO. A single
+     * nested Data (a thin wrapper) is below the bar and does NOT qualify.
+     */
+    public function composesMultipleData(?string $fqcn, Codebase $codebase): bool
+    {
+        $count = 0;
+
+        foreach ($codebase->classNamed($fqcn)->fields() as $field) {
+            if ($this->fieldHoldsData($field, $codebase)) {
+                $count++;
+            }
+        }
+
+        return $count >= 2;
+    }
+
+    /**
+     * Does this field hold nested `Data` — either its declared type names a `Data` subclass (directly or
+     * within a `?T`/union/intersection), or it is a typed collection whose element is `Data`?
+     */
+    private function fieldHoldsData(ClassField $field, Codebase $codebase): bool
+    {
+        return $this->typeNamesData($field->type, $codebase)
+            || $this->collectionElementIsData($field, $codebase);
+    }
+
+    /**
+     * Does this type node name a `Data` subclass — unwrapping `?T` and scanning the members of a
+     * union/intersection (so `WarehouseData|Lazy` counts)?
+     */
+    private function typeNamesData(?Node $type, Codebase $codebase): bool
+    {
+        if ($type instanceof NullableType) {
+            return $this->typeNamesData($type->type, $codebase);
+        }
+
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
+            foreach ($type->types as $inner) {
+                if ($this->typeNamesData($inner, $codebase)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $type instanceof Name && $codebase->extends($type->toString(), self::DATA);
+    }
+
+    /**
+     * Is this field a typed collection of `Data` — a `#[DataCollectionOf(X::class)]` whose element X is
+     * itself a `Data` subclass?
+     */
+    private function collectionElementIsData(ClassField $field, Codebase $codebase): bool
+    {
+        foreach ($field->attributeGroups as $group) {
+            foreach ($group->attrs as $attribute) {
+                if (self::shortName($attribute->name->toString()) !== 'DataCollectionOf') {
+                    continue;
+                }
+
+                $element = self::attributeClassArgument($attribute);
+
+                if ($element !== null && $codebase->extends($element, self::DATA)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The class named by an attribute's first argument — `#[X(SomeData::class)]` or `#[X('Some\Data')]`.
+     */
+    private static function attributeClassArgument(Attribute $attribute): ?string
+    {
+        $value = ($attribute->args[0] ?? null)?->value;
+
+        if ($value instanceof ClassConstFetch && $value->class instanceof Name) {
+            return $value->class->toString();
+        }
+
+        return $value instanceof String_ ? $value->value : null;
     }
 
     private static function shortName(string $fqcn): string

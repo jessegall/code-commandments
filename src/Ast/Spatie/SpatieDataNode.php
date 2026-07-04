@@ -6,14 +6,26 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
+use JesseGall\CodeCommandments\Ast\Support\PageObject;
+use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Ternary;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\IntersectionType;
+use PhpParser\Node\Name;
+use PhpParser\Node\NullableType;
+use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Continue_;
+use PhpParser\Node\UnionType;
 use PhpParser\Node\Stmt\Do_;
 use PhpParser\Node\Stmt\ElseIf_;
 use PhpParser\Node\Stmt\Else_;
@@ -35,6 +47,21 @@ use PhpParser\NodeFinder;
 final class SpatieDataNode extends NodeMatch
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
+
+    /**
+     * The Spatie CONTAINER-injection attributes — the ones that pull a service dependency out of the
+     * container into a property (`#[FromContainer]`, `#[FromContainerProperty]`). A property carrying one
+     * is a COLLABORATOR the page builds itself with, not page data. (The value-injection attributes —
+     * `FromRouteParameter`, `FromAuthenticatedUser` — inject payload values that may legitimately
+     * serialize, so they are NOT in this list.) Stated here once as the package's contract.
+     */
+    private const array CONTAINER_INJECTION_ATTRIBUTES = [
+        'FromContainer',
+        'FromContainerProperty',
+    ];
+
+    /** The attribute that keeps a property out of the serialized payload AND the generated TypeScript. */
+    private const string HIDDEN = 'Hidden';
 
     /**
      * Is this class declaration a Spatie `Data` subclass?
@@ -68,6 +95,175 @@ final class SpatieDataNode extends NodeMatch
     public function isRichData(): bool
     {
         return DataClassShape::forCodebase($this->codebase)->isRich($this->newClassName(), $this->codebase);
+    }
+
+    /**
+     * Is the class this node is in (or IS) a PAGE OBJECT — a `Data` class that composes more than one
+     * nested `Data` AND travels back in a response? True whether this node is the class declaration
+     * (`whereClass()`) or a statement inside it (an `app(...)` call, a constructor assignment), so every
+     * page-object detector gates on the same predicate. (Delegated to the shared {@see PageObject} policy.)
+     */
+    public function isPageObject(): bool
+    {
+        return $this->isDataClass()
+            && PageObject::forCodebase($this->codebase)->isPageObject($this->enclosingClassName());
+    }
+
+    /**
+     * Does this class have a PUBLIC container-injected SERVICE that is NOT `#[Hidden]`? An injected
+     * collaborator (a `#[FromContainer]` repository, projector, or the request) is construction
+     * machinery, not page data — left public and un-hidden it serializes and leaks into the generated
+     * TypeScript type. Read off the generic field reader: a public field carrying a container-injection
+     * attribute but no `#[Hidden]`, whose type is NOT itself a `Data` (an injected nested `Data` is
+     * legitimate payload, not a service).
+     */
+    public function hasUnhiddenInjectedService(): bool
+    {
+        foreach ($this->fields() as $field) {
+            if ($field->isPublic
+                && $field->hasAttribute(...self::CONTAINER_INJECTION_ATTRIBUTES)
+                && ! $field->hasAttribute(self::HIDDEN)
+                && ! $this->typeIsData($field->type)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this declared type a `Data` subclass — an injected nested payload rather than a service?
+     */
+    private function typeIsData(?Node $type): bool
+    {
+        $class = TypeName::class($type);
+
+        return $class !== null && $this->codebase->extends($class, self::DATA);
+    }
+
+    /**
+     * Is the property this `$this->x = …` assignment targets a PUBLIC declared slot of the page object —
+     * a serialized payload field (not a promoted param, which the framework already fills)? That is the
+     * thing that should be a computed hook rather than an imperative constructor fill.
+     */
+    public function assignedPropertyIsPublicSlot(): bool
+    {
+        $name = $this->assignedPropertyName();
+
+        if ($name === null) {
+            return false;
+        }
+
+        foreach ($this->fields() as $field) {
+            if ($field->name === $name) {
+                return $field->isPublic && ! $field->isPromoted;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this assignment's right-hand side a DEFERRED value — a `Lazy::…()` closure or an Inertia
+     * `DeferProp`/`MergeProp` — whose whole point is to NOT run eagerly? Hoisting it into a `get` hook
+     * would evaluate it on every read and destroy the deferral, so it belongs in the constructor.
+     */
+    public function assignmentRhsIsDeferred(): bool
+    {
+        if (! $this->node instanceof Assign) {
+            return false;
+        }
+
+        $rhs = $this->node->expr;
+
+        if ($rhs instanceof StaticCall && $rhs->class instanceof Name) {
+            return self::shortName($rhs->class->toString()) === 'Lazy';
+        }
+
+        return $rhs instanceof New_
+            && $rhs->class instanceof Name
+            && str_contains(self::shortName($rhs->class->toString()), 'Prop');
+    }
+
+    /**
+     * Is the slot this assignment targets declared as a DEFERRED type — its type union names `Lazy` or
+     * an Inertia `…Prop` (`DeferProp`/`MergeProp`)? Such a slot is deferred by contract (whatever factory
+     * builds it — `Table::asClosureLazy(): Lazy`, `Lazy::closure(...)`), so its constructor assignment is
+     * legitimate and must not be hoisted into an eager `get` hook.
+     */
+    public function assignedSlotTypeIsDeferred(): bool
+    {
+        $name = $this->assignedPropertyName();
+
+        if ($name === null) {
+            return false;
+        }
+
+        foreach ($this->fields() as $field) {
+            if ($field->name === $name) {
+                return $this->typeNamesDeferral($field->type);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this type node name a deferral wrapper — `Lazy` or an Inertia `…Prop` — unwrapping `?T` and
+     * scanning a union/intersection?
+     */
+    private function typeNamesDeferral(?Node $type): bool
+    {
+        if ($type instanceof NullableType) {
+            return $this->typeNamesDeferral($type->type);
+        }
+
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
+            foreach ($type->types as $inner) {
+                if ($this->typeNamesDeferral($inner)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (! $type instanceof Name) {
+            return false;
+        }
+
+        $short = self::shortName($type->toString());
+
+        return $short === 'Lazy' || str_ends_with($short, 'Prop');
+    }
+
+    /**
+     * Is the property this assignment targets written more than once in the constructor — a slot built
+     * up in steps, which can't collapse into a single `get` expression?
+     */
+    public function propertyAssignedMoreThanOnce(): bool
+    {
+        $name = $this->assignedPropertyName();
+
+        if ($name === null) {
+            return false;
+        }
+
+        $count = $this->getConstructor(fn (ClassMethod $ctor): int => count(array_filter(
+            new NodeFinder()->findInstanceOf($ctor->stmts ?? [], Assign::class),
+            static fn (Assign $assign): bool => self::assignsThisPropertyNamed($assign, $name),
+        )));
+
+        return ($count ?? 0) > 1;
+    }
+
+    private static function assignsThisPropertyNamed(Assign $assign, string $name): bool
+    {
+        return $assign->var instanceof PropertyFetch
+            && $assign->var->var instanceof Variable
+            && $assign->var->var->name === 'this'
+            && $assign->var->name instanceof Identifier
+            && $assign->var->name->toString() === $name;
     }
 
     /**

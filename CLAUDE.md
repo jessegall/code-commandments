@@ -167,6 +167,21 @@ deletes the file).
 
 - **AST/semantic detection over name matching** — always; derive the answer from
   the AST / resolved type, never a class/method/variable name or a hardcoded list.
+- **Use the whole arsenal — detectors AND scribes.** Before hand-rolling a scan, reach for the
+  engine tools you already have: the call graph (`Codebase::index()` → `callersOf`), the
+  provenance/type engine (`TypeResolver::typeOf` — a value's real type through the receiver chain
+  and local assignments), the field-nil `ValueFlow`, the variable trace (`NodeMatch::trace()`), the
+  field reader (`AstNode::fields()`), and the receiver resolver. This applies to **Scribes too** —
+  a repenter has the same arsenal (each finding is a `NodeMatch`/`ElementMatch` with the full node,
+  `enclosingClass()`, `fields()`, the codebase via `NeedsCodebase`); compose the engine to gather
+  what the fix needs, never scrape source with a regex. A missing predicate is a signal to extend
+  the right engine layer.
+- **🔧 FIX THE TOOL, NEVER WORK AROUND IT.** When an engine tool gives the wrong answer, the
+  bug is in the TOOL — fix it at the source (with a regression test) so every detector that
+  uses it benefits. A bespoke workaround inside one detector is a defect, not a solution: it
+  hides the real bug, leaves every other caller broken, and rots the engine. If a tool in the
+  arsenal is broken, we repair the arsenal. (E.g. `TypeResolver` returning the literal
+  `'static'` for a `::for()` factory was fixed IN `TypeResolver`, not skirted in a caller.)
 - **A package's AST knowledge lives on its OWN decorator node.** Everything specific to a
   third-party package (Spatie Data, Laravel/Eloquent/MCP, jessegall/concurrent, php-types
   `Option`) is a `NodeMatch`/`ElementMatch` subclass under `Ast\{Laravel,Spatie,Concurrent,PhpTypes}\*Node`

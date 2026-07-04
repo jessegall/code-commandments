@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -125,10 +126,17 @@ final class TypeResolver
 
         if ($expr instanceof StaticCall && $expr->class instanceof Name && $expr->name instanceof Identifier) {
             $class = ltrim($expr->class->toString(), '\\');
+            $method = $expr->name->toString();
+            $return = $this->returnType[$class][$method] ?? null;
 
-            // A `::from()`/`::from<Type>()` magic factory returns the class itself; any other static
-            // call resolves through its declared return type.
-            return str_starts_with($expr->name->toString(), 'from') ? $class : ($this->returnType[$class][$expr->name->toString()] ?? null);
+            // A `static`/`self` return (a named constructor like `::for()`, `::make()`), OR a magic
+            // `::from()`/`::from<Type>()` factory whose inherited signature we can't see, yields the
+            // class itself; any other static call resolves through its declared return type.
+            if (self::isSelfReferential($return) || ($return === null && str_starts_with($method, 'from'))) {
+                return $class;
+            }
+
+            return $return;
         }
 
         if ($expr instanceof PropertyFetch && $expr->name instanceof Identifier) {
@@ -141,7 +149,14 @@ final class TypeResolver
         if (($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) && $expr->name instanceof Identifier) {
             $receiver = $this->resolve($expr->var, $locals, $selfFqcn);
 
-            return $receiver === null ? null : ($this->returnType[$receiver][$expr->name->toString()] ?? null);
+            if ($receiver === null) {
+                return null;
+            }
+
+            // A fluent method typed `static`/`self` (`->withFoo(): static`) stays on the receiver.
+            $return = $this->returnType[$receiver][$expr->name->toString()] ?? null;
+
+            return self::isSelfReferential($return) ? $receiver : $return;
         }
 
         // `$a ?? $b` and `$c ? $a : $b` evaluate to one of their branches — the type of whichever
@@ -295,7 +310,7 @@ final class TypeResolver
                     $this->parentOf[$fqcn] = ltrim($class->extends->toString(), '\\');
                 }
 
-                foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+                foreach (AstNode::constructorParamsOf($class) as $param) {
                     if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
                         $this->fieldType[$fqcn][$param->var->name] = self::typeName($param->type);
                         $this->recordCollectionElement($fqcn, $param->var->name, $param->attrGroups);
@@ -343,6 +358,15 @@ final class TypeResolver
         }
 
         return false;
+    }
+
+    /**
+     * Is this declared return type `static` or `self` — a self-referential type that resolves to the
+     * class the call is made on, not to a class literally named "static"/"self"?
+     */
+    private static function isSelfReferential(?string $type): bool
+    {
+        return $type === 'static' || $type === 'self';
     }
 
     private static function typeName(?Node $type): ?string

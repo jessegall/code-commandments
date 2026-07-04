@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
@@ -119,7 +120,7 @@ final class ChainResolver
             }
         }
 
-        $constructor = $class->getMethod('__construct');
+        $constructor = AstNode::constructorOf($class);
 
         if ($constructor !== null) {
             foreach ($constructor->params as $param) {

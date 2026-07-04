@@ -75,7 +75,7 @@ final class ReceiverResolver
             return null;
         }
 
-        $constructor = $class->getMethod('__construct');
+        $constructor = AstNode::constructorOf($class);
 
         if ($constructor !== null) {
             foreach ($constructor->getParams() as $param) {

@@ -26,6 +26,8 @@ final class TypeResolverTest extends TestCase
         class A {
             public function __construct(public readonly B $b) {}
             public function self(): A { return $this; }
+            public static function for(string $id): static { return new static(); }
+            public function with(): static { return $this; }
         }
         class Sink { public function take(int $n, ?int $maybe = null): void {} }
         class Use_ {
@@ -33,6 +35,8 @@ final class TypeResolverTest extends TestCase
                 $x = A::from([]);
                 $chain = $a->b->c;
                 $ret = $a->self()->b;
+                $made = A::for('x');
+                $fluent = $a->with();
             }
         }
         PHP;
@@ -63,6 +67,17 @@ final class TypeResolverTest extends TestCase
     public function test_follows_a_method_return_then_a_property(): void
     {
         self::assertSame('App\\B', $this->typeOfLocal('ret'));
+    }
+
+    public function test_resolves_a_static_returning_named_constructor_to_its_class(): void
+    {
+        // `A::for()` is typed `: static` — it must resolve to A, not to a class literally named "static".
+        self::assertSame('App\\A', $this->typeOfLocal('made'));
+    }
+
+    public function test_resolves_a_static_returning_fluent_method_to_its_receiver(): void
+    {
+        self::assertSame('App\\A', $this->typeOfLocal('fluent'));
     }
 
     public function test_reads_parameter_nullability_by_position(): void

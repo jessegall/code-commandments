@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -272,6 +273,14 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         return new Query($this, static fn (Node $node): bool =>
             $node instanceof Param && self::typeContains($node->type, $want), [Param::class]);
+    }
+
+    /**
+     * Every assignment (`$x = …`). Refine with predicates on the node (the target, the RHS).
+     */
+    public function whereAssign(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof Assign, [Assign::class]);
     }
 
     /**

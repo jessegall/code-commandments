@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\TypeName;
@@ -81,7 +82,7 @@ final class PhantomNullableDetector implements ChainDetector
     {
         $fields = [];
 
-        foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+        foreach (AstNode::constructorParamsOf($class) as $param) {
             if ($param->flags !== 0 && TypeName::isNullable($param->type) && ($name = self::fieldName($param)) !== null) {
                 $fields[] = [$param, $name];
             }

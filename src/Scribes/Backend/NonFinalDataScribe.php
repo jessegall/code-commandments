@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
@@ -48,7 +49,7 @@ final class NonFinalDataScribe extends RepentScribe
         }
 
         // `readonly ` before the type (or the variable) of each promoted, non-readonly param.
-        foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+        foreach (AstNode::constructorParamsOf($class) as $param) {
             if ($this->isPromotedMutable($param)) {
                 $at = ($param->type ?? $param->var)->getStartFilePos();
                 $draft->edit(new Span($path, $source, $at, $at), 'readonly ');

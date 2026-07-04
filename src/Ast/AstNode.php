@@ -674,6 +674,59 @@ class AstNode
     }
 
     /**
+     * The `__construct` declaration of the class this node is in (or IS). Called bare, returns the
+     * `ClassMethod` or null when the class has no explicit constructor. Given a closure, it runs the
+     * closure ONLY when a constructor exists and returns its result (null otherwise) — so a caller
+     * acts on the constructor without a null check: `$node->getConstructor(fn (ClassMethod $c) => …)`.
+     * The one place `getMethod('__construct')` lives — read the constructor through this.
+     *
+     * @template T
+     *
+     * @param  (\Closure(ClassMethod): T)|null  $with
+     * @return ($with is null ? ClassMethod|null : T|null)
+     */
+    public function getConstructor(?\Closure $with = null): mixed
+    {
+        $constructor = self::constructorOf($this->enclosingClass());
+
+        if ($constructor === null || $with === null) {
+            return $constructor;
+        }
+
+        return $with($constructor);
+    }
+
+    /**
+     * The constructor parameters of the class this node is in (or IS) — promoted and plain, in source
+     * order; an empty list when there is no constructor.
+     *
+     * @return list<Param>
+     */
+    public function constructorParams(): array
+    {
+        return self::constructorParamsOf($this->enclosingClass());
+    }
+
+    /**
+     * The `__construct` of a raw class-like node (or null) — the static seam for code that already
+     * holds a {@see ClassLike} (a scribe, a shape analyser) rather than an {@see AstNode}.
+     */
+    public static function constructorOf(?ClassLike $class): ?ClassMethod
+    {
+        return $class?->getMethod('__construct');
+    }
+
+    /**
+     * The constructor parameters of a raw class-like node — promoted and plain, in source order.
+     *
+     * @return list<Param>
+     */
+    public static function constructorParamsOf(?ClassLike $class): array
+    {
+        return self::constructorOf($class)?->params ?? [];
+    }
+
+    /**
      * For a class declaration: does its constructor promote at least one property and is
      * EVERY promoted property NULLABLE? Such a record's type tells no truth about what's
      * required — every field admits null, so a consumer must re-validate what `::from()`
@@ -690,7 +743,7 @@ class AstNode
             return false;
         }
 
-        $constructor = $this->node->getMethod('__construct');
+        $constructor = $this->getConstructor();
 
         if ($constructor === null) {
             return false;
@@ -723,7 +776,7 @@ class AstNode
             return false;
         }
 
-        $constructor = $this->node->getMethod('__construct');
+        $constructor = $this->getConstructor();
 
         if ($constructor === null) {
             return true;
@@ -753,7 +806,7 @@ class AstNode
 
         $names = [];
 
-        foreach ($this->node->getMethod('__construct')?->params ?? [] as $param) {
+        foreach ($this->constructorParams() as $param) {
             if (($param->flags & Modifiers::PUBLIC) !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
                 $names[] = $param->var->name;
             }
@@ -768,6 +821,108 @@ class AstNode
         }
 
         return array_values(array_unique($names));
+    }
+
+    /**
+     * Every field this class declares — its promoted constructor parameters and its declared
+     * properties, each as a {@see ClassField} carrying name, type, attributes, visibility, and
+     * whether it was promoted. The generic shape a framework decorator reads to apply policy
+     * (which fields serialise, which carry an injection attribute). A non-class node has none.
+     *
+     * @return list<ClassField>
+     */
+    public function fields(): array
+    {
+        $class = $this->enclosingClass();
+
+        if ($class === null) {
+            return [];
+        }
+
+        $fields = [];
+
+        foreach (self::constructorParamsOf($class) as $param) {
+            if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
+                $fields[] = new ClassField(
+                    name: $param->var->name,
+                    type: $param->type,
+                    attributeGroups: $param->attrGroups,
+                    isPublic: ($param->flags & Modifiers::PUBLIC) !== 0,
+                    isPromoted: true,
+                    docComment: $param->getDocComment()?->getText(),
+                );
+            }
+        }
+
+        foreach ($class->getProperties() as $property) {
+            foreach ($property->props as $declared) {
+                $fields[] = new ClassField(
+                    name: $declared->name->toString(),
+                    type: $property->type,
+                    attributeGroups: $property->attrGroups,
+                    isPublic: $property->isPublic(),
+                    isPromoted: false,
+                    docComment: $property->getDocComment()?->getText(),
+                );
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Is this an assignment to one of `$this`'s properties — `$this->foo = …`?
+     */
+    public function assignsThisProperty(): bool
+    {
+        return $this->node instanceof Assign
+            && $this->node->var instanceof PropertyFetch
+            && $this->node->var->var instanceof Variable
+            && $this->node->var->var->name === 'this'
+            && $this->node->var->name instanceof Identifier;
+    }
+
+    /**
+     * The property name a `$this->foo = …` assignment targets, or null when this isn't one.
+     */
+    public function assignedPropertyName(): ?string
+    {
+        return $this->assignsThisProperty() ? $this->node->var->name->toString() : null;
+    }
+
+    /**
+     * Does the right-hand side of this assignment read a variable other than `$this` — a local or a
+     * parameter? Such an expression can't move into a property-hook getter, which sees only `$this`.
+     */
+    public function assignmentReferencesLocalVariable(): bool
+    {
+        if (! $this->node instanceof Assign) {
+            return false;
+        }
+
+        foreach (new NodeFinder()->findInstanceOf([$this->node->expr], Variable::class) as $variable) {
+            if ($variable->name !== 'this') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this node nested inside a branch — an `if`/`match`/ternary or a loop — within its enclosing
+     * function? A statement guarded by control flow is not a straight-line assignment.
+     */
+    public function isWithinBranch(): bool
+    {
+        for ($node = $this->node?->getAttribute('parent'); $node instanceof Node && ! $node instanceof FunctionLike; $node = $node->getAttribute('parent')) {
+            if ($node instanceof If_ || $node instanceof Match_ || $node instanceof Ternary
+                || $node instanceof Foreach_ || $node instanceof For_ || $node instanceof While_ || $node instanceof Do_) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
