@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\Assign;
@@ -32,9 +33,6 @@ final class DataConstructions
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
-    /** The factory verbs that build a value from a source — a hand-mapping in the `::from()` source. */
-    private const array FACTORY_VERBS = ['from', 'make', 'create', 'build', 'of', 'for'];
-
     /** @var array<string, list<NodeMatch>>  Data FQCN => every `::from(...)` hydration site */
     private array $sites = [];
 
@@ -53,12 +51,12 @@ final class DataConstructions
     }
 
     /**
-     * Is property $prop of Data class $fqcn HAND-BUILT in the source of EVERY one of its `::from()` sites
-     * (and there is at least one)? A single site that feeds it cleanly — an opaque `::from($model)`, a
-     * passed-through value, a property absent from that source — spares it: the mapping isn't always
-     * manual there, so a cast isn't forced.
+     * Is property $prop (declared type $type) of Data class $fqcn HAND-BUILT in the source of EVERY one of
+     * its `::from()` sites (and there is at least one)? A single site that feeds it cleanly — an opaque
+     * `::from($model)`, a passed-through value, a property absent from that source — spares it: the mapping
+     * isn't always manual there, so a cast isn't forced.
      */
-    public function alwaysHandBuilt(string $fqcn, string $prop): bool
+    public function alwaysHandBuilt(string $fqcn, string $prop, string $type): bool
     {
         $sites = $this->sites[ltrim($fqcn, '\\')] ?? [];
 
@@ -69,7 +67,7 @@ final class DataConstructions
         foreach ($sites as $site) {
             $value = $this->sourceValueFor($site, $prop);
 
-            if ($value === null || ! $this->isHandBuilt($value, $site)) {
+            if ($value === null || ! $this->isHandBuilt($value, $site, $type)) {
                 return false;
             }
         }
@@ -80,12 +78,23 @@ final class DataConstructions
     private function index(): void
     {
         foreach ($this->codebase->whereStaticCall('from')->get() as $call) {
-            $fqcn = $call->staticCallClass();
+            $fqcn = $this->constructedClass($call);
 
             if ($fqcn !== null && $this->codebase->extends($fqcn, self::DATA)) {
                 $this->sites[$fqcn][] = $call;
             }
         }
+    }
+
+    /**
+     * The Data class a `::from()` call constructs — resolving `self::from()` / `static::from()` (a common
+     * shape for a named constructor) to the class the call sits in, not the literal `self`/`static`.
+     */
+    private function constructedClass(NodeMatch $call): ?string
+    {
+        $class = $call->staticCallClass();
+
+        return in_array($class, ['self', 'static'], true) ? $call->enclosingClassName() : $class;
     }
 
     /**
@@ -123,27 +132,58 @@ final class DataConstructions
     }
 
     /**
-     * Is this value HAND-BUILT — `new VO(...)`, a `X::from()/make()/…` factory, or an inline array
-     * flattened off one receiver — rather than a value passed straight through? A local variable is
-     * followed one hop to what it was assigned, so `$m = new Money(...); D::from(['price' => $m])` counts.
-     * A `new`/`::from` of a nested `Data` is NOT hand-built (Spatie nests it automatically).
+     * Is this value CONSTRUCTED to produce the value object $type — `new VO(...)`, a named constructor on
+     * the VO (`ValueBag::coalesce(...)`), an external factory whose return type IS the VO
+     * (`MoneyMapper::make(): Money`), or an inline array flattened off one receiver — rather than an
+     * existing value passed straight through? A construction FORM (`new`/static call/inline flatten) is
+     * what separates hand-building from a passthrough; the produced-type match keeps it precise (a
+     * `$model->price` read or a scalar helper is not building the VO). A local variable is followed one
+     * hop to what it was assigned, so `$m = new Money(...); D::from(['price' => $m])` still counts.
      */
-    private function isHandBuilt(Node $expr, NodeMatch $site): bool
+    private function isHandBuilt(Node $expr, NodeMatch $site, string $type): bool
     {
         $expr = $this->resolveLocal($expr, $site);
 
         if ($expr instanceof New_) {
-            return $expr->class instanceof Name && ! $this->codebase->extends($expr->class->toString(), self::DATA);
+            return $expr->class instanceof Name && $this->producesType($expr->class->toString(), $type);
         }
 
-        if ($expr instanceof StaticCall) {
-            return $expr->name instanceof Node\Identifier
-                && in_array($expr->name->toString(), self::FACTORY_VERBS, true)
-                && $expr->class instanceof Name
-                && ! $this->codebase->extends($expr->class->toString(), self::DATA);
+        if ($expr instanceof StaticCall && $expr->class instanceof Name) {
+            if ($this->producesType($expr->class->toString(), $type)) {
+                return true;
+            }
+
+            $returned = $this->returnedType($expr, $site);
+
+            return $returned !== null && $this->producesType($returned, $type);
         }
 
         return $expr instanceof Array_ && AstNode::sharedFetchReceiver($expr) !== null;
+    }
+
+    /**
+     * Does $class produce the value object $type — is it $type itself or a subclass? A named constructor
+     * on the value object's own class (`ValueBag::coalesce`), or a `new`/factory of it, builds the VO.
+     */
+    private function producesType(string $class, string $type): bool
+    {
+        $class = ltrim($class, '\\');
+        $type = ltrim($type, '\\');
+
+        return $class === $type || $this->codebase->extends($class, $type);
+    }
+
+    /**
+     * The declared return type of a static call, resolved through the receiver chain (so a
+     * `MoneyMapper::make(): Money` external factory is recognised as producing `Money`), or null.
+     */
+    private function returnedType(StaticCall $call, NodeMatch $site): ?string
+    {
+        $function = $site->enclosingFunction();
+
+        return $function === null
+            ? null
+            : TypeResolver::forCodebase($this->codebase)->typeOf($call, $function, $site->enclosingClassName());
     }
 
     /**
