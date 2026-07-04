@@ -42,4 +42,35 @@ final class ChecksTest extends TestCase
         $this->assertSame([], new Checks()->commands(Moment::Start, new PlanExecution));
         $this->assertSame([], new Checks()->commands(Moment::Phase, new PlanExecution));
     }
+
+    public function test_complete_appends_the_constraint_check_when_constraints_exist(): void
+    {
+        $plan = new PlanExecution()->constraint('No frontend logic.');
+
+        $this->assertSame(
+            ['vendor/bin/commandments judge --branch=main', 'vendor/bin/commandments constraints check'],
+            new Checks()->commands(Moment::Complete, $plan),
+        );
+    }
+
+    public function test_phase_appends_the_constraint_check_only_when_enforced(): void
+    {
+        $soft = new PlanExecution()->constraint('No frontend logic.');
+        $this->assertSame([], new Checks()->commands(Moment::Phase, $soft), 'phase is a nudge by default');
+
+        $forced = new PlanExecution()->constraint('No frontend logic.')->enforceConstraintsEachPhase();
+        $this->assertSame(
+            ['vendor/bin/commandments constraints check'],
+            new Checks()->commands(Moment::Phase, $forced),
+        );
+    }
+
+    public function test_no_constraint_check_when_the_project_declares_none(): void
+    {
+        $this->assertSame(
+            ['vendor/bin/commandments judge --branch=main'],
+            new Checks()->commands(Moment::Complete, new PlanExecution),
+            'a project without constraints never sees the line',
+        );
+    }
 }
