@@ -77,6 +77,7 @@ final class Kernel
             new HookCommand(['judge-reminder'], new JudgeReminder()),
             new HookCommand(['plan-reminder'], new PlanReminder()),
             new PlanCommand(),
+            new ConstraintsCommand(),
             new HookRunner(),
             new Configure(),
             new ConfigCommand(),
@@ -92,6 +93,7 @@ final class Kernel
           commandments judge --list
           commandments checks [start|phase|complete] [--list]  # run the planExecution checks for a plan moment (complete appends judge --branch)
           commandments plan [done|status]  # end the active plan (clears the keep-going nudge) / show it
+          commandments constraints [list|add "<rule>"|check|verified]  # the plan's architectural invariants; `plan done` blocks until verified
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
           commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
           commandments scaffold [--sin=NAME] [--dry-run]  # generate the reusable helper a sin's fix uses (namespace injected)
