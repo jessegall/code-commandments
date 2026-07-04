@@ -90,4 +90,22 @@ final class PlanExecutionTest extends TestCase
         $this->assertNull($plan->stopPolicy());
         $this->assertSame([], $plan->checksFor(Moment::Complete));
     }
+
+    public function test_constraints_accumulate_and_are_off_by_default(): void
+    {
+        $plan = new PlanExecution;
+
+        $this->assertSame([], $plan->constraints());
+        $this->assertFalse($plan->enforcesConstraintsEachPhase(), 'phase enforcement is opt-in');
+
+        $plan->constraint('Frontend is presentation-only.')
+            ->constraint('No new global facades.', 'No raw SQL in controllers.');
+
+        $this->assertSame(
+            ['Frontend is presentation-only.', 'No new global facades.', 'No raw SQL in controllers.'],
+            $plan->constraints(),
+        );
+        $this->assertSame($plan, $plan->enforceConstraintsEachPhase());
+        $this->assertTrue($plan->enforcesConstraintsEachPhase());
+    }
 }

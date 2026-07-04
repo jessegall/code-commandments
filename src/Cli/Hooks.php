@@ -44,7 +44,7 @@ final class Hooks
      *
      * @var list<class-string<Hook>>
      */
-    public const array BUILTINS = [Remind::class, JudgeReminder::class, PlanReminder::class];
+    public const array BUILTINS = [Remind::class, JudgeReminder::class, PlanReminder::class, ConstraintReminder::class];
 
     /**
      * The hooks to wire for the project at $dir — the {@see BUILTINS} plus any it registered with

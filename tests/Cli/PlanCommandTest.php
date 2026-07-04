@@ -6,7 +6,9 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\PlanCommand;
+use JesseGall\CodeCommandments\Cli\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\PlanMarker;
+use JesseGall\CodeCommandments\PlanExecution;
 use PHPUnit\Framework\TestCase;
 
 final class PlanCommandTest extends TestCase
@@ -51,6 +53,33 @@ final class PlanCommandTest extends TestCase
     {
         $this->assertSame(0, $this->exec('done'));
         $this->assertFalse(PlanMarker::inWorktree($this->root)->isActive());
+    }
+
+    public function test_done_is_blocked_until_constraints_are_verified(): void
+    {
+        PlanMarker::inWorktree($this->root)->activate('sha');
+        $constraints = PlanConstraints::inWorktree($this->root, new PlanExecution);
+        $constraints->addLocal('No frontend logic.');
+
+        // Unverified → refused, marker survives.
+        $this->assertSame(2, $this->exec('done'));
+        $this->assertTrue(PlanMarker::inWorktree($this->root)->isActive());
+
+        // Verified at the current HEAD ('sha', FakeGit's default) → allowed, marker + constraints cleared.
+        $constraints->markVerified('sha');
+        $this->assertSame(0, $this->exec('done'));
+        $this->assertFalse(PlanMarker::inWorktree($this->root)->isActive());
+        $this->assertSame([], PlanConstraints::inWorktree($this->root, new PlanExecution)->local());
+    }
+
+    public function test_done_gate_is_stale_when_head_moved_since_verification(): void
+    {
+        PlanMarker::inWorktree($this->root)->activate('sha');
+        $constraints = PlanConstraints::inWorktree($this->root, new PlanExecution);
+        $constraints->addLocal('No frontend logic.');
+        $constraints->markVerified('sha-old'); // verified, then a later commit moved HEAD to 'sha'
+
+        $this->assertSame(2, $this->exec('done'), 'verification is stale — HEAD moved');
     }
 
     public function test_status_runs_in_both_states(): void

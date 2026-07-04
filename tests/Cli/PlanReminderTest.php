@@ -41,6 +41,17 @@ final class PlanReminderTest extends TestCase
         $this->assertTrue($this->marker()->isActive(), 'a plan is now active');
     }
 
+    public function test_the_approval_nudge_asks_for_constraints_and_lists_global_ones(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->constraint(\'No frontend logic.\'));');
+
+        $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+
+        $this->assertStringContainsString('AskUserQuestion', $context, 'the agent is told to ask the user');
+        $this->assertStringContainsString('constraints add', $context);
+        $this->assertStringContainsString('No frontend logic.', $context, 'the global constraint is listed as in force');
+    }
+
     public function test_a_post_tool_use_for_another_tool_is_ignored(): void
     {
         $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Bash']));
@@ -110,6 +121,21 @@ final class PlanReminderTest extends TestCase
 
         $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha1'));
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha2'), "the human's stop stands after one nudge");
+    }
+
+    public function test_stop_is_silent_while_waiting_on_a_background_task(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        $this->marker()->activate('sha0');
+
+        // A pending background task on the Stop payload — the agent will auto-resume; don't nudge.
+        $io = new CapturingHookIO(
+            new FakeGit($this->root, 'sha1', 'plan/x'),
+            ['hook_event_name' => 'Stop', 'background_tasks' => [['id' => 'a']]],
+        );
+        new PlanReminder($io)->run([]);
+
+        $this->assertSame([], $io->emitted, 'no keep-going nudge while parked on background work');
     }
 
     public function test_stop_clears_the_marker_once_back_on_the_base_branch(): void

@@ -55,7 +55,27 @@ final class Checks implements Command
             $commands[] = 'vendor/bin/commandments judge --branch=' . $plan->baseBranch();
         }
 
+        if ($this->appendsConstraintCheck($moment, $plan)) {
+            $commands[] = 'vendor/bin/commandments constraints check';
+        }
+
         return $commands;
+    }
+
+    /**
+     * Should the constraint diff-check trail these checks? Always at `complete` (the hard gate), and at
+     * each `phase` only when the project opts in with `enforceConstraintsEachPhase`. Gated on the project
+     * declaring constraints, so a project that uses none never sees the line. Local-only constraints are
+     * still enforced by the `plan done` gate + the executing-plans skill.
+     */
+    private function appendsConstraintCheck(Moment $moment, PlanExecution $plan): bool
+    {
+        if ($plan->constraints() === []) {
+            return false;
+        }
+
+        return $moment === Moment::Complete
+            || ($moment === Moment::Phase && $plan->enforcesConstraintsEachPhase());
     }
 
     /**

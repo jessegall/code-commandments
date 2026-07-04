@@ -29,7 +29,17 @@ The **plan-reminder hook** injects this project's concrete profile when the plan
 
 5. **At the very end, once every phase is done:** run `commandments checks complete`. It runs the project's full gate (test suite, lint, static analysis — whatever it declared) and **always appends `judge --branch`**. Fix every finding **at its source** (never launder a sin with a default/cast/null-check), re-run, and repeat until it is completely clean.
 
-6. **Finish:** once the end gate is green, run `commandments plan done`. This ends the plan and clears the keep-going Stop nudge.
+6. **Verify the constraints** (if the plan has any — see below). Run `commandments constraints check`, review your **whole branch diff** against each one, fix any violation at its source, then `commandments constraints verified`.
+
+7. **Finish:** once the end gate is green and constraints are verified, run `commandments plan done`. This ends the plan and clears the keep-going Stop nudge. (It **refuses** while constraints are unverified.)
+
+## Constraints
+
+A **constraint** is a natural-language architectural invariant `judge` can't decide — e.g. *"the frontend is presentation-only; all logic and lookups live in the backend."* Some are **global** (declared in config, every run); you also gather **local** ones per run.
+
+- **At the start** (right after approval), ask the user — via AskUserQuestion — whether this run has any constraints, and record each: `commandments constraints add "<rule>"`. The project's global constraints are already in force; `commandments constraints list` shows them all.
+- **As you work**, hold to them. A reminder re-surfaces them periodically. If the project set `enforceConstraintsEachPhase()`, run `commandments constraints check` each phase too.
+- **At completion** (step 6), the check is a **hard gate**: `commandments constraints check` prints each constraint and tells you to review the **entire branch diff vs the base** (`git diff <base>...HEAD` — everything you created across all phases, not just the last change). For each: confirm compliance, or **fix the violation at its source and commit**. Only when all hold do you run `commandments constraints verified` — and only then will `plan done` proceed. If you commit anything after verifying, it goes stale; re-verify.
 
 ## Autonomy
 
@@ -47,7 +57,9 @@ $config->planExecution(fn ($plan) => $plan
     ->keepGoing()                 // Stop hook re-nudges until `plan done`
     ->onStart('composer install') // once, before the first phase
     ->eachPhase('composer lint')  // after each phase — keep it fast
-    ->onComplete('composer test'));// the end gate; judge --branch runs after
+    ->onComplete('composer test') // the end gate; judge --branch runs after
+    ->constraint('The frontend is presentation-only; all logic lives in the backend.')
+    ->enforceConstraintsEachPhase()); // optional — else phase is a nudge, completion always the gate
 ```
 
 On `composer update` a starter block is injected automatically, its `onComplete` inferred from the project's own composer/npm scripts. Edit it freely.

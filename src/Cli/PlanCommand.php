@@ -42,7 +42,19 @@ final class PlanCommand implements Command
             return 0;
         }
 
+        $constraints = PlanConstraints::inWorktree($root, Config::load($root)->planExecutionSettings());
+
+        if ($constraints->active() !== [] && ! $constraints->isVerifiedAt($this->io->git()->head($root))) {
+            fwrite(STDERR,
+                "✗ Constraints not verified. Before finishing, run `commandments constraints check`, review the\n"
+                . "  whole branch diff against each constraint, fix any violation at its source, then run\n"
+                . "  `commandments constraints verified` — then `plan done` again.\n");
+
+            return 2;
+        }
+
         $marker->clear();
+        $constraints->clear();
         Checklist::inProject($root)->clearAll(); // the plan is over — drop its worklist so no stale
         // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");
@@ -57,6 +69,14 @@ final class PlanCommand implements Command
 
         fwrite(STDOUT, $marker->isActive() ? "● Plan active.\n" : "○ No plan active.\n");
         fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  keep-going: {$keepGoing}\n");
+
+        $constraints = PlanConstraints::inWorktree($root, $plan);
+        $active = $constraints->active();
+
+        if ($active !== []) {
+            $verified = $constraints->isVerifiedAt($this->io->git()->head($root)) ? 'verified' : 'not verified';
+            fwrite(STDOUT, '  constraints: ' . count($active) . " active ({$verified})\n");
+        }
 
         return 0;
     }

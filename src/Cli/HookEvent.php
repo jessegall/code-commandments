@@ -57,4 +57,18 @@ final class HookEvent
     {
         return ($this->payload[$key] ?? null) === true;
     }
+
+    /**
+     * Is the agent stopping ONLY to WAIT on background work — a `run_in_background` task or a subagent
+     * that will auto-resume it — rather than genuinely ending its turn? A `Stop` hook must stay silent
+     * then: a parked-waiting agent isn't done, and nudging or blocking it is noise (and the block cap
+     * would burn on stops it doesn't control). Keyed on the `background_tasks` the harness reports pending
+     * on the Stop payload; absent/empty ⇒ a real stop, so behaviour is unchanged when the field isn't sent.
+     */
+    public function hasPendingBackgroundWork(): bool
+    {
+        $tasks = $this->payload['background_tasks'] ?? null;
+
+        return is_array($tasks) && $tasks !== [];
+    }
 }

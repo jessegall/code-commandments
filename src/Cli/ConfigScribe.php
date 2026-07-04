@@ -160,6 +160,8 @@ final class ConfigScribe
             "        // \$plan->onStart('composer install');          // once, before the first phase",
             "        // \$plan->eachPhase('composer lint');           // after each phase — keep it fast",
             "        {$onComplete}",
+            "        // \$plan->constraint('The frontend is presentation-only; all logic lives in the backend.');",
+            '        // $plan->enforceConstraintsEachPhase();        // force the constraint check each phase, not just at the end',
             '    });',
         ];
 
