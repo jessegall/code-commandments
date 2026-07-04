@@ -62,13 +62,30 @@ final class HookEvent
      * Is the agent stopping ONLY to WAIT on background work — a `run_in_background` task or a subagent
      * that will auto-resume it — rather than genuinely ending its turn? A `Stop` hook must stay silent
      * then: a parked-waiting agent isn't done, and nudging or blocking it is noise (and the block cap
-     * would burn on stops it doesn't control). Keyed on the `background_tasks` the harness reports pending
-     * on the Stop payload; absent/empty ⇒ a real stop, so behaviour is unchanged when the field isn't sent.
+     * would burn on stops it doesn't control). Read off the Stop payload's `background_tasks`, each a
+     * `{id, type, status, …}` (confirmed live): a task with a NON-terminal status (running/pending, or an
+     * unknown/missing one we treat as active) holds the turn open. A settled task lingering in the array,
+     * an empty array, or an absent field ⇒ a genuine stop, so behaviour is unchanged when none is pending.
      */
     public function hasPendingBackgroundWork(): bool
     {
-        $tasks = $this->payload['background_tasks'] ?? null;
+        $tasks = $this->payload['background_tasks'] ?? [];
 
-        return is_array($tasks) && $tasks !== [];
+        if (! is_array($tasks)) {
+            return false;
+        }
+
+        foreach ($tasks as $task) {
+            $status = is_array($task) ? ($task['status'] ?? null) : null;
+
+            if (! in_array($status, self::SETTLED_STATUSES, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
+
+    /** Background-task statuses that are FINISHED — work no longer holding the turn open. */
+    private const array SETTLED_STATUSES = ['completed', 'done', 'failed', 'cancelled', 'canceled', 'error'];
 }
