@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -295,7 +296,7 @@ final class TypeResolver
                     $this->parentOf[$fqcn] = ltrim($class->extends->toString(), '\\');
                 }
 
-                foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+                foreach (AstNode::constructorParamsOf($class) as $param) {
                     if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
                         $this->fieldType[$fqcn][$param->var->name] = self::typeName($param->type);
                         $this->recordCollectionElement($fqcn, $param->var->name, $param->attrGroups);

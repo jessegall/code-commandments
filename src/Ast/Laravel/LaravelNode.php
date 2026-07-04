@@ -40,6 +40,15 @@ final class LaravelNode extends NodeMatch
     /** Laravel MCP's tool base — a request-like handler whose `rules()`/`schema()` are contractual. */
     public const string MCP_TOOL = 'Laravel\\Mcp\\Server\\Tool';
 
+    /** Inertia's entrypoint — `Inertia::render('Page', $props)` ships a payload to the frontend. */
+    public const string INERTIA = 'Inertia\\Inertia';
+
+    /** The `inertia(...)` helper — the function-call twin of `Inertia::render(...)`. */
+    public const string INERTIA_HELPER = 'inertia';
+
+    /** The framework controller base — a class whose public actions return an HTTP response. */
+    public const string CONTROLLER = 'Illuminate\\Routing\\Controller';
+
     /** The HTTP/MCP request bases whose untyped reads are the smell. */
     public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 

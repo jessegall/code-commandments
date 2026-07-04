@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\NullObjectDefault;
@@ -64,7 +65,7 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
         $path = $match->file->path;
         $edits = [];
 
-        foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
+        foreach (AstNode::constructorParamsOf($class) as $param) {
             if ($param->flags === 0) {
                 continue; // not a promoted property — irrelevant to the DTO's contract
             }

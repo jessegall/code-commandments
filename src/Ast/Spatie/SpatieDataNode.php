@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
+use JesseGall\CodeCommandments\Ast\Support\PageObject;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -68,6 +69,18 @@ final class SpatieDataNode extends NodeMatch
     public function isRichData(): bool
     {
         return DataClassShape::forCodebase($this->codebase)->isRich($this->newClassName(), $this->codebase);
+    }
+
+    /**
+     * Is the class this node is in (or IS) a PAGE OBJECT — a `Data` class that composes more than one
+     * nested `Data` AND travels back in a response? True whether this node is the class declaration
+     * (`whereClass()`) or a statement inside it (an `app(...)` call, a constructor assignment), so every
+     * page-object detector gates on the same predicate. (Delegated to the shared {@see PageObject} policy.)
+     */
+    public function isPageObject(): bool
+    {
+        return $this->isDataClass()
+            && PageObject::forCodebase($this->codebase)->isPageObject($this->enclosingClassName());
     }
 
     /**

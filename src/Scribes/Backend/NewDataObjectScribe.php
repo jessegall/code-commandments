@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
@@ -60,7 +61,7 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
             return null;
         }
 
-        $params = $class->getMethod('__construct')?->params ?? [];
+        $params = AstNode::constructorParamsOf($class);
         $source = $match->file->source;
         $entries = [];
 
