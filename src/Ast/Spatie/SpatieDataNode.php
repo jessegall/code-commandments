@@ -70,6 +70,19 @@ final class SpatieDataNode extends NodeMatch
     private const string HIDDEN = 'Hidden';
 
     /**
+     * Date/time types Spatie casts out of the box via the built-in `DateTimeInterfaceCast` — so a
+     * value-object property of one of these never needs an author-written cast. Matched by short name so
+     * a `Carbon\CarbonImmutable`, an `Illuminate\Support\Carbon`, or a plain `DateTimeImmutable` all count.
+     */
+    private const array NATIVE_CAST_TYPES = [
+        'DateTimeInterface',
+        'DateTime',
+        'DateTimeImmutable',
+        'Carbon',
+        'CarbonImmutable',
+    ];
+
+    /**
      * The built-in output transformers whose target TS type the typescript-transformer already knows
      * (a `DateTimeInterface` → `string`, an `Arrayable` → its array) — so a `#[WithTransformer]` naming
      * one needs no explicit TS type. A CUSTOM transformer's output shape is invisible to the generator.
@@ -272,11 +285,23 @@ final class SpatieDataNode extends NodeMatch
 
         $type = TypeName::class($field->type);
 
-        if ($type === null || $this->codebase->extends($type, self::DATA) || $this->codebase->isEnum($type)) {
+        if ($type === null || $this->codebase->extends($type, self::DATA) || $this->castsNatively($type)) {
             return false;
         }
 
-        return DataConstructions::forCodebase($this->codebase)->alwaysHandBuilt($data, $field->name);
+        return DataConstructions::forCodebase($this->codebase)->alwaysHandBuilt($data, $field->name, $type);
+    }
+
+    /**
+     * Does Spatie cast this type out of the box, so a custom `#[WithCast]` is never the fix — an enum
+     * (native), or a date/time (the built-in `DateTimeInterfaceCast`)? Building a `Carbon` at the call
+     * site is normal; the framework hydrates it from the raw value without an author-written cast.
+     */
+    private function castsNatively(string $type): bool
+    {
+        return $this->codebase->isEnum($type)
+            || in_array(self::shortName($type), self::NATIVE_CAST_TYPES, true)
+            || $this->codebase->implements($type, 'DateTimeInterface');
     }
 
     /**

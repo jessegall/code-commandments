@@ -42,6 +42,41 @@ final class ManualInputCastDetectorTest extends TestCase
         $this->assertSame(['App\\OrderData::__construct'], $scopes);
     }
 
+    public function test_flags_a_named_constructor_factory_at_self_from_sites(): void
+    {
+        // The real workflows shape: self::from(...) named constructors, the value built by a factory on
+        // the value object's own class (X::coalesce(): self) and by `new X` — both hand-built.
+        $scopes = $this->scopes(<<<'PHP'
+        <?php
+        namespace App;
+        use Spatie\LaravelData\Data;
+        final class ValueBag { public static function coalesce(mixed $v): self { return new self; } }
+        final class LlmResult extends Data {
+            public function __construct(public readonly ValueBag $structured) {}
+            public static function failure(): self { return self::from(['structured' => new ValueBag]); }
+            public static function ok($s): self { return self::from(['structured' => ValueBag::coalesce($s)]); }
+        }
+        PHP);
+
+        $this->assertSame(['App\\LlmResult::__construct'], $scopes);
+    }
+
+    public function test_does_not_flag_a_native_date_type_built_at_the_call_site(): void
+    {
+        // A Carbon is cast natively (DateTimeInterfaceCast); building one at the call site needs no cast.
+        $scopes = $this->scopes(<<<'PHP'
+        <?php
+        namespace App;
+        use Spatie\LaravelData\Data;
+        final class EventData extends Data {
+            public function __construct(public readonly \Carbon\CarbonImmutable $at) {}
+            public static function now(): self { return self::from(['at' => \Carbon\CarbonImmutable::parse('now')]); }
+        }
+        PHP);
+
+        $this->assertSame([], $scopes);
+    }
+
     public function test_does_not_flag_when_a_from_source_passes_the_value_through_cleanly(): void
     {
         $scopes = $this->scopes(<<<'PHP'
