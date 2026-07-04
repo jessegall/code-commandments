@@ -618,9 +618,12 @@ final class ValueFlow
                 }
 
                 $function = $this->enclosingFunction($fetch);
-                $owner = $function === null ? null : $this->types->typeOf($fetch->var, $function, $this->enclosingClass($function));
+                $type = $function === null ? null : $this->types->typeOf($fetch->var, $function, $this->enclosingClass($function));
 
-                if ($owner !== null) {
+                if ($type !== null) {
+                    // Attribute the read to the class that DECLARES the field — so a read through a
+                    // subclass receiver reaches the base field's verdict, not a phantom bucket.
+                    $owner = $this->types->declaringClassOf($type, $fetch->name->toString()) ?? $type;
                     $reads[$owner][$fetch->name->toString()][] = new NodeMatch($fetch, $file, $this->codebase);
                 }
             }

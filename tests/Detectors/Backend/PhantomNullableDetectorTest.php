@@ -65,6 +65,22 @@ final class PhantomNullableDetectorTest extends TestCase
         $this->assertSame([], $this->fields($php));
     }
 
+    public function test_flags_an_inherited_field_read_through_a_subclass(): void
+    {
+        // The field is declared on the base but read through a subclass receiver — the read must
+        // still reach the base field's verdict, not fall into an orphan bucket.
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Money { public function cents(): int { return 1; } }
+        class Base { public function __construct(public readonly ?Money $total = null) {} }
+        class Sub extends Base {}
+        class Reader { public function go(Sub $s): int { return $s->total->cents(); } }
+        PHP;
+
+        $this->assertSame(['total'], $this->fields($php));
+    }
+
     public function test_does_not_flag_a_field_with_no_reads(): void
     {
         $php = <<<'PHP'

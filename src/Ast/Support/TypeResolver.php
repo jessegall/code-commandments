@@ -56,6 +56,9 @@ final class TypeResolver
     /** @var array<string, array<string, string>>  fqcn => field => element type of its #[DataCollectionOf] */
     private array $collectionElement = [];
 
+    /** @var array<string, string>  fqcn => parent fqcn (so a field/type walks up the hierarchy) */
+    private array $parentOf = [];
+
     /** @var array<int, array<string, ?string>>  object-id of a function => local var => type */
     private array $localCache = [];
 
@@ -90,6 +93,26 @@ final class TypeResolver
         return $this->paramNullable[ltrim((string) $fqcn, '\\')][$method][$pos] ?? null;
     }
 
+    /**
+     * The class that actually DECLARES $field — $fqcn itself, or the nearest ancestor that declares it
+     * (an inherited field belongs to its parent). Null when no class in the chain declares it. Lets a
+     * `$subclass->inheritedField` read attribute to the base where the field — and its nullability — lives.
+     */
+    public function declaringClassOf(?string $fqcn, string $field): ?string
+    {
+        $seen = [];
+
+        for ($class = ltrim((string) $fqcn, '\\'); $class !== '' && ! isset($seen[$class]); $class = $this->parentOf[$class] ?? '') {
+            $seen[$class] = true;
+
+            if (array_key_exists($field, $this->fieldType[$class] ?? [])) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
     private function resolve(Node $expr, array $locals, ?string $selfFqcn): ?string
     {
         if ($expr instanceof Variable && is_string($expr->name)) {
@@ -110,8 +133,9 @@ final class TypeResolver
 
         if ($expr instanceof PropertyFetch && $expr->name instanceof Identifier) {
             $receiver = $this->resolve($expr->var, $locals, $selfFqcn);
+            $owner = $receiver === null ? null : $this->declaringClassOf($receiver, $expr->name->toString());
 
-            return $receiver === null ? null : ($this->fieldType[$receiver][$expr->name->toString()] ?? null);
+            return $owner === null ? null : ($this->fieldType[$owner][$expr->name->toString()] ?? null);
         }
 
         if (($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) && $expr->name instanceof Identifier) {
@@ -265,6 +289,10 @@ final class TypeResolver
 
                 if ($fqcn === '') {
                     continue;
+                }
+
+                if ($class->extends instanceof Name) {
+                    $this->parentOf[$fqcn] = ltrim($class->extends->toString(), '\\');
                 }
 
                 foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
