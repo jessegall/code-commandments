@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use Shop\Http\Requests\ReportRequest;
 use Spatie\LaravelData\Attributes\Computed;
@@ -19,6 +20,7 @@ use Spatie\LaravelData\Lazy;
  * constructor — the InjectedServiceNotHidden detector must NOT flag it.
  */
 #[Righteous(InjectedServiceNotHidden::class)]
+#[Righteous(ServiceLocationInPageObject::class)]
 final class ReportPage extends Data
 {
     #[Computed]

@@ -4,10 +4,13 @@ namespace Shop\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Shop\Http\Pages\AccountPage;
+use Shop\Http\Pages\AiWorkflowPage;
 use Shop\Http\Pages\CatalogPage;
 use Shop\Http\Pages\CheckoutSummaryPage;
 use Shop\Http\Pages\DashboardPage;
+use Shop\Http\Pages\PrintQueuePage;
 use Shop\Http\Pages\ReportPage;
+use Shop\Http\Pages\SystemStatusPage;
 
 /**
  * Returns each page object — this is what makes them response-bound (a Spatie `Data` is `Responsable`,
@@ -38,5 +41,20 @@ final class PageController extends Controller
     public function report(): ReportPage
     {
         return ReportPage::from([]);
+    }
+
+    public function aiWorkflow(): AiWorkflowPage
+    {
+        return AiWorkflowPage::from([]);
+    }
+
+    public function systemStatus(): SystemStatusPage
+    {
+        return SystemStatusPage::from([]);
+    }
+
+    public function printQueue(): PrintQueuePage
+    {
+        return PrintQueuePage::for('agent-1');
     }
 }

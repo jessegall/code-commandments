@@ -91,6 +91,8 @@ to avoid transformers; a page object is exactly where they belong.)
 
 - Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
   _Add `#[Hidden]` above the injection attribute._
+- A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
+  _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
 
 ## Bad → good
 
@@ -148,13 +150,44 @@ final class ReportPage extends Data
 }
 ```
 
+```php
+// Bad
+public function aiEnabled(): bool
+{
+    return app(AiService::class)->isEnabled();
+}
+
+// Good
+final class ReportPage extends Data
+{
+    #[Computed]
+    public string $timeRange { get => $this->request->timeRange(); }
+
+    #[Computed]
+    public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
+
+    /** @var list<StatCard>|Lazy */
+    #[Computed]
+    #[DataCollectionOf(StatCard::class)]
+    public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(ReportRequest::class)]
+        public readonly ReportRequest $request,
+    ) {}
+}
+```
+
 ## When it fires
 
 - A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type — `InjectedServiceNotHiddenDetector`
+- A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` — `ServiceLocationInPageObjectDetector`
 
 ## Checklist
 
 - [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
+- [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
 
 ## Related skills
 

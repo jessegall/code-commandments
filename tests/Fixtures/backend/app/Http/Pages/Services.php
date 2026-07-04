@@ -13,3 +13,27 @@ final class CartReader {}
 final class CatalogReader {}
 
 final class FacetBuilder {}
+
+final class AiService
+{
+    public function isEnabled(): bool
+    {
+        return true;
+    }
+}
+
+final class ContainersService
+{
+    public function healthy(): bool
+    {
+        return true;
+    }
+}
+
+final class LogBuffer
+{
+    public function size(): int
+    {
+        return 0;
+    }
+}
