@@ -42,6 +42,7 @@ field, or a value object, and delete the defence.
 ## Rules
 
 - Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
+- If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
 
 ## Bad → good
@@ -61,6 +62,31 @@ public function coversOrFail(string $date): bool
     }
 
     return $this->period->includes($date);
+}
+```
+
+```php
+// Bad
+final class Order
+{
+    public function __construct(
+        public readonly ?ShippingAddress $shipTo,
+        public readonly string $reference,
+    ) {}
+
+    public function stage(PickList $pickList): void
+    {
+        $pickList->deliverTo = $this->shipTo;
+    }
+}
+
+// Good
+final class DeliveryInstruction
+{
+    public function __construct(
+        public readonly ?string $note,
+        public readonly bool $signatureRequired,
+    ) {}
 }
 ```
 
@@ -90,11 +116,13 @@ public function nestUnder(string $prefix, string $segment, array $routes): array
 ## When it fires
 
 - Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
+- Phantom nullable — a promoted field typed `?T` whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
 - Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`
 
 ## Checklist
 
 - [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
+- [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
 
 ## Related skills

@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\ArrayItem;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\MethodCall;
@@ -18,8 +20,11 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Param;
+use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
 
@@ -79,65 +84,255 @@ final class ValueFlow
     {
         $fqcn = ltrim($fqcn, '\\');
 
-        return $this->verdicts["{$fqcn}::{$field}"] ??= $this->walk($this->fieldReads()[$fqcn][$field] ?? []);
+        if (! isset($this->verdicts["{$fqcn}::{$field}"])) {
+            $terminals = $this->terminals($this->fieldReads()[$fqcn][$field] ?? []);
+            $this->verdicts["{$fqcn}::{$field}"] = new FlowVerdict(count($terminals['assume']), count($terminals['guard']));
+        }
+
+        return $this->verdicts["{$fqcn}::{$field}"];
     }
 
     /**
-     * Walk forward from a set of value occurrences, tallying presence-assumptions vs null-guards. A
-     * worklist over occurrences: each is a terminal (guard / assume) or a propagation whose downstream
-     * occurrences are enqueued. A visited-node set and a visited-slot set keep it finite.
+     * The `path:line`s of the reads that made $fqcn::$field's verdict — a calibration aid answering
+     * "WHY was this flagged / cleared". Returned as `['assume' => [...], 'guard' => [...]]`.
+     *
+     * @return array{assume: list<string>, guard: list<string>}
+     */
+    public function explain(string $fqcn, string $field): array
+    {
+        $terminals = $this->terminals($this->fieldReads()[ltrim($fqcn, '\\')][$field] ?? []);
+
+        return [
+            'assume' => array_map(static fn (NodeMatch $m): string => $m->location(), $terminals['assume']),
+            'guard' => array_map(static fn (NodeMatch $m): string => $m->location(), $terminals['guard']),
+        ];
+    }
+
+    /**
+     * The DECIDING chain of $fqcn::$field as a list of `edgeKind@file` steps — the path from the field
+     * to its deepest ASSUME terminal (the read that makes it a phantom). Each step names how the value
+     * arrived (`read`, `assign`, `arg`, `return`, `field`) and in which file, so a caller reads both
+     * how DEEP the chain goes (its distinct files) and IN WHAT KIND (its edges). Measured to the
+     * deciding terminal, so a decoy branch can't pad it, and empty when the field is not a phantom.
+     *
+     * @return list<string>
+     */
+    public function chainPath(string $fqcn, string $field): array
+    {
+        $deepest = [];
+
+        foreach ($this->terminals($this->fieldReads()[ltrim($fqcn, '\\')][$field] ?? [])['chains'] as $chain) {
+            if (self::files($chain) > self::files($deepest)) {
+                $deepest = $chain;
+            }
+        }
+
+        return $deepest;
+    }
+
+    /**
+     * The number of distinct files a `kind@file` step list crosses.
+     *
+     * @param  list<string>  $chain
+     */
+    private static function files(array $chain): int
+    {
+        return count(array_unique(array_map(static fn (string $step): string => explode('@', $step, 2)[1], $chain)));
+    }
+
+    /**
+     * Walk forward from a set of value occurrences, collecting the terminals: each occurrence is a
+     * guard, an assume, or a propagation whose downstream occurrences are enqueued. A visited-node
+     * set and a visited-slot set keep it finite.
+     *
+     * Each queue item carries its arrival EDGE KIND and the ordered `kind@file` STEPS from the start,
+     * so an assume terminal records its own chain — depth (distinct files) and kind (edges) both —
+     * immune to a decoy branch elsewhere.
      *
      * @param  list<NodeMatch>  $starts
+     * @return array{assume: list<NodeMatch>, guard: list<NodeMatch>, chains: list<list<string>>}
      */
-    private function walk(array $starts): FlowVerdict
+    private function terminals(array $starts): array
     {
-        $assume = 0;
-        $guard = 0;
-        $queue = $starts;
-        $seenNodes = [];
+        $assume = [];
+        $guard = [];
+        $chains = [];
+        $queue = array_map(static fn (NodeMatch $start): array => [$start, 'read', [], null], $starts);
+        $seen = [];
         $seenSlots = [];
         $steps = 0;
 
         while ($queue !== [] && $steps++ < self::MAX_STEPS) {
-            $occurrence = array_pop($queue);
+            [$occurrence, $kind, $path, $key] = array_pop($queue);
             $node = $occurrence->node;
 
-            if ($node === null || isset($seenNodes[spl_object_id($node)])) {
+            if ($node === null) {
                 continue;
             }
 
-            $seenNodes[spl_object_id($node)] = true;
+            $visit = spl_object_id($node) . ':' . ($key ?? '');
 
-            if ($occurrence->isNullGuardedUse()) {
-                $guard++;
-            } elseif ($this->isDereferenced($node) || $this->flowsToNonNullableParam($occurrence)) {
-                $assume++;
+            if (isset($seen[$visit])) {
+                continue;
+            }
+
+            $seen[$visit] = true;
+            $path[] = $kind . '@' . basename($occurrence->file->path);
+
+            // A carrier (the value is inside an array under $key) is never itself a guard or a deref —
+            // only the value it eventually yields is. A direct value ($key === null) is classified.
+            if ($key === null && $occurrence->isNullGuardedUse()) {
+                $guard[] = $occurrence;
+            } elseif ($key === null && ($this->isDereferenced($node) || $this->flowsToNonNullableParam($occurrence))) {
+                $assume[] = $occurrence;
+                $chains[] = $path;
             } else {
-                foreach ($this->follow($occurrence, $seenSlots) as $downstream) {
-                    $queue[] = $downstream;
+                foreach ($this->follow($occurrence, $key, $seenSlots) as [$downstream, $edge, $nextKey]) {
+                    $queue[] = [$downstream, $edge, $path, $nextKey];
                 }
             }
         }
 
-        return new FlowVerdict($assume, $guard);
+        return ['assume' => $assume, 'guard' => $guard, 'chains' => $chains];
     }
 
     /**
-     * The occurrences a value flows to from $occurrence — the propagation edges: assignment to a
-     * local, an argument into a NULLABLE parameter (a non-nullable one is a terminal assume, above),
-     * a `return` out to every call site, and a write into another object's field.
+     * The occurrences a value flows to from $occurrence, each tagged with its EDGE KIND and the array
+     * KEY it now sits under (null = a bare value). A bare value flows by assignment, argument, return,
+     * and field-write — and can be put INTO an array. A carrier (value inside an array under $key)
+     * flows the array the same ways, and yields the value back out at an element read or a `::from()`.
+     *
+     * @param  array<string, true>  $seenSlots
+     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     */
+    private function follow(NodeMatch $occurrence, ?string $key, array &$seenSlots): array
+    {
+        $moved = [
+            ...$this->keyed($this->viaAssignment($occurrence), 'assign', $key),
+            ...$this->keyed($this->viaArgument($occurrence, $seenSlots), 'arg', $key),
+            ...$this->keyed($this->viaReturn($occurrence, $seenSlots), 'return', $key),
+        ];
+
+        if ($key === null) {
+            return [
+                ...$moved,
+                ...$this->keyed($this->viaFieldWrite($occurrence, $seenSlots), 'field', null),
+                ...$this->viaArrayInsertion($occurrence),
+            ];
+        }
+
+        return [
+            ...$moved,
+            ...$this->viaArrayElement($occurrence, $key),
+            ...$this->keyed($this->viaFromArray($occurrence, $key, $seenSlots), 'from', null),
+        ];
+    }
+
+    /**
+     * `[<value>]` / `['k' => <value>]` → the array that now carries the value, keyed by its literal key
+     * (or `*` for an index / dynamic key). From here the CARRIER flows.
+     *
+     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     */
+    private function viaArrayInsertion(NodeMatch $occurrence): array
+    {
+        $item = $occurrence->node?->getAttribute('parent');
+
+        if (! $item instanceof ArrayItem || $item->value !== $occurrence->node) {
+            return [];
+        }
+
+        $array = $item->getAttribute('parent');
+
+        if (! $array instanceof Array_) {
+            return [];
+        }
+
+        return [[new NodeMatch($array, $occurrence->file, $this->codebase), 'array', $this->literalKey($item)]];
+    }
+
+    /**
+     * The value coming back OUT of the array this carrier holds: an element read (`$arr['k']`,
+     * `$arr[0]`), a `foreach ($arr as $v)`, or a spread (`[...$arr]`) that re-carries it.
+     *
+     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     */
+    private function viaArrayElement(NodeMatch $occurrence, string $key): array
+    {
+        $node = $occurrence->node;
+        $parent = $node?->getAttribute('parent');
+
+        if ($parent instanceof ArrayDimFetch && $parent->var === $node) {
+            return $this->keyMatches($parent->dim, $key) ? [[new NodeMatch($parent, $occurrence->file, $this->codebase), 'element', null]] : [];
+        }
+
+        if ($parent instanceof Foreach_ && $parent->expr === $node && $parent->valueVar instanceof Variable && is_string($parent->valueVar->name)) {
+            return $this->keyed($this->readsOf($parent->valueVar->name, $this->enclosingFunction($node), $occurrence->file), 'element', null);
+        }
+
+        // `[...$arr]` — the spread re-carries the element into the surrounding array, key intact.
+        if ($parent instanceof ArrayItem && $parent->unpack && $parent->getAttribute('parent') instanceof Array_) {
+            return [[new NodeMatch($parent->getAttribute('parent'), $occurrence->file, $this->codebase), 'spread', $key]];
+        }
+
+        return [];
+    }
+
+    /**
+     * `SomeData::from([... 'k' => <value> ...])` — the array this carrier holds is hydrated into an
+     * object; the value at key $key becomes that class's field `$key`. The shortcut across the vendor
+     * `from()` (a chain detector is allowed to reason through it): follow into the field's reads.
      *
      * @param  array<string, true>  $seenSlots
      * @return list<NodeMatch>
      */
-    private function follow(NodeMatch $occurrence, array &$seenSlots): array
+    private function viaFromArray(NodeMatch $occurrence, string $key, array &$seenSlots): array
     {
-        return [
-            ...$this->viaAssignment($occurrence),
-            ...$this->viaArgument($occurrence, $seenSlots),
-            ...$this->viaReturn($occurrence, $seenSlots),
-            ...$this->viaFieldWrite($occurrence, $seenSlots),
-        ];
+        $arg = $occurrence->node?->getAttribute('parent');
+
+        if (! $arg instanceof Arg || $key === '*') {
+            return [];
+        }
+
+        $call = $arg->getAttribute('parent');
+
+        if (! $call instanceof StaticCall || ! $call->class instanceof Name || ! $call->name instanceof Identifier || ! str_starts_with($call->name->toString(), 'from')) {
+            return [];
+        }
+
+        return $this->fieldSlotReads(ltrim($call->class->toString(), '\\'), $key, $seenSlots);
+    }
+
+    /**
+     * The literal string/int key an array item sits under, or `*` when it has none or a dynamic one.
+     */
+    private function literalKey(ArrayItem $item): string
+    {
+        return match (true) {
+            $item->key instanceof String_ => $item->key->value,
+            $item->key instanceof Int_ => (string) $item->key->value,
+            default => '*',
+        };
+    }
+
+    private function keyMatches(?Node $dim, string $key): bool
+    {
+        if ($key === '*') {
+            return true;
+        }
+
+        return ($dim instanceof String_ && $dim->value === $key) || ($dim instanceof Int_ && (string) $dim->value === $key);
+    }
+
+    /**
+     * Tag each occurrence with the edge kind that reached it and the key it now carries.
+     *
+     * @param  list<NodeMatch>  $downstream
+     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     */
+    private function keyed(array $downstream, string $edge, ?string $key): array
+    {
+        return array_map(static fn (NodeMatch $match): array => [$match, $edge, $key], $downstream);
     }
 
     /**
@@ -264,7 +459,7 @@ final class ValueFlow
 
         $target = $this->targetParam($parent->getAttribute('parent'), $parent);
 
-        return $target !== null && TypeName::isNullable($target[2]->type) === false && $target[2]->type !== null;
+        return $target !== null && ! TypeResolver::paramAcceptsNull($target[2]);
     }
 
     /**

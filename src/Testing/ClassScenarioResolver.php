@@ -8,11 +8,14 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Detectors\ChainDetector;
 
 /**
- * The backend {@see ScenarioResolver}: a finding's scenario is its enclosing CLASS —
- * the whole surrounding intent (fields, sibling methods) — so two findings in one
- * class compare as identical (one scenario) and copy-pasted classes collapse too.
+ * The backend {@see ScenarioResolver}: a finding's scenario is its enclosing CLASS — the whole
+ * surrounding intent (fields, sibling methods) — so two findings in one class compare as identical
+ * and copy-pasted classes collapse. For a {@see ChainDetector}, the scenario is instead its PROVENANCE
+ * PATH (the `edgeKind@file` steps): what proves a chain detector diverse is that its findings travel
+ * different routes of different kinds, not that their flagged classes look different.
  */
 final class ClassScenarioResolver implements ScenarioResolver
 {
@@ -27,7 +30,12 @@ final class ClassScenarioResolver implements ScenarioResolver
 
         foreach ($detectors as $detector) {
             $scenarios[$detector::class] = array_map(
-                fn (NodeMatch $match): array => ['file' => $match->file->path, 'source' => $this->scopeSource($match)],
+                fn (NodeMatch $match): array => [
+                    'file' => $match->file->path,
+                    'source' => $detector instanceof ChainDetector
+                        ? implode("\n", $detector->chainPath($match, $codebase))
+                        : $this->scopeSource($match),
+                ],
                 $detector->find($codebase),
             );
         }

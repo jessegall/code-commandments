@@ -23,4 +23,12 @@ interface Fixture
      * @return array<string, list<array{file: string, source: string}>>
      */
     public function scenarios(): array;
+
+    /**
+     * Per {@see \JesseGall\CodeCommandments\Detectors\ChainDetector}, the file-depth of each of its
+     * findings — held against {@see \JesseGall\CodeCommandments\Detectors\ChainDetector::MIN_CHAIN_FILES}.
+     *
+     * @return array<string, list<int>>
+     */
+    public function chainSpans(): array;
 }

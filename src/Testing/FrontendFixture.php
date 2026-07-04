@@ -41,6 +41,15 @@ final class FrontendFixture implements Fixture
         return new ComponentScenarioResolver()->resolve($this->codebase(), $this->detectors());
     }
 
+    /**
+     * Chain detection is backend-only (a {@see \JesseGall\CodeCommandments\Detectors\ChainDetector}
+     * follows a PHP value through the PHP AST), so a frontend fixture has none.
+     */
+    public function chainSpans(): array
+    {
+        return [];
+    }
+
     private function codebase(): Codebase
     {
         return Codebase::scan($this->path);

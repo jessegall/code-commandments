@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
@@ -171,17 +172,25 @@ final class TypeResolver
                     $this->returnType[$fqcn][$method->name->toString()] = self::typeName($method->returnType);
 
                     foreach (array_values($method->params) as $pos => $param) {
-                        $this->paramNullable[$fqcn][$method->name->toString()][$pos] = self::isNullable($param);
+                        $this->paramNullable[$fqcn][$method->name->toString()][$pos] = self::paramAcceptsNull($param);
                     }
                 }
             }
         }
     }
 
-    private static function isNullable(Node\Param $param): bool
+    /**
+     * Can this parameter receive `null`? True when its type admits null — nullable (`?T`/`T|null`),
+     * untyped, or `mixed` — or when it defaults to the null literal. A non-null default (`int $x = 0`)
+     * does NOT make it null-accepting; that's the difference between "optional" and "nullable".
+     */
+    public static function paramAcceptsNull(Node\Param $param): bool
     {
-        return $param->type === null || $param->type instanceof NullableType || $param->default !== null
-            || ($param->type instanceof Node\UnionType && self::unionHasNull($param->type));
+        return $param->type === null
+            || $param->type instanceof NullableType
+            || ($param->type instanceof Identifier && strtolower($param->type->toString()) === 'mixed')
+            || ($param->type instanceof Node\UnionType && self::unionHasNull($param->type))
+            || ($param->default instanceof ConstFetch && $param->default->name->toLowerString() === 'null');
     }
 
     private static function unionHasNull(Node\UnionType $type): bool

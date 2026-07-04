@@ -30,10 +30,11 @@ final class DetectorRunner
      */
     public function run(array $detectors, Codebase $codebase, ProgressBar $progress): array
     {
-        // Build the call graph ONCE in the parent so forked workers inherit it
-        // copy-on-write, instead of each rebuilding it (or each cross-file detector
-        // re-scanning the tree per query).
+        // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
+        // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
+        // detector re-scanning the tree per query).
         $codebase->index()->warm();
+        $codebase->valueFlow()->warm();
 
         $tasks = $this->tasks($detectors, $codebase);
 

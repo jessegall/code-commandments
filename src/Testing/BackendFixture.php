@@ -33,6 +33,11 @@ final class BackendFixture implements Fixture
         return new ClassScenarioResolver()->resolve($this->codebase(), $this->detectors);
     }
 
+    public function chainSpans(): array
+    {
+        return new ChainSpanResolver()->resolve($this->codebase(), $this->detectors);
+    }
+
     private function codebase(): Codebase
     {
         return Codebase::scan($this->path);

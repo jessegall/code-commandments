@@ -14,6 +14,7 @@ use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\AssignOp\Coalesce as CoalesceAssign;
 use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
@@ -26,6 +27,7 @@ use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\Empty_;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Instanceof_;
 use PhpParser\Node\Expr\Isset_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -202,7 +204,7 @@ class AstNode
      */
     public function isNullGuardedUse(): bool
     {
-        if ($this->isDeNulled()) {
+        if ($this->isDeNulled() || $this->isTypeInterrogated()) {
             return true;
         }
 
@@ -213,9 +215,40 @@ class AstNode
             || $parent instanceof BooleanOr
             || $parent instanceof Isset_
             || $parent instanceof Empty_
+            || ($parent instanceof CoalesceAssign && $parent->var === $this->node)
             || ($parent instanceof If_ && $parent->cond === $this->node)
             || ($parent instanceof While_ && $parent->cond === $this->node)
             || ($parent instanceof Ternary && $parent->cond === $this->node);
+    }
+
+    /** The `is_*` predicates that narrow a value's type — each admits that it may be another type. */
+    private const array TYPE_PREDICATES = [
+        'is_null', 'is_string', 'is_array', 'is_int', 'is_integer', 'is_float', 'is_bool',
+        'is_object', 'is_scalar', 'is_iterable', 'is_callable', 'is_numeric', 'is_countable',
+    ];
+
+    /**
+     * Is this value type-interrogated before use — `$x instanceof Y`, `is_string($x)`, `is_null($x)`,
+     * `is_array($x)`, …? Like a null-guard, the check ACKNOWLEDGES the value may be absent / another
+     * type, so a use gated by it is not an unconditional presence-assumption.
+     */
+    private function isTypeInterrogated(): bool
+    {
+        $parent = $this->parent()->node;
+
+        if ($parent instanceof Instanceof_ && $parent->expr === $this->node) {
+            return true;
+        }
+
+        if ($parent instanceof Arg) {
+            $call = $parent->getAttribute('parent');
+
+            return $call instanceof FuncCall
+                && $call->name instanceof Name
+                && in_array(strtolower($call->name->toString()), self::TYPE_PREDICATES, true);
+        }
+
+        return false;
     }
 
     /**

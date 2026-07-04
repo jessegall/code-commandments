@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
+use JesseGall\CodeCommandments\Detectors\ChainDetector;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,6 +20,13 @@ use PHPUnit\Framework\TestCase;
  */
 abstract class FixtureTestCase extends TestCase
 {
+    /**
+     * How many files each of a {@see ChainDetector}'s fixture findings must cross — a FIXTURE-proof
+     * bar (prove the engine on a deep chain), NOT a detection threshold: a chain detector flags a
+     * one-hop phantom just as readily. It lives here, in the test, for exactly that reason.
+     */
+    private const int MIN_CHAIN_FILES = 5;
+
     abstract protected function fixture(): Fixture;
 
     public function test_detectors_flag_exactly_their_marked_sins(): void
@@ -37,6 +45,9 @@ abstract class FixtureTestCase extends TestCase
     {
         $diversity = new Diversity();
 
+        // A chain detector's scenario IS its provenance path (see ClassScenarioResolver), so the same
+        // overlap rule proves what matters for it: ≥3 findings whose chains take different routes of
+        // different kinds — not three shallow lookalikes.
         foreach ($this->fixture()->scenarios() as $detector => $scenarios) {
             $largest = $diversity->largestGroup($scenarios);
 
@@ -53,5 +64,25 @@ abstract class FixtureTestCase extends TestCase
                 ),
             );
         }
+    }
+
+    public function test_chain_detectors_cross_enough_files_per_finding(): void
+    {
+        $shallow = [];
+
+        foreach ($this->fixture()->chainSpans() as $detector => $depths) {
+            foreach ($depths as $depth) {
+                if ($depth < self::MIN_CHAIN_FILES) {
+                    $shallow[] = "{$detector}: a finding crosses only {$depth} file(s)";
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $shallow,
+            "Every ChainDetector finding must follow a value through ≥" . self::MIN_CHAIN_FILES
+            . " files — prove the chain goes DEEP, not one hop:\n" . implode("\n", $shallow),
+        );
     }
 }
