@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages;
 
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -21,6 +22,7 @@ use Spatie\LaravelData\Lazy;
  */
 #[Righteous(InjectedServiceNotHidden::class)]
 #[Righteous(ServiceLocationInPageObject::class)]
+#[Righteous(ConstructorOrchestration::class)]
 final class ReportPage extends Data
 {
     #[Computed]

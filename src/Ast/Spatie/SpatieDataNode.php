@@ -14,8 +14,18 @@ use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Ternary;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\IntersectionType;
+use PhpParser\Node\Name;
+use PhpParser\Node\NullableType;
+use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Continue_;
+use PhpParser\Node\UnionType;
 use PhpParser\Node\Stmt\Do_;
 use PhpParser\Node\Stmt\ElseIf_;
 use PhpParser\Node\Stmt\Else_;
@@ -129,6 +139,131 @@ final class SpatieDataNode extends NodeMatch
         $class = TypeName::class($type);
 
         return $class !== null && $this->codebase->extends($class, self::DATA);
+    }
+
+    /**
+     * Is the property this `$this->x = …` assignment targets a PUBLIC declared slot of the page object —
+     * a serialized payload field (not a promoted param, which the framework already fills)? That is the
+     * thing that should be a computed hook rather than an imperative constructor fill.
+     */
+    public function assignedPropertyIsPublicSlot(): bool
+    {
+        $name = $this->assignedPropertyName();
+
+        if ($name === null) {
+            return false;
+        }
+
+        foreach ($this->fields() as $field) {
+            if ($field->name === $name) {
+                return $field->isPublic && ! $field->isPromoted;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this assignment's right-hand side a DEFERRED value — a `Lazy::…()` closure or an Inertia
+     * `DeferProp`/`MergeProp` — whose whole point is to NOT run eagerly? Hoisting it into a `get` hook
+     * would evaluate it on every read and destroy the deferral, so it belongs in the constructor.
+     */
+    public function assignmentRhsIsDeferred(): bool
+    {
+        if (! $this->node instanceof Assign) {
+            return false;
+        }
+
+        $rhs = $this->node->expr;
+
+        if ($rhs instanceof StaticCall && $rhs->class instanceof Name) {
+            return self::shortName($rhs->class->toString()) === 'Lazy';
+        }
+
+        return $rhs instanceof New_
+            && $rhs->class instanceof Name
+            && str_contains(self::shortName($rhs->class->toString()), 'Prop');
+    }
+
+    /**
+     * Is the slot this assignment targets declared as a DEFERRED type — its type union names `Lazy` or
+     * an Inertia `…Prop` (`DeferProp`/`MergeProp`)? Such a slot is deferred by contract (whatever factory
+     * builds it — `Table::asClosureLazy(): Lazy`, `Lazy::closure(...)`), so its constructor assignment is
+     * legitimate and must not be hoisted into an eager `get` hook.
+     */
+    public function assignedSlotTypeIsDeferred(): bool
+    {
+        $name = $this->assignedPropertyName();
+
+        if ($name === null) {
+            return false;
+        }
+
+        foreach ($this->fields() as $field) {
+            if ($field->name === $name) {
+                return $this->typeNamesDeferral($field->type);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this type node name a deferral wrapper — `Lazy` or an Inertia `…Prop` — unwrapping `?T` and
+     * scanning a union/intersection?
+     */
+    private function typeNamesDeferral(?Node $type): bool
+    {
+        if ($type instanceof NullableType) {
+            return $this->typeNamesDeferral($type->type);
+        }
+
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
+            foreach ($type->types as $inner) {
+                if ($this->typeNamesDeferral($inner)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (! $type instanceof Name) {
+            return false;
+        }
+
+        $short = self::shortName($type->toString());
+
+        return $short === 'Lazy' || str_ends_with($short, 'Prop');
+    }
+
+    /**
+     * Is the property this assignment targets written more than once in the constructor — a slot built
+     * up in steps, which can't collapse into a single `get` expression?
+     */
+    public function propertyAssignedMoreThanOnce(): bool
+    {
+        $name = $this->assignedPropertyName();
+
+        if ($name === null) {
+            return false;
+        }
+
+        $count = $this->getConstructor(fn (ClassMethod $ctor): int => count(array_filter(
+            new NodeFinder()->findInstanceOf($ctor->stmts ?? [], Assign::class),
+            static fn (Assign $assign): bool => self::assignsThisPropertyNamed($assign, $name),
+        )));
+
+        return ($count ?? 0) > 1;
+    }
+
+    private static function assignsThisPropertyNamed(Assign $assign, string $name): bool
+    {
+        return $assign->var instanceof PropertyFetch
+            && $assign->var->var instanceof Variable
+            && $assign->var->var->name === 'this'
+            && $assign->var->name instanceof Identifier
+            && $assign->var->name->toString() === $name;
     }
 
     /**

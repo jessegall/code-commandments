@@ -89,12 +89,38 @@ to avoid transformers; a page object is exactly where they belong.)
 
 ## Rules
 
+- Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
+  _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`._
 - Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
   _Add `#[Hidden]` above the injection attribute._
 - A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
   _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
 
 ## Bad → good
+
+```php
+// Bad
+public function __construct(
+    #[Hidden]
+    #[FromContainer(FacetBuilder::class)]
+    public readonly FacetBuilder $builder,
+) {
+    $this->headline = $this->builder->headline();
+    $this->cards = $this->builder->cards();
+}
+
+// Good
+public function __construct(
+    #[Hidden]
+    #[FromContainer(SalesReporter::class)]
+    public readonly SalesReporter $sales,
+) {
+    $totals = $this->sales->totals();
+    $this->summary = $totals->summary();
+    $this->home = $totals->homeLink();
+    $this->movers = Lazy::closure(fn (): array => $this->sales->movers());
+}
+```
 
 ```php
 // Bad
@@ -181,11 +207,13 @@ final class ReportPage extends Data
 
 ## When it fires
 
+- A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place — `ConstructorOrchestrationDetector`
 - A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type — `InjectedServiceNotHiddenDetector`
 - A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` — `ServiceLocationInPageObjectDetector`
 
 ## Checklist
 
+- [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
 - [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
 - [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
 

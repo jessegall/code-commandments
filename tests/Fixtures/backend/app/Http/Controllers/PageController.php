@@ -8,9 +8,13 @@ use Shop\Http\Pages\AiWorkflowPage;
 use Shop\Http\Pages\CatalogPage;
 use Shop\Http\Pages\CheckoutSummaryPage;
 use Shop\Http\Pages\DashboardPage;
+use Shop\Http\Pages\MetricsPage;
+use Shop\Http\Pages\OverviewPage;
 use Shop\Http\Pages\PrintQueuePage;
 use Shop\Http\Pages\ReportPage;
 use Shop\Http\Pages\SystemStatusPage;
+use Shop\Http\Pages\TimelinePage;
+use Shop\Http\Pages\WarehousePage;
 
 /**
  * Returns each page object — this is what makes them response-bound (a Spatie `Data` is `Responsable`,
@@ -56,5 +60,25 @@ final class PageController extends Controller
     public function printQueue(): PrintQueuePage
     {
         return PrintQueuePage::for('agent-1');
+    }
+
+    public function overview(): OverviewPage
+    {
+        return OverviewPage::from([]);
+    }
+
+    public function timeline(): TimelinePage
+    {
+        return TimelinePage::for('order-1');
+    }
+
+    public function metrics(): MetricsPage
+    {
+        return MetricsPage::from([]);
+    }
+
+    public function warehouse(): WarehousePage
+    {
+        return WarehousePage::from([]);
     }
 }

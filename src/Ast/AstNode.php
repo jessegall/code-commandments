@@ -833,13 +833,15 @@ class AstNode
      */
     public function fields(): array
     {
-        if (! $this->node instanceof Class_) {
+        $class = $this->enclosingClass();
+
+        if ($class === null) {
             return [];
         }
 
         $fields = [];
 
-        foreach ($this->constructorParams() as $param) {
+        foreach (self::constructorParamsOf($class) as $param) {
             if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
                 $fields[] = new ClassField(
                     name: $param->var->name,
@@ -852,7 +854,7 @@ class AstNode
             }
         }
 
-        foreach ($this->node->getProperties() as $property) {
+        foreach ($class->getProperties() as $property) {
             foreach ($property->props as $declared) {
                 $fields[] = new ClassField(
                     name: $declared->name->toString(),
@@ -866,6 +868,61 @@ class AstNode
         }
 
         return $fields;
+    }
+
+    /**
+     * Is this an assignment to one of `$this`'s properties — `$this->foo = …`?
+     */
+    public function assignsThisProperty(): bool
+    {
+        return $this->node instanceof Assign
+            && $this->node->var instanceof PropertyFetch
+            && $this->node->var->var instanceof Variable
+            && $this->node->var->var->name === 'this'
+            && $this->node->var->name instanceof Identifier;
+    }
+
+    /**
+     * The property name a `$this->foo = …` assignment targets, or null when this isn't one.
+     */
+    public function assignedPropertyName(): ?string
+    {
+        return $this->assignsThisProperty() ? $this->node->var->name->toString() : null;
+    }
+
+    /**
+     * Does the right-hand side of this assignment read a variable other than `$this` — a local or a
+     * parameter? Such an expression can't move into a property-hook getter, which sees only `$this`.
+     */
+    public function assignmentReferencesLocalVariable(): bool
+    {
+        if (! $this->node instanceof Assign) {
+            return false;
+        }
+
+        foreach (new NodeFinder()->findInstanceOf([$this->node->expr], Variable::class) as $variable) {
+            if ($variable->name !== 'this') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this node nested inside a branch — an `if`/`match`/ternary or a loop — within its enclosing
+     * function? A statement guarded by control flow is not a straight-line assignment.
+     */
+    public function isWithinBranch(): bool
+    {
+        for ($node = $this->node?->getAttribute('parent'); $node instanceof Node && ! $node instanceof FunctionLike; $node = $node->getAttribute('parent')) {
+            if ($node instanceof If_ || $node instanceof Match_ || $node instanceof Ternary
+                || $node instanceof Foreach_ || $node instanceof For_ || $node instanceof While_ || $node instanceof Do_) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
