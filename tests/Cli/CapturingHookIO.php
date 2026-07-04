@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\HookIO;
+use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 /**

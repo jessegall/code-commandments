@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Configure;
+use JesseGall\CodeCommandments\Cli\Config\Configure;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The `disable`/`enable` commands resolve a sin id and toggle it in `.commandments/config.php`
- * (via {@see \JesseGall\CodeCommandments\Cli\ConfigFile}). They run against the cwd, so each test
+ * (via {@see \JesseGall\CodeCommandments\Cli\Config\ConfigFile}). They run against the cwd, so each test
  * runs inside a throwaway project directory.
  */
 final class ConfigureTest extends TestCase

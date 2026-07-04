@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\JudgeReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -91,11 +91,11 @@ final class JudgeReminderTest extends TestCase
         file_put_contents($this->repo . '/Service.php', "<?php\n");
 
         // A plan judges once at the end (checks complete), committing each phase unjudged — so no nudge.
-        \JesseGall\CodeCommandments\Cli\PlanMarker::inWorktree($this->repo)->activate('HEAD');
+        \JesseGall\CodeCommandments\Cli\Plan\PlanMarker::inWorktree($this->repo)->activate('HEAD');
         $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent while a plan runs');
 
         // Once the plan is done, the nudge resumes.
-        \JesseGall\CodeCommandments\Cli\PlanMarker::inWorktree($this->repo)->clear();
+        \JesseGall\CodeCommandments\Cli\Plan\PlanMarker::inWorktree($this->repo)->clear();
         $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'nudges again after the plan ends');
     }
 

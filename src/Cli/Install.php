@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
 /**
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
  * call to the consumer's composer `post-update-cmd` and `post-install-cmd` so the
@@ -31,7 +33,7 @@ final class Install
         }
 
         $wired = $this->wireComposerScripts($composerPath);
-        $hooked = Hooks::wire(getcwd() . '/.claude/settings.json', Hooks::forProject(getcwd()));
+        $hooked = HookRegistry::wire(getcwd() . '/.claude/settings.json', HookRegistry::forProject(getcwd()));
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"

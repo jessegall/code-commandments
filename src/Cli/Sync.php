@@ -7,6 +7,11 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Skills\ClaudeSection;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
+use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
+use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
+use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration so a
  * Publishes the current skills, CLAUDE.md briefing, config surface, and Claude Code hooks
@@ -33,7 +38,7 @@ final class Sync implements Command
         $this->ensurePlanExecution($consumer);
         $this->ensureDisableMenus($consumer);
         $this->ensureCommandmentsGitignore($consumer);
-        Hooks::wire("{$consumer}/.claude/settings.json", Hooks::forProject($consumer));
+        HookRegistry::wire("{$consumer}/.claude/settings.json", HookRegistry::forProject($consumer));
         $this->removeLegacyArtifacts($consumer);
 
         fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");

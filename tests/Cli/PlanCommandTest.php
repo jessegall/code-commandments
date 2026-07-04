@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\PlanCommand;
-use JesseGall\CodeCommandments\Cli\PlanConstraints;
-use JesseGall\CodeCommandments\Cli\PlanMarker;
+use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
+use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\PlanExecution;
 use PHPUnit\Framework\TestCase;
 

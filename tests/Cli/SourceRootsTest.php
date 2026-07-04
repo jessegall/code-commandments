@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\ConfigFile;
-use JesseGall\CodeCommandments\Cli\SourceRoots;
+use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
+use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 use PHPUnit\Framework\TestCase;
 
 /**

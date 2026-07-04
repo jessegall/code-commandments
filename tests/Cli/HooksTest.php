@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Hooks;
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -29,7 +29,7 @@ final class HooksTest extends TestCase
 
     public function test_it_wires_one_dispatcher_per_moment(): void
     {
-        Hooks::wire($this->path);
+        HookRegistry::wire($this->path);
 
         // The builtins bind PostToolUse, Stop, and PreToolUse — one dispatcher entry each, no more.
         $this->assertSame(1, $this->dispatchers('PostToolUse'));
@@ -54,7 +54,7 @@ final class HooksTest extends TestCase
             ],
         ]);
 
-        Hooks::wire($this->path);
+        HookRegistry::wire($this->path);
 
         $this->assertSame(0, $this->dispatchers('UserPromptSubmit'), 'the stale pre-stamp remind is gone');
         $this->assertContains('my-own-hook', $this->commands('UserPromptSubmit'), "the human's own hook is untouched");
@@ -64,8 +64,8 @@ final class HooksTest extends TestCase
 
     public function test_it_is_idempotent_once_wired(): void
     {
-        $this->assertTrue(Hooks::wire($this->path), 'first wire writes');
-        $this->assertFalse(Hooks::wire($this->path), 'a second wire is a no-op');
+        $this->assertTrue(HookRegistry::wire($this->path), 'first wire writes');
+        $this->assertFalse(HookRegistry::wire($this->path), 'a second wire is a no-op');
         $this->assertSame(1, $this->dispatchers('PostToolUse'));
         $this->assertSame(1, $this->dispatchers('Stop'));
         $this->assertSame(1, $this->dispatchers('PreToolUse'));
@@ -74,7 +74,7 @@ final class HooksTest extends TestCase
     public function test_a_consumer_registered_hook_adds_its_moment(): void
     {
         // FakeHook binds a new event (Notification) — a moment no builtin uses, so it gets its own entry.
-        Hooks::wire($this->path, [...Hooks::BUILTINS, FakeHook::class]);
+        HookRegistry::wire($this->path, [...HookRegistry::BUILTINS, FakeHook::class]);
 
         $this->assertSame(1, $this->dispatchers('Notification'), 'the consumer hook adds its moment');
         $this->assertSame(1, $this->dispatchers('PostToolUse'), 'the builtins are still wired');
@@ -87,14 +87,14 @@ final class HooksTest extends TestCase
         $ownHook = 'php vendor/bin/commandments judge --changes';
         $this->write(['hooks' => ['PostToolUse' => [['hooks' => [['type' => 'command', 'command' => $ownHook]]]]]]);
 
-        Hooks::wire($this->path);
+        HookRegistry::wire($this->path);
 
         $this->assertContains($ownHook, $this->commands('PostToolUse'), "the user's own commandments hook survives");
     }
 
     public function test_post_tool_use_is_one_unmatched_entry_but_pre_tool_use_is_scoped_to_bash(): void
     {
-        Hooks::wire($this->path);
+        HookRegistry::wire($this->path);
 
         $settings = (array) json_decode((string) file_get_contents($this->path), true);
 

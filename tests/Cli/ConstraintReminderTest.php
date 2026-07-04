@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\ConstraintReminder;
-use JesseGall\CodeCommandments\Cli\PlanMarker;
+use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use PHPUnit\Framework\TestCase;
 
 /**

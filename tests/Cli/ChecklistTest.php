@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Checklist;
+use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 use PHPUnit\Framework\TestCase;
 
 final class ChecklistTest extends TestCase

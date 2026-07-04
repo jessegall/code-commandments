@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\ConfigFile;
+use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use PHPUnit\Framework\TestCase;
 
 /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Judge;
+use JesseGall\CodeCommandments\Cli\Judge\Judge;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 

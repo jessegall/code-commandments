@@ -6,6 +6,20 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
 
+use JesseGall\CodeCommandments\Hooks\HookDispatch;
+use JesseGall\CodeCommandments\Hooks\HookRunner;
+use JesseGall\CodeCommandments\Hooks\HookCommand;
+use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
+use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
+use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
+use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
+use JesseGall\CodeCommandments\Cli\Plan\Checks;
+use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
+use JesseGall\CodeCommandments\Cli\Config\Configure;
+use JesseGall\CodeCommandments\Cli\Report\Report;
+use JesseGall\CodeCommandments\Cli\Report\FeatureRequest;
+use JesseGall\CodeCommandments\Cli\Judge\Judge;
 /**
  * The one entry point behind `bin/commandments`. It parses `$argv` into an {@see Input} exactly
  * once, then dispatches to the {@see Command} registered for the verb — the strategy table that

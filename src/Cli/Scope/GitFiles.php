@@ -8,7 +8,7 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
  * Reads sets of judged files (`.php`/`.vue`, one per engine) out of git:
  * working-tree changes vs HEAD, or everything new/changed on the current branch
  * vs a base ref. Shared by the {@see WorkingTreeChanges} and {@see BranchChanges}
- * scopes, and by the {@see \JesseGall\CodeCommandments\Cli\HookIO} worktree resolution.
+ * scopes, and by the {@see \JesseGall\CodeCommandments\Hooks\HookIO} worktree resolution.
  *
  * Not final: it is the git seam a test substitutes to fix the root/HEAD/branch a hook sees
  * ({@see \JesseGall\CodeCommandments\Tests\Cli\FakeGit}), instead of running real git.
