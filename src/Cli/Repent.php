@@ -177,7 +177,14 @@ final class Repent implements Command
                 $sweepLabel = $sweep === 0 ? '' : ' (sweep ' . ($sweep + 1) . ')';
                 $progress->track($index, count($steps), 'repenting' . $sweepLabel . ' · ' . $step->name());
 
-                $overlay = $overlay->with($step->run($roots, $scope, $overlay));
+                $rewrites = $step->run($roots, $scope, $overlay);
+
+                // The chain rule: a step's rewrite is applied only if EVERY existing file it would touch
+                // is a target. One frozen / out-of-scope member drops the whole connected rewrite, so a
+                // repent never half-applies or writes into a file this run must not touch.
+                if ($scope->permits(array_keys($rewrites))) {
+                    $overlay = $overlay->with($rewrites);
+                }
             }
 
             if ($overlay->changes() === $before) {

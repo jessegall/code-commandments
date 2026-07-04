@@ -34,7 +34,8 @@ final class DetectorStep extends BaseDetectorStep
             $scribe->withCodebase($codebase);
         }
 
-        // Honour the scope: only repent sins in files the scope includes.
+        // Honour the scope: only repent sins in files the scope includes (a FROZEN file is scoped OUT,
+        // so a repenter leaves it untouched exactly as judging suppresses its findings).
         $findings = array_values(array_filter(
             $this->detector->find($codebase),
             static fn ($match): bool => $scope->includes($match->file->path),
