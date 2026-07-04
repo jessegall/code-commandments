@@ -148,6 +148,13 @@ contract; go back to the required/`Optional`/`?T` choice above.
   scalar. **Gotcha:** a property carrying `#[WithCast]` (or any value-injecting attribute) **cannot be
   `readonly`** — the framework injects into it after construction. Drop `readonly` on exactly that
   property, nowhere else.
+- **Never hand-hydrate a value object in a constructor/factory.** `$this->price = new Money($raw['amount'],
+  $raw['currency'])` re-does imperatively the `simple → complex` mapping a **cast** owns. Type the property
+  as the value object and give it a `#[WithCast(MoneyCast::class)]`, or let the value object implement
+  `Castable` (a `castUsing()` returning the cast). A custom cast is a tiny class implementing `Cast` —
+  `cast(DataProperty $property, mixed $value, array $properties, CreationContext $context): mixed` —
+  returning the built object (or `Uncastable` when it can't; it never receives `null`). Hydration stays
+  declarative and reusable, out of the constructor. (Still not for a nested `Data` — that nests automatically.)
 - **Validation:** prefer **declarative attributes** (`#[Required]`, `#[Min(1)]`, `#[Email]`) for static,
   per-property constraints. Use a static `rules()` only for **conditional / cross-field** logic — and
   return an **array** (`['field' => ['required', 'email']]`), never a pipe-string (`'required|email'`).
@@ -166,6 +173,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
 - A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
 - Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
   _`#[DataCollectionOf(X::class)]` + `X::collect($rows)`._
+- Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
+  _Type the property as the value object and add `#[WithCast(SomeCast::class)]` (or make the value object `Castable`) so the `simple → complex` mapping lives in one place._
 - Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
   _`X::from(...)` (or a `fromY()` factory)._
 - Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
@@ -266,6 +275,22 @@ public function importBatchCleanly(array $rows): iterable
 
 ```php
 // Bad
+public function __construct(
+    public readonly Money $price,
+) {}
+
+// Good
+#[\JesseGall\CodeCommandments\Testing\Righteous(\JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast::class)]
+final class CleanInboundData extends \Spatie\LaravelData\Data
+{
+    public function __construct(
+        public readonly Money $price,
+    ) {}
+}
+```
+
+```php
+// Bad
 public function build(Customer $customer): CustomerData
 {
     return new CustomerData(
@@ -328,6 +353,7 @@ final class StockSnapshotData extends Data
 - All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) — `AllNullableDataDetector`
 - `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — `DataMethodHintCollisionDetector`
 - Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `ManualHydrationLoopDetector`
+- A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once — `ManualInputCastDetector`
 - `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
 - Data class not `final` / props not `readonly` promoted — `NonFinalDataDetector`
 
@@ -336,6 +362,7 @@ final class StockSnapshotData extends Data
 - [ ] A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback bag, a filter set, a money breakdown), make each non-nullable with a Null Object / identity default on the value type instead.
 - [ ] A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
 - [ ] Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
+- [ ] Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
 - [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
 - [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
 

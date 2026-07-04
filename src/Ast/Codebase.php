@@ -19,7 +19,9 @@ use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
+use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\UnionType;
@@ -298,6 +300,28 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function whereMethodDeclaration(): Query
     {
         return new Query($this, static fn (Node $node): bool => $node instanceof ClassMethod, [ClassMethod::class]);
+    }
+
+    /**
+     * Every FIELD declaration — a promoted constructor parameter or a declared property. The finding
+     * sits on the field; read its name/type/attributes via {@see AstNode::asField}.
+     */
+    public function whereField(): Query
+    {
+        return new Query($this, static fn (Node $node): bool =>
+            ($node instanceof Param && $node->flags !== 0) || $node instanceof Property,
+            [Param::class, Property::class]);
+    }
+
+    /**
+     * Every property-hook GETTER — `public T $x { get => … }` (or `get { … }`), on a declared
+     * property or a promoted constructor parameter. A computed slot; refine with predicates on what
+     * its body produces.
+     */
+    public function whereGetterHook(): Query
+    {
+        return new Query($this, static fn (Node $node): bool =>
+            $node instanceof PropertyHook && $node->name->toString() === 'get', [PropertyHook::class]);
     }
 
     /**

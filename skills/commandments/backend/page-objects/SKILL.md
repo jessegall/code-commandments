@@ -86,12 +86,13 @@ domain type flattened for the wire — reach for **`#[WithTransformer(SomeTransf
 property. The wrong move is a computed getter that hand-builds the reshaped array:
 
 ```
-// Wrong — the shape is buried in an imperative getter, and the honest `Money` type is lost.
-public array $price { get => ['amount' => $this->money->cents, 'currency' => $this->money->code]; }
+// Wrong — an Order's fields hand-flattened into a wire array; the honest type is lost, and the same
+// shape is copy-pasted onto every page that carries a price.
+public array $priceInEuro { get => ['amount' => $this->order->priceInCents, 'currency' => $this->order->currency]; }
 
-// Right — the slot keeps its real type; a transformer owns the wire shape declaratively.
-#[WithTransformer(MoneyTransformer::class)]
-public readonly Money $price;
+// Right — a real Money slot; a transformer owns the wire shape, and the TS type is declared to match it.
+#[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+public readonly Money $priceInEuro;
 ```
 
 A transformer is a tiny class implementing Spatie's `Transformer` —
@@ -99,8 +100,14 @@ A transformer is a tiny class implementing Spatie's `Transformer` —
 serialized form (`$value->cents . ' ' . $value->code`, an array, whatever the frontend needs). Applied
 per-property with `#[WithTransformer(X::class, ...args)]`, or registered as a global transformer in
 `config/data.php` for a whole type (a `Money`, a `Carbon`). Keeping the transform in a transformer means
-the property's PHP type stays honest, the `#[TypeScript]` type is derived from the *real* type, and the
-same shaping is reusable across every page that carries a `Money`.
+the property's PHP type stays honest and the same shaping is reusable across every page that carries a `Money`.
+
+**A transformer changes the wire shape, but NOT the generated TypeScript.** The typescript-transformer
+derives a property's TS type from its PHP type hint (`Money`), not from the transformer's output — so pair
+the transformer with **`#[TypeScriptType('string')]`** (PHP-type syntax) or **`#[LiteralTypeScriptType(...)]`**
+(raw TS, e.g. a reference to another generated type) declaring the transformed shape. Without it the frontend
+type silently stays `Money` while the wire carries a string. (A built-in like `Carbon`→`string` is already
+known to the generator; a custom value object is not — you must state it.)
 
 (For a *leaf* DTO the [`spatie-data`](../spatie-data/SKILL.md) skill says to avoid output transformers; a
 page object — the composed thing on the wire — is exactly where they earn their place.)
@@ -111,8 +118,12 @@ page object — the composed thing on the wire — is exactly where they earn th
   _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`._
 - Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
   _Add `#[Hidden]` above the injection attribute._
+- Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
+  _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
 - A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
   _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
+- Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
+  _Add `#[TypeScriptType('...')]` (or `#[LiteralTypeScriptType(...)]`) stating the type the transformer serializes to, so the generated frontend type matches the wire._
 
 ## Bad → good
 
@@ -196,6 +207,36 @@ final class ReportPage extends Data
 
 ```php
 // Bad
+#[Computed]
+public function marker(): array
+{
+    return ['lat' => $this->origin->lat, 'lng' => $this->origin->lng, 'origin' => $this->origin->label()];
+}
+
+// Good
+final class WireShapesPage extends Data
+{
+    public function __construct(
+        public readonly string $first,
+        public readonly string $last,
+        public readonly Money $price,
+        public readonly Money $tax,
+        public readonly CartLine $lead,
+    ) {}
+
+    // Own fields — receiver is $this (this Data), not a value object.
+    public array $fullName { get => ['first' => $this->first, 'last' => $this->last]; }
+
+    // Two different receivers — a real composite, not one object flattened.
+    public array $totals { get => ['price' => $this->price->cents, 'tax' => $this->tax->cents]; }
+
+    // Receiver resolves to a nested Data — just a projection of another payload.
+    public array $line { get => ['sku' => $this->lead->sku, 'qty' => $this->lead->qty]; }
+}
+```
+
+```php
+// Bad
 public function aiEnabled(): bool
 {
     return app(AiService::class)->isEnabled();
@@ -223,17 +264,44 @@ final class ReportPage extends Data
 }
 ```
 
+```php
+// Bad
+public function __construct(
+    #[WithTransformer(MoneyTransformer::class)]
+    public readonly Money $price,
+) {}
+
+// Good
+final class WirePairedData extends Data
+{
+    public function __construct(
+        #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+        public readonly Money $price,
+
+        #[LiteralTypeScriptType('[number, number]'), WithTransformer(GeoPointTransformer::class)]
+        public readonly GeoPoint $location,
+
+        #[WithTransformer(DateTimeInterfaceTransformer::class)]
+        public readonly \Carbon\Carbon $createdAt,
+    ) {}
+}
+```
+
 ## When it fires
 
 - A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place — `ConstructorOrchestrationDetector`
 - A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type — `InjectedServiceNotHiddenDetector`
+- A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape — `ManualOutputTransformDetector`
 - A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` — `ServiceLocationInPageObjectDetector`
+- A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type — `TransformerWithoutTsTypeDetector`
 
 ## Checklist
 
 - [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
 - [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
+- [ ] Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
 - [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
+- [ ] Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
 
 ## Related skills
 

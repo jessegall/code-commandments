@@ -181,6 +181,13 @@ contract; go back to the required/`Optional`/`?T` choice above.
   scalar. **Gotcha:** a property carrying `#[WithCast]` (or any value-injecting attribute) **cannot be
   `readonly`** — the framework injects into it after construction. Drop `readonly` on exactly that
   property, nowhere else.
+- **Never hand-hydrate a value object in a constructor/factory.** `$this->price = new Money($raw['amount'],
+  $raw['currency'])` re-does imperatively the `simple → complex` mapping a **cast** owns. Type the property
+  as the value object and give it a `#[WithCast(MoneyCast::class)]`, or let the value object implement
+  `Castable` (a `castUsing()` returning the cast). A custom cast is a tiny class implementing `Cast` —
+  `cast(DataProperty $property, mixed $value, array $properties, CreationContext $context): mixed` —
+  returning the built object (or `Uncastable` when it can't; it never receives `null`). Hydration stays
+  declarative and reusable, out of the constructor. (Still not for a nested `Data` — that nests automatically.)
 - **Validation:** prefer **declarative attributes** (`#[Required]`, `#[Min(1)]`, `#[Email]`) for static,
   per-property constraints. Use a static `rules()` only for **conditional / cross-field** logic — and
   return an **array** (`['field' => ['required', 'email']]`), never a pipe-string (`'required|email'`).
