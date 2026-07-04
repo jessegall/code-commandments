@@ -64,6 +64,8 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
     private ?CodebaseIndex $index = null;
 
+    private ?ValueFlow $valueFlow = null;
+
     /** @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null */
     private ?array $nodeBuckets = null;
 
@@ -95,6 +97,15 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function index(): CodebaseIndex
     {
         return $this->index ??= new CodebaseIndex($this);
+    }
+
+    /**
+     * The value-flow (provenance) graph over these files — where a field's value travels and how it
+     * is consumed. Built once, cached here like {@see index}.
+     */
+    public function valueFlow(): ValueFlow
+    {
+        return $this->valueFlow ??= new ValueFlow($this);
     }
 
     /**

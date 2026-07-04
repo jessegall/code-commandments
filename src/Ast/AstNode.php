@@ -24,7 +24,9 @@ use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\Empty_;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Isset_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
@@ -188,6 +190,32 @@ class AstNode
         }
 
         return false;
+    }
+
+    /**
+     * Is this expression consumed in a position that ACKNOWLEDGES it can be null — a null-guard
+     * ({@see isDeNulled}: `?->`, `?? `, `=== null` / `!== null`) OR a truthiness test (`if ($x)`,
+     * `$x && …`, `$x || …`, `! $x`, `$x ? … : …`, `isset`/`empty`). The terminal "the code knows
+     * this may be absent" verdict a value-flow walk stops on. Counting a bare truthiness test is
+     * deliberately conservative — for a nullable value it DOES gate the null, and over-counting
+     * only suppresses a finding, never invents one.
+     */
+    public function isNullGuardedUse(): bool
+    {
+        if ($this->isDeNulled()) {
+            return true;
+        }
+
+        $parent = $this->parent()->node;
+
+        return $parent instanceof BooleanNot
+            || $parent instanceof BooleanAnd
+            || $parent instanceof BooleanOr
+            || $parent instanceof Isset_
+            || $parent instanceof Empty_
+            || ($parent instanceof If_ && $parent->cond === $this->node)
+            || ($parent instanceof While_ && $parent->cond === $this->node)
+            || ($parent instanceof Ternary && $parent->cond === $this->node);
     }
 
     /**
