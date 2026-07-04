@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Sync;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Moment;
@@ -87,7 +88,7 @@ final class SyncTest extends TestCase
     private function sync(): void
     {
         ob_start();
-        new Sync()->run([]);
+        new Sync()->run(Input::of('sync'));
         ob_get_clean();
     }
 }

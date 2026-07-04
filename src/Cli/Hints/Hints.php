@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Hints;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
@@ -28,11 +30,16 @@ use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
  * mis-prefixed factory from a legitimate named constructor); `--dry-run=FILE`
  * writes that diff to a file.
  */
-final class Hints
+final class Hints implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $options = HintsOptions::fromArgs($args);
+        return ['hints'];
+    }
+
+    public function run(Input $input): int
+    {
+        $options = HintsOptions::fromInput($input);
 
         if (! is_dir($options->path)) {
             fwrite(STDERR, "Not a directory: {$options->path}\n");
@@ -41,7 +48,7 @@ final class Hints
         }
 
         try {
-            $scope = Scope::fromArgs($args, $options->path);
+            $scope = Scope::fromArgs($input->raw(), $options->path);
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Install;
 use PHPUnit\Framework\TestCase;
 
@@ -81,7 +82,7 @@ final class InstallTest extends TestCase
     private function install(): void
     {
         ob_start();
-        new Install()->run([]);
+        new Install()->run(Input::of('install'));
         ob_get_clean();
     }
 

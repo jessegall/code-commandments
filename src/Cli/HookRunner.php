@@ -11,11 +11,16 @@ namespace JesseGall\CodeCommandments\Cli;
  * vendor. Guards the class name (must be a real {@see Hook}) so a stale/mistyped wiring fails
  * cleanly with a message, never a fatal.
  */
-final class HookRunner
+final class HookRunner implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $class = ltrim((string) ($args[0] ?? ''), '\\');
+        return ['hook'];
+    }
+
+    public function run(Input $input): int
+    {
+        $class = ltrim((string) ($input->firstArgument() ?? ''), '\\');
 
         if ($class === '' || ! class_exists($class) || ! is_subclass_of($class, Hook::class)) {
             fwrite(STDERR, "commandments hook: '{$class}' is not a runnable " . Hook::class . ".\n");
@@ -23,6 +28,6 @@ final class HookRunner
             return 2;
         }
 
-        return new $class()->run(array_slice($args, 1));
+        return new $class()->run($input->raw());
     }
 }

@@ -15,7 +15,12 @@ final class Install
 {
     private const string HOOK = '@php vendor/bin/commandments sync';
 
-    public function run(array $args): int
+    public function names(): array
+    {
+        return ['install'];
+    }
+
+    public function run(Input $input): int
     {
         $composerPath = getcwd() . '/composer.json';
 
@@ -36,7 +41,7 @@ final class Install
             ? "✓ Wired the Claude Code hooks: the cardinal-rule reminder (PostToolUse) + the judge nudge (Stop).\n"
             : "✓ Claude Code hooks already wired.\n");
 
-        return (new Sync)->run($args);
+        return (new Sync)->run($input);
     }
 
     private function wireComposerScripts(string $path): bool

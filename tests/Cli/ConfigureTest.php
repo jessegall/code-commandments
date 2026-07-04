@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Configure;
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use PHPUnit\Framework\TestCase;
@@ -74,7 +75,7 @@ final class ConfigureTest extends TestCase
     private function exec(string $action, string ...$args): int
     {
         ob_start();
-        $code = new Configure($action)->run($args);
+        $code = new Configure()->run(Input::of($action, $args));
         ob_get_clean();
 
         return $code;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Repent;
 use PHPUnit\Framework\TestCase;
 
@@ -155,7 +156,7 @@ final class RepentTest extends TestCase
     private function repent(array $args): array
     {
         ob_start();
-        $code = new Repent()->run($args);
+        $code = new Repent()->run(Input::of('repent', $args));
         $out = (string) ob_get_clean();
 
         return ['code' => $code, 'out' => $out];

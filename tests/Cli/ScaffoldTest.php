@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Scaffold;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use PHPUnit\Framework\TestCase;
@@ -127,7 +128,7 @@ final class ScaffoldTest extends TestCase
     private function scaffold(array $args): void
     {
         ob_start();
-        $code = new Scaffold()->run($args);
+        $code = new Scaffold()->run(Input::of('scaffold', $args));
         ob_get_clean();
 
         $this->assertSame(0, $code);

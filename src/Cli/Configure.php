@@ -15,18 +15,22 @@ use JesseGall\CodeCommandments\Skills\Skill;
  * skill slug (the `--sin=` / `--skill=` keys, matched leniently); it's resolved to its {@see Sin}
  * or {@see Skill} class and added to / removed from the config's `$config->disable(...)` call via
  * the AST ({@see ConfigFile}) — disabling a skill silences every detector it teaches the fix for.
- * One verb per instance so the bin can route `disable`/`enable` to the same command.
+ * One handler for both verbs — it reads which from {@see Input::command}.
  */
-final class Configure
+final class Configure implements Command
 {
-    public function __construct(private readonly string $action) {}
-
-    public function run(array $args): int
+    public function names(): array
     {
-        $query = $this->firstArgument($args);
+        return ['disable', 'enable'];
+    }
+
+    public function run(Input $input): int
+    {
+        $action = $input->command();
+        $query = $input->firstArgument();
 
         if ($query === null) {
-            fwrite(STDERR, "Usage: commandments {$this->action} <sin|skill>\n");
+            fwrite(STDERR, "Usage: commandments {$action} <sin|skill>\n");
 
             return 2;
         }
@@ -40,18 +44,18 @@ final class Configure
         }
 
         $file = ConfigFile::inProject();
-        $changed = $this->action === 'enable' ? $file->enable($target::class) : $file->disable($target::class);
+        $changed = $action === 'enable' ? $file->enable($target::class) : $file->disable($target::class);
 
-        $this->report($target, $changed);
+        $this->report($action, $target, $changed);
 
         return 0;
     }
 
-    private function report(Sin|Skill $target, bool $changed): void
+    private function report(string $action, Sin|Skill $target, bool $changed): void
     {
         $label = $target instanceof Skill ? "skill `{$target->slug}`" : "`{$target->name()}`";
-        $verb = $this->action === 'enable' ? 'enabled' : 'disabled';
-        $noun = $this->action === 'enable' ? 'was not disabled' : 'already disabled';
+        $verb = $action === 'enable' ? 'enabled' : 'disabled';
+        $noun = $action === 'enable' ? 'was not disabled' : 'already disabled';
 
         $message = $changed
             ? "\033[32m✓ {$verb} {$label}.\033[0m\n"
@@ -84,16 +88,5 @@ final class Configure
         ];
 
         return count($matches) === 1 ? array_values($matches)[0] : null;
-    }
-
-    private function firstArgument(array $args): ?string
-    {
-        foreach ($args as $arg) {
-            if (! str_starts_with($arg, '--')) {
-                return $arg;
-            }
-        }
-
-        return null;
     }
 }

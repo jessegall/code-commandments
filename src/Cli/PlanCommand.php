@@ -13,16 +13,21 @@ use JesseGall\CodeCommandments\Config;
  * whether a plan is active and the resolved {@see \JesseGall\CodeCommandments\PlanExecution} profile.
  * Scoped to the current worktree, like the hook.
  */
-final class PlanCommand
+final class PlanCommand implements Command
 {
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
-    public function run(array $args): int
+    public function names(): array
+    {
+        return ['plan'];
+    }
+
+    public function run(Input $input): int
     {
         $root = $this->io->projectRoot();
         $marker = PlanMarker::inWorktree($root);
 
-        return match ($args[0] ?? 'status') {
+        return match ($input->firstArgument('status')) {
             'done', 'finish', 'complete' => $this->done($marker),
             'status' => $this->status($marker, $root),
             default => $this->usage(),

@@ -36,11 +36,16 @@ use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
  * judge ONCE, then work that file line-by-line (a full scan is slow), deleting each
  * line as its sin is fixed. `--no-checklist` prints only; `--checklist=FILE` retargets it.
  */
-final class Judge
+final class Judge implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $options = JudgeOptions::fromArgs($args);
+        return ['judge'];
+    }
+
+    public function run(Input $input): int
+    {
+        $options = JudgeOptions::fromInput($input);
 
         if ($options->list) {
             return $this->list();
@@ -72,7 +77,7 @@ final class Judge
         }
 
         try {
-            $scope = Scope::fromArgs($args, $options->path);
+            $scope = Scope::fromArgs($input->raw(), $options->path);
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 
@@ -81,7 +86,7 @@ final class Judge
 
         // Scoping to a checklist (`--repent=ID|latest`) must NOT write a new one — it
         // would clobber the very file it's reading. Force `--no-checklist` there.
-        $checklist = Scope::repent($args) !== null ? null : $options->checklist;
+        $checklist = Scope::repent($input->raw()) !== null ? null : $options->checklist;
 
         return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands(), $this->scaffoldCommands());
     }

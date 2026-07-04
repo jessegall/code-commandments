@@ -18,15 +18,20 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * compose: scaffold the construct, then `repent` to use it. Idempotent — an existing file
  * is skipped, never overwritten.
  */
-final class Scaffold
+final class Scaffold implements Command
 {
     /** Where a frontend scaffold (a Vue component) is written — the JS source root, by convention. */
     private const string FRONTEND_ROOT = 'resources/js';
 
-    public function run(array $args): int
+    public function names(): array
     {
-        $sin = $this->option($args, '--sin=');
-        $dryRun = in_array('--dry-run', $args, true);
+        return ['scaffold'];
+    }
+
+    public function run(Input $input): int
+    {
+        $sin = $input->option('sin');
+        $dryRun = $input->hasFlag('dry-run');
 
         $root = $this->sourceRoot();
 
@@ -145,16 +150,6 @@ final class Scaffold
         return 0;
     }
 
-    private function option(array $args, string $prefix): ?string
-    {
-        foreach ($args as $arg) {
-            if (str_starts_with($arg, $prefix)) {
-                return substr($arg, strlen($prefix));
-            }
-        }
-
-        return null;
-    }
 
     private function out(string $text): void
     {

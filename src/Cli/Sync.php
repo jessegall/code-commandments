@@ -13,9 +13,14 @@ use JesseGall\CodeCommandments\Skills\Catalog as Skills;
  * into the consumer on install and every `composer update`. Idempotent; runs in the
  * consumer's working directory.
  */
-final class Sync
+final class Sync implements Command
 {
-    public function run(array $args): int
+    public function names(): array
+    {
+        return ['sync'];
+    }
+
+    public function run(Input $input): int
     {
         $consumer = getcwd();
         $packageRoot = dirname(__DIR__, 2);

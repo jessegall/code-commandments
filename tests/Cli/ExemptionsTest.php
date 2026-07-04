@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Exemptions;
+use JesseGall\CodeCommandments\Cli\Input;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -47,7 +48,7 @@ final class ExemptionsTest extends TestCase
     private function exec(array $args): array
     {
         ob_start();
-        $code = new Exemptions()->run($args);
+        $code = new Exemptions()->run(Input::of('exemptions', $args));
 
         return [$code, (string) ob_get_clean()];
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\PlanCommand;
 use JesseGall\CodeCommandments\Cli\PlanMarker;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,7 @@ final class PlanCommandTest extends TestCase
         $command = new PlanCommand(new CapturingHookIO(new FakeGit($this->root)));
 
         ob_start();
-        $code = $command->run($args);
+        $code = $command->run(Input::of('plan', $args));
         ob_get_clean();
 
         return $code;

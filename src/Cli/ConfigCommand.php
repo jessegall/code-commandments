@@ -20,14 +20,19 @@ use JesseGall\CodeCommandments\Skills\Catalog as SkillCatalog;
  *                     OVERWRITE `$config->paths(...)` with the fresh list. Everything else in the
  *                     config (disable/detector/…) is left untouched.
  */
-final class ConfigCommand
+final class ConfigCommand implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        return match ($this->firstArgument($args)) {
+        return ['config'];
+    }
+
+    public function run(Input $input): int
+    {
+        return match ($input->firstArgument()) {
             null => $this->about(),
             'reindex' => $this->reindex(),
-            default => $this->usage($this->firstArgument($args)),
+            default => $this->usage($input->firstArgument()),
         };
     }
 
@@ -86,16 +91,5 @@ final class ConfigCommand
         fwrite(STDERR, "Unknown subcommand '{$subcommand}'. Usage: commandments config [reindex]\n");
 
         return 2;
-    }
-
-    private function firstArgument(array $args): ?string
-    {
-        foreach ($args as $arg) {
-            if (! str_starts_with($arg, '--')) {
-                return $arg;
-            }
-        }
-
-        return null;
     }
 }

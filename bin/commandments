@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-use JesseGall\CodeCommandments\Cli\Judge;
+use JesseGall\CodeCommandments\Cli\Kernel;
 
 $toBytes = static function (string $limit): int {
     $limit = trim($limit);
@@ -46,87 +46,5 @@ $toBytes = static function (string $limit): int {
         }
     }
 
-    $command = $argv[1] ?? 'judge';
-    $args = array_slice($argv, 2);
-
-    if (in_array($command, ['-h', '--help', 'help'], true)) {
-        fwrite(STDOUT, <<<TXT
-        Code Commandments — a compiler for architecture.
-
-        Usage:
-          commandments judge [path] [--skill=NAME] [--sin=NAME]   # no [path] → the source roots declared in .commandments/config.php
-          commandments judge --list
-          commandments checks [start|phase|complete] [--list]  # run the planExecution checks for a plan moment (complete appends judge --branch)
-          commandments plan [done|status]  # end the active plan (clears the keep-going nudge) / show it
-          commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
-          commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
-          commandments scaffold [--sin=NAME] [--dry-run]  # generate the reusable helper a sin's fix uses (namespace injected)
-          commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]  # report a false positive (with --detector) or a global bug
-          commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
-          commandments disable <sin>  # turn a rule off in .commandments/config.php
-          commandments enable <sin>   # turn it back on
-          commandments config reindex  # re-detect the source roots and rewrite config.php's paths()
-          commandments exemptions [<sin|detector>]  # list exemptions (all, or one detector's)
-          commandments install  # wire composer + the Claude Code hooks (reminder + judge nudge), then sync
-          commandments sync     # publish skills + refresh the CLAUDE.md briefing
-          commandments remind   # emit the cardinal rule as a PostToolUse payload
-          commandments judge-reminder  # emit the "did you judge?" nudge (Stop, or PreToolUse on git commit)
-          commandments plan-reminder   # open a plan (PostToolUse/ExitPlanMode) + keep it going (Stop)
-          commandments hook <Class>    # run a wired hook class (built-in or a consumer's $config->hook(...))
-
-        Options:
-          --skill=NAME       only run detectors for one skill (group), e.g. spatie-data
-          --sin=NAME         only run detectors for one sin (lenient name match), e.g. nullable-callback
-          --exclude=A,B      skip findings in paths containing any fragment
-          --changes          only report sins in files changed in the working tree (alias: --git)
-          --branch[=BASE]    only report sins new/changed on this branch vs BASE (default: main)
-          --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
-          --memory=LIMIT     memory ceiling for the run (default: 2G; -1 for no limit)
-          --checklist=FILE   write the checklist here (default: .commandments/sins.md)
-          --no-checklist     print only, don't write the checklist file
-          --list             list every detector grouped by skill
-
-        With no [path], judge scans the source roots declared by $config->paths(...)
-        in .commandments/config.php — auto-detected on first run from your
-        composer.json PSR-4 map (plus app/src), so scaffolding like database/,
-        storage/ and config/ isn't judged. Edit that call (or run `commandments
-        config reindex` to re-detect) to tune what's in scope; pass an explicit
-        [path] to scan it directly instead.
-
-        By default judge writes a Markdown checklist (.commandments/sins.md). Judge
-        ONCE, then work that file line-by-line — a full scan is slow — deleting
-        each line as you fix its sin. Re-run judge at the end to confirm.
-
-        Files marked @code-commandments-generated are skipped automatically
-        (they are regenerated, not hand-authored). Exit code 1 when sins found.
-
-        TXT);
-
-        exit(0);
-    }
-
-    exit(match ($command) {
-        'judge' => (new Judge)->run($args),
-        'checks' => (new JesseGall\CodeCommandments\Cli\Checks)->run($args),
-        'hints' => (new JesseGall\CodeCommandments\Cli\Hints\Hints)->run($args),
-        'repent' => (new JesseGall\CodeCommandments\Cli\Repent)->run($args),
-        'scaffold' => (new JesseGall\CodeCommandments\Cli\Scaffold)->run($args),
-        'report' => (new JesseGall\CodeCommandments\Cli\Report)->run($args),
-        'feature-request' => (new JesseGall\CodeCommandments\Cli\FeatureRequest)->run($args),
-        'sync' => (new JesseGall\CodeCommandments\Cli\Sync)->run($args),
-        'install' => (new JesseGall\CodeCommandments\Cli\Install)->run($args),
-        'remind' => (new JesseGall\CodeCommandments\Cli\Remind)->run($args),
-        'judge-reminder' => (new JesseGall\CodeCommandments\Cli\JudgeReminder)->run($args),
-        'plan-reminder' => (new JesseGall\CodeCommandments\Cli\PlanReminder)->run($args),
-        'plan' => (new JesseGall\CodeCommandments\Cli\PlanCommand)->run($args),
-        'hook' => (new JesseGall\CodeCommandments\Cli\HookRunner)->run($args),
-        'disable', 'enable' => (new JesseGall\CodeCommandments\Cli\Configure($command))->run($args),
-        'config' => (new JesseGall\CodeCommandments\Cli\ConfigCommand)->run($args),
-        'exemptions' => (new JesseGall\CodeCommandments\Cli\Exemptions)->run($args),
-        default => (static function () use ($command): int {
-            fwrite(STDERR, "Unknown command '{$command}'. Try: commandments --help\n");
-
-            return 2;
-        })(),
-    });
+    exit(new Kernel()->run($argv));
 })($argv);

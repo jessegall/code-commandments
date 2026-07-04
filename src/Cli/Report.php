@@ -12,15 +12,20 @@ namespace JesseGall\CodeCommandments\Cli;
  * detector is optional, so a GLOBAL bug (a crash, a CLI issue — anything not tied to
  * one detector) files as a `[bug-report]`. Only `--reason` is required.
  */
-final class Report
+final class Report implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $detector = $this->value($args, '--detector=');
-        $title = $this->value($args, '--title=');
-        $reason = $this->value($args, '--reason=');
-        $file = $this->value($args, '--file=');
-        $line = $this->value($args, '--line=');
+        return ['report'];
+    }
+
+    public function run(Input $input): int
+    {
+        $detector = $input->option('detector');
+        $title = $input->option('title');
+        $reason = $input->option('reason');
+        $file = $input->option('file');
+        $line = $input->option('line');
 
         if ($reason === null) {
             fwrite(STDERR, "Usage: commandments report --reason=\"what's wrong\" [--detector=NAME] [--title=\"…\"] [--file=PATH] [--line=N]\n");
@@ -61,16 +66,5 @@ final class Report
         $first = trim((string) strtok($reason, "\n"));
 
         return mb_strlen($first) > 60 ? mb_substr($first, 0, 57) . '…' : $first;
-    }
-
-    private function value(array $args, string $prefix): ?string
-    {
-        foreach ($args as $arg) {
-            if (str_starts_with($arg, $prefix)) {
-                return substr($arg, strlen($prefix));
-            }
-        }
-
-        return null;
     }
 }

@@ -18,14 +18,19 @@ use JesseGall\CodeCommandments\PlanExecution;
  * first failure with that command's exit code — so the agent sees exactly what broke, fixes it at
  * the source, and re-runs. `--list` prints the resolved commands instead of running them.
  */
-final class Checks
+final class Checks implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $moment = Moment::fromToken($this->positional($args));
+        return ['checks'];
+    }
+
+    public function run(Input $input): int
+    {
+        $moment = Moment::fromToken($input->firstArgument());
         $commands = $this->commands($moment, Config::load()->planExecutionSettings());
 
-        if (in_array('--list', $args, true)) {
+        if ($input->hasFlag('list')) {
             foreach ($commands as $command) {
                 fwrite(STDOUT, $command . "\n");
             }
@@ -74,17 +79,4 @@ final class Checks
         return 0;
     }
 
-    /**
-     * The first non-flag argument — the moment token, or null (⇒ the default `complete`).
-     */
-    private function positional(array $args): ?string
-    {
-        foreach ($args as $arg) {
-            if (! str_starts_with((string) $arg, '--')) {
-                return (string) $arg;
-            }
-        }
-
-        return null;
-    }
 }

@@ -25,23 +25,33 @@ use JesseGall\CodeCommandments\WorkingCopy;
  * By DEFAULT it writes; `--dry-run[=FILE]` previews a unified diff. `--only=NAME` runs
  * the chain steps whose name matches (a Scribe or frontend Detector name).
  */
-final class Repent
+final class Repent implements Command
 {
     /** The fixpoint cap — a backstop against an oscillating step, far above any real chain depth. */
     private const int MAX_SWEEPS = 10;
 
-    public function run(array $args): int
-    {
-        $options = $this->parse($args);
+    /** Keep package-gated scribes even when this project lacks the package (cross-project calibration). */
+    private bool $ignorePackages = false;
 
-        if (! is_dir($options['path'])) {
-            fwrite(STDERR, "Not a directory: {$options['path']}\n");
+    public function names(): array
+    {
+        return ['repent'];
+    }
+
+    public function run(Input $input): int
+    {
+        $path = rtrim($input->firstArgument() ?? '.', '/');
+        $only = $input->option('only') ?? $input->option('sin');
+        $this->ignorePackages = $input->hasFlag('ignore-package-requirements');
+
+        if (! is_dir($path)) {
+            fwrite(STDERR, "Not a directory: {$path}\n");
 
             return 2;
         }
 
         try {
-            $scope = Scope::fromArgs($args, $options['path']);
+            $scope = Scope::fromArgs($input->raw(), $path);
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 
@@ -50,11 +60,11 @@ final class Repent
 
         // The SAME roots `judge` reads (config.php's paths()) decide what `repent` rewrites — so it
         // never touches `tests/` (or anything outside the declared roots) that judge wouldn't flag.
-        $roots = new SourceRoots()->resolve($options['path'], $options['pathGiven']);
+        $roots = new SourceRoots()->resolve($path, $input->firstArgument() !== null);
 
-        return $options['dryRun']
-            ? $this->preview($options['path'], $roots, $scope, $options['only'], $options['dryRunFile'])
-            : $this->apply($options['path'], $roots, $scope, $options['only']);
+        return $input->hasFlag('dry-run')
+            ? $this->preview($path, $roots, $scope, $only, $input->option('dry-run'))
+            : $this->apply($path, $roots, $scope, $only);
     }
 
     /**
@@ -106,7 +116,7 @@ final class Repent
                 // The construct is used when its name (the stub's file stem, e.g. `SwitchCase`)
                 // appears in what the fix wrote — only then is it needed, so nothing over-generates.
                 if (str_contains($output, pathinfo($scaffold->path, PATHINFO_FILENAME))) {
-                    new Scaffold()->run(['--sin=' . $detector->sin()->name()]);
+                    new Scaffold()->run(Input::of('scaffold', ['--sin=' . $detector->sin()->name()]));
 
                     break;
                 }
@@ -190,7 +200,7 @@ final class Repent
      */
     private function chain(?string $only): ScribeChain
     {
-        $chain = ScribeChain::default();
+        $chain = ScribeChain::default($this->ignorePackages ? static fn (): bool => true : null);
         $config = getcwd() . '/.commandments/repent.php';
 
         if (is_file($config)) {
@@ -202,36 +212,6 @@ final class Repent
         }
 
         return $chain->matching($only);
-    }
-
-    /**
-     * @return array{path: string, dryRun: bool, dryRunFile: ?string, only: ?string, repent: ?string}
-     */
-    private function parse(array $args): array
-    {
-        $path = '.';
-        $pathGiven = false;
-        $dryRun = false;
-        $dryRunFile = null;
-        $only = null;
-
-        foreach ($args as $arg) {
-            if ($arg === '--dry-run') {
-                $dryRun = true;
-            } elseif (str_starts_with($arg, '--dry-run=')) {
-                $dryRun = true;
-                $dryRunFile = substr($arg, 10);
-            } elseif (str_starts_with($arg, '--only=')) {
-                $only = substr($arg, 7);
-            } elseif (str_starts_with($arg, '--sin=')) {
-                $only = substr($arg, 6);
-            } elseif (! str_starts_with($arg, '--')) {
-                $path = $arg;
-                $pathGiven = true;
-            }
-        }
-
-        return ['path' => rtrim($path, '/'), 'pathGiven' => $pathGiven, 'dryRun' => $dryRun, 'dryRunFile' => $dryRunFile, 'only' => $only];
     }
 
     private function relative(string $path, string $base): string

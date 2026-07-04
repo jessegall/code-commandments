@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Hints\DataHintScribe;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
+use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use PHPUnit\Framework\TestCase;
 
@@ -302,7 +303,7 @@ final class HintsTest extends TestCase
         $diffFile = $dir . '/changes.diff';
 
         ob_start();
-        $code = new Hints()->run([$dir, '--dry-run=' . $diffFile]);
+        $code = new Hints()->run(Input::of('hints', [$dir, '--dry-run=' . $diffFile]));
         ob_get_clean();
 
         $diff = (string) file_get_contents($diffFile);
@@ -332,7 +333,7 @@ final class HintsTest extends TestCase
         $before = $this->read($dir, 'Widget.php');
 
         ob_start();
-        new Hints()->run([$dir]);
+        new Hints()->run(Input::of('hints', [$dir]));
         ob_get_clean();
 
         $this->assertSame($before, $this->read($dir, 'Widget.php'));
@@ -423,7 +424,7 @@ final class HintsTest extends TestCase
     private function apply(string $dir): void
     {
         ob_start();
-        $code = new Hints()->run([$dir]);
+        $code = new Hints()->run(Input::of('hints', [$dir]));
         ob_get_clean();
 
         $this->assertSame(0, $code);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\HookRunner;
+use JesseGall\CodeCommandments\Cli\Input;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -38,7 +39,7 @@ final class HookRunnerTest extends TestCase
     private function exec(string ...$args): int
     {
         ob_start();
-        $code = new HookRunner()->run($args);
+        $code = new HookRunner()->run(Input::of('hook', $args));
         ob_get_clean();
 
         return $code;

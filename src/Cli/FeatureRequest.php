@@ -10,12 +10,17 @@ namespace JesseGall\CodeCommandments\Cli;
  * Files a `[feature-request]` issue proposing a new detector or an improvement —
  * the channel for "this rule is missing" or "this should also catch …".
  */
-final class FeatureRequest
+final class FeatureRequest implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $title = $this->value($args, '--title=');
-        $reason = $this->value($args, '--reason=');
+        return ['feature-request'];
+    }
+
+    public function run(Input $input): int
+    {
+        $title = $input->option('title');
+        $reason = $input->option('reason');
 
         if ($title === null || $reason === null) {
             fwrite(STDERR, "Usage: commandments feature-request --title=\"short title\" --reason=\"what to add and why\"\n");
@@ -26,16 +31,5 @@ final class FeatureRequest
         $body = "**Proposal:**\n{$reason}\n\n_Filed via `commandments feature-request` from a consumer project._\n";
 
         return new GitHubIssue()->file("[feature-request] {$title}", $body);
-    }
-
-    private function value(array $args, string $prefix): ?string
-    {
-        foreach ($args as $arg) {
-            if (str_starts_with($arg, $prefix)) {
-                return substr($arg, strlen($prefix));
-            }
-        }
-
-        return null;
     }
 }

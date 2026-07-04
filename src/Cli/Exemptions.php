@@ -17,11 +17,16 @@ use ReflectionClass;
  * (by slug or class) to quiet it. It reads each detector's own {@see Exemptable::exemptions}
  * declaration, so the list stays in sync with what the detector actually reads.
  */
-final class Exemptions
+final class Exemptions implements Command
 {
-    public function run(array $args): int
+    public function names(): array
     {
-        $query = $this->firstArgument($args);
+        return ['exemptions'];
+    }
+
+    public function run(Input $input): int
+    {
+        $query = $input->firstArgument();
 
         return $query === null ? $this->listAll() : $this->listFor($query);
     }
@@ -87,17 +92,6 @@ final class Exemptions
 
             return $detector->sin()->matches($query) || str_contains($short, $needle);
         }));
-    }
-
-    private function firstArgument(array $args): ?string
-    {
-        foreach ($args as $arg) {
-            if (! str_starts_with($arg, '--')) {
-                return $arg;
-            }
-        }
-
-        return null;
     }
 
     private function out(string $text): void
