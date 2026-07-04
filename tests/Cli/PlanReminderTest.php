@@ -41,6 +41,17 @@ final class PlanReminderTest extends TestCase
         $this->assertTrue($this->marker()->isActive(), 'a plan is now active');
     }
 
+    public function test_the_approval_nudge_asks_for_constraints_and_lists_global_ones(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->constraint(\'No frontend logic.\'));');
+
+        $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+
+        $this->assertStringContainsString('AskUserQuestion', $context, 'the agent is told to ask the user');
+        $this->assertStringContainsString('constraints add', $context);
+        $this->assertStringContainsString('No frontend logic.', $context, 'the global constraint is listed as in force');
+    }
+
     public function test_a_post_tool_use_for_another_tool_is_ignored(): void
     {
         $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Bash']));

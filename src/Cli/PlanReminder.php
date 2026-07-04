@@ -106,7 +106,29 @@ final class PlanReminder extends Hook
             . "`vendor/bin/commandments checks phase`{$push}. Do NOT run the full suite or `judge` between phases.\n"
             . "• End gate: run `vendor/bin/commandments checks complete` (your full checks + `judge --branch`), fix each "
             . "finding at its SOURCE, re-run until clean, then run `vendor/bin/commandments plan done`."
+            . $this->constraintsSection($plan)
             . $autonomy;
+    }
+
+    /**
+     * The constraints bullet for the approval nudge — always ask the user for this run's invariants (the
+     * hook can't ask; it instructs the agent to), listing the project's global ones so the agent knows
+     * they are already in force. The completion gate is what makes it stick.
+     */
+    private function constraintsSection(PlanExecution $plan): string
+    {
+        $global = '';
+
+        foreach ($plan->constraints() as $rule) {
+            $global .= "\n    - {$rule}";
+        }
+
+        return "\n• Constraints: ask the user (AskUserQuestion) whether this run has any architectural "
+            . "constraints to hold to — invariants `judge` can't check (e.g. \"no logic in the frontend\") — "
+            . "and record each with `vendor/bin/commandments constraints add \"<rule>\"`. The completion gate "
+            . "blocks `plan done` until you review your whole branch diff against every constraint "
+            . "(`vendor/bin/commandments constraints check` → fix → `constraints verified`)."
+            . ($global === '' ? '' : "\n  Already in force (global):{$global}");
     }
 
     private function keepGoingNudge(): string
