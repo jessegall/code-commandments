@@ -9,6 +9,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\MethodCall;
@@ -22,7 +23,9 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\NodeFinder;
 
 /**
@@ -49,6 +52,9 @@ final class TypeResolver
 
     /** @var array<string, array<string, array<int, bool>>>  fqcn => method => pos => param is nullable */
     private array $paramNullable = [];
+
+    /** @var array<string, array<string, string>>  fqcn => field => element type of its #[DataCollectionOf] */
+    private array $collectionElement = [];
 
     /** @var array<int, array<string, ?string>>  object-id of a function => local var => type */
     private array $localCache = [];
@@ -157,7 +163,49 @@ final class TypeResolver
             }
         }
 
+        // `foreach ($this->songs as $song)` types $song from the collection's declared element type.
+        foreach (new NodeFinder()->findInstanceOf($function, Foreach_::class) as $each) {
+            if ($each->valueVar instanceof Variable && is_string($each->valueVar->name) && $each->expr instanceof PropertyFetch && $each->expr->name instanceof Identifier) {
+                $owner = $this->resolve($each->expr->var, $locals, $selfFqcn);
+                $element = $owner === null ? null : ($this->collectionElement[$owner][$each->expr->name->toString()] ?? null);
+
+                if ($element !== null) {
+                    $locals[$each->valueVar->name] = $element;
+                }
+            }
+        }
+
         return $this->localCache[$id] = $locals;
+    }
+
+    /**
+     * Record the element type a field's `#[DataCollectionOf(X::class)]` declares, so a `foreach` over
+     * that typed collection can type its loop variable. The one Spatie-specific read in the resolver —
+     * kept to this method — because that attribute is the only place the element type is stated.
+     *
+     * @param  list<\PhpParser\Node\AttributeGroup>  $attrGroups
+     */
+    private function recordCollectionElement(string $fqcn, string $field, array $attrGroups): void
+    {
+        foreach ($attrGroups as $group) {
+            foreach ($group->attrs as $attribute) {
+                if (! str_ends_with($attribute->name->toString(), 'DataCollectionOf')) {
+                    continue;
+                }
+
+                $arg = $attribute->args[0]->value ?? null;
+
+                $element = match (true) {
+                    $arg instanceof ClassConstFetch && $arg->class instanceof Name => ltrim($arg->class->toString(), '\\'),
+                    $arg instanceof String_ => ltrim($arg->value, '\\'),
+                    default => null,
+                };
+
+                if ($element !== null) {
+                    $this->collectionElement[$fqcn][$field] = $element;
+                }
+            }
+        }
     }
 
     /**
@@ -222,12 +270,14 @@ final class TypeResolver
                 foreach ($class->getMethod('__construct')?->params ?? [] as $param) {
                     if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
                         $this->fieldType[$fqcn][$param->var->name] = self::typeName($param->type);
+                        $this->recordCollectionElement($fqcn, $param->var->name, $param->attrGroups);
                     }
                 }
 
                 foreach ($class->getProperties() as $property) {
                     foreach ($property->props as $declared) {
                         $this->fieldType[$fqcn][$declared->name->toString()] = self::typeName($property->type);
+                        $this->recordCollectionElement($fqcn, $declared->name->toString(), $property->attrGroups);
                     }
                 }
 
