@@ -16,9 +16,10 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * `[Controller, method]` action — two names for one handler, whose middleware/names/constraints drift
  * apart over time. Points at route-actions.
  *
- * Pure route-file analysis: every `Route::verb(...)` / `$router->verb(...)` carrying an action argument,
- * grouped by `verb + action`. Grouping by verb keeps a deliberate GET+POST pair on one URL out of it —
- * only a repeated (verb, action) is the redundant binding.
+ * Pure route-file analysis: every `Route::verb(...)` / `$router->verb(...)` carrying a `[Controller,
+ * method]` action, grouped by `verb + action`. Grouping by verb keeps a deliberate GET+POST pair on one
+ * URL out of it. INVOKABLE single-action controllers are exempt — mapping one to several canonical URLs
+ * (well-known/discovery endpoints, aliases, `/{path}` nested variants) is idiomatic, not a duplicate.
  */
 final class DuplicateRouteDetector implements Detector
 {
@@ -44,6 +45,14 @@ final class DuplicateRouteDetector implements Detector
             }
 
             foreach (RouteActions::actionsOf($match->node) as $action) {
+                if (str_ends_with($action, '::__invoke')) {
+                    // An invokable single-action controller is ONE operation by design; mapping it to
+                    // several canonical URLs (discovery/well-known endpoints, aliases, `/{path}` nested
+                    // variants) is idiomatic, not a duplicate. Only a repeated `[Controller, method]`
+                    // array binding is the redundant handler this flags.
+                    continue;
+                }
+
                 $byRoute[$verb . ' ' . $action][] = $match;
             }
         }

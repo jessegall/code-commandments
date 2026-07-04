@@ -80,6 +80,12 @@ exporter.
 Two route registrations pointing at the same `[Controller, method]` are two names for one thing — a
 maintenance trap (middleware, names, and constraints drift apart). Register the action once; if you truly
 need a second URL, make it a redirect, not a second binding onto the same handler.
+
+**The exception — an invokable controller mapped to several URLs is fine.** A single-action controller
+(`__invoke`) IS one operation, and answering it at several canonical URLs — the OAuth/OIDC well-known
+discovery endpoints, an alias, a `/{path}` nested catch-all — is deliberate, not duplication. The
+maintenance-trap concern is about a `[Controller, method]` binding copied to two places, not about one
+invokable serving the paths a spec requires.
 PRINCIPLE;
     }
 

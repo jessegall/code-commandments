@@ -50,10 +50,16 @@ Two route registrations pointing at the same `[Controller, method]` are two name
 maintenance trap (middleware, names, and constraints drift apart). Register the action once; if you truly
 need a second URL, make it a redirect, not a second binding onto the same handler.
 
+**The exception — an invokable controller mapped to several URLs is fine.** A single-action controller
+(`__invoke`) IS one operation, and answering it at several canonical URLs — the OAuth/OIDC well-known
+discovery endpoints, an alias, a `/{path}` nested catch-all — is deliberate, not duplication. The
+maintenance-trap concern is about a `[Controller, method]` binding copied to two places, not about one
+invokable serving the paths a spec requires.
+
 ## Rules
 
-- Register an action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift).
-  _Keep one route; if a second URL is truly needed, make it a redirect, not a second binding._
+- Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
+  _Keep one route; if a second URL is truly needed, make it a redirect, or an invokable controller._
 - One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
   _Delete the duplicate action and point its route at the surviving one (or a redirect)._
 - A route action delegates INTO the domain (a service/action class), never sideways into another controller.
@@ -116,13 +122,13 @@ final class ExportController
 
 ## When it fires
 
-- Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler — `DuplicateRouteDetector`
+- Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt) — `DuplicateRouteDetector`
 - Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice — `DuplicateRouteActionDetector`
 - A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one — `RouteDelegatesToControllerDetector`
 
 ## Checklist
 
-- [ ] Register an action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift).
+- [ ] Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
 - [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
 - [ ] A route action delegates INTO the domain (a service/action class), never sideways into another controller.
 
