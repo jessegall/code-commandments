@@ -5,14 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 /**
- * An in-memory overlay of pending file edits over the real filesystem — the substrate
- * that lets `repent` run its whole scribe chain to a FIXPOINT without touching disk.
- * Each sweep reads code THROUGH the overlay, so it sees the prior sweep's edits (and any
- * file a prior step CREATED), and folds its own edits into a new overlay for the next
- * sweep; the run persists (or diffs) the accumulated {@see changes} only at the end.
- *
- * Empty — the default — it is a transparent pass-through to disk, so every ordinary
- * {@see Ast\Codebase::scan} / {@see Vue\Codebase::scan} that omits it is unaffected.
+ * An in-memory overlay of pending file edits over the real filesystem — the substrate that
+ * lets `repent` run its whole scribe chain to a FIXPOINT, each sweep reading through the prior
+ * sweep's edits and persisting the accumulated {@see changes} only at the end. Empty by default,
+ * a transparent pass-through to disk.
  */
 final class WorkingCopy
 {
