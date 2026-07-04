@@ -46,17 +46,18 @@ final class DuplicateRouteDetectorTest extends TestCase
         PHP));
     }
 
-    public function test_flags_a_duplicate_invokable_registration(): void
+    public function test_does_not_flag_an_invokable_mapped_to_several_urls(): void
     {
-        $hits = $this->find(<<<'PHP'
+        // An invokable single-action controller aliased to several canonical URLs (well-known/discovery
+        // endpoints, OIDC aliases) is idiomatic, not a duplicate — the OAuth discovery pattern.
+        $this->assertCount(0, $this->find(<<<'PHP'
         <?php
         use Illuminate\Support\Facades\Route;
-        class PingController { public function __invoke() {} }
-        Route::get('/ping', PingController::class);
-        Route::get('/health', PingController::class);
-        PHP);
-
-        $this->assertCount(2, $hits);
+        class MetadataController { public function __invoke() {} }
+        Route::get('/.well-known/oauth-authorization-server', MetadataController::class);
+        Route::get('/.well-known/openid-configuration', MetadataController::class);
+        Route::get('/.well-known/oauth-authorization-server/{path}', MetadataController::class);
+        PHP));
     }
 
     /**
