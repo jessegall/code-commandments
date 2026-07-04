@@ -184,6 +184,19 @@ final class JudgeReminderTest extends TestCase
         $this->assertSame('', trim($other), 'a non-commit Bash call is ignored');
     }
 
+    public function test_stop_is_silent_while_waiting_on_a_background_task(): void
+    {
+        file_put_contents($this->repo . '/Service.php', "<?php\n"); // a touched judged file — would normally nudge
+
+        // Parked waiting on a background task: silent, and it must NOT consume the batch.
+        $waiting = $this->runCli(['hook_event_name' => 'Stop', 'background_tasks' => [['id' => 'a']]]);
+        $this->assertSame('', trim($waiting), 'no nudge while parked on background work');
+
+        // The same stop once genuinely done still nudges — proving the file was never marked reminded.
+        $done = $this->runCli(['hook_event_name' => 'Stop']);
+        $this->assertStringContainsString('block', $done, 'a real stop with the same dirty file still nudges');
+    }
+
     /** @param array<string, mixed> $payload */
     private function runCli(array $payload): string
     {

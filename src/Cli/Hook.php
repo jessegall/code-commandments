@@ -37,14 +37,17 @@ abstract class Hook
 
     /**
      * Dispatch by event name to the moment handlers. A bare CLI run has no event name and falls to
-     * {@see onManualRun}.
+     * {@see onManualRun}. One rule holds for EVERY Stop hook and lives here, not in each: a Stop that
+     * is only the agent PARKED WAITING on background work (a `run_in_background` task, a subagent) is
+     * not a real stop — it will auto-resume — so no `onStop` handler runs; nudging or blocking it would
+     * be noise and could burn the block cap on stops the agent doesn't control.
      */
     protected function handle(HookEvent $event): int
     {
         return match ($event->name()) {
             'PostToolUse' => $this->onPostToolUse($event),
             'PreToolUse' => $this->onPreToolUse($event),
-            'Stop' => $this->onStop($event),
+            'Stop' => $event->hasPendingBackgroundWork() ? $this->pass() : $this->onStop($event),
             default => $this->onManualRun($event),
         };
     }

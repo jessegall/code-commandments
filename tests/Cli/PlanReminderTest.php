@@ -112,6 +112,21 @@ final class PlanReminderTest extends TestCase
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha2'), "the human's stop stands after one nudge");
     }
 
+    public function test_stop_is_silent_while_waiting_on_a_background_task(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        $this->marker()->activate('sha0');
+
+        // A pending background task on the Stop payload — the agent will auto-resume; don't nudge.
+        $io = new CapturingHookIO(
+            new FakeGit($this->root, 'sha1', 'plan/x'),
+            ['hook_event_name' => 'Stop', 'background_tasks' => [['id' => 'a']]],
+        );
+        new PlanReminder($io)->run([]);
+
+        $this->assertSame([], $io->emitted, 'no keep-going nudge while parked on background work');
+    }
+
     public function test_stop_clears_the_marker_once_back_on_the_base_branch(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
