@@ -22,12 +22,12 @@
 
     <text x="24" y="186"><tspan class="t">⏺ Reviewing the branch diff against 3 constraints …</tspan></text>
 
-    <text x="24" y="226"><tspan class="grn">  ✓ </tspan><tspan class="t">Money is always the Money value object</tspan></text>
-    <text x="24" y="246"><tspan class="dim">      no bare int or float crosses a boundary in the diff</tspan></text>
-    <text x="24" y="276"><tspan class="grn">  ✓ </tspan><tspan class="t">Domain code never imports from the HTTP layer</tspan></text>
-    <text x="24" y="296"><tspan class="dim">      Domain/ has no Http\ imports in the changed files</tspan></text>
-    <text x="24" y="326"><tspan class="grn">  ✓ </tspan><tspan class="t">Every timestamp is stored in UTC</tspan></text>
-    <text x="24" y="346"><tspan class="dim">      new columns are timestampTz; casts are immutable_datetime</tspan></text>
+    <text x="24" y="226"><tspan class="grn">  ✓ </tspan><tspan class="t">Every new query is scoped to the current tenant</tspan></text>
+    <text x="24" y="246"><tspan class="dim">      all 3 added queries chain ->forTenant(); none hit the global scope</tspan></text>
+    <text x="24" y="276"><tspan class="grn">  ✓ </tspan><tspan class="t">Public API responses stay backwards-compatible</tspan></text>
+    <text x="24" y="296"><tspan class="dim">      OrderResource diff is additive — no field removed or renamed</tspan></text>
+    <text x="24" y="326"><tspan class="grn">  ✓ </tspan><tspan class="t">New endpoints run behind the existing authorization</tspan></text>
+    <text x="24" y="346"><tspan class="dim">      the added route calls authorize() before any write</tspan></text>
 
     <text x="24" y="386"><tspan class="grn">⏺ </tspan><tspan class="t b">Bash</tspan><tspan class="dim">(vendor/bin/commandments plan done)</tspan></text>
     <text x="24" y="406"><tspan class="dim">  ⎿ </tspan><tspan class="grn">✓ Constraints verified at HEAD — plan marked done.</tspan></text>

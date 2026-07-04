@@ -205,16 +205,18 @@ $config->planExecution(fn (PlanExecution $plan) => $plan
     ->onStart('composer install')   // once, before the first phase
     ->eachPhase('composer lint')    // after each phase (keep it fast)
     ->onComplete('composer test')   // the end gate; judge --branch runs after
-    ->constraint('Money is always the Money value object — never a bare int or float.')
-    ->constraint('Domain code never imports from the HTTP layer.')
+    ->constraint('Every new query is scoped to the current tenant.')
+    ->constraint('Public API responses stay backwards-compatible — no field removed or renamed.')
     ->enforceConstraintsEachPhase()); // check constraints every phase, not just at the end
 ```
 
-**Constraints** are natural-language architectural invariants `judge` can't decide on
-its own — "money is always the Money value object", "every timestamp is stored in UTC",
-"no new dependency in the domain layer". The agent verifies them by reviewing its own
-branch diff, and the completion gate blocks `commandments plan done` until it has. By
-default a phase gets a soft reminder and completion is the hard gate;
+**Constraints** are natural-language architectural invariants a detector *can't* decide
+from the AST — "every new query is scoped to the current tenant", "public API responses
+stay backwards-compatible", "new endpoints run behind the existing authorization checks".
+Where a detector reads a sin off the code's shape, a constraint captures intent only a
+reading of the *change* can confirm: the agent verifies each by reviewing its own branch
+diff, and the completion gate blocks `commandments plan done` until they hold. By default
+a phase gets a soft reminder and completion is the hard gate;
 `enforceConstraintsEachPhase()` makes every phase a hard check too. Declare project-wide
 ones here; a single run can add its own with `commandments constraints add "…"`.
 
