@@ -35,6 +35,18 @@ final class PlanCommandTest extends TestCase
         $this->assertFalse($marker->isActive(), 'the keep-going marker is cleared');
     }
 
+    public function test_done_clears_the_leftover_checklist(): void
+    {
+        PlanMarker::inWorktree($this->root)->activate('sha0');
+        file_put_contents($this->root . '/.commandments/sins.md', "- `a.php:1`  A::m  [X]\n");
+        file_put_contents($this->root . '/.commandments/sins-2026-07-04_101112.md', "old\n");
+
+        $this->assertSame(0, $this->exec('done'));
+
+        $this->assertFileDoesNotExist($this->root . '/.commandments/sins.md', 'the worklist is gone');
+        $this->assertCount(0, glob($this->root . '/.commandments/sins*.md') ?: [], 'its archives too');
+    }
+
     public function test_done_is_a_no_op_without_an_active_plan(): void
     {
         $this->assertSame(0, $this->exec('done'));

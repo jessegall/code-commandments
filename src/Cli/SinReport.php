@@ -100,15 +100,20 @@ final class SinReport
             . "Before you change a line, trace the value to where it is BORN and fix it there; "
             . "the symptom (and often others) then disappears on its own. Never silence it with a "
             . "`?? default`, a cast, or a null-check.\n\n"
-            . "**This file is your worklist, and DELETION is how you work it.** Each line "
-            . "below is one unfixed sin. Go top to bottom, ONE at a time:\n\n"
-            . "1. Read the skill named in the section header (it teaches the fix).\n"
-            . "2. Open the `file:line` and fix the sin at the source.\n"
-            . "3. **Delete its line from this file** — do NOT tick it, mark it, or strike it "
-            . "through. A fixed sin leaves no trace; the line is simply gone.\n\n"
-            . "The shrinking file IS your progress — every line you delete is a sin resolved. "
-            . "When no lines remain, you're done: re-run `commandments judge` to confirm (a "
-            . "clean run deletes this file).\n";
+            . "**This file is your worklist. Work it straight down, deleting as you go — do NOT "
+            . "stop to re-check.** For each line, top to bottom, do exactly this:\n\n"
+            . "1. Read the skill in the section header (it teaches the fix) — once per section.\n"
+            . "2. Open the `file:line` and fix the sin at its source.\n"
+            . "3. **Delete that line from this file.** Nothing else — no tick, no mark, no "
+            . "strike-through. The deleted line IS the record that it's fixed.\n\n"
+            . "**Do NOT re-run `judge`, re-scan, or re-verify between fixes.** That is slow and "
+            . "pointless: the shrinking file is your only source of truth, and each deleted line "
+            . "is its own confirmation. Do not pause to check your work — just fix, delete, and "
+            . "move to the next line until none remain.\n\n"
+            . "Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` again. "
+            . "If your fixes rippled into other files, it writes a fresh worklist — a new wave; work "
+            . "it exactly the same way (fix, delete, no re-checks between). Repeat, judging only "
+            . "between waves, until a run is clean and deletes this file.\n";
 
         foreach ($this->bySkill as $skill => $findings) {
             $out .= "\n## {$skill}  — read `skills/commandments/{$skill}/SKILL.md`\n\n";

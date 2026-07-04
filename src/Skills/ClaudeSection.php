@@ -93,9 +93,11 @@ final class ClaudeSection
         1. Open `.commandments/sins.md`. Each line is one sin: `file:line`, the scope, and
            the detector, grouped under the skill that teaches the fix.
         2. Go top to bottom, ONE line at a time: read that section's skill, fix the sin at
-           the source, then **delete that line from the file.** Do not re-run judge between
-           fixes — the open checklist is your source of truth.
-        3. When the file is empty, run judge once more to confirm (a clean run deletes it).
+           the source, then **delete that line from the file.** Do not re-run judge, re-scan,
+           or re-verify between fixes — the open checklist is your only source of truth.
+        3. Work **wave by wave.** When the file is EMPTY, run judge again. If your fixes
+           rippled into other files it writes a fresh worklist — a new wave; work it the same
+           way. Repeat, judging ONLY between waves, until a run is clean and deletes the file.
 
         **Auto-fixable sins.** Some sins have a scribe that fixes them. The report
         advertises the command — typically `vendor/bin/commandments repent --repent=latest`
