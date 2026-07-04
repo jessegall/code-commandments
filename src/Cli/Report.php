@@ -40,6 +40,12 @@ final class Report
 
         if ($file !== null) {
             $body .= "\n**Where:** `{$file}" . ($line !== null ? ":{$line}" : '') . "`\n";
+
+            $snippet = new CodeSnippet()->forFile($file, $line !== null ? (int) $line : null);
+
+            if ($snippet !== null) {
+                $body .= "\n{$snippet}";
+            }
         }
 
         $body .= "\n_Filed via `commandments report` from a consumer project._\n";
