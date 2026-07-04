@@ -70,6 +70,7 @@ final class Kernel
             new Scaffold(),
             new Report(),
             new FeatureRequest(),
+            new Freeze(),
             new Sync(),
             new Install(),
             new HookCommand(['remind'], new Remind()),
@@ -98,6 +99,8 @@ final class Kernel
           commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
           commandments disable <sin>  # turn a rule off in .commandments/config.php
           commandments enable <sin>   # turn it back on
+          commandments freeze <path>  # mark a file intentionally immutable (scanned, but never flagged or repented)
+          commandments unfreeze <path>  # lift the freeze — the file is a target again
           commandments config reindex  # re-detect the source roots and rewrite config.php's paths()
           commandments exemptions [<sin|detector>]  # list exemptions (all, or one detector's)
           commandments install  # wire composer + the Claude Code hooks (reminder + judge nudge), then sync

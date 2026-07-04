@@ -19,6 +19,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Install](#install)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [Freezing a file](#freezing-a-file)
 - [Hooks](#hooks)
 - [How detectors are tested](#how-detectors-are-tested)
 - [Skills](#skills)
@@ -145,6 +146,30 @@ Each move is named for what it registers: `paths`, `disable`, `detector`,
 and `planExecution` (see [Hooks](#hooks)). `configure` finds the detector by the
 closure's first parameter type. Run `commandments config` for a summary of what's
 in effect.
+
+## Freezing a file
+
+Some files must not change even though they carry sins — a frozen graph migration
+whose body deliberately mirrors its siblings, a snapshot committed for the record,
+generated code checked into the tree. Freeze such a file:
+
+```bash
+vendor/bin/commandments freeze database/migrations/V5ToV6.php
+vendor/bin/commandments unfreeze database/migrations/V5ToV6.php   # lift it
+```
+
+`freeze` stamps a `@code-commandments-frozen` comment; you can equally mark a class
+by hand with a `#[Frozen]` attribute or an `@frozen` docblock tag.
+
+A frozen file is still **scanned** — the call graph, provenance and type resolution
+read it, so findings in *other* files stay correct — but it is never a **target**:
+it is never flagged by `judge`, and `repent` never rewrites it. Freezing is a scope,
+compounded into every scope the tools resolve, so a cross-file fix whose edits would
+touch a frozen file is dropped whole rather than half-applied.
+
+Freeze only what is genuinely immutable. A finding you disagree with belongs in a
+`report`; a rule you want off belongs in `disable` — freezing is for files that by
+their nature cannot move.
 
 ## Hooks
 

@@ -56,6 +56,21 @@ final class ClaudeSection
         false positives and requesting rules is how the disciplines get sharper — do it
         whenever a finding is wrong or a gap is real, don't just work around it.
 
+        **Frozen files — a file that is deliberately immutable.** A few files must not
+        change even though they carry sins: a frozen graph migration whose body mirrors
+        its siblings on purpose, a snapshot committed for the record, generated code
+        checked into the tree. Mark such a file frozen:
+        `vendor/bin/commandments freeze <path>` (or add `#[Frozen]` / an `@frozen`
+        docblock tag by hand). A frozen file is still **scanned** — the call graph,
+        provenance and type resolution read it, so cross-file findings elsewhere stay
+        correct — but it is never a **target**: it is never flagged, and a repenter
+        never rewrites it (a cross-file fix whose edits would touch a frozen file is
+        dropped whole, never half-applied). Lift it with
+        `vendor/bin/commandments unfreeze <path>`. **Freeze only what is genuinely
+        immutable — never to silence a sin you could fix.** A real finding you disagree
+        with is a `report`; a rule you want off is `disable`; freezing is for files that
+        by their nature cannot move.
+
         When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
         behind every other skill.
 

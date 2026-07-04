@@ -11,16 +11,21 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
  * `includes($file)` to decide what it reports on / acts on; an unscoped run includes
  * everything.
  *
+ * A Scope COMPOUNDS other {@see FileScope}s: `includes()` is their AND. Every scope is built with a
+ * {@see FrozenScope} already inserted, so a frozen file is off-limits without any consumer knowing what
+ * "frozen" is — it's just not in scope. New axes (ownership, generated code) drop in the same way.
+ *
  * Paths are canonicalized with `realpath`, so a finding's scanned path (which may be
  * relative or unresolved) matches the git change-set (which is already absolute and
  * symlink-resolved) regardless of how the codebase was addressed.
  */
-final class Scope
+final class Scope implements FileScope
 {
     /**
      * @param  array<string, true>|null  $files  null = whole codebase; keys are realpaths
+     * @param  list<FileScope>  $restrictions  extra scopes AND-ed with the path set (a FrozenScope always)
      */
-    private function __construct(private readonly ?array $files) {}
+    private function __construct(private readonly ?array $files, private readonly array $restrictions = []) {}
 
     /**
      * Parse the scope flags, pick the matching strategy, and resolve it against $path.
@@ -36,15 +41,15 @@ final class Scope
             default => new EntireCodebase,
         };
 
-        return new self(self::canonical($strategy->restrictTo($path)));
+        return new self(self::canonical($strategy->restrictTo($path)), self::always());
     }
 
     /**
-     * An unscoped scope — includes everything.
+     * An unscoped scope — includes every file except the frozen ones.
      */
     public static function everything(): self
     {
-        return new self(null);
+        return new self(null, self::always());
     }
 
     /**
@@ -54,14 +59,21 @@ final class Scope
      */
     public static function restrictedTo(array $files): self
     {
-        return new self(self::canonical(array_fill_keys($files, true)));
+        return new self(self::canonical(array_fill_keys($files, true)), self::always());
     }
 
     /**
-     * Is $file in scope? An unscoped scope includes everything.
+     * Is $file in scope — a file this run may flag or rewrite? Every compounded scope must admit it, and
+     * an unscoped path set admits everything the restrictions allow.
      */
     public function includes(string $file): bool
     {
+        foreach ($this->restrictions as $restriction) {
+            if (! $restriction->includes($file)) {
+                return false;
+            }
+        }
+
         if ($this->files === null) {
             return true;
         }
@@ -69,6 +81,35 @@ final class Scope
         $real = realpath($file);
 
         return $real !== false && isset($this->files[$real]);
+    }
+
+    /**
+     * Are ALL of these files in scope — the gate a cross-file (chain) rewrite passes as a whole? An
+     * existing file that isn't a target (frozen, or out of scope) forbids the lot, so nothing is
+     * half-applied or written into a file this run must not touch. A file that doesn't exist yet is a
+     * fresh creation (an extracted component) and is always allowed.
+     *
+     * @param  list<string>  $files
+     */
+    public function permits(array $files): bool
+    {
+        foreach ($files as $file) {
+            if (file_exists($file) && ! $this->includes($file)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The scopes compounded into EVERY run — the frozen exclusion is always among a run's targets rules.
+     *
+     * @return list<FileScope>
+     */
+    private static function always(): array
+    {
+        return [new FrozenScope()];
     }
 
     /**
