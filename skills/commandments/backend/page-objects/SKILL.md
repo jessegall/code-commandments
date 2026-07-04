@@ -87,6 +87,75 @@ that property, not a hand-rolled getter that returns a reshaped array. A transfo
 mapping declaratively and keeps the slot's PHP type honest. (For a *leaf* DTO the `spatie-data` skill says
 to avoid transformers; a page object is exactly where they belong.)
 
+## Rules
+
+- Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
+  _Add `#[Hidden]` above the injection attribute._
+
+## Bad → good
+
+```php
+// Bad
+final class CatalogPage extends Data
+{
+    public readonly MenuLink $home;
+
+    public readonly MenuLink $active;
+
+    public readonly CartLine $featured;
+
+    public static function for(string $category): self
+    {
+        return self::from(['category' => $category]);
+    }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(CatalogReader::class)]
+        public readonly CatalogReader $reader,
+
+        #[FromContainer(FacetBuilder::class)]
+        public readonly FacetBuilder $facetBuilder,
+
+        public readonly string $category,
+    ) {}
+
+    public function breadcrumb(): string
+    {
+        return $this->home->label . ' / ' . $this->active->label;
+    }
+}
+
+// Good
+final class ReportPage extends Data
+{
+    #[Computed]
+    public string $timeRange { get => $this->request->timeRange(); }
+
+    #[Computed]
+    public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
+
+    /** @var list<StatCard>|Lazy */
+    #[Computed]
+    #[DataCollectionOf(StatCard::class)]
+    public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(ReportRequest::class)]
+        public readonly ReportRequest $request,
+    ) {}
+}
+```
+
+## When it fires
+
+- A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type — `InjectedServiceNotHiddenDetector`
+
+## Checklist
+
+- [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
+
 ## Related skills
 
 - [`backend/spatie-data`](../spatie-data/SKILL.md) — the mechanics of a `Data` class this builds on — `::from()`, honest types, `#[DataCollectionOf]`; a page object is a Data used as a composed view-model.

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Ast\Support\PageObject;
+use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -36,6 +37,21 @@ use PhpParser\NodeFinder;
 final class SpatieDataNode extends NodeMatch
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
+
+    /**
+     * The Spatie CONTAINER-injection attributes — the ones that pull a service dependency out of the
+     * container into a property (`#[FromContainer]`, `#[FromContainerProperty]`). A property carrying one
+     * is a COLLABORATOR the page builds itself with, not page data. (The value-injection attributes —
+     * `FromRouteParameter`, `FromAuthenticatedUser` — inject payload values that may legitimately
+     * serialize, so they are NOT in this list.) Stated here once as the package's contract.
+     */
+    private const array CONTAINER_INJECTION_ATTRIBUTES = [
+        'FromContainer',
+        'FromContainerProperty',
+    ];
+
+    /** The attribute that keeps a property out of the serialized payload AND the generated TypeScript. */
+    private const string HIDDEN = 'Hidden';
 
     /**
      * Is this class declaration a Spatie `Data` subclass?
@@ -81,6 +97,38 @@ final class SpatieDataNode extends NodeMatch
     {
         return $this->isDataClass()
             && PageObject::forCodebase($this->codebase)->isPageObject($this->enclosingClassName());
+    }
+
+    /**
+     * Does this class have a PUBLIC container-injected SERVICE that is NOT `#[Hidden]`? An injected
+     * collaborator (a `#[FromContainer]` repository, projector, or the request) is construction
+     * machinery, not page data — left public and un-hidden it serializes and leaks into the generated
+     * TypeScript type. Read off the generic field reader: a public field carrying a container-injection
+     * attribute but no `#[Hidden]`, whose type is NOT itself a `Data` (an injected nested `Data` is
+     * legitimate payload, not a service).
+     */
+    public function hasUnhiddenInjectedService(): bool
+    {
+        foreach ($this->fields() as $field) {
+            if ($field->isPublic
+                && $field->hasAttribute(...self::CONTAINER_INJECTION_ATTRIBUTES)
+                && ! $field->hasAttribute(self::HIDDEN)
+                && ! $this->typeIsData($field->type)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this declared type a `Data` subclass — an injected nested payload rather than a service?
+     */
+    private function typeIsData(?Node $type): bool
+    {
+        $class = TypeName::class($type);
+
+        return $class !== null && $this->codebase->extends($class, self::DATA);
     }
 
     /**
