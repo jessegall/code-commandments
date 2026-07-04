@@ -11,10 +11,8 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * `commandments constraints <list|add|check|verified>` — the agent's handle on the plan's constraints
- * ({@see PlanConstraints}). `list` shows the invariants in force (global + this run's); `add "<rule>"`
- * records a local one after asking the user; `check` prints them with the whole-branch introspection
- * instruction; `verified` stamps that the agent reviewed its branch diff and all constraints hold —
- * which unblocks the `plan done` gate ({@see PlanCommand}). Worktree-scoped, like the plan marker.
+ * ({@see PlanConstraints}): list the invariants in force, add a local one, print them with the
+ * whole-branch introspection instruction, or stamp them verified (which unblocks the `plan done` gate).
  */
 final class ConstraintsCommand implements Command
 {

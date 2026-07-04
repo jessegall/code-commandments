@@ -7,10 +7,9 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 /**
- * A {@see HookIO} that feeds every handler the SAME already-read payload and RECORDS what each one would
- * emit, instead of reading STDIN again or writing STDOUT. {@see HookDispatch} runs the whole registry
- * through one of these so it can gather each handler's response and merge them into a single reply — the
- * production sibling of the test-only `CapturingHookIO`.
+ * A {@see HookIO} that feeds every handler the same already-read payload and records what each one
+ * emits, rather than reading STDIN again or writing STDOUT — so {@see HookDispatch} can gather the
+ * handlers' responses and merge them into a single reply.
  */
 final class RecordingHookIO extends HookIO
 {

@@ -12,11 +12,9 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 /**
- * The constraint heartbeat — a `PostToolUse` hook that, WHILE A PLAN IS ACTIVE and constraints are in
- * force, re-surfaces them once every {@see INTERVAL} tool uses, then resets. Same shape as the
- * cardinal-rule {@see Remind}, but plan-scoped: it keeps the run's invariants ("no frontend logic")
- * present through a long grind so the agent doesn't drift between the phase and completion gates.
- * Silent when no plan is active, when there are no constraints, and on the other 24 of every 25 ticks.
+ * The constraint heartbeat — a `PostToolUse` hook that, while a plan is active and constraints are in
+ * force, re-surfaces them once every {@see INTERVAL} tool uses, then resets, so the run's invariants
+ * stay present through a long grind. Silent otherwise.
  */
 final class ConstraintReminder extends Hook
 {

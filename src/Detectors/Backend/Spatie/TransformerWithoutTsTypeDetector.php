@@ -11,14 +11,9 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * A `#[WithTransformer(SomeTransformer::class)]` on a `Data` property with NO paired `#[TypeScriptType]` /
- * `#[LiteralTypeScriptType]`. The typescript-transformer derives a property's TS type from its PHP type,
- * not from the transformer's output — so the generated frontend type silently keeps the PHP type while the
- * wire carries the transformed shape. Pairing the transformer with an explicit TS type keeps them honest.
- * Points at page-objects (where output transformers earn their place).
- *
- * A built-in transformer the generator already maps (`DateTimeInterfaceTransformer`, `ArrayableTransformer`)
- * is exempt — its target TS type is known without an annotation.
+ * Flags a custom `#[WithTransformer]` on a `Data` property with no paired `#[TypeScriptType]` /
+ * `#[LiteralTypeScriptType]`, so the generated TS keeps the PHP type while the wire carries the
+ * transformed shape. Built-in transformers the generator already maps are exempt.
  */
 final class TransformerWithoutTsTypeDetector implements Detector
 {

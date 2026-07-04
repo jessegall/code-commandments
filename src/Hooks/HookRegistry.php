@@ -13,24 +13,10 @@ use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
 use JesseGall\CodeCommandments\Cli\Install;
 use JesseGall\CodeCommandments\Cli\Sync;
 /**
- * Wires code-commandments' Claude Code hooks into the project's `.claude/settings.json` — shared by
- * {@see Install} (first setup) and {@see Sync} (every `composer update`), so the hooks self-heal to
- * the current wiring instead of freezing at install time.
- *
- * ONE stamped entry per MOMENT, not per hook. Every wired entry runs the {@see HookDispatch} entry point
- * (`commandments hooks`), which fans a moment out to the whole handler registry ({@see forProject}). So
- * the settings file holds a thin, stable set — one line per distinct event the {@see Hook::bindings}
- * ask for — and a NEW hook is a line in the registry, not a new settings entry: same-moment handlers add
- * nothing here. An event is wired with a matcher ONLY when every handler for it shares one (e.g.
- * PreToolUse → all `Bash`), so the dispatcher doesn't boot on unrelated tools; a mixed or unmatched event
- * is wired once, unmatched, and the handlers self-filter by tool inside {@see Hook::handle}.
- *
- * Idempotent, and MIGRATING: it removes ONLY the hooks WE stamped ({@see STAMP}) — from every event, then
- * adds back the current moment set. So the old per-class entries (a stamped `hook '<class>'`) are stripped
- * and replaced with the dispatcher entries on the next sync; and CRUCIALLY, every hook the human wrote —
- * in any event, even one that itself runs `commandments` — is left untouched, because it carries no stamp.
- * (A one-time migration also matches our PRE-stamp reminder hooks so they upgrade.) Idempotent by CONTENT:
- * it writes only when the settings actually change.
+ * Wires code-commandments' Claude Code hooks into `.claude/settings.json` — one stamped entry per
+ * distinct MOMENT, each running the {@see HookDispatch} entry point that fans out to the handler
+ * registry. Shared by {@see Install} and {@see Sync}; idempotent, and strips only the entries it
+ * stamped ({@see STAMP}), leaving hooks the user wrote untouched.
  */
 final class HookRegistry
 {
@@ -39,10 +25,8 @@ final class HookRegistry
     private const string BINARY = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments"';
 
     /**
-     * The stamp appended to every command WE wire — a trailing shell comment (ignored when the hook
-     * runs), so {@see stripOurs} can recognise and replace exactly our own hooks and NEVER touch one
-     * the user wrote by hand, even if theirs also invokes `commandments`. This is the ONLY thing we
-     * strip; a hook without this stamp is the human's and is preserved untouched.
+     * The stamp appended to every command we wire — a trailing shell comment (ignored when the hook
+     * runs) that lets {@see stripOurs} replace exactly our own hooks and leave the user's untouched.
      */
     private const string STAMP = '# @code-commandments-managed';
 
@@ -50,8 +34,7 @@ final class HookRegistry
     private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
 
     /**
-     * The hooks that ship with the package. A consumer adds its own via `$config->hook(...)`; both
-     * flow through {@see wire} the same way, wired from each hook's {@see Hook::bindings}.
+     * The hooks that ship with the package; a consumer adds its own via `$config->hook(...)`.
      *
      * @var list<class-string<Hook>>
      */
@@ -59,8 +42,7 @@ final class HookRegistry
 
     /**
      * The hooks to wire for the project at $dir — the {@see BUILTINS} plus any it registered with
-     * `$config->hook(...)`. The one place the open set is assembled, so {@see Install}/{@see Sync}
-     * can't drift.
+     * `$config->hook(...)`.
      *
      * @return list<class-string<Hook>>
      */
@@ -70,8 +52,7 @@ final class HookRegistry
     }
 
     /**
-     * Wire $hookClasses (the {@see BUILTINS} by default; callers pass the built-ins PLUS a project's
-     * registered hooks) into the settings at $path. Returns true when the file actually changed.
+     * Wire $hookClasses into the settings at $path. Returns true when the file actually changed.
      *
      * @param  list<class-string<Hook>>  $hookClasses
      */
@@ -106,8 +87,8 @@ final class HookRegistry
     }
 
     /**
-     * The stamped command every wired moment runs — the {@see HookDispatch} entry point. One command for
-     * all moments; the dispatcher reads the event from the payload and fans out to the registry.
+     * The stamped command every wired moment runs — the {@see HookDispatch} entry point, which reads
+     * the event from the payload and fans out to the registry.
      */
     private static function command(): string
     {
@@ -117,8 +98,7 @@ final class HookRegistry
     /**
      * The distinct MOMENTS to wire, from the union of every handler's {@see Hook::bindings} — one entry
      * per event, carrying a matcher only when every handler for that event shares one (else unmatched, so
-     * the handlers self-filter by tool). This is the whole coupling between the handler list and the
-     * settings: a same-moment handler changes nothing here.
+     * the handlers self-filter by tool).
      *
      * @param  list<class-string<Hook>>  $hookClasses
      * @return array<string, ?string>  event => matcher (null = unmatched)
@@ -184,11 +164,9 @@ final class HookRegistry
     }
 
     /**
-     * Is $command one WE wrote — safe to strip and re-add? True for any command carrying our
+     * Is $command one we wrote — safe to strip and re-add? True for any command carrying our
      * {@see STAMP}, and (for one-time migration of pre-stamp installs) for a bare `commandments`
-     * invocation ENDING in one of our own reminder {@see LEGACY_SUBCOMMANDS}. A hook the human wrote —
-     * even one that runs `commandments judge`/`repent`/`sync` — carries no stamp and doesn't end in a
-     * reminder subcommand, so it is NEVER matched here and is preserved untouched.
+     * invocation ending in one of our reminder {@see LEGACY_SUBCOMMANDS}.
      */
     private static function isOurs(string $command): bool
     {

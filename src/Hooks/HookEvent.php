@@ -59,13 +59,10 @@ final class HookEvent
     }
 
     /**
-     * Is the agent stopping ONLY to WAIT on background work — a `run_in_background` task or a subagent
-     * that will auto-resume it — rather than genuinely ending its turn? A `Stop` hook must stay silent
-     * then: a parked-waiting agent isn't done, and nudging or blocking it is noise (and the block cap
-     * would burn on stops it doesn't control). Read off the Stop payload's `background_tasks`, each a
-     * `{id, type, status, …}` (confirmed live): a task with a NON-terminal status (running/pending, or an
-     * unknown/missing one we treat as active) holds the turn open. A settled task lingering in the array,
-     * an empty array, or an absent field ⇒ a genuine stop, so behaviour is unchanged when none is pending.
+     * Is the agent stopping only to wait on background work — a `run_in_background` task or a subagent
+     * that will auto-resume it — rather than genuinely ending its turn? True when the Stop payload's
+     * `background_tasks` holds a task with a non-terminal status (an unknown or missing one counts as
+     * active); a `Stop` hook stays silent then.
      */
     public function hasPendingBackgroundWork(): bool
     {

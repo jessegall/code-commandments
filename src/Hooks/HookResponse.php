@@ -5,14 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks;
 
 /**
- * Merges what several handlers emit for ONE hook moment into a single Claude Code response — the
- * aggregation the harness used to do across separate hook processes, now that {@see HookDispatch} runs
- * the whole registry in one invocation. Pure: given the raw emissions, it returns the one payload to
- * write, or null to stay silent (the graceful no-op — Claude Code just continues).
- *
- * The rules mirror what running the hooks separately produced: a BLOCK wins (a `Stop` that any handler
- * blocks stays blocked, with the reasons joined into one message); otherwise the non-blocking context
- * every handler injected is concatenated into one, kept out of the transcript only when they all asked.
+ * Merges what several handlers emit for one hook moment into a single Claude Code response, or null to
+ * stay silent. A BLOCK wins — the blocking handlers' reasons are joined into one message; otherwise the
+ * non-blocking context each handler injected is concatenated, suppressed from the transcript only when
+ * they all asked.
  */
 final class HookResponse
 {

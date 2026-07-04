@@ -7,10 +7,8 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Ast\Support\Frozen;
 
 /**
- * `commandments freeze <path>` / `unfreeze <path>` — stamp a file as intentionally immutable, or lift
- * the stamp. A frozen file is still SCANNED (the call graph / provenance need it) but is never a
- * TARGET: {@see \JesseGall\CodeCommandments\Cli\Scope\FrozenScope} keeps it out of scope, so it is
- * never flagged and never rewritten by a repenter. Idempotent — freezing a frozen file is a no-op.
+ * `commandments freeze <path>` / `unfreeze <path>` — stamp a file as intentionally immutable, or lift the
+ * stamp. A frozen file is still scanned but never flagged or rewritten. Idempotent.
  */
 final class Freeze implements Command
 {

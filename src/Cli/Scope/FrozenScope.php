@@ -7,10 +7,8 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
 use JesseGall\CodeCommandments\Ast\Support\Frozen;
 
 /**
- * The scope of NOT-frozen files — always compounded into a run's {@see Scope}, so a file the author
- * declared immutable ({@see Frozen}) is never a target. It is still SCANNED (the scanner ignores scope);
- * this only keeps it from being flagged or rewritten. The frozen verdict is read from source once per
- * file and remembered.
+ * The scope of NOT-frozen files — compounded into a run's {@see Scope} so a file declared immutable
+ * ({@see Frozen}) is never a target. The frozen verdict is read from source once per file and remembered.
  */
 final class FrozenScope implements FileScope
 {

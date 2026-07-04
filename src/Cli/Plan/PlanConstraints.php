@@ -7,13 +7,10 @@ namespace JesseGall\CodeCommandments\Cli\Plan;
 use JesseGall\CodeCommandments\PlanExecution;
 
 /**
- * The constraint state for the active plan — the natural-language invariants the run must hold to, plus
- * whether the agent has VERIFIED them against its branch diff. The ACTIVE set is the project's global
- * constraints (from {@see PlanExecution::constraints}) plus any LOCAL ones this run added
- * (`commandments constraints add`), which live in the worktree's own `.commandments/.plan-constraints`.
- * Verification is a HEAD stamp in `.commandments/.constraints-verified`: fresh only while HEAD is
- * unchanged, so a commit made after a check invalidates it and the `plan done` gate demands a re-check of
- * the final state. Worktree-scoped like {@see PlanMarker}, so one worktree's constraints never gate another.
+ * The constraint state for the active plan — the natural-language invariants the run must hold to (the
+ * global ones from {@see PlanExecution::constraints} plus this run's local additions), and whether the
+ * agent has verified them against its branch diff. Verification is a HEAD stamp, fresh only while HEAD
+ * is unchanged. Worktree-scoped like {@see PlanMarker}.
  */
 final class PlanConstraints
 {

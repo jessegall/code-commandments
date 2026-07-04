@@ -19,15 +19,9 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeFinder;
 
 /**
- * Where — across the WHOLE codebase — every `Data` subclass is HYDRATED with `::from(...)`, and whether a
- * given property is HAND-BUILT in the source at each of those sites. A `#[WithCast]` / `Castable` fires
- * during `::from()` normalisation (NOT plain `new`, which just assigns) — so `::from()` is the only site
- * a cast could own. A property whose `::from()` source always carries a hand-built value
- * (`D::from(['price' => new Money(...)])` everywhere) re-does the `simple → complex` mapping at every call
- * site; a cast owns it once. The cross-file signal for
- * {@see \JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast}.
- *
- * Memoised per codebase like {@see \JesseGall\CodeCommandments\Ast\Support\TypeResolver}.
+ * Whole-codebase index of every `Data` subclass's `::from(...)` hydration sites, and whether a given
+ * property is hand-built in the source at each. The cross-file signal for
+ * {@see \JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast}. Memoised per codebase.
  */
 final class DataConstructions
 {
@@ -51,10 +45,8 @@ final class DataConstructions
     }
 
     /**
-     * Is property $prop (declared type $type) of Data class $fqcn HAND-BUILT in the source of EVERY one of
-     * its `::from()` sites (and there is at least one)? A single site that feeds it cleanly — an opaque
-     * `::from($model)`, a passed-through value, a property absent from that source — spares it: the mapping
-     * isn't always manual there, so a cast isn't forced.
+     * Is property $prop (declared type $type) of Data class $fqcn hand-built in the source of EVERY one of
+     * its `::from()` sites (and there is at least one)? A single site that feeds it cleanly spares it.
      */
     public function alwaysHandBuilt(string $fqcn, string $prop, string $type): bool
     {
@@ -87,8 +79,7 @@ final class DataConstructions
     }
 
     /**
-     * The Data class a `::from()` call constructs — resolving `self::from()` / `static::from()` (a common
-     * shape for a named constructor) to the class the call sits in, not the literal `self`/`static`.
+     * The Data class a `::from()` call constructs — resolving `self`/`static` to the enclosing class.
      */
     private function constructedClass(NodeMatch $call): ?string
     {
@@ -99,8 +90,7 @@ final class DataConstructions
 
     /**
      * The value feeding $prop in this `::from()` source — the `$prop` key of the source array literal
-     * (resolving a local that holds that array). Null when the source can't be attributed per-property:
-     * an opaque `D::from($model)`, or a source array without that key — either way not hand-mapped here.
+     * (resolving a local that holds it). Null when the source can't be attributed per-property.
      */
     private function sourceValueFor(NodeMatch $site, string $prop): ?Node
     {
@@ -121,8 +111,7 @@ final class DataConstructions
     }
 
     /**
-     * The array literal an expression IS, or that a local variable was last assigned in $site's function —
-     * so `$data = ['price' => …]; D::from($data)` reads the same as an inline `D::from(['price' => …])`.
+     * The array literal an expression IS, or that a local variable was last assigned in $site's function.
      */
     private function arrayLiteral(?Node $expr, NodeMatch $site): ?Array_
     {
@@ -133,12 +122,9 @@ final class DataConstructions
 
     /**
      * Is this value CONSTRUCTED to produce the value object $type — `new VO(...)`, a named constructor on
-     * the VO (`ValueBag::coalesce(...)`), an external factory whose return type IS the VO
-     * (`MoneyMapper::make(): Money`), or an inline array flattened off one receiver — rather than an
-     * existing value passed straight through? A construction FORM (`new`/static call/inline flatten) is
-     * what separates hand-building from a passthrough; the produced-type match keeps it precise (a
-     * `$model->price` read or a scalar helper is not building the VO). A local variable is followed one
-     * hop to what it was assigned, so `$m = new Money(...); D::from(['price' => $m])` still counts.
+     * the VO, an external factory whose return type IS the VO, or an inline array flattened off one
+     * receiver — rather than an existing value passed straight through? A local variable is followed one
+     * hop to what it was assigned.
      */
     private function isHandBuilt(Node $expr, NodeMatch $site, string $type): bool
     {
@@ -162,8 +148,7 @@ final class DataConstructions
     }
 
     /**
-     * Does $class produce the value object $type — is it $type itself or a subclass? A named constructor
-     * on the value object's own class (`ValueBag::coalesce`), or a `new`/factory of it, builds the VO.
+     * Does $class produce the value object $type — is it $type itself or a subclass?
      */
     private function producesType(string $class, string $type): bool
     {
@@ -174,8 +159,7 @@ final class DataConstructions
     }
 
     /**
-     * The declared return type of a static call, resolved through the receiver chain (so a
-     * `MoneyMapper::make(): Money` external factory is recognised as producing `Money`), or null.
+     * The declared return type of a static call, resolved through the receiver chain, or null.
      */
     private function returnedType(StaticCall $call, NodeMatch $site): ?string
     {
@@ -187,9 +171,8 @@ final class DataConstructions
     }
 
     /**
-     * Follow a local variable one hop to the expression it was last assigned in $site's function — so a
-     * value built a statement earlier still reads as hand-built. A variable with no local assignment (a
-     * parameter, a passed-through value) is returned unchanged, so it reads as clean.
+     * Follow a local variable one hop to the expression it was last assigned in $site's function. A
+     * variable with no local assignment is returned unchanged.
      */
     private function resolveLocal(Node $expr, NodeMatch $site): Node
     {

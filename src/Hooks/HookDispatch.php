@@ -8,15 +8,10 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
- * `commandments hooks` — the ONE entry point every wired hook moment runs through. {@see Hooks} wires a
- * single stamped `hooks` command per moment (PostToolUse, Stop, PreToolUse/Bash, …); this reads the
- * payload once, runs EVERY registered handler ({@see HookRegistry::forProject} — the builtins plus a consumer's
- * `$config->hook(...)`), and merges their responses into one ({@see HookResponse}).
- *
- * A handler self-routes by event ({@see Hook::handle}) and stays silent when the moment isn't its
- * concern, so most runs emit nothing and Claude Code simply continues. The win: new hook behaviour is a
- * line in the registry, never a new settings entry — the wiring is written once (on install / `composer
- * update` sync) and never grows.
+ * `commandments hooks` — the one entry point every wired hook moment runs through. Reads the payload
+ * once, runs every registered handler ({@see HookRegistry::forProject}), and merges their responses
+ * into one ({@see HookResponse}). Each handler self-routes by event and stays silent when the moment
+ * isn't its concern.
  */
 final class HookDispatch implements Command
 {

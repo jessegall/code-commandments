@@ -71,8 +71,7 @@ final class SpatieDataNode extends NodeMatch
 
     /**
      * Date/time types Spatie casts out of the box via the built-in `DateTimeInterfaceCast` — so a
-     * value-object property of one of these never needs an author-written cast. Matched by short name so
-     * a `Carbon\CarbonImmutable`, an `Illuminate\Support\Carbon`, or a plain `DateTimeImmutable` all count.
+     * value-object property of one never needs an author-written cast. Matched by short name.
      */
     private const array NATIVE_CAST_TYPES = [
         'DateTimeInterface',
@@ -94,10 +93,8 @@ final class SpatieDataNode extends NodeMatch
 
     /**
      * Does this `#[WithTransformer(...)]` change a property's wire shape WITHOUT a paired
-     * `#[TypeScriptType]` / `#[LiteralTypeScriptType]` declaring it? The typescript-transformer derives a
-     * property's TS type from its PHP type, NOT from the transformer's output — so a custom transformer
-     * with no explicit TS type silently emits the wrong shape (the PHP type) to the frontend. A built-in
-     * transformer the generator already maps is exempt.
+     * `#[TypeScriptType]` / `#[LiteralTypeScriptType]` declaring it? A built-in transformer the generator
+     * already maps is exempt.
      */
     public function transformerLacksTsType(): bool
     {
@@ -121,8 +118,7 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
-     * The short class name of an attribute's first `X::class` argument — the transformer a
-     * `#[WithTransformer(X::class)]` names — or null when it isn't a class literal.
+     * The short class name of an attribute's first `X::class` argument, or null when it isn't a class literal.
      */
     private function firstArgumentClassShortName(Attribute $attribute): ?string
     {
@@ -213,15 +209,9 @@ final class SpatieDataNode extends NodeMatch
 
     /**
      * Does this node hand-flatten a VALUE OBJECT into the wire array of a PUBLIC slot — a single array
-     * literal whose every value is fetched off the SAME single receiver, that receiver resolving to a
-     * non-`Data`, non-enum object (a value object)? The array can reach a public slot three ways, all the
-     * same sin: a getter hook (`public array $x { get => [ … ]; }`), a `#[Computed]` method returning it,
-     * or a constructor assignment to a public declared slot (`$this->x = [ … ]`). Any of them erases the
-     * honest type and copies the shape onto every page; a `#[WithTransformer]` should own it declaratively.
-     *
-     * The receiver checks fall out of the type resolution: `$this` resolves to this `Data` (rejected by
-     * the non-`Data` gate), a scalar/unresolved receiver yields no type (rejected), and two different
-     * receivers never share (so a genuine composite is left alone).
+     * literal whose every value is fetched off the SAME receiver, that receiver resolving to a non-`Data`,
+     * non-enum object? The array reaches a public slot three ways: a getter hook, a `#[Computed]` method,
+     * or a constructor assignment to a public declared slot.
      */
     public function flattensValueObjectToArray(): bool
     {
@@ -247,9 +237,7 @@ final class SpatieDataNode extends NodeMatch
 
     /**
      * The array literal that produces a PUBLIC slot's value at this node — the body of a getter hook or
-     * `#[Computed]` method ({@see AstNode::soleArrayLiteralOutput}), or the right-hand side of a
-     * constructor assignment to a public declared slot ({@see assignedPropertyIsPublicSlot}). Null when
-     * the node produces no public-slot array (an internal helper, a private property, a scalar slot).
+     * `#[Computed]` method, or the RHS of a constructor assignment to a public declared slot. Null otherwise.
      */
     private function publicSlotArrayOutput(): ?Array_
     {
@@ -263,12 +251,9 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
-     * Is this field a PUBLIC value-object slot that is HAND-BUILT at every construction site of its
-     * `Data` — fed a `new VO(...)` / factory / inline-flattened value everywhere the object is made? Then
-     * the `simple → complex` mapping is copy-pasted across call sites; a `#[WithCast]` / `Castable` should
-     * own it once. Excludes a slot already carrying a cast attribute, a nested `Data` or enum (auto-built),
-     * and a scalar (nothing to cast) — read off the field's declared type via the whole-program
-     * {@see DataConstructions} index.
+     * Is this field a PUBLIC value-object slot HAND-BUILT at every construction site of its `Data`, via the
+     * whole-program {@see DataConstructions} index? Excludes a slot already carrying a cast attribute, a
+     * nested `Data`, and a natively-cast type (enum, date/time).
      */
     public function alwaysHandBuiltAtConstruction(): bool
     {
@@ -293,9 +278,8 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
-     * Does Spatie cast this type out of the box, so a custom `#[WithCast]` is never the fix — an enum
-     * (native), or a date/time (the built-in `DateTimeInterfaceCast`)? Building a `Carbon` at the call
-     * site is normal; the framework hydrates it from the raw value without an author-written cast.
+     * Does Spatie cast this type out of the box — an enum (native) or a date/time (the built-in
+     * `DateTimeInterfaceCast`) — so a custom `#[WithCast]` is never the fix?
      */
     private function castsNatively(string $type): bool
     {
