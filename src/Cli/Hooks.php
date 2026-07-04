@@ -9,17 +9,22 @@ use JesseGall\CodeCommandments\Config;
 /**
  * Wires code-commandments' Claude Code hooks into the project's `.claude/settings.json` — shared by
  * {@see Install} (first setup) and {@see Sync} (every `composer update`), so the hooks self-heal to
- * the current wiring instead of freezing at install time. The wiring is data-driven: each {@see Hook}
- * declares its own {@see Hook::bindings} (event + matcher), and every hook — the {@see BUILTINS} plus
- * any a consumer registered with `$config->hook(...)` — is wired the same way. Each is wired to run
- * through the generic `commandments hook '<class>'` entry point ({@see HookRunner}).
+ * the current wiring instead of freezing at install time.
  *
- * Idempotent, and MIGRATING: it removes ONLY the hooks WE stamped ({@see STAMP}) — from every event,
- * then adds back exactly the current set under their current events. So an older hook wired under the
- * wrong event (a `remind` under `UserPromptSubmit`) moves; and CRUCIALLY, every hook the human wrote —
- * in any event, even one that itself runs `commandments` — is left completely untouched, because it
- * carries no stamp. (A one-time migration also matches our PRE-stamp reminder hooks so they upgrade to
- * stamped.) Idempotent by CONTENT: it writes only when the settings actually change.
+ * ONE stamped entry per MOMENT, not per hook. Every wired entry runs the {@see HookDispatch} entry point
+ * (`commandments hooks`), which fans a moment out to the whole handler registry ({@see forProject}). So
+ * the settings file holds a thin, stable set — one line per distinct event the {@see Hook::bindings}
+ * ask for — and a NEW hook is a line in the registry, not a new settings entry: same-moment handlers add
+ * nothing here. An event is wired with a matcher ONLY when every handler for it shares one (e.g.
+ * PreToolUse → all `Bash`), so the dispatcher doesn't boot on unrelated tools; a mixed or unmatched event
+ * is wired once, unmatched, and the handlers self-filter by tool inside {@see Hook::handle}.
+ *
+ * Idempotent, and MIGRATING: it removes ONLY the hooks WE stamped ({@see STAMP}) — from every event, then
+ * adds back the current moment set. So the old per-class entries (a stamped `hook '<class>'`) are stripped
+ * and replaced with the dispatcher entries on the next sync; and CRUCIALLY, every hook the human wrote —
+ * in any event, even one that itself runs `commandments` — is left untouched, because it carries no stamp.
+ * (A one-time migration also matches our PRE-stamp reminder hooks so they upgrade.) Idempotent by CONTENT:
+ * it writes only when the settings actually change.
  */
 final class Hooks
 {
@@ -72,16 +77,14 @@ final class Hooks
 
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);
 
-        foreach ($hookClasses as $class) {
-            foreach (new $class()->bindings() as $binding) {
-                $group = ['hooks' => [['type' => 'command', 'command' => self::command($class)]]];
+        foreach (self::moments($hookClasses) as $event => $matcher) {
+            $group = ['hooks' => [['type' => 'command', 'command' => self::command()]]];
 
-                if ($binding->matcher !== null) {
-                    $group = ['matcher' => $binding->matcher] + $group;
-                }
-
-                $hooks[$binding->event][] = $group;
+            if ($matcher !== null) {
+                $group = ['matcher' => $matcher] + $group;
             }
+
+            $hooks[$event][] = $group;
         }
 
         $settings['hooks'] = $hooks;
@@ -97,14 +100,42 @@ final class Hooks
     }
 
     /**
-     * The stamped command that runs a hook class through the generic runner. The class is single-
-     * quoted so its namespace backslashes reach the CLI intact.
-     *
-     * @param  class-string<Hook>  $class
+     * The stamped command every wired moment runs — the {@see HookDispatch} entry point. One command for
+     * all moments; the dispatcher reads the event from the payload and fans out to the registry.
      */
-    private static function command(string $class): string
+    private static function command(): string
     {
-        return self::BINARY . " hook '" . $class . "' " . self::STAMP;
+        return self::BINARY . ' hooks ' . self::STAMP;
+    }
+
+    /**
+     * The distinct MOMENTS to wire, from the union of every handler's {@see Hook::bindings} — one entry
+     * per event, carrying a matcher only when every handler for that event shares one (else unmatched, so
+     * the handlers self-filter by tool). This is the whole coupling between the handler list and the
+     * settings: a same-moment handler changes nothing here.
+     *
+     * @param  list<class-string<Hook>>  $hookClasses
+     * @return array<string, ?string>  event => matcher (null = unmatched)
+     */
+    private static function moments(array $hookClasses): array
+    {
+        $matchersByEvent = [];
+
+        foreach ($hookClasses as $class) {
+            foreach (new $class()->bindings() as $binding) {
+                $matchersByEvent[$binding->event][] = $binding->matcher;
+            }
+        }
+
+        $moments = [];
+
+        foreach ($matchersByEvent as $event => $matchers) {
+            $unique = array_values(array_unique($matchers, SORT_REGULAR));
+
+            $moments[$event] = count($unique) === 1 && $unique[0] !== null ? $unique[0] : null;
+        }
+
+        return $moments;
     }
 
     /**

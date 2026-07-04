@@ -51,7 +51,7 @@ final class SyncTest extends TestCase
 
         // The plan-reminder hook is wired (via the generic `hook '<class>'` runner) and stamped.
         $settings = (string) file_get_contents("{$this->consumer}/.claude/settings.json");
-        $this->assertStringContainsString('PlanReminder', $settings);
+        $this->assertStringContainsString(' hooks ', $settings, 'the dispatcher entry point is wired');
         $this->assertStringContainsString('@code-commandments-managed', $settings);
 
         // The published-skills glob covers the flat commandments-* dirs.
@@ -81,8 +81,8 @@ final class SyncTest extends TestCase
         $this->sync();
 
         $settings = (string) file_get_contents("{$this->consumer}/.claude/settings.json");
-        $this->assertStringContainsString('FakeHook', $settings, 'the consumer hook is wired');
-        $this->assertStringContainsString('Notification', $settings, 'under its declared event');
+        $this->assertStringContainsString('Notification', $settings, 'the consumer hook adds its declared moment');
+        $this->assertStringContainsString(' hooks ', $settings, 'wired through the dispatcher entry point');
     }
 
     private function sync(): void
