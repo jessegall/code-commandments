@@ -123,19 +123,44 @@ final class PlanReminderTest extends TestCase
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha2'), "the human's stop stands after one nudge");
     }
 
-    public function test_stop_is_silent_while_waiting_on_a_background_task(): void
+    public function test_stop_is_silent_while_waiting_on_a_running_background_task(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
         $this->marker()->activate('sha0');
 
-        // A pending background task on the Stop payload — the agent will auto-resume; don't nudge.
-        $io = new CapturingHookIO(
-            new FakeGit($this->root, 'sha1', 'plan/x'),
-            ['hook_event_name' => 'Stop', 'background_tasks' => [['id' => 'a']]],
+        // The real Stop payload shape while parked on a subagent — it will auto-resume; don't nudge.
+        $running = [['id' => 'a', 'type' => 'subagent', 'status' => 'running']];
+        $this->assertSame(
+            [],
+            $this->fireWith(['hook_event_name' => 'Stop', 'background_tasks' => $running]),
+            'no keep-going nudge while a background task is running',
         );
+    }
+
+    public function test_a_settled_background_task_does_not_suppress_a_real_stop(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        $this->marker()->activate('sha0');
+
+        // A completed task lingering in the array is NOT pending — the stop is real, so keep-going fires.
+        $done = [['id' => 'a', 'type' => 'subagent', 'status' => 'completed']];
+        $emitted = $this->fireWith(['hook_event_name' => 'Stop', 'background_tasks' => $done], 'sha1');
+
+        $this->assertSame('block', $emitted[0]['decision'] ?? null, 'a settled task still lets the plan nudge');
+    }
+
+    /**
+     * Fire with a full payload (not just an event name), returning what was emitted.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return list<array<string, mixed>>
+     */
+    private function fireWith(array $payload, string $head = 'sha1'): array
+    {
+        $io = new CapturingHookIO(new FakeGit($this->root, $head, 'plan/x'), $payload);
         new PlanReminder($io)->run([]);
 
-        $this->assertSame([], $io->emitted, 'no keep-going nudge while parked on background work');
+        return $io->emitted;
     }
 
     public function test_stop_clears_the_marker_once_back_on_the_base_branch(): void
