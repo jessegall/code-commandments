@@ -123,9 +123,9 @@ _71 sins across 19 skills._
 |---|---|
 | `ConstructorOrchestration` | A page object filling a PUBLIC slot imperatively in its constructor — `$this->docks = $this->dockProjector->project();` — where a `#[Computed]` property hook would declare the slot next to how it is projected. |
 | `InjectedServiceNotHidden` | A page object that injects a collaborator into a PUBLIC property without `#[Hidden]`. |
-| `ManualOutputTransform` | A `Data` computed slot whose getter hand-flattens a value object into a wire array — `get => ['amount' => $this->order->priceInCents, 'currency' => $this->order->currency]`. |
+| `ManualOutputTransform` | Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape. / |
 | `ServiceLocationInPageObject` | A page object reaching into the container with `app(Service::class)` / `resolve(Service::class)` inside a getter, instead of injecting the collaborator via `#[FromContainer]`. |
-| `TransformerWithoutTsType` | A `#[WithTransformer(SomeTransformer::class)]` on a `Data` property with NO paired `#[TypeScriptType]` / `#[LiteralTypeScriptType]`. |
+| `TransformerWithoutTsType` | Flags a custom `#[WithTransformer]` on a `Data` property with no paired `#[TypeScriptType]` / `#[LiteralTypeScriptType]`, so the generated TS keeps the PHP type while the wire carries the transformed shape. |
 
 #### `backend/route-actions`
 
@@ -142,7 +142,7 @@ _71 sins across 19 skills._
 | `AllNullableData` | A Spatie Data class whose every promoted field is NULLABLE. |
 | `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`). |
 | `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback. |
-| `ManualInputCast` | A `Data` value-object property that is HAND-BUILT at every place its object is constructed — a `new D(price: new Money(...))` / `D::from(['price' => new Money(...)])` at every call site. |
+| `ManualInputCast` | Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once. / |
 | `NewDataObject` | Constructing a RICH Spatie `Data` object with `new` instead of `::from()` — the raw `new` skips the work `::from()` does: a cast, a name map, a nested-Data hydration, or a magic `fromX()` factory. |
 | `NonFinalData` | A Spatie `Data` class that is not declared `final`. |
 

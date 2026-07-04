@@ -38,7 +38,7 @@ final class ConstraintsCommandTest extends TestCase
 
     private function store(): PlanConstraints
     {
-        return PlanConstraints::inWorktree($this->root, new PlanExecution);
+        return PlanConstraints::inWorktree($this->root, new PlanExecution()->build());
     }
 
     public function test_add_records_a_local_rule_and_list_runs(): void

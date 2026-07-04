@@ -5,23 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 /**
- * The project's plan-execution profile — how a plan branches, commits, and checks itself as an
- * agent grinds it phase by phase. Configured inside {@see Config::planExecution}; it is the config
- * surface behind the `commandments checks` / `commandments plan` commands and the `executing-plans`
- * skill. Every setter returns `$this`, so it composes as a block or a single fluent arrow:
- *
- *   $config->planExecution(fn (PlanExecution $plan) => $plan
- *       ->branchPrefix('plan/')
- *       ->pushEachPhase()
- *       ->keepGoing()
- *       ->onStart('composer install')
- *       ->eachPhase('composer lint')
- *       ->onComplete('composer test'));
- *
- * The three check moments ({@see Moment}) are deliberately distinct: {@see onStart} is one-time
- * setup, {@see eachPhase} is the cheap between-phase signal (a full suite here would drown the
- * grind), and {@see onComplete} is the exhaustive end gate. `judge --branch` is never listed —
- * the `complete` gate always appends it, so a plan can never finish unjudged.
+ * The fluent BUILDER for a project's plan-execution profile — how a plan branches, commits, and checks
+ * itself as an agent grinds it phase by phase. The `$config->planExecution(...)` closure receives one and
+ * chains setters (each returns `$this`); {@see build} freezes it into the read-only {@see PlanProfile} the
+ * package consumes. Setters only — a read lives on the profile, so no chain can misfire on a getter.
  */
 final class PlanExecution
 {
@@ -151,55 +138,20 @@ final class PlanExecution
     }
 
     /**
-     * The commands declared for one {@see Moment} — the single accessor the `checks` command
-     * reads, so a new moment is one enum case + one bucket, not a new getter everywhere.
-     *
-     * @return list<string>
+     * Freeze the configured state into the read-only {@see PlanProfile} the package consumes.
      */
-    public function checksFor(Moment $moment): array
+    public function build(): PlanProfile
     {
-        return match ($moment) {
-            Moment::Start => $this->onStart,
-            Moment::Phase => $this->eachPhase,
-            Moment::Complete => $this->onComplete,
-        };
-    }
-
-    public function baseBranch(): string
-    {
-        return $this->baseBranch;
-    }
-
-    public function prefix(): string
-    {
-        return $this->branchPrefix;
-    }
-
-    public function pushesEachPhase(): bool
-    {
-        return $this->pushEachPhase;
-    }
-
-    /**
-     * The configured keep-going policy, or null when the Stop hook is off (the default).
-     */
-    public function stopPolicy(): ?StopPolicy
-    {
-        return $this->stopPolicy;
-    }
-
-    /**
-     * The global constraints — the invariants every plan in this project must hold to.
-     *
-     * @return list<string>
-     */
-    public function constraints(): array
-    {
-        return $this->constraints;
-    }
-
-    public function enforcesConstraintsEachPhase(): bool
-    {
-        return $this->enforceEachPhase;
+        return new PlanProfile(
+            $this->onStart,
+            $this->eachPhase,
+            $this->onComplete,
+            $this->baseBranch,
+            $this->branchPrefix,
+            $this->pushEachPhase,
+            $this->stopPolicy,
+            $this->constraints,
+            $this->enforceEachPhase,
+        );
     }
 }

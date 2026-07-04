@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\StopPolicy;
 
 use JesseGall\CodeCommandments\Hooks\Hook;
@@ -21,7 +21,7 @@ use JesseGall\CodeCommandments\Cli\Judge\Checklist;
  *    concretised with THIS project's profile (branch strategy, push cadence, the `checks` commands,
  *    keep-going policy).
  *  - **`Stop`** (a turn ending): while a plan is active AND the project opted into
- *    {@see PlanExecution::keepGoing}, blocks-and-continues so the agent grinds on until the plan is
+ *    {@see PlanProfile::keepGoing}, blocks-and-continues so the agent grinds on until the plan is
  *    done. Loop-safe — the {@see PlanMarker}'s stuck-counter caps a spinning agent, HEAD movement
  *    resets it, and {@see StopPolicy::RespectUserStops} nudges only once. Clears itself when the
  *    plan branch is back on its base (merged/abandoned), so it never leaks into later, unrelated work.
@@ -92,12 +92,12 @@ final class PlanReminder extends Hook
         return $capped ? $this->pass() : $this->block($this->keepGoingNudge());
     }
 
-    private function profile(HookEvent $event): PlanExecution
+    private function profile(HookEvent $event): PlanProfile
     {
         return Config::load($event->root)->planExecutionSettings();
     }
 
-    private function approvedNudge(PlanExecution $plan): string
+    private function approvedNudge(PlanProfile $plan): string
     {
         $push = $plan->pushesEachPhase() ? ', then commit and push' : ', then commit (push once at the end)';
         $autonomy = $plan->stopPolicy() !== null
@@ -120,7 +120,7 @@ final class PlanReminder extends Hook
      * hook can't ask; it instructs the agent to), listing the project's global ones so the agent knows
      * they are already in force. The completion gate is what makes it stick.
      */
-    private function constraintsSection(PlanExecution $plan): string
+    private function constraintsSection(PlanProfile $plan): string
     {
         $global = '';
 
