@@ -132,6 +132,15 @@ nothing and pushes every required-field check downstream into the consumers. If 
 field nullable so a consumer's check passes — stop, that's a symptom; the field's nullability is decided
 by *this* class's real contract, not by what quiets a caller.
 
+**When every field genuinely IS optional and same-shaped** — a callback/hook bag like
+`AcceptCallbacks { startDrag, received, moved, removed: Callback }`, where there is no required core
+field to demand — the honest shape is *not* `?T = null` on each, and *not* flattening the bag into its
+parent (that loses the cohesive shape). Keep each field **non-nullable with a [Null Object](../absence/SKILL.md)
+default** on the value type: `public readonly Callback $startDrag = new Callback(Callback::NOOP)`, with
+`noOp()`/`isNoOp()` behaviour on `Callback` itself. Now consumers never null-check, the wire contract has
+no nullables, and an "undeclared" hook is an *inert value* rather than an absence. This is the `absence`
+skill's Null Object option applied to a whole DTO — reach for it before you accept an all-nullable bag.
+
 ### Collections — type the element, collect the list
 
 - **`#[DataCollectionOf(X::class)]`** (or a `/** @var X[] */` docblock) on the property is **required** —
