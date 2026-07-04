@@ -99,14 +99,27 @@ nothing and pushes every required-field check downstream into the consumers. If 
 field nullable so a consumer's check passes — stop, that's a symptom; the field's nullability is decided
 by *this* class's real contract, not by what quiets a caller.
 
-**When every field genuinely IS optional and same-shaped** — a callback/hook bag like
-`AcceptCallbacks { startDrag, received, moved, removed: Callback }`, where there is no required core
-field to demand — the honest shape is *not* `?T = null` on each, and *not* flattening the bag into its
-parent (that loses the cohesive shape). Keep each field **non-nullable with a [Null Object](../absence/SKILL.md)
-default** on the value type: `public readonly Callback $startDrag = new Callback(Callback::NOOP)`, with
-`noOp()`/`isNoOp()` behaviour on `Callback` itself. Now consumers never null-check, the wire contract has
-no nullables, and an "undeclared" hook is an *inert value* rather than an absence. This is the `absence`
-skill's Null Object option applied to a whole DTO — reach for it before you accept an all-nullable bag.
+**When every field genuinely IS optional and same-shaped**, with no required core field to demand, the
+honest shape is *not* `?T = null` on each, and *not* flattening the bag into its parent (that loses the
+cohesive shape). If the field's type has a natural **inert / identity value**, keep each field
+**non-nullable with a [Null Object](../absence/SKILL.md) default** on the value type. Now consumers never
+null-check, the wire contract carries no nullables, and an "undeclared" field is an *inert value* rather
+than an absence. This is the `absence` skill's Null Object option applied to a whole DTO — reach for it
+before you accept an all-nullable bag.
+
+This is **not** a callback-only move — it fits any type with an identity value:
+
+- a **callback/hook bag** — `AcceptCallbacks { startDrag, received, moved, removed: Callback }` → each
+  defaults to `new Callback(Callback::NOOP)`, with `noOp()`/`isNoOp()` on `Callback`. The unset hook is
+  a verb nothing listens to.
+- a **filter/criteria set** — `SearchFilters { status, assignee, dueBefore }` → each defaults to a
+  "match-all" object (`StatusFilter::any()`, `DateFilter::unbounded()`), so the query builder applies
+  every filter unconditionally, no `if ($x !== null)` branch.
+- a **money/quantity bag** — `PriceBreakdown { discount, tax, shipping: Money }` → each defaults to
+  `Money::zero()`, so `subtotal + tax + shipping` needs no null coalescing.
+
+Where the type has **no** honest identity value, the field is not really always-optional — it has a real
+contract; go back to the required/`Optional`/`?T` choice above.
 
 ### Collections — type the element, collect the list
 
@@ -149,7 +162,7 @@ if you think you need one, you probably want a typed accessor / method on the cl
 
 ## Rules
 
-- A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback/hook bag), make each non-nullable with a Null Object default on the value type instead.
+- A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback bag, a filter set, a money breakdown), make each non-nullable with a Null Object / identity default on the value type instead.
 - A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
 - Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
   _`#[DataCollectionOf(X::class)]` + `X::collect($rows)`._
@@ -320,7 +333,7 @@ final class StockSnapshotData extends Data
 
 ## Checklist
 
-- [ ] A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback/hook bag), make each non-nullable with a Null Object default on the value type instead.
+- [ ] A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback bag, a filter set, a money breakdown), make each non-nullable with a Null Object / identity default on the value type instead.
 - [ ] A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
 - [ ] Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
 - [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
