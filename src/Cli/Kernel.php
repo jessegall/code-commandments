@@ -78,6 +78,7 @@ final class Kernel
             new HookCommand(['plan-reminder'], new PlanReminder()),
             new PlanCommand(),
             new ConstraintsCommand(),
+            new HookDispatch(),
             new HookRunner(),
             new Configure(),
             new ConfigCommand(),
@@ -110,7 +111,8 @@ final class Kernel
           commandments remind   # emit the cardinal rule as a PostToolUse payload
           commandments judge-reminder  # emit the "did you judge?" nudge (Stop, or PreToolUse on git commit)
           commandments plan-reminder   # open a plan (PostToolUse/ExitPlanMode) + keep it going (Stop)
-          commandments hook <Class>    # run a wired hook class (built-in or a consumer's \$config->hook(...))
+          commandments hooks           # the wired hook entry point — dispatches one moment to every registered handler
+          commandments hook <Class>    # run ONE hook class directly (built-in or a consumer's \$config->hook(...))
 
         Options:
           --skill=NAME       only run detectors for one skill (group), e.g. spatie-data

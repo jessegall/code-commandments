@@ -54,7 +54,7 @@ final class InstallTest extends TestCase
 
         $this->assertContains('my-custom-thing', $commands, "a project's own UserPromptSubmit hook is untouched");
         $this->assertContains('user-guard', $commands, "a project's own PreToolUse hook is untouched");
-        $this->assertTrue($this->hasRemind($settings['hooks']['PostToolUse'] ?? []), 'our remind is wired under PostToolUse');
+        $this->assertTrue($this->hasDispatcher($settings['hooks']['PostToolUse'] ?? []), 'our hook dispatcher is wired under PostToolUse');
     }
 
     public function test_it_migrates_our_old_user_prompt_submit_remind_to_post_tool_use(): void
@@ -70,7 +70,7 @@ final class InstallTest extends TestCase
         $settings = $this->readSettings();
 
         $this->assertArrayNotHasKey('UserPromptSubmit', $settings['hooks'], 'the old remind event is gone (it held only our hook)');
-        $this->assertTrue($this->hasRemind($settings['hooks']['PostToolUse'] ?? []), 'remind moved to PostToolUse');
+        $this->assertTrue($this->hasDispatcher($settings['hooks']['PostToolUse'] ?? []), 'the dispatcher is wired under PostToolUse');
     }
 
     /** @param array<string, mixed> $settings */
@@ -111,12 +111,14 @@ final class InstallTest extends TestCase
         return $commands;
     }
 
-    /** @param list<mixed> $groups */
-    private function hasRemind(array $groups): bool
+    /** @param list<mixed> $groups  Is our stamped `commandments hooks` dispatcher wired in these groups? */
+    private function hasDispatcher(array $groups): bool
     {
         foreach ($groups as $group) {
             foreach ((array) ($group['hooks'] ?? []) as $hook) {
-                if (str_contains((string) ($hook['command'] ?? ''), "'" . \JesseGall\CodeCommandments\Cli\Remind::class . "'")) {
+                $command = (string) ($hook['command'] ?? '');
+
+                if (str_contains($command, '@code-commandments-managed') && str_contains($command, ' hooks ')) {
                     return true;
                 }
             }
