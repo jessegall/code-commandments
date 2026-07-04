@@ -52,6 +52,32 @@ final class PageObjectTest extends TestCase
         $this->assertFalse($surface->isResponseBound('App\\InternalAggregate'), 'never leaves the backend');
     }
 
+    public function test_response_surface_resolves_a_page_object_through_a_local_variable(): void
+    {
+        // The workflows style: build into a local, hand the local to the renderer. Provenance must still
+        // see it — a shallow inline-only scan would miss `$page` and call HandheldPage internal.
+        $codebase = Codebase::fromString(<<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Routing\Controller;
+        use Spatie\LaravelData\Data;
+        class Canvas extends Data { public function __construct(public string $svg) {} }
+        class HandheldPage extends Data {
+            public readonly Canvas $a;
+            public readonly Canvas $b;
+            public static function for(string $id): static { return static::from(['id' => $id]); }
+        }
+        class HandheldController extends Controller {
+            public function show(string $id) {
+                $page = HandheldPage::for($id);
+                return inertia('Handheld', $page);
+            }
+        }
+        PHP, '/proj/app/Handheld.php');
+
+        $this->assertTrue(ResponseSurface::forCodebase($codebase)->isResponseBound('App\\HandheldPage'));
+    }
+
     public function test_page_object_policy_ignores_data_ness(): void
     {
         // PageObject adds only the two page conditions; the Data gate is the caller's precondition. The
