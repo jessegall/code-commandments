@@ -79,13 +79,31 @@ read it. `#[Hidden] #[FromContainer(WarehouseShowRequest::class)] public Warehou
 the signature, and `#[Computed] public string $movementWindow { get => $this->request->getMovementWindow(); }`
 as a slot. The request is a seed; the slots are projections of it. No `request()` helper, no facade.
 
-### Shape output with a transformer
+### Shape output with a transformer, not a hand-rolled getter
 
-When a property's *serialized shape* needs to differ from its PHP type — a value object rendered as a
-string, a domain type flattened for the wire — reach for **`#[WithTransformer(SomeTransformer::class)]`** on
-that property, not a hand-rolled getter that returns a reshaped array. A transformer owns the output
-mapping declaratively and keeps the slot's PHP type honest. (For a *leaf* DTO the `spatie-data` skill says
-to avoid transformers; a page object is exactly where they belong.)
+When a property's *serialized shape* must differ from its PHP type — a value object rendered as a string, a
+domain type flattened for the wire — reach for **`#[WithTransformer(SomeTransformer::class)]`** on that
+property. The wrong move is a computed getter that hand-builds the reshaped array:
+
+```
+// Wrong — the shape is buried in an imperative getter, and the honest `Money` type is lost.
+public array $price { get => ['amount' => $this->money->cents, 'currency' => $this->money->code]; }
+
+// Right — the slot keeps its real type; a transformer owns the wire shape declaratively.
+#[WithTransformer(MoneyTransformer::class)]
+public readonly Money $price;
+```
+
+A transformer is a tiny class implementing Spatie's `Transformer` —
+`transform(DataProperty $property, mixed $value, TransformationContext $context): mixed` — returning the
+serialized form (`$value->cents . ' ' . $value->code`, an array, whatever the frontend needs). Applied
+per-property with `#[WithTransformer(X::class, ...args)]`, or registered as a global transformer in
+`config/data.php` for a whole type (a `Money`, a `Carbon`). Keeping the transform in a transformer means
+the property's PHP type stays honest, the `#[TypeScript]` type is derived from the *real* type, and the
+same shaping is reusable across every page that carries a `Money`.
+
+(For a *leaf* DTO the [`spatie-data`](../spatie-data/SKILL.md) skill says to avoid output transformers; a
+page object — the composed thing on the wire — is exactly where they earn their place.)
 
 ## Rules
 
