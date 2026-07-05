@@ -47,14 +47,25 @@ final class ClaudeSection
           birthplace. Fix is at the birthplace. If the honest fix touches many call sites,
           touch them — that breadth IS the bug surfacing, not a reason to wrap it.
         - If a finding is a genuine false positive, say so and why — and **report it** so
-          it gets fixed upstream instead of silently ignored:
-          `vendor/bin/commandments report --detector=NAME --reason="…" --file=PATH --line=N`.
+          it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
+          `vendor/bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
+          (repeat `--ref` for EVERY file involved — a bug spanning files references each).
           Never rationalise a real finding as "pre-existing baseline."
 
-        **See a rule that's missing, or one that should catch more?** Propose it:
-        `vendor/bin/commandments feature-request --title="…" --reason="…"`. Reporting
-        false positives and requesting rules is how the disciplines get sharper — do it
-        whenever a finding is wrong or a gap is real, don't just work around it.
+        **You are ENCOURAGED to make the tool better — not just when a finding is clearly
+        wrong.** Surface every improvement idea: a rule that's missing or should catch more,
+        a false positive, OR a `repent` auto-fix that did the wrong thing or left a rough
+        edge. Two channels, and using them is expected, not exceptional:
+
+        - `vendor/bin/commandments report --reason="…" --ref=PATH:LINE [--ref=…]` — a bug or
+          false positive (a wrong finding, or a broken/incorrect `repent` result). A broken
+          auto-fix is itself a bug: report it, referencing both the source and the bad output.
+        - `vendor/bin/commandments feature-request --title="…" --reason="…"` — a new or
+          changed rule.
+
+        Reporting false positives, flagging bad auto-fixes, and requesting rules is how the
+        disciplines get sharper — do it whenever something is wrong or could be better, don't
+        just work around it.
 
         **Frozen files — a file that is deliberately immutable.** A few files must not
         change even though they carry sins: a frozen graph migration whose body mirrors
