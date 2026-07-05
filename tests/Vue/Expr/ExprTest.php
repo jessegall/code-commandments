@@ -39,4 +39,25 @@ final class ExprTest extends TestCase
         // An arrow body may legitimately read an outer variable — only the PARAMS are subtracted.
         $this->assertSame(['list', 'query'], Parser::parse('list.filter((k) => k.name === query)')->roots());
     }
+
+    public function test_object_shape_infers_a_struct_from_a_literal(): void
+    {
+        // Each field takes its value's soundly-inferred type; a value only a checker could type
+        // (a call, an identifier, a nested object) falls back to `unknown` — a partial but usable shape.
+        $this->assertSame(
+            '{ name: string; quantity: number; active: boolean; note: null; make: unknown }',
+            Parser::parse('{ name: "", quantity: 0, active: true, note: null, make: build() }')->objectShape(),
+        );
+        $this->assertNull(Parser::parse('{}')->objectShape(), 'an empty object names nothing');
+        $this->assertNull(Parser::parse('42')->objectShape(), 'a non-object has no shape');
+    }
+
+    public function test_callee_and_argument_read_a_call(): void
+    {
+        $call = Parser::parse('useForm({ name: "" })');
+
+        $this->assertSame('useForm', $call->callee());
+        $this->assertSame('{ name: string }', $call->argument(0)?->objectShape());
+        $this->assertNull(Parser::parse('obj.method()')->callee(), 'a member call has no bare callee');
+    }
 }

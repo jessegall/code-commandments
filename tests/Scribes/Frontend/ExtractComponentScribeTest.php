@@ -327,6 +327,31 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('v-model:confirm-open="confirmOpen"', $callSite);
     }
 
+    public function test_an_inertia_useform_model_is_typed_from_its_seed_not_unknown(): void
+    {
+        // Issue #304(2): an extracted `v-model` bound to an Inertia `useForm({…})` was typed
+        // `defineModel<unknown>`, breaking every `form.x` access. It must be synthesised as
+        // `InertiaForm<{ shape }>` from the seed object, with the `InertiaForm` type imported.
+        $dialog = '<Dialog><DialogContent><DialogHeader><DialogTitle>Edit</DialogTitle></DialogHeader>'
+            . '<form><Label>Name</Label><Input v-model="form.name" />'
+            . '<Label>Qty</Label><Input v-model="form.quantity" />'
+            . '<Label>Active</Label><Input v-model="form.active" />'
+            . '<Button @click="form.reset()">Reset</Button></form></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { useForm } from '@inertiajs/vue3';\n"
+            . "import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';\n"
+            . "const form = useForm({ name: '', quantity: 0, active: true });\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = $this->components($files);
+        $component = $created === [] ? '' : (string) reset($created);
+
+        $this->assertStringContainsString('InertiaForm<{ name: string; quantity: number; active: boolean }>', $component);
+        $this->assertStringContainsString("import type { InertiaForm } from '@inertiajs/vue3';", $component);
+        $this->assertStringNotContainsString('unknown', $component, 'the form no longer falls to unknown');
+    }
+
     public function test_a_props_variable_access_forwards_the_member_not_the_props_object(): void
     {
         // A chunk that reads `props.label` must forward `label` (typed from Props), not a bogus

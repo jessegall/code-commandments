@@ -655,7 +655,7 @@ final class ExtractComponentScribe extends RepentScribe
         $defineEmits = self::defineEmits($boundary->emitEvents());
 
         $scriptSetup = $defineModels . $defineProps . $defineEmits;
-        $imports = self::usedImports($script, $markup . "\n" . $scriptSetup);
+        $imports = trim(self::usedImports($script, $markup . "\n" . $scriptSetup) . "\n" . self::syntheticTypeImports($script, $types));
         $head = $imports === '' ? '' : "{$imports}\n\n";
         $carried = self::carriedTypes($script, $types);
 
@@ -730,6 +730,7 @@ final class ExtractComponentScribe extends RepentScribe
                 $types[$prop] = $source[$prop]
                     ?? $script->declaredType($prop)
                     ?? self::tracedType($boundary, $script, $prop)
+                    ?? self::inertiaFormType($script, $prop) // a local `const x = useForm({…})`
                     ?? $this->propTypes?->typeOf($boundary->sfc, $prop) // trace up the render tree
                     ?? 'unknown';
             }
@@ -775,6 +776,85 @@ final class ExtractComponentScribe extends RepentScribe
         }
 
         return $types;
+    }
+
+    /**
+     * The type of a local bound to an Inertia `useForm({…})` — `const form = useForm({ name: '',
+     * qty: 0 })` → `InertiaForm<{ name: string; qty: number }>`, the field shape inferred from the
+     * seed object. This is the one composable the static passes can't trace (its type lives in
+     * `node_modules`), yet an extracted `v-model="form"` typed `unknown` breaks every `form.x` access
+     * — so it's synthesised from the call. Gated to `useForm` imported from `@inertiajs/*`; the
+     * `InertiaForm` type import is added by {@see syntheticTypeImports}. Null for anything else, so
+     * no other factory is guessed at.
+     */
+    private static function inertiaFormType(Script $script, string $prop): ?string
+    {
+        $init = $script->declaratorValue($prop);
+        $source = $script->importSpecifier('useForm');
+
+        if ($init === null || ! str_starts_with(ltrim($init), 'useForm') || $source === null || ! str_contains($source, '@inertiajs')) {
+            return null;
+        }
+
+        // Prefer the author's own type argument — `useForm<ProductForm>(…)` → `InertiaForm<ProductForm>`
+        // — since it's more precise than a re-inferred shape (and carried in by usedImports/carriedTypes).
+        $generic = self::genericArgument(ltrim($init));
+
+        if ($generic !== null) {
+            return "InertiaForm<{$generic}>";
+        }
+
+        // No explicit type — infer the field shape from the seed object `useForm({ … })`.
+        $shape = Parser::parse($init)->callee() === 'useForm' ? Parser::parse($init)->argument(0)?->objectShape() : null;
+
+        return $shape === null ? null : "InertiaForm<{$shape}>";
+    }
+
+    /**
+     * The explicit type argument of a leading `useForm<…>(…)` call, read as the balanced `<…>` right
+     * after the callee (so `useForm<Foo<Bar>>(…)` yields `Foo<Bar>`) — or null when there is none. A
+     * bounded delimiter scan: the template expression parser can't lex a TS generic, so this reads it
+     * directly rather than guessing.
+     */
+    private static function genericArgument(string $init): ?string
+    {
+        $rest = ltrim(substr($init, strlen('useForm')));
+
+        if (($rest[0] ?? '') !== '<') {
+            return null;
+        }
+
+        $depth = 0;
+
+        for ($i = 0, $length = strlen($rest); $i < $length; $i++) {
+            $depth += $rest[$i] === '<' ? 1 : ($rest[$i] === '>' ? -1 : 0);
+
+            if ($depth === 0) {
+                return trim(substr($rest, 1, $i - 1)) ?: null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Import statements for types this component SYNTHESISED (not carried from the source) — currently
+     * Inertia's `InertiaForm`, pulled from the same module the source imported `useForm` from, so a
+     * `defineModel<InertiaForm<…>>` compiles. Empty when no synthesised type needs an import.
+     *
+     * @param  array<string, string>  $types
+     */
+    private static function syntheticTypeImports(Script $script, array $types): string
+    {
+        foreach ($types as $type) {
+            if (str_contains($type, 'InertiaForm<')) {
+                $source = $script->importSpecifier('useForm') ?? '@inertiajs/vue3';
+
+                return "import type { InertiaForm } from '{$source}';";
+            }
+        }
+
+        return '';
     }
 
     /**
