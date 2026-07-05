@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 /**
@@ -28,12 +29,13 @@ final class ConstraintReminder extends Hook
     protected function onPostToolUse(HookEvent $event): int
     {
         $active = $this->active($event->root);
+        $counter = ToolUseCounter::forConstraintReminder($event->root);
 
-        if ($active === [] || $this->bump($event->root) < self::INTERVAL) {
+        if ($active === [] || $counter->bump() < self::INTERVAL) {
             return $this->pass();
         }
 
-        $this->reset($event->root);
+        $counter->reset();
         $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [
@@ -79,38 +81,4 @@ final class ConstraintReminder extends Hook
         return 'Code Commandments — hold to this plan\'s CONSTRAINTS; do not drift into a violation as you '
             . 'work (the completion gate will make you review your whole branch diff against them):' . $list;
     }
-
-    private function bump(string $root): int
-    {
-        $count = 1 + (is_file($this->counterFile($root)) ? (int) file_get_contents($this->counterFile($root)) : 0);
-        $this->write($root, $count);
-
-        return $count;
-    }
-
-    private function reset(string $root): void
-    {
-        $this->write($root, 0);
-    }
-
-    private function write(string $root, int $count): void
-    {
-        $file = $this->counterFile($root);
-
-        @mkdir(dirname($file), 0777, true);
-        @file_put_contents($file, $count . "\n" . self::EXPLANATION . "\n");
-    }
-
-    private function counterFile(string $root): string
-    {
-        return $root . '/.commandments/.constraint-remind-count';
-    }
-
-    /** What the counter file explains about itself, below the count (the `(int)` read ignores it). */
-    private const string EXPLANATION = <<<'TXT'
-        -----
-        Tool-use counter for the code-commandments constraint reminder (`commandments hook … ConstraintReminder`,
-        wired as a PostToolUse hook). The number on the first line is the running count; while a plan is active
-        and has constraints, the hook re-surfaces them once every 25 tool uses, then resets. Safe to delete.
-        TXT;
 }

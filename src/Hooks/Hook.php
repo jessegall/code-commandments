@@ -44,12 +44,18 @@ abstract class Hook
         return match ($event->name()) {
             'PostToolUse' => $this->onPostToolUse($event),
             'PreToolUse' => $this->onPreToolUse($event),
+            'SessionStart' => $this->onSessionStart($event),
             'Stop' => $event->hasPendingBackgroundWork() ? $this->pass() : $this->onStop($event),
             default => $this->onManualRun($event),
         };
     }
 
     protected function onPostToolUse(HookEvent $event): int
+    {
+        return $this->pass();
+    }
+
+    protected function onSessionStart(HookEvent $event): int
     {
         return $this->pass();
     }

@@ -26,6 +26,7 @@ final readonly class PlanProfile
         private ?StopPolicy $stopPolicy,
         private array $constraints,
         private bool $enforceEachPhase,
+        private string $testFlow = '',
     ) {}
 
     /**
@@ -73,5 +74,13 @@ final readonly class PlanProfile
     public function enforcesConstraintsEachPhase(): bool
     {
         return $this->enforceEachPhase;
+    }
+
+    /**
+     * The project's default testing methodology for a plan run — '' when none is configured.
+     */
+    public function testFlow(): string
+    {
+        return $this->testFlow;
     }
 }

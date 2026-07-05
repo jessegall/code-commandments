@@ -8,6 +8,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
 use JesseGall\CodeCommandments\Cli\Install;
 /**
  * PostToolUse hook that counts tool uses and surfaces the cardinal rule once every
@@ -38,11 +39,13 @@ final class Remind extends Hook
      */
     protected function onPostToolUse(HookEvent $event): int
     {
-        if ($this->bump() < self::INTERVAL) {
+        $counter = ToolUseCounter::forRemind($event->root);
+
+        if ($counter->bump() < self::INTERVAL) {
             return $this->pass();
         }
 
-        $this->reset();
+        $counter->reset();
         $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [
@@ -57,46 +60,5 @@ final class Remind extends Hook
     protected function onManualRun(HookEvent $event): int
     {
         return $this->onPostToolUse($event);
-    }
-
-    /**
-     * Increment the persisted tool-use count and return the new value.
-     */
-    /** What the counter file explains about itself, below the count (the `(int)` read ignores it). */
-    private const string EXPLANATION = <<<'TXT'
-        -----
-        Tool-use counter for the code-commandments reminder hook (`commandments remind`, wired as a
-        PostToolUse hook). The number on the first line is the running count; the hook surfaces the
-        cardinal rule once every 25 tool uses, then resets it to 0. Safe to delete — it regenerates.
-        TXT;
-
-    private function bump(): int
-    {
-        $file = self::counterFile();
-        $count = 1 + (is_file($file) ? (int) file_get_contents($file) : 0);
-
-        $this->write($count);
-
-        return $count;
-    }
-
-    private function reset(): void
-    {
-        $this->write(0);
-    }
-
-    private function write(int $count): void
-    {
-        $file = self::counterFile();
-
-        @mkdir(dirname($file), 0777, true);
-        @file_put_contents($file, $count . "\n" . self::EXPLANATION . "\n");
-    }
-
-    private static function counterFile(): string
-    {
-        $root = getenv('CLAUDE_PROJECT_DIR') ?: getcwd();
-
-        return $root . '/.commandments/.remind-count';
     }
 }
