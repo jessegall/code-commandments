@@ -24,8 +24,36 @@ final class PlanCommandTest extends TestCase
     protected function tearDown(): void
     {
         @unlink($this->root . '/.commandments/.plan-active');
+        @unlink($this->root . '/.commandments/.plan-stuck');
         @rmdir($this->root . '/.commandments');
         @rmdir($this->root);
+    }
+
+    public function test_stuck_marks_an_active_plan_without_ending_it(): void
+    {
+        $marker = PlanMarker::inWorktree($this->root);
+        $marker->activate('sha0');
+
+        $this->assertSame(0, $this->exec('stuck'));
+
+        $this->assertTrue($marker->isActive(), 'a stuck plan stays active — it is not done');
+        $this->assertSame('sha', $marker->stuckAt(), 'stuck at the current HEAD (FakeGit default)');
+    }
+
+    public function test_stuck_is_a_no_op_without_an_active_plan(): void
+    {
+        $this->assertSame(0, $this->exec('stuck'));
+        $this->assertNull(PlanMarker::inWorktree($this->root)->stuckAt());
+    }
+
+    public function test_done_clears_a_lingering_stuck_signal(): void
+    {
+        $marker = PlanMarker::inWorktree($this->root);
+        $marker->activate('sha');
+        $marker->markStuck('sha');
+
+        $this->assertSame(0, $this->exec('done'));
+        $this->assertNull($marker->stuckAt(), 'done drops the stuck signal too');
     }
 
     public function test_done_clears_an_active_plan(): void

@@ -33,9 +33,32 @@ final class PlanCommand implements Command
 
         return match ($input->firstArgument('status')) {
             'done', 'finish', 'complete' => $this->done($marker, $root),
+            'stuck', 'blocked' => $this->stuck($marker, $root),
             'status' => $this->status($marker, $root),
             default => $this->usage(),
         };
+    }
+
+    /**
+     * Signal that the plan is BLOCKED — the agent needs the human and cannot finish. Unlike `done`
+     * this keeps the plan ACTIVE; it only stops the keep-going Stop nudge (so a stuck agent isn't
+     * looped) until progress is made. A plan that isn't blocked but complete uses `done` instead.
+     */
+    private function stuck(PlanMarker $marker, string $root): int
+    {
+        if (! $marker->isActive()) {
+            fwrite(STDOUT, "No active plan — nothing to mark stuck.\n");
+
+            return 0;
+        }
+
+        $marker->markStuck($this->io->git()->head($root));
+        fwrite(STDOUT,
+            "◼ Plan marked STUCK — the keep-going nudge is paused; the plan stays active. Tell the user\n"
+            . "  what you're blocked on. Nudging resumes automatically once you make progress (a new commit),\n"
+            . "  or run `commandments plan done` if it turns out the plan is actually complete.\n");
+
+        return 0;
     }
 
     private function done(PlanMarker $marker, string $root): int
@@ -72,7 +95,8 @@ final class PlanCommand implements Command
         $plan = Config::load($root)->planExecutionSettings();
         $keepGoing = $plan->stopPolicy()?->name ?? 'off';
 
-        fwrite(STDOUT, $marker->isActive() ? "● Plan active.\n" : "○ No plan active.\n");
+        $stuck = $marker->isActive() && $marker->stuckAt() !== null;
+        fwrite(STDOUT, $marker->isActive() ? ($stuck ? "◼ Plan active (STUCK).\n" : "● Plan active.\n") : "○ No plan active.\n");
         fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  keep-going: {$keepGoing}\n");
 
         $constraints = PlanConstraints::inWorktree($root, $plan);
@@ -94,7 +118,7 @@ final class PlanCommand implements Command
 
     private function usage(): int
     {
-        fwrite(STDERR, "Usage: commandments plan <done|status>\n");
+        fwrite(STDERR, "Usage: commandments plan <done|stuck|status>\n");
 
         return 2;
     }
