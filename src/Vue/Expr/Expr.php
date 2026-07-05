@@ -180,6 +180,52 @@ final class Expr
      *
      * @return array{name: string, arguments: list<string>}|null
      */
+    /**
+     * The bare callee name of a call — `useForm({…})` → `useForm` — or null when this isn't a
+     * call on a plain identifier (a `obj.method(…)` member call has no bare callee).
+     */
+    public function callee(): ?string
+    {
+        if ($this->kind !== self::CALL) {
+            return null;
+        }
+
+        $callee = $this->child('callee');
+
+        return $callee->is(self::IDENTIFIER) ? (string) $callee->get('name') : null;
+    }
+
+    /**
+     * The $index-th ARGUMENT of a call, as an {@see Expr} (so a caller can inspect an object-literal
+     * argument, unlike {@see asCall} which renders args to source and elides complex ones). Null when
+     * this isn't a call or the argument is absent.
+     */
+    public function argument(int $index): ?self
+    {
+        return $this->kind === self::CALL ? ($this->children('arguments')[$index] ?? null) : null;
+    }
+
+    /**
+     * The TS SHAPE of an object literal — `{ name: '', qty: 0, tag: null }` → `{ name: string; qty:
+     * number; tag: null }`. Each field takes its value's soundly-inferred type, falling back to
+     * `unknown` for a value only a checker could type (a call, an identifier) — a partial shape is
+     * still a usable struct. Null when this isn't an object literal or it has no static entries.
+     */
+    public function objectShape(): ?string
+    {
+        if ($this->kind !== self::OBJECT) {
+            return null;
+        }
+
+        $fields = [];
+
+        foreach ($this->objectEntries() as $key => $value) {
+            $fields[] = "{$key}: " . ($value->inferType() ?? 'unknown');
+        }
+
+        return $fields === [] ? null : '{ ' . implode('; ', $fields) . ' }';
+    }
+
     public function asCall(): ?array
     {
         if ($this->kind !== self::CALL) {
