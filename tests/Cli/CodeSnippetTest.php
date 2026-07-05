@@ -61,6 +61,17 @@ final class CodeSnippetTest extends TestCase
         @unlink($vue);
     }
 
+    public function test_marks_every_line_in_a_range(): void
+    {
+        $snippet = new CodeSnippet()->forFile($this->file, 3, 5);
+
+        self::assertNotNull($snippet);
+        self::assertStringContainsString(':3-5`', $snippet, 'the range is shown in the header');
+        self::assertStringContainsString('→ 3  final class NodeGroup', $snippet);
+        self::assertStringContainsString('→ 4  {', $snippet);
+        self::assertStringContainsString("→ 5      public const string GENERAL", $snippet);
+    }
+
     public function test_returns_null_when_the_file_is_absent(): void
     {
         self::assertNull(new CodeSnippet()->forFile('/no/such/file.php', 10));

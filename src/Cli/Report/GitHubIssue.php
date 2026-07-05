@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Cli\Install;
  * Requires `gh` installed and authenticated; otherwise it explains how to file by
  * hand rather than failing silently.
  */
-final class GitHubIssue
+class GitHubIssue
 {
     private const string REPO = 'jessegall/code-commandments';
 

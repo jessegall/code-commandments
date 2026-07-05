@@ -19,7 +19,11 @@ final class CodeSnippet
     /** Lines shown after the reported line — enough to carry a small method/class body. */
     private const int AFTER = 24;
 
-    public function forFile(string $file, ?int $line): ?string
+    /**
+     * A fenced excerpt around $line — or, when $endLine is given, around the whole `$line..$endLine`
+     * RANGE (every line in it marked `→`), with a little context on each side.
+     */
+    public function forFile(string $file, ?int $line, ?int $endLine = null): ?string
     {
         if (! is_file($file) || ! is_readable($file)) {
             return null;
@@ -32,24 +36,32 @@ final class CodeSnippet
         }
 
         $total = count($lines);
-        $target = $line ?? 1;
-        $start = max(1, $target - self::BEFORE);
-        $end = min($total, $target + self::AFTER);
+        $from = $line ?? 1;
+        $to = max($from, $endLine ?? $from);
+        $start = max(1, $from - self::BEFORE);
+        $end = min($total, $to + ($endLine !== null ? self::BEFORE : self::AFTER));
         $width = strlen((string) $end);
 
         $rows = [];
 
         for ($n = $start; $n <= $end; $n++) {
-            $marker = ($line !== null && $n === $target) ? '→' : ' ';
+            $marker = ($line !== null && $n >= $from && $n <= $to) ? '→' : ' ';
             $rows[] = sprintf("%s %{$width}d  %s", $marker, $n, $lines[$n - 1]);
         }
 
-        $where = $line !== null ? "{$file}:{$line}" : $file;
-
-        return "**Code** (`{$where}`):\n\n"
+        return "**Code** (`{$this->where($file, $line, $endLine)}`):\n\n"
             . "```{$this->fence($file)}\n"
             . implode("\n", $rows)
             . "\n```\n";
+    }
+
+    private function where(string $file, ?int $line, ?int $endLine): string
+    {
+        if ($line === null) {
+            return $file;
+        }
+
+        return $endLine !== null && $endLine > $line ? "{$file}:{$line}-{$endLine}" : "{$file}:{$line}";
     }
 
     private function fence(string $file): string
