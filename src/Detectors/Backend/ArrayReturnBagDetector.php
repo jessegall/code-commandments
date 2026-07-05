@@ -16,7 +16,8 @@ use JesseGall\CodeCommandments\Backend\Detector;
 
 /**
  * Detects multi-field string-keyed array returns (bags for value objects). Exempt: contract methods,
- * self-serializers, JSON schemas, and method overrides. Points at value-objects.
+ * self-serializers, JSON schemas, method overrides, and SHAPED-array returns (`@return array{…}` — a
+ * typed, statically-checkable struct, not a loose bag). Points at value-objects.
  */
 final class ArrayReturnBagDetector implements Detector, Exemptable
 {
@@ -38,6 +39,7 @@ final class ArrayReturnBagDetector implements Detector, Exemptable
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
             ->reject(static fn (AstNode $node): bool => $node->looksLikeJsonSchema())
             ->reject(static fn (AstNode $node): bool => $node->isSelfProjectionArray())
+            ->reject(static fn (AstNode $node): bool => $node->enclosingFunctionReturnsShapedArray())
             ->reject(static fn (AstNode $node): bool => Exemptions::has(ArrayReturning::class, $codebase, $node->enclosingClassName()))
             ->reject(static fn (AstNode $node): bool => Exemptions::has(ContractMethod::class, $codebase, $node->enclosingClassName(), $node->enclosingFunctionName()))
             ->reject(static fn (AstNode $node): bool => $codebase->overridesMethod($node->enclosingClassName(), $node->enclosingFunctionName() ?? ''))
