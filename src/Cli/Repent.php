@@ -83,8 +83,37 @@ final class Repent implements Command
         }
 
         $this->scaffoldConstructs($converged, $written);
+        $this->inviteFeedback();
 
         return 0;
+    }
+
+    /** Show the post-repent feedback nudge once every this many applies — present, not spammy. */
+    private const int FEEDBACK_INTERVAL = 4;
+
+    /**
+     * Invite the agent to judge the auto-fix it just ran and report anything wrong — a rate-limited
+     * nudge (issue #306) that turns each repent into a feedback moment, so a broken/awkward rewrite or
+     * a rule gap gets filed early instead of silently worked around. Shown on the first apply and every
+     * {@see FEEDBACK_INTERVAL} after, counted in `.commandments/.repent-feedback-count`.
+     */
+    private function inviteFeedback(): void
+    {
+        $file = getcwd() . '/.commandments/.repent-feedback-count';
+        $count = 1 + (is_file($file) ? (int) file_get_contents($file) : 0);
+        @mkdir(dirname($file), 0777, true);
+        @file_put_contents($file, (string) $count . "\n");
+
+        if ($count !== 1 && $count % self::FEEDBACK_INTERVAL !== 0) {
+            return;
+        }
+
+        $this->out(
+            "\033[2m↳ Did that auto-fix do the right thing? If `repent` produced anything broken, incomplete, or\n"
+            . "  awkward — or you noticed a rule gap or false positive — file it (don't just work around it):\n"
+            . "  `commandments report --reason=\"…\" --ref=path:line` (referencing the source AND the bad output),\n"
+            . "  or `commandments feature-request --title=\"…\" --reason=\"…\"`.\033[0m\n",
+        );
     }
 
     /**
