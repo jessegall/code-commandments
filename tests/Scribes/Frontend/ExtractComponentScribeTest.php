@@ -239,6 +239,33 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertEmpty(preg_grep('/CustomerSection2\.vue$/', $paths), 'the identical block must reuse, not duplicate into CustomerSection2');
     }
 
+    public function test_the_oracle_dry_render_does_not_leak_phantom_reuses(): void
+    {
+        // Regression (issue #297): with an oracle set, the throwaway prime() dry-render used to
+        // register its would-be components into the SHARED library, so the real pass "reused" those
+        // phantoms — emitting `<CustomerSection … />` + `import` but NEVER creating the file (a
+        // dangling import that guts the source). Every component an import references MUST be created.
+        $dir = $this->tempDir();
+        $filler = str_repeat("  <p>row</p>\n", 55);
+        $file = "<template>\n  <div>\n{$filler}  <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n";
+        file_put_contents("{$dir}/PanelA.vue", $file);
+
+        $oracle = new class implements \JesseGall\CodeCommandments\Vue\Oracle\TypeOracle {
+            public function resolveAll(array $queries): array
+            {
+                return []; // resolves nothing — but the dry pass it drives must still not pollute
+            }
+        };
+
+        $detector = new DeepDataReachDetector();
+        $codebase = Codebase::scan($dir);
+        $scribe = $detector->scribe()->withLibrary(ComponentLibrary::from($codebase))->withOracle($oracle);
+        $files = $scribe->rewrite($detector->find($codebase));
+
+        $this->assertArrayHasKey("{$dir}/CustomerSection.vue", $files, 'the extracted component is actually created, not a phantom reuse');
+        $this->assertStringContainsString('<CustomerSection', $files["{$dir}/PanelA.vue"] ?? '', 'the call site references it');
+    }
+
     public function test_a_dynamic_compound_title_does_not_become_the_component_name(): void
     {
         // The DialogTitle is a binding expression, not static text. It must NOT be pascal-
