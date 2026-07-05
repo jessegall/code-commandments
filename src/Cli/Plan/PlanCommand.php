@@ -59,6 +59,7 @@ final class PlanCommand implements Command
 
         $marker->clear();
         $constraints->clear();
+        PlanTesting::inWorktree($root, Config::load($root)->planExecutionSettings())->clear();
         Checklist::inProject($root)->clearAll(); // the plan is over — drop its worklist so no stale
         // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");
@@ -80,6 +81,12 @@ final class PlanCommand implements Command
         if ($active !== []) {
             $verified = $constraints->isVerifiedAt($this->io->git()->head($root)) ? 'verified' : 'not verified';
             fwrite(STDOUT, '  constraints: ' . count($active) . " active ({$verified})\n");
+        }
+
+        $method = PlanTesting::inWorktree($root, $plan)->effective();
+
+        if ($method !== '') {
+            fwrite(STDOUT, "  testing: {$method}\n");
         }
 
         return 0;

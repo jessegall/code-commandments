@@ -101,6 +101,7 @@ final class PlanReminder extends Hook
             . "• End gate: run `vendor/bin/commandments checks complete` (your full checks + `judge --branch`), fix each "
             . "finding at its SOURCE, re-run until clean, then run `vendor/bin/commandments plan done`."
             . $this->constraintsSection($plan)
+            . $this->testingSection($plan)
             . $autonomy;
     }
 
@@ -123,6 +124,33 @@ final class PlanReminder extends Hook
             . "blocks `plan done` until you review your whole branch diff against every constraint "
             . "(`vendor/bin/commandments constraints check` → fix → `constraints verified`)."
             . ($global === '' ? '' : "\n  Already in force (global):{$global}");
+    }
+
+    /**
+     * The testing-methodology bullet for the approval nudge — tells the agent to ask the user (a second
+     * AskUserQuestion, alongside constraints) how tests are handled for this run, offering the standard
+     * methods, the project's configured default (when set) as "use the project's test flow", and an open
+     * custom option. The choice is recorded with `commandments testing set`, then re-surfaced through the
+     * run by {@see TestingReminder}. No hard gate — a testing style is verified by the phase tests, not a diff.
+     */
+    private function testingSection(PlanProfile $plan): string
+    {
+        $configured = trim($plan->testFlow());
+
+        $useConfigured = $configured === '' ? '' : "\n    - Use the project's configured test flow: \"{$configured}\"";
+
+        return "\n• Testing methodology: ask the user (AskUserQuestion) how tests should be written and run for "
+            . "this plan, and record the answer with `vendor/bin/commandments testing set \"<methodology>\"`. "
+            . "Offer these options:"
+            . $useConfigured
+            . "\n    - Write AND run the tests for each phase before committing it"
+            . "\n    - Write no tests until the very end, then add them all in one pass"
+            . "\n    - Only ADD new tests for this work — don't touch pre-existing failing tests"
+            . "\n    - Only FIX broken tests — don't add new ones"
+            . "\n    - Custom (let the user describe their own)"
+            . ($configured === ''
+                ? "\n  No project default is configured, so don't offer the \"configured test flow\" option."
+                : "\n  When the user just takes the configured default, `testing set` it verbatim.");
     }
 
     private function keepGoingNudge(): string

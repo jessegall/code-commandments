@@ -34,6 +34,8 @@ final class PlanExecution
 
     private bool $enforceEachPhase = false;
 
+    private string $testFlow = '';
+
     /**
      * The branch a plan is cut from and judged against — the base for the new plan branch and the
      * `judge --branch=<base>` the end gate runs. Defaults to `main`.
@@ -138,6 +140,20 @@ final class PlanExecution
     }
 
     /**
+     * The project's DEFAULT testing methodology for a plan run — how tests are written and run as the
+     * agent grinds a plan (e.g. "write and run the tests for each phase before committing it"). Free
+     * natural language, not a check. At plan approval the agent asks the user which methodology this
+     * run uses; this default is offered as the "use the project's test flow" option, and stands when
+     * the user just takes it. Empty by default — then the agent only offers the standard methods.
+     */
+    public function testFlow(string $methodology): self
+    {
+        $this->testFlow = $methodology;
+
+        return $this;
+    }
+
+    /**
      * Freeze the configured state into the read-only {@see PlanProfile} the package consumes.
      */
     public function build(): PlanProfile
@@ -152,6 +168,7 @@ final class PlanExecution
             $this->stopPolicy,
             $this->constraints,
             $this->enforceEachPhase,
+            $this->testFlow,
         );
     }
 }

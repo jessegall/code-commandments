@@ -42,6 +42,16 @@ final class PlanExecutionTest extends TestCase
         $this->assertSame($plan, $plan->onComplete('c'));
         $this->assertSame($plan, $plan->constraint('x'));
         $this->assertSame($plan, $plan->enforceConstraintsEachPhase());
+        $this->assertSame($plan, $plan->testFlow('write tests each phase'));
+    }
+
+    public function test_test_flow_defaults_empty_and_is_carried_into_the_profile(): void
+    {
+        $this->assertSame('', new PlanExecution()->build()->testFlow(), 'no default methodology by default');
+        $this->assertSame(
+            'Write and run the tests for each phase.',
+            new PlanExecution()->testFlow('Write and run the tests for each phase.')->build()->testFlow(),
+        );
     }
 
     public function test_check_buckets_accumulate_per_moment(): void

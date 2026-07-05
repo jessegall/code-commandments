@@ -43,6 +43,17 @@ final class HookEvent
     }
 
     /**
+     * What triggered a `SessionStart` — `startup` (a fresh launch), `clear` (`/clear`), `resume`
+     * (continuing an existing session), or `compact` (context compaction re-fires SessionStart). Only
+     * `startup`/`clear` are a genuinely-new session; `resume`/`compact` continue a live one, so the
+     * fresh-session cleanup skips them. Empty for a non-SessionStart event or a manual run.
+     */
+    public function source(): string
+    {
+        return (string) ($this->payload['source'] ?? '');
+    }
+
+    /**
      * The shell command a `Bash` tool call is about to run (empty for other tools).
      */
     public function command(): string

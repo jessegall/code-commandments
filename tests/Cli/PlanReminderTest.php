@@ -52,6 +52,24 @@ final class PlanReminderTest extends TestCase
         $this->assertStringContainsString('No frontend logic.', $context, 'the global constraint is listed as in force');
     }
 
+    public function test_the_approval_nudge_asks_for_the_testing_methodology(): void
+    {
+        $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+
+        $this->assertStringContainsString('Testing methodology', $context, 'the agent is told to ask about tests');
+        $this->assertStringContainsString('testing set', $context, 'and to record the answer');
+        $this->assertStringContainsString('each phase', $context, 'the standard methods are offered');
+    }
+
+    public function test_the_testing_question_offers_the_configured_test_flow_when_set(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->testFlow(\'Write tests each phase.\'));');
+
+        $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+
+        $this->assertStringContainsString("configured test flow: \"Write tests each phase.\"", $context);
+    }
+
     public function test_a_post_tool_use_for_another_tool_is_ignored(): void
     {
         $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Bash']));

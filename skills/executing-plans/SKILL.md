@@ -31,6 +31,8 @@ The **plan-reminder hook** injects this project's concrete profile when the plan
 
 6. **Verify the constraints** (if the plan has any — see below). Run `commandments constraints check`, review your **whole branch diff** against each one, fix any violation at its source, then `commandments constraints verified`.
 
+   **Testing methodology:** right after approval (with the constraints question), also ask the user — via AskUserQuestion — **how tests are handled** for this run, and record it: `commandments testing set "<methodology>"`. Offer the standard methods (write+run tests each phase / all tests at the very end / only add new tests / only fix broken tests / custom), plus, when the project configured a default `testFlow`, a "use the project's test flow" option. Hold to the recorded methodology through the phases — a reminder re-surfaces it; `commandments testing show` prints it. It's a working style, not a diff-verified gate, so it doesn't block `plan done`.
+
 7. **Finish:** once the end gate is green and constraints are verified, run `commandments plan done`. This ends the plan and clears the keep-going Stop nudge. (It **refuses** while constraints are unverified.)
 
 ## Constraints
@@ -59,7 +61,8 @@ $config->planExecution(fn ($plan) => $plan
     ->eachPhase('composer lint')  // after each phase — keep it fast
     ->onComplete('composer test') // the end gate; judge --branch runs after
     ->constraint('The frontend is presentation-only; all logic lives in the backend.')
-    ->enforceConstraintsEachPhase()); // optional — else phase is a nudge, completion always the gate
+    ->enforceConstraintsEachPhase() // optional — else phase is a nudge, completion always the gate
+    ->testFlow('Write and run the tests for each phase before committing it.')); // default test methodology, offered at approval
 ```
 
 On `composer update` a starter block is injected automatically, its `onComplete` inferred from the project's own composer/npm scripts. Edit it freely.

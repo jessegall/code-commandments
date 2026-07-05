@@ -163,6 +163,7 @@ final class ConfigScribe
             "        {$onComplete}",
             "        // \$plan->constraint('The frontend is presentation-only; all logic lives in the backend.');",
             '        // $plan->enforceConstraintsEachPhase();        // force the constraint check each phase, not just at the end',
+            "        // \$plan->testFlow('Write and run the tests for each phase before committing it.');  // default test methodology, offered at approval",
             '    });',
         ];
 

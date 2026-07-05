@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
 use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
+use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
 use JesseGall\CodeCommandments\Cli\Config\Configure;
@@ -92,6 +93,7 @@ final class Kernel
             new HookCommand(['plan-reminder'], new PlanReminder()),
             new PlanCommand(),
             new ConstraintsCommand(),
+            new TestingCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),
