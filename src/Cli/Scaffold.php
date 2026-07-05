@@ -54,8 +54,13 @@ final class Scaffold implements Command
                     : "{$dir}/{$scaffold->path}";
                 $code = $scaffold->render($frontend ? '' : $this->namespaceFor($rootNamespace, $scaffold));
 
-                if (is_file($target)) {
-                    $skipped[] = $target;
+                // Skip when it already exists at the target path, OR — for a frontend construct — when a
+                // component of that name already lives ANYWHERE under the JS root (a project that ships
+                // `ui/switch-case/SwitchCase.vue` must not get a duplicate `components/SwitchCase.vue`;
+                // the repented code imports the real one, so a second copy is dead weight that itself
+                // trips control-flow-on-element).
+                if (is_file($target) || ($frontend && ($existing = $this->existingFrontendComponent($scaffold->path)) !== null)) {
+                    $skipped[] = $existing ?? $target;
 
                     continue;
                 }
@@ -73,6 +78,31 @@ final class Scaffold implements Command
         }
 
         return $this->report($created, $skipped, $sin, $dryRun);
+    }
+
+    /**
+     * The path of an existing component with this construct's name (the scaffold sub-path's file stem,
+     * e.g. `SwitchCase`) ANYWHERE under the JS root, or null when none. So a project that already ships
+     * the construct — under any folder — is not handed a duplicate copy.
+     */
+    private function existingFrontendComponent(string $scaffoldPath): ?string
+    {
+        $root = getcwd() . '/' . self::FRONTEND_ROOT;
+
+        if (! is_dir($root)) {
+            return null;
+        }
+
+        $wanted = basename($scaffoldPath); // e.g. `SwitchCase.vue`
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+
+        foreach ($files as $file) {
+            if ($file->getFilename() === $wanted) {
+                return $file->getPathname();
+            }
+        }
+
+        return null;
     }
 
     /**

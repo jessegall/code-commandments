@@ -100,6 +100,20 @@ final class ScaffoldTest extends TestCase
         $this->assertStringNotContainsString('{namespace}', $component);
     }
 
+    public function test_a_frontend_scaffold_is_skipped_when_the_component_already_exists_elsewhere(): void
+    {
+        $dir = $this->project();
+
+        // The project already ships SwitchCase under a different folder (its own UI kit).
+        mkdir($dir . '/resources/js/components/ui/switch-case', 0777, true);
+        file_put_contents($dir . '/resources/js/components/ui/switch-case/SwitchCase.vue', "<template><slot /></template>\n");
+
+        $this->scaffold(['--sin=switch-case']);
+
+        // No duplicate at the default path — the repented code imports the real one (issue #304).
+        $this->assertFileDoesNotExist($dir . '/resources/js/components/SwitchCase.vue', 'no duplicate SwitchCase.vue');
+    }
+
     public function test_a_sin_without_a_scaffold_generates_nothing(): void
     {
         $dir = $this->project();
