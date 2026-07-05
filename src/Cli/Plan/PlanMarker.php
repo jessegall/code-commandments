@@ -40,6 +40,41 @@ final class PlanMarker
     }
 
     /**
+     * Signal that the plan is STUCK at $head — the agent is blocked and needs the human, but the plan
+     * is NOT done. The keep-going Stop hook stops nudging while this stands (so a blocked agent isn't
+     * looped), yet the plan stays active. Auto-recovers: once HEAD moves past $head (progress made),
+     * the hook clears this and normal nudging resumes. Distinct from `plan done`, which ENDS the plan.
+     */
+    public function markStuck(string $head): void
+    {
+        @mkdir(dirname($this->stuckPath()), 0777, true);
+        @file_put_contents($this->stuckPath(), $head . "\n" . self::STUCK_EXPLANATION . "\n");
+    }
+
+    /**
+     * The HEAD the plan was marked stuck at, or null when it isn't stuck. An empty string means it was
+     * marked stuck with no commits yet.
+     */
+    public function stuckAt(): ?string
+    {
+        if (! is_file($this->stuckPath())) {
+            return null;
+        }
+
+        return trim(explode("\n", (string) file_get_contents($this->stuckPath()))[0]);
+    }
+
+    public function clearStuck(): void
+    {
+        @unlink($this->stuckPath());
+    }
+
+    private function stuckPath(): string
+    {
+        return dirname($this->path) . '/.plan-stuck';
+    }
+
+    /**
      * Count one keep-going nudge at $currentHead and return the fresh {@see PlanState}.
      */
     public function recordNudge(string $currentHead): PlanState
@@ -53,6 +88,7 @@ final class PlanMarker
     public function clear(): void
     {
         @unlink($this->path);
+        $this->clearStuck(); // the plan is over — a lingering stuck signal would outlive it.
     }
 
     /**
@@ -112,5 +148,14 @@ final class PlanMarker
         nudge count, and the total nudge count. Written when a plan is approved, read on every stop,
         cleared by `commandments plan done` or when the branch merges back. Safe to delete — deleting it
         simply ends the keep-going nudges for this plan.
+        TXT;
+
+    private const string STUCK_EXPLANATION = <<<'TXT'
+        -----
+        Stuck signal for the code-commandments keep-going Stop hook (`commandments plan stuck`). The first
+        line is the HEAD the plan was marked stuck at. While this file exists AND HEAD hasn't moved past
+        it, the Stop hook stops nudging — the agent is blocked and needs the human — but the plan stays
+        active (it is NOT done). It auto-clears once HEAD moves (progress made) or on `plan done`. Safe to
+        delete — deleting it resumes the keep-going nudges.
         TXT;
 }

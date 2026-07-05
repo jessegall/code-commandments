@@ -181,6 +181,31 @@ final class PlanReminderTest extends TestCase
         return $io->emitted;
     }
 
+    public function test_stop_is_silent_while_the_plan_is_marked_stuck_at_the_same_head(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        $this->marker()->activate('sha0');
+        $this->marker()->markStuck('stuck-head');
+
+        // Blocked at the same HEAD — the keep-going hook must NOT loop the agent, but the plan stays active.
+        $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'stuck-head'));
+        $this->assertTrue($this->marker()->isActive(), 'a stuck plan stays active');
+        $this->assertSame('stuck-head', $this->marker()->stuckAt(), 'still stuck (no progress)');
+    }
+
+    public function test_progress_since_stuck_clears_it_and_resumes_nudging(): void
+    {
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        $this->marker()->activate('sha0');
+        $this->marker()->markStuck('stuck-head');
+
+        // A new commit landed since it got stuck → unblocked: the stuck signal clears and keep-going fires.
+        $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'moved-on');
+
+        $this->assertSame('block', $emitted[0]['decision'] ?? null, 'nudging resumed after progress');
+        $this->assertNull($this->marker()->stuckAt(), 'the stuck signal auto-cleared');
+    }
+
     public function test_stop_clears_the_marker_once_back_on_the_base_branch(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');

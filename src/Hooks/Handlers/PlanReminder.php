@@ -66,7 +66,18 @@ final class PlanReminder extends Hook
             return $this->pass();
         }
 
-        $state = $marker->recordNudge($this->git()->head($event->root));
+        $head = $this->git()->head($event->root);
+        $stuckAt = $marker->stuckAt();
+
+        if ($stuckAt !== null) {
+            if ($head === $stuckAt) {
+                return $this->pass(); // Blocked and no progress since — don't loop the agent; the plan stays active.
+            }
+
+            $marker->clearStuck(); // Progress since it got stuck — unblocked; resume normal keep-going.
+        }
+
+        $state = $marker->recordNudge($head);
 
         if ($state->total > self::MAX_TOTAL) {
             $marker->clear(); // A plan this long was abandoned, not run — stop nudging for good.
@@ -90,7 +101,9 @@ final class PlanReminder extends Hook
     {
         $push = $plan->pushesEachPhase() ? ', then commit and push' : ', then commit (push once at the end)';
         $autonomy = $plan->stopPolicy() !== null
-            ? "\n• Autonomy: grind through every phase without stopping — the Stop hook will keep you going until you run `plan done`."
+            ? "\n• Autonomy: grind through every phase without stopping — the Stop hook keeps you going until you run `plan done` "
+                . "(only when the plan is COMPLETE). If you get genuinely blocked and need the user, run `plan stuck` instead — it "
+                . "pauses the nudges without ending the plan."
             : '';
 
         return "Code Commandments — a plan was just approved. Before writing any code, load the "
@@ -158,6 +171,8 @@ final class PlanReminder extends Hook
         return "Code Commandments — the plan isn't finished. Keep going: work the remaining phases, commit each, "
             . "and only stop if you genuinely need user input. When every phase is done and "
             . "`vendor/bin/commandments checks complete` is clean, run `vendor/bin/commandments plan done` to finish. "
-            . "If you're truly blocked or the plan is already complete, run `plan done` and say why.";
+            . "If you are genuinely BLOCKED and need the user, run `vendor/bin/commandments plan stuck` (NOT `plan done` "
+            . "— you may only `done` a COMPLETE plan): it pauses these nudges while keeping the plan active, and tell "
+            . "the user what you're blocked on. Nudging resumes on your own once you make progress.";
     }
 }
