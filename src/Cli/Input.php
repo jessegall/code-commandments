@@ -123,6 +123,27 @@ final class Input
     }
 
     /**
+     * Every value given for a REPEATABLE `--name=value` option, in order — for options a command
+     * accepts more than once (`--ref=a.vue:10 --ref=b.vue:5`). {@see option} keeps last-wins; this
+     * returns them all, read from the verbatim {@see raw} tail so no earlier collapse is lost.
+     *
+     * @return list<string>
+     */
+    public function repeated(string $name): array
+    {
+        $prefix = "--{$name}=";
+        $values = [];
+
+        foreach ($this->raw as $token) {
+            if (str_starts_with($token, $prefix)) {
+                $values[] = substr($token, strlen($prefix));
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * A comma-list option (`--exclude=a,b,c`) split and emptied of blanks.
      *
      * @return list<string>
