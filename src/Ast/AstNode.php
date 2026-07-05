@@ -1236,13 +1236,18 @@ class AstNode
     }
 
     /**
-     * Is this a `match` whose `default` arm returns an absence value
+     * Is this a `match` OVER A SUBJECT whose `default` arm returns an absence value
      * (`null`/`false`/`[]`) instead of throwing? An unhandled case silently
      * swallowed — a missing case is a bug, and the default should say so.
+     *
+     * A `match (true)`/`match (false)` is excluded: that is boolean-condition dispatch
+     * (if/elseif sugar over arbitrary, often open predicates like `instanceof`), NOT a
+     * closed value set, so its `default` is a normal `else` branch — there is no missing
+     * case to throw on. The sin is a hole in a CLOSED set; a boolean dispatch has none.
      */
     public function isMatchWithAbsenceDefault(): bool
     {
-        if (! $this->node instanceof Match_) {
+        if (! $this->node instanceof Match_ || $this->matchesOnBooleanLiteral()) {
             return false;
         }
 
@@ -1253,6 +1258,17 @@ class AstNode
         }
 
         return false;
+    }
+
+    /**
+     * Is the match subject a bare boolean literal (`match (true)`/`match (false)`) — the
+     * condition-dispatch form, not a match over a value/enum.
+     */
+    private function matchesOnBooleanLiteral(): bool
+    {
+        return $this->node instanceof Match_
+            && $this->node->cond instanceof ConstFetch
+            && in_array($this->node->cond->name->toLowerString(), ['true', 'false'], true);
     }
 
     /**
