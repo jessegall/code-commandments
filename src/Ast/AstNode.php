@@ -1400,6 +1400,38 @@ class AstNode
      *
      * @return list<string>
      */
+    /**
+     * Does the function enclosing this node declare a SHAPED-array return — a
+     * `@return array{field: T, …}` sealed struct with named keys? Such a return is a typed,
+     * statically-checkable record contract (PHPStan/Psalm enforce the shape), not a loose
+     * `array<string, mixed>` bag — so an array-bag rule should leave it alone. A positional
+     * `array{0: T, 1: T}` tuple (numeric keys) is NOT a struct and doesn't count.
+     */
+    public function enclosingFunctionReturnsShapedArray(): bool
+    {
+        $doc = $this->enclosingFunction()?->getDocComment()?->getText();
+
+        return $doc !== null && self::declaresShapedArrayReturn($doc);
+    }
+
+    /**
+     * Is there a `@return array{…}` with at least one NAMED (non-numeric) key in $docblock?
+     */
+    private static function declaresShapedArrayReturn(string $docblock): bool
+    {
+        foreach (preg_split('/\R/', $docblock) ?: [] as $line) {
+            if (preg_match('/@return\s+\??array\s*\{/', $line) !== 1) {
+                continue;
+            }
+
+            if (preg_match('/\{[^}]*[A-Za-z_]\w*\??\s*:/', $line) === 1) {
+                return true; // a named field key — a struct, not a positional tuple or loose map
+            }
+        }
+
+        return false;
+    }
+
     protected static function methodTagNames(string $docblock): array
     {
         $names = [];

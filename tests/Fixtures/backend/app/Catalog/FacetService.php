@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -41,6 +42,23 @@ final class FacetService
     private function byRating(): array
     {
         return [];
+    }
+
+    /**
+     * A SHAPED-array return (`@return array{…}`) — a sealed, statically-checkable struct whose
+     * fields are named and typed. That is a typed record contract, not a loose bag, so it is NOT
+     * this sin (no marker): the shape annotation already gives what a value object would.
+     *
+     * @return array{categories: array<int, string>, price_buckets: array<int, int>, ratings: array<int, int>}
+     */
+    #[Righteous(ArrayReturnBag::class)]
+    public function shapedFacets(): array
+    {
+        return [
+            'categories' => $this->byCategory(),
+            'price_buckets' => $this->byPrice(),
+            'ratings' => $this->byRating(),
+        ];
     }
 
     /**
