@@ -40,10 +40,11 @@ final class PlanMarker
     }
 
     /**
-     * Signal that the plan is STUCK at $head — the agent is blocked and needs the human, but the plan
-     * is NOT done. The keep-going Stop hook stops nudging while this stands (so a blocked agent isn't
-     * looped), yet the plan stays active. Auto-recovers: once HEAD moves past $head (progress made),
-     * the hook clears this and normal nudging resumes. Distinct from `plan done`, which ENDS the plan.
+     * Signal that the plan is STUCK — the agent is blocked and needs the human, but the plan is NOT
+     * done. The keep-going Stop hook suppresses the NEXT stop (so a blocked agent isn't looped back in)
+     * and clears this immediately, yet the plan stays active — so the moment the agent continues, normal
+     * nudging resumes. One-shot: it never lingers to disable keep-going for the rest of the run. $head is
+     * recorded for reference (what `plan status` shows). Distinct from `plan done`, which ENDS the plan.
      */
     public function markStuck(string $head): void
     {
@@ -153,9 +154,9 @@ final class PlanMarker
     private const string STUCK_EXPLANATION = <<<'TXT'
         -----
         Stuck signal for the code-commandments keep-going Stop hook (`commandments plan stuck`). The first
-        line is the HEAD the plan was marked stuck at. While this file exists AND HEAD hasn't moved past
-        it, the Stop hook stops nudging — the agent is blocked and needs the human — but the plan stays
-        active (it is NOT done). It auto-clears once HEAD moves (progress made) or on `plan done`. Safe to
-        delete — deleting it resumes the keep-going nudges.
+        line is the HEAD the plan was marked stuck at (for reference). It is ONE-SHOT: it suppresses the
+        next Stop nudge — the agent is blocked and needs the human — then clears itself, so keep-going
+        resumes the moment the agent continues. The plan stays active (it is NOT done). Also cleared on
+        `plan done`. Safe to delete — deleting it just resumes the keep-going nudges.
         TXT;
 }
