@@ -54,9 +54,10 @@ final class PlanCommand implements Command
 
         $marker->markStuck($this->io->git()->head($root));
         fwrite(STDOUT,
-            "◼ Plan marked STUCK — the keep-going nudge is paused; the plan stays active. Tell the user\n"
-            . "  what you're blocked on. Nudging resumes automatically once you make progress (a new commit),\n"
-            . "  or run `commandments plan done` if it turns out the plan is actually complete.\n");
+            "◼ Plan marked STUCK — the keep-going nudge is paused for this stop so you aren't looped while\n"
+            . "  blocked; the plan stays active. Tell the user what you're blocked on and stop. As soon as you\n"
+            . "  continue, keep-going resumes on its own. (Run `commandments plan done` only if the plan is\n"
+            . "  actually complete.)\n");
 
         return 0;
     }

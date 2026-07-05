@@ -66,18 +66,17 @@ final class PlanReminder extends Hook
             return $this->pass();
         }
 
-        $head = $this->git()->head($event->root);
-        $stuckAt = $marker->stuckAt();
+        if ($marker->stuckAt() !== null) {
+            // The plan was just marked STUCK: suppress THIS one stop so a blocked agent isn't looped
+            // back in, then clear the signal immediately — the moment the agent continues, normal
+            // keep-going resumes. A stuck signal is one-shot; it must never silently disable nudging
+            // for the rest of the run just because no commit has landed yet.
+            $marker->clearStuck();
 
-        if ($stuckAt !== null) {
-            if ($head === $stuckAt) {
-                return $this->pass(); // Blocked and no progress since — don't loop the agent; the plan stays active.
-            }
-
-            $marker->clearStuck(); // Progress since it got stuck — unblocked; resume normal keep-going.
+            return $this->pass();
         }
 
-        $state = $marker->recordNudge($head);
+        $state = $marker->recordNudge($this->git()->head($event->root));
 
         if ($state->total > self::MAX_TOTAL) {
             $marker->clear(); // A plan this long was abandoned, not run — stop nudging for good.

@@ -48,7 +48,7 @@ A **constraint** is a natural-language architectural invariant `judge` can't dec
 Grind through the phases without stopping for input. When keep-going is enabled, the Stop hook re-nudges you to continue until you finish. Two ways a plan run ends the nudging:
 
 - **Complete** → `commandments plan done`. Only when every phase is done and the end gate is clean. This ends the plan.
-- **Blocked** → `commandments plan stuck`. When you genuinely need the user and cannot proceed — you may **not** `plan done` a plan that isn't complete. `plan stuck` pauses the keep-going nudges but keeps the plan **active** (it is not finished); say clearly what you're blocked on. It auto-resumes the nudges once you make progress (a new commit), so you don't have to un-stick it manually.
+- **Blocked** → `commandments plan stuck`, then stop. When you genuinely need the user and cannot proceed — you may **not** `plan done` a plan that isn't complete. `plan stuck` pauses the keep-going nudge for that one stop (so you aren't looped back in while blocked) but keeps the plan **active**; say clearly what you're blocked on. It's one-shot: the moment you continue, keep-going resumes on its own — no need to un-stick it manually.
 
 Lint, type-checks, and any other gate are **not universal**: they run only if the project declared them in `planExecution()->onComplete(...)` (or you were explicitly asked), never assumed.
 
