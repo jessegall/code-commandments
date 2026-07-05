@@ -1773,6 +1773,61 @@ class AstNode
         return false;
     }
 
+    /** Attributes that OVERRIDE a serialized field's wire type with an explicit TS type (spatie/typescript-transformer). */
+    private const array WIRE_TYPE_ATTRIBUTES = ['LiteralTypeScriptType', 'TypeScriptType'];
+
+    /**
+     * Does this field DECLARATION affirm null as part of its SERIALIZED wire contract — a wire-type
+     * override attribute whose declared type is nullable, e.g. `#[LiteralTypeScriptType('Foo | null')]`?
+     * Then the null is intentional (the author stated it on the wire), not a phantom nullable to tighten
+     * away. Reads the attribute off the field's own {@see Param}/{@see Property} (walking up from a
+     * declared item), so it works for a promoted param and a declared property alike.
+     */
+    public function declaresNullableWireType(): bool
+    {
+        $carrier = $this->node instanceof Param || $this->node instanceof Property
+            ? $this->node
+            : $this->walkUp(static fn (Node $node): bool => $node instanceof Param || $node instanceof Property);
+
+        if (! $carrier instanceof Param && ! $carrier instanceof Property) {
+            return false;
+        }
+
+        foreach ($carrier->attrGroups as $group) {
+            foreach ($group->attrs as $attribute) {
+                if (! in_array(self::shortName($attribute->name->toString()), self::WIRE_TYPE_ATTRIBUTES, true)) {
+                    continue;
+                }
+
+                $argument = $attribute->args[0]->value ?? null;
+
+                if ($argument instanceof String_ && self::typeStringIsNullable($argument->value)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does a TS type string declare null — a `?Foo` prefix, or a `null` member of a `|` union?
+     */
+    private static function typeStringIsNullable(string $type): bool
+    {
+        if (str_starts_with(trim($type), '?')) {
+            return true;
+        }
+
+        foreach (explode('|', $type) as $part) {
+            if (strtolower(trim($part)) === 'null') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * The string/int literals used as `match`/`switch` arm conditions — e.g.
      * `'pending'`, `'paid'` in `match ($x) { 'pending' => …, 'paid' => … }`.

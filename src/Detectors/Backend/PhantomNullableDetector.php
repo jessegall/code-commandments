@@ -51,6 +51,10 @@ final class PhantomNullableDetector implements ChainDetector
             $fqcn = ltrim(($node->namespacedName ?? null)?->toString() ?? '', '\\');
 
             foreach ($this->nullableFields($node) as [$field, $name]) {
+                if ($codebase->wrap($field, $class->file)->declaresNullableWireType()) {
+                    continue; // the author declared null part of the serialized contract — genuine, not phantom
+                }
+
                 $verdict = $flow->verdict($fqcn, $name);
 
                 if ($verdict->assume >= 1 && $verdict->guard === 0) {

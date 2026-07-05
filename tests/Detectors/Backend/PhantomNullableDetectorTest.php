@@ -115,4 +115,43 @@ final class PhantomNullableDetectorTest extends TestCase
 
         $this->assertSame([], $this->fields($php));
     }
+
+    public function test_does_not_flag_a_promoted_param_declaring_null_on_its_wire_type(): void
+    {
+        // Issue #313: the same shape as `test_flags_a_field_assumed_present_everywhere` — `inner` is
+        // read unguarded — but the field declares null as part of its serialized contract, so the null
+        // is intentional, not a phantom. Without the attribute this field IS flagged (that test); with
+        // it, it must not be.
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Inner { public function v(): int { return 1; } }
+        class Holder {
+            public function __construct(
+                #[LiteralTypeScriptType('InnerData | null')]
+                public readonly ?Inner $inner = null,
+            ) {}
+        }
+        class Reader { public function go(Holder $h): int { return $h->inner->v(); } }
+        PHP;
+
+        $this->assertSame([], $this->fields($php), 'a field that declares null on its wire contract is not a phantom');
+    }
+
+    public function test_does_not_flag_a_declared_property_declaring_null_on_its_wire_type(): void
+    {
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Inner { public function v(): int { return 1; } }
+        class Holder {
+            #[LiteralTypeScriptType('InnerData | null')]
+            public readonly ?Inner $inner;
+            public function __construct() { $this->inner = null; }
+        }
+        class Reader { public function go(Holder $h): int { return $h->inner->v(); } }
+        PHP;
+
+        $this->assertSame([], $this->fields($php), 'the attribute is read off the declared property too');
+    }
 }
