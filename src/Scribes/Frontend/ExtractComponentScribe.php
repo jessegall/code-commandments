@@ -174,7 +174,19 @@ final class ExtractComponentScribe extends RepentScribe
     private function prime(array $findings): void
     {
         $this->collector = [];
+
+        // The dry render must NOT leak into the real pass: its create()s call library->register(),
+        // and the real dispatch would then "reuse" those phantom components — emitting an import +
+        // call-site rewrite to a component file the real pass never creates (a dangling import that
+        // guts the source and breaks the build). Run it against a CLONE of the library and restore
+        // the pristine one before the real render, so only real creates register for reuse.
+        $pristine = $this->library;
+        $this->library = $pristine !== null ? clone $pristine : null;
+
         $this->dispatch($findings); // resolveTypes records each component's unknowns via consultOracle
+
+        $this->library = $pristine;
+
         $queries = $this->collector;
         $this->collector = null;
 
