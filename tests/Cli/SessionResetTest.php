@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
+use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
 use JesseGall\CodeCommandments\PlanExecution;
 use PHPUnit\Framework\TestCase;
 
@@ -38,6 +39,7 @@ final class SessionResetTest extends TestCase
         PlanMarker::inWorktree($this->root)->activate('sha');
         PlanConstraints::inWorktree($this->root, $plan)->addLocal('No frontend logic.');
         PlanTesting::inWorktree($this->root, $plan)->set('Tests each phase.');
+        file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nphase 2\n");
         ToolUseCounter::forRemind($this->root)->bump();
     }
 
@@ -61,6 +63,7 @@ final class SessionResetTest extends TestCase
         $this->assertFalse(PlanMarker::inWorktree($this->root)->isActive(), 'the plan marker is cleared');
         $this->assertSame([], PlanConstraints::inWorktree($this->root, $this->plan()->build())->local());
         $this->assertSame('', PlanTesting::inWorktree($this->root, $this->plan()->build())->chosen());
+        $this->assertFalse(PlanWorkingState::inWorktree($this->root)->exists(), 'the working-state record is wiped');
         $this->assertFileDoesNotExist($this->root . '/.commandments/.remind-count', 'the reminder counter is wiped');
     }
 
@@ -82,6 +85,7 @@ final class SessionResetTest extends TestCase
         $this->assertTrue(PlanMarker::inWorktree($this->root)->isActive(), 'a compaction must not drop a live plan');
         $this->assertSame(['No frontend logic.'], PlanConstraints::inWorktree($this->root, $this->plan()->build())->local());
         $this->assertSame('Tests each phase.', PlanTesting::inWorktree($this->root, $this->plan()->build())->chosen());
+        $this->assertTrue(PlanWorkingState::inWorktree($this->root)->exists(), 'the working-state record must survive compaction — it exists to be re-read then');
     }
 
     public function test_resume_leaves_the_active_plan_intact(): void

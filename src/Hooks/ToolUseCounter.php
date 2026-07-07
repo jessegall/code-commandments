@@ -35,6 +35,7 @@ final class ToolUseCounter
             self::forRemind($root),
             self::forConstraintReminder($root),
             self::forTestingReminder($root),
+            self::forWorkingStateReminder($root),
         ];
     }
 
@@ -59,6 +60,14 @@ final class ToolUseCounter
         return new self($root . '/.commandments/.testing-remind-count', self::note(
             'the code-commandments testing-methodology reminder',
             're-surfaces the active plan\'s testing methodology once every 25 tool uses, then resets',
+        ));
+    }
+
+    public static function forWorkingStateReminder(string $root): self
+    {
+        return new self($root . '/.commandments/.working-state-remind-count', self::note(
+            'the code-commandments working-state reminder',
+            'nudges the agent to refresh its living working-state record once every 25 tool uses, then resets',
         ));
     }
 

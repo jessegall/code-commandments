@@ -27,6 +27,7 @@ final readonly class PlanProfile
         private array $constraints,
         private bool $enforceEachPhase,
         private string $testFlow = '',
+        private bool $trackWorkingState = false,
     ) {}
 
     /**
@@ -82,5 +83,13 @@ final readonly class PlanProfile
     public function testFlow(): string
     {
         return $this->testFlow;
+    }
+
+    /**
+     * Whether the agent keeps a living working-state record while a plan runs — off by default.
+     */
+    public function tracksWorkingState(): bool
+    {
+        return $this->trackWorkingState;
     }
 }

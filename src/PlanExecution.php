@@ -36,6 +36,8 @@ final class PlanExecution
 
     private string $testFlow = '';
 
+    private bool $trackWorkingState = false;
+
     /**
      * The branch a plan is cut from and judged against — the base for the new plan branch and the
      * `judge --branch=<base>` the end gate runs. Defaults to `main`.
@@ -154,6 +156,21 @@ final class PlanExecution
     }
 
     /**
+     * Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent
+     * writes its progress and, above all, the conversational deltas (decisions and their rejected
+     * alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to
+     * `.commandments/.plan-working-state`, refreshed after each phase and each important event. A
+     * `PreCompact` hook flushes it before compaction and it is re-injected on compact/resume, so a
+     * compacted agent resumes with the full picture. Off by default.
+     */
+    public function trackWorkingState(bool $track = true): self
+    {
+        $this->trackWorkingState = $track;
+
+        return $this;
+    }
+
+    /**
      * Freeze the configured state into the read-only {@see PlanProfile} the package consumes.
      */
     public function build(): PlanProfile
@@ -169,6 +186,7 @@ final class PlanExecution
             $this->constraints,
             $this->enforceEachPhase,
             $this->testFlow,
+            $this->trackWorkingState,
         );
     }
 }

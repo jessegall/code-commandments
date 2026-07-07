@@ -25,6 +25,7 @@ The **plan-reminder hook** injects this project's concrete profile when the plan
    - Implement it.
    - Run **only the tests that matter for this phase** — the new tests plus any plausibly affected — not the whole suite. Then run `commandments checks phase` (the project's fast between-phase checks).
    - **Commit** the phase. Push only if the profile says push-each-phase; otherwise push once at the end.
+   - If working-state tracking is on (see below), **refresh `.commandments/.plan-working-state`** now — and again after any important event mid-phase.
    - Do **NOT** run the full suite or `commandments judge` between phases.
 
 5. **At the very end, once every phase is done:** run `commandments checks complete`. It runs the project's full gate (test suite, lint, static analysis — whatever it declared) and **always appends `judge --branch`**. Fix every finding **at its source** (never launder a sin with a default/cast/null-check), re-run, and repeat until it is completely clean.
@@ -52,6 +53,23 @@ Grind through the phases without stopping for input. When keep-going is enabled,
 
 Lint, type-checks, and any other gate are **not universal**: they run only if the project declared them in `planExecution()->onComplete(...)` (or you were explicitly asked), never assumed.
 
+## Working state
+
+When the project sets `trackWorkingState()`, keep a **living working-state record** at
+`.commandments/.plan-working-state` — the one thing that survives a context **compaction**. The plan
+(on disk) and the code (in git) already survive; what's lost is what lived only in the conversation. So
+the record captures **ONLY what `git log` + the plan can't reconstruct**:
+
+- a **Done / Doing / Next** cursor (finer-grained than commits),
+- the **decisions** you made — and the alternative you rejected, and *why*,
+- **plan changes agreed in conversation** (the plan file is the design; note where reality diverged),
+- **gotchas** you hit the hard way, and the **exact next physical step**.
+
+Refresh it **after each phase** and **after each important event** (a decision, a plan change we discuss).
+Don't restate the plan — that's noise. A `PreCompact` hook nudges a final flush right before compaction,
+and the record is **auto re-injected on compact/resume**, so a compacted you resumes with the full picture.
+It's cleared on `plan done` and on a genuinely-new session, and survives `compact`/`resume` (that's the point).
+
 ## Configuration
 
 The profile lives in `.commandments/config.php`:
@@ -67,7 +85,8 @@ $config->planExecution(fn ($plan) => $plan
     ->onComplete('composer test') // the end gate; judge --branch runs after
     ->constraint('The frontend is presentation-only; all logic lives in the backend.')
     ->enforceConstraintsEachPhase() // optional — else phase is a nudge, completion always the gate
-    ->testFlow('Write and run the tests for each phase before committing it.')); // default test methodology, offered at approval
+    ->testFlow('Write and run the tests for each phase before committing it.') // default test methodology, offered at approval
+    ->trackWorkingState()); // keep a living working-state record that survives context compaction
 ```
 
 On `composer update` a starter block is injected automatically, its `onComplete` inferred from the project's own composer/npm scripts. Edit it freely.

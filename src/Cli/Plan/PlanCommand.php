@@ -84,6 +84,7 @@ final class PlanCommand implements Command
         $marker->clear();
         $constraints->clear();
         PlanTesting::inWorktree($root, Config::load($root)->planExecutionSettings())->clear();
+        PlanWorkingState::inWorktree($root)->clear();
         Checklist::inProject($root)->clearAll(); // the plan is over — drop its worklist so no stale
         // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");

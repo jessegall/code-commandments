@@ -70,6 +70,20 @@ final class PlanReminderTest extends TestCase
         $this->assertStringContainsString("configured test flow: \"Write tests each phase.\"", $context);
     }
 
+    public function test_the_approval_nudge_states_the_working_state_discipline_only_when_tracked(): void
+    {
+        // Off by default — the bullet is absent.
+        $off = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+        $this->assertStringNotContainsString('.plan-working-state', $off);
+
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->trackWorkingState());');
+
+        $on = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+        $this->assertStringContainsString('Working state', $on);
+        $this->assertStringContainsString('.plan-working-state', $on);
+        $this->assertStringContainsString('after each phase', $on);
+    }
+
     public function test_a_post_tool_use_for_another_tool_is_ignored(): void
     {
         $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Bash']));

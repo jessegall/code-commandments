@@ -43,6 +43,14 @@ final class PlanExecutionTest extends TestCase
         $this->assertSame($plan, $plan->constraint('x'));
         $this->assertSame($plan, $plan->enforceConstraintsEachPhase());
         $this->assertSame($plan, $plan->testFlow('write tests each phase'));
+        $this->assertSame($plan, $plan->trackWorkingState());
+    }
+
+    public function test_working_state_tracking_is_off_by_default_and_opt_in(): void
+    {
+        $this->assertFalse(new PlanExecution()->build()->tracksWorkingState(), 'off by default');
+        $this->assertTrue(new PlanExecution()->trackWorkingState()->build()->tracksWorkingState());
+        $this->assertFalse(new PlanExecution()->trackWorkingState(false)->build()->tracksWorkingState());
     }
 
     public function test_test_flow_defaults_empty_and_is_carried_into_the_profile(): void

@@ -114,7 +114,26 @@ final class PlanReminder extends Hook
             . "finding at its SOURCE, re-run until clean, then run `vendor/bin/commandments plan done`."
             . $this->constraintsSection($plan)
             . $this->testingSection($plan)
+            . $this->workingStateSection($plan)
             . $autonomy;
+    }
+
+    /**
+     * The working-state bullet for the approval nudge — shown only when the project opted into
+     * {@see PlanProfile::tracksWorkingState}. It tells the agent to keep the living record current after
+     * each phase AND each important event, so a context compaction never loses the conversational deltas.
+     */
+    private function workingStateSection(PlanProfile $plan): string
+    {
+        if (! $plan->tracksWorkingState()) {
+            return '';
+        }
+
+        return "\n• Working state: keep a living record at `.commandments/.plan-working-state`, refreshed after "
+            . "each phase AND after each important event (a decision, a plan change we agree in conversation). "
+            . "Capture ONLY what `git log` + the plan can't reconstruct — a Done / Doing / Next cursor, the "
+            . "decisions you made (and the alternative you rejected + why), plan changes agreed in chat, gotchas, "
+            . "and the exact next step. It's re-injected if context compacts, so it's how you survive the loss.";
     }
 
     /**

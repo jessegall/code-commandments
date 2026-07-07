@@ -31,11 +31,12 @@ final class HooksTest extends TestCase
     {
         HookRegistry::wire($this->path);
 
-        // The builtins bind PostToolUse, Stop, PreToolUse, and SessionStart — one dispatcher entry each.
+        // The builtins bind PostToolUse, Stop, PreToolUse, SessionStart, and PreCompact — one entry each.
         $this->assertSame(1, $this->dispatchers('PostToolUse'));
         $this->assertSame(1, $this->dispatchers('Stop'));
         $this->assertSame(1, $this->dispatchers('PreToolUse'));
         $this->assertSame(1, $this->dispatchers('SessionStart'));
+        $this->assertSame(1, $this->dispatchers('PreCompact'));
     }
 
     public function test_it_converges_and_strips_our_old_entries_while_keeping_foreign_ones(): void
