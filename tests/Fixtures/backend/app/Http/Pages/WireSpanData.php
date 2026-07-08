@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\WithTransformer;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Attributes\Computed;
 
 /**
  * A custom `DateRangeTransformer` serialises `DateRange` to an ISO interval string, but no
@@ -31,6 +32,7 @@ final class WireSpanData extends Data
         return $this->span->start . ' to ' . $this->span->end;
     }
 
+    #[Computed]
     public string $zoneLabel {
         get => strtoupper($this->timezone);
     }
