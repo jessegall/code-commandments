@@ -24,11 +24,12 @@ final class DataTypeProvider implements ContractProvider
             ->get();
 
         foreach ($classes as $class) {
-            $name = $class->enclosingClassName();
-            $fields = $class->publicFieldNames();
+            $data = $codebase->wrap($class->node, $class->file, SpatieDataNode::class);
+            $name = $data->enclosingClassName();
+            $fields = $data->publicFieldNames();
 
             if ($name !== null && $fields !== []) {
-                $contracts[] = new TypeContract(self::shortName($name), $fields);
+                $contracts[] = new TypeContract(self::shortName($name), $fields, $data->optionalPublicFieldNames());
             }
         }
 

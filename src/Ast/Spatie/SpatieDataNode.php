@@ -582,6 +582,26 @@ final class SpatieDataNode extends NodeMatch
     public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
 
     /**
+     * The names of this Data class's PUBLIC fields typed `T|Optional` — the ones Spatie OMITS from the wire
+     * when absent. A hand-written mirror may legitimately leave these out, so the mirror comparison must not
+     * penalise their absence. Complements the generic {@see AstNode::publicFieldNames} with the Optional fact.
+     *
+     * @return list<string>
+     */
+    public function optionalPublicFieldNames(): array
+    {
+        $names = [];
+
+        foreach ($this->fields() as $field) {
+            if ($field->isPublic && self::typeIncludesOptional($field->type)) {
+                $names[] = $field->name;
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
      * Is EVERY promoted constructor property of this Data class typed `T|Optional` — an all-optional DTO
      * whose type promises that nothing is ever present? The `Optional` sibling of the all-nullable smell:
      * the tell that the absence belongs on the CONTAINER field where this object is used (`Type|Optional`),

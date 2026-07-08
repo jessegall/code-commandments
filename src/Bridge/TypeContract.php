@@ -20,10 +20,13 @@ final class TypeContract implements Contract
 
     /**
      * @param  list<string>  $fields
+     * @param  list<string>  $optionalFields  the subset of $fields the server OMITS from the wire when
+     *                                          absent (a `T|Optional` slot) — a mirror may leave these out
      */
     public function __construct(
         public readonly string $name,
         public readonly array $fields,
+        public readonly array $optionalFields = [],
     ) {}
 
     /**
@@ -45,7 +48,9 @@ final class TypeContract implements Contract
 
     /**
      * The Jaccard overlap of this contract's fields with $fields, both canonicalised —
-     * `|shared| / |combined|`, in `[0, 1]`. Zero when either side is empty.
+     * `|shared| / |combined|`, in `[0, 1]`. Zero when either side is empty. An OPTIONAL
+     * contract field the candidate omits (a `T|Optional` slot Spatie drops from the wire)
+     * is legitimately absent, so it is excluded from the union rather than counted as drift.
      *
      * @param  list<string>  $fields
      */
@@ -59,9 +64,17 @@ final class TypeContract implements Contract
         }
 
         $shared = count(array_intersect_key($mine, $theirs));
-        $combined = count($mine + $theirs);
+        $union = $mine + $theirs;
 
-        return $shared / $combined;
+        foreach (self::canonicalSet($this->optionalFields) as $key => $_) {
+            if (! isset($theirs[$key])) {
+                unset($union[$key]);
+            }
+        }
+
+        $combined = count($union);
+
+        return $combined === 0 ? 0.0 : $shared / $combined;
     }
 
     /**

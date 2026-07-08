@@ -56,6 +56,30 @@ final class DataTypeProviderTest extends TestCase
         $this->assertSame(['firstName', 'lastName'], $contracts[0]->fields);
     }
 
+    public function test_it_marks_optional_backed_fields_as_optional_on_the_contract(): void
+    {
+        $codebase = Codebase::fromString(<<<'PHP'
+        <?php
+        namespace App\Data;
+        use Spatie\LaravelData\Data;
+        use Spatie\LaravelData\Optional;
+
+        final class OrderData extends Data
+        {
+            public function __construct(
+                public int $id,
+                public string $total,
+                public Chrome|Optional $chrome = new Optional(),
+            ) {}
+        }
+        PHP);
+
+        $contracts = (new DataTypeProvider())->contracts($codebase);
+
+        $this->assertSame(['id', 'total', 'chrome'], $contracts[0]->fields);
+        $this->assertSame(['chrome'], $contracts[0]->optionalFields);
+    }
+
     public function test_a_plain_class_that_does_not_extend_data_publishes_nothing(): void
     {
         $codebase = Codebase::fromString(<<<'PHP'
