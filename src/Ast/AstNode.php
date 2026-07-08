@@ -170,6 +170,23 @@ class AstNode
     }
 
     /**
+     * Is this expression itself a NULL comparison — `$x === null` / `null !== $x` (strict identity against
+     * the `null` literal) or `is_null($x)`? The tell that a condition GUARDS on absence, as opposed to an
+     * arbitrary boolean test (`$x->relationLoaded('y')`, `$flag`). A `??`/`?->` is a null-guard too, but
+     * those are their own node kinds — this is the comparison form a ternary condition takes.
+     */
+    public function isNullComparison(): bool
+    {
+        if ($this->node instanceof Identical || $this->node instanceof NotIdentical) {
+            return new self($this->node->left)->isNull() || new self($this->node->right)->isNull();
+        }
+
+        return $this->node instanceof FuncCall
+            && $this->node->name instanceof Name
+            && strtolower($this->node->name->toString()) === 'is_null';
+    }
+
+    /**
      * Is this expression's result immediately de-nulled by the caller — consumed
      * with `?->`, `?? …`, or compared `=== null` / `!== null`? The tell that a
      * `?T` return is being null-checked at the call site instead of at the source.

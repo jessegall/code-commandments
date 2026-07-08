@@ -9,13 +9,13 @@ use Spatie\LaravelData\Optional;
 /**
  * The null→Optional map, in ONE named home — the omit-from-wire counterpart to Spatie's `optional()`
  * (which maps null→null). `use` it on a `Data` class and build with `Foo::optionalOrMissing($payload)`:
- * a null payload becomes `new Optional` (absent from the wire), anything else hydrates through `::from`.
- * So a producer never re-derives `$x === null ? new Optional : Foo::from($x)` at every call site.
+ * a null payload becomes an absent `Optional` (omitted from the wire), anything else hydrates through `::from`.
+ * So a producer never re-derives `$x === null ? Optional::create() : Foo::from($x)` at every call site.
  */
 trait OptionalOrMissing
 {
     public static function optionalOrMissing(mixed $payload): static|Optional
     {
-        return $payload === null ? new Optional() : static::from($payload);
+        return $payload === null ? Optional::create() : static::from($payload);
     }
 }

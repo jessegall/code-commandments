@@ -602,20 +602,19 @@ public function position(): OptCoords|Optional
 }
 
 // Good
-final class Placement extends Data
+final class LazyRelationRow extends Data
 {
     public function __construct(
         public readonly string $label,
-        public readonly OptCoords|Optional $at = new Optional(),
+        public readonly OptRange|Optional $range = new Optional(),
     ) {}
 
-    public function fallback(bool $absent): OptCoords|Optional
+    public static function fromRow(object $row): self
     {
-        if ($absent) {
-            return Optional::create();
-        }
-
-        return OptCoords::from([]);
+        return self::from([
+            'label' => $row->label,
+            'range' => $row->relationLoaded('range') ? $row->range : Optional::create(),
+        ]);
     }
 }
 ```
@@ -663,6 +662,32 @@ final class WireBanner extends Data
         public readonly BannerIcon|Optional $icon = new Optional(),
         public readonly string|null $caption = null,
     ) {}
+}
+```
+
+```php
+// Bad
+public function position(): OptCoords|Optional
+{
+    return $this->rawPosition === null ? new Optional : OptCoords::from($this->rawPosition);
+}
+
+// Good
+final class Placement extends Data
+{
+    public function __construct(
+        public readonly string $label,
+        public readonly OptCoords|Optional $at = new Optional(),
+    ) {}
+
+    public function fallback(bool $absent): OptCoords|Optional
+    {
+        if ($absent) {
+            return Optional::create();
+        }
+
+        return OptCoords::from([]);
+    }
 }
 ```
 

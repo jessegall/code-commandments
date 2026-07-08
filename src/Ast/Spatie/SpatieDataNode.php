@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 
 use JesseGall\CodeCommandments\Support\ClassName;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Ast\Support\PageObject;
@@ -597,25 +598,80 @@ final class SpatieDataNode extends NodeMatch
     public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
 
     /**
-     * Is this `new Optional` a hand-rolled null→Optional MAP — the fallback arm of a ternary
-     * (`$x === null ? new Optional : Foo::from($x)`) or the right of a `??` (`expr() ?? new Optional`)?
+     * Is this an "absent" Optional construction — a raw `new Optional` OR Spatie's `Optional::create()`
+     * factory? The null→Optional map reads the same either way, so every rule about it works on both forms
+     * (a producer that adopts the preferred `Optional::create()` must not slip past the map detector).
+     */
+    public function isOptionalAbsentMarker(): bool
+    {
+        if ($this->node instanceof New_) {
+            return ltrim((string) $this->newClassName(), '\\') === self::OPTIONAL;
+        }
+
+        return $this->node instanceof StaticCall
+            && $this->node->class instanceof Name
+            && ltrim($this->node->class->toString(), '\\') === self::OPTIONAL
+            && $this->node->name instanceof Identifier
+            && $this->node->name->toString() === 'create';
+    }
+
+    /**
+     * Is this Optional construction a hand-rolled null→Optional MAP — the fallback arm of a ternary
+     * (`$x === null ? Optional::create() : Foo::from($x)`) or the right of a `??` (`expr() ?? Optional::create()`)?
      * That maps "absent" onto `Optional` at a producer, which belongs in ONE named factory
      * (`Foo::optionalOrMissing($x)`), not re-derived at every call site. A `new Optional` used as a PARAMETER
-     * DEFAULT (`T | Optional $x = new Optional`) or a bare `return new Optional` is the correct shape, NOT this.
+     * DEFAULT (`T | Optional $x = new Optional`) or a bare `return Optional::create()` is the correct shape, NOT this.
      */
     public function isOptionalNullFallback(): bool
     {
-        if (! $this->node instanceof New_ || ltrim((string) $this->newClassName(), '\\') !== self::OPTIONAL) {
+        if (! $this->isOptionalAbsentMarker()) {
             return false;
         }
 
         $parent = $this->node->getAttribute('parent');
 
         if ($parent instanceof Ternary) {
-            return $parent->if === $this->node || $parent->else === $this->node;
+            if ($parent->if !== $this->node && $parent->else !== $this->node) {
+                return false;
+            }
+
+            // ONLY a null-guard ternary is the null→Optional map. A boolean-guarded ternary
+            // (`$stockpile->relationLoaded('warehouse') ? $stockpile->warehouse : Optional::create()`) is a
+            // legitimate lazy-relation include, not a hand-rolled map — the short-ternary `$x ?: Optional` is a
+            // null-ish guard and counts.
+            return $parent->if === null || new AstNode($parent->cond)->isNullComparison();
         }
 
         return $parent instanceof Coalesce && $parent->right === $this->node;
+    }
+
+    /**
+     * Is this Optional construction the fallback INSIDE the shared `optionalOrMissing()` home itself — the ONE
+     * named factory the {@see isOptionalNullFallback} rule tells producers to create, so it must not flag
+     * itself? The tell is that the ternary's other arm hydrates `self`/`static` (`$x === null ?
+     * Optional::create() : static::from($x)`): the factory maps a generic payload onto ITS OWN type. A producer
+     * instead hydrates a concrete OTHER type (`OptRange::from(...)`) or coalesces a value
+     * (`$this->memo ?? Optional::create()`) — those re-derive the map and still fire.
+     */
+    public function isSharedOptionalFactory(): bool
+    {
+        if (! $this->isOptionalAbsentMarker()) {
+            return false;
+        }
+
+        $ternary = $this->node->getAttribute('parent');
+
+        if (! $ternary instanceof Ternary) {
+            return false;
+        }
+
+        $present = $ternary->if === $this->node ? $ternary->else : $ternary->if;
+
+        return $present instanceof StaticCall
+            && $present->class instanceof Name
+            && in_array($present->class->toString(), ['self', 'static'], true)
+            && $present->name instanceof Identifier
+            && $present->name->toString() === 'from';
     }
 
     /**
