@@ -153,7 +153,10 @@ final class Draft
         $rewrites = $this->creates;
 
         foreach ($this->edits as $path => $edits) {
-            usort($edits, static fn (array $a, array $b): int => $b['start'] <=> $a['start']);
+            // Right-to-left; at a shared start apply the WIDER edit first so a zero-width insert
+            // (e.g. stamp an attribute) composes with an abutting replace (e.g. drop a modifier)
+            // that begins at the same offset, instead of one being skipped as an overlap.
+            usort($edits, static fn (array $a, array $b): int => ($b['start'] <=> $a['start']) ?: ($b['end'] <=> $a['end']));
 
             $source = $this->sources[$path];
             $consumed = strlen($source) + 1;

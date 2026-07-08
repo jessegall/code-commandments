@@ -41,6 +41,52 @@ final class Span
     }
 
     /**
+     * The indentation (leading whitespace) of the line $pos sits on. The sanctioned offset-math primitive
+     * a scribe uses to align an inserted line — never its own `strrpos("\n")` scan.
+     */
+    public static function indentAt(string $source, int $pos): string
+    {
+        $lineStart = strrpos(substr($source, 0, $pos), "\n");
+        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+
+        return substr($source, $lineStart, $pos - $lineStart);
+    }
+
+    /**
+     * The byte offset of $needle's LAST occurrence before $pos, or null. The one sanctioned "search back
+     * to a delimiter/keyword from an AST position" — so a scribe never hand-rolls `strrpos` over the source.
+     */
+    public static function before(string $source, int $pos, string $needle): ?int
+    {
+        $at = strrpos(substr($source, 0, $pos), $needle);
+
+        return $at === false ? null : $at;
+    }
+
+    /**
+     * The byte offset of $needle's FIRST occurrence at/after $pos, or null — the forward counterpart of
+     * {@see before}.
+     */
+    public static function after(string $source, int $pos, string $needle): ?int
+    {
+        $at = strpos($source, $needle, $pos);
+
+        return $at === false ? null : $at;
+    }
+
+    /**
+     * The offset of the first NON-whitespace byte at/after $pos (bounded by $limit, default end of source)
+     * — skipping the gap between two tokens without a scribe hand-rolling a `ctype_space` char loop.
+     */
+    public static function skipWhitespace(string $source, int $pos, ?int $limit = null): int
+    {
+        $limit ??= strlen($source);
+        $pos += strspn($source, " \t\r\n", $pos, max(0, $limit - $pos));
+
+        return $pos;
+    }
+
+    /**
      * The leading whitespace of the line this span begins on (its indentation), or ''
      * when something non-blank precedes it on that line.
      */
