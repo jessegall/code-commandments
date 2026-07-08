@@ -30,17 +30,25 @@ other.
    methods, `methods(...)` = a method name anywhere. FQCNs come from the package's
    decorator node (`LaravelNode::*`) — stated ONCE, never re-declared in the package.
 
-3. **The detector reads the tag** and declares it via `Exemptable`:
+3. **The detector DECLARES the tag + WHERE to match it** (an `ExemptBy` scope) and lets
+   `AppliesExemptions` apply the reject centrally — no hand-written `Exemptions::has(...)`:
    ```php
    final class FeatureEnvyDetector implements Detector, Exemptable
    {
-       public function exemptions(): array { return [Boundary::class]; }
-       // inside find():
-       ->reject(fn (AstNode $n) => Exemptions::has(Boundary::class, $codebase, $n->enclosingClassName()))
+       use AppliesExemptions;
+
+       public function exemptions(): array { return [Boundary::class => [ExemptBy::EnclosingClass]]; }
+
+       public function find(Codebase $codebase): array
+       {
+           return $this->exempt($codebase->whereMethodDeclaration()->where(/* … */)->get(), $codebase);
+       }
    }
    ```
-   `exempt('boundary')` (the slug) is the same as `exempt(Boundary::class)` — package
-   devs need only the slug of a well-known tag.
+   `ExemptBy::EnclosingClass` matches the finding's class, `ExemptBy::EnclosingMethod` its
+   class + method. A tag mapped to `[]` is enforced by the detector itself (a bespoke
+   subject — e.g. a param's resolved type) and declared only so `exemptions` lists it.
+   `exempt('boundary')` (the slug) is the same as `exempt(Boundary::class)`.
 
 ## Rules
 

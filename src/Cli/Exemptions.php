@@ -61,7 +61,7 @@ final class Exemptions implements Command
 
             $this->out("\033[1m{$name}\033[0m honours:\n");
 
-            foreach ($detector->exemptions() as $class) {
+            foreach (array_keys($detector->exemptions()) as $class) {
                 $this->row(new $class);
             }
         }

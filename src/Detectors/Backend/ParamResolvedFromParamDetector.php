@@ -35,7 +35,7 @@ final class ParamResolvedFromParamDetector implements Detector, Exemptable
 
     public function exemptions(): array
     {
-        return [Boundary::class];
+        return [Boundary::class => []];
     }
 
     public function find(Codebase $codebase): array

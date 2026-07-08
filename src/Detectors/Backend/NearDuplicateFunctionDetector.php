@@ -39,7 +39,7 @@ final class NearDuplicateFunctionDetector implements Detector, Exemptable
 
     public function exemptions(): array
     {
-        return [ContractMethod::class];
+        return [ContractMethod::class => []];
     }
 
     public function find(Codebase $codebase): array
