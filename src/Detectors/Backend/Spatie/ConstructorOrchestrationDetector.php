@@ -43,6 +43,7 @@ final class ConstructorOrchestrationDetector implements Detector, Repentable
             ->reject(static fn (AstNode $node): bool => $node->assignmentReferencesLocalVariable())
             ->reject(static fn (AstNode $node): bool => $node->isWithinBranch())
             ->reject(static fn (SpatieDataNode $node): bool => $node->propertyAssignedMoreThanOnce())
+            ->reject(static fn (SpatieDataNode $node): bool => $node->assignmentReadsScopedState())
             ->get();
     }
 }

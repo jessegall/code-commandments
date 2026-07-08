@@ -133,6 +133,39 @@ final class ConstructorOrchestrationDetectorTest extends TestCase
         PHP));
     }
 
+    public function test_does_not_flag_a_slot_that_reads_request_scoped_state(): void
+    {
+        // The canvas is built from a projector whose builder reads request-scoped context captured at BUILD
+        // time (EditorContextResolver::current()). Hoisting it into a `get` hook would re-evaluate at access
+        // time against a since-rebound context and return the wrong workflow's canvas — leave it eager.
+        $this->assertSame([], $this->find(<<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Routing\Controller;
+        use Spatie\LaravelData\Data;
+        class Canvas extends Data { public function __construct(public string $svg) {} }
+        class EditorContextResolver { public static function current(): object { return new \stdClass; } }
+        class CanvasProjector {
+            public function project(): Canvas {
+                $ctx = EditorContextResolver::current();
+                return new Canvas('<svg/>');
+            }
+        }
+        class Shell extends Data {
+            public readonly Canvas $canvas;   // reads scoped state one hop deep -> reject
+            public readonly Canvas $palette;
+            public readonly string $direct;   // reads scoped state directly -> reject
+
+            public function __construct(public readonly CanvasProjector $canvasProjector) {
+                $this->canvas = $this->canvasProjector->project();
+                $this->palette = $this->canvasProjector->project();
+                $this->direct = EditorContextResolver::current()->workflowId;
+            }
+        }
+        class C extends Controller { public function a(): Shell { return Shell::from([]); } }
+        PHP));
+    }
+
     /**
      * @return list<string>  the assigned property names that were flagged
      */

@@ -403,6 +403,65 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
+     * Does this constructor assignment's RHS read request-SCOPED / ambient state — a static `X::current()`
+     * accessor, directly or one hop inside a method it calls (`$this->projector->project()` whose body reads
+     * `SomeResolver::current()`)? Such a value is captured at BUILD time on purpose; hoisting it into a `get`
+     * hook re-evaluates it at ACCESS time against whatever scope is bound then, returning the wrong context's
+     * result. Left eager (never repented, never flagged).
+     */
+    public function assignmentReadsScopedState(): bool
+    {
+        if (! $this->node instanceof Assign) {
+            return false;
+        }
+
+        if (self::readsScopedAccessor($this->node->expr)) {
+            return true; // the RHS itself calls `::current()`
+        }
+
+        foreach (new NodeFinder()->findInstanceOf($this->node->expr, MethodCall::class) as $call) {
+            if ($this->calleeReadsScopedState($call)) {
+                return true; // a method the RHS calls reads scoped state
+            }
+        }
+
+        return false;
+    }
+
+    /** Does the one-hop body of $call read a static `::current()` scoped accessor? */
+    private function calleeReadsScopedState(MethodCall $call): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if (! $call->name instanceof Identifier || $function === null) {
+            return false;
+        }
+
+        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName());
+        $classNode = $receiver === null ? null : $this->codebase->classNamed($receiver)->node;
+
+        if (! $classNode instanceof \PhpParser\Node\Stmt\ClassLike) {
+            return false;
+        }
+
+        $method = $classNode->getMethod($call->name->toString());
+
+        return $method !== null && self::readsScopedAccessor($method);
+    }
+
+    /** Does $node contain a static `X::current()` call — the scoped/ambient-context accessor idiom? */
+    private static function readsScopedAccessor(Node $node): bool
+    {
+        foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
+            if ($call->name instanceof Identifier && $call->name->toString() === 'current') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Is the property this assignment targets written more than once in the constructor — a slot built
      * up in steps, which can't collapse into a single `get` expression?
      */
