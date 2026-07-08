@@ -451,6 +451,16 @@ class AstNode
     }
 
     /**
+     * The method name of a `$obj->method(...)` / `$obj?->method(...)` instance call, or null.
+     */
+    public function methodCallName(): ?string
+    {
+        return ($this->node instanceof MethodCall || $this->node instanceof NullsafeMethodCall) && $this->node->name instanceof Identifier
+            ? $this->node->name->toString()
+            : null;
+    }
+
+    /**
      * Is this a static call whose (fully-qualified) class begins with $prefix — the readable
      * form of "a call into this namespace", e.g. `Illuminate\Support\Facades\`.
      */

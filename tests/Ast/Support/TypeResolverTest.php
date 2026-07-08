@@ -105,6 +105,32 @@ final class TypeResolverTest extends TestCase
         self::assertNull($resolver->propertyTypeOf(null, 'box'));
     }
 
+    public function test_resolves_a_variadic_method_including_through_a_trait_and_inheritance(): void
+    {
+        $resolver = TypeResolver::forCodebase(Codebase::fromString(<<<'PHP'
+            <?php
+            namespace App;
+            trait CopiesWith {
+                public function copyWith(mixed ...$changes): static { return $this; }
+            }
+            class Element { use CopiesWith; }
+            class Card extends Element {}
+            class Plain {
+                public function copyWith(array $changes): static { return $this; }
+            }
+            PHP));
+
+        // The trait-provided variadic method resolves — and to the TRAIT, so every user groups as one.
+        self::assertTrue($resolver->methodIsVariadic('App\\Element', 'copyWith'));
+        self::assertSame('App\\CopiesWith', $resolver->declaringClassOfMethod('App\\Element', 'copyWith'));
+        self::assertSame('App\\CopiesWith', $resolver->declaringClassOfMethod('App\\Card', 'copyWith'), 'inherited trait method resolves to the trait');
+
+        // A same-named NON-variadic method on an unrelated class is not conflated.
+        self::assertFalse($resolver->methodIsVariadic('App\\Plain', 'copyWith'));
+        self::assertSame('App\\Plain', $resolver->declaringClassOfMethod('App\\Plain', 'copyWith'));
+        self::assertNull($resolver->declaringClassOfMethod('App\\Element', 'missing'));
+    }
+
     public function test_reads_a_data_collection_element_type(): void
     {
         $resolver = TypeResolver::forCodebase(Codebase::fromString(<<<'PHP'

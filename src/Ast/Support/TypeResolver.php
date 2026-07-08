@@ -26,6 +26,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\NodeFinder;
 
@@ -44,11 +45,17 @@ final class TypeResolver
     /** @var array<string, array<string, array<int, bool>>>  fqcn => method => pos => param is nullable */
     private array $paramNullable = [];
 
+    /** @var array<string, array<string, bool>>  fqcn => method => declares a variadic parameter */
+    private array $methodVariadic = [];
+
     /** @var array<string, array<string, string>>  fqcn => field => element type of its #[DataCollectionOf] */
     private array $collectionElement = [];
 
     /** @var array<string, string>  fqcn => parent fqcn (so a field/type walks up the hierarchy) */
     private array $parentOf = [];
+
+    /** @var array<string, list<string>>  fqcn => the traits it uses (so a trait-provided method resolves) */
+    private array $traitsOf = [];
 
     /** @var array<int, array<string, ?string>>  object-id of a function => local var => type */
     private array $localCache = [];
@@ -102,6 +109,68 @@ final class TypeResolver
         }
 
         return null;
+    }
+
+    /**
+     * The class that actually DECLARES $method reachable from $fqcn — $fqcn itself, or the nearest ancestor
+     * that declares it. Lets calls to an inherited method (on different subclasses of one base) group to the
+     * single owning class. Null when no class in the chain declares it.
+     */
+    public function declaringClassOfMethod(?string $fqcn, string $method): ?string
+    {
+        $seen = [];
+
+        for ($class = ltrim((string) $fqcn, '\\'); $class !== '' && ! isset($seen[$class]); $class = $this->parentOf[$class] ?? '') {
+            $seen[$class] = true;
+
+            $owner = $this->methodDeclaredBy($class, $method, []);
+
+            if ($owner !== null) {
+                return $owner;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The class OR trait that declares $method — $class itself, or a trait it uses (recursively), so a
+     * `with`-style method provided by a shared trait resolves to the TRAIT, unifying every type that uses it.
+     *
+     * @param  array<string, true>  $seen
+     */
+    private function methodDeclaredBy(string $class, string $method, array $seen): ?string
+    {
+        if (isset($seen[$class])) {
+            return null;
+        }
+
+        $seen[$class] = true;
+
+        if (array_key_exists($method, $this->returnType[$class] ?? [])) {
+            return $class;
+        }
+
+        foreach ($this->traitsOf[$class] ?? [] as $trait) {
+            $owner = $this->methodDeclaredBy($trait, $method, $seen);
+
+            if ($owner !== null) {
+                return $owner;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Does $method (resolved to its declaring class from $fqcn) declare a VARIADIC parameter — the shape of a
+     * `with`-style API (`copyWith(mixed ...$changes)`) that maps named arguments to fields? False when unknown.
+     */
+    public function methodIsVariadic(?string $fqcn, string $method): bool
+    {
+        $owner = $this->declaringClassOfMethod($fqcn, $method);
+
+        return $owner !== null && ($this->methodVariadic[$owner][$method] ?? false);
     }
 
     /**
@@ -312,15 +381,21 @@ final class TypeResolver
         $finder = new NodeFinder();
 
         foreach ($codebase->files() as $file) {
-            foreach ($finder->findInstanceOf($file->ast, Class_::class) as $class) {
+            foreach ($finder->findInstanceOf($file->ast, ClassLike::class) as $class) {
                 $fqcn = ltrim(($class->namespacedName ?? null)?->toString() ?? '', '\\');
 
                 if ($fqcn === '') {
                     continue;
                 }
 
-                if ($class->extends instanceof Name) {
+                if ($class instanceof Class_ && $class->extends instanceof Name) {
                     $this->parentOf[$fqcn] = ltrim($class->extends->toString(), '\\');
+                }
+
+                foreach ($class->getTraitUses() as $use) {
+                    foreach ($use->traits as $trait) {
+                        $this->traitsOf[$fqcn][] = ltrim($trait->toString(), '\\');
+                    }
                 }
 
                 foreach (AstNode::constructorParamsOf($class) as $param) {
@@ -339,6 +414,7 @@ final class TypeResolver
 
                 foreach ($class->getMethods() as $method) {
                     $this->returnType[$fqcn][$method->name->toString()] = self::typeName($method->returnType);
+                    $this->methodVariadic[$fqcn][$method->name->toString()] = self::hasVariadicParam($method);
 
                     foreach (array_values($method->params) as $pos => $param) {
                         $this->paramNullable[$fqcn][$method->name->toString()][$pos] = self::paramAcceptsNull($param);
@@ -353,6 +429,17 @@ final class TypeResolver
      * untyped, or `mixed` — or when it defaults to the null literal. A non-null default (`int $x = 0`)
      * does NOT make it null-accepting; that's the difference between "optional" and "nullable".
      */
+    private static function hasVariadicParam(Node\Stmt\ClassMethod $method): bool
+    {
+        foreach ($method->params as $param) {
+            if ($param->variadic) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function paramAcceptsNull(Node\Param $param): bool
     {
         return $param->type === null
