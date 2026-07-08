@@ -89,6 +89,43 @@ final class TypeResolverTest extends TestCase
         self::assertNull($resolver->paramIsNullable('App\\Sink', 'take', 9), 'an unknown position is unknown, not non-nullable');
     }
 
+    public function test_reads_a_property_type_resolving_to_the_declaring_class(): void
+    {
+        $resolver = TypeResolver::forCodebase(Codebase::fromString(<<<'PHP'
+            <?php
+            namespace App;
+            class Sandbox {}
+            class Base { public function __construct(public readonly Sandbox $box) {} }
+            class Sub extends Base {}
+            PHP));
+
+        self::assertSame('App\\Sandbox', $resolver->propertyTypeOf('App\\Base', 'box'));
+        self::assertSame('App\\Sandbox', $resolver->propertyTypeOf('App\\Sub', 'box'), 'inherited property reads its base type');
+        self::assertNull($resolver->propertyTypeOf('App\\Base', 'missing'));
+        self::assertNull($resolver->propertyTypeOf(null, 'box'));
+    }
+
+    public function test_reads_a_data_collection_element_type(): void
+    {
+        $resolver = TypeResolver::forCodebase(Codebase::fromString(<<<'PHP'
+            <?php
+            namespace App;
+            use Spatie\LaravelData\Attributes\DataCollectionOf;
+            class Mode {}
+            class Payload {
+                public function __construct(
+                    #[DataCollectionOf(Mode::class)]
+                    public readonly array $modes,
+                    public readonly array $plain,
+                ) {}
+            }
+            PHP));
+
+        self::assertSame('App\\Mode', $resolver->collectionElementOf('App\\Payload', 'modes'));
+        self::assertNull($resolver->collectionElementOf('App\\Payload', 'plain'), 'a plain array has no element type');
+        self::assertNull($resolver->collectionElementOf('App\\Payload', 'missing'));
+    }
+
     private function functionNamed(array $ast, string $name): FunctionLike
     {
         foreach (new NodeFinder()->findInstanceOf($ast, FunctionLike::class) as $function) {

@@ -30,14 +30,21 @@ final class GeneratedSkillsAreCurrentTest extends TestCase
         $renderer = new SkillRenderer();
 
         foreach (Skills::all() as $skill) {
-            $path = "{$root}/skills/commandments/{$skill->slug}/SKILL.md";
+            $dir = "{$root}/skills/commandments/{$skill->slug}";
+            $files = ["{$dir}/SKILL.md" => $renderer->render($skill, $examples)];
 
-            $this->assertFileExists($path);
-            $this->assertSame(
-                file_get_contents($path),
-                $renderer->render($skill, $examples),
-                "{$skill->slug}/SKILL.md is stale — run `composer sins`.",
-            );
+            foreach ($skill->references() as $reference) {
+                $files["{$dir}/reference/{$reference->name}.md"] = "# {$reference->title}\n\n" . trim($reference->body) . "\n";
+            }
+
+            foreach ($files as $path => $rendered) {
+                $this->assertFileExists($path);
+                $this->assertSame(
+                    $rendered,
+                    file_get_contents($path),
+                    substr($path, strlen("{$root}/skills/commandments/")) . " is stale — run `composer sins`.",
+                );
+            }
         }
     }
 }

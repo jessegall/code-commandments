@@ -58,6 +58,19 @@ abstract class Skill
     }
 
     /**
+     * The dense REFERENCE documents this skill ships alongside its teaching — the mechanics (interface
+     * signatures, attribute catalogues, config flags) a fixer needs but that would bloat the principle.
+     * Each is generated to `reference/<name>.md` next to the SKILL.md and linked from its `## Reference`
+     * section. Empty by default — most skills carry all they need in the principle.
+     *
+     * @return list<Reference>
+     */
+    public function references(): array
+    {
+        return [];
+    }
+
+    /**
      * The skill's flat, loadable id — the `.claude/skills/<id>/` directory it's published
      * to AND its `SKILL.md` frontmatter `name`, so the Skill tool can find it. Claude Code
      * discovers skills one level deep, so the engine/slug is flattened with `-`:

@@ -30,23 +30,39 @@ $renderer = new SkillRenderer();
 $stale = [];
 $written = 0;
 
+/**
+ * A skill's generated files — its SKILL.md plus one `reference/<name>.md` per {@see Reference}.
+ *
+ * @return array<string, string>  absolute path => rendered content
+ */
+$filesFor = static function ($skill) use ($root, $renderer, $examples): array {
+    $dir = "{$root}/skills/commandments/{$skill->slug}";
+    $files = ["{$dir}/SKILL.md" => $renderer->render($skill, $examples)];
+
+    foreach ($skill->references() as $reference) {
+        $files["{$dir}/reference/{$reference->name}.md"] = "# {$reference->title}\n\n" . trim($reference->body) . "\n";
+    }
+
+    return $files;
+};
+
 foreach (Skills::all() as $skill) {
-    $path = "{$root}/skills/commandments/{$skill->slug}/SKILL.md";
-    $rendered = $renderer->render($skill, $examples);
-    $current = is_file($path) ? file_get_contents($path) : null;
+    foreach ($filesFor($skill) as $path => $rendered) {
+        $current = is_file($path) ? file_get_contents($path) : null;
 
-    if ($current === $rendered) {
-        continue;
+        if ($current === $rendered) {
+            continue;
+        }
+
+        if ($check) {
+            $stale[] = substr($path, strlen("{$root}/skills/commandments/"));
+            continue;
+        }
+
+        @mkdir(dirname($path), 0755, true);
+        file_put_contents($path, $rendered);
+        $written++;
     }
-
-    if ($check) {
-        $stale[] = $skill->slug;
-        continue;
-    }
-
-    @mkdir(dirname($path), 0755, true);
-    file_put_contents($path, $rendered);
-    $written++;
 }
 
 if ($check) {

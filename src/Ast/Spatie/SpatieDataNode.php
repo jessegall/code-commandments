@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Ast\Support\PageObject;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
@@ -17,6 +19,7 @@ use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
+use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -28,6 +31,8 @@ use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
+use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Continue_;
@@ -491,5 +496,431 @@ final class SpatieDataNode extends NodeMatch
         return $assign instanceof Assign
             && $assign->var instanceof ArrayDimFetch
             && $assign->var->dim !== null;
+    }
+
+    /**
+     * The DESTINATION this value hydrates into — walking up from this node to the property-keyed item of an
+     * enclosing single-argument `SomeData::from([...])` on a `Data` class, crossing at most one list-literal
+     * wrapper (so an element of a `#[DataCollectionOf]` list resolves too). Null when this node is not in
+     * such a hydration-argument position. The ONE walk every "auto-hydration would do this" detector shares.
+     */
+    public function hydrationSlot(): ?HydrationSlot
+    {
+        if (! $this->node instanceof Node) {
+            return null;
+        }
+
+        [$key, $keyedItem, $valueInList] = $this->keyedHydrationItem($this->node);
+
+        if ($key === null || ! $keyedItem instanceof ArrayItem) {
+            return null;
+        }
+
+        $call = $this->soleFromCallOf($keyedItem);
+
+        if ($call === null) {
+            return null;
+        }
+
+        $owner = $this->constructedFrom($call);
+
+        if ($owner === null || ! $this->codebase->extends($owner, self::DATA)) {
+            return null;
+        }
+
+        $resolver = TypeResolver::forCodebase($this->codebase);
+        $declared = $resolver->propertyTypeOf($owner, $key);
+        $element = $resolver->collectionElementOf($owner, $key);
+
+        return new HydrationSlot(
+            ownerFqcn: $owner,
+            property: $key,
+            declaredType: $declared,
+            isCollection: $element !== null,
+            elementType: $element ?? $declared,
+            valueInList: $valueInList,
+            destHasCast: $this->propertyHasCast($owner, $key),
+        );
+    }
+
+    /**
+     * Walk up from $node to the nearest property-keyed `ArrayItem`, crossing at most one list-literal
+     * wrapper. Returns `[key, item, valueInList]` — the string key, the keyed item, and whether $node sat
+     * inside a list (an element of a collection). `[null, null, false]` when no such item is reachable.
+     *
+     * @return array{0: ?string, 1: ?ArrayItem, 2: bool}
+     */
+    private function keyedHydrationItem(Node $node): array
+    {
+        $crossed = 0;
+
+        for ($current = $node; ; ) {
+            $parent = $current->getAttribute('parent');
+
+            if ($parent instanceof ArrayItem) {
+                if ($parent->key instanceof String_) {
+                    return [$parent->key->value, $parent, $crossed >= 1];
+                }
+
+                $current = $parent; // an unkeyed element of a list — keep climbing to its list
+
+                continue;
+            }
+
+            if ($parent instanceof Array_) {
+                if (++$crossed > 1) {
+                    return [null, null, false]; // deeper than one list wrapper — not a simple slot
+                }
+
+                $current = $parent;
+
+                continue;
+            }
+
+            return [null, null, false]; // any other parent before a key — not a hydration argument
+        }
+    }
+
+    /**
+     * The `Data::from(...)` call whose sole array argument is the array holding $keyedItem — either directly
+     * (`Data::from([...])`) or through one local hop (`$a = [...]; Data::from($a)`, the array assigned to a
+     * once-assigned local then passed straight in). Null otherwise.
+     */
+    private function soleFromCallOf(ArrayItem $keyedItem): ?StaticCall
+    {
+        $array = $keyedItem->getAttribute('parent');
+
+        if (! $array instanceof Array_) {
+            return null;
+        }
+
+        $parent = $array->getAttribute('parent');
+
+        if ($parent instanceof Arg) {
+            return $this->fromCallOwningArgument($parent);
+        }
+
+        if ($parent instanceof Assign && $parent->var instanceof Variable && is_string($parent->var->name)) {
+            return $this->fromCallForLocal($parent->var->name);
+        }
+
+        return null;
+    }
+
+    /**
+     * The `Data::from(...)` call whose SOLE argument is $arg, or null when $arg isn't the one argument of a
+     * `from` static call.
+     */
+    private function fromCallOwningArgument(Arg $arg): ?StaticCall
+    {
+        $call = $arg->getAttribute('parent');
+
+        if (! $call instanceof StaticCall || ! $call->name instanceof Identifier || $call->name->toString() !== 'from') {
+            return null;
+        }
+
+        $args = array_values(array_filter($call->args, static fn ($a): bool => $a instanceof Arg));
+
+        return count($args) === 1 && $args[0] === $arg ? $call : null;
+    }
+
+    /**
+     * A `Data::from($local)` in the enclosing function whose sole argument is the once-assigned local $var —
+     * the one-hop indirection where the source array is built into a variable and passed straight in. The
+     * single-assignment guard keeps a reassigned variable from tracing through the wrong array.
+     */
+    private function fromCallForLocal(string $var): ?StaticCall
+    {
+        $function = $this->enclosingFunction();
+
+        if ($function === null || $this->assignmentCount($function, $var) !== 1) {
+            return null;
+        }
+
+        foreach (new NodeFinder()->findInstanceOf($function, StaticCall::class) as $call) {
+            if ($call->name instanceof Identifier
+                && $call->name->toString() === 'from'
+                && $this->soleArgumentIsVariable($call, $var)) {
+                return $call;
+            }
+        }
+
+        return null;
+    }
+
+    private function assignmentCount(Node $function, string $var): int
+    {
+        return count(array_filter(
+            new NodeFinder()->findInstanceOf($function, Assign::class),
+            static fn (Assign $assign): bool => $assign->var instanceof Variable && $assign->var->name === $var,
+        ));
+    }
+
+    private function soleArgumentIsVariable(StaticCall $call, string $var): bool
+    {
+        $args = array_values(array_filter($call->args, static fn ($a): bool => $a instanceof Arg));
+
+        return count($args) === 1 && $args[0]->value instanceof Variable && $args[0]->value->name === $var;
+    }
+
+    /**
+     * The `Data` class a `::from()` call constructs — resolving `self`/`static` to its enclosing class.
+     */
+    private function constructedFrom(StaticCall $call): ?string
+    {
+        if (! $call->class instanceof Name) {
+            return null;
+        }
+
+        $class = $call->class->toString();
+
+        return in_array($class, ['self', 'static'], true)
+            ? $this->codebase->wrap($call, $this->file)->enclosingClassName()
+            : ltrim($class, '\\');
+    }
+
+    /**
+     * Does property $prop on $owner carry a cast-injecting attribute (so the object form is intended)?
+     */
+    private function propertyHasCast(string $owner, string $prop): bool
+    {
+        foreach ($this->codebase->classNamed($owner)->fields() as $field) {
+            if ($field->name === $prop) {
+                return $field->hasAttribute('WithCast', 'WithCastAndTransformer', 'WithCastable');
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this `X::from(...)` called with exactly one ARRAY-LITERAL argument — the redundant nested-hydration
+     * shape (`X::from(['a' => 1])`), as opposed to an object/model conversion (`X::from($model)`)?
+     */
+    public function fromArgIsArrayLiteral(): bool
+    {
+        $args = $this->arguments();
+
+        return count($args) === 1 && $args[0]->value instanceof Array_;
+    }
+
+    /**
+     * The class the value at this hydration slot is CONSTRUCTED as — this node's own `X::from(...)` receiver,
+     * resolving `self`/`static`. The N1 exact-match compares this against the slot's element type.
+     */
+    public function constructedClass(): ?string
+    {
+        return $this->node instanceof StaticCall ? $this->constructedFrom($this->node) : null;
+    }
+
+    /**
+     * Does this `X::from([...])` fill a slot the parent `::from` would AUTO-BUILD from the same array — the
+     * destination's element type is EXACTLY the constructed class (no subtype into a supertype slot), and the
+     * value's list-vs-single shape matches the slot's collection-vs-single shape? Then the wrapper is ceremony.
+     */
+    public function hydratesAnAutoBuiltSlot(): bool
+    {
+        $slot = $this->hydrationSlot();
+
+        if ($slot === null || $slot->valueInList !== $slot->isCollection) {
+            return false;
+        }
+
+        return $slot->elementType !== null && $slot->elementType === $this->constructedClass();
+    }
+
+    /**
+     * Does this node's hydration slot carry a `#[WithCast]`-family attribute — where the object form may be
+     * intended, so the nested construction is not redundant?
+     */
+    public function hydrationSlotHasCast(): bool
+    {
+        return $this->hydrationSlot()?->destHasCast ?? false;
+    }
+
+    /**
+     * The static factory an `array_map(...)` at this node maps over its list — `array_map(E::for(...), $xs)`
+     * or `array_map(fn ($x) => E::for($x), $xs)`. Null when this isn't an `array_map` whose callback is a
+     * single static-factory call. {@see FactoryRef} carries whether the callback reaches beyond its own item.
+     */
+    public function mappedFactory(): ?FactoryRef
+    {
+        if ($this->callName() !== 'array_map') {
+            return null;
+        }
+
+        $callable = $this->arguments()[0]->value ?? null;
+
+        if ($callable === null) {
+            return null;
+        }
+
+        [$staticCall, $closesOver] = $this->factoryCallOf($callable);
+
+        if (! $staticCall instanceof StaticCall || ! $staticCall->class instanceof Name || ! $staticCall->name instanceof Identifier) {
+            return null;
+        }
+
+        $class = $staticCall->class->toString();
+        $class = in_array($class, ['self', 'static'], true) ? ($this->enclosingClassName() ?? $class) : ltrim($class, '\\');
+
+        $function = $this->enclosingFunction();
+        $returns = $function === null
+            ? null
+            : TypeResolver::forCodebase($this->codebase)->typeOf($staticCall, $function, $this->enclosingClassName());
+
+        return new FactoryRef($class, $staticCall->name->toString(), $returns, $closesOver);
+    }
+
+    /**
+     * Does this `array_map(...)` fill a `#[DataCollectionOf(E)]` slot by DERIVING each element through a
+     * factory that should live in a cast — `array_map(E::for(...), $xs)` where `E::for` returns the element
+     * type `E` (a `Data`), the factory is NOT the `from`/`collect` auto-hydration entrypoint, and the
+     * callback doesn't close over context a per-item cast couldn't reach?
+     */
+    public function mappedFactoryDerivesElement(): bool
+    {
+        $slot = $this->hydrationSlot();
+        $factory = $this->mappedFactory();
+
+        if ($slot === null || ! $slot->isCollection || $slot->elementType === null || $factory === null) {
+            return false;
+        }
+
+        if (in_array($factory->method, ['from', 'collect'], true) || $factory->closesOverContext) {
+            return false;
+        }
+
+        return $this->extendsData($factory->class) && $factory->returnsType === $slot->elementType;
+    }
+
+    private function extendsData(string $class): bool
+    {
+        return $this->codebase->extends($class, self::DATA);
+    }
+
+    /**
+     * The static call an `array_map` callback invokes, and whether the callback reaches beyond its own
+     * parameters — a first-class callable (`E::for(...)`), or an arrow/closure whose body is a single static
+     * call. `[null, false]` when the callback post-processes the result or isn't a single static call.
+     *
+     * @return array{0: ?StaticCall, 1: bool}
+     */
+    private function factoryCallOf(Node $callable): array
+    {
+        if ($callable instanceof StaticCall) {
+            return [$callable, false]; // first-class callable `E::for(...)` — no bound context
+        }
+
+        if ($callable instanceof ArrowFunction && $callable->expr instanceof StaticCall) {
+            return [$callable->expr, $this->referencesBeyond($callable->expr, $callable)];
+        }
+
+        if ($callable instanceof Closure && ! empty($callable->uses)) {
+            return [null, true]; // a `use (...)` import is captured context a per-item cast can't reach
+        }
+
+        if ($callable instanceof Closure) {
+            $return = $this->soleReturn($callable);
+
+            return $return instanceof StaticCall ? [$return, $this->referencesBeyond($return, $callable)] : [null, false];
+        }
+
+        return [null, false];
+    }
+
+    /**
+     * Does $call reference a variable that isn't one of $fn's parameters (or `$this`) — captured context the
+     * mapping closes over, which a per-item cast can't be handed?
+     */
+    private function referencesBeyond(StaticCall $call, Node $fn): bool
+    {
+        $params = [];
+
+        foreach ($fn->getParams() as $param) {
+            if ($param->var instanceof Variable && is_string($param->var->name)) {
+                $params[$param->var->name] = true;
+            }
+        }
+
+        foreach (new NodeFinder()->findInstanceOf($call, Variable::class) as $variable) {
+            if (is_string($variable->name) && ! isset($params[$variable->name])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The sole `return <expr>` value of a closure body, or null when it isn't a single return statement.
+     */
+    private function soleReturn(Closure $closure): ?Node
+    {
+        $returns = new NodeFinder()->findInstanceOf($closure->stmts, \PhpParser\Node\Stmt\Return_::class);
+
+        return count($returns) === 1 ? $returns[0]->expr : null;
+    }
+
+    /**
+     * Does this node CONSTRUCT a natively-cast value — an enum from its backing scalar (`Enum::from($x)`), a
+     * `new DateTime*(...)`, or `Carbon::parse($x)` — the shapes Spatie hydrates straight from the raw value?
+     */
+    public function constructsNativeCastValue(): bool
+    {
+        if ($this->staticCallMethod() === 'from') {
+            $class = $this->staticCallClass();
+
+            return $class !== null && $this->codebase->isEnum(ltrim($class, '\\'));
+        }
+
+        if ($this->staticCallMethod() === 'parse') {
+            $class = $this->staticCallClass();
+
+            return $class !== null && in_array(self::shortName($class), self::NATIVE_CAST_TYPES, true);
+        }
+
+        $new = $this->newClassName();
+
+        return $new !== null && $this->castsNativelyPublic(ltrim($new, '\\'));
+    }
+
+    /**
+     * Is this construction called with exactly one argument — no timezone / format second argument that the
+     * native cast wouldn't reproduce?
+     */
+    public function hasSingleArgument(): bool
+    {
+        return count($this->arguments()) === 1;
+    }
+
+    /**
+     * Does this node's hydration slot accept the natively-cast value being constructed — the SAME enum for an
+     * `Enum::from(...)`, or a (non-enum) date/time slot for a date/time construction? A cross-kind mismatch
+     * (enum construction into a date slot, or vice versa) is not redundant and is spared.
+     */
+    public function slotAcceptsNativeCast(): bool
+    {
+        $slot = $this->hydrationSlot();
+
+        if ($slot === null || $slot->declaredType === null) {
+            return false;
+        }
+
+        $enumClass = $this->staticCallMethod() === 'from' ? ltrim((string) $this->staticCallClass(), '\\') : '';
+
+        if ($enumClass !== '' && $this->codebase->isEnum($enumClass)) {
+            return $slot->declaredType === $enumClass; // enum construction → exact enum slot
+        }
+
+        return $this->castsNativelyPublic($slot->declaredType) && ! $this->codebase->isEnum($slot->declaredType);
+    }
+
+    /**
+     * Public wrapper over {@see castsNatively} for detectors that gate a destination type.
+     */
+    public function castsNativelyPublic(string $type): bool
+    {
+        return $this->castsNatively($type);
     }
 }
