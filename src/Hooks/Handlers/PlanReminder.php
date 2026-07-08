@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Cli\Plan\PlanReset;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 /**
  * The plan-execution {@see Hook} wired to `PostToolUse/ExitPlanMode` and `Stop`. Records the active
@@ -47,9 +48,14 @@ final class PlanReminder extends Hook
         }
 
         $plan = $this->profile($event);
+
+        // A newly-approved plan starts from a clean slate: wipe every trace of the PREVIOUS plan — its
+        // counters, constraints, testing choice, working-state notes and stuck signal — so none bleeds
+        // into this one, THEN activate the new marker. (Same reset a fresh session does, one home.)
+        PlanReset::wipe($event->root, $plan);
         PlanMarker::inWorktree($event->root)->activate($this->git()->head($event->root));
-        Checklist::inProject($event->root)->clearAll(); // a fresh plan starts from a clean slate — an
-        // older judge's worklist would be a stale reference; it regenerates on the plan's first scan.
+        Checklist::inProject($event->root)->clearAll(); // an older judge's worklist would be a stale
+        // reference; it regenerates on the plan's first scan.
 
         return $this->inject($event, $this->approvedNudge($plan));
     }

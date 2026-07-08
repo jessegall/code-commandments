@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
+use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use PHPUnit\Framework\TestCase;
 
@@ -100,6 +104,25 @@ final class PlanReminderTest extends TestCase
         $this->assertStringContainsString('Working state', $on);
         $this->assertStringContainsString('.plan-working-state', $on);
         $this->assertStringContainsString('after each phase', $on);
+    }
+
+    public function test_approving_a_new_plan_wipes_the_previous_plan_state(): void
+    {
+        // A previous plan left constraints, a testing choice, working-state notes and a bumped counter
+        // behind. Approving a NEW plan must start clean — none of it may bleed into the new run.
+        $plan = new \JesseGall\CodeCommandments\PlanExecution()->build();
+        PlanConstraints::inWorktree($this->root, $plan)->addLocal('Stale constraint from the last plan.');
+        PlanTesting::inWorktree($this->root, $plan)->set('Stale testing choice.');
+        file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nold plan phase 3\n");
+        Counter::named($this->root, 'cardinal-remind')->bump();
+
+        $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']);
+
+        $this->assertTrue($this->marker()->isActive(), 'the new plan is active');
+        $this->assertSame([], PlanConstraints::inWorktree($this->root, $plan)->local(), 'old constraints are wiped');
+        $this->assertSame('', PlanTesting::inWorktree($this->root, $plan)->chosen(), 'old testing choice is wiped');
+        $this->assertFalse(PlanWorkingState::inWorktree($this->root)->exists(), 'old working-state is wiped');
+        $this->assertFileDoesNotExist($this->root . '/.commandments/.cardinal-remind-count', 'counters are reset');
     }
 
     public function test_a_post_tool_use_for_another_tool_is_ignored(): void

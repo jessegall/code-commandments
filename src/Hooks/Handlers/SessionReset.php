@@ -9,11 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\Counter;
-use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
-use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
-use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
-use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
+use JesseGall\CodeCommandments\Cli\Plan\PlanReset;
 /**
  * The fresh-session cleanup — a `SessionStart` hook that wipes the worktree's lingering plan state (the
  * {@see PlanMarker}, constraints, testing choice, working-state record, reminder counters) so a crashed or force-closed run
@@ -42,14 +38,7 @@ final class SessionReset extends Hook
             return $this->pass(); // resume / compact continue a live session — leave its plan intact.
         }
 
-        $plan = Config::load($event->root)->planExecutionSettings();
-
-        PlanMarker::inWorktree($event->root)->clear();
-        PlanConstraints::inWorktree($event->root, $plan)->clear();
-        PlanTesting::inWorktree($event->root, $plan)->clear();
-        PlanWorkingState::inWorktree($event->root)->clear();
-
-        Counter::clearAll($event->root);
+        PlanReset::wipe($event->root, Config::load($event->root)->planExecutionSettings());
 
         return $this->pass(); // Silent — a cleanup has nothing to say to the fresh session.
     }
