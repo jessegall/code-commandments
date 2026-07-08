@@ -104,6 +104,29 @@ final class TypeResolver
         return null;
     }
 
+    /**
+     * The declared type of $field on $fqcn — resolved to the class that actually DECLARES it, so an
+     * inherited property reads the type from its base. Null when the field (or its type) isn't known.
+     */
+    public function propertyTypeOf(?string $fqcn, string $field): ?string
+    {
+        $owner = $this->declaringClassOf($fqcn, $field);
+
+        return $owner === null ? null : ($this->fieldType[$owner][$field] ?? null);
+    }
+
+    /**
+     * The element type a `#[DataCollectionOf(X::class)]` on $field declares — the X each item of the
+     * collection hydrates to. Resolved to the declaring class (an inherited collection reads its base's
+     * attribute). Null when $field carries no `#[DataCollectionOf]`.
+     */
+    public function collectionElementOf(?string $fqcn, string $field): ?string
+    {
+        $owner = $this->declaringClassOf($fqcn, $field);
+
+        return $owner === null ? null : ($this->collectionElement[$owner][$field] ?? null);
+    }
+
     private function resolve(Node $expr, array $locals, ?string $selfFqcn): ?string
     {
         if ($expr instanceof Variable && is_string($expr->name)) {

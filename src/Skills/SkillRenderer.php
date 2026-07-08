@@ -41,6 +41,7 @@ final class SkillRenderer
             $this->badGood($sins, $examples),
             $this->whenItFires($sins),
             $this->checklist($sins),
+            $this->references($skill),
             $this->related($skill),
         ];
 
@@ -91,6 +92,19 @@ final class SkillRenderer
         $rows = array_map(static fn (Sin $sin): string => "- [ ] {$sin->rule()}", $sins);
 
         return $rows === [] ? '' : "## Checklist\n\n" . implode("\n", $rows);
+    }
+
+    /**
+     * The `## Reference` section — links to the dense mechanics docs the skill ships in `reference/`.
+     */
+    private function references(Skill $skill): string
+    {
+        $rows = array_map(
+            static fn (Reference $reference): string => "- [{$reference->title}](reference/{$reference->name}.md)",
+            $skill->references(),
+        );
+
+        return $rows === [] ? '' : "## Reference\n\n" . implode("\n", $rows);
     }
 
     /**

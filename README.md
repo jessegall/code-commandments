@@ -375,7 +375,7 @@ The teaching layer: one discipline each, the doc an agent reads to fix a sin.
 Every `SKILL.md` is generated from its class (`composer sins`).
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
-_19 skills. Full table in [README.skills.md](README.skills.md)._
+_20 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
 ## Sins & detectors
@@ -384,7 +384,7 @@ Every sin (the `--sin=` key) and what it flags. Each sin has one detector that
 finds it, named `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_71 sins across 19 skills. Full tables in [README.sins.md](README.sins.md)._
+_74 sins across 20 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## Auto-fixing
@@ -452,7 +452,7 @@ vendor/bin/commandments repent resources/js
 ```
 
 <!-- BEGIN: scribes (auto-generated, run `composer readme`) -->
-_`repent` auto-fixes 15 sins, plus 2 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
+_`repent` auto-fixes 17 sins, plus 2 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes, so one run fully converges.
