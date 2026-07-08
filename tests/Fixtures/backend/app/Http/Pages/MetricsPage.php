@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Attributes\FromContainer;
@@ -13,6 +14,7 @@ use Spatie\LaravelData\Data;
  * Slots including a typed collection, all filled straight from the injected builder in the
  * constructor — each a self-contained projection that a `#[Computed]` hook would carry.
  */
+#[Sinful(PageObjectMissingTypeScript::class)]
 final class MetricsPage extends Data
 {
     public readonly StatCard $headline;

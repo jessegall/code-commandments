@@ -5,11 +5,13 @@ namespace Shop\Http\Pages;
 use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Attributes\Hidden;
 use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * A righteous page object — composed and returned like the others, but its injected collaborator is
  * `#[Hidden]`, so nothing leaks. The InjectedServiceNotHidden detector must NOT flag it.
  */
+#[TypeScript]
 final class AccountPage extends Data
 {
     public readonly StatCard $profile;

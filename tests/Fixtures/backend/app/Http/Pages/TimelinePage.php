@@ -7,11 +7,13 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Attributes\Hidden;
 use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Seeded through a `for()` factory, then a constructor that projects each slot from the injected
  * reader — pure `$this->slot = $this->cart->…()` fills that belong in `#[Computed]` hooks.
  */
+#[TypeScript]
 final class TimelinePage extends Data
 {
     public readonly CartLine $head;

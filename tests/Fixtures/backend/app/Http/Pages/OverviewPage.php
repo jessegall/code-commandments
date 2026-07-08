@@ -7,12 +7,14 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Attributes\Hidden;
 use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * The EditorShell shape — an assembly-line constructor that fills each public slot from a projector.
  * Every fill is self-contained (`$this->x = $this->sales->…()`), so each should be a `#[Computed]`
  * hook instead.
  */
+#[TypeScript]
 final class OverviewPage extends Data
 {
     public readonly MenuLink $primary;

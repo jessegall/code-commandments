@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
@@ -13,6 +14,7 @@ use Spatie\LaravelData\Data;
  * collaborators (`app(AiService::class)`) instead of injecting them. The same reach is also a
  * container-reach, so the method carries both markers.
  */
+#[Sinful(PageObjectMissingTypeScript::class)]
 final class AiWorkflowPage extends Data
 {
     public readonly MenuLink $trigger;

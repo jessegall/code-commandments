@@ -7,12 +7,14 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Attributes\Hidden;
 use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
  * with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
  * is not — one un-hidden service is enough to leak into the frontend type.
  */
+#[TypeScript]
 #[Sinful(InjectedServiceNotHidden::class)]
 final class CatalogPage extends Data
 {

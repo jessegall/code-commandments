@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\Computed;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
@@ -14,6 +15,7 @@ use Spatie\LaravelData\Data;
  * `$cart` collaborator is public and un-hidden, so it ships to the frontend type with the payload.
  */
 #[Sinful(InjectedServiceNotHidden::class)]
+#[Sinful(PageObjectMissingTypeScript::class)]
 final class CheckoutSummaryPage extends Data
 {
     public function __construct(

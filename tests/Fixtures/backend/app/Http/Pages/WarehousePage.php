@@ -8,12 +8,14 @@ use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Attributes\Hidden;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Lazy;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * The real Smart Farmers WarehouseShowPage pattern of LEGITIMATE constructor work — the two kinds the
  * orchestration detector must not flag: a `Lazy` slot (hoisting it would destroy the deferral), and
  * slots derived from a local unwrapped once and reused (a `get` hook can't see that local). Righteous.
  */
+#[TypeScript]
 final class WarehousePage extends Data
 {
     public readonly StatCard $summary;

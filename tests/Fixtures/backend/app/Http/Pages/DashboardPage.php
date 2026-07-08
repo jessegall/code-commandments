@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Data;
@@ -12,6 +13,7 @@ use Spatie\LaravelData\Data;
  * and leaks into the frontend `DashboardPage` type.
  */
 #[Sinful(InjectedServiceNotHidden::class)]
+#[Sinful(PageObjectMissingTypeScript::class)]
 final class DashboardPage extends Data
 {
     public readonly StatCard $revenue;

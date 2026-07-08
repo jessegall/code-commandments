@@ -120,6 +120,8 @@ page object — the composed thing on the wire — is exactly where they earn th
   _Add `#[Hidden]` above the injection attribute._
 - Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
   _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
+- Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.
+  _Add `#[TypeScript]` above the page-object class (`use Spatie\TypeScriptTransformer\Attributes\TypeScript;`)._
 - A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
   _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
 - Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
@@ -153,6 +155,7 @@ public function __construct(
 
 ```php
 // Bad
+#[TypeScript]
 final class CatalogPage extends Data
 {
     public readonly MenuLink $home;
@@ -184,6 +187,7 @@ final class CatalogPage extends Data
 }
 
 // Good
+#[TypeScript]
 final class ReportPage extends Data
 {
     #[Computed]
@@ -240,12 +244,72 @@ final class WireShapesPage extends Data
 
 ```php
 // Bad
+final class MetricsPage extends Data
+{
+    public readonly StatCard $headline;
+
+    /** @var list<StatCard> */
+    #[DataCollectionOf(StatCard::class)]
+    public readonly array $cards;
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(FacetBuilder::class)]
+        public readonly FacetBuilder $builder,
+    ) {
+        $this->headline = $this->builder->headline();
+        $this->cards = $this->builder->cards();
+    }
+
+    public function caption(): string
+    {
+        return sprintf('%s across %d metrics', $this->headline->label, count($this->cards));
+    }
+
+    public function labels(): string
+    {
+        $names = [];
+
+        foreach ($this->cards as $card) {
+            $names[] = strtoupper($card->label);
+        }
+
+        return implode(', ', $names);
+    }
+}
+
+// Good
+#[TypeScript]
+final class ReportPage extends Data
+{
+    #[Computed]
+    public string $timeRange { get => $this->request->timeRange(); }
+
+    #[Computed]
+    public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
+
+    /** @var list<StatCard>|Lazy */
+    #[Computed]
+    #[DataCollectionOf(StatCard::class)]
+    public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(ReportRequest::class)]
+        public readonly ReportRequest $request,
+    ) {}
+}
+```
+
+```php
+// Bad
 public function aiEnabled(): bool
 {
     return app(AiService::class)->isEnabled();
 }
 
 // Good
+#[TypeScript]
 final class ReportPage extends Data
 {
     #[Computed]
@@ -295,6 +359,7 @@ final class WirePairedData extends Data
 - A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place — `ConstructorOrchestrationDetector`
 - A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type — `InjectedServiceNotHiddenDetector`
 - A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape — `ManualOutputTransformDetector`
+- A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked — `PageObjectMissingTypeScriptDetector`
 - A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` — `ServiceLocationInPageObjectDetector`
 - A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type — `TransformerWithoutTsTypeDetector`
 
@@ -303,6 +368,7 @@ final class WirePairedData extends Data
 - [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
 - [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
 - [ ] Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
+- [ ] Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.
 - [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
 - [ ] Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
 

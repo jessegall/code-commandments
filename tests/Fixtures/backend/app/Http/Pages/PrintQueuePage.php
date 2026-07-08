@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
@@ -11,6 +12,7 @@ use Spatie\LaravelData\Data;
  * The Smart Farmers PrintAgents IndexPage shape — seeded through a `for()` factory over direct nested
  * slots, reading a buffer service out of the container inside a getter.
  */
+#[Sinful(PageObjectMissingTypeScript::class)]
 final class PrintQueuePage extends Data
 {
     public readonly CartLine $current;

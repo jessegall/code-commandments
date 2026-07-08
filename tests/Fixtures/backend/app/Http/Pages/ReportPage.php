@@ -4,6 +4,7 @@ namespace Shop\Http\Pages;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use Shop\Http\Requests\ReportRequest;
@@ -13,6 +14,7 @@ use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Attributes\Hidden;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Lazy;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
@@ -20,9 +22,11 @@ use Spatie\LaravelData\Lazy;
  * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
  * constructor — the InjectedServiceNotHidden detector must NOT flag it.
  */
+#[TypeScript]
 #[Righteous(InjectedServiceNotHidden::class)]
 #[Righteous(ServiceLocationInPageObject::class)]
 #[Righteous(ConstructorOrchestration::class)]
+#[Righteous(PageObjectMissingTypeScript::class)]
 final class ReportPage extends Data
 {
     #[Computed]

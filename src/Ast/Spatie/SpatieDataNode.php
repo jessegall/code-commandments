@@ -657,6 +657,22 @@ final class SpatieDataNode extends NodeMatch
     /** The Spatie TypeScript-transformer attribute that compiles a Data class to a frontend type. */
     public const string TYPE_SCRIPT = 'Spatie\\TypeScriptTransformer\\Attributes\\TypeScript';
 
+    /**
+     * Is this class a PAGE OBJECT missing `#[TypeScript]`? A page object travels back in a response and is
+     * read by a `.vue` page — so it MUST generate a frontend type; without `#[TypeScript]` the page consumes
+     * an untyped `any` and the whole page/prop contract goes unchecked. (A nested leaf `Data` need not be
+     * annotated on its own — the transformer reaches it through the annotated page — so this gates on
+     * page-object-ness, not every `Data`.)
+     */
+    public function pageObjectMissingTypeScript(): bool
+    {
+        $class = $this->enclosingClass();
+
+        return $class instanceof \PhpParser\Node\Stmt\ClassLike
+            && $this->isPageObject()
+            && ! self::classHasAttribute($class, 'TypeScript');
+    }
+
     /** Spatie's collection wrapper — a valid RETURN of `::collect()`, but never a PROPERTY type. */
     public const string DATA_COLLECTION = 'Spatie\\LaravelData\\DataCollection';
 
