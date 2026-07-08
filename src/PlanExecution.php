@@ -27,7 +27,7 @@ final class PlanExecution
 
     private bool $pushEachPhase = false;
 
-    private ?StopPolicy $stopPolicy = null;
+    private ?PlanMode $mode = null;
 
     /** @var list<string> */
     private array $constraints = [];
@@ -71,15 +71,29 @@ final class PlanExecution
     }
 
     /**
-     * Turn on the keep-going Stop hook: while a plan is active, a stop re-nudges the agent to carry
-     * on until the plan is done, per the {@see StopPolicy}. Opt-in — without this call the Stop
-     * hook stays silent.
+     * The plan-execution MODE — how autonomously the agent runs an approved plan (confirm-first, supervised,
+     * grind-to-finish, or never-stop). See {@see PlanMode}. Opt-in: without this call plan runs are unmanaged
+     * (no confirm gate, no keep-going nudge) and the human's stop always stands. This is the primary knob;
+     * the older {@see keepGoing} is kept as an alias onto it.
+     */
+    public function mode(PlanMode $mode): self
+    {
+        $this->mode = $mode;
+
+        return $this;
+    }
+
+    /**
+     * Legacy alias for {@see mode}: turn on the keep-going Stop hook. `keepGoing()` maps to
+     * {@see PlanMode::Autonomous}, `keepGoing(StopPolicy::RespectUserStops)` to {@see PlanMode::Supervised}.
+     * Prefer `mode(...)` — it also exposes {@see PlanMode::Ask} and {@see PlanMode::Relentless}.
      */
     public function keepGoing(StopPolicy $policy = StopPolicy::UntilComplete): self
     {
-        $this->stopPolicy = $policy;
-
-        return $this;
+        return $this->mode(match ($policy) {
+            StopPolicy::UntilComplete => PlanMode::Autonomous,
+            StopPolicy::RespectUserStops => PlanMode::Supervised,
+        });
     }
 
     /**
@@ -182,7 +196,7 @@ final class PlanExecution
             $this->baseBranch,
             $this->branchPrefix,
             $this->pushEachPhase,
-            $this->stopPolicy,
+            $this->mode,
             $this->constraints,
             $this->enforceEachPhase,
             $this->testFlow,

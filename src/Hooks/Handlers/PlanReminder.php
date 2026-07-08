@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\PlanMode;
 use JesseGall\CodeCommandments\PlanProfile;
-use JesseGall\CodeCommandments\StopPolicy;
 
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
@@ -32,7 +32,7 @@ final class PlanReminder extends Hook
 
     public function summary(): string
     {
-        return "On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` (when `keepGoing()` is on).";
+        return "On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Ask/Supervised/Autonomous/Relentless).";
     }
 
     public function bindings(): array
@@ -57,28 +57,30 @@ final class PlanReminder extends Hook
     protected function onStop(HookEvent $event): int
     {
         $marker = PlanMarker::inWorktree($event->root);
-        $plan = $this->profile($event);
+        $mode = $this->profile($event)->mode();
 
-        if (! $marker->isActive() || $plan->stopPolicy() === null) {
-            return $this->pass(); // No plan, or keep-going not enabled — the human's stop stands.
+        if (! $marker->isActive() || $mode === null || ! $mode->keepsGoing()) {
+            return $this->pass(); // No plan, unmanaged, or Ask (a start-gate) — the human's stop stands.
         }
 
         $branch = $this->git()->currentBranch($event->root);
 
-        if ($branch !== '' && $branch === $plan->baseBranch()) {
+        if ($branch !== '' && $branch === $this->profile($event)->baseBranch()) {
             $marker->clear(); // Back on the base branch — the plan is merged or abandoned; done nudging.
 
             return $this->pass();
         }
 
         if ($marker->stuckAt() !== null) {
-            // The plan was just marked STUCK: suppress THIS one stop so a blocked agent isn't looped
-            // back in, then clear the signal immediately — the moment the agent continues, normal
-            // keep-going resumes. A stuck signal is one-shot; it must never silently disable nudging
-            // for the rest of the run just because no commit has landed yet.
             $marker->clearStuck();
 
-            return $this->pass();
+            // A stuck pause is honoured ONLY where the mode allows it (Autonomous): suppress this one stop
+            // so a blocked agent isn't looped, then clear the one-shot signal so keep-going resumes on the
+            // next progress. Relentless has no waiting — a stuck signal is cleared but the agent is pushed
+            // straight back in to SKIP the blocker and keep going.
+            if ($mode->allowsStuck()) {
+                return $this->pass();
+            }
         }
 
         $state = $marker->recordNudge($this->git()->head($event->root));
@@ -89,11 +91,15 @@ final class PlanReminder extends Hook
             return $this->pass();
         }
 
-        $capped = $plan->stopPolicy() === StopPolicy::RespectUserStops
-            ? $state->total > 1              // Nudge exactly once, then honour the stop.
-            : $state->stuck > self::MAX_STUCK; // Grind on, unless spinning with no new commits.
+        // Relentless never caps on no-progress (only the absolute MAX_TOTAL backstop ends it); Supervised
+        // nudges once; Autonomous grinds until it's clearly spinning with no new commits.
+        $capped = match (true) {
+            $mode->neverStops() => false,
+            $mode->nudgesOnce() => $state->total > 1,
+            default => $state->stuck > self::MAX_STUCK,
+        };
 
-        return $capped ? $this->pass() : $this->block($this->keepGoingNudge());
+        return $capped ? $this->pass() : $this->block($this->keepGoingNudge($mode));
     }
 
     private function profile(HookEvent $event): PlanProfile
@@ -104,11 +110,6 @@ final class PlanReminder extends Hook
     private function approvedNudge(PlanProfile $plan): string
     {
         $push = $plan->pushesEachPhase() ? ', then commit and push' : ', then commit (push once at the end)';
-        $autonomy = $plan->stopPolicy() !== null
-            ? "\n• Autonomy: grind through every phase without stopping — the Stop hook keeps you going until you run `plan done` "
-                . "(only when the plan is COMPLETE). If you get genuinely blocked and need the user, run `plan stuck` instead — it "
-                . "pauses the nudges without ending the plan."
-            : '';
 
         return "Code Commandments — a plan was just approved. Before writing any code, load the "
             . "`commandments-executing-plans` skill (Skill tool) and follow it. This project's plan profile:\n"
@@ -120,7 +121,31 @@ final class PlanReminder extends Hook
             . $this->constraintsSection($plan)
             . $this->testingSection($plan)
             . $this->workingStateSection($plan)
-            . $autonomy;
+            . $this->autonomySection($plan->mode());
+    }
+
+    /**
+     * The mode-specific autonomy bullet for the approval nudge — how hard to push and what to do when
+     * blocked. Silent when the project sets no mode. {@see PlanMode::Relentless} is the one that answers the
+     * user's demand: never stop, never ask, SKIP a blocker and keep going — and it never mentions `plan stuck`.
+     */
+    private function autonomySection(?PlanMode $mode): string
+    {
+        return match ($mode) {
+            null => '',
+            PlanMode::Ask => "\n• Autonomy: this project runs plans in ASK mode. Do NOT start implementing yet — present a short "
+                . "summary of the plan and ask the user (AskUserQuestion) to confirm before you write any code.",
+            PlanMode::Supervised => "\n• Autonomy: grind through the phases on your own, but the user may stop you at any point — "
+                . "honour a stop when it comes. Finish with `plan done` once the end gate is clean.",
+            PlanMode::Autonomous => "\n• Autonomy: grind through every phase without stopping — the Stop hook keeps you going until you "
+                . "run `plan done` (only when the plan is COMPLETE). If you get genuinely blocked and need the user, run `plan stuck` "
+                . "instead — it pauses the nudges without ending the plan.",
+            PlanMode::Relentless => "\n• Autonomy: RELENTLESS mode — do NOT stop until the plan is COMPLETE, for ANY reason. Do NOT ask "
+                . "the user questions and do NOT wait: when you hit a decision, choose the best option yourself and proceed. If a "
+                . "phase is genuinely blocked or not worth it, SKIP it — record why in your working notes and move on to the "
+                . "remaining phases. There is no pausing for the user in this mode — no blocking, no waiting; the only way the run "
+                . "ends is `plan done`, once every reachable phase is finished and the end gate is clean.",
+        };
     }
 
     /**
@@ -189,8 +214,17 @@ final class PlanReminder extends Hook
                 : "\n  When the user just takes the configured default, `testing set` it verbatim.");
     }
 
-    private function keepGoingNudge(): string
+    private function keepGoingNudge(PlanMode $mode): string
     {
+        if ($mode->neverStops()) {
+            return "Code Commandments — RELENTLESS mode: the plan isn't finished, so do NOT stop. Keep going through the "
+                . "remaining phases, commit each, and make your OWN decisions — do not ask the user, do not wait. If a phase "
+                . "is genuinely blocked or not worth doing, SKIP it: note why in your working state and move straight on to the "
+                . "next phase. You cannot pause for the user in this mode; the run ends only when you run "
+                . "`vendor/bin/commandments plan done`, and you may only `done` once every reachable phase is finished and "
+                . "`vendor/bin/commandments checks complete` is clean.";
+        }
+
         return "Code Commandments — the plan isn't finished. Keep going: work the remaining phases, commit each, "
             . "and only stop if you genuinely need user input. When every phase is done and "
             . "`vendor/bin/commandments checks complete` is clean, run `vendor/bin/commandments plan done` to finish. "

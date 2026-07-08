@@ -70,6 +70,23 @@ final class PlanReminderTest extends TestCase
         $this->assertStringContainsString("configured test flow: \"Write tests each phase.\"", $context);
     }
 
+    public function test_the_approval_nudge_carries_the_mode_autonomy_bullet(): void
+    {
+        // Ask mode: the approval nudge tells the agent to confirm BEFORE implementing, and a stop is silent.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::Ask));');
+        $ask = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+        $this->assertStringContainsString('ASK mode', $ask);
+        $this->assertStringContainsString('confirm before you write any code', $ask);
+        $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha1'), 'Ask is a start-gate — a stop stands');
+
+        // Relentless mode: the bullet forbids stopping/asking and tells the agent to skip blockers.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::Relentless));');
+        $relentless = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+        $this->assertStringContainsString('RELENTLESS', $relentless);
+        $this->assertStringContainsString('SKIP', $relentless);
+        $this->assertStringNotContainsString('plan stuck', $relentless, 'relentless never mentions plan stuck');
+    }
+
     public function test_the_approval_nudge_states_the_working_state_discipline_only_when_tracked(): void
     {
         // Off by default — the bullet is absent.
@@ -153,6 +170,35 @@ final class PlanReminderTest extends TestCase
 
         $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha1'));
         $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha2'), "the human's stop stands after one nudge");
+    }
+
+    public function test_relentless_never_gives_up_on_no_progress(): void
+    {
+        // The user's demand: never stop. Where Autonomous caps a spinning agent after the stuck-cap,
+        // Relentless keeps nudging on the SAME head far past it — only the absolute total cap can end it.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::Relentless));');
+        $this->marker()->activate('sha0');
+
+        for ($i = 0; $i < 20; $i++) {
+            $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'stuck'), "relentless nudge {$i}");
+        }
+    }
+
+    public function test_relentless_ignores_a_stuck_signal_and_pushes_straight_back_in(): void
+    {
+        // No waiting in relentless: a stuck marker is cleared but the agent is nudged to SKIP and continue,
+        // never granted the one-stop pause Autonomous gives.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::Relentless));');
+        $this->marker()->activate('sha0');
+        $this->marker()->markStuck('sha0');
+
+        $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'sha0');
+
+        $this->assertSame('block', $emitted[0]['decision'] ?? null, 'a stuck signal does not pause a relentless run');
+        $reason = (string) ($emitted[0]['reason'] ?? '');
+        $this->assertStringContainsString('RELENTLESS', $reason);
+        $this->assertStringContainsString('SKIP', $reason);
+        $this->assertStringNotContainsString('plan stuck', $reason, 'relentless never teaches plan stuck');
     }
 
     public function test_stop_is_silent_while_waiting_on_a_running_background_task(): void

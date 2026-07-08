@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Moment;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\PlanMode;
 use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\StopPolicy;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +26,7 @@ final class PlanExecutionTest extends TestCase
         $this->assertSame('main', $plan->baseBranch());
         $this->assertSame('plan/', $plan->prefix());
         $this->assertFalse($plan->pushesEachPhase(), 'push once at the end by default');
-        $this->assertNull($plan->stopPolicy(), 'keep-going is opt-in — off by default');
+        $this->assertNull($plan->mode(), 'a plan mode is opt-in — unmanaged by default');
         $this->assertSame([], $plan->checksFor(Moment::Complete));
     }
 
@@ -75,12 +76,18 @@ final class PlanExecutionTest extends TestCase
         $this->assertSame(['composer test'], $plan->checksFor(Moment::Complete));
     }
 
-    public function test_keep_going_records_its_policy(): void
+    public function test_mode_records_the_chosen_posture(): void
     {
-        $this->assertSame(StopPolicy::UntilComplete, new PlanExecution()->keepGoing()->build()->stopPolicy());
+        $this->assertSame(PlanMode::Relentless, new PlanExecution()->mode(PlanMode::Relentless)->build()->mode());
+        $this->assertSame(PlanMode::Ask, new PlanExecution()->mode(PlanMode::Ask)->build()->mode());
+    }
+
+    public function test_keep_going_maps_onto_the_mode_for_back_compat(): void
+    {
+        $this->assertSame(PlanMode::Autonomous, new PlanExecution()->keepGoing()->build()->mode());
         $this->assertSame(
-            StopPolicy::RespectUserStops,
-            new PlanExecution()->keepGoing(StopPolicy::RespectUserStops)->build()->stopPolicy(),
+            PlanMode::Supervised,
+            new PlanExecution()->keepGoing(StopPolicy::RespectUserStops)->build()->mode(),
         );
     }
 
@@ -100,12 +107,12 @@ final class PlanExecutionTest extends TestCase
     {
         $plan = new Config()
             ->planExecution(fn (PlanExecution $plan) => $plan
-                ->keepGoing(StopPolicy::UntilComplete)
+                ->mode(PlanMode::Autonomous)
                 ->pushEachPhase()
                 ->onComplete('composer test'))
             ->planExecutionSettings();
 
-        $this->assertSame(StopPolicy::UntilComplete, $plan->stopPolicy());
+        $this->assertSame(PlanMode::Autonomous, $plan->mode());
         $this->assertTrue($plan->pushesEachPhase());
         $this->assertSame(['composer test'], $plan->checksFor(Moment::Complete));
     }
@@ -114,7 +121,7 @@ final class PlanExecutionTest extends TestCase
     {
         $plan = new Config()->planExecutionSettings();
 
-        $this->assertNull($plan->stopPolicy());
+        $this->assertNull($plan->mode());
         $this->assertSame([], $plan->checksFor(Moment::Complete));
     }
 

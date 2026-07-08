@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\PlanMode;
 
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
@@ -52,6 +53,17 @@ final class PlanCommand implements Command
             return 0;
         }
 
+        // Relentless mode has no waiting: a blocker is skipped, not paused on. Refuse to mark stuck so the
+        // agent can't quietly stall the run — tell it to move on to the next phase instead.
+        if (Config::load($root)->planExecutionSettings()->mode() === PlanMode::Relentless) {
+            fwrite(STDOUT,
+                "◼ This project runs plans in RELENTLESS mode — there is no stopping. Don't wait on a blocker:\n"
+                . "  SKIP the blocked phase, note why in your working state, and continue with the remaining phases.\n"
+                . "  Run `commandments plan done` only once every reachable phase is finished and the end gate is clean.\n");
+
+            return 0;
+        }
+
         $marker->markStuck($this->io->git()->head($root));
         fwrite(STDOUT,
             "◼ Plan marked STUCK — the keep-going nudge is paused for this stop so you aren't looped while\n"
@@ -95,11 +107,11 @@ final class PlanCommand implements Command
     private function status(PlanMarker $marker, string $root): int
     {
         $plan = Config::load($root)->planExecutionSettings();
-        $keepGoing = $plan->stopPolicy()?->name ?? 'off';
+        $mode = $plan->mode()?->name ?? 'unmanaged';
 
         $stuck = $marker->isActive() && $marker->stuckAt() !== null;
         fwrite(STDOUT, $marker->isActive() ? ($stuck ? "◼ Plan active (STUCK).\n" : "● Plan active.\n") : "○ No plan active.\n");
-        fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  keep-going: {$keepGoing}\n");
+        fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  mode: {$mode}\n");
 
         $constraints = PlanConstraints::inWorktree($root, $plan);
         $active = $constraints->active();

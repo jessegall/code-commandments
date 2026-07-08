@@ -189,7 +189,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 |---|---|---|
 | `Remind` | `PostToolUse` | Surfaces the cardinal *trace to the source* rule once every 25 tool uses. |
 | `JudgeReminder` | `Stop, PreToolUse/Bash` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
-| `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` (when `keepGoing()` is on). |
+| `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Ask/Supervised/Autonomous/Relentless). |
 | `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
@@ -234,7 +234,8 @@ Every option (from the `PlanExecution` builder):
 | `->branchFrom(…)` | The branch a plan is cut from and judged against — the base for the new plan branch and the `judge --branch=<base>` the end gate runs. |
 | `->branchPrefix(…)` | The prefix for the branch a plan auto-creates (`plan/` → `plan/<slug>`). |
 | `->pushEachPhase(…)` | Push after every phase commit, rather than once at the end. |
-| `->keepGoing(…)` | Turn on the keep-going Stop hook: while a plan is active, a stop re-nudges the agent to carry on until the plan is done, per the StopPolicy. |
+| `->mode(…)` | The plan-execution MODE — how autonomously the agent runs an approved plan (confirm-first, supervised, grind-to-finish, or never-stop). |
+| `->keepGoing(…)` | Legacy alias for mode: turn on the keep-going Stop hook. |
 | `->onStart(…)` | Commands to run ONCE before the first phase — environment setup the whole plan needs (`composer install`, `npm ci`, a `git fetch`). |
 | `->eachPhase(…)` | Commands to run after EACH phase's commit — the fast, cheap signal (a linter, a type check) that keeps a phase honest without the full suite. |
 | `->onComplete(…)` | Commands to run ONCE at the very end, after the last phase — the exhaustive gate: the full test suite, a lint, a static analysis. |

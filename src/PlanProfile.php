@@ -23,7 +23,7 @@ final readonly class PlanProfile
         private string $baseBranch,
         private string $branchPrefix,
         private bool $pushEachPhase,
-        private ?StopPolicy $stopPolicy,
+        private ?PlanMode $mode,
         private array $constraints,
         private bool $enforceEachPhase,
         private string $testFlow = '',
@@ -59,9 +59,13 @@ final readonly class PlanProfile
         return $this->pushEachPhase;
     }
 
-    public function stopPolicy(): ?StopPolicy
+    /**
+     * The plan-execution mode — how autonomously an approved plan is run. Null when unmanaged (no mode
+     * configured): no confirm gate and no keep-going nudge.
+     */
+    public function mode(): ?PlanMode
     {
-        return $this->stopPolicy;
+        return $this->mode;
     }
 
     /**
