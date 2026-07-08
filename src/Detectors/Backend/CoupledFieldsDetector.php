@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\ClassField;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
+use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\CoupledFields;
@@ -51,22 +52,52 @@ final class CoupledFieldsDetector implements Detector, Unpublished
             return false;
         }
 
-        $values = [];        // value-typed field names (scalar/enum/value-object)
-        $valueObjects = [];  // value fields that are a CLASS — reachable-into for the cross-object shape
+        $values = []; // value-typed field names (scalar/enum/value-object)
 
         foreach ($fields as $field) {
             if ($codebase->isValueType($field->type)) {
                 $values[$field->name] = true;
-
-                if (TypeName::class($field->type) !== null) {
-                    $valueObjects[$field->name] = true;
-                }
             }
         }
 
         return $this->coupledValues($match, $values, count($fields))
-            || $match->selfFieldNestedReachPairings(array_keys($values), array_keys($valueObjects)) >= 2
+            || $this->crossObjectClump($match, $codebase)
             || $this->redundantMirror($match, $fields, $codebase);
+    }
+
+    /**
+     * A direct own field and a reach through a sibling object that are the SAME value-object type — two
+     * symmetric PEERS of one concept the boundary split (`$this->fromNode` + `$this->edge->toNode`, both
+     * `Node`). Combined in ≥2 places. When the two types DIFFER it is an aggregate holding related-but-
+     * distinct parts (a graph + a node's id), not a clump — so the types must match, resolved through the
+     * chain by {@see TypeResolver}. That the type is a parsed class keeps scalars/enums out.
+     */
+    private function crossObjectClump(NodeMatch $match, Codebase $codebase): bool
+    {
+        $class = $match->enclosingClassName();
+
+        if ($class === null) {
+            return false;
+        }
+
+        $resolver = TypeResolver::forCodebase($codebase);
+        $peers = 0;
+
+        foreach ($match->selfFieldNestedReachTriples() as [$direct, $base, $property]) {
+            $directType = $resolver->propertyTypeOf($class, $direct);
+            $baseType = $resolver->propertyTypeOf($class, $base);
+            $reachedType = $baseType === null ? null : $resolver->propertyTypeOf($baseType, $property);
+
+            if ($directType !== null
+                && $reachedType !== null
+                && ltrim($directType, '\\') === ltrim($reachedType, '\\')
+                && $codebase->declarationMatch($directType) !== null
+                && ++$peers >= 2) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -90,6 +90,21 @@ final class CoupledFieldsDetectorTest extends TestCase
         PHP, 'Connection');
     }
 
+    public function test_does_not_flag_an_aggregate_reaching_a_different_type(): void
+    {
+        // A turn HOLDS a graph and a node and reaches node.id — different types, a hierarchy/context, not
+        // two peers of one concept. Must NOT flag (the AgentTurn/NodeDescriptor shape).
+        $this->assertNotFlagged(<<<'PHP'
+        final class Node { public function __construct(public readonly string $id) {} }
+        final class Graph { public function __construct(public readonly string $name) {} }
+        final class Turn {
+            public function __construct(public readonly Graph $graph, public readonly Node $node) {}
+            public function a(): array { return [$this->graph, $this->node->id]; }
+            public function b(): array { return [$this->graph, $this->node->id]; }
+        }
+        PHP);
+    }
+
     // ── 3. redundant mirror ──────────────────────────────────────────────────
 
     public function test_flags_a_field_whose_name_encodes_a_nested_objects_property(): void

@@ -2527,25 +2527,30 @@ class AstNode
     }
 
     /**
-     * How many combining expressions under this node pair a DIRECT own field drawn from $directFields with a
-     * reach THROUGH a sibling object field drawn from $reachFields (`$this->a` + `$this->b->…`, a ≠ b) — the
-     * cross-object-clump signal. The caller supplies the eligible sets (e.g. value fields vs value-object
-     * fields) so the classification lives with the caller and the walk stays reusable here.
+     * Every place a combining expression under this node pairs a DIRECT own field with a reach THROUGH a
+     * sibling object field — `[$this->a, $this->b->c]` → `['a', 'b', 'c']` (a ≠ b). The reusable walk; the
+     * caller resolves and compares the TYPES (a same-type pair is a split-boundary clump; a different-type
+     * pair is an aggregate holding related-but-distinct parts).
      *
-     * @param  list<string>  $directFields
-     * @param  list<string>  $reachFields
+     * @return list<array{0: string, 1: string, 2: string}>  [directField, reachBase, reachedProperty]
      */
-    public function selfFieldNestedReachPairings(array $directFields, array $reachFields): int
+    public function selfFieldNestedReachTriples(): array
     {
-        $count = 0;
+        $triples = [];
 
         foreach ($this->combiningExpressions() as $expression) {
-            if (self::pairsDirectFieldWithNestedReach($expression, $directFields, $reachFields)) {
-                $count++;
+            [$directs, $reaches] = self::directFieldsAndReaches($expression);
+
+            foreach ($reaches as [$base, $property]) {
+                foreach ($directs as $direct) {
+                    if ($direct !== $base) {
+                        $triples[] = [$direct, $base, $property];
+                    }
+                }
             }
         }
 
-        return $count;
+        return $triples;
     }
 
     /**
@@ -2632,22 +2637,29 @@ class AstNode
         return $values;
     }
 
-    /** Does one expression combine a direct `$this->a` with a reach through a sibling object `$this->b->…` (a ≠ b)? */
-    protected static function pairsDirectFieldWithNestedReach(Node $node): bool
+    /**
+     * The direct own fields and the `$this->b->c` reaches within one expression.
+     *
+     * @return array{0: list<string>, 1: list<array{0: string, 1: string}>}  [directFields, [base, property]…]
+     */
+    protected static function directFieldsAndReaches(Node $node): array
     {
-        $direct = null;
-        $reachVia = null;
+        $directs = [];
+        $reaches = [];
 
         foreach ((new NodeFinder)->findInstanceOf($node, PropertyFetch::class) as $fetch) {
             $parent = $fetch->getAttribute('parent');
 
-            if ($parent instanceof PropertyFetch && $parent->var === $fetch) {
-                $reachVia = self::selfPropertyOf($fetch) ?? $reachVia; // the receiver of `$this->b->…`
+            // `$this->b` used as the receiver of `$this->b->c` — a reach base plus the property reached.
+            if ($parent instanceof PropertyFetch && $parent->var === $fetch
+                && ($base = self::selfPropertyOf($fetch)) !== null
+                && $parent->name instanceof Identifier) {
+                $reaches[] = [$base, $parent->name->toString()];
             } elseif (($name = self::selfPropertyOf($fetch)) !== null) {
-                $direct = $name;
+                $directs[] = $name;
             }
         }
 
-        return $direct !== null && $reachVia !== null && $direct !== $reachVia;
+        return [array_values(array_unique($directs)), $reaches];
     }
 }
