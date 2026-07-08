@@ -50,7 +50,7 @@ final class ExemptionsTest extends TestCase
         $this->assertNotEmpty(array_filter(Catalog::all(), static fn (Package $p): bool => $p instanceof LaravelPackage));
     }
 
-    public function test_spatie_data_pipes_and_casts_are_no_container(): void
+    public function test_spatie_data_pipes_and_casts_are_not_exempt_from_the_container(): void
     {
         $codebase = Codebase::fromString(<<<'PHP'
             <?php
@@ -59,14 +59,13 @@ final class ExemptionsTest extends TestCase
             namespace App {
                 class HydratePipe implements \Spatie\LaravelData\DataPipes\DataPipe {}
                 class MoneyCast implements \Spatie\LaravelData\Casts\Cast {}
-                class Plain {}
             }
             PHP);
 
-        // A DataPipe/Cast is framework-built with no DI — exempt from array-bag AND container-reach.
-        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\HydratePipe'));
-        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\MoneyCast'));
-        $this->assertFalse(Exemptions::has(NoContainer::class, $codebase, 'App\\Plain'));
+        // A Spatie DataPipe/Cast is resolved THROUGH the container, so DI is available — it must NOT be
+        // no-container-exempt; reaching the container inside it is a real sin.
+        $this->assertFalse(Exemptions::has(NoContainer::class, $codebase, 'App\\HydratePipe'));
+        $this->assertFalse(Exemptions::has(NoContainer::class, $codebase, 'App\\MoneyCast'));
     }
 
     public function test_service_providers_are_composition_roots(): void

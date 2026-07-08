@@ -7,10 +7,10 @@ namespace JesseGall\CodeCommandments\Packages\Tags;
 use JesseGall\CodeCommandments\Packages\Exemption;
 
 /**
- * Exemption tag: a type the framework instantiates ITSELF with no container/DI (an Eloquent cast, a Spatie
- * `DataPipe`/`Cast`). There's nothing to inject, so a loose array/primitive parameter is the framework's
- * calling convention (read by array-bag), and reaching the container per call is its only way to obtain
- * collaborators (read by container-reach).
+ * Exemption tag: a type the framework `new`s ITSELF with no container/DI — an Eloquent cast. There's
+ * nothing to inject, so a loose array/primitive parameter is the framework's calling convention (read by
+ * array-bag), and reaching the container per call is its only way to obtain collaborators (read by
+ * container-reach).
  */
 final class NoContainer extends Exemption
 {

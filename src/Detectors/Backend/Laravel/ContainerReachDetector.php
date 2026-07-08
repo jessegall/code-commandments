@@ -19,8 +19,8 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
  * Reaching into the container with `app()`/`resolve()` from a class the container
  * resolves — the dependency belongs in the constructor. Only statically-known targets
  * count; suppressed for enums and hand-instantiated classes. A `NoContainer` type the
- * framework builds itself with no DI (an Eloquent cast, a Spatie `DataPipe`/`Cast`) is
- * exempt — it CAN'T constructor-inject, so per-call container reach is its convention.
+ * framework `new`s itself with no DI (an Eloquent cast) is exempt — it CAN'T
+ * constructor-inject, so per-call container reach is its convention.
  */
 final class ContainerReachDetector implements Detector, Exemptable
 {

@@ -17,7 +17,7 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 /**
  * An `array` read by string-literal keys — a structured bag that should be a typed value
  * object. Dynamic/positional keys are genuine maps/tuples (left alone). A `NoContainer` type
- * (an Eloquent cast, a Spatie DataPipe/Cast) is exempt — the framework dictates its array parameter.
+ * (an Eloquent cast) is exempt — the framework dictates its array parameter.
  */
 final class ArrayBagDetector implements Detector, Exemptable
 {
