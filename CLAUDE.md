@@ -118,11 +118,69 @@ detector is not viable — cut it. For example, a named constructor like
 would flag it can't tell the two apart and isn't viable. Calibrate every time, not
 "later".
 
+**Calibrating a detector that isn't ready to ship? Mark it `Unpublished`.** A new
+detector often needs several calibrate→tighten rounds before it's clean. Have its
+detector class (and its sin) implement the marker interface
+`JesseGall\CodeCommandments\Unpublished` — both `Detectors\Catalog` and `Sins\Catalog`
+skip anything implementing it, so it stays out of `judge`, the fixture verifier, the
+generated docs (`SKILL.md`/README), and every release while you iterate. Build it and
+unit-test it by instantiating the detector **directly** (not through the catalog), and
+calibrate by running it directly over a scanned consumer codebase (a throwaway probe
+under the scratchpad — `Codebase::scan($root)` → `new YourDetector()->find($cb)`). When
+its hits read clean on real code, delete the `implements Unpublished`, add the ≥3-diverse
+fixtures + righteous twin, and it enrols itself. The marker lives ON the class — there is
+no second list, and a half-built rule can never leak into a tagged release.
+
 📍 **Sins are first-class.** Each sin is its OWN class under `src/Sins/{backend,frontend}/`
 (name + skill slug + description), discovered by `Sins\Catalog` — the sin twin of
 `Detectors\Catalog`. A detector *references* its sin (`sin(): Sin { return new ArrayBag(); }`),
 never declares one inline. `judge --sin=<name>` filters to it (the retired `--detector`).
 The generated `SKILL.md` "when it fires" rows project from the registered sins.
+
+## The engine arsenal — CHECK THIS BEFORE YOU IMPLEMENT ANYTHING
+
+The single most-repeated mistake is hand-rolling logic that already exists. **Before you
+implement ANY feature — a detector, a predicate, a scribe, a helper, a type read, a "does
+X reference Y" walk — find it here first.** Reuse it; if it's genuinely missing, ADD it to
+the right layer (never inline in the detector). This is not a walk-only rule — it applies
+every time you start building.
+
+**`Codebase` (`src/Ast/Codebase.php`) — whole-program.** Selectors open a query:
+`whereClass`, `whereField`, `whereMethod`, `whereMethodDeclaration`, `whereNew`,
+`whereNewExtending`, `whereStaticCall`, `whereFunction`, `whereGetterHook`, `whereAssign`,
+`whereParamType`, `whereAttribute`, `whereComment`, `whereClassExtending`, `where(Closure)`.
+Graph/resolve: `extends`, `implements`, `isEnum`, **`isValueType`** (value vs service — walks
+the chain), `classNamed` (a class decl), **`declarationMatch`** (ANY class-like incl. enum, with
+its file), `index()` (call graph → `callersOf`), `valueFlow()` (field-nil provenance).
+
+**`Query` (`src/Ast/Query.php`).** `where`/`reject` (one check/line), `isUsedOn($fqcn)`,
+`withinClass`/`notWithinClass`, `inProximityOf`; terminals `get`/`locations`/`count`/`first`.
+
+**`AstNode` / `NodeMatch` (`src/Ast/`) — per-node, ~120 predicates. Skim before adding one.**
+Navigation `parent`/`coalesceLeft`/`coalesceRight` (null-object, never null); reads
+`fields()` (→ `ClassField`), `publicFieldNames`, `constructorParams`, `arguments`,
+`enclosingClass(Name)`, `enclosingFunction(Name)`, `scope`, `asField`, `staticCallClass/Method`,
+`newClassName`, `callName`, `assignedPropertyName`; field-usage `selfPropertyGroupsAssembled`,
+`selfPropertiesTestedForAbsence`, `selfFieldNestedReachPairings`,
+`rewritesSelfPropertyOutsideConstructor`; predicates `isThrow`, `isInEnum`, `isWithinLoop`,
+`isNull`, `everyConstructorParamNullable`, `structuralHash`, … `NodeMatch` adds `line`,
+`location`, `near`, `span`, **`trace()`** (a variable's whole journey), `resultIsDeNulled`,
+`receiverMutatedNearby`.
+
+**`TypeName` (`src/Ast/TypeName.php`).** `class`, `nullableClass`, `isNullable`, `isNullableArray`,
+`render` (type→comparable string), `unionIncludes($fqcn)`.
+
+**`Ast\Support\*` — cross-cutting analyses (memoised per codebase; each is the SINGLE home of its
+concept).** `TypeResolver` (`typeOf` — an expression's real type through the receiver chain +
+local assignments; `propertyTypeOf`, `collectionElementOf`, `declaringClassOf`), `ChainResolver`
+(a property/method chain's final type), `ReceiverResolver` (a call receiver's static type),
+`ValueFlow` (field null-flow verdict/explain), `Calls`, `FeatureEnvy`, `LookupEnvy`,
+`NullObjectDefault`, `OwnStateMask`, `Frozen`, `Enums`, `StructuralHash`, `PageObject`,
+`ResponseSurface`, `RouteActions`, `DataClassShape`, `ParamResolution`. A package's own knowledge
+is on its decorator node (`Ast\{Spatie,Laravel,…}\*Node`), stated once.
+
+**Rewriting:** one `Scribes\Writer` (all edits) over `Scribes\Draft`; `Scribes\Span` owns ALL
+offset math. Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser`.
 
 ## Commands
 

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors;
 
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Discovery;
+use JesseGall\CodeCommandments\Unpublished;
 
 /**
  * The single source of truth for every detector that ships. Discovered from the
@@ -53,7 +54,7 @@ final class Catalog
         $detectors = [];
 
         foreach (Discovery::classes(__DIR__ . "/{$engine}", __NAMESPACE__ . "\\{$engine}", 'Detector') as $class) {
-            if (is_subclass_of($class, RootDetector::class)) {
+            if (is_subclass_of($class, RootDetector::class) && ! is_subclass_of($class, Unpublished::class)) {
                 $detectors[] = new $class;
             }
         }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Sins;
 
 use JesseGall\CodeCommandments\Discovery;
+use JesseGall\CodeCommandments\Unpublished;
 
 /**
  * Every sin that ships, discovered from the `Backend/` and `Frontend/` folders — the
@@ -52,7 +53,7 @@ final class Catalog
         $sins = [];
 
         foreach (Discovery::classes(__DIR__ . "/{$engine}", __NAMESPACE__ . "\\{$engine}") as $class) {
-            if (is_subclass_of($class, Sin::class)) {
+            if (is_subclass_of($class, Sin::class) && ! is_subclass_of($class, Unpublished::class)) {
                 $sins[] = new $class;
             }
         }

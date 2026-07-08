@@ -91,6 +91,49 @@ final class TypeName
         return false;
     }
 
+    /**
+     * A normalized, comparable string for a type declaration — `?Foo`, `int`, `A|B` (union members sorted so
+     * spelling order doesn't matter). The reusable "are these two types the same" primitive; null renders `''`.
+     */
+    public static function render(?Node $type): string
+    {
+        if ($type instanceof NullableType) {
+            return '?' . self::render($type->type);
+        }
+
+        if ($type instanceof Name || $type instanceof Identifier) {
+            return ltrim($type->toString(), '\\');
+        }
+
+        if ($type instanceof UnionType) {
+            $parts = array_map(static fn (Node $member): string => self::render($member), $type->types);
+            sort($parts);
+
+            return implode('|', $parts);
+        }
+
+        return $type === null ? '' : $type::class;
+    }
+
+    /**
+     * Does a UNION type list $fqcn as one of its members — e.g. `Foo | Optional` includes `…\Optional`?
+     * A reusable check for a marker type unioned onto a real type (the Spatie `Optional` shape, a sentinel).
+     */
+    public static function unionIncludes(?Node $type, string $fqcn): bool
+    {
+        if (! $type instanceof UnionType) {
+            return false;
+        }
+
+        foreach ($type->types as $member) {
+            if ($member instanceof Name && ltrim($member->toString(), '\\') === ltrim($fqcn, '\\')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function singleClassOfUnion(UnionType $type): ?string
     {
         $classes = [];

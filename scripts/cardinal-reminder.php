@@ -47,6 +47,25 @@ DETECT through the engine:
 REWRITE through the engine: `Draft` for edits; `Span` owns ALL offset math (`indentAt`/`before`/`after`/
   `skipWhitespace`). No bespoke indentation/keyword-hunting/attribute-insertion scattered in a scribe.
 
+REUSE — WRITE EVERYTHING WITH INTENT TO REUSE. A detector COMPOSES the fluent DSL; it must NOT `new
+  NodeFinder()` or hoard `PhpParser\Node` type-juggling. The moment you reach for a raw AST walk or a
+  private helper that reads/renders/compares nodes (a type→string, a `$this->x` reader, an "is it
+  reassigned" check), STOP: that belongs on `AstNode`/`TypeName`/`Codebase`/a `Support` — add it there so
+  every detector shares it, then compose it. (DetectorsComposeTheEngineTest enforces: no NodeFinder in a
+  detector, few PhpParser imports.) Same for scribes: one canonical `Writer`, never a bespoke rewriter.
+
+THE ARSENAL ALREADY EXISTS — check CLAUDE.md "The engine arsenal" BEFORE you implement ANYTHING. Highlights:
+  • Codebase: whereClass/whereField/whereMethod…; extends/implements/isEnum/`isValueType` (value vs
+    service, walks the chain); classNamed/`declarationMatch` (any class-like + file); index()→callersOf
+    (call graph); valueFlow() (field-nil provenance).
+  • AstNode/NodeMatch (~120): fields()/publicFieldNames/asField, selfPropertyGroupsAssembled/
+    selfPropertiesTestedForAbsence/selfFieldNestedReachPairings/rewritesSelfPropertyOutsideConstructor,
+    coalesceLeft/Right, `trace()` (a variable's journey), resultIsDeNulled, structuralHash.
+  • TypeName: class/nullableClass/isNullable/render/unionIncludes.
+  • Support/: TypeResolver (`typeOf` — real type through the receiver chain), ChainResolver,
+    ReceiverResolver, ValueFlow, FeatureEnvy, LookupEnvy, PageObject, ResponseSurface, DataClassShape…
+  If the predicate you need is close to one of these, EXTEND it — do not re-derive it.
+
 BANNED in detectors/scribes (NoRegexInParsingLayerTest enforces it): `preg_*`, `strpos`/`strrpos`/`strstr`,
   and `ctype_*` char-lexing. A `preg`/`strpos`/`ctype` "just this once" IS the violation — reuse or extend
   the engine instead, and write the new tool with intent to reuse.

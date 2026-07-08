@@ -2454,4 +2454,200 @@ class AstNode
 
         return null;
     }
+
+    // ── field-usage reads (a class's OWN fields, `$this->x`) ─────────────────────
+    // The reusable substrate for coupling/clump analysis — every walk lives here so a
+    // detector composes these instead of hand-rolling a NodeFinder.
+
+    /**
+     * Every group of ≥2 DISTINCT own fields (`$this->a`, `$this->b`) ASSEMBLED INTO ONE VALUE together —
+     * the direct arguments of a `new X($this->a, $this->b)` or the items of a tuple `[$this->a, $this->b]`.
+     * Only object construction and array literals count: a plain call (`sprintf($this->a, $this->b)`, a
+     * method passing them along) is formatting/forwarding, not assembling one thing, so it is NOT a group.
+     *
+     * @return list<list<string>>
+     */
+    public function selfPropertyGroupsAssembled(): array
+    {
+        $groups = [];
+
+        foreach ($this->assemblingExpressions() as $expression) {
+            $fields = [];
+
+            foreach ($this->directArgumentValues($expression) as $value) {
+                $name = self::selfPropertyOf($value);
+
+                if ($name !== null) {
+                    $fields[$name] = true;
+                }
+            }
+
+            if (count($fields) >= 2) {
+                $groups[] = array_keys($fields);
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
+     * The own fields this node tests for ABSENCE — `$this->x === null` / `!== null`, plus
+     * `$this->x instanceof $optionalFqcn` when a marker FQCN (e.g. Spatie `Optional`) is given.
+     *
+     * @return list<string>
+     */
+    public function selfPropertiesTestedForAbsence(?string $optionalFqcn = null): array
+    {
+        if ($this->node === null) {
+            return [];
+        }
+
+        $tested = [];
+
+        foreach ((new NodeFinder)->find($this->node, static fn (Node $n): bool => $n instanceof Identical || $n instanceof NotIdentical) as $comparison) {
+            /** @var Identical|NotIdentical $comparison */
+            foreach ([[$comparison->left, $comparison->right], [$comparison->right, $comparison->left]] as [$side, $other]) {
+                if ($other instanceof ConstFetch && strtolower($other->name->toString()) === 'null' && ($name = self::selfPropertyOf($side)) !== null) {
+                    $tested[$name] = true;
+                }
+            }
+        }
+
+        if ($optionalFqcn !== null) {
+            foreach ((new NodeFinder)->findInstanceOf($this->node, Instanceof_::class) as $instance) {
+                if ($instance->class instanceof Name
+                    && ltrim($instance->class->toString(), '\\') === ltrim($optionalFqcn, '\\')
+                    && ($name = self::selfPropertyOf($instance->expr)) !== null) {
+                    $tested[$name] = true;
+                }
+            }
+        }
+
+        return array_keys($tested);
+    }
+
+    /**
+     * How many combining expressions under this node pair a DIRECT own field drawn from $directFields with a
+     * reach THROUGH a sibling object field drawn from $reachFields (`$this->a` + `$this->b->…`, a ≠ b) — the
+     * cross-object-clump signal. The caller supplies the eligible sets (e.g. value fields vs value-object
+     * fields) so the classification lives with the caller and the walk stays reusable here.
+     *
+     * @param  list<string>  $directFields
+     * @param  list<string>  $reachFields
+     */
+    public function selfFieldNestedReachPairings(array $directFields, array $reachFields): int
+    {
+        $count = 0;
+
+        foreach ($this->combiningExpressions() as $expression) {
+            if (self::pairsDirectFieldWithNestedReach($expression, $directFields, $reachFields)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Is this class's property $name ever assigned OUTSIDE its constructor — a live copy, not a frozen
+     * field? (Reads the enclosing class; a promoted/`readonly` field that is never re-assigned yields false.)
+     */
+    public function rewritesSelfPropertyOutsideConstructor(string $name): bool
+    {
+        $class = $this->enclosingClass();
+
+        if ($class === null) {
+            return false;
+        }
+
+        foreach ($class->getMethods() as $method) {
+            if ($method->name->toString() === '__construct') {
+                continue;
+            }
+
+            foreach ((new NodeFinder)->findInstanceOf($method, Assign::class) as $assign) {
+                if (self::selfPropertyOf($assign->var) === $name) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /** The `$this->NAME` field a node reads, or null when it isn't a `$this->` property fetch. */
+    protected static function selfPropertyOf(Node $node): ?string
+    {
+        return $node instanceof PropertyFetch
+            && $node->var instanceof Variable
+            && $node->var->name === 'this'
+            && $node->name instanceof Identifier
+            ? $node->name->toString()
+            : null;
+    }
+
+    /**
+     * The value-ASSEMBLING expressions under this node — a `new X(...)` or an array literal `[...]`. These
+     * build ONE value out of their parts; a call does not, so it is excluded (see {@see combiningExpressions}).
+     *
+     * @return list<Node>
+     */
+    protected function assemblingExpressions(): array
+    {
+        return $this->node === null ? [] : (new NodeFinder)->find($this->node, static fn (Node $n): bool =>
+            $n instanceof New_ || $n instanceof Array_);
+    }
+
+    /**
+     * The value-COMBINING expressions — assembling ones PLUS calls — used where forwarding fields into a
+     * call still counts (the cross-object reach). A superset of {@see assemblingExpressions}.
+     *
+     * @return list<Node>
+     */
+    protected function combiningExpressions(): array
+    {
+        return $this->node === null ? [] : (new NodeFinder)->find($this->node, static fn (Node $n): bool =>
+            $n instanceof New_ || $n instanceof Array_ || $n instanceof MethodCall || $n instanceof StaticCall || $n instanceof FuncCall);
+    }
+
+    /**
+     * The direct argument/item value expressions of a combining node — `new X($a, $b)` / `[$a, $b]` / `f($a)`.
+     *
+     * @return list<Node>
+     */
+    protected function directArgumentValues(Node $node): array
+    {
+        if ($node instanceof Array_) {
+            return array_values(array_map(static fn (ArrayItem $item): Node => $item->value, array_filter($node->items)));
+        }
+
+        $values = [];
+
+        foreach ($node instanceof New_ || $node instanceof MethodCall || $node instanceof StaticCall || $node instanceof FuncCall ? $node->args : [] as $argument) {
+            if ($argument instanceof Arg) {
+                $values[] = $argument->value;
+            }
+        }
+
+        return $values;
+    }
+
+    /** Does one expression combine a direct `$this->a` with a reach through a sibling object `$this->b->…` (a ≠ b)? */
+    protected static function pairsDirectFieldWithNestedReach(Node $node): bool
+    {
+        $direct = null;
+        $reachVia = null;
+
+        foreach ((new NodeFinder)->findInstanceOf($node, PropertyFetch::class) as $fetch) {
+            $parent = $fetch->getAttribute('parent');
+
+            if ($parent instanceof PropertyFetch && $parent->var === $fetch) {
+                $reachVia = self::selfPropertyOf($fetch) ?? $reachVia; // the receiver of `$this->b->…`
+            } elseif (($name = self::selfPropertyOf($fetch)) !== null) {
+                $direct = $name;
+            }
+        }
+
+        return $direct !== null && $reachVia !== null && $direct !== $reachVia;
+    }
 }

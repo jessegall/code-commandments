@@ -575,6 +575,52 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Is this type a VALUE — data you hold — rather than a SERVICE you call? A scalar/array/enum is a value;
+     * a class is a value only when, WALKING THE CHAIN into it, every one of its own fields is itself a value
+     * (a `SocketRef` of scalars, an `EdgePayload` of `SocketRef`s). A service fails: its type is unresolvable
+     * (a vendor `DatabaseManager`) or, walked into, it holds other services. Bounded-depth and cycle-guarded;
+     * `mixed`/unresolved conservatively counts as NON-value. The reusable "is this a clump member" primitive.
+     *
+     * @param  array<string, true>  $visited  FQCNs already on the current walk (cycle guard)
+     */
+    public function isValueType(?Node $type, int $depth = 4, array $visited = []): bool
+    {
+        if ($type instanceof NullableType) {
+            return $this->isValueType($type->type, $depth, $visited);
+        }
+
+        if ($type instanceof Identifier) {
+            return in_array($type->toString(), ['string', 'int', 'float', 'bool', 'array', 'iterable'], true);
+        }
+
+        $class = TypeName::class($type);
+
+        if ($class === null) {
+            return false; // a union of classes, `mixed`, `object`, or a shape we won't vouch for
+        }
+
+        if ($this->isEnum($class)) {
+            return true;
+        }
+
+        $declaration = $this->declarationMatch($class);
+
+        if ($declaration === null || $depth <= 0 || isset($visited[$class])) {
+            return false; // vendor/unresolved, too deep, or a cycle — cannot vouch it is a value
+        }
+
+        $visited[$class] = true;
+
+        foreach ($declaration->fields() as $field) {
+            if (! $this->isValueType($field->type, $depth - 1, $visited)) {
+                return false; // holds a service (or something we can't vouch for) → this is a service, not a value
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * @return array<string, Class_>  class FQCN => declaration node
      */
     private function classNodeMap(): array
