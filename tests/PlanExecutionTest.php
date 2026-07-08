@@ -79,7 +79,7 @@ final class PlanExecutionTest extends TestCase
     public function test_mode_records_the_chosen_posture(): void
     {
         $this->assertSame(PlanMode::Relentless, new PlanExecution()->mode(PlanMode::Relentless)->build()->mode());
-        $this->assertSame(PlanMode::Ask, new PlanExecution()->mode(PlanMode::Ask)->build()->mode());
+        $this->assertSame(PlanMode::BestEffort, new PlanExecution()->mode(PlanMode::BestEffort)->build()->mode());
     }
 
     public function test_keep_going_maps_onto_the_mode_for_back_compat(): void

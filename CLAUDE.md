@@ -139,7 +139,7 @@ The generated `SKILL.md` "when it fires" rows project from the registered sins.
 | `bin/commandments install` | Wire a consumer: composer sync hook + the Claude Code hook suite (cardinal-rule reminder, judge nudge, plan-execution hooks) + gitignore, then sync. Every wired hook is stamped so re-wiring never touches the user's own hooks. Idempotent. |
 | `bin/commandments remind` | Emit the cardinal rule as a `PostToolUse` hook payload — counts tool uses in `.commandments/.remind-count` and surfaces "trace to the source" once every 25. |
 | `bin/commandments checks [start\|phase\|complete] [--list]` | Run the project's `planExecution()` checks for one moment of a plan (default `complete`). `start` runs once before the first phase, `phase` after each phase, `complete` at the end — and `complete` always appends `judge --branch`, so a plan can't finish unjudged. Runs each command in order, stops at the first failure; `--list` prints them. The `executing-plans` skill calls these as it grinds a plan. |
-| `bin/commandments plan [done\|stuck\|status]` | `done` ends the active plan — clears the worktree's `.plan-active` marker so the keep-going Stop hook stops nudging (the `executing-plans` skill runs it once the end gate is clean). `stuck` signals the agent is BLOCKED and needs the user: it pauses the keep-going nudge (writes `.plan-stuck` at HEAD) but keeps the plan ACTIVE — you may only `done` a COMPLETE plan, never a blocked one. The Stop hook stays silent while stuck at that HEAD and auto-clears the signal once HEAD moves (progress). **In `Relentless` mode `stuck` REFUSES** — there is no waiting; the agent skips the blocker and continues. `status` reports whether a plan is active (and stuck), the resolved profile, and the `mode`. |
+| `bin/commandments plan [done\|stuck\|status]` | `done` ends the active plan — clears the worktree's `.plan-active` marker so the keep-going Stop hook stops nudging (the `executing-plans` skill runs it once the end gate is clean). `stuck` signals the agent is BLOCKED and needs the user: it pauses the keep-going nudge (writes `.plan-stuck` at HEAD) but keeps the plan ACTIVE — you may only `done` a COMPLETE plan, never a blocked one. The Stop hook stays silent while stuck at that HEAD and auto-clears the signal once HEAD moves (progress). **In the never-stop modes (`BestEffort`, `Relentless`) `stuck` REFUSES** — there is no waiting; the agent skips the blocker (BestEffort defers + retries at the end, Relentless just moves on). `status` reports whether a plan is active (and stuck), the resolved profile, and the `mode`. |
 | `bin/commandments plan-reminder` | The plan-execution hook (see below). Emits the "load the `executing-plans` skill" nudge on `PostToolUse`/`ExitPlanMode` (plan approved), and the keep-going block-and-continue on `Stop`. Wired by `install`/`sync`. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
 
@@ -148,11 +148,12 @@ The generated `SKILL.md` "when it fires" rows project from the registered sins.
 profile; the agent then branches, works phase-by-phase (scoped tests + `checks phase`, commit
 each), and runs the full gate (`checks complete`, which appends `judge --branch`) ONCE at the
 end. A `Stop` hook re-nudges "keep going" until `plan done` per the project's `mode()` — a
-`PlanMode`: `Ask` (confirm before implementing; stop stands), `Supervised` (nudge once),
-`Autonomous` (grind; `plan stuck` may pause to ask when genuinely blocked), or `Relentless`
-(**never stop** — skip a blocker and keep going, no waiting, no `plan stuck`; only the runaway
-MAX_TOTAL backstop can end it). Loop-safe: outside Relentless a stuck-counter caps a spinning
-agent, HEAD movement resets it. All per-plan state (`.commandments/.plan-active`) is scoped to
+`PlanMode`: `Supervised` (nudge once), `Autonomous` (grind; `plan stuck` may pause to ask when
+genuinely blocked), `BestEffort` (**never ask** — skip a blocker, DEFER it, keep going, then
+retry every deferred step at the end to finish as much as possible), or `Relentless` (**never
+stop** — skip a blocker and move on, no waiting, no end retry; only the runaway MAX_TOTAL backstop
+can end it). `plan stuck` REFUSES in both never-stop modes. Loop-safe: in the ask-capable modes a
+stuck-counter caps a spinning agent, HEAD movement resets it. All per-plan state (`.commandments/.plan-active`) is scoped to
 the current **worktree**, never `CLAUDE_PROJECT_DIR`. The profile is configured with
 `$config->planExecution(...)` — a `PlanExecution` builder
 (`branchFrom`/`branchPrefix`/`pushEachPhase`/`mode` (legacy `keepGoing`) + `onStart`/

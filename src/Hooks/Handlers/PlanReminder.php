@@ -32,7 +32,7 @@ final class PlanReminder extends Hook
 
     public function summary(): string
     {
-        return "On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Ask/Supervised/Autonomous/Relentless).";
+        return "On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless).";
     }
 
     public function bindings(): array
@@ -60,7 +60,7 @@ final class PlanReminder extends Hook
         $mode = $this->profile($event)->mode();
 
         if (! $marker->isActive() || $mode === null || ! $mode->keepsGoing()) {
-            return $this->pass(); // No plan, unmanaged, or Ask (a start-gate) — the human's stop stands.
+            return $this->pass(); // No plan, or unmanaged (no mode set) — the human's stop stands.
         }
 
         $branch = $this->git()->currentBranch($event->root);
@@ -126,20 +126,23 @@ final class PlanReminder extends Hook
 
     /**
      * The mode-specific autonomy bullet for the approval nudge — how hard to push and what to do when
-     * blocked. Silent when the project sets no mode. {@see PlanMode::Relentless} is the one that answers the
-     * user's demand: never stop, never ask, SKIP a blocker and keep going — and it never mentions `plan stuck`.
+     * blocked. Silent when the project sets no mode. The never-stop modes ({@see PlanMode::BestEffort},
+     * {@see PlanMode::Relentless}) answer the user's demand: never wait, never ask — and never mention `plan stuck`.
      */
     private function autonomySection(?PlanMode $mode): string
     {
         return match ($mode) {
             null => '',
-            PlanMode::Ask => "\n• Autonomy: this project runs plans in ASK mode. Do NOT start implementing yet — present a short "
-                . "summary of the plan and ask the user (AskUserQuestion) to confirm before you write any code.",
             PlanMode::Supervised => "\n• Autonomy: grind through the phases on your own, but the user may stop you at any point — "
                 . "honour a stop when it comes. Finish with `plan done` once the end gate is clean.",
             PlanMode::Autonomous => "\n• Autonomy: grind through every phase without stopping — the Stop hook keeps you going until you "
                 . "run `plan done` (only when the plan is COMPLETE). If you get genuinely blocked and need the user, run `plan stuck` "
                 . "instead — it pauses the nudges without ending the plan.",
+            PlanMode::BestEffort => "\n• Autonomy: BEST-EFFORT mode — finish as MUCH of the plan as you possibly can, without stopping to "
+                . "ask. Do NOT wait for the user: when you hit a decision, decide yourself and proceed. If a step is genuinely "
+                . "blocked, do NOT pause on it — SKIP it, record it as DEFERRED in your working notes (with what's blocking it), and "
+                . "keep going with the rest of the plan. At the END, before finishing, come BACK and retry every deferred step now "
+                . "that the rest is in place; only `plan done` once you've attempted them all and the end gate is clean.",
             PlanMode::Relentless => "\n• Autonomy: RELENTLESS mode — do NOT stop until the plan is COMPLETE, for ANY reason. Do NOT ask "
                 . "the user questions and do NOT wait: when you hit a decision, choose the best option yourself and proceed. If a "
                 . "phase is genuinely blocked or not worth it, SKIP it — record why in your working notes and move on to the "
@@ -216,6 +219,15 @@ final class PlanReminder extends Hook
 
     private function keepGoingNudge(PlanMode $mode): string
     {
+        if ($mode->defersBlockers()) {
+            return "Code Commandments — BEST-EFFORT mode: the plan isn't finished, so do NOT stop. Finish as much as you "
+                . "possibly can — work the remaining phases, commit each, and make your OWN decisions; do not ask the user, do "
+                . "not wait. If a step is genuinely blocked, SKIP it and record it as DEFERRED in your working state (with what's "
+                . "blocking it), then move on. Before you finish, come BACK and retry every deferred step now that the rest is in "
+                . "place. Run `vendor/bin/commandments plan done` only once you've attempted them all and "
+                . "`vendor/bin/commandments checks complete` is clean.";
+        }
+
         if ($mode->neverStops()) {
             return "Code Commandments — RELENTLESS mode: the plan isn't finished, so do NOT stop. Keep going through the "
                 . "remaining phases, commit each, and make your OWN decisions — do not ask the user, do not wait. If a phase "

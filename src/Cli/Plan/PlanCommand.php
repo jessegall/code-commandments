@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\PlanMode;
 
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
@@ -53,9 +52,21 @@ final class PlanCommand implements Command
             return 0;
         }
 
-        // Relentless mode has no waiting: a blocker is skipped, not paused on. Refuse to mark stuck so the
-        // agent can't quietly stall the run — tell it to move on to the next phase instead.
-        if (Config::load($root)->planExecutionSettings()->mode() === PlanMode::Relentless) {
+        // The never-stop modes have no waiting: a blocker is skipped, not paused on. Refuse to mark stuck so
+        // the agent can't quietly stall the run — tell it to keep going instead (defer-and-retry in
+        // BestEffort, skip-and-move-on in Relentless).
+        $mode = Config::load($root)->planExecutionSettings()->mode();
+
+        if ($mode?->defersBlockers()) {
+            fwrite(STDOUT,
+                "◼ This project runs plans in BEST-EFFORT mode — there is no stopping. Don't wait on a blocker:\n"
+                . "  SKIP it, record it as DEFERRED in your working state (with what's blocking it), and keep going.\n"
+                . "  Come BACK and retry every deferred step at the END, then `commandments plan done` once the gate is clean.\n");
+
+            return 0;
+        }
+
+        if ($mode?->neverStops()) {
             fwrite(STDOUT,
                 "◼ This project runs plans in RELENTLESS mode — there is no stopping. Don't wait on a blocker:\n"
                 . "  SKIP the blocked phase, note why in your working state, and continue with the remaining phases.\n"

@@ -48,10 +48,10 @@ A **constraint** is a natural-language architectural invariant `judge` can't dec
 
 How hard you push is set by the project's **mode** (`planExecution()->mode(...)`; `commandments plan status` shows it). The Stop hook enforces it — grind through the phases; when the mode keeps you going, a stop re-nudges you to continue until the plan is finished.
 
-- **`Ask`** — confirm first. Right after approval, present a short summary and ask the user before writing any code. A stop is never overridden.
 - **`Supervised`** — grind on your own, but a human stop is respected (you're nudged at most once).
 - **`Autonomous`** — grind to the finish; a stop re-nudges until you're done. If you're **genuinely blocked** and need the user, run `commandments plan stuck`, then stop — it pauses the nudge for that one stop (so you aren't looped) while keeping the plan active; say what you're blocked on. One-shot: keep-going resumes the moment you continue.
-- **`Relentless`** — **never stop**. Do not ask the user and do not wait. When you hit a decision, choose the best option yourself and proceed. If a phase is genuinely blocked or not worth doing, **skip it** — note why in your working state and move to the next phase. There is **no `plan stuck`** here (it refuses); the only exit is `plan done`.
+- **`BestEffort`** — finish **as much of the plan as possible**, never asking. Don't wait for the user; decide yourself. If a step is genuinely blocked, **skip it and record it as DEFERRED** in your working state (with what's blocking it), then keep going. At the **end**, come **back and retry every deferred step** now that the rest is in place; only `plan done` once you've attempted them all. `plan stuck` refuses (it defers instead).
+- **`Relentless`** — **never stop**. Do not ask the user and do not wait. When you hit a decision, choose the best option yourself and proceed. If a phase is genuinely blocked or not worth doing, **skip it** — note why in your working state and move to the next phase (no end-of-run retry pass). There is **no `plan stuck`** here (it refuses); the only exit is `plan done`.
 
 A plan run ends the nudging exactly one way that counts as success:
 
@@ -85,7 +85,7 @@ $config->planExecution(fn ($plan) => $plan
     ->branchFrom('main')          // base to cut from + judge --branch base
     ->branchPrefix('plan/')       // the plan branch prefix
     ->pushEachPhase()             // push after every phase (default: once at the end)
-    ->mode(PlanMode::Autonomous)  // Ask | Supervised | Autonomous | Relentless (never stop, skip blockers)
+    ->mode(PlanMode::Autonomous)  // Supervised | Autonomous | BestEffort | Relentless (never stop, skip blockers)
     ->onStart('composer install') // once, before the first phase
     ->eachPhase('composer lint')  // after each phase — keep it fast
     ->onComplete('composer test') // the end gate; judge --branch runs after

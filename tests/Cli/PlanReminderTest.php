@@ -72,12 +72,13 @@ final class PlanReminderTest extends TestCase
 
     public function test_the_approval_nudge_carries_the_mode_autonomy_bullet(): void
     {
-        // Ask mode: the approval nudge tells the agent to confirm BEFORE implementing, and a stop is silent.
-        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::Ask));');
-        $ask = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
-        $this->assertStringContainsString('ASK mode', $ask);
-        $this->assertStringContainsString('confirm before you write any code', $ask);
-        $this->assertSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'sha1'), 'Ask is a start-gate — a stop stands');
+        // BestEffort mode: the bullet says finish as much as possible, defer a blocker, and retry at the end.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::BestEffort));');
+        $best = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+        $this->assertStringContainsString('BEST-EFFORT', $best);
+        $this->assertStringContainsString('DEFERRED', $best);
+        $this->assertStringContainsString('retry every deferred step', $best);
+        $this->assertStringNotContainsString('plan stuck', $best, 'a never-stop mode never mentions plan stuck');
 
         // Relentless mode: the bullet forbids stopping/asking and tells the agent to skip blockers.
         $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::Relentless));');
@@ -182,6 +183,25 @@ final class PlanReminderTest extends TestCase
         for ($i = 0; $i < 20; $i++) {
             $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'stuck'), "relentless nudge {$i}");
         }
+    }
+
+    public function test_best_effort_never_gives_up_and_nudges_to_defer_and_retry(): void
+    {
+        // Between Autonomous and Relentless: never caps on no-progress (like Relentless), but the nudge is
+        // completionist — defer a blocker and retry it at the end, rather than just moving on.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->mode(\JesseGall\CodeCommandments\PlanMode::BestEffort));');
+        $this->marker()->activate('sha0');
+
+        $emitted = [];
+        for ($i = 0; $i < 12; $i++) {
+            $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'stuck');
+            $this->assertNotSame([], $emitted, "best-effort nudge {$i}");
+        }
+
+        $reason = (string) ($emitted[0]['reason'] ?? '');
+        $this->assertStringContainsString('BEST-EFFORT', $reason);
+        $this->assertStringContainsString('DEFERRED', $reason);
+        $this->assertStringContainsString('retry every deferred step', $reason);
     }
 
     public function test_relentless_ignores_a_stuck_signal_and_pushes_straight_back_in(): void
