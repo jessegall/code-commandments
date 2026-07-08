@@ -229,7 +229,7 @@ final class ConstructorOrchestrationDetectorTest extends TestCase
         <?php
         namespace App;
         use Illuminate\Routing\Controller;
-        use JesseGall\CodeCommandments\Attributes\Eager;
+        use App\Support\Eager;
         use Spatie\LaravelData\Data;
         class Canvas extends Data { public function __construct(public string $svg) {} }
         class Shell extends Data {

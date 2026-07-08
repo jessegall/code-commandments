@@ -115,7 +115,7 @@ page object — the composed thing on the wire — is exactly where they earn th
 ## Rules
 
 - Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
-  _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`._
+  _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch._
 - Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
   _Add `#[Hidden]` above the injection attribute._
 - Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
