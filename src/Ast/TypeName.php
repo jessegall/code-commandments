@@ -57,11 +57,30 @@ final class TypeName
             $type = $type->type;
         }
 
+        // `T | null` written as a union (not the `?T` sugar) — strip the null arm and read the lone remainder.
+        if ($type instanceof UnionType) {
+            $type = self::soleNonNullMember($type);
+        }
+
         return match (true) {
             $type instanceof Name => $type->toString(),
             $type instanceof Identifier => $type->toString(),
             default => null,
         };
+    }
+
+    /**
+     * The single non-`null` member of a union, or null when it has zero or more than one — so `string|null`
+     * yields the `string` node but `int|string` (a genuine multi-type) yields null.
+     */
+    private static function soleNonNullMember(UnionType $type): ?Node
+    {
+        $members = array_values(array_filter(
+            $type->types,
+            static fn (Node $member): bool => ! ($member instanceof Identifier && strtolower($member->toString()) === 'null'),
+        ));
+
+        return count($members) === 1 ? $members[0] : null;
     }
 
     /**

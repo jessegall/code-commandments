@@ -163,6 +163,16 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
+     * Is this a `Data` class the transformer compiles to a frontend type — a `Data` subclass carrying
+     * `#[TypeScript]`? That attribute IS the "this shape travels to the frontend" signal: every public
+     * field is emitted into `generated.ts` and read by a `.vue`.
+     */
+    public function isTypeScriptData(): bool
+    {
+        return $this->isDataClass() && $this->hasAttribute('TypeScript');
+    }
+
+    /**
      * Is this `new X(...)` constructing a `Data` subclass?
      */
     public function isNewData(): bool
