@@ -27,6 +27,11 @@ final class Remind extends Hook
         . 'And keep to the skills you loaded — they are the standard for every change, not a '
         . 'one-time read; re-open the relevant one before you touch its subject.';
 
+    public function summary(): string
+    {
+        return "Surfaces the cardinal *trace to the source* rule once every 25 tool uses.";
+    }
+
     public function bindings(): array
     {
         return [new HookBinding('PostToolUse')];

@@ -182,6 +182,20 @@ every project on the next `composer update`.
 `# @code-commandments-managed` stamp, and re-wiring strips only stamped commands.
 A hook you wrote by hand is always preserved.
 
+The wired hooks — one dispatcher entry per Claude Code event, each fanning out to these handlers:
+
+<!-- BEGIN: hooks-table (auto-generated, run `composer readme`) -->
+| Hook | Events | What it does |
+|---|---|---|
+| `Remind` | `PostToolUse` | Surfaces the cardinal *trace to the source* rule once every 25 tool uses. |
+| `JudgeReminder` | `Stop, PreToolUse/Bash` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
+| `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` (when `keepGoing()` is on). |
+| `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
+| `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
+| `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
+| `WorkingState` | `PostToolUse, PreCompact, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat, a PreCompact flush, and re-injection on compact/resume. |
+<!-- END: hooks-table -->
+
 ### Plan execution
 
 Optional. When you approve a plan, a `PostToolUse`/`ExitPlanMode` hook loads the
@@ -207,8 +221,34 @@ $config->planExecution(fn (PlanExecution $plan) => $plan
     ->onComplete('composer test')   // the end gate; judge --branch runs after
     ->constraint('Every new query is scoped to the current tenant.')
     ->constraint('Public API responses stay backwards-compatible — no field removed or renamed.')
-    ->enforceConstraintsEachPhase()); // check constraints every phase, not just at the end
+    ->enforceConstraintsEachPhase()  // check constraints every phase, not just at the end
+    ->testFlow('Write and run the tests for each phase before committing it.') // default test methodology, offered at approval
+    ->trackWorkingState());          // keep a living working-state record that survives context compaction
 ```
+
+Every option (from the `PlanExecution` builder):
+
+<!-- BEGIN: plan-options (auto-generated, run `composer readme`) -->
+| Option | What it does |
+|---|---|
+| `->branchFrom(…)` | The branch a plan is cut from and judged against — the base for the new plan branch and the `judge --branch=<base>` the end gate runs. |
+| `->branchPrefix(…)` | The prefix for the branch a plan auto-creates (`plan/` → `plan/<slug>`). |
+| `->pushEachPhase(…)` | Push after every phase commit, rather than once at the end. |
+| `->keepGoing(…)` | Turn on the keep-going Stop hook: while a plan is active, a stop re-nudges the agent to carry on until the plan is done, per the StopPolicy. |
+| `->onStart(…)` | Commands to run ONCE before the first phase — environment setup the whole plan needs (`composer install`, `npm ci`, a `git fetch`). |
+| `->eachPhase(…)` | Commands to run after EACH phase's commit — the fast, cheap signal (a linter, a type check) that keeps a phase honest without the full suite. |
+| `->onComplete(…)` | Commands to run ONCE at the very end, after the last phase — the exhaustive gate: the full test suite, a lint, a static analysis. |
+| `->constraint(…)` | A CONSTRAINT the agent must respect for every plan run — a natural-language architectural invariant `judge` can't decide (e.g. "the frontend is presentation-only"). |
+| `->enforceConstraintsEachPhase(…)` | Force the constraint diff-check after EVERY phase, not just at completion. |
+| `->testFlow(…)` | The project's DEFAULT testing methodology for a plan run — how tests are written and run as the agent grinds a plan (e.g. "write and run the tests for each phase before committing it"). |
+| `->trackWorkingState(…)` | Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent writes its progress and, above all, the conversational deltas (decisions and their rejected alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to `.commandments/.plan-working-state`, refreshed after each phase and each important event. |
+<!-- END: plan-options -->
+
+**Working state** (`trackWorkingState()`) is opt-in: the agent maintains a living record at
+`.commandments/.plan-working-state` — the decisions, conversational plan changes, gotchas, and next step
+that live *only* in the conversation — refreshed after each phase and each important event. A `PreCompact`
+hook flushes it before context compaction and it is re-injected on compact/resume, so a compacted agent
+resumes with the full picture. It captures only what `git log` + the plan can't reconstruct.
 
 **Constraints** are natural-language architectural invariants a detector *can't* decide
 from the AST — "every new query is scoped to the current tenant", "public API responses

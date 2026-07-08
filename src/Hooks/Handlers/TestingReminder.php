@@ -22,6 +22,11 @@ final class TestingReminder extends Hook
 {
     private const int INTERVAL = 25;
 
+    public function summary(): string
+    {
+        return "Re-surfaces the active plan's testing methodology once every 25 tool uses.";
+    }
+
     public function bindings(): array
     {
         return [new HookBinding('PostToolUse')];

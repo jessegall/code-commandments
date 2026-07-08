@@ -22,6 +22,11 @@ final class JudgeReminder extends Hook
     /** The marker section separator: the reminded file set sits above it, the explanation below. */
     private const string SEPARATOR = '-----';
 
+    public function summary(): string
+    {
+        return "Nudges you to `judge` what you changed — before a risky Bash command, and on stop.";
+    }
+
     public function bindings(): array
     {
         return [new HookBinding('Stop'), new HookBinding('PreToolUse', 'Bash')];

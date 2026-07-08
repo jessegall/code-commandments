@@ -26,6 +26,11 @@ final class SessionReset extends Hook
     /** SessionStart sources that begin a genuinely-new session — the only ones we clean up on. */
     private const array FRESH_SESSION_SOURCES = ['startup', 'clear'];
 
+    public function summary(): string
+    {
+        return "On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session.";
+    }
+
     public function bindings(): array
     {
         return [new HookBinding('SessionStart')];

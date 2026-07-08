@@ -28,6 +28,11 @@ final class WorkingState extends Hook
     /** SessionStart sources that CONTINUE a live plan — the ones we re-inject the record on. */
     private const array CONTINUING_SOURCES = ['compact', 'resume'];
 
+    public function summary(): string
+    {
+        return "Keeps the plan's working-state record alive across compaction — a refresh heartbeat, a PreCompact flush, and re-injection on compact/resume.";
+    }
+
     public function bindings(): array
     {
         return [
