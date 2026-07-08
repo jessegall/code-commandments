@@ -274,7 +274,9 @@ final class Parser
             }
 
             $initEnd = $this->consumeToStatementEnd();
-            $initRaw = trim(substr($this->source, $initStart, $initEnd - $initStart));
+            // `consumeToStatementEnd` swallows the terminating `;`; the initializer is the expression
+            // WITHOUT it (VariableDecl::render re-appends one), so strip a trailing statement `;`.
+            $initRaw = rtrim(trim(substr($this->source, $initStart, $initEnd - $initStart)), ';');
         } else {
             $this->consumeToStatementEnd();
         }

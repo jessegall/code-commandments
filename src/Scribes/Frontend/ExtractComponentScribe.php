@@ -219,10 +219,11 @@ final class ExtractComponentScribe extends RepentScribe
             }
 
             $props = self::withLoopVars($boundary, $boundary->props());
+            [$props, $statics] = self::liftStatics($boundary, $props);
             $name = self::unique(dirname($members[0]->file()), $boundary->name(), $used);
             $component = $members[0]->sibling("{$name}.vue");
 
-            if (! $this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
+            if (! $this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup(), [], '', $statics))) {
                 continue;
             }
 
@@ -254,10 +255,11 @@ final class ExtractComponentScribe extends RepentScribe
             }
 
             $props = self::withLoopVars($boundary, $boundary->props());
+            [$props, $statics] = self::liftStatics($boundary, $props);
             $name = self::unique(dirname($finding->file()), $boundary->name(), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
+            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup(), [], '', $statics))) {
                 $this->place($draft, $boundary, $component, $name, self::selfBindings($boundary, $props));
             }
         }
@@ -288,10 +290,11 @@ final class ExtractComponentScribe extends RepentScribe
             }
 
             $props = self::withLoopVars($boundary, $boundary->props());
+            [$props, $statics] = self::liftStatics($boundary, $props);
             $name = self::unique(dirname($finding->file()), self::compoundName($boundary), $used);
             $component = $finding->sibling("{$name}.vue");
 
-            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup()))) {
+            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $boundary->markup(), [], '', $statics))) {
                 $this->place($draft, $boundary, $component, $name, self::selfBindings($boundary, $props));
             }
         }
@@ -385,14 +388,15 @@ final class ExtractComponentScribe extends RepentScribe
 
             [$prefix, $prop] = self::midObject($finding);
             $props = self::withLoopVars($boundary, self::reachProps($boundary, $finding, $prefix, $prop));
-            $name = self::unique(dirname($finding->file()), $prop !== '' ? ucfirst($prop) . 'Section' : $boundary->name(), $used);
+            [$props, $statics] = self::liftStatics($boundary, $props);
+            $name = self::unique(dirname($finding->file()), self::reachName($prefix, $prop, $boundary), $used);
             $component = $finding->sibling("{$name}.vue");
 
             $markup = $prefix === []
                 ? $boundary->markup()
                 : str_replace(implode('.', $prefix), $prop, $boundary->markup());
 
-            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $markup, $prefix, $prop))) {
+            if ($this->create($draft, $boundary, $component, $this->render($boundary, $props, $markup, $prefix, $prop, $statics))) {
                 $this->place($draft, $boundary, $component, $name, self::reachBindings($props, $prefix, $prop));
             }
         }
@@ -509,6 +513,12 @@ final class ExtractComponentScribe extends RepentScribe
 
     /**
      * A camelCase prop as a kebab-case template attribute (`rateLimit` → `rate-limit`).
+     *
+     * A hyphen is inserted ONLY at a genuine camelCase hump — a lowercase (or digit) followed by
+     * an uppercase — because that is the exact boundary Vue's `camelize` reverses. An acronym or
+     * all-caps run (`INLINE`, `XMLData`) has no such hump, so it is emitted VERBATIM: Vue matches a
+     * prop by its exact name before camelizing, so `:INLINE` binds `INLINE`, whereas a naive
+     * per-uppercase kebab (`i-n-l-i-n-e`) would camelize back to `iNLINE` and never resolve.
      */
     private static function kebab(string $name): string
     {
@@ -516,9 +526,10 @@ final class ExtractComponentScribe extends RepentScribe
 
         for ($i = 0; $i < strlen($name); $i++) {
             $char = $name[$i];
+            $prev = $i > 0 ? $name[$i - 1] : '';
 
-            if (ctype_upper($char)) {
-                $out .= ($i > 0 ? '-' : '') . strtolower($char);
+            if (ctype_upper($char) && ($prev !== '' && ! ctype_upper($prev) && $prev !== '-')) {
+                $out .= '-' . strtolower($char);
             } else {
                 $out .= $char;
             }
@@ -623,12 +634,37 @@ final class ExtractComponentScribe extends RepentScribe
     // ---- rendering ------------------------------------------------------------
 
     /**
+     * Split a boundary's free variables into the props it genuinely takes and the module-scope
+     * STATIC constants it merely reads (`const INLINE = {…} as const`) — issue #324. A static const
+     * is compile-time data, not per-render input: threading it as a prop mangles the call site (a
+     * fallthrough attribute) and forces a meaningless `unknown`-typed slot. It is COPIED into the
+     * child instead. Returns `[propsWithoutStatics, name => declarationSource]`.
+     *
+     * @param  list<string>  $props
+     * @return array{0: list<string>, 1: array<string, string>}
+     */
+    private static function liftStatics(Boundary $boundary, array $props): array
+    {
+        $script = new Script($boundary->sfc->scriptContent());
+        $statics = [];
+
+        foreach ($props as $prop) {
+            if (($decl = $script->staticConst($prop)) !== null) {
+                $statics[$prop] = $decl;
+            }
+        }
+
+        return [array_values(array_diff($props, array_keys($statics))), $statics];
+    }
+
+    /**
      * The component file: its `<script setup>` (the imports the markup/props actually
      * use, carried from the source, plus typed props) and the lifted `<template>`.
      *
      * @param  list<string>  $props
+     * @param  array<string, string>  $statics  module-local static consts to copy in ({@see liftStatics})
      */
-    private function render(Boundary $boundary, array $props, string $markup, array $prefix = [], string $reachProp = ''): string
+    private function render(Boundary $boundary, array $props, string $markup, array $prefix = [], string $reachProp = '', array $statics = []): string
     {
         $script = new Script($boundary->sfc->scriptContent());
 
@@ -654,7 +690,10 @@ final class ExtractComponentScribe extends RepentScribe
         // child declares them so `$emit` in the lifted markup is typed.
         $defineEmits = self::defineEmits($boundary->emitEvents());
 
-        $scriptSetup = $defineModels . $defineProps . $defineEmits;
+        // Module-local static consts the markup reads are copied in verbatim, not taken as props.
+        $carriedConsts = $statics === [] ? '' : implode("\n", $statics) . "\n";
+
+        $scriptSetup = $carriedConsts . $defineModels . $defineProps . $defineEmits;
         $imports = trim(self::usedImports($script, $markup . "\n" . $scriptSetup) . "\n" . self::syntheticTypeImports($script, $types));
         $head = $imports === '' ? '' : "{$imports}\n\n";
         $carried = self::carriedTypes($script, $types);
@@ -727,12 +766,14 @@ final class ExtractComponentScribe extends RepentScribe
             } elseif ($iterable !== null && ($segments = self::segments($iterable)) !== null) {
                 $types[$prop] = self::elementType(self::accessType($segments, $source, $script));
             } else {
-                $types[$prop] = $source[$prop]
+                // A template binding auto-unwraps a top-level `Ref`/`ComputedRef` to its value, so the
+                // prop takes the unwrapped type — never `Ref<…>` threaded through (issue #320).
+                $types[$prop] = Script::unwrapRef($source[$prop]
                     ?? $script->declaredType($prop)
                     ?? self::tracedType($boundary, $script, $prop)
                     ?? self::inertiaFormType($script, $prop) // a local `const x = useForm({…})`
                     ?? $this->propTypes?->typeOf($boundary->sfc, $prop) // trace up the render tree
-                    ?? 'unknown';
+                    ?? 'unknown');
             }
         }
 
@@ -1043,6 +1084,39 @@ final class ExtractComponentScribe extends RepentScribe
     }
 
     // ---- deep-reach analysis --------------------------------------------------
+
+    /**
+     * Generic container words that make a useless component name — a reach through one of these
+     * (`data.value.x`) should name the component after a MEANINGFUL segment of its path, not the
+     * container itself (`ValueSection`/`DataSection` say nothing about what the section shows).
+     */
+    private const array UNINFORMATIVE = [
+        'value', 'values', 'data', 'item', 'items', 'config', 'state', 'props', 'meta',
+        'info', 'detail', 'details', 'result', 'results', 'payload', 'context', 'entry',
+    ];
+
+    /**
+     * The component name for a deep-reach extraction — `<Segment>Section` where `Segment` is the
+     * rightmost INFORMATIVE segment of the reach path (issue #315): the mid-object prop when it is
+     * meaningful, else an earlier segment (a reach `spawnFailure.value.detail` names `SpawnFailureSection`,
+     * never `ValueSection`), else the boundary's own structural name.
+     *
+     * @param  list<string>  $prefix  the reach path down to the mid-object
+     */
+    private static function reachName(array $prefix, string $prop, Boundary $boundary): string
+    {
+        if ($prop === '') {
+            return $boundary->name();
+        }
+
+        foreach (array_reverse($prefix) as $segment) {
+            if (! in_array(strtolower($segment), self::UNINFORMATIVE, true)) {
+                return ucfirst($segment) . 'Section';
+            }
+        }
+
+        return $boundary->name();
+    }
 
     /**
      * The shared object a deep-reach cluster takes as a prop: the common prefix of its

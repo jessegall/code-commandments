@@ -104,6 +104,35 @@ final class ScriptTest extends TestCase
         $this->assertSame('string | null', $script->declaredType('id'));
     }
 
+    public function test_unwrap_ref_peels_a_single_generic_wrapper(): void
+    {
+        $this->assertSame('User', Script::unwrapRef('Ref<User>'));
+        $this->assertSame('string', Script::unwrapRef('ComputedRef<string>'));
+        $this->assertSame('number[]', Script::unwrapRef('ShallowRef<number[]>'));
+    }
+
+    public function test_unwrap_ref_takes_the_read_side_of_a_writable_ref(): void
+    {
+        // The modern `Ref<Value, Setter>` two-arg form — the prop takes the getter (first) type.
+        $this->assertSame('Foo | null', Script::unwrapRef('Ref<Foo | null, Foo | null>'));
+    }
+
+    public function test_unwrap_ref_unwraps_inside_a_union_and_collapses_duplicates(): void
+    {
+        // The reported #320 shape: a nullable writable ref of a nullable value flattens to `V | null`.
+        $this->assertSame(
+            'InspectorTexts | null',
+            Script::unwrapRef('Ref<InspectorTexts | null, InspectorTexts | null> | null'),
+        );
+    }
+
+    public function test_unwrap_ref_leaves_a_plain_type_untouched(): void
+    {
+        $this->assertSame('string', Script::unwrapRef('string'));
+        $this->assertSame('number | null', Script::unwrapRef('number | null'));
+        $this->assertSame('Foo<Bar>', Script::unwrapRef('Foo<Bar>'));
+    }
+
     public function test_a_non_literal_ref_initializer_stays_unresolved(): void
     {
         // `ref(props.busy)` — only a real type checker could resolve this; we don't guess.
