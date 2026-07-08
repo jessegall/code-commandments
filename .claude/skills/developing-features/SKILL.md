@@ -64,7 +64,7 @@ enrols itself.
 
 Regenerate docs (`composer sins` + `composer readme`), run the whole suite
 (`vendor/bin/phpunit tests` — the gate is phpunit; do NOT self-judge this repo), then
-commit/merge/tag/push per `releasing-and-propagating` (a new semver tag per commit; no
+commit/merge/tag/push per `releasing` (a new semver tag per commit; no
 Co-Authored-By trailer). Fix every sin/warning on files you touch.
 
 ## When to read what
@@ -77,4 +77,4 @@ Co-Authored-By trailer). Fix every sin/warning on files you touch.
 | `detector-fixtures` | the `#[Sinful]` fixture spec + diversity/righteous rules |
 | `writing-exemptions` | keeping a general rule general (the exemption registry) |
 | `issue-triage` | resolving inbound `[detector-report]`/`[bug-report]` issues |
-| `releasing-and-propagating` | commit/tag/push conventions + consumer propagation |
+| `releasing` | commit/tag/push conventions |

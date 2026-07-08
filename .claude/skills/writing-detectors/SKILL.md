@@ -65,4 +65,4 @@ that skill so the agent reads one skill and resolves the whole group. Keep the s
 ## Related
 
 - [[detector-engine]] · [[detector-fixtures]] · [[writing-exemptions]]
-- Commit conventions in [[releasing-and-propagating]].
+- Commit conventions in [[releasing]].

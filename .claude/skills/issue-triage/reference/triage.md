@@ -33,7 +33,7 @@ Read the issue body AND every comment.
 5. `composer readme` / `composer sins` if a description, the detector table, or the command
    surface changed.
 6. Commit (no Co-Author) with `Closes #N`, new semver tag (patch=fix), push commit + tag →
-   [[releasing-and-propagating]].
+   [[releasing]].
 7. Propagate to consumers (per-consumer `composer update`, commit-only). Comment the resolution
    on the issue; verify it auto-closed.
 

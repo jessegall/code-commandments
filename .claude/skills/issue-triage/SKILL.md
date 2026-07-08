@@ -43,4 +43,4 @@ how to watch for and resolve them.
 |---|---|
 | `reference/triage.md` | The decision tree + the exact reproduce→fix→fixture→release→close flow. |
 
-Shipping the fix → see [[releasing-and-propagating]].
+Shipping the fix → see [[releasing]].

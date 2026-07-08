@@ -56,5 +56,5 @@ scribes), `hints` (Spatie Data `@method` hints), `scaffold`, `config [reindex]`,
 
 - [[writing-detectors]] — author a detector end-to-end · [[detector-engine]] — the fluent DSL ·
   [[detector-fixtures]] — the self-checking fixture · [[writing-exemptions]] — keep a general rule
-  framework-agnostic · [[releasing-and-propagating]] — ship + propagate.
+  framework-agnostic · [[releasing]] — ship a change.
 - `CLAUDE.md` is the maintained, authoritative guide (more detail than this map).
