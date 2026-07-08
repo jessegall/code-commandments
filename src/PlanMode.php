@@ -13,12 +13,6 @@ namespace JesseGall\CodeCommandments;
 enum PlanMode
 {
     /**
-     * Confirm first. On approval the agent presents the plan and ASKS the user before writing any code; a
-     * Stop is never overridden. For work you want a checkpoint on before it starts running.
-     */
-    case Ask;
-
-    /**
      * Supervised grind: nudge to continue at most ONCE, then honour a Stop. The agent keeps going on its
      * own, but a human stop is respected — for a plan you want to watch, not leave running unattended.
      */
@@ -31,20 +25,26 @@ enum PlanMode
     case Autonomous;
 
     /**
+     * Finish as much as possible — never ask, but be completionist. Grind every phase; a Stop is always
+     * overridden (no waiting for the user). When a step is genuinely blocked it is SKIPPED and DEFERRED, not
+     * paused on — the agent records it, keeps going with the rest of the plan, and RETRIES every deferred
+     * step at the END before finishing. `plan stuck` is disabled (it defers instead). Between {@see Autonomous}
+     * (which pauses to ask) and {@see Relentless} (which never circles back).
+     */
+    case BestEffort;
+
+    /**
      * NEVER stop. Grind every phase to completion; a Stop is always overridden (only the runaway backstop
-     * can end it). There is NO waiting for the user: a genuinely-blocked phase is SKIPPED and recorded, not
-     * paused on — `plan stuck` is disabled. Choose the best option yourself and keep moving. For a plan you
+     * can end it). There is NO waiting for the user: a genuinely-blocked phase is SKIPPED and the agent moves
+     * straight on — `plan stuck` is disabled. Choose the best option yourself and keep moving. For a plan you
      * want run start-to-finish with zero human turns.
      */
     case Relentless;
 
-    /**
-     * Does a Stop re-nudge the agent to continue? True for every mode that runs autonomously; false for
-     * {@see Ask}, which is a start-gate, not a keep-going posture.
-     */
+    /** Does a Stop re-nudge the agent to continue? Every mode runs autonomously, so always true. */
     public function keepsGoing(): bool
     {
-        return $this === self::Supervised || $this === self::Autonomous || $this === self::Relentless;
+        return true;
     }
 
     /** Nudge exactly once, then let a Stop stand — the {@see Supervised} posture. */
@@ -59,9 +59,18 @@ enum PlanMode
         return $this === self::Autonomous;
     }
 
-    /** Never honour a Stop until the plan is done (skip blockers, don't wait) — the {@see Relentless} posture. */
+    /**
+     * Never honour a Stop until the plan is done — skip blockers, don't wait for the user. True for both the
+     * completionist {@see BestEffort} (skip + defer + retry) and {@see Relentless} (skip + move on).
+     */
     public function neverStops(): bool
     {
-        return $this === self::Relentless;
+        return $this === self::BestEffort || $this === self::Relentless;
+    }
+
+    /** Skip a blocker but DEFER it and retry at the end — the {@see BestEffort} posture (vs Relentless, which never circles back). */
+    public function defersBlockers(): bool
+    {
+        return $this === self::BestEffort;
     }
 }

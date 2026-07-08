@@ -86,7 +86,7 @@ final class PlanExecution
     /**
      * Legacy alias for {@see mode}: turn on the keep-going Stop hook. `keepGoing()` maps to
      * {@see PlanMode::Autonomous}, `keepGoing(StopPolicy::RespectUserStops)` to {@see PlanMode::Supervised}.
-     * Prefer `mode(...)` — it also exposes {@see PlanMode::Ask} and {@see PlanMode::Relentless}.
+     * Prefer `mode(...)` — it also exposes {@see PlanMode::BestEffort} and {@see PlanMode::Relentless}.
      */
     public function keepGoing(StopPolicy $policy = StopPolicy::UntilComplete): self
     {

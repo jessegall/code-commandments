@@ -157,7 +157,7 @@ final class ConfigScribe
         $lines = [
             '$config->planExecution(function (\JesseGall\CodeCommandments\PlanExecution $plan): void {',
             "        // \$plan->branchFrom('main')->branchPrefix('plan/')->pushEachPhase();  // branch + push cadence",
-            '        // $plan->mode(\JesseGall\CodeCommandments\PlanMode::Autonomous);  // Ask | Supervised | Autonomous | Relentless (never stop)',
+            '        // $plan->mode(\JesseGall\CodeCommandments\PlanMode::Autonomous);  // Supervised | Autonomous | BestEffort | Relentless (never stop)',
             "        // \$plan->onStart('composer install');          // once, before the first phase",
             "        // \$plan->eachPhase('composer lint');           // after each phase — keep it fast",
             "        {$onComplete}",
