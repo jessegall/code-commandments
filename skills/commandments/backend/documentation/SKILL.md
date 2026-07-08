@@ -33,6 +33,7 @@ if the codebase already uses them — structural, not narrative.) Everything els
 - Comment what the code IS now, never its history — no "formerly/used to be/refactored/no longer an X" archaeology; git holds the past.
 - Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
 - A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
+- A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
 - State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 
 ## Bad → good
@@ -119,6 +120,36 @@ public function awardLabel(int $points, string $name): string
 
 ```php
 // Bad
+final class ReviewDoc
+{
+    public function approve(int $stars, bool $verified): bool
+    {
+        return $verified && $stars >= 3;
+    }
+
+    public function flagged(string $body): bool
+    {
+        return str_contains($body, 'spam');
+    }
+
+    public function digest(int $count): string
+    {
+        return $count === 1 ? '1 review' : "{$count} reviews";
+    }
+}
+
+// Good
+final class HonestDoc
+{
+    public function tally(int $items): int
+    {
+        return max(0, $items);
+    }
+}
+```
+
+```php
+// Bad
 public function get(string $code): SkuEntry
 {
     // no magic here; a missing code yields an empty entry
@@ -138,6 +169,7 @@ public function has(string $code): bool
 - History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted") — `ArchaeologyCommentDetector`
 - Multi-paragraph class docblock (class too big) — `BloatedDocblockDetector`
 - Docblock that only restates the typed signature (`@param Type $x`, no description) — `CeremonyDocblockDetector`
+- A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is — `DanglingDocReferenceDetector`
 - A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code") — `NegativeSpaceCommentDetector`
 
 ## Checklist
@@ -145,6 +177,7 @@ public function has(string $code): bool
 - [ ] Comment what the code IS now, never its history — no "formerly/used to be/refactored/no longer an X" archaeology; git holds the past.
 - [ ] Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
 - [ ] A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
+- [ ] A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
 - [ ] State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 
 ## Related skills

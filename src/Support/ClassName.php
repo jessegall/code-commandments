@@ -17,4 +17,13 @@ final class ClassName
 
         return end($parts);
     }
+
+    /**
+     * The FIRST namespace segment of a fully-qualified name — `App\Data\OrderData` → `App`. The vendor root
+     * a cross-reference is judged first-party against.
+     */
+    public static function root(string $fqcn): string
+    {
+        return explode('\\', ltrim($fqcn, '\\'))[0];
+    }
 }

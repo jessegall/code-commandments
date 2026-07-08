@@ -955,6 +955,27 @@ class AstNode
     }
 
     /**
+     * The fully-qualified CLASS names this node's docblock cross-links via `{@see …}` / `{@link …}` — only
+     * NAMESPACED references (containing a `\`), each with its leading `\` and any `::member` tail stripped, so
+     * `{@see \App\Foo::bar}` yields `App\Foo` and a bare `{@see doThing()}` is ignored. The one home for
+     * reading a docblock's cross-references.
+     *
+     * @return list<string>
+     */
+    public function docReferences(): array
+    {
+        $doc = $this->node?->getDocComment()?->getText();
+
+        if ($doc === null) {
+            return [];
+        }
+
+        preg_match_all('/\{@(?:see|link)\s+\\\\?([A-Za-z_][\w\\\\]*\\\\[\w\\\\]+)/', $doc, $matches);
+
+        return array_values(array_unique($matches[1]));
+    }
+
+    /**
      * This node read as a single {@see ClassField} — when it IS one field declaration: a promoted
      * constructor parameter or a declared property (its first declared name). Null for anything else.
      */
