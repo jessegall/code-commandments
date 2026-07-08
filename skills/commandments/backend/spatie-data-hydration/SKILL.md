@@ -70,14 +70,32 @@ recomputed at every construction site. A boundary that renames keys (snake ↔ c
 
 ## Rules
 
+- Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
+  _Drop the `->toArray()` — the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is._
 - Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
   _`#[WithCast(SomeCast::class)] public array $items` — the cast runs `E::for(...)` per item; the call site passes the raw values._
+- Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
+  _`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`._
 - Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
   _`'status' => $raw`, not `'status' => Status::from($raw)`._
 - Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
   _`'slot' => ['a' => 1]` (or `[['a' => 1], ...]` for a collection), not `X::from(['a' => 1])`._
 
 ## Bad → good
+
+```php
+// Bad
+public function make(?HeaderCopy $header): HeaderHolder
+{
+    return HeaderHolder::from(['header' => ($header ?? $this->default)->toArray()]);
+}
+
+// Good
+public function fromData(HeaderCopy $header): MetaHolder
+{
+    return MetaHolder::from(['meta' => $header->toArray(), 'kind' => 'header']);
+}
+```
 
 ```php
 // Bad
@@ -96,6 +114,30 @@ public function ofSize(int $size): TileGrid
 public function build(): ThemedLegend
 {
     return ThemedLegend::from(['chips' => array_map(fn (ShipState $s) => StateChip::themed($s, $this->theme), ShipState::cases())]);
+}
+```
+
+```php
+// Bad
+public function import(): ContractData
+{
+    $src = $this->rows->next();
+
+    return ContractData::from([
+        'recordCompany' => $src['record_company'],
+        'signedAt' => $src['signed_at'],
+    ]);
+}
+
+// Good
+public function transformed(string $id): InvoiceData
+{
+    $row = $this->gateway->fetch($id);
+
+    return InvoiceData::from([
+        'invoiceNumber' => strtoupper($row['invoice_number']),
+        'amountCents' => $row['amount_cents'],
+    ]);
 }
 ```
 
@@ -135,13 +177,17 @@ public function fromModel(object $model): ReadyBadgeStrip
 
 ## When it fires
 
+- A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build — `DataToArrayRoundtripDetector`
 - A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation — `DerivedCollectionShouldCastDetector`
+- A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]` — `HandKeyRemapDetector`
 - An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar — `RedundantNativeCastDetector`
 - A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array — `RedundantNestedFromDetector`
 
 ## Checklist
 
+- [ ] Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
 - [ ] Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
+- [ ] Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
 - [ ] Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
 - [ ] Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
 
