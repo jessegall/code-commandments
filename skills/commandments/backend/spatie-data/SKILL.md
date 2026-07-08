@@ -257,6 +257,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
 - Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
   _`X::from(...)` (or a `fromY()` factory)._
 - Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
+- Map an absent value onto `Optional` in ONE named factory, not a ternary at every producer. Use the scaffolded `optionalOrMissing()` (null → `new Optional`, else `::from`), the omit-from-wire counterpart to Spatie's `optional()`.
+  _Replace `$x === null ? new Optional : Foo::from($x)` / `expr() ?? new Optional` with `Foo::optionalOrMissing($x)` (scaffold the `OptionalOrMissing` trait)._
 - On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
   _`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`._
 
@@ -592,6 +594,34 @@ final class StockSnapshotData extends Data
 
 ```php
 // Bad
+public function position(): OptCoords|Optional
+{
+    $raw = $this->payload['position'] ?? null;
+
+    return $raw === null ? new Optional : OptCoords::from($raw);
+}
+
+// Good
+final class Placement extends Data
+{
+    public function __construct(
+        public readonly string $label,
+        public readonly OptCoords|Optional $at = new Optional(),
+    ) {}
+
+    public function fallback(bool $absent): OptCoords|Optional
+    {
+        if ($absent) {
+            return new Optional();
+        }
+
+        return OptCoords::from([]);
+    }
+}
+```
+
+```php
+// Bad
 #[TypeScript]
 final class WireNode extends Data
 {
@@ -648,6 +678,7 @@ final class WireBanner extends Data
 - A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it) — `NestedTypeMissingTypeScriptDetector`
 - `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
 - Data class not `final` / props not `readonly` promoted — `NonFinalDataDetector`
+- A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs) — `NullToOptionalMapDetector`
 - A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `NullableWireObjectDetector`
 
 ## Checklist
@@ -662,6 +693,7 @@ final class WireBanner extends Data
 - [ ] Every nested `Data` reachable on the wire from a `#[TypeScript]` class must ALSO be `#[TypeScript]` (or the property must declare its shape with `#[LiteralTypeScriptType]`), or it generates as `undefined`. Enums need no tag — they auto-generate.
 - [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
 - [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
+- [ ] Map an absent value onto `Optional` in ONE named factory, not a ternary at every producer. Use the scaffolded `optionalOrMissing()` (null → `new Optional`, else `::from`), the omit-from-wire counterpart to Spatie's `optional()`.
 - [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
 
 ## Related skills

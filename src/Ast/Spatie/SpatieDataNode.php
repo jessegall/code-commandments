@@ -22,6 +22,7 @@ use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
@@ -580,6 +581,28 @@ final class SpatieDataNode extends NodeMatch
 
     /** The Spatie marker type for a field that may be genuinely ABSENT (omitted from output, not `null`). */
     public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
+
+    /**
+     * Is this `new Optional` a hand-rolled null→Optional MAP — the fallback arm of a ternary
+     * (`$x === null ? new Optional : Foo::from($x)`) or the right of a `??` (`expr() ?? new Optional`)?
+     * That maps "absent" onto `Optional` at a producer, which belongs in ONE named factory
+     * (`Foo::optionalOrMissing($x)`), not re-derived at every call site. A `new Optional` used as a PARAMETER
+     * DEFAULT (`T | Optional $x = new Optional`) or a bare `return new Optional` is the correct shape, NOT this.
+     */
+    public function isOptionalNullFallback(): bool
+    {
+        if (! $this->node instanceof New_ || ltrim((string) $this->newClassName(), '\\') !== self::OPTIONAL) {
+            return false;
+        }
+
+        $parent = $this->node->getAttribute('parent');
+
+        if ($parent instanceof Ternary) {
+            return $parent->if === $this->node || $parent->else === $this->node;
+        }
+
+        return $parent instanceof Coalesce && $parent->right === $this->node;
+    }
 
     /**
      * The names of this Data class's PUBLIC fields typed `T|Optional` — the ones Spatie OMITS from the wire
