@@ -27,6 +27,16 @@ abstract class Hook
      */
     abstract public function bindings(): array;
 
+    /**
+     * A one-line description of what this hook does — the single source for the README hooks table. Empty
+     * by default; every builtin overrides it, and a test enforces that so a wired hook can't ship
+     * undocumented.
+     */
+    public function summary(): string
+    {
+        return '';
+    }
+
     final public function run(array $args): int
     {
         return $this->handle(new HookEvent($this->io->payload(), $this->io->projectRoot()));

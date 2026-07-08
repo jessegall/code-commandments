@@ -30,6 +30,11 @@ final class PlanReminder extends Hook
      */
     private const int MAX_TOTAL = 40;
 
+    public function summary(): string
+    {
+        return "On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` (when `keepGoing()` is on).";
+    }
+
     public function bindings(): array
     {
         return [new HookBinding('PostToolUse', 'ExitPlanMode'), new HookBinding('Stop')];

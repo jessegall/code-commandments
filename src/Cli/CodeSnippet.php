@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Cli\Report\Redactor;
+
 /**
  * Renders a fenced, line-numbered excerpt of a source file around a reported line — so a
  * `report` issue carries the flagged code itself, not just a `file:line` that points into a
  * private or since-changed consumer tree the maintainer can't open. Pure text extraction for
  * a human to read; the reported line is marked with `→` and the gutter maps each row back to
- * the `:line` in the report.
+ * the `:line` in the report. Every captured line is passed through {@see Redactor} first, so a
+ * secret in the consumer's source never travels into the (often public) issue.
  */
 final class CodeSnippet
 {
+    public function __construct(private readonly Redactor $redactor = new Redactor()) {}
+
     /** Lines of context shown before the reported line (declarations read downward). */
     private const int BEFORE = 3;
 
@@ -46,7 +51,7 @@ final class CodeSnippet
 
         for ($n = $start; $n <= $end; $n++) {
             $marker = ($line !== null && $n >= $from && $n <= $to) ? '→' : ' ';
-            $rows[] = sprintf("%s %{$width}d  %s", $marker, $n, $lines[$n - 1]);
+            $rows[] = sprintf("%s %{$width}d  %s", $marker, $n, $this->redactor->line($lines[$n - 1]));
         }
 
         return "**Code** (`{$this->where($file, $line, $endLine)}`):\n\n"

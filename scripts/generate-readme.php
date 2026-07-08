@@ -233,6 +233,13 @@ $tables = [
     ],
 ];
 
+// ---- Plan-execution options + hooks (embedded tables, from the builder / hook classes) ----
+
+$embedded = [
+    'plan-options' => \JesseGall\CodeCommandments\Cli\Doc\PlanExecutionOptions::table(),
+    'hooks-table' => \JesseGall\CodeCommandments\Cli\Doc\HookCatalog::table(),
+];
+
 $readme = (string) file_get_contents($readmePath);
 $updated = $readme;
 $written = [];
@@ -247,6 +254,10 @@ foreach ($tables as $marker => $table) {
     }
 
     $updated = $replaceSection($updated, $marker, "\n{$table['excerpt']}\n");
+}
+
+foreach ($embedded as $marker => $block) {
+    $updated = $replaceSection($updated, $marker, "\n{$block}");
 }
 
 if ($updated !== $readme) {
