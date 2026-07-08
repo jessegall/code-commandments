@@ -165,13 +165,28 @@ final class Repent implements Command
         if ($file !== null) {
             file_put_contents($file, $diff);
             $this->out("\033[2m↳ dry-run diff written to {$file}\033[0m\n");
+            $this->reportHint();
 
             return 0;
         }
 
         $this->out($diff);
+        $this->reportHint();
 
         return 0;
+    }
+
+    /**
+     * The point-of-action nudge on a dry-run: the agent is looking at the exact diff an apply would make,
+     * so this is where to say "if a fix is wrong, report it — don't just discard it." Unconditional here
+     * (unlike the rate-limited post-apply {@see inviteFeedback}); reviewing IS the moment to decide.
+     */
+    private function reportHint(): void
+    {
+        $this->out(
+            "\033[2m↳ Review before applying. If a fix is broken, incomplete, or wrong — file it, don't just\n"
+            . "  discard it: `commandments report --reason=\"…\" --ref=path:line` (the source AND the bad output).\033[0m\n",
+        );
     }
 
     /**
