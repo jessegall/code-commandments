@@ -21,6 +21,7 @@ use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
@@ -922,5 +923,87 @@ final class SpatieDataNode extends NodeMatch
     public function castsNativelyPublic(string $type): bool
     {
         return $this->castsNatively($type);
+    }
+
+    /**
+     * Is this `SomeData::from([...])` a HAND-WRITTEN name remap — every value a bare `$src['snake_key']` off
+     * the SAME source array, and every key the camelCase of that snake key (with at least one real rename)?
+     * A single class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)` replaces the whole
+     * translation. Any transformed value, a mixed source, or a key that isn't a pure snake→camel of its
+     * fetch disqualifies it — so a deliberate, non-mechanical mapping is spared.
+     */
+    public function isHandKeyRemap(): bool
+    {
+        if ($this->staticCallMethod() !== 'from' || ! $this->onDataClass() || ! $this->fromArgIsArrayLiteral()) {
+            return false;
+        }
+
+        $array = $this->arguments()[0]->value;
+
+        if (! $array instanceof Array_ || count($array->items) < 2) {
+            return false;
+        }
+
+        $source = null;
+        $renamed = false;
+
+        foreach ($array->items as $item) {
+            if (! $item instanceof ArrayItem
+                || ! $item->key instanceof String_
+                || ! $item->value instanceof ArrayDimFetch
+                || ! $item->value->var instanceof Variable
+                || ! is_string($item->value->var->name)
+                || ! $item->value->dim instanceof String_) {
+                return false; // a transformed value or a non-`$src['key']` fetch — not a mechanical remap
+            }
+
+            $source ??= $item->value->var->name;
+
+            if ($item->value->var->name !== $source || self::snake($item->key->value) !== $item->value->dim->value) {
+                return false; // a different source, or a key that isn't the snake→camel of its fetch
+            }
+
+            $renamed = $renamed || $item->key->value !== $item->value->dim->value;
+        }
+
+        return $renamed;
+    }
+
+    /** The snake_case form of a camelCase identifier — the SnakeCaseMapper's transform. */
+    private static function snake(string $name): string
+    {
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+    }
+
+    /**
+     * Is this `X::from(...)->toArray()` (or `new X(...)->toArray()`) a redundant ROUND-TRIP — its result
+     * sits in a `::from` slot typed `X` (a nested `Data`, or a `#[DataCollectionOf(X)]` element) that
+     * re-hydrates the array right back into `X`? Build → array → build. Drop the `->toArray()`: the slot
+     * takes the object (or the source array) directly.
+     */
+    public function isRedundantToArrayRoundtrip(): bool
+    {
+        if (! $this->node instanceof MethodCall
+            || ! $this->node->name instanceof Identifier
+            || $this->node->name->toString() !== 'toArray') {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return false;
+        }
+
+        // The receiver's real type — a `Data` object, however it was built (`$d`, `X::from(...)`, `new X`).
+        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($this->node->var, $function, $this->enclosingClassName());
+
+        if ($receiver === null || ! $this->extendsData($receiver)) {
+            return false;
+        }
+
+        $slot = $this->hydrationSlot();
+
+        return $slot !== null && $slot->elementType === $receiver;
     }
 }
