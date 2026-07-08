@@ -58,6 +58,8 @@ change; the operation you kept repeating becomes first-class.
 
 - Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
   _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
+- Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.
+  _Extract the repeated `instanceof` chain into a named boolean method and call THAT at each site._
 
 ## Bad → good
 
@@ -77,10 +79,26 @@ public function decorate(UiNode $node, string $title): UiNode
 }
 ```
 
+```php
+// Bad
+public function routable($e): bool
+{
+    return $e instanceof Wire && $e->from instanceof Port && $e->to instanceof Port;
+}
+
+// Good
+public function accepts($n): bool
+{
+    return $n instanceof Element && $n->attribute instanceof Marker;
+}
+```
+
 ## When it fires
 
 - The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type — `RepeatedNamedCallDetector`
+- The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named — `RepeatedTypeGuardDetector`
 
 ## Checklist
 
 - [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
+- [ ] Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.

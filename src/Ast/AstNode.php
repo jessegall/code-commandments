@@ -1659,6 +1659,38 @@ class AstNode
     }
 
     /**
+     * The EXACT structural fingerprint of this node's subtree — identifiers, class names and values included
+     * (unlike {@see structuralHash}, which is function-only). Two occurrences hash equal iff they are the
+     * same code up to formatting. The reusable substrate for "this expression recurs verbatim" detection.
+     */
+    public function exactHash(): string
+    {
+        return $this->node === null ? '' : StructuralHash::of($this->node);
+    }
+
+    /**
+     * Is this the OUTERMOST `&&` chain that narrows a value through ≥2 `instanceof` checks —
+     * `$x instanceof A && $x->y instanceof B && $x->y->z instanceof C`? A recurring one is a type guard with
+     * no name; the fix is a named predicate. Only the chain root is flagged, so one guard yields one finding.
+     */
+    public function isTypeNarrowingGuard(): bool
+    {
+        return $this->node instanceof BooleanAnd
+            && ! $this->node->getAttribute('parent') instanceof BooleanAnd
+            && self::instanceofConjuncts($this->node) >= 2;
+    }
+
+    /** How many conjuncts of an `&&` chain are `instanceof` checks. */
+    private static function instanceofConjuncts(Node $node): int
+    {
+        if ($node instanceof BooleanAnd) {
+            return self::instanceofConjuncts($node->left) + self::instanceofConjuncts($node->right);
+        }
+
+        return $node instanceof Instanceof_ ? 1 : 0;
+    }
+
+    /**
      * Is this a CONDITIONAL ARRAY-ELEMENT spread — `...($x !== null ? ['k' => $x] : [])` inside an array
      * literal, or `array_merge($base, $cond ? ['k' => $v] : [])`? The tell is a ternary whose ONE branch is a
      * non-empty array literal and the OTHER an empty `[]` ("include these keys, else nothing"), used as a
