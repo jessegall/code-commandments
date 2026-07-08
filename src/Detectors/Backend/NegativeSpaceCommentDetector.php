@@ -27,7 +27,6 @@ final class NegativeSpaceCommentDetector implements Detector
         // is missing, not a description of behaviour: "is not built here" is fine, "is NOT here" is not)
         . '|\b(?:is|are|\'?s|\'?re)\s+not\s+(?:in\s+this\b|here\b)'
         . '|\bnot\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)\b'
-        . '|\bno\b[^.]{0,24}\bhere\b'
         . '/i';
 
     public function sin(): Sin
