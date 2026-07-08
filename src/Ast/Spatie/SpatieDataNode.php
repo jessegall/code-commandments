@@ -70,9 +70,9 @@ final class SpatieDataNode extends NodeMatch
     /**
      * The Spatie CONTAINER-injection attributes — the ones that pull a service dependency out of the
      * container into a property (`#[FromContainer]`, `#[FromContainerProperty]`). A property carrying one
-     * is a COLLABORATOR the page builds itself with, not page data. (The value-injection attributes —
-     * `FromRouteParameter`, `FromAuthenticatedUser` — inject payload values that may legitimately
-     * serialize, so they are NOT in this list.) Stated here once as the package's contract.
+     * is a COLLABORATOR the page builds itself with, not page data. Scoped to container injection: the
+     * value-injection attributes (`#[FromRouteParameter]`, `#[FromAuthenticatedUser]`) inject payload
+     * values that may legitimately serialize, so they belong to the wire. Stated here once as the contract.
      */
     private const array CONTAINER_INJECTION_ATTRIBUTES = [
         'FromContainer',

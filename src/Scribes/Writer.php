@@ -60,8 +60,8 @@ final class Writer
     /**
      * Stamp an attribute (`#[Computed]`, `#[TypeScript]`, `#[DataCollectionOf(X::class)]`, …) on its OWN line
      * directly above a property/param/class — beneath any existing attributes, aligned to the node's indent —
-     * and ensure the attribute's `use` import. Composes {@see Span::skipWhitespace}/{@see Span::indentAt}; no
-     * offset math here.
+     * and ensure the attribute's `use` import. All offset math goes through {@see Span::skipWhitespace} and
+     * {@see Span::indentAt}.
      */
     public function stampAttribute(Param|Property|ClassLike $node, string $attribute, ?string $importFqcn = null): void
     {

@@ -22,4 +22,11 @@ final class SkuRegistry
         // no magic here; a missing code yields an empty entry
         return new SkuEntry();
     }
+
+    #[Sinful(NegativeSpaceComment::class)]
+    public function count(): int
+    {
+        // a retry policy is NOT here — this only counts what's already loaded
+        return 0;
+    }
 }

@@ -32,8 +32,8 @@ final class LaravelPackage extends Package
             ->on(LaravelNode::MODEL, 'casts');
 
         // Config classes whose whole job is returning arrays (rules/messages/attributes/schema/…) —
-        // exempt wholesale, robust to hooks a rule can't enumerate. (A Model is NOT here — only its
-        // casts() above; a Model returning an array elsewhere is a real bag.)
+        // exempt wholesale, robust to hooks a rule can't enumerate. A Model earns only the narrower
+        // `casts()` contract above; its array returns elsewhere stay a real bag.
         $exemptions->exempt(ArrayReturning::class)->classes(LaravelNode::FORM_REQUEST, LaravelNode::MCP_REQUEST, LaravelNode::MCP_TOOL);
 
         // No-container: Eloquent builds a cast itself, no DI — a loose array param is the convention.

@@ -55,8 +55,8 @@ abstract class Sin
 
     /**
      * The one-line "what the sin is" — the symptom the detector flags (the `## When it
-     * fires` row). The bad → good code example is NOT stored here — it is sourced from
-     * the fixture (the `#[Sinful]` bad code and its `#[Righteous]` twin) via
+     * fires` row). The bad → good code example is sourced from the fixture (the `#[Sinful]`
+     * bad code and its `#[Righteous]` twin) via
      * {@see \JesseGall\CodeCommandments\Testing\FixtureExamples}, so it's real and tested.
      */
     public function description(): string

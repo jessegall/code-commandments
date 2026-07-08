@@ -110,8 +110,8 @@ final class PlanExecution
 
     /**
      * Commands to run after EACH phase's commit — the fast, cheap signal (a linter, a type check)
-     * that keeps a phase honest without the full suite. Keep it quick: it runs once per phase. The
-     * phase's own scoped tests are chosen by the agent, not listed here.
+     * that keeps a phase honest without the full suite. Keep it quick: it runs once per phase, alongside
+     * the phase's own scoped tests, which the agent chooses.
      */
     public function eachPhase(string ...$commands): self
     {
