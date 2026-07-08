@@ -46,6 +46,80 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('config: unknown', $src);
     }
 
+    public function test_an_all_caps_prop_is_bound_verbatim_not_mangled(): void
+    {
+        // Issue #324: a prop whose name is an acronym / all-caps (`ROWS`) must bind verbatim
+        // (`:ROWS="ROWS"`) — a naive per-uppercase kebab produced `:r-o-w-s`, which Vue's
+        // `camelize` reads back as `rOWS`, never resolving the declared prop.
+        $files = $this->extract(
+            new DeepDataReachDetector,
+            "<template>\n  <div>\n" . str_repeat("  <p>row</p>\n", 55)
+            . "  <fieldset><h3>{{ ROWS.name }}</h3>"
+            . "<input :value=\"ROWS.config.decimals\" /><input :value=\"ROWS.config.prefix\" /></fieldset>\n  </div>\n</template>",
+        );
+
+        $callSite = $files['component.vue'];
+
+        $this->assertStringContainsString(':ROWS="ROWS"', $callSite, 'the all-caps prop binds verbatim');
+        $this->assertStringNotContainsString(':r-o-w-s', $callSite, 'never per-uppercase kebab an acronym');
+    }
+
+    public function test_a_deep_reach_through_a_generic_container_is_named_after_a_meaningful_segment(): void
+    {
+        // Issue #315: a reach whose mid-object is a generic container word (`detail`) must NOT name
+        // the component `DetailSection` — walk back to the informative segment (`spawnFailure`) so
+        // the extracted file says what it shows.
+        $files = $this->extract(
+            new DeepDataReachDetector,
+            "<template>\n  <div>\n" . str_repeat("  <p>row</p>\n", 55)
+            . "  <section><p>{{ spawnFailure.detail.message }}</p><p>{{ spawnFailure.detail.code }}</p></section>\n  </div>\n</template>",
+        );
+
+        $names = array_map(static fn (string $p): string => basename($p, '.vue'), array_keys($this->components($files)));
+
+        $this->assertContains('SpawnFailureSection', $names);
+        $this->assertNotContains('DetailSection', $names);
+    }
+
+    public function test_a_module_local_static_const_is_copied_in_not_threaded_as_a_prop(): void
+    {
+        // Issue #324: a static `const INLINE = {…} as const` the markup reads is compile-time data,
+        // not per-render input — the extraction must COPY the declaration into the child, never make
+        // it a prop (`INLINE: unknown`) bound as a mangled fallthrough attribute at the call site.
+        $files = $this->extract(
+            new DeepDataReachDetector,
+            "<script setup lang=\"ts\">\nconst INLINE = { BOOL: 'bool', INT: 'int' } as const;\nconst order = useOrder();\n</script>\n<template>\n  <div>\n"
+            . str_repeat("    <p>row</p>\n", 55)
+            . "    <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.kind === INLINE.BOOL }}</p></section>\n  </div>\n</template>\n",
+        );
+
+        $components = $this->components($files);
+        $component = reset($components);
+
+        $this->assertStringContainsString("const INLINE = { BOOL: 'bool', INT: 'int' } as const;", $component, 'the static const is copied in');
+        $this->assertStringNotContainsString('INLINE: unknown', $component, 'it is never a prop');
+        $this->assertStringNotContainsString(':INLINE="INLINE"', $files['component.vue'], 'and never bound at the call site');
+    }
+
+    public function test_a_ref_typed_binding_becomes_an_unwrapped_prop_not_a_raw_ref(): void
+    {
+        // Issue #320: a template binding auto-unwraps a top-level Ref, so a prop typed after one must
+        // take the VALUE type — `Ref<InspectorTexts | null> | null` becomes `InspectorTexts | null`,
+        // never a raw `Ref<…>` threaded through (which reads undefined in the child).
+        $files = $this->extract(
+            new DeepDataReachDetector,
+            "<script setup lang=\"ts\">\nimport type { Ref } from 'vue';\nconst texts: Ref<InspectorTexts | null> | null = getTexts();\nconst order = useOrder();\n</script>\n<template>\n  <div>\n"
+            . str_repeat("    <p>row</p>\n", 55)
+            . "    <section><p>{{ order.customer.fullName }}: {{ texts?.hint }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n",
+        );
+
+        $components = $this->components($files);
+        $component = reset($components);
+
+        $this->assertStringContainsString('texts: InspectorTexts | null', $component, 'the ref is unwrapped to its value type');
+        $this->assertStringNotContainsString('Ref<', $component, 'no raw Ref threaded as a prop');
+    }
+
     public function test_does_not_infer_called_functions_or_globals_as_props(): void
     {
         $src = $this->onlyDeepReach(

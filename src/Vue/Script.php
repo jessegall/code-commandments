@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Ts\Node\CallExpr;
+use JesseGall\CodeCommandments\Vue\Ts\Node\CompositeType;
 use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionType;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ImportDecl;
 use JesseGall\CodeCommandments\Vue\Ts\Node\KeywordType;
@@ -14,6 +15,7 @@ use JesseGall\CodeCommandments\Vue\Ts\Node\NamedType;
 use JesseGall\CodeCommandments\Vue\Ts\Node\NamePattern;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectPattern;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
+use JesseGall\CodeCommandments\Vue\Ts\Node\TypeNode;
 use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
 
@@ -456,6 +458,25 @@ final class Script
     }
 
     /**
+     * The rendered declaration of a module-scope STATIC `const` — a simple `const NAME = <literal>`
+     * whose initializer is NOT a call (so not `ref()`/`computed()`/a composable, which are reactive
+     * per-render state). This is compile-time constant data (`const INLINE = {…} as const`): an
+     * extraction must COPY it into the child, never thread it through as a prop (a static kinds map
+     * is not per-render input). Null for a reactive binding, a destructure, or an unknown name.
+     */
+    public function staticConst(string $name): ?string
+    {
+        $variable = $this->ast()->variable($name);
+
+        if ($variable === null || $variable->keyword !== 'const' || $variable->initCall !== null) {
+            return null;
+        }
+
+        // A simple `const NAME = …`, not a destructure — the whole declaration is the constant.
+        return $variable->pattern instanceof NamePattern ? $variable->render() : null;
+    }
+
+    /**
      * The function a name is destructured from — `const { step, fields } = useWizardState(…)`
      * → `useWizardState` for `step`. The first hop of a composable trace: a binding pulled
      * out of a composable's return, so its type lives in that composable. Null when the name
@@ -497,12 +518,49 @@ final class Script
     /** A `Ref<T>` / `ComputedRef<T>` (etc.) unwrapped to its value type `T`, as in the template. */
     public static function unwrapRef(string $type): string
     {
-        foreach (['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef'] as $wrapper) {
-            $prefix = $wrapper . '<';
+        $unwrapped = self::unwrapRefNode(TsParser::type($type))->render();
 
-            if (str_starts_with($type, $prefix) && str_ends_with($type, '>')) {
-                return substr($type, strlen($prefix), -1);
+        return $unwrapped === '' ? $type : $unwrapped;
+    }
+
+    /**
+     * The names Vue auto-unwraps in a template — a top-level `ref()`/`computed()` binding reads as
+     * its value, so a prop typed after one takes the value type, never the wrapper.
+     */
+    private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
+
+    /**
+     * Peel the ref wrapper off a type NODE (never a string) — a `Ref<V>`/`Ref<V, S>` becomes its READ
+     * type `V` (the first argument, the getter side of a writable ref), and a union `Ref<V> | null`
+     * unwraps each member (`V | null`). Anything else is returned unchanged, so the call is a no-op on
+     * a plain type. Working over the AST (not string prefixes) handles the two-arg and union forms a
+     * naive `str_starts_with`/`str_ends_with` check missed ({@see unwrapRef}, issue #320).
+     */
+    private static function unwrapRefNode(TypeNode $type): TypeNode
+    {
+        if ($type instanceof NamedType && in_array($type->name, self::REF_WRAPPERS, true) && $type->arguments !== []) {
+            return $type->arguments[0];
+        }
+
+        if ($type instanceof CompositeType) {
+            // Unwrapping `Ref<V | null> | null` nests a `V | null` union inside the outer one; flatten
+            // same-operator members, then collapse the now-duplicate `null` so the type reads clean.
+            $flattened = [];
+
+            foreach (array_map(self::unwrapRefNode(...), $type->members) as $member) {
+                $flattened = $member instanceof CompositeType && $member->operator === $type->operator
+                    ? [...$flattened, ...$member->members]
+                    : [...$flattened, $member];
             }
+
+            $seen = [];
+            $unique = array_values(array_filter($flattened, static function (TypeNode $member) use (&$seen): bool {
+                $rendered = $member->render();
+
+                return isset($seen[$rendered]) ? false : ($seen[$rendered] = true);
+            }));
+
+            return count($unique) === 1 ? $unique[0] : new CompositeType($type->operator, $unique);
         }
 
         return $type;
