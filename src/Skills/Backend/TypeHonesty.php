@@ -13,7 +13,7 @@ final class TypeHonesty extends Skill
     {
         parent::__construct(
             slug: 'backend/type-honesty',
-            tier: Tier::KeepInMind,
+            tier: Tier::Mandatory,
             order: 12,
         );
     }

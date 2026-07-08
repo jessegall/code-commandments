@@ -13,7 +13,7 @@ final class Absence extends Skill
     {
         parent::__construct(
             slug: 'backend/absence',
-            tier: Tier::KeepInMind,
+            tier: Tier::Mandatory,
             order: 7,
         );
     }
