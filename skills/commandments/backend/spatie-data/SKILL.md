@@ -261,6 +261,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
   _Replace `$x === null ? new Optional : Foo::from($x)` / `expr() ?? new Optional` with `Foo::optionalOrMissing($x)` (scaffold the `OptionalOrMissing` trait)._
 - On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
   _`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`._
+- Use `Optional::create()`, not `new Optional`, everywhere a static call is legal — a parameter/property default must stay `new Optional` (a factory call is illegal there), everywhere else prefer the factory.
+  _Replace `new Optional` / `new Optional()` with `Optional::create()`._
 
 ## Bad → good
 
@@ -596,9 +598,7 @@ final class StockSnapshotData extends Data
 // Bad
 public function position(): OptCoords|Optional
 {
-    $raw = $this->payload['position'] ?? null;
-
-    return $raw === null ? new Optional : OptCoords::from($raw);
+    return $this->rawPosition === null ? new Optional : OptCoords::from($this->rawPosition);
 }
 
 // Good
@@ -612,7 +612,7 @@ final class Placement extends Data
     public function fallback(bool $absent): OptCoords|Optional
     {
         if ($absent) {
-            return new Optional();
+            return Optional::create();
         }
 
         return OptCoords::from([]);
@@ -680,6 +680,7 @@ final class WireBanner extends Data
 - Data class not `final` / props not `readonly` promoted — `NonFinalDataDetector`
 - A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs) — `NullToOptionalMapDetector`
 - A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `NullableWireObjectDetector`
+- A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer — `PreferOptionalCreateDetector`
 
 ## Checklist
 
@@ -695,6 +696,7 @@ final class WireBanner extends Data
 - [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
 - [ ] Map an absent value onto `Optional` in ONE named factory, not a ternary at every producer. Use the scaffolded `optionalOrMissing()` (null → `new Optional`, else `::from`), the omit-from-wire counterpart to Spatie's `optional()`.
 - [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
+- [ ] Use `Optional::create()`, not `new Optional`, everywhere a static call is legal — a parameter/property default must stay `new Optional` (a factory call is illegal there), everywhere else prefer the factory.
 
 ## Related skills
 

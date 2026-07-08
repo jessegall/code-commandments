@@ -40,7 +40,7 @@ final class SessionResetTest extends TestCase
         PlanConstraints::inWorktree($this->root, $plan)->addLocal('No frontend logic.');
         PlanTesting::inWorktree($this->root, $plan)->set('Tests each phase.');
         file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nphase 2\n");
-        Counter::named($this->root, 'remind')->bump();
+        Counter::named($this->root, 'cardinal-remind')->bump();
     }
 
     private function fire(string $source): void
@@ -64,7 +64,7 @@ final class SessionResetTest extends TestCase
         $this->assertSame([], PlanConstraints::inWorktree($this->root, $this->plan()->build())->local());
         $this->assertSame('', PlanTesting::inWorktree($this->root, $this->plan()->build())->chosen());
         $this->assertFalse(PlanWorkingState::inWorktree($this->root)->exists(), 'the working-state record is wiped');
-        $this->assertFileDoesNotExist($this->root . '/.commandments/.remind-count', 'the reminder counter is wiped');
+        $this->assertFileDoesNotExist($this->root . '/.commandments/.cardinal-remind-count', 'the reminder counter is wiped');
     }
 
     public function test_clear_also_wipes(): void

@@ -39,6 +39,12 @@ final class Writer
         $this->draft->edit(new Span($this->path, $this->source, $node->getStartFilePos(), $node->getEndFilePos() + 1), $text);
     }
 
+    /** The source text a node occupies, verbatim — the reusable "slice out what's written" a rewrite reuses. */
+    public function textOf(Node $node): string
+    {
+        return substr($this->source, $node->getStartFilePos(), $node->getEndFilePos() + 1 - $node->getStartFilePos());
+    }
+
     /** Insert $text at a byte offset (a zero-width edit). */
     public function insertAt(int $offset, string $text): void
     {

@@ -3,30 +3,25 @@
 namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PreferOptionalCreate;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Optional;
 
 /*
- * A request wrapper that reads an optional key off its payload and hand-maps its absence onto `Optional`
- * with a null-first ternary. The `optionalOrMissing()` factory is the one named home for this map.
+ * A request holding a raw, possibly-absent position and hand-mapping its absence onto `Optional` with a
+ * null-first ternary. The `optionalOrMissing()` factory is the one named home for the map.
  */
 final class MoveRequest
 {
-    /** @param array<string, mixed> $payload */
-    public function __construct(private readonly array $payload = [])
+    /** @param  array<string, mixed>|null  $rawPosition */
+    public function __construct(private readonly ?array $rawPosition = null)
     {
     }
 
     #[Sinful(NullToOptionalMap::class)]
+    #[Sinful(PreferOptionalCreate::class)]
     public function position(): OptCoords|Optional
     {
-        $raw = $this->payload['position'] ?? null;
-
-        return $raw === null ? new Optional : OptCoords::from($raw);
-    }
-
-    public function actor(): string
-    {
-        return (string) ($this->payload['actor'] ?? 'system');
+        return $this->rawPosition === null ? new Optional : OptCoords::from($this->rawPosition);
     }
 }

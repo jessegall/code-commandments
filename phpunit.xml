@@ -4,6 +4,10 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory=".phpunit.cache">
+    <php>
+        <!-- The dogfood duplicate-function test scans the whole of src/ into one Codebase; give the suite headroom. -->
+        <ini name="memory_limit" value="512M"/>
+    </php>
     <testsuites>
         <testsuite name="v4">
             <directory>tests</directory>

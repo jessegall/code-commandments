@@ -429,6 +429,12 @@ class AstNode
         return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class->toString() : null;
     }
 
+    /** The class-name node of a `new NamedClass(...)` — for reading the name AS WRITTEN, or null when this isn't one. */
+    public function newClassNode(): ?Name
+    {
+        return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class : null;
+    }
+
     /**
      * The resolved class name of a `Class::method(...)` static call, or null.
      * Names are resolved at parse time, so this is fully qualified.

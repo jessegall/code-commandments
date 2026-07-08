@@ -35,6 +35,7 @@ use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
+use PhpParser\Node\PropertyItem;
 use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
@@ -602,6 +603,27 @@ final class SpatieDataNode extends NodeMatch
         }
 
         return $parent instanceof Coalesce && $parent->right === $this->node;
+    }
+
+    /**
+     * Is this `new Optional` one a static factory call could REPLACE — i.e., in a runtime expression, not a
+     * constant-expression context? A parameter/property DEFAULT (`T | Optional $x = new Optional`) and an
+     * attribute argument MUST stay `new` (a static call is illegal there); everywhere else, prefer Spatie's
+     * built-in `Optional::create()` factory over the raw constructor.
+     */
+    public function isReplaceableNewOptional(): bool
+    {
+        if (! $this->node instanceof New_ || ltrim((string) $this->newClassName(), '\\') !== self::OPTIONAL) {
+            return false;
+        }
+
+        $parent = $this->node->getAttribute('parent');
+
+        if ($parent instanceof Param || $parent instanceof PropertyItem) {
+            return false; // a default value — must stay `new Optional`
+        }
+
+        return $this->walkUp(static fn (Node $node): bool => $node instanceof Attribute) === null;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PreferOptionalCreate;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Optional;
 
@@ -14,7 +15,7 @@ final class PlacementFactory
 {
     /**
      * @param  list<?array>  $rows
-     * @return list<OptCoords|Optional>
+     * @return list<OptRange|Optional>
      */
     public function makeMany(array $rows): array
     {
@@ -27,9 +28,19 @@ final class PlacementFactory
         return $out;
     }
 
-    #[Sinful(NullToOptionalMap::class)]
-    public function one(?array $raw): OptCoords|Optional
+    /**
+     * @param  list<OptRange|Optional>  $mapped
+     * @return list<OptRange>
+     */
+    public function present(array $mapped): array
     {
-        return $raw !== null ? OptCoords::from($raw) : new Optional();
+        return array_values(array_filter($mapped, static fn (OptRange|Optional $entry): bool => ! $entry instanceof Optional));
+    }
+
+    #[Sinful(NullToOptionalMap::class)]
+    #[Sinful(PreferOptionalCreate::class)]
+    public function one(?array $raw): OptRange|Optional
+    {
+        return $raw !== null ? OptRange::from($raw) : new Optional();
     }
 }
