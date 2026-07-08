@@ -159,7 +159,7 @@ final class RouteActions
             return true;
         }
 
-        return $finder->findFirst($method->stmts ?? [], self::rendersPage(...)) !== null;
+        return $finder->findFirst($method->stmts ?? [], LaravelNode::rendersInertiaPage(...)) !== null;
     }
 
     private static function isRequestType(string $fqcn, Codebase $codebase): bool
@@ -173,19 +173,6 @@ final class RouteActions
         return false;
     }
 
-    private static function rendersPage(Node $node): bool
-    {
-        if ($node instanceof StaticCall) {
-            return $node->class instanceof Name
-                && ltrim($node->class->toString(), '\\') === LaravelNode::INERTIA
-                && $node->name instanceof Identifier
-                && $node->name->toString() === 'render';
-        }
-
-        return $node instanceof FuncCall
-            && $node->name instanceof Name
-            && ltrim($node->name->toString(), '\\') === LaravelNode::INERTIA_HELPER;
-    }
 
     /**
      * `[C::class, 'method']` → the `C::method` action key, or null when the array isn't that shape.

@@ -31,7 +31,7 @@ final class VueFixtureExamples
 
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
-            $examples[$detector::class] = self::pair(ExampleText::forKeys($sinful, $keys), ExampleText::forKeys($righteous, $keys));
+            $examples[$detector::class] = ExampleText::pair(ExampleText::forKeys($sinful, $keys), ExampleText::forKeys($righteous, $keys), 'file');
         }
 
         return $examples;
@@ -42,18 +42,6 @@ final class VueFixtureExamples
      * @param  list<array{file: string, source: string}>  $good
      * @return array{bad: ?string, good: ?string}
      */
-    private static function pair(array $bad, array $good): array
-    {
-        foreach ($bad as $b) {
-            foreach ($good as $g) {
-                if ($b['file'] === $g['file']) {
-                    return ['bad' => $b['source'], 'good' => $g['source']];
-                }
-            }
-        }
-
-        return ['bad' => $bad[0]['source'] ?? null, 'good' => $good[0]['source'] ?? null];
-    }
 
     /**
      * @param  array<string, list<array{file: string, source: string}>>  $sources

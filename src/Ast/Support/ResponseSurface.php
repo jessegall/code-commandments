@@ -51,7 +51,7 @@ final class ResponseSurface
         $types = TypeResolver::forCodebase($codebase);
 
         foreach ($codebase->files() as $file) {
-            foreach ($finder->find($file->ast, self::isRenderer(...)) as $render) {
+            foreach ($finder->find($file->ast, LaravelNode::rendersInertiaPage(...)) as $render) {
                 self::collect($render->getArgs(), $codebase, $types, $finder, $bound);
             }
 
@@ -182,23 +182,6 @@ final class ResponseSurface
         }
 
         return null;
-    }
-
-    /**
-     * Is this node a renderer that ships props to the frontend — `Inertia::render(...)` or `inertia(...)`?
-     */
-    private static function isRenderer(Node $node): bool
-    {
-        if ($node instanceof StaticCall) {
-            return $node->class instanceof Name
-                && ltrim($node->class->toString(), '\\') === LaravelNode::INERTIA
-                && $node->name instanceof Identifier
-                && $node->name->toString() === 'render';
-        }
-
-        return $node instanceof FuncCall
-            && $node->name instanceof Name
-            && ltrim($node->name->toString(), '\\') === LaravelNode::INERTIA_HELPER;
     }
 
     /**

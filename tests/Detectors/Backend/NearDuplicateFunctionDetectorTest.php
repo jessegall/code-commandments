@@ -42,6 +42,29 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
         $this->assertSame(['A::sumA', 'A::sumB'], $scopes);
     }
 
+    public function test_does_not_flag_near_identical_constructors(): void
+    {
+        // Two DIFFERENT classes cannot share a constructor — each declares its own (assign params, forward
+        // to parent) — so a similar `__construct` is expected structure, not a redundant algorithm. (Found
+        // by dogfooding: every Sin's `parent::__construct(name: …, skill: …, …)` shares this exact shape.)
+        $code = <<<'PHP'
+        <?php
+        class Base { public function __construct(string $a, string $b, string $c, string $d, string $e) {} }
+        class Alpha extends Base {
+            public function __construct() {
+                parent::__construct(a: 'alpha', b: 'one', c: 'two', d: 'three', e: 'four');
+            }
+        }
+        class Beta extends Base {
+            public function __construct() {
+                parent::__construct(a: 'beta', b: 'five', c: 'six', d: 'seven', e: 'eight');
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
+    }
+
     public function test_does_not_flag_declarative_manifests_that_share_a_shape(): void
     {
         // Reported (#259): every node's outputs() shares the socket-declaration shape. A pure

@@ -1096,6 +1096,17 @@ class AstNode
     }
 
     /**
+     * Is this declaration a constructor? A constructor is excluded from near-duplicate detection: that sin's
+     * fix is "parameterise the shared shape into ONE method", but two DIFFERENT classes cannot share a
+     * constructor — each type declares its own — so a similar `__construct` (assign the params, forward to
+     * `parent`) is expected structure, not a redundant algorithm to hoist.
+     */
+    public function isConstructorDeclaration(): bool
+    {
+        return $this->node instanceof ClassMethod && strtolower($this->node->name->toString()) === '__construct';
+    }
+
+    /**
      * Is this a resolve-or-throw ACCESSOR — one or more null-guard `if (…) { throw … }` statements followed
      * by a single `return $this->prop` (or a local)? That is a language IDIOM for exposing a guarded optional,
      * not copy-pasted logic: two of them in independent classes are incidentally alike (they differ only in
@@ -1193,8 +1204,8 @@ class AstNode
         $restoredFrom = [];   // property name => list of local vars written back
 
         foreach ((new NodeFinder)->findInstanceOf($this->node->stmts, Assign::class) as $assign) {
-            $target = self::thisPropertyName($assign->var);
-            $source = self::thisPropertyName($assign->expr);
+            $target = self::selfPropertyOf($assign->var);
+            $source = self::selfPropertyOf($assign->expr);
 
             if ($source !== null && $assign->var instanceof Variable && is_string($assign->var->name)) {
                 $savedInto[$source] = $assign->var->name;
@@ -1257,15 +1268,6 @@ class AstNode
         return [];
     }
 
-    protected static function thisPropertyName(Node $expr): ?string
-    {
-        return $expr instanceof PropertyFetch
-            && $expr->var instanceof Variable
-            && $expr->var->name === 'this'
-            && $expr->name instanceof Identifier
-                ? $expr->name->toString()
-                : null;
-    }
 
     /**
      * Is this a function/method declared to return a nullable CLASS (`?C` /

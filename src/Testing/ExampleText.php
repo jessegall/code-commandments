@@ -30,6 +30,27 @@ final class ExampleText
     }
 
     /**
+     * The first bad/good example sharing the same $key (e.g. `class` or `file`), so a detector's before/
+     * after pair comes from ONE scenario; falls back to the first of each when none share a key.
+     *
+     * @param  list<array<string, mixed>>  $bad
+     * @param  list<array<string, mixed>>  $good
+     * @return array{bad: mixed, good: mixed}
+     */
+    public static function pair(array $bad, array $good, string $key): array
+    {
+        foreach ($bad as $b) {
+            foreach ($good as $g) {
+                if ($b[$key] === $g[$key]) {
+                    return ['bad' => $b['source'], 'good' => $g['source']];
+                }
+            }
+        }
+
+        return ['bad' => $bad[0]['source'] ?? null, 'good' => $good[0]['source'] ?? null];
+    }
+
+    /**
      * $lines with their common leading indentation removed (blank lines ignored when measuring).
      *
      * @param  list<string>  $lines

@@ -35,7 +35,7 @@ final class FixtureExamples
             $bad = ExampleText::forKeys($sinful, $keys);
             $good = ExampleText::forKeys($righteous, $keys);
 
-            $examples[$detector::class] = self::pair($bad, $good);
+            $examples[$detector::class] = ExampleText::pair($bad, $good, 'class');
         }
 
         return $examples;
@@ -49,18 +49,6 @@ final class FixtureExamples
      * @param  list<array{class: string, source: string}>  $good
      * @return array{bad: ?string, good: ?string}
      */
-    private static function pair(array $bad, array $good): array
-    {
-        foreach ($bad as $b) {
-            foreach ($good as $g) {
-                if ($b['class'] === $g['class']) {
-                    return ['bad' => $b['source'], 'good' => $g['source']];
-                }
-            }
-        }
-
-        return ['bad' => $bad[0]['source'] ?? null, 'good' => $good[0]['source'] ?? null];
-    }
 
     /**
      * Every marked declaration under any of the given detector keys.

@@ -59,6 +59,13 @@ final class NearDuplicateFunctionDetector implements Detector, Exemptable
                 continue;
             }
 
+            // A constructor is not a near-duplicate: its fix would be one shared method, but two DIFFERENT
+            // classes can't share a constructor — each declares its own (assign params, forward to parent),
+            // so a similar `__construct` is expected structure, not a redundant algorithm.
+            if ($match->isConstructorDeclaration()) {
+                continue;
+            }
+
             if ($this->isContractDeclarationHook($codebase, $match)) {
                 continue;
             }
