@@ -8,7 +8,6 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
-use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Backend\Config\RepeatedNamedCallConfig;
 use JesseGall\CodeCommandments\Sins\Backend\RepeatedNamedCall;
 use JesseGall\CodeCommandments\Sins\Sin;
@@ -29,7 +28,7 @@ use PhpParser\Node\Name;
  * method (grouped by its declaring class, so inherited calls on subclasses of one base collapse into one
  * group and unrelated classes stay separate). The repeated call is a missing named method on the type.
  */
-final class RepeatedNamedCallDetector implements Detector
+final class RepeatedNamedCallDetector extends RecurringPattern
 {
     use RepeatedNamedCallConfig;
 
@@ -38,36 +37,23 @@ final class RepeatedNamedCallDetector implements Detector
         return new RepeatedNamedCall();
     }
 
-    public function find(Codebase $codebase): array
+    protected function candidates(Codebase $codebase): array
     {
-        $resolver = TypeResolver::forCodebase($codebase);
-        $groups = [];
+        return $codebase->whereMethod()->get();
+    }
 
-        foreach ($codebase->whereMethod()->get() as $call) {
-            $key = $this->groupKey($call, $resolver);
-
-            if ($key !== null) {
-                $groups[$key][] = $call;
-            }
-        }
-
-        $findings = [];
-
-        foreach ($groups as $matches) {
-            if (count($matches) >= $this->threshold) {
-                array_push($findings, ...$matches);
-            }
-        }
-
-        return $findings;
+    protected function minimumOccurrences(): int
+    {
+        return $this->threshold;
     }
 
     /**
      * The group key a repeated call belongs to — `declaringClass::method#namedKeys` — or null when the call
      * isn't a repeatable variadic named-argument construction.
      */
-    private function groupKey(NodeMatch $call, TypeResolver $resolver): ?string
+    public function groupKey(NodeMatch $call, Codebase $codebase): ?string
     {
+        $resolver = TypeResolver::forCodebase($codebase);
         $named = $this->namedArguments($call);
 
         if ($named === [] || ! $this->carriesConstruction($named)) {

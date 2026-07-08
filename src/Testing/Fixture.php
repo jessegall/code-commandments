@@ -31,4 +31,13 @@ interface Fixture
      * @return array<string, list<int>>
      */
     public function chainSpans(): array;
+
+    /**
+     * Per {@see \JesseGall\CodeCommandments\Detectors\RecurrenceDetector}, the widest FILE span of any of
+     * its `#[Sinful]` groups — held against the cross-file floor in {@see FixtureTestCase}, so at least one
+     * recurrence group is proven ACROSS classes, not just within one.
+     *
+     * @return array<string, int>
+     */
+    public function recurrenceSpans(): array;
 }

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Sins\Backend\RepeatedGuard;
 use JesseGall\CodeCommandments\Sins\Sin;
 
@@ -17,29 +17,20 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * spelled: `$obj->some && $other->some`, `$other->some && $obj->some`, and `$objSome && $otherSome` (with
  * `$objSome = $obj->some`) all collide. The fix is a named predicate; a one-off guard is fine.
  */
-final class RepeatedGuardDetector implements Detector
+final class RepeatedGuardDetector extends RecurringPattern
 {
     public function sin(): Sin
     {
         return new RepeatedGuard();
     }
 
-    public function find(Codebase $codebase): array
+    protected function candidates(Codebase $codebase): array
     {
-        $byFingerprint = [];
+        return $codebase->where(static fn (AstNode $node): bool => $node->isSubstantiveGuard())->get();
+    }
 
-        foreach ($codebase->where(static fn (AstNode $node): bool => $node->isSubstantiveGuard())->get() as $match) {
-            $byFingerprint[$match->canonicalGuardHash()][] = $match;
-        }
-
-        $findings = [];
-
-        foreach ($byFingerprint as $occurrences) {
-            if (count($occurrences) >= 2) {
-                array_push($findings, ...$occurrences);
-            }
-        }
-
-        return $findings;
+    public function groupKey(NodeMatch $finding, Codebase $codebase): ?string
+    {
+        return $finding->canonicalGuardHash();
     }
 }

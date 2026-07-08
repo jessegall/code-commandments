@@ -43,6 +43,11 @@ final class DeclaredFixture implements Fixture
         return array_merge(...array_map(static fn (Fixture $f): array => $f->chainSpans(), $this->fixtures));
     }
 
+    public function recurrenceSpans(): array
+    {
+        return array_merge(...array_map(static fn (Fixture $f): array => $f->recurrenceSpans(), $this->fixtures));
+    }
+
     /**
      * Bucket the detectors by engine and declared path, then build one engine
      * fixture per bucket.

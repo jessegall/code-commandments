@@ -43,6 +43,15 @@ final class FrontendFixture implements Fixture
         return [];
     }
 
+    /**
+     * Recurrence detection is backend-only today — no frontend detector implements
+     * {@see \JesseGall\CodeCommandments\Detectors\RecurrenceDetector} — so a frontend fixture has none.
+     */
+    public function recurrenceSpans(): array
+    {
+        return [];
+    }
+
     private function codebase(): Codebase
     {
         return Codebase::scan($this->path);
