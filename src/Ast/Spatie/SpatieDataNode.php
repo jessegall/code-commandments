@@ -67,6 +67,19 @@ final class SpatieDataNode extends NodeMatch
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
+    /** A `DataPipe` — a hydration hook the framework builds once and CACHES; it resolves collaborators per call. */
+    public const string DATA_PIPE = 'Spatie\\LaravelData\\DataPipes\\DataPipe';
+
+    /** A `Cast` — built once and cached, handed the loose `$properties` array as its contract. */
+    public const string CAST = 'Spatie\\LaravelData\\Casts\\Cast';
+
+    /**
+     * Spatie types the framework builds ONCE and reuses (cached), so a request-scoped constructor
+     * dependency would go stale between calls — they resolve collaborators from the container per call
+     * instead AND take the framework's loose array parameters. Exempt from container-reach + array-bag.
+     */
+    public const array NO_CONTAINER_CONTRACTS = [self::DATA_PIPE, self::CAST];
+
     /**
      * The Spatie CONTAINER-injection attributes — the ones that pull a service dependency out of the
      * container into a property (`#[FromContainer]`, `#[FromContainerProperty]`). A property carrying one
