@@ -76,6 +76,8 @@ recomputed at every construction site. A boundary that renames keys (snake ↔ c
   _`#[WithCast(SomeCast::class)] public array $items` — the cast runs `E::for(...)` per item; the call site passes the raw values._
 - Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
   _`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`._
+- Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.
+  _`'status' => $order->status`, not `'status' => $order->status->value`._
 - Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
   _`'status' => $raw`, not `'status' => Status::from($raw)`._
 - Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
@@ -143,6 +145,24 @@ public function transformed(string $id): InvoiceData
 
 ```php
 // Bad
+public function open(PaymentMethod $method, string $reference): PaymentIntent
+{
+    if ($reference === '') {
+        $reference = 'pending';
+    }
+
+    return PaymentIntent::from(['method' => $method->value, 'reference' => $reference]);
+}
+
+// Good
+public function track(OrderStatus $status): TrackedOrder
+{
+    return TrackedOrder::from(['status' => $status]);
+}
+```
+
+```php
+// Bad
 public function map(object $shipment): ShipmentTimes
 {
     return ShipmentTimes::from([
@@ -180,6 +200,7 @@ public function fromModel(object $model): ReadyBadgeStrip
 - A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build — `DataToArrayRoundtripDetector`
 - A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation — `DerivedCollectionShouldCastDetector`
 - A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]` — `HandKeyRemapDetector`
+- An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum — `RedundantEnumUnwrapDetector`
 - An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar — `RedundantNativeCastDetector`
 - A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array — `RedundantNestedFromDetector`
 
@@ -188,6 +209,7 @@ public function fromModel(object $model): ReadyBadgeStrip
 - [ ] Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
 - [ ] Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
 - [ ] Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
+- [ ] Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.
 - [ ] Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
 - [ ] Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
 

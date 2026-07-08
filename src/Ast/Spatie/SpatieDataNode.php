@@ -23,6 +23,7 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Ternary;
@@ -490,6 +491,50 @@ final class SpatieDataNode extends NodeMatch
             && $assign->var->name->toString() === $name;
     }
 
+    /** The Spatie marker type for a field that may be genuinely ABSENT (omitted from output, not `null`). */
+    public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
+
+    /**
+     * Is EVERY promoted constructor property of this Data class typed `T|Optional` — an all-optional DTO
+     * whose type promises that nothing is ever present? The `Optional` sibling of the all-nullable smell:
+     * the tell that the absence belongs on the CONTAINER field where this object is used (`Type|Optional`),
+     * not scattered across these leaves (which lets the object exist half-formed).
+     */
+    public function everyConstructorParamOptional(): bool
+    {
+        $promoted = $this->getConstructor(
+            static fn (ClassMethod $ctor): array => array_filter($ctor->params, static fn (Param $p): bool => $p->flags !== 0),
+        );
+
+        if (! is_array($promoted) || $promoted === []) {
+            return false;
+        }
+
+        foreach ($promoted as $param) {
+            if (! self::typeIncludesOptional($param->type)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Does this type declaration union in the Spatie `Optional` marker (`T|Optional`)? */
+    private static function typeIncludesOptional(?Node $type): bool
+    {
+        if (! $type instanceof UnionType) {
+            return false;
+        }
+
+        foreach ($type->types as $member) {
+            if ($member instanceof Name && ltrim($member->toString(), '\\') === self::OPTIONAL) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Is this node inside a loop OR an `array_map` callback — the two shapes the spatie-data skill
      * names as per-item hydration that `::collect()` replaces.
@@ -613,6 +658,130 @@ final class SpatieDataNode extends NodeMatch
             valueInList: $valueInList,
             destHasCast: $this->propertyHasCast($owner, $key),
         );
+    }
+
+    /**
+     * Is this `<recv>->value` node an enum unwrapped straight back into its OWN enum slot — the receiver
+     * resolves to an enum, and the `::from([...])` property it feeds is typed as that SAME enum? Then
+     * Spatie's enum cast re-hydrates the scalar into the enum, so the `->value` is a needless round-trip
+     * (the mirror of {@see constructsNativeCastValue}: that constructs scalar→enum, this destructures
+     * enum→scalar). The detector prefilters to a `->value` fetch; here we decide what the receiver IS.
+     */
+    public function unwrapsEnumIntoItsOwnEnumSlot(): bool
+    {
+        if (! $this->node instanceof PropertyFetch && ! $this->node instanceof NullsafePropertyFetch) {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return false;
+        }
+
+        $enum = TypeResolver::forCodebase($this->codebase)->typeOf($this->node->var, $function, $this->enclosingClassName());
+
+        if ($enum === null || ! $this->codebase->isEnum($enum)) {
+            return false; // the receiver isn't an enum — `->value` is an ordinary member, not a backing unwrap
+        }
+
+        $slotType = $this->hydrationSlot()?->elementType ?? $this->forwardedEnumSlotType();
+
+        return $slotType !== null && ltrim($slotType, '\\') === ltrim($enum, '\\');
+    }
+
+    /**
+     * The destination property type for a `->value` that reaches its `::from()` ONE factory-method hop away
+     * — `make() { return $this->build(['status' => $e->value]); }` where `build($attrs)` does
+     * `SomeData::from($attrs)`. Traces the array through the single call it is passed into, resolves that
+     * callee's body, and reads the type of the forwarded slot. Null when the array isn't forwarded straight
+     * into a one-hop `::from`. Bounded to one hop on purpose (deeper chains stay uncaught rather than guessed).
+     */
+    private function forwardedEnumSlotType(): ?string
+    {
+        if (! $this->node instanceof Node) {
+            return null;
+        }
+
+        [$key, $item] = $this->keyedHydrationItem($this->node);
+        $array = $item instanceof ArrayItem ? $item->getAttribute('parent') : null;
+        $arg = $array instanceof Array_ ? $array->getAttribute('parent') : null;
+
+        if ($key === null || ! $arg instanceof Arg) {
+            return null;
+        }
+
+        [$callee, $ownerClass] = $this->resolveCallee($arg->getAttribute('parent'));
+        $param = $callee === null ? null : ($callee->params[$this->argPosition($arg)] ?? null);
+
+        if (! $param instanceof Param || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
+            return null;
+        }
+
+        foreach (new NodeFinder()->findInstanceOf($callee, StaticCall::class) as $from) {
+            if ($from->name instanceof Identifier && $from->name->toString() === 'from' && $this->soleArgumentIsVariable($from, $param->var->name)) {
+                $owner = $this->constructedFromInClass($from, $ownerClass);
+
+                if ($owner !== null && $this->codebase->extends($owner, self::DATA)) {
+                    return TypeResolver::forCodebase($this->codebase)->propertyTypeOf($owner, $key);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The declared method a call resolves to, plus the FQCN of the class that owns it — for a
+     * `$recv->method(...)` (receiver type resolved) or a `Class::method(...)`. `[null, null]` otherwise.
+     *
+     * @return array{0: ?\PhpParser\Node\Stmt\ClassMethod, 1: ?string}
+     */
+    private function resolveCallee(mixed $call): array
+    {
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return [null, null];
+        }
+
+        if ($call instanceof MethodCall && $call->name instanceof Identifier) {
+            $owner = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName());
+        } elseif ($call instanceof StaticCall && $call->name instanceof Identifier && $call->class instanceof Name) {
+            $class = $call->class->toString();
+            $owner = in_array($class, ['self', 'static'], true) ? $this->enclosingClassName() : ltrim($class, '\\');
+        } else {
+            return [null, null];
+        }
+
+        $node = $owner === null ? null : $this->codebase->classNamed($owner)->node;
+
+        return $node instanceof \PhpParser\Node\Stmt\ClassLike
+            ? [$node->getMethod($call->name->toString()), $owner]
+            : [null, null];
+    }
+
+    /** The zero-based position of $arg among its call's real arguments. */
+    private function argPosition(Arg $arg): int
+    {
+        $call = $arg->getAttribute('parent');
+        $args = ($call instanceof MethodCall || $call instanceof StaticCall)
+            ? array_values(array_filter($call->args, static fn ($a): bool => $a instanceof Arg))
+            : [];
+
+        return (int) array_search($arg, $args, true);
+    }
+
+    /** Like {@see constructedFrom}, but resolving `self`/`static` against $ownerClass (the callee's own class). */
+    private function constructedFromInClass(StaticCall $call, ?string $ownerClass): ?string
+    {
+        if (! $call->class instanceof Name) {
+            return null;
+        }
+
+        $class = $call->class->toString();
+
+        return in_array($class, ['self', 'static'], true) ? $ownerClass : ltrim($class, '\\');
     }
 
     /**
