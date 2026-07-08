@@ -46,6 +46,36 @@ final class ConstructorOrchestrationScribeTest extends ScribeTestCase
         $this->assertStringContainsString('public array $docks { get => $this->topBar->docks(); }', $fixed);
         $this->assertStringNotContainsString('readonly array $docks', $fixed);
         $this->assertStringNotContainsString('$this->docks =', $fixed);
+
+        // The hook is a get-only virtual property — it MUST be `#[Computed]` or Spatie treats it as a
+        // hydration input and the class won't build. The attribute needs its import to resolve.
+        $this->assertStringContainsString("#[Computed]\n    public array \$docks", $fixed);
+        $this->assertStringContainsString('use Spatie\LaravelData\Attributes\Computed;', $fixed);
+    }
+
+    public function test_does_not_duplicate_an_existing_computed_import(): void
+    {
+        $fixed = $this->fixStable(<<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Routing\Controller;
+        use Spatie\LaravelData\Attributes\Computed;
+        use Spatie\LaravelData\Data;
+        class Canvas extends Data { public function __construct(public string $svg) {} }
+        class Shell extends Data {
+            public readonly Canvas $canvas;
+            public readonly Canvas $palette;
+            public readonly array $docks;
+
+            public function __construct(public readonly TopBar $topBar) {
+                $this->docks = $this->topBar->docks();
+            }
+        }
+        class C extends Controller { public function a(): Shell { return Shell::from([]); } }
+        PHP);
+
+        $this->assertSame(1, substr_count($fixed, 'use Spatie\LaravelData\Attributes\Computed;'), 'the import is added at most once');
+        $this->assertStringContainsString('#[Computed]', $fixed);
     }
 
     public function test_preserves_a_data_collection_of_attribute(): void
@@ -74,8 +104,8 @@ final class ConstructorOrchestrationScribeTest extends ScribeTestCase
         class C extends Controller { public function a(): Grid { return Grid::from([]); } }
         PHP);
 
-        // The attribute survives; the slot becomes a hook.
-        $this->assertStringContainsString('#[DataCollectionOf(Row::class)]', $fixed);
+        // The attribute survives above the new `#[Computed]`; the slot becomes a hook.
+        $this->assertStringContainsString("#[DataCollectionOf(Row::class)]\n    #[Computed]\n    public array \$rows", $fixed);
         $this->assertStringContainsString('public array $rows { get => $this->repo->rows(); }', $fixed);
     }
 

@@ -11,14 +11,21 @@ use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Property;
+use PhpParser\Node\Stmt\Use_;
 
 /**
  * Repents page-object slot fills into computed property hooks: `$this->x = expr;` becomes a virtual `get` property.
- * Applies only to single-line assignments to declared properties; multi-line assignments are deferred.
+ * Applies only to single-line assignments to declared properties; multi-line assignments are deferred. The created
+ * hook is stamped `#[Computed]` (a get-only virtual property Spatie must NOT treat as a hydration input) and any
+ * attributes the property already carried are kept above it, where reflection reads them.
  */
 final class ConstructorOrchestrationScribe extends RepentScribe
 {
+    /** The Spatie attribute that marks a get-only virtual property as computed (not a hydration input). */
+    private const string COMPUTED = 'Spatie\\LaravelData\\Attributes\\Computed';
+
     public function rewrite(array $findings): array
     {
         $draft = $this->draft([]);
@@ -54,14 +61,27 @@ final class ConstructorOrchestrationScribe extends RepentScribe
 
         $rhs = $this->slice($source, $assign->expr->getStartFilePos(), $assign->expr->getEndFilePos());
 
-        // 1. Drop `readonly` — a virtual property has no backing store to freeze.
+        // 1. Stamp `#[Computed]` above the property (a get-only hook is NOT a hydration input) and drop
+        //    `readonly` (a virtual property has no backing store to freeze) — keeping any existing
+        //    attributes, which sit above and are left untouched, so reflection still reads them.
+        $typeStart = $property->type->getStartFilePos();
         $modifiersStart = $property->attrGroups === []
             ? $property->getStartFilePos()
             : end($property->attrGroups)->getEndFilePos() + 1;
-        $modifiers = substr($source, $modifiersStart, $property->type->getStartFilePos() - $modifiersStart);
+
+        $keywordStart = $modifiersStart;
+
+        while ($keywordStart < $typeStart && ctype_space($source[$keywordStart])) {
+            $keywordStart++; // skip the whitespace/newline that follows the last attribute
+        }
+
+        $lead = substr($source, $modifiersStart, $keywordStart - $modifiersStart);
+        $modifiers = substr($source, $keywordStart, $typeStart - $keywordStart);
+        $indent = $this->indentAt($source, $property->getStartFilePos());
+
         $draft->edit(
-            new Span($path, $source, $modifiersStart, $property->type->getStartFilePos()),
-            str_replace('readonly ', '', $modifiers),
+            new Span($path, $source, $modifiersStart, $typeStart),
+            $lead . "#[Computed]\n{$indent}" . str_replace('readonly ', '', $modifiers),
         );
 
         // 2. Turn the trailing `;` into the get hook.
@@ -73,6 +93,59 @@ final class ConstructorOrchestrationScribe extends RepentScribe
         // 3. Delete the constructor assignment, whole line.
         [$start, $end] = $this->lineSpan($source, $statement);
         $draft->edit(new Span($path, $source, $start, $end), '');
+
+        // 4. Ensure `use Spatie\LaravelData\Attributes\Computed;` so the stamp resolves.
+        $this->ensureComputedImport($draft, $match, $class);
+    }
+
+    /**
+     * Add `use …\Computed;` when the file doesn't already import it — after the last existing `use`, else
+     * after the `namespace …;`. A global-namespace file (no namespace) is left alone; the stamp then relies
+     * on the class being in a context that already sees the attribute.
+     */
+    private function ensureComputedImport(Draft $draft, NodeMatch $match, ClassLike $class): void
+    {
+        $namespace = $class->getAttribute('parent');
+
+        if (! $namespace instanceof Namespace_) {
+            return;
+        }
+
+        $uses = array_values(array_filter($namespace->stmts, static fn (Node $stmt): bool => $stmt instanceof Use_));
+
+        foreach ($uses as $use) {
+            foreach ($use->uses as $used) {
+                if (ltrim($used->name->toString(), '\\') === self::COMPUTED) {
+                    return; // already imported
+                }
+            }
+        }
+
+        $source = $match->file->source;
+
+        if ($uses !== []) {
+            $offset = end($uses)->getEndFilePos() + 1;
+            $insert = "\nuse " . self::COMPUTED . ';';
+        } elseif ($namespace->name !== null) {
+            $semicolon = strpos($source, ';', $namespace->name->getEndFilePos());
+            $offset = $semicolon === false ? null : $semicolon + 1;
+            $insert = "\n\nuse " . self::COMPUTED . ';';
+        } else {
+            return;
+        }
+
+        if ($offset !== null) {
+            $draft->edit(new Span($match->file->path, $source, $offset, $offset), $insert);
+        }
+    }
+
+    /** The leading whitespace of the line $pos sits on — the indentation to align an inserted line to. */
+    private function indentAt(string $source, int $pos): string
+    {
+        $newline = strrpos(substr($source, 0, $pos), "\n");
+        $lineStart = $newline === false ? 0 : $newline + 1;
+
+        return substr($source, $lineStart, $pos - $lineStart);
     }
 
     private function declaredProperty(ClassLike $class, string $name): ?Property
