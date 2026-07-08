@@ -46,10 +46,16 @@ A **constraint** is a natural-language architectural invariant `judge` can't dec
 
 ## Autonomy
 
-Grind through the phases without stopping for input. When keep-going is enabled, the Stop hook re-nudges you to continue until you finish. Two ways a plan run ends the nudging:
+How hard you push is set by the project's **mode** (`planExecution()->mode(...)`; `commandments plan status` shows it). The Stop hook enforces it — grind through the phases; when the mode keeps you going, a stop re-nudges you to continue until the plan is finished.
 
-- **Complete** → `commandments plan done`. Only when every phase is done and the end gate is clean. This ends the plan.
-- **Blocked** → `commandments plan stuck`, then stop. When you genuinely need the user and cannot proceed — you may **not** `plan done` a plan that isn't complete. `plan stuck` pauses the keep-going nudge for that one stop (so you aren't looped back in while blocked) but keeps the plan **active**; say clearly what you're blocked on. It's one-shot: the moment you continue, keep-going resumes on its own — no need to un-stick it manually.
+- **`Ask`** — confirm first. Right after approval, present a short summary and ask the user before writing any code. A stop is never overridden.
+- **`Supervised`** — grind on your own, but a human stop is respected (you're nudged at most once).
+- **`Autonomous`** — grind to the finish; a stop re-nudges until you're done. If you're **genuinely blocked** and need the user, run `commandments plan stuck`, then stop — it pauses the nudge for that one stop (so you aren't looped) while keeping the plan active; say what you're blocked on. One-shot: keep-going resumes the moment you continue.
+- **`Relentless`** — **never stop**. Do not ask the user and do not wait. When you hit a decision, choose the best option yourself and proceed. If a phase is genuinely blocked or not worth doing, **skip it** — note why in your working state and move to the next phase. There is **no `plan stuck`** here (it refuses); the only exit is `plan done`.
+
+A plan run ends the nudging exactly one way that counts as success:
+
+- **Complete** → `commandments plan done`. Only when every reachable phase is done and the end gate is clean. This ends the plan. You may **not** `plan done` a plan that isn't complete.
 
 Lint, type-checks, and any other gate are **not universal**: they run only if the project declared them in `planExecution()->onComplete(...)` (or you were explicitly asked), never assumed.
 
@@ -79,7 +85,7 @@ $config->planExecution(fn ($plan) => $plan
     ->branchFrom('main')          // base to cut from + judge --branch base
     ->branchPrefix('plan/')       // the plan branch prefix
     ->pushEachPhase()             // push after every phase (default: once at the end)
-    ->keepGoing()                 // Stop hook re-nudges until `plan done`
+    ->mode(PlanMode::Autonomous)  // Ask | Supervised | Autonomous | Relentless (never stop, skip blockers)
     ->onStart('composer install') // once, before the first phase
     ->eachPhase('composer lint')  // after each phase — keep it fast
     ->onComplete('composer test') // the end gate; judge --branch runs after
