@@ -1653,6 +1653,51 @@ class AstNode
     }
 
     /**
+     * Is this a CONDITIONAL ARRAY-ELEMENT spread — `...($x !== null ? ['k' => $x] : [])` inside an array
+     * literal, or `array_merge($base, $cond ? ['k' => $v] : [])`? The tell is a ternary whose ONE branch is a
+     * non-empty array literal and the OTHER an empty `[]` ("include these keys, else nothing"), used as a
+     * spread element or an `array_merge` argument — the noise a null-dropping variadic factory replaces.
+     */
+    public function isConditionalArraySpread(): bool
+    {
+        if (! $this->node instanceof Ternary || ! $this->node->if instanceof Node) {
+            return false;
+        }
+
+        if (! self::isOneEmptyOneFilledArray($this->node->if, $this->node->else)) {
+            return false;
+        }
+
+        $parent = $this->node->getAttribute('parent');
+
+        return self::isSpreadItemOf($parent, $this->node) || self::isArrayMergeArgumentOf($parent, $this->node);
+    }
+
+    /** Are the two nodes both array literals, exactly one of them empty (`['k'=>$v]` vs `[]`)? */
+    private static function isOneEmptyOneFilledArray(Node $a, Node $b): bool
+    {
+        return $a instanceof Array_ && $b instanceof Array_ && (($a->items === []) xor ($b->items === []));
+    }
+
+    /** Is $parent the spread item `...$ternary` wrapping this ternary? */
+    private static function isSpreadItemOf(mixed $parent, Node $ternary): bool
+    {
+        return $parent instanceof ArrayItem && $parent->unpack && $parent->value === $ternary;
+    }
+
+    /** Is $parent an `array_merge(..., $ternary)` argument wrapping this ternary? */
+    private static function isArrayMergeArgumentOf(mixed $parent, Node $ternary): bool
+    {
+        if (! $parent instanceof Arg || $parent->value !== $ternary) {
+            return false;
+        }
+
+        $call = $parent->getAttribute('parent');
+
+        return $call instanceof FuncCall && $call->name instanceof Name && strtolower($call->name->toString()) === 'array_merge';
+    }
+
+    /**
      * Is this an `if`/`else` whose `if` branch already exits (ends in
      * `return`/`throw`/`continue`/`break`), making the `else` redundant? Drop the
      * `else` and let the happy path continue unindented.

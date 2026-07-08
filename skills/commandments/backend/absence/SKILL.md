@@ -78,6 +78,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Rules
 
+- Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
+  _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
 - Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
   _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
 - Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
@@ -86,6 +88,26 @@ If you can't point at one of those, you do **not** have an honest null — go ba
   _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
 ## Bad → good
+
+```php
+// Bad
+public function lines(): array
+{
+    return [
+        'number' => $this->number,
+        ...($this->coupon === null ? [] : ['discount' => ['coupon' => $this->coupon, 'applied' => true]]),
+    ];
+}
+
+// Good
+public function summary(): array
+{
+    return [
+        'number' => $this->number,
+        'coupon' => $this->coupon ?? 'none',
+    ];
+}
+```
 
 ```php
 // Bad
@@ -158,12 +180,14 @@ public function locateHonestly(string $email): Option
 
 ## When it fires
 
+- An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present' — `ConditionalArraySpreadDetector`
 - Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
 - Nullable callback normalised in the body instead of a Null Object default — `NullableCallbackDetector`
 - `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)` — `OptionAsNullableDetector`
 
 ## Checklist
 
+- [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
 - [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
 - [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
 - [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
