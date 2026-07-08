@@ -70,7 +70,11 @@ final class Repent implements Command
         $written = new RewriteApplier()->apply($converged);
 
         if ($written === []) {
-            $this->out("\033[32m✓ Nothing to repent.\033[0m\n");
+            $this->out(
+                "\033[32m✓ Nothing to AUTO-FIX here.\033[0m \033[2mThis is NOT \"no sins\" — it only means no scribe could\n"
+                . "  rewrite this scope. A sin `judge` flags without an auto-fixer still stands; fix it BY HAND at its\n"
+                . "  source per its skill. Run `judge` to see what remains.\033[0m\n",
+            );
 
             return 0;
         }
@@ -157,7 +161,11 @@ final class Repent implements Command
         $diff = new UnifiedDiff()->of($this->converge($roots, $scope, $only), $path);
 
         if ($diff === '') {
-            $this->out("\033[32m✓ Nothing to repent.\033[0m\n");
+            $this->out(
+                "\033[32m✓ Nothing to AUTO-FIX here.\033[0m \033[2mThis is NOT \"no sins\" — it only means no scribe could\n"
+                . "  rewrite this scope. A sin `judge` flags without an auto-fixer still stands; fix it BY HAND at its\n"
+                . "  source per its skill. Run `judge` to see what remains.\033[0m\n",
+            );
 
             return 0;
         }
