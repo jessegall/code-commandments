@@ -23,6 +23,7 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
+use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
@@ -413,48 +414,133 @@ final class SpatieDataNode extends NodeMatch
      */
     public function assignmentReadsScopedState(): bool
     {
-        if (! $this->node instanceof Assign) {
+        return $this->node instanceof Assign
+            && $this->scopedStateWithin($this->node->expr, $this->enclosingFunction(), $this->enclosingClassName(), 4, []);
+    }
+
+    /**
+     * Does $node read request-scoped / ambient state within $depth call hops — a `::current()`/`->current()`
+     * scoped accessor, directly OR inside any method, `::from` constructor, or `new` it reaches? Bounded and
+     * cycle-guarded. Hoisting such a slot into a `get` hook would re-resolve it at ACCESS time against a
+     * since-rebound context and stamp the wrong data (why EditorShell/EditorPage build eagerly). $function
+     * and $selfClass are the scope $node lives in, so a `$this->x->m()` receiver resolves correctly as the
+     * recursion crosses into each callee.
+     *
+     * @param  array<string, true>  $visited  class::method keys already walked
+     */
+    private function scopedStateWithin(Node $node, ?FunctionLike $function, ?string $selfClass, int $depth, array $visited): bool
+    {
+        if (self::readsScopedAccessor($node)) {
+            return true;
+        }
+
+        if ($depth <= 0 || $function === null) {
             return false;
         }
 
-        if (self::readsScopedAccessor($this->node->expr)) {
-            return true; // the RHS itself calls `::current()`
+        $resolver = TypeResolver::forCodebase($this->codebase);
+
+        foreach (new NodeFinder()->findInstanceOf($node, MethodCall::class) as $call) {
+            if ($call->name instanceof Identifier
+                && $this->crossInto($resolver->typeOf($call->var, $function, $selfClass), $call->name->toString(), $depth, $visited)) {
+                return true;
+            }
         }
 
-        foreach (new NodeFinder()->findInstanceOf($this->node->expr, MethodCall::class) as $call) {
-            if ($this->calleeReadsScopedState($call)) {
-                return true; // a method the RHS calls reads scoped state
+        foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
+            if ($call->name instanceof Identifier && $call->class instanceof Name) {
+                // Spatie `::from(...)` runs the constructor; a named static factory (`::for`) is a real method.
+                $method = $call->name->toString() === 'from' ? '__construct' : $call->name->toString();
+
+                if ($this->crossInto($this->resolveSelfClass($call->class->toString(), $selfClass), $method, $depth, $visited)) {
+                    return true;
+                }
+            }
+        }
+
+        foreach (new NodeFinder()->findInstanceOf($node, New_::class) as $new) {
+            if ($new->class instanceof Name
+                && $this->crossInto($this->resolveSelfClass($new->class->toString(), $selfClass), '__construct', $depth, $visited)) {
+                return true;
             }
         }
 
         return false;
     }
 
-    /** Does the one-hop body of $call read a static `::current()` scoped accessor? */
-    private function calleeReadsScopedState(MethodCall $call): bool
+    /** Recurse into $class::$method's body one hop deeper, guarding against cycles. */
+    private function crossInto(?string $class, string $method, int $depth, array $visited): bool
     {
-        $function = $this->enclosingFunction();
-
-        if (! $call->name instanceof Identifier || $function === null) {
+        if ($class === null) {
             return false;
         }
 
-        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName());
-        $classNode = $receiver === null ? null : $this->codebase->classNamed($receiver)->node;
+        $key = "{$class}::{$method}";
+
+        if (isset($visited[$key])) {
+            return false;
+        }
+
+        $visited[$key] = true;
+        $classNode = $this->codebase->classNamed($class)->node;
 
         if (! $classNode instanceof \PhpParser\Node\Stmt\ClassLike) {
             return false;
         }
 
-        $method = $classNode->getMethod($call->name->toString());
+        $callee = $classNode->getMethod($method);
 
-        return $method !== null && self::readsScopedAccessor($method);
+        return $callee !== null && $this->scopedStateWithin($callee, $callee, $class, $depth - 1, $visited);
     }
 
-    /** Does $node contain a static `X::current()` call — the scoped/ambient-context accessor idiom? */
+    /** Resolve `self`/`static` to the class the call sits in; else the written name. */
+    private function resolveSelfClass(string $class, ?string $selfClass): ?string
+    {
+        return in_array($class, ['self', 'static'], true) ? $selfClass : ltrim($class, '\\');
+    }
+
+    /**
+     * Is the property this assignment fills marked `#[Eager]` — the author's explicit opt-out of the
+     * lazify, pinning a deliberately-eager constructor build the detector can't otherwise infer safe?
+     */
+    public function assignedSlotIsEager(): bool
+    {
+        $name = $this->assignedPropertyName();
+        $class = $this->enclosingClass();
+
+        if ($name === null || ! $class instanceof \PhpParser\Node\Stmt\ClassLike) {
+            return false;
+        }
+
+        foreach ($class->getProperties() as $property) {
+            if (count($property->props) !== 1 || $property->props[0]->name->toString() !== $name) {
+                continue;
+            }
+
+            foreach ($property->attrGroups as $group) {
+                foreach ($group->attrs as $attr) {
+                    $attrName = ltrim($attr->name->toString(), '\\');
+
+                    if ($attrName === 'Eager' || str_ends_with($attrName, '\\Eager')) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /** Does $node contain a `::current()` / `->current()` scoped/ambient-context accessor call? */
     private static function readsScopedAccessor(Node $node): bool
     {
         foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
+            if ($call->name instanceof Identifier && $call->name->toString() === 'current') {
+                return true;
+            }
+        }
+
+        foreach (new NodeFinder()->findInstanceOf($node, MethodCall::class) as $call) {
             if ($call->name instanceof Identifier && $call->name->toString() === 'current') {
                 return true;
             }
@@ -566,6 +652,118 @@ final class SpatieDataNode extends NodeMatch
         }
 
         return false;
+    }
+
+    /** The Spatie TypeScript-transformer attribute that compiles a Data class to a frontend type. */
+    public const string TYPE_SCRIPT = 'Spatie\\TypeScriptTransformer\\Attributes\\TypeScript';
+
+    /** Spatie's collection wrapper — a valid RETURN of `::collect()`, but never a PROPERTY type. */
+    public const string DATA_COLLECTION = 'Spatie\\LaravelData\\DataCollection';
+
+    /**
+     * Is this field TYPED as `DataCollection` (`DataCollection $x`, `DataCollection|null`, or a hook of that
+     * type) on a Data class? A collection property must be `array` (preferred) or `Collection` with
+     * `#[DataCollectionOf(X)]`; typing it `DataCollection` emits malformed TypeScript (`undefined<number, X>`)
+     * and skips the element-typed hydration/validation `#[DataCollectionOf]` drives.
+     */
+    public function propertyTypedAsDataCollection(): bool
+    {
+        if (! $this->codebase->extends($this->enclosingClassName(), self::DATA)) {
+            return false;
+        }
+
+        $type = $this->node instanceof Param ? $this->node->type
+            : ($this->node instanceof Property ? $this->node->type : null);
+
+        return self::typeMentionsDataCollection($type);
+    }
+
+    /** Does this type declaration name `DataCollection` (bare or in a nullable union)? */
+    private static function typeMentionsDataCollection(?Node $type): bool
+    {
+        if ($type instanceof Name) {
+            return ltrim($type->toString(), '\\') === self::DATA_COLLECTION;
+        }
+
+        if ($type instanceof NullableType) {
+            return self::typeMentionsDataCollection($type->type);
+        }
+
+        if ($type instanceof UnionType) {
+            foreach ($type->types as $member) {
+                if ($member instanceof Name && ltrim($member->toString(), '\\') === self::DATA_COLLECTION) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this a nullable NESTED-OBJECT field (`T | null` / `?T`, T a `Data` subclass or enum) on a
+     * `#[TypeScript]` Data class — where `T | Optional` belongs instead? On the wire a `?T = null` ships
+     * `"field": null`; `Optional` OMITS it, which is what the frontend's `x?.` reads for "absent". A
+     * nullable SCALAR is left alone (an explicit `null` can be meaningful); a nested object that's null
+     * almost always means "not there", i.e. `Optional`.
+     */
+    public function nullableWireObject(): bool
+    {
+        $class = $this->enclosingClass();
+
+        if (! $class instanceof \PhpParser\Node\Stmt\ClassLike
+            || ! $this->codebase->extends($this->enclosingClassName(), self::DATA)
+            || ! self::classHasAttribute($class, 'TypeScript')) {
+            return false;
+        }
+
+        $type = $this->node instanceof Param ? $this->node->type : ($this->node instanceof Property ? $this->node->type : null);
+        $inner = self::nullableClassName($type);
+
+        return $inner !== null && ($this->codebase->extends($inner, self::DATA) || $this->codebase->isEnum($inner));
+    }
+
+    /** Does $class carry an attribute named $short (by short name or fully-qualified)? */
+    private static function classHasAttribute(\PhpParser\Node\Stmt\ClassLike $class, string $short): bool
+    {
+        foreach ($class->attrGroups as $group) {
+            foreach ($group->attrs as $attr) {
+                $name = ltrim($attr->name->toString(), '\\');
+
+                if ($name === $short || str_ends_with($name, '\\' . $short)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /** The single class name T of a `T | null` / `?T` type — else null (not nullable, or not one class). */
+    private static function nullableClassName(?Node $type): ?string
+    {
+        if ($type instanceof NullableType && $type->type instanceof Name) {
+            return ltrim($type->type->toString(), '\\');
+        }
+
+        if (! $type instanceof UnionType) {
+            return null;
+        }
+
+        $classes = [];
+        $nullable = false;
+
+        foreach ($type->types as $member) {
+            if ($member instanceof Identifier && strtolower($member->toString()) === 'null') {
+                $nullable = true;
+            } elseif ($member instanceof Name && strtolower($member->toString()) === 'null') {
+                $nullable = true;
+            } elseif ($member instanceof Name) {
+                $classes[] = ltrim($member->toString(), '\\');
+            }
+        }
+
+        return $nullable && count($classes) === 1 ? $classes[0] : null;
     }
 
     /** Does this type declaration union in the Spatie `Optional` marker (`T|Optional`)? */

@@ -157,6 +157,14 @@ final class Parser
     {
         $left = $this->unary();
 
+        // A TS `as` cast is compile-time-only — skip `as <Type>` and keep the runtime value expression, so
+        // `($event.target as HTMLInputElement).value` parses (and reconstructs) as `$event.target.value`
+        // rather than silently truncating to `$event.target`.
+        while ($this->peek()['type'] === 'name' && $this->peek()['value'] === 'as') {
+            $this->next();
+            $this->skipTypeAnnotation();
+        }
+
         while (true) {
             $token = $this->peek();
             $operator = $token['value'];
@@ -190,6 +198,53 @@ final class Parser
         }
 
         return $this->postfix();
+    }
+
+    /**
+     * Consume (and discard) a TS type after `as` — a name plus its type suffixes (`.Name`, balanced
+     * `<…>`/`[…]`/`(…)`, `|`/`&` unions) — stopping at a token that ends the type in this position: a
+     * closing bracket at depth 0, or any non-connector punct (a comma, `?`/`:`, a value operator). The
+     * cast is erased; only the runtime value expression it wraps is kept.
+     */
+    private function skipTypeAnnotation(): void
+    {
+        $depth = 0;
+
+        while (true) {
+            $token = $this->peek();
+
+            if ($token['type'] === 'eof') {
+                return;
+            }
+
+            if ($token['type'] === 'punct') {
+                $value = $token['value'];
+
+                if (in_array($value, ['<', '[', '('], true)) {
+                    $depth++;
+                    $this->next();
+
+                    continue;
+                }
+
+                if (in_array($value, ['>', ']', ')'], true)) {
+                    if ($depth === 0) {
+                        return; // a closing bracket belonging to the enclosing expression
+                    }
+
+                    $depth--;
+                    $this->next();
+
+                    continue;
+                }
+
+                if ($depth === 0 && ! in_array($value, ['.', '|', '&'], true)) {
+                    return; // a top-level token that isn't a type connector ends the type
+                }
+            }
+
+            $this->next();
+        }
     }
 
     private function postfix(): Expr
