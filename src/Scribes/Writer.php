@@ -42,7 +42,13 @@ final class Writer
     /** The source text a node occupies, verbatim — the reusable "slice out what's written" a rewrite reuses. */
     public function textOf(Node $node): string
     {
-        return substr($this->source, $node->getStartFilePos(), $node->getEndFilePos() + 1 - $node->getStartFilePos());
+        return self::slice($this->source, $node);
+    }
+
+    /** A node's verbatim source cut from an explicit $source — the static form, for a scribe holding no Writer. */
+    public static function slice(string $source, Node $node): string
+    {
+        return Span::slice($source, $node->getStartFilePos(), $node->getEndFilePos());
     }
 
     /** Insert $text at a byte offset (a zero-width edit). */

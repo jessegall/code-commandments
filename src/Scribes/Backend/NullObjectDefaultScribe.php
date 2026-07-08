@@ -93,7 +93,7 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
     private function writtenNonNullType(?Node $type, string $source): ?string
     {
         if ($type instanceof NullableType) {
-            return $this->slice($source, $type->type);
+            return Writer::slice($source, $type->type);
         }
 
         if ($type instanceof UnionType) {
@@ -101,7 +101,7 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
 
             foreach ($type->types as $member) {
                 if (! $this->isNullMember($member)) {
-                    $parts[] = $this->slice($source, $member);
+                    $parts[] = Writer::slice($source, $member);
                 }
             }
 
@@ -120,10 +120,5 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
     private function isNullMember(Node $member): bool
     {
         return $member instanceof Identifier && strtolower($member->toString()) === 'null';
-    }
-
-    private function slice(string $source, Node $node): string
-    {
-        return substr($source, $node->getStartFilePos(), $node->getEndFilePos() + 1 - $node->getStartFilePos());
     }
 }

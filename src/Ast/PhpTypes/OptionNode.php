@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\PhpTypes;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\TypeName;
@@ -38,7 +40,7 @@ final class OptionNode extends NodeMatch
 
         $class = TypeName::nullableClass($type);
 
-        return $class !== null && self::shortName($class) === 'Option';
+        return $class !== null && ClassName::short($class) === 'Option';
     }
 
     /**

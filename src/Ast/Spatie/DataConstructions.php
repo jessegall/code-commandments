@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast\Spatie;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Ast\Support\MemoisedPerCodebase;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Array_;
@@ -30,18 +31,11 @@ final class DataConstructions
     /** @var array<string, list<NodeMatch>>  Data FQCN => every `::from(...)` hydration site */
     private array $sites = [];
 
-    private static ?\WeakMap $memo = null;
+    use MemoisedPerCodebase;
 
     private function __construct(private readonly Codebase $codebase)
     {
         $this->index();
-    }
-
-    public static function forCodebase(Codebase $codebase): self
-    {
-        self::$memo ??= new \WeakMap();
-
-        return self::$memo[$codebase] ??= new self($codebase);
     }
 
     /**

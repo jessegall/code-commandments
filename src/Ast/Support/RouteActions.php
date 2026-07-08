@@ -24,20 +24,13 @@ use PhpParser\NodeFinder;
 /** Set of route actions (class::method entry points) — unions three signals: route-file registration, structural, response-reachable. Built once per codebase and memoised. */
 final class RouteActions
 {
-    private static ?\WeakMap $memo = null;
+    use MemoisedPerCodebase;
 
     /**
      * @param  array<string, true>  $actions     "Fqcn::method" => true — the union of all signals
      * @param  array<string, true>  $registered  "Fqcn::method" => true — bound in a route file only
      */
     private function __construct(private readonly array $actions, private readonly array $registered) {}
-
-    public static function forCodebase(Codebase $codebase): self
-    {
-        self::$memo ??= new \WeakMap();
-
-        return self::$memo[$codebase] ??= self::build($codebase);
-    }
 
     /**
      * Is `$fqcn::$method` a route action by any of the three signals?
@@ -115,7 +108,7 @@ final class RouteActions
         return $actions;
     }
 
-    private static function build(Codebase $codebase): self
+    protected static function build(Codebase $codebase): static
     {
         $registered = [];
         $actions = [];

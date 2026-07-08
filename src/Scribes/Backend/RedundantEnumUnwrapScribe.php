@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
 use PhpParser\Node\Expr\PropertyFetch;
 
@@ -14,16 +13,9 @@ use PhpParser\Node\Expr\PropertyFetch;
  * receiver (`$order->status`), letting the property's built-in enum cast keep the enum. The mirror of
  * {@see RedundantNativeCastScribe} (which drops the scalar→enum construction).
  */
-final class RedundantEnumUnwrapScribe extends RepentScribe
+final class RedundantEnumUnwrapScribe extends SingleReplacementScribe
 {
-    public function rewrite(array $findings): array
-    {
-        return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->unwrap($match))
-            ->rewrites();
-    }
-
-    private function unwrap(NodeMatch $match): ?string
+    protected function replacement(NodeMatch $match): ?string
     {
         $node = $match->node;
 

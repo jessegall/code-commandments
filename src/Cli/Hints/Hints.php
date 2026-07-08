@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Hints;
 
+use JesseGall\CodeCommandments\Support\Path;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -60,7 +62,7 @@ final class Hints implements Command
         $this->out("\033[32m✓ Rewrote {$count} " . ($count === 1 ? 'file' : 'files') . ".\033[0m\n");
 
         foreach ($written as $path) {
-            $this->out('  ' . $this->relative($path, $options->path) . "\n");
+            $this->out('  ' . Path::relative($path, $options->path) . "\n");
         }
 
         return 0;
@@ -85,10 +87,6 @@ final class Hints implements Command
         return 0;
     }
 
-    private function relative(string $path, string $base): string
-    {
-        return str_starts_with($path, $base . '/') ? substr($path, strlen($base) + 1) : $path;
-    }
 
     private function out(string $text): void
     {

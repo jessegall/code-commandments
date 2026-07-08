@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\StaticCall;
@@ -14,16 +13,9 @@ use PhpParser\Node\Expr\StaticCall;
  * Unwraps a redundant `X::from([...])` to its plain array literal, letting the parent `::from` auto-hydrate
  * it. Rewrites only the array-literal form (the detector's shape); anything else is left untouched.
  */
-final class RedundantNestedFromScribe extends RepentScribe
+final class RedundantNestedFromScribe extends SingleReplacementScribe
 {
-    public function rewrite(array $findings): array
-    {
-        return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->unwrap($match))
-            ->rewrites();
-    }
-
-    private function unwrap(NodeMatch $match): ?string
+    protected function replacement(NodeMatch $match): ?string
     {
         $node = $match->node;
 

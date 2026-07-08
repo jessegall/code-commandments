@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Sharded;
@@ -32,7 +34,7 @@ final class Benchmark
         $findings = [];
 
         foreach ($detectors as $detector) {
-            $short = $this->shortName($detector);
+            $short = ClassName::short($detector::class);
 
             $before = memory_get_usage();
             $start = hrtime(true);
@@ -101,12 +103,5 @@ final class Benchmark
         }
 
         return sprintf('%+.1fM', $bytes / 1024 / 1024);
-    }
-
-    private function shortName(Detector $detector): string
-    {
-        $parts = explode('\\', $detector::class);
-
-        return end($parts);
     }
 }

@@ -873,7 +873,7 @@ final class Script
                 $i = (($end = strpos($source, '*/', $i)) === false) ? $length : $end + 2;
             } elseif ($char === '"' || $char === "'" || $char === '`') {
                 $start = $i;
-                $i = $this->skipString($source, $i, $char, $length);
+                $i = StringScan::skip($source, $i, $char, $length);
                 $tokens[] = ['kind' => Token::STRING, 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
             } elseif (ctype_alpha($char) || $char === '_' || $char === '$') {
                 $start = $i;
@@ -894,18 +894,6 @@ final class Script
         return $tokens;
     }
 
-    private function skipString(string $source, int $i, string $quote, int $length): int
-    {
-        for ($i++; $i < $length; $i++) {
-            if ($source[$i] === '\\') {
-                $i++;
-            } elseif ($source[$i] === $quote) {
-                return $i + 1;
-            }
-        }
-
-        return $length;
-    }
 
     private function isId(int $i, string $value): bool
     {

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Bridge\Bridge;
 use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
@@ -365,13 +367,6 @@ final class Judge implements Command
         if ($checklist !== null && is_file($checklist)) {
             @unlink($checklist);
         }
-    }
-
-    private function shortName(Detector $detector): string
-    {
-        $parts = explode('\\', $detector::class);
-
-        return end($parts);
     }
 
     private function line(string $text): void

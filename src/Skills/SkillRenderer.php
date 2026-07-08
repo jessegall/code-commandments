@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
@@ -186,7 +188,7 @@ final class SkillRenderer
             $detector = $detectors[$sin::class] ?? null;
             $rows[] = $detector === null
                 ? "- {$sin->description()}"
-                : "- {$sin->description()} — `{$this->shortName($detector::class)}`";
+                : "- {$sin->description()} — `" . ClassName::short($detector::class) . '`';
         }
 
         return $rows === [] ? '' : "## When it fires\n\n" . implode("\n", $rows);
@@ -241,13 +243,6 @@ final class SkillRenderer
         }
 
         return $map;
-    }
-
-    private function shortName(string $class): string
-    {
-        $parts = explode('\\', $class);
-
-        return end($parts);
     }
 
     private function tail(string $slug): string

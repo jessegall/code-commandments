@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts;
 
+use JesseGall\CodeCommandments\Vue\StringScan;
+
 use JesseGall\CodeCommandments\Vue\Token;
 
 /**
@@ -32,7 +34,7 @@ final class Lexer
                 $i = ($end = strpos($source, '*/', $i)) === false ? $length : $end + 2;
             } elseif ($char === '"' || $char === "'" || $char === '`') {
                 $start = $i;
-                $i = $this->skipString($source, $i, $char, $length);
+                $i = StringScan::skip($source, $i, $char, $length);
                 $tokens[] = new Lexeme(Token::STRING, substr($source, $start, $i - $start), $start, $i);
             } elseif (ctype_alpha($char) || $char === '_' || $char === '$') {
                 $start = $i;
@@ -59,16 +61,4 @@ final class Lexer
      * Skip a string/template literal from its opening quote at $i, returning the index just past its
      * close. A backslash escapes the next character; an unterminated literal runs to end of source.
      */
-    private function skipString(string $source, int $i, string $quote, int $length): int
-    {
-        for ($i++; $i < $length; $i++) {
-            if ($source[$i] === '\\') {
-                $i++;
-            } elseif ($source[$i] === $quote) {
-                return $i + 1;
-            }
-        }
-
-        return $length;
-    }
 }

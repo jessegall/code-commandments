@@ -10,6 +10,8 @@ namespace JesseGall\CodeCommandments\Scribes;
  */
 abstract class RepentScribe
 {
+    use NamedByClass;
+
     /**
      * Rewrite the sins the detector found.
      *
@@ -17,16 +19,6 @@ abstract class RepentScribe
      * @return array<string, string>  path => new content (changed/created files only)
      */
     abstract public function rewrite(array $findings): array;
-
-    /**
-     * The scribe's short name (its class basename) — used to select it.
-     */
-    public function name(): string
-    {
-        $parts = explode('\\', static::class);
-
-        return end($parts);
-    }
 
     /**
      * Open the fluent rewrite builder over the detector's findings — the scribe's

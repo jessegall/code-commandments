@@ -11,26 +11,13 @@ namespace JesseGall\CodeCommandments\Vue\Ts\Node;
  */
 final class ObjectType extends TypeNode
 {
+    use AggregatesMemberReferences;
+    use MembersAsFields;
+
     /**
      * @param  list<Member>  $members
      */
     public function __construct(public readonly array $members) {}
-
-    /**
-     * The members as `name => rendered value type` — a method member yields its `(…) => R` form.
-     *
-     * @return array<string, string>
-     */
-    public function fields(): array
-    {
-        $fields = [];
-
-        foreach ($this->members as $member) {
-            $fields[$member->name] = $member->type()->render();
-        }
-
-        return $fields;
-    }
 
     public function render(): string
     {
@@ -39,16 +26,5 @@ final class ObjectType extends TypeNode
         }
 
         return '{ ' . implode('; ', array_map(static fn (Member $m): string => $m->render(), $this->members)) . ' }';
-    }
-
-    public function references(): array
-    {
-        $names = [];
-
-        foreach ($this->members as $member) {
-            $names = [...$names, ...$member->references()];
-        }
-
-        return $names;
     }
 }

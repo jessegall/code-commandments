@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use PhpParser\Node;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
@@ -64,7 +66,7 @@ final class StructuralHash
             }
         }
 
-        $parts = [self::shortName($node::class)];
+        $parts = [ClassName::short($node::class)];
 
         foreach ($node->getSubNodeNames() as $name) {
             // Redundant methods wear different names (`resolveWritable` vs
@@ -101,12 +103,5 @@ final class StructuralHash
             is_int($value), is_float($value) => 'n:' . $value,
             default => 'null',
         };
-    }
-
-    private static function shortName(string $fqcn): string
-    {
-        $parts = explode('\\', $fqcn);
-
-        return end($parts);
     }
 }

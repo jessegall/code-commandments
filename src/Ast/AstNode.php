@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
 use PhpParser\Modifiers;
@@ -1987,13 +1989,6 @@ class AstNode
             && $call->name->toString() === 'array_map';
     }
 
-    protected static function shortName(string $fqcn): string
-    {
-        $parts = explode('\\', $fqcn);
-
-        return end($parts);
-    }
-
     /**
      * Does this DECLARATION (method, property, param, class, or hook) carry an attribute whose SHORT name
      * matches one given — `#[Computed]`, `#[Hidden]`, …? (The per-field reader is {@see ClassField::hasAttribute}.)
@@ -2006,7 +2001,7 @@ class AstNode
 
         foreach ($this->node->attrGroups as $group) {
             foreach ($group->attrs as $attribute) {
-                if (in_array(self::shortName($attribute->name->toString()), $shortNames, true)) {
+                if (in_array(ClassName::short($attribute->name->toString()), $shortNames, true)) {
                     return true;
                 }
             }
@@ -2037,7 +2032,7 @@ class AstNode
 
         foreach ($carrier->attrGroups as $group) {
             foreach ($group->attrs as $attribute) {
-                if (! in_array(self::shortName($attribute->name->toString()), self::WIRE_TYPE_ATTRIBUTES, true)) {
+                if (! in_array(ClassName::short($attribute->name->toString()), self::WIRE_TYPE_ATTRIBUTES, true)) {
                     continue;
                 }
 
@@ -2262,7 +2257,7 @@ class AstNode
         foreach ($candidates as $candidate) {
             $name = $candidate instanceof Identifier || $candidate instanceof Name ? $candidate->toString() : '';
 
-            if (in_array(strtolower(self::shortName($name)), ['callable', 'closure'], true)) {
+            if (in_array(strtolower(ClassName::short($name)), ['callable', 'closure'], true)) {
                 return true;
             }
         }

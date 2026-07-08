@@ -60,18 +60,11 @@ final class TypeResolver
     /** @var array<int, array<string, ?string>>  object-id of a function => local var => type */
     private array $localCache = [];
 
-    private static ?\WeakMap $memo = null;
+    use MemoisedPerCodebase;
 
     private function __construct(Codebase $codebase)
     {
         $this->index($codebase);
-    }
-
-    public static function forCodebase(Codebase $codebase): self
-    {
-        self::$memo ??= new \WeakMap();
-
-        return self::$memo[$codebase] ??= new self($codebase);
     }
 
     /**

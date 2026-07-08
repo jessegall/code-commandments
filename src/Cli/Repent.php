@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Support\Path;
+
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Detectors\Catalog;
@@ -83,7 +85,7 @@ final class Repent implements Command
         $this->out("\033[32m✓ Repented {$count} " . ($count === 1 ? 'file' : 'files') . ".\033[0m\n");
 
         foreach ($written as $file) {
-            $this->out('  ' . $this->relative($file, $path) . "\n");
+            $this->out('  ' . Path::relative($file, $path) . "\n");
         }
 
         $this->scaffoldConstructs($converged, $written);
@@ -271,10 +273,6 @@ final class Repent implements Command
         return $chain->matching($only);
     }
 
-    private function relative(string $path, string $base): string
-    {
-        return str_starts_with($path, $base . '/') ? substr($path, strlen($base) + 1) : $path;
-    }
 
     private function out(string $text): void
     {

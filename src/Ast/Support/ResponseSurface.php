@@ -29,19 +29,12 @@ use PhpParser\NodeFinder;
  */
 final class ResponseSurface
 {
-    private static ?\WeakMap $memo = null;
+    use MemoisedPerCodebase;
 
     /**
      * @param  array<string, true>  $bound  FQCN => true for every class that reaches a response boundary
      */
     private function __construct(private readonly array $bound) {}
-
-    public static function forCodebase(Codebase $codebase): self
-    {
-        self::$memo ??= new \WeakMap();
-
-        return self::$memo[$codebase] ??= self::build($codebase);
-    }
 
     /**
      * Does an instance of this class travel back in a response anywhere in the codebase?
@@ -51,7 +44,7 @@ final class ResponseSurface
         return $fqcn !== null && isset($this->bound[ltrim($fqcn, '\\')]);
     }
 
-    private static function build(Codebase $codebase): self
+    protected static function build(Codebase $codebase): static
     {
         $bound = [];
         $finder = new NodeFinder;

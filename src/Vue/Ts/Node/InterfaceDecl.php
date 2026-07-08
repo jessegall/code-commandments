@@ -11,6 +11,9 @@ namespace JesseGall\CodeCommandments\Vue\Ts\Node;
  */
 final class InterfaceDecl extends Node
 {
+    use AggregatesMemberReferences;
+    use MembersAsFields;
+
     /**
      * @param  list<Member>  $members
      */
@@ -20,41 +23,10 @@ final class InterfaceDecl extends Node
         public readonly string $header = '',
     ) {}
 
-    /**
-     * @return array<string, string>
-     */
-    public function fields(): array
-    {
-        $fields = [];
-
-        foreach ($this->members as $member) {
-            $fields[$member->name] = $member->type()->render();
-        }
-
-        return $fields;
-    }
-
     public function render(): string
     {
         $body = implode("\n", array_map(static fn (Member $m): string => '    ' . $m->render() . ';', $this->members));
 
         return "interface {$this->name}{$this->header} {\n{$body}\n}";
-    }
-
-    /**
-     * The named types this interface's members reference — so carrying it into an extracted child
-     * can carry its dependencies too.
-     *
-     * @return list<string>
-     */
-    public function references(): array
-    {
-        $names = [];
-
-        foreach ($this->members as $member) {
-            $names = [...$names, ...$member->references()];
-        }
-
-        return $names;
     }
 }

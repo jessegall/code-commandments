@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
+use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
@@ -54,7 +55,7 @@ final class ConstructorOrchestrationScribe extends RepentScribe
             return;
         }
 
-        $rhs = $this->slice($match->file->source, $assign->expr->getStartFilePos(), $assign->expr->getEndFilePos());
+        $rhs = Span::slice($match->file->source, $assign->expr->getStartFilePos(), $assign->expr->getEndFilePos());
         $writer = Writer::for($draft, $match);
 
         // 1. Stamp `#[Computed]` above the property (a get-only hook is NOT a hydration input, and the import
@@ -81,10 +82,5 @@ final class ConstructorOrchestrationScribe extends RepentScribe
         }
 
         return null;
-    }
-
-    private function slice(string $source, int $start, int $endInclusive): string
-    {
-        return substr($source, $start, $endInclusive + 1 - $start);
     }
 }

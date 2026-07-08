@@ -47,6 +47,24 @@ final class TypeName
     }
 
     /**
+     * The plain written name of a single type — a class `Name` OR a builtin `Identifier` (`int`,
+     * `string`) — with a `?T` wrapper stripped, else null (a union, intersection, or absent type). Unlike
+     * {@see class}, this KEEPS builtins: the caller wants the name as written, not just class types.
+     */
+    public static function simpleName(?Node $type): ?string
+    {
+        if ($type instanceof NullableType) {
+            $type = $type->type;
+        }
+
+        return match (true) {
+            $type instanceof Name => $type->toString(),
+            $type instanceof Identifier => $type->toString(),
+            default => null,
+        };
+    }
+
+    /**
      * The class FQCN when the type is NULLABLE and resolves to one class — `?C`
      * or `C | null` — else null. Used to spot a nullable object return.
      */

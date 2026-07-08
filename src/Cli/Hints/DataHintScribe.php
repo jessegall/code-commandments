@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Scribes\Edit;
 use JesseGall\CodeCommandments\Scribes\Scribe;
+use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
@@ -118,18 +119,13 @@ final class DataHintScribe extends Scribe
         $args = $call->node->args;
 
         if (count($args) === 1 && $args[0] instanceof Node\Arg && $args[0]->name !== null) {
-            $value = $this->slice($source, $args[0]->value);
-            $class = $this->slice($source, $call->node->class);
+            $value = Writer::slice($source, $args[0]->value);
+            $class = Writer::slice($source, $call->node->class);
 
             return $this->replaceNode($call->node, "{$class}::from({$value})");
         }
 
         return $this->replaceNode($call->nameNode, 'from');
-    }
-
-    private function slice(string $source, Node $node): string
-    {
-        return substr($source, $node->getStartFilePos(), $node->getEndFilePos() + 1 - $node->getStartFilePos());
     }
 
     /**

@@ -31,7 +31,7 @@ final class VueFixtureExamples
 
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
-            $examples[$detector::class] = self::pair(self::forKeys($sinful, $keys), self::forKeys($righteous, $keys));
+            $examples[$detector::class] = self::pair(ExampleText::forKeys($sinful, $keys), ExampleText::forKeys($righteous, $keys));
         }
 
         return $examples;
@@ -60,16 +60,6 @@ final class VueFixtureExamples
      * @param  list<string>  $keys
      * @return list<array{file: string, source: string}>
      */
-    private static function forKeys(array $sources, array $keys): array
-    {
-        foreach ($keys as $key) {
-            if (! empty($sources[$key])) {
-                return $sources[$key];
-            }
-        }
-
-        return [];
-    }
 
     /**
      * Every element marked by a `@{$marker} Name` comment, grouped by the Name.
@@ -126,24 +116,10 @@ final class VueFixtureExamples
         $indent = substr($component->source, $lineStart === false ? 0 : $lineStart + 1, $element->start - ($lineStart === false ? 0 : $lineStart + 1));
         $raw = $indent . substr($component->source, $element->start, $element->end - $element->start);
 
-        return self::dedent(explode("\n", $raw));
+        return ExampleText::dedent(explode("\n", $raw));
     }
 
     /**
      * @param  list<string>  $lines
      */
-    private static function dedent(array $lines): string
-    {
-        $min = PHP_INT_MAX;
-
-        foreach ($lines as $line) {
-            if (trim($line) !== '') {
-                $min = min($min, strlen($line) - strlen(ltrim($line)));
-            }
-        }
-
-        $min = $min === PHP_INT_MAX ? 0 : $min;
-
-        return implode("\n", array_map(static fn (string $line): string => substr($line, $min), $lines));
-    }
 }

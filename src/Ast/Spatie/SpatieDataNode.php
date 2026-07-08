@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Spatie;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Ast\Support\PageObject;
@@ -148,7 +150,7 @@ final class SpatieDataNode extends NodeMatch
         $argument = $attribute->args[0]->value ?? null;
 
         return $argument instanceof ClassConstFetch && $argument->class instanceof Name
-            ? self::shortName($argument->class->toString())
+            ? ClassName::short($argument->class->toString())
             : null;
     }
 
@@ -307,7 +309,7 @@ final class SpatieDataNode extends NodeMatch
     private function castsNatively(string $type): bool
     {
         return $this->codebase->isEnum($type)
-            || in_array(self::shortName($type), self::NATIVE_CAST_TYPES, true)
+            || in_array(ClassName::short($type), self::NATIVE_CAST_TYPES, true)
             || $this->codebase->implements($type, 'DateTimeInterface');
     }
 
@@ -347,12 +349,12 @@ final class SpatieDataNode extends NodeMatch
         $rhs = $this->node->expr;
 
         if ($rhs instanceof StaticCall && $rhs->class instanceof Name) {
-            return self::shortName($rhs->class->toString()) === 'Lazy';
+            return ClassName::short($rhs->class->toString()) === 'Lazy';
         }
 
         return $rhs instanceof New_
             && $rhs->class instanceof Name
-            && str_contains(self::shortName($rhs->class->toString()), 'Prop');
+            && str_contains(ClassName::short($rhs->class->toString()), 'Prop');
     }
 
     /**
@@ -402,7 +404,7 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $short = self::shortName($type->toString());
+        $short = ClassName::short($type->toString());
 
         return $short === 'Lazy' || str_ends_with($short, 'Prop');
     }
@@ -1549,7 +1551,7 @@ final class SpatieDataNode extends NodeMatch
         if ($this->staticCallMethod() === 'parse') {
             $class = $this->staticCallClass();
 
-            return $class !== null && in_array(self::shortName($class), self::NATIVE_CAST_TYPES, true);
+            return $class !== null && in_array(ClassName::short($class), self::NATIVE_CAST_TYPES, true);
         }
 
         $new = $this->newClassName();

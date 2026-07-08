@@ -15,22 +15,14 @@ use PhpParser\Node;
  */
 abstract class Scribe
 {
+    use NamedByClass;
+
     /**
      * The new content of each file this Scribe emends.
      *
      * @return array<string, string>  path => new file content (changed files only)
      */
     abstract public function rewrites(Codebase $codebase, Scope $scope): array;
-
-    /**
-     * The Scribe's short name (its class basename) — used to select it with `--only`.
-     */
-    public function name(): string
-    {
-        $parts = explode('\\', static::class);
-
-        return end($parts);
-    }
 
     /**
      * Apply byte-range edits to a source string, from the end backwards so earlier

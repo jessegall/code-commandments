@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Ternary;
 use PhpParser\NodeFinder;
@@ -45,11 +46,11 @@ final class NestedTernaryScribe extends RepentScribe
                 return null;
             }
 
-            $arms[] = "{$this->slice($source, $node->cond)} => {$this->slice($source, $node->if)}";
+            $arms[] = Writer::slice($source, $node->cond) . ' => ' . Writer::slice($source, $node->if);
             $node = $node->else;
         }
 
-        $arms[] = "default => {$this->slice($source, $node)}";
+        $arms[] = 'default => ' . Writer::slice($source, $node);
 
         $indent = $this->lineIndent($source, $ternary->getStartFilePos());
         $body = implode('', array_map(static fn (string $arm): string => "{$indent}    {$arm},\n", $arms));
@@ -60,11 +61,6 @@ final class NestedTernaryScribe extends RepentScribe
     private function containsTernary(Node $node): bool
     {
         return new NodeFinder()->findFirstInstanceOf($node, Ternary::class) !== null;
-    }
-
-    private function slice(string $source, Node $node): string
-    {
-        return substr($source, $node->getStartFilePos(), $node->getEndFilePos() + 1 - $node->getStartFilePos());
     }
 
     /**

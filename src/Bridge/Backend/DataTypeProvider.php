@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Bridge\Backend;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
 use JesseGall\CodeCommandments\Bridge\TypeContract;
@@ -29,17 +31,10 @@ final class DataTypeProvider implements ContractProvider
             $fields = $data->publicFieldNames();
 
             if ($name !== null && $fields !== []) {
-                $contracts[] = new TypeContract(self::shortName($name), $fields, $data->optionalPublicFieldNames());
+                $contracts[] = new TypeContract(ClassName::short($name), $fields, $data->optionalPublicFieldNames());
             }
         }
 
         return $contracts;
-    }
-
-    private static function shortName(string $fqcn): string
-    {
-        $parts = explode('\\', $fqcn);
-
-        return end($parts);
     }
 }

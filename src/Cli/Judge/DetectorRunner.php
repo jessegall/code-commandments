@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use Closure;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Concurrency\Fork;
@@ -70,7 +72,7 @@ final class DetectorRunner
         $tasks = [];
 
         foreach ($detectors as $detector) {
-            $short = $this->shortName($detector);
+            $short = ClassName::short($detector::class);
             $sin = $detector->sin();
 
             $tasks[] = static fn (): array => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase));
@@ -95,12 +97,5 @@ final class DetectorRunner
         }
 
         return $findings;
-    }
-
-    private function shortName(Detector $detector): string
-    {
-        $parts = explode('\\', $detector::class);
-
-        return end($parts);
     }
 }

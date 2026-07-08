@@ -41,6 +41,16 @@ final class Span
     }
 
     /**
+     * The substring of $source spanning the INCLUSIVE byte range `[$start, $endInclusive]` — the one
+     * sanctioned "cut a node's source out" primitive, so no scribe re-derives `substr($s, $start, $end + 1
+     * - $start)` by hand. {@see Writer::slice} adapts it to a php-parser node.
+     */
+    public static function slice(string $source, int $start, int $endInclusive): string
+    {
+        return substr($source, $start, $endInclusive + 1 - $start);
+    }
+
+    /**
      * The indentation (leading whitespace) of the line $pos sits on. The sanctioned offset-math primitive
      * a scribe uses to align an inserted line — never its own `strrpos("\n")` scan.
      */

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
@@ -14,16 +13,9 @@ use PhpParser\Node\Expr\StaticCall;
  * Unwraps a redundant native-cast construction (`Enum::from($x)`, `new DateTime($x)`, `Carbon::parse($x)`)
  * to its single argument, letting the property's built-in enum / date cast build it from the raw scalar.
  */
-final class RedundantNativeCastScribe extends RepentScribe
+final class RedundantNativeCastScribe extends SingleReplacementScribe
 {
-    public function rewrite(array $findings): array
-    {
-        return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->unwrap($match))
-            ->rewrites();
-    }
-
-    private function unwrap(NodeMatch $match): ?string
+    protected function replacement(NodeMatch $match): ?string
     {
         $node = $match->node;
 

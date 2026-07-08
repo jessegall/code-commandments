@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
+use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
@@ -61,11 +62,11 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
                 return null;
             }
 
-            $value = $this->slice($source, $arg->value->getStartFilePos(), $arg->value->getEndFilePos());
+            $value = Span::slice($source, $arg->value->getStartFilePos(), $arg->value->getEndFilePos());
             $entries[] = "'{$key}' => {$value}";
         }
 
-        $class = $this->slice($source, $new->class->getStartFilePos(), $new->class->getEndFilePos());
+        $class = Span::slice($source, $new->class->getStartFilePos(), $new->class->getEndFilePos());
 
         return "{$class}::from([" . implode(', ', $entries) . '])';
     }
@@ -86,10 +87,5 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
         }
 
         return $param->var->name;
-    }
-
-    private function slice(string $source, int $start, int $endInclusive): string
-    {
-        return substr($source, $start, $endInclusive + 1 - $start);
     }
 }

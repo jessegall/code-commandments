@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\ClassField;
 use JesseGall\CodeCommandments\Ast\Codebase;
@@ -58,8 +60,7 @@ final class DataClassShape
      */
     private function __construct(private readonly array $classes) {}
 
-    /** Per-codebase memo — the class map is built ONCE per run, not once per `new` candidate. */
-    private static ?\WeakMap $memo = null;
+    use MemoisedPerCodebase;
 
     /**
      * The class declaration for $fqcn if it lives in the scanned codebase, else null —
@@ -111,20 +112,7 @@ final class DataClassShape
         return $class->extends instanceof Name && $this->remapsInputNames($class->extends->toString(), $seen);
     }
 
-    /**
-     * The class map for a codebase — memoised, so building it (an AST walk over every file) happens
-     * once per run rather than once per `new` candidate the detector checks. Keyed by the codebase
-     * object via a {@see \WeakMap}, so the entry is released with the codebase and no object-id reuse
-     * can serve a stale map.
-     */
-    public static function forCodebase(Codebase $codebase): self
-    {
-        self::$memo ??= new \WeakMap();
-
-        return self::$memo[$codebase] ??= self::build($codebase);
-    }
-
-    private static function build(Codebase $codebase): self
+    protected static function build(Codebase $codebase): static
     {
         $classes = [];
         $finder = new NodeFinder;
@@ -216,7 +204,7 @@ final class DataClassShape
     {
         foreach ($groups as $group) {
             foreach ($group->attrs as $attribute) {
-                if (in_array(self::shortName($attribute->name->toString()), $names, true)) {
+                if (in_array(ClassName::short($attribute->name->toString()), $names, true)) {
                     return true;
                 }
             }
@@ -250,7 +238,7 @@ final class DataClassShape
         }
 
         $name = $type->toString();
-        $short = self::shortName($name);
+        $short = ClassName::short($name);
 
         return str_contains($short, 'DataCollection')
             || $short === 'Optional'
@@ -318,7 +306,7 @@ final class DataClassShape
     {
         foreach ($field->attributeGroups as $group) {
             foreach ($group->attrs as $attribute) {
-                if (self::shortName($attribute->name->toString()) !== 'DataCollectionOf') {
+                if (ClassName::short($attribute->name->toString()) !== 'DataCollectionOf') {
                     continue;
                 }
 
@@ -345,12 +333,5 @@ final class DataClassShape
         }
 
         return $value instanceof String_ ? $value->value : null;
-    }
-
-    private static function shortName(string $fqcn): string
-    {
-        $parts = explode('\\', $fqcn);
-
-        return end($parts);
     }
 }

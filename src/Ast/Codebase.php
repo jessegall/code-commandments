@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
 use PhpParser\Node;
@@ -351,7 +353,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
             $resolved = $node->name->toString();
 
-            return $resolved === $want || self::shortName($resolved) === $want;
+            return $resolved === $want || ClassName::short($resolved) === $want;
         }, [Attribute::class]);
     }
 
@@ -776,13 +778,6 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         }
 
         return false;
-    }
-
-    private static function shortName(string $fqcn): string
-    {
-        $pos = strrpos($fqcn, '\\');
-
-        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     private static function parse(string $code, string $path): ParsedFile

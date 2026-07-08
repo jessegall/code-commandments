@@ -10,6 +10,8 @@ namespace JesseGall\CodeCommandments\Vue\Ts\Node;
  */
 final class CompositeType extends TypeNode
 {
+    use AggregatesMemberReferences;
+
     /**
      * @param  '|'|'&'  $operator
      * @param  list<TypeNode>  $members
@@ -22,16 +24,5 @@ final class CompositeType extends TypeNode
     public function render(): string
     {
         return implode(" {$this->operator} ", array_map(static fn (TypeNode $m): string => $m->render(), $this->members));
-    }
-
-    public function references(): array
-    {
-        $names = [];
-
-        foreach ($this->members as $member) {
-            $names = [...$names, ...$member->references()];
-        }
-
-        return $names;
     }
 }

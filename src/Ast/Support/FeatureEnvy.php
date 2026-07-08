@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\ArrayDimFetch;
@@ -43,6 +44,8 @@ use PhpParser\NodeFinder;
  */
 final class FeatureEnvy
 {
+    use DetectsConstruction;
+
     /**
      * PHP collection built-ins that QUERY a collection, mapped to the argument
      * index that holds it. Recognising the LANGUAGE's array API by argument
@@ -392,7 +395,7 @@ final class FeatureEnvy
         $types = [];
 
         foreach ($method->params as $param) {
-            $type = self::typeName($param->type);
+            $type = TypeName::simpleName($param->type);
 
             if ($type !== null && $param->var instanceof Variable && is_string($param->var->name)) {
                 $types[$param->var->name] = $type;
@@ -424,22 +427,6 @@ final class FeatureEnvy
      * Does the body build an object (`new T`, or a `T::from(...)` named ctor)? Such
      * a method maps its input into a new value — a factory/mapper, not envy.
      */
-    private function constructs(ClassMethod $method): bool
-    {
-        $finder = new NodeFinder;
-
-        if ($finder->findFirstInstanceOf($method->stmts, New_::class) !== null) {
-            return true;
-        }
-
-        foreach ($finder->findInstanceOf($method->stmts, StaticCall::class) as $call) {
-            if ($call->class instanceof Name) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /**
      * Param name => owner FQCN, for params typed as an owned class other than the host.
@@ -455,7 +442,7 @@ final class FeatureEnvy
                 continue;
             }
 
-            $type = self::typeName($param->type);
+            $type = TypeName::simpleName($param->type);
 
             if ($type !== null && $type !== $host && isset($this->ownedClasses[$type])) {
                 $types[$param->var->name] = $type;
@@ -508,16 +495,4 @@ final class FeatureEnvy
         return $names;
     }
 
-    private static function typeName(?Node $type): ?string
-    {
-        if ($type instanceof NullableType) {
-            $type = $type->type;
-        }
-
-        return match (true) {
-            $type instanceof Name => $type->toString(),
-            $type instanceof Identifier => $type->toString(),
-            default => null,
-        };
-    }
 }

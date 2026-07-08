@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 use PhpParser\Node;
 use PhpParser\Node\AttributeGroup;
 
@@ -35,7 +37,7 @@ final class ClassField
     public function hasAttribute(string ...$shortNames): bool
     {
         foreach ($this->attributeNames() as $name) {
-            if (in_array(self::shortName($name), $shortNames, true)) {
+            if (in_array(ClassName::short($name), $shortNames, true)) {
                 return true;
             }
         }
@@ -59,12 +61,5 @@ final class ClassField
         }
 
         return $names;
-    }
-
-    private static function shortName(string $fqcn): string
-    {
-        $parts = explode('\\', $fqcn);
-
-        return end($parts);
     }
 }

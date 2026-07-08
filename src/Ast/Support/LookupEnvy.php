@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\MethodCall;
@@ -29,6 +30,8 @@ use PhpParser\NodeFinder;
  */
 final class LookupEnvy
 {
+    use DetectsConstruction;
+
     private const int MAX_DEPTH = 10;
 
     private const array FACT_TYPES = ['bool', 'int', 'float', 'string', 'array', 'iterable'];
@@ -141,7 +144,7 @@ final class LookupEnvy
         $found = null;
 
         foreach ($method->params as $param) {
-            $type = self::typeName($param->type);
+            $type = TypeName::simpleName($param->type);
 
             if ($type === null || $type === $host || ! isset($this->ownedClasses[$type]) || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
                 continue;
@@ -159,7 +162,7 @@ final class LookupEnvy
 
     private function returnsFact(ClassMethod $method): bool
     {
-        $type = self::typeName($method->returnType);
+        $type = TypeName::simpleName($method->returnType);
 
         return $type !== null && in_array(strtolower($type), self::FACT_TYPES, true);
     }
@@ -189,22 +192,6 @@ final class LookupEnvy
         return $used;
     }
 
-    private function constructs(ClassMethod $method): bool
-    {
-        $finder = new NodeFinder;
-
-        if ($finder->findFirstInstanceOf($method->stmts, New_::class) !== null) {
-            return true;
-        }
-
-        foreach ($finder->findInstanceOf($method->stmts, StaticCall::class) as $call) {
-            if ($call->class instanceof Name) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /**
      * @param  array<Node\Arg|Node\VariadicPlaceholder>  $args
@@ -260,16 +247,4 @@ final class LookupEnvy
             || $node instanceof NullsafeMethodCall;
     }
 
-    private static function typeName(?Node $type): ?string
-    {
-        if ($type instanceof NullableType) {
-            $type = $type->type;
-        }
-
-        return match (true) {
-            $type instanceof Name => $type->toString(),
-            $type instanceof Identifier => $type->toString(),
-            default => null,
-        };
-    }
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node\Stmt\If_;
 
@@ -15,16 +14,9 @@ use PhpParser\Node\Stmt\If_;
  * Keep the guard verbatim and HOIST the `else` body out after it, dedented one level — the
  * exact `else`-drop the redundant-else skill teaches.
  */
-final class RedundantElseScribe extends RepentScribe
+final class RedundantElseScribe extends SingleReplacementScribe
 {
-    public function rewrite(array $findings): array
-    {
-        return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->unwrap($match))
-            ->rewrites();
-    }
-
-    private function unwrap(NodeMatch $match): ?string
+    protected function replacement(NodeMatch $match): ?string
     {
         $if = $match->node;
 

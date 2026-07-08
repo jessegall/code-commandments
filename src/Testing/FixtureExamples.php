@@ -32,8 +32,8 @@ final class FixtureExamples
 
         foreach ($detectors as $detector) {
             $keys = [$detector->sin()::class, $detector::class, $detector->sin()->slug(), $detector->sin()->name()];
-            $bad = self::forKeys($sinful, $keys);
-            $good = self::forKeys($righteous, $keys);
+            $bad = ExampleText::forKeys($sinful, $keys);
+            $good = ExampleText::forKeys($righteous, $keys);
 
             $examples[$detector::class] = self::pair($bad, $good);
         }
@@ -69,16 +69,6 @@ final class FixtureExamples
      * @param  list<string>  $keys
      * @return list<array{class: string, source: string}>
      */
-    private static function forKeys(array $sources, array $keys): array
-    {
-        foreach ($keys as $key) {
-            if (! empty($sources[$key])) {
-                return $sources[$key];
-            }
-        }
-
-        return [];
-    }
 
     /**
      * Every marked declaration's class + source, grouped by the detector identifier the
@@ -117,7 +107,7 @@ final class FixtureExamples
             static fn (string $line): bool => ! str_contains($line, '#[Sinful(') && ! str_contains($line, '#[Righteous('),
         );
 
-        return self::dedent(array_values($kept));
+        return ExampleText::dedent(array_values($kept));
     }
 
     /**
@@ -126,20 +116,6 @@ final class FixtureExamples
      *
      * @param  list<string>  $lines
      */
-    private static function dedent(array $lines): string
-    {
-        $min = PHP_INT_MAX;
-
-        foreach ($lines as $line) {
-            if (trim($line) !== '') {
-                $min = min($min, strlen($line) - strlen(ltrim($line)));
-            }
-        }
-
-        $min = $min === PHP_INT_MAX ? 0 : $min;
-
-        return implode("\n", array_map(static fn (string $line): string => substr($line, $min), $lines));
-    }
 
     private static function detector(NodeMatch $match): ?string
     {
