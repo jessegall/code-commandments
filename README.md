@@ -744,7 +744,8 @@ list:
 | `Boundary` (`boundary`) | A framework **entry point**: an HTTP/RPC request, where raw input crosses into your domain. | **feature-envy** (don't move behaviour onto a request) · **pass-the-object** (a method taking one may unpack input from it). |
 | `ContractMethod` (`contract-method`) | A **method** a subclass must declare, whose shape the framework dictates (`rules`, `schema`, `casts`). | **near-duplicate** (the shared skeleton is inherent) · **array-return-bag** (the mandated array isn't a bag). |
 | `ArrayReturning` (`array-returning`) | A class whose whole job is handing the framework arrays (a `FormRequest`, an MCP tool). | **array-return-bag** (its array returns are contractual). |
-| `NoContainer` (`no-container`) | A type the framework instantiates itself, no DI (an Eloquent cast). | **array-bag** (a loose array parameter is the framework's calling convention). |
+| `NoContainer` (`no-container`) | A type the framework instantiates itself, no DI (an Eloquent cast, a Spatie `DataPipe`/`Cast`). | **array-bag** (a loose array parameter is the framework's calling convention) · **container-reach** (with no DI, per-call `app()` is its only way to obtain collaborators). |
+| `CompositionRoot` (`composition-root`) | A service provider's `register()`/`boot()` — the composition root, where `config()` is wired into the typed objects it binds. | **config-read** (a provider can't inject its own config; reading it here is the wiring's job). |
 
 Register in `register()`: `classes()` for whole classes, `on(class, ...methods)`
 for specific methods, `methods()` for a name ignored everywhere:

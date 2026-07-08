@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Packages\LaravelPackage;
 use JesseGall\CodeCommandments\Packages\Package;
 use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;
 use JesseGall\CodeCommandments\Packages\Tags\Boundary;
+use JesseGall\CodeCommandments\Packages\Tags\CompositionRoot;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 use PHPUnit\Framework\TestCase;
@@ -47,6 +48,40 @@ final class ExemptionsTest extends TestCase
     {
         $this->assertContainsOnlyInstancesOf(Package::class, Catalog::all());
         $this->assertNotEmpty(array_filter(Catalog::all(), static fn (Package $p): bool => $p instanceof LaravelPackage));
+    }
+
+    public function test_spatie_data_pipes_and_casts_are_no_container(): void
+    {
+        $codebase = Codebase::fromString(<<<'PHP'
+            <?php
+            namespace Spatie\LaravelData\DataPipes { interface DataPipe {} }
+            namespace Spatie\LaravelData\Casts { interface Cast {} }
+            namespace App {
+                class HydratePipe implements \Spatie\LaravelData\DataPipes\DataPipe {}
+                class MoneyCast implements \Spatie\LaravelData\Casts\Cast {}
+                class Plain {}
+            }
+            PHP);
+
+        // A DataPipe/Cast is framework-built with no DI — exempt from array-bag AND container-reach.
+        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\HydratePipe'));
+        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\MoneyCast'));
+        $this->assertFalse(Exemptions::has(NoContainer::class, $codebase, 'App\\Plain'));
+    }
+
+    public function test_service_providers_are_composition_roots(): void
+    {
+        $codebase = Codebase::fromString(<<<'PHP'
+            <?php
+            namespace Illuminate\Support { class ServiceProvider {} }
+            namespace App {
+                class AppServiceProvider extends \Illuminate\Support\ServiceProvider {}
+                class Plain {}
+            }
+            PHP);
+
+        $this->assertTrue(Exemptions::has(CompositionRoot::class, $codebase, 'App\\AppServiceProvider'));
+        $this->assertFalse(Exemptions::has(CompositionRoot::class, $codebase, 'App\\Plain'));
     }
 
     public function test_a_clause_exempts_whole_classes_and_specific_methods_and_global_methods(): void

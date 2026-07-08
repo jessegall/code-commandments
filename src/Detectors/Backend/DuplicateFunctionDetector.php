@@ -14,8 +14,9 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * down to a formatting-blind structural hash (spacing, newlines, and comments are
  * ignored; only real code differences count). Copy-paste is one decision living in
  * many places: hoist it to a shared method, trait, or base and call it once.
- * Trivial declarations (tiny getters, empty stubs) are below the size floor so
- * incidental likeness isn't flagged. Points at fix-at-the-source.
+ * Trivial declarations (tiny getters, empty stubs) are below the size floor, and a
+ * resolve-or-throw guard accessor (a language idiom, not shared logic) is excluded,
+ * so incidental likeness across independent classes isn't flagged. Points at fix-at-the-source.
  */
 final class DuplicateFunctionDetector implements Detector
 {
@@ -35,7 +36,7 @@ final class DuplicateFunctionDetector implements Detector
         $byHash = [];
 
         foreach ($codebase->whereMethodDeclaration()->get() as $match) {
-            if ($match->bodyNodeCount() >= self::MIN_BODY_NODES) {
+            if ($match->bodyNodeCount() >= self::MIN_BODY_NODES && ! $match->isGuardedAccessor()) {
                 $byHash[$match->structuralHash()][] = $match;
             }
         }

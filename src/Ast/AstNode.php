@@ -1088,6 +1088,52 @@ class AstNode
     }
 
     /**
+     * Is this a resolve-or-throw ACCESSOR — one or more null-guard `if (…) { throw … }` statements followed
+     * by a single `return $this->prop` (or a local)? That is a language IDIOM for exposing a guarded optional,
+     * not copy-pasted logic: two of them in independent classes are incidentally alike (they differ only in
+     * the exception thrown), and hoisting them would COUPLE the classes. Excluded from duplicate detection
+     * for the same reason as {@see returnsArrayLiteralOnly} — a shared shape across unrelated types isn't a
+     * near-duplicate smell.
+     */
+    public function isGuardedAccessor(): bool
+    {
+        if (! $this->node instanceof ClassMethod) {
+            return false;
+        }
+
+        $stmts = $this->node->stmts ?? [];
+        $last = $stmts === [] ? null : end($stmts);
+
+        if (! $last instanceof Return_ || ! ($last->expr instanceof PropertyFetch || $last->expr instanceof Variable)) {
+            return false;
+        }
+
+        foreach (array_slice($stmts, 0, count($stmts) - 1) as $guard) {
+            if (! self::isThrowingGuard($guard)) {
+                return false;
+            }
+        }
+
+        return count($stmts) >= 2; // at least one guard + the return
+    }
+
+    /** An `if (…) { throw … }` with no else — a pure bail-out guard. */
+    private static function isThrowingGuard(Node $stmt): bool
+    {
+        if (! $stmt instanceof If_ || $stmt->else !== null || $stmt->elseifs !== [] || $stmt->stmts === []) {
+            return false;
+        }
+
+        foreach ($stmt->stmts as $inner) {
+            if (! ($inner instanceof Expression && $inner->expr instanceof Throw_)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * The single array literal this member's body EVALUATES TO, or null. Covers a computed slot's getter
      * (`get => [ … ]`, `get { return [ … ]; }`) and a function/method that is nothing but `return [ … ];`.
      */
