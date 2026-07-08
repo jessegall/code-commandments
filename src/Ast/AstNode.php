@@ -1691,6 +1691,109 @@ class AstNode
     }
 
     /**
+     * A canonical fingerprint of an `&&` guard that ignores BOTH conjunct ORDER and local-variable ALIASING —
+     * `$obj->some && $other->some` fingerprints the same as `$other->some && $obj->some` and as
+     * `$objSome && $otherSome` (with `$objSome = $obj->some`). So the same check, however spelled or ordered,
+     * buckets together. Composes {@see StructuralHash::canonical}; empty for a non-`&&` node.
+     */
+    public function canonicalGuardHash(): string
+    {
+        if (! $this->node instanceof BooleanAnd) {
+            return '';
+        }
+
+        $aliases = $this->localAliases();
+        $hashes = array_map(static fn (Node $conjunct): string => StructuralHash::canonical($conjunct, $aliases), self::flattenConjuncts($this->node));
+        sort($hashes);
+
+        return sha1(implode('|', $hashes));
+    }
+
+    /**
+     * Is this the OUTERMOST `&&` guard that is SUBSTANTIVE and not pure-type — ≥2 conjuncts, ≥1 of them NOT a
+     * bare `instanceof` (a pure-instanceof chain is {@see isTypeNarrowingGuard}'s domain), and ≥2 "substance
+     * units" (a property/method reach — counted THROUGH aliases, so `$objSome` counts as `$obj->some`). This
+     * keeps trivial `$a && $b` out. A recurring one wants a named predicate.
+     */
+    public function isSubstantiveGuard(): bool
+    {
+        if (! $this->node instanceof BooleanAnd || $this->node->getAttribute('parent') instanceof BooleanAnd) {
+            return false;
+        }
+
+        $conjuncts = self::flattenConjuncts($this->node);
+
+        if (count($conjuncts) < 2 || self::countMatching($conjuncts, static fn (Node $c): bool => ! $c instanceof Instanceof_) === 0) {
+            return false;
+        }
+
+        $aliases = $this->localAliases();
+        $substance = 0;
+
+        foreach ($conjuncts as $conjunct) {
+            $target = $conjunct instanceof Variable && is_string($conjunct->name) && isset($aliases[$conjunct->name])
+                ? $aliases[$conjunct->name]
+                : $conjunct;
+            $substance += self::reachCount($target);
+        }
+
+        return $substance >= 2;
+    }
+
+    /**
+     * Single-assignment locals of the enclosing function — name → the expression assigned — the aliases a
+     * guard's fingerprint sees through. Only-once-assigned so a reassigned local never resolves ambiguously.
+     *
+     * @return array<string, Node>
+     */
+    private function localAliases(): array
+    {
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return [];
+        }
+
+        $counts = [];
+        $rhs = [];
+
+        foreach ((new NodeFinder)->findInstanceOf($function, Assign::class) as $assign) {
+            if ($assign->var instanceof Variable && is_string($assign->var->name)) {
+                $counts[$assign->var->name] = ($counts[$assign->var->name] ?? 0) + 1;
+                $rhs[$assign->var->name] = $assign->expr;
+            }
+        }
+
+        return array_filter($rhs, static fn (Node $expr, string $name): bool => $counts[$name] === 1, ARRAY_FILTER_USE_BOTH);
+    }
+
+    /**
+     * @return list<Node>
+     */
+    private static function flattenConjuncts(Node $node): array
+    {
+        return $node instanceof BooleanAnd
+            ? [...self::flattenConjuncts($node->left), ...self::flattenConjuncts($node->right)]
+            : [$node];
+    }
+
+    /** How many property/method reaches a node's subtree contains — its "substance". */
+    private static function reachCount(Node $node): int
+    {
+        return count((new NodeFinder)->find($node, static fn (Node $n): bool =>
+            $n instanceof PropertyFetch || $n instanceof MethodCall || $n instanceof StaticCall || $n instanceof Instanceof_));
+    }
+
+    /**
+     * @param  list<Node>  $nodes
+     * @param  callable(Node): bool  $test
+     */
+    private static function countMatching(array $nodes, callable $test): int
+    {
+        return count(array_filter($nodes, $test));
+    }
+
+    /**
      * Is this a CONDITIONAL ARRAY-ELEMENT spread — `...($x !== null ? ['k' => $x] : [])` inside an array
      * literal, or `array_merge($base, $cond ? ['k' => $v] : [])`? The tell is a ternary whose ONE branch is a
      * non-empty array literal and the OTHER an empty `[]` ("include these keys, else nothing"), used as a

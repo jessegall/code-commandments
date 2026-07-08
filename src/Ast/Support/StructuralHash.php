@@ -28,8 +28,29 @@ final class StructuralHash
         return sha1(self::serialize($node, true));
     }
 
-    private static function serialize(Node $node, bool $normalize): string
+    /**
+     * A fingerprint that INLINES local aliases — a variable named in $aliases serializes AS the expression it
+     * was assigned — so `$objSome` (from `$objSome = $obj->some`) hashes exactly like `$obj->some`. Two guards
+     * that check the same thing, one via locals and one inline, fingerprint the same. Cycle-guarded.
+     *
+     * @param  array<string, Node>  $aliases  local variable name → the expression assigned to it
+     */
+    public static function canonical(Node $node, array $aliases): string
     {
+        return sha1(self::serialize($node, false, $aliases));
+    }
+
+    /**
+     * @param  array<string, Node>  $aliases
+     * @param  array<string, true>  $inlining  aliases currently being expanded (cycle guard)
+     */
+    private static function serialize(Node $node, bool $normalize, array $aliases = [], array $inlining = []): string
+    {
+        if ($aliases !== [] && $node instanceof Variable && is_string($node->name)
+            && isset($aliases[$node->name]) && ! isset($inlining[$node->name])) {
+            return self::serialize($aliases[$node->name], $normalize, $aliases, $inlining + [$node->name => true]);
+        }
+
         if ($normalize) {
             $blanked = match (true) {
                 $node instanceof Variable && is_string($node->name) => 'Variable(name:s:$)',
@@ -54,20 +75,24 @@ final class StructuralHash
                 continue;
             }
 
-            $parts[] = $name . ':' . self::value($node->$name, $normalize);
+            $parts[] = $name . ':' . self::value($node->$name, $normalize, $aliases, $inlining);
         }
 
         return '(' . implode(',', $parts) . ')';
     }
 
-    private static function value(mixed $value, bool $normalize): string
+    /**
+     * @param  array<string, Node>  $aliases
+     * @param  array<string, true>  $inlining
+     */
+    private static function value(mixed $value, bool $normalize, array $aliases = [], array $inlining = []): string
     {
         if ($value instanceof Node) {
-            return self::serialize($value, $normalize);
+            return self::serialize($value, $normalize, $aliases, $inlining);
         }
 
         if (is_array($value)) {
-            return '[' . implode(',', array_map(static fn (mixed $item): string => self::value($item, $normalize), $value)) . ']';
+            return '[' . implode(',', array_map(static fn (mixed $item): string => self::value($item, $normalize, $aliases, $inlining), $value)) . ']';
         }
 
         return match (true) {

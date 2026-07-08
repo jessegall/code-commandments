@@ -56,12 +56,36 @@ change; the operation you kept repeating becomes first-class.
 
 ## Rules
 
+- Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
+  _Extract the repeated condition into a named boolean method and call THAT at each site._
 - Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
   _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
 - Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.
   _Extract the repeated `instanceof` chain into a named boolean method and call THAT at each site._
 
 ## Bad → good
+
+```php
+// Bad
+public function promote(array $items): array
+{
+    $ready = [];
+
+    foreach ($items as $item) {
+        if ($item->published && $item->approved) {
+            $ready[] = $item;
+        }
+    }
+
+    return $ready;
+}
+
+// Good
+public function shippable($order, $address): bool
+{
+    return $order->paid && $address->confirmed;
+}
+```
 
 ```php
 // Bad
@@ -95,10 +119,12 @@ public function accepts($n): bool
 
 ## When it fires
 
+- The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name — `RepeatedGuardDetector`
 - The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type — `RepeatedNamedCallDetector`
 - The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named — `RepeatedTypeGuardDetector`
 
 ## Checklist
 
+- [ ] Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
 - [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
 - [ ] Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.

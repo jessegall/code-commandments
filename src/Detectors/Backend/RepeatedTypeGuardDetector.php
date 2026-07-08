@@ -28,7 +28,7 @@ final class RepeatedTypeGuardDetector implements Detector
         $byFingerprint = [];
 
         foreach ($codebase->where(static fn (AstNode $node): bool => $node->isTypeNarrowingGuard())->get() as $match) {
-            $byFingerprint[$match->exactHash()][] = $match;
+            $byFingerprint[$match->canonicalGuardHash()][] = $match;
         }
 
         $findings = [];
