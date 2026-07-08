@@ -227,7 +227,9 @@ field `T|Optional` and give this object honest, concrete leaves.
   per-property constraints. Use a static `rules()` only for **conditional / cross-field** logic — and
   return an **array** (`['field' => ['required', 'email']]`), never a pipe-string (`'required|email'`).
   Remember plain `from($array)` does **not** validate; validation runs on request-sourced creation.
-- **`#[TypeScript]`** on any shape the frontend consumes, so the TS type stays in sync.
+- **`#[TypeScript]`** on any shape the frontend consumes, so the TS type stays in sync. And on every
+  nested **`Data`** it reaches on the wire — an untagged nested Data generates as `undefined` (a silent hole
+  in the type). A nested **enum** needs no tag: the enum collector auto-generates it either way.
 
 ### Don't reach for (not our style)
 
@@ -250,6 +252,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
   _`#[DataCollectionOf(X::class)]` + `X::collect($rows)`._
 - Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
   _Type the property as the value object and add `#[WithCast(SomeCast::class)]` (or make the value object `Castable`) so the `simple → complex` mapping lives in one place._
+- Every nested `Data` reachable on the wire from a `#[TypeScript]` class must ALSO be `#[TypeScript]` (or the property must declare its shape with `#[LiteralTypeScriptType]`), or it generates as `undefined`. Enums need no tag — they auto-generate.
+  _Add `#[TypeScript]` to the nested `Data` class the property points at._
 - Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
   _`X::from(...)` (or a `fromY()` factory)._
 - Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
@@ -482,6 +486,53 @@ final class CleanInboundData extends \Spatie\LaravelData\Data
 
 ```php
 // Bad
+#[TypeScript]
+final class WirePanel extends Data
+{
+    /** @param array<string, string> $tokens */
+    public function __construct(
+        public readonly PanelHeader|null $header = null,
+        public readonly string $variant = 'plain',
+        public readonly bool $bordered = true,
+        public readonly array $tokens = [],
+    ) {}
+
+    public function classAttribute(): string
+    {
+        $classes = ['insp-panel', "insp-{$this->variant}"];
+
+        if ($this->bordered) {
+            $classes[] = 'insp-bordered';
+        }
+
+        return implode(' ', $classes);
+    }
+
+    public function styleVars(): string
+    {
+        $pairs = [];
+
+        foreach ($this->tokens as $name => $value) {
+            $pairs[] = "--{$name}: {$value}";
+        }
+
+        return implode('; ', $pairs);
+    }
+}
+
+// Good
+#[TypeScript]
+final class EnumSlotRighteous extends Data
+{
+    public function __construct(
+        public readonly string $subject,
+        public readonly Priority $priority,
+    ) {}
+}
+```
+
+```php
+// Bad
 public function build(Customer $customer): CustomerData
 {
     return new CustomerData(
@@ -594,6 +645,7 @@ final class WireBanner extends Data
 - A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it — `HookMissingComputedDetector`
 - Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `ManualHydrationLoopDetector`
 - A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once — `ManualInputCastDetector`
+- A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it) — `NestedTypeMissingTypeScriptDetector`
 - `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
 - Data class not `final` / props not `readonly` promoted — `NonFinalDataDetector`
 - A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `NullableWireObjectDetector`
@@ -607,6 +659,7 @@ final class WireBanner extends Data
 - [ ] Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.
 - [ ] Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
 - [ ] Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
+- [ ] Every nested `Data` reachable on the wire from a `#[TypeScript]` class must ALSO be `#[TypeScript]` (or the property must declare its shape with `#[LiteralTypeScriptType]`), or it generates as `undefined`. Enums need no tag — they auto-generate.
 - [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
 - [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
 - [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.

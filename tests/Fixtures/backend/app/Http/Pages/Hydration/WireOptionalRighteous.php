@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages\Hydration;
 
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NestedTypeMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullableWireObject;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use Spatie\LaravelData\Data;
@@ -11,9 +12,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 /*
  * Righteous twin for NullableWireObject — the nested object already uses `| Optional` (omitted from the
  * wire when absent), and the nullable field that remains is a SCALAR (an explicit null can be meaningful).
- * Must NOT flag.
+ * Also righteous for NestedTypeMissingTypeScript: its nested `BannerIcon` carries `#[TypeScript]`. Must NOT flag.
  */
 #[Righteous(NullableWireObject::class)]
+#[Righteous(NestedTypeMissingTypeScript::class)]
 #[TypeScript]
 final class WireBanner extends Data
 {
@@ -24,6 +26,7 @@ final class WireBanner extends Data
     ) {}
 }
 
+#[TypeScript]
 final class BannerIcon extends Data
 {
     public function __construct(public readonly string $name = '') {}

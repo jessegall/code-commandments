@@ -260,7 +260,9 @@ field `T|Optional` and give this object honest, concrete leaves.
   per-property constraints. Use a static `rules()` only for **conditional / cross-field** logic — and
   return an **array** (`['field' => ['required', 'email']]`), never a pipe-string (`'required|email'`).
   Remember plain `from($array)` does **not** validate; validation runs on request-sourced creation.
-- **`#[TypeScript]`** on any shape the frontend consumes, so the TS type stays in sync.
+- **`#[TypeScript]`** on any shape the frontend consumes, so the TS type stays in sync. And on every
+  nested **`Data`** it reaches on the wire — an untagged nested Data generates as `undefined` (a silent hole
+  in the type). A nested **enum** needs no tag: the enum collector auto-generates it either way.
 
 ### Don't reach for (not our style)
 

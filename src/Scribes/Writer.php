@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Scribes;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use PhpParser\Node;
 use PhpParser\Node\Param;
-use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Property;
@@ -52,7 +51,7 @@ final class Writer
      * and ensure the attribute's `use` import. Composes {@see Span::skipWhitespace}/{@see Span::indentAt}; no
      * offset math here.
      */
-    public function stampAttribute(Param|Property|Class_ $node, string $attribute, ?string $importFqcn = null): void
+    public function stampAttribute(Param|Property|ClassLike $node, string $attribute, ?string $importFqcn = null): void
     {
         $insertAt = $node->attrGroups === []
             ? $node->getStartFilePos()

@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages\Hydration;
 
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NestedTypeMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullableWireObject;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
@@ -12,6 +13,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * typed `| null`; a label/format shape distinct from the trail, gauge, and panel scenarios.
  */
 #[Sinful(NullableWireObject::class)]
+#[Sinful(NestedTypeMissingTypeScript::class)]
 #[TypeScript]
 final class WireMetric extends Data
 {

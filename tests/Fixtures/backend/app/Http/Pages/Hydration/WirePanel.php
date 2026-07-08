@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Pages\Hydration;
 
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NestedTypeMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullableWireObject;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
@@ -12,6 +13,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * rendered through CSS-class composition unlike the price/weight scenarios.
  */
 #[Sinful(NullableWireObject::class)]
+#[Sinful(NestedTypeMissingTypeScript::class)]
 #[TypeScript]
 final class WirePanel extends Data
 {

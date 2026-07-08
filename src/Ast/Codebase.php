@@ -21,6 +21,7 @@ use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -61,6 +62,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
     /** @var array<string, Class_>|null  class FQCN => declaration node */
     private ?array $classNodeMap = null;
+
+    /** @var array<string, NodeMatch>|null  ANY class-like (class/enum/interface/trait) FQCN => its match */
+    private ?array $declarationMap = null;
 
     /** @var list<string>|null  every enum FQCN in the codebase */
     private ?array $enumNames = null;
@@ -529,6 +533,45 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         }
 
         return new AstNode($this->classNodeMap()[ltrim($fqcn, '\\')] ?? null);
+    }
+
+    /**
+     * The declaration of ANY class-like $fqcn — class, ENUM, interface or trait — as a {@see NodeMatch} that
+     * knows its file, or null when it lives outside the scanned tree. Unlike {@see classNamed} (classes only,
+     * for container-type resolution), this resolves an enum too and carries the file, so a caller can read or
+     * REWRITE the declaration (stamp an attribute on the nested type it points at).
+     */
+    public function declarationMatch(?string $fqcn): ?NodeMatch
+    {
+        if ($fqcn === null) {
+            return null;
+        }
+
+        return $this->declarationMap()[ltrim($fqcn, '\\')] ?? null;
+    }
+
+    /**
+     * @return array<string, NodeMatch>  class-like FQCN => its match (node + file)
+     */
+    private function declarationMap(): array
+    {
+        if ($this->declarationMap !== null) {
+            return $this->declarationMap;
+        }
+
+        $map = [];
+        $finder = new NodeFinder;
+
+        foreach ($this->files as $file) {
+            foreach ($finder->findInstanceOf($file->ast, ClassLike::class) as $declaration) {
+                /** @var ClassLike $declaration */
+                if (($declaration->namespacedName ?? null) !== null) {
+                    $map[$declaration->namespacedName->toString()] = $this->wrap($declaration, $file);
+                }
+            }
+        }
+
+        return $this->declarationMap = $map;
     }
 
     /**
