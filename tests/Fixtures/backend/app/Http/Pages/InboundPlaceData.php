@@ -5,6 +5,7 @@ namespace Shop\Http\Pages;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Attributes\Computed;
 
 /**
  * `$spot` is hand-built (`new GeoPoint(...)`) in the source assembled a statement before every `::from()`
@@ -29,6 +30,7 @@ final class InboundPlaceData extends Data
         return $this->label . ' covers ' . $this->areaSquareKm() . ' sqkm';
     }
 
+    #[Computed]
     public bool $isPinpoint {
         get => $this->radiusKm === 0.0;
     }

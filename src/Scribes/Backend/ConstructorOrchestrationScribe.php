@@ -11,9 +11,7 @@ use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Stmt\ClassLike;
-use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Property;
-use PhpParser\Node\Stmt\Use_;
 
 /**
  * Repents page-object slot fills into computed property hooks: `$this->x = expr;` becomes a virtual `get` property.
@@ -23,8 +21,7 @@ use PhpParser\Node\Stmt\Use_;
  */
 final class ConstructorOrchestrationScribe extends RepentScribe
 {
-    /** The Spatie attribute that marks a get-only virtual property as computed (not a hydration input). */
-    private const string COMPUTED = 'Spatie\\LaravelData\\Attributes\\Computed';
+    use ManagesComputedAttribute;
 
     public function rewrite(array $findings): array
     {
@@ -96,56 +93,6 @@ final class ConstructorOrchestrationScribe extends RepentScribe
 
         // 4. Ensure `use Spatie\LaravelData\Attributes\Computed;` so the stamp resolves.
         $this->ensureComputedImport($draft, $match, $class);
-    }
-
-    /**
-     * Add `use …\Computed;` when the file doesn't already import it — after the last existing `use`, else
-     * after the `namespace …;`. A global-namespace file (no namespace) is left alone; the stamp then relies
-     * on the class being in a context that already sees the attribute.
-     */
-    private function ensureComputedImport(Draft $draft, NodeMatch $match, ClassLike $class): void
-    {
-        $namespace = $class->getAttribute('parent');
-
-        if (! $namespace instanceof Namespace_) {
-            return;
-        }
-
-        $uses = array_values(array_filter($namespace->stmts, static fn (Node $stmt): bool => $stmt instanceof Use_));
-
-        foreach ($uses as $use) {
-            foreach ($use->uses as $used) {
-                if (ltrim($used->name->toString(), '\\') === self::COMPUTED) {
-                    return; // already imported
-                }
-            }
-        }
-
-        $source = $match->file->source;
-
-        if ($uses !== []) {
-            $offset = end($uses)->getEndFilePos() + 1;
-            $insert = "\nuse " . self::COMPUTED . ';';
-        } elseif ($namespace->name !== null) {
-            $semicolon = strpos($source, ';', $namespace->name->getEndFilePos());
-            $offset = $semicolon === false ? null : $semicolon + 1;
-            $insert = "\n\nuse " . self::COMPUTED . ';';
-        } else {
-            return;
-        }
-
-        if ($offset !== null) {
-            $draft->edit(new Span($match->file->path, $source, $offset, $offset), $insert);
-        }
-    }
-
-    /** The leading whitespace of the line $pos sits on — the indentation to align an inserted line to. */
-    private function indentAt(string $source, int $pos): string
-    {
-        $newline = strrpos(substr($source, 0, $pos), "\n");
-        $lineStart = $newline === false ? 0 : $newline + 1;
-
-        return substr($source, $lineStart, $pos - $lineStart);
     }
 
     private function declaredProperty(ClassLike $class, string $name): ?Property

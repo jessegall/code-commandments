@@ -229,6 +229,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
 - Don't make every field of a Data object `Optional` (the all-nullable smell in another skin). Almost always it's the WHOLE object that is present-or-absent — mark the enclosing field `Type|Optional` at its use site and give this object honest, concrete leaves, so if it exists it's a valid whole.
   _Give each leaf a concrete default (`int $columns = 1`) and move the optionality up to where this type is used: `public readonly Grid|Optional $grid = new Optional();`._
 - A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
+- Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.
+  _Add `#[Computed]` above the property: `#[Computed] public array $docks { get => $this->dockSet->all(); }`._
 - Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
   _`#[DataCollectionOf(X::class)]` + `X::collect($rows)`._
 - Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
@@ -350,6 +352,39 @@ final class VoucherData extends Data
 
 ```php
 // Bad
+final class DockShell extends Data
+{
+    public array $docks { get => $this->dockSet->all(); }
+
+    public function __construct(
+        public readonly DockSet $dockSet,
+        public readonly string $side,
+    ) {}
+
+    public function isEmpty(): bool
+    {
+        return $this->dockSet->all() === [];
+    }
+
+    public function onSide(string $side): bool
+    {
+        return $this->side === $side;
+    }
+}
+
+// Good
+final class TagCloud extends Data
+{
+    #[Computed]
+    public array $tags { get => array_keys($this->counts); }
+
+    /** @param array<string, int> $counts */
+    public function __construct(public readonly array $counts) {}
+}
+```
+
+```php
+// Bad
 public function importBatch(array $rows): array
 {
     $customers = [];
@@ -457,6 +492,7 @@ final class StockSnapshotData extends Data
 - All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) — `AllNullableDataDetector`
 - Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used — `AllOptionalDataDetector`
 - `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — `DataMethodHintCollisionDetector`
+- A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it — `HookMissingComputedDetector`
 - Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `ManualHydrationLoopDetector`
 - A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once — `ManualInputCastDetector`
 - `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
@@ -467,6 +503,7 @@ final class StockSnapshotData extends Data
 - [ ] A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback bag, a filter set, a money breakdown), make each non-nullable with a Null Object / identity default on the value type instead.
 - [ ] Don't make every field of a Data object `Optional` (the all-nullable smell in another skin). Almost always it's the WHOLE object that is present-or-absent — mark the enclosing field `Type|Optional` at its use site and give this object honest, concrete leaves, so if it exists it's a valid whole.
 - [ ] A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
+- [ ] Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.
 - [ ] Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
 - [ ] Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
 - [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.

@@ -33,6 +33,7 @@ use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
+use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -517,6 +518,54 @@ final class SpatieDataNode extends NodeMatch
         }
 
         return true;
+    }
+
+    /**
+     * Is this `get` property hook on a `Data` class MISSING `#[Computed]`? A get-only virtual property that
+     * is not `#[Computed]` is read by Spatie as a hydration INPUT — it expects the key in `::from()` (which a
+     * get-only hook can't receive) and mis-serializes, so the class crashes or silently drops the field.
+     */
+    public function hookMissingComputed(): bool
+    {
+        if (! $this->node instanceof PropertyHook) {
+            return false;
+        }
+
+        if (! $this->codebase->extends($this->enclosingClassName(), self::DATA)) {
+            return false;
+        }
+
+        $property = $this->node->getAttribute('parent');
+
+        if (! $property instanceof Property || self::carriesComputed($property)) {
+            return false;
+        }
+
+        // Only a get-ONLY hook is a purely computed value; a property that also has a `set` hook is a real
+        // read-write field Spatie can legitimately hydrate, so it's not the missing-`#[Computed]` trap.
+        foreach ($property->hooks as $hook) {
+            if ($hook->name->toString() === 'set') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Does the property already carry a `#[Computed]` attribute (short or fully-qualified)? */
+    private static function carriesComputed(Property $property): bool
+    {
+        foreach ($property->attrGroups as $group) {
+            foreach ($group->attrs as $attr) {
+                $name = ltrim($attr->name->toString(), '\\');
+
+                if ($name === 'Computed' || str_ends_with($name, '\\Computed')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** Does this type declaration union in the Spatie `Optional` marker (`T|Optional`)? */

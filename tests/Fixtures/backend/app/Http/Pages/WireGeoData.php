@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\TransformerWithoutTsType;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\WithTransformer;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Attributes\Computed;
 
 /**
  * A custom `GeoPointTransformer` flattens `GeoPoint` to a `[lat, lng]` tuple on the wire with no paired
@@ -23,6 +24,7 @@ final class WireGeoData extends Data
         $this->location = $location;
     }
 
+    #[Computed]
     public float $latitude {
         get => $this->location->lat;
     }
