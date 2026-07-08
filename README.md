@@ -800,20 +800,32 @@ final class AcmeEntrypoint extends Exemption
 ```
 
 Your detector reads it, any package registers against it, and neither imports the
-other. Declare it via `Exemptable` so `commandments exemptions <detector>` can
-show what quiets it, then read it in `find()`:
+other. **Declare** each tag and WHAT to match it against (an `ExemptBy` scope); the
+engine applies the reject centrally, so `find()` just passes its results through
+`$this->exempt(...)` — no hand-written `Exemptions::has(...)`:
 
 ```php
-use JesseGall\CodeCommandments\Packages\{Exemptable, Exemptions};
+use JesseGall\CodeCommandments\Packages\{AppliesExemptions, ExemptBy, Exemptable};
 
 final class AcmeFeatureEnvyDetector implements Detector, Exemptable
 {
-    public function exemptions(): array { return [AcmeEntrypoint::class]; }   // what it honours
+    use AppliesExemptions;
 
-    // …inside find():
-    ->reject(fn (AstNode $n) => Exemptions::has(AcmeEntrypoint::class, $codebase, $n->enclosingClassName()))
+    public function exemptions(): array
+    {
+        return [AcmeEntrypoint::class => [ExemptBy::EnclosingClass]];   // tag => where to match it
+    }
+
+    public function find(Codebase $codebase): array
+    {
+        return $this->exempt($codebase->whereMethodDeclaration()->where(/* … */)->get(), $codebase);
+    }
 }
 ```
+
+`ExemptBy::EnclosingClass` matches the finding's class, `ExemptBy::EnclosingMethod`
+its class + method. A tag mapped to `[]` is one the detector enforces itself (a
+bespoke subject) — declared only so `commandments exemptions` still lists it.
 
 ## License
 

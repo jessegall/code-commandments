@@ -39,7 +39,7 @@ abstract class Exemption
 
         foreach (Catalog::all() as $detector) {
             if ($detector instanceof Exemptable) {
-                array_push($declared, ...$detector->exemptions());
+                array_push($declared, ...array_keys($detector->exemptions()));
             }
         }
 

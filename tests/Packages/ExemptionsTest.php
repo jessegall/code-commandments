@@ -38,7 +38,7 @@ final class ExemptionsTest extends TestCase
             $tags = $detector->exemptions();
             $this->assertNotEmpty($tags, $detector::class . ' declares exemptions() but returns none');
 
-            foreach ($tags as $tag) {
+            foreach (array_keys($tags) as $tag) {
                 $this->assertTrue(is_subclass_of($tag, Exemption::class), "{$tag} must be an Exemption subclass");
             }
         }

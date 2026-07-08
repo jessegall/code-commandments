@@ -10,8 +10,9 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Support\Container;
+use JesseGall\CodeCommandments\Packages\AppliesExemptions;
+use JesseGall\CodeCommandments\Packages\ExemptBy;
 use JesseGall\CodeCommandments\Packages\Exemptable;
-use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
 
 /**
@@ -23,6 +24,8 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
  */
 final class ContainerReachDetector implements Detector, Exemptable
 {
+    use AppliesExemptions;
+
     public function sin(): Sin
     {
         return new ContainerReach();
@@ -30,17 +33,16 @@ final class ContainerReachDetector implements Detector, Exemptable
 
     public function exemptions(): array
     {
-        return [NoContainer::class];
+        return [NoContainer::class => [ExemptBy::EnclosingClass]];
     }
 
     public function find(Codebase $codebase): array
     {
-        return $codebase
+        return $this->exempt($codebase
             ->whereFunction('app', 'resolve')
             ->reject(static fn (AstNode $node): bool => $node->isInEnum())
             ->where(static fn (AstNode $node): bool => $node->firstArgIsClassLiteral())
             ->where(static fn (AstNode $node): bool => Container::resolves($codebase, $node->enclosingClassName()))
-            ->reject(static fn (AstNode $node): bool => Exemptions::has(NoContainer::class, $codebase, $node->enclosingClassName()))
-            ->get();
+            ->get(), $codebase);
     }
 }

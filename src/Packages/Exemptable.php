@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Packages;
 
 /**
- * A detector whose findings CAN BE EXEMPTED — it reads one or more tags via {@see Exemptions::has}
- * and skips a match a package has exempted. Implementing this DECLARES which tags it honours, so the
- * `exemptions` command can show, per detector, exactly what a package can register to quiet it —
- * and so the declaration stays in sync with the reads.
+ * A detector whose findings CAN BE EXEMPTED. It DECLARES, per tag, WHAT to match the tag against (a
+ * finding's enclosing class, its enclosing method, …) — and {@see AppliesExemptions::exempt} applies the
+ * reject centrally, so no detector hand-writes `Exemptions::has(...)`. A tag mapped to an EMPTY list is
+ * honoured by the detector itself (a bespoke subject the enum can't express) and only declared here so the
+ * `exemptions` command still shows it.
  */
 interface Exemptable
 {
     /**
-     * The exemption tags this detector honours.
+     * The exemption tags this detector honours, each mapped to the scopes it is matched at.
      *
-     * @return list<class-string<Exemption>>
+     * @return array<class-string<Exemption>, list<ExemptBy>>
      */
     public function exemptions(): array;
 }
