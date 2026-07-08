@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Modifiers;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
@@ -36,23 +37,21 @@ final class NonFinalDataScribe extends RepentScribe
 
     private function seal(Draft $draft, NodeMatch $match, Class_ $class): void
     {
-        $source = $match->file->source;
-        $path = $match->file->path;
+        $writer = Writer::for($draft, $match);
 
         // `final ` immediately before the `class` keyword (after any attributes/docblock).
         if ($class->name !== null) {
-            $keyword = strrpos(substr($source, 0, $class->name->getStartFilePos()), 'class');
+            $keyword = Span::before($match->file->source, $class->name->getStartFilePos(), 'class');
 
-            if ($keyword !== false) {
-                $draft->edit(new Span($path, $source, $keyword, $keyword), 'final ');
+            if ($keyword !== null) {
+                $writer->insertAt($keyword, 'final ');
             }
         }
 
         // `readonly ` before the type (or the variable) of each promoted, non-readonly param.
         foreach (AstNode::constructorParamsOf($class) as $param) {
             if ($this->isPromotedMutable($param)) {
-                $at = ($param->type ?? $param->var)->getStartFilePos();
-                $draft->edit(new Span($path, $source, $at, $at), 'readonly ');
+                $writer->insertAt(($param->type ?? $param->var)->getStartFilePos(), 'readonly ');
             }
         }
     }

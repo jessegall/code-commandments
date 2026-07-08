@@ -23,6 +23,13 @@ wrong.
 
 - **`final`**, **public `readonly`** promoted constructor properties. Immutable by construction — built
   once, never mutated. No setters; "change" a field by building a new one with `::from([...])`.
+  - **A `#[WithCast]` on a promoted param is still `readonly`.** The cast runs INSIDE the `::from()`
+    pipeline, BEFORE the object exists — it morphs the raw value and Spatie passes the *built* result as
+    the constructor argument. So the value is present at construction; `readonly` holds. Don't demote a
+    cast property to mutable "because the cast injects it after construction" — that only happens for a
+    **non-promoted** class property (`public T $x;` outside the constructor), which Spatie sets by
+    reflection post-construction and which therefore can't be `readonly`. The fix for that is to *promote*
+    it into the constructor, not to drop `readonly`.
 - **Construct via `::from([...])`, not `new`** — see the next section.
 - **Document non-array `fromX()` factories with `@method`** (see below) — *only* when you add a
   `fromX(SomeClass $x)` magic factory. The plain `::from([...])` array shape needs **no** `@method`: it's
@@ -178,6 +185,12 @@ field `T|Optional` and give this object honest, concrete leaves.
 
 ### Collections — type the element, collect the list
 
+- **NEVER type a property as `DataCollection`.** The property type is **`array`** (preferred) or a
+  `Collection`, with **`#[DataCollectionOf(X::class)]`** naming the element — `public readonly array $nodes;`
+  with the attribute, never `public readonly DataCollection $nodes;`. `DataCollection` is a fine *return*
+  of `::collect()`, but as a property TYPE it generates malformed TypeScript (`undefined<number, X>`) and
+  skips the element-typed hydration/validation below. (`#[LiteralTypeScriptType('X[]')]` is NOT the fix —
+  `array` + `#[DataCollectionOf]` is.)
 - **`#[DataCollectionOf(X::class)]`** (or a `/** @var X[] */` docblock) on the property is **required** —
   element typing drives both hydration and nested validation (`songs.*.title`). A `::from()` inside a
   `foreach`/`array_map` is the tell you forgot it.
@@ -228,6 +241,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
   _Retype each field to the truth: required → non-nullable, no default; genuinely-absent → `T|Optional = new Optional()` (dropped from output, not `null`); always-present-but-emptyable → a Null Object / identity default (`Grid $grid = new Grid()`, `Status $s = Status::Default`). If a whole SUB-object may be absent, put the optional on the CONTAINER field (`Type|Optional $x = new Optional()`) and keep that type's leaves concrete — don't scatter `?T`/`Optional` across every leaf._
 - Don't make every field of a Data object `Optional` (the all-nullable smell in another skin). Almost always it's the WHOLE object that is present-or-absent — mark the enclosing field `Type|Optional` at its use site and give this object honest, concrete leaves, so if it exists it's a valid whole.
   _Give each leaf a concrete default (`int $columns = 1`) and move the optionality up to where this type is used: `public readonly Grid|Optional $grid = new Optional();`._
+- Never type a `Data` property as `DataCollection`. Type it `array` (preferred) or `Collection` and add `#[DataCollectionOf(X::class)]` — element typing drives hydration, nested validation, and clean TypeScript.
+  _`#[DataCollectionOf(NodeData::class)] public readonly array $nodes;`, not `public readonly DataCollection $nodes;`._
 - A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
 - Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.
   _Add `#[Computed]` above the property: `#[Computed] public array $docks { get => $this->dockSet->all(); }`._
@@ -238,6 +253,8 @@ if you think you need one, you probably want a typed accessor / method on the cl
 - Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
   _`X::from(...)` (or a `fromY()` factory)._
 - Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
+- On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
+  _`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`._
 
 ## Bad → good
 
@@ -317,6 +334,41 @@ final class Panel extends Data
         public readonly string $id,
         public readonly string|Optional $title = new Optional(),
         public readonly string|Optional $subtitle = new Optional(),
+    ) {}
+}
+```
+
+```php
+// Bad
+final class RosterPage extends Data
+{
+    /** @var DataCollection<int, Member> */
+    public function __construct(
+        public readonly string $club,
+        public readonly int $season,
+        public readonly string $coach,
+        public readonly DataCollection $members,
+    ) {}
+
+    public function title(): string
+    {
+        return "{$this->club} {$this->season}";
+    }
+
+    public function underCoach(string $name): bool
+    {
+        return strcasecmp($this->coach, $name) === 0;
+    }
+}
+
+// Good
+final class GalleryPage extends Data
+{
+    /** @param list<Photo> $photos */
+    public function __construct(
+        public readonly string $album,
+        #[DataCollectionOf(Photo::class)]
+        public readonly array $photos = [],
     ) {}
 }
 ```
@@ -487,27 +539,77 @@ final class StockSnapshotData extends Data
 }
 ```
 
+```php
+// Bad
+#[TypeScript]
+final class WireNode extends Data
+{
+    public function __construct(
+        public readonly int $percent,
+        public readonly int $min = 0,
+        public readonly int $max = 100,
+        public readonly ?Band $band = null,
+    ) {}
+
+    public function clamped(): int
+    {
+        return max($this->min, min($this->max, $this->percent));
+    }
+
+    public function fraction(): float
+    {
+        $span = $this->max - $this->min;
+
+        return $span === 0 ? 0.0 : ($this->clamped() - $this->min) / $span;
+    }
+
+    public function colour(): string
+    {
+        return match ($this->band) {
+            Band::Danger => '#ef4444',
+            Band::Warn => '#f59e0b',
+            default => '#22c55e',
+        };
+    }
+}
+
+// Good
+#[TypeScript]
+final class WireBanner extends Data
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly BannerIcon|Optional $icon = new Optional(),
+        public readonly string|null $caption = null,
+    ) {}
+}
+```
+
 ## When it fires
 
 - All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) — `AllNullableDataDetector`
 - Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used — `AllOptionalDataDetector`
+- A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration — `DataCollectionTypeDetector`
 - `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) — `DataMethodHintCollisionDetector`
 - A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it — `HookMissingComputedDetector`
 - Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` — `ManualHydrationLoopDetector`
 - A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once — `ManualInputCastDetector`
 - `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `NewDataObjectDetector`
 - Data class not `final` / props not `readonly` promoted — `NonFinalDataDetector`
+- A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `NullableWireObjectDetector`
 
 ## Checklist
 
 - [ ] A DTO's field types must tell the truth — make required fields non-nullable; don't default every field to `?T`/null. If every field genuinely IS optional and same-shaped (a callback bag, a filter set, a money breakdown), make each non-nullable with a Null Object / identity default on the value type instead.
 - [ ] Don't make every field of a Data object `Optional` (the all-nullable smell in another skin). Almost always it's the WHOLE object that is present-or-absent — mark the enclosing field `Type|Optional` at its use site and give this object honest, concrete leaves, so if it exists it's a valid whole.
+- [ ] Never type a `Data` property as `DataCollection`. Type it `array` (preferred) or `Collection` and add `#[DataCollectionOf(X::class)]` — element typing drives hydration, nested validation, and clean TypeScript.
 - [ ] A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
 - [ ] Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.
 - [ ] Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
 - [ ] Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
 - [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
 - [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
+- [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested object `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
 
 ## Related skills
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
+use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Scribes\Edit;
@@ -117,9 +118,9 @@ final class RedundantReturnTypeScribe extends Scribe
     private function removeReturnType(ArrowFunction $arrow, string $source): Edit
     {
         $typeStart = $arrow->returnType->getStartFilePos();
-        $colon = strrpos(substr($source, 0, $typeStart), ':');
+        $colon = Span::before($source, $typeStart, ":");
 
-        return new Edit($colon === false ? $typeStart : $colon, $arrow->returnType->getEndFilePos(), '');
+        return new Edit($colon ?? $typeStart, $arrow->returnType->getEndFilePos(), '');
     }
 
     /**

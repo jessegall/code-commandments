@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\FuncCall;
@@ -51,8 +51,7 @@ final class ManualHydrationLoopScribe extends RepentScribe
         $class = substr($source, $from->class->getStartFilePos(), $from->class->getEndFilePos() + 1 - $from->class->getStartFilePos());
         $items = substr($source, $call->args[1]->value->getStartFilePos(), $call->args[1]->value->getEndFilePos() + 1 - $call->args[1]->value->getStartFilePos());
 
-        $span = new Span($match->file->path, $source, $call->getStartFilePos(), $call->getEndFilePos() + 1);
-        $draft->edit($span, "{$class}::collect({$items})");
+        Writer::for($draft, $match)->replace($call, "{$class}::collect({$items})");
     }
 
     /**

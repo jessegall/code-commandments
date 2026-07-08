@@ -487,6 +487,29 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringNotContainsString('blurb: unknown', $component);
     }
 
+    public function test_a_handler_arg_with_a_ts_cast_keeps_its_value_expression(): void
+    {
+        // Issue #325: `commitText(($event.target as HTMLInputElement).value)` was forwarded as
+        // `$emit('commitText', $event.target)` — dropping the `.value`, so the child emitted the raw
+        // element, not its string. The `as` cast is erased but the `.value` must survive.
+        $dialog = '<Dialog><DialogContent><DialogHeader>'
+            . '<DialogTitle>Rename</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader>'
+            . '<div class="body"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div>'
+            . '<DialogFooter><input @change="commitText(($event.target as HTMLInputElement).value)" /></DialogFooter></DialogContent></Dialog>';
+        $sfc = "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nfunction commitText(v: string) { save(v); }\n</script>\n"
+            . "<template>\n  <div>\n    <button>Open</button>\n    {$dialog}\n  </div>\n</template>\n";
+
+        $detector = new CompoundInlineComponentDetector();
+        $files = $detector->scribe()->rewrite($detector->find(Codebase::fromString($sfc)));
+        $created = $this->components($files);
+
+        $this->assertNotEmpty($created, 'the dialog should be extracted');
+        $component = reset($created);
+
+        $this->assertStringContainsString("\$emit('commitText', \$event.target.value)", $component, 'the .value is preserved');
+        $this->assertStringNotContainsString("\$emit('commitText', \$event.target)", $component, 'never drop to the raw target');
+    }
+
     public function test_an_assigned_value_becomes_a_model_not_a_readonly_prop(): void
     {
         // Issue #256: a value the chunk only ASSIGNS (no v-model) — `@click="dismissed = true"`

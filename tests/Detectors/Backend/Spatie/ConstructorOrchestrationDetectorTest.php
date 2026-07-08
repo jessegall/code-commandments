@@ -166,6 +166,86 @@ final class ConstructorOrchestrationDetectorTest extends TestCase
         PHP));
     }
 
+    public function test_does_not_flag_a_slot_whose_scoped_read_is_two_hops_deep(): void
+    {
+        // The projector's `project()` doesn't read scoped state directly — it calls a builder that does.
+        // The bounded trace follows the extra hop, so the slot is still spared (#326: EditorShell).
+        $this->assertSame([], $this->find(<<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Routing\Controller;
+        use Spatie\LaravelData\Data;
+        class Canvas extends Data { public function __construct(public string $svg) {} }
+        class EditorContextResolver { public static function current(): object { return new \stdClass; } }
+        class CanvasBuilder { public function build(): Canvas { $ctx = EditorContextResolver::current(); return new Canvas('<svg/>'); } }
+        class CanvasProjector {
+            public function __construct(private CanvasBuilder $builder) {}
+            public function project(): Canvas { return $this->builder->build(); }
+        }
+        class Shell extends Data {
+            public readonly Canvas $canvas;   // scoped read TWO hops deep -> reject
+            public readonly Canvas $palette;
+            public function __construct(public readonly CanvasProjector $canvasProjector) {
+                $this->canvas = $this->canvasProjector->project();
+            }
+        }
+        class C extends Controller { public function a(): Shell { return Shell::from([]); } }
+        PHP));
+    }
+
+    public function test_does_not_flag_a_slot_built_by_a_static_factory_that_reads_scoped_state(): void
+    {
+        // `$this->shell = InnerShell::for(...)` — the `::for` factory routes through `::from` → the
+        // constructor, which reads scoped state. The trace crosses the static factory + `::from` to the
+        // constructor, so the slot is spared (#326: EditorPage building an EditorShell eagerly).
+        $this->assertSame([], $this->find(<<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Routing\Controller;
+        use Spatie\LaravelData\Data;
+        class ContextResolver { public static function current(): object { return new \stdClass; } }
+        class InnerShell extends Data {
+            public readonly string $svg;
+            public function __construct(public readonly string $id) {
+                $this->svg = ContextResolver::current()->svg;
+            }
+            public static function for(string $id): self { return self::from(['id' => $id]); }
+        }
+        class Page extends Data {
+            public readonly InnerShell $shell;   // built via a factory that reads scoped state -> reject
+            public readonly string $extra;
+            public function __construct(public readonly string $workflowId) {
+                $this->shell = InnerShell::for($this->workflowId);
+            }
+        }
+        class C extends Controller { public function a(): Page { return Page::from([]); } }
+        PHP));
+    }
+
+    public function test_does_not_flag_a_slot_marked_eager(): void
+    {
+        // `#[Eager]` is the author's explicit opt-out — a deliberately-eager build the detector must leave.
+        $this->assertSame([], $this->find(<<<'PHP'
+        <?php
+        namespace App;
+        use Illuminate\Routing\Controller;
+        use JesseGall\CodeCommandments\Attributes\Eager;
+        use Spatie\LaravelData\Data;
+        class Canvas extends Data { public function __construct(public string $svg) {} }
+        class Shell extends Data {
+            public readonly Canvas $canvas;
+            public readonly Canvas $palette;
+            #[Eager]
+            public readonly array $docks;   // pinned eager -> reject
+
+            public function __construct(public readonly TopBar $topBar) {
+                $this->docks = $this->topBar->docks();
+            }
+        }
+        class C extends Controller { public function a(): Shell { return Shell::from([]); } }
+        PHP));
+    }
+
     /**
      * @return list<string>  the assigned property names that were flagged
      */

@@ -14,12 +14,21 @@ use PHPUnit\Framework\TestCase;
  *   1. REGEX (`preg_*`) anywhere but the delimiter tokenizers — a regex over code is a
  *      parser the engine should already provide; if a predicate/write is missing, add the
  *      TOOL (an AST method, a query selector, a write op), don't `preg_replace` the source.
- *   2. Hand-rolled SOURCE SCANNING (`strpos`/`strrpos`/`str_contains`) in the FRONTEND
- *      understanding/write layer — the "fake regex" dodge (hunt for `<Tag`, scan the script
- *      for a name). The element/expression AST already knows positions; query it.
+ *   2. Hand-rolled SOURCE SCANNING (`strpos`/`strrpos`/`strstr`) across the WHOLE detection +
+ *      scribe + engine layer — the "fake regex" dodge (hunt for `<Tag`, scan a docblock for a
+ *      type). The AST already knows positions; query it, or add a reusable primitive to the
+ *      offset util {@see \JesseGall\CodeCommandments\Scribes\Span} so every scribe shares it.
+ *   3. Hand-rolled CHAR LEXING (`ctype_*`) in the BACKEND detector/scribe layer — the backend
+ *      has php-parser + {@see Span}; building a token/skipping whitespace by hand is a lexer the
+ *      engine already provides, so `ctype_*` there is always a bypass.
+ *   4. Bespoke REWRITING (`->edit(`) scattered across the backend scribes — the low-level draft
+ *      edit is the ONE canonical {@see \JesseGall\CodeCommandments\Scribes\Writer}'s job; a scribe
+ *      describes WHAT to change (`replace`/`stampAttribute`/`ensureImport`/`insertAt`/`dropModifier`/
+ *      `deleteStatementLine`), never re-invents indentation, keyword-hunting or attribute insertion.
+ *      A missing write op is a method to ADD to the Writer, not a raw edit in the scribe.
  *
  * The ONLY exemptions are the genuine LEXERS (where char/delimiter scanning IS the job), the
- * byte-offset utility {@see \JesseGall\CodeCommandments\Scribes\Span} (newline math), and the
+ * byte-offset utility {@see \JesseGall\CodeCommandments\Scribes\Span} (newline/offset math), and the
  * compiler-diagnostic reader {@see \JesseGall\CodeCommandments\Vue\Oracle\TscDiagnostics} — which
  * scans `vue-tsc`'s flat log OUTPUT, not source code, so text scanning is likewise its whole job.
  * Prefix/suffix classification (`str_starts_with`/`str_ends_with` on a name/FQCN/path) is
@@ -31,6 +40,11 @@ final class NoRegexInParsingLayerTest extends TestCase
 
     private const array SCAN = ['strpos', 'strrpos', 'strstr'];
 
+    private const array CHAR_LEXING = ['ctype_alnum', 'ctype_alpha', 'ctype_digit', 'ctype_xdigit', 'ctype_space', 'ctype_upper', 'ctype_lower'];
+
+    /** The low-level draft edit — the canonical Writer's job alone; a backend scribe composes the Writer, never this. */
+    private const array REWRITE = ['->edit'];
+
     /** Lexers, the offset util, and the compiler-output reader — the only places raw scanning is the job. */
     private const array LEXERS = ['Tokenizer.php', 'Sfc.php', 'Attributes.php', 'Script.php', 'Interpolation.php', 'Lexer.php', 'Parser.php', 'Span.php', 'TscDiagnostics.php'];
 
@@ -39,9 +53,19 @@ final class NoRegexInParsingLayerTest extends TestCase
         $this->assertNoneOf(self::REGEX, $this->phpIn('Detectors', 'Scribes', 'Vue'), 'regex over code — compose the AST, don\'t scrape it');
     }
 
-    public function test_no_handrolled_source_scanning_in_the_frontend_engine(): void
+    public function test_no_handrolled_source_scanning_in_the_detection_scribe_or_engine_layer(): void
     {
-        $this->assertNoneOf(self::SCAN, $this->phpIn('Detectors/Frontend', 'Scribes/Frontend', 'Vue'), 'hand-rolled source scanning — the AST knows positions, query it');
+        $this->assertNoneOf(self::SCAN, $this->phpIn('Detectors', 'Scribes', 'Vue'), 'hand-rolled source scanning — the AST knows positions; query it or add a Span primitive');
+    }
+
+    public function test_no_handrolled_char_lexing_in_the_backend_layer(): void
+    {
+        $this->assertNoneOf(self::CHAR_LEXING, $this->phpIn('Detectors/Backend', 'Scribes/Backend'), 'hand-rolled char lexing — the backend has php-parser + Span; never build a token / skip whitespace by hand');
+    }
+
+    public function test_backend_scribes_rewrite_through_the_canonical_writer(): void
+    {
+        $this->assertNoneOf(self::REWRITE, $this->phpIn('Scribes/Backend'), 'bespoke rewriting — compose the one Writer (replace/stampAttribute/ensureImport/insertAt/dropModifier/deleteStatementLine); add a Writer method for a missing op, never a raw ->edit');
     }
 
     /**

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
+use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Ternary;
 use PhpParser\NodeFinder;
@@ -71,8 +72,8 @@ final class NestedTernaryScribe extends RepentScribe
      */
     private function lineIndent(string $source, int $offset): string
     {
-        $lineStart = strrpos(substr($source, 0, $offset), "\n");
-        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+        $lineStart = Span::before($source, $offset, "\n");
+        $lineStart = $lineStart === null ? 0 : $lineStart + 1;
 
         return substr($source, $lineStart, strspn($source, " \t", $lineStart));
     }

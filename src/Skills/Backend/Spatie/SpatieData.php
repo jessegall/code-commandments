@@ -56,6 +56,13 @@ wrong.
 
 - **`final`**, **public `readonly`** promoted constructor properties. Immutable by construction — built
   once, never mutated. No setters; "change" a field by building a new one with `::from([...])`.
+  - **A `#[WithCast]` on a promoted param is still `readonly`.** The cast runs INSIDE the `::from()`
+    pipeline, BEFORE the object exists — it morphs the raw value and Spatie passes the *built* result as
+    the constructor argument. So the value is present at construction; `readonly` holds. Don't demote a
+    cast property to mutable "because the cast injects it after construction" — that only happens for a
+    **non-promoted** class property (`public T $x;` outside the constructor), which Spatie sets by
+    reflection post-construction and which therefore can't be `readonly`. The fix for that is to *promote*
+    it into the constructor, not to drop `readonly`.
 - **Construct via `::from([...])`, not `new`** — see the next section.
 - **Document non-array `fromX()` factories with `@method`** (see below) — *only* when you add a
   `fromX(SomeClass $x)` magic factory. The plain `::from([...])` array shape needs **no** `@method`: it's
@@ -211,6 +218,12 @@ field `T|Optional` and give this object honest, concrete leaves.
 
 ### Collections — type the element, collect the list
 
+- **NEVER type a property as `DataCollection`.** The property type is **`array`** (preferred) or a
+  `Collection`, with **`#[DataCollectionOf(X::class)]`** naming the element — `public readonly array $nodes;`
+  with the attribute, never `public readonly DataCollection $nodes;`. `DataCollection` is a fine *return*
+  of `::collect()`, but as a property TYPE it generates malformed TypeScript (`undefined<number, X>`) and
+  skips the element-typed hydration/validation below. (`#[LiteralTypeScriptType('X[]')]` is NOT the fix —
+  `array` + `#[DataCollectionOf]` is.)
 - **`#[DataCollectionOf(X::class)]`** (or a `/** @var X[] */` docblock) on the property is **required** —
   element typing drives both hydration and nested validation (`songs.*.title`). A `::from()` inside a
   `foreach`/`array_map` is the tell you forgot it.

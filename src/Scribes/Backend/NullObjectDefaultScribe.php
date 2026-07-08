@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Identifier;
@@ -55,7 +55,6 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
         }
 
         $source = $match->file->source;
-        $path = $match->file->path;
         $edits = [];
 
         foreach (AstNode::constructorParamsOf($class) as $param) {
@@ -78,9 +77,11 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
             $edits[] = [$param->type, $written, $param->default, $identity];
         }
 
+        $writer = Writer::for($draft, $match);
+
         foreach ($edits as [$type, $written, $default, $identity]) {
-            $draft->edit(new Span($path, $source, $type->getStartFilePos(), $type->getEndFilePos() + 1), $written);
-            $draft->edit(new Span($path, $source, $default->getStartFilePos(), $default->getEndFilePos() + 1), $identity);
+            $writer->replace($type, $written);
+            $writer->replace($default, $identity);
         }
     }
 
