@@ -44,4 +44,24 @@ final class PlanWorkingState
     {
         @unlink($this->path);
     }
+
+    /**
+     * The archive path — the previous plan's record, kept for reference across a re-plan.
+     */
+    public function previousPath(): string
+    {
+        return $this->path . '.previous';
+    }
+
+    /**
+     * Preserve the current record as `.previous` (replacing any earlier archive) instead of losing it, so a
+     * re-plan that resets the plan state keeps the compaction lifeline: the agent can still read the prior
+     * plan's decisions. No-op when there is nothing to archive.
+     */
+    public function archive(): void
+    {
+        if ($this->exists()) {
+            @rename($this->path, $this->previousPath());
+        }
+    }
 }

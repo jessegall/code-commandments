@@ -106,10 +106,10 @@ final class PlanReminderTest extends TestCase
         $this->assertStringContainsString('after each phase', $on);
     }
 
-    public function test_approving_a_new_plan_wipes_the_previous_plan_state(): void
+    public function test_approving_a_new_plan_resets_constraints_testing_and_counters(): void
     {
         // A previous plan left constraints, a testing choice, working-state notes and a bumped counter
-        // behind. Approving a NEW plan must start clean — none of it may bleed into the new run.
+        // behind. Approving a NEW plan resets the constraints/testing/counters — none may bleed in.
         $plan = new \JesseGall\CodeCommandments\PlanExecution()->build();
         PlanConstraints::inWorktree($this->root, $plan)->addLocal('Stale constraint from the last plan.');
         PlanTesting::inWorktree($this->root, $plan)->set('Stale testing choice.');
@@ -121,8 +121,33 @@ final class PlanReminderTest extends TestCase
         $this->assertTrue($this->marker()->isActive(), 'the new plan is active');
         $this->assertSame([], PlanConstraints::inWorktree($this->root, $plan)->local(), 'old constraints are wiped');
         $this->assertSame('', PlanTesting::inWorktree($this->root, $plan)->chosen(), 'old testing choice is wiped');
-        $this->assertFalse(PlanWorkingState::inWorktree($this->root)->exists(), 'old working-state is wiped');
         $this->assertFileDoesNotExist($this->root . '/.commandments/.cardinal-remind-count', 'counters are reset');
+    }
+
+    public function test_a_replan_preserves_working_state_to_previous_and_warns_loudly(): void
+    {
+        // #336: a mid-execution re-plan must NOT silently drop prior state. The working-state (the
+        // compaction lifeline) is preserved as `.previous`, and the nudge warns that constraints/testing
+        // were reset — so the agent re-establishes them instead of assuming carry-over.
+        $plan = new \JesseGall\CodeCommandments\PlanExecution()->build();
+        PlanConstraints::inWorktree($this->root, $plan)->addLocal('No frontend logic.');
+        file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nold plan phase 3\n");
+
+        $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+
+        $this->assertStringContainsString('RE-PLAN DETECTED', $context, 'the reset is loud, not silent');
+        $this->assertStringContainsString('do NOT carry over', $context);
+        $working = PlanWorkingState::inWorktree($this->root);
+        $this->assertFalse($working->exists(), 'the live working-state is reset');
+        $this->assertFileExists($working->previousPath(), 'the prior working-state is preserved for reference');
+    }
+
+    public function test_a_first_plan_approval_has_no_replan_banner(): void
+    {
+        // No prior state → a clean plan start, no re-plan warning.
+        $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
+
+        $this->assertStringNotContainsString('RE-PLAN DETECTED', $context);
     }
 
     public function test_a_post_tool_use_for_another_tool_is_ignored(): void

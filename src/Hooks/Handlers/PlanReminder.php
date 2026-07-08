@@ -11,8 +11,11 @@ use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanReset;
+use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
+use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 /**
  * The plan-execution {@see Hook} wired to `PostToolUse/ExitPlanMode` and `Stop`. Records the active
@@ -49,6 +52,18 @@ final class PlanReminder extends Hook
 
         $plan = $this->profile($event);
 
+        // Did a previous plan already record state this session? If so, this approval RESETS it — and a
+        // re-plan of an in-progress plan must not silently drop it (#336): warn loudly so the agent
+        // re-establishes constraints/testing rather than assuming carry-over.
+        $working = PlanWorkingState::inWorktree($event->root);
+        $hadPriorState = PlanConstraints::inWorktree($event->root, $plan)->local() !== []
+            || trim(PlanTesting::inWorktree($event->root, $plan)->chosen()) !== ''
+            || $working->exists();
+
+        // Preserve the working-state (the compaction lifeline) as `.previous` BEFORE the reset — a re-plan
+        // resets constraints/testing so they're re-asked, but the prior decisions must never be lost.
+        $working->archive();
+
         // A newly-approved plan starts from a clean slate: wipe every trace of the PREVIOUS plan — its
         // counters, constraints, testing choice, working-state notes and stuck signal — so none bleeds
         // into this one, THEN activate the new marker. (Same reset a fresh session does, one home.)
@@ -57,7 +72,7 @@ final class PlanReminder extends Hook
         Checklist::inProject($event->root)->clearAll(); // an older judge's worklist would be a stale
         // reference; it regenerates on the plan's first scan.
 
-        return $this->inject($event, $this->approvedNudge($plan));
+        return $this->inject($event, $this->replanNotice($hadPriorState, $working) . $this->approvedNudge($plan));
     }
 
     protected function onStop(HookEvent $event): int
@@ -111,6 +126,24 @@ final class PlanReminder extends Hook
     private function profile(HookEvent $event): PlanProfile
     {
         return Config::load($event->root)->planExecutionSettings();
+    }
+
+    /**
+     * The loud re-plan banner — emitted ONLY when a previous plan had already recorded state this session,
+     * so a mid-execution re-plan (#336) can't silently drop it. It tells the agent the reset happened (don't
+     * assume carry-over) and where the prior working-state was preserved. Empty on a first approval, so a
+     * normal plan start reads clean.
+     */
+    private function replanNotice(bool $hadPriorState, PlanWorkingState $working): string
+    {
+        if (! $hadPriorState) {
+            return '';
+        }
+
+        return "⚠️ RE-PLAN DETECTED — this approval RESET the previous plan's constraints and testing "
+            . "methodology; they do NOT carry over. Re-establish them now (re-ask; don't assume the earlier "
+            . "answers still hold). The prior working-state was preserved at `" . $working->previousPath()
+            . "` — read it for the earlier decisions, then write a fresh working-state as you go.\n\n";
     }
 
     private function approvedNudge(PlanProfile $plan): string
