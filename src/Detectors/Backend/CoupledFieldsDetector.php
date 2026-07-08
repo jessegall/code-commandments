@@ -13,18 +13,17 @@ use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\CoupledFields;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Unpublished;
 
 /**
- * DRAFT ({@see Unpublished}) — a class's own VALUE fields that are really ONE object. A clump is made of
- * VALUES (scalars, enums, value objects whose own fields are values — `Codebase::isValueType` walks the
- * chain), never injected SERVICES, so forwarding two collaborators into a sub-object is NOT a clump. Three
- * shapes, all read off the reusable field-usage engine ({@see \JesseGall\CodeCommandments\Ast\AstNode}):
+ * A class's own VALUE fields that are really ONE object. A clump is made of VALUES (scalars, enums, value
+ * objects whose own fields are values — `Codebase::isValueType` walks the chain), never injected SERVICES,
+ * so forwarding two collaborators into a sub-object is NOT a clump. Three shapes, all read off the reusable
+ * field-usage engine ({@see \JesseGall\CodeCommandments\Ast\AstNode}):
  *   1. coupled     — ≥2 value fields assembled into one value together, recurrently OR guarded-then-assembled.
- *   2. cross-object — a value field + a reach through a sibling value-object, combined ≥2×.
+ *   2. cross-object — a value field + a reach through a sibling value-object of the SAME type (peers), ≥2×.
  *   3. redundant mirror — a never-reassigned field whose name encodes a sibling object's public property.
  */
-final class CoupledFieldsDetector implements Detector, Unpublished
+final class CoupledFieldsDetector implements Detector
 {
     public function sin(): Sin
     {
@@ -101,10 +100,11 @@ final class CoupledFieldsDetector implements Detector, Unpublished
     }
 
     /**
-     * ≥2 value fields that move as a unit: the SAME group assembled into one value in ≥2 places (recurrence
-     * is Fowler's tell — a one-off `new X($a, $b)` is a mapping), OR a group guarded for absence together and
-     * then assembled together (the `from`/`to` → one edge shape). A proper subset only — all fields folded
-     * into one value is a 1:1 mapping, not a clump.
+     * ≥2 value fields that move as a unit — a DEDICATED assembly of just them (`new Edge($from, $to)`,
+     * `[$lo, $hi]`), not 2-of-many in a wide projection (`new NodeInput(name, type, …, options, …, enumType)`
+     * — a 1:1 mapping, not a clump). The clump fields must DOMINATE the assembled group (be ≥ half of it), and
+     * either the SAME group recurs in ≥2 places (Fowler's tell — a one-off is a mapping) OR ≥2 of them are
+     * guarded for absence together (the `from`/`to` → one edge shape). A proper subset of the class's fields.
      *
      * @param  array<string, true>  $values
      */
@@ -125,8 +125,12 @@ final class CoupledFieldsDetector implements Detector, Unpublished
                 continue;
             }
 
-            if (count(array_filter($group, static fn (string $name): bool => isset($tested[$name]))) >= 2) {
-                return true; // guarded together AND assembled together
+            $guarded = array_filter($group, static fn (string $name): bool => isset($tested[$name]));
+
+            // A guarded pair that DOMINATES a dedicated assembly — not 2 tested fields incidental among the
+            // ten a wide projection maps across.
+            if (count($guarded) >= 2 && count($guarded) * 2 >= count($group)) {
+                return true;
             }
 
             sort($group);

@@ -589,6 +589,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             return $this->isValueType($type->type, $depth, $visited);
         }
 
+        // `T | null` / `T | Optional` — the field holds a value T that may be absent; classify T.
+        if ($type instanceof UnionType) {
+            $core = array_values(array_filter($type->types, static function (Node $member): bool {
+                $name = $member instanceof Name ? $member->getLast() : ($member instanceof Identifier ? $member->toString() : '');
+
+                return strcasecmp($name, 'null') !== 0 && $name !== 'Optional';
+            }));
+
+            return count($core) === 1 && $this->isValueType($core[0], $depth, $visited);
+        }
+
         if ($type instanceof Identifier) {
             return in_array($type->toString(), ['string', 'int', 'float', 'bool', 'array', 'iterable'], true);
         }

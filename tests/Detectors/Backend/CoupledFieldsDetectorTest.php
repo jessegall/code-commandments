@@ -48,6 +48,52 @@ final class CoupledFieldsDetectorTest extends TestCase
         PHP);
     }
 
+    public function test_flags_a_union_nullable_credential_pair_guarded_and_built(): void
+    {
+        // The real DeclarativeIntegration shape: `string | null` (a UnionType, not `?string`) siblings guarded
+        // as a pair, then assembled into one credentials object.
+        $this->assertFlagged(<<<'PHP'
+        final class Credentials { public function __construct(public readonly string $id, public readonly string $secret) {} }
+        final class Integration {
+            public function __construct(
+                private readonly string | null $clientId = null,
+                private readonly string | null $clientSecret = null,
+                private readonly string $name = '',
+            ) {}
+            public function credentials(): ?Credentials {
+                if ($this->clientId === null || $this->clientSecret === null) { return null; }
+                return new Credentials($this->clientId, $this->clientSecret);
+            }
+        }
+        PHP, 'Integration');
+    }
+
+    public function test_does_not_flag_a_wide_projection_mapping_many_fields(): void
+    {
+        // enumType/options are 2 of many fields projected into another type — a mapping, not a dedicated pair.
+        $this->assertNotFlagged(<<<'PHP'
+        final class Target {
+            public function __construct(
+                public readonly string $name, public readonly ?string $type, public readonly ?array $options,
+                public readonly ?string $enumType, public readonly ?string $schema, public readonly bool $many,
+            ) {}
+        }
+        final class Spec {
+            public function __construct(
+                public readonly string $name = '', public readonly ?string $type = null,
+                public readonly ?array $options = null, public readonly ?string $enumType = null,
+                public readonly ?string $schema = null, public readonly bool $many = false,
+            ) {}
+            public function values(): array {
+                return $this->enumType !== null ? ['e'] : ($this->options !== null ? $this->options : []);
+            }
+            public function toTarget(): Target {
+                return new Target($this->name, $this->type, $this->options, $this->enumType, $this->schema, $this->many);
+            }
+        }
+        PHP);
+    }
+
     public function test_does_not_flag_two_services_forwarded_together(): void
     {
         // Repo/Db are not values (unresolved services) — forwarding them into a sub-object is not a clump.

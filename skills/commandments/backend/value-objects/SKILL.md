@@ -35,6 +35,8 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
   _A Spatie `Data` object built via `::from($array)`._
 - Return a typed value object, not a multi-field string-keyed array literal.
   _Return a Spatie `Data` object via `::from(...)`._
+- Fields that move as a unit are one type: extract the clump into a value object and hold THAT; never mirror a datum that already lives on a nested object.
+  _Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property._
 - Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
   _A value object the params fold into (`Money::of()`, `NodePosition`)._
 - Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
@@ -91,6 +93,51 @@ public function dailyReport(int $day): DailyReport
         gross: $gross,
         net: (int) round($gross * 0.79),
     );
+}
+```
+
+```php
+// Bad
+final class ShelfPlan
+{
+    public function __construct(
+        public readonly Bay $anchor,
+        public readonly Fixture $neighbour,
+    ) {}
+
+    public function run(): array
+    {
+        return [$this->anchor, $this->neighbour->slot];
+    }
+
+    public function labelled(): string
+    {
+        return $this->describe($this->anchor, $this->neighbour->slot);
+    }
+
+    private function describe(Bay $from, Bay $to): string
+    {
+        return "{$from->aisle}-{$to->aisle}";
+    }
+}
+
+// Good
+final class OrderContext
+{
+    public function __construct(
+        public readonly Shopper $shopper,
+        public readonly Voucher $voucher,
+    ) {}
+
+    public function heading(): array
+    {
+        return [$this->shopper, $this->voucher->code];
+    }
+
+    public function footer(): array
+    {
+        return [$this->shopper, $this->voucher->code];
+    }
 }
 ```
 
@@ -178,6 +225,7 @@ public function ratesTyped(string $base, array $symbols): RateTable
 
 - String-indexing (`$arr['key']`) a structured array param (an unborn type) — `ArrayBagDetector`
 - Returning a multi-field string-keyed array literal (a bag that should be a value object) — `ArrayReturnBagDetector`
+- A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object — `CoupledFieldsDetector`
 - The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) — `DataClumpDetector`
 - Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
 - Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
@@ -186,6 +234,7 @@ public function ratesTyped(string $base, array $symbols): RateTable
 
 - [ ] Give a structured array a typed value object — never read a named field by string key off an `array` param.
 - [ ] Return a typed value object, not a multi-field string-keyed array literal.
+- [ ] Fields that move as a unit are one type: extract the clump into a value object and hold THAT; never mirror a datum that already lives on a nested object.
 - [ ] Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
 - [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
 - [ ] Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.

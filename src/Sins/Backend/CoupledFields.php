@@ -6,16 +6,13 @@ namespace JesseGall\CodeCommandments\Sins\Backend;
 
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
-use JesseGall\CodeCommandments\Unpublished;
 
 /**
- * DRAFT — implements {@see Unpublished}, so it is NOT enrolled in the catalogs (no judge, no fixture
- * verifier, no docs, no release) until it has been calibrated clean against real codebases. Sibling of
- * the shipped {@see DataClump} (which finds a param clump recurring ACROSS classes); this finds fields
- * WITHIN one class that are really one object — co-constructed, coupled-optional, cross-object, or a
- * redundant mirror of a nested object's data.
+ * Sibling of the shipped {@see DataClump} (which finds a param clump recurring ACROSS classes); this finds
+ * VALUE fields WITHIN one class that are really one object — coupled (co-assembled/guarded together),
+ * cross-object same-type peers, or a field that redundantly mirrors a nested object's property.
  */
-final class CoupledFields extends Sin implements Unpublished
+final class CoupledFields extends Sin
 {
     public function __construct()
     {
