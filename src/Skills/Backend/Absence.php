@@ -67,8 +67,10 @@ Ask these **in order** and stop at the first yes.
 
 3. **Is it a genuine "look for it; it may legitimately miss"?**
    A find that can honestly come back empty, where the caller must consciously handle both arms. →
-   **`Option<T>`.** Construct with `Option::some()` / `Option::none()` / `Option::fromNullable()`; consume
-   with `unwrapOr()` / `match()` / `map()` — branching on an Option is normal, that's how you use one.
+   **`Option<T>`.** Construct with `Option::some()` / `Option::none()` / `Option::fromNullable()` — or
+   `Option::fromTruthy($x)`, which folds "absent OR blank" into one call (any falsy value — `null`, `''`,
+   `'0'`, `0`, `[]` — becomes `none`), so you never hand-write a `$x === '' ? null : $x` guard first;
+   consume with `unwrapOr()` / `match()` / `map()` — branching on an Option is normal, that's how you use one.
 
    **Option vs. a bare null — decide on *blast radius* (how far the value travels).** If the maybe-missing
    value flows through more than one consumer, it is an **`Option`**: the absence rides *in the type* and

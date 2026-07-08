@@ -24,6 +24,6 @@ final class CustomerLocator
     #[Righteous(OptionAsNullable::class)]
     public function locateHonestly(string $email): Option
     {
-        return Option::fromNullable($email === '' ? null : $email);
+        return Option::fromTruthy($email);
     }
 }
