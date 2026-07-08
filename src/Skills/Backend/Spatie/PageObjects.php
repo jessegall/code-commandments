@@ -65,11 +65,18 @@ property; never reach *out* with `app()`, `resolve()`, `App::make()`, or a facad
 container injection is declarative, testable, and visible in the signature; a `app(X::class)` buried in a
 getter is service location — the thing the container exists to remove.
 
-**Every injected collaborator MUST carry `#[Hidden]`.** A page object is `#[TypeScript]`-generated, and
-`#[Hidden]` is the *only* thing that keeps a property out of both the serialized payload **and** the
-generated TypeScript type. Miss it, and your `NodeCardProjector` becomes a field on the frontend
-`EditorShell` type — a leak that is invisible until you read the generated `.d.ts`. Inject hidden, or the
-service ships to the browser.
+**Every injected collaborator MUST carry `#[Hidden]`.** Miss it, and your `NodeCardProjector` becomes a
+field on the frontend `EditorShell` type — a leak that is invisible until you read the generated `.d.ts`.
+Inject hidden, or the service ships to the browser.
+
+**Mind the TWO `#[Hidden]`s.** There are two unrelated attributes of that name:
+`Spatie\LaravelData\Attributes\Hidden` drops a property from the **serialized payload**;
+`Spatie\TypeScriptTransformer\Attributes\Hidden` drops it from the **generated TypeScript type**. LaravelData's
+`#[Hidden]` alone keeps the service off the wire but the transformer *still generates it* into the `.d.ts`.
+Rather than stamp both attributes on every injected service, run `commandments scaffold
+--sin=injected-service-not-hidden` — it publishes a `HiddenAwareAttributedClassTransformer` (a thin
+`AttributedClassTransformer` that also drops LaravelData-`#[Hidden]` properties). Register it in your
+typescript-transformer config's `transformers` list, and one `#[Hidden]` covers both surfaces.
 
 ### Computed slots, not a fat constructor
 

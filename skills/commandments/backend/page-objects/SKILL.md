@@ -33,11 +33,18 @@ property; never reach *out* with `app()`, `resolve()`, `App::make()`, or a facad
 container injection is declarative, testable, and visible in the signature; a `app(X::class)` buried in a
 getter is service location — the thing the container exists to remove.
 
-**Every injected collaborator MUST carry `#[Hidden]`.** A page object is `#[TypeScript]`-generated, and
-`#[Hidden]` is the *only* thing that keeps a property out of both the serialized payload **and** the
-generated TypeScript type. Miss it, and your `NodeCardProjector` becomes a field on the frontend
-`EditorShell` type — a leak that is invisible until you read the generated `.d.ts`. Inject hidden, or the
-service ships to the browser.
+**Every injected collaborator MUST carry `#[Hidden]`.** Miss it, and your `NodeCardProjector` becomes a
+field on the frontend `EditorShell` type — a leak that is invisible until you read the generated `.d.ts`.
+Inject hidden, or the service ships to the browser.
+
+**Mind the TWO `#[Hidden]`s.** There are two unrelated attributes of that name:
+`Spatie\LaravelData\Attributes\Hidden` drops a property from the **serialized payload**;
+`Spatie\TypeScriptTransformer\Attributes\Hidden` drops it from the **generated TypeScript type**. LaravelData's
+`#[Hidden]` alone keeps the service off the wire but the transformer *still generates it* into the `.d.ts`.
+Rather than stamp both attributes on every injected service, run `commandments scaffold
+--sin=injected-service-not-hidden` — it publishes a `HiddenAwareAttributedClassTransformer` (a thin
+`AttributedClassTransformer` that also drops LaravelData-`#[Hidden]` properties). Register it in your
+typescript-transformer config's `transformers` list, and one `#[Hidden]` covers both surfaces.
 
 ### Computed slots, not a fat constructor
 
@@ -117,7 +124,7 @@ page object — the composed thing on the wire — is exactly where they earn th
 - Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
   _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch._
 - Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
-  _Add `#[Hidden]` above the injection attribute._
+  _Add `#[Hidden]` above the injection attribute — LaravelData's `#[Hidden]`, which keeps it off the wire. So one attribute ALSO keeps it out of the generated TypeScript, wire the scaffolded `HiddenAwareAttributedClassTransformer` into your typescript-transformer config; otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type._
 - Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
   _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
 - Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.

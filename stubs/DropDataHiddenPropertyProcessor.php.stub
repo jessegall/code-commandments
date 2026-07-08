@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {namespace};
+
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use Spatie\LaravelData\Attributes\Hidden;
+use Spatie\TypeScriptTransformer\PhpNodes\PhpPropertyNode;
+use Spatie\TypeScriptTransformer\Transformers\ClassPropertyProcessors\ClassPropertyProcessor;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptProperty;
+
+/**
+ * Drops any property carrying Spatie LaravelData's #[Hidden] from the generated TypeScript. The vendor
+ * DataClassPropertyProcessor only excludes a property when it carries BOTH the LaravelData #[Hidden] and
+ * the typescript-transformer #[Hidden]; this makes the LaravelData one alone enough, so a page object's
+ * #[Hidden] injected services never leak into the frontend type without a second annotation.
+ */
+final class DropDataHiddenPropertyProcessor implements ClassPropertyProcessor
+{
+    public function execute(PhpPropertyNode $phpPropertyNode, ?TypeNode $annotation, TypeScriptProperty $property): ?TypeScriptProperty
+    {
+        if (! empty($phpPropertyNode->getAttributes(Hidden::class))) {
+            return null;
+        }
+
+        return $property;
+    }
+}
