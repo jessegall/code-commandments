@@ -8,7 +8,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Install;
 /**
  * PostToolUse hook that counts tool uses and surfaces the cardinal rule once every
@@ -44,13 +44,12 @@ final class Remind extends Hook
      */
     protected function onPostToolUse(HookEvent $event): int
     {
-        $counter = ToolUseCounter::forRemind($event->root);
+        $counter = Counter::named($event->root, 'remind', 'surfaces the "trace to the source" rule once every 25 tool uses', every: self::INTERVAL);
 
-        if ($counter->bump() < self::INTERVAL) {
+        if (! $counter->due()) {
             return $this->pass();
         }
 
-        $counter->reset();
         $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [

@@ -94,7 +94,7 @@ final class HooksTest extends TestCase
         $this->assertContains($ownHook, $this->commands('PostToolUse'), "the user's own commandments hook survives");
     }
 
-    public function test_post_tool_use_is_one_unmatched_entry_but_pre_tool_use_is_scoped_to_bash(): void
+    public function test_mixed_matcher_events_wire_as_one_unmatched_entry(): void
     {
         HookRegistry::wire($this->path);
 
@@ -105,9 +105,10 @@ final class HooksTest extends TestCase
         $post = $settings['hooks']['PostToolUse'][0] ?? [];
         $this->assertArrayNotHasKey('matcher', $post, 'PostToolUse is unmatched — the dispatcher filters by tool');
 
-        // PreToolUse handlers all share Bash → the entry keeps the Bash matcher (perf).
+        // PreToolUse now mixes matchers too (JudgeReminder/Bash, SourceReminder/Edit,Write,MultiEdit) → also
+        // one UNMATCHED entry; each handler self-filters by tool.
         $pre = $settings['hooks']['PreToolUse'][0] ?? [];
-        $this->assertSame('Bash', $pre['matcher'] ?? null, 'PreToolUse is matched to Bash calls only');
+        $this->assertArrayNotHasKey('matcher', $pre, 'PreToolUse is unmatched — the dispatcher filters by tool');
     }
 
     /** @param array<string, mixed> $settings */

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
-use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
@@ -40,7 +40,7 @@ final class SessionResetTest extends TestCase
         PlanConstraints::inWorktree($this->root, $plan)->addLocal('No frontend logic.');
         PlanTesting::inWorktree($this->root, $plan)->set('Tests each phase.');
         file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nphase 2\n");
-        ToolUseCounter::forRemind($this->root)->bump();
+        Counter::named($this->root, 'remind')->bump();
     }
 
     private function fire(string $source): void

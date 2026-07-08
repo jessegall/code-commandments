@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
@@ -49,9 +49,7 @@ final class SessionReset extends Hook
         PlanTesting::inWorktree($event->root, $plan)->clear();
         PlanWorkingState::inWorktree($event->root)->clear();
 
-        foreach (ToolUseCounter::all($event->root) as $counter) {
-            $counter->clear();
-        }
+        Counter::clearAll($event->root);
 
         return $this->pass(); // Silent — a cleanup has nothing to say to the fresh session.
     }

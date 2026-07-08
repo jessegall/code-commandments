@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
 /**
@@ -44,13 +44,12 @@ final class WorkingState extends Hook
 
     protected function onPostToolUse(HookEvent $event): int
     {
-        $counter = ToolUseCounter::forWorkingStateReminder($event->root);
+        $counter = Counter::named($event->root, 'working-state-remind', 'nudges a refresh of the living working-state record once every 25 tool uses', every: self::INTERVAL);
 
-        if (! $this->active($event->root) || $counter->bump() < self::INTERVAL) {
+        if (! $this->active($event->root) || ! $counter->due()) {
             return $this->pass();
         }
 
-        $counter->reset();
         $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [

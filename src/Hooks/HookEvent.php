@@ -62,6 +62,15 @@ final class HookEvent
     }
 
     /**
+     * The file an `Edit`/`Write`/`MultiEdit` tool call targets (empty for other tools) — the `file_path`
+     * in the payload's `tool_input`.
+     */
+    public function filePath(): string
+    {
+        return (string) ($this->payload['tool_input']['file_path'] ?? '');
+    }
+
+    /**
      * A boolean flag on the payload (e.g. `stop_hook_active`), false when absent.
      */
     public function flag(string $key): bool

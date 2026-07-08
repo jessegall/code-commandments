@@ -178,14 +178,18 @@ final class Repent implements Command
 
     /**
      * The point-of-action nudge on a dry-run: the agent is looking at the exact diff an apply would make,
-     * so this is where to say "if a fix is wrong, report it — don't just discard it." Unconditional here
-     * (unlike the rate-limited post-apply {@see inviteFeedback}); reviewing IS the moment to decide.
+     * so this is where to say "judge THIS diff, and if a fix is wrong report it — don't just discard it."
+     * It explicitly warns against skipping from a remembered "known-bad" verdict: the auto-fixers change
+     * every release, so a fix that broke last week may be fixed now — the only source of truth is the diff
+     * in front of you. Unconditional here (unlike the rate-limited post-apply {@see inviteFeedback}).
      */
     private function reportHint(): void
     {
         $this->out(
-            "\033[2m↳ Review before applying. If a fix is broken, incomplete, or wrong — file it, don't just\n"
-            . "  discard it: `commandments report --reason=\"…\" --ref=path:line` (the source AND the bad output).\033[0m\n",
+            "\033[2m↳ Judge THIS diff on its own. The auto-fixers change every release, so never skip a repent from a\n"
+            . "  past result or a remembered \"this fix is broken\" — and don't record one as permanently broken;\n"
+            . "  re-run `--dry-run` and read the CURRENT output. If a fix is genuinely broken, incomplete, or wrong,\n"
+            . "  file it (don't just discard it): `commandments report --reason=\"…\" --ref=path:line` (source AND bad output).\033[0m\n",
         );
     }
 

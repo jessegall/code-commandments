@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 /**
@@ -34,13 +34,12 @@ final class ConstraintReminder extends Hook
     protected function onPostToolUse(HookEvent $event): int
     {
         $active = $this->active($event->root);
-        $counter = ToolUseCounter::forConstraintReminder($event->root);
+        $counter = Counter::named($event->root, 'constraint-remind', "re-surfaces the active plan's constraints once every 25 tool uses", every: self::INTERVAL);
 
-        if ($active === [] || $counter->bump() < self::INTERVAL) {
+        if ($active === [] || ! $counter->due()) {
             return $this->pass();
         }
 
-        $counter->reset();
         $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [

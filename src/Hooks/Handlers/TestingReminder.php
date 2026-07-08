@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\ToolUseCounter;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 /**
@@ -35,13 +35,12 @@ final class TestingReminder extends Hook
     protected function onPostToolUse(HookEvent $event): int
     {
         $method = $this->active($event->root);
-        $counter = ToolUseCounter::forTestingReminder($event->root);
+        $counter = Counter::named($event->root, 'testing-remind', "re-surfaces the active plan's testing methodology once every 25 tool uses", every: self::INTERVAL);
 
-        if ($method === '' || $counter->bump() < self::INTERVAL) {
+        if ($method === '' || ! $counter->due()) {
             return $this->pass();
         }
 
-        $counter->reset();
         $this->io->emit([
             'suppressOutput' => true,
             'hookSpecificOutput' => [

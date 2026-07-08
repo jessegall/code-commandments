@@ -193,6 +193,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
+| `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `WorkingState` | `PostToolUse, PreCompact, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat, a PreCompact flush, and re-injection on compact/resume. |
 <!-- END: hooks-table -->
 
