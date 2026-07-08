@@ -154,6 +154,61 @@ This is **not** a callback-only move — it fits any type with an identity value
 Where the type has **no** honest identity value, the field is not really always-optional — it has a real
 contract; go back to the required/`Optional`/`?T` choice above.
 
+### `Optional` — for a value that may be genuinely ABSENT
+
+`Optional` (`Spatie\LaravelData\Optional`) is **not** another word for `null`. It marks a field that may be
+**missing from the payload entirely**, and Spatie treats it structurally:
+
+- **Hydration** — `::from([...])` with the key absent leaves the field an `Optional` instance; you never
+  pass a value. Constructing by hand, give it that default so partial construction is legal:
+  `public readonly string|Optional $artist = new Optional()` (equivalently `Optional::create()`).
+- **Output** — an `Optional` field is **omitted from `toArray()`/JSON entirely**, not emitted as `null`.
+  That is the whole point: `{"title": …}` with **no** `artist` key — versus `?string`, which emits
+  `"artist": null`. So `Optional` is the honest, leaner way to say "this simply isn't here", and it is the
+  clean way to prune a `?T = null` field from the wire: retype it `T|Optional = new Optional()`.
+- **Need both "absent" and "explicit null"?** `string|Optional|null`, then
+  `SomeData::factory()->withoutOptionalValues()->from([...])` collapses `Optional` → `null` for output.
+
+Read the three-way as a statement about the **wire**: `Optional` = the key vanishes; `?T` = key present,
+`null`; `T = default` = key present, the fallback. Choose by what the consumer of the JSON must see.
+
+### Put the optionality at its SOURCE — the coarsest honest boundary
+
+This is the cardinal rule (**trace to the source**) applied to absence. When a whole **sub-object** may be
+absent, the optional belongs on the **container field where the object is used** — NOT scattered across
+that object's own leaves:
+
+```php
+// ✗ WRONG — every leaf carries Optional, so a Grid can exist half-built (no columns, no span). The
+//   absence is smeared across the children and the object's own invariant ("a grid has columns") is gone.
+final class Grid extends Data {
+    public function __construct(
+        public readonly int|Optional $columns = new Optional(),
+        public readonly int|Optional $span    = new Optional(),
+    ) {}
+}
+
+// ✓ RIGHT — Grid is ALWAYS whole, with honest concrete defaults; "is there a grid at all?" lives on the
+//   PARENT's field. The invariant holds: if a Grid exists, it is a valid grid.
+final class Grid extends Data {
+    public function __construct(
+        public readonly int $columns = 1,
+        public readonly int $span    = 1,
+    ) {}
+}
+final class UiChrome extends Data {
+    public function __construct(
+        public readonly Grid|Optional       $grid  = new Optional(),
+        public readonly StyleToken|Optional $style = new Optional(),
+    ) {}
+}
+```
+
+**A `Data` class where EVERY field is `T|Optional` is the same god-DTO smell as all-`?T = null`** — the
+type now promises that *nothing* is ever present. Don't trade one lie for the other. Ask where the absence
+is really born: almost always it is the *whole object* that is present-or-absent, so make the enclosing
+field `T|Optional` and give this object honest, concrete leaves.
+
 ### Collections — type the element, collect the list
 
 - **`#[DataCollectionOf(X::class)]`** (or a `/** @var X[] */` docblock) on the property is **required** —

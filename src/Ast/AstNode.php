@@ -2220,6 +2220,18 @@ class AstNode
     }
 
     /**
+     * Is this node a property fetch of a fixed member name — `<recv>->{$name}` or `<recv>?->{$name}`?
+     * A pure-AST shape check (no type resolution); a detector composes it with a semantic `where` to
+     * decide what the receiver IS. (`->value` is a backed enum's magic backing member.)
+     */
+    public function isPropertyFetchNamed(string $name): bool
+    {
+        return ($this->node instanceof PropertyFetch || $this->node instanceof NullsafePropertyFetch)
+            && $this->node->name instanceof Identifier
+            && $this->node->name->toString() === $name;
+    }
+
+    /**
      * Is this array literal a projection of the enclosing object's OWN state — a
      * non-empty keyed map whose every value is a `$this->field` read (`['accessToken'
      * => $this->accessToken, …]`)? That is a `toArray()`/`toValues()` serializer
