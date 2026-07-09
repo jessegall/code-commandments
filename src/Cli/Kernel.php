@@ -148,7 +148,9 @@ final class Kernel
         composer.json PSR-4 map (plus app/src), so scaffolding like database/,
         storage/ and config/ isn't judged. Edit that call (or run `commandments
         config reindex` to re-detect) to tune what's in scope; pass an explicit
-        [path] to scan it directly instead.
+        [path] to scan it directly instead. Add \$config->exclude('app/Generated')
+        to subtract a path from ANY run — the tree is still parsed (so cross-file
+        rules stay correct) but nothing in it is ever reported or rewritten.
 
         By default judge writes a Markdown checklist (.commandments/sins.md). Judge
         ONCE, then work that file line-by-line — a full scan is slow — deleting

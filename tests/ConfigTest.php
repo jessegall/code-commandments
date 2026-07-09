@@ -126,6 +126,15 @@ final class ConfigTest extends TestCase
         $config->apply([new ConfigTunableDetector], []);
     }
 
+    public function test_exclude_accumulates_relative_paths_none_by_default(): void
+    {
+        $this->assertSame([], new Config()->excludedPaths(), 'nothing excluded by default');
+
+        $config = new Config()->exclude('src/Generated')->exclude('database', 'storage/framework');
+
+        $this->assertSame(['src/Generated', 'database', 'storage/framework'], $config->excludedPaths());
+    }
+
     public function test_load_reads_the_config_file_from_a_project(): void
     {
         $dir = $this->project(

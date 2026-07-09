@@ -41,6 +41,9 @@ final class Config
     /** @var list<string> The source roots to scan (relative to the project). Empty ⇒ auto-detect + scaffold. */
     private array $roots = [];
 
+    /** @var list<string> Paths (relative to the project) subtracted from the scan — never a target. */
+    private array $excluded = [];
+
     /**
      * Declare the source roots `judge` and `repent` scan — the project's own list of directories,
      * the ONE source of scan scope (both commands read it, so neither can scope differently). On a
@@ -63,6 +66,35 @@ final class Config
     public function sourceRoots(): array
     {
         return $this->roots;
+    }
+
+    /**
+     * Subtract explicit paths from the scan — declared ON TOP of the inclusive {@see paths}, so a
+     * directory or file listed here (relative to the project) is NEVER a target: judge never reports
+     * a sin in it and repent never rewrites it, however it was reached (a broad root, `--changes`,
+     * `--branch`). Like a {@see paths} root, an excluded path is a project-relative directory or file;
+     * unlike the per-file `#[Frozen]` marker, it excludes a whole subtree in one config line.
+     *
+     * The tree is still PARSED (so cross-file detectors that resolve a type or a caller defined under
+     * an excluded path stay correct) — only the OUTPUT is scoped out, exactly as `--changes`/`--branch`
+     * parse the whole path but scope what they report.
+     */
+    public function exclude(string ...$paths): self
+    {
+        $this->excluded = [...$this->excluded, ...$paths];
+
+        return $this;
+    }
+
+    /**
+     * The paths this project excludes from the scan (relative to the project; none by default). The
+     * CLI resolves these into a {@see Cli\Scope\ExcludedScope} compounded into every run's scope.
+     *
+     * @return list<string>
+     */
+    public function excludedPaths(): array
+    {
+        return $this->excluded;
     }
 
     /**

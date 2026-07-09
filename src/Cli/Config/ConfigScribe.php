@@ -29,6 +29,8 @@ final class ConfigScribe
          |
          | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
          |             adjust scope, or run `commandments config reindex`).
+         | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
+         |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
          | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
          |             hook by its class (or use `commandments disable/enable <sin>`). The
          |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.

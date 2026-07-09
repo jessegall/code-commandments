@@ -30,7 +30,7 @@ final class Scope implements FileScope
             default => new EntireCodebase,
         };
 
-        return new self(self::canonical($strategy->restrictTo($path)), self::always());
+        return new self(self::canonical($strategy->restrictTo($path)), self::always($path));
     }
 
     /**
@@ -92,13 +92,21 @@ final class Scope implements FileScope
     }
 
     /**
-     * The scopes compounded into EVERY run — the frozen exclusion is always among a run's targets rules.
+     * The scopes compounded into EVERY run — a {@see FrozenScope} always (a `#[Frozen]` file is never
+     * a target), plus the project's {@see ExcludedScope} when a $root is known (an `exclude()`d path
+     * is never a target either). Both are pure subtractions, so they AND cleanly with any strategy.
      *
      * @return list<FileScope>
      */
-    private static function always(): array
+    private static function always(?string $root = null): array
     {
-        return [new FrozenScope()];
+        $restrictions = [new FrozenScope()];
+
+        if ($root !== null) {
+            $restrictions[] = ExcludedScope::forProject($root);
+        }
+
+        return $restrictions;
     }
 
     /**
