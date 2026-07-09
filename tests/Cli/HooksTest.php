@@ -111,6 +111,26 @@ final class HooksTest extends TestCase
         $this->assertArrayNotHasKey('matcher', $pre, 'PreToolUse is unmatched — the dispatcher filters by tool');
     }
 
+    public function test_a_disabled_hook_is_dropped_from_the_wiring(): void
+    {
+        // A project config that disables the judge reminder — forProject drops it, so its Stop moment
+        // (which no other builtin shares... but PreToolUse/Bash it shares) never wires JUST for it.
+        $dir = sys_get_temp_dir() . '/cc-forproject-' . uniqid('', true);
+        mkdir($dir . '/.commandments', 0777, true);
+        file_put_contents(
+            $dir . '/.commandments/config.php',
+            "<?php\n\nuse JesseGall\\CodeCommandments\\Config;\n\nreturn function (Config \$config): void {\n"
+            . "    \$config->disable(\\JesseGall\\CodeCommandments\\Hooks\\Handlers\\JudgeReminder::class);\n};\n",
+        );
+
+        $hooks = HookRegistry::forProject($dir);
+
+        $this->assertNotContains(\JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder::class, $hooks);
+        $this->assertContains(\JesseGall\CodeCommandments\Hooks\Handlers\Remind::class, $hooks, 'the other builtins stay');
+
+        exec('rm -rf ' . escapeshellarg($dir));
+    }
+
     /** @param array<string, mixed> $settings */
     private function write(array $settings): void
     {

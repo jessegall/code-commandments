@@ -29,8 +29,9 @@ final class ConfigScribe
          |
          | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
          |             adjust scope, or run `commandments config reindex`).
-         | disable() — silence a rule by its Sin, Detector, or whole Skill class (or use
-         |             `commandments disable/enable <sin>`).
+         | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
+         |             hook by its class (or use `commandments disable/enable <sin>`). The
+         |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
          |
          | Extend it inside the closure:
          |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder

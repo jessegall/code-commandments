@@ -70,6 +70,10 @@ final class Config
      * points at (drops every detector for that sin), or by a {@see Skills\Skill} class (drops
      * every detector whose sin that skill teaches — silence a whole discipline in one line).
      *
+     * The SAME verb silences a Claude Code {@see Hooks\Hook}: name a hook class here and it drops
+     * from both the wiring and the dispatch ({@see enabledHooks}) — so a project turns off a nudge
+     * (the judge reminder, say) without hand-editing `settings.json`.
+     *
      * @param  class-string  ...$classes
      */
     public function disable(string ...$classes): self
@@ -143,6 +147,23 @@ final class Config
     public function hooks(): array
     {
         return $this->hooks;
+    }
+
+    /**
+     * The hook classes to actually wire and run for this project — the given set (the builtins plus
+     * any {@see hook}) minus any a project silenced by naming its class in {@see disable}. A hook is
+     * disabled exactly like a rule; the {@see Hooks\HookRegistry} routes both wiring and dispatch
+     * through here, so a disabled hook stays off even before the next `sync` re-wires settings.
+     *
+     * @param  list<class-string<Hooks\Hook>>  $all
+     * @return list<class-string<Hooks\Hook>>
+     */
+    public function enabledHooks(array $all): array
+    {
+        return array_values(array_filter(
+            $all,
+            fn (string $class): bool => ! in_array($class, $this->disabled, true),
+        ));
     }
 
     /**

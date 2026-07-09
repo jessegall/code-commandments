@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
+use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
@@ -62,6 +64,16 @@ final class ConfigTest extends TestCase
         $result = $config->apply([new ConfigTunableDetector], []);
 
         $this->assertSame([], $result['backend']);
+    }
+
+    public function test_disable_by_hook_class_drops_that_hook(): void
+    {
+        // The SAME disable() verb silences a Claude Code hook — enabledHooks filters the given set.
+        $config = new Config()->disable(JudgeReminder::class);
+
+        $kept = $config->enabledHooks([JudgeReminder::class, Remind::class]);
+
+        $this->assertSame([Remind::class], $kept, 'the disabled hook is gone, the other stays');
     }
 
     public function test_register_adds_a_custom_detector_routed_to_its_engine(): void

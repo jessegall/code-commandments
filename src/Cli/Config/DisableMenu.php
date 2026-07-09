@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Config;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use PhpParser\Node\Expr\Assign;
@@ -16,20 +17,23 @@ use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Use_;
 
 /**
- * The disable menus in `.commandments/config.php` — a `$disabledSkills` and a `$disabledSins`
- * closure, each one variadic `$config->disable(...)` call listing every shipped skill/sin as a
- * commented-out argument. Uncommenting a line disables that rule. `sync` re-ensures the menus on
- * every composer update: missing entries are added commented AND every entry is regrouped under the
- * right `Backend`/`Frontend` divider (self-healing — a rule that drifted into the wrong section is
- * moved back). An UNCOMMENTED entry — the human's active choice — is never removed, only regrouped;
- * a menu carrying any unrecognized custom line is left to plain append, untouched. Like every scribe
- * it edits through the AST, splicing by node offset.
+ * The disable menus in `.commandments/config.php` — a `$disabledSkills`, a `$disabledSins`, and a
+ * `$disabledHooks` closure, each one variadic `$config->disable(...)` call listing every shipped
+ * skill/sin/hook as a commented-out argument. Uncommenting a line disables that rule (or, for the
+ * hooks menu, that Claude Code nudge). `sync` re-ensures the menus on every composer update: missing
+ * entries are added commented AND every rule entry is regrouped under the right `Backend`/`Frontend`
+ * divider (self-healing — a rule that drifted into the wrong section is moved back); the hooks menu
+ * is a flat list, ungrouped, since a hook has no engine. An UNCOMMENTED entry — the human's active
+ * choice — is never removed, only regrouped; a menu carrying any unrecognized custom line is left to
+ * plain append, untouched. Like every scribe it edits through the AST, splicing by node offset.
  */
 final class DisableMenu
 {
     private const string SKILLS_VAR = 'disabledSkills';
 
     private const string SINS_VAR = 'disabledSins';
+
+    private const string HOOKS_VAR = 'disabledHooks';
 
     private const string PACKAGE_NS = 'JesseGall\\CodeCommandments\\';
 
@@ -61,15 +65,47 @@ final class DisableMenu
 
         $this->ensureImport('Skills');
         $this->ensureImport('Sins');
-        $this->ensureDefinition(self::SKILLS_VAR, 'Uncomment a line to disable that skill (every detector it teaches).', $this->skillRefs());
-        $this->ensureDefinition(self::SINS_VAR, 'Uncomment a line to disable that single sin.', $this->sinRefs());
+        $this->ensureImport('Hooks');
+
+        foreach ($this->menus() as $menu) {
+            $this->ensureDefinition($menu['var'], $menu['purpose'], $menu['refs'], $menu['grouped']);
+        }
+
         $this->ensureUseClause();
         $this->ensureCalls();
-        $this->reconcile(self::SKILLS_VAR, $this->skillRefs());
-        $this->reconcile(self::SINS_VAR, $this->sinRefs());
+
+        foreach ($this->menus() as $menu) {
+            $this->reconcile($menu['var'], $menu['refs'], $menu['grouped']);
+        }
     }
 
     // ----------[ Menu contents ]----------
+
+    /**
+     * The menus this manages, each self-describing: its closure variable, its one-line purpose, the
+     * canonical references it lists, and whether those group by engine. Rules (skills, sins) group
+     * Backend/Frontend; hooks are engine-agnostic, so their menu is a flat list.
+     *
+     * @return list<array{var: string, purpose: string, refs: list<string>, grouped: bool}>
+     */
+    private function menus(): array
+    {
+        return [
+            ['var' => self::SKILLS_VAR, 'purpose' => 'Uncomment a line to disable that skill (every detector it teaches).', 'refs' => $this->skillRefs(), 'grouped' => true],
+            ['var' => self::SINS_VAR, 'purpose' => 'Uncomment a line to disable that single sin.', 'refs' => $this->sinRefs(), 'grouped' => true],
+            ['var' => self::HOOKS_VAR, 'purpose' => 'Uncomment a line to disable that Claude Code hook (a wired nudge).', 'refs' => $this->hookRefs(), 'grouped' => false],
+        ];
+    }
+
+    /**
+     * Every wired Claude Code hook as a package-relative class reference, sorted.
+     *
+     * @return list<string>
+     */
+    private function hookRefs(): array
+    {
+        return $this->refs(HookRegistry::BUILTINS);
+    }
 
     /**
      * Every shipped skill as a package-relative class reference, backend first, sorted.
@@ -147,7 +183,7 @@ final class DisableMenu
      *
      * @param  list<string>  $refs
      */
-    private function ensureDefinition(string $var, string $purpose, array $refs): void
+    private function ensureDefinition(string $var, string $purpose, array $refs, bool $grouped): void
     {
         if ($this->hasMenu($var)) {
             return;
@@ -159,7 +195,7 @@ final class DisableMenu
             ' */',
             "\${$var} = function (Config \$config): void {",
             '    $config->disable(',
-            ...array_map(static fn (string $entry): string => $entry === '' ? '' : "        {$entry}", $this->entries($refs)),
+            ...array_map(static fn (string $entry): string => $entry === '' ? '' : "        {$entry}", $this->entries($refs, $grouped)),
             '    );',
             '};',
         ];
@@ -168,13 +204,18 @@ final class DisableMenu
     }
 
     /**
-     * The menu's argument lines — every reference commented out, split by an engine divider.
+     * The menu's argument lines — every reference commented out. A grouped menu splits by an engine
+     * divider; an ungrouped one (the hooks menu) is a flat, already-sorted list.
      *
      * @param  list<string>  $refs
      * @return list<string>
      */
-    private function entries(array $refs): array
+    private function entries(array $refs, bool $grouped): array
     {
+        if (! $grouped) {
+            return array_map(static fn (string $ref): string => "// {$ref}::class,", $refs);
+        }
+
         $backend = [];
         $frontend = [];
 
@@ -204,7 +245,7 @@ final class DisableMenu
      */
     private function ensureUseClause(): void
     {
-        foreach ([self::SKILLS_VAR, self::SINS_VAR] as $var) {
+        foreach ([self::SKILLS_VAR, self::SINS_VAR, self::HOOKS_VAR] as $var) {
             $closure = $this->returnClosure();
 
             if ($this->carries($closure, $var)) {
@@ -230,7 +271,7 @@ final class DisableMenu
      */
     private function ensureCalls(): void
     {
-        foreach ([self::SKILLS_VAR, self::SINS_VAR] as $var) {
+        foreach ([self::SKILLS_VAR, self::SINS_VAR, self::HOOKS_VAR] as $var) {
             $closure = $this->returnClosure();
             $body = substr($this->source(), $closure->getStartFilePos(), $closure->getEndFilePos() - $closure->getStartFilePos());
 
@@ -251,7 +292,7 @@ final class DisableMenu
      *
      * @param  list<string>  $canonical
      */
-    private function reconcile(string $var, array $canonical): void
+    private function reconcile(string $var, array $canonical, bool $grouped): void
     {
         $call = $this->menuDisableCall($var);
 
@@ -279,7 +320,7 @@ final class DisableMenu
             $entries[$ref] ??= true; // a canonical rule the menu lacks, added commented
         }
 
-        $this->replaceRange($open + 1, $close, "\n" . implode("\n", $this->groupedLines($entries)) . "\n    ");
+        $this->replaceRange($open + 1, $close, "\n" . implode("\n", $this->groupedLines($entries, $grouped)) . "\n    ");
     }
 
     /**
@@ -316,14 +357,25 @@ final class DisableMenu
     }
 
     /**
-     * The grouped, indented argument lines for a `disable(…)` body — Backend entries, a blank line, then
-     * Frontend entries, each carrying its preserved commented state and sorted within its group.
+     * The indented argument lines for a `disable(…)` body, each carrying its preserved commented
+     * state. A grouped menu emits Backend entries, a blank line, then Frontend entries (sorted within
+     * each group); an ungrouped menu (hooks) emits one flat, sorted list.
      *
      * @param  array<string, bool>  $entries  ref => commented?
      * @return list<string>
      */
-    private function groupedLines(array $entries): array
+    private function groupedLines(array $entries, bool $grouped): array
     {
+        if (! $grouped) {
+            ksort($entries);
+
+            return array_values(array_map(
+                static fn (bool $commented, string $ref): string => '        ' . ($commented ? '// ' : '') . $ref . self::SUFFIX,
+                $entries,
+                array_keys($entries),
+            ));
+        }
+
         $backend = [];
         $frontend = [];
 

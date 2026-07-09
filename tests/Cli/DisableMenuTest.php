@@ -43,9 +43,29 @@ final class DisableMenuTest extends TestCase
         $this->assertStringContainsString('// Skills\Backend\ValueObjects::class,', $config);
         $this->assertStringContainsString('// Sins\Backend\FeatureEnvy::class,', $config);
         $this->assertStringContainsString('// Sins\Frontend\SwitchCase::class,', $config);
-        $this->assertStringContainsString('use ($disabledSkills, $disabledSins)', $config);
+        $this->assertStringContainsString('$disabledHooks = function (Config $config): void {', $config);
+        $this->assertStringContainsString('// Hooks\Handlers\JudgeReminder::class,', $config);
+        $this->assertStringContainsString('use ($disabledSkills, $disabledSins, $disabledHooks)', $config);
         $this->assertStringContainsString('$disabledSkills($config);', $config);
         $this->assertStringContainsString('$disabledSins($config);', $config);
+        $this->assertStringContainsString('$disabledHooks($config);', $config);
+        $this->assertValidPhp();
+    }
+
+    public function test_uncommenting_a_hook_disables_it(): void
+    {
+        $this->scaffold();
+        DisableMenu::inProject($this->dir)->ensure();
+
+        $this->write(str_replace(
+            '// Hooks\Handlers\JudgeReminder::class,',
+            'Hooks\Handlers\JudgeReminder::class,',
+            $this->config(),
+        ));
+        DisableMenu::inProject($this->dir)->ensure(); // survives a re-ensure
+
+        $this->assertContains(\JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder::class, $this->disabled());
+        $this->assertSame(1, substr_count($this->config(), 'Hooks\Handlers\JudgeReminder::class'), 'not duplicated');
         $this->assertValidPhp();
     }
 
@@ -161,7 +181,7 @@ final class DisableMenuTest extends TestCase
 
         $config = $this->config();
         $this->assertStringContainsString('\JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,', $config, 'human line kept');
-        $this->assertStringContainsString('use ($disabledSkills, $disabledSins)', $config);
+        $this->assertStringContainsString('use ($disabledSkills, $disabledSins, $disabledHooks)', $config);
         $this->assertStringContainsString('// Skills\Backend\ValueObjects::class,', $config);
         $this->assertValidPhp();
     }

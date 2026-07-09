@@ -162,7 +162,7 @@ _92 sins across 21 skills._
 | `NestedTypeMissingTypeScript` | Flags a property on a `#[TypeScript]` Data whose nested Data/backed-enum type itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated frontend contract. |
 | `NewDataObject` | Detects `new Data(...)` instead of `::from(...)` — skips casts, name maps, nested hydration, and factories. |
 | `NonFinalData` | Detects non-final Spatie Data classes (DTOs are values, not bases). |
-| `NullToOptionalMap` | Flags a hand-rolled null→`Optional` map — a `new Optional` sitting as a ternary fallback (`$x === null ? new Optional : Foo::from($x)`) or the right of a `??` (`expr() ?? new Optional`). |
+| `NullToOptionalMap` | Flags a hand-rolled null→`Optional` map — an "absent" Optional (`new Optional` OR the preferred `Optional::create()`) sitting as a ternary fallback (`$x === null ? Optional::create() : Foo::from($x)`) or the right of a `??` (`expr() ?? Optional::create()`). |
 | `NullableWireObject` | Flags a nullable nested-object field (`T \| null`, T a `Data` subclass or enum) on a `#[TypeScript]` Data class, where `T \| Optional` belongs: on the wire `?T = null` ships `"field": null`, whereas `Optional` omits it — what the frontend's optional-chaining reads for "absent". |
 | `PreferOptionalCreate` | Flags a raw `new Optional` in a runtime expression and prefers Spatie's built-in `Optional::create()` factory. |
 

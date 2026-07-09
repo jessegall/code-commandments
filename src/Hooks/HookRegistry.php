@@ -55,13 +55,17 @@ final class HookRegistry
 
     /**
      * The hooks to wire for the project at $dir — the {@see BUILTINS} plus any it registered with
-     * `$config->hook(...)`.
+     * `$config->hook(...)`, minus any it silenced with `$config->disable(...)`. The disable filter
+     * runs here so it governs BOTH callers at once: {@see wire} (the moment never gets wired) and
+     * {@see HookDispatch} (a still-wired moment's handler never runs).
      *
      * @return list<class-string<Hook>>
      */
     public static function forProject(string $dir): array
     {
-        return [...self::BUILTINS, ...Config::load($dir)->hooks()];
+        $config = Config::load($dir);
+
+        return $config->enabledHooks([...self::BUILTINS, ...$config->hooks()]);
     }
 
     /**
