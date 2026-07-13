@@ -165,6 +165,24 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
+     * Does this node live in Data-class TERRITORY — a `Data` subclass itself, or a trait
+     * any of whose consumers is one (a page-object concern)? The scope a Data-idiom
+     * exemption (computed hooks, serialized fields) extends to: what a Data class pulls
+     * in via a trait is written FOR Data classes.
+     */
+    public function inDataScope(): bool
+    {
+        if ($this->isDataClass()) {
+            return true;
+        }
+
+        return array_any(
+            $this->codebase->usersOfTrait($this->enclosingClassName()),
+            fn (string $user): bool => $this->codebase->extends($user, self::DATA),
+        );
+    }
+
+    /**
      * Is this a `Data` class the transformer compiles to a frontend type — a `Data` subclass carrying
      * `#[TypeScript]`? That attribute IS the "this shape travels to the frontend" signal: every public
      * field is emitted into `generated.ts` and read by a `.vue`.

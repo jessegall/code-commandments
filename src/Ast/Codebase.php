@@ -59,6 +59,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var array<string, string>|null  child FQCN => parent FQCN */
     private ?array $parentMap = null;
 
+    /** @var array<string, list<string>>|null  trait FQCN => FQCNs of the class-likes that `use` it */
+    private ?array $traitUserMap = null;
+
     /** @var array<string, list<string>>|null  class FQCN => directly-implemented interface FQCNs */
     private ?array $interfaceMap = null;
 
@@ -709,6 +712,52 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * @return array<string, string>  child FQCN => parent FQCN
      */
+    /**
+     * The class-likes that `use` the given trait (directly) — "who consumes this trait",
+     * the reverse of a `TraitUse`. Empty when nothing uses it or the name isn't a trait.
+     *
+     * @return list<string>
+     */
+    public function usersOfTrait(?string $trait): array
+    {
+        if ($trait === null) {
+            return [];
+        }
+
+        return $this->traitUserMap()[ltrim($trait, '\\')] ?? [];
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function traitUserMap(): array
+    {
+        if ($this->traitUserMap !== null) {
+            return $this->traitUserMap;
+        }
+
+        $map = [];
+        $finder = new NodeFinder;
+
+        foreach ($this->files as $file) {
+            foreach ($finder->findInstanceOf($file->ast, ClassLike::class) as $class) {
+                $user = ($class->namespacedName ?? null)?->toString();
+
+                if ($user === null) {
+                    continue;
+                }
+
+                foreach ($class->getTraitUses() as $use) {
+                    foreach ($use->traits as $trait) {
+                        $map[ltrim($trait->toString(), '\\')][] = $user;
+                    }
+                }
+            }
+        }
+
+        return $this->traitUserMap = $map;
+    }
+
     private function parentMap(): array
     {
         if ($this->parentMap !== null) {

@@ -44,6 +44,8 @@ field, or a value object, and delete the defence.
 - Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
+- A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
+  _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
 
 ## Bad → good
 
@@ -110,17 +112,74 @@ public function nestUnder(string $prefix, string $segment, array $routes): array
 }
 ```
 
+```php
+// Bad
+final class LabelPrintDefaults
+{
+    public Weight $maxParcelWeight {
+        get => new Weight(23000);
+    }
+
+    public function __construct(
+        private readonly string $printerId,
+        private readonly bool $duplex = false,
+    ) {}
+
+    public function printerId(): string
+    {
+        return $this->printerId;
+    }
+
+    public function copiesFor(int $parcels): int
+    {
+        return $this->duplex ? (int) ceil($parcels / 2) : $parcels;
+    }
+
+    public function describe(): string
+    {
+        return sprintf('%s (%s)', $this->printerId, $this->duplex ? 'duplex' : 'simplex');
+    }
+}
+
+// Good
+final class GlowingTile implements AnimatedTile
+{
+    /** Derived from own state — a real computed property. */
+    public ?string $enterEffect { get => $this->intensity > 5 ? 'flash' : 'fade'; }
+
+    /** Delegates to own behaviour — still reads the instance. */
+    public ?string $leaveEffect { get => $this->resolveLeave(); }
+
+    /** A get/set pair is judged as a unit — the setter earns the hook syntax. */
+    public string $easing {
+        get => 'ease-' . $this->easingMode;
+        set => strtolower($value);
+    }
+
+    private string $easingMode = 'in';
+
+    public function __construct(private readonly int $intensity) {}
+
+    private function resolveLeave(): ?string
+    {
+        return $this->intensity > 0 ? 'shrink' : null;
+    }
+}
+```
+
 ## When it fires
 
 - Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
 - Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
 - Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`
+- A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax — `UselessPropertyHookDetector`
 
 ## Checklist
 
 - [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
+- [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
 
 ## Related skills
 

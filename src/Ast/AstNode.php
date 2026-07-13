@@ -34,6 +34,7 @@ use PhpParser\Node\Expr\Isset_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Expr\StaticPropertyFetch;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\NullsafeMethodCall;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
@@ -1236,6 +1237,53 @@ class AstNode
         }
 
         return true;
+    }
+
+    /**
+     * Does this subtree reference the instance or its own class behaviour — a `$this`
+     * variable (property read, method call, closure capture), or a `self::`/`static::`/
+     * `parent::` CALL or static-property read (own, late-bound behaviour — the value
+     * derives from which class you are, exactly like `$this->…`)? The "is this computed
+     * FROM the object" question. A class CONSTANT (`self::X`, an enum case) does NOT
+     * count: constants are valid property defaults, so a body made only of them still
+     * produces the same value however the object is configured.
+     */
+    public function referencesThis(): bool
+    {
+        return new NodeFinder()->findFirst(
+            [$this->node],
+            static fn (Node $node): bool => ($node instanceof Variable && $node->name === 'this')
+                || (($node instanceof StaticCall || $node instanceof StaticPropertyFetch)
+                    && $node->class instanceof Name
+                    && in_array($node->class->toLowerString(), ['self', 'static', 'parent'], true)),
+        ) !== null;
+    }
+
+    /**
+     * Is this a property hook DECLARATION without a body — an interface's / abstract
+     * class's `{ get; }`, a requirement rather than an implementation?
+     */
+    public function isAbstractHook(): bool
+    {
+        return $this->node instanceof PropertyHook && $this->node->body === null;
+    }
+
+    /**
+     * Does the property this hook belongs to ALSO declare a `set` hook? A get/set pair
+     * is a property that earns its hook syntax as a unit — judged together, not by the
+     * getter alone.
+     */
+    public function hookedPropertyHasSetter(): bool
+    {
+        $property = $this->parent()->node;
+
+        $hooks = match (true) {
+            $property instanceof Property => $property->hooks,
+            $property instanceof Param => $property->hooks,
+            default => [],
+        };
+
+        return array_any($hooks, static fn (PropertyHook $hook): bool => $hook->name->toString() === 'set');
     }
 
     /**
