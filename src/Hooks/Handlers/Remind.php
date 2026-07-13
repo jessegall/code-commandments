@@ -24,6 +24,9 @@ final class Remind extends Hook
         . 'it surfaces. Do NOT silence a detector with a ?? default, cast, null-check, wrapper, '
         . 'constructor override, or try/catch — that launders the problem. If the honest fix '
         . 'touches many call sites, touch them; that breadth is the bug surfacing. '
+        . 'A `commandments report` is NOT a deferral: it claims the DETECTOR is wrong, nothing '
+        . 'else. A correct finding whose honest fix is big (a migration, a cascading refactor) '
+        . 'is YOUR work — implement it; never file it to move on. '
         . 'And keep to the skills you loaded — they are the standard for every change, not a '
         . 'one-time read; re-open the relevant one before you touch its subject.';
 

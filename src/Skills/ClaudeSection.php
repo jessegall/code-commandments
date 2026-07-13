@@ -51,6 +51,14 @@ final class ClaudeSection
           `vendor/bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
           (repeat `--ref` for EVERY file involved — a bug spanning files references each).
           Never rationalise a real finding as "pre-existing baseline."
+        - **A report is NOT a deferral.** A detector-report claims ONE thing: the flagged
+          code is CORRECT under the architecture and the detector is wrong. If the finding
+          is right and an honest fix exists, you MUST implement it — however far it
+          cascades: many call sites, a data migration, a refactor that ripples. That
+          breadth IS the point; it is the debt surfacing, not a reason to file. The moment
+          your report would contain "the honest fix is real, but…" — stop: everything
+          after "but" is scope you own. Cost, timing, "needs its own change", or "risks
+          breaking existing data" are never grounds for a report; they are the work.
 
         **You are ENCOURAGED to make the tool better — not just when a finding is clearly
         wrong.** Surface every improvement idea: a rule that's missing or should catch more,

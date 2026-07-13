@@ -47,6 +47,18 @@ final class Report implements Command
             return 2;
         }
 
+        // The gate every detector-report passes: a report claims the DETECTOR is wrong —
+        // nothing else. Filed at the moment of temptation, so a "correct but expensive"
+        // finding is never laundered into a report instead of fixed.
+        if ($detector !== null) {
+            fwrite(STDERR,
+                "⚠ A detector-report claims ONE thing: the flagged code is CORRECT under the\n"
+                . "  architecture and the detector is wrong. It is NOT a deferral. If the finding\n"
+                . "  is right and an honest fix exists — however big (a migration, a cascading\n"
+                . "  refactor, many call sites) — you must IMPLEMENT it; a report of a correct\n"
+                . "  finding will be closed and the fix will still be owed.\n");
+        }
+
         [$issueTitle, $body] = $detector !== null
             ? ["[detector-report] {$detector}", "**Detector:** `{$detector}`\n\n"]
             : ['[bug-report] ' . ($input->option('title') ?? $this->summarise($reason)), ''];
