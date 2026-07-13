@@ -57,4 +57,41 @@ final class KeyedLookupEnvyDetectorTest extends TestCase
 
         $this->assertSame([], (new KeyedLookupEnvyDetector)->find(Codebase::fromString($code)));
     }
+
+    public function test_does_not_flag_the_map_owner_answering_from_its_own_lookup(): void
+    {
+        // Reported (#348): the lookup is the HOST's own method (`$this->find(...)`) — the
+        // method already lives on the owner of the map, tell-dont-ask's prescribed home.
+        // Moving it onto the value-object param would hand the whole map to every ref.
+        // The same answer THROUGH a collaborator is still the sin.
+        $code = <<<'PHP'
+        <?php
+        final class SocketRef {
+            public function __construct(public readonly string $nodeId, public readonly string $port) {}
+        }
+        final class NodeInstance {
+            public function portLabel(string $port): string { return 'n · '.$port; }
+        }
+        final class WorkflowInstance {
+            /** @var array<string, NodeInstance> */
+            private array $instances = [];
+            public function find(string $id): object { return option($this->instances[$id] ?? null); }
+            public function wireLabel(SocketRef $ref): string {
+                return $this->find($ref->nodeId)
+                    ->map(static fn (NodeInstance $node): string => $node->portLabel($ref->port))
+                    ->unwrapOr($ref->port);
+            }
+        }
+        final class WireLabeller {
+            public function __construct(private readonly object $instances) {}
+            public function label(SocketRef $ref): string {
+                return $this->instances->find($ref->nodeId)->portLabel($ref->port);
+            }
+        }
+        PHP;
+
+        $hits = (new KeyedLookupEnvyDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['WireLabeller::label'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
 }

@@ -129,9 +129,13 @@ final class LookupEnvy
             return false;
         }
 
-        // The producing call goes through a $this collaborator and is keyed by the
-        // param's member (`$this->registry->get($node->key)`).
+        // The producing call goes through a $this COLLABORATOR and is keyed by the
+        // param's member (`$this->registry->get($node->key)`). A chain of the host's
+        // OWN methods (`$this->find($ref->nodeId)->…`) is NOT envy — the method already
+        // lives on the owner of the data it keys into, tell-dont-ask's prescribed
+        // home (#348); only a chain crossing a property hop reaches a collaborator.
         return $this->rootsInThis($producer)
+            && $this->throughCollaborator($producer)
             && $this->anyArgUsesParamMember($producer->args, $param)
             && $this->navigationDepth($node) <= self::MAX_DEPTH;
     }
@@ -213,6 +217,25 @@ final class LookupEnvy
             if ($this->isMemberAccess($node) && $node->var instanceof Variable && $node->var->name === $param) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this receiver chain cross a PROPERTY hop (`$this->registry->…`) on its way
+     * down — i.e. does the fetch go through a held collaborator rather than the host's
+     * own methods (`$this->find(...)->…`)? The host answering from its own state is the
+     * owner speaking, not envy.
+     */
+    private function throughCollaborator(Node $expr): bool
+    {
+        while ($this->isMemberAccess($expr)) {
+            if ($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch) {
+                return true;
+            }
+
+            $expr = $expr->var;
         }
 
         return false;
