@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 final class PlanConstraintsTest extends TestCase
@@ -25,7 +26,7 @@ final class PlanConstraintsTest extends TestCase
 
     private function constraints(PlanExecution $plan): PlanConstraints
     {
-        return PlanConstraints::inWorktree($this->root, $plan->build());
+        return PlanConstraints::inSession(Workspace::at($this->root), $plan->build());
     }
 
     public function test_active_is_global_then_local(): void

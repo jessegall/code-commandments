@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -65,7 +66,7 @@ final class HookDispatchTest extends TestCase
         // A plan with a constraint makes BOTH the cardinal-rule Remind AND the ConstraintReminder fire on
         // the 25th tool use — the dispatcher merges them into ONE additionalContext.
         $this->writeConfig('$config->planExecution(fn ($p) => $p->constraint(\'No frontend logic.\'));');
-        PlanMarker::inWorktree($this->root)->activate('sha1');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha1');
 
         $emitted = [];
 
@@ -82,7 +83,7 @@ final class HookDispatchTest extends TestCase
     public function test_stop_blocks_when_a_handler_blocks(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        PlanMarker::inWorktree($this->root)->activate('sha0');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha0');
 
         $emitted = $this->dispatch(['hook_event_name' => 'Stop']);
 
@@ -93,7 +94,7 @@ final class HookDispatchTest extends TestCase
     public function test_stop_is_silent_while_parked_on_background_work(): void
     {
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
-        PlanMarker::inWorktree($this->root)->activate('sha0');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha0');
 
         $emitted = $this->dispatch([
             'hook_event_name' => 'Stop',

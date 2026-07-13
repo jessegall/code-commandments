@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * Resolves file scope for a command run from `--changes`/`--branch[=BASE]` flags, compounding
  * other FileScopes with AND logic; paths canonicalized to match git change-sets.
@@ -21,10 +23,10 @@ final class Scope implements FileScope
      *
      * @throws ScopeUnavailable when a `--changes`/`--branch` scope can't be resolved.
      */
-    public static function fromArgs(array $args, string $path): self
+    public static function fromArgs(array $args, string $path, Workspace $workspace): self
     {
         $strategy = match (true) {
-            ($id = self::repent($args)) !== null => new ChecklistScope($id),
+            ($id = self::repent($args)) !== null => new ChecklistScope($id, $workspace),
             ($base = self::branch($args)) !== null => new BranchChanges($base),
             self::flag($args, '--changes') => new WorkingTreeChanges,
             default => new EntireCodebase,

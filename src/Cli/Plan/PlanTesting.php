@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\PlanProfile;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
  * The testing-methodology state for the active plan — how tests are written and run as the agent
@@ -12,7 +13,7 @@ use JesseGall\CodeCommandments\PlanProfile;
  * there is no verification stamp and no `plan done` gate: it is chosen once at approval, recorded for
  * the run, and re-surfaced by {@see \JesseGall\CodeCommandments\Hooks\Handlers\TestingReminder} so it
  * survives a long grind (or a compaction). {@see effective} is this run's choice if the user made one,
- * else the project default from {@see PlanProfile::testFlow}. Worktree-scoped like {@see PlanMarker}.
+ * else the project default from {@see PlanProfile::testFlow}. Session-scoped like {@see PlanMarker}.
  */
 final class PlanTesting
 {
@@ -21,9 +22,9 @@ final class PlanTesting
         private readonly PlanProfile $plan,
     ) {}
 
-    public static function inWorktree(string $root, PlanProfile $plan): self
+    public static function inSession(Workspace $workspace, PlanProfile $plan): self
     {
-        return new self($root . '/.commandments/.plan-testing', $plan);
+        return new self($workspace->path('.plan-testing'), $plan);
     }
 
     /**

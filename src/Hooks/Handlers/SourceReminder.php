@@ -12,14 +12,9 @@ use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 /**
  * A `PreToolUse` nudge for the symptom-vs-source trap at the ONE place `judge` is blind: an edit to a
- * test / stub / fixture / mock. Those files are (correctly) OUTSIDE the judged source roots, so a
- * detector never fires on them — which means when an agent is standing in a failing test and reaches for
- * the nearest surface, nothing links it back to the cardinal rule. This closes that gap: when the agent
- * edits an unjudged symptom surface, it injects a reminder that a failing test usually means the
- * PRODUCTION code needs the fix — trace to the source, don't launder the failure in the test.
- *
- * Non-blocking (it never stops a legitimate test edit) and rate-limited via a {@see Counter} that a fresh
- * session re-arms, so it lands once when the agent first touches a test each session, then only sparingly.
+ * test / stub / fixture / mock, which sits outside the judged source roots. It reminds the agent that a
+ * failing test usually means the PRODUCTION code needs the fix — trace to the source, don't launder the
+ * failure in the test. Non-blocking, and rate-limited via a {@see Counter} a fresh session re-arms.
  */
 final class SourceReminder extends Hook
 {
@@ -61,7 +56,7 @@ final class SourceReminder extends Hook
         }
 
         // Count symptom-surface edits (not all tool uses): fire on the first of the session, then every 10.
-        $counter = Counter::named($event->root, 'source-remind', 'nudges "fix at the source, not the test" on an edit to an unjudged test/stub', every: self::INTERVAL);
+        $counter = Counter::named($event->workspace(), 'source-remind', 'nudges "fix at the source, not the test" on an edit to an unjudged test/stub', every: self::INTERVAL);
 
         return $counter->firstThenEvery() ? $this->inject($event, $this->nudge($file)) : $this->pass();
     }

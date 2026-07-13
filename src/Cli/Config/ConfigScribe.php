@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
+use JesseGall\CodeCommandments\Workspace;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node\Expr\MethodCall;
 
@@ -58,7 +60,7 @@ final class ConfigScribe
      */
     public static function inProject(?string $dir = null): self
     {
-        return new self(($dir ?? getcwd()) . '/.commandments/config.php');
+        return new self(Workspace::config($dir));
     }
 
     /**

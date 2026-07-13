@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Workspace;
 /**
  * `commandments testing <show|set|list>` — the agent's handle on the plan's testing methodology
  * ({@see PlanTesting}): show the method in force for this run, or record the one the user chose at
@@ -28,7 +29,7 @@ final class TestingCommand implements Command
     {
         $root = $this->io->projectRoot();
         $plan = Config::load($root)->planExecutionSettings();
-        $testing = PlanTesting::inWorktree($root, $plan);
+        $testing = PlanTesting::inSession(Workspace::at($root), $plan);
 
         return match ($input->firstArgument('show')) {
             'show', 'list', 'status' => $this->show($testing),

@@ -113,10 +113,11 @@ final class ClaudeSection
         scan: `judge resources/js` judges the **Vue frontend** (judge runs both engines),
         `judge app/Http` a subtree. (Also `--skill=NAME` to scope to one group; `--branch`
         for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
-        is slow, so it writes the findings to a checklist — `.commandments/sins.md` — and
+        is slow, so it writes the findings to a checklist — your session's
+        `.commandments/sessions/<id>/sins.md` (the run prints the exact path) — and
         that file, not repeated scans, is how you work:
 
-        1. Open `.commandments/sins.md`. Each line is one sin: `file:line`, the scope, and
+        1. Open the checklist judge wrote. Each line is one sin: `file:line`, the scope, and
            the detector, grouped under the skill that teaches the fix.
         2. Go top to bottom, ONE line at a time: read that section's skill, fix the sin at
            the source, then **delete that line from the file.** Do not re-run judge, re-scan,

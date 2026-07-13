@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 final class TestingCommandTest extends TestCase
@@ -38,7 +39,7 @@ final class TestingCommandTest extends TestCase
 
     private function store(): PlanTesting
     {
-        return PlanTesting::inWorktree($this->root, new PlanExecution()->build());
+        return PlanTesting::inSession(Workspace::at($this->root), new PlanExecution()->build());
     }
 
     public function test_set_records_the_run_methodology_joining_unquoted_words(): void

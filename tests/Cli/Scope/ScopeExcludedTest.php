@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli\Scope;
 
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,7 +40,7 @@ final class ScopeExcludedTest extends TestCase
 
     public function test_a_file_under_an_excluded_path_is_out_of_scope(): void
     {
-        $scope = Scope::fromArgs([], $this->dir);
+        $scope = Scope::fromArgs([], $this->dir, Workspace::at($this->dir));
 
         $this->assertFalse($scope->includes($this->excluded()), 'an excluded subtree is never a target');
         $this->assertTrue($scope->includes($this->live()), 'a sibling under the root stays in scope');
@@ -49,7 +50,7 @@ final class ScopeExcludedTest extends TestCase
     {
         // Even a run scoped to changed files can't pull an excluded file back in — the ExcludedScope ANDs.
         $scope = Scope::restrictedTo([$this->excluded(), $this->live()]);
-        $excluding = Scope::fromArgs([], $this->dir);
+        $excluding = Scope::fromArgs([], $this->dir, Workspace::at($this->dir));
 
         $this->assertTrue($scope->includes($this->excluded()), 'without config, a plain restriction admits it');
         $this->assertFalse($excluding->includes($this->excluded()), 'with the exclude() config, it is dropped');
@@ -62,7 +63,7 @@ final class ScopeExcludedTest extends TestCase
         $sibling = $this->dir . '/src/GeneratedReports/Report.php';
         file_put_contents($sibling, "<?php\nclass Report {}\n");
 
-        $scope = Scope::fromArgs([], $this->dir);
+        $scope = Scope::fromArgs([], $this->dir, Workspace::at($this->dir));
 
         $this->assertTrue($scope->includes($sibling), 'a boundary match, not a raw string prefix');
     }

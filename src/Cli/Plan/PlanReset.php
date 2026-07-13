@@ -6,9 +6,10 @@ namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\PlanProfile;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
- * The single clean-slate for a worktree's plan: wipes EVERY piece of per-plan state — the active
+ * The single clean-slate for a session's plan: wipes EVERY piece of per-plan state — the active
  * marker (and its stuck signal), the run's constraints, the testing choice, the working-state record, and
  * all hook counters. One home so the two moments that must start fresh — a brand-new session
  * ({@see \JesseGall\CodeCommandments\Hooks\Handlers\SessionReset}) and a newly-approved plan
@@ -17,13 +18,13 @@ use JesseGall\CodeCommandments\PlanProfile;
  */
 final class PlanReset
 {
-    public static function wipe(string $root, PlanProfile $plan): void
+    public static function wipe(Workspace $workspace, PlanProfile $plan): void
     {
-        PlanMarker::inWorktree($root)->clear();
-        PlanConstraints::inWorktree($root, $plan)->clear();
-        PlanTesting::inWorktree($root, $plan)->clear();
-        PlanWorkingState::inWorktree($root)->clear();
+        PlanMarker::inSession($workspace)->clear();
+        PlanConstraints::inSession($workspace, $plan)->clear();
+        PlanTesting::inSession($workspace, $plan)->clear();
+        PlanWorkingState::inSession($workspace)->clear();
 
-        Counter::clearAll($root);
+        Counter::clearAll($workspace);
     }
 }

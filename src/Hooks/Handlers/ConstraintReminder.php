@@ -33,8 +33,8 @@ final class ConstraintReminder extends Hook
 
     protected function onPostToolUse(HookEvent $event): int
     {
-        $active = $this->active($event->root);
-        $counter = Counter::named($event->root, 'constraint-remind', "re-surfaces the active plan's constraints once every 25 tool uses", every: self::INTERVAL);
+        $active = $this->active($event);
+        $counter = Counter::named($event->workspace(), 'constraint-remind', "re-surfaces the active plan's constraints once every 25 tool uses", every: self::INTERVAL);
 
         if ($active === [] || ! $counter->due()) {
             return $this->pass();
@@ -62,13 +62,13 @@ final class ConstraintReminder extends Hook
      *
      * @return list<string>
      */
-    private function active(string $root): array
+    private function active(HookEvent $event): array
     {
-        if (! PlanMarker::inWorktree($root)->isActive()) {
+        if (! PlanMarker::inSession($event->workspace())->isActive()) {
             return [];
         }
 
-        return PlanConstraints::inWorktree($root, Config::load($root)->planExecutionSettings())->active();
+        return PlanConstraints::inSession($event->workspace(), Config::load($event->root)->planExecutionSettings())->active();
     }
 
     /**

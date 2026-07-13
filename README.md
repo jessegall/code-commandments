@@ -243,7 +243,7 @@ Every option (from the `PlanExecution` builder):
 | `->constraint(…)` | A CONSTRAINT the agent must respect for every plan run — a natural-language architectural invariant `judge` can't decide (e.g. "the frontend is presentation-only"). |
 | `->enforceConstraintsEachPhase(…)` | Force the constraint diff-check after EVERY phase, not just at completion. |
 | `->testFlow(…)` | The project's DEFAULT testing methodology for a plan run — how tests are written and run as the agent grinds a plan (e.g. "write and run the tests for each phase before committing it"). |
-| `->trackWorkingState(…)` | Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent writes its progress and, above all, the conversational deltas (decisions and their rejected alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to `.commandments/.plan-working-state`, refreshed after each phase and each important event. |
+| `->trackWorkingState(…)` | Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent writes its progress and, above all, the conversational deltas (decisions and their rejected alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to the session's `.plan-working-state` file (the approval nudge names the exact path), refreshed after each phase and each important event. |
 <!-- END: plan-options -->
 
 **Working state** (`trackWorkingState()`) is opt-in: the agent maintains a living record at

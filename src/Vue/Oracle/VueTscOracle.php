@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Oracle;
 
+use JesseGall\CodeCommandments\Workspace;
+
 use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**
@@ -12,7 +14,6 @@ use JesseGall\CodeCommandments\Vue\Sfc;
  */
 final class VueTscOracle implements TypeOracle
 {
-    private const string BUILD_INFO = '.commandments/.vue-tsc.tsbuildinfo';
 
     public function __construct(
         private readonly string $root,
@@ -125,7 +126,7 @@ final class VueTscOracle implements TypeOracle
 
     private function buildInfo(): string
     {
-        $path = rtrim($this->root, '/') . '/' . self::BUILD_INFO;
+        $path = Workspace::at(rtrim($this->root, '/'))->shared('.vue-tsc.tsbuildinfo');
 
         if (! is_dir($directory = dirname($path))) {
             @mkdir($directory, 0777, true);

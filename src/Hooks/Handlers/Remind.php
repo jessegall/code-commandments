@@ -44,7 +44,7 @@ final class Remind extends Hook
      */
     protected function onPostToolUse(HookEvent $event): int
     {
-        $counter = Counter::named($event->root, 'cardinal-remind', 'surfaces the "trace to the source" cardinal rule once every 25 tool uses', every: self::INTERVAL);
+        $counter = Counter::named($event->workspace(), 'cardinal-remind', 'surfaces the "trace to the source" cardinal rule once every 25 tool uses', every: self::INTERVAL);
 
         if (! $counter->due()) {
             return $this->pass();

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * One Claude Code hook invocation — the JSON payload the harness delivered, paired with the
  * worktree it fired in ({@see HookIO::projectRoot}). It reads the payload semantically so a
@@ -27,6 +29,24 @@ final class HookEvent
     public function name(): string
     {
         return (string) ($this->payload['hook_event_name'] ?? '');
+    }
+
+    /**
+     * The Claude Code session this hook fired in, or '' for a manual CLI run.
+     */
+    public function sessionId(): string
+    {
+        return (string) ($this->payload['session_id'] ?? '');
+    }
+
+    /**
+     * This event's {@see Workspace} — where every session-scoped state file for this hook lives.
+     * The payload's `session_id` is authoritative; {@see Workspace::at} falls back to the
+     * `CLAUDE_CODE_SESSION_ID` env var and then the shared `default` folder.
+     */
+    public function workspace(): Workspace
+    {
+        return Workspace::at($this->root, $this->sessionId() ?: null);
     }
 
     /**

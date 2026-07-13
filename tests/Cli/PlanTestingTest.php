@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 final class PlanTestingTest extends TestCase
@@ -25,7 +26,7 @@ final class PlanTestingTest extends TestCase
 
     private function testing(PlanExecution $plan): PlanTesting
     {
-        return PlanTesting::inWorktree($this->root, $plan->build());
+        return PlanTesting::inSession(Workspace::at($this->root), $plan->build());
     }
 
     public function test_effective_falls_back_to_the_configured_default(): void

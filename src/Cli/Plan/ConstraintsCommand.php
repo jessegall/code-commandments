@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Workspace;
 /**
  * `commandments constraints <list|add|check|verified>` — the agent's handle on the plan's constraints
  * ({@see PlanConstraints}): list the invariants in force, add a local one, print them with the
@@ -27,7 +28,7 @@ final class ConstraintsCommand implements Command
     {
         $root = $this->io->projectRoot();
         $plan = Config::load($root)->planExecutionSettings();
-        $constraints = PlanConstraints::inWorktree($root, $plan);
+        $constraints = PlanConstraints::inSession(Workspace::at($root), $plan);
 
         return match ($input->firstArgument('list')) {
             'list' => $this->list($constraints),

@@ -44,9 +44,9 @@ final class WorkingState extends Hook
 
     protected function onPostToolUse(HookEvent $event): int
     {
-        $counter = Counter::named($event->root, 'working-state-remind', 'nudges a refresh of the living working-state record once every 25 tool uses', every: self::INTERVAL);
+        $counter = Counter::named($event->workspace(), 'working-state-remind', 'nudges a refresh of the living working-state record once every 25 tool uses', every: self::INTERVAL);
 
-        if (! $this->active($event->root) || ! $counter->due()) {
+        if (! $this->active($event) || ! $counter->due()) {
             return $this->pass();
         }
 
@@ -54,7 +54,7 @@ final class WorkingState extends Hook
             'suppressOutput' => true,
             'hookSpecificOutput' => [
                 'hookEventName' => 'PostToolUse',
-                'additionalContext' => $this->refreshNudge(),
+                'additionalContext' => $this->refreshNudge($this->record($event)->path()),
             ],
         ]);
 
@@ -63,26 +63,31 @@ final class WorkingState extends Hook
 
     protected function onPreCompact(HookEvent $event): int
     {
-        if (! $this->active($event->root)) {
+        if (! $this->active($event)) {
             return $this->pass();
         }
 
-        return $this->inject($event, $this->flushNudge());
+        return $this->inject($event, $this->flushNudge($this->record($event)->path()));
     }
 
     protected function onSessionStart(HookEvent $event): int
     {
-        if (! in_array($event->source(), self::CONTINUING_SOURCES, true) || ! $this->active($event->root)) {
+        if (! in_array($event->source(), self::CONTINUING_SOURCES, true) || ! $this->active($event)) {
             return $this->pass();
         }
 
-        $record = PlanWorkingState::inWorktree($event->root)->read();
+        $record = $this->record($event)->read();
 
         if ($record === '') {
             return $this->pass();
         }
 
         return $this->inject($event, $this->recall($record));
+    }
+
+    private function record(HookEvent $event): PlanWorkingState
+    {
+        return PlanWorkingState::inSession($event->workspace());
     }
 
     protected function onManualRun(HookEvent $event): int
@@ -94,10 +99,10 @@ final class WorkingState extends Hook
      * Working-state tracking is on for THIS run — a plan is active AND the project opted in. Off-plan or
      * without the toggle, every moment stays dormant, exactly like the constraint/testing heartbeats.
      */
-    private function active(string $root): bool
+    private function active(HookEvent $event): bool
     {
-        return PlanMarker::inWorktree($root)->isActive()
-            && Config::load($root)->planExecutionSettings()->tracksWorkingState();
+        return PlanMarker::inSession($event->workspace())->isActive()
+            && Config::load($event->root)->planExecutionSettings()->tracksWorkingState();
     }
 
     private function shape(): string
@@ -107,23 +112,23 @@ final class WorkingState extends Hook
             . 'conversation, the gotchas you hit, and the exact next step. Not a restatement of the plan.';
     }
 
-    private function refreshNudge(): string
+    private function refreshNudge(string $path): string
     {
-        return 'Code Commandments — refresh your WORKING STATE now (`.commandments/.plan-working-state`). '
+        return "Code Commandments — refresh your WORKING STATE now (`{$path}`). "
             . $this->shape() . ' It is your lifeline if context compacts.';
     }
 
-    private function flushNudge(): string
+    private function flushNudge(string $path): string
     {
         return 'Code Commandments — context is about to COMPACT. Immediately flush anything not yet on disk into '
-            . '`.commandments/.plan-working-state`. ' . $this->shape() . ' It is re-injected after compaction, '
+            . "`{$path}`. " . $this->shape() . ' It is re-injected after compaction, '
             . 'so this is how future-you survives the loss.';
     }
 
     private function recall(string $record): string
     {
-        return "Code Commandments — resuming an active plan. This is your WORKING STATE (from "
-            . "`.commandments/.plan-working-state`); treat it as ground truth for where you are and what was "
+        return "Code Commandments — resuming an active plan. This is your WORKING STATE (from the plan's "
+            . "working-state record); treat it as ground truth for where you are and what was "
             . "decided, and keep refreshing it as you work:\n\n" . $record;
     }
 }

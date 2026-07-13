@@ -13,6 +13,8 @@ use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
+use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
  * Auto-fixes Spatie Data magic surface: renames non-`from…` factories to
@@ -37,7 +39,7 @@ final class Hints implements Command
         }
 
         try {
-            $scope = Scope::fromArgs($input->raw(), $options->path);
+            $scope = Scope::fromArgs($input->raw(), $options->path, Workspace::at(new HookIO()->projectRoot()));
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 

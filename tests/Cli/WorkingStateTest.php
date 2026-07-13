@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -57,7 +58,7 @@ final class WorkingStateTest extends TestCase
 
     private function record(string $body): void
     {
-        file_put_contents($this->root . '/.commandments/.plan-working-state', $body);
+        file_put_contents(Workspace::at($this->root)->path('.plan-working-state'), $body);
     }
 
     // --- Heartbeat -------------------------------------------------------------------------------
@@ -65,7 +66,7 @@ final class WorkingStateTest extends TestCase
     public function test_heartbeat_nudges_a_refresh_once_every_interval_during_a_tracked_plan(): void
     {
         $this->enable();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         for ($i = 1; $i < 25; $i++) {
             $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']), "silent on tick {$i}");
@@ -81,7 +82,7 @@ final class WorkingStateTest extends TestCase
 
     public function test_heartbeat_is_silent_when_the_toggle_is_off(): void
     {
-        PlanMarker::inWorktree($this->root)->activate('sha'); // active plan, but trackWorkingState not set
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // active plan, but trackWorkingState not set
 
         for ($i = 0; $i < 30; $i++) {
             $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']));
@@ -102,7 +103,7 @@ final class WorkingStateTest extends TestCase
     public function test_precompact_injects_a_flush_nudge_during_a_tracked_plan(): void
     {
         $this->enable();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         $context = $this->context($this->fire(['hook_event_name' => 'PreCompact']));
         $this->assertStringContainsString('COMPACT', $context);
@@ -111,11 +112,11 @@ final class WorkingStateTest extends TestCase
 
     public function test_precompact_is_silent_off_plan_or_off_toggle(): void
     {
-        PlanMarker::inWorktree($this->root)->activate('sha'); // no toggle
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // no toggle
         $this->assertSame([], $this->fire(['hook_event_name' => 'PreCompact']));
 
         $this->enable(); // toggle, but clear the plan
-        PlanMarker::inWorktree($this->root)->clear();
+        PlanMarker::inSession(Workspace::at($this->root))->clear();
         $this->assertSame([], $this->fire(['hook_event_name' => 'PreCompact']));
     }
 
@@ -124,7 +125,7 @@ final class WorkingStateTest extends TestCase
     public function test_sessionstart_reinjects_the_record_on_compact(): void
     {
         $this->enable();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
         $this->record("## Decisions\nBind the workflow explicitly — rejected a fixture hook (too magic).\n");
 
         $context = $this->context($this->fire(['hook_event_name' => 'SessionStart', 'source' => 'compact']));
@@ -135,7 +136,7 @@ final class WorkingStateTest extends TestCase
     public function test_sessionstart_reinjects_on_resume_too(): void
     {
         $this->enable();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
         $this->record("phase 3 next\n");
 
         $this->assertStringContainsString('phase 3 next', $this->context($this->fire(['hook_event_name' => 'SessionStart', 'source' => 'resume'])));
@@ -144,7 +145,7 @@ final class WorkingStateTest extends TestCase
     public function test_sessionstart_is_silent_on_a_fresh_session(): void
     {
         $this->enable();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
         $this->record("something\n");
 
         // startup/clear are fresh sessions — SessionReset wipes; WorkingState must not re-inject stale state.
@@ -155,7 +156,7 @@ final class WorkingStateTest extends TestCase
     public function test_sessionstart_is_silent_when_there_is_no_record_yet(): void
     {
         $this->enable();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         $this->assertSame([], $this->fire(['hook_event_name' => 'SessionStart', 'source' => 'compact']));
     }

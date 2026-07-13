@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
+use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -34,45 +36,45 @@ final class JudgeReminderTest extends TestCase
 
     public function test_it_stays_silent_on_a_clean_tree(): void
     {
-        $this->assertNull((new JudgeReminder)->reminder($this->repo));
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)));
     }
 
     public function test_it_nudges_once_for_a_touched_judged_file_then_goes_silent(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
 
-        $first = (new JudgeReminder)->reminder($this->repo);
+        $first = (new JudgeReminder)->reminder(new HookEvent([], $this->repo));
         $this->assertNotNull($first, 'a touched .php file earns a nudge');
         $this->assertStringContainsString('judge', $first);
 
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'the same batch is silent after one nudge');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'the same batch is silent after one nudge');
     }
 
     public function test_it_nudges_to_finish_an_open_worklist_once_per_state(): void
     {
-        mkdir($this->repo . '/.commandments', 0777, true);
+        mkdir(Workspace::at($this->repo)->sessionDir(), 0777, true);
         $this->writeChecklist(['app/A.php:5  A::m  [X]', 'app/B.php:9  B::n  [Y]']);
 
-        $first = (new JudgeReminder)->reminder($this->repo);
+        $first = (new JudgeReminder)->reminder(new HookEvent([], $this->repo));
         $this->assertNotNull($first, 'an open worklist earns a nudge');
         $this->assertStringContainsString('OPEN worklist', $first);
         $this->assertStringContainsString('2 sins', $first);
 
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'the same unchanged worklist is not re-nudged');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'the same unchanged worklist is not re-nudged');
 
         // Working a line off re-arms the nudge — "keep going, 1 left".
         $this->writeChecklist(['app/A.php:5  A::m  [X]']);
-        $again = (new JudgeReminder)->reminder($this->repo);
+        $again = (new JudgeReminder)->reminder(new HookEvent([], $this->repo));
         $this->assertNotNull($again, 'a worked-off line re-arms the nudge');
         $this->assertStringContainsString('1 sin', $again);
     }
 
     public function test_an_empty_worklist_does_not_nudge(): void
     {
-        mkdir($this->repo . '/.commandments', 0777, true);
-        file_put_contents($this->repo . '/.commandments/sins.md', "# Code Commandments\n\nAll clear.\n");
+        mkdir(Workspace::at($this->repo)->sessionDir(), 0777, true);
+        file_put_contents(Workspace::at($this->repo)->path('sins.md'), "# Code Commandments\n\nAll clear.\n");
 
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'a worklist with no sin lines is done');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'a worklist with no sin lines is done');
     }
 
     private function writeChecklist(array $sinLines): void
@@ -83,7 +85,7 @@ final class JudgeReminderTest extends TestCase
             $body .= "- `{$line}`\n";
         }
 
-        file_put_contents($this->repo . '/.commandments/sins.md', $body);
+        file_put_contents(Workspace::at($this->repo)->path('sins.md'), $body);
     }
 
     public function test_it_stays_silent_while_a_plan_is_active(): void
@@ -91,54 +93,54 @@ final class JudgeReminderTest extends TestCase
         file_put_contents($this->repo . '/Service.php', "<?php\n");
 
         // A plan judges once at the end (checks complete), committing each phase unjudged — so no nudge.
-        \JesseGall\CodeCommandments\Cli\Plan\PlanMarker::inWorktree($this->repo)->activate('HEAD');
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent while a plan runs');
+        \JesseGall\CodeCommandments\Cli\Plan\PlanMarker::inSession(\JesseGall\CodeCommandments\Workspace::at($this->repo))->activate('HEAD');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'silent while a plan runs');
 
         // Once the plan is done, the nudge resumes.
-        \JesseGall\CodeCommandments\Cli\Plan\PlanMarker::inWorktree($this->repo)->clear();
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'nudges again after the plan ends');
+        \JesseGall\CodeCommandments\Cli\Plan\PlanMarker::inSession(\JesseGall\CodeCommandments\Workspace::at($this->repo))->clear();
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'nudges again after the plan ends');
     }
 
     public function test_it_ignores_non_judged_files(): void
     {
         file_put_contents($this->repo . '/notes.txt', 'hi');
 
-        $this->assertNull((new JudgeReminder)->reminder($this->repo));
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)));
     }
 
     public function test_committing_the_same_files_stays_silent_no_double_nudge(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'first nudge');
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'first nudge');
 
         // Commit the very files we nudged for. The SET is unchanged, so — even though HEAD moves and
         // the finding now shows as committed branch work — there is nothing new: stay silent.
         $this->git('add -A');
         $this->git('commit -q -m work');
 
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'no second nudge for the same set across a commit');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'no second nudge for the same set across a commit');
     }
 
     public function test_touching_a_new_file_earns_a_fresh_nudge(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo));
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent for the same set');
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)));
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'silent for the same set');
 
         file_put_contents($this->repo . '/Other.vue', "<template></template>\n");
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'a NEW file grows the set — nudge again');
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'a NEW file grows the set — nudge again');
     }
 
     public function test_a_clean_tree_clears_the_marker_so_the_next_batch_starts_over(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo));
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)));
 
         unlink($this->repo . '/Service.php'); // tree clean again
-        $this->assertNull((new JudgeReminder)->reminder($this->repo), 'silent on a clean tree');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'silent on a clean tree');
 
         file_put_contents($this->repo . '/Service.php', "<?php\n"); // same path, fresh batch
-        $this->assertNotNull((new JudgeReminder)->reminder($this->repo), 'the cleared marker lets the same path nudge again');
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'the cleared marker lets the same path nudge again');
     }
 
     public function test_it_is_silent_outside_a_repository(): void
@@ -146,7 +148,7 @@ final class JudgeReminderTest extends TestCase
         $bare = sys_get_temp_dir() . '/cc-nonrepo-' . uniqid('', true);
         mkdir($bare);
 
-        $this->assertNull((new JudgeReminder)->reminder($bare));
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $bare)));
 
         rmdir($bare);
     }
@@ -178,7 +180,7 @@ final class JudgeReminderTest extends TestCase
         $this->assertStringContainsString('before you commit', $commit);
 
         // A fresh set (delete the marker the commit run wrote) so suppression can't mask the result.
-        @unlink($this->repo . '/.commandments/.judge-reminded');
+        @unlink(Workspace::at($this->repo)->path('.judge-reminded'));
 
         $other = $this->runCli(['hook_event_name' => 'PreToolUse', 'tool_name' => 'Bash', 'tool_input' => ['command' => 'php artisan test']]);
         $this->assertSame('', trim($other), 'a non-commit Bash call is ignored');

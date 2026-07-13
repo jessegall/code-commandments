@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Cli\Judge;
 
 
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * The parsed options of a `judge` run — every flag EXCEPT the scope flags
  * (`--changes`/`--branch`), which {@see Scope\Scope::fromArgs} owns.
@@ -28,14 +30,14 @@ final class JudgeOptions
         public readonly bool $ignorePackages = false,
     ) {}
 
-    public static function fromInput(Input $input): self
+    public static function fromInput(Input $input, Workspace $workspace): self
     {
         $path = $input->firstArgument();
 
         // By default the findings are written to a checklist file the agent prunes
-        // line-by-line, under the package's `.commandments/` artifact folder (the
-        // whole folder is gitignored); `--no-checklist` prints only, `--checklist=FILE` retargets.
-        $checklist = $input->hasFlag('no-checklist') ? null : $input->option('checklist', Checklist::DEFAULT);
+        // line-by-line, in the session's folder under the package's `.commandments/` artifact dir
+        // (the whole folder is gitignored); `--no-checklist` prints only, `--checklist=FILE` retargets.
+        $checklist = $input->hasFlag('no-checklist') ? null : $input->option('checklist', $workspace->path('sins.md'));
 
         return new self(
             path: rtrim($path ?? '.', '/'),

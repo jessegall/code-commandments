@@ -11,9 +11,11 @@ use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Plan\PlanReset;
 /**
- * The fresh-session cleanup — a `SessionStart` hook that wipes the worktree's lingering plan state (the
+ * The fresh-session cleanup — a `SessionStart` hook that wipes the session's lingering plan state (the
  * {@see PlanMarker}, constraints, testing choice, working-state record, reminder counters) so a crashed or force-closed run
- * never leaves the keep-going Stop hook nudging a brand-new session to "keep grinding the plan". It fires
+ * never leaves the keep-going Stop hook nudging a brand-new session to "keep grinding the plan", and
+ * prunes stale sibling session folders ({@see \JesseGall\CodeCommandments\Workspace::prune}) so
+ * `.commandments/sessions/` never grows forever. It fires
  * only for a genuinely-new session ({@see FRESH_SESSION_SOURCES}); `resume`/`compact` continue a live one
  * — and compaction re-fires `SessionStart`, so wiping there would drop an in-flight plan.
  */
@@ -38,7 +40,10 @@ final class SessionReset extends Hook
             return $this->pass(); // resume / compact continue a live session — leave its plan intact.
         }
 
-        PlanReset::wipe($event->root, Config::load($event->root)->planExecutionSettings());
+        $workspace = $event->workspace();
+
+        PlanReset::wipe($workspace, Config::load($event->root)->planExecutionSettings());
+        $workspace->prune(); // Sweep session folders long abandoned — never this session's own.
 
         return $this->pass(); // Silent — a cleanup has nothing to say to the fresh session.
     }

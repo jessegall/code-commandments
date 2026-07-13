@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Workspace;
+
 use JesseGall\CodeCommandments\Skills\ClaudeSection;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 
@@ -86,7 +88,7 @@ final class Sync implements Command
      */
     private function ensureCommandmentsGitignore(string $consumer): void
     {
-        $path = "{$consumer}/.commandments/.gitignore";
+        $path = Workspace::at($consumer)->shared('.gitignore');
         $content = "# code-commandments generated state; config.php stays tracked\n*\n!.gitignore\n!config.php\n";
 
         if (! is_file($path) || (string) file_get_contents($path) !== $content) {
@@ -96,19 +98,35 @@ final class Sync implements Command
     }
 
     /**
-     * Delete artifacts the package wrote at their OLD locations, now that generated
-     * files live under `.commandments/`. Runs on every sync so a consumer migrates
-     * automatically on `composer update`. The files are generated/gitignored, so
-     * removing them is always safe.
+     * Delete artifacts at their legacy locations — the root checklist, and the flat `.commandments/`
+     * state files whose live home is the session folder (`.commandments/sessions/<key>/`). Runs on
+     * every sync so a consumer migrates automatically on `composer update`; the files are
+     * generated/gitignored, so removing them is always safe (each one regenerates).
      */
     private function removeLegacyArtifacts(string $consumer): void
     {
-        foreach (['commandments-sins.md'] as $legacy) {
-            $path = "{$consumer}/{$legacy}";
+        // A literal list on purpose: these names must stay frozen even when the live layout
+        // (which Workspace owns) changes again — they exist only to be deleted.
+        $flat = [
+            'sins.md', '.plan-active', '.plan-stuck', '.plan-working-state', '.plan-working-state.previous',
+            '.plan-constraints', '.constraints-verified', '.plan-testing', '.judge-reminded', '.remind-checklist',
+        ];
+
+        $legacy = [
+            'commandments-sins.md',
+            ...array_map(static fn (string $file): string => ".commandments/{$file}", $flat),
+        ];
+
+        foreach ($legacy as $file) {
+            $path = "{$consumer}/{$file}";
 
             if (is_file($path)) {
                 @unlink($path);
             }
+        }
+
+        foreach ([...glob("{$consumer}/.commandments/sins-*.md") ?: [], ...glob("{$consumer}/.commandments/.*-count") ?: []] as $path) {
+            @unlink($path);
         }
     }
 

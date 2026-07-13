@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -55,7 +56,7 @@ final class ConstraintReminderTest extends TestCase
     public function test_surfaces_the_constraints_once_every_interval_during_a_plan(): void
     {
         $this->writeConstraint();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         for ($i = 1; $i < 25; $i++) {
             $this->assertSame([], $this->fire(), "silent on tick {$i}");
@@ -80,7 +81,7 @@ final class ConstraintReminderTest extends TestCase
 
     public function test_silent_when_a_plan_has_no_constraints(): void
     {
-        PlanMarker::inWorktree($this->root)->activate('sha'); // active plan, but no constraints configured
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // active plan, but no constraints configured
 
         for ($i = 0; $i < 30; $i++) {
             $this->assertSame([], $this->fire());

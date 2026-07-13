@@ -14,8 +14,12 @@ use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\ScribeChain;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\WorkingCopy;
+use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
+use JesseGall\CodeCommandments\Hooks\Counter;
+use JesseGall\CodeCommandments\Hooks\HookIO;
+
 /**
  * Runs the Scribes through {@see ScribeChain}: in-place fixers then component extractors, each
  * re-scanning prior edits. Writes by default; `--dry-run[=FILE]` previews a diff; `--only=NAME`
@@ -28,6 +32,8 @@ final class Repent implements Command
 
     /** Keep package-gated scribes even when this project lacks the package (cross-project calibration). */
     private bool $ignorePackages = false;
+
+    public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
     {
@@ -47,7 +53,7 @@ final class Repent implements Command
         }
 
         try {
-            $scope = Scope::fromArgs($input->raw(), $path);
+            $scope = Scope::fromArgs($input->raw(), $path, Workspace::at($this->io->projectRoot()));
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 
@@ -101,16 +107,18 @@ final class Repent implements Command
      * Invite the agent to judge the auto-fix it just ran and report anything wrong — a rate-limited
      * nudge (issue #306) that turns each repent into a feedback moment, so a broken/awkward rewrite or
      * a rule gap gets filed early instead of silently worked around. Shown on the first apply and every
-     * {@see FEEDBACK_INTERVAL} after, counted in `.commandments/.repent-feedback-count`.
+     * {@see FEEDBACK_INTERVAL} after, counted by the session's `repent-feedback` {@see Counter}.
      */
     private function inviteFeedback(): void
     {
-        $file = getcwd() . '/.commandments/.repent-feedback-count';
-        $count = 1 + (is_file($file) ? (int) file_get_contents($file) : 0);
-        @mkdir(dirname($file), 0777, true);
-        @file_put_contents($file, (string) $count . "\n");
+        $counter = Counter::named(
+            Workspace::at($this->io->projectRoot()),
+            'repent-feedback',
+            'rate-limits the post-repent feedback nudge',
+            every: self::FEEDBACK_INTERVAL,
+        );
 
-        if ($count !== 1 && $count % self::FEEDBACK_INTERVAL !== 0) {
+        if (! $counter->firstThenEvery()) {
             return;
         }
 
@@ -260,7 +268,7 @@ final class Repent implements Command
     private function chain(?string $only): ScribeChain
     {
         $chain = ScribeChain::default($this->ignorePackages ? static fn (): bool => true : null);
-        $config = getcwd() . '/.commandments/repent.php';
+        $config = Workspace::at($this->io->projectRoot())->shared('repent.php');
 
         if (is_file($config)) {
             $customise = require $config;

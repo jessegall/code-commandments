@@ -139,7 +139,7 @@ final class Kernel
           --parallel=N       run detectors across N worker processes (default: 8, capped at cores; 1 = off)
           --memory=LIMIT     memory ceiling for the run (default: 2G; -1 for no limit)
           --ignore-package-requirements  keep package-gated rules even if this project lacks the package (cross-project calibration)
-          --checklist=FILE   write the checklist here (default: .commandments/sins.md)
+          --checklist=FILE   write the checklist here (default: your session's .commandments/sessions/<id>/sins.md)
           --no-checklist     print only, don't write the checklist file
           --list             list every detector grouped by skill
 
@@ -152,9 +152,10 @@ final class Kernel
         to subtract a path from ANY run — the tree is still parsed (so cross-file
         rules stay correct) but nothing in it is ever reported or rewritten.
 
-        By default judge writes a Markdown checklist (.commandments/sins.md). Judge
-        ONCE, then work that file line-by-line — a full scan is slow — deleting
-        each line as you fix its sin. Re-run judge at the end to confirm.
+        By default judge writes a Markdown checklist into your session's folder
+        (.commandments/sessions/<id>/sins.md — the run prints the exact path).
+        Judge ONCE, then work that file line-by-line — a full scan is slow —
+        deleting each line as you fix its sin. Re-run judge at the end to confirm.
 
         Files marked @code-commandments-generated are skipped automatically
         (they are regenerated, not hand-authored). Exit code 1 when sins found.

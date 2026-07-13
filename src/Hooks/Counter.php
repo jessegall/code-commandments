@@ -4,18 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
+use JesseGall\CodeCommandments\Workspace;
+
 /**
- * A tiny persisted counter for ANY recurring hook signal — the shared heartbeat machinery under the
- * reminder hooks, and the easy way to add a new one. Build one with {@see named} (a kebab-case slug names
- * it; the count lives on the first line of `.commandments/.{slug}-count`, with a self-describing note
- * below that the `(int)` read ignores), then either drive it by hand ({@see bump}/{@see reset}/{@see clear})
- * or use the {@see due} one-liner for the common "fire once every N" cadence:
- *
- *     if (Counter::named($root, 'my-thing')->due(25)) { …surface the note… }
- *
- * Worktree-scoped by its file path. Every counter follows the `.commandments/.*-count` naming convention,
- * so {@see clearAll} can wipe them ALL on a fresh session without any hook registering its path — a new
- * counter joins the reset for free just by being created through {@see named}.
+ * A tiny persisted counter for ANY recurring hook signal — the shared heartbeat under the reminder
+ * hooks. {@see named} builds one from a kebab-case slug (the session's `.{slug}-count` file); drive it
+ * by hand ({@see bump}/{@see reset}/{@see clear}) or via `Counter::named($ws, 'my-thing')->due(25)`.
+ * Session-scoped ({@see Workspace::path}); the `.*-count` naming convention lets {@see clearAll} wipe
+ * the session's counters, so a new counter joins the fresh-session reset just by using {@see named}.
  */
 final class Counter
 {
@@ -26,15 +22,16 @@ final class Counter
     ) {}
 
     /**
-     * A counter named by a kebab-case $slug — the general factory. Its file is `.commandments/.{slug}-count`;
-     * $describe is an optional one-line note written beneath the count so the file self-documents. $every is
-     * this counter's OWN cadence — how many calls between fires ({@see due}/{@see firstThenEvery}) — so each
-     * counter picks its own rhythm (a chatty nudge every 10, a steady one every 25).
+     * A counter named by a kebab-case $slug — the general factory. Its file is the session's
+     * `.{slug}-count`; $describe is an optional one-line note written beneath the count so the file
+     * self-documents. $every is this counter's OWN cadence — how many calls between fires
+     * ({@see due}/{@see firstThenEvery}) — so each counter picks its own rhythm (a chatty nudge every
+     * 10, a steady one every 25).
      */
-    public static function named(string $root, string $slug, string $describe = '', int $every = 25): self
+    public static function named(Workspace $workspace, string $slug, string $describe = '', int $every = 25): self
     {
         return new self(
-            $root . '/.commandments/.' . $slug . '-count',
+            $workspace->path('.' . $slug . '-count'),
             self::note($slug, $describe),
             $every,
         );
@@ -91,12 +88,14 @@ final class Counter
     }
 
     /**
-     * Wipe every counter in the worktree — any `.commandments/.*-count` file. A fresh session calls this so
-     * no stale count carries over; any counter built via {@see named} is caught by the naming convention.
+     * Wipe every counter in THIS session's folder — any `.*-count` file under {@see Workspace::sessionDir}.
+     * A fresh session calls this so no stale count carries over; any counter built via {@see named} is
+     * caught by the naming convention. Deliberately scoped: a fresh session must never wipe a CONCURRENT
+     * session's counters — that is the very overwrite this layout exists to prevent.
      */
-    public static function clearAll(string $root): void
+    public static function clearAll(Workspace $workspace): void
     {
-        foreach (glob($root . '/.commandments/.*-count') ?: [] as $file) {
+        foreach (glob($workspace->path('.*-count')) ?: [] as $file) {
             @unlink($file);
         }
     }

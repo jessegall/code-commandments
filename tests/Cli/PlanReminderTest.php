@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,7 +31,7 @@ final class PlanReminderTest extends TestCase
 
     protected function tearDown(): void
     {
-        @unlink($this->root . '/.commandments/.plan-active');
+        @unlink(Workspace::at($this->root)->path('.plan-active'));
         @unlink($this->root . '/.commandments/config.php');
         @rmdir($this->root . '/.commandments');
         @rmdir($this->root);
@@ -111,17 +112,17 @@ final class PlanReminderTest extends TestCase
         // A previous plan left constraints, a testing choice, working-state notes and a bumped counter
         // behind. Approving a NEW plan resets the constraints/testing/counters — none may bleed in.
         $plan = new \JesseGall\CodeCommandments\PlanExecution()->build();
-        PlanConstraints::inWorktree($this->root, $plan)->addLocal('Stale constraint from the last plan.');
-        PlanTesting::inWorktree($this->root, $plan)->set('Stale testing choice.');
-        file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nold plan phase 3\n");
-        Counter::named($this->root, 'cardinal-remind')->bump();
+        PlanConstraints::inSession(Workspace::at($this->root), $plan)->addLocal('Stale constraint from the last plan.');
+        PlanTesting::inSession(Workspace::at($this->root), $plan)->set('Stale testing choice.');
+        file_put_contents(Workspace::at($this->root)->path('.plan-working-state'), "## Doing\nold plan phase 3\n");
+        Counter::named(Workspace::at($this->root), 'cardinal-remind')->bump();
 
         $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']);
 
         $this->assertTrue($this->marker()->isActive(), 'the new plan is active');
-        $this->assertSame([], PlanConstraints::inWorktree($this->root, $plan)->local(), 'old constraints are wiped');
-        $this->assertSame('', PlanTesting::inWorktree($this->root, $plan)->chosen(), 'old testing choice is wiped');
-        $this->assertFileDoesNotExist($this->root . '/.commandments/.cardinal-remind-count', 'counters are reset');
+        $this->assertSame([], PlanConstraints::inSession(Workspace::at($this->root), $plan)->local(), 'old constraints are wiped');
+        $this->assertSame('', PlanTesting::inSession(Workspace::at($this->root), $plan)->chosen(), 'old testing choice is wiped');
+        $this->assertFileDoesNotExist(Workspace::at($this->root)->path('.cardinal-remind-count'), 'counters are reset');
     }
 
     public function test_a_replan_preserves_working_state_to_previous_and_warns_loudly(): void
@@ -130,14 +131,14 @@ final class PlanReminderTest extends TestCase
         // compaction lifeline) is preserved as `.previous`, and the nudge warns that constraints/testing
         // were reset — so the agent re-establishes them instead of assuming carry-over.
         $plan = new \JesseGall\CodeCommandments\PlanExecution()->build();
-        PlanConstraints::inWorktree($this->root, $plan)->addLocal('No frontend logic.');
-        file_put_contents($this->root . '/.commandments/.plan-working-state', "## Doing\nold plan phase 3\n");
+        PlanConstraints::inSession(Workspace::at($this->root), $plan)->addLocal('No frontend logic.');
+        file_put_contents(Workspace::at($this->root)->path('.plan-working-state'), "## Doing\nold plan phase 3\n");
 
         $context = $this->context($this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'ExitPlanMode']));
 
         $this->assertStringContainsString('RE-PLAN DETECTED', $context, 'the reset is loud, not silent');
         $this->assertStringContainsString('do NOT carry over', $context);
-        $working = PlanWorkingState::inWorktree($this->root);
+        $working = PlanWorkingState::inSession(Workspace::at($this->root));
         $this->assertFalse($working->exists(), 'the live working-state is reset');
         $this->assertFileExists($working->previousPath(), 'the prior working-state is preserved for reference');
     }
@@ -379,7 +380,7 @@ final class PlanReminderTest extends TestCase
 
     private function marker(): PlanMarker
     {
-        return PlanMarker::inWorktree($this->root);
+        return PlanMarker::inSession(Workspace::at($this->root));
     }
 
     private function writeConfig(string $body): void

@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files
  * are touched but unchecked, deduped per changed-file set.
@@ -38,14 +40,14 @@ final class JudgeReminder extends Hook
             return $this->pass(); // Some other Bash call — not our moment.
         }
 
-        $reason = $this->reminder($event->root, 'before you commit');
+        $reason = $this->reminder($event, 'before you commit');
 
         return $reason === null ? $this->pass() : $this->inject($event, $reason);
     }
 
     protected function onStop(HookEvent $event): int
     {
-        $reason = $this->reminder($event->root, 'before you wrap up');
+        $reason = $this->reminder($event, 'before you wrap up');
 
         return $reason === null ? $this->pass() : $this->block($reason);
     }
@@ -56,15 +58,17 @@ final class JudgeReminder extends Hook
      * subsequent call with no new files stays quiet. A clean tree clears the marker. Pure of I/O
      * beyond the git reads and the marker it owns, so the once-per-batch behaviour is directly testable.
      */
-    public function reminder(string $projectRoot, string $lead = 'before you wrap up'): ?string
+    public function reminder(HookEvent $event, string $lead = 'before you wrap up'): ?string
     {
-        $root = $this->git()->root($projectRoot);
+        $root = $this->git()->root($event->root);
 
         if ($root === null) {
             return null; // Not a git repository — nothing to scope a reminder to.
         }
 
-        if (PlanMarker::inWorktree($root)->isActive()) {
+        $ws = Workspace::at($root, $event->sessionId() ?: null);
+
+        if (PlanMarker::inSession($ws)->isActive()) {
             return null; // A plan is running — the executing-plans discipline judges ONCE at the end
             // (`checks complete` → `judge --branch`) and commits each phase unjudged on purpose, so a
             // per-commit nudge is noise. It resumes once `plan done` clears the marker.
@@ -72,7 +76,7 @@ final class JudgeReminder extends Hook
 
         // A leftover worklist from a prior `judge` takes priority over "did you judge?" — you already
         // judged; the job now is to finish it, wave by wave.
-        $open = $this->openWorklist($projectRoot, $root, $lead);
+        $open = $this->openWorklist($ws, $lead);
 
         if ($open !== null) {
             return $open;
@@ -86,16 +90,16 @@ final class JudgeReminder extends Hook
         $files = array_keys($useBranch ? $branch : $working);
 
         if ($files === []) {
-            $this->forget($projectRoot); // Clean tree — the next batch starts fresh.
+            $this->forget($ws); // Clean tree — the next batch starts fresh.
 
             return null;
         }
 
-        if ($this->alreadyReminded($projectRoot, $files)) {
+        if ($this->alreadyReminded($ws, $files)) {
             return null; // No new files since the last nudge this batch.
         }
 
-        $this->remember($projectRoot, $files);
+        $this->remember($ws, $files);
 
         return $this->reason(count($files), $useBranch, $lead);
     }
@@ -117,20 +121,17 @@ final class JudgeReminder extends Hook
             && ! str_contains($command, '--dry-run');
     }
 
-    /** The marker recording the worklist state last nudged about, so the same state isn't re-nudged. */
-    private const string CHECKLIST_MARKER = '.commandments/.remind-checklist';
-
     /**
-     * The "finish your open worklist" nudge, or null. Fires when a prior `judge` left a
-     * `.commandments/sins.md` with sins still in it — once per distinct state, re-arming as lines are
+     * The "finish your open worklist" nudge, or null. Fires when a prior `judge` left the session's
+     * `sins.md` with sins still in it — once per distinct state, re-arming as lines are
      * worked off (so it keeps saying "keep going, N left" without spamming an unchanged file). A cleared
-     * worklist forgets the marker.
+     * worklist forgets the marker (the session's `.remind-checklist`, recording the state last nudged).
      */
-    private function openWorklist(string $projectRoot, string $root, string $lead): ?string
+    private function openWorklist(Workspace $ws, string $lead): ?string
     {
-        $checklist = Checklist::inProject($root);
+        $checklist = Checklist::inSession($ws);
         $remaining = $checklist->remainingSins();
-        $marker = $root . '/' . self::CHECKLIST_MARKER;
+        $marker = $ws->path('.remind-checklist');
 
         if ($remaining === 0) {
             @unlink($marker);
@@ -150,7 +151,7 @@ final class JudgeReminder extends Hook
         $noun = $remaining === 1 ? 'sin' : 'sins';
 
         return "Code Commandments — {$lead}: you have an OPEN worklist with {$remaining} {$noun} still in "
-            . '`.commandments/sins.md`. Finish it before you stop: work straight down — fix each at its '
+            . "`{$ws->relative('sins.md')}`. Finish it before you stop: work straight down — fix each at its "
             . 'SOURCE, delete its line — and do NOT re-run judge, re-scan, or re-verify between fixes. '
             . 'Only when the file is EMPTY, run `judge` again (wave by wave; a clean run deletes it). If '
             . 'you are intentionally pausing here, just say so and carry on.';
@@ -176,9 +177,9 @@ final class JudgeReminder extends Hook
      *
      * @param  list<string>  $current
      */
-    private function alreadyReminded(string $projectRoot, array $current): bool
+    private function alreadyReminded(Workspace $ws, array $current): bool
     {
-        $stored = $this->stored($projectRoot);
+        $stored = $this->stored($ws);
 
         return $stored !== [] && array_diff($current, $stored) === [];
     }
@@ -186,19 +187,19 @@ final class JudgeReminder extends Hook
     /**
      * @param  list<string>  $files
      */
-    private function remember(string $projectRoot, array $files): void
+    private function remember(Workspace $ws, array $files): void
     {
         sort($files);
 
-        $file = self::markerFile($projectRoot);
+        $file = self::markerFile($ws);
 
         @mkdir(dirname($file), 0777, true);
         @file_put_contents($file, implode("\n", $files) . "\n" . self::SEPARATOR . "\n" . self::EXPLANATION . "\n");
     }
 
-    private function forget(string $projectRoot): void
+    private function forget(Workspace $ws): void
     {
-        @unlink(self::markerFile($projectRoot));
+        @unlink(self::markerFile($ws));
     }
 
     /**
@@ -206,9 +207,9 @@ final class JudgeReminder extends Hook
      *
      * @return list<string>
      */
-    private function stored(string $projectRoot): array
+    private function stored(Workspace $ws): array
     {
-        $file = self::markerFile($projectRoot);
+        $file = self::markerFile($ws);
 
         if (! is_file($file)) {
             return [];
@@ -229,9 +230,9 @@ final class JudgeReminder extends Hook
         return $paths;
     }
 
-    private static function markerFile(string $projectRoot): string
+    private static function markerFile(Workspace $ws): string
     {
-        return $projectRoot . '/.commandments/.judge-reminded';
+        return $ws->path('.judge-reminded');
     }
 
     /** What the marker file explains about itself, below the set (the {@see stored} read stops at the separator). */

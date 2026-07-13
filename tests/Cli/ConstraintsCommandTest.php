@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 final class ConstraintsCommandTest extends TestCase
@@ -38,7 +39,7 @@ final class ConstraintsCommandTest extends TestCase
 
     private function store(): PlanConstraints
     {
-        return PlanConstraints::inWorktree($this->root, new PlanExecution()->build());
+        return PlanConstraints::inSession(Workspace::at($this->root), new PlanExecution()->build());
     }
 
     public function test_add_records_a_local_rule_and_list_runs(): void

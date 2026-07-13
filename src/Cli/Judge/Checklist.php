@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
+use JesseGall\CodeCommandments\Workspace;
+
 /**
- * The judge worklist file — `.commandments/sins.md` — and its timestamped archives. Owns knowing where
+ * The judge worklist file — the session's `sins.md` — and its timestamped archives. Owns knowing where
  * they live and how to clear them, so a stale checklist from an older `judge` run never lingers as a
  * misleading reference. A checklist is disposable: it always regenerates on the next scan.
  */
 final class Checklist
 {
-    public const string DEFAULT = '.commandments/sins.md';
-
     public function __construct(private readonly string $path) {}
 
-    public static function inProject(string $root): self
+    public static function inSession(Workspace $workspace): self
     {
-        return new self(rtrim($root, '/') . '/' . self::DEFAULT);
+        return new self($workspace->path('sins.md'));
     }
 
     /**

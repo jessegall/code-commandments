@@ -51,13 +51,14 @@ final class PlanReminder extends Hook
         }
 
         $plan = $this->profile($event);
+        $ws = $event->workspace();
 
         // Did a previous plan already record state this session? If so, this approval RESETS it — and a
         // re-plan of an in-progress plan must not silently drop it (#336): warn loudly so the agent
         // re-establishes constraints/testing rather than assuming carry-over.
-        $working = PlanWorkingState::inWorktree($event->root);
-        $hadPriorState = PlanConstraints::inWorktree($event->root, $plan)->local() !== []
-            || trim(PlanTesting::inWorktree($event->root, $plan)->chosen()) !== ''
+        $working = PlanWorkingState::inSession($ws);
+        $hadPriorState = PlanConstraints::inSession($ws, $plan)->local() !== []
+            || trim(PlanTesting::inSession($ws, $plan)->chosen()) !== ''
             || $working->exists();
 
         // Preserve the working-state (the compaction lifeline) as `.previous` BEFORE the reset — a re-plan
@@ -67,17 +68,17 @@ final class PlanReminder extends Hook
         // A newly-approved plan starts from a clean slate: wipe every trace of the PREVIOUS plan — its
         // counters, constraints, testing choice, working-state notes and stuck signal — so none bleeds
         // into this one, THEN activate the new marker. (Same reset a fresh session does, one home.)
-        PlanReset::wipe($event->root, $plan);
-        PlanMarker::inWorktree($event->root)->activate($this->git()->head($event->root));
-        Checklist::inProject($event->root)->clearAll(); // an older judge's worklist would be a stale
+        PlanReset::wipe($ws, $plan);
+        PlanMarker::inSession($ws)->activate($this->git()->head($event->root));
+        Checklist::inSession($ws)->clearAll(); // an older judge's worklist would be a stale
         // reference; it regenerates on the plan's first scan.
 
-        return $this->inject($event, $this->replanNotice($hadPriorState, $working) . $this->approvedNudge($plan));
+        return $this->inject($event, $this->replanNotice($hadPriorState, $working) . $this->approvedNudge($plan, $working));
     }
 
     protected function onStop(HookEvent $event): int
     {
-        $marker = PlanMarker::inWorktree($event->root);
+        $marker = PlanMarker::inSession($event->workspace());
         $mode = $this->profile($event)->mode();
 
         if (! $marker->isActive() || $mode === null || ! $mode->keepsGoing()) {
@@ -146,7 +147,7 @@ final class PlanReminder extends Hook
             . "` — read it for the earlier decisions, then write a fresh working-state as you go.\n\n";
     }
 
-    private function approvedNudge(PlanProfile $plan): string
+    private function approvedNudge(PlanProfile $plan, PlanWorkingState $working): string
     {
         $push = $plan->pushesEachPhase() ? ', then commit and push' : ', then commit (push once at the end)';
 
@@ -159,7 +160,7 @@ final class PlanReminder extends Hook
             . "finding at its SOURCE, re-run until clean, then run `vendor/bin/commandments plan done`."
             . $this->constraintsSection($plan)
             . $this->testingSection($plan)
-            . $this->workingStateSection($plan)
+            . $this->workingStateSection($plan, $working)
             . $this->autonomySection($plan->mode());
     }
 
@@ -195,13 +196,13 @@ final class PlanReminder extends Hook
      * {@see PlanProfile::tracksWorkingState}. It tells the agent to keep the living record current after
      * each phase AND each important event, so a context compaction never loses the conversational deltas.
      */
-    private function workingStateSection(PlanProfile $plan): string
+    private function workingStateSection(PlanProfile $plan, PlanWorkingState $working): string
     {
         if (! $plan->tracksWorkingState()) {
             return '';
         }
 
-        return "\n• Working state: keep a living record at `.commandments/.plan-working-state`, refreshed after "
+        return "\n• Working state: keep a living record at `{$working->path()}`, refreshed after "
             . "each phase AND after each important event (a decision, a plan change we agree in conversation). "
             . "Capture ONLY what `git log` + the plan can't reconstruct — a Done / Doing / Next cursor, the "
             . "decisions you made (and the alternative you rejected + why), plan changes agreed in chat, gotchas, "

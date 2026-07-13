@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
+use JesseGall\CodeCommandments\Workspace;
+
 use Composer\InstalledVersions;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Catalog as DetectorCatalog;
@@ -40,7 +42,7 @@ final class ConfigCommand implements Command
         $effective = $config->apply(DetectorCatalog::backend(), DetectorCatalog::frontend());
 
         $roots = $config->sourceRoots() !== [] ? $config->sourceRoots() : new SourceRoots()->detect($root);
-        $file = $root . '/.commandments/config.php';
+        $file = Workspace::config($root);
 
         echo "\n  \033[1mcode-commandments\033[0m  " . $this->version() . "\n\n";
 
@@ -62,7 +64,7 @@ final class ConfigCommand implements Command
         $root = getcwd() ?: '.';
         $roots = new SourceRoots()->detect($root);
 
-        new ConfigScribe($root . '/.commandments/config.php')->rewritePaths($roots);
+        new ConfigScribe(Workspace::config($root))->rewritePaths($roots);
 
         echo "\033[32m✓ Reindexed " . count($roots) . " source root(s) into .commandments/config.php:\033[0m " . implode(', ', $roots) . "\n";
 

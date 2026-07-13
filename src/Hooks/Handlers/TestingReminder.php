@@ -34,8 +34,8 @@ final class TestingReminder extends Hook
 
     protected function onPostToolUse(HookEvent $event): int
     {
-        $method = $this->active($event->root);
-        $counter = Counter::named($event->root, 'testing-remind', "re-surfaces the active plan's testing methodology once every 25 tool uses", every: self::INTERVAL);
+        $method = $this->active($event);
+        $counter = Counter::named($event->workspace(), 'testing-remind', "re-surfaces the active plan's testing methodology once every 25 tool uses", every: self::INTERVAL);
 
         if ($method === '' || ! $counter->due()) {
             return $this->pass();
@@ -61,13 +61,13 @@ final class TestingReminder extends Hook
      * The testing methodology in force for this run, or '' when no plan is active — the reminder is
      * plan-scoped, so a configured default stays dormant until a plan is running.
      */
-    private function active(string $root): string
+    private function active(HookEvent $event): string
     {
-        if (! PlanMarker::inWorktree($root)->isActive()) {
+        if (! PlanMarker::inSession($event->workspace())->isActive()) {
             return '';
         }
 
-        return PlanTesting::inWorktree($root, Config::load($root)->planExecutionSettings())->effective();
+        return PlanTesting::inSession($event->workspace(), Config::load($event->root)->planExecutionSettings())->effective();
     }
 
     private function reminder(string $method): string

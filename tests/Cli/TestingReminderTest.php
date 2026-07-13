@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\TestingReminder;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\PlanExecution;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -47,13 +48,13 @@ final class TestingReminderTest extends TestCase
 
     private function chooseMethod(): void
     {
-        PlanTesting::inWorktree($this->root, new PlanExecution()->build())->set('Only fix broken tests.');
+        PlanTesting::inSession(Workspace::at($this->root), new PlanExecution()->build())->set('Only fix broken tests.');
     }
 
     public function test_surfaces_the_methodology_once_every_interval_during_a_plan(): void
     {
         $this->chooseMethod();
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         for ($i = 1; $i < 25; $i++) {
             $this->assertSame([], $this->fire(), "silent on tick {$i}");
@@ -73,7 +74,7 @@ final class TestingReminderTest extends TestCase
             "<?php\nuse JesseGall\\CodeCommandments\\Config;\nreturn function (Config \$config): void {\n"
             . "    \$config->planExecution(fn (\$p) => \$p->testFlow('Write tests each phase.'));\n};\n",
         );
-        PlanMarker::inWorktree($this->root)->activate('sha');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         for ($i = 1; $i < 25; $i++) {
             $this->fire();
@@ -93,7 +94,7 @@ final class TestingReminderTest extends TestCase
 
     public function test_silent_when_a_plan_has_no_methodology(): void
     {
-        PlanMarker::inWorktree($this->root)->activate('sha'); // active plan, nothing configured or chosen
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // active plan, nothing configured or chosen
 
         for ($i = 0; $i < 30; $i++) {
             $this->assertSame([], $this->fire());

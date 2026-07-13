@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,7 +26,7 @@ final class SourceReminderTest extends TestCase
 
     protected function tearDown(): void
     {
-        @unlink($this->root . '/.commandments/.source-remind-count');
+        @unlink(Workspace::at($this->root)->path('.source-remind-count'));
         @unlink($this->root . '/.commandments/config.php');
         @rmdir($this->root . '/.commandments');
         @rmdir($this->root);
@@ -84,7 +85,7 @@ final class SourceReminderTest extends TestCase
 
     private function resetCounter(): void
     {
-        @unlink($this->root . '/.commandments/.source-remind-count');
+        @unlink(Workspace::at($this->root)->path('.source-remind-count'));
     }
 
     /**

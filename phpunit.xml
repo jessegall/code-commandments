@@ -7,6 +7,8 @@
     <php>
         <!-- The dogfood duplicate-function test scans the whole of src/ into one Codebase; give the suite headroom. -->
         <ini name="memory_limit" value="512M"/>
+        <!-- Pin the session id: a suite run INSIDE a Claude Code session must not shift every Workspace path to a real session hash. -->
+        <env name="CLAUDE_CODE_SESSION_ID" value="" force="true"/>
     </php>
     <testsuites>
         <testsuite name="v4">

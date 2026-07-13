@@ -173,7 +173,8 @@ final class PlanExecution
      * Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent
      * writes its progress and, above all, the conversational deltas (decisions and their rejected
      * alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to
-     * `.commandments/.plan-working-state`, refreshed after each phase and each important event. A
+     * the session's `.plan-working-state` file (the approval nudge names the exact path),
+     * refreshed after each phase and each important event. A
      * `PreCompact` hook flushes it before compaction and it is re-injected on compact/resume, so a
      * compacted agent resumes with the full picture. Off by default.
      */

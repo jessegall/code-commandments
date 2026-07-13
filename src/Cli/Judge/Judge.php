@@ -26,12 +26,17 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Benchmark;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
+use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * Scans a path and runs Sin Detectors, outputting findings grouped by skill (filterable by --skill/--sin).
  * Orchestrates Scope, Codebase, DetectorRunner (parallel), and SinReport; writes `.commandments/sins.md` checklist.
  */
 final class Judge implements Command
 {
+    public function __construct(private readonly HookIO $io = new HookIO) {}
+
     public function names(): array
     {
         return ['judge'];
@@ -39,7 +44,10 @@ final class Judge implements Command
 
     public function run(Input $input): int
     {
-        $options = JudgeOptions::fromInput($input);
+        // The same root resolution as the hooks (git toplevel → CLAUDE_PROJECT_DIR → cwd), so a judge
+        // run from a subdirectory still lands its artifacts in the SAME session folder the hooks read.
+        $workspace = Workspace::at($this->io->projectRoot());
+        $options = JudgeOptions::fromInput($input, $workspace);
 
         if ($options->list) {
             return $this->list();
@@ -71,7 +79,7 @@ final class Judge implements Command
         }
 
         try {
-            $scope = Scope::fromArgs($input->raw(), $options->path);
+            $scope = Scope::fromArgs($input->raw(), $options->path, $workspace);
         } catch (ScopeUnavailable $unavailable) {
             fwrite(STDERR, $unavailable->getMessage() . "\n");
 

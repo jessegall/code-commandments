@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * `commandments plan <done|status>` — the human/agent handle on the active-plan {@see PlanMarker}
  * that the keep-going Stop hook reads. `done` ends a plan: it clears the marker so the Stop hook
@@ -29,7 +31,7 @@ final class PlanCommand implements Command
     public function run(Input $input): int
     {
         $root = $this->io->projectRoot();
-        $marker = PlanMarker::inWorktree($root);
+        $marker = PlanMarker::inSession(Workspace::at($root));
 
         return match ($input->firstArgument('status')) {
             'done', 'finish', 'complete' => $this->done($marker, $root),
@@ -93,7 +95,7 @@ final class PlanCommand implements Command
             return 0;
         }
 
-        $constraints = PlanConstraints::inWorktree($root, Config::load($root)->planExecutionSettings());
+        $constraints = PlanConstraints::inSession(Workspace::at($root), Config::load($root)->planExecutionSettings());
 
         if ($constraints->active() !== [] && ! $constraints->isVerifiedAt($this->io->git()->head($root))) {
             fwrite(STDERR,
@@ -106,9 +108,9 @@ final class PlanCommand implements Command
 
         $marker->clear();
         $constraints->clear();
-        PlanTesting::inWorktree($root, Config::load($root)->planExecutionSettings())->clear();
-        PlanWorkingState::inWorktree($root)->clear();
-        Checklist::inProject($root)->clearAll(); // the plan is over — drop its worklist so no stale
+        PlanTesting::inSession(Workspace::at($root), Config::load($root)->planExecutionSettings())->clear();
+        PlanWorkingState::inSession(Workspace::at($root))->clear();
+        Checklist::inSession(Workspace::at($root))->clearAll(); // the plan is over — drop its worklist so no stale
         // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");
 
@@ -124,7 +126,7 @@ final class PlanCommand implements Command
         fwrite(STDOUT, $marker->isActive() ? ($stuck ? "◼ Plan active (STUCK).\n" : "● Plan active.\n") : "○ No plan active.\n");
         fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  mode: {$mode}\n");
 
-        $constraints = PlanConstraints::inWorktree($root, $plan);
+        $constraints = PlanConstraints::inSession(Workspace::at($root), $plan);
         $active = $constraints->active();
 
         if ($active !== []) {
@@ -132,7 +134,7 @@ final class PlanCommand implements Command
             fwrite(STDOUT, '  constraints: ' . count($active) . " active ({$verified})\n");
         }
 
-        $method = PlanTesting::inWorktree($root, $plan)->effective();
+        $method = PlanTesting::inSession(Workspace::at($root), $plan)->effective();
 
         if ($method !== '') {
             fwrite(STDOUT, "  testing: {$method}\n");

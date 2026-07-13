@@ -256,7 +256,7 @@ final class Config
     public static function load(?string $dir = null): self
     {
         $config = new self;
-        $file = ($dir ?? getcwd()) . '/.commandments/config.php';
+        $file = Workspace::config($dir);
 
         if (! is_file($file)) {
             return $config;

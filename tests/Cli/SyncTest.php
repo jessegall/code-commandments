@@ -58,6 +58,23 @@ final class SyncTest extends TestCase
         $this->assertStringContainsString('.claude/skills/commandments-*/', (string) file_get_contents("{$this->consumer}/.gitignore"));
     }
 
+    public function test_sync_removes_legacy_flat_state_files(): void
+    {
+        @mkdir("{$this->consumer}/.commandments", 0777, true);
+        file_put_contents("{$this->consumer}/.commandments/sins.md", "old\n");
+        file_put_contents("{$this->consumer}/.commandments/sins-2026-07-04_101112.md", "older\n");
+        file_put_contents("{$this->consumer}/.commandments/.plan-active", "sha\n");
+        file_put_contents("{$this->consumer}/.commandments/.cardinal-remind-count", "7\n");
+
+        $this->sync();
+
+        $this->assertFileDoesNotExist("{$this->consumer}/.commandments/sins.md", 'the pre-session flat checklist is migrated out');
+        $this->assertFileDoesNotExist("{$this->consumer}/.commandments/sins-2026-07-04_101112.md");
+        $this->assertFileDoesNotExist("{$this->consumer}/.commandments/.plan-active");
+        $this->assertFileDoesNotExist("{$this->consumer}/.commandments/.cardinal-remind-count");
+        $this->assertFileExists("{$this->consumer}/.commandments/config.php", 'the durable config is never touched');
+    }
+
     public function test_a_second_sync_leaves_the_config_untouched(): void
     {
         $this->sync();

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
 use JesseGall\CodeCommandments\PlanProfile;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
  * The constraint state for the active plan — the natural-language invariants the run must hold to (the
  * global ones from {@see PlanProfile::constraints} plus this run's local additions), and whether the
  * agent has verified them against its branch diff. Verification is a HEAD stamp, fresh only while HEAD
- * is unchanged. Worktree-scoped like {@see PlanMarker}.
+ * is unchanged. Session-scoped like {@see PlanMarker}.
  */
 final class PlanConstraints
 {
@@ -20,11 +21,11 @@ final class PlanConstraints
         private readonly PlanProfile $plan,
     ) {}
 
-    public static function inWorktree(string $root, PlanProfile $plan): self
+    public static function inSession(Workspace $workspace, PlanProfile $plan): self
     {
         return new self(
-            $root . '/.commandments/.plan-constraints',
-            $root . '/.commandments/.constraints-verified',
+            $workspace->path('.plan-constraints'),
+            $workspace->path('.constraints-verified'),
             $plan,
         );
     }

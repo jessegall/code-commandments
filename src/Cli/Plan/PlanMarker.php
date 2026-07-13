@@ -6,12 +6,14 @@ namespace JesseGall\CodeCommandments\Cli\Plan;
 
 
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
+use JesseGall\CodeCommandments\Workspace;
+
 /**
- * The per-worktree record that a plan is being executed — the state behind the keep-going Stop
+ * The per-session record that a plan is being executed — the state behind the keep-going Stop
  * hook. Written when a plan is approved ({@see PlanReminder}), read on every stop to decide whether
  * to re-nudge, and cleared by `commandments plan done` ({@see PlanCommand}) or when the plan branch
- * is merged back to its base. It lives under the worktree's OWN `.commandments/`, so one worktree's
- * plan never nudges another. It stores ONLY the {@see PlanState} counters — nothing config-derived,
+ * is merged back to its base. It lives in the session's OWN {@see Workspace} folder, so one
+ * session's plan never nudges another — across worktrees AND across concurrent sessions. It stores ONLY the {@see PlanState} counters — nothing config-derived,
  * so the base branch/policy stay live from config. The file format mirrors the other hook markers:
  * value lines, a separator, then a self-describing explanation.
  */
@@ -21,9 +23,9 @@ final class PlanMarker
 
     public function __construct(private readonly string $path) {}
 
-    public static function inWorktree(string $root): self
+    public static function inSession(Workspace $workspace): self
     {
-        return new self($root . '/.commandments/.plan-active');
+        return new self($workspace->path('.plan-active'));
     }
 
     /**
