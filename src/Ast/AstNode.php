@@ -524,6 +524,54 @@ class AstNode
     }
 
     /**
+     * The class a function call's first argument names, when it IS a class literal —
+     * `app(Foo::class)` → `Foo` (fully qualified), `app('mailer')` → `mailer`, with
+     * `static::class`/`self::class` resolved to the enclosing class. Null when the first
+     * argument is anything else (a runtime class-string, no args, not a function call).
+     */
+    public function firstArgClassLiteral(): ?string
+    {
+        if (! $this->node instanceof FuncCall) {
+            return null;
+        }
+
+        $first = $this->node->args[0] ?? null;
+
+        if (! $first instanceof Arg) {
+            return null;
+        }
+
+        if ($first->value instanceof String_) {
+            return $first->value->value;
+        }
+
+        if ($first->value instanceof ClassConstFetch && $first->value->class instanceof Name) {
+            $name = $first->value->class;
+
+            if (in_array($name->toLowerString(), ['static', 'self'], true)) {
+                return $this->enclosingClassName();
+            }
+
+            return $name->toString();
+        }
+
+        return null;
+    }
+
+    /**
+     * Is this `app()`/`resolve()` call resolving the class it sits IN — `app(static::class)`,
+     * `app(self::class)`, or the class's own name? A class constructing ITSELF through the
+     * container is a static factory's construction seam (`Foo::make()` giving a static entry
+     * point constructor DI), not a dependency reach.
+     */
+    public function resolvesEnclosingClass(): bool
+    {
+        $enclosing = $this->enclosingClassName();
+
+        return $enclosing !== null && $this->firstArgClassLiteral() === $enclosing;
+    }
+
+    /**
      * Is this node the value of a `return` statement?
      */
     public function isReturnedValue(): bool

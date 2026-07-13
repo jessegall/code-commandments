@@ -50,25 +50,20 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 
 ```php
 // Bad
-public function render(array $breakdown): string
+public function normalize(array $row): void
 {
-    return sprintf(
-        'Subtotal %d, tax %d, total %d',
-        $breakdown['subtotal'],
-        $breakdown['tax'],
-        $breakdown['total'],
+    $this->products->upsert(
+        $row['sku'] ?? '',
+        $row['name'] ?? '',
+        (int) ($row['stock'] ?? 0),
     );
 }
 
 // Good
-public function renderTotals(PriceBreakdown $breakdown): string
+public function __unserialize(array $data): void
 {
-    return sprintf(
-        'Subtotal %d, tax %d, total %d',
-        $breakdown->subtotal,
-        $breakdown->tax,
-        $breakdown->total,
-    );
+    $this->pendingSku = $data['sku'];
+    $this->pendingStock = $this->migrateStock($data);
 }
 ```
 

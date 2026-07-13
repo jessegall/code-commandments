@@ -12,6 +12,14 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class PaymentProcessor
 {
+    // Righteous twin (ContainerReach): a class resolving ITSELF from a static factory
+    // is the construction seam that gives a static entry point constructor DI — not a
+    // dependency reach.
+    public static function make(mixed ...$args): static
+    {
+        return app(static::class, $args);
+    }
+
     #[Sinful(ContainerReach::class)]
     #[Sinful(GenericException::class)]
     #[Sinful(FacadeCall::class)]

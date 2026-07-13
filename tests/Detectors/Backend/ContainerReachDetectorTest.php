@@ -36,4 +36,44 @@ final class ContainerReachDetectorTest extends TestCase
 
         $this->assertSame(['App\\Service::known'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_does_not_flag_a_class_resolving_itself_from_a_static_factory(): void
+    {
+        // app(static::class, $args) in a static make() is the construction seam that GIVES
+        // the class constructor DI — self-construction, not a dependency reach (#342, #346).
+        $code = <<<'PHP'
+        <?php
+        namespace App;
+
+        class PaletteItems
+        {
+            public function __construct(private Registry $registry) {}
+
+            public static function make(mixed ...$args): static
+            {
+                return app(static::class, $args);
+            }
+
+            public static function fromSelf(): self
+            {
+                return app(self::class);
+            }
+
+            public static function byOwnName(): self
+            {
+                return app(PaletteItems::class);
+            }
+
+            // resolving ANOTHER class is still the sin
+            public function reach(): object
+            {
+                return app(Mailer::class);
+            }
+        }
+        PHP;
+
+        $hits = (new ContainerReachDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['App\\PaletteItems::reach'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
 }

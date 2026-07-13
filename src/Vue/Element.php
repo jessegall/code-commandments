@@ -363,6 +363,19 @@ class Element
     }
 
     /**
+     * Is this element the DIRECT child of a `<Transition>`/`<TransitionGroup>`? Vue's
+     * transition components track and animate their real element children by key — the
+     * structural directive (`v-if`, `v-for`) MUST sit on the element itself; hoisting it
+     * to a `<template>` renders a fragment and breaks child tracking / FLIP moves.
+     * Control flow here is the Vue canon, not a sin.
+     */
+    public function isTransitionChild(): bool
+    {
+        return $this->parent !== null
+            && in_array($this->parent->tag, ['Transition', 'TransitionGroup', 'transition', 'transition-group'], true);
+    }
+
+    /**
      * Does this subtree render an element tagged $tag? The AST answer to "does this markup
      * reference `<$tag>`" — a tree query, never a scan of the rendered source string.
      */

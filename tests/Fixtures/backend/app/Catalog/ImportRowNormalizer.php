@@ -15,6 +15,10 @@ use Shop\Repositories\ProductRepository;
  */
 final class ImportRowNormalizer
 {
+    private string $pendingSku = '';
+
+    private int $pendingStock = 0;
+
     public function __construct(private readonly ProductRepository $products) {}
 
     /**
@@ -39,5 +43,23 @@ final class ImportRowNormalizer
     public function persist(ImportRow $row): void
     {
         $this->products->upsert($row->sku, $row->name, $row->stock);
+    }
+
+    /**
+     * PHP's serialization protocol hands `__unserialize` the raw property bag — the
+     * array parameter is dictated by the LANGUAGE, so string-indexing it here (and in
+     * the private helper fed only that bag) is the canonical parse point, not a sin (#340).
+     */
+    #[Righteous(ArrayBag::class)]
+    public function __unserialize(array $data): void
+    {
+        $this->pendingSku = $data['sku'];
+        $this->pendingStock = $this->migrateStock($data);
+    }
+
+    #[Righteous(ArrayBag::class)]
+    private function migrateStock(array $data): int
+    {
+        return (int) ($data['stock'] ?? $data['quantity'] ?? 0);
     }
 }

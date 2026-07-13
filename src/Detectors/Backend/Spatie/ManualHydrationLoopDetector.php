@@ -16,7 +16,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/
  * `while` loop, or as an `array_map` callback. Spatie does this in one pass: a
  * `#[DataCollectionOf]` property plus `::collect()`. The loop/map is the mapping that
- * belongs to the framework. Points at spatie-data.
+ * belongs to the framework. A `::from()` fed an inline array literal is exempt — that
+ * hand-written field mapping is a cross-shape transformation `::collect()` cannot
+ * express. Points at spatie-data.
  */
 final class ManualHydrationLoopDetector implements Detector, Repentable
 {
@@ -39,6 +41,7 @@ final class ManualHydrationLoopDetector implements Detector, Repentable
             ->reject(static fn (SpatieDataNode $node): bool => $node->isConditionalConstruction())
             ->reject(static fn (SpatieDataNode $node): bool => $node->isWithinTolerantCatch())
             ->reject(static fn (SpatieDataNode $node): bool => $node->isKeyedMapAssignment())
+            ->reject(static fn (SpatieDataNode $node): bool => $node->isInlineProjection())
             ->get();
     }
 }

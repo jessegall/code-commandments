@@ -27,6 +27,40 @@ class NodeMatch extends AstNode
     }
 
     /**
+     * Is this node inside PHP's serialization-protocol boundary — the body of
+     * `__unserialize()` / `__set_state()`, whose raw array-bag parameter the LANGUAGE
+     * dictates, or a method whose EVERY call site sits inside one (a private helper the
+     * hook hands its bag to)? String-indexing there is the canonical deserialization
+     * parse point; it cannot take a value object instead.
+     */
+    public function isWithinSerializationBoundary(): bool
+    {
+        return $this->scopeIsSerializationBoundary($this->enclosingClassName(), $this->enclosingFunctionName(), 0);
+    }
+
+    private function scopeIsSerializationBoundary(?string $class, ?string $method, int $depth): bool
+    {
+        if (in_array($method, ['__unserialize', '__set_state'], true)) {
+            return true;
+        }
+
+        if ($class === null || $method === null || $depth >= 3) {
+            return false;
+        }
+
+        $callers = $this->codebase->index()->callersOf($class, $method);
+
+        return $callers !== [] && array_all(
+            $callers,
+            fn (NodeMatch $caller): bool => $this->scopeIsSerializationBoundary(
+                $caller->enclosingClassName(),
+                $caller->enclosingFunctionName(),
+                $depth + 1,
+            ),
+        );
+    }
+
+    /**
      * The 1-based line where this match begins.
      */
     public function line(): int

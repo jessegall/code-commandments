@@ -20,7 +20,9 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
  * resolves — the dependency belongs in the constructor. Only statically-known targets
  * count; suppressed for enums and hand-instantiated classes. A `NoContainer` type the
  * framework `new`s itself with no DI (an Eloquent cast) is exempt — it CAN'T
- * constructor-inject, so per-call container reach is its convention.
+ * constructor-inject, so per-call container reach is its convention. A class resolving
+ * ITSELF (`app(static::class)` in a static `make()`) is exempt — that is the construction
+ * seam that gives a static entry point constructor DI, not a dependency reach.
  */
 final class ContainerReachDetector implements Detector, Exemptable
 {
@@ -42,6 +44,7 @@ final class ContainerReachDetector implements Detector, Exemptable
             ->whereFunction('app', 'resolve')
             ->reject(static fn (AstNode $node): bool => $node->isInEnum())
             ->where(static fn (AstNode $node): bool => $node->firstArgIsClassLiteral())
+            ->reject(static fn (AstNode $node): bool => $node->resolvesEnclosingClass())
             ->where(static fn (AstNode $node): bool => Container::resolves($codebase, $node->enclosingClassName()))
             ->get(), $codebase);
     }

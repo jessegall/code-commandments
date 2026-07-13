@@ -149,6 +149,45 @@ final class ManualHydrationLoopDetectorTest extends TestCase
         $this->assertSame([], array_map(static fn ($m): string => $m->scope(), $hits));
     }
 
+    public function test_does_not_flag_a_cross_type_projection_built_in_place(): void
+    {
+        // Reported (#341): mapping one typed object into ANOTHER by hand-writing the field
+        // mapping (`::from(['value' => ..., 'label' => ...])`) is a transformation, not
+        // re-hydration — `::collect()` maps rows verbatim and cannot express the projection.
+        // A verbatim `::from($item)` in the same map is still the sin.
+        $code = <<<'PHP'
+        <?php
+        namespace Spatie\LaravelData { class Data {} }
+        namespace App {
+            use Spatie\LaravelData\Data;
+            class InputOption extends Data {}
+            class Hydrator {
+                public function projected(array $options): array {
+                    return array_map(
+                        static fn ($option) => InputOption::from(['value' => (string) $option->value, 'label' => $option->label]),
+                        $options,
+                    );
+                }
+                public function projectedLoop(array $options): array {
+                    $out = [];
+                    foreach ($options as $option) {
+                        $out[] = InputOption::from(['value' => (string) $option->value, 'label' => $option->label]);
+                    }
+                    return $out;
+                }
+                public function verbatim(array $rows): array {
+                    return array_map(static fn ($row) => InputOption::from($row), $rows);
+                }
+            }
+        }
+        PHP;
+
+        $hits = (new ManualHydrationLoopDetector)->find(Codebase::fromString($code));
+
+        $this->assertCount(1, $hits);
+        $this->assertSame(21, $hits[0]->line()); // the verbatim ::from($row) map
+    }
+
     public function test_still_flags_a_method_level_try_catch_around_the_whole_map(): void
     {
         // A try/catch OUTSIDE the loop (one failure aborts all) is not tolerant — still a sin.

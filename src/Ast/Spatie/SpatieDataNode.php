@@ -1045,6 +1045,24 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
+     * Is this `::from()` fed an ARRAY LITERAL built in place — a hand-written field mapping
+     * (`::from(['value' => $option->value, 'label' => $option->label])`) rather than the raw
+     * item? That is a cross-shape TRANSFORMATION, not re-hydration: `::collect()` maps rows
+     * through `from()` verbatim and cannot express the projection, so the loop/map is the
+     * only place the mapping can live.
+     */
+    public function isInlineProjection(): bool
+    {
+        if (! $this->node instanceof StaticCall) {
+            return false;
+        }
+
+        $first = $this->node->args[0] ?? null;
+
+        return $first instanceof Arg && $first->value instanceof Array_;
+    }
+
+    /**
      * Is this `::from()` NOT a straight per-row construction — guarded by a branch (`if`, `match`,
      * `?:`) or buried in a nested callback (an `Option::inspect`/`->map`, etc.) between it and its
      * loop, rather than run once per element? Such a loop FILTERS or conditionally builds, and

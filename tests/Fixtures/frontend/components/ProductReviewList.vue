@@ -45,5 +45,16 @@ defineProps<{ productId: number }>();
         <li class="review-tag">{{ tag.label }}</li>
       </template>
     </template>
+
+    <!-- @righteous ControlFlowOnElement — TransitionGroup tracks its real keyed
+         children for FLIP; the v-for MUST sit on the element, not a <template> -->
+    <TransitionGroup tag="ul" name="review-list" class="review-stream">
+      <li v-for="review in reviews" :key="review.id" class="review-row">{{ review.body }}</li>
+    </TransitionGroup>
+
+    <!-- @righteous ControlFlowOnElement — a <Transition> toggles its single real child -->
+    <Transition name="fade">
+      <p v-if="highlighted" class="review-highlight">{{ highlighted.body }}</p>
+    </Transition>
   </section>
 </template>

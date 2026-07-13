@@ -85,4 +85,20 @@ final class ProductImportMapper
 
         return $catalog;
     }
+
+    /**
+     * A CROSS-SHAPE projection — the field mapping is hand-written as an inline array
+     * literal, transforming one typed shape into another. `::collect()` maps rows through
+     * `from()` verbatim and cannot express the projection — NOT this sin (#341).
+     *
+     * @param  array<int, object>  $variants
+     * @return array<int, ProductData>
+     */
+    public function projected(array $variants): array
+    {
+        return array_map(
+            static fn (object $variant): ProductData => ProductData::from(['sku' => (string) $variant->sku, 'name' => $variant->label]),
+            $variants,
+        );
+    }
 }

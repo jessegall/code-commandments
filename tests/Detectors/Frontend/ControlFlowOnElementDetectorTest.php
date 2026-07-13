@@ -42,6 +42,45 @@ final class ControlFlowOnElementDetectorTest extends TestCase
         $this->assertCount(0, $this->find('<template><div v-show="open">x</div></template>'));
     }
 
+    public function test_leaves_v_for_on_the_direct_child_of_a_transition_group_alone(): void
+    {
+        // TransitionGroup tracks its real keyed element children for FLIP — the v-for
+        // MUST sit on the element; a <template> wrapper breaks the animation (#343–#345).
+        $found = $this->find(
+            '<template><TransitionGroup tag="div"><Item v-for="i in items" :key="i.id" :item="i" /></TransitionGroup></template>',
+        );
+
+        $this->assertCount(0, $found);
+    }
+
+    public function test_leaves_v_if_on_the_direct_child_of_a_transition_alone(): void
+    {
+        $found = $this->find('<template><Transition><div v-if="open">x</div></Transition></template>');
+
+        $this->assertCount(0, $found);
+    }
+
+    public function test_leaves_the_kebab_case_transition_group_child_alone(): void
+    {
+        $found = $this->find(
+            '<template><transition-group tag="ul"><li v-for="i in items" :key="i">{{ i }}</li></transition-group></template>',
+        );
+
+        $this->assertCount(0, $found);
+    }
+
+    public function test_still_flags_control_flow_deeper_inside_a_transition_group(): void
+    {
+        // Only the DIRECT child is the transition's tracked element — a grandchild has
+        // no excuse.
+        $found = $this->find(
+            '<template><TransitionGroup tag="div"><div :key="1"><span v-if="open">x</span></div></TransitionGroup></template>',
+        );
+
+        $this->assertCount(1, $found);
+        $this->assertSame('span', $found[0]->tag);
+    }
+
     public function test_scribe_wraps_the_element_in_a_template(): void
     {
         $rewrites = new WrapControlFlowScribe()->rewrite(
