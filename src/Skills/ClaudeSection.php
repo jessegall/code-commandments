@@ -50,7 +50,11 @@ final class ClaudeSection
           it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
           `vendor/bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
           (repeat `--ref` for EVERY file involved — a bug spanning files references each).
-          Never rationalise a real finding as "pre-existing baseline."
+          Design-smell detectors REQUIRE a `--best-design="…"`: the cleanest design you can
+          conceive for this code. It is the litmus — a report is valid ONLY if the flagged
+          code already IS that design; if you can name anything cleaner, that design is the
+          owed fix, so implement it and do not file. The reason may not hedge; a "correct,
+          but…" is rejected. Never rationalise a real finding as "pre-existing baseline."
         - **A report is NOT a deferral.** A detector-report claims ONE thing: the flagged
           code is CORRECT under the architecture and the detector is wrong. If the finding
           is right and an honest fix exists, you MUST implement it — however far it

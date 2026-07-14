@@ -101,11 +101,81 @@ final class ReportTest extends TestCase
         $this->assertStringContainsString('function alpha()', $filer->body);
     }
 
-    public function test_a_detector_report_does_not_require_a_ref(): void
+    public function test_an_unmarked_detector_report_files_without_a_best_design(): void
     {
         $filer = $this->filer();
 
         $this->assertSame(0, $this->fire($filer, '--detector=SomeDetector', '--reason=false positive'));
         $this->assertStringContainsString('[detector-report] SomeDetector', $filer->title);
+    }
+
+    public function test_a_marked_detector_report_requires_a_best_design(): void
+    {
+        $filer = $this->filer();
+
+        $this->assertSame(2, $this->fire($filer, '--detector=AllNullableDataDetector', '--reason=false positive'));
+        $this->assertSame('', $filer->title, 'a RequiresBestDesign detector is not filed without --best-design');
+    }
+
+    public function test_the_best_design_requirement_is_lenient_on_the_detector_suffix(): void
+    {
+        $filer = $this->filer();
+
+        // Same detector, named without the `Detector` suffix — still resolved, still required.
+        $this->assertSame(2, $this->fire($filer, '--detector=AllNullableData', '--reason=false positive'));
+        $this->assertSame('', $filer->title);
+    }
+
+    public function test_a_marked_detector_report_injects_the_best_design(): void
+    {
+        $filer = $this->filer();
+
+        $this->assertSame(0, $this->fire(
+            $filer,
+            '--detector=AllNullableDataDetector',
+            '--reason=the flagged shape is the truthful contract',
+            '--best-design=an all-nullable Data is the honest shape here',
+        ));
+
+        $this->assertStringContainsString('Cleanest design the reporter can conceive', $filer->body);
+        $this->assertStringContainsString('an all-nullable Data is the honest shape here', $filer->body);
+    }
+
+    public function test_a_hedged_detector_report_reason_is_rejected(): void
+    {
+        $filer = $this->filer();
+
+        $this->assertSame(2, $this->fire(
+            $filer,
+            '--detector=AllNullableDataDetector',
+            '--reason=the finding is real but it needs its own migration',
+            '--best-design=a proper sum type',
+        ));
+        $this->assertSame('', $filer->title, 'a hedged report is not filed');
+    }
+
+    public function test_a_hedge_in_the_best_design_is_rejected(): void
+    {
+        $filer = $this->filer();
+
+        $this->assertSame(2, $this->fire(
+            $filer,
+            '--detector=AllNullableDataDetector',
+            '--reason=the code is correct as written',
+            '--best-design=a sum type would be cleaner but that is a bigger refactor',
+        ));
+        $this->assertSame('', $filer->title);
+    }
+
+    public function test_a_flat_word_containing_but_does_not_trip_the_hedge_gate(): void
+    {
+        $filer = $this->filer();
+
+        $this->assertSame(0, $this->fire(
+            $filer,
+            '--detector=AllNullableDataDetector',
+            '--reason=the attribute distribution is the honest contract',
+            '--best-design=the flagged code as written',
+        ), 'the substring "but" inside "attribute"/"distribution" must not trip the gate');
     }
 }

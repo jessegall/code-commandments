@@ -153,7 +153,7 @@ _93 sins across 21 skills._
 
 | Sin | What it flags |
 |---|---|
-| `AllNullableData` | Detects Spatie Data classes where every field is nullable; make required fields non-nullable so `from()` fails on a real miss. / |
+| `AllNullableData` | Detects Spatie Data classes where every field is nullable; make required fields non-nullable so `from()` fails on a real miss. |
 | `AllOptionalData` | Detects a `Data` class where EVERY promoted property is `T\|Optional` — the all-optional sibling of the all-nullable "god" DTO. |
 | `DataCollectionType` | Flags a `Data` property typed as `DataCollection` — it must be `array` (preferred) or `Collection` with `#[DataCollectionOf(X)]`. |
 | `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`). |

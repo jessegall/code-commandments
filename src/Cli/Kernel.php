@@ -114,7 +114,7 @@ final class Kernel
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
           commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
           commandments scaffold [--sin=NAME] [--dry-run]  # generate the reusable helper a sin's fix uses (namespace injected)
-          commandments report --reason="…" [--detector=NAME] [--file=PATH] [--line=N]  # report a false positive (with --detector) or a global bug — NOT a deferral: a correct finding must be FIXED, however big the fix
+          commandments report --reason="…" --ref=PATH:LINE [--detector=NAME --best-design="…"]  # report a false positive (design-smell detectors REQUIRE --best-design: the cleanest design you can conceive — valid only if the code already IS it) or a global bug — NOT a deferral: a correct finding must be FIXED, however big the fix
           commandments feature-request --title="…" --reason="…"  # propose a new/changed rule
           commandments disable <sin>  # turn a rule off in .commandments/config.php
           commandments enable <sin>   # turn it back on

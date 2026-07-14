@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors;
 
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Discovery;
+use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Unpublished;
 
 /**
@@ -24,6 +25,29 @@ final class Catalog
     public static function all(): array
     {
         return [...self::backend(), ...self::frontend()];
+    }
+
+    /**
+     * The published detector whose SHORT class name matches `$name` (the name a finding and a
+     * `--detector=` report carry), or null if none does. Lenient on the `Detector` suffix, so both
+     * `AllNullableDataDetector` and `AllNullableData` resolve.
+     */
+    public static function detectorNamed(string $name): ?RootDetector
+    {
+        $wanted = mb_strtolower(self::withoutSuffix($name));
+
+        foreach (self::all() as $detector) {
+            if (mb_strtolower(self::withoutSuffix(ClassName::short($detector::class))) === $wanted) {
+                return $detector;
+            }
+        }
+
+        return null;
+    }
+
+    private static function withoutSuffix(string $name): string
+    {
+        return str_ends_with($name, 'Detector') ? substr($name, 0, -strlen('Detector')) : $name;
     }
 
     /**

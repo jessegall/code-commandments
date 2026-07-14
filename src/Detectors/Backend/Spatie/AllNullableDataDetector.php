@@ -9,15 +9,17 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\RequiresBestDesign;
 use JesseGall\CodeCommandments\Scribes\Backend\NullObjectDefaultScribe;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\AllNullableData;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
  * Detects Spatie Data classes where every field is nullable; make required fields non-nullable
- * so `from()` fails on a real miss.
+ * so `from()` fails on a real miss. {@see RequiresBestDesign} — "genuinely optional" is the exact
+ * dodge this sin rejects, so a false-positive report must name the cleanest design.
  */
-final class AllNullableDataDetector implements Detector, Repentable
+final class AllNullableDataDetector implements Detector, Repentable, RequiresBestDesign
 {
     public function sin(): Sin
     {
