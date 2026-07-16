@@ -103,4 +103,21 @@ final class HookDispatchTest extends TestCase
 
         $this->assertSame([], $emitted, 'the base-class guard suppresses every Stop handler');
     }
+
+    public function test_every_hook_is_silent_inside_a_subagent(): void
+    {
+        // A read-only exploration subagent must receive none of our reminders/injections — they speak only
+        // to the main session. The `agent_id` stamp makes even the 25th tool use (which normally fires the
+        // cardinal-rule Remind) stay silent.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->constraint(\'No frontend logic.\'));');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha1');
+
+        $emitted = [['sentinel' => true]];
+
+        for ($i = 0; $i < 25; $i++) {
+            $emitted = $this->dispatch(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit', 'agent_id' => 'sub-7']);
+        }
+
+        $this->assertSame([], $emitted, 'no reminder fires inside a subagent');
+    }
 }

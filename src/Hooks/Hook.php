@@ -48,9 +48,18 @@ abstract class Hook
      * is only the agent PARKED WAITING on background work (a `run_in_background` task, a subagent) is
      * not a real stop — it will auto-resume — so no `onStop` handler runs; nudging or blocking it would
      * be noise and could burn the block cap on stops the agent doesn't control.
+     *
+     * A second rule holds for every hook and lives here too: a hook firing INSIDE a spawned subagent stays
+     * silent. Our reminders and injections speak only to the main session that owns the plan and working
+     * state; in a read-only exploration subagent they are noise that can derail its task ({@see
+     * HookEvent::isSubagent}).
      */
     protected function handle(HookEvent $event): int
     {
+        if ($event->isSubagent()) {
+            return $this->pass();
+        }
+
         return match ($event->name()) {
             'PostToolUse' => $this->onPostToolUse($event),
             'PreToolUse' => $this->onPreToolUse($event),

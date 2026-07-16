@@ -35,4 +35,19 @@ final class HookEventTest extends TestCase
 
         $this->assertSame('/tmp/project/.commandments/sessions/default/sins.md', $event->workspace()->path('sins.md'));
     }
+
+    public function test_a_subagent_payload_is_detected_by_agent_id_or_agent_type(): void
+    {
+        $this->assertTrue(new HookEvent(['agent_id' => 'sub-1'], '/tmp/p')->isSubagent());
+        $this->assertTrue(new HookEvent(['agent_type' => 'Explore'], '/tmp/p')->isSubagent());
+    }
+
+    public function test_the_main_session_is_not_a_subagent(): void
+    {
+        // No agent fields (or empty ones) — the main coding session and a manual CLI run both read as
+        // NOT a subagent, so the additive guard never changes existing behaviour.
+        $this->assertFalse(new HookEvent(['session_id' => 'abc'], '/tmp/p')->isSubagent());
+        $this->assertFalse(new HookEvent(['agent_id' => '', 'agent_type' => ''], '/tmp/p')->isSubagent());
+        $this->assertFalse(new HookEvent([], '/tmp/p')->isSubagent());
+    }
 }
