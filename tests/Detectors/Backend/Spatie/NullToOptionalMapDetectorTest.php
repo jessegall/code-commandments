@@ -147,6 +147,34 @@ final class NullToOptionalMapDetectorTest extends TestCase
         PHP));
     }
 
+    public function test_does_not_flag_a_bare_parameter_passthrough_converter_home(): void
+    {
+        // The designated null→Optional converter for values a Data trait can't serve (enums, scalars):
+        // a helper whose whole body forwards its own PARAMETER (`$value ?? Optional::create()`). That is the
+        // one named home the map is supposed to live in, not a producer re-deriving a field's map.
+        $this->assertSame(0, $this->hits(<<<'PHP'
+        class Optionals {
+            public static function fromNullable(mixed $value): mixed {
+                return $value ?? Optional::create();
+            }
+        }
+        PHP));
+    }
+
+    public function test_still_flags_a_producer_coalescing_own_state(): void
+    {
+        // A producer coalescing OWN STATE (`$this->memo`) re-derives the map at the producer — not the shared
+        // converter home, so it still fires even though it is a `??` form.
+        $this->assertSame(1, $this->hits(<<<'PHP'
+        class Maker {
+            private $memo;
+            public function make() {
+                return $this->memo ?? Optional::create();
+            }
+        }
+        PHP));
+    }
+
     private function hits(string $body): int
     {
         return count((new NullToOptionalMapDetector)->find(Codebase::fromString(self::PRELUDE . $body, '/proj/app/File.php')));

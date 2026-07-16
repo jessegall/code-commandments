@@ -1194,6 +1194,69 @@ class AstNode
     }
 
     /**
+     * Is this declaration a NAMED CONSTRUCTOR of its OWN type — a factory whose body mints a fresh instance of
+     * the enclosing class (`return new self(...)`, `new static(...)`, `Money::zero() => new Money(...)`)? Its
+     * parameters are the object's own fields being BORN at the one build boundary — exactly like `__construct`,
+     * not a loose data clump threaded between collaborators. Excluded from the data-clump smell for the same
+     * reason {@see isConstructorDeclaration} is: the fix "hoist the clump into a value object" is already what
+     * this method's return type IS.
+     */
+    public function isNamedConstructor(): bool
+    {
+        if (! $this->isFunctionDeclaration()) {
+            return false;
+        }
+
+        $enclosing = $this->enclosingClassName();
+        $short = $enclosing === null ? null : ltrim(strrchr('\\' . $enclosing, '\\'), '\\');
+
+        return new NodeFinder()->findFirst(
+            (array) ($this->node->stmts ?? []),
+            static function (Node $node) use ($short): bool {
+                if (! $node instanceof New_ || ! $node->class instanceof Name) {
+                    return false;
+                }
+
+                $name = $node->class->toString();
+
+                return in_array(strtolower($name), ['self', 'static'], true)
+                    || ($short !== null && strcasecmp(ltrim(strrchr('\\' . $name, '\\'), '\\'), $short) === 0);
+            },
+        ) !== null;
+    }
+
+    /**
+     * Is this function/method's body a SOLE expression return — exactly one statement, `return <expr>;`, with
+     * no local variables, branches or loops? Such a body is a declarative descriptor or a one-line delegate
+     * (`style() => new Style(...)`, `checksum() => $this->fingerprint(...)`), not a copy-pasted PROCEDURE: it
+     * has no control-flow skeleton to hoist, so two that coincide across independent classes are incidental
+     * likeness, not shared logic. Excluded from duplicate detection for the same reason a tiny getter is.
+     */
+    public function isSoleReturnExpression(): bool
+    {
+        if (! $this->isFunctionDeclaration()) {
+            return false;
+        }
+
+        $stmts = $this->node->stmts ?? [];
+
+        return count($stmts) === 1 && $stmts[0] instanceof Return_ && $stmts[0]->expr !== null;
+    }
+
+    /**
+     * Does this declaration carry an `@deprecated` docblock tag? Deprecated code is a frozen snapshot on its
+     * way out — you never hoist LIVE logic toward it and you don't refactor code that's slated for deletion —
+     * so a duplicate/near-duplicate that involves a deprecated declaration is not a smell to act on. Excluded
+     * from duplicate detection: the semantic `@deprecated` marker, not a folder-name convention.
+     */
+    public function isDeprecated(): bool
+    {
+        $doc = $this->node?->getDocComment()?->getText();
+
+        return $doc !== null && str_contains($doc, '@deprecated');
+    }
+
+    /**
      * Is this a resolve-or-throw ACCESSOR — one or more null-guard `if (…) { throw … }` statements followed
      * by a single `return $this->prop` (or a local)? That is a language IDIOM for exposing a guarded optional,
      * not copy-pasted logic: two of them in independent classes are incidentally alike (they differ only in

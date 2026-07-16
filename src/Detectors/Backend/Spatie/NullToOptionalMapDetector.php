@@ -16,8 +16,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * the right of a `??` (`expr() ?? Optional::create()`). That belongs in one named factory
  * (`optionalOrMissing()`), not re-derived at every producer. A `new Optional` parameter DEFAULT or a bare
  * `return Optional::create()` is the correct shape and is not flagged, and neither is the shared
- * `optionalOrMissing()` factory itself — the `$x === null ? Optional::create() : static::from($x)` home the fix
- * tells producers to create; that is the one place the map is supposed to live.
+ * shared conversion home itself — the `$x === null ? Optional::create() : static::from($x)` factory OR a bare
+ * parameter passthrough (`fromNullable($value) => $value ?? Optional::create()`) for values a Data trait can't
+ * serve; that is the one designated place the map is supposed to live.
  */
 final class NullToOptionalMapDetector implements Detector
 {

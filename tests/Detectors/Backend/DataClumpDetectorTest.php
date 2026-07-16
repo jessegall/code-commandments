@@ -42,4 +42,50 @@ final class DataClumpDetectorTest extends TestCase
 
         $this->assertSame([], (new DataClumpDetector)->find(Codebase::fromString($code)));
     }
+
+    public function test_a_named_constructor_minting_new_self_is_not_a_clump(): void
+    {
+        // `make()`/`new()` factories that return `new self(...)` are the object being BORN — those params are
+        // its own fields at the build boundary, exactly like `__construct`, not a clump between collaborators.
+        $code = <<<'PHP'
+        <?php
+        class Interaction {
+            public static function make(string $correlationId, string $key, string $trigger): self {
+                return new self($correlationId, $key, $trigger);
+            }
+        }
+        class Event {
+            public static function of(string $correlationId, string $key, string $trigger): static {
+                return new static($correlationId, $key, $trigger);
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new DataClumpDetector)->find(Codebase::fromString($code)));
+    }
+
+    public function test_still_flags_a_clump_threaded_through_ordinary_methods_even_beside_a_named_constructor(): void
+    {
+        // The named constructor is exempt, but the SAME trio threaded through ordinary collaborator methods
+        // in two classes is still the clump smell.
+        $code = <<<'PHP'
+        <?php
+        class Interaction {
+            public static function make(string $shopId, string $userId, string $channelId): self {
+                return new self($shopId, $userId, $channelId);
+            }
+        }
+        class Feed {
+            public function publish(string $shopId, string $userId, string $channelId): void {}
+        }
+        class Sync {
+            public function reconcile(string $shopId, string $userId, string $channelId): void {}
+        }
+        PHP;
+
+        $scopes = array_map(static fn ($m): string => $m->scope(), (new DataClumpDetector)->find(Codebase::fromString($code)));
+        sort($scopes);
+
+        $this->assertSame(['Feed::publish', 'Sync::reconcile'], $scopes);
+    }
 }

@@ -90,6 +90,48 @@ final class DuplicateFunctionDetectorTest extends TestCase
         $this->assertSame([], (new DuplicateFunctionDetector)->find(Codebase::fromString($code)));
     }
 
+    public function test_ignores_sole_return_expression_descriptors_that_coincide(): void
+    {
+        // Distinct element types each declaring a one-line look descriptor (`return new Style(...)`). A body
+        // that is a single `return <expr>;` has no procedure to hoist — coincident descriptors across
+        // independent types are incidental likeness, not copy-pasted logic. (Named args + enum fetches push
+        // these over the raw node floor, so the SHAPE — not the size — is what excludes them.)
+        $code = <<<'PHP'
+        <?php
+        class Field   { public function style(): Style { return new Style(layout: Layout::Stack, gap: Gap::Medium, align: Align::Start); } }
+        class Section { public function style(): Style { return new Style(layout: Layout::Stack, gap: Gap::Medium, align: Align::Start); } }
+        PHP;
+
+        $this->assertSame([], (new DuplicateFunctionDetector)->find(Codebase::fromString($code)));
+    }
+
+    public function test_ignores_deprecated_declarations(): void
+    {
+        // A `@deprecated` copy is a frozen snapshot on its way out — you never hoist live logic toward it.
+        // Pairing it with the live original for a "hoist" finding is noise, so a deprecated declaration is
+        // excluded from the comparison pool.
+        $code = <<<'PHP'
+        <?php
+        class Live {
+            /** @deprecated kept until the old world is deleted */
+            public function tick(int $x): int {
+                $sum = 0;
+                for ($i = 0; $i < $x; $i++) { $sum += $i * 2; }
+                return $sum;
+            }
+        }
+        class Fresh {
+            public function tick(int $x): int {
+                $sum = 0;
+                for ($i = 0; $i < $x; $i++) { $sum += $i * 2; }
+                return $sum;
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new DuplicateFunctionDetector)->find(Codebase::fromString($code)));
+    }
+
     public function test_still_flags_genuine_duplicate_logic_that_merely_contains_a_guard(): void
     {
         // A guard FOLLOWED BY real logic is not a bare accessor — copy-paste is still flagged.

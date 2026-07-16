@@ -664,12 +664,16 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
-     * Is this Optional construction the fallback INSIDE the shared `optionalOrMissing()` home itself — the ONE
-     * named factory the {@see isOptionalNullFallback} rule tells producers to create, so it must not flag
-     * itself? The tell is that the ternary's other arm hydrates `self`/`static` (`$x === null ?
-     * Optional::create() : static::from($x)`): the factory maps a generic payload onto ITS OWN type. A producer
-     * instead hydrates a concrete OTHER type (`OptRange::from(...)`) or coalesces a value
-     * (`$this->memo ?? Optional::create()`) — those re-derive the map and still fire.
+     * Is this Optional construction the fallback INSIDE the shared conversion home itself — the ONE named
+     * factory the {@see isOptionalNullFallback} rule tells producers to create, so it must not flag itself?
+     * Two shapes qualify:
+     *   • the ternary form whose other arm hydrates `self`/`static` (`$x === null ? Optional::create() :
+     *     static::from($x)`) — the factory maps a generic payload onto ITS OWN type; and
+     *   • the coalesce form whose left is a bare PARAMETER passthrough (`fromNullable($value) => $value ??
+     *     Optional::create()`) — a generic null→Optional converter for values a Data trait can't serve
+     *     (enums, scalars), the one designated home for the map.
+     * A producer instead hydrates a concrete OTHER type (`OptRange::from(...)`) or coalesces OWN STATE
+     * (`$this->memo ?? Optional::create()`) — those re-derive the map at the producer and still fire.
      */
     public function isSharedOptionalFactory(): bool
     {
@@ -677,19 +681,46 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $ternary = $this->node->getAttribute('parent');
+        $parent = $this->node->getAttribute('parent');
 
-        if (! $ternary instanceof Ternary) {
+        if ($parent instanceof Coalesce) {
+            return $parent->right === $this->node && $this->coalescesEnclosingParameter($parent->left);
+        }
+
+        if (! $parent instanceof Ternary) {
             return false;
         }
 
-        $present = $ternary->if === $this->node ? $ternary->else : $ternary->if;
+        $present = $parent->if === $this->node ? $parent->else : $parent->if;
 
         return $present instanceof StaticCall
             && $present->class instanceof Name
             && in_array($present->class->toString(), ['self', 'static'], true)
             && $present->name instanceof Identifier
             && $present->name->toString() === 'from';
+    }
+
+    /**
+     * Is this coalesce left operand a bare reference to a PARAMETER of the enclosing function — the passthrough
+     * tell of a generic converter (`fromNullable($value) => $value ?? Optional::create()`), as opposed to own
+     * state (`$this->memo`) or a producer's `Type::from(...)` that re-derives the map?
+     */
+    private function coalescesEnclosingParameter(Node $left): bool
+    {
+        if (! $left instanceof Variable || ! is_string($left->name)) {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return false;
+        }
+
+        return array_any(
+            $function->getParams(),
+            static fn (Param $param): bool => $param->var instanceof Variable && $param->var->name === $left->name,
+        );
     }
 
     /**

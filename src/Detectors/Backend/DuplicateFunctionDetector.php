@@ -14,9 +14,11 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * down to a formatting-blind structural hash (spacing, newlines, and comments are
  * ignored; only real code differences count). Copy-paste is one decision living in
  * many places: hoist it to a shared method, trait, or base and call it once.
- * Trivial declarations (tiny getters, empty stubs) are below the size floor, and a
- * resolve-or-throw guard accessor (a language idiom, not shared logic) is excluded,
- * so incidental likeness across independent classes isn't flagged. Points at fix-at-the-source.
+ * Trivial declarations (tiny getters, empty stubs) are below the size floor; a
+ * resolve-or-throw guard accessor (a language idiom, not shared logic), a sole
+ * `return <expr>;` descriptor/delegate (no procedure to hoist), and a `@deprecated`
+ * declaration (a frozen snapshot you never refactor toward) are excluded, so incidental
+ * likeness across independent classes isn't flagged. Points at fix-at-the-source.
  */
 final class DuplicateFunctionDetector implements Detector
 {
@@ -36,7 +38,11 @@ final class DuplicateFunctionDetector implements Detector
         $byHash = [];
 
         foreach ($codebase->whereMethodDeclaration()->get() as $match) {
-            if ($match->bodyNodeCount() >= self::MIN_BODY_NODES && ! $match->isGuardedAccessor()) {
+            if ($match->bodyNodeCount() >= self::MIN_BODY_NODES
+                && ! $match->isGuardedAccessor()
+                && ! $match->isSoleReturnExpression()
+                && ! $match->isDeprecated()
+            ) {
                 $byHash[$match->structuralHash()][] = $match;
             }
         }
