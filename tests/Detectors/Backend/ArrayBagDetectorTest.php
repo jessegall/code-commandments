@@ -113,4 +113,48 @@ final class ArrayBagDetectorTest extends TestCase
 
         $this->assertSame(['Order::readLines'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_exempts_a_named_constructor_hydrating_its_own_type_from_the_array(): void
+    {
+        // Issue #365. `fromArray()` IS the hydration boundary the rule asks for: it is where a raw
+        // deserialized row BECOMES the value object every reader then takes. Flagging it could only
+        // relocate the array into yet another factory, never remove it — the rule would be unsatisfiable.
+        // The service method beside it, reading the same bag by key, still sins.
+        $code = <<<'PHP'
+        <?php
+        final readonly class RunPipelinePayload
+        {
+            public function __construct(
+                public string | null $definition,
+                public object | null $context,
+            ) {}
+
+            public static function fromArray(array $payload): self
+            {
+                $definition = $payload['definition'] ?? null;
+                $context = $payload['context'] ?? null;
+
+                return new self(
+                    is_string($definition) ? $definition : null,
+                    is_object($context) ? $context : null,
+                );
+            }
+        }
+
+        final class PipelineReporter
+        {
+            public function describe(array $payload): string
+            {
+                return $payload['definition'] . ':' . $payload['context'];
+            }
+        }
+        PHP;
+
+        $hits = (new ArrayBagDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(
+            ['PipelineReporter::describe', 'PipelineReporter::describe'],
+            array_map(static fn ($m): string => $m->scope(), $hits),
+        );
+    }
 }

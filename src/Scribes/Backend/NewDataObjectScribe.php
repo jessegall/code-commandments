@@ -68,7 +68,27 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
 
         $class = Span::slice($source, $new->class->getStartFilePos(), $new->class->getEndFilePos());
 
-        return "{$class}::from([" . implode(', ', $entries) . '])';
+        return "{$class}::from([" . $this->body($entries, $new, $source) . '])';
+    }
+
+    /**
+     * The array's inner text. A call the author wrote across several lines keeps that layout — one entry
+     * per line at the original arguments' indent, closing at the original `)`'s — so a 15-key `new` doesn't
+     * collapse into one unreadable 700-character line. A single-line call stays on one line.
+     *
+     * @param  list<string>  $entries
+     */
+    private function body(array $entries, New_ $new, string $source): string
+    {
+        $first = $new->args[0] ?? null;
+        $inner = $first === null ? null : Span::ownLineIndent($source, $first->getStartFilePos());
+        $outer = Span::ownLineIndent($source, $new->getEndFilePos());
+
+        if ($inner === null || $outer === null || $new->getStartLine() === $new->getEndLine()) {
+            return implode(', ', $entries);
+        }
+
+        return "\n" . implode('', array_map(static fn (string $entry): string => "{$inner}{$entry},\n", $entries)) . $outer;
     }
 
     /**

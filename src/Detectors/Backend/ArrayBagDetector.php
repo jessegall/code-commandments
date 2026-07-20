@@ -20,7 +20,9 @@ use JesseGall\CodeCommandments\Packages\Tags\NoContainer;
  * object. Dynamic/positional keys are genuine maps/tuples (left alone). A `NoContainer` type
  * (an Eloquent cast) is exempt — the framework dictates its array parameter. So is the
  * serialization-protocol boundary (`__unserialize`/`__set_state`, and helpers fed only its
- * bag) — the LANGUAGE dictates that array parameter.
+ * bag) — the LANGUAGE dictates that array parameter. So is a NAMED CONSTRUCTOR of the enclosing
+ * type (`Payload::fromArray($row)` returning `new self(...)`): that IS the hydration boundary the
+ * rule asks for, so flagging it could only relocate the array, never remove it.
  */
 final class ArrayBagDetector implements Detector, Exemptable
 {
@@ -42,6 +44,7 @@ final class ArrayBagDetector implements Detector, Exemptable
             ->where(static fn (AstNode $node): bool => $node->arrayKeyIsString())
             ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName() ?? ''))
             ->reject(static fn (NodeMatch $node): bool => $node->isWithinSerializationBoundary())
+            ->reject(static fn (AstNode $node): bool => $node->isWithinNamedConstructor())
             ->get(), $codebase);
     }
 }

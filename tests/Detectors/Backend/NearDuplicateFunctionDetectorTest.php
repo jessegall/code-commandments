@@ -162,4 +162,66 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
         // …but on MCP Tool subclasses the by-contract hook is exempt.
         $this->assertSame([], $toolHits);
     }
+
+    public function test_exempts_sole_return_delegates_whose_only_variance_is_literals(): void
+    {
+        // Issues #364 and #366. Each build() is ONE delegating return into the shared processAction() —
+        // the hoist the rule wanted has already happened, and what remains differing is pure copy DATA.
+        // Reported empirically: extracting again did not reduce the count, it MOVED it (2 -> 4), because
+        // a literal-blind hash keeps colliding on the relocated literals. A sole `return <expr>;` has no
+        // control-flow skeleton to parameterise, so it cannot be a near-duplicate of one.
+        $copy = static fn (string $title, string $label): string => <<<PHP
+            public function build(Shop \$shop, ShopChannel \$channel): ShopActionData {
+                return \$this->processAction(\$shop, \$channel, new ShopActionCopy(
+                    title: '{$title}',
+                    description: 'Pull every order from the channel and reconcile it against the local store.',
+                    activeLabel: '{$label}...',
+                    confirmDescription: 'Are you sure? This paginates through every order on the channel.',
+                    confirmLabel: '{$label}',
+                    processedLabel: '{$label}',
+                ));
+            }
+            PHP;
+
+        $code = <<<PHP
+        <?php
+        class ImportMissingOrdersAction { {$copy('Import Missing Orders', 'Import')} }
+        class SyncOrderStatusesAction { {$copy('Sync Order Statuses', 'Sync')} }
+        PHP;
+
+        $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
+    }
+
+    public function test_still_flags_a_near_duplicate_procedure_beside_the_exempt_delegates(): void
+    {
+        // The righteous twin's counterpart: the same file, but the pair carries a real control-flow
+        // skeleton (a loop, a branch, an accumulator) differing only in which field it walks. THAT is
+        // the redundant algorithm the sin is about, and the sole-return guard must not swallow it.
+        $procedure = static fn (string $bucket, string $var): string => <<<PHP
+            public function totals(array \$rows): array {
+                \${$var} = [];
+                foreach (\$rows as \$row) {
+                    if (\$row->owner() === null) {
+                        continue;
+                    }
+                    \$key = \$row->owner()->code('{$bucket}');
+                    \${$var}[\$key] = (\${$var}[\$key] ?? 0) + \$row->amount();
+                }
+                return \${$var};
+            }
+            PHP;
+
+        $code = <<<PHP
+        <?php
+        class ChannelTotals { {$procedure('channel', 'totals')} }
+        class WarehouseTotals { {$procedure('warehouse', 'sums')} }
+        PHP;
+
+        $hits = (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(
+            ['ChannelTotals::totals', 'WarehouseTotals::totals'],
+            array_map(static fn ($m): string => $m->scope(), $hits),
+        );
+    }
 }

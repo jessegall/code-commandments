@@ -102,11 +102,21 @@ final class Span
      */
     public function lineIndent(): string
     {
-        $lineStart = strrpos(substr($this->source, 0, $this->start), "\n");
-        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
-        $prefix = substr($this->source, $lineStart, $this->start - $lineStart);
+        return self::ownLineIndent($this->source, $this->start) ?? '';
+    }
 
-        return $prefix !== '' && trim($prefix) === '' ? $prefix : '';
+    /**
+     * The indentation of the line $pos sits on, but ONLY when $pos is the first non-blank byte on that
+     * line — null when code precedes it. The primitive behind "is this token on its own line, and if so
+     * at what indent", so a scribe can mirror a multi-line call's layout instead of re-deriving the scan.
+     */
+    public static function ownLineIndent(string $source, int $pos): ?string
+    {
+        $lineStart = strrpos(substr($source, 0, $pos), "\n");
+        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+        $prefix = substr($source, $lineStart, $pos - $lineStart);
+
+        return $prefix !== '' && trim($prefix) === '' ? $prefix : null;
     }
 
     /**

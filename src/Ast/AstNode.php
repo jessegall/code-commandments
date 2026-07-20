@@ -1244,6 +1244,19 @@ class AstNode
     }
 
     /**
+     * Does this node sit inside a NAMED CONSTRUCTOR of the enclosing type — a factory whose body mints a
+     * fresh instance of its own class ({@see isNamedConstructor})? The HYDRATION boundary: the one place a
+     * raw payload legitimately becomes typed. Sibling of {@see NodeMatch::isWithinSerializationBoundary},
+     * which says the same thing for the hooks the LANGUAGE dictates.
+     */
+    public function isWithinNamedConstructor(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        return $function !== null && new self($function)->isNamedConstructor();
+    }
+
+    /**
      * Does this declaration carry an `@deprecated` docblock tag? Deprecated code is a frozen snapshot on its
      * way out — you never hoist LIVE logic toward it and you don't refactor code that's slated for deletion —
      * so a duplicate/near-duplicate that involves a deprecated declaration is not a smell to act on. Excluded

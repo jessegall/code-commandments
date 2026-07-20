@@ -153,4 +153,35 @@ final class NewDataObjectScribeTest extends ScribeTestCase
         $this->assertSame([], $this->findings($php));
         $this->assertSame($php, $this->fix($php));
     }
+
+    public function test_keeps_a_multi_line_call_multi_line(): void
+    {
+        // Issue #363: a 15-key `new` collapsed into one ~700-character line, losing every named argument
+        // to its own line. The rewrite is right; the LAYOUT must survive it — one entry per line at the
+        // original arguments' indent, closing at the original `)`'s.
+        $php = "<?php\n\n" . self::DATA . <<<'PHP'
+
+            final class Maker
+            {
+                public function make(MoneyData $total): OrderData
+                {
+                    return new OrderData(
+                        id: 'abc',
+                        total: $total,
+                    );
+                }
+            }
+        }
+        PHP;
+
+        $fixed = $this->fixStable($php);
+
+        $this->assertStringContainsString(
+            "            return OrderData::from([\n"
+            . "                'id' => 'abc',\n"
+            . "                'total' => \$total,\n"
+            . "            ]);",
+            $fixed,
+        );
+    }
 }

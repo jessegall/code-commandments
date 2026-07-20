@@ -19,7 +19,9 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
  * (a type-2 clone). The redundant-method smell: each does the same thing to a
  * different field/string, begging to be one parameterised method. Groups that are
  * byte-identical are left to `DuplicateFunctionDetector`; this catches the near
- * misses it can't see. A 12-body-node floor skips trivial look-alikes. Points at
+ * misses it can't see. A 12-body-node floor skips trivial look-alikes. Excluded, as
+ * in the exact detector: a pure manifest, a constructor, a sole `return <expr>;`
+ * descriptor/delegate, a guard accessor, and a `@deprecated` declaration. Points at
  * fix-at-the-source.
  */
 final class NearDuplicateFunctionDetector implements Detector, Exemptable
@@ -63,6 +65,20 @@ final class NearDuplicateFunctionDetector implements Detector, Exemptable
             // classes can't share a constructor — each declares its own (assign params, forward to parent),
             // so a similar `__construct` is expected structure, not a redundant algorithm.
             if ($match->isConstructorDeclaration()) {
+                continue;
+            }
+
+            // A sole `return <expr>;` is a DESCRIPTOR or a one-line delegate — no control-flow skeleton
+            // to hoist. Two of them that "differ only in their literals" are differing only in DATA, and
+            // every extraction merely relocates that data (issues #364, #366). The exact detector already
+            // exempts this shape; a literal-BLIND match needs the guard more, not less.
+            if ($match->isSoleReturnExpression()) {
+                continue;
+            }
+
+            // A resolve-or-throw guard accessor is a language idiom, and a `@deprecated` declaration is a
+            // frozen snapshot you never refactor toward — both exempt for the same reason as above.
+            if ($match->isGuardedAccessor() || $match->isDeprecated()) {
                 continue;
             }
 
