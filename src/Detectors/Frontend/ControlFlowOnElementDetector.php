@@ -15,10 +15,12 @@ use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
  * Detects structural directives (`v-if`/`v-else-if`/`v-else`/`v-for`) on real elements
- * instead of `<template>` wrappers — mixes structure (what renders) with content. Exempts
- * `v-show` (affects real element only) and the direct child of a
- * `<Transition>`/`<TransitionGroup>`, where Vue REQUIRES the directive on the real keyed
- * element. Points at vue-control-flow.
+ * instead of `<template>` wrappers — mixes structure (what renders) with content. A `<slot>`
+ * is exempt alongside `<template>`: both are compile-time outlets that render no element of
+ * their own, so there is no content for the structure to be mixed with — choosing between
+ * slot outlets IS the wrapper form. Also exempts `v-show` (affects real element only) and the
+ * direct child of a `<Transition>`/`<TransitionGroup>`, where Vue REQUIRES the directive on
+ * the real keyed element. Points at vue-control-flow.
  */
 final class ControlFlowOnElementDetector implements Detector, Repentable
 {
@@ -37,6 +39,7 @@ final class ControlFlowOnElementDetector implements Detector, Repentable
         return $components
             ->whereElement()
             ->rejectTag('template')
+            ->rejectTag('slot')
             ->withAnyDirective(...Directive::structural())
             ->reject(static fn (ElementMatch $element): bool => $element->isTransitionChild())
             ->get();

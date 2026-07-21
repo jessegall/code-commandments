@@ -7,12 +7,10 @@ namespace {namespace};
 use Spatie\TypeScriptTransformer\Transformers\AttributedClassTransformer;
 
 /**
- * The #[TypeScript] attributed-class transformer, extended to also drop LaravelData #[Hidden] properties
- * from generation via {@see DropDataHiddenPropertyProcessor} — so a page object's #[Hidden] injected
- * services stay out of the generated type with the one attribute, no typescript-transformer #[Hidden] twin.
- *
- * Register it in place of the default AttributedClassTransformer in your typescript-transformer config's
- * `transformers` list.
+ * The #[TypeScript] attributed-class transformer, extended to drop LaravelData #[Hidden] properties via
+ * {@see DropDataHiddenPropertyProcessor} — register it in place of the default AttributedClassTransformer
+ * in your typescript-transformer config so a page object's #[Hidden] injected services stay out of the
+ * generated type with the one attribute, no typescript-transformer #[Hidden] twin.
  */
 final class HiddenAwareAttributedClassTransformer extends AttributedClassTransformer
 {
