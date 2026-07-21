@@ -9,6 +9,8 @@ return [
 
     'idle_timeout' => 120,
 
+    'support_email' => env('SHOP_SUPPORT_EMAIL'),
+
     'legacy_pin_length' => 4,
 
     'pin_retry_grace_seconds' => 90,

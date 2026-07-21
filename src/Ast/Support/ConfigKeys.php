@@ -10,6 +10,11 @@ use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Scalar\Encapsed;
 use PhpParser\Node\Scalar\EncapsedStringPart;
+use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\Float_;
+use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
@@ -32,7 +37,18 @@ final class ConfigKeys
         private readonly array $declared,
         private readonly array $literals,
         private readonly array $files,
+        private readonly array $defaults = [],
     ) {}
+
+    /**
+     * Does the config FILE already state a default for this key — a literal value, or an
+     * `env('VAR', <fallback>)` carrying one? If so, a reader supplying its own fallback states the
+     * same decision a second time, and the two drift the moment either is edited.
+     */
+    public function declaresDefault(string $key): bool
+    {
+        return isset($this->defaults[$key]);
+    }
 
     /**
      * The dotted key this node declares if NOTHING reads it, else null. Null too for a key whose whole
@@ -63,6 +79,7 @@ final class ConfigKeys
     protected static function build(Codebase $codebase): static
     {
         $declared = [];
+        $defaults = [];
         $literals = [];
         $finder = new NodeFinder;
 
@@ -82,7 +99,7 @@ final class ConfigKeys
             $prefix = self::configPrefixOf($file->path);
 
             if ($prefix !== null) {
-                self::collect(self::returnedArray($file->ast), $prefix, $declared);
+                self::collect(self::returnedArray($file->ast), $prefix, $declared, $defaults);
             }
         }
 
@@ -96,7 +113,7 @@ final class ConfigKeys
             }
         }
 
-        return new self($declared, $literals, $files);
+        return new self($declared, $literals, $files, $defaults);
     }
 
     /**
@@ -145,9 +162,10 @@ final class ConfigKeys
      * Walk a config array, recording the dotted key of every LEAF (a non-array value). A nested array
      * is a namespace, not a setting — deleting it means deleting the leaves under it.
      *
-     * @param  array<int, string>  $declared
+     * @param  array<int, string>   $declared
+     * @param  array<string, true>  $defaults
      */
-    private static function collect(?Array_ $array, string $prefix, array &$declared): void
+    private static function collect(?Array_ $array, string $prefix, array &$declared, array &$defaults): void
     {
         foreach ($array?->items ?? [] as $item) {
             if (! $item instanceof ArrayItem || ! $item->key instanceof String_) {
@@ -157,12 +175,37 @@ final class ConfigKeys
             $key = $prefix . '.' . $item->key->value;
 
             if ($item->value instanceof Array_) {
-                self::collect($item->value, $key, $declared);
+                self::collect($item->value, $key, $declared, $defaults);
 
                 continue;
             }
 
             $declared[spl_object_id($item)] = $key;
+
+            if (self::statesADefault($item->value)) {
+                $defaults[$key] = true;
+            }
         }
+    }
+
+    /**
+     * Does this declared VALUE carry a default? A scalar literal is one outright; `env('VAR', 8086)`
+     * is one too. A bare `env('VAR')` states no fallback, so a reader supplying one is the only
+     * source of truth and nothing is duplicated.
+     */
+    private static function statesADefault(Node $value): bool
+    {
+        if ($value instanceof String_ || $value instanceof Int_ || $value instanceof Float_) {
+            return true;
+        }
+
+        if ($value instanceof ConstFetch) {
+            return in_array(strtolower($value->name->toString()), ['true', 'false'], true);
+        }
+
+        return $value instanceof FuncCall
+            && $value->name instanceof Name
+            && $value->name->toString() === 'env'
+            && count($value->args) >= 2;
     }
 }

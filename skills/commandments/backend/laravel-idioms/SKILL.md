@@ -41,6 +41,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
   _Delete the key (and its env var), or restore the reader the feature lost._
 - A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
   _Delete the registration (and the listener, if nothing else reaches it) — or restore the dispatch the listener was waiting for._
+- The config FILE owns the default. A reader asks for the value; it does not restate what the value should be when absent.
+  _Drop the reader's fallback and let the config file answer — or delete the key from the file and let the reader's default be the one truth._
 - Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
   _Constructor-inject the dependency behind its interface._
 - Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
@@ -119,6 +121,20 @@ public function boot(): void
 public function register(): void
 {
     Event::listen(PriceChanged::class, 'Shop\\Listeners\\RepricePublications');
+}
+```
+
+```php
+// Bad
+public function idleTimeout(): int
+{
+    return $this->intOr('kiosk.idle_timeout', 120);
+}
+
+// Good
+public function supportEmail(): string
+{
+    return $this->stringOr('kiosk.support_email', 'help@shop.test');
 }
 ```
 
@@ -243,6 +259,7 @@ public function handleNamed(MoveNodeRequest $request): string
 - `app()`/`resolve()` reach inside a container-resolved class — `ContainerReachDetector`
 - A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt — `DeadConfigKeyDetector`
 - An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring — `DeadEventWiringDetector`
+- A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently — `DuplicatedConfigDefaultDetector`
 - Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
 - Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
 - Set-property-then-`save()` at a call site (should be an intention method) — `ModelMutationAtCallSiteDetector`
@@ -256,6 +273,7 @@ public function handleNamed(MoveNodeRequest $request): string
 - [ ] Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
 - [ ] Config is an interface: every key exists because something reads it. When the last reader goes, the key goes with it.
 - [ ] A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
+- [ ] The config FILE owns the default. A reader asks for the value; it does not restate what the value should be when absent.
 - [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
 - [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.

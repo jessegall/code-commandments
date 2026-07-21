@@ -1276,6 +1276,18 @@ class AstNode
     }
 
     /**
+     * Is this expression's RESULT thrown away — it is the whole of an expression statement, so
+     * nothing reads what it returns? The structural difference between a WRITE and a READ: a
+     * `Config::set('k', $v);` stands alone, while every read is assigned, returned, or passed on.
+     */
+    public function resultIsDiscarded(): bool
+    {
+        $parent = $this->node?->getAttribute('parent');
+
+        return $parent instanceof Expression && $parent->expr === $this->node;
+    }
+
+    /**
      * Is THIS `new` the rebuild a hand-rolled wither performs — i.e. is it the construction
      * {@see handRolledWither} identifies on its enclosing method? Read on a `whereNew()` node, so the
      * sin reports (and `repent` replaces) the construction itself rather than the whole method.
