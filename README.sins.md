@@ -129,7 +129,7 @@ _101 sins across 21 skills._
 | `DeadConfigKey` | A key declared in `config/*.php` that nothing in the codebase names. |
 | `DeadEventWiring` | An `Event::listen(X::class, …)` whose event class nothing can fire: X is never constructed and never dispatched statically. |
 | `DuplicatedConfigDefault` | A read of a config key that supplies its OWN fallback while the config file already states one — `intOr('shop.realtime.port', 8086)` against `'port' => env('PORT', 8086)`. |
-| `FacadeCall` | Detects Laravel facade calls that hide dependencies; inject the underlying contract instead. / |
+| `FacadeCall` | Detects Laravel facade calls that hide dependencies; inject the underlying contract instead. |
 | `MassUpdateAtCallSite` | A mass `->update([...])` on an Eloquent model at a call site — an untyped array of attributes smuggling a mutation past the model's own methods. |
 | `ModelMutationAtCallSite` | Setting an Eloquent model's properties at a call site and then `->save()`-ing it — the mutation belongs behind an intention-revealing method on the model (`$order->markPaid()`), not smeared across the caller. |
 | `OrphanedBinding` | A `bind`/`singleton`/`scoped`/`instance` registration whose abstract nothing outside the registration ever names — no type-hint, no `app()`/`make()`, no mention at all. |

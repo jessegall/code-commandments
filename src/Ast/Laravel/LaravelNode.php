@@ -92,6 +92,16 @@ final class LaravelNode extends NodeMatch
     /** The container methods that REGISTER an abstract — the wiring `OrphanedBindingDetector` audits. */
     public const array BINDING_METHODS = ['bind', 'bindIf', 'singleton', 'singletonIf', 'scoped', 'scopedIf', 'instance'];
 
+    /** The queueable contract — a job the framework SERIALIZES onto a queue and later revives itself. */
+    public const string SHOULD_QUEUE = 'Illuminate\\Contracts\\Queue\\ShouldQueue';
+
+    /**
+     * The queued-job hooks the framework calls with a FIXED argument list — `failed($e)` is invoked as
+     * `$command->failed($e)`, the rest with nothing at all. Unlike `handle()`, which the container calls
+     * (so its collaborators arrive by method injection), these have no injection seam whatsoever.
+     */
+    public const array QUEUE_HOOKS = ['failed', 'middleware', 'retryUntil', 'backoff', 'uniqueId', 'tags', 'displayName'];
+
     /** The `Event` facade — `Event::listen(X::class, L::class)` wires a listener to an event. */
     public const string EVENT = 'Illuminate\\Support\\Facades\\Event';
 
@@ -307,6 +317,19 @@ final class LaravelNode extends NodeMatch
         }
 
         return false;
+    }
+
+    /**
+     * Is this call inside one of a queued job's framework-invoked hooks ({@see QUEUE_HOOKS})? The job
+     * itself is a serialized message, not a container-built service, and the framework calls these hooks
+     * DIRECTLY with a signature it dictates — so there is no injection to prefer over the container, and
+     * a collaborator could not have survived serialization onto the queue anyway. `handle()` is excluded
+     * on purpose: the container calls that one, so its dependencies belong in its signature.
+     */
+    public function inQueuedJobHook(): bool
+    {
+        return $this->codebase->implements($this->enclosingClassName(), self::SHOULD_QUEUE)
+            && in_array($this->enclosingFunctionName() ?? '', self::QUEUE_HOOKS, true);
     }
 
     /**

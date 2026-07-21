@@ -66,6 +66,35 @@ final class FacadeCallDetectorTest extends TestCase
         $this->assertSame(['App\\Reporter::log'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
 
+    public function test_leaves_a_queued_jobs_framework_invoked_hooks_alone(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        namespace Illuminate\Contracts\Queue { interface ShouldQueue {} }
+        namespace App {
+            use Illuminate\Contracts\Queue\ShouldQueue;
+            use Illuminate\Support\Facades\App;
+            use Illuminate\Support\Facades\Log;
+
+            class RunWorkflowJob implements ShouldQueue {
+                // the framework calls `$command->failed($e)` DIRECTLY — nothing to inject into
+                public function failed(\Throwable $failure): void {
+                    App::make('runs')->abandoned($failure);
+                }
+
+                // …but `handle()` is called by the CONTAINER, so its collaborators belong in its signature
+                public function handle(): void {
+                    Log::info('running');
+                }
+            }
+        }
+        PHP;
+
+        $hits = (new FacadeCallDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['App\\RunWorkflowJob::handle'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
+
     public function test_leaves_testing_facade_fake_installers_alone(): void
     {
         $code = <<<'PHP'

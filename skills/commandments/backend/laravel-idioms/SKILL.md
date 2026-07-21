@@ -140,21 +140,15 @@ public function supportEmail(): string
 
 ```php
 // Bad
-public function notify(string $email, string $type): void
+public function handle(): void
 {
-    $template = config('shop.templates.' . $type);
-
-    Mail::raw($template, function ($message) use ($email) {
-        $message->to($email);
-    });
+    Log::info('reconciling');
 }
 
 // Good
-public function notifyClean(string $email, string $template): void
+public function failed(\Throwable $failure): void
 {
-    $this->mailer->raw($template, function ($message) use ($email) {
-        $message->to($email);
-    });
+    App::make(StockReconciler::class)->abandon($failure->getMessage());
 }
 ```
 

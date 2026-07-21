@@ -12,7 +12,10 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * Detects Laravel facade calls that hide dependencies; inject the underlying contract instead.
+ * Detects Laravel facade calls that hide dependencies; inject the underlying contract instead. Spared are
+ * the places where there IS no injection to prefer: a service provider, an Eloquent cast, and a queued
+ * job's framework-invoked hooks (`failed()` and friends), which the framework calls directly with a
+ * signature it dictates.
  */
 final class FacadeCallDetector implements Detector
 {
@@ -30,6 +33,7 @@ final class FacadeCallDetector implements Detector
             ->reject(static fn (AstNode $node): bool => $node->isOutsideClass())
             ->reject(static fn (LaravelNode $node): bool => $node->inServiceProvider())
             ->reject(static fn (LaravelNode $node): bool => $node->isEloquentCast())
+            ->reject(static fn (LaravelNode $node): bool => $node->inQueuedJobHook())
             ->get();
     }
 }
