@@ -44,6 +44,8 @@ field, or a value object, and delete the defence.
 - Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
+- A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
+  _Fetch the real value, or split a narrower envelope that only promises what this answer knows._
 - A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
   _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
 
@@ -114,6 +116,22 @@ public function nestUnder(string $prefix, string $segment, array $routes): array
 
 ```php
 // Bad
+public function draft(string $slug): WorkflowRowData
+{
+    $name = $slug === '' ? self::UNTITLED : $slug;
+
+    return new WorkflowRowData($slug, $name, null, false, '');
+}
+
+// Good
+public function publish(string $slug, string $name, string $stamp): WorkflowRowData
+{
+    return new WorkflowRowData($slug, $name, null, true, $stamp);
+}
+```
+
+```php
+// Bad
 final class LabelPrintDefaults
 {
     public Weight $maxParcelWeight {
@@ -172,6 +190,7 @@ final class GlowingTile implements AnimatedTile
 - Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
 - Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
 - Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`
+- A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none — `PlaceholderFilledDataDetector`
 - A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax — `UselessPropertyHookDetector`
 
 ## Checklist
@@ -179,6 +198,7 @@ final class GlowingTile implements AnimatedTile
 - [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
+- [ ] A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
 - [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
 
 ## Related skills
