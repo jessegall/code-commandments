@@ -18,7 +18,9 @@ use JesseGall\CodeCommandments\Backend\Detector;
 /**
  * Detects multi-field string-keyed array returns (bags for value objects). Exempt: contract methods,
  * self-serializers, JSON schemas, method overrides, and SHAPED-array returns (`@return array{…}` — a
- * typed, statically-checkable struct, not a loose bag). Points at value-objects.
+ * typed, statically-checkable struct, not a loose bag). Also exempt is a SCRIPT-SCOPE return — a
+ * `config/*.php` or manifest file whose whole purpose is to hand back a keyed map. There is no method
+ * there whose contract could be a value object. Points at value-objects.
  */
 final class ArrayReturnBagDetector implements Detector, Exemptable
 {
@@ -42,6 +44,7 @@ final class ArrayReturnBagDetector implements Detector, Exemptable
         return $this->exempt($codebase
             ->where(static fn (AstNode $node): bool => $node->stringKeyCount() >= 2)
             ->where(static fn (AstNode $node): bool => $node->isReturnedValue())
+            ->reject(static fn (AstNode $node): bool => $node->enclosingFunction() === null)
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
             ->reject(static fn (AstNode $node): bool => $node->looksLikeJsonSchema())
             ->reject(static fn (AstNode $node): bool => $node->isSelfProjectionArray())

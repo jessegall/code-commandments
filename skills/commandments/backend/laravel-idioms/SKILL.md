@@ -37,6 +37,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
   _Inject a typed config value object._
 - Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
   _Declare the dependency as a constructor parameter._
+- Config is an interface: every key exists because something reads it. When the last reader goes, the key goes with it.
+  _Delete the key (and its env var), or restore the reader the feature lost._
 - A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
   _Delete the registration (and the listener, if nothing else reaches it) — or restore the dispatch the listener was waiting for._
 - Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
@@ -90,6 +92,19 @@ public function pay(Request $request): array
 public function payClean(PaymentProcessor $processor, string $token, int $amount): array
 {
     return ['ok' => $processor->charge($token, $amount)];
+}
+```
+
+```php
+// Bad
+static fn (): null => null;
+
+// Good
+public function register(): void
+{
+    $this->app->singleton('shop.kiosk.timeout', static fn (): int => (int) config('kiosk.idle_timeout'));
+    $this->app->singleton('shop.relay.heartbeat', static fn (): int => (int) config('relay.heartbeat_seconds'));
+    $this->app->singleton('shop.stocktake.cycle', static fn (): int => (int) config('stocktake.cycle_days'));
 }
 ```
 
@@ -226,6 +241,7 @@ public function handleNamed(MoveNodeRequest $request): string
 
 - `config('…')` read inside a class — `ConfigReadDetector`
 - `app()`/`resolve()` reach inside a container-resolved class — `ContainerReachDetector`
+- A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt — `DeadConfigKeyDetector`
 - An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring — `DeadEventWiringDetector`
 - Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
 - Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
@@ -238,6 +254,7 @@ public function handleNamed(MoveNodeRequest $request): string
 
 - [ ] Inject a typed config object; never read `config('…')` inside a class.
 - [ ] Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
+- [ ] Config is an interface: every key exists because something reads it. When the last reader goes, the key goes with it.
 - [ ] A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
 - [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
