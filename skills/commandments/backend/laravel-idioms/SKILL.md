@@ -43,6 +43,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
   _An intention method on the model (`$order->markPaid()`)._
 - Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
   _An intention method on the model (`$order->suspend($reason)`)._
+- Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.
+  _Delete the registration (and the implementation it names, if that is dead too)._
 - Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
   _A named getter on a `FormRequest` subclass (`$request->productId()`)._
 - Expose a named getter on a typed request class; don't re-coerce a typed accessor (`$request->string('id')->toString()`) at a call site.
@@ -144,6 +146,28 @@ public function suspendNamed(Customer $customer, string $reason): void
 
 ```php
 // Bad
+public function register(): void
+{
+    $channel = self::CHANNEL;
+
+    $this->app->singleton(AuditTrail::class, static function () use ($channel): AuditTrail {
+        $trail = new AuditTrail($channel);
+
+        $trail->record('booted');
+
+        return $trail;
+    });
+}
+
+// Good
+public function register(): void
+{
+    $this->app->singleton(PaymentGatewayRegistry::class);
+}
+```
+
+```php
+// Bad
 public function handle(Request $request): string
 {
     $id = $request->get('id');
@@ -189,6 +213,7 @@ public function handleNamed(MoveNodeRequest $request): string
 - Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
 - Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
 - Set-property-then-`save()` at a call site (should be an intention method) — `ModelMutationAtCallSiteDetector`
+- A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor — `OrphanedBindingDetector`
 - Raw `->input()/->get()/->query()/->post()` on a Request — `RawRequestInputDetector`
 - Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class — `RequestAccessorRecastDetector`
 
@@ -199,6 +224,7 @@ public function handleNamed(MoveNodeRequest $request): string
 - [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
 - [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
+- [ ] Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.
 - [ ] Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
 - [ ] Expose a named getter on a typed request class; don't re-coerce a typed accessor (`$request->string('id')->toString()`) at a call site.
 

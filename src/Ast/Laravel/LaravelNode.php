@@ -87,6 +87,9 @@ final class LaravelNode extends NodeMatch
     /** The router types a route-group closure receives — the non-facade way routes are registered. */
     public const array ROUTER_TYPES = ['Illuminate\\Routing\\Router', 'Illuminate\\Contracts\\Routing\\Registrar'];
 
+    /** The container methods that REGISTER an abstract — the wiring `OrphanedBindingDetector` audits. */
+    public const array BINDING_METHODS = ['bind', 'bindIf', 'singleton', 'singletonIf', 'scoped', 'scopedIf', 'instance'];
+
     /** The calls that look a route up BY NAME — the reference side of the route-name vocabulary. */
     public const array ROUTE_NAME_LOOKUPS = ['route', 'to_route', 'signedRoute', 'temporarySignedRoute'];
 
