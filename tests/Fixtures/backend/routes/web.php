@@ -35,3 +35,14 @@ Route::post('/labels/{sku}', [LabelController::class, 'print']);
 Route::post('/kiosk/labels/{sku}', [KioskLabelController::class, 'print']);
 Route::post('/reviews/{reviewId}', [ReviewController::class, 'publish']);
 Route::post('/public/reviews/{reviewId}', [PublicReviewController::class, 'publish']);
+
+// The route-name vocabulary DanglingRouteNameDetector checks references against. A name registered
+// here is a name `route('…')` may look up; anything else names a route that does not exist. Closure
+// actions keep these registrations out of the duplicate-action rules.
+Route::get('/dashboard', fn (): string => 'dashboard')->name('dashboard');
+Route::name('reports.')->group(function () {
+    Route::get('/reports/daily', fn (): string => 'daily')->name('daily');
+});
+Route::group(['as' => 'kiosk.'], function () {
+    Route::get('/kiosk/home', fn (): string => 'home')->name('home');
+});

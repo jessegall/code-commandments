@@ -16,6 +16,7 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\Return_;
@@ -83,6 +84,18 @@ final class LaravelNode extends NodeMatch
     /** The route-registration verbs — the methods on `Route`/`$router` that bind a URL to an action. */
     public const array ROUTE_VERBS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'match', 'any'];
 
+    /** The router types a route-group closure receives — the non-facade way routes are registered. */
+    public const array ROUTER_TYPES = ['Illuminate\\Routing\\Router', 'Illuminate\\Contracts\\Routing\\Registrar'];
+
+    /** The calls that look a route up BY NAME — the reference side of the route-name vocabulary. */
+    public const array ROUTE_NAME_LOOKUPS = ['route', 'to_route', 'signedRoute', 'temporarySignedRoute'];
+
+    /** Facades whose `::route()` builds a URL from a route NAME (as opposed to a request's `route($param)`). */
+    public const array URL_GENERATORS = ['Illuminate\\Support\\Facades\\URL', 'URL', 'Illuminate\\Support\\Facades\\Redirect', 'Redirect'];
+
+    /** Helpers returning a redirector/URL generator, so `redirect()->route('x')` is a name lookup. */
+    public const array URL_HELPERS = ['redirect', 'url'];
+
     /** The HTTP/MCP request bases whose untyped reads are the smell. */
     public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 
@@ -99,6 +112,49 @@ final class LaravelNode extends NodeMatch
     public function isFacadeCall(): bool
     {
         return $this->staticCallClassStartsWith(self::FACADE_NAMESPACE);
+    }
+
+    /**
+     * The route name this node LOOKS UP as a string literal — `route('x')`, `to_route('x')`,
+     * `redirect()->route('x')`, `URL::route('x')` — or null when it isn't a name lookup or the name is
+     * built dynamically. The reference side of the route-name vocabulary {@see RouteNames} registers.
+     */
+    public function routeNameReference(): ?string
+    {
+        if (! $this->isRouteNameLookup()) {
+            return null;
+        }
+
+        $first = $this->arguments()[0]->value ?? null;
+
+        return $first instanceof String_ ? $first->value : null;
+    }
+
+    /**
+     * Is this call a route-name LOOKUP rather than something else spelled `route`? The global helper
+     * (`route('x')`, `to_route('x')`) always is. A `->route(…)` METHOD call is only a lookup on a
+     * redirector or URL generator (`redirect()->route('x')`, `URL::route('x')`) — on a request it is
+     * `Request::route($param)`, which fetches a route PARAMETER and shares nothing but the spelling.
+     */
+    private function isRouteNameLookup(): bool
+    {
+        if ($this->node instanceof FuncCall && $this->node->name instanceof Name) {
+            return in_array($this->node->name->toString(), self::ROUTE_NAME_LOOKUPS, true);
+        }
+
+        if (! $this->node instanceof MethodCall && ! $this->node instanceof StaticCall) {
+            return false;
+        }
+
+        if (! $this->node->name instanceof Identifier || ! in_array($this->node->name->toString(), self::ROUTE_NAME_LOOKUPS, true)) {
+            return false;
+        }
+
+        $receiver = $this->node instanceof StaticCall ? $this->node->class : $this->node->var;
+
+        return $receiver instanceof Name
+            ? in_array(ltrim($receiver->toString(), '\\'), self::URL_GENERATORS, true)
+            : $receiver instanceof FuncCall && $receiver->name instanceof Name && in_array($receiver->name->toString(), self::URL_HELPERS, true);
     }
 
     /**

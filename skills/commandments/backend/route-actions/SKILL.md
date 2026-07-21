@@ -58,6 +58,8 @@ invokable serving the paths a spec requires.
 
 ## Rules
 
+- The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
+  _Point the lookup at the registered name, or register the route the name promises._
 - Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
   _Keep one route; if a second URL is truly needed, make it a redirect, or an invokable controller._
 - One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
@@ -66,6 +68,23 @@ invokable serving the paths a spec requires.
   _Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper._
 
 ## Bad → good
+
+```php
+// Bad
+public function menu(): array
+{
+    return [
+        ['label' => 'Home', 'href' => route('dashboard')],
+        ['label' => 'Overview', 'href' => route('dashbord')],
+    ];
+}
+
+// Good
+public function home(): string
+{
+    return route('dashboard');
+}
+```
 
 ```php
 // Bad
@@ -122,12 +141,14 @@ final class ExportController
 
 ## When it fires
 
+- A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 — `DanglingRouteNameDetector`
 - Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt) — `DuplicateRouteDetector`
 - Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice — `DuplicateRouteActionDetector`
 - A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one — `RouteDelegatesToControllerDetector`
 
 ## Checklist
 
+- [ ] The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
 - [ ] Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
 - [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
 - [ ] A route action delegates INTO the domain (a service/action class), never sideways into another controller.
