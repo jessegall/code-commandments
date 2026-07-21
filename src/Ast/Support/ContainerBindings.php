@@ -19,9 +19,11 @@ use PhpParser\NodeFinder;
 
 /**
  * Which container ABSTRACTS the codebase actually resolves. A binding only earns its keep if
- * something outside its own registration asks for the abstract — by type-hint, by `app()`/`make()`,
- * or by naming the class at all. References made INSIDE a registration don't count: a factory
- * closure building the very thing it binds proves nothing about demand.
+ * something outside its OWN registration asks for the abstract — by type-hint, by `app()`/`make()`,
+ * or by naming the class at all. A reference inside the registration OF THAT SAME ABSTRACT doesn't
+ * count: a factory closure building the very thing it binds proves nothing about demand. A reference
+ * inside a DIFFERENT binding's closure does count — one factory resolving another abstract is exactly
+ * how a registry is reached, and that demand is as real as any type-hint.
  */
 final class ContainerBindings
 {
@@ -57,17 +59,24 @@ final class ContainerBindings
         $finder = new NodeFinder;
 
         foreach ($codebase->files() as $file) {
-            $registrations = array_map(
-                static fn (Node $call): array => [$call->getStartFilePos(), $call->getEndFilePos()],
-                $finder->find($file->ast, static fn (Node $n): bool => self::boundAbstract($n) !== null),
-            );
+            // Keyed BY ABSTRACT: a registration only discounts references to the very thing IT binds.
+            // A sibling binding's factory reaching for another abstract is real demand — the registry
+            // that `bind(Provider::class, fn ($app) => $app->make(Registry::class)->get(…))` resolves
+            // is load-bearing, and deleting it would break every Provider resolution.
+            $registrations = [];
+
+            foreach ($finder->find($file->ast, static fn (Node $n): bool => self::boundAbstract($n) !== null) as $call) {
+                $registrations[(string) self::boundAbstract($call)][] = [$call->getStartFilePos(), $call->getEndFilePos()];
+            }
 
             foreach ($finder->find($file->ast, static fn (Node $n): bool => self::namedClass($n) !== null) as $reference) {
-                if (self::within($reference, $registrations)) {
+                $named = (string) self::namedClass($reference);
+
+                if (self::within($reference, $registrations[$named] ?? [])) {
                     continue;
                 }
 
-                $referenced[self::namedClass($reference)] = true;
+                $referenced[$named] = true;
             }
         }
 

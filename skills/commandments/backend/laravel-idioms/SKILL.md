@@ -203,7 +203,9 @@ public function register(): void
 // Good
 public function register(): void
 {
-    $this->app->singleton(PaymentGatewayRegistry::class);
+    $this->app->singleton(CourierRegistry::class, static fn (): CourierRegistry => new CourierRegistry);
+
+    $this->app->bind(CourierApi::class, static fn ($app): CourierApi => $app->make(CourierRegistry::class)->preferred());
 }
 ```
 

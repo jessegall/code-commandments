@@ -19,6 +19,49 @@ final class OrphanedBindingDetectorTest extends TestCase
         );
     }
 
+    public function test_a_sibling_factory_resolving_the_abstract_is_real_demand(): void
+    {
+        // The registry pattern: config names a provider and a SECOND binding's factory resolves the
+        // registry to turn that name into an implementation. The registry is load-bearing — deleting
+        // it breaks every Provider resolution — but the only reference to it sits inside another
+        // binding's closure. Only a reference inside the registration of the SAME abstract proves
+        // nothing; a different binding reaching for it is demand like any other.
+        $code = <<<'PHP'
+        <?php
+        namespace App;
+
+        class Registry {}
+        class Provider {}
+        class Impl {}
+        class Unused {}
+
+        class OAuthServiceProvider {
+            public function register(): void {
+                $this->app->singleton(Registry::class, function ($app) {
+                    $registry = new Registry();
+                    $registry->register('builtin', fn () => $app->make(Impl::class));
+
+                    return $registry;
+                });
+
+                $this->app->bind(Provider::class, function ($app) {
+                    return $app->make(Registry::class)->get('builtin');
+                });
+
+                $this->app->singleton(Unused::class, fn () => new Unused());
+            }
+        }
+
+        class Consumer {
+            public function __construct(private readonly Provider $provider) {}
+        }
+        PHP;
+
+        // Registry: resolved by Provider's factory. Impl: resolved by Registry's factory. Provider:
+        // type-hinted. Unused: named nowhere but its own registration — the only dead wiring here.
+        $this->assertSame([22], $this->lines($code));
+    }
+
     public function test_flags_only_the_binding_nothing_resolves(): void
     {
         $code = <<<'PHP'
