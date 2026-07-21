@@ -37,6 +37,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
   _Inject a typed config value object._
 - Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
   _Declare the dependency as a constructor parameter._
+- A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
+  _Delete the registration (and the listener, if nothing else reaches it) — or restore the dispatch the listener was waiting for._
 - Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
   _Constructor-inject the dependency behind its interface._
 - Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
@@ -88,6 +90,20 @@ public function pay(Request $request): array
 public function payClean(PaymentProcessor $processor, string $token, int $amount): array
 {
     return ['ok' => $processor->charge($token, $amount)];
+}
+```
+
+```php
+// Bad
+public function boot(): void
+{
+    Event::listen(StockReconciled::class, 'Shop\\Listeners\\NotifyWarehouse');
+}
+
+// Good
+public function register(): void
+{
+    Event::listen(PriceChanged::class, 'Shop\\Listeners\\RepricePublications');
 }
 ```
 
@@ -210,6 +226,7 @@ public function handleNamed(MoveNodeRequest $request): string
 
 - `config('…')` read inside a class — `ConfigReadDetector`
 - `app()`/`resolve()` reach inside a container-resolved class — `ContainerReachDetector`
+- An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring — `DeadEventWiringDetector`
 - Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
 - Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
 - Set-property-then-`save()` at a call site (should be an intention method) — `ModelMutationAtCallSiteDetector`
@@ -221,6 +238,7 @@ public function handleNamed(MoveNodeRequest $request): string
 
 - [ ] Inject a typed config object; never read `config('…')` inside a class.
 - [ ] Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
+- [ ] A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
 - [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
 - [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.

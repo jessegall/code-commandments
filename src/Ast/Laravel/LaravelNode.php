@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Ast\Support\RouteActions;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\StaticCall;
@@ -90,6 +91,12 @@ final class LaravelNode extends NodeMatch
     /** The container methods that REGISTER an abstract — the wiring `OrphanedBindingDetector` audits. */
     public const array BINDING_METHODS = ['bind', 'bindIf', 'singleton', 'singletonIf', 'scoped', 'scopedIf', 'instance'];
 
+    /** The `Event` facade — `Event::listen(X::class, L::class)` wires a listener to an event. */
+    public const string EVENT = 'Illuminate\\Support\\Facades\\Event';
+
+    /** The static calls that FIRE an event class — the demand side of `Event::listen`. */
+    public const array EVENT_DISPATCHERS = ['dispatch', 'dispatchIf', 'dispatchUnless', 'broadcast'];
+
     /** The calls that look a route up BY NAME — the reference side of the route-name vocabulary. */
     public const array ROUTE_NAME_LOOKUPS = ['route', 'to_route', 'signedRoute', 'temporarySignedRoute'];
 
@@ -158,6 +165,30 @@ final class LaravelNode extends NodeMatch
         return $receiver instanceof Name
             ? in_array(ltrim($receiver->toString(), '\\'), self::URL_GENERATORS, true)
             : $receiver instanceof FuncCall && $receiver->name instanceof Name && in_array($receiver->name->toString(), self::URL_HELPERS, true);
+    }
+
+    /**
+     * The EVENT class this node wires a listener to — `Event::listen(X::class, L::class)` — or null
+     * when it isn't a listener registration or the event is named dynamically (a variable holding a
+     * discovered class, which nothing static can resolve).
+     */
+    public function listenedEventClass(): ?string
+    {
+        if (! $this->node instanceof StaticCall
+            || ! $this->node->class instanceof Name
+            || ! in_array(ltrim($this->node->class->toString(), '\\'), [self::EVENT, 'Event'], true)
+            || ! $this->node->name instanceof Identifier
+            || $this->node->name->toString() !== 'listen'
+        ) {
+            return null;
+        }
+
+        $first = $this->arguments()[0]->value ?? null;
+
+        return $first instanceof ClassConstFetch && $first->class instanceof Name && $first->name instanceof Identifier
+            && $first->name->toString() === 'class'
+                ? ltrim($first->class->toString(), '\\')
+                : null;
     }
 
     /**
