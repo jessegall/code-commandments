@@ -10,6 +10,7 @@ use Closure;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Concurrency\Fork;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 /**
@@ -75,7 +76,7 @@ final class DetectorRunner
             $short = ClassName::short($detector::class);
             $sin = $detector->sin();
 
-            $tasks[] = static fn (): array => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase));
+            $tasks[] = static fn (): array => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase), $detector, $codebase);
         }
 
         return $tasks;
@@ -88,14 +89,48 @@ final class DetectorRunner
      * @param  list<\JesseGall\CodeCommandments\Ast\NodeMatch>  $matches
      * @return list<Finding>
      */
-    private static function findings(string $detector, string $skill, string $sin, array $matches): array
+    private static function findings(string $detector, string $skill, string $sin, array $matches, Detector $rule, Codebase $codebase): array
     {
+        $buckets = self::buckets($matches, $rule, $codebase);
         $findings = [];
 
         foreach ($matches as $match) {
-            $findings[] = new Finding($detector, $skill, $sin, $match->file->path, $match->location(), $match->scope());
+            $location = $match->location();
+            $twins = array_values(array_diff($buckets[spl_object_id($match)] ?? [], [$location]));
+
+            $findings[] = new Finding($detector, $skill, $sin, $match->file->path, $location, $match->scope(), $twins);
         }
 
         return $findings;
+    }
+
+    /**
+     * Every match's FELLOW occurrences, keyed by match — the sibling locations a recurrence verdict rests
+     * on. Only a {@see RecurrenceDetector} has them: it alone declares the fingerprint that decides which
+     * findings are the same shape, so re-reading {@see RecurrenceDetector::groupKey} here is the honest
+     * way to recover the bucket the verdict came from. Every other detector judges a site on its own.
+     *
+     * @param  list<\JesseGall\CodeCommandments\Ast\NodeMatch>  $matches
+     * @return array<int, list<string>>  spl_object_id(match) => the locations in its bucket
+     */
+    private static function buckets(array $matches, Detector $rule, Codebase $codebase): array
+    {
+        if (! $rule instanceof RecurrenceDetector) {
+            return [];
+        }
+
+        $byKey = [];
+        $keyOf = [];
+
+        foreach ($matches as $match) {
+            $key = $rule->groupKey($match, $codebase);
+
+            if ($key !== null) {
+                $byKey[$key][] = $match->location();
+                $keyOf[spl_object_id($match)] = $key;
+            }
+        }
+
+        return array_map(static fn (string $key): array => $byKey[$key], $keyOf);
     }
 }

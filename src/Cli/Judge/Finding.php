@@ -12,6 +12,13 @@ namespace JesseGall\CodeCommandments\Cli\Judge;
  */
 final class Finding
 {
+    /**
+     * @param  list<string>  $twins  the OTHER occurrences this finding was bucketed with — non-empty only
+     *                               for a {@see \JesseGall\CodeCommandments\Detectors\RecurrenceDetector},
+     *                               whose whole verdict is "this shape RECURS". Without them the reader
+     *                               cannot see what it recurs WITH, and judges the site alone — which
+     *                               reads as a false positive whenever the twin lives in another file.
+     */
     public function __construct(
         public readonly string $detector,
         public readonly string $skill,
@@ -19,5 +26,6 @@ final class Finding
         public readonly string $file,
         public readonly string $location,
         public readonly string $scope,
+        public readonly array $twins = [],
     ) {}
 }

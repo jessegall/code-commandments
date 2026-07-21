@@ -15,6 +15,9 @@ use JesseGall\CodeCommandments\Cli\Scaffold;
  */
 final class SinReport
 {
+    /** How many sibling occurrences a recurrence finding names before it just says "+N more". */
+    private const int TWINS_SHOWN = 3;
+
     /** @var array<string, list<Finding>> */
     private array $bySkill;
 
@@ -74,6 +77,10 @@ final class SinReport
             foreach ($findings as $finding) {
                 $location = $this->relative($finding->location);
                 $lines[] = "  \033[36m{$location}\033[0m  {$finding->scope}  \033[2m[{$finding->detector}]\033[0m";
+
+                if ($finding->twins !== []) {
+                    $lines[] = "    \033[2m↳ same shape as: " . $this->twins($finding) . "\033[0m";
+                }
             }
 
             foreach ($this->fixCommands($findings) as $command) {
@@ -131,11 +138,26 @@ final class SinReport
 
             foreach ($findings as $finding) {
                 // The FULL path (not display-relative) so `--repent=ID` can resolve it.
-                $out .= "- `{$finding->location}`  {$finding->scope}  [{$finding->detector}]\n";
+                $out .= "- `{$finding->location}`  {$finding->scope}  [{$finding->detector}]"
+                    . ($finding->twins === [] ? '' : ' — same shape as ' . $this->twins($finding))
+                    . "\n";
             }
         }
 
         return $out;
+    }
+
+    /**
+     * The sibling occurrences a RECURRENCE verdict rests on, rendered display-relative. A recurrence sin
+     * is unreadable without them — the site alone looks innocent, and the reader has no way to see what
+     * it was bucketed WITH. Capped, because a shape repeated forty times needs a name, not forty paths.
+     */
+    private function twins(Finding $finding): string
+    {
+        $shown = array_map($this->relative(...), array_slice($finding->twins, 0, self::TWINS_SHOWN));
+        $rest = count($finding->twins) - count($shown);
+
+        return implode(', ', $shown) . ($rest > 0 ? " (+{$rest} more)" : '');
     }
 
     /**
