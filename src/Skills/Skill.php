@@ -78,7 +78,17 @@ abstract class Skill
      */
     public function id(): string
     {
-        return 'commandments-' . str_replace('/', '-', $this->slug);
+        return self::idFor($this->slug);
+    }
+
+    /**
+     * The loadable id for a bare slug — the same flatten every consumer of "how a skill is named for the
+     * Skill tool" shares (the report that tells an agent which skill to load, the publisher that writes the
+     * directory), so the invocation name has ONE home and never drifts from where the skill is published.
+     */
+    public static function idFor(string $slug): string
+    {
+        return 'commandments-' . str_replace('/', '-', $slug);
     }
 
     /**
