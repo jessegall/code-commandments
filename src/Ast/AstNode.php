@@ -1512,6 +1512,21 @@ class AstNode
     }
 
     /**
+     * The fully-qualified types this `catch` clause names — one entry per alternative, so
+     * `catch (BreakSignal | StopSignal)` yields both. Empty for any node that isn't a catch.
+     *
+     * @return list<string>
+     */
+    public function caughtTypes(): array
+    {
+        if (! $this->node instanceof Catch_) {
+            return [];
+        }
+
+        return array_map(static fn (Name $type): string => $type->toString(), $this->node->types);
+    }
+
+    /**
      * Is this a `match` OVER A SUBJECT whose `default` arm returns an absence value
      * (`null`/`false`/`[]`) instead of throwing? An unhandled case silently
      * swallowed — a missing case is a bug, and the default should say so.
