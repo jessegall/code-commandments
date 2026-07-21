@@ -58,6 +58,8 @@ invokable serving the paths a spec requires.
 
 ## Rules
 
+- One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.
+  _Hoist the shared sequence into one application service and have both faces call it._
 - The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
   _Point the lookup at the registered name, or register the route the name promises._
 - Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
@@ -68,6 +70,26 @@ invokable serving the paths a spec requires.
   _Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper._
 
 ## Bad → good
+
+```php
+// Bad
+public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, PrintLog $log): string
+{
+    $job = $queue->push($renderer->render($sku));
+
+    $log->record($job);
+
+    return $this->answer($job);
+}
+
+// Good
+public function handle(LabelPrinting $printing): int
+{
+    $printing->print((string) $this->argument('sku'));
+
+    return 0;
+}
+```
 
 ```php
 // Bad
@@ -141,6 +163,7 @@ final class ExportController
 
 ## When it fires
 
+- The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift — `BoundaryDuplicatedOperationDetector`
 - A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 — `DanglingRouteNameDetector`
 - Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt) — `DuplicateRouteDetector`
 - Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice — `DuplicateRouteActionDetector`
@@ -148,6 +171,7 @@ final class ExportController
 
 ## Checklist
 
+- [ ] One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.
 - [ ] The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
 - [ ] Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
 - [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.

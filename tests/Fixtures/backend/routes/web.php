@@ -46,3 +46,7 @@ Route::name('reports.')->group(function () {
 Route::group(['as' => 'kiosk.'], function () {
     Route::get('/kiosk/home', fn (): string => 'home')->name('home');
 });
+
+// The HTTP face of the label-printing operation — registered here so the route table, not a
+// namespace segment, is what marks it as an entry point.
+Route::post('/labels/print/{sku}', [\Shop\Http\Controllers\LabelPrintController::class, 'store']);

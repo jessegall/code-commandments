@@ -98,6 +98,12 @@ final class LaravelNode extends NodeMatch
     /** The static calls that FIRE an event class — the demand side of `Event::listen`. */
     public const array EVENT_DISPATCHERS = ['dispatch', 'dispatchIf', 'dispatchUnless', 'broadcast'];
 
+    /** The console command base — one FACE of the application, alongside MCP tools and HTTP actions. */
+    public const string CONSOLE_COMMAND = 'Illuminate\\Console\\Command';
+
+    /** Boundary KIND => the base type that identifies it. HTTP is read from the route table instead. */
+    public const array BOUNDARY_KINDS = ['console' => self::CONSOLE_COMMAND, 'mcp' => self::MCP_TOOL];
+
     /** The calls that look a route up BY NAME — the reference side of the route-name vocabulary. */
     public const array ROUTE_NAME_LOOKUPS = ['route', 'to_route', 'signedRoute', 'temporarySignedRoute'];
 
