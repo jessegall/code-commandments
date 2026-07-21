@@ -17,7 +17,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * a listener on a base event answers every child — so only a genuinely unreachable branch is
  * flagged. Only FIRST-PARTY events are judged: a framework or package event (`JobQueued`,
  * `MessageSent`) is raised inside vendor code the scan never sees, so its absence here proves
- * nothing. Points at laravel-idioms.
+ * nothing. An INTERFACE-typed listen is likewise spared: it is an extension point — the events that
+ * satisfy it are the host application's own, declared outside the scanned tree, so no absence here can
+ * prove the branch dead. Points at laravel-idioms.
  */
 final class DeadEventWiringDetector implements Detector
 {
@@ -31,6 +33,7 @@ final class DeadEventWiringDetector implements Detector
         return $codebase
             ->where(static fn (LaravelNode $node): bool => $node->listenedEventClass() !== null)
             ->where(static fn (LaravelNode $node): bool => $codebase->declarationMatch($node->listenedEventClass()) !== null)
+            ->reject(static fn (LaravelNode $node): bool => $codebase->isInterface($node->listenedEventClass()))
             ->reject(static fn (LaravelNode $node): bool => $codebase->isEverProduced($node->listenedEventClass() ?? '', LaravelNode::EVENT_DISPATCHERS))
             ->get();
     }

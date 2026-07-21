@@ -708,6 +708,16 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Is $class declared as an INTERFACE in the codebase? An interface is an extension point: whoever
+     * implements it may live outside the scanned tree entirely (a library's host application), so no
+     * reachability claim about it can be settled from this tree alone.
+     */
+    public function isInterface(?string $class): bool
+    {
+        return $this->declarationMatch($class)?->isInterfaceDeclaration() ?? false;
+    }
+
+    /**
      * @return list<string>  every enum FQCN declared in the codebase
      */
     private function enumNames(): array

@@ -69,6 +69,7 @@ use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\If_;
+use PhpParser\Node\Stmt\Interface_;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Switch_;
@@ -2969,6 +2970,16 @@ class AstNode
     public function isInEnum(): bool
     {
         return $this->enclosingClass() instanceof Enum_;
+    }
+
+    /**
+     * Is THIS node an interface declaration? An interface is a contract others implement — the one shape
+     * whose implementors may live entirely outside the scanned tree, so "nothing here produces one" never
+     * proves it unreachable.
+     */
+    public function isInterfaceDeclaration(): bool
+    {
+        return $this->node instanceof Interface_;
     }
 
     /**

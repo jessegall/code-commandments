@@ -107,6 +107,30 @@ final class DeadEventWiringDetectorTest extends TestCase
         $this->assertSame([], $this->lines($code));
     }
 
+    public function test_a_listener_bound_to_an_interface_is_an_extension_point(): void
+    {
+        // A package listens on the CONTRACT its host applications implement on their own domain events.
+        // The implementors live outside the scanned tree by design, so "nothing here fires it" proves
+        // nothing — the registration is the package's public trigger API, not dead wiring.
+        $code = <<<'PHP'
+        <?php
+        namespace App;
+
+        use Illuminate\Support\Facades\Event;
+
+        interface TriggersWorkflowsEvent {}
+        class RunWorkflowsForEvent {}
+
+        class TriggersServiceProvider {
+            public function boot(): void {
+                Event::listen(TriggersWorkflowsEvent::class, RunWorkflowsForEvent::class);
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->lines($code));
+    }
+
     public function test_a_dynamically_named_event_is_not_judged(): void
     {
         // `Event::listen($event, …)` over a discovered class list resolves to nothing statically.
