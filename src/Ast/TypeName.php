@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use PhpParser\Node;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Param;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\UnionType;
@@ -205,5 +206,18 @@ final class TypeName
         }
 
         return false;
+    }
+
+    /**
+     * Does this PARAMETER promise a present value of the named scalar type — declared exactly `string`
+     * (or `int`, …), not nullable, and with no default to fall back on? The primitive behind "the slot
+     * says a real value is always there", so a caller filling it with nothing is a lie the types hide.
+     */
+    public static function promisesScalar(?Param $param, string $scalar): bool
+    {
+        return $param !== null
+            && $param->default === null
+            && $param->type instanceof Identifier
+            && $param->type->toString() === $scalar;
     }
 }

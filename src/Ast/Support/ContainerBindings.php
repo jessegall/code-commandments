@@ -48,20 +48,7 @@ final class ContainerBindings
      */
     public static function boundAbstract(Node $node): ?string
     {
-        if (! $node instanceof MethodCall && ! $node instanceof StaticCall) {
-            return null;
-        }
-
-        if (! $node->name instanceof Identifier || ! in_array($node->name->toString(), LaravelNode::BINDING_METHODS, true)) {
-            return null;
-        }
-
-        $first = ($node->args[0] ?? null)?->value;
-
-        return $first instanceof ClassConstFetch && $first->class instanceof Name && $first->name instanceof Identifier
-            && $first->name->toString() === 'class'
-                ? ltrim($first->class->toString(), '\\')
-                : null;
+        return LaravelNode::boundAbstractOf($node);
     }
 
     protected static function build(Codebase $codebase): static

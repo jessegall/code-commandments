@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
-use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -32,31 +31,8 @@ final class DeadEventWiringDetector implements Detector
         return $codebase
             ->where(static fn (LaravelNode $node): bool => $node->listenedEventClass() !== null)
             ->where(static fn (LaravelNode $node): bool => $codebase->declarationMatch($node->listenedEventClass()) !== null)
-            ->reject(static fn (LaravelNode $node): bool => self::isFireable($codebase, $node->listenedEventClass() ?? ''))
+            ->reject(static fn (LaravelNode $node): bool => $codebase->isEverProduced($node->listenedEventClass() ?? '', LaravelNode::EVENT_DISPATCHERS))
             ->get();
     }
 
-    /**
-     * Can anything raise this event? An event is always CONSTRUCTED to be dispatched, so a `new X`
-     * anywhere is proof; `X::dispatch()` is the constructor-free spelling of the same thing. Either
-     * on the event itself or on any subclass of it — a listener bound to a base event answers all of
-     * its children, so a fired child keeps the base's wiring alive.
-     */
-    private static function isFireable(Codebase $codebase, string $event): bool
-    {
-        return $codebase
-            ->whereNew()
-            ->where(static fn (AstNode $node): bool => self::isEventOrChild($codebase, $node->newClassName(), $event))
-            ->count() > 0
-            || $codebase
-                ->whereStaticCall()
-                ->where(static fn (AstNode $node): bool => in_array($node->staticCallMethod() ?? '', LaravelNode::EVENT_DISPATCHERS, true))
-                ->where(static fn (AstNode $node): bool => self::isEventOrChild($codebase, $node->staticCallClass(), $event))
-                ->count() > 0;
-    }
-
-    private static function isEventOrChild(Codebase $codebase, ?string $candidate, string $event): bool
-    {
-        return $candidate !== null && ($candidate === $event || $codebase->extends($candidate, $event) || $codebase->implements($candidate, $event));
-    }
 }

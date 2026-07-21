@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Laravel;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use JesseGall\CodeCommandments\Ast\Support\RouteActions;
@@ -131,13 +132,7 @@ final class LaravelNode extends NodeMatch
      */
     public function routeNameReference(): ?string
     {
-        if (! $this->isRouteNameLookup()) {
-            return null;
-        }
-
-        $first = $this->arguments()[0]->value ?? null;
-
-        return $first instanceof String_ ? $first->value : null;
+        return $this->isRouteNameLookup() ? $this->stringArgument() : null;
     }
 
     /**
@@ -183,12 +178,30 @@ final class LaravelNode extends NodeMatch
             return null;
         }
 
-        $first = $this->arguments()[0]->value ?? null;
+        return $this->classArgument();
+    }
 
-        return $first instanceof ClassConstFetch && $first->class instanceof Name && $first->name instanceof Identifier
-            && $first->name->toString() === 'class'
-                ? ltrim($first->class->toString(), '\\')
-                : null;
+    /**
+     * The container ABSTRACT this node registers — `$this->app->singleton(X::class, …)`, `App::bind(…)`
+     * and their `…If` variants — or null when it isn't a binding, or its abstract isn't a class literal.
+     */
+    public function boundAbstract(): ?string
+    {
+        return self::boundAbstractOf($this->node);
+    }
+
+    /**
+     * The same read from a RAW node, for the cross-file analysis that indexes registrations before any
+     * match objects exist ({@see \JesseGall\CodeCommandments\Ast\Support\ContainerBindings}). The
+     * binding-method vocabulary is stated once, here.
+     */
+    public static function boundAbstractOf(Node $node): ?string
+    {
+        $name = new AstNode($node)->callName();
+
+        return $name !== null && in_array($name, self::BINDING_METHODS, true)
+            ? new AstNode($node)->classArgument()
+            : null;
     }
 
     /**

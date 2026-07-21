@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
-use JesseGall\CodeCommandments\Ast\AstNode;
+use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\ContainerBindings;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -31,8 +31,8 @@ final class OrphanedBindingDetector implements Detector
         $bindings = ContainerBindings::forCodebase($codebase);
 
         return $codebase
-            ->where(static fn (AstNode $node): bool => ContainerBindings::boundAbstract($node->node) !== null)
-            ->reject(static fn (AstNode $node): bool => $bindings->isResolvedSomewhere(ContainerBindings::boundAbstract($node->node) ?? ''))
+            ->where(static fn (LaravelNode $node): bool => $node->boundAbstract() !== null)
+            ->reject(static fn (LaravelNode $node): bool => $bindings->isResolvedSomewhere($node->boundAbstract() ?? ''))
             ->get();
     }
 }

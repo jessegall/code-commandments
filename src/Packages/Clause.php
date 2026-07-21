@@ -94,12 +94,6 @@ final class Clause
      */
     private function isA(Codebase $codebase, string $class, array $bases): bool
     {
-        foreach ($bases as $base) {
-            if ($class === $base || $codebase->extends($class, $base) || $codebase->implements($class, $base)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($bases, static fn (string $base): bool => $codebase->isA($class, $base));
     }
 }

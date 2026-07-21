@@ -580,6 +580,40 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Is $fqcn (or anything descending from it) ever brought to life — `new X` or a static call named
+     * among $statically? An object is always CONSTRUCTED before it is used, so this answers "can
+     * anything in this codebase produce one of these" for a dispatchable event, a job, a command.
+     *
+     * @param  list<string>  $statically  constructor-free spellings (`dispatch`, `broadcast`, …)
+     */
+    public function isEverProduced(string $fqcn, array $statically = []): bool
+    {
+        $produced = $this->whereNew()
+            ->where(fn (AstNode $node): bool => $this->isA($node->newClassName(), $fqcn))
+            ->count() > 0;
+
+        if ($produced || $statically === []) {
+            return $produced;
+        }
+
+        return $this->whereStaticCall()
+            ->where(static fn (AstNode $node): bool => in_array($node->staticCallMethod() ?? '', $statically, true))
+            ->where(fn (AstNode $node): bool => $this->isA($node->staticCallClass(), $fqcn))
+            ->count() > 0;
+    }
+
+    /**
+     * Is $class the SAME as $base, or a descendant of it (extends or implements, walked)? The one home
+     * for "does this type answer for that one" — a listener bound to a base event answers every child,
+     * an exemption clause covers every subclass of the type it names.
+     */
+    public function isA(?string $class, string $base): bool
+    {
+        return $class !== null
+            && ($class === $base || $this->extends($class, $base) || $this->implements($class, $base));
+    }
+
+    /**
      * Is this type a VALUE — data you hold — rather than a SERVICE you call? A scalar/array/enum is a value;
      * a class is a value only when, WALKING THE CHAIN into it, every one of its own fields is itself a value
      * (a `SocketRef` of scalars, an `EdgePayload` of `SocketRef`s). A service fails: its type is unresolvable

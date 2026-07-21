@@ -31,31 +31,11 @@ final class DuplicatedConfigDefaultDetector implements Detector
         $keys = ConfigKeys::forCodebase($codebase);
 
         return $codebase
-            ->where(static fn (AstNode $node): bool => self::readsWithFallback($node))
+            ->where(static fn (AstNode $node): bool => $node->stringArgument() !== null)
+            ->where(static fn (AstNode $node): bool => $node->argumentCount() >= 2)
             ->reject(static fn (AstNode $node): bool => $node->resultIsDiscarded())
-            ->where(static fn (AstNode $node): bool => $keys->declaresDefault(self::keyOf($node) ?? ''))
+            ->where(static fn (AstNode $node): bool => $keys->declaresDefault($node->stringArgument() ?? ''))
             ->get();
     }
 
-    /**
-     * Is this a call that names a config key by literal AND passes a second argument — the reader's
-     * own fallback? The key literal is what identifies the call as a config read, whatever the helper
-     * is spelled (`config`, a typed `intOr`, a facade `get`), so no helper name is hardcoded.
-     *
-     * A WRITE is excluded structurally rather than by name: `Config::set('k', $v);` discards its
-     * result, while every read is assigned, returned or passed on. Without that, every
-     * `config()->set(...)` in a test suite looked like a duplicated default.
-     */
-    private static function readsWithFallback(AstNode $node): bool
-    {
-        return count($node->arguments()) >= 2 && self::keyOf($node) !== null;
-    }
-
-    /** The dotted config key a call names in its first argument, or null. */
-    private static function keyOf(AstNode $node): ?string
-    {
-        $first = $node->arguments()[0]->value ?? null;
-
-        return $first instanceof \PhpParser\Node\Scalar\String_ ? $first->value : null;
-    }
 }

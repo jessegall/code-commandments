@@ -1269,7 +1269,7 @@ class AstNode
                 return null;
             }
 
-            self::isOwnPropertyFetch($arg->value) ? $carried++ : $changed++;
+            new self($arg->value)->readsOwnProperty() ? $carried++ : $changed++;
         }
 
         return $carried >= self::WITHER_CARRIED_FLOOR && $changed >= 1 && $this->constructorIsPromotionOnly() ? $new : null;
@@ -1297,6 +1297,78 @@ class AstNode
         $function = $this->enclosingFunction();
 
         return $function !== null && new self($function)->handRolledWither() === $this->node;
+    }
+
+    /**
+     * Is this expression a plain `$this->prop` read — a field carried across verbatim, as opposed to a
+     * value computed or passed in? The primitive behind "which arguments ride along unchanged".
+     */
+    public function readsOwnProperty(): bool
+    {
+        return $this->node instanceof PropertyFetch
+            && $this->node->var instanceof Variable
+            && $this->node->var->name === 'this'
+            && $this->node->name instanceof Identifier;
+    }
+
+    /** Is this the empty string literal — the absence of a value written where one is promised? */
+    public function isEmptyString(): bool
+    {
+        return $this->node instanceof String_ && $this->node->value === '';
+    }
+
+    /**
+     * This call's argument at $index as a STRING LITERAL, or null when it isn't one (or isn't there).
+     * The one home for "the literal key/name this call names" — a config key, a route name, an event id.
+     */
+    public function stringArgument(int $index = 0): ?string
+    {
+        $value = $this->arguments()[$index]->value ?? null;
+
+        return $value instanceof String_ ? $value->value : null;
+    }
+
+    /**
+     * This call's argument at $index as the FQCN of a `Foo::class` fetch, or null. The class-literal
+     * counterpart of {@see stringArgument} — how a registration names the type it wires.
+     */
+    public function classArgument(int $index = 0): ?string
+    {
+        $value = $this->arguments()[$index]->value ?? null;
+
+        return $value instanceof ClassConstFetch
+            && $value->class instanceof Name
+            && $value->name instanceof Identifier
+            && $value->name->toString() === 'class'
+                ? ltrim($value->class->toString(), '\\')
+                : null;
+    }
+
+    /** How many arguments this call passes — 0 for a node that isn't a call. */
+    public function argumentCount(): int
+    {
+        return count($this->arguments());
+    }
+
+    /**
+     * The constructor PARAMETER an argument targets — matched by NAME when the argument is named, by
+     * POSITION otherwise. Null when nothing matches, so a caller never has to guess which slot it hit.
+     *
+     * @param  list<Param>  $params
+     */
+    public static function paramForArgument(array $params, Arg $argument, int $index): ?Param
+    {
+        if ($argument->name === null) {
+            return $params[$index] ?? null;
+        }
+
+        foreach ($params as $param) {
+            if (($param->var->name ?? null) === $argument->name->toString()) {
+                return $param;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1346,14 +1418,6 @@ class AstNode
      */
     private const int WITHER_CARRIED_FLOOR = 3;
 
-    /** Is this expression a plain `$this->prop` read — a field carried across verbatim? */
-    private static function isOwnPropertyFetch(Node $expr): bool
-    {
-        return $expr instanceof PropertyFetch
-            && $expr->var instanceof Variable
-            && $expr->var->name === 'this'
-            && $expr->name instanceof Identifier;
-    }
 
     /** Does this class name refer to the ENCLOSING type — `self`, `static`, or its own name? */
     private function namesOwnType(Name $name): bool

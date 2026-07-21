@@ -54,7 +54,7 @@ final class HandRolledWitherScribe extends RepentScribe
         $entries = [];
 
         foreach ($new->args as $index => $arg) {
-            if ($this->carriesOwnProperty($arg->value)) {
+            if (new AstNode($arg->value)->readsOwnProperty()) {
                 continue;
             }
 
@@ -69,15 +69,6 @@ final class HandRolledWitherScribe extends RepentScribe
         }
 
         return $entries === [] ? null : $entries;
-    }
-
-    /** Is this argument a `$this->prop` read — a field riding along unchanged, which clone-with implies? */
-    private function carriesOwnProperty(mixed $expr): bool
-    {
-        return $expr instanceof \PhpParser\Node\Expr\PropertyFetch
-            && $expr->var instanceof Variable
-            && $expr->var->name === 'this'
-            && $expr->name instanceof \PhpParser\Node\Identifier;
     }
 
 }

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend\Spatie;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
+use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\PlaceholderFilledData;
 use JesseGall\CodeCommandments\Sins\Sin;
@@ -33,58 +34,21 @@ final class PlaceholderFilledDataDetector implements Detector
     }
 
     /**
-     * Does a slot typed as a NON-NULLABLE STRING receive `''`?
-     *
-     * The type is what makes this readable as a lie: the class promises a string that is always
-     * present, and the caller hands it the absence of one. Deliberately narrow — `0` and `false` are
-     * ordinary domain values (`fill: false`, `rate: 0`), and a nullable slot already says "may be
-     * missing", so `null` there is honest.
+     * Does a slot typed as a required, non-nullable `string` receive `''`? The TYPE is what makes this
+     * readable as a lie: the class promises a value that is always there, and the caller hands it none.
      */
     private static function fillsAStringSlotWithNothing(Codebase $codebase, AstNode $node): bool
     {
         $params = AstNode::constructorParamsOf($codebase->classNamed($node->newClassName())->node);
 
-        if ($params === []) {
-            return false;
-        }
-
         foreach ($node->arguments() as $index => $argument) {
-            $value = $argument->value;
-
-            if (! $value instanceof \PhpParser\Node\Scalar\String_ || $value->value !== '') {
-                continue;
-            }
-
-            if (self::promisesAString(self::slotFor($params, $argument, $index))) {
+            if (new AstNode($argument->value)->isEmptyString()
+                && TypeName::promisesScalar(AstNode::paramForArgument($params, $argument, $index), 'string')
+            ) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    /** The constructor parameter an argument targets — by NAME when named, else by position. */
-    private static function slotFor(array $params, \PhpParser\Node\Arg $argument, int $index): ?\PhpParser\Node\Param
-    {
-        if ($argument->name === null) {
-            return $params[$index] ?? null;
-        }
-
-        foreach ($params as $param) {
-            if (($param->var->name ?? null) === $argument->name->toString()) {
-                return $param;
-            }
-        }
-
-        return null;
-    }
-
-    /** Is this slot a required, non-nullable `string` — a promise that a real value is always there? */
-    private static function promisesAString(?\PhpParser\Node\Param $param): bool
-    {
-        return $param !== null
-            && $param->default === null
-            && $param->type instanceof \PhpParser\Node\Identifier
-            && $param->type->toString() === 'string';
     }
 }
