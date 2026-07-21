@@ -247,7 +247,7 @@ final class Judge implements Command
     /**
      * Drop findings in excluded files (a `--exclude` fragment) and those out of scope.
      * Exclusion and scope are separate concerns: exclude is the `--exclude` fragments;
-     * scope is the changed-file set.
+     * scope is the changed-file set (which a frozen or generated file never joins).
      *
      * @param  list<Finding>  $findings
      * @param  list<string>  $exclude
