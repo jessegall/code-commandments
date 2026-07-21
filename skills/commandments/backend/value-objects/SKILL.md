@@ -39,6 +39,8 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
   _Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property._
 - Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
   _A value object the params fold into (`Money::of()`, `NodePosition`)._
+- A wither changes ONE thing: say only what changes. `clone($this, ['x' => $x])` states the intent; re-listing every field states the constructor again, N times over.
+  _Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])` — `repent` does it for you._
 - Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
   _A small `readonly` result object._
 - Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
@@ -149,6 +151,20 @@ public function record(string $shopId, string $userId, string $channelId): strin
 public function recordAccess(AccessContext $context): string
 {
     return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
+}
+```
+
+```php
+// Bad
+public function withValue(?string $value): self
+{
+    return new self($this->id, $this->label, $this->type, $this->required, $value, $this->order);
+}
+
+// Good
+public function withOrder(int $order): self
+{
+    return clone($this, ['order' => $order]);
 }
 ```
 
@@ -272,6 +288,7 @@ final class LooseCard extends Data
 - Returning a multi-field string-keyed array literal (a bag that should be a value object) — `ArrayReturnBagDetector`
 - A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object — `CoupledFieldsDetector`
 - The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) — `DataClumpDetector`
+- A wither rebuilds its object by re-spelling every constructor field, so each new field must be threaded through N of them — `HandRolledWitherDetector`
 - Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
 - Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
 - A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of NESTING the existing `Wire{type, label}` — width instead of depth — `FlatFieldClusterDetector`
@@ -282,6 +299,7 @@ final class LooseCard extends Data
 - [ ] Return a typed value object, not a multi-field string-keyed array literal.
 - [ ] Fields that move as a unit are one type: extract the clump into a value object and hold THAT; never mirror a datum that already lives on a nested object.
 - [ ] Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
+- [ ] A wither changes ONE thing: say only what changes. `clone($this, ['x' => $x])` states the intent; re-listing every field states the constructor again, N times over.
 - [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
 - [ ] Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
 - [ ] When scalar fields on a Data class share a prefix that names a value object the codebase already declares, they restate that object flat. Nest them into the existing sub-object and shed the prefix — `wireType`/`wireLabel` become `wire: Wire{type, label}`.

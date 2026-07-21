@@ -56,7 +56,7 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
         $entries = [];
 
         foreach ($new->args as $index => $arg) {
-            $key = $arg->name?->toString() ?? $this->positionalKey($params, $index);
+            $key = $arg->name?->toString() ?? AstNode::promotedParamName($params, $index);
 
             if ($arg->unpack || $key === null) {
                 return null;
@@ -91,21 +91,4 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
         return "\n" . implode('', array_map(static fn (string $entry): string => "{$inner}{$entry},\n", $entries)) . $outer;
     }
 
-    /**
-     * The property name a positional argument at $index maps to — the param at that
-     * position, but only when it's a PROMOTED, non-variadic property (so its name IS the
-     * property). Anything else is unresolvable, so the whole call is left alone.
-     *
-     * @param  list<\PhpParser\Node\Param>  $params
-     */
-    private function positionalKey(array $params, int $index): ?string
-    {
-        $param = $params[$index] ?? null;
-
-        if ($param === null || $param->flags === 0 || $param->variadic || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
-            return null;
-        }
-
-        return $param->var->name;
-    }
 }

@@ -1244,6 +1244,120 @@ class AstNode
     }
 
     /**
+     * The `new self(...)`/`new static(...)` a WITHER re-threads its whole field list through — a body
+     * that is one `return new self($this->a, $this->b, $changed, $this->d);`, carrying most fields
+     * across untouched to alter one or two. Every new field must then be added to N of these, and
+     * PHP 8.5's clone-with says the same thing in one line.
+     *
+     * Null unless the shape is unmistakable: a sole-return `new` of the OWN type, at least
+     * {@see WITHER_CARRIED_FLOOR} arguments that are verbatim `$this->prop`, and at least one that
+     * isn't (with no carried argument, it is a copy, not a wither).
+     */
+    public function handRolledWither(): ?New_
+    {
+        $new = $this->isSoleReturnExpression() ? ($this->node->stmts[0]->expr ?? null) : null;
+
+        if (! $new instanceof New_ || ! $new->class instanceof Name || ! $this->namesOwnType($new->class)) {
+            return null;
+        }
+
+        $carried = 0;
+        $changed = 0;
+
+        foreach ($new->args as $arg) {
+            if (! $arg instanceof Arg || $arg->unpack) {
+                return null;
+            }
+
+            self::isOwnPropertyFetch($arg->value) ? $carried++ : $changed++;
+        }
+
+        return $carried >= self::WITHER_CARRIED_FLOOR && $changed >= 1 && $this->constructorIsPromotionOnly() ? $new : null;
+    }
+
+    /**
+     * Is THIS `new` the rebuild a hand-rolled wither performs — i.e. is it the construction
+     * {@see handRolledWither} identifies on its enclosing method? Read on a `whereNew()` node, so the
+     * sin reports (and `repent` replaces) the construction itself rather than the whole method.
+     */
+    public function isWitherRebuild(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        return $function !== null && new self($function)->handRolledWither() === $this->node;
+    }
+
+    /**
+     * The PROPERTY a positional argument at $index writes — the constructor parameter at that
+     * position, but only when it is promoted and non-variadic (so its name IS the property name).
+     * Null for anything else, because a key that had to be guessed is worse than no rewrite at all.
+     *
+     * Shared by every scribe that turns positional arguments into a keyed array ({@see
+     * \JesseGall\CodeCommandments\Scribes\Backend\NewDataObjectScribe}, {@see
+     * \JesseGall\CodeCommandments\Scribes\Backend\HandRolledWitherScribe}).
+     *
+     * @param  list<Param>  $params
+     */
+    public static function promotedParamName(array $params, int $index): ?string
+    {
+        $param = $params[$index] ?? null;
+
+        if ($param === null || $param->flags === 0 || $param->variadic || ! $param->var instanceof Variable || ! is_string($param->var->name)) {
+            return null;
+        }
+
+        return $param->var->name;
+    }
+
+    /**
+     * Is the enclosing class's constructor PURE PROMOTION — every parameter promoted, and no body?
+     *
+     * The gate that makes clone-with a faithful replacement rather than a behaviour change: `new self(…)`
+     * RUNS the constructor, `clone($this, […])` does not. A constructor that validates, normalises or
+     * derives a field would be silently skipped, so a wither on such a class is left alone.
+     */
+    public function constructorIsPromotionOnly(): bool
+    {
+        $constructor = $this->enclosingClass()?->getMethod('__construct');
+
+        if ($constructor === null || $constructor->params === []) {
+            return false;
+        }
+
+        return ($constructor->stmts ?? []) === []
+            && array_all($constructor->params, static fn (Param $param): bool => $param->flags !== 0 && ! $param->variadic);
+    }
+
+    /**
+     * How many fields must ride along untouched before re-threading them is the smell. Below this a
+     * two-or-three-field rebuild is just an ordinary constructor call, not a maintenance tax.
+     */
+    private const int WITHER_CARRIED_FLOOR = 3;
+
+    /** Is this expression a plain `$this->prop` read — a field carried across verbatim? */
+    private static function isOwnPropertyFetch(Node $expr): bool
+    {
+        return $expr instanceof PropertyFetch
+            && $expr->var instanceof Variable
+            && $expr->var->name === 'this'
+            && $expr->name instanceof Identifier;
+    }
+
+    /** Does this class name refer to the ENCLOSING type — `self`, `static`, or its own name? */
+    private function namesOwnType(Name $name): bool
+    {
+        $spelled = strtolower($name->toString());
+
+        if (in_array($spelled, ['self', 'static'], true)) {
+            return true;
+        }
+
+        $enclosing = $this->enclosingClassName();
+
+        return $enclosing !== null && strtolower(ltrim($name->toString(), '\\')) === strtolower($enclosing);
+    }
+
+    /**
      * Does this node sit inside a NAMED CONSTRUCTOR of the enclosing type — a factory whose body mints a
      * fresh instance of its own class ({@see isNamedConstructor})? The HYDRATION boundary: the one place a
      * raw payload legitimately becomes typed. Sibling of {@see NodeMatch::isWithinSerializationBoundary},

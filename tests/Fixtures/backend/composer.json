@@ -1,0 +1,6 @@
+{
+    "_comment": "The fixture is judged as its own project. It states PHP 8.5 so rules gated on a language feature (clone-with) are live here.",
+    "require": {
+        "php": "^8.5"
+    }
+}
