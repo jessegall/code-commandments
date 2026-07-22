@@ -40,4 +40,30 @@ final class ManufacturedFakeFillDetectorTest extends TestCase
         // (a real default), not the getter return (no argument fill).
         $this->assertSame([7, 8], $lines);
     }
+
+    public function test_does_not_flag_an_empty_array_fill(): void
+    {
+        // `?? []` is the collection's own identity ("no items" — e.g. the empty base of a
+        // recursive tree merge), a real domain answer, not a manufactured scalar fake (#398).
+        $code = <<<'PHP'
+        <?php
+        class TreeDiff
+        {
+            public static function apply(array $base, array $patch): array
+            {
+                return array_map(
+                    static fn (array $child): array => self::apply(self::childByKey($base, 'k') ?? [], $child),
+                    $patch,
+                );
+            }
+
+            private static function childByKey(array $node, string $key): ?array
+            {
+                return null;
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new ManufacturedFakeFillDetector)->find(Codebase::fromString($code)));
+    }
 }

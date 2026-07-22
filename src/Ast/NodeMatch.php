@@ -5,10 +5,18 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
+use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
+use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
 use PhpParser\NodeFinder;
 
 /**
@@ -58,6 +66,76 @@ class NodeMatch extends AstNode
                 $depth + 1,
             ),
         );
+    }
+
+    /**
+     * For a `match` whose `default` returns `null`: do the HANDLED arms themselves already
+     * admit null — an arm body calling a method DECLARED `?T`? Then null is part of the
+     * match's ANSWER VOCABULARY (the recognised cases can answer "no answer" too), and the
+     * default gives the unrecognised rest that same declared answer — it is NOT a swallowed
+     * unhandled case. Suppressed when the subject is an enum: a closed set has a finite
+     * case list, so its default hides a hole regardless of what the arms return.
+     */
+    public function matchHandledArmsAdmitNull(): bool
+    {
+        if (! $this->node instanceof Match_ || ! $this->matchDefaultIsNull() || $this->matchSubjectIsEnum()) {
+            return false;
+        }
+
+        foreach ($this->node->arms as $arm) {
+            if ($arm->conds !== null && $this->declaredReturnAdmitsNull($arm->body)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Does this match's `default` arm return the `null` literal specifically? */
+    private function matchDefaultIsNull(): bool
+    {
+        foreach ($this->node instanceof Match_ ? $this->node->arms : [] as $arm) {
+            if ($arm->conds === null) {
+                return new AstNode($arm->body)->isNull();
+            }
+        }
+
+        return false;
+    }
+
+    /** Does the match subject resolve to an enum type — a genuinely CLOSED value set? */
+    private function matchSubjectIsEnum(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if (! $this->node instanceof Match_ || $function === null) {
+            return false;
+        }
+
+        $subject = TypeResolver::forCodebase($this->codebase)->typeOf($this->node->cond, $function, $this->enclosingClassName());
+
+        return $this->codebase->isEnum($subject);
+    }
+
+    /** Is this expression a call to a method whose DECLARED return type is nullable? */
+    private function declaredReturnAdmitsNull(Node $expr): bool
+    {
+        if ($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) {
+            $receiver = ReceiverResolver::typeOf(new self($expr, $this->file, $this->codebase));
+
+            return $expr->name instanceof Identifier
+                && $this->codebase->methodReturnsNullable($receiver, $expr->name->toString());
+        }
+
+        if ($expr instanceof StaticCall && $expr->class instanceof Name && $expr->name instanceof Identifier) {
+            $class = in_array($expr->class->toString(), ['self', 'static', 'parent'], true)
+                ? $this->enclosingClassName()
+                : $expr->class->toString();
+
+            return $this->codebase->methodReturnsNullable($class, $expr->name->toString());
+        }
+
+        return false;
     }
 
     /**

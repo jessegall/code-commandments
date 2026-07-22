@@ -35,10 +35,13 @@ final class Container
     }
 
     /**
-     * Is the class never instantiated with `new` anywhere?
+     * Is the class never instantiated with `new` anywhere — itself OR a subclass? An abstract
+     * base is only ever `new`ed via its subclasses; if those are built by hand, the base's
+     * constructor is a hand-wired seam too, and the container never fills it (#392).
      */
     private static function neverInstantiatedByHand(Codebase $codebase, string $class): bool
     {
-        return $codebase->whereNew($class)->count() === 0;
+        return $codebase->whereNew($class)->count() === 0
+            && $codebase->whereNewExtending($class)->count() === 0;
     }
 }

@@ -50,7 +50,7 @@ _101 sins across 21 skills._
 | Sin | What it flags |
 |---|---|
 | `DuplicateFunction` | Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count). |
-| `ManufacturedFakeFill` | Detects filling an argument with a manufactured fake (empty string, zero, false) on absence; real defaults like `?? 'EUR'` are legitimate. / |
+| `ManufacturedFakeFill` | Detects filling an argument with a manufactured fake (empty string, zero, false) on absence; real defaults like `?? 'EUR'` are legitimate. |
 | `NearDuplicateFunction` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
 
 #### `backend/guard-clauses-and-flow`

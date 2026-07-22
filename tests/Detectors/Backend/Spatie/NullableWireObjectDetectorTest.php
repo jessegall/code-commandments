@@ -86,6 +86,38 @@ final class NullableWireObjectDetectorTest extends TestCase
         PHP));
     }
 
+    public function test_does_not_flag_a_computed_get_hook_property(): void
+    {
+        // A hooked property is COMPUTED, not a hydration slot — `Optional` (absent key)
+        // can't apply, and spatie force-evaluates an Optional-typed hook during ::from().
+        // `T | null` is the honest shape there (#394, #395).
+        $this->assertSame(0, $this->hits(<<<'PHP'
+        #[TypeScript]
+        final class Element extends Data {
+            public Chrome|null $chrome { get => $this->resolveChrome(); }
+
+            public function __construct(public readonly string $id) {}
+
+            private function resolveChrome(): Chrome|null { return null; }
+        }
+        PHP));
+    }
+
+    public function test_still_flags_a_stored_slot_next_to_a_hooked_one(): void
+    {
+        $this->assertSame(1, $this->hits(<<<'PHP'
+        #[TypeScript]
+        final class Element extends Data {
+            public Chrome|null $computed { get => null; }
+
+            public function __construct(
+                public readonly string $id,
+                public readonly Chrome|null $stored = null,
+            ) {}
+        }
+        PHP));
+    }
+
     private function hits(string $body): int
     {
         return count((new NullableWireObjectDetector)->find(Codebase::fromString(self::PRELUDE . $body, '/proj/app/File.php')));

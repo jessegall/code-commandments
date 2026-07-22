@@ -1019,6 +1019,14 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
+        // A HOOKED (computed) property is not a hydration slot — `Optional` means "key absent
+        // from the payload", but a get-hook derives its value and hydration never writes it
+        // (spatie even force-evaluates an Optional-typed hook via isset() during ::from(),
+        // before non-promoted state exists). `T | null` is the honest shape there (#394, #395).
+        if ($this->isHookedProperty()) {
+            return false;
+        }
+
         $type = $this->node instanceof Param ? $this->node->type : ($this->node instanceof Property ? $this->node->type : null);
         $inner = self::nullableClassName($type);
 

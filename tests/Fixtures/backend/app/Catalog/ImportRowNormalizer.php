@@ -46,6 +46,26 @@ final class ImportRowNormalizer
     }
 
     /**
+     * `?? []` filling an argument is the collection's own identity ("no items" — here the
+     * empty base of a recursive merge), a real domain answer rather than a manufactured
+     * scalar fake (#398). Must NOT be flagged.
+     */
+    #[Righteous(ManufacturedFakeFill::class)]
+    public function merge(array $base, array $patch): array
+    {
+        return array_replace($this->childOf($base) ?? [], $patch);
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return array<string, mixed>|null
+     */
+    private function childOf(array $node): ?array
+    {
+        return $node === [] ? null : $node;
+    }
+
+    /**
      * PHP's serialization protocol hands `__unserialize` the raw property bag — the
      * array parameter is dictated by the LANGUAGE, so string-indexing it here (and in
      * the private helper fed only that bag) is the canonical parse point, not a sin (#340).

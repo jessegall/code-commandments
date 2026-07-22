@@ -541,6 +541,20 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Does `$fqcn::$method` DECLARE a nullable return type (`?T` / `T|null`)? Resolved to the
+     * class (or trait) that actually declares the method, so an inherited method reads its
+     * base's signature. False when the class or method isn't known to this codebase.
+     */
+    public function methodReturnsNullable(?string $fqcn, string $method): bool
+    {
+        $owner = Support\TypeResolver::forCodebase($this)->declaringClassOfMethod($fqcn, $method);
+        $declaration = $this->classNamed($owner)->node;
+
+        return $declaration instanceof ClassLike
+            && TypeName::isNullable($declaration->getMethod($method)?->returnType);
+    }
+
+    /**
      * The declaration of ANY class-like $fqcn — class, ENUM, interface or trait — as a {@see NodeMatch} that
      * knows its file, or null when it lives outside the scanned tree. Unlike {@see classNamed} (classes only,
      * for container-type resolution), this resolves an enum too and carries the file, so a caller can read or

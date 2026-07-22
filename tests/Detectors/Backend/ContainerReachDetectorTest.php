@@ -76,4 +76,34 @@ final class ContainerReachDetectorTest extends TestCase
 
         $this->assertSame(['App\\PaletteItems::reach'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_does_not_flag_an_abstract_base_whose_subclasses_are_hand_instantiated(): void
+    {
+        // The abstract base itself is never `new`ed — only its subclasses are, by hand, so
+        // the container never fills its constructor; per-call resolution is its only seam (#392).
+        $code = <<<'PHP'
+        <?php
+        namespace App;
+
+        abstract class PipelineContext
+        {
+            public function client(): object
+            {
+                return app(Registry::class);
+            }
+        }
+
+        final class PublishContext extends PipelineContext {}
+
+        final class Publisher
+        {
+            public function publish(): object
+            {
+                return (new PublishContext)->client();
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new ContainerReachDetector)->find(Codebase::fromString($code)));
+    }
 }

@@ -655,13 +655,22 @@ final class WireNode extends Data
 
 // Good
 #[TypeScript]
-final class WireBanner extends Data
+final class WireStage extends Data
 {
+    #[Computed]
+    public StagePhase|null $phase {
+        get => $this->resolvePhase();
+    }
+
     public function __construct(
         public readonly string $id,
-        public readonly BannerIcon|Optional $icon = new Optional(),
-        public readonly string|null $caption = null,
+        public readonly bool $ready = false,
     ) {}
+
+    private function resolvePhase(): StagePhase|null
+    {
+        return $this->ready ? null : StagePhase::Setup;
+    }
 }
 ```
 

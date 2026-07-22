@@ -172,6 +172,28 @@ class AstNode
     }
 
     /**
+     * Is this the empty-array literal `[]`? Distinct from {@see isEmptyLiteral}: an empty
+     * COLLECTION is the type's own identity ("no items") — a real domain answer — whereas
+     * `''`/`0`/`false` impersonate a present scalar. Callers that hunt manufactured fakes
+     * exclude it; callers that hunt absence values include it.
+     */
+    public function isEmptyArrayLiteral(): bool
+    {
+        return $this->node instanceof Array_ && $this->node->items === [];
+    }
+
+    /**
+     * Is this a HOOKED property declaration (`public T $x { get => …; }`) — or a promoted
+     * param with hooks? A hooked property is COMPUTED, not a stored slot: hydration never
+     * writes it, so slot-shaped advice (e.g. "type it `T | Optional`") does not apply to it.
+     */
+    public function isHookedProperty(): bool
+    {
+        return ($this->node instanceof Property && $this->node->hooks !== [])
+            || ($this->node instanceof Param && $this->node->hooks !== []);
+    }
+
+    /**
      * Is this expression itself a NULL comparison — `$x === null` / `null !== $x` (strict identity against
      * the `null` literal) or `is_null($x)`? The tell that a condition GUARDS on absence, as opposed to an
      * arbitrary boolean test (`$x->relationLoaded('y')`, `$flag`). A `??`/`?->` is a null-guard too, but
