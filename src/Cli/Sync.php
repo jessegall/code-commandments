@@ -34,6 +34,7 @@ final class Sync implements Command
 
         $published = $this->publishSkills("{$packageRoot}/skills/commandments", $consumer)
             + $this->publishStandaloneSkills("{$packageRoot}/skills", $consumer);
+        $this->publishCommands("{$packageRoot}/commands", $consumer);
         $this->injectClaudeSection($consumer);
         $this->ensureGitignored("{$consumer}/.gitignore");
         $this->ensureConfigStub($consumer);
@@ -158,6 +159,9 @@ final class Sync implements Command
             // Every published skill lives OUTSIDE `.commandments/` (flat under `.claude/skills/
             // commandments-*/`), so this glob is the one root entry the package still manages.
             '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*/',
+            // The slash commands are published the same way and for the same reason: generated, never
+            // hand-edited — a consumer's own commands in that folder stay tracked.
+            '# code-commandments published slash commands (regenerated on composer update)' => '.claude/commands/until.md',
         ];
 
         foreach ($entries as $comment => $entry) {
@@ -198,10 +202,26 @@ final class Sync implements Command
 
     /**
      * The standalone, hand-written skills — NOT the {@see Skills\Catalog} teaching skills projected
-     * from sins, but process skills that ship as-is (currently `executing-plans`). Each is published
+     * from sins, but process skills that ship as-is (`executing-plans`, `until`). Each is published
      * flat under `.claude/skills/commandments-<slug>/`, the same convention the teaching skills use.
      */
-    private const array STANDALONE = ['executing-plans'];
+    private const array STANDALONE = ['executing-plans', 'until'];
+
+    /**
+     * Publish the package's slash commands into `.claude/commands/` — the HUMAN's handle on the
+     * agent-facing verbs (currently `/until "<condition>"`). A skill teaches the agent; a command
+     * lets the user fire it in one line. Regenerated on every sync like the skills, so a consumer
+     * picks up new commands on `composer update`.
+     */
+    private function publishCommands(string $source, string $consumer): void
+    {
+        foreach (glob("{$source}/*.md") ?: [] as $command) {
+            $to = "{$consumer}/.claude/commands/" . basename($command);
+
+            @mkdir(dirname($to), 0777, true);
+            copy($command, $to);
+        }
+    }
 
     private function publishStandaloneSkills(string $source, string $consumer): int
     {

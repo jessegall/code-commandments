@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Plan;
 
 
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
+use JesseGall\CodeCommandments\Cli\MarkerFile;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -19,13 +20,11 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class PlanMarker
 {
-    private const string SEPARATOR = '-----';
-
-    public function __construct(private readonly string $path) {}
+    public function __construct(private readonly MarkerFile $file) {}
 
     public static function inSession(Workspace $workspace): self
     {
-        return new self($workspace->path('.plan-active'));
+        return new self(new MarkerFile($workspace->path('.plan-active')));
     }
 
     /**
@@ -38,7 +37,7 @@ final class PlanMarker
 
     public function isActive(): bool
     {
-        return is_file($this->path);
+        return $this->file->exists();
     }
 
     /**
@@ -50,8 +49,7 @@ final class PlanMarker
      */
     public function markStuck(string $head): void
     {
-        @mkdir(dirname($this->stuckPath()), 0777, true);
-        @file_put_contents($this->stuckPath(), $head . "\n" . self::STUCK_EXPLANATION . "\n");
+        $this->stuck()->write([$head], self::STUCK_EXPLANATION);
     }
 
     /**
@@ -60,21 +58,17 @@ final class PlanMarker
      */
     public function stuckAt(): ?string
     {
-        if (! is_file($this->stuckPath())) {
-            return null;
-        }
-
-        return trim(explode("\n", (string) file_get_contents($this->stuckPath()))[0]);
+        return $this->stuck()->exists() ? trim($this->stuck()->value(0)) : null;
     }
 
     public function clearStuck(): void
     {
-        @unlink($this->stuckPath());
+        $this->stuck()->delete();
     }
 
-    private function stuckPath(): string
+    private function stuck(): MarkerFile
     {
-        return dirname($this->path) . '/.plan-stuck';
+        return new MarkerFile(dirname($this->file->path()) . '/.plan-stuck');
     }
 
     /**
@@ -90,17 +84,17 @@ final class PlanMarker
 
     public function clear(): void
     {
-        @unlink($this->path);
+        $this->file->delete();
         $this->clearStuck(); // the plan is over — a lingering stuck signal would outlive it.
     }
 
     /**
      * The persisted {@see PlanState}, or an empty one when there is no marker (or it's truncated
-     * below its four value lines) — absence is modelled as the empty state, never patched per-field.
+     * below its three value lines) — absence is modelled as the empty state, never patched per-field.
      */
     private function state(): PlanState
     {
-        $lines = $this->valueLines();
+        $lines = $this->file->values();
 
         if (count($lines) < 3) {
             return new PlanState('', 0, 0);
@@ -109,40 +103,9 @@ final class PlanMarker
         return new PlanState($lines[0], (int) $lines[1], (int) $lines[2]);
     }
 
-    /**
-     * The value lines above the {@see SEPARATOR}, or [] when no marker file exists.
-     *
-     * @return list<string>
-     */
-    private function valueLines(): array
-    {
-        if (! is_file($this->path)) {
-            return [];
-        }
-
-        $lines = [];
-
-        foreach (preg_split('/\R/', (string) file_get_contents($this->path)) ?: [] as $line) {
-            if ($line === self::SEPARATOR) {
-                break;
-            }
-
-            $lines[] = $line;
-        }
-
-        return $lines;
-    }
-
     private function save(PlanState $state): void
     {
-        @mkdir(dirname($this->path), 0777, true);
-        @file_put_contents($this->path, implode("\n", [
-            $state->head,
-            (string) $state->stuck,
-            (string) $state->total,
-            self::SEPARATOR,
-            self::EXPLANATION,
-        ]) . "\n");
+        $this->file->write([$state->head, (string) $state->stuck, (string) $state->total], self::EXPLANATION);
     }
 
     private const string EXPLANATION = <<<'TXT'

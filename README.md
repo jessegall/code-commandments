@@ -91,6 +91,10 @@ vendor/bin/commandments checks start          # run the project's start / phase 
 vendor/bin/commandments checks phase
 vendor/bin/commandments checks complete       # full gate: your checks, then `judge --branch`
 vendor/bin/commandments plan status           # is a plan active? (`plan done` ends it)
+
+# hold every stop until a condition you set holds (no plan needed — see Hooks below)
+vendor/bin/commandments until "the full test suite passes"
+vendor/bin/commandments until met 1           # verified it — strike it off (`until list` shows them)
 ```
 
 Exit code is non-zero when sins are found.
@@ -192,6 +196,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless). |
 | `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
+| `UntilReminder` | `Stop` | Holds every stop while a `commandments until "<condition>"` gate stands, sending you back to verify it. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `CompactionReminder` | `SessionStart` | After a context compaction (which silently drops loaded skills), reminds you to reload any skill governing your current task. |
@@ -275,6 +280,32 @@ The completion gate verifying the declared constraints against the branch diff b
 <p align="center">
   <img src="docs/constraint-gate.svg" width="660" alt="The completion gate: composer test and judge --branch pass, then the agent reviews the branch diff against three declared constraints, confirms each, and plan done is allowed." />
 </p>
+
+### Stop conditions — `until`
+
+No plan required, no configuration: **you** decide, mid-session, that the agent may not
+stop yet. Say it in chat (`/until the full test suite passes`) or have the agent record
+it — either way it lands in the same gate:
+
+```bash
+vendor/bin/commandments until "the full test suite passes"   # set a condition
+vendor/bin/commandments until list                           # what's still standing
+vendor/bin/commandments until met 1                          # verified — strike it off
+vendor/bin/commandments until stuck                          # blocked: release ONE stop, keep the condition
+vendor/bin/commandments until clear                          # drop the gate
+```
+
+While any condition stands, a `Stop` hook holds every stop the agent attempts and sends it
+back in with the condition text, telling it to **verify** the condition for real rather than
+assume it. The gate lifts when the last condition is struck off. Conditions stack — one call
+each — and the whole gate is scoped to that session and worktree, so it never holds another
+session's stop.
+
+The `/until` slash command and the `commandments-until` skill are published into the project
+on `composer update`, so the agent knows the discipline: never `clear` a condition it simply
+hasn't met, and `until stuck` (not `clear`) when it genuinely needs you. Loop-safe — after 10
+held stops with no progress the gate releases itself and the agent reports back, and meeting a
+condition resets that count.
 
 ### Register your own hook
 

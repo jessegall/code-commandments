@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
 use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
 use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
+use JesseGall\CodeCommandments\Cli\Until\UntilCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
 use JesseGall\CodeCommandments\Cli\Config\Configure;
@@ -94,6 +95,7 @@ final class Kernel
             new PlanCommand(),
             new ConstraintsCommand(),
             new TestingCommand(),
+            new UntilCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),
@@ -111,6 +113,7 @@ final class Kernel
           commandments checks [start|phase|complete] [--list]  # run the planExecution checks for a plan moment (complete appends judge --branch)
           commandments plan [done|status]  # end the active plan (clears the keep-going nudge) / show it
           commandments constraints [list|add "<rule>"|check|verified]  # the plan's architectural invariants; `plan done` blocks until verified
+          commandments until "<condition>" | list | met <n> | stuck | clear  # hold every stop until the user's condition holds (no plan needed)
           commandments hints [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]]  # fix Spatie Data @method/factory hints (scoped = docblock-only)
           commandments repent [path] [--changes|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]  # auto-fix sins: maintenance Scribes (Data hints, arrow-fn returns) + extract-component / SwitchCase
           commandments scaffold [--sin=NAME] [--dry-run]  # generate the reusable helper a sin's fix uses (namespace injected)
