@@ -101,7 +101,17 @@ final class ClaudeSection
         because you did the work. Strike one off with `vendor/bin/commandments until met <n>` once
         it genuinely holds; if you are truly blocked, `vendor/bin/commandments until stuck` hands
         back to the user while keeping the condition in force. Never `until clear` to escape a
-        condition you simply haven't met. Load the `commandments-until` skill for the discipline.
+        condition you simply haven't met.
+
+        **The same gate is where mid-work interjections go.** When the user speaks while you are
+        already working, decide what their message IS: **steering** the work in hand (a correction,
+        a change of approach, "while you're in there…") is done **now** — parking it is a way of not
+        doing it. A **separate task**, one they deferred ("later", "when you're done"), or anything
+        that would derail the phase you're on is **parked**: `vendor/bin/commandments until "<the
+        task, as a statement you can verify>"`, then carry on with what you were doing. Unsure?
+        Cheap and inside the current phase → do it; opens a new front → park it. A plan takes
+        precedence over the gate, so parked work surfaces at `plan done` — exactly "later".
+        Load the `commandments-until` skill for the discipline.
 
         When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
         behind every other skill.

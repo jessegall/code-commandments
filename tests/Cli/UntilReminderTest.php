@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder;
 use JesseGall\CodeCommandments\Workspace;
@@ -34,6 +35,17 @@ final class UntilReminderTest extends TestCase
     private function stop(): array
     {
         $io = new CapturingHookIO(new FakeGit($this->root), ['hook_event_name' => 'Stop']);
+        new UntilReminder($io)->run([]);
+
+        return $io->emitted;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function prompt(): array
+    {
+        $io = new CapturingHookIO(new FakeGit($this->root), ['hook_event_name' => 'UserPromptSubmit']);
         new UntilReminder($io)->run([]);
 
         return $io->emitted;
@@ -109,6 +121,42 @@ final class UntilReminderTest extends TestCase
 
         $this->assertSame(0, $this->gate()->blocks());
         $this->assertStringContainsString('Do not stop', $this->reason($this->stop()));
+    }
+
+    public function test_an_active_plan_takes_precedence_and_the_gate_waits_for_it(): void
+    {
+        $this->gate()->add('the changelog has an entry');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+
+        $this->assertSame([], $this->stop(), 'the plan owns the stop — one hook pushes the agent back in');
+        $this->assertSame(0, $this->gate()->blocks(), 'and a long grind never burns the release cap');
+
+        PlanMarker::inSession(Workspace::at($this->root))->clear(); // `plan done`
+
+        $this->assertStringContainsString('the changelog has an entry', $this->reason($this->stop()));
+    }
+
+    public function test_a_prompt_mid_work_puts_the_park_or_do_it_now_triage_in_front_of_the_agent(): void
+    {
+        $this->gate()->add('the changelog has an entry');
+
+        $context = (string) ($this->prompt()[0]['hookSpecificOutput']['additionalContext'] ?? '');
+
+        $this->assertStringContainsString('STEERING', $context, 'work in hand is done now');
+        $this->assertStringContainsString('PARK', $context, 'a separate/deferred task is parked');
+        $this->assertStringContainsString('until "', $context, 'with the command to park it');
+    }
+
+    public function test_the_triage_also_fires_during_a_plan_with_no_gate_yet(): void
+    {
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+
+        $this->assertNotSame([], $this->prompt(), 'a plan is work in flight, gate or no gate');
+    }
+
+    public function test_the_triage_is_silent_in_an_ordinary_conversation(): void
+    {
+        $this->assertSame([], $this->prompt(), 'nothing in flight — a normal message is not taxed');
     }
 
     public function test_a_stop_parked_on_background_work_is_not_held(): void

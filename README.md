@@ -196,7 +196,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless). |
 | `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
-| `UntilReminder` | `Stop` | Holds every stop while a `commandments until "<condition>"` gate stands, sending you back to verify it. |
+| `UntilReminder` | `Stop, UserPromptSubmit` | Holds every stop while a `commandments until "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `CompactionReminder` | `SessionStart` | After a context compaction (which silently drops loaded skills), reminds you to reload any skill governing your current task. |
@@ -306,6 +306,18 @@ on `composer update`, so the agent knows the discipline: never `clear` a conditi
 hasn't met, and `until stuck` (not `clear`) when it genuinely needs you. Loop-safe — after 10
 held stops with no progress the gate releases itself and the agent reports back, and meeting a
 condition resets that count.
+
+**Interjections get parked here too.** When you speak while the agent is mid-work, a
+`UserPromptSubmit` hook puts a triage in front of it: *steering* the work in hand (a
+correction, "while you're in there…") is done now, but a **separate task** — or one you
+deferred ("later", "when you're done") — is parked as a condition and picked up at the end
+instead of derailing the phase or being lost. It fires only while work is actually in flight,
+so an ordinary conversation isn't taxed with it.
+
+**A plan takes precedence.** While a plan is active the gate stays silent — the plan's own
+keep-going hook owns the stop, and parked conditions don't burn their release cap during a long
+grind. They take over the moment `commandments plan done` clears the plan, which lists what is
+now holding you so the handover is never a surprise.
 
 ### Register your own hook
 

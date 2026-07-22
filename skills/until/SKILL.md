@@ -35,6 +35,32 @@ One condition per call — stacking them keeps each one independently verifiable
 Do **not** set a gate on your own initiative. It is the user's instrument; setting one for yourself
 just to stay busy is out of bounds.
 
+## Parking what the user says mid-work
+
+The other half of the gate: when you are already working and the user speaks, their message is
+either **steering** or a **separate task**. Decide which before you act — a `UserPromptSubmit` hook
+puts this triage in front of you while work is in flight.
+
+- **Steering the work in hand** — a correction, a change of approach, "while you're in there, rename
+  that too", anything about the phase you are on. → **Do it now.** Parking it is a way of not doing
+  it, and leaves the work wrong in the meantime.
+- **A separate task**, one they explicitly deferred ("later", "when you're done", "after this"), or
+  anything that would derail the phase you're in. → **Park it**:
+  `vendor/bin/commandments until "<the task, as a statement you can verify>"`, then carry straight
+  on with what you were doing. It will hold your stop at the end, so it cannot be lost.
+- **Unsure?** Cheap and inside the current phase → do it. Opens a new front → park it. The
+  tie-breaker: would doing it now change what this phase is about?
+
+Park it as something **checkable** — "the changelog has an entry for this release", not "look at the
+changelog" — because you must verify it before you may stop.
+
+## A plan takes precedence
+
+While a plan is active the gate is silent: the plan's own keep-going hook owns the stop, and parked
+conditions don't burn their release cap during a long grind. They take over the moment
+`commandments plan done` clears the plan — which is exactly "at the end". `plan done` lists what is
+now holding you, so the handover is never a surprise.
+
 ## Working under a gate
 
 When you try to stop, the hook sends you back with the standing conditions. Then:

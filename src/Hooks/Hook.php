@@ -62,6 +62,7 @@ abstract class Hook
 
         return match ($event->name()) {
             'PostToolUse' => $this->onPostToolUse($event),
+            'UserPromptSubmit' => $this->onUserPromptSubmit($event),
             'PreToolUse' => $this->onPreToolUse($event),
             'SessionStart' => $this->onSessionStart($event),
             'PreCompact' => $this->pass(),
@@ -76,6 +77,14 @@ abstract class Hook
     }
 
     protected function onSessionStart(HookEvent $event): int
+    {
+        return $this->pass();
+    }
+
+    /**
+     * The user has just spoken — the ONE moment a hook can react to what the human said mid-run.
+     */
+    protected function onUserPromptSubmit(HookEvent $event): int
     {
         return $this->pass();
     }

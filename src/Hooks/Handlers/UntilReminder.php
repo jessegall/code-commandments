@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
@@ -26,12 +27,27 @@ final class UntilReminder extends Hook
 
     public function summary(): string
     {
-        return 'Holds every stop while a `commandments until "<condition>"` gate stands, sending you back to verify it.';
+        return 'Holds every stop while a `commandments until "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it.';
     }
 
     public function bindings(): array
     {
-        return [new HookBinding('Stop')];
+        return [new HookBinding('Stop'), new HookBinding('UserPromptSubmit')];
+    }
+
+    /**
+     * The user spoke while work is in flight. A hook cannot read intent, so it puts the TRIAGE in front
+     * of the agent: steering the work in hand is done NOW, a separate or explicitly-later task is parked
+     * as a condition so it resurfaces at the end instead of being lost. Silent when nothing is in flight
+     * — an ordinary conversation is not taxed with it.
+     */
+    protected function onUserPromptSubmit(HookEvent $event): int
+    {
+        if (! $this->inFlight($event)) {
+            return $this->pass();
+        }
+
+        return $this->inject($event, $this->triage());
     }
 
     protected function onStop(HookEvent $event): int
@@ -41,6 +57,12 @@ final class UntilReminder extends Hook
 
         if ($conditions === []) {
             return $this->pass(); // No gate — the stop stands.
+        }
+
+        if (PlanMarker::inSession($event->workspace())->isActive()) {
+            return $this->pass(); // A plan owns the stop: ONE hook pushes the agent back in, and the
+            // parked conditions must not burn their release cap during a long grind. They take over the
+            // moment `plan done` clears the plan — which is exactly "at the end".
         }
 
         if ($gate->isStuck()) {
@@ -59,6 +81,31 @@ final class UntilReminder extends Hook
         }
 
         return $this->block($this->hold($conditions));
+    }
+
+    /**
+     * Is work in flight — a plan being ground out, or a gate already standing? Only then is a message
+     * from the user an INTERJECTION that might belong in the gate rather than the turn at hand.
+     */
+    private function inFlight(HookEvent $event): bool
+    {
+        return PlanMarker::inSession($event->workspace())->isActive()
+            || UntilGate::inSession($event->workspace())->isOpen();
+    }
+
+    private function triage(): string
+    {
+        return "Code Commandments — you are mid-work and the user just spoke. Decide which this is before "
+            . "you act:\n"
+            . "  • STEERING the work in hand (a correction, a change of approach, \"while you're in there…\") "
+            . "— do it NOW. Do not park it; parking it is a way of not doing it.\n"
+            . "  • A SEPARATE task, or one they deferred (\"later\", \"when you're done\", \"after this\"), or "
+            . "anything that would derail the phase you're in — PARK it: run `vendor/bin/commandments until "
+            . "\"<the task, as a statement you can verify>\"` and carry on with what you were doing. It will "
+            . "hold your stop at the end, so it cannot be lost.\n"
+            . "  • Unsure? Cheap and inside the current phase → do it. Opens a new front → park it.\n"
+            . "Park a task ONLY as something checkable (\"the changelog has an entry\", not \"look at the "
+            . "changelog\") — you will have to verify it before you may stop.";
     }
 
     /**

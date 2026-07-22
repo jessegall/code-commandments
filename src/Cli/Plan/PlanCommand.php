@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -113,8 +114,31 @@ final class PlanCommand implements Command
         Checklist::inSession(Workspace::at($root))->clearAll(); // the plan is over — drop its worklist so no stale
         // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");
+        $this->handOverToTheGate(UntilGate::inSession(Workspace::at($root))->all());
 
         return 0;
+    }
+
+    /**
+     * The handover: a plan holds the stop while it runs, so anything parked with `until` waited for
+     * this moment. Name those conditions here — they take over the next stop, and the agent should not
+     * meet them for the first time as a block it forgot about.
+     *
+     * @param  list<string>  $conditions
+     */
+    private function handOverToTheGate(array $conditions): void
+    {
+        if ($conditions === []) {
+            return;
+        }
+
+        fwrite(STDOUT, '● ' . count($conditions) . " stop condition(s) now hold you — the work parked during the plan:\n");
+
+        foreach ($conditions as $index => $condition) {
+            fwrite(STDOUT, '  ' . ($index + 1) . ". {$condition}\n");
+        }
+
+        fwrite(STDOUT, "  Do them now, then `commandments until met <n>` for each once you have VERIFIED it.\n");
     }
 
     private function status(PlanMarker $marker, string $root): int
@@ -122,8 +146,11 @@ final class PlanCommand implements Command
         $plan = Config::load($root)->planExecutionSettings();
         $mode = $plan->mode()?->name ?? 'unmanaged';
 
-        $stuck = $marker->isActive() && $marker->stuckAt() !== null;
-        fwrite(STDOUT, $marker->isActive() ? ($stuck ? "◼ Plan active (STUCK).\n" : "● Plan active.\n") : "○ No plan active.\n");
+        fwrite(STDOUT, match (true) {
+            ! $marker->isActive() => "○ No plan active.\n",
+            $marker->stuckAt() !== null => "◼ Plan active (STUCK).\n",
+            default => "● Plan active.\n",
+        });
         fwrite(STDOUT, "  branch prefix: `{$plan->prefix()}`  base: `{$plan->baseBranch()}`  mode: {$mode}\n");
 
         $constraints = PlanConstraints::inSession(Workspace::at($root), $plan);

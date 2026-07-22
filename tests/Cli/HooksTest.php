@@ -61,7 +61,8 @@ final class HooksTest extends TestCase
 
         HookRegistry::wire($this->path);
 
-        $this->assertSame(0, $this->dispatchers('UserPromptSubmit'), 'the stale pre-stamp remind is gone');
+        $this->assertNotContains('php vendor/bin/commandments remind', $this->commands('UserPromptSubmit'), 'the stale pre-stamp remind is gone');
+        $this->assertSame(1, $this->dispatchers('UserPromptSubmit'), 'and the event now carries exactly one stamped dispatcher');
         $this->assertContains('my-own-hook', $this->commands('UserPromptSubmit'), "the human's own hook is untouched");
         $this->assertSame(1, $this->dispatchers('Stop'), 'the old per-class stamped entry is replaced by one dispatcher');
         $this->assertContains('keep-me-too', $this->commands('Stop'), 'a foreign hook under Stop is preserved');

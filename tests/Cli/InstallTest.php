@@ -69,7 +69,10 @@ final class InstallTest extends TestCase
 
         $settings = $this->readSettings();
 
-        $this->assertArrayNotHasKey('UserPromptSubmit', $settings['hooks'], 'the old remind event is gone (it held only our hook)');
+        $commands = array_column(array_merge(...array_column($settings['hooks']['UserPromptSubmit'] ?? [], 'hooks')), 'command');
+
+        $this->assertNotContains('php vendor/bin/commandments remind', $commands, 'the old per-command remind is gone');
+        $this->assertTrue($this->hasDispatcher($settings['hooks']['UserPromptSubmit'] ?? []), 'the event now carries the dispatcher instead');
         $this->assertTrue($this->hasDispatcher($settings['hooks']['PostToolUse'] ?? []), 'the dispatcher is wired under PostToolUse');
     }
 
