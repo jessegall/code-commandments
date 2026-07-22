@@ -72,8 +72,9 @@ the record captures **ONLY what `git log` + the plan can't reconstruct**:
 - **gotchas** you hit the hard way, and the **exact next physical step**.
 
 Refresh it **after each phase** and **after each important event** (a decision, a plan change we discuss).
-Don't restate the plan — that's noise. A `PreCompact` hook nudges a final flush right before compaction,
-and the record is **auto re-injected on compact/resume**, so a compacted you resumes with the full picture.
+Don't restate the plan — that's noise. Compaction gives no warning you can act on, so the record must be
+current *before* it strikes — a heartbeat nudges a refresh as you work, and the record is **auto
+re-injected on compact/resume**, so a compacted you resumes with the full picture.
 It's cleared on `plan done` and on a genuinely-new session, and survives `compact`/`resume` (that's the point).
 
 ## Configuration

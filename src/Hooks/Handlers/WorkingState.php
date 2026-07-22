@@ -15,11 +15,10 @@ use JesseGall\CodeCommandments\Cli\Plan\PlanWorkingState;
 /**
  * The working-state discipline — the opt-in ({@see \JesseGall\CodeCommandments\PlanExecution::trackWorkingState})
  * mechanism that keeps the agent's living record ({@see PlanWorkingState}) current through a plan and,
- * above all, alive across context compaction. Three moments, all plan-scoped and toggle-gated:
- * a `PostToolUse` heartbeat nudges a refresh once every {@see INTERVAL} tool uses (a backstop to the
- * skill's after-each-phase/after-each-event discipline); a `PreCompact` flush is the final frontier
- * right before compaction; and a `SessionStart` on `compact`/`resume` re-injects the record so the
- * agent resumes with the full picture. Silent otherwise.
+ * above all, alive across context compaction. Two moments, both plan-scoped and toggle-gated: a
+ * `PostToolUse` heartbeat nudges a refresh once every {@see INTERVAL} tool uses, keeping the record
+ * current ahead of a compaction that arrives unannounced; a `SessionStart` on `compact`/`resume`
+ * re-injects it so the agent resumes with the full picture. Silent otherwise.
  */
 final class WorkingState extends Hook
 {
@@ -30,14 +29,13 @@ final class WorkingState extends Hook
 
     public function summary(): string
     {
-        return "Keeps the plan's working-state record alive across compaction — a refresh heartbeat, a PreCompact flush, and re-injection on compact/resume.";
+        return "Keeps the plan's working-state record alive across compaction — a refresh heartbeat and re-injection on compact/resume.";
     }
 
     public function bindings(): array
     {
         return [
             new HookBinding('PostToolUse'),
-            new HookBinding('PreCompact'),
             new HookBinding('SessionStart'),
         ];
     }
@@ -59,15 +57,6 @@ final class WorkingState extends Hook
         ]);
 
         return 0;
-    }
-
-    protected function onPreCompact(HookEvent $event): int
-    {
-        if (! $this->active($event)) {
-            return $this->pass();
-        }
-
-        return $this->inject($event, $this->flushNudge($this->record($event)->path()));
     }
 
     protected function onSessionStart(HookEvent $event): int
@@ -116,13 +105,6 @@ final class WorkingState extends Hook
     {
         return "Code Commandments — refresh your WORKING STATE now (`{$path}`). "
             . $this->shape() . ' It is your lifeline if context compacts.';
-    }
-
-    private function flushNudge(string $path): string
-    {
-        return 'Code Commandments — context is about to COMPACT. Immediately flush anything not yet on disk into '
-            . "`{$path}`. " . $this->shape() . ' It is re-injected after compaction, '
-            . 'so this is how future-you survives the loss.';
     }
 
     private function recall(string $record): string

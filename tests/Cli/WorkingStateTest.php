@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The working-state discipline: while a plan is active AND the project opted into `trackWorkingState()`,
- * a PostToolUse heartbeat nudges a refresh every 25 tool uses, a PreCompact flush fires before compaction,
- * and a SessionStart on `compact`/`resume` re-injects the record. All silent otherwise. Driven through a
+ * a PostToolUse heartbeat nudges a refresh every 25 tool uses and a SessionStart on `compact`/`resume`
+ * re-injects the record. All silent otherwise (PreCompact included — it has no context channel). Driven through a
  * {@see CapturingHookIO} + {@see FakeGit}, so no harness, STDIN, or real repository is involved.
  */
 final class WorkingStateTest extends TestCase
@@ -98,25 +98,18 @@ final class WorkingStateTest extends TestCase
         }
     }
 
-    // --- PreCompact flush ------------------------------------------------------------------------
+    // --- PreCompact has no context channel -------------------------------------------------------
 
-    public function test_precompact_injects_a_flush_nudge_during_a_tracked_plan(): void
+    /**
+     * `PreCompact` accepts only `decision`/`reason`/`continue`/`systemMessage` — an `additionalContext`
+     * payload is REJECTED by the harness, and its stdout never reaches the model. So the hook stays
+     * fully silent there, even mid-plan with tracking on.
+     */
+    public function test_precompact_emits_nothing_even_during_a_tracked_plan(): void
     {
         $this->enable();
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
-        $context = $this->context($this->fire(['hook_event_name' => 'PreCompact']));
-        $this->assertStringContainsString('COMPACT', $context);
-        $this->assertStringContainsString('.plan-working-state', $context);
-    }
-
-    public function test_precompact_is_silent_off_plan_or_off_toggle(): void
-    {
-        PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // no toggle
-        $this->assertSame([], $this->fire(['hook_event_name' => 'PreCompact']));
-
-        $this->enable(); // toggle, but clear the plan
-        PlanMarker::inSession(Workspace::at($this->root))->clear();
         $this->assertSame([], $this->fire(['hook_event_name' => 'PreCompact']));
     }
 

@@ -64,7 +64,7 @@ abstract class Hook
             'PostToolUse' => $this->onPostToolUse($event),
             'PreToolUse' => $this->onPreToolUse($event),
             'SessionStart' => $this->onSessionStart($event),
-            'PreCompact' => $this->onPreCompact($event),
+            'PreCompact' => $this->pass(),
             'Stop' => $event->hasPendingBackgroundWork() ? $this->pass() : $this->onStop($event),
             default => $this->onManualRun($event),
         };
@@ -76,14 +76,6 @@ abstract class Hook
     }
 
     protected function onSessionStart(HookEvent $event): int
-    {
-        return $this->pass();
-    }
-
-    /**
-     * Fired just before context compaction — the last moment to flush in-context state to disk.
-     */
-    protected function onPreCompact(HookEvent $event): int
     {
         return $this->pass();
     }

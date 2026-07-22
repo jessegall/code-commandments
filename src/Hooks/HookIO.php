@@ -59,10 +59,27 @@ class HookIO
     }
 
     /**
+     * The hook events that actually carry an `additionalContext` channel. Emitting the shape on any other
+     * event is not merely ignored — the harness REJECTS the whole payload as invalid, so the hook fails
+     * loudly on every fire. Stated once here, so no handler can re-learn it the hard way (`PreCompact`
+     * did: it supports only `decision`/`reason`/`continue`/`systemMessage`, and its stdout never reaches
+     * the model, so a pre-compaction nudge is undeliverable by design).
+     */
+    private const array INJECTABLE = [
+        'SessionStart', 'Setup', 'SubagentStart', 'UserPromptSubmit', 'UserPromptExpansion',
+        'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PostToolBatch', 'Stop', 'SubagentStop',
+    ];
+
+    /**
      * A non-blocking context injection: the tool/turn proceeds; Claude reads $context as context.
+     * Silent on an event with no context channel — better nothing than an invalid payload.
      */
     public function inject(string $event, string $context): void
     {
+        if (! in_array($event, self::INJECTABLE, true)) {
+            return;
+        }
+
         $this->emit(['hookSpecificOutput' => [
             'hookEventName' => $event,
             'additionalContext' => $context,

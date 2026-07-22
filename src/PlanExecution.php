@@ -174,9 +174,9 @@ final class PlanExecution
      * writes its progress and, above all, the conversational deltas (decisions and their rejected
      * alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to
      * the session's `.plan-working-state` file (the approval nudge names the exact path),
-     * refreshed after each phase and each important event. A
-     * `PreCompact` hook flushes it before compaction and it is re-injected on compact/resume, so a
-     * compacted agent resumes with the full picture. Off by default.
+     * refreshed after each phase and each important event — kept near-current by a `PostToolUse`
+     * heartbeat, and re-injected on compact/resume, so a compacted agent resumes with the full
+     * picture. Off by default.
      */
     public function trackWorkingState(bool $track = true): self
     {

@@ -195,7 +195,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `CompactionReminder` | `SessionStart` | After a context compaction (which silently drops loaded skills), reminds you to reload any skill governing your current task. |
-| `WorkingState` | `PostToolUse, PreCompact, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat, a PreCompact flush, and re-injection on compact/resume. |
+| `WorkingState` | `PostToolUse, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat and re-injection on compact/resume. |
 <!-- END: hooks-table -->
 
 ### Plan execution
@@ -244,14 +244,14 @@ Every option (from the `PlanExecution` builder):
 | `->constraint(…)` | A CONSTRAINT the agent must respect for every plan run — a natural-language architectural invariant `judge` can't decide (e.g. "the frontend is presentation-only"). |
 | `->enforceConstraintsEachPhase(…)` | Force the constraint diff-check after EVERY phase, not just at completion. |
 | `->testFlow(…)` | The project's DEFAULT testing methodology for a plan run — how tests are written and run as the agent grinds a plan (e.g. "write and run the tests for each phase before committing it"). |
-| `->trackWorkingState(…)` | Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent writes its progress and, above all, the conversational deltas (decisions and their rejected alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to the session's `.plan-working-state` file (the approval nudge names the exact path), refreshed after each phase and each important event. |
+| `->trackWorkingState(…)` | Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent writes its progress and, above all, the conversational deltas (decisions and their rejected alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to the session's `.plan-working-state` file (the approval nudge names the exact path), refreshed after each phase and each important event — kept near-current by a `PostToolUse` heartbeat, and re-injected on compact/resume, so a compacted agent resumes with the full picture. |
 <!-- END: plan-options -->
 
 **Working state** (`trackWorkingState()`) is opt-in: the agent maintains a living record at
 `.commandments/.plan-working-state` — the decisions, conversational plan changes, gotchas, and next step
-that live *only* in the conversation — refreshed after each phase and each important event. A `PreCompact`
-hook flushes it before context compaction and it is re-injected on compact/resume, so a compacted agent
-resumes with the full picture. It captures only what `git log` + the plan can't reconstruct.
+that live *only* in the conversation — refreshed after each phase and each important event, with a
+`PostToolUse` heartbeat nudging a refresh so the record stays near-current, and re-injected on
+compact/resume, so a compacted agent resumes with the full picture. It captures only what `git log` + the plan can't reconstruct.
 
 **Constraints** are natural-language architectural invariants a detector *can't* decide
 from the AST — "every new query is scoped to the current tenant", "public API responses
