@@ -88,7 +88,7 @@ final class UntilReminderTest extends TestCase
         $this->gate()->markStuck();
 
         $this->assertSame([], $this->stop(), 'the blocked agent may hand back to the user');
-        $this->assertSame(['the full test suite passes'], $this->gate()->all());
+        $this->assertSame([1 => 'the full test suite passes'], $this->gate()->all());
         $this->assertSame('block', $this->stop()[0]['decision'] ?? null, 'and the gate holds again right after');
     }
 

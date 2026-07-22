@@ -109,7 +109,7 @@ final class UntilReminder extends Hook
     }
 
     /**
-     * @param  list<string>  $conditions
+     * @param  array<int, string>  $conditions  keyed by their stable id
      */
     private function hold(array $conditions): string
     {
@@ -124,7 +124,7 @@ final class UntilReminder extends Hook
     }
 
     /**
-     * @param  list<string>  $conditions
+     * @param  array<int, string>  $conditions  keyed by their stable id
      */
     private function released(array $conditions): string
     {
@@ -136,14 +136,15 @@ final class UntilReminder extends Hook
     }
 
     /**
-     * @param  list<string>  $conditions
+     * @param  array<int, string>  $conditions  keyed by their stable id — printed as-is, since that
+     *                                          id is the handle `until met <n>` takes
      */
     private function numbered(array $conditions): string
     {
         $lines = '';
 
-        foreach ($conditions as $index => $condition) {
-            $lines .= "\n  " . ($index + 1) . ". {$condition}";
+        foreach ($conditions as $id => $condition) {
+            $lines .= "\n  {$id}. {$condition}";
         }
 
         return $lines;

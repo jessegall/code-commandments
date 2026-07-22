@@ -69,7 +69,9 @@ When you try to stop, the hook sends you back with the standing conditions. Then
    tests so they must pass" is not verification — a gate exists precisely because the user does not
    want that assumption.
 2. **Condition holds?** `vendor/bin/commandments until met <n>` — the number the gate printed (see
-   `until list`). The gate lifts when the last one is struck off.
+   `until list`). Numbers are STABLE ids: striking one condition off never renumbers the rest, so
+   you may read the list once and run several `met` calls off it safely. The gate lifts when the
+   last one is struck off.
 3. **Doesn't hold?** Keep working. That is the whole point of the gate.
 4. **Genuinely blocked** — you need a decision, a credential, something you cannot get?
    `vendor/bin/commandments until stuck`, then tell the user exactly which condition you cannot meet

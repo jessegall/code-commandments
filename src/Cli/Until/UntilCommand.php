@@ -74,8 +74,9 @@ final class UntilCommand implements Command
 
         fwrite(STDOUT, "● You may not stop until these hold:\n");
 
-        foreach ($conditions as $index => $condition) {
-            fwrite(STDOUT, '  ' . ($index + 1) . ". {$condition}\n");
+        foreach ($conditions as $id => $condition) {
+            fwrite(STDOUT, "  {$id}. {$condition}\n"); // The STABLE id — still valid after other
+            // conditions are struck off, so a batch of `met` calls read off one list can't miss.
         }
 
         return 0;
