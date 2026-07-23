@@ -50,4 +50,14 @@ final class HookEventTest extends TestCase
         $this->assertFalse(new HookEvent(['agent_id' => '', 'agent_type' => ''], '/tmp/p')->isSubagent());
         $this->assertFalse(new HookEvent([], '/tmp/p')->isSubagent());
     }
+
+    public function test_plan_mode_is_read_from_the_permission_mode_field(): void
+    {
+        // Only the literal `plan` counts; every other mode — and an absent field (older Claude Code,
+        // a manual CLI run) — reads as not-plan-mode, so the additive guard never changes behaviour.
+        $this->assertTrue(new HookEvent(['permission_mode' => 'plan'], '/tmp/p')->isPlanMode());
+        $this->assertFalse(new HookEvent(['permission_mode' => 'default'], '/tmp/p')->isPlanMode());
+        $this->assertFalse(new HookEvent(['permission_mode' => 'acceptEdits'], '/tmp/p')->isPlanMode());
+        $this->assertFalse(new HookEvent([], '/tmp/p')->isPlanMode());
+    }
 }

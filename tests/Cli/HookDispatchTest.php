@@ -104,6 +104,18 @@ final class HookDispatchTest extends TestCase
         $this->assertSame([], $emitted, 'the base-class guard suppresses every Stop handler');
     }
 
+    public function test_stop_is_silent_in_plan_mode(): void
+    {
+        // In PLAN MODE the agent stops to PRESENT its plan for approval — with an active plan marker
+        // (e.g. a re-plan mid-execution) the keep-going nudge must not hold that stop.
+        $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha0');
+
+        $emitted = $this->dispatch(['hook_event_name' => 'Stop', 'permission_mode' => 'plan']);
+
+        $this->assertSame([], $emitted, 'no Stop handler fires while planning');
+    }
+
     public function test_every_hook_is_silent_inside_a_subagent(): void
     {
         // A read-only exploration subagent must receive none of our reminders/injections — they speak only

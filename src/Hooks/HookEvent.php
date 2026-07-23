@@ -64,6 +64,19 @@ final class HookEvent
     }
 
     /**
+     * Is the session in PLAN MODE — the agent is researching and drafting a plan, not executing one?
+     * Claude Code stamps hook payloads with `permission_mode` (`plan`, `default`, `acceptEdits`, …).
+     * A Stop in plan mode is the agent presenting its plan for the user's approval; holding or nudging
+     * that stop would fight the approval flow, so every Stop handler stays silent then ({@see
+     * Hook::handle}). Absent field (older Claude Code, a manual CLI run) reads as not-plan-mode — the
+     * guard is additive and never changes existing behaviour.
+     */
+    public function isPlanMode(): bool
+    {
+        return ($this->payload['permission_mode'] ?? '') === 'plan';
+    }
+
+    /**
      * The tool a `Pre`/`PostToolUse` event concerns (`Bash`, `ExitPlanMode`, …).
      */
     public function tool(): string

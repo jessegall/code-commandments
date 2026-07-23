@@ -47,7 +47,9 @@ abstract class Hook
      * {@see onManualRun}. One rule holds for EVERY Stop hook and lives here, not in each: a Stop that
      * is only the agent PARKED WAITING on background work (a `run_in_background` task, a subagent) is
      * not a real stop — it will auto-resume — so no `onStop` handler runs; nudging or blocking it would
-     * be noise and could burn the block cap on stops the agent doesn't control.
+     * be noise and could burn the block cap on stops the agent doesn't control. The same holds for a
+     * Stop in PLAN MODE ({@see HookEvent::isPlanMode}): the agent is presenting a plan for approval,
+     * not abandoning work — no Stop handler may hold or nudge it.
      *
      * A second rule holds for every hook and lives here too: a hook firing INSIDE a spawned subagent stays
      * silent. Our reminders and injections speak only to the main session that owns the plan and working
@@ -66,7 +68,7 @@ abstract class Hook
             'PreToolUse' => $this->onPreToolUse($event),
             'SessionStart' => $this->onSessionStart($event),
             'PreCompact' => $this->pass(),
-            'Stop' => $event->hasPendingBackgroundWork() ? $this->pass() : $this->onStop($event),
+            'Stop' => $event->hasPendingBackgroundWork() || $event->isPlanMode() ? $this->pass() : $this->onStop($event),
             default => $this->onManualRun($event),
         };
     }
