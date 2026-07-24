@@ -101,8 +101,9 @@ final class UntilReminder extends Hook
             . "— do it NOW. Do not park it; parking it is a way of not doing it.\n"
             . "  • A SEPARATE task, or one they deferred (\"later\", \"when you're done\", \"after this\"), or "
             . "anything that would derail the phase you're in — PARK it: run `vendor/bin/commandments until "
-            . "\"<the task, as a statement you can verify>\"` and carry on with what you were doing. It will "
-            . "hold your stop at the end, so it cannot be lost.\n"
+            . "\"<the task, as a statement you can verify>\"`, add it to your to-do list (TodoWrite) so the user "
+            . "can see it, and carry on with what you were doing. It will hold your stop at the end, so it cannot "
+            . "be lost.\n"
             . "  • Unsure? Cheap and inside the current phase → do it. Opens a new front → park it.\n"
             . "Park a task ONLY as something checkable (\"the changelog has an entry\", not \"look at the "
             . "changelog\") — you will have to verify it before you may stop.";
@@ -117,7 +118,9 @@ final class UntilReminder extends Hook
             . "VERIFY each condition below for real (run the command, read the file, check the output) — do not "
             . "assume it holds because you think you did the work:\n"
             . $this->numbered($conditions)
-            . "\nFor each one that genuinely holds now, run `vendor/bin/commandments until met <n>`; the gate lifts "
+            . "\nFor each one that genuinely holds now, run `vendor/bin/commandments until met <n>` and mark its "
+            . "to-do item completed (add any condition still missing from your to-do list so the user can see it); "
+            . "the gate lifts "
             . "when none are left. Otherwise keep working until it holds. If you are genuinely BLOCKED and need the "
             . "user, run `vendor/bin/commandments until stuck` (NOT `until clear`) and tell them which condition you "
             . "cannot meet and why — that lets you stop once while keeping the condition in force.";

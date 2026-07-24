@@ -32,6 +32,11 @@ Write the condition **as a checkable statement**, not as a task: "the full test 
 "run the tests". You will be asked to verify it later, so it has to be something you can *check*.
 One condition per call — stacking them keeps each one independently verifiable.
 
+**Mirror it into your to-do list.** As soon as you record a condition, add the same statement to your
+to-do list (TodoWrite) as a pending item, so the user can see at a glance what is holding you. The
+gate's marker file is invisible to them; the to-do list is not. Keep the two in sync: when you strike
+a condition off with `until met <n>`, mark its to-do item completed in the same breath.
+
 Do **not** set a gate on your own initiative. It is the user's instrument; setting one for yourself
 just to stay busy is out of bounds.
 
@@ -52,7 +57,8 @@ puts this triage in front of you while work is in flight.
   tie-breaker: would doing it now change what this phase is about?
 
 Park it as something **checkable** — "the changelog has an entry for this release", not "look at the
-changelog" — because you must verify it before you may stop.
+changelog" — because you must verify it before you may stop. Add it to your to-do list too, same as
+any condition, so the parked task is visible to the user and not just buried in the gate.
 
 ## A plan takes precedence
 
@@ -71,7 +77,8 @@ When you try to stop, the hook sends you back with the standing conditions. Then
 2. **Condition holds?** `vendor/bin/commandments until met <n>` — the number the gate printed (see
    `until list`). Numbers are STABLE ids: striking one condition off never renumbers the rest, so
    you may read the list once and run several `met` calls off it safely. The gate lifts when the
-   last one is struck off.
+   last one is struck off. Mark the matching to-do item completed at the same time, so the visible
+   list tracks the gate.
 3. **Doesn't hold?** Keep working. That is the whole point of the gate.
 4. **Genuinely blocked** — you need a decision, a credential, something you cannot get?
    `vendor/bin/commandments until stuck`, then tell the user exactly which condition you cannot meet

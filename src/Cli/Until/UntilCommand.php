@@ -55,9 +55,11 @@ final class UntilCommand implements Command
     {
         fwrite(STDOUT,
             "● Stop gate set (condition {$number}): {$condition}\n"
-            . "  You may not stop until this holds. Every time you try to stop you will be sent back in to\n"
-            . "  verify it — when it genuinely holds, run `commandments until met {$number}`. If you are truly\n"
-            . "  blocked and need the user, run `commandments until stuck` (that keeps the condition in force).\n");
+            . "  You may not stop until this holds. Add this condition to your to-do list (TodoWrite) as a\n"
+            . "  pending item so the user can see what is holding you, and mark it done when you meet it.\n"
+            . "  Every time you try to stop you will be sent back in to verify it — when it genuinely holds,\n"
+            . "  run `commandments until met {$number}`. If you are truly blocked and need the user, run\n"
+            . "  `commandments until stuck` (that keeps the condition in force).\n");
 
         return 0;
     }
