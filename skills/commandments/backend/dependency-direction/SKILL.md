@@ -75,10 +75,31 @@ almost always something smaller than the class you were about to reach for.
 
 ## Rules
 
+- Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
+  _cut the weaker arrow: move the shared class down, or have the lower namespace own an interface the higher one implements_
 - Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
   _invert the arrow: take the value/contract the low layer needs, and let the high layer supply it_
 
 ## Bad → good
+
+```php
+// Bad
+public function rateCents(int $weightGrams): int
+{
+    // An enum case can never be built by the container, so resolving the
+    // rate registry through app() is the only option here.
+    return app(ShippingRateRegistry::class)->for($this)->quote($weightGrams);
+}
+
+// Good
+final class RenewalReminder
+{
+    public function dueInDays(WarrantyPolicy $policy): int
+    {
+        return $policy->months * 30 - 14;
+    }
+}
+```
 
 ```php
 // Bad
@@ -93,22 +114,24 @@ class Panel
     public function __construct(public readonly string $title) {}
 
     /**
-     * The arrow the stack declares: Shared reaches DOWN into Elements, which is exactly what
-     * `mayUse: ['Shop\Ui\Elements']` permits. Nothing in Elements learns that panels exist.
+     * The arrow the stack declares: Shared reaches DOWN into the tokens, which is exactly what
+     * `mayUse` permits. Nothing down there learns that panels exist.
      */
-    public function heading(): Badge
+    public function accent(): Accent
     {
-        return new Badge(strtoupper($this->title));
+        return new Accent('primary');
     }
 }
 ```
 
 ## When it fires
 
+- two namespaces that reference each other — neither can be read, tested or moved alone — `NamespaceCycleDetector`
 - a declared layer references a layer it may not use (the arrow points back up) — `NamespaceDependencyDetector`
 
 ## Checklist
 
+- [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
 - [ ] Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
 
 ## Related skills

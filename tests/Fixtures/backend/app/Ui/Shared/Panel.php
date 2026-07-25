@@ -4,7 +4,7 @@ namespace Shop\Ui\Shared;
 
 use JesseGall\CodeCommandments\Sins\Backend\NamespaceDependency;
 use JesseGall\CodeCommandments\Testing\Righteous;
-use Shop\Ui\Elements\Badge;
+use Shop\Ui\Tokens\Accent;
 
 /**
  * A panel, assembled from the UI primitives.
@@ -15,11 +15,11 @@ class Panel
     public function __construct(public readonly string $title) {}
 
     /**
-     * The arrow the stack declares: Shared reaches DOWN into Elements, which is exactly what
-     * `mayUse: ['Shop\Ui\Elements']` permits. Nothing in Elements learns that panels exist.
+     * The arrow the stack declares: Shared reaches DOWN into the tokens, which is exactly what
+     * `mayUse` permits. Nothing down there learns that panels exist.
      */
-    public function heading(): Badge
+    public function accent(): Accent
     {
-        return new Badge(strtoupper($this->title));
+        return new Accent('primary');
     }
 }

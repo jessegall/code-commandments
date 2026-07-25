@@ -2,6 +2,8 @@
 
 namespace Shop\Enums;
 
+use JesseGall\CodeCommandments\Sins\Backend\NamespaceCycle;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Shipping\ShippingRateRegistry;
 
 enum ShippingMethod: string
@@ -10,6 +12,11 @@ enum ShippingMethod: string
     case Express = 'express';
     case Pickup = 'pickup';
 
+    /**
+     * Shipping reaches for this enum all over; this is the ONE place the enum reaches back, and it
+     * welds the two namespaces into a single unit — neither can now be lifted out alone.
+     */
+    #[Sinful(NamespaceCycle::class)]
     public function rateCents(int $weightGrams): int
     {
         // An enum case can never be built by the container, so resolving the
