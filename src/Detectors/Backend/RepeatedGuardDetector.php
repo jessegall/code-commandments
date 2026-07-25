@@ -29,7 +29,7 @@ final class RepeatedGuardDetector extends RecurringPattern
         return $codebase->where(static fn (AstNode $node): bool => $node->isSubstantiveGuard())->get();
     }
 
-    public function groupKey(NodeMatch $finding, Codebase $codebase): ?string
+    protected function fingerprint(NodeMatch $finding, Codebase $codebase): ?string
     {
         return $finding->canonicalGuardHash();
     }

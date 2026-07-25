@@ -6,23 +6,39 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
+use JesseGall\CodeCommandments\Located;
 
 /**
- * The shared machinery of every {@see RecurrenceDetector}: gather candidates, bucket them by their
- * {@see RecurrenceDetector::groupKey} fingerprint, and flag every member of a bucket seen at least
- * {@see minimumOccurrences} times. A concrete recurrence detector supplies only the two things that
- * genuinely differ — which nodes are candidates, and how a candidate fingerprints — never the loop.
+ * The shared machinery of every BACKEND {@see RecurrenceDetector}: gather candidates, bucket them by
+ * their {@see fingerprint}, and flag every member of a bucket seen at least {@see minimumOccurrences}
+ * times — a concrete detector supplies only which nodes are candidates and how one fingerprints, never
+ * the loop. It is also the ONE seam where the engine-agnostic contract meets the PHP AST, narrowing
+ * `groupKey` to a {@see NodeMatch} here rather than in every detector.
  */
-abstract class RecurringPattern implements RecurrenceDetector
+abstract class RecurringPattern implements Detector, RecurrenceDetector
 {
     /**
-     * The nodes to bucket — the shapes this detector counts. {@see groupKey} decides which of them are
+     * The nodes to bucket — the shapes this detector counts. {@see fingerprint} decides which of them are
      * countable (a null key drops one) and which collide.
      *
      * @return list<NodeMatch>
      */
     abstract protected function candidates(Codebase $codebase): array;
+
+    /**
+     * The canonical fingerprint of this node's recurring shape, or null when it is not countable.
+     */
+    abstract protected function fingerprint(NodeMatch $finding, Codebase $codebase): ?string;
+
+    final public function groupKey(Located $finding, BaseCodebase $codebase): ?string
+    {
+        return $finding instanceof NodeMatch && $codebase instanceof Codebase
+            ? $this->fingerprint($finding, $codebase)
+            : null;
+    }
 
     /**
      * How many occurrences of one fingerprint make it a sin. Two — a shape written twice is already a
@@ -38,7 +54,7 @@ abstract class RecurringPattern implements RecurrenceDetector
         $buckets = [];
 
         foreach ($this->candidates($codebase) as $candidate) {
-            $key = $this->groupKey($candidate, $codebase);
+            $key = $this->fingerprint($candidate, $codebase);
 
             if ($key !== null) {
                 $buckets[$key][] = $candidate;

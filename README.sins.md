@@ -209,7 +209,7 @@ _105 sins across 23 skills._
 | `CompoundInlineComponent` | Detects compound UI primitives assembled inline (component root with ≥2 descendants sharing a prefix tag). |
 | `DeepDataReach` | Detects clusters of deep data reaches (e.g., `order.customer.name`, `order.customer.email`) sharing one nested object. |
 | `DeepNested` | A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit. / |
-| `DuplicateElement` | Detects identical template blocks (structural comparison, blind to formatting); only substantial blocks and the largest duplicate are flagged. / |
+| `DuplicateElement` | Detects identical template blocks (structural comparison, blind to formatting); only substantial blocks and the largest duplicate are flagged. |
 | `PropDrilling` | Detects a prop threaded through ≥2 components unused. |
 | `PropMutation` | Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals. / |
 

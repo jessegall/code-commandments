@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
-use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Codebase;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
+use JesseGall\CodeCommandments\Located;
 
 /**
- * For each {@see RecurrenceDetector} in the set, the widest FILE span of any of its `#[Sinful]` groups —
- * how many distinct files the largest single recurrence bucket touches. {@see FixtureTestCase} asserts it
- * reaches two, so every recurrence detector proves at least once that its fingerprint buckets ACROSS
- * classes: a copied guard in two files is caught, not just two copies inside one class.
+ * For each {@see RecurrenceDetector} in the set, the widest FILE span of any of its marked groups — how
+ * many distinct files the largest recurrence bucket touches. {@see FixtureTestCase} asserts it reaches
+ * two, so a fingerprint is proven to bucket ACROSS files: a guard copied into two classes, a Vue block
+ * repeated in two components. Engine-agnostic like the contract it checks — it reads a finding's file
+ * through {@see Located} — so both fixtures share this one resolver.
  */
 final class RecurrenceSpanResolver
 {
@@ -32,7 +33,9 @@ final class RecurrenceSpanResolver
             $buckets = [];
 
             foreach ($detector->find($codebase) as $finding) {
-                $buckets[$detector->groupKey($finding, $codebase)][$finding->file->path] = true;
+                if ($finding instanceof Located) {
+                    $buckets[$detector->groupKey($finding, $codebase)][$finding->file()] = true;
+                }
             }
 
             $spans[$detector::class] = array_reduce(

@@ -51,7 +51,7 @@ final class RepeatedNamedCallDetector extends RecurringPattern
      * The group key a repeated call belongs to — `declaringClass::method#namedKeys` — or null when the call
      * isn't a repeatable variadic named-argument construction.
      */
-    public function groupKey(NodeMatch $call, Codebase $codebase): ?string
+    protected function fingerprint(NodeMatch $call, Codebase $codebase): ?string
     {
         $resolver = TypeResolver::forCodebase($codebase);
         $named = $this->namedArguments($call);

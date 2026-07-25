@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
+use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
@@ -25,7 +26,7 @@ use PhpParser\NodeFinder;
  * Subclass to add domain predicates; type-hint the subclass in a `where` closure
  * and the query will inject it without registration.
  */
-class NodeMatch extends AstNode
+class NodeMatch extends AstNode implements Located
 {
     public function __construct(
         Node $node,
@@ -183,6 +184,17 @@ class NodeMatch extends AstNode
     public function line(): int
     {
         return $this->node->getStartLine();
+    }
+
+    /**
+     * The path of the file this match sits in — the {@see Located} half that the frontend's
+     * {@see \JesseGall\CodeCommandments\Vue\ElementMatch} always had, so anything engine-agnostic
+     * (the fixture harness, the runner) can read a finding's file without knowing which engine
+     * produced it.
+     */
+    public function file(): string
+    {
+        return $this->file->path;
     }
 
     /**
