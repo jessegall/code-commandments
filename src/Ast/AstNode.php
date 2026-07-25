@@ -54,6 +54,7 @@ use PhpParser\Node\UnionType;
 use PhpParser\Node\UseItem;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\Float_;
+use PhpParser\Node\Scalar;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\InterpolatedString;
 use PhpParser\Node\Scalar\String_;
@@ -2737,6 +2738,102 @@ class AstNode
         }
 
         return false;
+    }
+
+    /**
+     * Does this declaration's whole body switch on one of its OWN `bool` parameters? The pairing of
+     * {@see paramTypeNames} and {@see bodyIsTwoWayBranchOn}: a flag comes in, and the method is
+     * nothing but the choice it makes.
+     */
+    public function switchesEntirelyOnABoolParam(): bool
+    {
+        foreach ($this->paramTypeNames() as $name => $type) {
+            if (strtolower((string) $type) === 'bool' && $this->bodyIsTwoWayBranchOn($name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this declaration's ENTIRE body one two-way branch on the variable $name — an `if ($flag)
+     * {…} else {…}` with nothing around it, or a `match ($flag)` with a true arm and a false arm?
+     * Then the parameter is not something the method works WITH; it selects which of two methods
+     * the caller actually wanted. A branch with anything before or after it fails: that is a method
+     * doing its job with a conditional in it, not a method that IS the conditional.
+     */
+    public function bodyIsTwoWayBranchOn(string $name): bool
+    {
+        if (! $this->isFunctionDeclaration() || count($this->node->stmts ?? []) !== 1) {
+            return false;
+        }
+
+        $only = $this->node->stmts[0];
+
+        if ($only instanceof If_) {
+            return $only->elseifs === []
+                && $only->else !== null
+                && self::armDoesWork($only->stmts)
+                && self::armDoesWork($only->else->stmts)
+                && self::testsVariable($only->cond, $name);
+        }
+
+        $expression = match (true) {
+            $only instanceof Return_ => $only->expr,
+            $only instanceof Expression => $only->expr,
+            default => null,
+        };
+
+        return $expression instanceof Match_
+            && count($expression->arms) === 2
+            && array_all($expression->arms, static fn (MatchArm $arm): bool => ! self::isBareValue($arm->body))
+            && self::testsVariable($expression->cond, $name);
+    }
+
+    /**
+     * Does this branch arm DO something, rather than just hand back a constant? Two arms that only
+     * return different literals are a mapping from a bool to a value — a lookup, not two
+     * behaviours — and an arm that exits with a bare constant is a guard answering a precondition.
+     * Either way there are no two methods hiding in there to split apart.
+     *
+     * @param  list<Node\Stmt>  $statements
+     */
+    private static function armDoesWork(array $statements): bool
+    {
+        if (count($statements) !== 1) {
+            return $statements !== [];
+        }
+
+        $only = $statements[0];
+
+        return ! ($only instanceof Return_ && self::isBareValue($only->expr));
+    }
+
+    /**
+     * Is this expression a constant sitting there — a literal, `null`/`true`, a class constant, or
+     * nothing at all? The tell that an arm carries a VALUE rather than work.
+     */
+    private static function isBareValue(?Node $expression): bool
+    {
+        return $expression === null
+            || $expression instanceof Scalar
+            || $expression instanceof ConstFetch
+            || $expression instanceof ClassConstFetch;
+    }
+
+    /**
+     * Is this condition the variable $name itself, or its plain negation? Anything richer — a
+     * comparison, a call, the flag combined with something else — is the method reasoning, not
+     * merely obeying.
+     */
+    private static function testsVariable(Node $condition, string $name): bool
+    {
+        if ($condition instanceof BooleanNot) {
+            $condition = $condition->expr;
+        }
+
+        return $condition instanceof Variable && $condition->name === $name;
     }
 
     /**
