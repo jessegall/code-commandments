@@ -147,6 +147,48 @@ final class ConfigScribe
     }
 
     /**
+     * Splice a layer declaration in before the `disable()` call, importing the detector it tunes.
+     * Returns false when the config already declares layers — the human's stack is theirs, and
+     * `commandments layers` proposes, it never overwrites. Same offset splice as
+     * {@see ensurePlanExecution}, so the surrounding lines stay exactly as they were.
+     */
+    public function ensureLayers(string $declaration): bool
+    {
+        if (! is_file($this->path) || $this->hasCall('layer')) {
+            return false;
+        }
+
+        $anchor = $this->call('disable') ?? $this->call('paths');
+
+        if ($anchor === null) {
+            return false;
+        }
+
+        $source = (string) file_get_contents($this->path);
+        $at = $anchor->getStartFilePos();
+        $block = ltrim($declaration) . "\n\n    ";
+
+        file_put_contents($this->path, $this->withDetectorImport(substr($source, 0, $at)) . $block . substr($source, $at));
+
+        return true;
+    }
+
+    /**
+     * Add the `NamespaceDependencyDetector` import after the `Config` one, unless it is already there.
+     */
+    private function withDetectorImport(string $head): string
+    {
+        $existing = 'use JesseGall\CodeCommandments\Config;';
+        $import = 'use JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector;';
+
+        if (str_contains($head, $import) || ! str_contains($head, $existing)) {
+            return $head;
+        }
+
+        return str_replace($existing, $existing . "\n" . $import, $head);
+    }
+
+    /**
      * The `planExecution()` block spliced in before the anchor call. Its first line takes the
      * anchor's existing indent; it ends with a blank line + a 4-space indent so the anchor stays
      * exactly where it was. Explicit lines (not a heredoc) so the emitted indentation is exact.

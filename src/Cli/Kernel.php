@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Cli\Config\Configure;
 use JesseGall\CodeCommandments\Cli\Report\Report;
 use JesseGall\CodeCommandments\Cli\Report\FeatureRequest;
 use JesseGall\CodeCommandments\Cli\Judge\Judge;
+use JesseGall\CodeCommandments\Cli\Layers\LayersCommand;
 /**
  * The one entry point behind `bin/commandments`. It parses `$argv` into an {@see Input} exactly
  * once, then dispatches to the {@see Command} registered for the verb — the strategy table that
@@ -100,6 +101,7 @@ final class Kernel
             new HookRunner(),
             new Configure(),
             new ConfigCommand(),
+            new LayersCommand(),
             new Exemptions(),
         ];
     }
@@ -123,6 +125,7 @@ final class Kernel
           commandments enable <sin>   # turn it back on
           commandments freeze <path>  # mark a file intentionally immutable (scanned, but never flagged or repented)
           commandments unfreeze <path>  # lift the freeze — the file is a target again
+          commandments layers [path] [--floor] [--write]  # read the dependency stack you already have and propose the layer declaration for it (--write adds it to config.php)
           commandments config reindex  # re-detect the source roots and rewrite config.php's paths()
           commandments exemptions [<sin|detector>]  # list exemptions (all, or one detector's)
           commandments install  # wire composer + the Claude Code hooks (reminder + judge nudge), then sync

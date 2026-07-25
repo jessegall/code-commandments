@@ -101,6 +101,34 @@ final class NamespaceGraph
     }
 
     /**
+     * The floor the stack rests on: namespaces that reference nothing else of yours, yet that
+     * others reference. Both halves matter — the first makes them provably the bottom, the second
+     * makes them worth declaring. A namespace nothing depends on is merely isolated, and pinning it
+     * down buys no one anything.
+     *
+     * @return list<string>
+     */
+    public function foundation(): array
+    {
+        $depended = [];
+
+        foreach ($this->arrows as $targets) {
+            foreach (array_keys($targets) as $target) {
+                $depended[$target] = true;
+            }
+        }
+
+        $floor = array_values(array_filter(
+            array_keys($depended),
+            fn (string $namespace): bool => ($this->arrows[$namespace] ?? []) === [],
+        ));
+
+        sort($floor);
+
+        return $floor;
+    }
+
+    /**
      * The namespaces in dependency order — every namespace after the ones it references — paired
      * with the ones no order could place, because they sit in a cycle. What a proposed layer
      * declaration reads off: the first entry may use nothing, the last may use everything before it.
