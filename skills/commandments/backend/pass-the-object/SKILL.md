@@ -61,10 +61,29 @@ the parameter to the resolved type.
 
 ## Rules
 
+- Take the SUBJECT and ask it — never a bool every caller derives from that same object.
+  _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
 - Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
   _Take the resolved object as the param; resolve once in the caller._
 
 ## Bad → good
+
+```php
+// Bad
+public function forDraft(bool $draft): int
+{
+    return match ($draft) {
+        true => 150,
+        false => 300,
+    };
+}
+
+// Good
+public function cornerInset(): string
+{
+    return $this->inZenMode() || $this->hasPanelOpen() ? 'tight' : 'wide';
+}
+```
 
 ```php
 // Bad
@@ -84,10 +103,12 @@ public function priceForVariant(Variant $variant): int
 
 ## When it fires
 
+- a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it) — `ComputedBooleanArgumentDetector`
 - Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging — `ParamResolvedFromParamDetector`
 
 ## Checklist
 
+- [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
 - [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
 
 ## Related skills

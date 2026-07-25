@@ -44,6 +44,7 @@ use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\MatchArm;
 use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\PropertyHook;
@@ -65,6 +66,7 @@ use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Do_;
+use PhpParser\Node\Stmt\ElseIf_;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
@@ -481,14 +483,19 @@ class AstNode
     }
 
     /**
-     * The resolved class name of a `Class::method(...)` static call, or null.
-     * Names are resolved at parse time, so this is fully qualified.
+     * The resolved class name of a `Class::method(...)` static call, or null. Names are resolved at
+     * parse time, so this is fully qualified; `self`/`static` resolve to the enclosing class, so a
+     * caller comparing against a real class name never has to special-case them.
      */
     public function staticCallClass(): ?string
     {
-        return $this->node instanceof StaticCall && $this->node->class instanceof Name
-            ? $this->node->class->toString()
-            : null;
+        if (! $this->node instanceof StaticCall || ! $this->node->class instanceof Name) {
+            return null;
+        }
+
+        $class = $this->node->class->toString();
+
+        return in_array($class, ['self', 'static'], true) ? $this->enclosingClassName() : $class;
     }
 
     /**
@@ -2725,6 +2732,96 @@ class AstNode
                 || ($parent instanceof Ternary && $parent->cond === $variable);
 
             if ($isNullGuard) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this a method/function whose parameters are ALL `bool` — at least one — and which branches
+     * on every one of them? A pure CHOOSER: its whole answer is decided by flags handed in, so the
+     * signature names none of the subject those flags describe. A constructor is excluded (its
+     * params are the object's own fields being born), and so is a body that merely stores or
+     * forwards a flag rather than deciding with it.
+     */
+    public function decidesOnBoolsAlone(): bool
+    {
+        if (! $this->isFunctionDeclaration() || $this->isConstructorDeclaration()) {
+            return false;
+        }
+
+        $types = $this->paramTypeNames();
+
+        if ($types === []) {
+            return false;
+        }
+
+        foreach ($types as $name => $type) {
+            if (strtolower((string) $type) !== 'bool' || ! $this->readsAsCondition($name)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * This function/method's parameters as `name => written type` — the type as SPELLED (`bool`,
+     * `?Order`, null when untyped), keyed by parameter name so a caller can hold both halves.
+     * Promoted constructor parameters are included; a union or intersection reads as null, since it
+     * has no single written name.
+     *
+     * @return array<string, string|null>
+     */
+    public function paramTypeNames(): array
+    {
+        if (! $this->isFunctionDeclaration()) {
+            return [];
+        }
+
+        $types = [];
+
+        foreach ($this->node->params as $param) {
+            if ($param->var instanceof Variable && is_string($param->var->name)) {
+                $types[$param->var->name] = TypeName::simpleName($param->type);
+            }
+        }
+
+        return $types;
+    }
+
+    /**
+     * Is the variable $name read as a CONDITION somewhere in this declaration — the subject of an
+     * `if`/`while`, a ternary or match subject, a match-arm condition, or an operand of `&&`/`||`/`!`?
+     * The tell that the value is DECIDING something here rather than merely being stored or passed on.
+     */
+    public function readsAsCondition(string $name): bool
+    {
+        if ($this->node === null) {
+            return false;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($this->node, Variable::class) as $variable) {
+            if ($variable->name !== $name) {
+                continue;
+            }
+
+            $parent = $variable->getAttribute('parent');
+
+            $decides = $parent instanceof BooleanNot
+                || $parent instanceof BooleanAnd
+                || $parent instanceof BooleanOr
+                || ($parent instanceof If_ && $parent->cond === $variable)
+                || ($parent instanceof ElseIf_ && $parent->cond === $variable)
+                || ($parent instanceof While_ && $parent->cond === $variable)
+                || ($parent instanceof Do_ && $parent->cond === $variable)
+                || ($parent instanceof Ternary && $parent->cond === $variable)
+                || ($parent instanceof Match_ && $parent->cond === $variable)
+                || ($parent instanceof MatchArm && in_array($variable, $parent->conds ?? [], true));
+
+            if ($decides) {
                 return true;
             }
         }

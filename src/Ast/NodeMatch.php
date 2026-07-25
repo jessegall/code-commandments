@@ -13,6 +13,7 @@ use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
@@ -136,6 +137,44 @@ class NodeMatch extends AstNode
         }
 
         return false;
+    }
+
+    /**
+     * The ONE type every argument of this call is asked of — `render($order->isPaid(), $order->total())`
+     * answers with the Order's FQCN, because both arguments are answers the same object gave. Null when
+     * an argument asks nothing (a literal, a bare variable, a `new`) or when the arguments disagree about
+     * whose answers they carry.
+     *
+     * The "did the caller already hold the object?" question, answered once for a whole call site: if it
+     * did, the object itself is the honest argument.
+     */
+    public function argumentSubjectType(): ?string
+    {
+        $arguments = $this->arguments();
+        $function = $this->enclosingFunction();
+
+        if ($arguments === [] || $function === null) {
+            return null;
+        }
+
+        $resolver = TypeResolver::forCodebase($this->codebase);
+        $self = $this->enclosingClassName();
+        $types = [];
+
+        foreach ($arguments as $argument) {
+            $asked = new NodeFinder()->find([$argument->value], static fn (Node $node): bool =>
+                $node instanceof MethodCall || $node instanceof NullsafeMethodCall || $node instanceof PropertyFetch);
+
+            if ($asked === []) {
+                return null;
+            }
+
+            foreach ($asked as $ask) {
+                $types[$resolver->typeOf($ask->var, $function, $self) ?? ''] = true;
+            }
+        }
+
+        return count($types) === 1 && ! isset($types['']) ? array_key_first($types) : null;
     }
 
     /**

@@ -23,9 +23,11 @@ final class CodebaseIndex
     public function __construct(private readonly Codebase $codebase) {}
 
     /**
-     * Every call site `->$method(...)` whose receiver resolves to $fqcn (or a
-     * subclass of it). The call sites are looked up by name from the prebuilt
-     * buckets, then narrowed by the resolved receiver type.
+     * Every call site of `$fqcn::$method(...)` — instance (`->$method()`, narrowed by the resolved
+     * receiver type) and STATIC (`Class::$method()`, by the named class, with `self`/`static`
+     * reading as the enclosing one). Both are call sites of the same declaration, so a caller
+     * asking "who calls this?" gets the whole answer; a method reached only statically is not
+     * uncalled.
      *
      * @return list<NodeMatch>
      */
@@ -34,7 +36,7 @@ final class CodebaseIndex
         $callers = [];
 
         foreach ($this->callsByName()[$method] ?? [] as $call) {
-            $receiver = ReceiverResolver::typeOf($call);
+            $receiver = $call->staticCallClass() ?? ReceiverResolver::typeOf($call);
 
             if ($receiver !== null && ($receiver === $fqcn || $this->codebase->extends($receiver, $fqcn))) {
                 $callers[] = $call;
@@ -56,8 +58,9 @@ final class CodebaseIndex
     }
 
     /**
-     * The lazily-built, then-cached map of method name => its call sites. One scan
-     * of every `->method(...)` in the tree, bucketed by name.
+     * The lazily-built, then-cached map of method name => its call sites. One scan of every
+     * `->method(...)` and `Class::method(...)` in the tree, bucketed by name — both spellings reach
+     * the same declaration, so both belong in the graph.
      *
      * @return array<string, list<NodeMatch>>
      */
@@ -69,7 +72,7 @@ final class CodebaseIndex
 
         $byName = [];
 
-        foreach ($this->codebase->whereMethod()->get() as $call) {
+        foreach ([...$this->codebase->whereMethod()->get(), ...$this->codebase->whereStaticCall()->get()] as $call) {
             $name = $call->callName();
 
             if ($name !== null) {
