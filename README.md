@@ -86,6 +86,11 @@ vendor/bin/commandments judge src --parallel=4
 vendor/bin/commandments judge src --exclude=Generated,Legacy
 vendor/bin/commandments judge --list
 
+# read the dependency stack you already have, and propose the layer declaration for it
+vendor/bin/commandments layers                # print it
+vendor/bin/commandments layers --write        # add it to .commandments/config.php
+vendor/bin/commandments layers --floor        # only the namespaces nothing of yours sits below
+
 # executing an approved plan (see Hooks below)
 vendor/bin/commandments checks start          # run the project's start / phase / complete checks
 vendor/bin/commandments checks phase
@@ -150,6 +155,43 @@ Each move is named for what it registers: `paths`, `disable`, `detector`,
 and `planExecution` (see [Hooks](#hooks)). `configure` finds the detector by the
 closure's first parameter type. Run `commandments config` for a summary of what's
 in effect.
+
+### Declaring your layers
+
+Most rules know a sin when they see one. Dependency *direction* is the exception:
+only your project knows which way its arrows are meant to point, so
+`NamespaceDependencyDetector` stays completely inert until you say. Declare the
+stack top-down and each layer names what it may reach:
+
+```php
+$config->configure(fn (NamespaceDependencyDetector $d) => $d
+    ->layer('App\\Ui\\Tokens')
+    ->layer('App\\Ui\\Elements', mayUse: ['App\\Ui\\Tokens'])
+    ->layer('App\\Ui\\Shared',   mayUse: ['App\\Ui\\Elements', 'App\\Ui\\Tokens'])
+    ->layer('App\\Ui\\Pages',    mayUse: ['App\\Ui\\Shared', 'App\\Ui\\Elements']));
+```
+
+Every reference out of a declared layer is then judged — `extends`, `implements`, a
+trait `use`, a parameter/return/property type, `new X`, `X::method()`, `instanceof`,
+a `catch`, an attribute. They are all the same arrow.
+
+- **Both ends must be declared.** A namespace you never named (the framework,
+  vendor, code you haven't got to yet) is always allowed, in both directions — so a
+  declaration bites in proportion to how much of your tree it covers.
+- **A layer contains its own sub-namespaces**, so `App\Ui\Elements\Button` is inside
+  `App\Ui\Elements` and references within a layer are always fine.
+- **The most specific declared layer wins**, and layers match on segment boundaries —
+  `App\UiKit` is not inside `App\Ui`.
+
+You don't have to write any of that by hand. `commandments layers` reads the stack
+already implied by your code and prints the declaration; `--write` splices it into
+`config.php`, importing the detector and leaving your own lines untouched. What it
+proposes is today's shape, so everything already passing keeps passing — it costs
+nothing to adopt and refuses the *next* arrow pointing somewhere new.
+
+Namespaces sitting in a cycle can't be placed in any order, so they're reported
+separately and left out of the proposal. Break those first — `judge --sin=namespace-cycle`
+needs no configuration at all, because a cycle is wrong under any stack.
 
 ## Freezing a file
 
