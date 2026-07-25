@@ -142,6 +142,32 @@ final class ComputedBooleanArgumentDetectorTest extends TestCase
         $this->assertSame(['Chrome::inset'], $this->scopes($code));
     }
 
+    public function test_a_private_tail_its_own_class_calls_is_the_fix_not_the_sin(): void
+    {
+        // Found calibrating against the very project that reported this sin: the FIXED CornerInset.
+        // The public surface takes the subject (`for(Root $editor)`) exactly as the report asked, and
+        // the bool helper is the shared tail both named constructors delegate to — the rule living in
+        // ONE place. Flagging it would tell the author to apply the fix they have already applied.
+        $code = <<<'PHP'
+        <?php
+        class Root {
+            public function inZenMode(): bool { return true; }
+            public function hasPanelOpen(): bool { return false; }
+        }
+        class CornerInset {
+            public static function for(Root $editor): string {
+                return self::atTheEdge($editor->inZenMode() || $editor->hasPanelOpen());
+            }
+            public static function withPanel(Root $editor, bool $open): string {
+                return self::atTheEdge($open || $editor->inZenMode());
+            }
+            private static function atTheEdge(bool $edge): string { return $edge ? 'large' : 'x-large'; }
+        }
+        PHP;
+
+        $this->assertSame([], $this->scopes($code));
+    }
+
     /**
      * @return list<string>
      */

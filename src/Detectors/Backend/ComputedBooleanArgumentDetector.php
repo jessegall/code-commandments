@@ -54,6 +54,7 @@ final class ComputedBooleanArgumentDetector implements Detector
 
         $callers = $declaration->codebase->index()->callersOf($class, $name);
         $subjects = [];
+        $reachedFromOutside = false;
 
         foreach ($callers as $call) {
             $subject = $call->argumentSubjectType();
@@ -62,9 +63,14 @@ final class ComputedBooleanArgumentDetector implements Detector
                 return false;
             }
 
+            $reachedFromOutside = $reachedFromOutside || $call->enclosingClassName() !== $class;
             $subjects[$subject] = true;
         }
 
-        return count($callers) >= self::MIN_CALLERS && count($subjects) === 1;
+        // A helper only its OWN class calls is the rule already living in one place — the shared tail
+        // two named constructors delegate to, which is what fixing this sin LOOKS like. The sin is the
+        // predicate spread across callers instead of inside the class that owns the decision, so
+        // without a caller outside there is nothing spread and nothing to drift.
+        return $reachedFromOutside && count($callers) >= self::MIN_CALLERS && count($subjects) === 1;
     }
 }
