@@ -62,7 +62,7 @@ final class NamespaceDependencyDetector implements Detector
             // An import only lets the file spell the name short; the arrow is drawn where the name
             // is USED, and that is where the fix lives.
             ->reject(static fn (AstNode $node): bool => $node->isImportedName())
-            ->where(fn (AstNode $node): bool => $this->breaches($node))
+            ->where(fn (NodeMatch $node): bool => $this->breaches($node))
             ->get();
     }
 
@@ -71,12 +71,19 @@ final class NamespaceDependencyDetector implements Detector
      * Code outside every declared layer never breaches — it has not opted into the layering — and
      * neither does a reference to an undeclared namespace.
      */
-    private function breaches(AstNode $node): bool
+    private function breaches(NodeMatch $node): bool
     {
         $namespace = $node->namespaceName();
         $target = $node->referencedClassName();
 
-        if ($namespace === null || $target === null || $this->layerOf($target) === null) {
+        // Only a class the scan actually FOUND can be depended on. A name that resolves to nothing
+        // here — a vendor class sitting under a prefix you declared, or an import left behind by a
+        // class that moved — is not a dependency of yours, whatever its namespace looks like.
+        if ($namespace === null || $target === null || $node->codebase->declarationMatch($target) === null) {
+            return false;
+        }
+
+        if ($this->layerOf($target) === null) {
             return false;
         }
 

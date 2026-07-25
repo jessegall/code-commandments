@@ -14,10 +14,10 @@ use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 /**
  * `commandments layers` — read the dependency stack a project ALREADY has and propose the
  * declaration for it, since the layer rule is inert until one exists and nobody writes that from a
- * blank file. The default proposal is today's shape (every orderable namespace with what it uses
- * now): everything already there passes, and the next arrow somewhere new does not. `--floor` is a
- * smaller start — only the namespaces others depend on that depend on nothing — which tightens as
- * the layers above it are declared, a layer being free to use any namespace still undeclared.
+ * blank file. The default proposal is today's shape — every namespace with what it already uses, so
+ * it is green the moment it is written and refuses only the next arrow somewhere new. `--floor` is a
+ * smaller start (the namespaces others depend on that depend on nothing), which tightens as the
+ * layers above it are declared, a layer being free to use any namespace still undeclared.
  */
 final class LayersCommand implements Command
 {
@@ -75,7 +75,7 @@ final class LayersCommand implements Command
         if ($order['cyclic'] !== []) {
             $this->line('');
             $this->line(sprintf(
-                "  \033[33m%d\033[0m sit in a cycle, so no order can place them — break those first:",
+                "  \033[33m%d\033[0m sit in a cycle — declared below as they stand, each permitting the other:",
                 count($order['cyclic']),
             ));
 
@@ -88,7 +88,9 @@ final class LayersCommand implements Command
 
         if ($proposed === []) {
             $this->line('');
-            $this->line('  Nothing to propose yet — every namespace here depends on another.');
+            $this->line($floorOnly
+                ? '  Nothing at the floor — every namespace here reaches another. Drop --floor for the whole shape.'
+                : '  Nothing to propose — nothing here references anything else of yours.');
 
             return;
         }

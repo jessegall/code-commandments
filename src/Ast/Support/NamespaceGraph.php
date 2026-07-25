@@ -28,6 +28,17 @@ final class NamespaceGraph
      */
     private array $namespaces = [];
 
+    /**
+     * @var array<string, array<string, true>>  from => to, for EVERY first-party reference that
+     *                                          leaves its namespace — nested pairs included
+     *
+     * {@see $arrows} drops a reference between a namespace and its own subtree, because for
+     * dependency DIRECTION the two are one unit. A declaration cannot afford that blind spot: name
+     * both as layers and `App\Ai` → `App\Ai\Contracts` becomes an arrow that must be permitted like
+     * any other, so {@see currentShape} reads its `mayUse` from here.
+     */
+    private array $references = [];
+
     private function __construct(Codebase $codebase)
     {
         foreach ($codebase->whereClassReference()->get() as $reference) {
@@ -41,11 +52,17 @@ final class NamespaceGraph
             $to = ClassName::namespace((string) $target);
             $this->namespaces[$from] = true;
 
-            if ($to !== '') {
-                $this->namespaces[$to] = true;
+            if ($to === '') {
+                continue;
             }
 
-            if ($to === '' || ClassName::within($to, $from) || ClassName::within($from, $to)) {
+            $this->namespaces[$to] = true;
+
+            if ($to !== $from) {
+                $this->references[$from][$to] = true;
+            }
+
+            if (ClassName::within($to, $from) || ClassName::within($from, $to)) {
                 continue;
             }
 
@@ -117,87 +134,66 @@ final class NamespaceGraph
      * either stays inside a layer or is named in that layer's `mayUse`, so a freshly written
      * declaration never reports a breach on the next judge.
      *
-     * Only MAXIMAL namespaces are emitted — never one nested inside another. Declaring both a
-     * namespace and its child would split them into two layers and cancel the containment that
-     * makes their ordinary internal references legal, turning `App\Ai` ↔ `App\Ai\Contracts` into a
-     * pair of illegal arrows.
+     * Every namespace stays its OWN layer — collapsing a subtree into its root would be green and
+     * worthless, since one layer permitting everything constrains nothing. Declaring a namespace
+     * alongside its child does mean the two no longer contain one another, so the references
+     * between them need permitting like any other; that is exactly what reading `mayUse` from
+     * {@see $references} rather than {@see $arrows} provides.
      *
      * @return array<string, list<string>>  layer => the layers it may use
      */
     public function currentShape(): array
     {
-        $layers = self::maximal($this->nodes());
-        $shape = array_fill_keys($layers, []);
+        $shape = [];
 
-        foreach ($this->arrows as $from => $targets) {
-            $fromLayer = self::containing($layers, $from);
-
-            foreach (array_keys($targets) as $to) {
-                $toLayer = self::containing($layers, $to);
-
-                if ($fromLayer === null || $toLayer === null || $fromLayer === $toLayer) {
-                    continue;
-                }
-
-                $shape[$fromLayer][$toLayer] = true;
-            }
+        foreach ($this->nodes() as $namespace) {
+            $uses = array_keys($this->references[$namespace] ?? []);
+            sort($uses);
+            $shape[$namespace] = $uses;
         }
 
-        return $this->inDependencyOrder(array_map(
-            static function (array $uses): array {
-                $names = array_keys($uses);
-                sort($names);
-
-                return $names;
-            },
-            $shape,
-        ));
+        return $this->inDependencyOrder($shape);
     }
 
     /**
-     * The bottom of {@see currentShape}: the emitted layers that reach nothing else you own. A
-     * smaller declaration to start from, and one that can never be wrong — though it constrains
-     * only what it covers, since a layer may always use a namespace nobody declared.
+     * The bottom of {@see currentShape}: the layers whose whole SUBTREE reaches nothing else you
+     * own. A smaller declaration to start from, and one that can never be wrong — though it
+     * constrains only what it covers, since a layer may always use a namespace nobody declared.
+     *
+     * The subtree is the point. Declaring a namespace makes it absorb every descendant nobody
+     * declared, so it inherits their outgoing references too: `App\Ai` looks like a floor while
+     * `App\Ai\Tools` quietly reaches `App\Base`, and a declaration built on that would fail the
+     * moment it was written.
      *
      * @return array<string, list<string>>
      */
     public function floorShape(): array
     {
-        return array_filter($this->currentShape(), static fn (array $uses): bool => $uses === []);
+        return array_filter(
+            $this->currentShape(),
+            fn (array $uses, string $layer): bool => $uses === [] && ! $this->subtreeReachesOut($layer),
+            ARRAY_FILTER_USE_BOTH,
+        );
     }
 
     /**
-     * Drop every namespace that sits inside another in the same set, leaving only the outermost —
-     * the set that can be declared as layers without any of them swallowing another.
-     *
-     * @param  list<string>  $namespaces
-     * @return list<string>
+     * Does anything under $namespace reference something outside it?
      */
-    private static function maximal(array $namespaces): array
+    private function subtreeReachesOut(string $namespace): bool
     {
-        return array_values(array_filter(
-            $namespaces,
-            static fn (string $candidate): bool => ! array_any(
-                $namespaces,
-                static fn (string $other): bool => $other !== $candidate && ClassName::within($candidate, $other),
-            ),
-        ));
-    }
+        foreach ($this->references as $from => $targets) {
+            if (! ClassName::within($from, $namespace)) {
+                continue;
+            }
 
-    /**
-     * The emitted layer $namespace belongs to, or null when none covers it.
-     *
-     * @param  list<string>  $layers
-     */
-    private static function containing(array $layers, string $namespace): ?string
-    {
-        foreach ($layers as $layer) {
-            if (ClassName::within($namespace, $layer)) {
-                return $layer;
+            foreach (array_keys($targets) as $to) {
+                if (! ClassName::within($to, $namespace)) {
+                    return true;
+                }
             }
         }
 
-        return null;
+        return false;
     }
 
     /**

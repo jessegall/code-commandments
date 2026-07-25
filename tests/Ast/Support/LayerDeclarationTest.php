@@ -54,22 +54,20 @@ final class LayerDeclarationTest extends TestCase
     }
 
     #[DataProvider('shapes')]
-    public function test_no_emitted_layer_sits_inside_another(string $source): void
+    public function test_every_namespace_keeps_its_own_layer(string $source): void
     {
-        // The rule that makes the invariant possible: two layers where one contains the other would
-        // cancel the containment that keeps their internal references legal.
-        $layers = array_keys(NamespaceGraph::forCodebase(Codebase::fromString($source))->currentShape());
-        $nested = [];
+        // Greenness alone is a low bar: collapsing a whole tree into one root layer would satisfy it
+        // and constrain nothing. A declaration is only worth writing if it still distinguishes the
+        // namespaces, so the emission must name every one it saw.
+        $codebase = Codebase::fromString($source);
+        $graph = NamespaceGraph::forCodebase($codebase);
+        $shape = $graph->currentShape();
 
-        foreach ($layers as $layer) {
-            foreach ($layers as $other) {
-                if ($layer !== $other && str_starts_with(strtolower($layer) . '\\', strtolower($other) . '\\')) {
-                    $nested[] = "{$layer} is declared inside {$other}";
-                }
-            }
+        foreach (array_keys($graph->edges()) as $namespace) {
+            $this->assertArrayHasKey($namespace, $shape, "{$namespace} was swallowed by another layer");
         }
 
-        $this->assertSame([], $nested);
+        $this->assertSame(count($shape), count(array_unique(array_keys($shape))));
     }
 
     #[DataProvider('shapes')]
@@ -187,30 +185,49 @@ final class LayerDeclarationTest extends TestCase
                 namespace App\Ai\Tools { class Tool { public function s(): \App\Support\Str { return new \App\Support\Str; } } }
                 namespace App\Support { class Str { public function a(): \App\Ai\Agent { return new \App\Ai\Agent; } } }
             '],
+            'a namespace whose UNDECLARED descendant reaches out' => ['<?php
+                namespace App\Ai { class Agent {} }
+                namespace App\Ai\Tools { class Tool { public function b(): \App\Base\B { return new \App\Base\B; } } }
+                namespace App\Base { class B {} }
+                namespace App\Top { class T { public function a(): \App\Ai\Agent { return new \App\Ai\Agent; } } }
+            '],
+            'a reference to a class that is not here' => ['<?php
+                namespace App\Base { class Money {} }
+                namespace App\Web { class Page {
+                    public function m(): \App\Base\Money { return new \App\Base\Money; }
+                    public function gone(): \App\Base\Deleted { return new \App\Base\Deleted; }
+                } }
+            '],
             'an empty program' => ['<?php namespace App\Nothing;'],
         ];
     }
 
     // ── the decisions that make it hold ──────────────────────────────────────────────────────
 
-    public function test_only_the_outermost_of_a_nested_pair_is_declared(): void
+    public function test_a_nested_pair_becomes_two_layers_that_permit_each_other(): void
     {
+        // Declaring a namespace beside its own child means the two no longer contain one another,
+        // so what used to be internal traffic is now an arrow each way — and each is permitted.
+        // (The alternative, folding the child into the parent, would be green and say nothing.)
         $shape = $this->shape('<?php
             namespace App\Ai { class Agent { public function c(): \App\Ai\Contracts\Tool { return new \App\Ai\Contracts\Tool; } } }
             namespace App\Ai\Contracts { class Tool { public function a(): \App\Ai\Agent { return new \App\Ai\Agent; } } }
         ');
 
-        $this->assertSame(['App\Ai' => []], $shape);
+        $this->assertSame([
+            'App\Ai' => ['App\Ai\Contracts'],
+            'App\Ai\Contracts' => ['App\Ai'],
+        ], $shape);
     }
 
-    public function test_a_deep_nest_collapses_to_its_root(): void
+    public function test_a_deep_nest_keeps_every_level_it_saw(): void
     {
         $shape = $this->shape('<?php
             namespace App\A { class One { public function b(): \App\A\B\C\Three { return new \App\A\B\C\Three; } } }
             namespace App\A\B\C { class Three {} }
         ');
 
-        $this->assertSame(['App\A' => []], $shape);
+        $this->assertSame(['App\A\B\C' => [], 'App\A' => ['App\A\B\C']], $shape);
     }
 
     public function test_siblings_are_separate_layers_and_name_each_other(): void

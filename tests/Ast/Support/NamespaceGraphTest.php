@@ -92,17 +92,21 @@ final class NamespaceGraphTest extends TestCase
         $this->assertSame([['App\Core', 'App\Web']], $this->graph($code)->mutualPairs());
     }
 
-    public function test_the_emitted_shape_never_declares_a_namespace_inside_another(): void
+    public function test_the_emitted_shape_permits_a_nested_pair_in_both_directions(): void
     {
-        // Declaring both a namespace and its child splits them into two layers and cancels the
-        // containment that makes their internal references legal — so only the outermost is emitted.
+        // The graph drops a nested pair's arrows — for DIRECTION the two are one unit — but a
+        // declaration that names both must still permit the traffic between them.
         $code = <<<'PHP'
         <?php
         namespace App\Ai { class Agent { public function c(): \App\Ai\Contracts\Tool { return new \App\Ai\Contracts\Tool; } } }
         namespace App\Ai\Contracts { class Tool { public function a(): \App\Ai\Agent { return new \App\Ai\Agent; } } }
         PHP;
 
-        $this->assertSame(['App\Ai' => []], $this->graph($code)->currentShape());
+        $this->assertSame([], $this->graph($code)->edges(), 'the direction graph ignores a nested pair');
+        $this->assertSame([
+            'App\Ai' => ['App\Ai\Contracts'],
+            'App\Ai\Contracts' => ['App\Ai'],
+        ], $this->graph($code)->currentShape());
     }
 
     public function test_the_emitted_shape_names_what_each_layer_already_reaches(): void

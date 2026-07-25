@@ -108,6 +108,32 @@ final class NamespaceDependencyDetectorTest extends TestCase
         $this->assertSame(['App\Ui\Elements\Button::card'], $this->scopes($detector->find(Codebase::fromString($code))));
     }
 
+    public function test_a_name_that_resolves_to_no_class_here_is_not_a_dependency(): void
+    {
+        // Found on a real tree: an import left behind by a class that moved away still LOOKS like it
+        // points into a declared layer, but there is nothing there to depend on. Judging it also made
+        // the rule disagree with the graph that proposes declarations, so `layers` could emit a
+        // config that failed on the very next judge.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Ui\Shared { class Card {} }
+        namespace App\Ui\Elements { class Button { public function gone(): \App\Ui\Shared\Deleted { return new \App\Ui\Shared\Deleted; } } }
+        PHP;
+
+        $this->assertSame([], $this->judge($code));
+    }
+
+    public function test_a_vendor_class_under_a_declared_prefix_is_not_a_dependency(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        namespace App\Ui\Shared { class Card {} }
+        namespace App\Ui\Elements { class Button { public function v(): \App\Ui\Shared\Vendor\Thing { return new \App\Ui\Shared\Vendor\Thing; } } }
+        PHP;
+
+        $this->assertSame([], $this->judge($code));
+    }
+
     public function test_a_sibling_namespace_is_not_within_a_layer_that_merely_shares_a_prefix(): void
     {
         // `App\UiKit` is NOT inside `App\Ui` — a layer is matched on segment boundaries, never on a

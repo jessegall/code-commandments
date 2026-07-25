@@ -189,9 +189,16 @@ already implied by your code and prints the declaration; `--write` splices it in
 proposes is today's shape, so everything already passing keeps passing — it costs
 nothing to adopt and refuses the *next* arrow pointing somewhere new.
 
-Namespaces sitting in a cycle can't be placed in any order, so they're reported
-separately and left out of the proposal. Break those first — `judge --sin=namespace-cycle`
-needs no configuration at all, because a cycle is wrong under any stack.
+What it emits is green by construction: every reference already in your tree either
+stays inside a layer or is named in that layer's `mayUse`, and no layer is ever
+declared inside another. Write it and the next judge is silent — the declaration
+starts earning its keep on the arrow you draw tomorrow.
+
+Namespaces caught in a cycle are declared as they stand, each permitting the other,
+because this command records the shape you have rather than the one you want. They're
+listed separately too, since no order can place them: break them with
+`judge --sin=namespace-cycle`, which needs no configuration at all, because a cycle is
+wrong under any stack.
 
 ## Freezing a file
 
