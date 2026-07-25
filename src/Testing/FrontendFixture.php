@@ -13,16 +13,11 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 /**
  * A frontend fixture with `@sin` markers on `.vue`/`.ts` components; full-stack with optional
  * `.php` backend shapes reaching frontend detectors via Bridge.
+ *
+ * @property-read list<Detector> $detectors
  */
-final class FrontendFixture implements Fixture
+final class FrontendFixture extends EngineFixture
 {
-    /**
-     * @param  list<Detector>  $detectors
-     */
-    public function __construct(
-        private readonly string $path,
-        private readonly array $detectors,
-    ) {}
 
     public function markerResults(): array
     {

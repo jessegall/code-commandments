@@ -26,4 +26,30 @@ final class ClassName
     {
         return explode('\\', ltrim($fqcn, '\\'))[0];
     }
+
+    /**
+     * Everything BEFORE the last segment — `App\Data\OrderData` → `App\Data`; `''` for a name at global
+     * scope. The namespace a class lives in, which is what a layer/boundary rule judges it by.
+     */
+    public static function namespace(string $fqcn): string
+    {
+        $parts = explode('\\', ltrim($fqcn, '\\'));
+
+        array_pop($parts);
+
+        return implode('\\', $parts);
+    }
+
+    /**
+     * Does $fqcn live inside $namespace — the same namespace, or one nested under it? Compared on
+     * SEGMENT boundaries, so `App\Ui\Elements` is within `App\Ui` but `App\UiKit` is not (a bare
+     * `str_starts_with` would wrongly say it is). Case-insensitive, as PHP namespaces are.
+     */
+    public static function within(string $fqcn, string $namespace): bool
+    {
+        $name = strtolower(ltrim($fqcn, '\\'));
+        $within = strtolower(trim($namespace, '\\'));
+
+        return $within === '' || $name === $within || str_starts_with($name, $within . '\\');
+    }
 }

@@ -12,17 +12,11 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * class-scoped diversity scenarios. Parameterised by the path to scan and the
  * backend detectors to verify — the package points it at its own Shop app and full
  * catalog; a consumer points it at its own directory and custom detectors.
+ *
+ * @property-read list<Detector> $detectors
  */
-final class BackendFixture implements Fixture
+final class BackendFixture extends EngineFixture
 {
-    /**
-     * @param  list<Detector>  $detectors
-     */
-    public function __construct(
-        private readonly string $path,
-        private readonly array $detectors,
-    ) {}
-
     public function markerResults(): array
     {
         return new SinfulMarkerVerifier()->verify($this->codebase(), $this->detectors);

@@ -49,4 +49,7 @@ phpcs.xml
 
 # code-commandments self-judgment runtime artifacts
 .commandments/
+# …except a FIXTURE's own: a fixture directory IS a project, and the rules it declares there
+# are part of the spec the harness proves (see Testing\EngineFixture).
+!/tests/Fixtures/*/.commandments/
 .ast-cache/

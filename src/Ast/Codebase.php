@@ -11,6 +11,7 @@ use FilesystemIterator;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -26,6 +27,7 @@ use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Enum_;
+use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
@@ -81,6 +83,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /** @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null */
     private ?array $nodeBuckets = null;
 
+    /** @var array<class-string<Node>, list<class-string<Node>>>  requested node class => the bucket keys it covers */
+    private array $bucketsByType = [];
+
     /** @var array<string, string>|null */
     private ?array $sourceByPath = null;
 
@@ -121,13 +126,19 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * Every [node, file] pair of the given exact node classes — pulled from an
-     * index bucketed by node type and walked ONCE, then cached for the codebase's
-     * life. Pass null for every node.
+     * Every [node, file] pair of the given node classes — pulled from an index
+     * bucketed by node type and walked ONCE, then cached for the codebase's life.
+     * Pass null for every node.
      *
      * This is the engine's anti-quadratic guarantee: a selector visits only the
      * nodes of its own kind (every `new`, every parameter, …), so a query run once
      * per candidate scans a small bucket — not the whole tree on every call.
+     *
+     * A requested type matches its SUBCLASSES too, so a selector may name the base
+     * kind it means (`Name`, which php-parser resolves into `Name\FullyQualified`)
+     * without having to enumerate the leaves php-parser happens to use — an omission
+     * that would otherwise show up as a selector silently matching nothing. Name
+     * disjoint types: a base AND its own subclass in one call yields that subclass twice.
      *
      * @param  list<class-string<Node>>|null  $types
      * @return iterable<array{0: Node, 1: ParsedFile}>
@@ -137,8 +148,25 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $buckets = $this->nodeBuckets ??= $this->bucketNodes();
 
         foreach ($types ?? array_keys($buckets) as $type) {
-            yield from $buckets[$type] ?? [];
+            foreach ($this->bucketsOf($type) as $bucket) {
+                yield from $buckets[$bucket];
+            }
         }
+    }
+
+    /**
+     * The bucket keys a requested node class covers — itself and every subclass of it that the
+     * scan actually produced. Memoised per codebase, since a query asks on every run.
+     *
+     * @param  class-string<Node>  $type
+     * @return list<class-string<Node>>
+     */
+    private function bucketsOf(string $type): array
+    {
+        return $this->bucketsByType[$type] ??= array_values(array_filter(
+            array_keys($this->nodeBuckets ?? []),
+            static fn (string $bucket): bool => $bucket === $type || is_subclass_of($bucket, $type),
+        ));
     }
 
     /**
@@ -340,6 +368,34 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function whereClassExtending(string $parent): Query
     {
         return $this->whereClass()->where(fn (AstNode $node): bool => $this->extends($node->enclosingClassName(), $parent));
+    }
+
+    /**
+     * Every reference to a class-like NAME anywhere in the program — a `use` import, `extends`,
+     * `implements`, a `use` of a trait, a parameter/return/property type, `new X`, `X::method()`,
+     * `X::CONST`, `instanceof X`, a `catch (X)`, an attribute. In short: the codebase's dependency
+     * EDGES, in one selector. Names arrive fully qualified (the scan resolves them), so read the
+     * target with {@see AstNode::referencedClassName} and the referring side with
+     * {@see AstNode::namespaceName}.
+     *
+     * Defined by what a class reference is NOT, so nothing is missed as the language grows: the
+     * namespace DECLARATION (that says where code lives, not what it depends on), function and
+     * constant names (they fall back to the global scope and are not classes), and the relative
+     * `self`/`static`/`parent` (which can never cross a boundary).
+     */
+    public function whereClassReference(): Query
+    {
+        return new Query($this, static function (Node $node): bool {
+            if (! $node instanceof Name || $node->isSpecialClassName()) {
+                return false;
+            }
+
+            $parent = $node->getAttribute('parent');
+
+            return ! $parent instanceof Namespace_
+                && ! $parent instanceof FuncCall
+                && ! $parent instanceof ConstFetch;
+        }, [Name::class]);
     }
 
     /**

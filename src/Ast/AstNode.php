@@ -50,6 +50,7 @@ use PhpParser\Node\PropertyHook;
 use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\UnionType;
+use PhpParser\Node\UseItem;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
@@ -70,6 +71,7 @@ use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Interface_;
+use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Stmt\Switch_;
@@ -3016,6 +3018,41 @@ class AstNode
         }
 
         return ($class->namespacedName ?? null)?->toString() ?? $class->name?->toString();
+    }
+
+    /**
+     * The namespace this node is DECLARED in — `App\Ui\Shared` — or null at global scope. Read from
+     * the enclosing `namespace` statement, so it answers for a node at file scope too (a `use`
+     * import, a top-level function), where {@see enclosingClassName} has nothing to offer.
+     */
+    public function namespaceName(): ?string
+    {
+        $namespace = $this->node instanceof Namespace_
+            ? $this->node
+            : $this->walkUp(static fn (Node $node): bool => $node instanceof Namespace_);
+
+        return $namespace?->name?->toString();
+    }
+
+    /**
+     * Is this class-like reference an `use X;` IMPORT rather than a use SITE? An import only lets
+     * the file spell the name short; the dependency itself happens where the name is USED — which
+     * is where a boundary rule should point the fix, and the only place a declaration-scoped
+     * marker can reach.
+     */
+    public function isImportedName(): bool
+    {
+        return $this->parent()->node instanceof UseItem;
+    }
+
+    /**
+     * The fully-qualified class-like name THIS node refers to — for a `Name` node selected by
+     * {@see Codebase::whereClassReference} (an import, a type, `new X`, `X::…`). Null on any other
+     * node. The other end of a dependency edge, to {@see namespaceName}'s near end.
+     */
+    public function referencedClassName(): ?string
+    {
+        return $this->node instanceof Name ? $this->node->toString() : null;
     }
 
     /**

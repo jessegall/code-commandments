@@ -298,7 +298,10 @@ final class Config
         }
 
         $detectors = array_values($detectors);
-        $this->runConfigurators($detectors);
+
+        foreach ($this->tune($detectors) as $class) {
+            throw new InvalidArgumentException("configure({$class}): that detector is not registered, or was disabled.");
+        }
 
         return [
             'backend' => array_values(array_filter($detectors, static fn (Detector $d): bool => ! $d instanceof FrontendDetector)),
@@ -375,12 +378,24 @@ final class Config
     }
 
     /**
-     * Hand each configurator its detector, resolved by the closure's first parameter type.
+     * Apply ONLY this config's {@see configure} tuning to the given detectors — no package
+     * filtering, no disabling — mutating each targeted detector in place, and REPORT the
+     * configured classes the set didn't contain instead of throwing. {@see apply} turns that
+     * report into the hard error a project's own config deserves; a caller holding a deliberate
+     * SUBSET tunes what it has and ignores the rest.
+     *
+     * That subset caller is the fixture harness: a fixture directory is itself a project, so it
+     * declares its detectors' settings in its own `.commandments/config.php`
+     * ({@see Testing\FixtureConfig}) — which is what lets a detector that stays INERT until
+     * declared (layer declarations, a threshold) be proven on a fixture at all.
      *
      * @param  list<Detector>  $detectors
+     * @return list<class-string>  the configured classes absent from $detectors
      */
-    private function runConfigurators(array $detectors): void
+    public function tune(array $detectors): array
     {
+        $unmatched = [];
+
         foreach ($this->configurators as $configurator) {
             $type = (new ReflectionFunction($configurator))->getParameters()[0] ?? null;
             $class = $type?->getType() instanceof ReflectionNamedType ? $type->getType()->getName() : null;
@@ -400,10 +415,14 @@ final class Config
             }
 
             if ($target === null) {
-                throw new InvalidArgumentException("configure({$class}): that detector is not registered, or was disabled.");
+                $unmatched[] = $class;
+
+                continue;
             }
 
             $configurator($target);
         }
+
+        return $unmatched;
     }
 }
