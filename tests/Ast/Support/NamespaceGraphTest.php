@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\NamespaceGraph;
+use JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector;
 use PHPUnit\Framework\TestCase;
 
 final class NamespaceGraphTest extends TestCase
@@ -89,6 +90,64 @@ final class NamespaceGraphTest extends TestCase
         PHP;
 
         $this->assertSame([['App\Core', 'App\Web']], $this->graph($code)->mutualPairs());
+    }
+
+    public function test_the_emitted_shape_never_declares_a_namespace_inside_another(): void
+    {
+        // Declaring both a namespace and its child splits them into two layers and cancels the
+        // containment that makes their internal references legal — so only the outermost is emitted.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Ai { class Agent { public function c(): \App\Ai\Contracts\Tool { return new \App\Ai\Contracts\Tool; } } }
+        namespace App\Ai\Contracts { class Tool { public function a(): \App\Ai\Agent { return new \App\Ai\Agent; } } }
+        PHP;
+
+        $this->assertSame(['App\Ai' => []], $this->graph($code)->currentShape());
+    }
+
+    public function test_the_emitted_shape_names_what_each_layer_already_reaches(): void
+    {
+        $shape = $this->graph($this->stack())->currentShape();
+
+        $this->assertSame(['App\Core' => [], 'App\Web' => ['App\Core']], $shape);
+    }
+
+    public function test_a_freshly_emitted_declaration_passes_its_own_judgement(): void
+    {
+        // The invariant the whole command rests on: what it writes must be green on the next judge,
+        // or it hands you a config that immediately fails. Every shape below mixes the traps —
+        // nested namespaces, siblings that reference each other, and a mutual pair.
+        $sources = [
+            'nested + siblings' => <<<'PHP'
+                <?php
+                namespace App\Ui { class Panel { public function e(): \App\Ui\Enums\Size { return \App\Ui\Enums\Size::Big; } } }
+                namespace App\Ui\Enums { enum Size { case Big; } }
+                namespace App\Support { class Str { public function e(): \App\Support\Enums\Case_ { return new \App\Support\Enums\Case_; } } }
+                namespace App\Support\Enums { class Case_ {} }
+                namespace App\Mcp { class Server { public function s(): \App\Support\Str { return new \App\Support\Str; } } }
+                PHP,
+            'a mutual pair' => <<<'PHP'
+                <?php
+                namespace App\Billing { class Invoice { public function o(): \App\Orders\Order { return new \App\Orders\Order; } } }
+                namespace App\Orders { class Order { public function i(): \App\Billing\Invoice { return new \App\Billing\Invoice; } } }
+                PHP,
+        ];
+
+        foreach ($sources as $label => $source) {
+            $codebase = Codebase::fromString($source);
+            $detector = new NamespaceDependencyDetector();
+
+            foreach (NamespaceGraph::forCodebase($codebase)->currentShape() as $layer => $mayUse) {
+                $detector->layer($layer, $mayUse);
+            }
+
+            $this->assertSame([], $detector->find($codebase), "{$label}: the emitted declaration must judge clean");
+        }
+    }
+
+    public function test_the_floor_is_the_emitted_layers_that_reach_nothing_of_yours(): void
+    {
+        $this->assertSame(['App\Core' => []], $this->graph($this->stack())->floorShape());
     }
 
     private function stack(): string

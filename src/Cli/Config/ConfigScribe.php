@@ -158,7 +158,11 @@ final class ConfigScribe
             return false;
         }
 
-        $anchor = $this->call('disable') ?? $this->call('paths');
+        // `paths()` first: it is the one call that lives in the config's OWN closure. A real config
+        // carries `$disabledSkills`/`$disabledSins` menus that are closures full of `disable()`
+        // calls, and anchoring on the first `disable()` in the file dropped the layer declaration
+        // inside one of those menus — where it reads as if the layering were a disablement.
+        $anchor = $this->call('paths') ?? $this->call('disable');
 
         if ($anchor === null) {
             return false;

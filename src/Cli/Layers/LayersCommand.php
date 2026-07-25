@@ -36,47 +36,15 @@ final class LayersCommand implements Command
 
         $order = $graph->dependencyOrder();
         $floorOnly = $input->hasFlag('floor');
-        $proposed = $floorOnly ? $this->flat($graph->foundation()) : $this->wholeShape($graph, $order['ordered']);
+        $proposed = $floorOnly ? $graph->floorShape() : $graph->currentShape();
 
-        $this->report($graph, $order, $graph->foundation(), $proposed, $floorOnly);
+        $this->report($graph, $order, array_keys($graph->floorShape()), $proposed, $floorOnly);
 
         if ($proposed === []) {
             return 0;
         }
 
         return $input->hasFlag('write') ? $this->write($project, $proposed) : 0;
-    }
-
-    /**
-     * The foundation as layers that may use nothing declared.
-     *
-     * @param  list<string>  $namespaces
-     * @return array<string, list<string>>
-     */
-    private function flat(array $namespaces): array
-    {
-        return array_combine($namespaces, array_fill(0, count($namespaces), []));
-    }
-
-    /**
-     * Every orderable namespace with what it references today — the architecture as it stands,
-     * turned into a declaration that holds it there.
-     *
-     * @param  list<string>  $ordered
-     * @return array<string, list<string>>
-     */
-    private function wholeShape(NamespaceGraph $graph, array $ordered): array
-    {
-        $edges = $graph->edges();
-        $layers = [];
-
-        foreach ($ordered as $namespace) {
-            $uses = $edges[$namespace] ?? [];
-            sort($uses);
-            $layers[$namespace] = $uses;
-        }
-
-        return $layers;
     }
 
     /**
