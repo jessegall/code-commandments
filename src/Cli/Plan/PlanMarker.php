@@ -124,5 +124,4 @@ final class PlanMarker
     {
         $this->file->write([$state->head, (string) $state->stuck, (string) $state->total], self::EXPLANATION);
     }
-
 }

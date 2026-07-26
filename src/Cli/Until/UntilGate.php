@@ -352,5 +352,4 @@ final class UntilGate
 
         return implode(' ', $parts);
     }
-
 }

@@ -243,5 +243,4 @@ final class JudgeReminder extends Hook
     {
         return $ws->path('.judge-reminded');
     }
-
 }

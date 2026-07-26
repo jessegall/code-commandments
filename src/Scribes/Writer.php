@@ -136,6 +136,68 @@ final class Writer
         $this->draft->edit(new Span($this->path, $this->source, $start, $end), $text);
     }
 
+    /**
+     * Relocate declarations, in the order given, to just above $anchor — each carried with its
+     * docblock, its attributes and its own line, and separated by a blank line. One insertion and one
+     * deletion per node, so the moved text is the original bytes: no reprinting, no reformatting.
+     *
+     * @param  list<Node>  $nodes  each must sit AFTER $anchor in the same file
+     */
+    public function moveBefore(array $nodes, Node $anchor): void
+    {
+        $blocks = [];
+
+        foreach ($nodes as $node) {
+            [$start, $end] = $this->declarationBounds($node);
+            $blocks[] = trim(Span::slice($this->source, $start, $end - 1), "\n");
+            $this->draft->edit(new Span($this->path, $this->source, $start, $end), '');
+        }
+
+        if ($blocks !== []) {
+            // The anchor's own line — NOT its blank-line-swallowing bounds, or the block would land
+            // above the blank that already separates the anchor from the head of the class.
+            $this->insertAt($this->lineStartOf($anchor), implode("\n\n", $blocks) . "\n\n");
+        }
+    }
+
+    /**
+     * Where a declaration really begins and ends in the source: from the start of the line its
+     * docblock (or its attributes, or the declaration itself) opens on, through the newline that ends
+     * it. The BLANK line above is taken too, so lifting the block out closes the gap behind it instead
+     * of leaving one hanging before the next member (or the closing brace).
+     *
+     * @return array{0: int, 1: int}  [start, end-exclusive]
+     */
+    private function declarationBounds(Node $node): array
+    {
+        $start = $this->lineStartOf($node);
+
+        while ($start >= 2 && $this->source[$start - 1] === "\n" && $this->source[$start - 2] === "\n") {
+            $start--;
+        }
+
+        $end = $node->getEndFilePos() + 1;
+
+        return [$start, ($this->source[$end] ?? '') === "\n" ? $end + 1 : $end];
+    }
+
+    /**
+     * The offset the declaration's own line begins at — its docblock or attributes included, its
+     * indentation kept, and nothing of the line before it.
+     */
+    private function lineStartOf(Node $node): int
+    {
+        $start = $node->getStartFilePos();
+
+        foreach ($node->getComments() as $comment) {
+            $start = min($start, $comment->getStartFilePos());
+        }
+
+        $newlineBefore = Span::before($this->source, $start, "\n");
+
+        return $newlineBefore === null ? 0 : $newlineBefore + 1;
+    }
+
     /** Delete the whole line(s) a statement occupies — its indentation through the trailing newline. */
     public function deleteStatementLine(Node $statement): void
     {

@@ -1223,6 +1223,21 @@ class AstNode
     }
 
     /**
+     * The FIRST method declared by the class this node belongs to — the line every declaration must
+     * stand above. Null outside a class, or in one that declares no method at all.
+     */
+    public function firstMethodOfItsClass(): ?ClassMethod
+    {
+        foreach ($this->enclosingClass()?->stmts ?? [] as $member) {
+            if ($member instanceof ClassMethod) {
+                return $member;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Does any comment attached to this node hold commented-out PHP rather than prose? Dead code kept
      * in a comment is its own problem, and never prose to be read as documentation.
      * {@see \JesseGall\CodeCommandments\Ast\Support\CommentedCode}

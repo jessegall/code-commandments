@@ -152,5 +152,4 @@ final class HookEvent
 
         return false;
     }
-
 }
