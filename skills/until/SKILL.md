@@ -27,6 +27,8 @@ Set a condition the moment the user expresses one, in their own words:
 | "keep going until the tests pass" | `vendor/bin/commandments until "the full test suite passes"` |
 | "don't stop until the build is green and the README is updated" | two calls — one condition each |
 | "/until the linter is clean" | `vendor/bin/commandments until "the linter is clean"` |
+| "add it to the to-do list" | the gate **and** a TodoWrite item — see below |
+| "don't forget to X" / "remind me to X" / "later" | same: gate **and** tracker |
 
 Write the condition **as a checkable statement**, not as a task: "the full test suite passes", not
 "run the tests". You will be asked to verify it later, so it has to be something you can *check*.
@@ -36,6 +38,25 @@ One condition per call — stacking them keeps each one independently verifiable
 to-do list (TodoWrite) as a pending item, so the user can see at a glance what is holding you. The
 gate's marker file is invisible to them; the to-do list is not. Keep the two in sync: when you strike
 a condition off with `until met <n>`, mark its to-do item completed in the same breath.
+
+### A to-do item is NOT a gate
+
+The two are not interchangeable, and only one of them survives you:
+
+| | To-do list (TodoWrite) | The gate (`commandments until`) |
+|---|---|---|
+| Who sees it | the user, live | the Stop hook |
+| Holds a stop | never | every stop, until verified |
+| Lives past this session | no | yes — it's a file |
+
+So when the user defers something — **"add it to the to-do list"**, "don't forget to…", "remind me
+to…", "later", "when you're done" — that phrasing is a DEFERRAL, and it takes **both**: the gate,
+which is what actually brings the task back, and the tracker item, which is what shows them it
+exists. Doing only the tracker satisfies the letter of "add it to the to-do list" and loses the task
+the moment the session ends — which is exactly the failure this rule exists to stop.
+
+Read it the other way too: nothing about the word "to-do" excuses you from the gate. If the user is
+handing you work to do later, it is a condition.
 
 Do **not** set a gate on your own initiative. It is the user's instrument; setting one for yourself
 just to stay busy is out of bounds.
@@ -49,16 +70,17 @@ puts this triage in front of you while work is in flight.
 - **Steering the work in hand** — a correction, a change of approach, "while you're in there, rename
   that too", anything about the phase you are on. → **Do it now.** Parking it is a way of not doing
   it, and leaves the work wrong in the meantime.
-- **A separate task**, one they explicitly deferred ("later", "when you're done", "after this"), or
-  anything that would derail the phase you're in. → **Park it**:
-  `vendor/bin/commandments until "<the task, as a statement you can verify>"`, then carry straight
-  on with what you were doing. It will hold your stop at the end, so it cannot be lost.
+- **A separate task**, one they explicitly deferred ("later", "when you're done", "after this", "add
+  it to the to-do list", "don't forget to…"), or anything that would derail the phase you're in. →
+  **Park it**, which is BOTH halves: `vendor/bin/commandments until "<the task, as a statement you
+  can verify>"` **and** the same statement in your to-do list. Then carry straight on with what you
+  were doing. The gate holds your stop at the end, so the task cannot be lost.
 - **Unsure?** Cheap and inside the current phase → do it. Opens a new front → park it. The
   tie-breaker: would doing it now change what this phase is about?
 
 Park it as something **checkable** — "the changelog has an entry for this release", not "look at the
-changelog" — because you must verify it before you may stop. Add it to your to-do list too, same as
-any condition, so the parked task is visible to the user and not just buried in the gate.
+changelog" — because you must verify it before you may stop. The to-do item is the visible half, never
+the whole of it: a tracker entry with no gate behind it is a task you have agreed to lose.
 
 ## A plan takes precedence
 

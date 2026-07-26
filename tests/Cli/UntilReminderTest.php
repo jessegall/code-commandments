@@ -147,6 +147,19 @@ final class UntilReminderTest extends TestCase
         $this->assertStringContainsString('until "', $context, 'with the command to park it');
     }
 
+    public function test_the_triage_says_a_to_do_item_is_not_parking(): void
+    {
+        // #406: "add it to the to-do list" was being satisfied with a tracker entry alone, which holds
+        // no stop and dies with the session — so the deferred task was silently lost.
+        $this->gate()->add('the changelog has an entry');
+
+        $context = (string) ($this->prompt()[0]['hookSpecificOutput']['additionalContext'] ?? '');
+
+        $this->assertStringContainsString('add it to the to-do list', $context, 'the wording is named as a deferral');
+        $this->assertStringContainsString('A TO-DO ITEM IS NOT PARKING', $context);
+        $this->assertStringContainsString('TodoWrite', $context, 'and the visible half is still asked for');
+    }
+
     public function test_the_triage_also_fires_during_a_plan_with_no_gate_yet(): void
     {
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha');

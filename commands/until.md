@@ -19,3 +19,8 @@ Do this now, in order:
    command / read the output — never assume), run `vendor/bin/commandments until met <n>`. If you
    are genuinely blocked, run `vendor/bin/commandments until stuck` and tell the user what blocks
    you. Never `until clear` to escape a condition you haven't met.
+
+Steps 1 and 2 are one action, not a choice between two. That holds whenever the user defers
+something — "add it to the to-do list", "don't forget to…", "later" — because a tracker item holds
+no stop and is gone with the session: the gate is what brings the task back, the to-do item is what
+makes it visible. Doing only the tracker loses the task quietly.
