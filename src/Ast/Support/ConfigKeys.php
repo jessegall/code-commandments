@@ -28,6 +28,9 @@ final class ConfigKeys
 {
     use MemoisedPerCodebase;
 
+    /** @var array<string, bool> project root + config name => is it a vendor-published file */
+    private static array $published = [];
+
     /**
      * @param  array<int, string>   $declared  ArrayItem object-id => its dotted key
      * @param  list<string>         $literals  every string literal in the codebase that could name a key
@@ -136,9 +139,6 @@ final class ConfigKeys
 
         return self::isPublishedByAPackage(dirname($path, 2), $name) ? null : $name;
     }
-
-    /** @var array<string, bool> project root + config name => is it a vendor-published file */
-    private static array $published = [];
 
     private static function isPublishedByAPackage(string $root, string $name): bool
     {

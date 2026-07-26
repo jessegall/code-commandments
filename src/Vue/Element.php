@@ -16,6 +16,12 @@ class Element
 {
     public ?Element $parent = null;
 
+    /** A real component carries CONTENT (this many elements) … */
+    protected const int MIN_COMPONENT_ELEMENTS = 6;
+
+    /** … AND its own internal STRUCTURE (this many levels — not a flat wrapper). */
+    protected const int MIN_COMPONENT_DEPTH = 3;
+
     /**
      * @param  array<string, string|null>  $attributes  directive name => value (null = valueless)
      * @param  list<Element>  $children
@@ -562,12 +568,6 @@ class Element
 
         return $size;
     }
-
-    /** A real component carries CONTENT (this many elements) … */
-    protected const int MIN_COMPONENT_ELEMENTS = 6;
-
-    /** … AND its own internal STRUCTURE (this many levels — not a flat wrapper). */
-    protected const int MIN_COMPONENT_DEPTH = 3;
 
     /**
      * Is this element substantial enough to earn its own component file? A component is a

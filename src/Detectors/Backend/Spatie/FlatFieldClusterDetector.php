@@ -31,13 +31,13 @@ final class FlatFieldClusterDetector implements Detector
     /** Builtin scalar leaves that nest cleanly into a value object. */
     private const array SCALARS = ['string', 'int', 'float', 'bool'];
 
+    /** A value object is a SMALL bundle; a class with more public fields than this is an entity, not a VO. */
+    private const int MAX_VALUE_OBJECT_FIELDS = 6;
+
     public function sin(): Sin
     {
         return new FlatFieldCluster();
     }
-
-    /** A value object is a SMALL bundle; a class with more public fields than this is an entity, not a VO. */
-    private const int MAX_VALUE_OBJECT_FIELDS = 6;
 
     public function find(Codebase $codebase): array
     {

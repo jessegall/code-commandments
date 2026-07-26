@@ -55,12 +55,12 @@ final class DataClassShape
         'MapName',
     ];
 
+    use MemoisedPerCodebase;
+
     /**
      * @param  array<string, Class_>  $classes  FQCN => declaration
      */
     private function __construct(private readonly array $classes) {}
-
-    use MemoisedPerCodebase;
 
     /**
      * The class declaration for $fqcn if it lives in the scanned codebase, else null —

@@ -33,6 +33,9 @@ final class Repent implements Command
     /** Keep package-gated scribes even when this project lacks the package (cross-project calibration). */
     private bool $ignorePackages = false;
 
+    /** Show the post-repent feedback nudge once every this many applies — present, not spammy. */
+    private const int FEEDBACK_INTERVAL = 4;
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -99,9 +102,6 @@ final class Repent implements Command
 
         return 0;
     }
-
-    /** Show the post-repent feedback nudge once every this many applies — present, not spammy. */
-    private const int FEEDBACK_INTERVAL = 4;
 
     /**
      * Invite the agent to judge the auto-fix it just ran and report anything wrong — a rate-limited

@@ -118,6 +118,15 @@ final class SpatieDataNode extends NodeMatch
         'ArrayableTransformer',
     ];
 
+    /** The Spatie marker type for a field that may be genuinely ABSENT (omitted from output, not `null`). */
+    public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
+
+    /** The Spatie TypeScript-transformer attribute that compiles a Data class to a frontend type. */
+    public const string TYPE_SCRIPT = 'Spatie\\TypeScriptTransformer\\Attributes\\TypeScript';
+
+    /** Spatie's collection wrapper — a valid RETURN of `::collect()`, but never a PROPERTY type. */
+    public const string DATA_COLLECTION = 'Spatie\\LaravelData\\DataCollection';
+
     /**
      * Does this `#[WithTransformer(...)]` change a property's wire shape WITHOUT a paired
      * `#[TypeScriptType]` / `#[LiteralTypeScriptType]` declaring it? A built-in transformer the generator
@@ -612,9 +621,6 @@ final class SpatieDataNode extends NodeMatch
             && $assign->var->name->toString() === $name;
     }
 
-    /** The Spatie marker type for a field that may be genuinely ABSENT (omitted from output, not `null`). */
-    public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
-
     /**
      * Is this an "absent" Optional construction — a raw `new Optional` OR Spatie's `Optional::create()`
      * factory? The null→Optional map reads the same either way, so every rule about it works on both forms
@@ -837,9 +843,6 @@ final class SpatieDataNode extends NodeMatch
         return false;
     }
 
-    /** The Spatie TypeScript-transformer attribute that compiles a Data class to a frontend type. */
-    public const string TYPE_SCRIPT = 'Spatie\\TypeScriptTransformer\\Attributes\\TypeScript';
-
     /**
      * Is this class a PAGE OBJECT missing `#[TypeScript]`? A page object travels back in a response and is
      * read by a `.vue` page — so it MUST generate a frontend type; without `#[TypeScript]` the page consumes
@@ -958,9 +961,6 @@ final class SpatieDataNode extends NodeMatch
 
         return null;
     }
-
-    /** Spatie's collection wrapper — a valid RETURN of `::collect()`, but never a PROPERTY type. */
-    public const string DATA_COLLECTION = 'Spatie\\LaravelData\\DataCollection';
 
     /**
      * Is this field TYPED as `DataCollection` (`DataCollection $x`, `DataCollection|null`, or a hook of that

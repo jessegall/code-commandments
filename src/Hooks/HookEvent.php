@@ -15,6 +15,9 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class HookEvent
 {
+    /** Background-task statuses that are FINISHED — work no longer holding the turn open. */
+    private const array SETTLED_STATUSES = ['completed', 'done', 'failed', 'cancelled', 'canceled', 'error'];
+
     /**
      * @param  array<string, mixed>  $payload
      */
@@ -150,6 +153,4 @@ final class HookEvent
         return false;
     }
 
-    /** Background-task statuses that are FINISHED — work no longer holding the turn open. */
-    private const array SETTLED_STATUSES = ['completed', 'done', 'failed', 'cancelled', 'canceled', 'error'];
 }

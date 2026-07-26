@@ -24,6 +24,15 @@ final class JudgeReminder extends Hook
     /** The marker section separator: the reminded file set sits above it, the explanation below. */
     private const string SEPARATOR = '-----';
 
+    /** What the marker file explains about itself, below the set (the {@see stored} read stops at the separator). */
+    private const string EXPLANATION = <<<'TXT'
+        Batch marker for the code-commandments judge reminder (`commandments judge-reminder`, wired as
+        Stop + PreToolUse hooks). The lines above the separator are the changed-file set it last
+        reminded at; the hook nudges once per set to run `judge`, staying silent until a new file is
+        touched, and clears itself when the tree is clean. Safe to delete — it regenerates, at most
+        costing you one extra nudge.
+        TXT;
+
     public function summary(): string
     {
         return "Nudges you to `judge` what you changed — before a risky Bash command, and on stop.";
@@ -235,12 +244,4 @@ final class JudgeReminder extends Hook
         return $ws->path('.judge-reminded');
     }
 
-    /** What the marker file explains about itself, below the set (the {@see stored} read stops at the separator). */
-    private const string EXPLANATION = <<<'TXT'
-        Batch marker for the code-commandments judge reminder (`commandments judge-reminder`, wired as
-        Stop + PreToolUse hooks). The lines above the separator are the changed-file set it last
-        reminded at; the hook nudges once per set to run `judge`, staying silent until a new file is
-        touched, and clears itself when the tree is clean. Safe to delete — it regenerates, at most
-        costing you one extra nudge.
-        TXT;
 }

@@ -15,6 +15,18 @@ use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
  */
 class HookIO
 {
+    /**
+     * The hook events that actually carry an `additionalContext` channel. Emitting the shape on any other
+     * event is not merely ignored — the harness REJECTS the whole payload as invalid, so the hook fails
+     * loudly on every fire. Stated once here, so no handler can re-learn it the hard way (`PreCompact`
+     * did: it supports only `decision`/`reason`/`continue`/`systemMessage`, and its stdout never reaches
+     * the model, so a pre-compaction nudge is undeliverable by design).
+     */
+    private const array INJECTABLE = [
+        'SessionStart', 'Setup', 'SubagentStart', 'UserPromptSubmit', 'UserPromptExpansion',
+        'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PostToolBatch', 'Stop', 'SubagentStop',
+    ];
+
     public function __construct(private readonly GitFiles $git = new GitFiles) {}
 
     /**
@@ -57,18 +69,6 @@ class HookIO
     {
         $this->emit(['decision' => 'block', 'reason' => $reason]);
     }
-
-    /**
-     * The hook events that actually carry an `additionalContext` channel. Emitting the shape on any other
-     * event is not merely ignored — the harness REJECTS the whole payload as invalid, so the hook fails
-     * loudly on every fire. Stated once here, so no handler can re-learn it the hard way (`PreCompact`
-     * did: it supports only `decision`/`reason`/`continue`/`systemMessage`, and its stdout never reaches
-     * the model, so a pre-compaction nudge is undeliverable by design).
-     */
-    private const array INJECTABLE = [
-        'SessionStart', 'Setup', 'SubagentStart', 'UserPromptSubmit', 'UserPromptExpansion',
-        'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PostToolBatch', 'Stop', 'SubagentStop',
-    ];
 
     /**
      * A non-blocking context injection: the tool/turn proceeds; Claude reads $context as context.

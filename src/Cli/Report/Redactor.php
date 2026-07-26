@@ -20,6 +20,18 @@ final class Redactor
         . 'client[_-]?secret|private[_-]?key|credentials?|authorization|auth[_-]?token|bearer|token|dsn|'
         . 'app[_-]?key|encryption[_-]?key|session[_-]?secret|webhook[_-]?secret|salt|signature|passphrase)';
 
+    /** Provider-specific secret formats (AWS, GitHub, Google, Slack, Stripe, JWT, PEM, private keys). */
+    private const array TOKENS = [
+        '/A(?:KIA|SIA|GPA|IDA|ROA|IPA|NPA|NVA)[0-9A-Z]{16}/',                 // AWS access key id
+        '/gh[pousr]_[A-Za-z0-9]{20,}/',                                       // GitHub token
+        '/github_pat_[A-Za-z0-9_]{20,}/',                                     // GitHub fine-grained PAT
+        '/AIza[0-9A-Za-z_\-]{20,}/',                                          // Google API key
+        '/xox[baprs]-[0-9A-Za-z\-]{10,}/',                                    // Slack token
+        '/(?:sk|pk|rk)_(?:live|test)_[0-9A-Za-z]{16,}/',                      // Stripe key
+        '/eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}/',    // JWT
+        '/-----BEGIN[A-Z ]*PRIVATE KEY-----/',                               // PEM private key header
+    ];
+
     public function line(string $line): string
     {
         // A sensitive-named key → its quoted value: `'api_key' => 'x'`, `apiKey: "x"`, `APP_KEY = 'x'`.
@@ -71,18 +83,6 @@ final class Redactor
     {
         return str_repeat('█', max(1, mb_strlen($secret)));
     }
-
-    /** Provider-specific secret formats (AWS, GitHub, Google, Slack, Stripe, JWT, PEM, private keys). */
-    private const array TOKENS = [
-        '/A(?:KIA|SIA|GPA|IDA|ROA|IPA|NPA|NVA)[0-9A-Z]{16}/',                 // AWS access key id
-        '/gh[pousr]_[A-Za-z0-9]{20,}/',                                       // GitHub token
-        '/github_pat_[A-Za-z0-9_]{20,}/',                                     // GitHub fine-grained PAT
-        '/AIza[0-9A-Za-z_\-]{20,}/',                                          // Google API key
-        '/xox[baprs]-[0-9A-Za-z\-]{10,}/',                                    // Slack token
-        '/(?:sk|pk|rk)_(?:live|test)_[0-9A-Za-z]{16,}/',                      // Stripe key
-        '/eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}/',    // JWT
-        '/-----BEGIN[A-Z ]*PRIVATE KEY-----/',                               // PEM private key header
-    ];
 
     /** Does a base64/hex-ish string carry both letters and digits — the signature of a random secret? */
     private static function looksRandom(string $value): bool

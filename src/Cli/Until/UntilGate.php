@@ -24,6 +24,15 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class UntilGate
 {
+    private const string EXPLANATION = <<<'TXT'
+        Stop-gate conditions for code-commandments (`commandments until "<condition>"`). The lines above
+        the separator are: the consecutive held-stop count, a one-shot stuck flag, the last condition id
+        handed out, then one `id<TAB>condition` per line. Ids are STABLE — striking a condition off never
+        renumbers the rest. While any condition stands, the Stop hook blocks and tells the agent to verify
+        it; the agent strikes one off with `commandments until met <n>` and the gate lifts when none are
+        left. Safe to delete — deleting it simply lifts the gate.
+        TXT;
+
     public function __construct(
         private readonly MarkerFile $file,
         private readonly MarkerFile $paused,
@@ -344,12 +353,4 @@ final class UntilGate
         return implode(' ', $parts);
     }
 
-    private const string EXPLANATION = <<<'TXT'
-        Stop-gate conditions for code-commandments (`commandments until "<condition>"`). The lines above
-        the separator are: the consecutive held-stop count, a one-shot stuck flag, the last condition id
-        handed out, then one `id<TAB>condition` per line. Ids are STABLE — striking a condition off never
-        renumbers the rest. While any condition stands, the Stop hook blocks and tells the agent to verify
-        it; the agent strikes one off with `commandments until met <n>` and the gate lifts when none are
-        left. Safe to delete — deleting it simply lifts the gate.
-        TXT;
 }

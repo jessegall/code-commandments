@@ -48,6 +48,18 @@ final class ExtractComponentScribe extends RepentScribe
     /** @var array<string, array<string, string>> */
     private array $resolved = [];
 
+    // ---- deep-reach analysis --------------------------------------------------
+
+    /**
+     * Generic container words that make a useless component name — a reach through one of these
+     * (`data.value.x`) should name the component after a MEANINGFUL segment of its path, not the
+     * container itself (`ValueSection`/`DataSection` say nothing about what the section shows).
+     */
+    private const array UNINFORMATIVE = [
+        'value', 'values', 'data', 'item', 'items', 'config', 'state', 'props', 'meta',
+        'info', 'detail', 'details', 'result', 'results', 'payload', 'context', 'entry',
+    ];
+
     private function __construct(private readonly string $strategy) {}
 
     /**
@@ -1082,18 +1094,6 @@ final class ExtractComponentScribe extends RepentScribe
 
         return $candidate;
     }
-
-    // ---- deep-reach analysis --------------------------------------------------
-
-    /**
-     * Generic container words that make a useless component name — a reach through one of these
-     * (`data.value.x`) should name the component after a MEANINGFUL segment of its path, not the
-     * container itself (`ValueSection`/`DataSection` say nothing about what the section shows).
-     */
-    private const array UNINFORMATIVE = [
-        'value', 'values', 'data', 'item', 'items', 'config', 'state', 'props', 'meta',
-        'info', 'detail', 'details', 'result', 'results', 'payload', 'context', 'entry',
-    ];
 
     /**
      * The component name for a deep-reach extraction — `<Segment>Section` where `Segment` is the

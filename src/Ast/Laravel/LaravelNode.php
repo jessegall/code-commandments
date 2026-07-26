@@ -58,25 +58,6 @@ final class LaravelNode extends NodeMatch
     /** The `inertia(...)` helper — the function-call twin of `Inertia::render(...)`. */
     public const string INERTIA_HELPER = 'inertia';
 
-    /**
-     * Does $node render an Inertia page — `Inertia::render(...)` OR the `inertia(...)` helper? The one home
-     * for "this expression ships a page to the frontend", shared by every analysis that scans for a page
-     * response (the response surface, the route-action reader).
-     */
-    public static function rendersInertiaPage(Node $node): bool
-    {
-        if ($node instanceof StaticCall) {
-            return $node->class instanceof Name
-                && ltrim($node->class->toString(), '\\') === self::INERTIA
-                && $node->name instanceof Identifier
-                && $node->name->toString() === 'render';
-        }
-
-        return $node instanceof FuncCall
-            && $node->name instanceof Name
-            && ltrim($node->name->toString(), '\\') === self::INERTIA_HELPER;
-    }
-
     /** The framework controller base — a class whose public actions return an HTTP response. */
     public const string CONTROLLER = 'Illuminate\\Routing\\Controller';
 
@@ -131,6 +112,25 @@ final class LaravelNode extends NodeMatch
         'Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes',
         'Illuminate\\Contracts\\Database\\Eloquent\\CastsInboundAttributes',
     ];
+
+    /**
+     * Does $node render an Inertia page — `Inertia::render(...)` OR the `inertia(...)` helper? The one home
+     * for "this expression ships a page to the frontend", shared by every analysis that scans for a page
+     * response (the response surface, the route-action reader).
+     */
+    public static function rendersInertiaPage(Node $node): bool
+    {
+        if ($node instanceof StaticCall) {
+            return $node->class instanceof Name
+                && ltrim($node->class->toString(), '\\') === self::INERTIA
+                && $node->name instanceof Identifier
+                && $node->name->toString() === 'render';
+        }
+
+        return $node instanceof FuncCall
+            && $node->name instanceof Name
+            && ltrim($node->name->toString(), '\\') === self::INERTIA_HELPER;
+    }
 
     /**
      * Is this a facade static call — `Cache::get(...)`, `Log::info(...)`? Matched by the framework's

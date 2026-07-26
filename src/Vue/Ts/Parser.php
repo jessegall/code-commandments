@@ -65,6 +65,9 @@ final class Parser
 
     private int $typeDepth = 0;
 
+    /** Type-operator keywords that EXPECT a following type — a `{` after one still opens the type. */
+    private const array TYPE_OPERATORS = ['keyof', 'typeof', 'readonly', 'infer', 'in', 'extends', 'as', 'is', 'new', 'unique', 'abstract', 'asserts'];
+
     private function __construct(private readonly string $source)
     {
         $this->lexemes = new Lexer()->tokenize($source);
@@ -1054,9 +1057,6 @@ final class Parser
 
         return trim(substr($this->source, $start, $end - $start));
     }
-
-    /** Type-operator keywords that EXPECT a following type — a `{` after one still opens the type. */
-    private const array TYPE_OPERATORS = ['keyof', 'typeof', 'readonly', 'infer', 'in', 'extends', 'as', 'is', 'new', 'unique', 'abstract', 'asserts'];
 
     /**
      * Does this token COMPLETE a type — so a `{` right after it is a new construct (a function body),

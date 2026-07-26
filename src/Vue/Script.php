@@ -34,6 +34,12 @@ final class Script
 
     private ?Module $ast = null;
 
+    /**
+     * The names Vue auto-unwraps in a template — a top-level `ref()`/`computed()` binding reads as
+     * its value, so a prop typed after one takes the value type, never the wrapper.
+     */
+    private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
+
     public function __construct(private readonly string $source)
     {
         $this->tokens = $this->lex($source);
@@ -522,12 +528,6 @@ final class Script
 
         return $unwrapped === '' ? $type : $unwrapped;
     }
-
-    /**
-     * The names Vue auto-unwraps in a template — a top-level `ref()`/`computed()` binding reads as
-     * its value, so a prop typed after one takes the value type, never the wrapper.
-     */
-    private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
 
     /**
      * Peel the ref wrapper off a type NODE (never a string) — a `Ref<V>`/`Ref<V, S>` becomes its READ

@@ -22,6 +22,13 @@ use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
  */
 final class Sync implements Command
 {
+    /**
+     * The standalone, hand-written skills — NOT the {@see Skills\Catalog} teaching skills projected
+     * from sins, but process skills that ship as-is (`executing-plans`, `until`). Each is published
+     * flat under `.claude/skills/commandments-<slug>/`, the same convention the teaching skills use.
+     */
+    private const array STANDALONE = ['executing-plans', 'until'];
+
     public function names(): array
     {
         return ['sync'];
@@ -199,13 +206,6 @@ final class Sync implements Command
 
         return $count;
     }
-
-    /**
-     * The standalone, hand-written skills — NOT the {@see Skills\Catalog} teaching skills projected
-     * from sins, but process skills that ship as-is (`executing-plans`, `until`). Each is published
-     * flat under `.claude/skills/commandments-<slug>/`, the same convention the teaching skills use.
-     */
-    private const array STANDALONE = ['executing-plans', 'until'];
 
     /**
      * Publish the package's slash commands into `.claude/commands/` — the HUMAN's handle on the

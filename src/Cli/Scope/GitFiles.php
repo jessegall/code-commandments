@@ -11,6 +11,9 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
  */
 class GitFiles
 {
+    /** The extensions judge parses — one per engine (`.php` backend, `.vue` frontend). */
+    private const array JUDGED = ['.php', '.vue'];
+
     /**
      * The git toplevel containing $path, or null when $path is not in a repository.
      */
@@ -75,9 +78,6 @@ class GitFiles
 
         return $this->pathSet($root, $tracked . "\n" . $untracked);
     }
-
-    /** The extensions judge parses — one per engine (`.php` backend, `.vue` frontend). */
-    private const array JUDGED = ['.php', '.vue'];
 
     /**
      * Resolve newline-separated repo-relative paths into a set of absolute paths the

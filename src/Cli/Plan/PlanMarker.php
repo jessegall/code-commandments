@@ -20,6 +20,23 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class PlanMarker
 {
+    private const string EXPLANATION = <<<'TXT'
+        Active-plan marker for the code-commandments keep-going Stop hook (`commandments plan-reminder`).
+        The value lines above the separator are: the HEAD at the last nudge, the consecutive no-progress
+        nudge count, and the total nudge count. Written when a plan is approved, read on every stop,
+        cleared by `commandments plan done` or when the branch merges back. Safe to delete — deleting it
+        simply ends the keep-going nudges for this plan.
+        TXT;
+
+    private const string STUCK_EXPLANATION = <<<'TXT'
+        -----
+        Stuck signal for the code-commandments keep-going Stop hook (`commandments plan stuck`). The first
+        line is the HEAD the plan was marked stuck at (for reference). It is ONE-SHOT: it suppresses the
+        next Stop nudge — the agent is blocked and needs the human — then clears itself, so keep-going
+        resumes the moment the agent continues. The plan stays active (it is NOT done). Also cleared on
+        `plan done`. Safe to delete — deleting it just resumes the keep-going nudges.
+        TXT;
+
     public function __construct(private readonly MarkerFile $file) {}
 
     public static function inSession(Workspace $workspace): self
@@ -108,20 +125,4 @@ final class PlanMarker
         $this->file->write([$state->head, (string) $state->stuck, (string) $state->total], self::EXPLANATION);
     }
 
-    private const string EXPLANATION = <<<'TXT'
-        Active-plan marker for the code-commandments keep-going Stop hook (`commandments plan-reminder`).
-        The value lines above the separator are: the HEAD at the last nudge, the consecutive no-progress
-        nudge count, and the total nudge count. Written when a plan is approved, read on every stop,
-        cleared by `commandments plan done` or when the branch merges back. Safe to delete — deleting it
-        simply ends the keep-going nudges for this plan.
-        TXT;
-
-    private const string STUCK_EXPLANATION = <<<'TXT'
-        -----
-        Stuck signal for the code-commandments keep-going Stop hook (`commandments plan stuck`). The first
-        line is the HEAD the plan was marked stuck at (for reference). It is ONE-SHOT: it suppresses the
-        next Stop nudge — the agent is blocked and needs the human — then clears itself, so keep-going
-        resumes the moment the agent continues. The plan stays active (it is NOT done). Also cleared on
-        `plan done`. Safe to delete — deleting it just resumes the keep-going nudges.
-        TXT;
 }

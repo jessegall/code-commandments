@@ -21,6 +21,13 @@ final class Boundary
     /** @var array{edits: list<array{int, int, string}>, events: array<string, int>, safe: bool}|null */
     private ?array $emits = null;
 
+    /** JS globals a template expression may reference; never props. */
+    private const array JS_GLOBALS = [
+        'Object', 'Array', 'Math', 'JSON', 'Number', 'String', 'Boolean', 'Date', 'RegExp', 'Map', 'Set',
+        'Symbol', 'Promise', 'console', 'window', 'document', 'globalThis', 'NaN', 'Infinity', 'undefined',
+        'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURIComponent', 'decodeURIComponent',
+    ];
+
     private function __construct(
         public readonly Element $node,
         public readonly Sfc $sfc,
@@ -332,13 +339,6 @@ final class Boundary
     {
         return in_array($prop, $this->propsVariableMembers(), true) ? "{$this->propsVariable()}.{$prop}" : $prop;
     }
-
-    /** JS globals a template expression may reference; never props. */
-    private const array JS_GLOBALS = [
-        'Object', 'Array', 'Math', 'JSON', 'Number', 'String', 'Boolean', 'Date', 'RegExp', 'Map', 'Set',
-        'Symbol', 'Promise', 'console', 'window', 'document', 'globalThis', 'NaN', 'Infinity', 'undefined',
-        'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURIComponent', 'decodeURIComponent',
-    ];
 
     /**
      * The names imported into this component's `<script setup>` — a child that references one imports

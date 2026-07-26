@@ -35,6 +35,9 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class Judge implements Command
 {
+    /** How many past checklists to keep alongside the live one. */
+    private const int KEEP_ARCHIVES = 5;
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -225,9 +228,6 @@ final class Judge implements Command
         @rename($checklist, $archive);
         $this->pruneArchives($stem, $ext);
     }
-
-    /** How many past checklists to keep alongside the live one. */
-    private const int KEEP_ARCHIVES = 5;
 
     /**
      * Keep only the {@see KEEP_ARCHIVES} most-recent archives (by write time) for this checklist,
