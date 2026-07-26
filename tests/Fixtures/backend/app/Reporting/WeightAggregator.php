@@ -2,6 +2,7 @@
 
 namespace Shop\Reporting;
 
+use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
 use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
@@ -20,6 +21,17 @@ final class WeightAggregator
     private array $entries = [];
 
     private string $unit = 'g';
+
+    /**
+     * The fluent form of the same mistake: chainable, still an order.
+     */
+    #[Sinful(NarratedCommand::class)]
+    public function clears(): static
+    {
+        $this->entries = [];
+
+        return $this;
+    }
 
     public function push(int $grams): void
     {

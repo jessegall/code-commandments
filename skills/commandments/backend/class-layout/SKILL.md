@@ -114,6 +114,14 @@ final class LogLine
      * @var list<LogLine>
      */
     public array $children = [];
+
+    /**
+     * A bool about the line itself, named as a claim instead of a question.
+     */
+    public function reports(): bool
+    {
+        return $this->level === 'error';
+    }
 }
 
 // Good

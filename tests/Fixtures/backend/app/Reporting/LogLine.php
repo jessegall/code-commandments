@@ -2,6 +2,7 @@
 
 namespace Shop\Reporting;
 
+use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -19,4 +20,13 @@ final class LogLine
      * @var list<LogLine>
      */
     public array $children = [];
+
+    /**
+     * A bool about the line itself, named as a claim instead of a question.
+     */
+    #[Sinful(BareStatePredicate::class)]
+    public function reports(): bool
+    {
+        return $this->level === 'error';
+    }
 }

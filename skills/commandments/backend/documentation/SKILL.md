@@ -147,6 +147,24 @@ final class ReviewDoc
 final class HonestDoc
 {
     /**
+     * A question about its own state — the mood a bool is supposed to wear.
+     */
+    public function isTallied(): bool
+    {
+        return true;
+    }
+
+    /**
+     * A relational predicate: it takes what it compares against, so the third person is correct.
+     *
+     * @param string $needle The word to look for.
+     */
+    public function contains(string $needle): bool
+    {
+        return $needle !== '';
+    }
+
+    /**
      * The count, floored at zero.
      *
      * @param int $items How many were seen.
@@ -170,11 +188,37 @@ final class LogLine
      * @var list<LogLine>
      */
     public array $children = [];
+
+    /**
+     * A bool about the line itself, named as a claim instead of a question.
+     */
+    public function reports(): bool
+    {
+        return $this->level === 'error';
+    }
 }
 
 // Good
 final class HonestDoc
 {
+    /**
+     * A question about its own state — the mood a bool is supposed to wear.
+     */
+    public function isTallied(): bool
+    {
+        return true;
+    }
+
+    /**
+     * A relational predicate: it takes what it compares against, so the third person is correct.
+     *
+     * @param string $needle The word to look for.
+     */
+    public function contains(string $needle): bool
+    {
+        return $needle !== '';
+    }
+
     /**
      * The count, floored at zero.
      *
@@ -236,11 +280,37 @@ final class Itinerary
     public string $reference = '';
 
     public static int $planned = 0;
+
+    /**
+     * The relational twin `covers($leg)` would be fine; with nothing to compare, this is a question.
+     */
+    public function covers(): bool
+    {
+        return $this->legModes !== [];
+    }
 }
 
 // Good
 final class HonestDoc
 {
+    /**
+     * A question about its own state — the mood a bool is supposed to wear.
+     */
+    public function isTallied(): bool
+    {
+        return true;
+    }
+
+    /**
+     * A relational predicate: it takes what it compares against, so the third person is correct.
+     *
+     * @param string $needle The word to look for.
+     */
+    public function contains(string $needle): bool
+    {
+        return $needle !== '';
+    }
+
     /**
      * The count, floored at zero.
      *

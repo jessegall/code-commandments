@@ -2,6 +2,7 @@
 
 namespace Shop\Shipping;
 
+use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
 use JesseGall\CodeCommandments\Sins\Backend\StackedDocblock;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -21,4 +22,13 @@ final class Itinerary
     public string $reference = '';
 
     public static int $planned = 0;
+
+    /**
+     * The relational twin `covers($leg)` would be fine; with nothing to compare, this is a question.
+     */
+    #[Sinful(BareStatePredicate::class)]
+    public function covers(): bool
+    {
+        return $this->legModes !== [];
+    }
 }

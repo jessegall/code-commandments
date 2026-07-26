@@ -3,6 +3,7 @@
 namespace Shop\Dispatch;
 
 use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
+use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Labels\PrintLog;
@@ -13,6 +14,15 @@ use Shop\Labels\PrintLog;
 final class RunSheetExporter
 {
     public function __construct(private readonly PrintLog $log) {}
+
+    /**
+     * A void command narrating itself — the depot is being TOLD to take the sheet.
+     */
+    #[Sinful(NarratedCommand::class)]
+    public function announces(string $depot): void
+    {
+        $this->log->record($depot);
+    }
 
     /**
      * Negating the flag hides nothing: the body is still the choice, and `export($rows, false)`

@@ -2,6 +2,7 @@
 
 namespace Shop\Support;
 
+use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
 
@@ -18,6 +19,15 @@ final class FeatureGate
     private array $overrides = [];
 
     public function __construct(private readonly string $environment) {}
+
+    /**
+     * No argument, so it can only be describing the gate — which is what a question is for.
+     */
+    #[Sinful(BareStatePredicate::class)]
+    public function tracks(): bool
+    {
+        return $this->environment !== 'testing';
+    }
 
     public function override(string $flag, bool $on): void
     {

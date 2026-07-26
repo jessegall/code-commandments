@@ -625,19 +625,33 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             return false;
         }
 
-        $parents = $this->parentMap();
-        $nodes = $this->classNodeMap();
-        $seen = [];
-        $current = $parents[$class] ?? null;
+        return $this->ancestorDeclares($class, $method, []);
+    }
 
-        while ($current !== null && ! isset($seen[$current])) {
-            $seen[$current] = true;
+    /**
+     * Does any ancestor of $class — a parent class OR an implemented interface, transitively — declare
+     * $method in the PARSED graph? The reflection path above answers for autoloadable code; this is the
+     * same question over the codebase's own declarations, interfaces included (an interface contract is
+     * every bit as binding on a name as a parent's).
+     *
+     * @param  array<string, true>  $seen
+     */
+    private function ancestorDeclares(string $class, string $method, array $seen): bool
+    {
+        if (isset($seen[$class])) {
+            return false;
+        }
 
-            if (($nodes[$current] ?? null)?->getMethod($method) !== null) {
+        $seen[$class] = true;
+
+        foreach ([...(array) ($this->parentMap()[$class] ?? []), ...($this->interfaceMap()[$class] ?? [])] as $ancestor) {
+            if (($this->declarationMap()[$ancestor] ?? null)?->node?->getMethod($method) !== null) {
                 return true;
             }
 
-            $current = $parents[$current] ?? null;
+            if ($this->ancestorDeclares($ancestor, $method, $seen)) {
+                return true;
+            }
         }
 
         return false;

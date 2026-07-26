@@ -3,6 +3,7 @@
 namespace Shop\Checkout;
 
 use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
+use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -27,6 +28,15 @@ final class CouponDesk
     {
         // store the cart snapshot
         $this->snapshot = CartSnapshot::of($cartId);
+    }
+
+    /**
+     * A command with a preposition is still a command — the void return settles it.
+     */
+    #[Sinful(NarratedCommand::class)]
+    public function writesTo(string $ledger): void
+    {
+        $this->applied[] = $ledger;
     }
 
     #[Righteous(RestatedComment::class)]

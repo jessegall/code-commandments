@@ -4,6 +4,7 @@ namespace Shop\Concurrent;
 
 use JesseGall\CodeCommandments\Sins\Backend\MemberAfterMethod;
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
+use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\Concurrent\Concurrent;
 
@@ -13,6 +14,7 @@ use JesseGall\Concurrent\Concurrent;
  */
 #[Righteous(MemberAfterMethod::class)]
 #[Righteous(MemberOutOfOrder::class)]
+#[Righteous(NarratedCommand::class)]
 final class CheckoutSession
 {
     private const int TTL = 1800;

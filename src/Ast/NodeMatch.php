@@ -37,6 +37,18 @@ class NodeMatch extends AstNode implements Located
     }
 
     /**
+     * Is this method's NAME inherited rather than chosen — declared by a parent class or an interface,
+     * ours or a package's? Renaming it would break the contract, so a naming rule has nothing to say.
+     * {@see Codebase::overridesMethod} answers for both (the parsed graph, then reflection).
+     */
+    public function nameIsInherited(): bool
+    {
+        $method = $this->methodName();
+
+        return $method !== null && $this->codebase->overridesMethod($this->enclosingClassName(), $method);
+    }
+
+    /**
      * Is this node inside PHP's serialization-protocol boundary — the body of
      * `__unserialize()` / `__set_state()`, whose raw array-bag parameter the LANGUAGE
      * dictates, or a method whose EVERY call site sits inside one (a private helper the

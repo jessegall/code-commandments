@@ -1261,6 +1261,82 @@ class AstNode
     }
 
     /**
+     * This method declaration's name, or null when this node is not one.
+     */
+    public function methodName(): ?string
+    {
+        return $this->node instanceof ClassMethod ? $this->node->name->toString() : null;
+    }
+
+    /**
+     * Is this a magic method — a name the LANGUAGE dictates (`__construct`, `__invoke`, `__toString`)?
+     * Its mood is not the author's to choose.
+     */
+    public function isMagicMethod(): bool
+    {
+        return str_starts_with($this->methodName() ?? '', '__');
+    }
+
+    /**
+     * Does this method declare a `bool` return — an answer to a question, whatever its name says?
+     */
+    public function returnsBool(): bool
+    {
+        return $this->declaredReturnType() === 'bool';
+    }
+
+    /**
+     * Is this method a COMMAND — declared to return nothing, or to hand back the object it acted on
+     * (`void`, `never`, `static`, `self`, `$this`)? A command is told to do something, so its name is
+     * an order; anything that answers with a value is a question or a getter instead.
+     */
+    public function isCommandMethod(): bool
+    {
+        $type = $this->declaredReturnType();
+
+        if (in_array($type, ['void', 'never'], true)) {
+            return true;
+        }
+
+        // A self-return is fluent — an order you can chain — but only from an INSTANCE. The same
+        // signature on a static method is a named constructor (`ScanResult::requiresSwitch(...)`),
+        // which names the thing it builds and was never an order.
+        return in_array($type, ['static', 'self', '$this'], true) && ! $this->isStaticMethod();
+    }
+
+    /**
+     * Is this method declared `static`?
+     */
+    public function isStaticMethod(): bool
+    {
+        return $this->node instanceof ClassMethod && $this->node->isStatic();
+    }
+
+    /**
+     * The declared return type spelled as written, or null when the method declares none — an untyped
+     * method says nothing about its mood, so a rule reading this leaves it alone.
+     */
+    public function declaredReturnType(): ?string
+    {
+        if (! $this->node instanceof ClassMethod) {
+            return null;
+        }
+
+        $type = $this->node->getReturnType();
+
+        return $type instanceof Identifier || $type instanceof Name ? strtolower($type->toString()) : null;
+    }
+
+    /**
+     * Does this method declaration take no arguments — so whatever it answers, it answers about the
+     * receiver alone?
+     */
+    public function takesNoArguments(): bool
+    {
+        return $this->node instanceof ClassMethod && $this->node->params === [];
+    }
+
+    /**
      * Every DOCBLOCK attached to this node, in source order. PHP hands the last one to
      * `getDocComment()`; the ones above it are just comments, which is exactly how a second docblock
      * goes unnoticed.

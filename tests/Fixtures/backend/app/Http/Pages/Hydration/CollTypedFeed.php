@@ -23,7 +23,7 @@ final class ActivityFeed extends Data
 
     public function __construct(public readonly string $cursor) {}
 
-    public function opensAtStart(): bool
+    public function isOpenAtStart(): bool
     {
         return $this->cursor === '';
     }
