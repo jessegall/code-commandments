@@ -137,6 +137,20 @@ final class Repent implements Command
     }
 
     /**
+     * What the run wrote into COMPONENTS — the only files a Vue construct can be rendered from. A
+     * backend rewrite cannot use one, so its content is not evidence that a stub is needed.
+     *
+     * @param  array<string, string>  $converged  path => final content
+     * @param  list<string>  $written
+     */
+    private function componentSource(array $converged, array $written): string
+    {
+        $components = array_filter($written, static fn (string $file): bool => str_ends_with($file, '.vue'));
+
+        return implode("\n", array_map(static fn (string $file): string => $converged[$file] ?? '', $components));
+    }
+
+    /**
      * Generate the reusable constructs the fixes just applied depend on. A fix that rewrites toward
      * a scaffolded helper (a `v-if` chain into `<SwitchCase>`) needs that helper to exist — so if a
      * written file now uses one, {@see Scaffold} mints it (idempotent, so an existing one is left
@@ -148,7 +162,7 @@ final class Repent implements Command
      */
     private function scaffoldConstructs(array $converged, array $written): void
     {
-        $output = implode("\n", array_map(static fn (string $file): string => $converged[$file] ?? '', $written));
+        $output = $this->componentSource($converged, $written);
 
         foreach (Catalog::all() as $detector) {
             if (! $detector instanceof Repentable) {
@@ -156,9 +170,11 @@ final class Repent implements Command
             }
 
             foreach ($detector->sin()->scaffolds() as $scaffold) {
-                // The construct is used when its name (the stub's file stem, e.g. `SwitchCase`)
-                // appears in what the fix wrote — only then is it needed, so nothing over-generates.
-                if (str_contains($output, pathinfo($scaffold->path, PATHINFO_FILENAME))) {
+                // The construct is used when a rewritten COMPONENT renders it as an element —
+                // `<SwitchCase`. Merely naming it is not use: a PHP file that mentions the construct
+                // (the scribe that writes it, a comment, a test) once minted a Vue stub into a project
+                // with no Vue in it at all (#407).
+                if (str_contains($output, '<' . pathinfo($scaffold->path, PATHINFO_FILENAME))) {
                     new Scaffold()->run(Input::of('scaffold', ['--sin=' . $detector->sin()->name()]));
 
                     break;

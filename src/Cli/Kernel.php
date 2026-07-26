@@ -31,11 +31,6 @@ use JesseGall\CodeCommandments\Cli\Layers\LayersCommand;
  */
 final class Kernel
 {
-    /**
-     * @var array<string, Command>  verb => handler
-     */
-    private array $registry = [];
-
     private const string USAGE = <<<TXT
         Code Commandments — a compiler for architecture.
 
@@ -98,6 +93,11 @@ final class Kernel
 
 
         TXT;
+
+    /**
+     * @var array<string, Command>  verb => handler
+     */
+    private array $registry = [];
 
     public function __construct()
     {

@@ -173,6 +173,32 @@ final class RepentTest extends TestCase
     /**
      * @param  array<string, string>  $files
      */
+    public function test_a_backend_rewrite_that_MENTIONS_a_construct_does_not_scaffold_it(): void
+    {
+        // #407: the scaffold check matched the stub's NAME anywhere in what was written, so a PHP file
+        // that merely talks about `SwitchCase` — the scribe that writes it, a comment, a test — minted
+        // a Vue component into a project with no Vue in it.
+        $dir = $this->project([
+            'Extractor.php' => <<<'PHP'
+                <?php
+                namespace Demo;
+
+                final class Extractor
+                {
+                    /** Hoists a v-if chain into a SwitchCase component. */
+                    public function hoist(): void
+                    {
+                    }
+                }
+                PHP,
+        ]);
+
+        new Repent()->run(Input::of('repent', [$dir]));
+
+        $this->assertStringContainsString('SwitchCase', $this->read($dir, 'Extractor.php'), 'the file still names it');
+        $this->assertFalse(is_dir($dir . '/resources'), 'but no Vue construct was scaffolded into a PHP-only project');
+    }
+
     private function project(array $files): string
     {
         $dir = sys_get_temp_dir() . '/cc-repent-' . uniqid('', true);
