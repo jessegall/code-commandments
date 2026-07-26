@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli\Config;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Scalar\String_;
@@ -131,6 +132,158 @@ final class ConfigFile
         $this->rewriteArgs($call, $remaining);
 
         return true;
+    }
+
+    /**
+     * The layers the config declares — `->layer('A', mayUse: ['B'])` read off the chain, in the order
+     * they stand, each with the layers it may use. Empty when nothing is declared.
+     *
+     * @return array<string, list<string>>  layer namespace => the namespaces it may use
+     */
+    public function layers(): array
+    {
+        if (! is_file($this->path)) {
+            return [];
+        }
+
+        $layers = [];
+
+        // Outermost first is the LAST link written, so read the chain back to front to get the
+        // order the human sees.
+        foreach (array_reverse($this->layerCalls()) as $call) {
+            $namespace = $call->args[0]->value ?? null;
+
+            if ($namespace instanceof String_) {
+                $layers[$namespace->value] = self::mayUseOf($call);
+            }
+        }
+
+        return $layers;
+    }
+
+    /**
+     * Rewrite the declared layers in place — the `->layer(...)` CHAIN replaced, with everything around
+     * it (the `configure(...)` wrapper, its formatting, the rest of the file) exactly as it was. The
+     * new chain takes the indentation the old one had. False when the config declares no layers yet.
+     *
+     * @param  array<string, list<string>>  $layers
+     */
+    public function rewriteLayers(array $layers): bool
+    {
+        $calls = $this->layerCalls();
+
+        if ($calls === []) {
+            return false;
+        }
+
+        $source = (string) file_get_contents($this->path);
+
+        // The outermost call is the LAST link written, so the chain runs from the innermost link's
+        // receiver to the outermost's closing paren.
+        $from = self::chainStart($calls[count($calls) - 1]);
+        $to = $calls[0]->getEndFilePos() + 1;
+
+        $chain = self::renderChain($layers, self::indentOfChain($source, $from));
+
+        file_put_contents($this->path, substr($source, 0, $from) . $chain . substr($source, $to));
+
+        return true;
+    }
+
+    /**
+     * The `->layer(...)` chain as source, one link per line at $indent — the ONE renderer, shared by
+     * the first write and every incremental edit, so a config never gains a second house style.
+     *
+     * @param  array<string, list<string>>  $layers
+     */
+    public static function renderChain(array $layers, string $indent): string
+    {
+        $links = [];
+
+        foreach ($layers as $namespace => $uses) {
+            $may = $uses === [] ? '' : ', mayUse: [' . implode(', ', array_map(self::quoted(...), $uses)) . ']';
+            $links[] = "\n{$indent}->layer(" . self::quoted((string) $namespace) . $may . ')';
+        }
+
+        return implode('', $links);
+    }
+
+    /**
+     * The indentation the existing chain's links stand at — read from the first line after $from, so a
+     * rewritten chain lines up with whatever the project (or its formatter) settled on.
+     */
+    private static function indentOfChain(string $source, int $from): string
+    {
+        $rest = substr($source, $from);
+        $lines = preg_split('/\R/', $rest) ?: [];
+
+        foreach ($lines as $line) {
+            if (trim($line) !== '') {
+                return substr($line, 0, strlen($line) - strlen(ltrim($line)));
+            }
+        }
+
+        return '        ';
+    }
+
+    private static function quoted(string $namespace): string
+    {
+        return "'" . str_replace('\\', '\\\\', $namespace) . "'";
+    }
+
+    /**
+     * Every `->layer(...)` call in the config, outermost first (which is the LAST link written).
+     *
+     * @return list<MethodCall>
+     */
+    private function layerCalls(): array
+    {
+        $calls = [];
+
+        foreach (Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('layer')->get() as $match) {
+            if ($match->node instanceof MethodCall) {
+                $calls[] = $match->node;
+            }
+        }
+
+        return $calls;
+    }
+
+    /**
+     * Where the chain this call belongs to begins — walk left through the `->layer(...)` links to the
+     * receiver they all hang off (`$detector`), and take the offset just after it.
+     */
+    private static function chainStart(MethodCall $call): int
+    {
+        $receiver = $call->var;
+
+        return $receiver->getEndFilePos() + 1;
+    }
+
+    /**
+     * The `mayUse:` argument of a `->layer(...)` call, as namespaces.
+     *
+     * @return list<string>
+     */
+    private static function mayUseOf(MethodCall $call): array
+    {
+        foreach ($call->args as $arg) {
+            if (! $arg->value instanceof Array_) {
+                continue;
+            }
+
+            $uses = [];
+
+            foreach ($arg->value->items as $item) {
+                if ($item?->value instanceof String_) {
+                    $uses[] = $item->value->value;
+                }
+            }
+
+            return $uses;
+        }
+
+        return [];
     }
 
     /**

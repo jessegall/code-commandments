@@ -91,6 +91,11 @@ vendor/bin/commandments layers                # print it
 vendor/bin/commandments layers --write        # add it to .commandments/config.php
 vendor/bin/commandments layers --floor        # only the namespaces nothing of yours sits below
 
+# and as the codebase grows, edit the declared stack in place
+vendor/bin/commandments layers add 'App\Parts' --may-use='App\Ui\Tokens'
+vendor/bin/commandments layers allow 'App\Ui\Pages' 'App\Parts'   # one arrow
+vendor/bin/commandments layers --write --refresh                   # regenerate the block
+
 # executing an approved plan (see Hooks below)
 vendor/bin/commandments checks start          # run the project's start / phase / complete checks
 vendor/bin/commandments checks phase

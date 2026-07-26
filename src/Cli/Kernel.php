@@ -50,7 +50,9 @@ final class Kernel
           commandments enable <sin>   # turn it back on
           commandments freeze <path>  # mark a file intentionally immutable (scanned, but never flagged or repented)
           commandments unfreeze <path>  # lift the freeze — the file is a target again
-          commandments layers [path] [--floor] [--write]  # read the dependency stack you already have and propose the layer declaration for it (--write adds it to config.php)
+          commandments layers [path] [--floor] [--write] [--refresh]  # read the dependency stack you already have and propose the layer declaration for it (--write adds it to config.php, --refresh regenerates one already there)
+          commandments layers add <Namespace> [--may-use=A,B]  # declare a layer, or widen one, in place
+          commandments layers allow <Layer> <Target>           # one more arrow, in place
           commandments config reindex  # re-detect the source roots and rewrite config.php's paths()
           commandments exemptions [<sin|detector>]  # list exemptions (all, or one detector's)
           commandments install  # wire composer + the Claude Code hooks (reminder + judge nudge), then sync

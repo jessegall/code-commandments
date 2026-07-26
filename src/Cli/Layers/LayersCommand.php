@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli\Layers;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\NamespaceGraph;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
@@ -28,6 +29,104 @@ final class LayersCommand implements Command
 
     public function run(Input $input): int
     {
+        // The incremental moves come first: they edit the DECLARED stack and never scan, so a growing
+        // codebase does not have to re-propose (and hand-delete) the whole block to add one arrow.
+        return match ($input->firstArgument()) {
+            'add' => $this->add($input),
+            'allow' => $this->allow($input),
+            default => $this->propose($input),
+        };
+    }
+
+    /**
+     * `layers add <Namespace> [--may-use=A,B]` — declare a layer, or widen one that is already
+     * declared. Appends to the existing block in place; the rest of the config is untouched.
+     */
+    private function add(Input $input): int
+    {
+        $namespace = $input->arguments()[1] ?? null;
+
+        if ($namespace === null) {
+            return $this->usage('layers add <Namespace> [--may-use=A,B]');
+        }
+
+        $config = ConfigFile::inProject();
+        $layers = $config->layers();
+        $namespace = self::normalise($namespace);
+        $existing = $layers[$namespace] ?? [];
+        $added = array_values(array_diff(self::namespaces($input->option('may-use')), $existing));
+
+        $declared = array_key_exists($namespace, $layers);
+        $layers[$namespace] = [...$existing, ...$added];
+
+        return $this->commit($config, $layers, self::addReport($namespace, $added, $declared));
+    }
+
+    /**
+     * What `add` did, said plainly: a new layer, a widened one, or nothing left to do.
+     *
+     * @param  list<string>  $added
+     */
+    private static function addReport(string $namespace, array $added, bool $declared): string
+    {
+        if (! $declared) {
+            return "✓ declared {$namespace}" . ($added === [] ? ' (reaching nothing yet)' : ' → ' . implode(', ', $added));
+        }
+
+        if ($added === []) {
+            return "• {$namespace} already reaches those layers — nothing to add";
+        }
+
+        return "✓ {$namespace} may now use " . implode(', ', $added);
+    }
+
+    /**
+     * `layers allow <Layer> <Target>` — one arrow, deliberately. The layer must already be declared:
+     * silently inventing it would hide a typo as a new stack.
+     */
+    private function allow(Input $input): int
+    {
+        $arguments = $input->arguments();
+
+        if (count($arguments) < 3) {
+            return $this->usage('layers allow <Layer> <Target>');
+        }
+
+        $from = self::normalise($arguments[1]);
+        $to = self::normalise($arguments[2]);
+
+        $config = ConfigFile::inProject();
+        $layers = $config->layers();
+
+        if (! array_key_exists($from, $layers)) {
+            return $this->fail("{$from} is not a declared layer — run `commandments layers add {$from}` first, or check the spelling.");
+        }
+
+        if (in_array($to, $layers[$from], true)) {
+            return $this->done("• {$from} may already use {$to}");
+        }
+
+        $layers[$from][] = $to;
+
+        return $this->commit($config, $layers, "✓ {$from} may now use {$to}");
+    }
+
+    /**
+     * Write $layers back over the declared block and report $message.
+     *
+     * @param  array<string, list<string>>  $layers
+     */
+    private function commit(ConfigFile $config, array $layers, string $message): int
+    {
+        if (! $config->rewriteLayers($layers)) {
+            return $this->fail('.commandments/config.php declares no layers yet — run `commandments layers --write` to propose the stack first.');
+        }
+
+        return $this->done($message);
+    }
+
+    private function propose(Input $input): int
+    {
         // The scan can be pointed anywhere; the config being proposed to is always THIS project.
         $given = $input->firstArgument();
         $project = (string) getcwd();
@@ -44,7 +143,7 @@ final class LayersCommand implements Command
             return 0;
         }
 
-        return $input->hasFlag('write') ? $this->write($project, $proposed) : 0;
+        return $input->hasFlag('write') ? $this->write($project, $proposed, $input->hasFlag('refresh')) : 0;
     }
 
     /**
@@ -111,14 +210,70 @@ final class LayersCommand implements Command
     /**
      * @param  array<string, list<string>>  $layers
      */
-    private function write(string $path, array $layers): int
+    private function write(string $path, array $layers, bool $refresh): int
     {
+        $config = new ConfigFile(\JesseGall\CodeCommandments\Workspace::config($path));
+
+        if ($refresh && $config->rewriteLayers($layers)) {
+            $this->line('');
+            $this->line("\033[32m✓ refreshed the declaration in .commandments/config.php\033[0m");
+            $this->line("  \033[2mthe stack as it stands today — read the diff before you commit it\033[0m");
+
+            return 0;
+        }
+
         $written = new ConfigScribe(\JesseGall\CodeCommandments\Workspace::config($path))->ensureLayers(self::render($layers));
 
         $this->line('');
         $this->line($written
             ? "\033[32m✓ written to .commandments/config.php\033[0m"
-            : "\033[33m• config.php already declares layers — left untouched\033[0m");
+            : "\033[33m• config.php already declares layers — left untouched.\033[0m"
+                . "\n  \033[2mAdd to it instead: `layers add <Namespace> [--may-use=A,B]`, `layers allow <Layer> <Target>`,"
+                . "\n  or `layers --write --refresh` to regenerate the whole block from today's shape.\033[0m");
+
+        return 0;
+    }
+
+    /**
+     * A comma-separated option as a list of namespaces — `--may-use=App\\A,App\\B`.
+     *
+     * @return list<string>
+     */
+    private static function namespaces(?string $option): array
+    {
+        if ($option === null || trim($option) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(self::normalise(...), explode(',', $option))));
+    }
+
+    /**
+     * A namespace as the config spells it — trimmed, without a leading separator, and with the
+     * double backslashes a shell leaves behind collapsed.
+     */
+    private static function normalise(string $namespace): string
+    {
+        return ltrim(str_replace('\\\\', '\\', trim($namespace)), '\\');
+    }
+
+    private function usage(string $form): int
+    {
+        fwrite(STDERR, "Usage: commandments {$form}\n");
+
+        return 2;
+    }
+
+    private function fail(string $message): int
+    {
+        fwrite(STDERR, "\033[31m✗ {$message}\033[0m\n");
+
+        return 2;
+    }
+
+    private function done(string $message): int
+    {
+        $this->line("\033[32m{$message}\033[0m");
 
         return 0;
     }
@@ -130,22 +285,9 @@ final class LayersCommand implements Command
      */
     public static function render(array $layers): string
     {
-        $lines = ['    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector'];
-        $calls = [];
-
-        foreach ($layers as $namespace => $uses) {
-            $may = $uses === [] ? '' : ', mayUse: [' . implode(', ', array_map(self::quote(...), $uses)) . ']';
-            $calls[] = '        ->layer(' . self::quote((string) $namespace) . $may . ')';
-        }
-
-        $calls[count($calls) - 1] .= ');';
-
-        return implode("\n", [...$lines, ...$calls]);
-    }
-
-    private static function quote(string $namespace): string
-    {
-        return "'" . str_replace('\\', '\\\\', $namespace) . "'";
+        return '    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector'
+            . ConfigFile::renderChain($layers, '        ')
+            . ');';
     }
 
     private function line(string $message): void
