@@ -12,14 +12,14 @@ use JesseGall\CodeCommandments\Ast\Codebase;
  */
 final class Exemptions
 {
-    /** @var array<class-string, Clause> tag => its clause */
-    private array $clauses = [];
-
     /** The aggregated registry (every package's registrations), built once. */
     private static ?self $registry = null;
 
     /** @var list<class-string<Package>> Consumer packages registered via config, beyond the shipped roster. */
     private static array $extra = [];
+
+    /** @var array<class-string, Clause> tag => its clause */
+    private array $clauses = [];
 
     /**
      * Open (or continue) the exemption clause for a tag, to add rules to it. The tag is a

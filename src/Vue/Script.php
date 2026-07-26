@@ -26,19 +26,19 @@ use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
  */
 final class Script
 {
-    /** @var list<array{kind: string, value: string, start: int, end: int}> */
-    private array $tokens;
-
     /** Reactive wrappers whose value type is what the template sees — unwrapped. */
     private const array REACTIVE = ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'];
-
-    private ?Module $ast = null;
 
     /**
      * The names Vue auto-unwraps in a template — a top-level `ref()`/`computed()` binding reads as
      * its value, so a prop typed after one takes the value type, never the wrapper.
      */
     private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
+
+    /** @var list<array{kind: string, value: string, start: int, end: int}> */
+    private array $tokens;
+
+    private ?Module $ast = null;
 
     public function __construct(private readonly string $source)
     {

@@ -28,6 +28,8 @@ use PhpParser\NodeFinder;
  */
 final class DataClassShape
 {
+    use MemoisedPerCodebase;
+
     /** The Spatie `Data` base — the FQCN this shape analyser tests fields and elements against. */
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
@@ -54,8 +56,6 @@ final class DataClassShape
         'MapInputName',
         'MapName',
     ];
-
-    use MemoisedPerCodebase;
 
     /**
      * @param  array<string, Class_>  $classes  FQCN => declaration

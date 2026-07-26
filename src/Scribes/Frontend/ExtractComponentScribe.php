@@ -36,18 +36,6 @@ final class ExtractComponentScribe extends RepentScribe
 
     private const string COMPOUND = 'compound';
 
-    private ?ComponentLibrary $library = null;
-
-    private ?PropTypes $propTypes = null;
-
-    private ?TypeOracle $oracle = null;
-
-    /** @var array<string, array{sfc: Sfc, names: list<string>}>|null */
-    private ?array $collector = null;
-
-    /** @var array<string, array<string, string>> */
-    private array $resolved = [];
-
     // ---- deep-reach analysis --------------------------------------------------
 
     /**
@@ -59,6 +47,18 @@ final class ExtractComponentScribe extends RepentScribe
         'value', 'values', 'data', 'item', 'items', 'config', 'state', 'props', 'meta',
         'info', 'detail', 'details', 'result', 'results', 'payload', 'context', 'entry',
     ];
+
+    private ?ComponentLibrary $library = null;
+
+    private ?PropTypes $propTypes = null;
+
+    private ?TypeOracle $oracle = null;
+
+    /** @var array<string, array{sfc: Sfc, names: list<string>}>|null */
+    private ?array $collector = null;
+
+    /** @var array<string, array<string, string>> */
+    private array $resolved = [];
 
     private function __construct(private readonly string $strategy) {}
 

@@ -26,12 +26,12 @@ use PhpParser\NodeFinder;
  */
 final class DataConstructions
 {
+    use MemoisedPerCodebase;
+
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
     /** @var array<string, list<NodeMatch>>  Data FQCN => every `::from(...)` hydration site */
     private array $sites = [];
-
-    use MemoisedPerCodebase;
 
     private function __construct(private readonly Codebase $codebase)
     {

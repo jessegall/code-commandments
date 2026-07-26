@@ -36,6 +36,8 @@ use PhpParser\NodeFinder;
  */
 final class TypeResolver
 {
+    use MemoisedPerCodebase;
+
     /** @var array<string, array<string, ?string>>  fqcn => field => declared type fqcn */
     private array $fieldType = [];
 
@@ -59,8 +61,6 @@ final class TypeResolver
 
     /** @var array<int, array<string, ?string>>  object-id of a function => local var => type */
     private array $localCache = [];
-
-    use MemoisedPerCodebase;
 
     private function __construct(Codebase $codebase)
     {

@@ -30,11 +30,11 @@ final class Repent implements Command
     /** The fixpoint cap — a backstop against an oscillating step, far above any real chain depth. */
     private const int MAX_SWEEPS = 10;
 
-    /** Keep package-gated scribes even when this project lacks the package (cross-project calibration). */
-    private bool $ignorePackages = false;
-
     /** Show the post-repent feedback nudge once every this many applies — present, not spammy. */
     private const int FEEDBACK_INTERVAL = 4;
+
+    /** Keep package-gated scribes even when this project lacks the package (cross-project calibration). */
+    private bool $ignorePackages = false;
 
     public function __construct(private readonly HookIO $io = new HookIO) {}
 

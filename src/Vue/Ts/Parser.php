@@ -58,15 +58,15 @@ final class Parser
      */
     private const int MAX_TYPE_DEPTH = 256;
 
+    /** Type-operator keywords that EXPECT a following type — a `{` after one still opens the type. */
+    private const array TYPE_OPERATORS = ['keyof', 'typeof', 'readonly', 'infer', 'in', 'extends', 'as', 'is', 'new', 'unique', 'abstract', 'asserts'];
+
     /** @var list<Lexeme> */
     private array $lexemes;
 
     private int $pos = 0;
 
     private int $typeDepth = 0;
-
-    /** Type-operator keywords that EXPECT a following type — a `{` after one still opens the type. */
-    private const array TYPE_OPERATORS = ['keyof', 'typeof', 'readonly', 'infer', 'in', 'extends', 'as', 'is', 'new', 'unique', 'abstract', 'asserts'];
 
     private function __construct(private readonly string $source)
     {

@@ -18,15 +18,15 @@ final class Boundary
     /** Elements that are only valid inside a table — extracting them breaks structure. */
     private const array TABLE_BOUND = ['td', 'th', 'tr', 'tbody', 'thead', 'tfoot', 'caption', 'colgroup'];
 
-    /** @var array{edits: list<array{int, int, string}>, events: array<string, int>, safe: bool}|null */
-    private ?array $emits = null;
-
     /** JS globals a template expression may reference; never props. */
     private const array JS_GLOBALS = [
         'Object', 'Array', 'Math', 'JSON', 'Number', 'String', 'Boolean', 'Date', 'RegExp', 'Map', 'Set',
         'Symbol', 'Promise', 'console', 'window', 'document', 'globalThis', 'NaN', 'Infinity', 'undefined',
         'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURIComponent', 'decodeURIComponent',
     ];
+
+    /** @var array{edits: list<array{int, int, string}>, events: array<string, int>, safe: bool}|null */
+    private ?array $emits = null;
 
     private function __construct(
         public readonly Element $node,
