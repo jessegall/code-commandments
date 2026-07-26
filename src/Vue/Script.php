@@ -391,14 +391,12 @@ final class Script
      * and the `{ a, b as c }` named set; `type` and aliasing handled.
      *
      * @return list<string>
-     */
-    /**
+     *
      * Where an import statement ends, starting from its terminator token at $j: the
      * source string after `from`, the string itself (side-effect), else the next `;`.
      *
      * @return array{0: int, 1: int}  [end offset, index to resume the outer scan at]
-     */
-    /**
+     *
      * The `defineProps<{ name: Type; … }>()` field types.
      *
      * @return array<string, string>
@@ -640,8 +638,9 @@ final class Script
         return null;
     }
 
-    /** Vue reactivity wrappers whose `<T>` IS the value type seen in the template. */
     /**
+     * Vue reactivity wrappers whose `<T>` IS the value type seen in the template.
+     *
      * The type of a function declared at the `(` token $i — `(params) => Return`.
      */
     private function functionType(int $i): ?string
@@ -690,15 +689,13 @@ final class Script
 
     /**
      * The inner text of a `<…>` generic opened just before $i (depth 1), to its match.
-     */
-    /**
+     *
      * The TS type of a reactive wrapper's value, inferred from its initializer — `ref(false)`
      * → `boolean`, `computed(() => a === b)` → `boolean`. The argument's SOURCE is sliced out
      * by the parens' known byte offsets and handed to the expression engine: a `computed`
      * getter's value is its callback's RETURN, every other wrapper's is the argument itself.
      * Null for an initializer the engine can't infer soundly (an identifier, call, object).
-     */
-    /**
+     *
      * The index of the bracket that closes the one opening at $open — counting only
      * round/square/curly brackets, NOT `<`/`>`. In an expression body `<`/`>` are the
      * arrow `=>` and comparison operators, not delimiters, so counting them (as the

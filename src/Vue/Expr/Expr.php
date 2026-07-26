@@ -179,8 +179,7 @@ final class Expr
      * re-serialising the call.
      *
      * @return array{name: string, arguments: list<string>}|null
-     */
-    /**
+     *
      * The bare callee name of a call — `useForm({…})` → `useForm` — or null when this isn't a
      * call on a plain identifier (a `obj.method(…)` member call has no bare callee).
      */

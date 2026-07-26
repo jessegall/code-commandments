@@ -4,6 +4,7 @@ namespace Shop\Docs;
 
 use JesseGall\CodeCommandments\Sins\Backend\DanglingDocReference;
 use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
+use JesseGall\CodeCommandments\Sins\Backend\StackedDocblock;
 use JesseGall\CodeCommandments\Testing\Righteous;
 
 /**
@@ -13,6 +14,7 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  */
 #[Righteous(DanglingDocReference::class)]
 #[Righteous(InlineDocblock::class)]
+#[Righteous(StackedDocblock::class)]
 final class HonestDoc
 {
     /**

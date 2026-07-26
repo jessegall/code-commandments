@@ -48,17 +48,13 @@ final class FixtureExamples
      * @param  list<array{class: string, source: string}>  $bad
      * @param  list<array{class: string, source: string}>  $good
      * @return array{bad: ?string, good: ?string}
-     */
-
-    /**
+     *
      * Every marked declaration under any of the given detector keys.
      *
      * @param  array<string, list<array{class: string, source: string}>>  $sources
      * @param  list<string>  $keys
      * @return list<array{class: string, source: string}>
-     */
-
-    /**
+     *
      * Every marked declaration's class + source, grouped by the detector identifier the
      * marker names.
      *

@@ -3,11 +3,16 @@
 namespace Shop\Shipping;
 
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
+use JesseGall\CodeCommandments\Sins\Backend\StackedDocblock;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 #[Sinful(MemberOutOfOrder::class)]
+#[Sinful(StackedDocblock::class)]
 final class Itinerary
 {
+    /**
+     * How each leg is carried, in order.
+     */
     /**
      * @var list<string>
      */

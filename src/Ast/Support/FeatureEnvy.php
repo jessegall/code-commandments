@@ -428,9 +428,7 @@ final class FeatureEnvy
     /**
      * Does the body build an object (`new T`, or a `T::from(...)` named ctor)? Such
      * a method maps its input into a new value — a factory/mapper, not envy.
-     */
-
-    /**
+     *
      * Param name => owner FQCN, for params typed as an owned class other than the host.
      *
      * @return array<string, string>

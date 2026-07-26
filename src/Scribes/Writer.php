@@ -158,6 +158,24 @@ final class Writer
     }
 
     /**
+     * Replace a run of comments — the first through the last — with $text. How a stack of docblocks
+     * becomes one: the whole run goes, the merged block takes its place, and the declaration beneath
+     * is untouched.
+     *
+     * @param  list<\PhpParser\Comment>  $comments  in source order
+     */
+    public function replaceComments(array $comments, string $text): void
+    {
+        if ($comments === []) {
+            return;
+        }
+
+        $last = $comments[count($comments) - 1];
+
+        $this->rewriteRange($comments[0]->getStartFilePos(), $last->getEndFilePos() + 1, $text);
+    }
+
+    /**
      * A low-level replace of a byte range — for a scribe-specific edit with no node (e.g. a property's `;`).
      */
     public function rewriteRange(int $start, int $end, string $text): void

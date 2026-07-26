@@ -38,6 +38,8 @@ if the codebase already uses them — structural, not narrative.) Everything els
   _expand it — `repent` does this for you_
 - State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 - An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
+- One declaration carries ONE docblock — merge a stack into a single block, because the language hands only the last one to a reader's tooling.
+  _merge them into one block — `repent` does this for you_
 
 ## Bad → good
 
@@ -219,6 +221,38 @@ public function apply(string $coupon): void
 }
 ```
 
+```php
+// Bad
+final class Itinerary
+{
+    /**
+     * How each leg is carried, in order.
+     */
+    /**
+     * @var list<string>
+     */
+    public array $legModes = [];
+
+    public string $reference = '';
+
+    public static int $planned = 0;
+}
+
+// Good
+final class HonestDoc
+{
+    /**
+     * The count, floored at zero.
+     *
+     * @param int $items How many were seen.
+     */
+    public function tally(int $items): int
+    {
+        return max(0, $items);
+    }
+}
+```
+
 ## When it fires
 
 - History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted") — `ArchaeologyCommentDetector`
@@ -228,6 +262,7 @@ public function apply(string $coupon): void
 - A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content — `InlineDocblockDetector`
 - A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code") — `NegativeSpaceCommentDetector`
 - An inline comment that only spells the statement below it back in prose ("// save the order" over `$this->orders->save($order)`) — `RestatedCommentDetector`
+- Two or more docblocks stacked on one declaration — PHP reads only the last, so the ones above it are documentation nobody sees — `StackedDocblockDetector`
 
 ## Checklist
 
@@ -238,6 +273,7 @@ public function apply(string $coupon): void
 - [ ] Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line.
 - [ ] State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 - [ ] An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
+- [ ] One declaration carries ONE docblock — merge a stack into a single block, because the language hands only the last one to a reader's tooling.
 
 ## Related skills
 

@@ -24,10 +24,9 @@ final class ScribeChain
 
     /**
      * The built-in chain: in-place fixers, then extractors last.
-     */
-    /**
+     *
      * @param  (callable(string, string): bool)|null  $installed  package-availability check —
-     *   pass `fn () => true` to ignore package requirements (cross-project calibration).
+     * pass `fn () => true` to ignore package requirements (cross-project calibration).
      */
     public static function default(?callable $installed = null): self
     {

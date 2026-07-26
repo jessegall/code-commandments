@@ -44,6 +44,39 @@ final class Docblock
     }
 
     /**
+     * Several docblocks merged into ONE canonical block at $indent — each block's content in order,
+     * separated by a blank line so the paragraphs stay distinct. Text is never rewritten, only rehoused.
+     *
+     * @param  list<string>  $texts
+     */
+    public static function merge(array $texts, string $indent): string
+    {
+        $lines = [];
+
+        foreach ($texts as $text) {
+            $content = self::contentOf($text);
+
+            if ($content === []) {
+                continue;
+            }
+
+            if ($lines !== []) {
+                $lines[] = '';
+            }
+
+            $lines = [...$lines, ...$content];
+        }
+
+        $body = '';
+
+        foreach ($lines as $line) {
+            $body .= $line === '' ? "\n{$indent} *" : "\n{$indent} * {$line}";
+        }
+
+        return "/**{$body}\n{$indent} */";
+    }
+
+    /**
      * The docblock's content lines, stripped of the delimiters and the per-line `*`, with any leading
      * and trailing blank lines dropped. A blank line INSIDE (the paragraph break before `@param`) is
      * kept as an empty entry.

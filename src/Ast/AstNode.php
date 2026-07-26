@@ -1261,6 +1261,34 @@ class AstNode
     }
 
     /**
+     * Every DOCBLOCK attached to this node, in source order. PHP hands the last one to
+     * `getDocComment()`; the ones above it are just comments, which is exactly how a second docblock
+     * goes unnoticed.
+     *
+     * @return list<\PhpParser\Comment>
+     */
+    public function docblocks(): array
+    {
+        $blocks = [];
+
+        foreach ($this->node?->getComments() ?? [] as $comment) {
+            if (str_starts_with($comment->getText(), '/**')) {
+                $blocks[] = $comment;
+            }
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Does this declaration carry MORE THAN ONE docblock — a stack where one block belongs?
+     */
+    public function hasStackedDocblocks(): bool
+    {
+        return count($this->docblocks()) > 1;
+    }
+
+    /**
      * Is this node's docblock written with a delimiter sharing a line with its text — a one-liner, or a
      * block that opens or closes next to content? {@see Docblock}
      */
@@ -2048,8 +2076,7 @@ class AstNode
      * (`@method ($x is A ? B : C) collect(...)`) don't fool it.
      *
      * @return list<string>
-     */
-    /**
+     *
      * Does the function enclosing this node declare a SHAPED-array return — a
      * `@return array{field: T, …}` sealed struct with named keys? Such a return is a typed,
      * statically-checkable record contract (PHPStan/Psalm enforce the shape), not a loose

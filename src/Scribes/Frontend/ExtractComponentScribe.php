@@ -612,8 +612,7 @@ final class ExtractComponentScribe extends RepentScribe
     /**
      * @param  list<string>  $props
      * @return array<string, string>
-     */
-    /**
+     *
      * @param  list<string>  $props
      * @return array<string, string>  prop => the parent-scope expression to bind it to
      */

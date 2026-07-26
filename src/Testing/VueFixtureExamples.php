@@ -41,15 +41,11 @@ final class VueFixtureExamples
      * @param  list<array{file: string, source: string}>  $bad
      * @param  list<array{file: string, source: string}>  $good
      * @return array{bad: ?string, good: ?string}
-     */
-
-    /**
+     *
      * @param  array<string, list<array{file: string, source: string}>>  $sources
      * @param  list<string>  $keys
      * @return list<array{file: string, source: string}>
-     */
-
-    /**
+     *
      * Every element marked by a `@{$marker} Name` comment, grouped by the Name.
      *
      * @return array<string, list<array{file: string, source: string}>>

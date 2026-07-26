@@ -61,8 +61,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
     /**
      * @param  list<ParsedFile>  $files
-     */
-    /**
+     *
      * @var array<string, string>|null  child FQCN => parent FQCN
      */
     private ?array $parentMap = null;
@@ -892,8 +891,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
     /**
      * @return array<string, string>  child FQCN => parent FQCN
-     */
-    /**
+     *
      * The class-likes that `use` the given trait (directly) — "who consumes this trait",
      * the reverse of a `TraitUse`. Empty when nothing uses it or the name isn't a trait.
      *
