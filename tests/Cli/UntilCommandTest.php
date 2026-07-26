@@ -102,6 +102,18 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([1 => 'tests pass'], $this->gate()->all(), 'the condition stays in force');
     }
 
+    public function test_stuck_is_a_challenge_not_a_refusal_when_other_conditions_stand(): void
+    {
+        // `stuck` claims the WHOLE list is blocked, so it prints the others back at the agent — but
+        // the signal is always honoured: a genuinely blocked agent is never trapped by the challenge.
+        $this->exec('add', 'the migration runs');
+        $this->exec('add', 'the changelog has an entry');
+
+        $this->assertSame(0, $this->exec('stuck'));
+        $this->assertTrue($this->gate()->isStuck());
+        $this->assertCount(2, $this->gate()->all(), 'and every condition stays in force');
+    }
+
     public function test_clear_drops_every_condition(): void
     {
         $this->exec('add', 'tests pass');

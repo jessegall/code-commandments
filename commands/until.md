@@ -20,6 +20,10 @@ Do this now, in order:
    are genuinely blocked, run `vendor/bin/commandments until stuck` and tell the user what blocks
    you. Never `until clear` to escape a condition you haven't met.
 
+If several conditions stand, drain them: one that needs a decision from the user does not stop the
+others, so do everything you can on your own first and hand back with only the genuine blocker (and
+every question at once). `until stuck` claims the WHOLE list is blocked.
+
 Steps 1 and 2 are one action, not a choice between two. That holds whenever the user defers
 something — "add it to the to-do list", "don't forget to…", "later" — because a tracker item holds
 no stop and is gone with the session: the gate is what brings the task back, the to-do item is what

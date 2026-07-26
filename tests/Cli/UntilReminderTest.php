@@ -172,6 +172,20 @@ final class UntilReminderTest extends TestCase
         $this->assertSame([], $this->prompt(), 'nothing in flight — a normal message is not taxed');
     }
 
+    public function test_the_held_stop_tells_the_agent_to_drain_what_it_can_before_asking(): void
+    {
+        // A condition waiting on the user must not stall the ones that aren't: the blocked one goes
+        // last, and `until stuck` is only for a list where NOTHING can move.
+        $this->gate()->add('the migration runs');
+        $this->gate()->add('the changelog has an entry');
+
+        $reason = $this->reason($this->stop());
+
+        $this->assertStringContainsString('DRAIN THE LIST FIRST', $reason);
+        $this->assertStringContainsString('leave the blocked one for last', $reason);
+        $this->assertStringContainsString('Only when NOTHING left on the list can move', $reason);
+    }
+
     public function test_a_paused_gate_holds_nothing_and_says_nothing(): void
     {
         $this->gate()->add('tests pass');

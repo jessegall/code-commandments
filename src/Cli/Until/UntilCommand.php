@@ -131,7 +131,30 @@ final class UntilCommand implements Command
             . "  which condition you cannot meet and why. The condition stays in force: the gate holds again as\n"
             . "  soon as you continue. (Use `until met <n>` only when a condition actually holds.)\n");
 
+        $this->challengeTheRest($gate);
+
         return 0;
+    }
+
+    /**
+     * `stuck` claims the WHOLE list is blocked, so when several conditions stand, name the others back
+     * at the agent: one condition waiting on the user is not a reason to leave the ones it can still
+     * advance untouched. The signal is honoured either way — this is a challenge, not a refusal.
+     */
+    private function challengeTheRest(UntilGate $gate): void
+    {
+        $conditions = $gate->all();
+
+        if (count($conditions) < 2) {
+            return;
+        }
+
+        fwrite(STDOUT,
+            "\n  ⚠ " . count($conditions) . " conditions stand. `stuck` says you cannot advance ANY of them without\n"
+            . "  the user. If one of these can still be worked on your own, do that FIRST and come back to the user\n"
+            . "  with only the genuine blocker left:\n");
+
+        $this->conditions($conditions);
     }
 
     /**

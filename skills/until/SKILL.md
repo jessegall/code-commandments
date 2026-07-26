@@ -105,7 +105,28 @@ When you try to stop, the hook sends you back with the standing conditions. Then
 4. **Genuinely blocked** — you need a decision, a credential, something you cannot get?
    `vendor/bin/commandments until stuck`, then tell the user exactly which condition you cannot meet
    and why. That releases ONE stop while keeping the condition in force; the gate holds again the
-   moment you continue.
+   moment you continue. Read the next section before you reach for it.
+
+## Drain the list before you ask
+
+The gate is a QUEUE, and you work it until it stops moving. One condition needing the user does not
+block the ones that don't: reorder, take everything you can do on your own, and leave the blocked one
+standing.
+
+- **Blocked on the user?** Park that one mentally, move to the next condition, and keep going.
+- **Only when NOTHING left can move without them** — every remaining condition needs a decision, a
+  credential, an answer only they have — do you run `until stuck` and hand back.
+- **Ask once, ask fully.** If two conditions both need a decision, put both questions in the same
+  hand-back. Two stops for two questions is two interruptions where one would have done.
+
+Coming back with a question and four untouched conditions wastes the user's turn: they answer, and
+you were going to be busy for an hour anyway. Coming back with a question and everything else already
+DONE is what the gate is for. The same applies to the to-do list that mirrors it — a blocked item
+moves to the end, it does not become the reason the rest sit still.
+
+`until stuck` is a claim about the WHOLE list, not about one condition. It will name what else is
+standing when you run it — if any of those is something you could still be doing, you called it too
+early.
 
 **Never** run `until clear` to escape a condition you simply haven't met. `clear` drops the user's
 gate entirely and is theirs to ask for ("forget that condition"). Marking a condition `met` when it

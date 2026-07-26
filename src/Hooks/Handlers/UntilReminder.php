@@ -132,9 +132,14 @@ final class UntilReminder extends Hook
             . "\nFor each one that genuinely holds now, run `vendor/bin/commandments until met <n>` and mark its "
             . "to-do item completed (add any condition still missing from your to-do list so the user can see it); "
             . "the gate lifts "
-            . "when none are left. Otherwise keep working until it holds. If you are genuinely BLOCKED and need the "
-            . "user, run `vendor/bin/commandments until stuck` (NOT `until clear`) and tell them which condition you "
-            . "cannot meet and why — that lets you stop once while keeping the condition in force.";
+            . "when none are left. Otherwise keep working until it holds.\n"
+            . "DRAIN THE LIST FIRST. One condition needing a decision from the user does NOT stop the others: take "
+            . "the ones you can advance on your own, finish them, and leave the blocked one for last. Coming back "
+            . "with one question and four conditions still untouched wastes the user's turn — coming back with one "
+            . "question and everything else DONE is the whole point of the gate.\n"
+            . "Only when NOTHING left on the list can move without the user, run `vendor/bin/commandments until "
+            . "stuck` (NOT `until clear`) and tell them exactly which condition is blocked and what you need — that "
+            . "lets you stop once while keeping every condition in force.";
     }
 
     /**
