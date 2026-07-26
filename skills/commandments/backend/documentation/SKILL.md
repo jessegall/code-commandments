@@ -34,6 +34,8 @@ if the codebase already uses them — structural, not narrative.) Everything els
 - Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
 - A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
 - A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
+- Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line.
+  _expand it — `repent` does this for you_
 - State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 - An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
 
@@ -142,6 +144,40 @@ final class ReviewDoc
 // Good
 final class HonestDoc
 {
+    /**
+     * The count, floored at zero.
+     *
+     * @param int $items How many were seen.
+     */
+    public function tally(int $items): int
+    {
+        return max(0, $items);
+    }
+}
+```
+
+```php
+// Bad
+final class LogLine
+{
+    public string $level = 'info';
+
+    private int $depth = 0;
+
+    /**
+     * @var list<LogLine>
+     */
+    public array $children = [];
+}
+
+// Good
+final class HonestDoc
+{
+    /**
+     * The count, floored at zero.
+     *
+     * @param int $items How many were seen.
+     */
     public function tally(int $items): int
     {
         return max(0, $items);
@@ -189,6 +225,7 @@ public function apply(string $coupon): void
 - Multi-paragraph class docblock (class too big) — `BloatedDocblockDetector`
 - Docblock that only restates the typed signature (`@param Type $x`, no description) — `CeremonyDocblockDetector`
 - A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is — `DanglingDocReferenceDetector`
+- A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content — `InlineDocblockDetector`
 - A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code") — `NegativeSpaceCommentDetector`
 - An inline comment that only spells the statement below it back in prose ("// save the order" over `$this->orders->save($order)`) — `RestatedCommentDetector`
 
@@ -198,6 +235,7 @@ public function apply(string $coupon): void
 - [ ] Keep a class docblock to one tight paragraph — a multi-paragraph essay means the class does too much.
 - [ ] A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
 - [ ] A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
+- [ ] Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line.
 - [ ] State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
 - [ ] An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
 

@@ -350,7 +350,9 @@ final class Panel extends Data
 // Bad
 final class RosterPage extends Data
 {
-    /** @var DataCollection<int, Member> */
+    /**
+     * @var DataCollection<int, Member>
+     */
     public function __construct(
         public readonly string $club,
         public readonly int $season,
@@ -372,7 +374,9 @@ final class RosterPage extends Data
 // Good
 final class GalleryPage extends Data
 {
-    /** @param list<Photo> $photos */
+    /**
+     * @param list<Photo> $photos
+     */
     public function __construct(
         public readonly string $album,
         #[DataCollectionOf(Photo::class)]
@@ -438,7 +442,9 @@ final class TagCloud extends Data
     #[Computed]
     public array $tags { get => array_keys($this->counts); }
 
-    /** @param array<string, int> $counts */
+    /**
+     * @param array<string, int> $counts
+     */
     public function __construct(public readonly array $counts) {}
 }
 ```
@@ -493,7 +499,9 @@ final class CleanInboundData extends \Spatie\LaravelData\Data
 #[TypeScript]
 final class WirePanel extends Data
 {
-    /** @param array<string, string> $tokens */
+    /**
+     * @param array<string, string> $tokens
+     */
     public function __construct(
         public readonly PanelHeader|null $header = null,
         public readonly string $variant = 'plain',

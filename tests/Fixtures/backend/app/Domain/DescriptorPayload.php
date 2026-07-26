@@ -17,7 +17,9 @@ final class DescriptorPayload
         public readonly ?string $icon = null,
     ) {}
 
-    /** @return array{key: string, label?: string, icon?: string} */
+    /**
+     * @return array{key: string, label?: string, icon?: string}
+     */
     #[Sinful(ConditionalArraySpread::class)]
     public function toArray(): array
     {

@@ -17,7 +17,9 @@ final class TabHolder extends Data
 
 final class TabHolderFactory
 {
-    /** @var array<string, int> */
+    /**
+     * @var array<string, int>
+     */
     private array $order = ['edit' => 0, 'preview' => 1, 'diff' => 2];
 
     #[Sinful(DataToArrayRoundtrip::class)]

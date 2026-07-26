@@ -67,7 +67,9 @@ final class ThemedLegendBuilder
 
 final class LabelStrip extends Data
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public function __construct(public readonly array $labels) {}
 }
 

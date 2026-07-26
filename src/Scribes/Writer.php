@@ -33,25 +33,33 @@ final class Writer
         return new self($draft, $match->file->path, $match->file->source, $match->enclosingClass());
     }
 
-    /** Replace an AST node's whole span with $text. */
+    /**
+     * Replace an AST node's whole span with $text.
+     */
     public function replace(Node $node, string $text): void
     {
         $this->draft->edit(new Span($this->path, $this->source, $node->getStartFilePos(), $node->getEndFilePos() + 1), $text);
     }
 
-    /** The source text a node occupies, verbatim — the reusable "slice out what's written" a rewrite reuses. */
+    /**
+     * The source text a node occupies, verbatim — the reusable "slice out what's written" a rewrite reuses.
+     */
     public function textOf(Node $node): string
     {
         return self::slice($this->source, $node);
     }
 
-    /** A node's verbatim source cut from an explicit $source — the static form, for a scribe holding no Writer. */
+    /**
+     * A node's verbatim source cut from an explicit $source — the static form, for a scribe holding no Writer.
+     */
     public static function slice(string $source, Node $node): string
     {
         return Span::slice($source, $node->getStartFilePos(), $node->getEndFilePos());
     }
 
-    /** Insert $text at a byte offset (a zero-width edit). */
+    /**
+     * Insert $text at a byte offset (a zero-width edit).
+     */
     public function insertAt(int $offset, string $text): void
     {
         $this->draft->edit(new Span($this->path, $this->source, $offset, $offset), $text);
@@ -80,7 +88,9 @@ final class Writer
         }
     }
 
-    /** Ensure `use $fqcn;` — added after the last existing `use`, else after the `namespace …;`. No-op when present or in the global namespace. */
+    /**
+     * Ensure `use $fqcn;` — added after the last existing `use`, else after the `namespace …;`. No-op when present or in the global namespace.
+     */
     public function ensureImport(string $fqcn): void
     {
         $namespace = $this->class?->getAttribute('parent');
@@ -110,7 +120,9 @@ final class Writer
         }
     }
 
-    /** Drop a modifier keyword (`readonly`, `final`, …) from a typed property/param's modifier list. */
+    /**
+     * Drop a modifier keyword (`readonly`, `final`, …) from a typed property/param's modifier list.
+     */
     public function dropModifier(Property|Param $node, string $modifier): void
     {
         if ($node->type === null) {
@@ -130,7 +142,24 @@ final class Writer
         );
     }
 
-    /** A low-level replace of a byte range — for a scribe-specific edit with no node (e.g. a property's `;`). */
+    /**
+     * Replace a declaration's docblock with $text — the doc comment's own byte range, so the
+     * declaration under it is untouched and nothing has to hunt for where the comment ends.
+     */
+    public function replaceDocblock(Node $node, string $text): void
+    {
+        $doc = $node->getDocComment();
+
+        if ($doc === null) {
+            return;
+        }
+
+        $this->rewriteRange($doc->getStartFilePos(), $doc->getEndFilePos() + 1, $text);
+    }
+
+    /**
+     * A low-level replace of a byte range — for a scribe-specific edit with no node (e.g. a property's `;`).
+     */
     public function rewriteRange(int $start, int $end, string $text): void
     {
         $this->draft->edit(new Span($this->path, $this->source, $start, $end), $text);
@@ -236,7 +265,9 @@ final class Writer
         return $newlineBefore === null ? 0 : $newlineBefore + 1;
     }
 
-    /** Delete the whole line(s) a statement occupies — its indentation through the trailing newline. */
+    /**
+     * Delete the whole line(s) a statement occupies — its indentation through the trailing newline.
+     */
     public function deleteStatementLine(Node $statement): void
     {
         $newlineBefore = Span::before($this->source, $statement->getStartFilePos(), "\n");

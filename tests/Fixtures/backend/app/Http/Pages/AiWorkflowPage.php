@@ -21,7 +21,9 @@ final class AiWorkflowPage extends Data
 
     public readonly MenuLink $action;
 
-    /** @var list<StatCard> */
+    /**
+     * @var list<StatCard>
+     */
     #[DataCollectionOf(StatCard::class)]
     public readonly array $nodes;
 

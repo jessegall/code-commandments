@@ -13,7 +13,9 @@ use Spatie\LaravelData\DataCollection;
 #[Sinful(DataCollectionType::class)]
 final class BoardColumn extends Data
 {
-    /** @var DataCollection<int, Card> */
+    /**
+     * @var DataCollection<int, Card>
+     */
     public function __construct(
         public readonly string $lane,
         public readonly DataCollection $cards,

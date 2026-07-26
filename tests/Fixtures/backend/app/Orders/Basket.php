@@ -4,7 +4,9 @@ namespace Shop\Orders;
 
 final class Basket
 {
-    /** @var list<int> */
+    /**
+     * @var list<int>
+     */
     public array $amounts = [];
 
     public string $currency = 'EUR';

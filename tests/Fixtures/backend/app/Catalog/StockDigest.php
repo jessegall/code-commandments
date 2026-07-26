@@ -12,7 +12,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class StockDigest
 {
-    /** @var array<string, int> */
+    /**
+     * @var array<string, int>
+     */
     private array $movements = [];
 
     private int $reorderLevel = 5;

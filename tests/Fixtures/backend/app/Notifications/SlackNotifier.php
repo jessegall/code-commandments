@@ -12,7 +12,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class SlackNotifier
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $channels = ['#ops', '#alerts'];
 
     public function __construct(private readonly string $webhookUrl) {}

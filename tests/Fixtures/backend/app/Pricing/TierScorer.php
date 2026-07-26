@@ -8,7 +8,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class TierScorer
 {
-    /** @var list<int> */
+    /**
+     * @var list<int>
+     */
     private array $entries = [];
 
     public function add(int $weightPoints): void

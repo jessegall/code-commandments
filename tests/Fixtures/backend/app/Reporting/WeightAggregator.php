@@ -14,7 +14,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class WeightAggregator
 {
-    /** @var list<int> */
+    /**
+     * @var list<int>
+     */
     private array $entries = [];
 
     private string $unit = 'g';

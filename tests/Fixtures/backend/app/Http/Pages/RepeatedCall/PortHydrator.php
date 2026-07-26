@@ -11,7 +11,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class PortHydrator
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $requiredPorts;
 
     public function __construct(string ...$requiredPorts)

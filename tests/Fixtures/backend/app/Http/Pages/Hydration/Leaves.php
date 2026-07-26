@@ -78,7 +78,9 @@ enum FulfilmentState: string
     case Done = 'done';
 }
 
-/** A stand-in date wrapper — short-named `Carbon`, so Spatie's built-in date cast applies. */
+/**
+ * A stand-in date wrapper — short-named `Carbon`, so Spatie's built-in date cast applies.
+ */
 final class Carbon
 {
     public static function parse(string $value): self

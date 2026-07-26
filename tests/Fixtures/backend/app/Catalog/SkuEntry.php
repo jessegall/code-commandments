@@ -4,6 +4,8 @@ namespace Shop\Catalog;
 
 final class SkuEntry
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public array $reservedSkus = [];
 }

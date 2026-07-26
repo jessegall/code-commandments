@@ -3,6 +3,7 @@
 namespace Shop\Support;
 
 use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
+use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -15,9 +16,13 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * never be shared across queued jobs — construct a fresh one per job.
  */
 #[Sinful(BloatedDocblock::class)]
+#[Sinful(InlineDocblock::class)]
 final class PdfRenderer
 {
-    /** @var list<string> */
+    /**
+     * The typefaces registered with the engine.
+     *
+     * @var list<string> */
     private array $fonts = [];
 
     public function __construct(private readonly string $letterhead) {}

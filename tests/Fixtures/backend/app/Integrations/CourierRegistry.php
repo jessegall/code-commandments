@@ -16,6 +16,8 @@ final class CourierRegistry
         return $this->couriers['preferred'];
     }
 
-    /** @var array<string, CourierApi> */
+    /**
+     * @var array<string, CourierApi>
+     */
     private array $couriers = [];
 }

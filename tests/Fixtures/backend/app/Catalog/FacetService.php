@@ -26,19 +26,25 @@ final class FacetService
         ];
     }
 
-    /** @return array<int, string> */
+    /**
+     * @return array<int, string>
+     */
     private function byCategory(): array
     {
         return [];
     }
 
-    /** @return array<int, int> */
+    /**
+     * @return array<int, int>
+     */
     private function byPrice(): array
     {
         return [];
     }
 
-    /** @return array<int, int> */
+    /**
+     * @return array<int, int>
+     */
     private function byRating(): array
     {
         return [];

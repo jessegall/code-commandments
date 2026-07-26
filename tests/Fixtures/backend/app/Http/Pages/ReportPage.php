@@ -35,7 +35,9 @@ final class ReportPage extends Data
     #[Computed]
     public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
 
-    /** @var list<StatCard>|Lazy */
+    /**
+     * @var list<StatCard>|Lazy
+     */
     #[Computed]
     #[DataCollectionOf(StatCard::class)]
     public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }

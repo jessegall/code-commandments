@@ -15,7 +15,9 @@ use Spatie\LaravelData\Data;
  */
 final class LocationPage extends Data
 {
-    /** @param list<GeoPoint> $waypoints */
+    /**
+     * @param list<GeoPoint> $waypoints
+     */
     public function __construct(
         public readonly GeoPoint $origin,
         public readonly array $waypoints,

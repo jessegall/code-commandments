@@ -12,7 +12,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class PriceBook
 {
-    /** @var array<string, int> */
+    /**
+     * @var array<string, int>
+     */
     private array $prices = [];
 
     public function set(string $sku, int $cents): void

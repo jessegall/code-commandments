@@ -32,7 +32,9 @@ final class ZoneRater
 
 final class RateCard
 {
-    /** @var array<string, ShippingZone> */
+    /**
+     * @var array<string, ShippingZone>
+     */
     public array $zones = [];
 
     public function zoneByCode(string $code): ShippingZone

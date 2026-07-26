@@ -3,6 +3,7 @@
 namespace Shop\Docs;
 
 use JesseGall\CodeCommandments\Sins\Backend\DanglingDocReference;
+use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Testing\Righteous;
 
 /**
@@ -11,8 +12,14 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  * dangles, so it must NOT flag.
  */
 #[Righteous(DanglingDocReference::class)]
+#[Righteous(InlineDocblock::class)]
 final class HonestDoc
 {
+    /**
+     * The count, floored at zero.
+     *
+     * @param int $items How many were seen.
+     */
     public function tally(int $items): int
     {
         return max(0, $items);

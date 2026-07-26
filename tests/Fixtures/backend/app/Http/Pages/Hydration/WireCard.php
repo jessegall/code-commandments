@@ -17,7 +17,9 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 final class WireCard extends Data
 {
-    /** @param list<string> $segments */
+    /**
+     * @param list<string> $segments
+     */
     public function __construct(
         public readonly array $segments,
         public readonly string $separator = '/',

@@ -8,7 +8,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class RouteCostEstimator
 {
-    /** @var list<int> */
+    /**
+     * @var list<int>
+     */
     private array $entries = [];
 
     private string $carrier = 'default';

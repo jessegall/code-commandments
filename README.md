@@ -529,7 +529,7 @@ Every sin (the `--sin=` key) and what it flags. Each sin has one detector that
 finds it, named `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_108 sins across 24 skills. Full tables in [README.sins.md](README.sins.md)._
+_109 sins across 24 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## Auto-fixing
@@ -597,7 +597,7 @@ vendor/bin/commandments repent resources/js
 ```
 
 <!-- BEGIN: scribes (auto-generated, run `composer readme`) -->
-_`repent` auto-fixes 27 sins, plus 2 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
+_`repent` auto-fixes 28 sins, plus 2 whole-tree maintenance passes. Full tables in [README.scribes.md](README.scribes.md)._
 <!-- END: scribes -->
 
 `repent` keeps applying scribes until nothing changes, so one run fully converges.

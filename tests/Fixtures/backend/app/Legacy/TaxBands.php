@@ -13,13 +13,19 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 #[Sinful(ConstClassEnum::class)]
 final class TaxBands
 {
-    /** The default rate applied to most goods. */
+    /**
+     * The default rate applied to most goods.
+     */
     const STANDARD = 0.21;
 
-    /** Food, books, and other reduced-rate categories. */
+    /**
+     * Food, books, and other reduced-rate categories.
+     */
     const REDUCED = 0.09;
 
-    /** Exports and exempt supplies. */
+    /**
+     * Exports and exempt supplies.
+     */
     const ZERO = 0.0;
 }
 

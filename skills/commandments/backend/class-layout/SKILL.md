@@ -110,7 +110,9 @@ final class LogLine
 
     private int $depth = 0;
 
-    /** @var list<LogLine> */
+    /**
+     * @var list<LogLine>
+     */
     public array $children = [];
 }
 

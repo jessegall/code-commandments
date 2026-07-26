@@ -13,7 +13,9 @@ use Spatie\LaravelData\DataCollection;
 #[Sinful(DataCollectionType::class)]
 final class RosterPage extends Data
 {
-    /** @var DataCollection<int, Member> */
+    /**
+     * @var DataCollection<int, Member>
+     */
     public function __construct(
         public readonly string $club,
         public readonly int $season,

@@ -203,7 +203,9 @@ final class ReportPage extends Data
     #[Computed]
     public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
 
-    /** @var list<StatCard>|Lazy */
+    /**
+     * @var list<StatCard>|Lazy
+     */
     #[Computed]
     #[DataCollectionOf(StatCard::class)]
     public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }
@@ -256,7 +258,9 @@ final class MetricsPage extends Data
 {
     public readonly StatCard $headline;
 
-    /** @var list<StatCard> */
+    /**
+     * @var list<StatCard>
+     */
     #[DataCollectionOf(StatCard::class)]
     public readonly array $cards;
 
@@ -296,7 +300,9 @@ final class ReportPage extends Data
     #[Computed]
     public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
 
-    /** @var list<StatCard>|Lazy */
+    /**
+     * @var list<StatCard>|Lazy
+     */
     #[Computed]
     #[DataCollectionOf(StatCard::class)]
     public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }
@@ -326,7 +332,9 @@ final class ReportPage extends Data
     #[Computed]
     public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
 
-    /** @var list<StatCard>|Lazy */
+    /**
+     * @var list<StatCard>|Lazy
+     */
     #[Computed]
     #[DataCollectionOf(StatCard::class)]
     public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }

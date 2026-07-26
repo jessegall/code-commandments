@@ -4,7 +4,9 @@ namespace Shop\Http\Pages\Hydration;
 
 use Spatie\LaravelData\Data;
 
-/** A small value Data the optional-map producer fixtures hydrate. */
+/**
+ * A small value Data the optional-map producer fixtures hydrate.
+ */
 final class OptCoords extends Data
 {
     public function __construct(

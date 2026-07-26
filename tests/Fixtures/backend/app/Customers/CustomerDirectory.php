@@ -11,7 +11,9 @@ use Shop\Models\Customer;
  */
 final class CustomerDirectory
 {
-    /** Resolve-or-throw: presence is assumed, a miss is a broken state. */
+    /**
+     * Resolve-or-throw: presence is assumed, a miss is a broken state.
+     */
     public function getByEmail(string $email): Customer
     {
         return Customer::query()->where('email', $email)->first()
@@ -38,7 +40,9 @@ final class CustomerDirectory
         return Customer::query()->where('active', true)->get()->all();
     }
 
-    /** An honest null: one local caller checks it on the spot. */
+    /**
+     * An honest null: one local caller checks it on the spot.
+     */
     private function latestDraft(): ?Customer
     {
         return Customer::query()->where('status', 'draft')->latest()->first();

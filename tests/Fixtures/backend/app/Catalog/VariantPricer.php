@@ -37,7 +37,9 @@ final class VariantPricer
 
 final class ProductCatalogue
 {
-    /** @var array<string, Variant> */
+    /**
+     * @var array<string, Variant>
+     */
     public array $variants = [];
 
     public function variantBySku(string $sku): Variant

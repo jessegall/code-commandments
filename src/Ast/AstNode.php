@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use JesseGall\CodeCommandments\Ast\Support\ClassLayoutOrder;
 use JesseGall\CodeCommandments\Ast\Support\CodeWords;
+use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Ast\Support\CommentedCode;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
 use PhpParser\Comment\Doc;
@@ -93,7 +94,9 @@ use PhpParser\Node\Stmt\While_;
  */
 class AstNode
 {
-    /** The `is_*` predicates that narrow a value's type — each admits that it may be another type. */
+    /**
+     * The `is_*` predicates that narrow a value's type — each admits that it may be another type.
+     */
     private const array TYPE_PREDICATES = [
         'is_null', 'is_string', 'is_array', 'is_int', 'is_integer', 'is_float', 'is_bool',
         'is_object', 'is_scalar', 'is_iterable', 'is_callable', 'is_numeric', 'is_countable',
@@ -105,7 +108,9 @@ class AstNode
      */
     private const int WITHER_CARRIED_FLOOR = 3;
 
-    /** Attributes that OVERRIDE a serialized field's wire type with an explicit TS type (spatie/typescript-transformer). */
+    /**
+     * Attributes that OVERRIDE a serialized field's wire type with an explicit TS type (spatie/typescript-transformer).
+     */
     private const array WIRE_TYPE_ATTRIBUTES = ['LiteralTypeScriptType', 'TypeScriptType'];
 
     public function __construct(public readonly ?Node $node = null) {}
@@ -358,7 +363,9 @@ class AstNode
         return false;
     }
 
-    /** An `if (<reads $this state>) { return|throw|continue|break; }` bail-out guard clause. */
+    /**
+     * An `if (<reads $this state>) { return|throw|continue|break; }` bail-out guard clause.
+     */
     private function isStateGuardClause(): bool
     {
         if (! $this->node instanceof If_ || $this->node->else !== null || $this->node->elseifs !== []) {
@@ -375,7 +382,9 @@ class AstNode
         return $bailsOut && new self($this->node->cond)->readsThisState();
     }
 
-    /** Does this expression read any `$this->…` property? */
+    /**
+     * Does this expression read any `$this->…` property?
+     */
     private function readsThisState(): bool
     {
         return new NodeFinder()->findFirst(
@@ -490,7 +499,9 @@ class AstNode
         return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class->toString() : null;
     }
 
-    /** The class-name node of a `new NamedClass(...)` — for reading the name AS WRITTEN, or null when this isn't one. */
+    /**
+     * The class-name node of a `new NamedClass(...)` — for reading the name AS WRITTEN, or null when this isn't one.
+     */
     public function newClassNode(): ?Name
     {
         return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class : null;
@@ -1250,6 +1261,17 @@ class AstNode
     }
 
     /**
+     * Is this node's docblock written with a delimiter sharing a line with its text — a one-liner, or a
+     * block that opens or closes next to content? {@see Docblock}
+     */
+    public function hasInlineDocblock(): bool
+    {
+        $doc = $this->node?->getDocComment();
+
+        return $doc !== null && Docblock::isInline($doc->getText());
+    }
+
+    /**
      * Does any comment attached to this node hold commented-out PHP rather than prose? Dead code kept
      * in a comment is its own problem, and never prose to be read as documentation.
      * {@see \JesseGall\CodeCommandments\Ast\Support\CommentedCode}
@@ -1455,7 +1477,9 @@ class AstNode
             && $this->node->name instanceof Identifier;
     }
 
-    /** Is this the empty string literal — the absence of a value written where one is promised? */
+    /**
+     * Is this the empty string literal — the absence of a value written where one is promised?
+     */
     public function isEmptyString(): bool
     {
         return $this->node instanceof String_ && $this->node->value === '';
@@ -1488,7 +1512,9 @@ class AstNode
                 : null;
     }
 
-    /** How many arguments this call passes — 0 for a node that isn't a call. */
+    /**
+     * How many arguments this call passes — 0 for a node that isn't a call.
+     */
     public function argumentCount(): int
     {
         return count($this->arguments());
@@ -1557,7 +1583,9 @@ class AstNode
     }
 
 
-    /** Does this class name refer to the ENCLOSING type — `self`, `static`, or its own name? */
+    /**
+     * Does this class name refer to the ENCLOSING type — `self`, `static`, or its own name?
+     */
     private function namesOwnType(Name $name): bool
     {
         $spelled = strtolower($name->toString());
@@ -1627,7 +1655,9 @@ class AstNode
         return count($stmts) >= 2; // at least one guard + the return
     }
 
-    /** An `if (…) { throw … }` with no else — a pure bail-out guard. */
+    /**
+     * An `if (…) { throw … }` with no else — a pure bail-out guard.
+     */
     private static function isThrowingGuard(Node $stmt): bool
     {
         if (! $stmt instanceof If_ || $stmt->else !== null || $stmt->elseifs !== [] || $stmt->stmts === []) {
@@ -2237,7 +2267,9 @@ class AstNode
             && self::instanceofConjuncts($this->node) >= 2;
     }
 
-    /** How many conjuncts of an `&&` chain are `instanceof` checks. */
+    /**
+     * How many conjuncts of an `&&` chain are `instanceof` checks.
+     */
     private static function instanceofConjuncts(Node $node): int
     {
         if ($node instanceof BooleanAnd) {
@@ -2334,7 +2366,9 @@ class AstNode
             : [$node];
     }
 
-    /** How many property/method reaches a node's subtree contains — its "substance". */
+    /**
+     * How many property/method reaches a node's subtree contains — its "substance".
+     */
     private static function reachCount(Node $node): int
     {
         return count((new NodeFinder)->find($node, static fn (Node $n): bool =>
@@ -2371,19 +2405,25 @@ class AstNode
         return self::isSpreadItemOf($parent, $this->node) || self::isArrayMergeArgumentOf($parent, $this->node);
     }
 
-    /** Are the two nodes both array literals, exactly one of them empty (`['k'=>$v]` vs `[]`)? */
+    /**
+     * Are the two nodes both array literals, exactly one of them empty (`['k'=>$v]` vs `[]`)?
+     */
     private static function isOneEmptyOneFilledArray(Node $a, Node $b): bool
     {
         return $a instanceof Array_ && $b instanceof Array_ && (($a->items === []) xor ($b->items === []));
     }
 
-    /** Is $parent the spread item `...$ternary` wrapping this ternary? */
+    /**
+     * Is $parent the spread item `...$ternary` wrapping this ternary?
+     */
     private static function isSpreadItemOf(mixed $parent, Node $ternary): bool
     {
         return $parent instanceof ArrayItem && $parent->unpack && $parent->value === $ternary;
     }
 
-    /** Is $parent an `array_merge(..., $ternary)` argument wrapping this ternary? */
+    /**
+     * Is $parent an `array_merge(..., $ternary)` argument wrapping this ternary?
+     */
     private static function isArrayMergeArgumentOf(mixed $parent, Node $ternary): bool
     {
         if (! $parent instanceof Arg || $parent->value !== $ternary) {
@@ -3469,7 +3509,9 @@ class AstNode
         $tested = [];
 
         foreach ((new NodeFinder)->find($this->node, static fn (Node $n): bool => $n instanceof Identical || $n instanceof NotIdentical) as $comparison) {
-            /** @var Identical|NotIdentical $comparison */
+            /**
+             * @var Identical|NotIdentical $comparison
+             */
             foreach ([[$comparison->left, $comparison->right], [$comparison->right, $comparison->left]] as [$side, $other]) {
                 if ($other instanceof ConstFetch && strtolower($other->name->toString()) === 'null' && ($name = self::selfPropertyOf($side)) !== null) {
                     $tested[$name] = true;
@@ -3544,7 +3586,9 @@ class AstNode
         return false;
     }
 
-    /** The `$this->NAME` field a node reads, or null when it isn't a `$this->` property fetch. */
+    /**
+     * The `$this->NAME` field a node reads, or null when it isn't a `$this->` property fetch.
+     */
     protected static function selfPropertyOf(Node $node): ?string
     {
         return $node instanceof PropertyFetch

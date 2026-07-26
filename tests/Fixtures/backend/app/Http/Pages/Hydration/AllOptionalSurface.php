@@ -20,7 +20,9 @@ final class SurfaceStyle extends Data
         public readonly float|Optional $radius = new Optional(),
     ) {}
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public function cssVars(): array
     {
         $vars = [];

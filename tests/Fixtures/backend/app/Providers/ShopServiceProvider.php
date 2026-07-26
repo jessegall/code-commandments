@@ -9,7 +9,9 @@ use Shop\Services\PaymentGatewayRegistry;
 
 class ShopServiceProvider extends ServiceProvider
 {
-    /** Righteous: PaymentProcessor resolves this registry, so the wiring answers a real demand. */
+    /**
+     * Righteous: PaymentProcessor resolves this registry, so the wiring answers a real demand.
+     */
     #[Righteous(OrphanedBinding::class)]
     public function register(): void
     {

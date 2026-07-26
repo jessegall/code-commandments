@@ -62,35 +62,53 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * @param  list<ParsedFile>  $files
      */
-    /** @var array<string, string>|null  child FQCN => parent FQCN */
+    /**
+     * @var array<string, string>|null  child FQCN => parent FQCN
+     */
     private ?array $parentMap = null;
 
-    /** @var array<string, list<string>>|null  trait FQCN => FQCNs of the class-likes that `use` it */
+    /**
+     * @var array<string, list<string>>|null  trait FQCN => FQCNs of the class-likes that `use` it
+     */
     private ?array $traitUserMap = null;
 
-    /** @var array<string, list<string>>|null  class FQCN => directly-implemented interface FQCNs */
+    /**
+     * @var array<string, list<string>>|null  class FQCN => directly-implemented interface FQCNs
+     */
     private ?array $interfaceMap = null;
 
-    /** @var array<string, Class_>|null  class FQCN => declaration node */
+    /**
+     * @var array<string, Class_>|null  class FQCN => declaration node
+     */
     private ?array $classNodeMap = null;
 
-    /** @var array<string, NodeMatch>|null  ANY class-like (class/enum/interface/trait) FQCN => its match */
+    /**
+     * @var array<string, NodeMatch>|null  ANY class-like (class/enum/interface/trait) FQCN => its match
+     */
     private ?array $declarationMap = null;
 
-    /** @var list<string>|null  every enum FQCN in the codebase */
+    /**
+     * @var list<string>|null  every enum FQCN in the codebase
+     */
     private ?array $enumNames = null;
 
     private ?CodebaseIndex $index = null;
 
     private ?ValueFlow $valueFlow = null;
 
-    /** @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null */
+    /**
+     * @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null
+     */
     private ?array $nodeBuckets = null;
 
-    /** @var array<class-string<Node>, list<class-string<Node>>>  requested node class => the bucket keys it covers */
+    /**
+     * @var array<class-string<Node>, list<class-string<Node>>>  requested node class => the bucket keys it covers
+     */
     private array $bucketsByType = [];
 
-    /** @var array<string, string>|null */
+    /**
+     * @var array<string, string>|null
+     */
     private ?array $sourceByPath = null;
 
     private function __construct(private readonly array $files) {}
@@ -454,6 +472,14 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Every node carrying a DOCBLOCK — the `/**` documentation comment, wherever it is attached.
+     */
+    public function whereDocblock(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node->getDocComment() !== null);
+    }
+
+    /**
      * Every node carrying a `//` (or `#`) comment — the inline prose a reader meets before a
      * statement, docblocks excluded. Narrow it with {@see AstNode::lineComments()}.
      */
@@ -676,7 +702,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         foreach ($this->files as $file) {
             foreach ($finder->findInstanceOf($file->ast, ClassLike::class) as $declaration) {
-                /** @var ClassLike $declaration */
+                /**
+                 * @var ClassLike $declaration
+                 */
                 if (($declaration->namespacedName ?? null) !== null) {
                     $map[$declaration->namespacedName->toString()] = $this->wrap($declaration, $file);
                 }
@@ -791,7 +819,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         foreach ($this->files as $file) {
             foreach ($finder->findInstanceOf($file->ast, Class_::class) as $class) {
-                /** @var Class_ $class */
+                /**
+                 * @var Class_ $class
+                 */
                 if (($class->namespacedName ?? null) !== null) {
                     $map[$class->namespacedName->toString()] = $class;
                 }
@@ -920,7 +950,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         foreach ($this->files as $file) {
             foreach ($finder->find($file->ast, static fn (Node $node): bool => $node instanceof Class_) as $class) {
-                /** @var Class_ $class */
+                /**
+                 * @var Class_ $class
+                 */
                 if ($class->extends instanceof Name && ($class->namespacedName ?? null) !== null) {
                     $map[$class->namespacedName->toString()] = $class->extends->toString();
                 }
@@ -944,7 +976,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         foreach ($this->files as $file) {
             foreach ($finder->find($file->ast, static fn (Node $node): bool => $node instanceof Class_) as $class) {
-                /** @var Class_ $class */
+                /**
+                 * @var Class_ $class
+                 */
                 if (($class->namespacedName ?? null) === null) {
                     continue;
                 }

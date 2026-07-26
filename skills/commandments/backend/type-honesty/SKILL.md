@@ -164,13 +164,19 @@ final class GlowingTile implements AnimatedTile
 {
     private string $easingMode = 'in';
 
-    /** Derived from own state — a real computed property. */
+    /**
+     * Derived from own state — a real computed property.
+     */
     public ?string $enterEffect { get => $this->intensity > 5 ? 'flash' : 'fade'; }
 
-    /** Delegates to own behaviour — still reads the instance. */
+    /**
+     * Delegates to own behaviour — still reads the instance.
+     */
     public ?string $leaveEffect { get => $this->resolveLeave(); }
 
-    /** A get/set pair is judged as a unit — the setter earns the hook syntax. */
+    /**
+     * A get/set pair is judged as a unit — the setter earns the hook syntax.
+     */
     public string $easing {
         get => 'ease-' . $this->easingMode;
         set => strtolower($value);

@@ -15,7 +15,9 @@ use Spatie\LaravelData\DataCollection;
 #[Sinful(DataCollectionType::class)]
 final class ActivityFeed extends Data
 {
-    /** @var DataCollection<int, FeedItem> */
+    /**
+     * @var DataCollection<int, FeedItem>
+     */
     #[Computed]
     public DataCollection $items { get => FeedItem::collect([], DataCollection::class); }
 

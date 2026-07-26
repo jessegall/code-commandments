@@ -21,7 +21,9 @@ final class CatalogBadges extends Data
 
 final class CatalogBadgesComposer
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $skus = ['A1', 'B2', '', 'C3'];
 
     #[Sinful(DerivedCollectionCast::class)]

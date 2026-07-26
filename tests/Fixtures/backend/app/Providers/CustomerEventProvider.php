@@ -15,7 +15,9 @@ use Shop\Events\CustomerMerged;
  */
 class CustomerEventProvider extends ServiceProvider
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private const array LISTENERS = [
         'Shop\\Listeners\\RelinkOrders',
         'Shop\\Listeners\\MergeLoyaltyPoints',

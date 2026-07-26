@@ -24,7 +24,9 @@ final class LineShipper
 
 final class Order
 {
-    /** @var array<string, OrderLine> */
+    /**
+     * @var array<string, OrderLine>
+     */
     public array $lines = [];
 
     public function lineById(string $id): OrderLine

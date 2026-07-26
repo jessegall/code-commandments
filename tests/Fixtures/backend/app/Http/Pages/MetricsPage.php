@@ -19,7 +19,9 @@ final class MetricsPage extends Data
 {
     public readonly StatCard $headline;
 
-    /** @var list<StatCard> */
+    /**
+     * @var list<StatCard>
+     */
     #[DataCollectionOf(StatCard::class)]
     public readonly array $cards;
 

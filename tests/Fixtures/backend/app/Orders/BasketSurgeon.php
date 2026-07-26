@@ -19,7 +19,9 @@ final class BasketSurgeon
 
 final class Basket
 {
-    /** @var array<string, BasketLine> */
+    /**
+     * @var array<string, BasketLine>
+     */
     public array $lines = [];
 
     public function lineById(string $id): BasketLine

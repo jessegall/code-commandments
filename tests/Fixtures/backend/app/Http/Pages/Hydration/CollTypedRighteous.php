@@ -14,7 +14,9 @@ use Spatie\LaravelData\Data;
 #[Righteous(DataCollectionType::class)]
 final class GalleryPage extends Data
 {
-    /** @param list<Photo> $photos */
+    /**
+     * @param list<Photo> $photos
+     */
     public function __construct(
         public readonly string $album,
         #[DataCollectionOf(Photo::class)]

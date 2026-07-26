@@ -12,10 +12,14 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class HandlerRegistry
 {
-    /** @var array<string, callable> */
+    /**
+     * @var array<string, callable>
+     */
     private array $handlers = [];
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     private array $aliases = [];
 
     public function register(string $event, callable $handler): void

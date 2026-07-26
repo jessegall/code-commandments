@@ -27,7 +27,9 @@ final class CatalogFilters
         return [...$this->base, 'in_stock' => 'true'];
     }
 
-    /** @return array{sort: string, brand?: string} */
+    /**
+     * @return array{sort: string, brand?: string}
+     */
     #[Sinful(ConditionalArraySpread::class)]
     public function toSortedQuery(string $sort): array
     {

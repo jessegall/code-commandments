@@ -13,7 +13,9 @@ use Spatie\LaravelData\Optional;
  */
 final class MoveRequest
 {
-    /** @param  array<string, mixed>|null  $rawPosition */
+    /**
+     * @param  array<string, mixed>|null  $rawPosition
+     */
     public function __construct(private readonly ?array $rawPosition = null)
     {
     }

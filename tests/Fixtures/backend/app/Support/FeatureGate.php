@@ -2,6 +2,7 @@
 
 namespace Shop\Support;
 
+use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -10,6 +11,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * Decides whether a named feature is on — the default arm answers "false" for an
  * unknown flag, masking a typo as a disabled feature.
  */
+#[Sinful(InlineDocblock::class)]
 final class FeatureGate
 {
     /** @var array<string, bool> */

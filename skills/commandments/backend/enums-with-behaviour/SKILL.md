@@ -56,16 +56,24 @@ Reach for this the moment you write:
 // Bad
 final class PaymentStatuses
 {
-    /** Authorisation requested, awaiting the gateway. */
+    /**
+     * Authorisation requested, awaiting the gateway.
+     */
     const PENDING = 'pending';
 
-    /** Funds held but not yet taken. */
+    /**
+     * Funds held but not yet taken.
+     */
     const AUTHORISED = 'authorised';
 
-    /** Money moved; the order can ship. */
+    /**
+     * Money moved; the order can ship.
+     */
     const CAPTURED = 'captured';
 
-    /** Reversed after capture. */
+    /**
+     * Reversed after capture.
+     */
     const REFUNDED = 'refunded';
 }
 

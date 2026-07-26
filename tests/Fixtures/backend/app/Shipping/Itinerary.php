@@ -8,7 +8,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 #[Sinful(MemberOutOfOrder::class)]
 final class Itinerary
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public array $legModes = [];
 
     public string $reference = '';

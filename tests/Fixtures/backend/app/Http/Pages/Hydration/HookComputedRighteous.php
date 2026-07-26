@@ -17,6 +17,8 @@ final class TagCloud extends Data
     #[Computed]
     public array $tags { get => array_keys($this->counts); }
 
-    /** @param array<string, int> $counts */
+    /**
+     * @param array<string, int> $counts
+     */
     public function __construct(public readonly array $counts) {}
 }

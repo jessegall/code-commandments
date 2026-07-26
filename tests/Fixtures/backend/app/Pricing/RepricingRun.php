@@ -15,7 +15,9 @@ final class RepricingRun
 {
     private string $basis = 'list';
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $trail = [];
 
     #[Sinful(ScratchStateRestore::class)]

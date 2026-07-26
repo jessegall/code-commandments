@@ -15,7 +15,9 @@ final class InvoiceSummary extends Data
 {
     public int $total { get => array_sum(array_map(fn (LineItem $i): int => $i->cents, $this->lines)); }
 
-    /** @param list<LineItem> $lines */
+    /**
+     * @param list<LineItem> $lines
+     */
     public function __construct(public readonly array $lines) {}
 
     public function largestLine(): ?LineItem

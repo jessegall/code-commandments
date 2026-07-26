@@ -17,7 +17,9 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 final class WireMetric extends Data
 {
-    /** @param list<string> $labels */
+    /**
+     * @param list<string> $labels
+     */
     public function __construct(
         public readonly string $series,
         public readonly array $labels = [],

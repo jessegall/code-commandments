@@ -17,7 +17,9 @@ final class ReceiptMeta
         private readonly ?string $coupon = null,
     ) {}
 
-    /** @return array{number: string, discount?: array{coupon: string, applied: bool}} */
+    /**
+     * @return array{number: string, discount?: array{coupon: string, applied: bool}}
+     */
     #[Sinful(ConditionalArraySpread::class)]
     public function lines(): array
     {
@@ -31,7 +33,9 @@ final class ReceiptMeta
      * Righteous — the coupon is resolved to a value first (a null-object default), then set unconditionally.
      * No conditional spread. Must NOT flag.
      */
-    /** @return array{number: string, coupon: string} */
+    /**
+     * @return array{number: string, coupon: string}
+     */
     #[Righteous(ConditionalArraySpread::class)]
     public function summary(): array
     {

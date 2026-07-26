@@ -7,7 +7,9 @@ use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
-/** A keyed store of per-code catalog entries. */
+/**
+ * A keyed store of per-code catalog entries.
+ */
 final class SkuRegistry
 {
     #[Righteous(NegativeSpaceComment::class)]

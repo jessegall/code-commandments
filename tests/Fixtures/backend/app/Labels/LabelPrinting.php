@@ -2,7 +2,9 @@
 
 namespace Shop\Labels;
 
-/** The one home for "print a label" — the shared service every face should call. */
+/**
+ * The one home for "print a label" — the shared service every face should call.
+ */
 final class LabelPrinting
 {
     public function __construct(

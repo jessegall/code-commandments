@@ -17,7 +17,9 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 final class RosterBoard extends Data
 {
-    /** @var list<Seat> */
+    /**
+     * @var list<Seat>
+     */
     #[DataCollectionOf(Seat::class)]
     public readonly array $seats;
 

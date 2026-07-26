@@ -24,7 +24,9 @@ final class TrackedOrderFactory
         return TrackedOrder::from(['status' => $status]);
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public function payload(OrderStatus $status): array
     {
         return ['status' => $status->value];

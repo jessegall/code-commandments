@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Detectors\RunsLast;
 use JesseGall\CodeCommandments\Scribes\Backend\DetectorStep as BackendDetectorStep;
 use JesseGall\CodeCommandments\Scribes\Frontend\DetectorStep as FrontendDetectorStep;
 
@@ -16,7 +17,9 @@ use JesseGall\CodeCommandments\Scribes\Frontend\DetectorStep as FrontendDetector
  */
 final class ScribeChain
 {
-    /** @var list<ScribeStep> */
+    /**
+     * @var list<ScribeStep>
+     */
     private array $steps = [];
 
     /**
@@ -36,16 +39,21 @@ final class ScribeChain
 
         $fixers = [];
         $extractors = [];
+        $normalisers = [];
 
         // The project's config (disable / register / configure) shapes the detectors `repent`
         // fixes too, so it agrees with `judge`.
         $configured = Config::load()->apply(Detectors::backend(), Detectors::frontend(), $installed);
 
-        // Backend (PHP AST) Repentables — all in-place fixers.
+        // Backend (PHP AST) Repentables — in-place fixers, except a NORMALISER: a fix that only
+        // reshapes what the content rules already accepted runs after all of them ({@see RunsLast}).
         foreach ($configured['backend'] as $detector) {
-            if ($detector instanceof Repentable) {
-                $fixers[] = new BackendDetectorStep($detector);
+            if (! $detector instanceof Repentable) {
+                continue;
             }
+
+            $step = new BackendDetectorStep($detector);
+            $detector instanceof RunsLast ? $normalisers[] = $step : $fixers[] = $step;
         }
 
         // Frontend (Vue) Repentables — fixers in place, extractors run last.
@@ -58,7 +66,7 @@ final class ScribeChain
             $step->extractsComponents() ? $extractors[] = $step : $fixers[] = $step;
         }
 
-        foreach ([...$fixers, ...$extractors] as $step) {
+        foreach ([...$fixers, ...$extractors, ...$normalisers] as $step) {
             $chain->append($step);
         }
 

@@ -15,7 +15,9 @@ use JesseGall\Concurrent\Concurrent;
 #[Sinful(ConcurrentSubclass::class)]
 final class CartSession extends Concurrent
 {
-    /** @var array<int, int> */
+    /**
+     * @var array<int, int>
+     */
     public array $quantities = [];
 
     public ?string $couponCode = null;

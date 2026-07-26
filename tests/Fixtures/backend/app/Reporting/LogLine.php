@@ -2,13 +2,12 @@
 
 namespace Shop\Reporting;
 
+use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
-/**
- * A node in a test log tree. It holds its own children, so whether it contains a
- * failure is knowledge it could answer itself — see the envious FailureScanner.
- */
+/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
+#[Sinful(InlineDocblock::class)]
 #[Sinful(MemberOutOfOrder::class)]
 final class LogLine
 {
@@ -16,6 +15,8 @@ final class LogLine
 
     private int $depth = 0;
 
-    /** @var list<LogLine> */
+    /**
+     * @var list<LogLine>
+     */
     public array $children = [];
 }

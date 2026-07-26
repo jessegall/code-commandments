@@ -17,7 +17,9 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 final class WirePanel extends Data
 {
-    /** @param array<string, string> $tokens */
+    /**
+     * @param array<string, string> $tokens
+     */
     public function __construct(
         public readonly PanelHeader|null $header = null,
         public readonly string $variant = 'plain',

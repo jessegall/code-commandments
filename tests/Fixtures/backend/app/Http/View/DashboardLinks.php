@@ -26,7 +26,9 @@ final class DashboardLinks
         ];
     }
 
-    /** Righteous: the name is exactly the one the route registers. */
+    /**
+     * Righteous: the name is exactly the one the route registers.
+     */
     #[Righteous(DanglingRouteName::class)]
     public function home(): string
     {

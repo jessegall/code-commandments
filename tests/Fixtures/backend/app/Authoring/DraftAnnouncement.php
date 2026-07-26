@@ -22,7 +22,9 @@ final class DraftAnnouncement
         return new WorkflowRowData($slug, $name, null, false, '');
     }
 
-    /** Righteous: the timestamp is real, so the envelope's promise holds. */
+    /**
+     * Righteous: the timestamp is real, so the envelope's promise holds.
+     */
     #[Righteous(PlaceholderFilledData::class)]
     public function publish(string $slug, string $name, string $stamp): WorkflowRowData
     {

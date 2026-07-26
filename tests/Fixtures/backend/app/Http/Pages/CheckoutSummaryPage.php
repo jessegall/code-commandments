@@ -24,7 +24,9 @@ final class CheckoutSummaryPage extends Data
     public function __construct(
         public readonly CartLine $lead,
         public readonly StatCard $total,
-        /** @var list<CartLine> */
+        /**
+         * @var list<CartLine>
+         */
         #[DataCollectionOf(CartLine::class)]
         public readonly array $lines,
         #[FromContainer(CartReader::class)]

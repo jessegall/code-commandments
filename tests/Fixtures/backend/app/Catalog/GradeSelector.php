@@ -46,7 +46,9 @@ final class GradeSelector
 
 final class ActiveBatch
 {
-    /** @param list<string> $blocked */
+    /**
+     * @param list<string> $blocked
+     */
     public function __construct(private readonly string $code, private readonly array $blocked = []) {}
 
     public function permits(string $sku): bool

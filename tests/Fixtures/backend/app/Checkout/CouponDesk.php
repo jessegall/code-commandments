@@ -17,7 +17,9 @@ final class CouponDesk
 {
     private ?CartSnapshot $snapshot = null;
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $applied = [];
 
     #[Sinful(RestatedComment::class)]
@@ -42,7 +44,9 @@ final class CouponDesk
         return $this->snapshot?->qualifiesFor($coupon) ?? false;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function appliedCoupons(): array
     {
         return $this->applied;

@@ -27,7 +27,9 @@ final readonly class InputSocket
         return new self($this->id, $this->label, $this->type, $this->required, $value, $this->order);
     }
 
-    /** Righteous: says only what changes, so a new field never touches this method. */
+    /**
+     * Righteous: says only what changes, so a new field never touches this method.
+     */
     #[Righteous(HandRolledWither::class)]
     public function withOrder(int $order): self
     {

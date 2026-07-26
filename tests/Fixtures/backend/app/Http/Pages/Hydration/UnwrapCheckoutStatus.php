@@ -18,7 +18,9 @@ final class CheckoutSummary extends Data
 
 final class Basket
 {
-    /** @param list<string> $items */
+    /**
+     * @param list<string> $items
+     */
     public function __construct(public OrderStatus $status, public array $items) {}
 }
 

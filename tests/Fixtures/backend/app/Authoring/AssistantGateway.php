@@ -12,7 +12,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class AssistantGateway
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $refusals = [];
 
     #[Sinful(PlaceholderFilledData::class)]
@@ -27,7 +29,9 @@ final class AssistantGateway
         return new AiReplyData(message: '', success: false, error: $reason);
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function refusals(): array
     {
         return $this->refusals;

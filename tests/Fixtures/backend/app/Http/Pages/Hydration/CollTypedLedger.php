@@ -13,7 +13,9 @@ use Spatie\LaravelData\DataCollection;
 #[Sinful(DataCollectionType::class)]
 final class LedgerView extends Data
 {
-    /** @var DataCollection<int, Entry>|null */
+    /**
+     * @var DataCollection<int, Entry>|null
+     */
     public function __construct(
         public readonly string $currency,
         public readonly int $openingCents,

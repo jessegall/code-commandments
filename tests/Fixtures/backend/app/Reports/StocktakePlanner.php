@@ -13,7 +13,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class StocktakePlanner
 {
-    /** @var list<DateTimeImmutable> */
+    /**
+     * @var list<DateTimeImmutable>
+     */
     private array $planned = [];
 
     #[Sinful(DuplicatedConfigDefault::class)]
