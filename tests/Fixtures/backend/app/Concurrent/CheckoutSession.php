@@ -3,6 +3,7 @@
 namespace Shop\Concurrent;
 
 use JesseGall\CodeCommandments\Sins\Backend\MemberAfterMethod;
+use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\Concurrent\Concurrent;
 
@@ -11,11 +12,18 @@ use JesseGall\Concurrent\Concurrent;
  * count stand at the head of the class, so one read of the top says everything this object holds.
  */
 #[Righteous(MemberAfterMethod::class)]
+#[Righteous(MemberOutOfOrder::class)]
 final class CheckoutSession
 {
     private const int TTL = 1800;
 
+    public static int $started = 0;
+
+    public string $currency = 'EUR';
+
     private int $itemCount = 0;
+
+    public bool $isEmpty { get => $this->itemCount === 0; }
 
     /**
      * @return Concurrent<self>

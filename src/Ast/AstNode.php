@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
+use JesseGall\CodeCommandments\Ast\Support\ClassLayoutOrder;
 use JesseGall\CodeCommandments\Ast\Support\CodeWords;
 use JesseGall\CodeCommandments\Ast\Support\CommentedCode;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
@@ -1220,6 +1221,17 @@ class AstNode
         }
 
         return false;
+    }
+
+    /**
+     * Is this class member declared out of the canonical head order — does something above it belong
+     * below it? {@see \JesseGall\CodeCommandments\Ast\Support\ClassLayoutOrder}
+     */
+    public function breaksClassLayoutOrder(): bool
+    {
+        $class = $this->enclosingClass();
+
+        return $class !== null && $this->node !== null && ClassLayoutOrder::isOutOfOrder($class, $this->node);
     }
 
     /**

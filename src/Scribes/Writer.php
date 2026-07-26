@@ -161,6 +161,44 @@ final class Writer
     }
 
     /**
+     * Rewrite a run of declarations into $groups — the same nodes, regrouped. One edit over the whole
+     * run, so no two moves can overlap, and each declaration is re-emitted as its ORIGINAL bytes
+     * (docblock, attributes, alignment). A blank line separates the groups; INSIDE a group each member
+     * keeps the spacing it had, so a tight block stays tight and a spaced one stays spaced.
+     *
+     * @param  list<Node>         $nodes   the run as it stands, in source order
+     * @param  list<list<Node>>   $groups  the same nodes, grouped and in the order they should read
+     */
+    public function reorder(array $nodes, array $groups): void
+    {
+        if ($nodes === []) {
+            return;
+        }
+
+        $pieces = [];
+
+        foreach ($groups as $group) {
+            foreach ($group as $index => $node) {
+                $start = $this->lineStartOf($node);
+                $opensGroup = $index === 0;
+                $blank = $pieces !== [] && ($opensGroup || $this->hasBlankLineAbove($start));
+
+                $pieces[] = ($blank ? "\n" : '') . Span::slice($this->source, $start, $node->getEndFilePos());
+            }
+        }
+
+        $first = $this->lineStartOf($nodes[0]);
+        $last = $nodes[count($nodes) - 1]->getEndFilePos() + 1;
+
+        $this->draft->edit(new Span($this->path, $this->source, $first, $last), implode("\n", $pieces));
+    }
+
+    private function hasBlankLineAbove(int $lineStart): bool
+    {
+        return $lineStart >= 2 && $this->source[$lineStart - 1] === "\n" && $this->source[$lineStart - 2] === "\n";
+    }
+
+    /**
      * Where a declaration really begins and ends in the source: from the start of the line its
      * docblock (or its attributes, or the declaration itself) opens on, through the newline that ends
      * it. The BLANK line above is taken too, so lifting the block out closes the gap behind it instead

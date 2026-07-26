@@ -162,6 +162,8 @@ final class LabelPrintDefaults
 // Good
 final class GlowingTile implements AnimatedTile
 {
+    private string $easingMode = 'in';
+
     /** Derived from own state — a real computed property. */
     public ?string $enterEffect { get => $this->intensity > 5 ? 'flash' : 'fade'; }
 
@@ -173,8 +175,6 @@ final class GlowingTile implements AnimatedTile
         get => 'ease-' . $this->easingMode;
         set => strtolower($value);
     }
-
-    private string $easingMode = 'in';
 
     public function __construct(private readonly int $intensity) {}
 
