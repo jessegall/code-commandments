@@ -3,6 +3,7 @@
 namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
+use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -26,10 +27,12 @@ final class WeightAggregator
     /**
      * @return array<string, int>
      */
+    #[Sinful(RestatedComment::class)]
     public function histogram(int $bucketSize): array
     {
         $buckets = [];
 
+        // loop over the entries
         foreach ($this->entries as $grams) {
             $key = $this->unit . (intdiv($grams, $bucketSize) * $bucketSize);
             $buckets[$key] = ($buckets[$key] ?? 0) + 1;

@@ -3,7 +3,9 @@
 namespace Shop\Checkout;
 
 use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
+use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -18,13 +20,17 @@ final class CouponDesk
     /** @var list<string> */
     private array $applied = [];
 
+    #[Sinful(RestatedComment::class)]
     public function load(int $cartId): void
     {
+        // store the cart snapshot
         $this->snapshot = CartSnapshot::of($cartId);
     }
 
+    #[Righteous(RestatedComment::class)]
     public function apply(string $coupon): void
     {
+        // a coupon may be presented twice; the desk keeps both, and the till reconciles them later
         if ($this->honours($coupon)) {
             $this->applied[] = $coupon;
         }

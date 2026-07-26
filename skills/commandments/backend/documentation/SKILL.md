@@ -35,6 +35,7 @@ if the codebase already uses them — structural, not narrative.) Everything els
 - A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
 - A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
 - State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
+- An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
 
 ## Bad → good
 
@@ -164,6 +165,24 @@ public function has(string $code): bool
 }
 ```
 
+```php
+// Bad
+public function load(int $cartId): void
+{
+    // store the cart snapshot
+    $this->snapshot = CartSnapshot::of($cartId);
+}
+
+// Good
+public function apply(string $coupon): void
+{
+    // a coupon may be presented twice; the desk keeps both, and the till reconciles them later
+    if ($this->honours($coupon)) {
+        $this->applied[] = $coupon;
+    }
+}
+```
+
 ## When it fires
 
 - History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted") — `ArchaeologyCommentDetector`
@@ -171,6 +190,7 @@ public function has(string $code): bool
 - Docblock that only restates the typed signature (`@param Type $x`, no description) — `CeremonyDocblockDetector`
 - A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is — `DanglingDocReferenceDetector`
 - A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code") — `NegativeSpaceCommentDetector`
+- An inline comment that only spells the statement below it back in prose ("// save the order" over `$this->orders->save($order)`) — `RestatedCommentDetector`
 
 ## Checklist
 
@@ -179,6 +199,7 @@ public function has(string $code): bool
 - [ ] A docblock must add meaning beyond the signature — drop `@param Type $x` lines that only restate an already-typed parameter.
 - [ ] A `{@see}`/`{@link}` must resolve to a real class. A cross-reference to a first-party class the codebase no longer declares is stale documentation — repoint it at the current class or delete it. (References into another vendor namespace are left alone; they can't be verified here.)
 - [ ] State what the code IS, affirmatively — a comment that defends it against a strawman (that it is "not random", "no magic", "not a typo") is negative space; make the code self-evident and delete the comment.
+- [ ] An inline comment must say something the code does not — never narrate the statement below it; if every word of the comment is already a word of the code, delete the comment.
 
 ## Related skills
 

@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
+use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr\Assign;
@@ -425,6 +426,23 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         return new Query($this, static function (Node $node) use ($pattern): bool {
             foreach ($node->getComments() as $comment) {
                 if (preg_match($pattern, $comment->getText()) === 1) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * Every node carrying a `//` (or `#`) comment — the inline prose a reader meets before a
+     * statement, docblocks excluded. Narrow it with {@see AstNode::lineComments()}.
+     */
+    public function whereLineComment(): Query
+    {
+        return new Query($this, static function (Node $node): bool {
+            foreach ($node->getComments() as $comment) {
+                if (! $comment instanceof Doc) {
                     return true;
                 }
             }

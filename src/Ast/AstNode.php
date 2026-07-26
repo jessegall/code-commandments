@@ -7,7 +7,10 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
+use JesseGall\CodeCommandments\Ast\Support\CodeWords;
+use JesseGall\CodeCommandments\Ast\Support\CommentedCode;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
+use PhpParser\Comment\Doc;
 use PhpParser\Modifiers;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
@@ -1166,6 +1169,59 @@ class AstNode
     public function isFunctionDeclaration(): bool
     {
         return $this->node instanceof ClassMethod || $this->node instanceof Function_;
+    }
+
+    /**
+     * The `//` (and `#`) comments attached to this node — the inline prose a reader meets immediately
+     * before this statement. One entry per comment line, each still carrying its marker. Neither a
+     * docblock nor a slash-star block counts: both are documentation constructs, judged as such
+     * elsewhere.
+     *
+     * @return list<string>
+     */
+    public function lineComments(): array
+    {
+        $comments = [];
+
+        foreach ($this->node?->getComments() ?? [] as $comment) {
+            $text = $comment->getText();
+
+            if (! $comment instanceof Doc && (str_starts_with($text, '//') || str_starts_with($text, '#'))) {
+                $comments[] = $text;
+            }
+        }
+
+        return $comments;
+    }
+
+    /**
+     * Does any comment attached to this node hold commented-out PHP rather than prose? Dead code kept
+     * in a comment is its own problem, and never prose to be read as documentation.
+     * {@see \JesseGall\CodeCommandments\Ast\Support\CommentedCode}
+     */
+    public function hasCommentedOutCode(): bool
+    {
+        return array_any($this->lineComments(), static fn (string $c): bool => CommentedCode::isCode($c));
+    }
+
+    /**
+     * Is this node an element of an array literal — an item in a list, rather than a statement?
+     */
+    public function isArrayItem(): bool
+    {
+        return $this->node instanceof ArrayItem || $this->parent()->node instanceof ArrayItem;
+    }
+
+    /**
+     * Every word this statement's own HEAD spells — its identifiers, class names, string literals and
+     * the plain-English name of the construct — stemmed for comparison. A nested body is not read.
+     * {@see \JesseGall\CodeCommandments\Ast\Support\CodeWords}
+     *
+     * @return list<string>
+     */
+    public function codeWords(): array
+    {
+        return $this->node === null ? [] : CodeWords::of($this->node);
     }
 
     /**
