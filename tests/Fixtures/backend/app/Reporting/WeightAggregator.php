@@ -3,6 +3,7 @@
 namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
+use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
@@ -13,6 +14,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * Aggregates parcel weights into a histogram. accumulateFrom is the same loop as
  * the pricing and shipping scorers — same shape, different names and constant.
  */
+#[Sinful(RedundantArrowReturnType::class)]
 final class WeightAggregator
 {
     /**
@@ -31,6 +33,14 @@ final class WeightAggregator
         $this->entries = [];
 
         return $this;
+    }
+
+    /**
+     * A literal proves its own type.
+     */
+    public function unit(): callable
+    {
+        return fn (): string => 'g';
     }
 
     public function push(int $grams): void

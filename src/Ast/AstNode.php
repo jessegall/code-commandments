@@ -1278,6 +1278,14 @@ class AstNode
     }
 
     /**
+     * Does this arrow function declare a return type at all?
+     */
+    public function hasReturnType(): bool
+    {
+        return $this->node instanceof ArrowFunction && $this->node->returnType !== null;
+    }
+
+    /**
      * Does this method declare a `bool` return — an answer to a question, whatever its name says?
      */
     public function returnsBool(): bool
@@ -1382,7 +1390,7 @@ class AstNode
      */
     public function hasCommentedOutCode(): bool
     {
-        return array_any($this->lineComments(), static fn (string $c): bool => CommentedCode::isCode($c));
+        return array_any($this->lineComments(), static fn (string $c) => CommentedCode::isCode($c));
     }
 
     /**
@@ -1437,7 +1445,7 @@ class AstNode
             return 0;
         }
 
-        return count((new NodeFinder)->find($this->node->stmts, static fn (Node $node): bool => true));
+        return count((new NodeFinder)->find($this->node->stmts, static fn (Node $node) => true));
     }
 
     /**
@@ -2395,7 +2403,7 @@ class AstNode
         }
 
         $aliases = $this->localAliases();
-        $hashes = array_map(static fn (Node $conjunct): string => StructuralHash::canonical($conjunct, $aliases), self::flattenConjuncts($this->node));
+        $hashes = array_map(static fn (Node $conjunct) => StructuralHash::canonical($conjunct, $aliases), self::flattenConjuncts($this->node));
         sort($hashes);
 
         return sha1(implode('|', $hashes));

@@ -72,7 +72,7 @@ final class Judge implements Command
         // `--ignore-package-requirements` lets one checkout judge ANY project's tree — a
         // package-gated rule (Spatie/Laravel/…) is kept even though THIS project doesn't
         // require the package. For cross-project calibration; user `disable()`s still apply.
-        $installed = $options->ignorePackages ? static fn (): bool => true : null;
+        $installed = $options->ignorePackages ? static fn () => true : null;
         $configured = $config->apply(Catalog::backend(), Catalog::frontend(), $installed);
         $detectors = $this->select($configured['backend'], $options->skill, $options->sin);
         $frontend = $this->select($configured['frontend'], $options->skill, $options->sin);

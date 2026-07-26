@@ -51,8 +51,8 @@ final class MirroredServerTypeDetector implements Detector, ConsumesContracts
         return $components
             ->whereTypeDeclaration()
             ->havingAtLeastFields(self::MIN_FIELDS)
-            ->reject(fn (TypeDeclarationMatch $type): bool => $this->isGenerated($type, $generated))
-            ->where(fn (TypeDeclarationMatch $type): bool => $this->mirrorsAServerContract($type, $contracts))
+            ->reject(fn (TypeDeclarationMatch $type) => $this->isGenerated($type, $generated))
+            ->where(fn (TypeDeclarationMatch $type) => $this->mirrorsAServerContract($type, $contracts))
             ->get();
     }
 

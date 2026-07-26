@@ -20,7 +20,7 @@ final class HandRolledWitherScribe extends RepentScribe
     public function rewrite(array $findings): array
     {
         return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->toCloneWith($match))
+            ->replace(fn (NodeMatch $match) => $this->toCloneWith($match))
             ->rewrites();
     }
 

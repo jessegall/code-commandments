@@ -4,6 +4,7 @@ namespace Shop\Support;
 
 use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
+use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -13,6 +14,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * unknown flag, masking a typo as a disabled feature.
  */
 #[Sinful(InlineDocblock::class)]
+#[Sinful(RedundantArrowReturnType::class)]
 final class FeatureGate
 {
     /** @var array<string, bool> */
@@ -27,6 +29,14 @@ final class FeatureGate
     public function tracks(): bool
     {
         return $this->environment !== 'testing';
+    }
+
+    /**
+     * A construction spells the class it builds; the annotation repeats it.
+     */
+    public function factory(): callable
+    {
+        return fn (): FeatureGate => new FeatureGate($this->environment);
     }
 
     public function override(string $flag, bool $on): void

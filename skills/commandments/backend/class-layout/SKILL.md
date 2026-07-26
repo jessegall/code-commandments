@@ -95,6 +95,18 @@ final class CheckoutSession
         );
     }
 
+    /**
+     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
+     * nothing here can prove. Both tell the reader something the code does not.
+     */
+    public function readers(): array
+    {
+        return [
+            fn (): ?int => $this->itemCount,
+            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
+        ];
+    }
+
     public function addItem(): void
     {
         $this->itemCount++;
@@ -147,6 +159,18 @@ final class CheckoutSession
             default: new self,
             ttl: self::TTL,
         );
+    }
+
+    /**
+     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
+     * nothing here can prove. Both tell the reader something the code does not.
+     */
+    public function readers(): array
+    {
+        return [
+            fn (): ?int => $this->itemCount,
+            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
+        ];
     }
 
     public function addItem(): void

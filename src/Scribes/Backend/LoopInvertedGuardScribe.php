@@ -21,7 +21,7 @@ final class LoopInvertedGuardScribe extends RepentScribe
     public function rewrite(array $findings): array
     {
         return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->invert($match))
+            ->replace(fn (NodeMatch $match) => $this->invert($match))
             ->rewrites();
     }
 

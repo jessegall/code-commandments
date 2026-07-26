@@ -43,6 +43,8 @@ field, or a value object, and delete the defence.
 
 - Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
+- Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
+  _drop the `: Type` — `repent` does this for you_
 - Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
 - A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
   _Fetch the real value, or split a narrower envelope that only promises what this answer knows._
@@ -88,6 +90,127 @@ final class DeliveryInstruction
         public readonly ?string $note,
         public readonly bool $signatureRequired,
     ) {}
+}
+```
+
+```php
+// Bad
+final class WeightAggregator
+{
+    /**
+     * @var list<int>
+     */
+    private array $entries = [];
+
+    private string $unit = 'g';
+
+    /**
+     * The fluent form of the same mistake: chainable, still an order.
+     */
+    public function clears(): static
+    {
+        $this->entries = [];
+
+        return $this;
+    }
+
+    /**
+     * A literal proves its own type.
+     */
+    public function unit(): callable
+    {
+        return fn (): string => 'g';
+    }
+
+    public function push(int $grams): void
+    {
+        $this->entries[] = $grams;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function histogram(int $bucketSize): array
+    {
+        $buckets = [];
+
+        // loop over the entries
+        foreach ($this->entries as $grams) {
+            $key = $this->unit . (intdiv($grams, $bucketSize) * $bucketSize);
+            $buckets[$key] = ($buckets[$key] ?? 0) + 1;
+        }
+
+        return $buckets;
+    }
+
+    public function accumulateFrom(int $start): int
+    {
+        $total = $start;
+
+        foreach ($this->entries as $row) {
+            if ($row > 0) {
+                $total += $row * 5;
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * The duplicated scorers collapsed into one parameterised pass — the per-entry
+     * weight is an argument, so there is no rhyming twin to extract.
+     */
+    public function scoreFrom(int $start, int $weight): int
+    {
+        return array_reduce(
+            array_filter($this->entries, static fn (int $row): bool => $row > 0),
+            static fn (int $total, int $row): int => $total + $row * $weight,
+            $start,
+        );
+    }
+}
+
+// Good
+final class CheckoutSession
+{
+    private const int TTL = 1800;
+
+    public static int $started = 0;
+
+    public string $currency = 'EUR';
+
+    private int $itemCount = 0;
+
+    public bool $isEmpty { get => $this->itemCount === 0; }
+
+    /**
+     * @return Concurrent<self>
+     */
+    public static function for(int $customerId): Concurrent
+    {
+        return new Concurrent(
+            key: "checkout:{$customerId}",
+            default: new self,
+            ttl: self::TTL,
+        );
+    }
+
+    /**
+     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
+     * nothing here can prove. Both tell the reader something the code does not.
+     */
+    public function readers(): array
+    {
+        return [
+            fn (): ?int => $this->itemCount,
+            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
+        ];
+    }
+
+    public function addItem(): void
+    {
+        $this->itemCount++;
+    }
 }
 ```
 
@@ -195,6 +318,7 @@ final class GlowingTile implements AnimatedTile
 
 - Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
 - Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
+- An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property — `RedundantArrowReturnTypeDetector`
 - Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`
 - A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none — `PlaceholderFilledDataDetector`
 - A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax — `UselessPropertyHookDetector`
@@ -203,6 +327,7 @@ final class GlowingTile implements AnimatedTile
 
 - [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
+- [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
 - [ ] A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
 - [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.

@@ -29,7 +29,7 @@ final class PlaceholderFilledDataDetector implements Detector
         return $codebase
             ->whereNew()
             ->where(static fn (SpatieDataNode $node): bool => $node->isNewData())
-            ->where(static fn (AstNode $node): bool => self::fillsAStringSlotWithNothing($codebase, $node))
+            ->where(static fn (AstNode $node) => self::fillsAStringSlotWithNothing($codebase, $node))
             ->get();
     }
 

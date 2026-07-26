@@ -29,7 +29,7 @@ final class DeNulledFinderDetector implements Detector
         return $codebase
             ->whereMethodDeclaration()
             ->where(static fn (AstNode $node): bool => $node->returnsNullableObject())
-            ->where(static fn (AstNode $node): bool => self::deNulledByEveryCallerAndTravels($codebase, $node))
+            ->where(static fn (AstNode $node) => self::deNulledByEveryCallerAndTravels($codebase, $node))
             ->get();
     }
 

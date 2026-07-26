@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
+use JesseGall\CodeCommandments\Ast\Support\ExpressionType;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node;
+use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
@@ -34,6 +36,28 @@ class NodeMatch extends AstNode implements Located
         public readonly Codebase $codebase,
     ) {
         parent::__construct($node);
+    }
+
+    /**
+     * Does this arrow function's return type only restate what its expression provably yields? The
+     * comparison is exact — same spelling, same nullability — and unproven means false, never true.
+     * {@see \JesseGall\CodeCommandments\Ast\Support\ExpressionType}
+     */
+    public function returnTypeRestatesItsExpression(): bool
+    {
+        if (! $this->node instanceof ArrowFunction || $this->node->returnType === null) {
+            return false;
+        }
+
+        $declared = TypeName::render($this->node->returnType);
+
+        if (in_array(strtolower($declared), ['self', 'static', 'parent'], true)) {
+            return false; // What these mean depends on where the closure ends up, not on the expression.
+        }
+
+        $yielded = ExpressionType::of($this->codebase, $this->node->expr, $this->enclosingClassName());
+
+        return $yielded !== null && $yielded === $declared;
     }
 
     /**
@@ -74,7 +98,7 @@ class NodeMatch extends AstNode implements Located
 
         return $callers !== [] && array_all(
             $callers,
-            fn (NodeMatch $caller): bool => $this->scopeIsSerializationBoundary(
+            fn (NodeMatch $caller) => $this->scopeIsSerializationBoundary(
                 $caller->enclosingClassName(),
                 $caller->enclosingFunctionName(),
                 $depth + 1,

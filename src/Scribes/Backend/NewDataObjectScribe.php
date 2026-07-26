@@ -31,7 +31,7 @@ final class NewDataObjectScribe extends RepentScribe implements NeedsCodebase
     public function rewrite(array $findings): array
     {
         return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->toFrom($match))
+            ->replace(fn (NodeMatch $match) => $this->toFrom($match))
             ->rewrites();
     }
 

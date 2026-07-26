@@ -30,7 +30,7 @@ final class ClassScenarioResolver implements ScenarioResolver
 
         foreach ($detectors as $detector) {
             $scenarios[$detector::class] = array_map(
-                fn (NodeMatch $match): array => [
+                fn (NodeMatch $match) => [
                     'file' => $match->file->path,
                     'source' => $detector instanceof ChainDetector
                         ? implode("\n", $detector->chainPath($match, $codebase))

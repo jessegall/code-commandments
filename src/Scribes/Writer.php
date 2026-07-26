@@ -6,7 +6,11 @@ namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use PhpParser\Node;
+use PhpParser\Node\Expr\ArrowFunction;
+use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Param;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Property;
@@ -140,6 +144,22 @@ final class Writer
             new Span($this->path, $this->source, $keywordStart, $typeStart),
             str_replace("{$modifier} ", '', $modifiers),
         );
+    }
+
+    /**
+     * Drop a declared return type — the `: Type` between the parameter list and the body, taken out
+     * whole so nothing is left dangling. No-op when the function declares none.
+     */
+    public function removeReturnType(ArrowFunction|ClassMethod|Closure|Function_ $function): void
+    {
+        if ($function->returnType === null) {
+            return;
+        }
+
+        $start = $function->returnType->getStartFilePos();
+        $colon = Span::before($this->source, $start, ':');
+
+        $this->rewriteRange($colon ?? $start, $function->returnType->getEndFilePos() + 1, '');
     }
 
     /**

@@ -289,7 +289,7 @@ final class Repent implements Command
      */
     private function chain(?string $only): ScribeChain
     {
-        $chain = ScribeChain::default($this->ignorePackages ? static fn (): bool => true : null);
+        $chain = ScribeChain::default($this->ignorePackages ? static fn () => true : null);
         $config = Workspace::at($this->io->projectRoot())->shared('repent.php');
 
         if (is_file($config)) {

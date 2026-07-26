@@ -52,7 +52,7 @@ final class FlatFieldClusterDetector implements Detector
         return $codebase
             ->whereClass()
             ->where(static fn (SpatieDataNode $node): bool => $node->isTypeScriptData())
-            ->where(fn (AstNode $node): bool => $this->flattensAValueObject($node, $shapes))
+            ->where(fn (AstNode $node) => $this->flattensAValueObject($node, $shapes))
             ->get();
     }
 

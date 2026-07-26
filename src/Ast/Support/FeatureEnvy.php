@@ -296,7 +296,7 @@ final class FeatureEnvy
      */
     private function mutates(ClassMethod $method, string $param): bool
     {
-        foreach ((new NodeFinder)->find($method->stmts, static fn (Node $n): bool => true) as $node) {
+        foreach ((new NodeFinder)->find($method->stmts, static fn (Node $n) => true) as $node) {
             $target = match (true) {
                 $node instanceof Assign, $node instanceof AssignOp => $node->var,
                 $node instanceof PreInc, $node instanceof PostInc,
@@ -466,7 +466,7 @@ final class FeatureEnvy
         $foreign = [];
         $candidates = array_flip($params);
 
-        foreach ((new NodeFinder)->find($method->stmts, static fn (Node $n): bool => true) as $node) {
+        foreach ((new NodeFinder)->find($method->stmts, static fn (Node $n) => true) as $node) {
             if (! $this->isMemberAccess($node) || ! $node->var instanceof Variable || ! is_string($node->var->name)) {
                 continue;
             }

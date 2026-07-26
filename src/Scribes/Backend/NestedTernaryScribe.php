@@ -22,7 +22,7 @@ final class NestedTernaryScribe extends RepentScribe
     public function rewrite(array $findings): array
     {
         return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->toMatch($match))
+            ->replace(fn (NodeMatch $match) => $this->toMatch($match))
             ->rewrites();
     }
 

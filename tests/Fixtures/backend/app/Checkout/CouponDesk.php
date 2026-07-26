@@ -4,6 +4,7 @@ namespace Shop\Checkout;
 
 use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
 use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
+use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -14,6 +15,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * of it with `?? false`. The snapshot is always present by the time a coupon is
  * weighed; the fake default hides a missing `load()` as "not honoured".
  */
+#[Sinful(RedundantArrowReturnType::class)]
 final class CouponDesk
 {
     private ?CartSnapshot $snapshot = null;
@@ -52,6 +54,14 @@ final class CouponDesk
     public function honours(string $coupon): bool
     {
         return $this->snapshot?->qualifiesFor($coupon) ?? false;
+    }
+
+    /**
+     * The type only spells the property one token to its right.
+     */
+    public function reader(): callable
+    {
+        return fn (): array => $this->applied;
     }
 
     /**

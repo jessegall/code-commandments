@@ -44,7 +44,7 @@ final class ParamResolvedFromParamDetector implements Detector, Exemptable
 
         return $codebase
             ->whereMethodDeclaration()
-            ->reject(static fn (AstNode $node): bool => self::isBoundary($codebase, $node))
+            ->reject(static fn (AstNode $node) => self::isBoundary($codebase, $node))
             ->where(static fn (AstNode $node): bool => $resolution->unpacksTargetFromContainerParam($node, $codebase))
             ->get();
     }

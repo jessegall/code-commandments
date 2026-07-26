@@ -33,8 +33,8 @@ final class BareStatePredicateDetector implements Detector
             ->reject(fn (NodeMatch $n): bool => $n->nameIsInherited())
             ->where(fn (AstNode $n): bool => $n->returnsBool())
             ->where(fn (AstNode $n): bool => $n->takesNoArguments())
-            ->reject(fn (AstNode $n): bool => VerbMood::readsAsQuestion($n->methodName()))
-            ->where(fn (AstNode $n): bool => VerbMood::isThirdPerson($n->methodName()))
+            ->reject(fn (AstNode $n) => VerbMood::readsAsQuestion($n->methodName()))
+            ->where(fn (AstNode $n) => VerbMood::isThirdPerson($n->methodName()))
             ->get();
     }
 }

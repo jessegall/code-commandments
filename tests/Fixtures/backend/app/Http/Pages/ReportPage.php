@@ -40,7 +40,7 @@ final class ReportPage extends Data
      */
     #[Computed]
     #[DataCollectionOf(StatCard::class)]
-    public array|Lazy $statistics { get => Lazy::closure(fn (): array => []); }
+    public array|Lazy $statistics { get => Lazy::closure(fn () => []); }
 
     public function __construct(
         #[Hidden]

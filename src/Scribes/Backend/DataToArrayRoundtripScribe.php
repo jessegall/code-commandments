@@ -17,7 +17,7 @@ final class DataToArrayRoundtripScribe extends RepentScribe
     public function rewrite(array $findings): array
     {
         return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->dropToArray($match))
+            ->replace(fn (NodeMatch $match) => $this->dropToArray($match))
             ->rewrites();
     }
 

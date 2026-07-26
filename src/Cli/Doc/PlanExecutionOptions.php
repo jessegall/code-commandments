@@ -41,13 +41,13 @@ final class PlanExecutionOptions
 
         $options = array_filter(
             $reflection->getMethods(ReflectionMethod::IS_PUBLIC),
-            static fn (ReflectionMethod $method): bool => self::isOption($method),
+            static fn (ReflectionMethod $method) => self::isOption($method),
         );
 
         usort($options, static fn (ReflectionMethod $a, ReflectionMethod $b): int => $a->getStartLine() <=> $b->getStartLine());
 
         return array_map(
-            static fn (ReflectionMethod $method): array => [
+            static fn (ReflectionMethod $method) => [
                 'name' => $method->getName(),
                 'summary' => Summary::first($method->getDocComment()),
             ],

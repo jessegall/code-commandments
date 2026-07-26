@@ -5,6 +5,7 @@ namespace Shop\Concurrent;
 use JesseGall\CodeCommandments\Sins\Backend\MemberAfterMethod;
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
 use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
+use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\Concurrent\Concurrent;
 
@@ -15,6 +16,7 @@ use JesseGall\Concurrent\Concurrent;
 #[Righteous(MemberAfterMethod::class)]
 #[Righteous(MemberOutOfOrder::class)]
 #[Righteous(NarratedCommand::class)]
+#[Righteous(RedundantArrowReturnType::class)]
 final class CheckoutSession
 {
     private const int TTL = 1800;
@@ -37,6 +39,18 @@ final class CheckoutSession
             default: new self,
             ttl: self::TTL,
         );
+    }
+
+    /**
+     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
+     * nothing here can prove. Both tell the reader something the code does not.
+     */
+    public function readers(): array
+    {
+        return [
+            fn (): ?int => $this->itemCount,
+            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
+        ];
     }
 
     public function addItem(): void

@@ -31,7 +31,7 @@ final class IndexAsKeyDetector implements Detector
         return $components
             ->whereElement()
             ->withDirective(Directive::For)
-            ->where(static fn (ElementMatch $element): bool => self::keyedByIndex($element))
+            ->where(static fn (ElementMatch $element) => self::keyedByIndex($element))
             ->get();
     }
 

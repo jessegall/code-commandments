@@ -106,7 +106,7 @@ final class LookupEnvy
                 continue;
             }
 
-            foreach ($finder->find([$return->expr], static fn (Node $node): bool => true) as $node) {
+            foreach ($finder->find([$return->expr], static fn (Node $node) => true) as $node) {
                 if ($this->isKeyedFetchRead($node, $param)) {
                     return true;
                 }
@@ -213,7 +213,7 @@ final class LookupEnvy
 
     private function usesParamMember(Node $expr, string $param): bool
     {
-        foreach ((new NodeFinder)->find([$expr], static fn (Node $node): bool => true) as $node) {
+        foreach ((new NodeFinder)->find([$expr], static fn (Node $node) => true) as $node) {
             if ($this->isMemberAccess($node) && $node->var instanceof Variable && $node->var->name === $param) {
                 return true;
             }

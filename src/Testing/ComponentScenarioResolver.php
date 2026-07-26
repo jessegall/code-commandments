@@ -26,7 +26,7 @@ final class ComponentScenarioResolver implements ScenarioResolver
 
         foreach ($detectors as $detector) {
             $scenarios[(new \ReflectionClass($detector))->getShortName()] = array_map(
-                static fn (Located $match): array => ['file' => $match->file(), 'source' => (string) @file_get_contents($match->file())],
+                static fn (Located $match) => ['file' => $match->file(), 'source' => (string) @file_get_contents($match->file())],
                 $detector->find($codebase),
             );
         }

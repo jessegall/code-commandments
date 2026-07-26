@@ -30,7 +30,7 @@ final class StringMatchMirrorsEnumDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->armConditionLiterals() !== [])
             ->reject(static fn (AstNode $node): bool => $node->isMatchOnEnumValue())
-            ->where(static fn (AstNode $node): bool => Enums::mirroredBy($node->armConditionLiterals(), $enums))
+            ->where(static fn (AstNode $node) => Enums::mirroredBy($node->armConditionLiterals(), $enums))
             ->get();
     }
 }

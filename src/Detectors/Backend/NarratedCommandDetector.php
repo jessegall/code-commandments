@@ -52,8 +52,8 @@ final class NarratedCommandDetector implements Detector
             ->reject(fn (AstNode $n): bool => $n->isMagicMethod())
             ->reject(fn (NodeMatch $n): bool => $n->nameIsInherited())
             ->where(fn (AstNode $n): bool => $n->isCommandMethod())
-            ->where(fn (AstNode $n): bool => VerbMood::isThirdPerson($n->methodName()))
-            ->reject(fn (AstNode $n): bool => $this->declaresAConstraint($n))
+            ->where(fn (AstNode $n) => VerbMood::isThirdPerson($n->methodName()))
+            ->reject(fn (AstNode $n) => $this->declaresAConstraint($n))
             ->get();
     }
 }

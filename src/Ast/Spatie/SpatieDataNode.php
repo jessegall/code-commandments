@@ -624,7 +624,7 @@ final class SpatieDataNode extends NodeMatch
 
         $count = $this->getConstructor(fn (ClassMethod $ctor): int => count(array_filter(
             new NodeFinder()->findInstanceOf($ctor->stmts ?? [], Assign::class),
-            static fn (Assign $assign): bool => self::assignsThisPropertyNamed($assign, $name),
+            static fn (Assign $assign) => self::assignsThisPropertyNamed($assign, $name),
         )));
 
         return ($count ?? 0) > 1;

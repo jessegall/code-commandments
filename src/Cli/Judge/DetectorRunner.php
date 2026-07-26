@@ -76,7 +76,7 @@ final class DetectorRunner
             $short = ClassName::short($detector::class);
             $sin = $detector->sin();
 
-            $tasks[] = static fn (): array => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase), $detector, $codebase);
+            $tasks[] = static fn () => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase), $detector, $codebase);
         }
 
         return $tasks;

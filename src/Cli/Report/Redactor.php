@@ -68,7 +68,7 @@ final class Redactor
 
         // Recognised secret token shapes, wherever they appear.
         foreach (self::TOKENS as $pattern) {
-            $line = (string) preg_replace_callback($pattern, static fn (array $m): string => self::mask($m[0]), $line);
+            $line = (string) preg_replace_callback($pattern, static fn (array $m) => self::mask($m[0]), $line);
         }
 
         // A high-entropy blob inside a string literal — a key/token that dodged the rules above. Requires a

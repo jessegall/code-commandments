@@ -62,7 +62,7 @@ final class NamespaceDependencyDetector implements Detector
             // An import only lets the file spell the name short; the arrow is drawn where the name
             // is USED, and that is where the fix lives.
             ->reject(static fn (AstNode $node): bool => $node->isImportedName())
-            ->where(fn (NodeMatch $node): bool => $this->breaches($node))
+            ->where(fn (NodeMatch $node) => $this->breaches($node))
             ->get();
     }
 

@@ -35,7 +35,7 @@ final class ComputedBooleanArgumentDetector implements Detector
         return $codebase
             ->whereMethodDeclaration()
             ->where(static fn (AstNode $node): bool => $node->decidesOnBoolsAlone())
-            ->where(fn (NodeMatch $node): bool => $this->callersAllAskOneObject($node))
+            ->where(fn (NodeMatch $node) => $this->callersAllAskOneObject($node))
             ->get();
     }
 

@@ -11,6 +11,7 @@ use FilesystemIterator;
 use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
+use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
@@ -202,7 +203,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $buckets = [];
 
         foreach ($this->files as $file) {
-            foreach ($finder->find($file->ast, static fn (): bool => true) as $node) {
+            foreach ($finder->find($file->ast, static fn () => true) as $node) {
                 $buckets[$node::class][] = [$node, $file];
             }
         }
@@ -319,7 +320,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     public function whereNewExtending(string $parent): Query
     {
-        return $this->whereNew()->where(fn (AstNode $node): bool => $this->extends($node->newClassName(), $parent));
+        return $this->whereNew()->where(fn (AstNode $node) => $this->extends($node->newClassName(), $parent));
     }
 
     /**
@@ -388,7 +389,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     public function whereClassExtending(string $parent): Query
     {
-        return $this->whereClass()->where(fn (AstNode $node): bool => $this->extends($node->enclosingClassName(), $parent));
+        return $this->whereClass()->where(fn (AstNode $node) => $this->extends($node->enclosingClassName(), $parent));
     }
 
     /**
@@ -471,6 +472,14 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Every arrow function — `fn (…) => …`, the one-expression form.
+     */
+    public function whereArrowFunction(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof ArrowFunction, [ArrowFunction::class]);
+    }
+
+    /**
      * Every node carrying a DOCBLOCK — the `/**` documentation comment, wherever it is attached.
      */
     public function whereDocblock(): Query
@@ -503,7 +512,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     public function where(\Closure $check): Query
     {
-        return (new Query($this, static fn (Node $node): bool => true))->where($check);
+        return (new Query($this, static fn (Node $node) => true))->where($check);
     }
 
     /**
@@ -737,7 +746,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function isEverProduced(string $fqcn, array $statically = []): bool
     {
         $produced = $this->whereNew()
-            ->where(fn (AstNode $node): bool => $this->isA($node->newClassName(), $fqcn))
+            ->where(fn (AstNode $node) => $this->isA($node->newClassName(), $fqcn))
             ->count() > 0;
 
         if ($produced || $statically === []) {
@@ -746,7 +755,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         return $this->whereStaticCall()
             ->where(static fn (AstNode $node): bool => in_array($node->staticCallMethod() ?? '', $statically, true))
-            ->where(fn (AstNode $node): bool => $this->isA($node->staticCallClass(), $fqcn))
+            ->where(fn (AstNode $node) => $this->isA($node->staticCallClass(), $fqcn))
             ->count() > 0;
     }
 

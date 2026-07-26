@@ -144,7 +144,7 @@ final class TypeName
         }
 
         if ($type instanceof UnionType) {
-            $parts = array_map(static fn (Node $member): string => self::render($member), $type->types);
+            $parts = array_map(static fn (Node $member) => self::render($member), $type->types);
             sort($parts);
 
             return implode('|', $parts);

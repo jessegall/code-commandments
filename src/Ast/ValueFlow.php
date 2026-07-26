@@ -152,7 +152,7 @@ final class ValueFlow
         $assume = [];
         $guard = [];
         $chains = [];
-        $queue = array_map(static fn (NodeMatch $start): array => [$start, 'read', [], null], $starts);
+        $queue = array_map(static fn (NodeMatch $start) => [$start, 'read', [], null], $starts);
         $seen = [];
         $seenSlots = [];
         $steps = 0;
@@ -327,7 +327,7 @@ final class ValueFlow
      */
     private function keyed(array $downstream, string $edge, ?string $key): array
     {
-        return array_map(static fn (NodeMatch $match): array => [$match, $edge, $key], $downstream);
+        return array_map(static fn (NodeMatch $match) => [$match, $edge, $key], $downstream);
     }
 
     /**

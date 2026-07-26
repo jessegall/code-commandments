@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Cli\Hints\DataHintScribe;
-use JesseGall\CodeCommandments\Scribes\Backend\RedundantReturnTypeScribe;
 
 /**
  * The roll of Scribes the `scribe` command runs. (An explicit list, not a glob —
@@ -20,7 +19,6 @@ final class Catalog
     {
         return [
             new DataHintScribe,
-            new RedundantReturnTypeScribe,
         ];
     }
 }

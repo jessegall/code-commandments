@@ -89,7 +89,7 @@ final class RouteNames
         $finder = new NodeFinder;
 
         foreach ($codebase->files() as $file) {
-            foreach ($finder->find($file->ast, static fn (Node $n): bool => self::isRouteChainCall($n, 'name')) as $call) {
+            foreach ($finder->find($file->ast, static fn (Node $n) => self::isRouteChainCall($n, 'name')) as $call) {
                 // A `name()` that decorates a `group` is a PREFIX, not a name of its own; the names
                 // inside the group already absorb it via their own prefix walk (and a prefix built at
                 // runtime is survivable — the tail match in `isRegistered` sees past it).
@@ -122,7 +122,7 @@ final class RouteNames
             // A group's accumulated `as` IS a route name in its own right: Laravel hands it to any route
             // inside that declares no `->name()` of its own, so `['as' => '.commands']` under `shops.show`
             // makes `route('shops.show.commands')` resolve to the group's unnamed index route.
-            foreach ($finder->find($file->ast, static fn (Node $n): bool => self::isGroupCall($n)) as $group) {
+            foreach ($finder->find($file->ast, static fn (Node $n) => self::isGroupCall($n)) as $group) {
                 $accumulated = rtrim(self::prefixOf($group) . self::groupPrefix($group), '.');
 
                 if ($accumulated !== '') {
@@ -130,7 +130,7 @@ final class RouteNames
                 }
             }
 
-            foreach ($finder->find($file->ast, static fn (Node $n): bool => self::isResourceRegistration($n)) as $call) {
+            foreach ($finder->find($file->ast, static fn (Node $n) => self::isResourceRegistration($n)) as $call) {
                 $literal = self::literalArg($call);
 
                 if ($literal === null) {

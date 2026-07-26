@@ -92,7 +92,7 @@ final class Sfc
      */
     public function elements(): Query
     {
-        $nodes = array_map(fn (Element $element): array => [$element, $this], $this->template->descendants());
+        $nodes = array_map(fn (Element $element) => [$element, $this], $this->template->descendants());
 
         return new Query(static fn (): array => $nodes, static fn (Element $element): bool => $element->isElement());
     }

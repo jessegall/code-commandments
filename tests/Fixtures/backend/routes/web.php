@@ -16,7 +16,7 @@ use Shop\Http\Controllers\Delegated\ReviewController;
 // any of these — neither the top-level calls nor the ones inside route closures.
 
 Route::get('/products', function () {
-    return Cache::remember('products', 60, static fn (): array => []);
+    return Cache::remember('products', 60, static fn () => []);
 });
 
 Route::post('/cart/{id}', function (string $id) {
@@ -39,12 +39,12 @@ Route::post('/public/reviews/{reviewId}', [PublicReviewController::class, 'publi
 // The route-name vocabulary DanglingRouteNameDetector checks references against. A name registered
 // here is a name `route('…')` may look up; anything else names a route that does not exist. Closure
 // actions keep these registrations out of the duplicate-action rules.
-Route::get('/dashboard', fn (): string => 'dashboard')->name('dashboard');
+Route::get('/dashboard', fn () => 'dashboard')->name('dashboard');
 Route::name('reports.')->group(function () {
-    Route::get('/reports/daily', fn (): string => 'daily')->name('daily');
+    Route::get('/reports/daily', fn () => 'daily')->name('daily');
 });
 Route::group(['as' => 'kiosk.'], function () {
-    Route::get('/kiosk/home', fn (): string => 'home')->name('home');
+    Route::get('/kiosk/home', fn () => 'home')->name('home');
 });
 
 // The HTTP face of the label-printing operation — registered here so the route table, not a

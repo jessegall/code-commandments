@@ -24,7 +24,7 @@ final class SinfulMarkerVerifier implements MarkerVerifier
     {
         $markers = SinMarkers::in($codebase);
 
-        return array_map(fn (Detector $detector): DetectorResult => $this->check($codebase, $detector, $markers), $detectors);
+        return array_map(fn (Detector $detector) => $this->check($codebase, $detector, $markers), $detectors);
     }
 
     /**

@@ -18,7 +18,7 @@ abstract class SingleReplacementScribe extends RepentScribe
     public function rewrite(array $findings): array
     {
         return $this->draft($findings)
-            ->replace(fn (NodeMatch $match): ?string => $this->replacement($match))
+            ->replace(fn (NodeMatch $match) => $this->replacement($match))
             ->rewrites();
     }
 

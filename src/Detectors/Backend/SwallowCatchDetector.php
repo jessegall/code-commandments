@@ -42,7 +42,7 @@ final class SwallowCatchDetector implements Detector, Exemptable
     {
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isSwallowedCatch())
-            ->reject(static fn (AstNode $node): bool => self::catchesOnlyControlSignals($codebase, $node))
+            ->reject(static fn (AstNode $node) => self::catchesOnlyControlSignals($codebase, $node))
             ->get();
     }
 
@@ -57,7 +57,7 @@ final class SwallowCatchDetector implements Detector, Exemptable
 
         return $types !== [] && array_all(
             $types,
-            static fn (string $type): bool => Exemptions::has(ControlSignal::class, $codebase, $type),
+            static fn (string $type) => Exemptions::has(ControlSignal::class, $codebase, $type),
         );
     }
 }

@@ -94,7 +94,7 @@ final class StructuralHash
         }
 
         if (is_array($value)) {
-            return '[' . implode(',', array_map(static fn (mixed $item): string => self::value($item, $normalize, $aliases, $inlining), $value)) . ']';
+            return '[' . implode(',', array_map(static fn (mixed $item) => self::value($item, $normalize, $aliases, $inlining), $value)) . ']';
         }
 
         return match (true) {

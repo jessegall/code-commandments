@@ -23,7 +23,7 @@ final class SwitchCaseScribe extends RepentScribe
     {
         return $this->draft($findings)
             ->map(static fn (ElementMatch $head): ?SwitchCaseChain => SwitchCaseChain::at($head))
-            ->replace(fn (SwitchCaseChain $chain): string => $this->switch($chain))
+            ->replace(fn (SwitchCaseChain $chain) => $this->switch($chain))
             ->rewrites();
     }
 

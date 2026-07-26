@@ -511,7 +511,7 @@ final class DisableMenu
      */
     private function hasMenu(string $var): bool
     {
-        return $this->parse()->where(static fn (AstNode $n): bool => self::isMenuAssign($n, $var))->first() !== null;
+        return $this->parse()->where(static fn (AstNode $n) => self::isMenuAssign($n, $var))->first() !== null;
     }
 
     /**
@@ -519,7 +519,7 @@ final class DisableMenu
      */
     private function definition(string $var): ?Assign
     {
-        $match = $this->parse()->where(static fn (AstNode $n): bool => self::isMenuAssign($n, $var))->first();
+        $match = $this->parse()->where(static fn (AstNode $n) => self::isMenuAssign($n, $var))->first();
 
         return $match?->node instanceof Assign ? $match->node : null;
     }

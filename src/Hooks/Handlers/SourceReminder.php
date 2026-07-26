@@ -44,7 +44,7 @@ final class SourceReminder extends Hook
 
     public function bindings(): array
     {
-        return array_map(static fn (string $tool): HookBinding => new HookBinding('PreToolUse', $tool), self::WRITERS);
+        return array_map(static fn (string $tool) => new HookBinding('PreToolUse', $tool), self::WRITERS);
     }
 
     protected function onPreToolUse(HookEvent $event): int

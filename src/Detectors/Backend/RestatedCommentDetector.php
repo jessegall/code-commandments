@@ -40,7 +40,7 @@ final class RestatedCommentDetector implements Detector
             ->reject(fn (AstNode $n): bool => $n->isFunctionDeclaration())
             ->reject(fn (AstNode $n): bool => $n->isArrayItem())
             ->reject(fn (AstNode $n): bool => $n->hasCommentedOutCode())
-            ->where(fn (AstNode $n): bool => $this->hasCommentRestatingTheCode($n))
+            ->where(fn (AstNode $n) => $this->hasCommentRestatingTheCode($n))
             ->get();
     }
 

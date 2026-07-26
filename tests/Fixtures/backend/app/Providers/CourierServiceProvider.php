@@ -20,7 +20,7 @@ class CourierServiceProvider extends ServiceProvider
     #[Righteous(OrphanedBinding::class)]
     public function register(): void
     {
-        $this->app->singleton(CourierRegistry::class, static fn (): CourierRegistry => new CourierRegistry);
+        $this->app->singleton(CourierRegistry::class, static fn () => new CourierRegistry);
 
         $this->app->bind(CourierApi::class, static fn ($app): CourierApi => $app->make(CourierRegistry::class)->preferred());
     }

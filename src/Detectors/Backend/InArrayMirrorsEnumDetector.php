@@ -30,7 +30,7 @@ final class InArrayMirrorsEnumDetector implements Detector
 
         return $codebase
             ->whereFunction('in_array')
-            ->where(static fn (AstNode $node): bool => Enums::mirroredBy($node->argumentArrayLiterals(1), $enums))
+            ->where(static fn (AstNode $node) => Enums::mirroredBy($node->argumentArrayLiterals(1), $enums))
             ->get();
     }
 }
