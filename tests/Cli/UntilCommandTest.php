@@ -191,6 +191,55 @@ final class UntilCommandTest extends TestCase
         );
     }
 
+    public function test_pausing_a_second_time_merges_instead_of_destroying_what_is_already_set_aside(): void
+    {
+        // #403: `until "A"; pause; until "B"; pause` used to leave only B set aside — A was gone with
+        // no warning. Pausing again is exactly what a user does after adding a condition mid-pause.
+        $this->exec('add', 'A');
+        $this->exec('pause');
+        $this->exec('add', 'B');
+
+        $this->assertSame(0, $this->exec('pause'));
+
+        $this->assertSame([1 => 'A', 2 => 'B'], $this->gate()->pausedConditions());
+        $this->assertSame([], $this->gate()->all(), 'and nothing is left holding');
+    }
+
+    public function test_a_merged_pause_keeps_ids_monotonic_so_none_is_reused(): void
+    {
+        $this->exec('add', 'A');   // id 1
+        $this->exec('add', 'B');   // id 2
+        $this->exec('met', '1');
+        $this->exec('pause');      // set aside: [2 => B], lastId 2
+        $this->exec('add', 'C');   // a fresh live gate, id 1
+
+        $this->exec('pause');
+
+        $this->assertSame([2 => 'B', 3 => 'C'], $this->gate()->pausedConditions(), 'C continues past B');
+    }
+
+    public function test_pausing_the_same_condition_twice_does_not_double_it(): void
+    {
+        $this->exec('add', 'A');
+        $this->exec('pause');
+        $this->exec('add', 'A');
+
+        $this->exec('pause');
+
+        $this->assertSame([1 => 'A'], $this->gate()->pausedConditions());
+    }
+
+    public function test_resume_brings_a_re_set_condition_back_only_once(): void
+    {
+        $this->exec('add', 'A');
+        $this->exec('pause');
+        $this->exec('add', 'A');
+
+        $this->exec('resume');
+
+        $this->assertSame([1 => 'A'], $this->gate()->all());
+    }
+
     public function test_meeting_a_condition_set_while_paused_leaves_the_paused_gate_intact(): void
     {
         $this->exec('add', 'tests pass');

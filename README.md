@@ -356,7 +356,8 @@ session's stop.
 back to the conditions? `until pause` moves the whole gate aside (the marker becomes
 `.until.pause`): every condition is kept verbatim, but nothing holds a stop and the interjection
 nudge below goes quiet too. `until resume` puts them back — and anything you set while paused
-stands on its own and survives the resume. `clear` is still the only thing that throws conditions
+stands on its own and survives the resume. Pause again while a gate is already set aside and the
+two MERGE (ids stay monotonic, so nothing is overwritten or double-listed). `clear` is still the only thing that throws conditions
 away.
 
 The `/until` slash command and the `commandments-until` skill are published into the project

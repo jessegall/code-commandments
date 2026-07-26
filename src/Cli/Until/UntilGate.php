@@ -142,10 +142,37 @@ final class UntilGate
      * verbatim while NOTHING holds a stop. The user's escape hatch when they want to do something
      * else in between without being sent back to the conditions ({@see resume} brings them back).
      * False when there is no gate standing to pause.
+     *
+     * Pausing a SECOND time (a condition was set while the gate already stood aside, and the user
+     * pauses again) MERGES into what is already set aside — it must never overwrite it, or the
+     * earlier conditions would be destroyed silently (#403).
      */
     public function pause(): bool
     {
-        return $this->file->moveTo($this->paused);
+        if (! $this->file->exists()) {
+            return false;
+        }
+
+        if (! $this->paused->exists()) {
+            return $this->file->moveTo($this->paused);
+        }
+
+        $setAside = $this->parse($this->paused);
+        $conditions = $setAside['conditions'];
+        $lastId = $setAside['lastId'];
+
+        foreach ($this->all() as $condition) {
+            if (in_array($condition, $conditions, true)) {
+                continue; // Already set aside — pausing the same condition twice must not double it.
+            }
+
+            $conditions[++$lastId] = $condition;
+        }
+
+        $this->write($this->paused, $conditions, $lastId, blocks: 0, stuck: false);
+        $this->file->delete();
+
+        return true;
     }
 
     /**
@@ -164,6 +191,10 @@ final class UntilGate
         }
 
         foreach ($this->conditionsOf($this->paused) as $condition) {
+            if (in_array($condition, $this->all(), true)) {
+                continue; // The same condition was re-set while paused — bring it back once, not twice.
+            }
+
             $this->add($condition);
         }
 
@@ -276,13 +307,24 @@ final class UntilGate
             return;
         }
 
+        $this->write($this->file, $conditions, $lastId, $blocks, $stuck);
+    }
+
+    /**
+     * Serialise a gate into $file — the ONE place the marker's line format is produced, so the live
+     * store and the set-aside one can never drift apart.
+     *
+     * @param  array<int, string>  $conditions  keyed by stable id
+     */
+    private function write(MarkerFile $file, array $conditions, int $lastId, int $blocks, bool $stuck): void
+    {
         $lines = [(string) $blocks, $stuck ? '1' : '0', (string) $lastId];
 
         foreach ($conditions as $id => $text) {
             $lines[] = "{$id}\t{$text}";
         }
 
-        $this->file->write($lines, self::EXPLANATION);
+        $file->write($lines, self::EXPLANATION);
     }
 
     /**
