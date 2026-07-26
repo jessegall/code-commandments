@@ -341,6 +341,8 @@ vendor/bin/commandments until "the full test suite passes"   # set a condition
 vendor/bin/commandments until list                           # what's still standing
 vendor/bin/commandments until met 1                          # verified — strike it off
 vendor/bin/commandments until stuck                          # blocked: release ONE stop, keep the condition
+vendor/bin/commandments until pause                          # set the gate aside (conditions kept, nothing holds)
+vendor/bin/commandments until resume                         # put it back in force
 vendor/bin/commandments until clear                          # drop the gate
 ```
 
@@ -349,6 +351,13 @@ back in with the condition text, telling it to **verify** the condition for real
 assume it. The gate lifts when the last condition is struck off. Conditions stack — one call
 each — and the whole gate is scoped to that session and worktree, so it never holds another
 session's stop.
+
+**Pausing is yours, not the agent's.** Want to do something else in between without being sent
+back to the conditions? `until pause` moves the whole gate aside (the marker becomes
+`.until.pause`): every condition is kept verbatim, but nothing holds a stop and the interjection
+nudge below goes quiet too. `until resume` puts them back — and anything you set while paused
+stands on its own and survives the resume. `clear` is still the only thing that throws conditions
+away.
 
 The `/until` slash command and the `commandments-until` skill are published into the project
 on `composer update`, so the agent knows the discipline: never `clear` a condition it simply

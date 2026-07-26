@@ -16,17 +16,25 @@ use JesseGall\CodeCommandments\Workspace;
  * the wrong one — #399); the gate lifts only when none remain ({@see met} strikes one off,
  * {@see clear} drops them all). {@see blocks}
  * counts the consecutive stops the gate has held so a wedged agent is released instead of looped
- * forever — striking a condition off is progress and resets it. Session-scoped like every other
+ * forever — striking a condition off is progress and resets it. The user can also set the whole gate
+ * aside without losing it: {@see pause} moves the marker to `.until.pause` (nothing holds a stop while
+ * it's there) and {@see resume} brings every condition back. Session-scoped like every other
  * marker, so one session's gate never holds another's stop, and written in the shared
  * {@see MarkerFile} format.
  */
 final class UntilGate
 {
-    public function __construct(private readonly MarkerFile $file) {}
+    public function __construct(
+        private readonly MarkerFile $file,
+        private readonly MarkerFile $paused,
+    ) {}
 
     public static function inSession(Workspace $workspace): self
     {
-        return new self(new MarkerFile($workspace->path('.until')));
+        return new self(
+            new MarkerFile($workspace->path('.until')),
+            new MarkerFile($workspace->path('.until.pause')),
+        );
     }
 
     /**
@@ -53,7 +61,7 @@ final class UntilGate
      */
     public function all(): array
     {
-        return $this->parse()['conditions'];
+        return $this->conditionsOf($this->file);
     }
 
     public function isOpen(): bool
@@ -126,6 +134,57 @@ final class UntilGate
     public function clear(): void
     {
         $this->file->delete();
+        $this->paused->delete(); // A cleared gate leaves nothing to resume.
+    }
+
+    /**
+     * Set the whole gate aside — the marker moves to `.until.pause`, so every condition survives
+     * verbatim while NOTHING holds a stop. The user's escape hatch when they want to do something
+     * else in between without being sent back to the conditions ({@see resume} brings them back).
+     * False when there is no gate standing to pause.
+     */
+    public function pause(): bool
+    {
+        return $this->file->moveTo($this->paused);
+    }
+
+    /**
+     * Bring a paused gate back into force. Conditions set WHILE paused stand on their own, so the
+     * paused ones are folded back in behind them (fresh ids) rather than overwriting the live marker.
+     * False when nothing is paused.
+     */
+    public function resume(): bool
+    {
+        if (! $this->isPaused()) {
+            return false;
+        }
+
+        if (! $this->file->exists()) {
+            return $this->paused->moveTo($this->file);
+        }
+
+        foreach ($this->conditionsOf($this->paused) as $condition) {
+            $this->add($condition);
+        }
+
+        $this->paused->delete();
+
+        return true;
+    }
+
+    public function isPaused(): bool
+    {
+        return $this->paused->exists();
+    }
+
+    /**
+     * The conditions a paused gate is holding — what `until list` shows while it stands aside.
+     *
+     * @return array<int, string>  keyed by the id each condition had when it was paused
+     */
+    public function pausedConditions(): array
+    {
+        return $this->conditionsOf($this->paused);
     }
 
     /**
@@ -134,7 +193,15 @@ final class UntilGate
      */
     private function lastId(): int
     {
-        return $this->parse()['lastId'];
+        return $this->parse($this->file)['lastId'];
+    }
+
+    /**
+     * @return array<int, string>  the conditions held by $file, keyed by their stable ids
+     */
+    private function conditionsOf(MarkerFile $file): array
+    {
+        return $this->parse($file)['conditions'];
     }
 
     /**
@@ -144,9 +211,9 @@ final class UntilGate
      *
      * @return array{lastId: int, conditions: array<int, string>}
      */
-    private function parse(): array
+    private function parse(MarkerFile $file): array
     {
-        $tail = array_slice($this->file->values(), 2);
+        $tail = array_slice($file->values(), 2);
 
         if ($this->isCurrentFormat($tail)) {
             $conditions = [];
@@ -203,7 +270,8 @@ final class UntilGate
     private function save(array $conditions, int $lastId, int $blocks, bool $stuck): void
     {
         if ($conditions === []) {
-            $this->clear(); // No conditions IS no gate — never leave an empty marker behind.
+            $this->file->delete(); // No conditions IS no gate — never leave an empty marker behind.
+            // Only the LIVE marker: a paused gate is untouched state, and still waits to be resumed.
 
             return;
         }

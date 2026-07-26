@@ -87,7 +87,10 @@ When you try to stop, the hook sends you back with the standing conditions. Then
 
 **Never** run `until clear` to escape a condition you simply haven't met. `clear` drops the user's
 gate entirely and is theirs to ask for ("forget that condition"). Marking a condition `met` when it
-does not hold is the same offence: it reports success that isn't there.
+does not hold is the same offence: it reports success that isn't there. The same goes for
+`until pause` — it is THE USER's switch for doing something else in between (it sets the whole gate
+aside, conditions intact, and silences the nudges until `until resume`). Run it only when they ask;
+reaching for it yourself is escaping the gate by another name.
 
 Loop-safe by design: after 10 consecutive held stops with no condition met, the gate releases itself
 and tells you to report back. Meeting a condition resets that count — real progress is never punished.
@@ -100,4 +103,5 @@ and tells you to report back. Meeting a condition resets that count — real pro
 | `commandments until list` | show every condition still standing |
 | `commandments until met <n>` | strike condition `<n>` off as verified |
 | `commandments until stuck` | blocked — release ONE stop, keep the condition |
+| `commandments until pause` / `resume` | the USER's switch — set the whole gate aside (conditions kept, nothing holds, no nudges) and put it back |
 | `commandments until clear` | drop every condition (only when the user asks) |

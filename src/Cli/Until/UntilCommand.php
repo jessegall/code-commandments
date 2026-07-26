@@ -17,7 +17,9 @@ use JesseGall\CodeCommandments\Workspace;
  * a condition can be set at any moment, in any session.
  * A bare condition (or `add`) sets one, `list` shows what stands, `met <n>` strikes
  * one off as satisfied, `stuck` lets ONE stop through when the agent genuinely can't meet it, and
- * `clear` drops the gate entirely.
+ * `clear` drops the gate entirely. `pause`/`resume` are THE USER's own handle — they set the whole
+ * gate aside (conditions intact, nothing holding, no nudges) while they do something else in between,
+ * and put it back when they're ready.
  */
 final class UntilCommand implements Command
 {
@@ -37,6 +39,8 @@ final class UntilCommand implements Command
             'list', 'show', 'status' => $this->list($gate),
             'met', 'done', 'satisfied' => $this->met($gate, (int) ($input->arguments()[1] ?? '0')),
             'stuck', 'blocked' => $this->stuck($gate),
+            'pause', 'hold' => $this->pause($gate),
+            'resume', 'unpause', 'continue' => $this->resume($gate),
             'clear', 'cancel', 'drop' => $this->clear($gate),
             default => $this->add($gate, $this->text($input, from: 0)), // `until "<condition>"` — the
             // form the user actually speaks; no subcommand needed to set one.
@@ -66,22 +70,31 @@ final class UntilCommand implements Command
 
     private function list(UntilGate $gate): int
     {
-        $conditions = $gate->all();
-
-        if ($conditions === []) {
+        if ($gate->isOpen()) {
+            fwrite(STDOUT, "● You may not stop until these hold:\n");
+            $this->conditions($gate->all());
+        } else {
             fwrite(STDOUT, "○ No stop conditions in force.\n");
-
-            return 0;
         }
 
-        fwrite(STDOUT, "● You may not stop until these hold:\n");
-
-        foreach ($conditions as $id => $condition) {
-            fwrite(STDOUT, "  {$id}. {$condition}\n"); // The STABLE id — still valid after other
-            // conditions are struck off, so a batch of `met` calls read off one list can't miss.
+        if ($gate->isPaused()) {
+            fwrite(STDOUT, "❙❙ Paused (set aside, holding nothing — `commandments until resume` puts them back):\n");
+            $this->conditions($gate->pausedConditions());
         }
 
         return 0;
+    }
+
+    /**
+     * @param  array<int, string>  $conditions  keyed by their STABLE id — printed as-is, since that id
+     *                                          stays valid after another condition is struck off, so a
+     *                                          batch of `met` calls read off one list can't miss
+     */
+    private function conditions(array $conditions): void
+    {
+        foreach ($conditions as $id => $condition) {
+            fwrite(STDOUT, "  {$id}. {$condition}\n");
+        }
     }
 
     private function met(UntilGate $gate, int $number): int
@@ -121,15 +134,54 @@ final class UntilCommand implements Command
         return 0;
     }
 
-    private function clear(UntilGate $gate): int
+    /**
+     * The user's pause — the whole gate is set aside so nothing holds a stop while they do something
+     * else, and every condition waits, intact, for `until resume`.
+     */
+    private function pause(UntilGate $gate): int
     {
         if (! $gate->isOpen()) {
+            fwrite(STDOUT, $gate->isPaused()
+                ? "○ The stop gate is already paused — run `commandments until resume` to bring it back.\n"
+                : "○ No stop conditions in force — nothing to pause.\n");
+
+            return 0;
+        }
+
+        $paused = count($gate->all());
+        $gate->pause();
+
+        fwrite(STDOUT, "❙❙ Stop gate paused — {$paused} condition(s) set aside, nothing is holding you now.\n"
+            . "  They are kept as-is; run `commandments until resume` to put them back in force.\n");
+
+        return 0;
+    }
+
+    private function resume(UntilGate $gate): int
+    {
+        if (! $gate->isPaused()) {
+            fwrite(STDOUT, "○ The stop gate is not paused.\n");
+
+            return 0;
+        }
+
+        $gate->resume();
+
+        fwrite(STDOUT, "● Stop gate resumed — you may not stop until these hold:\n");
+        $this->conditions($gate->all());
+
+        return 0;
+    }
+
+    private function clear(UntilGate $gate): int
+    {
+        if (! $gate->isOpen() && ! $gate->isPaused()) {
             fwrite(STDOUT, "○ No stop conditions in force.\n");
 
             return 0;
         }
 
-        $gate->clear();
+        $gate->clear(); // Paused conditions go too — `clear` means the gate is gone, not set aside.
         fwrite(STDOUT, "✓ Stop gate cleared — every condition dropped.\n");
 
         return 0;
@@ -146,7 +198,7 @@ final class UntilCommand implements Command
 
     private function usage(): int
     {
-        fwrite(STDERR, "Usage: commandments until \"<condition>\" | list | met <n> | stuck | clear\n");
+        fwrite(STDERR, "Usage: commandments until \"<condition>\" | list | met <n> | stuck | pause | resume | clear\n");
 
         return 2;
     }

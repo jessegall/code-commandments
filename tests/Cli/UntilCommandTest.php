@@ -150,6 +150,84 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([2 => 'readme updated'], $this->gate()->all());
     }
 
+    public function test_pause_sets_the_whole_gate_aside_and_resume_puts_it_back(): void
+    {
+        $this->exec('add', 'tests pass');
+        $this->exec('add', 'readme updated');
+
+        $this->assertSame(0, $this->exec('pause'));
+        $this->assertSame([], $this->gate()->all(), 'nothing holds a stop while paused');
+        $this->assertTrue($this->gate()->isPaused());
+
+        $this->assertSame(0, $this->exec('resume'));
+        $this->assertFalse($this->gate()->isPaused());
+        $this->assertSame([1 => 'tests pass', 2 => 'readme updated'], $this->gate()->all(), 'ids and all');
+    }
+
+    public function test_unpause_is_the_same_as_resume(): void
+    {
+        $this->exec('add', 'tests pass');
+        $this->exec('pause');
+
+        $this->assertSame(0, $this->exec('unpause'));
+        $this->assertSame([1 => 'tests pass'], $this->gate()->all());
+    }
+
+    public function test_a_condition_set_while_paused_stands_and_survives_the_resume(): void
+    {
+        $this->exec('add', 'tests pass');
+        $this->exec('pause');
+
+        $this->exec('add', 'the docs build');
+
+        $this->assertSame([1 => 'the docs build'], $this->gate()->all(), 'the new one gates on its own');
+
+        $this->exec('resume');
+
+        $this->assertSame(
+            [1 => 'the docs build', 2 => 'tests pass'],
+            $this->gate()->all(),
+            'and the paused one is folded back in behind it, never overwriting it',
+        );
+    }
+
+    public function test_meeting_a_condition_set_while_paused_leaves_the_paused_gate_intact(): void
+    {
+        $this->exec('add', 'tests pass');
+        $this->exec('pause');
+        $this->exec('add', 'the docs build');
+
+        $this->exec('met', '1');
+
+        $this->assertTrue($this->gate()->isPaused(), 'the paused gate is untouched state, not an empty gate');
+        $this->assertSame([1 => 'tests pass'], $this->gate()->pausedConditions());
+    }
+
+    public function test_list_shows_what_is_paused_alongside_what_stands(): void
+    {
+        $this->exec('add', 'tests pass');
+        $this->exec('pause');
+
+        $this->assertSame(0, $this->exec('list'));
+        $this->assertSame([1 => 'tests pass'], $this->gate()->pausedConditions());
+    }
+
+    public function test_clear_drops_a_paused_gate_too(): void
+    {
+        $this->exec('add', 'tests pass');
+        $this->exec('pause');
+
+        $this->assertSame(0, $this->exec('clear'));
+        $this->assertFalse($this->gate()->isPaused());
+    }
+
+    public function test_pause_and_resume_are_quiet_when_there_is_nothing_to_do(): void
+    {
+        $this->assertSame(0, $this->exec('pause'), 'no gate — nothing to pause');
+        $this->assertSame(0, $this->exec('resume'), 'nothing paused');
+        $this->assertFalse($this->gate()->isPaused());
+    }
+
     public function test_list_and_clear_are_quiet_when_no_gate_is_set(): void
     {
         $this->assertSame(0, $this->exec('list'));

@@ -70,6 +70,22 @@ final class MarkerFile
         @unlink($this->path);
     }
 
+    /**
+     * Move this marker to $target, keeping its contents byte-for-byte — how a marker is set aside and
+     * brought back (`until pause`/`until resume`) without ever re-serialising, and so re-reading it
+     * later can never depend on the writer. False when this marker doesn't exist.
+     */
+    public function moveTo(self $target): bool
+    {
+        if (! $this->exists()) {
+            return false;
+        }
+
+        @mkdir(dirname($target->path), 0777, true);
+
+        return @rename($this->path, $target->path);
+    }
+
     public function path(): string
     {
         return $this->path;

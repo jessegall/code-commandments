@@ -159,6 +159,35 @@ final class UntilReminderTest extends TestCase
         $this->assertSame([], $this->prompt(), 'nothing in flight — a normal message is not taxed');
     }
 
+    public function test_a_paused_gate_holds_nothing_and_says_nothing(): void
+    {
+        $this->gate()->add('tests pass');
+        $this->gate()->pause();
+
+        $this->assertSame([], $this->stop(), 'a paused gate never holds a stop');
+        $this->assertSame([], $this->prompt(), 'and never nudges the agent to park an interjection');
+    }
+
+    public function test_a_paused_gate_silences_the_triage_even_during_a_plan(): void
+    {
+        // The user paused the gate to do something else in between: the whole `until` machinery is
+        // off, so a plan in flight must not revive the park-it nudge.
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+        $this->gate()->add('tests pass');
+        $this->gate()->pause();
+
+        $this->assertSame([], $this->prompt());
+    }
+
+    public function test_a_resumed_gate_holds_the_stop_again(): void
+    {
+        $this->gate()->add('tests pass');
+        $this->gate()->pause();
+        $this->gate()->resume();
+
+        $this->assertStringContainsString('tests pass', $this->reason($this->stop()));
+    }
+
     public function test_a_stop_parked_on_background_work_is_not_held(): void
     {
         $this->gate()->add('tests pass');

@@ -89,8 +89,15 @@ final class UntilReminder extends Hook
      */
     private function inFlight(HookEvent $event): bool
     {
-        return PlanMarker::inSession($event->workspace())->isActive()
-            || UntilGate::inSession($event->workspace())->isOpen();
+        $gate = UntilGate::inSession($event->workspace());
+
+        if ($gate->isPaused()) {
+            return false; // The user paused the gate to do something else in between: the whole `until`
+            // machinery goes quiet — no held stop AND no "park this as a condition" nudge — until they
+            // run `until resume`.
+        }
+
+        return PlanMarker::inSession($event->workspace())->isActive() || $gate->isOpen();
     }
 
     private function triage(): string
