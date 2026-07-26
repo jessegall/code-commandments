@@ -12,13 +12,19 @@ namespace JesseGall\CodeCommandments;
  */
 final class PlanExecution
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $onStart = [];
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $eachPhase = [];
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $onComplete = [];
 
     private string $baseBranch = 'main';
@@ -29,7 +35,9 @@ final class PlanExecution
 
     private ?PlanMode $mode = null;
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $constraints = [];
 
     private bool $enforceEachPhase = false;

@@ -23,7 +23,9 @@ use JesseGall\CodeCommandments\Support\ClassName;
  */
 trait NamespaceDependencyConfig
 {
-    /** @var array<string, list<string>>  declared layer namespace => the namespaces it may reference */
+    /**
+     * @var array<string, list<string>>  declared layer namespace => the namespaces it may reference
+     */
     private array $layers = [];
 
     /**

@@ -21,7 +21,9 @@ use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
 
-/** Set of route actions (class::method entry points) — unions three signals: route-file registration, structural, response-reachable. Built once per codebase and memoised. */
+/**
+ * Set of route actions (class::method entry points) — unions three signals: route-file registration, structural, response-reachable. Built once per codebase and memoised.
+ */
 final class RouteActions
 {
     use MemoisedPerCodebase;

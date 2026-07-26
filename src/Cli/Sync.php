@@ -289,7 +289,9 @@ final class Sync implements Command
             return;
         }
 
-        /** @var \SplFileInfo $item */
+        /**
+         * @var \SplFileInfo $item
+         */
         foreach (new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST,
@@ -306,7 +308,9 @@ final class Sync implements Command
             return;
         }
 
-        /** @var \SplFileInfo $item */
+        /**
+         * @var \SplFileInfo $item
+         */
         foreach (new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($from, \FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST,

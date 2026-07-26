@@ -18,13 +18,19 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class JudgeReminder extends Hook
 {
-    /** The base ref a `--branch` scope compares against — the same default as {@see Scope\Scope}. */
+    /**
+     * The base ref a `--branch` scope compares against — the same default as {@see Scope\Scope}.
+     */
     private const string BASE = 'main';
 
-    /** The marker section separator: the reminded file set sits above it, the explanation below. */
+    /**
+     * The marker section separator: the reminded file set sits above it, the explanation below.
+     */
     private const string SEPARATOR = '-----';
 
-    /** What the marker file explains about itself, below the set (the {@see stored} read stops at the separator). */
+    /**
+     * What the marker file explains about itself, below the set (the {@see stored} read stops at the separator).
+     */
     private const string EXPLANATION = <<<'TXT'
         Batch marker for the code-commandments judge reminder (`commandments judge-reminder`, wired as
         Stop + PreToolUse hooks). The lines above the separator are the changed-file set it last

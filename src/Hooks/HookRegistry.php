@@ -36,7 +36,9 @@ final class HookRegistry
      */
     private const string STAMP = '# @code-commandments-managed';
 
-    /** Our reminder subcommands, for recognising PRE-stamp hooks we wrote so they migrate to stamped. */
+    /**
+     * Our reminder subcommands, for recognising PRE-stamp hooks we wrote so they migrate to stamped.
+     */
     private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
 
     /**
@@ -79,7 +81,9 @@ final class HookRegistry
      */
     public static function wire(string $path, array $hookClasses = self::BUILTINS): bool
     {
-        /** @var array<string, mixed> $settings */
+        /**
+         * @var array<string, mixed> $settings
+         */
         $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
         $before = json_encode($settings);
 

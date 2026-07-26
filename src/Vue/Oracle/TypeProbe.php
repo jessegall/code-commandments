@@ -17,7 +17,9 @@ use JesseGall\CodeCommandments\Vue\Sfc;
  */
 final class TypeProbe
 {
-    /** The probe target-type prefix — the protocol {@see TscDiagnostics} decodes a name out of. */
+    /**
+     * The probe target-type prefix — the protocol {@see TscDiagnostics} decodes a name out of.
+     */
     public const string MARKER = '__CcNo_';
 
     /**

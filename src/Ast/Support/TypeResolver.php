@@ -38,28 +38,44 @@ final class TypeResolver
 {
     use MemoisedPerCodebase;
 
-    /** @var array<string, array<string, ?string>>  fqcn => field => declared type fqcn */
+    /**
+     * @var array<string, array<string, ?string>>  fqcn => field => declared type fqcn
+     */
     private array $fieldType = [];
 
-    /** @var array<string, array<string, ?string>>  fqcn => method => return type fqcn */
+    /**
+     * @var array<string, array<string, ?string>>  fqcn => method => return type fqcn
+     */
     private array $returnType = [];
 
-    /** @var array<string, array<string, array<int, bool>>>  fqcn => method => pos => param is nullable */
+    /**
+     * @var array<string, array<string, array<int, bool>>>  fqcn => method => pos => param is nullable
+     */
     private array $paramNullable = [];
 
-    /** @var array<string, array<string, bool>>  fqcn => method => declares a variadic parameter */
+    /**
+     * @var array<string, array<string, bool>>  fqcn => method => declares a variadic parameter
+     */
     private array $methodVariadic = [];
 
-    /** @var array<string, array<string, string>>  fqcn => field => element type of its #[DataCollectionOf] */
+    /**
+     * @var array<string, array<string, string>>  fqcn => field => element type of its #[DataCollectionOf]
+     */
     private array $collectionElement = [];
 
-    /** @var array<string, string>  fqcn => parent fqcn (so a field/type walks up the hierarchy) */
+    /**
+     * @var array<string, string>  fqcn => parent fqcn (so a field/type walks up the hierarchy)
+     */
     private array $parentOf = [];
 
-    /** @var array<string, list<string>>  fqcn => the traits it uses (so a trait-provided method resolves) */
+    /**
+     * @var array<string, list<string>>  fqcn => the traits it uses (so a trait-provided method resolves)
+     */
     private array $traitsOf = [];
 
-    /** @var array<int, array<string, ?string>>  object-id of a function => local var => type */
+    /**
+     * @var array<int, array<string, ?string>>  object-id of a function => local var => type
+     */
     private array $localCache = [];
 
     private function __construct(Codebase $codebase)

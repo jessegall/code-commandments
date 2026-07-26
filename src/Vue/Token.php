@@ -31,11 +31,15 @@ final class Token
     public const string COLON = ':';
     public const string ASSIGN = '=';
 
-    /** Expression-level openers/closers — `()[]{}` (angles are operators, not delimiters). */
+    /**
+     * Expression-level openers/closers — `()[]{}` (angles are operators, not delimiters).
+     */
     public const array GROUP_OPEN = [self::PAREN_OPEN, self::BRACKET_OPEN, self::BRACE_OPEN];
     public const array GROUP_CLOSE = [self::PAREN_CLOSE, self::BRACKET_CLOSE, self::BRACE_CLOSE];
 
-    /** Type-level openers/closers — `()[]{}<>` (a generic's `<…>` balances in a type). */
+    /**
+     * Type-level openers/closers — `()[]{}<>` (a generic's `<…>` balances in a type).
+     */
     public const array TYPE_OPEN = [self::PAREN_OPEN, self::BRACKET_OPEN, self::BRACE_OPEN, self::ANGLE_OPEN];
     public const array TYPE_CLOSE = [self::PAREN_CLOSE, self::BRACKET_CLOSE, self::BRACE_CLOSE, self::ANGLE_CLOSE];
 

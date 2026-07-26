@@ -25,10 +25,14 @@ final class SourceReminder extends Hook
      */
     private const int INTERVAL = 10;
 
-    /** The tools whose edits this watches — file writes; a Bash edit isn't seen and isn't the trap. */
+    /**
+     * The tools whose edits this watches — file writes; a Bash edit isn't seen and isn't the trap.
+     */
     private const array WRITERS = ['Edit', 'Write', 'MultiEdit'];
 
-    /** Path SEGMENTS that mark a test/fixture tree — matched exactly, so `src/Contest/` never counts. */
+    /**
+     * Path SEGMENTS that mark a test/fixture tree — matched exactly, so `src/Contest/` never counts.
+     */
     private const array SURFACE_DIRS = [
         'tests', 'test', 'spec', 'specs', 'stubs', 'fixtures', 'fixture', 'mocks', '__mocks__', '__snapshots__', 'snapshots',
     ];

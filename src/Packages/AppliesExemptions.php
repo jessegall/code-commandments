@@ -29,7 +29,9 @@ trait AppliesExemptions
 
     private function isExempt(NodeMatch $finding, Codebase $codebase): bool
     {
-        /** @var Exemptable $this */
+        /**
+         * @var Exemptable $this
+         */
         foreach ($this->exemptions() as $tag => $scopes) {
             foreach ($scopes as $scope) {
                 if (self::matchesExemption($tag, $scope, $finding, $codebase)) {

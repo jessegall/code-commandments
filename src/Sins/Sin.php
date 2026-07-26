@@ -13,7 +13,9 @@ use JesseGall\CodeCommandments\Skills\Skill;
  */
 abstract class Sin
 {
-    /** @var class-string<Skill> */
+    /**
+     * @var class-string<Skill>
+     */
     private readonly string $skill;
 
     /**

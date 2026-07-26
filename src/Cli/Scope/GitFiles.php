@@ -11,7 +11,9 @@ namespace JesseGall\CodeCommandments\Cli\Scope;
  */
 class GitFiles
 {
-    /** The extensions judge parses — one per engine (`.php` backend, `.vue` frontend). */
+    /**
+     * The extensions judge parses — one per engine (`.php` backend, `.vue` frontend).
+     */
     private const array JUDGED = ['.php', '.vue'];
 
     /**

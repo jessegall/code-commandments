@@ -17,7 +17,9 @@ use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
  */
 final class DeclaredFixture implements Fixture
 {
-    /** @var list<Fixture> */
+    /**
+     * @var list<Fixture>
+     */
     private readonly array $fixtures;
 
     /**

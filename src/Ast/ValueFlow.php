@@ -35,18 +35,26 @@ use PhpParser\NodeFinder;
  */
 final class ValueFlow
 {
-    /** A backstop against a pathological walk — far above any real field's fan-out. */
+    /**
+     * A backstop against a pathological walk — far above any real field's fan-out.
+     */
     private const int MAX_STEPS = 5000;
 
     private readonly TypeResolver $types;
 
-    /** @var array<string, array<string, list<NodeMatch>>>|null  fqcn => field => its read occurrences */
+    /**
+     * @var array<string, array<string, list<NodeMatch>>>|null  fqcn => field => its read occurrences
+     */
     private ?array $fieldReads = null;
 
-    /** @var array<string, \JesseGall\CodeCommandments\Ast\ParsedFile>|null  fqcn => the file it's declared in */
+    /**
+     * @var array<string, \JesseGall\CodeCommandments\Ast\ParsedFile>|null  fqcn => the file it's declared in
+     */
     private ?array $fileForClass = null;
 
-    /** @var array<string, FlowVerdict>  memoised verdicts, keyed "fqcn::field" */
+    /**
+     * @var array<string, FlowVerdict>  memoised verdicts, keyed "fqcn::field"
+     */
     private array $verdicts = [];
 
     public function __construct(private readonly Codebase $codebase)

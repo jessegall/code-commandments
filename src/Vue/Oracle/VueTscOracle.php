@@ -38,7 +38,9 @@ final class VueTscOracle implements TypeOracle
         }
     }
 
-    /** Does the target project ship `vue-tsc`? Only then is this oracle wired in. */
+    /**
+     * Does the target project ship `vue-tsc`? Only then is this oracle wired in.
+     */
     public static function available(string $root): bool
     {
         return is_file(self::binary($root));

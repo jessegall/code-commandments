@@ -24,7 +24,9 @@ final class WorkingState extends Hook
 {
     private const int INTERVAL = 25;
 
-    /** SessionStart sources that CONTINUE a live plan — the ones we re-inject the record on. */
+    /**
+     * SessionStart sources that CONTINUE a live plan — the ones we re-inject the record on.
+     */
     private const array CONTINUING_SOURCES = ['compact', 'resume'];
 
     public function summary(): string

@@ -52,7 +52,9 @@ final class DataCollectionTypeScribe extends RepentScribe
         Writer::for($draft, $match)->replace($typeName, 'array');
     }
 
-    /** The `DataCollection` Name node inside a bare / nullable / union type, or null. */
+    /**
+     * The `DataCollection` Name node inside a bare / nullable / union type, or null.
+     */
     private static function dataCollectionNameIn(?Node $type): ?Name
     {
         if ($type instanceof Name) {

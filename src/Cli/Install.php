@@ -48,7 +48,9 @@ final class Install
 
     private function wireComposerScripts(string $path): bool
     {
-        /** @var array<string, mixed> $composer */
+        /**
+         * @var array<string, mixed> $composer
+         */
         $composer = json_decode((string) file_get_contents($path), true);
         $scripts = is_array($composer['scripts'] ?? null) ? $composer['scripts'] : [];
         $changed = false;

@@ -21,7 +21,9 @@ final class Tokenizer
 
     private int $byteOffset = 0;
 
-    /** @var list<array{tag: string, attributes: array<string, string|null>, line: int, start: int, children: list<Element>}> */
+    /**
+     * @var list<array{tag: string, attributes: array<string, string|null>, line: int, start: int, children: list<Element>}>
+     */
     private array $stack = [];
 
     /**

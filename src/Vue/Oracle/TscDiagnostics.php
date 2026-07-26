@@ -59,7 +59,9 @@ final class TscDiagnostics
             && strlen($type) <= self::MAX_TYPE_LENGTH;
     }
 
-    /** The substring from $from up to the next $stop, or null when there is no closing $stop. */
+    /**
+     * The substring from $from up to the next $stop, or null when there is no closing $stop.
+     */
     private static function until(string $line, int $from, string $stop): ?string
     {
         $end = strpos($line, $stop, $from);

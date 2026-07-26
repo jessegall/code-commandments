@@ -23,7 +23,9 @@ final class BoundaryOperations
 {
     use MemoisedPerCodebase;
 
-    /** A shared operation must involve at least this many domain calls to be one at all. */
+    /**
+     * A shared operation must involve at least this many domain calls to be one at all.
+     */
     public const int MIN_SHARED_CALLS = 3;
 
     /**

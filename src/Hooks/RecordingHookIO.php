@@ -13,7 +13,9 @@ use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
  */
 final class RecordingHookIO extends HookIO
 {
-    /** @var list<array<string, mixed>>  every payload a handler emitted, in order */
+    /**
+     * @var list<array<string, mixed>>  every payload a handler emitted, in order
+     */
     public array $emitted = [];
 
     /**

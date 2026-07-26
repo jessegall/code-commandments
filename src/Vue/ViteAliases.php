@@ -16,10 +16,14 @@ final class ViteAliases
 {
     private const array CONFIG_FILES = ['vite.config.ts', 'vite.config.js', 'vite.config.mjs', 'vite.config.mts'];
 
-    /** Functions that yield the config's own directory — i.e. the project root. */
+    /**
+     * Functions that yield the config's own directory — i.e. the project root.
+     */
     private const array ROOT_FUNCTIONS = ['dirname', 'fileURLToPath'];
 
-    /** Functions that JOIN a base directory with path segments. */
+    /**
+     * Functions that JOIN a base directory with path segments.
+     */
     private const array JOIN_FUNCTIONS = ['resolve', 'join'];
 
     /**

@@ -20,7 +20,9 @@ final class DeepReachCluster
 
     private const int MIN_FIELDS = 2; // distinct fields read off the shared object
 
-    /** Accessors that read reactive state / a count, not a nested data shape. */
+    /**
+     * Accessors that read reactive state / a count, not a nested data shape.
+     */
     public const array TRANSPARENT = ['value', 'length'];
 
     /**

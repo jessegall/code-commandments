@@ -41,19 +41,25 @@ enum PlanMode
      */
     case Relentless;
 
-    /** Does a Stop re-nudge the agent to continue? Every mode runs autonomously, so always true. */
+    /**
+     * Does a Stop re-nudge the agent to continue? Every mode runs autonomously, so always true.
+     */
     public function keepsGoing(): bool
     {
         return true;
     }
 
-    /** Nudge exactly once, then let a Stop stand — the {@see Supervised} posture. */
+    /**
+     * Nudge exactly once, then let a Stop stand — the {@see Supervised} posture.
+     */
     public function nudgesOnce(): bool
     {
         return $this === self::Supervised;
     }
 
-    /** Is `plan stuck` an available pause — true only for {@see Autonomous}, where blocking to ask is allowed. */
+    /**
+     * Is `plan stuck` an available pause — true only for {@see Autonomous}, where blocking to ask is allowed.
+     */
     public function allowsStuck(): bool
     {
         return $this === self::Autonomous;
@@ -68,7 +74,9 @@ enum PlanMode
         return $this === self::BestEffort || $this === self::Relentless;
     }
 
-    /** Skip a blocker but DEFER it and retry at the end — the {@see BestEffort} posture (vs Relentless, which never circles back). */
+    /**
+     * Skip a blocker but DEFER it and retry at the end — the {@see BestEffort} posture (vs Relentless, which never circles back).
+     */
     public function defersBlockers(): bool
     {
         return $this === self::BestEffort;

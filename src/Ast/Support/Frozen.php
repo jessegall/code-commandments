@@ -14,10 +14,14 @@ namespace JesseGall\CodeCommandments\Ast\Support;
  */
 final class Frozen
 {
-    /** The whole-file freeze stamp `commandments freeze` writes and this recognises. Stated once. */
+    /**
+     * The whole-file freeze stamp `commandments freeze` writes and this recognises. Stated once.
+     */
     public const string FILE_MARKER = '@code-commandments-frozen';
 
-    /** The stamp a generator puts on a file it REGENERATES — hand-fixing it is work that cannot survive. */
+    /**
+     * The stamp a generator puts on a file it REGENERATES — hand-fixing it is work that cannot survive.
+     */
     public const string GENERATED_MARKER = '@code-commandments-generated';
 
     public static function isFrozen(string $source): bool

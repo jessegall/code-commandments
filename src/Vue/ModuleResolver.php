@@ -12,13 +12,19 @@ final class ModuleResolver
 {
     private const array EXTENSIONS = ['.ts', '.tsx', '.vue', '.js', '/index.ts', '/index.tsx', '/index.vue', '/index.js'];
 
-    /** Markers whose nearest ancestor directory is the project root. */
+    /**
+     * Markers whose nearest ancestor directory is the project root.
+     */
     private const array ROOT_MARKERS = ['vite.config.ts', 'vite.config.js', 'vite.config.mjs', 'vite.config.mts', 'package.json'];
 
-    /** @var array<string, self>  one resolver per project root, aliases discovered once */
+    /**
+     * @var array<string, self>  one resolver per project root, aliases discovered once
+     */
     private static array $byRoot = [];
 
-    /** @var list<array{prefix: string, dir: string}>  longest prefix first */
+    /**
+     * @var list<array{prefix: string, dir: string}>  longest prefix first
+     */
     private array $aliases;
 
     /**

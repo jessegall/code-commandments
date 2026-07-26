@@ -20,28 +20,44 @@ use ReflectionNamedType;
  */
 final class Config
 {
-    /** @var list<class-string> Sin or Detector classes to suppress. */
+    /**
+     * @var list<class-string> Sin or Detector classes to suppress.
+     */
     private array $disabled = [];
 
-    /** @var list<class-string<Detector>> Consumer detector classes to add. */
+    /**
+     * @var list<class-string<Detector>> Consumer detector classes to add.
+     */
     private array $registered = [];
 
-    /** @var list<class-string<Packages\Package>> Consumer package classes to register exemptions from. */
+    /**
+     * @var list<class-string<Packages\Package>> Consumer package classes to register exemptions from.
+     */
     private array $packages = [];
 
-    /** @var list<class-string<Cli\Hook>> Consumer Claude Code hook classes to wire alongside the built-ins. */
+    /**
+     * @var list<class-string<Cli\Hook>> Consumer Claude Code hook classes to wire alongside the built-ins.
+     */
     private array $hooks = [];
 
-    /** @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector. */
+    /**
+     * @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector.
+     */
     private array $configurators = [];
 
-    /** The {@see planExecution} closure that composes this project's {@see PlanExecution} profile. */
+    /**
+     * The {@see planExecution} closure that composes this project's {@see PlanExecution} profile.
+     */
     private ?Closure $planExecutionConfigurator = null;
 
-    /** @var list<string> The source roots to scan (relative to the project). Empty ⇒ auto-detect + scaffold. */
+    /**
+     * @var list<string> The source roots to scan (relative to the project). Empty ⇒ auto-detect + scaffold.
+     */
     private array $roots = [];
 
-    /** @var list<string> Paths (relative to the project) subtracted from the scan — never a target. */
+    /**
+     * @var list<string> Paths (relative to the project) subtracted from the scan — never a target.
+     */
     private array $excluded = [];
 
     /**

@@ -28,7 +28,9 @@ final class ConfigKeys
 {
     use MemoisedPerCodebase;
 
-    /** @var array<string, bool> project root + config name => is it a vendor-published file */
+    /**
+     * @var array<string, bool> project root + config name => is it a vendor-published file
+     */
     private static array $published = [];
 
     /**
@@ -146,7 +148,9 @@ final class ConfigKeys
             || glob($root . '/vendor/*/*/src/config/' . $name . '.php') !== [];
     }
 
-    /** @param  array<int, Node>  $ast */
+    /**
+     * @param  array<int, Node>  $ast
+     */
     private static function returnedArray(array $ast): ?Array_
     {
         foreach ($ast as $statement) {

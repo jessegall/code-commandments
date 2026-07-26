@@ -21,7 +21,9 @@ use PhpParser\Node\Stmt\TraitUse;
  */
 final class ClassLayoutOrder
 {
-    /** A member that is none of the known kinds sorts with the plain private properties. */
+    /**
+     * A member that is none of the known kinds sorts with the plain private properties.
+     */
     private const int UNKNOWN = 6;
 
     /**
@@ -118,7 +120,9 @@ final class ClassLayoutOrder
         return $base + self::visibilityOffset($property->flags);
     }
 
-    /** 0 for public (the default when no modifier is spelled), 1 for protected, 2 for private. */
+    /**
+     * 0 for public (the default when no modifier is spelled), 1 for protected, 2 for private.
+     */
     private static function visibilityOffset(int $flags): int
     {
         return match (true) {

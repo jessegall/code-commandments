@@ -31,49 +31,79 @@ use PhpParser\Node\Stmt\Return_;
  */
 final class LaravelNode extends NodeMatch
 {
-    /** The facade namespace: `Cache::`, `Log::`, `Mail::` all live under it. */
+    /**
+     * The facade namespace: `Cache::`, `Log::`, `Mail::` all live under it.
+     */
     public const string FACADE_NAMESPACE = 'Illuminate\\Support\\Facades\\';
 
-    /** Wiring the framework at boot through facades is a provider's sanctioned job. */
+    /**
+     * Wiring the framework at boot through facades is a provider's sanctioned job.
+     */
     public const string SERVICE_PROVIDER = 'Illuminate\\Support\\ServiceProvider';
 
-    /** The Eloquent model base. */
+    /**
+     * The Eloquent model base.
+     */
     public const string MODEL = 'Illuminate\\Database\\Eloquent\\Model';
 
-    /** The HTTP request base. */
+    /**
+     * The HTTP request base.
+     */
     public const string REQUEST = 'Illuminate\\Http\\Request';
 
-    /** The form-request base — a validated request, whose `rules()` shape the framework dictates. */
+    /**
+     * The form-request base — a validated request, whose `rules()` shape the framework dictates.
+     */
     public const string FORM_REQUEST = 'Illuminate\\Foundation\\Http\\FormRequest';
 
-    /** Laravel MCP's request. */
+    /**
+     * Laravel MCP's request.
+     */
     public const string MCP_REQUEST = 'Laravel\\Mcp\\Request';
 
-    /** Laravel MCP's tool base — a request-like handler whose `rules()`/`schema()` are contractual. */
+    /**
+     * Laravel MCP's tool base — a request-like handler whose `rules()`/`schema()` are contractual.
+     */
     public const string MCP_TOOL = 'Laravel\\Mcp\\Server\\Tool';
 
-    /** Inertia's entrypoint — `Inertia::render('Page', $props)` ships a payload to the frontend. */
+    /**
+     * Inertia's entrypoint — `Inertia::render('Page', $props)` ships a payload to the frontend.
+     */
     public const string INERTIA = 'Inertia\\Inertia';
 
-    /** The `inertia(...)` helper — the function-call twin of `Inertia::render(...)`. */
+    /**
+     * The `inertia(...)` helper — the function-call twin of `Inertia::render(...)`.
+     */
     public const string INERTIA_HELPER = 'inertia';
 
-    /** The framework controller base — a class whose public actions return an HTTP response. */
+    /**
+     * The framework controller base — a class whose public actions return an HTTP response.
+     */
     public const string CONTROLLER = 'Illuminate\\Routing\\Controller';
 
-    /** The `Route` facade — `Route::get('/x', [C::class, 'm'])` registers a route action. */
+    /**
+     * The `Route` facade — `Route::get('/x', [C::class, 'm'])` registers a route action.
+     */
     public const string ROUTE = 'Illuminate\\Support\\Facades\\Route';
 
-    /** The route-registration verbs — the methods on `Route`/`$router` that bind a URL to an action. */
+    /**
+     * The route-registration verbs — the methods on `Route`/`$router` that bind a URL to an action.
+     */
     public const array ROUTE_VERBS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'match', 'any'];
 
-    /** The router types a route-group closure receives — the non-facade way routes are registered. */
+    /**
+     * The router types a route-group closure receives — the non-facade way routes are registered.
+     */
     public const array ROUTER_TYPES = ['Illuminate\\Routing\\Router', 'Illuminate\\Contracts\\Routing\\Registrar'];
 
-    /** The container methods that REGISTER an abstract — the wiring `OrphanedBindingDetector` audits. */
+    /**
+     * The container methods that REGISTER an abstract — the wiring `OrphanedBindingDetector` audits.
+     */
     public const array BINDING_METHODS = ['bind', 'bindIf', 'singleton', 'singletonIf', 'scoped', 'scopedIf', 'instance'];
 
-    /** The queueable contract — a job the framework SERIALIZES onto a queue and later revives itself. */
+    /**
+     * The queueable contract — a job the framework SERIALIZES onto a queue and later revives itself.
+     */
     public const string SHOULD_QUEUE = 'Illuminate\\Contracts\\Queue\\ShouldQueue';
 
     /**
@@ -83,31 +113,49 @@ final class LaravelNode extends NodeMatch
      */
     public const array QUEUE_HOOKS = ['failed', 'middleware', 'retryUntil', 'backoff', 'uniqueId', 'tags', 'displayName'];
 
-    /** The `Event` facade — `Event::listen(X::class, L::class)` wires a listener to an event. */
+    /**
+     * The `Event` facade — `Event::listen(X::class, L::class)` wires a listener to an event.
+     */
     public const string EVENT = 'Illuminate\\Support\\Facades\\Event';
 
-    /** The static calls that FIRE an event class — the demand side of `Event::listen`. */
+    /**
+     * The static calls that FIRE an event class — the demand side of `Event::listen`.
+     */
     public const array EVENT_DISPATCHERS = ['dispatch', 'dispatchIf', 'dispatchUnless', 'broadcast'];
 
-    /** The console command base — one FACE of the application, alongside MCP tools and HTTP actions. */
+    /**
+     * The console command base — one FACE of the application, alongside MCP tools and HTTP actions.
+     */
     public const string CONSOLE_COMMAND = 'Illuminate\\Console\\Command';
 
-    /** Boundary KIND => the base type that identifies it. HTTP is read from the route table instead. */
+    /**
+     * Boundary KIND => the base type that identifies it. HTTP is read from the route table instead.
+     */
     public const array BOUNDARY_KINDS = ['console' => self::CONSOLE_COMMAND, 'mcp' => self::MCP_TOOL];
 
-    /** The calls that look a route up BY NAME — the reference side of the route-name vocabulary. */
+    /**
+     * The calls that look a route up BY NAME — the reference side of the route-name vocabulary.
+     */
     public const array ROUTE_NAME_LOOKUPS = ['route', 'to_route', 'signedRoute', 'temporarySignedRoute'];
 
-    /** Facades whose `::route()` builds a URL from a route NAME (as opposed to a request's `route($param)`). */
+    /**
+     * Facades whose `::route()` builds a URL from a route NAME (as opposed to a request's `route($param)`).
+     */
     public const array URL_GENERATORS = ['Illuminate\\Support\\Facades\\URL', 'URL', 'Illuminate\\Support\\Facades\\Redirect', 'Redirect'];
 
-    /** Helpers returning a redirector/URL generator, so `redirect()->route('x')` is a name lookup. */
+    /**
+     * Helpers returning a redirector/URL generator, so `redirect()->route('x')` is a name lookup.
+     */
     public const array URL_HELPERS = ['redirect', 'url'];
 
-    /** The HTTP/MCP request bases whose untyped reads are the smell. */
+    /**
+     * The HTTP/MCP request bases whose untyped reads are the smell.
+     */
     public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 
-    /** The Eloquent attribute-cast contracts — a cast has no container/DI, so it may use facades. */
+    /**
+     * The Eloquent attribute-cast contracts — a cast has no container/DI, so it may use facades.
+     */
     public const array CAST_CONTRACTS = [
         'Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes',
         'Illuminate\\Contracts\\Database\\Eloquent\\CastsInboundAttributes',

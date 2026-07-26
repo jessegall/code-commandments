@@ -22,7 +22,9 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  */
 final class UntilReminder extends Hook
 {
-    /** Consecutive held stops with no condition met before the gate releases itself, to never trap a session. */
+    /**
+     * Consecutive held stops with no condition met before the gate releases itself, to never trap a session.
+     */
     private const int MAX_BLOCKS = 10;
 
     public function summary(): string

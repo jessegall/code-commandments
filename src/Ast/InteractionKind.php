@@ -10,34 +10,54 @@ namespace JesseGall\CodeCommandments\Ast;
  */
 enum InteractionKind: string
 {
-    /** `$x = …` — the variable is (re)written here. */
+    /**
+     * `$x = …` — the variable is (re)written here.
+     */
     case Assigned = 'assigned';
 
-    /** `f($x)` / `new C($x)` — passed into a call. */
+    /**
+     * `f($x)` / `new C($x)` — passed into a call.
+     */
     case Argument = 'argument';
 
-    /** `$x->method()` — a method is called on it. */
+    /**
+     * `$x->method()` — a method is called on it.
+     */
     case MethodCall = 'method-call';
 
-    /** `$x->prop` — a property is read off it. */
+    /**
+     * `$x->prop` — a property is read off it.
+     */
     case PropertyFetch = 'property-fetch';
 
-    /** `$x->prop = …` — a property is written on it. */
+    /**
+     * `$x->prop = …` — a property is written on it.
+     */
     case PropertyWrite = 'property-write';
 
-    /** `$x === null` / `$x !== null` — compared against null. */
+    /**
+     * `$x === null` / `$x !== null` — compared against null.
+     */
     case NullChecked = 'null-checked';
 
-    /** `$x ?? …` — coalesced away. */
+    /**
+     * `$x ?? …` — coalesced away.
+     */
     case Coalesced = 'coalesced';
 
-    /** `$x?->…` — reached through the null-safe operator. */
+    /**
+     * `$x?->…` — reached through the null-safe operator.
+     */
     case Nullsafe = 'nullsafe';
 
-    /** `return $x` — handed back to the caller. */
+    /**
+     * `return $x` — handed back to the caller.
+     */
     case Returned = 'returned';
 
-    /** Any other read. */
+    /**
+     * Any other read.
+     */
     case Read = 'read';
 
     /**

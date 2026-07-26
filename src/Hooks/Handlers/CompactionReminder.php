@@ -20,7 +20,9 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  */
 final class CompactionReminder extends Hook
 {
-    /** The only SessionStart source that DROPS in-context skills — a fresh/forked/resumed session keeps them. */
+    /**
+     * The only SessionStart source that DROPS in-context skills — a fresh/forked/resumed session keeps them.
+     */
     private const string COMPACT = 'compact';
 
     public function summary(): string

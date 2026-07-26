@@ -14,10 +14,14 @@ use JesseGall\CodeCommandments\Vue\Expr\Parser;
  */
 class Element
 {
-    /** A real component carries CONTENT (this many elements) … */
+    /**
+     * A real component carries CONTENT (this many elements) …
+     */
     protected const int MIN_COMPONENT_ELEMENTS = 6;
 
-    /** … AND its own internal STRUCTURE (this many levels — not a flat wrapper). */
+    /**
+     * … AND its own internal STRUCTURE (this many levels — not a flat wrapper).
+     */
     protected const int MIN_COMPONENT_DEPTH = 3;
 
     public ?Element $parent = null;
@@ -256,7 +260,9 @@ class Element
         return $bindings;
     }
 
-    /** A kebab attribute name as its camelCase prop — `order-table` → `orderTable`. No regex. */
+    /**
+     * A kebab attribute name as its camelCase prop — `order-table` → `orderTable`. No regex.
+     */
     protected static function camelize(string $name): string
     {
         $out = '';

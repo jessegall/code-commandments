@@ -13,7 +13,9 @@ namespace JesseGall\CodeCommandments\Vue\Expr;
  */
 final class Parser
 {
-    /** Binary operators, loosest-binding first; ternary `?:` sits below all of them. */
+    /**
+     * Binary operators, loosest-binding first; ternary `?:` sits below all of them.
+     */
     private const array PRECEDENCE = [
         '??' => 1,
         '||' => 2,
@@ -29,7 +31,9 @@ final class Parser
         '.', '(', ')', '[', ']', '{', '}', ',', '?', ':', '!', '<', '>', '+', '-', '*', '/', '%', '=',
     ];
 
-    /** @var list<array{type: string, value: string}> */
+    /**
+     * @var list<array{type: string, value: string}>
+     */
     private array $tokens;
 
     private int $pos = 0;

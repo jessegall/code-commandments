@@ -29,7 +29,9 @@ final class RedundantReturnTypeScribe extends Scribe
         $classes = $this->classNodes($codebase);
         $finder = new NodeFinder;
 
-        /** @var array<string, list<Edit>> $editsByFile */
+        /**
+         * @var array<string, list<Edit>> $editsByFile
+         */
         $editsByFile = [];
 
         foreach ($codebase->files() as $file) {

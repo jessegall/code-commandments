@@ -28,7 +28,9 @@ final class Enums
 
         foreach ($codebase->files() as $file) {
             foreach ($finder->findInstanceOf($file->ast, Enum_::class) as $enum) {
-                /** @var Enum_ $enum */
+                /**
+                 * @var Enum_ $enum
+                 */
                 $fqcn = ($enum->namespacedName ?? null)?->toString() ?? $enum->name?->toString();
 
                 if ($fqcn === null) {

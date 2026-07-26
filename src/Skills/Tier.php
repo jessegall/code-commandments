@@ -9,9 +9,13 @@ namespace JesseGall\CodeCommandments\Skills;
  */
 enum Tier
 {
-    /** Load at the start of every coding session, before exploring or editing. */
+    /**
+     * Load at the start of every coding session, before exploring or editing.
+     */
     case Mandatory;
 
-    /** Load the moment the work touches the subject. */
+    /**
+     * Load the moment the work touches the subject.
+     */
     case KeepInMind;
 }

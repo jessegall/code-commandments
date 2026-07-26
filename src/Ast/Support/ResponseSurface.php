@@ -197,7 +197,9 @@ final class ResponseSurface
      */
     private static function constructedClass(Node $node): string
     {
-        /** @var StaticCall|New_ $node */
+        /**
+         * @var StaticCall|New_ $node
+         */
         return ltrim($node->class->toString(), '\\');
     }
 }

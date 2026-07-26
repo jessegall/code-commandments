@@ -24,7 +24,9 @@ use JesseGall\CodeCommandments\Cli\Judge\Checklist;
  */
 final class PlanReminder extends Hook
 {
-    /** Consecutive no-progress nudges before the keep-going Stop hook gives up, to never loop a stuck agent. */
+    /**
+     * Consecutive no-progress nudges before the keep-going Stop hook gives up, to never loop a stuck agent.
+     */
     private const int MAX_STUCK = 4;
 
     /**

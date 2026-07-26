@@ -21,7 +21,9 @@ use JesseGall\CodeCommandments\Detector;
  */
 abstract class EngineFixture implements Fixture
 {
-    /** @var list<Detector> */
+    /**
+     * @var list<Detector>
+     */
     protected readonly array $detectors;
 
     /**

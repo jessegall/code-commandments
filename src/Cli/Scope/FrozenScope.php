@@ -12,7 +12,9 @@ use JesseGall\CodeCommandments\Ast\Support\Frozen;
  */
 final class FrozenScope implements FileScope
 {
-    /** @var array<string, bool>  realpath => is the file frozen (read once) */
+    /**
+     * @var array<string, bool>  realpath => is the file frozen (read once)
+     */
     private array $frozen = [];
 
     public function includes(string $path): bool

@@ -26,7 +26,9 @@ use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
  */
 final class Script
 {
-    /** Reactive wrappers whose value type is what the template sees — unwrapped. */
+    /**
+     * Reactive wrappers whose value type is what the template sees — unwrapped.
+     */
     private const array REACTIVE = ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'];
 
     /**
@@ -35,7 +37,9 @@ final class Script
      */
     private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
 
-    /** @var list<array{kind: string, value: string, start: int, end: int}> */
+    /**
+     * @var list<array{kind: string, value: string, start: int, end: int}>
+     */
     private array $tokens;
 
     private ?Module $ast = null;
@@ -521,7 +525,9 @@ final class Script
         return isset($fields[$field]) ? self::unwrapRef($fields[$field]) : null;
     }
 
-    /** A `Ref<T>` / `ComputedRef<T>` (etc.) unwrapped to its value type `T`, as in the template. */
+    /**
+     * A `Ref<T>` / `ComputedRef<T>` (etc.) unwrapped to its value type `T`, as in the template.
+     */
     public static function unwrapRef(string $type): string
     {
         $unwrapped = self::unwrapRefNode(TsParser::type($type))->render();

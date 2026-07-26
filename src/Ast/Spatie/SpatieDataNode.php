@@ -68,10 +68,14 @@ final class SpatieDataNode extends NodeMatch
 {
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
-    /** A `DataPipe` — a hydration hook the framework builds once and CACHES; it resolves collaborators per call. */
+    /**
+     * A `DataPipe` — a hydration hook the framework builds once and CACHES; it resolves collaborators per call.
+     */
     public const string DATA_PIPE = 'Spatie\\LaravelData\\DataPipes\\DataPipe';
 
-    /** A `Cast` — built once and cached, handed the loose `$properties` array as its contract. */
+    /**
+     * A `Cast` — built once and cached, handed the loose `$properties` array as its contract.
+     */
     public const string CAST = 'Spatie\\LaravelData\\Casts\\Cast';
 
     /**
@@ -93,7 +97,9 @@ final class SpatieDataNode extends NodeMatch
         'FromContainerProperty',
     ];
 
-    /** The attribute that keeps a property out of the serialized payload AND the generated TypeScript. */
+    /**
+     * The attribute that keeps a property out of the serialized payload AND the generated TypeScript.
+     */
     private const string HIDDEN = 'Hidden';
 
     /**
@@ -118,13 +124,19 @@ final class SpatieDataNode extends NodeMatch
         'ArrayableTransformer',
     ];
 
-    /** The Spatie marker type for a field that may be genuinely ABSENT (omitted from output, not `null`). */
+    /**
+     * The Spatie marker type for a field that may be genuinely ABSENT (omitted from output, not `null`).
+     */
     public const string OPTIONAL = 'Spatie\\LaravelData\\Optional';
 
-    /** The Spatie TypeScript-transformer attribute that compiles a Data class to a frontend type. */
+    /**
+     * The Spatie TypeScript-transformer attribute that compiles a Data class to a frontend type.
+     */
     public const string TYPE_SCRIPT = 'Spatie\\TypeScriptTransformer\\Attributes\\TypeScript';
 
-    /** Spatie's collection wrapper — a valid RETURN of `::collect()`, but never a PROPERTY type. */
+    /**
+     * Spatie's collection wrapper — a valid RETURN of `::collect()`, but never a PROPERTY type.
+     */
     public const string DATA_COLLECTION = 'Spatie\\LaravelData\\DataCollection';
 
     /**
@@ -511,7 +523,9 @@ final class SpatieDataNode extends NodeMatch
         return false;
     }
 
-    /** Recurse into $class::$method's body one hop deeper, guarding against cycles. */
+    /**
+     * Recurse into $class::$method's body one hop deeper, guarding against cycles.
+     */
     private function crossInto(?string $class, string $method, int $depth, array $visited): bool
     {
         if ($class === null) {
@@ -536,7 +550,9 @@ final class SpatieDataNode extends NodeMatch
         return $callee !== null && $this->scopedStateWithin($callee, $callee, $class, $depth - 1, $visited);
     }
 
-    /** Resolve `self`/`static` to the class the call sits in; else the written name. */
+    /**
+     * Resolve `self`/`static` to the class the call sits in; else the written name.
+     */
     private function resolveSelfClass(string $class, ?string $selfClass): ?string
     {
         return in_array($class, ['self', 'static'], true) ? $selfClass : ltrim($class, '\\');
@@ -574,7 +590,9 @@ final class SpatieDataNode extends NodeMatch
         return false;
     }
 
-    /** Does $node contain a `::current()` / `->current()` scoped/ambient-context accessor call? */
+    /**
+     * Does $node contain a `::current()` / `->current()` scoped/ambient-context accessor call?
+     */
     private static function readsScopedAccessor(Node $node): bool
     {
         foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
@@ -827,7 +845,9 @@ final class SpatieDataNode extends NodeMatch
         return true;
     }
 
-    /** Does the property already carry a `#[Computed]` attribute (short or fully-qualified)? */
+    /**
+     * Does the property already carry a `#[Computed]` attribute (short or fully-qualified)?
+     */
     private static function carriesComputed(Property $property): bool
     {
         foreach ($property->attrGroups as $group) {
@@ -900,7 +920,9 @@ final class SpatieDataNode extends NodeMatch
             && ! self::classHasAttribute($nestedDeclaration->node, 'TypeScript');
     }
 
-    /** The FQCN of a field's on-the-wire nested type — its `#[DataCollectionOf(X)]` element, else the sole class of its declared type (unwrapping `?T` / `T|null` / `T|Optional`). Null for a scalar/array/multi-class type. The repent reads it to find the class to stamp. */
+    /**
+     * The FQCN of a field's on-the-wire nested type — its `#[DataCollectionOf(X)]` element, else the sole class of its declared type (unwrapping `?T` / `T|null` / `T|Optional`). Null for a scalar/array/multi-class type. The repent reads it to find the class to stamp.
+     */
     public function nestedWireTypeFqcn(): ?string
     {
         if (! $this->node instanceof Param && ! $this->node instanceof Property) {
@@ -910,7 +932,9 @@ final class SpatieDataNode extends NodeMatch
         return self::dataCollectionOfElement($this->node) ?? self::soleClassNameOfType($this->node->type);
     }
 
-    /** The element FQCN named by a `#[DataCollectionOf(X::class)]` on this field, or null. */
+    /**
+     * The element FQCN named by a `#[DataCollectionOf(X::class)]` on this field, or null.
+     */
     private static function dataCollectionOfElement(Param|Property $node): ?string
     {
         foreach ($node->attrGroups as $group) {
@@ -930,7 +954,9 @@ final class SpatieDataNode extends NodeMatch
         return null;
     }
 
-    /** The single class FQCN of a type, unwrapping `?T` and dropping `null`/`Optional` from a union; null for a scalar (an `Identifier`), an array, or a multi-class union. */
+    /**
+     * The single class FQCN of a type, unwrapping `?T` and dropping `null`/`Optional` from a union; null for a scalar (an `Identifier`), an array, or a multi-class union.
+     */
     private static function soleClassNameOfType(?Node $type): ?string
     {
         if ($type instanceof NullableType) {
@@ -980,7 +1006,9 @@ final class SpatieDataNode extends NodeMatch
         return self::typeMentionsDataCollection($type);
     }
 
-    /** Does this type declaration name `DataCollection` (bare or in a nullable union)? */
+    /**
+     * Does this type declaration name `DataCollection` (bare or in a nullable union)?
+     */
     private static function typeMentionsDataCollection(?Node $type): bool
     {
         if ($type instanceof Name) {
@@ -1033,7 +1061,9 @@ final class SpatieDataNode extends NodeMatch
         return $inner !== null && ($this->codebase->extends($inner, self::DATA) || $this->codebase->isEnum($inner));
     }
 
-    /** Does $class carry an attribute named $short (by short name or fully-qualified)? */
+    /**
+     * Does $class carry an attribute named $short (by short name or fully-qualified)?
+     */
     private static function classHasAttribute(\PhpParser\Node\Stmt\ClassLike $class, string $short): bool
     {
         foreach ($class->attrGroups as $group) {
@@ -1049,7 +1079,9 @@ final class SpatieDataNode extends NodeMatch
         return false;
     }
 
-    /** The single class name T of a `T | null` / `?T` type — else null (not nullable, or not one class). */
+    /**
+     * The single class name T of a `T | null` / `?T` type — else null (not nullable, or not one class).
+     */
     private static function nullableClassName(?Node $type): ?string
     {
         if ($type instanceof NullableType && $type->type instanceof Name) {
@@ -1076,7 +1108,9 @@ final class SpatieDataNode extends NodeMatch
         return $nullable && count($classes) === 1 ? $classes[0] : null;
     }
 
-    /** Does this type declaration union in the Spatie `Optional` marker (`T|Optional`)? */
+    /**
+     * Does this type declaration union in the Spatie `Optional` marker (`T|Optional`)?
+     */
     private static function typeIncludesOptional(?Node $type): bool
     {
         if (! $type instanceof UnionType) {
@@ -1336,7 +1370,9 @@ final class SpatieDataNode extends NodeMatch
             : [null, null];
     }
 
-    /** The zero-based position of $arg among its call's real arguments. */
+    /**
+     * The zero-based position of $arg among its call's real arguments.
+     */
     private function argPosition(Arg $arg): int
     {
         $call = $arg->getAttribute('parent');
@@ -1347,7 +1383,9 @@ final class SpatieDataNode extends NodeMatch
         return (int) array_search($arg, $args, true);
     }
 
-    /** Like {@see constructedFrom}, but resolving `self`/`static` against $ownerClass (the callee's own class). */
+    /**
+     * Like {@see constructedFrom}, but resolving `self`/`static` against $ownerClass (the callee's own class).
+     */
     private function constructedFromInClass(StaticCall $call, ?string $ownerClass): ?string
     {
         if (! $call->class instanceof Name) {
@@ -1784,7 +1822,9 @@ final class SpatieDataNode extends NodeMatch
         return $renamed;
     }
 
-    /** The snake_case form of a camelCase identifier — the SnakeCaseMapper's transform. */
+    /**
+     * The snake_case form of a camelCase identifier — the SnakeCaseMapper's transform.
+     */
     private static function snake(string $name): string
     {
         return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $name));

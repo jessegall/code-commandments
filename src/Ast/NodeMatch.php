@@ -93,7 +93,9 @@ class NodeMatch extends AstNode implements Located
         return false;
     }
 
-    /** Does this match's `default` arm return the `null` literal specifically? */
+    /**
+     * Does this match's `default` arm return the `null` literal specifically?
+     */
     private function matchDefaultIsNull(): bool
     {
         foreach ($this->node instanceof Match_ ? $this->node->arms : [] as $arm) {
@@ -105,7 +107,9 @@ class NodeMatch extends AstNode implements Located
         return false;
     }
 
-    /** Does the match subject resolve to an enum type — a genuinely CLOSED value set? */
+    /**
+     * Does the match subject resolve to an enum type — a genuinely CLOSED value set?
+     */
     private function matchSubjectIsEnum(): bool
     {
         $function = $this->enclosingFunction();
@@ -119,7 +123,9 @@ class NodeMatch extends AstNode implements Located
         return $this->codebase->isEnum($subject);
     }
 
-    /** Is this expression a call to a method whose DECLARED return type is nullable? */
+    /**
+     * Is this expression a call to a method whose DECLARED return type is nullable?
+     */
     private function declaredReturnAdmitsNull(Node $expr): bool
     {
         if ($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) {

@@ -19,7 +19,9 @@ use JesseGall\CodeCommandments\Cli\Judge\Finding;
  */
 final class Benchmark
 {
-    /** @var list<array{name: string, seconds: float, matches: int, shards: ?int, bytes: int}> */
+    /**
+     * @var list<array{name: string, seconds: float, matches: int, shards: ?int, bytes: int}>
+     */
     private array $records = [];
 
     /**

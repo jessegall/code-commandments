@@ -194,7 +194,9 @@ final class RouteNames
         return '';
     }
 
-    /** Is this `name()` call decorating a `group` — i.e. the chain it heads is `…->name('x')->group(…)`? */
+    /**
+     * Is this `name()` call decorating a `group` — i.e. the chain it heads is `…->name('x')->group(…)`?
+     */
     private static function decoratesGroup(Node $call): bool
     {
         $parent = $call->getAttribute('parent');
@@ -272,7 +274,9 @@ final class RouteNames
         return false;
     }
 
-    /** The method/function name a call node invokes, or null. */
+    /**
+     * The method/function name a call node invokes, or null.
+     */
     private static function callName(Node $node): ?string
     {
         return ($node instanceof MethodCall || $node instanceof StaticCall) && $node->name instanceof Identifier
@@ -280,7 +284,9 @@ final class RouteNames
             : null;
     }
 
-    /** The first argument as a string literal, or null when it isn't one (dynamic). */
+    /**
+     * The first argument as a string literal, or null when it isn't one (dynamic).
+     */
     private static function literalArg(Node $node): ?string
     {
         $first = ($node->args ?? [])[0]->value ?? null;
@@ -305,7 +311,9 @@ final class RouteNames
         return $head === '' ? null : $head;
     }
 
-    /** The string value stored under $key in an array literal, or null. */
+    /**
+     * The string value stored under $key in an array literal, or null.
+     */
     private static function arrayValue(Array_ $array, string $key): ?string
     {
         foreach ($array->items as $item) {

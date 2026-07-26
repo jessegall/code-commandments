@@ -11,16 +11,24 @@ namespace JesseGall\CodeCommandments\Scribes;
  */
 final class Draft
 {
-    /** @var list<mixed>  the working items — the findings, possibly mapped */
+    /**
+     * @var list<mixed>  the working items — the findings, possibly mapped
+     */
     private array $items;
 
-    /** @var array<string, string>  path => that file's original source */
+    /**
+     * @var array<string, string>  path => that file's original source
+     */
     private array $sources = [];
 
-    /** @var array<string, list<array{start: int, end: int, text: string}>> */
+    /**
+     * @var array<string, list<array{start: int, end: int, text: string}>>
+     */
     private array $edits = [];
 
-    /** @var array<string, string>  path => content of a freshly drafted file */
+    /**
+     * @var array<string, string>  path => content of a freshly drafted file
+     */
     private array $creates = [];
 
     /**

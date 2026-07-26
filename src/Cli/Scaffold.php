@@ -15,7 +15,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  */
 final class Scaffold implements Command
 {
-    /** Where a frontend scaffold (a Vue component) is written — the JS source root, by convention. */
+    /**
+     * Where a frontend scaffold (a Vue component) is written — the JS source root, by convention.
+     */
     private const string FRONTEND_ROOT = 'resources/js';
 
     public function names(): array

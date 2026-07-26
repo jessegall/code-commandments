@@ -207,7 +207,9 @@ final class SkillRenderer
         $rows = [];
 
         foreach ($skill->related() as $class => $note) {
-            /** @var Skill $target */
+            /**
+             * @var Skill $target
+             */
             $target = new $class;
             $rows[] = "- [`{$target->slug}`]({$this->relativeLink($skill->slug, $target->slug)}) — {$note}";
         }

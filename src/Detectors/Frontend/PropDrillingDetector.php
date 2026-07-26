@@ -20,10 +20,14 @@ use JesseGall\CodeCommandments\Vue\Sfc;
  */
 final class PropDrillingDetector implements Detector
 {
-    /** @var array<string, array<string, list<array{element: ElementMatch, childProp: string}>>> */
+    /**
+     * @var array<string, array<string, list<array{element: ElementMatch, childProp: string}>>>
+     */
     private array $conduitCache = [];
 
-    /** @var array<string, Sfc> */
+    /**
+     * @var array<string, Sfc>
+     */
     private array $byPath = [];
 
     public function sin(): Sin

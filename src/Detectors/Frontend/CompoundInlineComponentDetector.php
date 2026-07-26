@@ -18,7 +18,9 @@ use JesseGall\CodeCommandments\Frontend\Detector;
  */
 final class CompoundInlineComponentDetector implements Detector, Repentable
 {
-    /** elements — below this the compound is too small to be its own component. */
+    /**
+     * elements — below this the compound is too small to be its own component.
+     */
     private const int MIN_BODY = 12;
 
     public function sin(): Sin

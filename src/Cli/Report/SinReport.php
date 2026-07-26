@@ -16,10 +16,14 @@ use JesseGall\CodeCommandments\Skills\Skill;
  */
 final class SinReport
 {
-    /** How many sibling occurrences a recurrence finding names before it just says "+N more". */
+    /**
+     * How many sibling occurrences a recurrence finding names before it just says "+N more".
+     */
     private const int TWINS_SHOWN = 3;
 
-    /** @var array<string, list<Finding>> */
+    /**
+     * @var array<string, list<Finding>>
+     */
     private array $bySkill;
 
     private int $total;

@@ -20,13 +20,19 @@ final class Workspace
 
     private const string SESSIONS = 'sessions';
 
-    /** The session folder for a run with no session id at all (a human terminal, CI). */
+    /**
+     * The session folder for a run with no session id at all (a human terminal, CI).
+     */
     public const string DEFAULT_SESSION = 'default';
 
-    /** How many hex chars of the hashed session id name the folder — short but collision-safe in practice. */
+    /**
+     * How many hex chars of the hashed session id name the folder — short but collision-safe in practice.
+     */
     private const int KEY_LENGTH = 5;
 
-    /** How long a sibling session folder may go untouched before {@see prune} sweeps it. */
+    /**
+     * How long a sibling session folder may go untouched before {@see prune} sweeps it.
+     */
     private const int PRUNE_DAYS = 7;
 
     public function __construct(

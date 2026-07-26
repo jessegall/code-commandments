@@ -16,7 +16,9 @@ use PhpParser\Node\Scalar\MagicConst;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeFinder;
 
-/** Resolves where `spatie/laravel-typescript-transformer` writes generated types (fluent or config form); evaluates path expressions statically or yields null. */
+/**
+ * Resolves where `spatie/laravel-typescript-transformer` writes generated types (fluent or config form); evaluates path expressions statically or yields null.
+ */
 final class TransformerOutput
 {
     /**

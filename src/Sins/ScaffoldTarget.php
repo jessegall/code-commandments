@@ -11,9 +11,13 @@ namespace JesseGall\CodeCommandments\Sins;
  */
 enum ScaffoldTarget: string
 {
-    /** The PHP PSR-4 source root — the consumer's namespace is injected into the stub. */
+    /**
+     * The PHP PSR-4 source root — the consumer's namespace is injected into the stub.
+     */
     case Backend = 'backend';
 
-    /** The JS source root — a Vue component, no namespace to inject. */
+    /**
+     * The JS source root — a Vue component, no namespace to inject.
+     */
     case Frontend = 'frontend';
 }

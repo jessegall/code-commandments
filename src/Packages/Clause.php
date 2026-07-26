@@ -12,13 +12,19 @@ use JesseGall\CodeCommandments\Ast\Codebase;
  */
 final class Clause
 {
-    /** @var list<class-string> */
+    /**
+     * @var list<class-string>
+     */
     private array $classes = [];
 
-    /** @var array<class-string, list<string>> */
+    /**
+     * @var array<class-string, list<string>>
+     */
     private array $classMethods = [];
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     private array $methods = [];
 
     /**

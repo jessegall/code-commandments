@@ -20,7 +20,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  */
 final class ComputedBooleanArgumentDetector implements Detector
 {
-    /** The decision must be re-derived at this many call sites before they can drift apart. */
+    /**
+     * The decision must be re-derived at this many call sites before they can drift apart.
+     */
     private const int MIN_CALLERS = 2;
 
     public function sin(): Sin

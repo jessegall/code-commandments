@@ -30,7 +30,9 @@ final class DataClassShape
 {
     use MemoisedPerCodebase;
 
-    /** The Spatie `Data` base — the FQCN this shape analyser tests fields and elements against. */
+    /**
+     * The Spatie `Data` base — the FQCN this shape analyser tests fields and elements against.
+     */
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
     /**

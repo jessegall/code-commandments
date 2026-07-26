@@ -12,10 +12,14 @@ namespace JesseGall\CodeCommandments\Detectors\Frontend\Config;
  */
 trait DeepNestedConfig
 {
-    /** Nested DEEPER than this is too deep. */
+    /**
+     * Nested DEEPER than this is too deep.
+     */
     private int $maxDepth = 8;
 
-    /** ...and worth extracting only with MORE levels than this still beneath it. */
+    /**
+     * ...and worth extracting only with MORE levels than this still beneath it.
+     */
     private int $maxRemaining = 3;
 
     public function maxDepth(int $levels): static

@@ -13,11 +13,17 @@ namespace JesseGall\CodeCommandments\Skills;
 final readonly class Reference
 {
     public function __construct(
-        /** The kebab-case file stem — becomes `reference/<name>.md` and the link target. */
+        /**
+         * The kebab-case file stem — becomes `reference/<name>.md` and the link target.
+         */
         public string $name,
-        /** The human title shown in the SKILL.md reference list and as the doc's H1. */
+        /**
+         * The human title shown in the SKILL.md reference list and as the doc's H1.
+         */
         public string $title,
-        /** The markdown body (without the H1 — the renderer adds it from the title). */
+        /**
+         * The markdown body (without the H1 — the renderer adds it from the title).
+         */
         public string $body,
     ) {}
 }

@@ -352,7 +352,9 @@ final class FeatureEnvy
                 continue;
             }
 
-            /** @var PropertyFetch|NullsafePropertyFetch|MethodCall|NullsafeMethodCall $collection */
+            /**
+             * @var PropertyFetch|NullsafePropertyFetch|MethodCall|NullsafeMethodCall $collection
+             */
             $collection = $argument->value;
             $owner = $this->chains->resolve($collection->var, $paramTypes);
 

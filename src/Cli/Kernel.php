@@ -31,7 +31,9 @@ use JesseGall\CodeCommandments\Cli\Layers\LayersCommand;
  */
 final class Kernel
 {
-    /** @var array<string, Command>  verb => handler */
+    /**
+     * @var array<string, Command>  verb => handler
+     */
     private array $registry = [];
 
     private const string USAGE = <<<TXT

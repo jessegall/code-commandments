@@ -19,7 +19,9 @@ final class NamespaceGraph
 {
     use MemoisedPerCodebase;
 
-    /** @var array<string, array<string, list<NodeMatch>>>  from => to => the references that draw that arrow */
+    /**
+     * @var array<string, array<string, list<NodeMatch>>>  from => to => the references that draw that arrow
+     */
     private array $arrows = [];
 
     /**

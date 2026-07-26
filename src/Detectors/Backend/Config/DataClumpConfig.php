@@ -11,7 +11,9 @@ namespace JesseGall\CodeCommandments\Detectors\Backend\Config;
  */
 trait DataClumpConfig
 {
-    /** The clump must recur across at least this many distinct classes to be flagged. */
+    /**
+     * The clump must recur across at least this many distinct classes to be flagged.
+     */
     private int $minClasses = 2;
 
     public function minClasses(int $classes): static

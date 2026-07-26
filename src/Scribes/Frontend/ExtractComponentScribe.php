@@ -54,10 +54,14 @@ final class ExtractComponentScribe extends RepentScribe
 
     private ?TypeOracle $oracle = null;
 
-    /** @var array<string, array{sfc: Sfc, names: list<string>}>|null */
+    /**
+     * @var array<string, array{sfc: Sfc, names: list<string>}>|null
+     */
     private ?array $collector = null;
 
-    /** @var array<string, array<string, string>> */
+    /**
+     * @var array<string, array<string, string>>
+     */
     private array $resolved = [];
 
     private function __construct(private readonly string $strategy) {}

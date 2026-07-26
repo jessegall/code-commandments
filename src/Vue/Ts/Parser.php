@@ -47,7 +47,9 @@ final class Parser
         'object', 'symbol', 'bigint', 'this',
     ];
 
-    /** Type-level leads the grammar doesn't model — bail to verbatim so the whole region is kept. */
+    /**
+     * Type-level leads the grammar doesn't model — bail to verbatim so the whole region is kept.
+     */
     private const array VERBATIM_LEADS = ['keyof', 'readonly', 'infer', 'unique', 'new', 'abstract', 'asserts'];
 
     /**
@@ -58,10 +60,14 @@ final class Parser
      */
     private const int MAX_TYPE_DEPTH = 256;
 
-    /** Type-operator keywords that EXPECT a following type — a `{` after one still opens the type. */
+    /**
+     * Type-operator keywords that EXPECT a following type — a `{` after one still opens the type.
+     */
     private const array TYPE_OPERATORS = ['keyof', 'typeof', 'readonly', 'infer', 'in', 'extends', 'as', 'is', 'new', 'unique', 'abstract', 'asserts'];
 
-    /** @var list<Lexeme> */
+    /**
+     * @var list<Lexeme>
+     */
     private array $lexemes;
 
     private int $pos = 0;

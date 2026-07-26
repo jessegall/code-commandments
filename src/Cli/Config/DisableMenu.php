@@ -164,7 +164,9 @@ final class DisableMenu
         $last = null;
 
         foreach ($imports as $import) {
-            /** @var Use_ $node */
+            /**
+             * @var Use_ $node
+             */
             $node = $import->node;
 
             foreach ($node->uses as $use) {

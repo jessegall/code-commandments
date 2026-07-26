@@ -14,7 +14,9 @@ final class PhpTarget
 {
     use MemoisedPerCodebase;
 
-    /** `clone($obj, [...])` — clone-with, the language feature that replaces a hand-rolled wither. */
+    /**
+     * `clone($obj, [...])` — clone-with, the language feature that replaces a hand-rolled wither.
+     */
     private const string CLONE_WITH = '8.5';
 
     private function __construct(private readonly ?string $minimum) {}
@@ -41,7 +43,9 @@ final class PhpTarget
         return new self(null);
     }
 
-    /** The nearest ancestor composer.json's decoded contents, or null. */
+    /**
+     * The nearest ancestor composer.json's decoded contents, or null.
+     */
     private static function manifestFor(string $path): ?array
     {
         for ($dir = dirname($path); $dir !== '/' && $dir !== '' && $dir !== '.'; $dir = dirname($dir)) {

@@ -24,7 +24,9 @@ final class ProgressBar
 
     private bool $active = false;
 
-    /** @var resource */
+    /**
+     * @var resource
+     */
     private $stream;
 
     /**

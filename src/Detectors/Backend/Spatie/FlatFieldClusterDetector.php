@@ -25,13 +25,19 @@ use JesseGall\CodeCommandments\Support\FunctionWord;
  */
 final class FlatFieldClusterDetector implements Detector
 {
-    /** The smallest cluster worth flagging — two prefixed siblings already spread one concept flat. */
+    /**
+     * The smallest cluster worth flagging — two prefixed siblings already spread one concept flat.
+     */
     private const int MIN_CLUSTER = 2;
 
-    /** Builtin scalar leaves that nest cleanly into a value object. */
+    /**
+     * Builtin scalar leaves that nest cleanly into a value object.
+     */
     private const array SCALARS = ['string', 'int', 'float', 'bool'];
 
-    /** A value object is a SMALL bundle; a class with more public fields than this is an entity, not a VO. */
+    /**
+     * A value object is a SMALL bundle; a class with more public fields than this is an entity, not a VO.
+     */
     private const int MAX_VALUE_OBJECT_FIELDS = 6;
 
     public function sin(): Sin

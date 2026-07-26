@@ -15,10 +15,14 @@ use JesseGall\CodeCommandments\Discovery;
  */
 abstract class Exemption
 {
-    /** The short id — what a package may pass to `exempt(...)` instead of the class, and the `exemptions` key. */
+    /**
+     * The short id — what a package may pass to `exempt(...)` instead of the class, and the `exemptions` key.
+     */
     abstract public function slug(): string;
 
-    /** One line: what this exemption means, and which rules honour it. */
+    /**
+     * One line: what this exemption means, and which rules honour it.
+     */
     abstract public function description(): string;
 
     /**

@@ -54,7 +54,9 @@ final class DataHintScribe extends Scribe
 
         $renames = $docblockOnly ? [] : $this->planRenames($classes);
 
-        /** @var array<string, list<Edit>> $editsByFile */
+        /**
+         * @var array<string, list<Edit>> $editsByFile
+         */
         $editsByFile = [];
 
         foreach ($classes as $fqcn => $class) {
@@ -293,7 +295,9 @@ final class DataHintScribe extends Scribe
 
         foreach ($codebase->files() as $file) {
             foreach ($finder->findInstanceOf($file->ast, Class_::class) as $class) {
-                /** @var Class_ $class */
+                /**
+                 * @var Class_ $class
+                 */
                 $fqcn = ($class->namespacedName ?? null)?->toString();
 
                 if ($fqcn === null || ! $codebase->extends($fqcn, self::DATA)) {

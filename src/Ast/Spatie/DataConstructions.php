@@ -30,7 +30,9 @@ final class DataConstructions
 
     private const string DATA = 'Spatie\\LaravelData\\Data';
 
-    /** @var array<string, list<NodeMatch>>  Data FQCN => every `::from(...)` hydration site */
+    /**
+     * @var array<string, list<NodeMatch>>  Data FQCN => every `::from(...)` hydration site
+     */
     private array $sites = [];
 
     private function __construct(private readonly Codebase $codebase)

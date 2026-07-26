@@ -22,7 +22,9 @@ use PhpParser\NodeVisitor\CloningVisitor;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\PrettyPrinter\Standard;
 
-/** Resolves the constant-expression default for a Null Object (from default constructor or factory); yields null if no identity exists. */
+/**
+ * Resolves the constant-expression default for a Null Object (from default constructor or factory); yields null if no identity exists.
+ */
 final class NullObjectDefault
 {
     public function __construct(private readonly Codebase $codebase) {}

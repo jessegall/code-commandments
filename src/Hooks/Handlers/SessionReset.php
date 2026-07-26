@@ -21,7 +21,9 @@ use JesseGall\CodeCommandments\Cli\Plan\PlanReset;
  */
 final class SessionReset extends Hook
 {
-    /** SessionStart sources that begin a genuinely-new session — the only ones we clean up on. */
+    /**
+     * SessionStart sources that begin a genuinely-new session — the only ones we clean up on.
+     */
     private const array FRESH_SESSION_SOURCES = ['startup', 'clear'];
 
     public function summary(): string

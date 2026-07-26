@@ -19,10 +19,14 @@ use RecursiveIteratorIterator;
  */
 final class Codebase implements \JesseGall\CodeCommandments\Codebase
 {
-    /** @var list<array{0: Element, 1: Sfc}>|null */
+    /**
+     * @var list<array{0: Element, 1: Sfc}>|null
+     */
     private ?array $nodes = null;
 
-    /** @var list<TypeDeclaration>|null */
+    /**
+     * @var list<TypeDeclaration>|null
+     */
     private ?array $typeDeclarations = null;
 
     /**

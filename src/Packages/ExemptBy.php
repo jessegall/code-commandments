@@ -11,9 +11,13 @@ namespace JesseGall\CodeCommandments\Packages;
  */
 enum ExemptBy
 {
-    /** The finding's enclosing class — the common case (a `NoContainer` cast, a `Boundary` request). */
+    /**
+     * The finding's enclosing class — the common case (a `NoContainer` cast, a `Boundary` request).
+     */
     case EnclosingClass;
 
-    /** The finding's enclosing class AND method — for a per-method contract (`rules`, `casts`, `schema`). */
+    /**
+     * The finding's enclosing class AND method — for a per-method contract (`rules`, `casts`, `schema`).
+     */
     case EnclosingMethod;
 }

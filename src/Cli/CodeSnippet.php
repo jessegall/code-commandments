@@ -16,10 +16,14 @@ use JesseGall\CodeCommandments\Cli\Report\Redactor;
  */
 final class CodeSnippet
 {
-    /** Lines of context shown before the reported line (declarations read downward). */
+    /**
+     * Lines of context shown before the reported line (declarations read downward).
+     */
     private const int BEFORE = 3;
 
-    /** Lines shown after the reported line — enough to carry a small method/class body. */
+    /**
+     * Lines shown after the reported line — enough to carry a small method/class body.
+     */
     private const int AFTER = 24;
 
     public function __construct(private readonly Redactor $redactor = new Redactor()) {}

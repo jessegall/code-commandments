@@ -12,13 +12,19 @@ use JesseGall\CodeCommandments\Ast\Codebase;
  */
 final class Exemptions
 {
-    /** The aggregated registry (every package's registrations), built once. */
+    /**
+     * The aggregated registry (every package's registrations), built once.
+     */
     private static ?self $registry = null;
 
-    /** @var list<class-string<Package>> Consumer packages registered via config, beyond the shipped roster. */
+    /**
+     * @var list<class-string<Package>> Consumer packages registered via config, beyond the shipped roster.
+     */
     private static array $extra = [];
 
-    /** @var array<class-string, Clause> tag => its clause */
+    /**
+     * @var array<class-string, Clause> tag => its clause
+     */
     private array $clauses = [];
 
     /**

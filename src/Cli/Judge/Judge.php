@@ -35,7 +35,9 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class Judge implements Command
 {
-    /** How many past checklists to keep alongside the live one. */
+    /**
+     * How many past checklists to keep alongside the live one.
+     */
     private const int KEEP_ARCHIVES = 5;
 
     public function __construct(private readonly HookIO $io = new HookIO) {}
@@ -274,7 +276,9 @@ final class Judge implements Command
 
     private function list(): int
     {
-        /** @var array<string, list<string>> $bySkill */
+        /**
+         * @var array<string, list<string>> $bySkill
+         */
         $bySkill = [];
 
         foreach (Catalog::all() as $detector) {

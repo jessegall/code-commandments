@@ -15,12 +15,16 @@ namespace JesseGall\CodeCommandments\Cli\Report;
  */
 final class Redactor
 {
-    /** Names whose value is sensitive wherever it is assigned or keyed. */
+    /**
+     * Names whose value is sensitive wherever it is assigned or keyed.
+     */
     private const string SENSITIVE = '(?:passw(?:ord|d)?|pwd|secret|secrets|api[_-]?key|apikey|access[_-]?key|'
         . 'client[_-]?secret|private[_-]?key|credentials?|authorization|auth[_-]?token|bearer|token|dsn|'
         . 'app[_-]?key|encryption[_-]?key|session[_-]?secret|webhook[_-]?secret|salt|signature|passphrase)';
 
-    /** Provider-specific secret formats (AWS, GitHub, Google, Slack, Stripe, JWT, PEM, private keys). */
+    /**
+     * Provider-specific secret formats (AWS, GitHub, Google, Slack, Stripe, JWT, PEM, private keys).
+     */
     private const array TOKENS = [
         '/A(?:KIA|SIA|GPA|IDA|ROA|IPA|NPA|NVA)[0-9A-Z]{16}/',                 // AWS access key id
         '/gh[pousr]_[A-Za-z0-9]{20,}/',                                       // GitHub token
@@ -78,13 +82,17 @@ final class Redactor
         return $line;
     }
 
-    /** A censored bar (U+2588 full blocks) the SAME length as the secret it hides — so the length leaks nothing. */
+    /**
+     * A censored bar (U+2588 full blocks) the SAME length as the secret it hides — so the length leaks nothing.
+     */
     private static function mask(string $secret): string
     {
         return str_repeat('█', max(1, mb_strlen($secret)));
     }
 
-    /** Does a base64/hex-ish string carry both letters and digits — the signature of a random secret? */
+    /**
+     * Does a base64/hex-ish string carry both letters and digits — the signature of a random secret?
+     */
     private static function looksRandom(string $value): bool
     {
         return preg_match('/[A-Za-z]/', $value) === 1 && preg_match('/[0-9]/', $value) === 1;
