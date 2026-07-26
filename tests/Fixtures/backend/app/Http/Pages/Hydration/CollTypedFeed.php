@@ -15,11 +15,11 @@ use Spatie\LaravelData\DataCollection;
 #[Sinful(DataCollectionType::class)]
 final class ActivityFeed extends Data
 {
-    public function __construct(public readonly string $cursor) {}
-
     /** @var DataCollection<int, FeedItem> */
     #[Computed]
     public DataCollection $items { get => FeedItem::collect([], DataCollection::class); }
+
+    public function __construct(public readonly string $cursor) {}
 
     public function opensAtStart(): bool
     {

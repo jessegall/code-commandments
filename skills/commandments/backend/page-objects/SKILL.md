@@ -227,14 +227,6 @@ public function marker(): array
 // Good
 final class WireShapesPage extends Data
 {
-    public function __construct(
-        public readonly string $first,
-        public readonly string $last,
-        public readonly Money $price,
-        public readonly Money $tax,
-        public readonly CartLine $lead,
-    ) {}
-
     // Own fields — receiver is $this (this Data), not a value object.
     #[Computed]
     public array $fullName { get => ['first' => $this->first, 'last' => $this->last]; }
@@ -246,6 +238,15 @@ final class WireShapesPage extends Data
     // Receiver resolves to a nested Data — just a projection of another payload.
     #[Computed]
     public array $line { get => ['sku' => $this->lead->sku, 'qty' => $this->lead->qty]; }
+
+    public function __construct(
+        public readonly string $first,
+        public readonly string $last,
+        public readonly Money $price,
+        public readonly Money $tax,
+        public readonly CartLine $lead,
+    ) {}
+
 }
 ```
 

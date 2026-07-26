@@ -18,6 +18,9 @@ use Spatie\LaravelData\Data;
 #[Sinful(PageObjectMissingTypeScript::class)]
 final class CheckoutSummaryPage extends Data
 {
+    #[Computed]
+    public int $itemCount { get => count($this->lines); }
+
     public function __construct(
         public readonly CartLine $lead,
         public readonly StatCard $total,
@@ -27,9 +30,6 @@ final class CheckoutSummaryPage extends Data
         #[FromContainer(CartReader::class)]
         public readonly CartReader $cart,
     ) {}
-
-    #[Computed]
-    public int $itemCount { get => count($this->lines); }
 
     public function isBackordered(): bool
     {

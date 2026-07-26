@@ -15,6 +15,11 @@ use Spatie\LaravelData\Attributes\Computed;
  */
 final class WireSpanData extends Data
 {
+    #[Computed]
+    public string $zoneLabel {
+        get => strtoupper($this->timezone);
+    }
+
     #[Sinful(TransformerWithoutTsType::class)]
     public function __construct(
         #[WithTransformer(DateRangeTransformer::class)]
@@ -30,11 +35,6 @@ final class WireSpanData extends Data
         }
 
         return $this->span->start . ' to ' . $this->span->end;
-    }
-
-    #[Computed]
-    public string $zoneLabel {
-        get => strtoupper($this->timezone);
     }
 
     public function isSameDay(): bool

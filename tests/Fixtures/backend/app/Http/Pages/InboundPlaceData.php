@@ -13,6 +13,11 @@ use Spatie\LaravelData\Attributes\Computed;
  */
 final class InboundPlaceData extends Data
 {
+    #[Computed]
+    public bool $isPinpoint {
+        get => $this->radiusKm === 0.0;
+    }
+
     #[Sinful(ManualInputCast::class)]
     public function __construct(
         public readonly GeoPoint $spot,
@@ -28,10 +33,5 @@ final class InboundPlaceData extends Data
     public function describe(): string
     {
         return $this->label . ' covers ' . $this->areaSquareKm() . ' sqkm';
-    }
-
-    #[Computed]
-    public bool $isPinpoint {
-        get => $this->radiusKm === 0.0;
     }
 }

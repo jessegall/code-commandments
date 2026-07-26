@@ -19,13 +19,14 @@ final class WireGeoData extends Data
     #[WithTransformer(GeoPointTransformer::class)]
     public GeoPoint $location;
 
+    #[Computed]
+    public float $latitude {
+        get => $this->location->lat;
+    }
+
     public function __construct(GeoPoint $location)
     {
         $this->location = $location;
     }
 
-    #[Computed]
-    public float $latitude {
-        get => $this->location->lat;
-    }
 }

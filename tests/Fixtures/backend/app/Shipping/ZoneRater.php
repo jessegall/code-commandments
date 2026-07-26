@@ -2,6 +2,7 @@
 
 namespace Shop\Shipping;
 
+use JesseGall\CodeCommandments\Sins\Backend\MemberAfterMethod;
 use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
 
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -11,10 +12,9 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * carried to be unpacked; the rate is computed entirely from the zone. Pass the
  * zone.
  */
+#[Sinful(MemberAfterMethod::class)]
 final class ZoneRater
 {
-    private const int REMOTE_SURCHARGE = 250;
-
     #[Sinful(ParamResolvedFromParam::class)]
     public function rate(RateCard $card, string $zoneCode): int
     {
@@ -26,6 +26,8 @@ final class ZoneRater
 
         return $zone->baseCents();
     }
+
+    private const int REMOTE_SURCHARGE = 250;
 }
 
 final class RateCard

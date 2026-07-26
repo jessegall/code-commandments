@@ -25,6 +25,9 @@ use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassConst;
+use PhpParser\Node\Stmt\EnumCase;
+use PhpParser\Node\Stmt\TraitUse;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Enum_;
@@ -432,6 +435,22 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
             return false;
         });
+    }
+
+    /**
+     * Every class-body member that is NOT a method — a constant, a property (hooked or plain), an enum
+     * case, a trait `use`. What a class HAS, as opposed to what it does.
+     */
+    public function whereClassMember(): Query
+    {
+        return new Query(
+            $this,
+            static fn (Node $node): bool => $node instanceof Property
+                || $node instanceof ClassConst
+                || $node instanceof EnumCase
+                || $node instanceof TraitUse,
+            [Property::class, ClassConst::class, EnumCase::class, TraitUse::class],
+        );
     }
 
     /**

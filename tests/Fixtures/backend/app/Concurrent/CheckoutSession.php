@@ -2,11 +2,15 @@
 
 namespace Shop\Concurrent;
 
+use JesseGall\CodeCommandments\Sins\Backend\MemberAfterMethod;
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\Concurrent\Concurrent;
 
 /**
- * Transient per-customer checkout state, shared across requests.
+ * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
+ * count stand at the head of the class, so one read of the top says everything this object holds.
  */
+#[Righteous(MemberAfterMethod::class)]
 final class CheckoutSession
 {
     private const int TTL = 1800;

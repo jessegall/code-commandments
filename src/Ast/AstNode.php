@@ -92,6 +92,21 @@ use PhpParser\Node\Stmt\While_;
  */
 class AstNode
 {
+    /** The `is_*` predicates that narrow a value's type — each admits that it may be another type. */
+    private const array TYPE_PREDICATES = [
+        'is_null', 'is_string', 'is_array', 'is_int', 'is_integer', 'is_float', 'is_bool',
+        'is_object', 'is_scalar', 'is_iterable', 'is_callable', 'is_numeric', 'is_countable',
+    ];
+
+    /**
+     * How many fields must ride along untouched before re-threading them is the smell. Below this a
+     * two-or-three-field rebuild is just an ordinary constructor call, not a maintenance tax.
+     */
+    private const int WITHER_CARRIED_FLOOR = 3;
+
+    /** Attributes that OVERRIDE a serialized field's wire type with an explicit TS type (spatie/typescript-transformer). */
+    private const array WIRE_TYPE_ATTRIBUTES = ['LiteralTypeScriptType', 'TypeScriptType'];
+
     public function __construct(public readonly ?Node $node = null) {}
 
     /**
@@ -278,12 +293,6 @@ class AstNode
             || ($parent instanceof While_ && $parent->cond === $this->node)
             || ($parent instanceof Ternary && $parent->cond === $this->node);
     }
-
-    /** The `is_*` predicates that narrow a value's type — each admits that it may be another type. */
-    private const array TYPE_PREDICATES = [
-        'is_null', 'is_string', 'is_array', 'is_int', 'is_integer', 'is_float', 'is_bool',
-        'is_object', 'is_scalar', 'is_iterable', 'is_callable', 'is_numeric', 'is_countable',
-    ];
 
     /**
      * Is this value type-interrogated before use — `$x instanceof Y`, `is_string($x)`, `is_null($x)`,
@@ -1195,6 +1204,25 @@ class AstNode
     }
 
     /**
+     * Is this class member declared BELOW a method of the same class — state a reader only meets after
+     * the behaviour that uses it? False for a node outside a class body, and for the methods themselves.
+     */
+    public function followsAMethodInItsClass(): bool
+    {
+        $seenMethod = false;
+
+        foreach ($this->enclosingClass()?->stmts ?? [] as $member) {
+            if ($member === $this->node) {
+                return $seenMethod;
+            }
+
+            $seenMethod = $seenMethod || $member instanceof ClassMethod;
+        }
+
+        return false;
+    }
+
+    /**
      * Does any comment attached to this node hold commented-out PHP rather than prose? Dead code kept
      * in a comment is its own problem, and never prose to be read as documentation.
      * {@see \JesseGall\CodeCommandments\Ast\Support\CommentedCode}
@@ -1500,12 +1528,6 @@ class AstNode
         return ($constructor->stmts ?? []) === []
             && array_all($constructor->params, static fn (Param $param): bool => $param->flags !== 0 && ! $param->variadic);
     }
-
-    /**
-     * How many fields must ride along untouched before re-threading them is the smell. Below this a
-     * two-or-three-field rebuild is just an ordinary constructor call, not a maintenance tax.
-     */
-    private const int WITHER_CARRIED_FLOOR = 3;
 
 
     /** Does this class name refer to the ENCLOSING type — `self`, `static`, or its own name? */
@@ -2515,9 +2537,6 @@ class AstNode
 
         return false;
     }
-
-    /** Attributes that OVERRIDE a serialized field's wire type with an explicit TS type (spatie/typescript-transformer). */
-    private const array WIRE_TYPE_ATTRIBUTES = ['LiteralTypeScriptType', 'TypeScriptType'];
 
     /**
      * Does this field DECLARATION affirm null as part of its SERIALIZED wire contract — a wire-type

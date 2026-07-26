@@ -14,12 +14,6 @@ use Spatie\LaravelData\Attributes\Computed;
  */
 final class PricingPage extends Data
 {
-    public function __construct(
-        public readonly Money $money,
-        public readonly string $sku,
-        public readonly int $quantity,
-    ) {}
-
     #[Sinful(ManualOutputTransform::class)]
     #[Computed]
     public array $priceInEuro { get => ['amount' => $this->money->cents, 'currency' => $this->money->code]; }
@@ -32,4 +26,11 @@ final class PricingPage extends Data
             default => 'retail',
         };
     }
+
+    public function __construct(
+        public readonly Money $money,
+        public readonly string $sku,
+        public readonly int $quantity,
+    ) {}
+
 }
