@@ -52,10 +52,29 @@ else that is declared.
 - **A layer contains its own sub-namespaces.** `App\Ui\Elements\Button` is inside
   `App\Ui\Elements`, so references within a layer are always fine.
 
+### First: which side is wrong?
+
+A layer finding is the ONE finding in this package that is not decidable from the code
+alone. Every other rule reads the AST and knows; this one measures the code against a
+DECLARATION a human wrote (or `commandments layers` inferred from whatever the code
+happened to do that day). The declaration is a claim about the intended design, and a
+claim can be stale, half-migrated, or simply wrong.
+
+So read the finding as *these two are in tension*, and decide which side is at fault
+before you change either. Ask: does the declared stack still describe the architecture
+this project wants? Would someone who knows this codebase call this arrow a mistake, or
+call the layer boundary the mistake? The answer is usually "the code" — a layer breach
+is normally an accident of convenience — but you have to actually ask, because obeying a
+wrong declaration means refactoring good code into a shape nobody intended.
+
+The verdict is yours to reach and the user's to confirm. If you conclude the declaration
+is wrong, SAY SO to the user in as many words, with the reasoning — never fix it silently.
+
 ### Fixing one
 
 Do NOT widen `mayUse` to make the finding go away — that edits the architecture to
-match the accident. In order of preference:
+match the accident, and it is the one move that turns a red run green while making the
+design worse. In order of preference:
 
 1. **Invert the arrow.** The low layer usually needs a *value*, not the high layer's
    class: take the primitive, an enum, a value object, a callback. The caller in the
@@ -64,8 +83,11 @@ match the accident. In order of preference:
    the lower one (or in a new shared layer beneath both).
 3. **Introduce a contract the low layer owns.** The low layer declares an interface;
    the high layer implements it. The arrow now points down, and the name says so.
-4. **Change the declaration** — only when you have decided the stack itself was wrong,
-   deliberately, not to silence a finding.
+4. **Change the declaration** — when the judgment above says the stack itself is wrong.
+   That is a real option, not a defeat: state the decision and its reasoning to the user,
+   change the layer that is misdeclared (not just the one `mayUse` entry the finding
+   named), and leave the codebase saying what it means. What is forbidden is reaching for
+   this because 1–3 looked like work.
 
 ### The tell
 
