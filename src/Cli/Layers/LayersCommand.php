@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Cli\Layers;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\NamespaceGraph;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -25,6 +27,22 @@ final class LayersCommand implements Command
     public function names(): array
     {
         return ['layers'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file.')
+            ->form('layers [path]', "propose today's shape: every namespace with what it already uses")
+            ->form('layers [path] --floor', 'propose only the bottom — what others depend on and that depends on nothing')
+            ->form('layers [path] --write', 'add the proposal to .commandments/config.php')
+            ->form('layers add <Namespace> [--may-use=A,B]', 'declare a new layer, or widen a declared one, in place')
+            ->form('layers allow <Layer> <Target>', 'one more arrow, in place')
+            ->option('--floor', 'propose only the bottom layer')
+            ->option('--write', 'write the proposal into .commandments/config.php')
+            ->option('--refresh', 'with --write, regenerate a block that is already declared')
+            ->option('--may-use=A,B', 'with `add`, the namespaces the new layer may depend on')
+            ->note('Once a stack is declared the proposal refuses to overwrite it — a GROWING codebase edits it '
+                . 'INCREMENTALLY with `add`/`allow`, or regenerates the whole block from today\'s shape with `--write --refresh`. Every edit goes through the AST and replaces only the ->layer(...) chain, keeping your config\'s own formatting.');
     }
 
     public function run(Input $input): int
@@ -259,9 +277,7 @@ final class LayersCommand implements Command
 
     private function usage(string $form): int
     {
-        fwrite(STDERR, "Usage: commandments {$form}\n");
-
-        return 2;
+        return HelpScreen::usage($this, "Incomplete — that form reads `commandments {$form}`.");
     }
 
     private function fail(string $message): int

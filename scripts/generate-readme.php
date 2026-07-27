@@ -198,18 +198,15 @@ $skillsBlock = "\n" . implode("\n", $skillLines) . "\n";
  * Replace the content between a `<!-- BEGIN: $name … -->` and `<!-- END: $name -->`.
  */
 $replaceSection = static function (string $readme, string $name, string $content): string {
-    $beginAt = strpos($readme, "<!-- BEGIN: {$name}");
-    $endAt = strpos($readme, "<!-- END: {$name} -->");
+    $replaced = \JesseGall\CodeCommandments\Cli\Doc\GeneratedBlock::replace($readme, $name, $content);
 
-    if ($beginAt === false || $endAt === false) {
+    if ($replaced === null) {
         fwrite(STDERR, "README {$name} markers not found.\n");
 
         exit(1);
     }
 
-    $beginClose = strpos($readme, '-->', $beginAt) + 3;
-
-    return substr($readme, 0, $beginClose) . $content . substr($readme, $endAt);
+    return $replaced;
 };
 
 $tables = [
@@ -238,6 +235,7 @@ $tables = [
 $embedded = [
     'plan-options' => \JesseGall\CodeCommandments\Cli\Doc\PlanExecutionOptions::table(),
     'hooks-table' => \JesseGall\CodeCommandments\Cli\Doc\HookCatalog::table(),
+    'commands-table' => \JesseGall\CodeCommandments\Cli\Doc\CommandTable::overview(),
 ];
 
 $readme = (string) file_get_contents($readmePath);

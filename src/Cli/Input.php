@@ -106,6 +106,15 @@ final class Input
     }
 
     /**
+     * Is this run asking for HELP rather than work — `--help`, or the short `-h` the parser keeps in
+     * the verbatim tail? Asked of the Input because the Input is what knows its own flags.
+     */
+    public function wantsHelp(): bool
+    {
+        return $this->hasFlag('help') || in_array('-h', $this->raw, true);
+    }
+
+    /**
      * The value of a `--name=value` option, or null when absent (or given bare).
      */
     public function option(string $name, ?string $default = null): ?string

@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Cli\Report;
 
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * Files a [feature-request] GitHub issue proposing a new detector or improvement.
@@ -17,15 +19,21 @@ final class FeatureRequest implements Command
         return ['feature-request'];
     }
 
+    public function help(): Help
+    {
+        return Help::of('File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule.')
+            ->form('feature-request --title="…" --reason="…"', 'propose it')
+            ->option('--title="…"', 'a short title for the proposal (required)')
+            ->option('--reason="…"', 'what to add or change, and why (required)');
+    }
+
     public function run(Input $input): int
     {
         $title = $input->option('title');
         $reason = $input->option('reason');
 
         if ($title === null || $reason === null) {
-            fwrite(STDERR, "Usage: commandments feature-request --title=\"short title\" --reason=\"what to add and why\"\n");
-
-            return 2;
+            return HelpScreen::usage($this, '--title and --reason are both required.');
         }
 
         $body = "**Proposal:**\n{$reason}\n\n_Filed via `commandments feature-request` from a consumer project._\n";

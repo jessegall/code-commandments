@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Workspace;
@@ -27,6 +29,16 @@ final class PlanCommand implements Command
     public function names(): array
     {
         return ['plan'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('The handle on the ACTIVE PLAN marker the keep-going Stop hook reads — scoped to this worktree.')
+            ->form('plan status', 'is a plan active (and stuck)? the resolved profile and mode (the default)')
+            ->form('plan done', 'end the plan — clears the marker so the keep-going nudge stops (run it once the end gate is clean)')
+            ->form('plan stuck', 'signal you are BLOCKED and need the user — pauses the nudge but keeps the plan active')
+            ->note('You may only `done` a COMPLETE plan, never a blocked one. The stuck signal holds only at the '
+                . 'current HEAD and clears itself once HEAD moves (progress). In the never-stop modes (BestEffort, Relentless) `stuck` REFUSES — there is no waiting: skip the blocker and keep going.');
     }
 
     public function run(Input $input): int
@@ -172,8 +184,6 @@ final class PlanCommand implements Command
 
     private function usage(): int
     {
-        fwrite(STDERR, "Usage: commandments plan <done|stuck|status>\n");
-
-        return 2;
+        return HelpScreen::usage($this);
     }
 }

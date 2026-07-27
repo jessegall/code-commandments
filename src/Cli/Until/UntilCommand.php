@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Until;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
@@ -28,6 +30,20 @@ final class UntilCommand implements Command
     public function names(): array
     {
         return ['until'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of("The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config.")
+            ->form('until "<condition>"', 'set a condition (the form the user speaks; `add`/`set` do the same)')
+            ->form('until list', 'what stands right now (the default), and what is paused')
+            ->form('until met <n>', 'strike condition <n> off as VERIFIED — the gate lifts when none remain')
+            ->form('until stuck', 'release ONE stop when you are genuinely blocked, keeping every condition in force')
+            ->form('until pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
+            ->form('until resume', 'put the paused gate back in force')
+            ->form('until clear', "drop the gate entirely — the user's call, never an escape hatch")
+            ->note('`stuck` is a claim about the WHOLE list: drain every condition you can advance on your own '
+                . 'before asking the user. Loop-safe — 10 consecutive held stops with no progress release the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
     }
 
     public function run(Input $input): int
@@ -221,8 +237,6 @@ final class UntilCommand implements Command
 
     private function usage(): int
     {
-        fwrite(STDERR, "Usage: commandments until \"<condition>\" | list | met <n> | stuck | pause | resume | clear\n");
-
-        return 2;
+        return HelpScreen::usage($this, 'Name the condition you may not stop until it holds.');
     }
 }

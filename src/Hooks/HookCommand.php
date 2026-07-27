@@ -6,6 +6,9 @@ namespace JesseGall\CodeCommandments\Hooks;
 
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Doc\Summary;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use ReflectionClass;
 use JesseGall\CodeCommandments\Cli\Kernel;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
@@ -24,6 +27,17 @@ final class HookCommand implements Command
     public function names(): array
     {
         return $this->names;
+    }
+
+    /**
+     * Projected from the {@see Hook}'s OWN docblock ({@see Summary::first}) — the hook explains itself
+     * where it is written, so wiring one as a verb documents it too, with nothing restated here.
+     */
+    public function help(): Help
+    {
+        return Help::of(Summary::first(new ReflectionClass($this->hook)->getDocComment()))
+            ->form($this->names[0], 'run this hook — it reads its payload from stdin, not from flags')
+            ->section(Help::HOOKS);
     }
 
     public function run(Input $input): int

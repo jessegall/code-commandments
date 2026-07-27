@@ -8,6 +8,8 @@ use JesseGall\CodeCommandments\Config;
 
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Workspace;
 /**
@@ -23,6 +25,15 @@ final class TestingCommand implements Command
     public function names(): array
     {
         return ['testing', 'test-flow'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of("The plan's testing methodology — the working style the user chose at approval, in force for this run.")
+            ->form('testing show', 'the methodology in force (the default)')
+            ->form('testing set "<methodology>"', 'record the one the user chose')
+            ->note('Unlike constraints there is no gate: a testing methodology is verified continuously by the phase '
+                . 'tests themselves, not against a diff at completion.');
     }
 
     public function run(Input $input): int
@@ -71,8 +82,6 @@ final class TestingCommand implements Command
 
     private function usage(): int
     {
-        fwrite(STDERR, "Usage: commandments testing <show|set \"<methodology>\">\n");
-
-        return 2;
+        return HelpScreen::usage($this);
     }
 }

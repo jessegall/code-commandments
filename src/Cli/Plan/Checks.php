@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Moment;
 use JesseGall\CodeCommandments\PlanProfile;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * Runs PlanProfile checks for a plan moment (`start`, `phase`, `complete`); the `complete` gate
@@ -19,6 +20,16 @@ final class Checks implements Command
     public function names(): array
     {
         return ['checks'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of("Run the project's planExecution() checks for one moment of a plan.")
+            ->form('checks [start|phase|complete]', 'run that moment\'s checks in order, stopping at the first failure (default: complete)')
+            ->form('checks <moment> --list', 'print the commands that moment would run, without running them')
+            ->option('--list', 'print the resolved commands instead of running them')
+            ->note('`start` runs once before the first phase, `phase` after each phase, `complete` at the end — and '
+                . '`complete` always appends `judge --branch` (plus `constraints check` when the plan declares constraints), so a plan cannot finish unjudged.');
     }
 
     public function run(Input $input): int

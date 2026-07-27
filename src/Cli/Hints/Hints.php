@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Support\Path;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
@@ -26,6 +27,17 @@ final class Hints implements Command
     public function names(): array
     {
         return ['hints'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints.')
+            ->form('hints [path]', 'apply the fixes (the default — this WRITES)')
+            ->form('hints [path] --dry-run[=FILE]', 'preview a unified diff instead, to the screen or a file')
+            ->adopt(Scope::options())
+            ->option('--dry-run[=FILE]', 'preview the rewrite as a unified diff instead of applying it')
+            ->note('A scoped run (--changes/--branch) is forced to docblock-only: a rename\'s call sites can live '
+                . 'outside the scope, so renaming is whole-tree only. `repent` runs this as one of its scribes; `hints` is the focused Data-only entry.');
     }
 
     public function run(Input $input): int

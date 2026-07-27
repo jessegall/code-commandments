@@ -10,6 +10,8 @@ use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\Skill;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * `commandments disable <sin|skill>` / `commandments enable <sin|skill>` — toggle a rule in the
@@ -26,15 +28,22 @@ final class Configure implements Command
         return ['disable', 'enable'];
     }
 
+    public function help(): Help
+    {
+        return Help::of("Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched.")
+            ->form('disable <sin|skill>', 'turn a rule off — a skill silences every detector it teaches the fix for')
+            ->form('enable <sin|skill>', 'turn it back on')
+            ->note('The argument is a sin id OR a skill slug (the --sin= / --skill= keys), matched leniently. Run '
+                . '`commandments judge --list` to see them all.');
+    }
+
     public function run(Input $input): int
     {
         $action = $input->command();
         $query = $input->firstArgument();
 
         if ($query === null) {
-            fwrite(STDERR, "Usage: commandments {$action} <sin|skill>\n");
-
-            return 2;
+            return HelpScreen::usage($this, "Name the sin or skill to {$action}.");
         }
 
         $target = $this->resolve($query);

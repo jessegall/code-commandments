@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\WorkingCopy;
 use JesseGall\CodeCommandments\Workspace;
 
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\HookIO;
@@ -47,6 +48,20 @@ final class Repent implements Command
     public function names(): array
     {
         return ['repent'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector\'s own fix, backend and frontend.')
+            ->form('repent [path]', 'apply every fix, re-scanning until it converges (the default — this WRITES)')
+            ->form('repent [path] --dry-run[=FILE]', 'preview a unified diff instead, to the screen or a file')
+            ->form('repent --only=NAME', 'run ONE rewriter (a Scribe or a Repentable detector, lenient name match)')
+            ->adopt(Scope::options())
+            ->option('--dry-run[=FILE]', 'preview the rewrite as a unified diff instead of applying it')
+            ->option('--only=NAME', 'run one rewriter only (alias: --sin=NAME)')
+            ->option('--ignore-package-requirements', 'keep package-gated scribes even if this project lacks the package')
+            ->note('Rewrites only within the source roots `judge` reads (config.php\'s paths()), so it never touches '
+                . 'tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `commandments report`, referencing both the source and the broken output.');
     }
 
     public function run(Input $input): int

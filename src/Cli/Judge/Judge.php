@@ -23,6 +23,7 @@ use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Benchmark;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
@@ -45,6 +46,30 @@ final class Judge implements Command
     public function names(): array
     {
         return ['judge'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found.')
+            ->form('judge [path]', 'scan a path — or, with none, the source roots declared in .commandments/config.php')
+            ->form('judge --list', 'list every detector, grouped by skill')
+            ->option('--skill=NAME', 'only run detectors for one skill (group), e.g. spatie-data')
+            ->option('--sin=NAME', 'only run detectors for one sin (lenient name match), e.g. nullable-callback')
+            ->option('--exclude=A,B', 'skip findings in paths containing any fragment')
+            ->adopt(Scope::options())
+            ->option('--parallel=N', 'run detectors across N worker processes (default: 8, capped at cores; 1 = off)')
+            ->option('--ignore-package-requirements', 'keep package-gated rules even if this project lacks the package (cross-project calibration)')
+            ->option('--checklist=FILE', "write the checklist here (default: your session's .commandments/sessions/<id>/sins.md)")
+            ->option('--no-checklist', "print only, don't write the checklist file")
+            ->option('--benchmark', 'time each detector and print the slowest')
+            ->note('With no [path], judge scans the source roots declared by $config->paths(...) in '
+                . '.commandments/config.php — auto-detected on first run from your composer.json PSR-4 map (plus '
+                . 'app/src), so scaffolding like database/, storage/ and config/ is not judged. Run `commandments config '
+                . 'reindex` to re-detect them, or pass an explicit [path] to scan it directly. Add '
+                . "\$config->exclude('app/Generated') to subtract a path from ANY run — the tree is still parsed (so "
+                . 'cross-file rules stay correct) but nothing in it is ever reported or rewritten.')
+            ->note('Judge writes a Markdown checklist into your session folder (the run prints the exact path). '
+                . 'A full scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its sin; re-run judge at the end to confirm. Files marked @code-commandments-generated are skipped — they are regenerated, not hand-authored.');
     }
 
     public function run(Input $input): int

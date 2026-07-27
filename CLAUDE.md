@@ -176,7 +176,8 @@ local assignments; `propertyTypeOf`, `collectionElementOf`, `declaringClassOf`),
 (a property/method chain's final type), `ReceiverResolver` (a call receiver's static type),
 `ValueFlow` (field null-flow verdict/explain), `Calls`, `FeatureEnvy`, `LookupEnvy`,
 `NullObjectDefault`, `OwnStateMask`, `Frozen`, `Enums`, `StructuralHash`, `PageObject`,
-`ResponseSurface`, `RouteActions`, `DataClassShape`, `ParamResolution`. A package's own knowledge
+`ResponseSurface`, `RouteActions`, `DataClassShape`, `ParamResolution`, `Projection` (is an array
+literal the wire shape of a type that ALREADY exists, or an unborn one?). A package's own knowledge
 is on its decorator node (`Ast\{Spatie,Laravel,…}\*Node`), stated once.
 
 **Rewriting:** one `Scribes\Writer` (all edits) over `Scribes\Draft`; `Scribes\Span` owns ALL
@@ -202,6 +203,20 @@ offset math. Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vu
 | `bin/commandments until "<condition>"` / `until list` / `until met <n>` / `until stuck` / `until pause` / `until resume` / `until clear` | The user's STOP GATE — plan-free and config-free: the user says "keep going until X" (or fires the published `/until` slash command) and the agent records X here ({@see Cli\Until\UntilGate}, session-scoped). While any condition stands, the `UntilReminder` Stop hook holds every stop and sends the agent back to VERIFY it (never assume); `met <n>` strikes a verified one off and the gate lifts when none remain, `stuck` releases ONE stop for a genuinely blocked agent while keeping the condition — and it is a claim about the WHOLE list, so the agent DRAINS every condition it can advance alone before asking (the hold message says so, and `stuck` names the others back at it), `pause`/`resume` are THE USER's switch — `pause` moves the marker to `.until.pause` so the whole gate (stop hold AND interjection nudge) goes quiet with every condition kept verbatim, `resume` puts it back (anything set while paused stands on its own and survives) — and `clear` drops the gate (the user's call, never an escape hatch). Loop-safe: 10 consecutive held stops with no progress release the gate; meeting a condition resets that count. The `commandments-until` skill teaches the discipline. Two disciplines ride on it: a mid-work interjection from the user is TRIAGED (steering the work in hand → do it now; a separate or deferred task → park it as a condition) via a `UserPromptSubmit` nudge that fires only while work is in flight, and an ACTIVE PLAN TAKES PRECEDENCE — the gate stays silent while `PlanReminder` owns the stop (and never burns its release cap), then takes over at `plan done`, which lists what now holds the agent. |
 | `bin/commandments plan-reminder` | The plan-execution hook (see below). Emits the "load the `executing-plans` skill" nudge on `PostToolUse`/`ExitPlanMode` (plan approved), and the keep-going block-and-continue on `Stop`. Wired by `install`/`sync`. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
+
+**📖 A command DOCUMENTS ITSELF — never hand-write a usage screen.** Every `Cli\Command` declares
+`help(): Help` beside the code that parses its flags — a one-line summary, one `->form(...)` per
+subcommand, one `->option(...)` per flag it reads, plus `->note(...)` for the longer prose (a
+`HookCommand` takes its summary straight from the hook's docblock; shared flags are `->adopt(...)`ed
+from their owner, e.g. `Scope::options()`). EVERY surface is projected from that: `commandments
+--help` (the overview, grouped by `Help::section`), `commandments <verb> --help` / `help <verb>`
+(the page), a wrong invocation (`HelpScreen::usage($this, "why")` — the ONLY way to fail a command;
+never `fwrite(STDERR, "Usage: …")`), the README's command table, and the command references inside
+the skills. A skill that teaches a command embeds a block —
+`<!-- BEGIN: commands:until (auto-generated, run `composer sins`) -->` (comma-separate several verbs,
+or `commands:all`) — which `composer sins` fills from the live CLI; `HelpTest` fails if any skill
+block is stale or any command declares no help. So adding a subcommand means adding ONE `->form(...)`
+line, and it appears everywhere.
 
 **Plan execution — the `executing-plans` discipline.** On plan approval a `PostToolUse`/
 `ExitPlanMode` hook loads the standalone `executing-plans` skill and injects the project's

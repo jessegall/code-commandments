@@ -109,6 +109,39 @@ vendor/bin/commandments until met 1           # verified it — strike it off (`
 
 Exit code is non-zero when sins are found.
 
+### Every command
+
+<!-- BEGIN: commands-table (auto-generated, run `composer readme`) -->
+| Command | Purpose |
+|---|---|
+| `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found. |
+| `commandments checks [start\|phase\|complete]` | Run the project's planExecution() checks for one moment of a plan. |
+| `commandments hints [path]` | Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints. |
+| `commandments repent [path]` | Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, backend and frontend. |
+| `commandments scaffold` | Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped. |
+| `commandments report --reason="…" --ref=PATH:LINE` | File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug. |
+| `commandments feature-request --title="…" --reason="…"` | File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule. |
+| `commandments freeze <path>` | Mark a file intentionally immutable, or lift the mark. A frozen file is still scanned (so cross-file rules stay correct) but never flagged and never rewritten. |
+| `commandments sync` | Refresh this project's code-commandments integration — publish the skills, refresh the CLAUDE.md briefing and the config surface, and wire the Claude Code hooks. |
+| `commandments install` | Wire a consumer project up once — the composer sync hook, the Claude Code hook suite (cardinal-rule reminder, judge nudge, plan-execution hooks) and .gitignore — then sync. |
+| `commandments remind` | PostToolUse hook that counts tool uses and surfaces the cardinal rule once every INTERVAL—a steady heartbeat keeping 'trace to the source' present. |
+| `commandments judge-reminder` | A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set. |
+| `commandments plan-reminder` | The plan-execution Hook wired to `PostToolUse/ExitPlanMode` and `Stop`. |
+| `commandments plan status` | The handle on the ACTIVE PLAN marker the keep-going Stop hook reads — scoped to this worktree. |
+| `commandments constraints list` | The plan's architectural invariants — the rules the whole branch must still hold at the end. |
+| `commandments testing show` | The plan's testing methodology — the working style the user chose at approval, in force for this run. |
+| `commandments until "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
+| `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
+| `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
+| `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |
+| `commandments config` | Inspect and manage .commandments/config.php — what is configured, and what is actually running. |
+| `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
+| `commandments exemptions` | List the exemption tags — what a package registers to quiet a general rule on its own boundary types. |
+<!-- END: commands-table -->
+
+Run `commandments <command> --help` for a command's forms, options and notes — every help screen is
+projected from the command itself, so it is never out of date.
+
 ## Configuration
 
 **You don't have to configure anything.** Every detector is enabled out of the box.

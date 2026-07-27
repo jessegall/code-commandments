@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
+use JesseGall\CodeCommandments\Cli\Help\Option;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -33,6 +34,22 @@ final class Scope implements FileScope
         };
 
         return new self(self::canonical($strategy->restrictTo($path)), self::always($path));
+    }
+
+    /**
+     * The flags {@see fromArgs} understands — declared HERE, where they are parsed, so every command
+     * that hands us its `raw()` tail ({@see \JesseGall\CodeCommandments\Cli\Judge\Judge},
+     * `hints`, `repent`) documents them from this one source instead of restating them.
+     *
+     * @return list<Option>
+     */
+    public static function options(): array
+    {
+        return [
+            new Option('--changes', 'only files changed in the working tree (alias: --git)'),
+            new Option('--branch[=BASE]', 'only files new/changed on this branch vs BASE (default: main)'),
+            new Option('--repent[=ID]', 'only the files listed in a past run\'s checklist (bare: the latest)'),
+        ];
     }
 
     /**

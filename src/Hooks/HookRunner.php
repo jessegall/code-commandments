@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Hooks;
 
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * `commandments hook <FQCN>` — the one entry point every wired {@see Hook} runs through. {@see Hooks}
@@ -21,14 +23,19 @@ final class HookRunner implements Command
         return ['hook'];
     }
 
+    public function help(): Help
+    {
+        return Help::of('Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer\'s own $config->hook(...).')
+            ->form('hook <Class>', 'instantiate that Hook and run it against the payload on stdin')
+            ->section(Help::HOOKS);
+    }
+
     public function run(Input $input): int
     {
         $class = ltrim((string) ($input->firstArgument() ?? ''), '\\');
 
         if ($class === '' || ! class_exists($class) || ! is_subclass_of($class, Hook::class)) {
-            fwrite(STDERR, "commandments hook: '{$class}' is not a runnable " . Hook::class . ".\n");
-
-            return 2;
+            return HelpScreen::usage($this, "'{$class}' is not a runnable " . Hook::class . '.');
         }
 
         return new $class()->run($input->raw());

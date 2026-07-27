@@ -13,6 +13,7 @@ declare(strict_types=1);
 require __DIR__ . '/../vendor/autoload.php';
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Cli\Doc\CommandBlocks;
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\SkillRenderer;
@@ -63,6 +64,26 @@ foreach (Skills::all() as $skill) {
         file_put_contents($path, $rendered);
         $written++;
     }
+}
+
+// ---- Command references inside the skills -----------------------------------
+// Any skill (generated or standalone) that teaches a CLI command declares a `commands:<verbs>`
+// block; it is filled from the commands themselves, so a skill can never drift from the CLI.
+
+foreach (CommandBlocks::documentsIn("{$root}/skills") as $path => $document) {
+    $refreshed = CommandBlocks::refresh($document);
+
+    if ($refreshed === $document) {
+        continue;
+    }
+
+    if ($check) {
+        $stale[] = substr($path, strlen("{$root}/skills/"));
+        continue;
+    }
+
+    file_put_contents($path, $refreshed);
+    $written++;
 }
 
 if ($check) {

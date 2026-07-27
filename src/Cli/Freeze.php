@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Ast\Support\Frozen;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 
 /**
  * `commandments freeze <path>` / `unfreeze <path>` — stamp a file as intentionally immutable, or lift the
@@ -17,14 +19,20 @@ final class Freeze implements Command
         return ['freeze', 'unfreeze'];
     }
 
+    public function help(): Help
+    {
+        return Help::of('Mark a file intentionally immutable, or lift the mark. A frozen file is still scanned (so cross-file rules stay correct) but never flagged and never rewritten.')
+            ->form('freeze <path>', 'stamp the file frozen')
+            ->form('unfreeze <path>', 'lift the stamp — the file is a target again')
+            ->note('Idempotent: freezing a frozen file (or unfreezing an unfrozen one) reports and does nothing.');
+    }
+
     public function run(Input $input): int
     {
         $path = $input->firstArgument();
 
         if ($path === null) {
-            fwrite(STDERR, "Usage: commandments <freeze|unfreeze> <path>\n");
-
-            return 2;
+            return HelpScreen::usage($this, 'Name the file to ' . $input->command() . '.');
         }
 
         if (! is_file($path)) {

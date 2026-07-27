@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Sins\Scaffold as ScaffoldFile;
 use JesseGall\CodeCommandments\Sins\ScaffoldTarget;
@@ -23,6 +24,15 @@ final class Scaffold implements Command
     public function names(): array
     {
         return ['scaffold'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of("Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped.")
+            ->form('scaffold', 'generate every sin\'s scaffold that is missing')
+            ->form('scaffold --sin=NAME', 'generate one sin\'s scaffold (lenient name match)')
+            ->option('--sin=NAME', 'only scaffold for this sin')
+            ->option('--dry-run', 'print what would be created, and its contents, without writing');
     }
 
     public function run(Input $input): int

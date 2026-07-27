@@ -8,6 +8,8 @@ use JesseGall\CodeCommandments\Config;
 
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Workspace;
 /**
@@ -22,6 +24,17 @@ final class ConstraintsCommand implements Command
     public function names(): array
     {
         return ['constraints', 'constraint'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of("The plan's architectural invariants — the rules the whole branch must still hold at the end.")
+            ->form('constraints list', 'the invariants in force for this plan (the default)')
+            ->form('constraints add "<rule>"', 'add one for this plan only, alongside the project\'s declared ones')
+            ->form('constraints check', 'print them with the whole-branch introspection instruction')
+            ->form('constraints verified', 'stamp them verified — this is what unblocks the `plan done` gate')
+            ->note('`checks complete` runs `constraints check` for you whenever the project declares any, so a plan '
+                . 'cannot finish with its invariants unexamined.');
     }
 
     public function run(Input $input): int
@@ -121,8 +134,6 @@ final class ConstraintsCommand implements Command
 
     private function usage(): int
     {
-        fwrite(STDERR, "Usage: commandments constraints <list|add \"<rule>\"|check|verified>\n");
-
-        return 2;
+        return HelpScreen::usage($this);
     }
 }

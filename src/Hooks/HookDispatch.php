@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Hooks;
 
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * `commandments hooks` — the one entry point every wired hook moment runs through. Reads the payload
@@ -20,6 +21,13 @@ final class HookDispatch implements Command
     public function names(): array
     {
         return ['hooks'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one.')
+            ->form('hooks', 'dispatch the moment on stdin (wired by `install`/`sync`; you rarely run this by hand)')
+            ->section(Help::HOOKS);
     }
 
     public function run(Input $input): int

@@ -14,6 +14,8 @@ use JesseGall\CodeCommandments\Skills\Catalog as SkillCatalog;
 
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
  * Inspects and manages `.commandments/config.php`; `config` shows effective configuration,
@@ -24,6 +26,13 @@ final class ConfigCommand implements Command
     public function names(): array
     {
         return ['config'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('Inspect and manage .commandments/config.php — what is configured, and what is actually running.')
+            ->form('config', 'the effective configuration: source roots, detectors running vs available, packages, skills')
+            ->form('config reindex', "re-detect the source roots from composer.json and rewrite the config's paths()");
     }
 
     public function run(Input $input): int
@@ -87,8 +96,6 @@ final class ConfigCommand implements Command
 
     private function usage(?string $subcommand): int
     {
-        fwrite(STDERR, "Unknown subcommand '{$subcommand}'. Usage: commandments config [reindex]\n");
-
-        return 2;
+        return HelpScreen::usage($this, "Unknown subcommand '{$subcommand}'.");
     }
 }

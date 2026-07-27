@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Skills\ClaudeSection;
@@ -32,6 +33,12 @@ final class Sync implements Command
     public function names(): array
     {
         return ['sync'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of("Refresh this project's code-commandments integration — publish the skills, refresh the CLAUDE.md briefing and the config surface, and wire the Claude Code hooks.")
+            ->form('sync', 'run it (idempotent; composer runs it for you on every install/update once `install` has wired it)');
     }
 
     public function run(Input $input): int

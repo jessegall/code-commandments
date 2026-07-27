@@ -77,6 +77,25 @@ current *before* it strikes — a heartbeat nudges a refresh as you work, and th
 re-injected on compact/resume**, so a compacted you resumes with the full picture.
 It's cleared on `plan done` and on a genuinely-new session, and survives `compact`/`resume` (that's the point).
 
+## The commands
+
+<!-- BEGIN: commands:plan,checks,constraints,testing (auto-generated, run `composer sins`) -->
+| Command | Does |
+|---|---|
+| `commandments plan status` | is a plan active (and stuck)? the resolved profile and mode (the default) |
+| `commandments plan done` | end the plan — clears the marker so the keep-going nudge stops (run it once the end gate is clean) |
+| `commandments plan stuck` | signal you are BLOCKED and need the user — pauses the nudge but keeps the plan active |
+| `commandments checks [start\|phase\|complete]` | run that moment's checks in order, stopping at the first failure (default: complete) |
+| `commandments checks <moment> --list` | print the commands that moment would run, without running them |
+| `commandments constraints list` | the invariants in force for this plan (the default) |
+| `commandments constraints add "<rule>"` | add one for this plan only, alongside the project's declared ones |
+| `commandments constraints check` | print them with the whole-branch introspection instruction |
+| `commandments constraints verified` | stamp them verified — this is what unblocks the `plan done` gate |
+| `commandments testing show` | the methodology in force (the default) |
+| `commandments testing set "<methodology>"` | record the one the user chose |
+
+<!-- END: commands:plan,checks,constraints,testing -->
+
 ## Configuration
 
 The profile lives in `.commandments/config.php`:

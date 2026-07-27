@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 /**
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
@@ -13,13 +14,19 @@ use JesseGall\CodeCommandments\Hooks\HookRegistry;
  * update`/`install`, wires our Claude Code hooks ({@see Hooks} — the cardinal-rule
  * heartbeat and the "did you judge?" nudge), then runs an initial sync. Idempotent.
  */
-final class Install
+final class Install implements Command
 {
     private const string HOOK = '@php vendor/bin/commandments sync';
 
     public function names(): array
     {
         return ['install'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('Wire a consumer project up once — the composer sync hook, the Claude Code hook suite (cardinal-rule reminder, judge nudge, plan-execution hooks) and .gitignore — then sync.')
+            ->form('install', 'wire it (idempotent; every hook we write is stamped, so your own hooks are never touched)');
     }
 
     public function run(Input $input): int

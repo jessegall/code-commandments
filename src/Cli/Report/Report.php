@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Cli\Report;
 
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\CodeSnippet;
 use JesseGall\CodeCommandments\Detectors\Catalog;
@@ -43,6 +45,22 @@ final class Report implements Command
         return ['report'];
     }
 
+    public function help(): Help
+    {
+        return Help::of('File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug.')
+            ->form('report --reason="…" --ref=PATH:LINE', 'a [bug-report] — a defect in the tool, pointing at the code it happened on')
+            ->form('report --detector=NAME --reason="…" --ref=PATH:LINE', 'a [detector-report] — this finding is a false positive')
+            ->option('--reason="…"', "what is wrong (required)")
+            ->option('--ref=PATH:LINE', 'the code this is about — repeatable, and PATH:START-END works; the source is read and injected into the issue')
+            ->option('--detector=NAME', 'the detector that fired — makes this a false-positive report')
+            ->option('--best-design="…"', 'the cleanest design you can conceive for the flagged code; REQUIRED by design-smell detectors')
+            ->option('--title="…"', 'the issue title (default: the reason\'s first line)')
+            ->option('--global', "opt out of --ref when the defect is tied to no file at all (a crash with no args, a CLI-wide bug)")
+            ->option('--file=PATH --line=N', 'the single-ref alias for --ref')
+            ->note('A report is NOT a deferral. A correct finding must be FIXED, however big the fix — a detector-report '
+                . 'asserts flatly that the code is right and the rule is wrong, with no hedge. Some detectors (design smells) REQUIRE --best-design: the report is valid only when the flagged code ALREADY IS that best design.');
+    }
+
     public function run(Input $input): int
     {
         $detector = $input->option('detector');
@@ -50,7 +68,7 @@ final class Report implements Command
         $refs = $this->references($input);
 
         if ($reason === null) {
-            return $this->usage();
+            return $this->usage('--reason is required — say what is wrong.');
         }
 
         if ($detector !== null) {
@@ -220,15 +238,9 @@ final class Report implements Command
         return $out;
     }
 
-    private function usage(): int
+    private function usage(string $message = ''): int
     {
-        fwrite(STDERR,
-            "Usage: commandments report --reason=\"what's wrong\" --ref=path:line [--ref=other:line …]\n"
-            . "                           [--detector=NAME --best-design=\"…\"] [--title=\"…\"] [--global]\n"
-            . "  --detector reports a false positive. Some detectors (design smells) REQUIRE --best-design\n"
-            . "  (the cleanest design you can conceive) — a report is valid only when the code already IS it.\n");
-
-        return 2;
+        return HelpScreen::usage($this, $message);
     }
 
     /**

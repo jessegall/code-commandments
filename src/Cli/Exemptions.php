@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Exemption;
@@ -18,6 +19,13 @@ final class Exemptions implements Command
     public function names(): array
     {
         return ['exemptions'];
+    }
+
+    public function help(): Help
+    {
+        return Help::of('List the exemption tags — what a package registers to quiet a general rule on its own boundary types.')
+            ->form('exemptions', 'every registered tag, with the package that owns it')
+            ->form('exemptions <sin|detector>', 'the exemptions ONE detector honours');
     }
 
     public function run(Input $input): int
