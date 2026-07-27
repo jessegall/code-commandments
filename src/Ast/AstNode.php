@@ -3303,34 +3303,175 @@ class AstNode
 
     /**
      * Is this array literal a projection of the enclosing object's OWN state — a
-     * non-empty keyed map whose every value is a `$this->field` read (`['accessToken'
+     * non-empty keyed map whose every value is read off `$this` (`['accessToken'
      * => $this->accessToken, …]`)? That is a `toArray()`/`toValues()` serializer
      * turning a typed object into a persistence/presentation shape — which the
      * value-objects skill exempts — not a loose bag of unrelated fields.
      */
     public function isSelfProjectionArray(): bool
     {
-        if (! $this->node instanceof Array_ || $this->node->items === []) {
-            return false;
+        return $this->arrayProjectionSource() === 'this';
+    }
+
+    /**
+     * The ONE object this keyed array literal is read FROM — `'this'` for a `toWire()`/`toArray()`
+     * serializer, the variable name for `['status' => $outcome->status->value, …]` — or null when it
+     * is a real bag: values gathered from several sources, from none, or reaching past that object's
+     * own fields into their internals.
+     *
+     * A field may be DRESSED on the way out and still count: a chain that asks it to serialize itself
+     * (`$this->when->toWire()`), a null guard (`$outcome->error === null ? null : …`), a map over it
+     * (`array_map(fn (self $t) => $t->toWire(), $this->terms)`). What does NOT count is reading a
+     * field's INTERNALS (`$this->origin->lat` — that assembles a new shape out of another type's
+     * parts) or calling the object itself (`$this->byCategory()` — computed results, not own state).
+     * A backed enum's magic `->value` terminates a chain: it is the field's own scalar, not a reach
+     * into an object. So a projection means the type is already there and the array is its wire
+     * shape; anything else is the unborn type the value-objects rule is about.
+     */
+    public function arrayProjectionSource(): ?string
+    {
+        $values = $this->keyedValues();
+
+        if ($values === null) {
+            return null;
         }
+
+        $sources = [];
+
+        foreach ($values as $value) {
+            foreach (self::variableNames($value) as $name) {
+                $sources[$name] = true;
+            }
+        }
+
+        if (count($sources) !== 1) {
+            return null;
+        }
+
+        $source = (string) array_key_first($sources);
+
+        foreach ($values as $value) {
+            if (! self::readsOnlyOwnFieldsOf($value, $source)) {
+                return null;
+            }
+        }
+
+        return $source;
+    }
+
+    /**
+     * The names of every plain variable an expression reads — `['this', 'outcome']`. Anything with a
+     * computed name (`$$name`) is not a variable we can name, so it is left out.
+     *
+     * @return list<string>
+     */
+    private static function variableNames(?Node $node): array
+    {
+        $names = [];
+
+        foreach (self::expressionNodes($node) as $child) {
+            if ($child instanceof Variable && is_string($child->name)) {
+                $names[] = $child->name;
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * Every VALUE of this array literal, in declaration order — or null when it is not a non-empty
+     * array literal, or carries a spread/positional element, which makes it a list or a merge rather
+     * than the named record a projection reads.
+     *
+     * @return list<Node>|null
+     */
+    private function keyedValues(): ?array
+    {
+        if (! $this->node instanceof Array_ || $this->node->items === []) {
+            return null;
+        }
+
+        $values = [];
 
         foreach ($this->node->items as $item) {
             if (! $item instanceof ArrayItem || $item->key === null) {
+                return null;
+            }
+
+            $values[] = $item->value;
+        }
+
+        return $values;
+    }
+
+    /**
+     * Does this value read `$source` only through ITS OWN fields — `$source->field`, dressed by any
+     * call or guard — rather than calling `$source` itself or reaching through a field into the
+     * object behind it?
+     */
+    private static function readsOnlyOwnFieldsOf(?Node $value, string $source): bool
+    {
+        foreach (self::expressionNodes($value) as $node) {
+            if (! $node instanceof Variable || $node->name !== $source) {
+                continue;
+            }
+
+            $field = $node->getAttribute('parent');
+
+            // `$source` used bare, or called on directly (`$this->compute()`) — not a field read.
+            if (! $field instanceof PropertyFetch && ! $field instanceof NullsafePropertyFetch) {
                 return false;
             }
 
-            $value = $item->value;
-
-            $isOwnField = ($value instanceof PropertyFetch || $value instanceof NullsafePropertyFetch)
-                && $value->var instanceof Variable
-                && $value->var->name === 'this';
-
-            if (! $isOwnField) {
+            if (! self::readsFieldWhole($field->getAttribute('parent'))) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * Is what sits ABOVE a field read leaving that field WHOLE? A call on it delegates (the field
+     * owns its own shape); a further property/index read takes it apart — except a backed enum's
+     * magic `->value`, which is the field's own scalar.
+     */
+    private static function readsFieldWhole(mixed $beyond): bool
+    {
+        if ($beyond instanceof ArrayDimFetch) {
+            return false;
+        }
+
+        if (! $beyond instanceof PropertyFetch && ! $beyond instanceof NullsafePropertyFetch) {
+            return true;
+        }
+
+        return $beyond->name instanceof Identifier && $beyond->name->toString() === 'value';
+    }
+
+    /**
+     * Every node of an expression, itself included — EXCEPT a nested closure, whose body is its own
+     * scope and reads nothing on this expression's behalf.
+     *
+     * @return list<Node>
+     */
+    private static function expressionNodes(?Node $node): array
+    {
+        if ($node === null || $node instanceof Closure || $node instanceof ArrowFunction) {
+            return [];
+        }
+
+        $nodes = [$node];
+
+        foreach ($node->getSubNodeNames() as $name) {
+            foreach (is_array($node->{$name}) ? $node->{$name} : [$node->{$name}] as $child) {
+                if ($child instanceof Node) {
+                    $nodes = [...$nodes, ...self::expressionNodes($child)];
+                }
+            }
+        }
+
+        return $nodes;
     }
 
     /**
@@ -3378,19 +3519,24 @@ class AstNode
      */
     public function enclosingParamIsArray(string $name): bool
     {
+        return self::isArrayType($this->enclosingParamType($name));
+    }
+
+    /**
+     * The DECLARED type of the enclosing function's `$name` parameter, or null when it has none (or
+     * there is no such parameter) — the one read behind "what IS this variable, as written".
+     */
+    public function enclosingParamType(string $name): ?Node
+    {
         $function = $this->enclosingFunction();
 
-        if ($function === null) {
-            return false;
-        }
-
-        foreach ($function->getParams() as $param) {
+        foreach ($function?->getParams() ?? [] as $param) {
             if ($param->var instanceof Variable && $param->var->name === $name) {
-                return self::isArrayType($param->type);
+                return $param->type;
             }
         }
 
-        return false;
+        return null;
     }
 
     /**

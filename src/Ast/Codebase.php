@@ -96,6 +96,8 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
     private ?ValueFlow $valueFlow = null;
 
+    private ?Support\Projection $projection = null;
+
     /**
      * @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null
      */
@@ -145,6 +147,15 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function valueFlow(): ValueFlow
     {
         return $this->valueFlow ??= new ValueFlow($this);
+    }
+
+    /**
+     * The projection reader — is an array literal the wire shape of a type that already exists, or an
+     * unborn one? Built once, cached here like {@see valueFlow}.
+     */
+    public function projection(): Support\Projection
+    {
+        return $this->projection ??= new Support\Projection($this);
     }
 
     /**
