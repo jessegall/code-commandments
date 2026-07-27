@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
+use JesseGall\CodeCommandments\Support\PhpFile;
+
 /**
  * The ONE home of the `.commandments/` layout — every artifact path in the package is built here.
  * Two tiers: the durable tier ({@see shared} — `config.php`, `repent.php`, `.gitignore`, the vue-tsc
@@ -19,6 +21,14 @@ final class Workspace
     private const string DIR = '.commandments';
 
     private const string SESSIONS = 'sessions';
+
+    /**
+     * The durable-tier folder a PROJECT writes its own code into — its custom detectors, sins,
+     * skills and packages ({@see custom}). The one folder under `.commandments/` that is neither
+     * generated nor session-scoped, so it is the one (besides `config.php`) kept out of the
+     * folder's `.gitignore`.
+     */
+    public const string CUSTOM = 'custom';
 
     /**
      * The session folder for a run with no session id at all (a human terminal, CI).
@@ -57,6 +67,50 @@ final class Workspace
     public static function config(?string $dir = null): string
     {
         return self::at($dir ?? getcwd())->shared('config.php');
+    }
+
+    /**
+     * The project's `custom/` folder — `<dir>/.commandments/custom` (default the cwd), where a
+     * project keeps its OWN detectors, sins, skills and packages. One home, so the scaffolder
+     * ({@see Cli\Make\Make}), the loader ({@see Config::load}) and the publisher all resolve it
+     * the same way.
+     */
+    public static function custom(?string $dir = null): string
+    {
+        return self::at($dir ?? getcwd())->shared(self::CUSTOM);
+    }
+
+    /**
+     * Every PHP file a project has written into its {@see custom} folder, recursively and in a
+     * stable order — the classes {@see Config::load} requires before the config composes, so a
+     * `->detector(...)` line can name a class no autoloader knows about.
+     *
+     * @return list<string>
+     */
+    public static function customFiles(?string $dir = null): array
+    {
+        $root = self::custom($dir);
+
+        if (! is_dir($root)) {
+            return [];
+        }
+
+        $files = [];
+
+        /**
+         * @var \SplFileInfo $file
+         */
+        foreach (new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
+        ) as $file) {
+            if (PhpFile::is($file)) {
+                $files[] = $file->getPathname();
+            }
+        }
+
+        sort($files);
+
+        return $files;
     }
 
     public function root(): string

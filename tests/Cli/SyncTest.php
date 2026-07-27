@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Sync;
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Moment;
 use PHPUnit\Framework\TestCase;
 
@@ -100,6 +101,63 @@ final class SyncTest extends TestCase
         $settings = (string) file_get_contents("{$this->consumer}/.claude/settings.json");
         $this->assertStringContainsString('Notification', $settings, 'the consumer hook adds its declared moment');
         $this->assertStringContainsString(' hooks ', $settings, 'wired through the dispatcher entry point');
+    }
+
+    public function test_sync_publishes_the_projects_OWN_skill_through_the_same_renderer(): void
+    {
+        // A project skill + its sin, written where `make` writes them. Sync must render the
+        // SKILL.md the finding points at — the custom side is not a lesser citizen.
+        $class = 'Cc' . str_replace('.', '', uniqid('', true));
+        @mkdir("{$this->consumer}/.commandments/custom", 0777, true);
+        file_put_contents("{$this->consumer}/.commandments/custom/{$class}.php", <<<PHP
+        <?php
+        use JesseGall\\CodeCommandments\\Sins\\Sin;
+        use JesseGall\\CodeCommandments\\Skills\\Skill;
+        use JesseGall\\CodeCommandments\\Skills\\Tier;
+
+        final class {$class} extends Skill
+        {
+            public function __construct() { parent::__construct(slug: 'backend/house-style', tier: Tier::KeepInMind, order: 99); }
+            public function title(): string { return 'The house style'; }
+            public function trigger(): string { return 'Read this when …'; }
+            public function intro(): string { return 'Say it once.'; }
+            public function summary(): string { return 'say it once.'; }
+            public function principle(): string { return 'Because repetition rots.'; }
+        }
+
+        final class {$class}Sin extends Sin
+        {
+            public function __construct()
+            {
+                parent::__construct(name: 'said-twice', skill: {$class}::class, description: 'It was said twice.', rule: 'Say it once.');
+            }
+        }
+        PHP);
+
+        Custom::forget();
+        $this->sync();
+        Custom::forget();
+
+        $skill = "{$this->consumer}/.claude/skills/commandments-backend-house-style/SKILL.md";
+
+        $this->assertFileExists($skill, 'the project skill is published where judge points the agent');
+
+        $rendered = (string) file_get_contents($skill);
+        $this->assertStringContainsString('# The house style', $rendered);
+        $this->assertStringContainsString('Because repetition rots.', $rendered);
+        $this->assertStringContainsString('It was said twice.', $rendered, 'its own sin projects into "when it fires"');
+        $this->assertStringContainsString('- Say it once.', $rendered, 'and into the rules');
+    }
+
+    public function test_the_commandments_gitignore_keeps_the_projects_own_rules_tracked(): void
+    {
+        $this->sync();
+
+        $ignore = (string) file_get_contents("{$this->consumer}/.commandments/.gitignore");
+
+        $this->assertStringContainsString("!custom/\n", $ignore, 'the directory is re-admitted');
+        $this->assertStringContainsString("!custom/**\n", $ignore, 'and so is everything in it');
+        $this->assertStringContainsString("!config.php\n", $ignore);
     }
 
     private function sync(): void

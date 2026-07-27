@@ -9,9 +9,10 @@ use JesseGall\CodeCommandments\Workspace;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
+use JesseGall\CodeCommandments\Scribes\Span;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Scalar\String_;
-use RuntimeException;
+use PhpParser\Node\Stmt\Expression;
 
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 /**
@@ -54,17 +55,9 @@ final class ConfigFile
      */
     public function paths(): array
     {
-        if (! is_file($this->path)) {
-            return [];
-        }
+        $call = $this->calls()->named('paths');
 
-        foreach (Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('paths')->get() as $match) {
-            if ($match->node instanceof MethodCall) {
-                return self::argStrings($match->node);
-            }
-        }
-
-        return [];
+        return $call === null ? [] : self::argStrings($call);
     }
 
     /**
@@ -75,18 +68,10 @@ final class ConfigFile
      */
     public function disabled(): array
     {
-        if (! is_file($this->path)) {
-            return [];
-        }
-
         $classes = [];
 
-        foreach (Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('disable')->get() as $match) {
-            $call = $match->node;
-
-            if ($call instanceof MethodCall) {
-                $classes = [...$classes, ...self::argClasses($call)];
-            }
+        foreach ($this->calls()->all('disable') as $call) {
+            $classes = [...$classes, ...self::argClasses($call)];
         }
 
         return array_values(array_unique($classes));
@@ -132,6 +117,85 @@ final class ConfigFile
         $this->rewriteArgs($call, $remaining);
 
         return true;
+    }
+
+    /**
+     * The detector classes the config registers — read from the `detector()` call's `::class`
+     * arguments, the twin of {@see disabled}.
+     *
+     * @return list<string>
+     */
+    public function detectors(): array
+    {
+        $call = $this->calls()->named('detector');
+
+        return $call === null ? [] : self::argClasses($call);
+    }
+
+    /**
+     * Register a project's own detector — `$config->detector(\Foo\BarDetector::class)`. Adds the
+     * class to the existing `detector()` call, or writes a whole new statement after `paths()`
+     * when the config has none yet (the scaffold ships only a commented-out example). False when
+     * that detector is already registered. Like every edit here it goes through the AST: the new
+     * argument is spliced by node offset and the statement takes the indentation of the one it
+     * follows, so the human's formatting survives.
+     */
+    public function registerDetector(string $fqcn): bool
+    {
+        $this->scaffoldIfMissing();
+        $fqcn = ltrim($fqcn, '\\');
+        $call = $this->calls()->named('detector');
+
+        if ($call !== null) {
+            $current = self::argClasses($call);
+
+            if (in_array($fqcn, $current, true)) {
+                return false;
+            }
+
+            $this->rewriteArgs($call, [...$current, $fqcn]);
+
+            return true;
+        }
+
+        $this->appendStatement("\$config->detector(\\{$fqcn}::class);");
+
+        return true;
+    }
+
+    /**
+     * Write a new statement into the config's composer closure, on its own line after the LAST
+     * statement already there, at that statement's own indentation. Falls back to the `paths()`
+     * statement's line when the file has been edited past recognition.
+     */
+    private function appendStatement(string $statement): void
+    {
+        $anchor = $this->lastStatement();
+
+        if ($anchor === null) {
+            throw UnrecognizableConfig::at($this->path);
+        }
+
+        $source = (string) file_get_contents($this->path);
+        $at = $anchor->getEndFilePos() + 1;
+        $indent = Span::indentAt($source, $anchor->getStartFilePos());
+
+        file_put_contents($this->path, substr($source, 0, $at) . "\n\n{$indent}{$statement}" . substr($source, $at));
+    }
+
+    /**
+     * The last `$config->…;` statement in the config — the line a new declaration is written after.
+     */
+    private function lastStatement(): ?Expression
+    {
+        $statements = $this->calls()->statements();
+
+        return $statements === [] ? null : $statements[count($statements) - 1];
+    }
+
+    private function calls(): ConfigCalls
+    {
+        return new ConfigCalls($this->path);
     }
 
     /**
@@ -238,15 +302,7 @@ final class ConfigFile
      */
     private function layerCalls(): array
     {
-        $calls = [];
-
-        foreach (Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('layer')->get() as $match) {
-            if ($match->node instanceof MethodCall) {
-                $calls[] = $match->node;
-            }
-        }
-
-        return $calls;
+        return $this->calls()->all('layer');
     }
 
     /**
@@ -292,13 +348,7 @@ final class ConfigFile
      */
     private function disableCall(): MethodCall
     {
-        $match = Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod('disable')->first();
-
-        if (! $match?->node instanceof MethodCall) {
-            throw new RuntimeException("{$this->path} has no `\$config->disable(...)` call to manage — restore it, or delete the file to regenerate.");
-        }
-
-        return $match->node;
+        return $this->calls()->require('disable');
     }
 
     /**

@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Cli\Config\Configure;
 use JesseGall\CodeCommandments\Cli\Report\Report;
 use JesseGall\CodeCommandments\Cli\Report\FeatureRequest;
 use JesseGall\CodeCommandments\Cli\Judge\Judge;
+use JesseGall\CodeCommandments\Cli\Make\Make;
 use JesseGall\CodeCommandments\Cli\Layers\LayersCommand;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 /**
@@ -102,6 +103,7 @@ final class Kernel
     {
         return [
             new Judge(),
+            new Make(),
             new Checks(),
             new Hints(),
             new Repent(),

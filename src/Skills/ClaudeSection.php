@@ -163,6 +163,23 @@ final class ClaudeSection
         last judge run's checklist, so it fixes exactly what was reported; review the diff
         with `--dry-run` first.
 
+        **Write commandments of your OWN.** The shipped rules are not the ceiling. When
+        this project has a discipline of its own — a convention you keep restating in
+        review, a mistake that keeps coming back, anything the shipped set doesn't
+        catch — it can become a rule that judges every file from then on. Scaffold it:
+
+        `vendor/bin/commandments make <Name>` (add `--engine=frontend` for a Vue rule)
+
+        That writes the three classes a commandment is made of — the skill that teaches
+        it, the sin that names it, the detector that finds it — into
+        `.commandments/custom/`, registers the detector in this project's config, and
+        prints the rest of the process. The folder is committed like any other source:
+        these are the project's rules. **Load the `commandments-writing-detectors`
+        skill before you write one** — it lists the engine predicates that already
+        exist (hand-rolling one that does is the usual first mistake) and teaches the
+        probe-then-calibrate discipline that proves a detector fires on what you meant.
+        Reach for this whenever the user asks for a new rule, check, or detector.
+
         **Scaffoldable sins.** A few sins are fixed by reaching for a generic helper the
         project may not have yet (e.g. a no-op invokable for a nullable callback). For
         those the report advertises `vendor/bin/commandments scaffold --sin=NAME`, which

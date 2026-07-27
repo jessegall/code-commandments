@@ -306,9 +306,13 @@ final class Judge implements Command
          */
         $bySkill = [];
 
-        foreach (Catalog::all() as $detector) {
-            $parts = explode('\\', $detector::class);
-            $bySkill[$detector->sin()->slug()][] = end($parts);
+        // The detectors that would actually RUN here, not the shipped catalog: the project's
+        // config has already dropped what it disabled and added what it registered, so a project's
+        // own rules are listed beside the shipped ones and a silenced one is not listed at all.
+        $configured = Config::load()->apply(Catalog::backend(), Catalog::frontend());
+
+        foreach ([...$configured['backend'], ...$configured['frontend']] as $detector) {
+            $bySkill[$detector->sin()->slug()][] = ClassName::short($detector::class);
         }
 
         ksort($bySkill);

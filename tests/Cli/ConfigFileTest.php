@@ -99,6 +99,42 @@ final class ConfigFileTest extends TestCase
         $this->assertFalse($file->disable('Demo\\Foo'), 'same class, with/without leading slash');
     }
 
+    public function test_register_detector_writes_a_new_statement_when_the_config_has_none(): void
+    {
+        $file = $this->file();
+
+        $this->assertTrue($file->registerDetector('Commandments\\FooDetector'));
+        $this->assertSame(['Commandments\\FooDetector'], $file->detectors());
+        $this->assertStringContainsString('$config->detector(\\Commandments\\FooDetector::class);', $this->read($file));
+        $this->assertValidPhp($file);
+    }
+
+    public function test_register_detector_appends_to_the_call_it_already_wrote(): void
+    {
+        $file = $this->file();
+        $file->registerDetector('Commandments\\FooDetector');
+
+        $this->assertTrue($file->registerDetector('Commandments\\BarDetector'));
+        $this->assertFalse($file->registerDetector('Commandments\\BarDetector'), 'already registered');
+
+        $this->assertSame(['Commandments\\FooDetector', 'Commandments\\BarDetector'], $file->detectors());
+        $this->assertValidPhp($file);
+    }
+
+    public function test_register_detector_leaves_the_humans_own_lines_alone(): void
+    {
+        $file = $this->file();
+        $file->disable('Demo\\Foo');
+        $before = $this->read($file);
+
+        $file->registerDetector('Commandments\\FooDetector');
+
+        $this->assertStringContainsString('$config->paths(', $this->read($file));
+        $this->assertSame(['Demo\\Foo'], $file->disabled(), 'the disable list survived the insert');
+        $this->assertStringContainsString(rtrim(substr($before, 0, strpos($before, '$config->disable') ?: 0)), $this->read($file));
+        $this->assertValidPhp($file);
+    }
+
     private function file(): ConfigFile
     {
         $dir = sys_get_temp_dir() . '/cc-cfgfile-' . uniqid('', true);

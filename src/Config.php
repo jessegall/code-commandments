@@ -268,9 +268,15 @@ final class Config
      * The {@see Config} for a project — read from `<dir>/.commandments/config.php` (default the
      * cwd), or an empty (no-op) config when there is none. The file returns a callable given the
      * fresh Config to compose; if it returns a Config, that one wins (either style works).
+     *
+     * The project's own classes are loaded FIRST ({@see loadCustom}), so a config line may name a
+     * detector, sin, skill or package the project wrote into `.commandments/custom/` without any
+     * PSR-4 wiring — the folder IS the autoloader for a project's own rules.
      */
     public static function load(?string $dir = null): self
     {
+        self::loadCustom($dir);
+
         $config = new self;
         $file = Workspace::config($dir);
 
@@ -285,6 +291,20 @@ final class Config
         }
 
         return $config;
+    }
+
+    /**
+     * Require every PHP file under `.commandments/custom/` — the project's OWN detectors, sins,
+     * skills and packages. A project's rules live beside its config, not in its app namespace, so
+     * there is no composer autoload entry to add and nothing to remember: dropping a file in the
+     * folder is what makes its class loadable. `require_once` per file, so a second `load()` in
+     * the same process (the hooks, the fixture harness) never redeclares a class.
+     */
+    private static function loadCustom(?string $dir): void
+    {
+        foreach (Workspace::customFiles($dir) as $file) {
+            require_once $file;
+        }
     }
 
     /**

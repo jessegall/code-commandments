@@ -7,7 +7,9 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Workspace;
 
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Skills\ClaudeSection;
+use JesseGall\CodeCommandments\Skills\SkillRenderer;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
@@ -25,10 +27,11 @@ final class Sync implements Command
 {
     /**
      * The standalone, hand-written skills — NOT the {@see Skills\Catalog} teaching skills projected
-     * from sins, but process skills that ship as-is (`executing-plans`, `until`). Each is published
-     * flat under `.claude/skills/commandments-<slug>/`, the same convention the teaching skills use.
+     * from sins, but process skills that ship as-is (`executing-plans`, `until`,
+     * `writing-detectors`). Each is published flat under `.claude/skills/commandments-<slug>/`, the
+     * same convention the teaching skills use.
      */
-    private const array STANDALONE = ['executing-plans', 'until'];
+    private const array STANDALONE = ['executing-plans', 'until', 'writing-detectors'];
 
     public function names(): array
     {
@@ -47,7 +50,8 @@ final class Sync implements Command
         $packageRoot = dirname(__DIR__, 2);
 
         $published = $this->publishSkills("{$packageRoot}/skills/commandments", $consumer)
-            + $this->publishStandaloneSkills("{$packageRoot}/skills", $consumer);
+            + $this->publishStandaloneSkills("{$packageRoot}/skills", $consumer)
+            + $this->publishCustomSkills($consumer);
         $this->publishCommands("{$packageRoot}/commands", $consumer);
         $this->injectClaudeSection($consumer);
         $this->ensureGitignored("{$consumer}/.gitignore");
@@ -97,14 +101,19 @@ final class Sync implements Command
 
     /**
      * The `.commandments/` folder carries its OWN `.gitignore`: ignore everything generated in here
-     * (the checklist, archives, tool-use counter), keeping only the hand-written `config.php` and the
-     * ignore file itself tracked. Self-contained — nothing about the folder leaks into the project's
-     * root `.gitignore`. Idempotent.
+     * (the checklist, archives, tool-use counter), keeping the HAND-WRITTEN things tracked — the
+     * `config.php`, the ignore file itself, and the project's own `custom/` rules
+     * ({@see Workspace::CUSTOM}), which are source code and belong in the repo like any other.
+     * Self-contained — nothing about the folder leaks into the project's root `.gitignore`.
+     * Idempotent.
      */
     private function ensureCommandmentsGitignore(string $consumer): void
     {
         $path = Workspace::at($consumer)->shared('.gitignore');
-        $content = "# code-commandments generated state; config.php stays tracked\n*\n!.gitignore\n!config.php\n";
+        $custom = Workspace::CUSTOM;
+        // Un-ignoring a directory takes BOTH lines: `!custom/` re-admits the directory (git never
+        // descends into an ignored one) and `!custom/**` re-admits everything inside it.
+        $content = "# code-commandments generated state; config.php and custom/ stay tracked\n*\n!.gitignore\n!config.php\n!{$custom}/\n!{$custom}/**\n";
 
         if (! is_file($path) || (string) file_get_contents($path) !== $content) {
             @mkdir(dirname($path), 0777, true);
@@ -228,6 +237,31 @@ final class Sync implements Command
             @mkdir(dirname($to), 0777, true);
             copy($command, $to);
         }
+    }
+
+    /**
+     * Publish the PROJECT's own skills — the {@see Skill} classes it wrote into
+     * `.commandments/custom/` ({@see Custom::skills}) — rendered by the SAME
+     * {@see SkillRenderer} that generates the shipped ones, into the same flat
+     * `.claude/skills/commandments-<slug>/` home. There is no second renderer and no second
+     * publishing rule: a project's rule points at a skill the agent can actually load, exactly
+     * as a shipped rule does. Regenerated every sync, so editing the Skill class is how the
+     * document changes — never the markdown.
+     */
+    private function publishCustomSkills(string $consumer): int
+    {
+        $renderer = new SkillRenderer();
+        $count = 0;
+
+        foreach (Custom::skills($consumer) as $skill) {
+            $dir = "{$consumer}/.claude/skills/{$skill->id()}";
+
+            @mkdir($dir, 0775, true);
+            file_put_contents("{$dir}/SKILL.md", $renderer->render($skill));
+            $count++;
+        }
+
+        return $count;
     }
 
     private function publishStandaloneSkills(string $source, string $consumer): int

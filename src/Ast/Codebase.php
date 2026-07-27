@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\PhpFile;
 
 use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
@@ -1103,7 +1104,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         });
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {
-            if ($file->isFile() && $file->getExtension() === 'php') {
+            if (PhpFile::is($file)) {
                 yield $file->getPathname();
             }
         }

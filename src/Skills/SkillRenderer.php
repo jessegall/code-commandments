@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
@@ -230,7 +231,12 @@ final class SkillRenderer
      */
     private function sinsOf(Skill $skill): array
     {
-        return array_values(array_filter(Sins::every(), static fn (Sin $sin): bool => $sin->slug() === $skill->slug));
+        // The shipped sins AND the project's own ({@see Custom}) — a project skill projects its
+        // rules, examples and checklist from its own sins through the very same renderer, so a
+        // custom SKILL.md is not a lesser document than a shipped one.
+        $sins = [...Sins::every(), ...Custom::sins()];
+
+        return array_values(array_filter($sins, static fn (Sin $sin): bool => $sin->slug() === $skill->slug));
     }
 
     /**

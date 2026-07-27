@@ -268,17 +268,11 @@ final class ConfigScribe
      */
     private function call(string $method): ?MethodCall
     {
-        if (! is_file($this->path)) {
-            return null;
-        }
-
-        $match = Codebase::fromString((string) file_get_contents($this->path), $this->path)->whereMethod($method)->first();
-
-        return $match?->node instanceof MethodCall ? $match->node : null;
+        return new ConfigCalls($this->path)->named($method);
     }
 
     private function hasCall(string $method): bool
     {
-        return $this->call($method) !== null;
+        return new ConfigCalls($this->path)->has($method);
     }
 }
