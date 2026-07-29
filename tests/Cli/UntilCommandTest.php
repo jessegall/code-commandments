@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\MarkerFile;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Cli\Until\UntilCommand;
 use JesseGall\CodeCommandments\Workspace;
@@ -43,6 +44,22 @@ final class UntilCommandTest extends TestCase
     private function gate(): UntilGate
     {
         return UntilGate::inSession(Workspace::at($this->root));
+    }
+
+    /**
+     * Plant a LIVE marker holding $conditions (`id<TAB>text` lines) — the only way to reach the state a
+     * pre-#418 session could leave behind: conditions in force WHILE the gate stands paused.
+     */
+    private function live(string ...$conditions): void
+    {
+        $marker = new MarkerFile(Workspace::at($this->root)->path('.until'));
+        $lastId = 0;
+
+        foreach ($conditions as $condition) {
+            $lastId = max($lastId, (int) explode("\t", $condition)[0]);
+        }
+
+        $marker->write(['0', '0', (string) $lastId, ...$conditions], 'planted by a test');
     }
 
     public function test_a_bare_condition_sets_the_gate(): void
@@ -185,49 +202,77 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([1 => 'tests pass'], $this->gate()->all());
     }
 
-    public function test_a_condition_set_while_paused_stands_and_survives_the_resume(): void
+    public function test_a_condition_set_while_paused_waits_with_the_paused_ones_and_re_arms_nothing(): void
+    {
+        // #418: the user's pause says NOTHING holds — `add` used to write the live marker anyway, so the
+        // very next condition silently re-armed the gate and `list` showed a split state.
+        $this->exec('add', 'tests pass');
+        $this->exec('pause');
+
+        $this->assertSame(0, $this->exec('add', 'the docs build'));
+
+        $this->assertSame([], $this->gate()->all(), 'the pause still holds nothing');
+        $this->assertSame([1 => 'tests pass', 2 => 'the docs build'], $this->gate()->pausedConditions());
+
+        $this->exec('resume');
+
+        $this->assertSame([1 => 'tests pass', 2 => 'the docs build'], $this->gate()->all(), 'both come back');
+    }
+
+    public function test_a_condition_set_while_paused_continues_the_paused_ids(): void
+    {
+        $this->exec('add', 'A');
+        $this->exec('add', 'B');
+        $this->exec('met', '1');   // live: [2 => B], lastId 2
+        $this->exec('pause');
+
+        $this->exec('add', 'C');
+
+        $this->assertSame([2 => 'B', 3 => 'C'], $this->gate()->pausedConditions(), 'C continues past B');
+    }
+
+    public function test_setting_the_same_condition_twice_keeps_one_and_returns_its_id(): void
+    {
+        $this->exec('add', 'A');
+
+        $this->assertSame(0, $this->exec('add', 'A'));
+        $this->assertSame([1 => 'A'], $this->gate()->all(), 'a condition IS its text — never a twin');
+    }
+
+    public function test_met_says_the_gate_is_paused_rather_than_denying_the_condition(): void
     {
         $this->exec('add', 'tests pass');
         $this->exec('pause');
 
-        $this->exec('add', 'the docs build');
-
-        $this->assertSame([1 => 'the docs build'], $this->gate()->all(), 'the new one gates on its own');
-
-        $this->exec('resume');
-
-        $this->assertSame(
-            [1 => 'the docs build', 2 => 'tests pass'],
-            $this->gate()->all(),
-            'and the paused one is folded back in behind it, never overwriting it',
-        );
+        $this->assertSame(2, $this->exec('met', '1'), 'a paused condition is not struck off');
+        $this->assertSame([1 => 'tests pass'], $this->gate()->pausedConditions(), 'and it survives intact');
     }
 
-    public function test_pausing_a_second_time_merges_instead_of_destroying_what_is_already_set_aside(): void
+    public function test_a_split_gate_left_by_an_older_session_folds_back_together(): void
     {
-        // #403: `until "A"; pause; until "B"; pause` used to leave only B set aside — A was gone with
-        // no warning. Pausing again is exactly what a user does after adding a condition mid-pause.
+        // #403/#418: a version before the fix wrote a condition set mid-pause to the LIVE marker, so a
+        // session can be upgraded mid-flight with both markers on disk. Neither side may be lost:
+        // pausing merges into what is set aside, resuming folds the set-aside ones in behind the live.
         $this->exec('add', 'A');
         $this->exec('pause');
-        $this->exec('add', 'B');
+        $this->live("1\tB");
 
         $this->assertSame(0, $this->exec('pause'));
 
-        $this->assertSame([1 => 'A', 2 => 'B'], $this->gate()->pausedConditions());
+        $this->assertSame([1 => 'A', 2 => 'B'], $this->gate()->pausedConditions(), 'B continues past A');
         $this->assertSame([], $this->gate()->all(), 'and nothing is left holding');
     }
 
-    public function test_a_merged_pause_keeps_ids_monotonic_so_none_is_reused(): void
+    public function test_resume_folds_the_paused_conditions_in_behind_a_split_gates_live_ones(): void
     {
-        $this->exec('add', 'A');   // id 1
-        $this->exec('add', 'B');   // id 2
-        $this->exec('met', '1');
-        $this->exec('pause');      // set aside: [2 => B], lastId 2
-        $this->exec('add', 'C');   // a fresh live gate, id 1
-
+        $this->exec('add', 'A');
         $this->exec('pause');
+        $this->live("1\tB");
 
-        $this->assertSame([2 => 'B', 3 => 'C'], $this->gate()->pausedConditions(), 'C continues past B');
+        $this->assertSame(0, $this->exec('resume'));
+
+        $this->assertSame([1 => 'B', 2 => 'A'], $this->gate()->all());
+        $this->assertFalse($this->gate()->isPaused());
     }
 
     public function test_pausing_the_same_condition_twice_does_not_double_it(): void
@@ -252,11 +297,11 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([1 => 'A'], $this->gate()->all());
     }
 
-    public function test_meeting_a_condition_set_while_paused_leaves_the_paused_gate_intact(): void
+    public function test_meeting_a_split_gates_live_condition_leaves_the_paused_one_intact(): void
     {
         $this->exec('add', 'tests pass');
         $this->exec('pause');
-        $this->exec('add', 'the docs build');
+        $this->live("1\tthe docs build");
 
         $this->exec('met', '1');
 

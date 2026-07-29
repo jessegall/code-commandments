@@ -65,7 +65,28 @@ final class UntilCommand implements Command
 
     private function add(UntilGate $gate, string $condition): int
     {
-        return $condition === '' ? $this->usage() : $this->announce($condition, $gate->add($condition));
+        if ($condition === '') {
+            return $this->usage();
+        }
+
+        return $gate->isPaused()
+            ? $this->announceParked($condition, $gate->add($condition))
+            : $this->announce($condition, $gate->add($condition));
+    }
+
+    /**
+     * The gate is set aside, so the condition is kept WITH the paused ones and holds nothing yet —
+     * say so plainly, or the agent would read the ordinary announcement and think a stop is barred
+     * when the user's pause says otherwise (#418).
+     */
+    private function announceParked(string $condition, int $number): int
+    {
+        fwrite(STDOUT,
+            "❙❙ Condition {$number} recorded WITH THE PAUSED GATE: {$condition}\n"
+            . "  The user paused the gate, so nothing is holding you — this waits, intact, until they run\n"
+            . "  `commandments until resume`. Keep it on your to-do list (TodoWrite) so it is not lost.\n");
+
+        return 0;
     }
 
     /**
@@ -118,7 +139,10 @@ final class UntilCommand implements Command
         $condition = $gate->met($number);
 
         if ($condition === null) {
-            fwrite(STDERR, "✗ No condition {$number} — run `commandments until list` to see what stands.\n");
+            fwrite(STDERR, $gate->isPaused() && ! $gate->isOpen()
+                ? "✗ The stop gate is PAUSED — nothing is holding you, and a paused condition is not struck off\n"
+                    . "  until the user runs `commandments until resume`.\n"
+                : "✗ No condition {$number} — run `commandments until list` to see what stands.\n");
 
             return 2;
         }

@@ -18,7 +18,8 @@ use JesseGall\CodeCommandments\Workspace;
  * counts the consecutive stops the gate has held so a wedged agent is released instead of looped
  * forever — striking a condition off is progress and resets it. The user can also set the whole gate
  * aside without losing it: {@see pause} moves the marker to `.until.pause` (nothing holds a stop while
- * it's there) and {@see resume} brings every condition back. Session-scoped like every other
+ * it's there — not even a condition {@see add}ed after the pause, which waits there with the rest) and
+ * {@see resume} brings every condition back. Session-scoped like every other
  * marker, so one session's gate never holds another's stop, and written in the shared
  * {@see MarkerFile} format.
  */
@@ -51,17 +52,14 @@ final class UntilGate
      * never renumbered or reused while the gate stands, so a batch of `met` calls read off one `list`
      * can never strike the wrong condition (#399). A condition is stored as a single line (any
      * newlines in it collapse to spaces).
+     *
+     * While the gate is PAUSED the condition joins what is set aside and stays paused until
+     * {@see resume} — a pause is the user's directive that NOTHING holds, so recording a condition
+     * must never silently re-arm the gate behind their back (#418).
      */
     public function add(string $condition): int
     {
-        $conditions = $this->all();
-        $id = $this->lastId() + 1;
-        $conditions[$id] = $this->oneLine($condition);
-
-        $this->save($conditions, $id, blocks: 0, stuck: false); // A new condition is a fresh gate:
-        // never inherit the block count of the one before it.
-
-        return $id;
+        return $this->addTo($this->isPaused() ? $this->paused : $this->file, $condition);
     }
 
     /**
@@ -152,62 +150,59 @@ final class UntilGate
      * else in between without being sent back to the conditions ({@see resume} brings them back).
      * False when there is no gate standing to pause.
      *
-     * Pausing a SECOND time (a condition was set while the gate already stood aside, and the user
-     * pauses again) MERGES into what is already set aside — it must never overwrite it, or the
-     * earlier conditions would be destroyed silently (#403).
+     * Pausing when something is somehow live while the gate already stands aside MERGES into what is
+     * set aside — it must never overwrite it, or the earlier conditions would be destroyed silently
+     * (#403). {@see add} keeps that state from arising in the first place (#418), so this is how a
+     * session upgraded mid-flight is put back together.
      */
     public function pause(): bool
     {
-        if (! $this->file->exists()) {
+        return $this->handOver($this->file, $this->paused);
+    }
+
+    /**
+     * Bring a paused gate back into force — every condition set aside holds again. False when nothing
+     * is paused. A live marker can only survive from a session that predates #418 (a condition set
+     * mid-pause used to re-arm the gate), so the paused ones are folded in behind whatever it holds
+     * rather than overwriting it.
+     */
+    public function resume(): bool
+    {
+        return $this->handOver($this->paused, $this->file);
+    }
+
+    /**
+     * Hand every condition $from holds over to $into and drop $from — the ONE merge behind
+     * {@see pause} and {@see resume}, so the two directions can never drift apart. A target that does
+     * not exist yet is simply taken over; otherwise the target KEEPS its ids and the newcomers get
+     * fresh ones behind them, and a condition already on both sides is folded in once (#403). The
+     * held-stop count does not survive the move: a gate that changes sides is a fresh gate. False
+     * when $from holds nothing to hand over.
+     */
+    private function handOver(MarkerFile $from, MarkerFile $into): bool
+    {
+        if (! $from->exists()) {
             return false;
         }
 
-        if (! $this->paused->exists()) {
-            return $this->file->moveTo($this->paused);
+        if (! $into->exists()) {
+            return $from->moveTo($into);
         }
 
-        $setAside = $this->parse($this->paused);
-        $conditions = $setAside['conditions'];
-        $lastId = $setAside['lastId'];
+        $target = $this->parse($into);
+        $conditions = $target['conditions'];
+        $lastId = $target['lastId'];
 
-        foreach ($this->all() as $condition) {
+        foreach ($this->conditionsOf($from) as $condition) {
             if (in_array($condition, $conditions, true)) {
-                continue; // Already set aside — pausing the same condition twice must not double it.
+                continue;
             }
 
             $conditions[++$lastId] = $condition;
         }
 
-        $this->write($this->paused, $conditions, $lastId, blocks: 0, stuck: false);
-        $this->file->delete();
-
-        return true;
-    }
-
-    /**
-     * Bring a paused gate back into force. Conditions set WHILE paused stand on their own, so the
-     * paused ones are folded back in behind them (fresh ids) rather than overwriting the live marker.
-     * False when nothing is paused.
-     */
-    public function resume(): bool
-    {
-        if (! $this->isPaused()) {
-            return false;
-        }
-
-        if (! $this->file->exists()) {
-            return $this->paused->moveTo($this->file);
-        }
-
-        foreach ($this->conditionsOf($this->paused) as $condition) {
-            if (in_array($condition, $this->all(), true)) {
-                continue; // The same condition was re-set while paused — bring it back once, not twice.
-            }
-
-            $this->add($condition);
-        }
-
-        $this->paused->delete();
+        $this->write($into, $conditions, $lastId, blocks: 0, stuck: false);
+        $from->delete();
 
         return true;
     }
@@ -225,6 +220,31 @@ final class UntilGate
     public function pausedConditions(): array
     {
         return $this->conditionsOf($this->paused);
+    }
+
+    /**
+     * Record $condition in $file — the LIVE marker, or the paused one while the gate stands aside —
+     * and return the stable id that signs it off. Setting a condition that is already there returns
+     * its existing id instead of a twin: a condition IS its text, exactly as the {@see handOver}
+     * merge reads it.
+     */
+    private function addTo(MarkerFile $file, string $condition): int
+    {
+        $state = $this->parse($file);
+        $text = $this->oneLine($condition);
+        $existing = array_search($text, $state['conditions'], true);
+
+        if ($existing !== false) {
+            return $existing;
+        }
+
+        $id = $state['lastId'] + 1;
+        $conditions = $state['conditions'] + [$id => $text];
+
+        $this->write($file, $conditions, $id, blocks: 0, stuck: false); // A new condition is a fresh
+        // gate: never inherit the block count of the one before it.
+
+        return $id;
     }
 
     /**

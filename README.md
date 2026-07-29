@@ -394,10 +394,11 @@ session's stop.
 **Pausing is yours, not the agent's.** Want to do something else in between without being sent
 back to the conditions? `until pause` moves the whole gate aside (the marker becomes
 `.until.pause`): every condition is kept verbatim, but nothing holds a stop and the interjection
-nudge below goes quiet too. `until resume` puts them back — and anything you set while paused
-stands on its own and survives the resume. Pause again while a gate is already set aside and the
-two MERGE (ids stay monotonic, so nothing is overwritten or double-listed). `clear` is still the only thing that throws conditions
-away.
+nudge below goes quiet too. A pause means **nothing** holds: a condition recorded while the gate
+stands aside joins the paused ones and waits there too, so the next `until "…"` can never re-arm
+the gate behind your back — `until resume` is the one thing that puts them back in force (ids stay
+monotonic, so nothing is overwritten or double-listed). `clear` is still the only thing that throws
+conditions away.
 
 The `/until` slash command and the `commandments-until` skill are published into the project
 on `composer update`, so the agent knows the discipline: never `clear` a condition it simply

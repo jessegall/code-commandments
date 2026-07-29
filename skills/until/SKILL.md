@@ -135,6 +135,11 @@ does not hold is the same offence: it reports success that isn't there. The same
 aside, conditions intact, and silences the nudges until `until resume`). Run it only when they ask;
 reaching for it yourself is escaping the gate by another name.
 
+While the gate is paused it holds **nothing** — and a condition you record then waits *with* the
+paused ones rather than starting a live gate of its own. So parking a deferred task mid-pause is
+still right (it is kept, and `until resume` brings it back with the rest); just don't expect it to
+hold a stop before the user resumes.
+
 Loop-safe by design: after 10 consecutive held stops with no condition met, the gate releases itself
 and tells you to report back. Meeting a condition resets that count — real progress is never punished.
 
