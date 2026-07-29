@@ -68,6 +68,11 @@ That writes the three classes into `.commandments/custom/`, registers the detect
 beside your config, is **not** gitignored, and is **not** PSR-4 mapped — its files are required
 directly, so dropping a class in is what makes it loadable. Commit them: they are your rules.
 
+And they are named as yours wherever they fire: `judge` prints `[YourDetector (custom)]` in the
+console and in `sins.md`, and says in the section that the fix belongs in `.commandments/custom/`.
+So when one of your own rules fires wrongly, tighten it HERE — `commandments report --detector=` is
+for the rules the package ships and refuses a project-local one.
+
 ## The anatomy — three classes, one job each
 
 **The Skill teaches.** It is what a finding sends the reader to, and the source of truth for what

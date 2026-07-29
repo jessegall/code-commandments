@@ -34,9 +34,21 @@ final class Catalog
      */
     public static function detectorNamed(string $name): ?RootDetector
     {
+        return self::named(self::all(), $name);
+    }
+
+    /**
+     * The detector in $detectors whose SHORT class name matches $name, or null — the single home of
+     * that leniency, so a project's OWN detectors ({@see \JesseGall\CodeCommandments\Custom}) resolve
+     * a `--sin=`/`--detector=` name exactly as a shipped one does.
+     *
+     * @param  list<RootDetector>  $detectors
+     */
+    public static function named(array $detectors, string $name): ?RootDetector
+    {
         $wanted = mb_strtolower(self::withoutSuffix($name));
 
-        foreach (self::all() as $detector) {
+        foreach ($detectors as $detector) {
             if (mb_strtolower(self::withoutSuffix(ClassName::short($detector::class))) === $wanted) {
                 return $detector;
             }

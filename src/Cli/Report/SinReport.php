@@ -22,6 +22,13 @@ final class SinReport
     private const int TWINS_SHOWN = 3;
 
     /**
+     * Said once per group that holds one, in both renderings — a project-local rule's finding is the
+     * project's own business end to end: it teaches, fires and is CORRECTED here (#414).
+     */
+    private const string CUSTOM_NOTE = 'Rules marked `(custom)` are THIS project\'s own, from '
+        . '.commandments/custom/ — a wrong one is fixed there, never reported upstream.';
+
+    /**
      * @var array<string, list<Finding>>
      */
     private array $bySkill;
@@ -80,9 +87,13 @@ final class SinReport
             $lines[] = "  \033[1;36m↳ LOAD this skill before fixing: invoke the Skill tool → " . Skill::idFor($skill) . "\033[0m";
             $lines[] = "    \033[2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.\033[0m";
 
+            if ($this->hasCustom($findings)) {
+                $lines[] = "  \033[2m↳ " . self::CUSTOM_NOTE . "\033[0m";
+            }
+
             foreach ($findings as $finding) {
                 $location = $this->relative($finding->location);
-                $lines[] = "  \033[36m{$location}\033[0m  {$finding->scope}  \033[2m[{$finding->detector}]\033[0m";
+                $lines[] = "  \033[36m{$location}\033[0m  {$finding->scope}  \033[2m[{$finding->rule()}]\033[0m";
 
                 if ($finding->twins !== []) {
                     $lines[] = "    \033[2m↳ same shape as: " . $this->twins($finding) . "\033[0m";
@@ -149,9 +160,13 @@ final class SinReport
                 $out .= "> 🛠 Scaffold the helper its fix uses — run `{$command}`.\n\n";
             }
 
+            if ($this->hasCustom($findings)) {
+                $out .= '> 🧾 ' . self::CUSTOM_NOTE . "\n\n";
+            }
+
             foreach ($findings as $finding) {
                 // The FULL path (not display-relative) so `--repent=ID` can resolve it.
-                $out .= "- `{$finding->location}`  {$finding->scope}  [{$finding->detector}]"
+                $out .= "- `{$finding->location}`  {$finding->scope}  [{$finding->rule()}]"
                     . ($finding->twins === [] ? '' : ' — same shape as ' . $this->twins($finding))
                     . "\n";
             }
@@ -171,6 +186,22 @@ final class SinReport
         $rest = count($finding->twins) - count($shown);
 
         return implode(', ', $shown) . ($rest > 0 ? " (+{$rest} more)" : '');
+    }
+
+    /**
+     * Does any of a group's findings come from a rule the project owns?
+     *
+     * @param  list<Finding>  $findings
+     */
+    private function hasCustom(array $findings): bool
+    {
+        foreach ($findings as $finding) {
+            if ($finding->custom) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

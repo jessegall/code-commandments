@@ -698,6 +698,12 @@ Before you start, load the project skills via Claude Code's Skill tool:
 throughout: classify by what the AST/type **is**, never by a name or a hardcoded
 list.
 
+A rule you own is marked as yours everywhere it is named: `judge` prints its
+findings as `[YourDetector (custom)]` (in the console and in `sins.md`, with a note
+in the section saying the fix belongs in `.commandments/custom/`), `judge --list`
+tags it, and `commandments report --detector=YourDetector` refuses to file — the
+package cannot answer for a rule it does not ship.
+
 ### A skill
 
 The teaching half. Each skill is its own class under `Skills/{Backend,Frontend}/`

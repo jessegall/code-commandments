@@ -10,7 +10,9 @@ use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\CodeSnippet;
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Detectors\Catalog;
+use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\RequiresBestDesign;
 /**
  * Files GitHub issues. With `--detector`, files a `[detector-report]` (false positive/wrong rule);
@@ -38,7 +40,10 @@ final class Report implements Command
         ' pre-existing', ' baseline', ' migration-scoped',
     ];
 
-    public function __construct(private readonly GitHubIssue $github = new GitHubIssue()) {}
+    public function __construct(
+        private readonly GitHubIssue $github = new GitHubIssue(),
+        private readonly HookIO $io = new HookIO,
+    ) {}
 
     public function names(): array
     {
@@ -57,6 +62,9 @@ final class Report implements Command
             ->option('--title="…"', 'the issue title (default: the reason\'s first line)')
             ->option('--global', "opt out of --ref when the defect is tied to no file at all (a crash with no args, a CLI-wide bug)")
             ->option('--file=PATH --line=N', 'the single-ref alias for --ref')
+            ->note('Only rules the PACKAGE ships can be reported here. A finding printed as `[Name (custom)]` '
+                . 'comes from a detector this project wrote into .commandments/custom/ — fix it there; a report '
+                . 'against it is refused.')
             ->note('A report is NOT a deferral. A correct finding must be FIXED, however big the fix — a detector-report '
                 . 'asserts flatly that the code is right and the rule is wrong, with no hedge. Some detectors (design smells) REQUIRE --best-design: the report is valid only when the flagged code ALREADY IS that best design.');
     }
@@ -108,6 +116,17 @@ final class Report implements Command
      */
     private function detectorReport(Input $input, string $detector, string $reason, array $refs): int
     {
+        // The package cannot answer for a rule it does not ship. A project's own detector is the
+        // project's to fix, and a report against it goes to a maintainer who has never seen it (#413).
+        if (($own = Catalog::named(Custom::detectors($this->io->projectRoot()), $detector)) !== null) {
+            fwrite(STDERR,
+                "✋ {$detector} is THIS project's own rule — it lives in .commandments/custom/, not in the\n"
+                . "  package (" . $own::class . "). Nothing upstream can fix it: tighten the detector there\n"
+                . "  (a principled reject, never a name list) or drop it from \$config->detector(...).\n");
+
+            return 2;
+        }
+
         $bestDesign = $input->option('best-design');
         $bestDesign = ($bestDesign !== null && trim($bestDesign) !== '') ? $bestDesign : null;
 

@@ -27,5 +27,17 @@ final class Finding
         public readonly string $location,
         public readonly string $scope,
         public readonly array $twins = [],
+        public readonly bool $custom = false,
     ) {}
+
+    /**
+     * The detector's name as the report prints it — tagged when the rule is the PROJECT's own
+     * ({@see \JesseGall\CodeCommandments\Custom}), because that decides who owns the fix: a
+     * project-local rule that fires wrongly is corrected in `.commandments/custom/`, and a report
+     * against the package for a rule it does not ship goes nowhere (#414).
+     */
+    public function rule(): string
+    {
+        return $this->custom ? "{$this->detector} (custom)" : $this->detector;
+    }
 }

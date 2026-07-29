@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use Closure;
@@ -75,8 +76,10 @@ final class DetectorRunner
         foreach ($detectors as $detector) {
             $short = ClassName::short($detector::class);
             $sin = $detector->sin();
+            $custom = Custom::owns($detector); // Resolved in the PARENT: a worker's finding must already
+            // know whose rule it came from, and the answer never depends on where it ran.
 
-            $tasks[] = static fn () => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase), $detector, $codebase);
+            $tasks[] = static fn () => self::findings($short, $sin->slug(), $sin->name(), $detector->find($codebase), $detector, $codebase, $custom);
         }
 
         return $tasks;
@@ -89,7 +92,7 @@ final class DetectorRunner
      * @param  list<\JesseGall\CodeCommandments\Ast\NodeMatch>  $matches
      * @return list<Finding>
      */
-    private static function findings(string $detector, string $skill, string $sin, array $matches, Detector $rule, Codebase $codebase): array
+    private static function findings(string $detector, string $skill, string $sin, array $matches, Detector $rule, Codebase $codebase, bool $custom = false): array
     {
         $buckets = self::buckets($matches, $rule, $codebase);
         $findings = [];
@@ -98,7 +101,7 @@ final class DetectorRunner
             $location = $match->location();
             $twins = array_values(array_diff($buckets[spl_object_id($match)] ?? [], [$location]));
 
-            $findings[] = new Finding($detector, $skill, $sin, $match->file->path, $location, $match->scope(), $twins);
+            $findings[] = new Finding($detector, $skill, $sin, $match->file->path, $location, $match->scope(), $twins, $custom);
         }
 
         return $findings;

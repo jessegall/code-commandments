@@ -65,6 +65,23 @@ final class Custom
     }
 
     /**
+     * Is $class one the PROJECT wrote — its file living under the custom folder? The one ownership
+     * test, so every surface that names a rule can say WHOSE it is: a finding from a project-local
+     * detector is fixed (or reported) HERE, never upstream, and nothing in the output should leave a
+     * reader guessing which of the two it is (#414).
+     *
+     * @param  object|class-string  $class
+     */
+    public static function owns(object|string $class, ?string $dir = null): bool
+    {
+        $file = new ReflectionClass($class)->getFileName();
+        $root = realpath(Workspace::custom($dir)); // Both sides RESOLVED: reflection reports the real
+        // path, so a symlinked project root would otherwise disown its own rules.
+
+        return $file !== false && $root !== false && str_starts_with($file, $root . DIRECTORY_SEPARATOR);
+    }
+
+    /**
      * Forget what a project's folder declared, so the next read discovers it afresh — for tests and
      * for a long-lived process that has just scaffolded a new file.
      */

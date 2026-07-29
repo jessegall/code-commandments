@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
@@ -312,7 +313,9 @@ final class Judge implements Command
         $configured = Config::load()->apply(Catalog::backend(), Catalog::frontend());
 
         foreach ([...$configured['backend'], ...$configured['frontend']] as $detector) {
-            $bySkill[$detector->sin()->slug()][] = ClassName::short($detector::class);
+            $short = ClassName::short($detector::class);
+            // A project's own rule says so, so a reader knows which of the two catalogues it came from.
+            $bySkill[$detector->sin()->slug()][] = Custom::owns($detector) ? "{$short} (custom)" : $short;
         }
 
         ksort($bySkill);
@@ -363,7 +366,7 @@ final class Judge implements Command
             $short = end($parts);
 
             foreach ($detector->find($codebase) as $match) {
-                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope());
+                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope(), custom: Custom::owns($detector));
             }
         }
 
