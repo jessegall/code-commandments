@@ -43,9 +43,78 @@ final class LoopInvertedGuardScribeTest extends ScribeTestCase
         $fixed = $this->fixStable($php);
 
         // Inverted condition + continue guard (at the loop-body level, indent 12)…
-        $this->assertStringContainsString("if (! (\$row->valid())) {\n                continue;\n            }", $fixed);
+        $this->assertStringContainsString("if (! \$row->valid()) {\n                continue;\n            }", $fixed);
         // …body hoisted to the loop level (dedented one step), order preserved.
         $this->assertStringContainsString("            \$this->store(\$row);\n            \$this->log(\$row);", $fixed);
+    }
+
+    public function test_keeps_the_parentheses_a_comparison_actually_needs(): void
+    {
+        // `!` binds tighter than `===`, so THIS condition cannot lose its parentheses.
+        $php = <<<'PHP'
+        <?php
+
+        class Processor
+        {
+            public function run(array $rows): void
+            {
+                foreach ($rows as $row) {
+                    if ($row->state === 'ready') {
+                        $this->store($row);
+                        $this->log($row);
+                    }
+                }
+            }
+        }
+        PHP;
+
+        $this->assertStringContainsString("if (! (\$row->state === 'ready')) {", $this->fixStable($php));
+    }
+
+    public function test_writes_the_guard_in_the_files_own_brace_style(): void
+    {
+        // #416: the fix arrived K&R in an Allman codebase and had to be reformatted by hand.
+        $php = <<<'PHP'
+        <?php
+
+        class Processor
+        {
+            public function run(array $rows): void
+            {
+                foreach ($rows as $row)
+                {
+                    if ($row->valid())
+                    {
+                        $this->store($row);
+                        $this->log($row);
+                    }
+                }
+            }
+        }
+        PHP;
+
+        $expected = <<<'PHP'
+        <?php
+
+        class Processor
+        {
+            public function run(array $rows): void
+            {
+                foreach ($rows as $row)
+                {
+                    if (! $row->valid())
+                    {
+                        continue;
+                    }
+
+                    $this->store($row);
+                    $this->log($row);
+                }
+            }
+        }
+        PHP;
+
+        $this->assertSame($expected, $this->fixStable($php));
     }
 
     public function test_does_not_overshoot_a_single_statement_filter_or_a_plain_if(): void

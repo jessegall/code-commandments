@@ -15,7 +15,9 @@ use PhpParser\Comment;
 /**
  * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\StackedDocblockDetector}: the stack becomes
  * ONE canonical block, each original's content kept verbatim and in order, separated by a blank line so
- * the paragraphs stay distinct. Nothing is dropped — the invisible blocks become visible.
+ * the paragraphs stay distinct. Nothing is dropped — the invisible blocks become visible. A stack that
+ * cannot fold honestly is left alone ({@see NodeMatch::docblockStackIsFoldable}) for a human, since a
+ * rewrite that reads right and documents the wrong thing is worse than the sin it fixes.
  */
 final class StackedDocblockScribe extends RepentScribe
 {
@@ -38,6 +40,11 @@ final class StackedDocblockScribe extends RepentScribe
 
         if (count($blocks) < 2) {
             return;
+        }
+
+        if (! $finding->docblockStackIsFoldable()) {
+            return; // A fold that would misattribute prose (#415) or promote a contradicting tag (#417)
+            // is worse than the sin it fixes: leave the stack standing for a human to resolve.
         }
 
         $indent = Span::ownLineIndent($finding->file->source, $blocks[0]->getStartFilePos()) ?? '';

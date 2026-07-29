@@ -105,6 +105,96 @@ final class StackedDocblockScribeTest extends ScribeTestCase
         $this->assertSame($php, $this->fix($php));
     }
 
+    public function test_declines_a_stack_whose_tags_would_contradict_each_other(): void
+    {
+        // #417: PHP shows only the LAST block, so the shadowed `@return` was inert — merging PROMOTES it
+        // beside a return type it contradicts, turning dead documentation into live lies.
+        $php = <<<'PHP'
+        <?php
+
+        class WizardState
+        {
+            /**
+             * @return Option<string>
+             */
+            /**
+             * @return array<class-string, array<string, mixed>>
+             */
+            public function drivers(): array
+            {
+                return [];
+            }
+        }
+        PHP;
+
+        $this->assertFalse($this->rewrote($php), 'a human decides which @return survives');
+        $this->assertSame($php, $this->fix($php));
+    }
+
+    public function test_declines_a_block_standing_apart_from_the_stack(): void
+    {
+        // #415: an insertion orphaned the block belonging to a method further down — folding it in
+        // attributed that method's prose to the one it happens to sit above.
+        $php = <<<'PHP'
+        <?php
+
+        class WorkerSupervisor
+        {
+            /**
+             * Stale workers are dropped so the next request rebuilds them.
+             */
+
+            /**
+             * Changed source means the compiled maps describe code that no longer exists.
+             */
+            private function clearCompiledCaches(): void
+            {
+            }
+        }
+        PHP;
+
+        $this->assertFalse($this->rewrote($php), 'whose words those are is not a machine question');
+        $this->assertSame($php, $this->fix($php));
+    }
+
+    public function test_still_folds_tags_that_speak_about_different_things(): void
+    {
+        $php = <<<'PHP'
+        <?php
+
+        class Roster
+        {
+            /**
+             * @param  string  $name
+             */
+            /**
+             * @param  int  $age
+             */
+            public function join(string $name, int $age): void
+            {
+            }
+        }
+        PHP;
+
+        $expected = <<<'PHP'
+        <?php
+
+        class Roster
+        {
+            /**
+             * @param  string  $name
+             *
+             * @param  int  $age
+             */
+            public function join(string $name, int $age): void
+            {
+            }
+        }
+        PHP;
+
+        $this->assertSame($expected, $this->fixStable($php), 'two @param of DIFFERENT names do not clash');
+    }
+
     public function test_is_idempotent_and_keeps_every_word(): void
     {
         $php = <<<'PHP'

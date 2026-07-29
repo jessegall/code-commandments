@@ -77,6 +77,89 @@ final class Docblock
     }
 
     /**
+     * Can these blocks be folded into ONE coherent block? Two blocks that each declare the SAME tag
+     * (two `@return`, two `@var`, the same `@param $x`) cannot: the fold would hand a reader a block
+     * whose own tags contradict each other, and since the shadowed block was the one nobody ever saw,
+     * PROMOTING its tag next to the live one makes the documentation worse than the sin (#417). Prose
+     * always folds — only a repeated tag refuses.
+     *
+     * @param  list<string>  $texts
+     */
+    public static function foldable(array $texts): bool
+    {
+        $seen = [];
+
+        foreach ($texts as $text) {
+            foreach (array_unique(self::tags($text)) as $tag) {
+                if (in_array($tag, $seen, true)) {
+                    return false;
+                }
+
+                $seen[] = $tag;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The tags this block declares, each as the key that identifies WHAT it documents — the tag name,
+     * plus the variable for a `@param`/`@property`, since those legitimately repeat per name while a
+     * `@return` or `@var` speaks about the declaration once.
+     *
+     * @return list<string>
+     */
+    private static function tags(string $text): array
+    {
+        $tags = [];
+
+        foreach (self::contentOf($text) as $line) {
+            $words = self::words($line);
+
+            if ($words === [] || ! str_starts_with($words[0], '@')) {
+                continue;
+            }
+
+            $tags[] = $words[0] . self::subject(array_slice($words, 1));
+        }
+
+        return $tags;
+    }
+
+    /**
+     * The `$name` a tag speaks about, as a suffix for its key — empty when it names none, so the tag
+     * itself is the whole key.
+     *
+     * @param  list<string>  $words
+     */
+    private static function subject(array $words): string
+    {
+        foreach ($words as $word) {
+            if (str_starts_with($word, '$')) {
+                return ' ' . $word;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @return list<string>  the line's whitespace-separated words
+     */
+    private static function words(string $line): array
+    {
+        $words = [];
+
+        foreach (explode(' ', str_replace("\t", ' ', $line)) as $word) {
+            if ($word !== '') {
+                $words[] = $word;
+            }
+        }
+
+        return $words;
+    }
+
+    /**
      * The docblock's content lines, stripped of the delimiters and the per-line `*`, with any leading
      * and trailing blank lines dropped. A blank line INSIDE (the paragraph break before `@param`) is
      * kept as an empty entry.

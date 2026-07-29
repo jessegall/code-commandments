@@ -175,13 +175,16 @@ concept).** `TypeResolver` (`typeOf` — an expression's real type through the r
 local assignments; `propertyTypeOf`, `collectionElementOf`, `declaringClassOf`), `ChainResolver`
 (a property/method chain's final type), `ReceiverResolver` (a call receiver's static type),
 `ValueFlow` (field null-flow verdict/explain), `Calls`, `FeatureEnvy`, `LookupEnvy`,
-`NullObjectDefault`, `OwnStateMask`, `Frozen`, `Enums`, `StructuralHash`, `PageObject`,
+`NullObjectDefault`, `OwnStateMask`, `Frozen`, `Enums`, `StructuralHash`, `PageObject`, `Negation`
+(a condition flipped — `!` in front, parenthesised only where that changes meaning), `Docblock`
+(`isInline`/`canonical`/`merge`/`foldable` — the SHAPE of a docblock),
 `ResponseSurface`, `RouteActions`, `DataClassShape`, `ParamResolution`, `Projection` (is an array
 literal the wire shape of a type that ALREADY exists, or an unborn one?). A package's own knowledge
 is on its decorator node (`Ast\{Spatie,Laravel,…}\*Node`), stated once.
 
 **Rewriting:** one `Scribes\Writer` (all edits) over `Scribes\Draft`; `Scribes\Span` owns ALL
-offset math. Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser`.
+offset math (incl. `blockOpener` — a new block wears the FILE's brace style, never the scribe's).
+Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser`.
 
 ## Commands
 

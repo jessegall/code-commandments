@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Ast\Support\CodeWords;
 use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Ast\Support\CommentedCode;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
+use PhpParser\Comment;
 use PhpParser\Comment\Doc;
 use PhpParser\Modifiers;
 use PhpParser\Node;
@@ -1370,6 +1371,30 @@ class AstNode
     public function hasStackedDocblocks(): bool
     {
         return count($this->docblocks()) > 1;
+    }
+
+    /**
+     * May this stack be folded into ONE block without inventing documentation? Two things forbid it:
+     *
+     * - A block standing APART from the rest (a blank line between it and the next) is not a second
+     *   description of this declaration — it is a block an insertion orphaned from the declaration it
+     *   was written for, and folding it in attributes another thing's prose to this one (#415).
+     * - Blocks whose tags would contradict each other once merged ({@see Docblock::foldable}, #417).
+     *
+     * The sin stands either way — the stack is still documentation nobody reads — but the fix is a
+     * human's to make: no automatic rewrite can tell whose words those are.
+     */
+    public function docblockStackIsFoldable(): bool
+    {
+        $blocks = $this->docblocks();
+
+        foreach ($blocks as $index => $block) {
+            if ($index > 0 && $block->getStartLine() - $blocks[$index - 1]->getEndLine() > 1) {
+                return false;
+            }
+        }
+
+        return Docblock::foldable(array_map(static fn (Comment $c): string => $c->getText(), $blocks));
     }
 
     /**

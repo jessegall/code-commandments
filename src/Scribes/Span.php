@@ -97,6 +97,33 @@ final class Span
     }
 
     /**
+     * How a block OPENS in this file — `' {'` when the brace follows the header on the same line, or
+     * `"\n{$indent}{"` when it stands on a line of its own (Allman). Read from the very statement being
+     * rewritten (the first `{` at/after $pos), so an emitted block wears the file's OWN brace style
+     * instead of the one the scribe was written in (#416). The one sanctioned primitive for it, so no
+     * scribe hard-codes a brace.
+     */
+    public static function blockOpener(string $source, int $pos, string $indent): string
+    {
+        return self::braceOnItsOwnLine($source, $pos) ? "\n{$indent}{" : ' {';
+    }
+
+    /**
+     * Does the first `{` at/after $pos begin its own line — a newline standing between the header and
+     * the brace?
+     */
+    private static function braceOnItsOwnLine(string $source, int $pos): bool
+    {
+        $brace = self::after($source, $pos, '{');
+
+        if ($brace === null) {
+            return false;
+        }
+
+        return self::ownLineIndent($source, $brace) !== null;
+    }
+
+    /**
      * The leading whitespace of the line this span begins on (its indentation), or ''
      * when something non-blank precedes it on that line.
      */
