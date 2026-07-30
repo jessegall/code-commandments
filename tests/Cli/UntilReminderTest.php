@@ -53,8 +53,10 @@ final class UntilReminderTest extends TestCase
 
     /**
      * One tool use as the harness reports it — the moment the gate counts work from.
+     *
+     * @return list<array<string, mixed>>
      */
-    private function postToolUse(string $tool, string $command = ''): void
+    private function postToolUse(string $tool, string $command = ''): array
     {
         $io = new CapturingHookIO(new FakeGit($this->root), [
             'hook_event_name' => 'PostToolUse',
@@ -63,6 +65,13 @@ final class UntilReminderTest extends TestCase
         ]);
 
         new UntilReminder($io)->run([]);
+
+        return $io->emitted;
+    }
+
+    private function context(array $emitted): string
+    {
+        return (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
     }
 
     private function reason(array $emitted): string
@@ -191,8 +200,78 @@ final class UntilReminderTest extends TestCase
 
         $this->assertStringContainsString('RELEASED', $released);
         $this->assertStringContainsString('the impossible thing happens', $released);
-        $this->assertFalse($this->gate()->isOpen(), 'the gate is gone — the next stop stands');
+        $this->assertFalse($this->gate()->isOpen(), 'nothing holds the next stop');
         $this->assertSame([], $this->stop());
+    }
+
+    public function test_the_cap_sets_the_conditions_aside_instead_of_deleting_them(): void
+    {
+        // The cap exists so a spinning session can always stop. Destroying what the user ASKED FOR is no
+        // part of that: the conditions are paused, kept verbatim, and `until resume` puts them back.
+        $this->gate()->add('the impossible thing happens');
+        $this->gate()->add('the other impossible thing happens');
+
+        for ($i = 0; $i <= 10; $i++) {
+            $this->stop();
+        }
+
+        $this->assertFalse($this->gate()->isOpen());
+        $this->assertSame([
+            1 => 'the impossible thing happens',
+            2 => 'the other impossible thing happens',
+        ], $this->gate()->pausedConditions(), 'kept verbatim, with their ids');
+
+        $this->gate()->resume();
+
+        $this->assertTrue($this->gate()->isOpen(), 'and the user can put them back in force');
+    }
+
+    public function test_it_says_the_released_conditions_can_be_resumed(): void
+    {
+        $this->gate()->add('the impossible thing happens');
+
+        for ($i = 0; $i <= 10; $i++) {
+            $released = $this->reason($this->stop());
+        }
+
+        $this->assertStringContainsString('SET ASIDE', $released);
+        $this->assertStringContainsString('until resume', $released);
+    }
+
+    public function test_it_calls_out_a_to_do_list_that_has_gone_stale_under_the_gate(): void
+    {
+        // The user watches the to-do list in their terminal. Twenty pieces of work with no update to it
+        // means they are reading a list that describes a different hour of the session.
+        $this->gate()->add('the suite is green');
+
+        for ($i = 0; $i < 19; $i++) {
+            $this->assertSame([], $this->postToolUse('Read'), 'a focused stretch of work is not interrupted');
+        }
+
+        $emitted = $this->postToolUse('Read');
+
+        $this->assertStringContainsString('TodoWrite', $this->context($emitted));
+        $this->assertStringContainsString('USER IS WATCHING', $this->context($emitted));
+    }
+
+    public function test_updating_the_to_do_list_restarts_the_drift(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        for ($i = 0; $i < 19; $i++) {
+            $this->postToolUse('Read');
+        }
+
+        $this->postToolUse('TodoWrite');
+
+        $this->assertSame([], $this->postToolUse('Read'), 'the list is current — nothing to say');
+    }
+
+    public function test_the_stale_list_nudge_never_fires_without_a_gate(): void
+    {
+        for ($i = 0; $i < 25; $i++) {
+            $this->assertSame([], $this->postToolUse('Read'));
+        }
     }
 
     public function test_meeting_a_condition_resets_the_cap_countdown(): void

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -36,6 +37,13 @@ final class UntilReminder extends Hook
      */
     private const int EXCERPT = 3;
 
+    /**
+     * Pieces of work allowed to pass with no `TodoWrite` before the agent is told its visible to-do list
+     * has gone stale. High enough that a focused stretch of work is never interrupted for bookkeeping, low
+     * enough that the user is never left watching a list that describes a different hour of the session.
+     */
+    private const int DRIFT = 20;
+
     public function summary(): string
     {
         return 'Holds every stop while a `commandments until "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it.';
@@ -56,11 +64,51 @@ final class UntilReminder extends Hook
     {
         $gate = UntilGate::inSession($event->workspace());
 
-        if ($gate->isOpen() && $this->isWork($event)) {
-            $gate->recordWork();
+        if (! $gate->isOpen()) {
+            return $this->pass();
         }
 
-        return $this->pass();
+        $drift = $this->drift($event);
+
+        if ($event->isTool('TodoWrite')) {
+            $drift->reset(); // The visible list was just trued up — the drift starts over.
+
+            return $this->pass();
+        }
+
+        if (! $this->isWork($event)) {
+            return $this->pass();
+        }
+
+        $gate->recordWork();
+
+        return $drift->due() ? $this->inject($event, $this->stale()) : $this->pass();
+    }
+
+    /**
+     * How far the to-do list the USER can see has drifted from the work actually being done: one count per
+     * piece of work, reset by every `TodoWrite`. A long run of work with no update to that list means the
+     * user is watching a list that no longer describes the session — the thing they cannot check for
+     * themselves. Counted only while a gate stands, so it speaks exactly when the user is waiting on
+     * something.
+     */
+    private function drift(HookEvent $event): Counter
+    {
+        return Counter::named(
+            $event->workspace(),
+            'until-todo-drift',
+            'counts the work done since the visible to-do list was last updated',
+            every: self::DRIFT,
+        );
+    }
+
+    private function stale(): string
+    {
+        return "Code Commandments — " . self::DRIFT . " pieces of work have gone by without a single update to "
+            . "your to-do list, so the list the USER IS WATCHING no longer describes what you are doing. True it "
+            . "up NOW (TodoWrite): mark what is genuinely finished as completed, add what you have taken on since, "
+            . "and make sure every standing stop condition appears on it. Do not report an item done there unless "
+            . "you have verified it — a to-do list that is merely optimistic is worse than a stale one.";
     }
 
     /**
@@ -121,7 +169,8 @@ final class UntilReminder extends Hook
         $blocks = $gate->recordBlock();
 
         if ($blocks > self::MAX_BLOCKS) {
-            $gate->clear();
+            $gate->pause(); // SET ASIDE, never dropped: the cap protects the session from spinning, and
+            // destroying what the user asked for is not part of that bargain — a `resume` puts it back.
 
             return $this->block($this->released($conditions));
         }
@@ -193,16 +242,20 @@ final class UntilReminder extends Hook
     }
 
     /**
+     * The cap has fired: nothing holds the next stop, but what the user asked for is SET ASIDE rather than
+     * deleted, so the decision about it stays theirs ({@see UntilGate::pause}).
+     *
      * @param  array<int, string>  $conditions  keyed by their stable id
      */
     private function released(array $conditions): string
     {
         return "Code Commandments — you have been sent back " . self::MAX_BLOCKS . " times without meeting a stop "
-            . "condition, so the gate has RELEASED itself and " . count($conditions) . " condition(s) are no longer "
-            . "tracked:\n"
+            . "condition, so the gate has RELEASED itself: nothing holds your next stop, and "
+            . count($conditions) . " condition(s) are SET ASIDE, kept verbatim:\n"
             . $this->excerpt($conditions, listable: false)
-            . "\nTell the user plainly that you could not meet them and what stands in the way, so they can decide "
-            . "what to do. Do not set the gate again on your own.";
+            . "\nTell the user plainly that you could not meet them and what stands in the way, and that "
+            . "`commandments until resume` puts them back in force, so they can decide what to do. Do not resume "
+            . "or re-set the gate on your own.";
     }
 
     /**

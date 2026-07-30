@@ -152,7 +152,10 @@ final class UntilCommand implements Command
 
         fwrite(STDOUT, "✓ Condition met: {$condition}\n" . ($remaining === []
             ? "  The stop gate is lifted — nothing else is holding you.\n"
-            : '  ' . count($remaining) . " condition(s) still standing; run `commandments until list` to see them.\n"));
+            : '  ' . count($remaining) . " condition(s) still standing; run `commandments until list` to see them.\n")
+            . "  NOW update the to-do list the user can SEE (TodoWrite): mark this item completed. Striking a\n"
+            . "  condition off here does not touch that list — it goes stale the moment you skip this, and a\n"
+            . "  stale list is the user watching work they cannot check.\n");
 
         return 0;
     }
