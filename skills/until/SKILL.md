@@ -91,7 +91,9 @@ now holding you, so the handover is never a surprise.
 
 ## Working under a gate
 
-When you try to stop, the hook sends you back with the standing conditions. Then:
+When you try to stop, the hook sends you back with the standing conditions. It leads with how many
+stand and spells out only the **three oldest** — a long gate is not re-printed in full on every stop —
+so when it says "and N more", run `vendor/bin/commandments until list` to read the whole set. Then:
 
 1. **Verify, don't assume.** Actually run the command, read the file, check the output. "I wrote the
    tests so they must pass" is not verification — a gate exists precisely because the user does not

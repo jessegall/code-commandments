@@ -16,7 +16,9 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  * {@see PlanReminder}'s keep-going nudge: it needs no plan and no config opt-in, because it exists
  * only when the user explicitly asked for it. Each held stop sends the agent back in to VERIFY the
  * conditions rather than to assume them, and says how to end the gate honestly: `until met <n>` when
- * one holds, `until stuck` when it is truly blocked. Loop-safe: {@see MAX_BLOCKS} consecutive holds
+ * one holds, `until stuck` when it is truly blocked. It leads with the COUNT and spells out only the
+ * {@see EXCERPT} oldest conditions — a gate holding dozens of parked tasks would otherwise re-print the
+ * whole list on every single stop — and points at `until list` for the rest. Loop-safe: {@see MAX_BLOCKS} consecutive holds
  * without progress release the gate, so a wedged session can always stop (striking a condition off
  * resets the count).
  */
@@ -26,6 +28,13 @@ final class UntilReminder extends Hook
      * Consecutive held stops with no condition met before the gate releases itself, to never trap a session.
      */
     private const int MAX_BLOCKS = 10;
+
+    /**
+     * How many conditions a held stop spells out. A long gate (the user parking dozens of tasks) would
+     * otherwise re-print the whole list on EVERY stop and drown the turn in text, so the message shows
+     * the oldest few — the ones due next — and names the count for the rest.
+     */
+    private const int EXCERPT = 3;
 
     public function summary(): string
     {
@@ -127,10 +136,10 @@ final class UntilReminder extends Hook
      */
     private function hold(array $conditions): string
     {
-        return "Code Commandments — the user set a STOP CONDITION you have not signed off yet. Do not stop. "
-            . "VERIFY each condition below for real (run the command, read the file, check the output) — do not "
-            . "assume it holds because you think you did the work:\n"
-            . $this->numbered($conditions)
+        return "Code Commandments — " . $this->standing($conditions) . " you have not signed off yet. Do not stop. "
+            . "VERIFY each condition for real (run the command, read the file, check the output) — do not "
+            . "assume it holds because you think you did the work.\n"
+            . $this->excerpt($conditions)
             . "\nFor each one that genuinely holds now, run `vendor/bin/commandments until met <n>` and mark its "
             . "to-do item completed (add any condition still missing from your to-do list so the user can see it); "
             . "the gate lifts "
@@ -150,24 +159,54 @@ final class UntilReminder extends Hook
     private function released(array $conditions): string
     {
         return "Code Commandments — you have been sent back " . self::MAX_BLOCKS . " times without meeting a stop "
-            . "condition, so the gate has RELEASED itself and these conditions are no longer tracked:\n"
-            . $this->numbered($conditions)
+            . "condition, so the gate has RELEASED itself and " . count($conditions) . " condition(s) are no longer "
+            . "tracked:\n"
+            . $this->excerpt($conditions, listable: false)
             . "\nTell the user plainly that you could not meet them and what stands in the way, so they can decide "
             . "what to do. Do not set the gate again on your own.";
     }
 
     /**
-     * @param  array<int, string>  $conditions  keyed by their stable id — printed as-is, since that
-     *                                          id is the handle `until met <n>` takes
+     * "The user set N stop conditions" — the COUNT leads the message, so a long gate is stated as a
+     * number instead of as a wall of text the agent has to measure by eye.
+     *
+     * @param  array<int, string>  $conditions
      */
-    private function numbered(array $conditions): string
+    private function standing(array $conditions): string
+    {
+        $count = count($conditions);
+
+        return $count === 1
+            ? 'the user set a STOP CONDITION'
+            : "the user set {$count} STOP CONDITIONS";
+    }
+
+    /**
+     * The conditions as the agent reads them: the {@see EXCERPT} oldest — the ones due next — and, when
+     * more stand behind them, how many and where the whole list is. A held stop repeats on EVERY stop,
+     * so spelling out a 50-condition gate each time costs more context than it buys; the id shown is
+     * the stable handle `until met <n>` takes, so an excerpted line is still actionable.
+     *
+     * @param  array<int, string>  $conditions  keyed by their stable id
+     * @param  bool  $listable  whether `until list` can still show the rest (false once the gate is gone)
+     */
+    private function excerpt(array $conditions, bool $listable = true): string
     {
         $lines = '';
 
-        foreach ($conditions as $id => $condition) {
+        foreach (array_slice($conditions, 0, self::EXCERPT, preserve_keys: true) as $id => $condition) {
             $lines .= "\n  {$id}. {$condition}";
         }
 
-        return $lines;
+        $rest = count($conditions) - self::EXCERPT;
+
+        if ($rest <= 0) {
+            return $lines;
+        }
+
+        return $lines . "\n  … and {$rest} more" . ($listable
+            ? " — run `vendor/bin/commandments until list` for the full list (only these first "
+                . self::EXCERPT . " are shown so the gate doesn't flood every stop)."
+            : ' that are gone with the gate and can no longer be listed.');
     }
 }

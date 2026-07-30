@@ -82,6 +82,39 @@ final class UntilReminderTest extends TestCase
         $this->assertStringContainsString('until stuck', $reason);
     }
 
+    public function test_a_long_gate_is_excerpted_instead_of_reprinted_in_full(): void
+    {
+        // A user parking dozens of tasks would otherwise get the whole list back on EVERY stop. The
+        // oldest few are due next, so those are spelled out and the rest are a count plus `until list`.
+        for ($i = 1; $i <= 8; $i++) {
+            $this->gate()->add("thing {$i} is done");
+        }
+
+        $reason = $this->reason($this->stop());
+
+        $this->assertStringContainsString('8 STOP CONDITIONS', $reason, 'the count leads');
+        $this->assertStringContainsString('1. thing 1 is done', $reason);
+        $this->assertStringContainsString('3. thing 3 is done', $reason);
+        $this->assertStringNotContainsString('thing 4 is done', $reason, 'the tail is not spelled out');
+        $this->assertStringContainsString('and 5 more', $reason);
+        $this->assertStringContainsString('until list', $reason, 'with where to read the rest');
+    }
+
+    public function test_the_excerpt_keeps_the_stable_ids_the_met_command_takes(): void
+    {
+        for ($i = 1; $i <= 5; $i++) {
+            $this->gate()->add("thing {$i} is done");
+        }
+
+        $this->gate()->met(1);
+        $this->gate()->met(2);
+
+        $reason = $this->reason($this->stop());
+
+        $this->assertStringContainsString('3. thing 3 is done', $reason, 'not renumbered to 1.');
+        $this->assertStringContainsString('5. thing 5 is done', $reason);
+    }
+
     public function test_a_stuck_signal_releases_exactly_one_stop_and_keeps_the_condition(): void
     {
         $this->gate()->add('the full test suite passes');
