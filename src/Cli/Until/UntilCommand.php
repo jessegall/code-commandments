@@ -38,12 +38,13 @@ final class UntilCommand implements Command
             ->form('until "<condition>"', 'set a condition (the form the user speaks; `add`/`set` do the same)')
             ->form('until list', 'what stands right now (the default), and what is paused')
             ->form('until met <n>', 'strike condition <n> off as VERIFIED — the gate lifts when none remain')
-            ->form('until stuck', 'release ONE stop when you are genuinely blocked, keeping every condition in force')
+            ->form('until stuck', 'release ONE stop when you are genuinely blocked, keeping every condition in force (refused while several conditions stand and nothing has been worked)')
             ->form('until pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
             ->form('until resume', 'put the paused gate back in force')
             ->form('until clear', "drop the gate entirely — the user's call, never an escape hatch")
             ->note('`stuck` is a claim about the WHOLE list: drain every condition you can advance on your own '
-                . 'before asking the user. Loop-safe — 10 consecutive held stops with no progress release the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
+                . 'before asking the user — and it is TESTED, not taken on trust: while several conditions stand, '
+                . 'a `stuck` with no work done since the gate last sent you back is refused. Loop-safe — 10 consecutive held stops with no progress release the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
     }
 
     public function run(Input $input): int
@@ -164,6 +165,10 @@ final class UntilCommand implements Command
             return 0;
         }
 
+        if ($this->isUntested($gate)) {
+            return $this->refuse($gate);
+        }
+
         $gate->markStuck();
 
         fwrite(STDOUT,
@@ -174,6 +179,42 @@ final class UntilCommand implements Command
         $this->challengeTheRest($gate);
 
         return 0;
+    }
+
+    /**
+     * Is this `stuck` an UNTESTED claim — several conditions standing and not one piece of work done since
+     * the gate last sent the agent back ({@see UntilGate::workSinceHold})? Then "I cannot advance ANY of
+     * these without the user" has been asserted, not tried, which is exactly how a gate holding a dozen
+     * untouched conditions ended a session early (#419).
+     *
+     * Deliberately limited to a MULTI-condition gate. With one condition left there may genuinely be
+     * nothing to do but ask, and refusing then would leave a blocked agent with no honest way out; with
+     * several, the drain argument the hold message makes is self-evidently untested.
+     */
+    private function isUntested(UntilGate $gate): bool
+    {
+        return count($gate->all()) > 1 && $gate->workSinceHold() === 0;
+    }
+
+    /**
+     * Refuse the claim and send the agent back to the list. The conditions are untouched and no stop is
+     * released — the very next `stuck`, once something has actually been attempted, goes through.
+     */
+    private function refuse(UntilGate $gate): int
+    {
+        $conditions = $gate->all();
+
+        fwrite(STDERR,
+            "✗ `stuck` refused — nothing has been WORKED since the gate last sent you back.\n"
+            . '  ' . count($conditions) . " conditions stand and no tool use has touched any of them, so \"none of these\n"
+            . "  can move without the user\" is a claim you have not tested. Advance the ones you can on your own\n"
+            . "  FIRST, then come back with everything else DONE and only the genuine blocker left.\n"
+            . "  Reading a file, running a command, editing code all count as working the list — explaining does\n"
+            . "  not. Once you have tried, `stuck` lets you through.\n");
+
+        $this->conditions($conditions);
+
+        return 2;
     }
 
     /**

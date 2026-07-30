@@ -153,7 +153,7 @@ and tells you to report back. Meeting a condition resets that count — real pro
 | `commandments until "<condition>"` | set a condition (the form the user speaks; `add`/`set` do the same) |
 | `commandments until list` | what stands right now (the default), and what is paused |
 | `commandments until met <n>` | strike condition <n> off as VERIFIED — the gate lifts when none remain |
-| `commandments until stuck` | release ONE stop when you are genuinely blocked, keeping every condition in force |
+| `commandments until stuck` | release ONE stop when you are genuinely blocked, keeping every condition in force (refused while several conditions stand and nothing has been worked) |
 | `commandments until pause` | THE USER's switch — set the whole gate aside, conditions kept verbatim |
 | `commandments until resume` | put the paused gate back in force |
 | `commandments until clear` | drop the gate entirely — the user's call, never an escape hatch |

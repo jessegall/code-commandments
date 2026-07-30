@@ -43,7 +43,42 @@ final class UntilReminder extends Hook
 
     public function bindings(): array
     {
-        return [new HookBinding('Stop'), new HookBinding('UserPromptSubmit')];
+        return [new HookBinding('Stop'), new HookBinding('UserPromptSubmit'), new HookBinding('PostToolUse')];
+    }
+
+    /**
+     * Count the WORK done under the gate. `until stuck` is a claim that nothing on the list can move
+     * without the user, and until #419 it was accepted on assertion alone — so the gate measures whether
+     * the agent actually tried between being sent back and claiming to be blocked. Only counted while a
+     * gate stands: an ordinary session pays nothing for this.
+     */
+    protected function onPostToolUse(HookEvent $event): int
+    {
+        $gate = UntilGate::inSession($event->workspace());
+
+        if ($gate->isOpen() && $this->isWork($event)) {
+            $gate->recordWork();
+        }
+
+        return $this->pass();
+    }
+
+    /**
+     * Is this tool use WORK — something that could move a condition — or only bookkeeping? Two moves let
+     * an agent look busy without touching the problem: talking to the GATE itself (`commandments until …`,
+     * which would otherwise let a `list` followed by a `stuck` count as progress) and reordering the
+     * to-do list. Everything else counts, deliberately generously — reading a file, running a command and
+     * editing code are all genuine attempts, and the bar this sets is only "you tried something". It
+     * recognises a shell verb rather than parsing code, so no engine is owed (as with
+     * {@see JudgeReminder::isGitCommit}).
+     */
+    private function isWork(HookEvent $event): bool
+    {
+        if ($event->isTool('TodoWrite')) {
+            return false;
+        }
+
+        return ! $event->isTool('Bash') || ! str_contains($event->command(), 'commandments until');
     }
 
     /**
@@ -90,6 +125,8 @@ final class UntilReminder extends Hook
 
             return $this->block($this->released($conditions));
         }
+
+        $gate->resetWork(); // This hold is the mark the next `stuck` claim is measured against (#419).
 
         return $this->block($this->hold($conditions));
     }
@@ -150,7 +187,9 @@ final class UntilReminder extends Hook
             . "question and everything else DONE is the whole point of the gate.\n"
             . "Only when NOTHING left on the list can move without the user, run `vendor/bin/commandments until "
             . "stuck` (NOT `until clear`) and tell them exactly which condition is blocked and what you need — that "
-            . "lets you stop once while keeping every condition in force.";
+            . "lets you stop once while keeping every condition in force. While several conditions stand, `stuck` is "
+            . "REFUSED until you have actually worked the list since reading this — a blocker you have only reasoned "
+            . "about is not a blocker you have tested.";
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Until;
 
 use JesseGall\CodeCommandments\Cli\MarkerFile;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -37,6 +38,7 @@ final class UntilGate
     public function __construct(
         private readonly MarkerFile $file,
         private readonly MarkerFile $paused,
+        private readonly Counter $work,
     ) {}
 
     public static function inSession(Workspace $workspace): self
@@ -44,7 +46,38 @@ final class UntilGate
         return new self(
             new MarkerFile($workspace->path('.until')),
             new MarkerFile($workspace->path('.until.pause')),
+            Counter::named($workspace, 'until-work', 'counts the substantive tool uses since the gate last sent the agent back'),
         );
+    }
+
+    /**
+     * Count one piece of WORK — a tool use, while the gate stands, that could actually move a condition
+     * ({@see \JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder::isWork} decides which do). The
+     * measure exists for one reason (#419): `stuck` used to accept any claim, so the cheapest way out of
+     * the gate was to explain why a condition is blocked without ever testing it. Work is what separates
+     * a tested blocker from an assumed one.
+     */
+    public function recordWork(): void
+    {
+        $this->work->bump();
+    }
+
+    /**
+     * How much work has happened since the gate last held a stop — 0 means the agent has done nothing
+     * but talk since it was sent back in.
+     */
+    public function workSinceHold(): int
+    {
+        return $this->work->count();
+    }
+
+    /**
+     * Being sent back in is the mark work is measured FROM — every hold restarts the count, so
+     * {@see workSinceHold} always answers "since the last time you were told to keep going".
+     */
+    public function resetWork(): void
+    {
+        $this->work->reset();
     }
 
     /**

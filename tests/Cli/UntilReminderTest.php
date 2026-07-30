@@ -51,6 +51,20 @@ final class UntilReminderTest extends TestCase
         return $io->emitted;
     }
 
+    /**
+     * One tool use as the harness reports it — the moment the gate counts work from.
+     */
+    private function postToolUse(string $tool, string $command = ''): void
+    {
+        $io = new CapturingHookIO(new FakeGit($this->root), [
+            'hook_event_name' => 'PostToolUse',
+            'tool_name' => $tool,
+            'tool_input' => ['command' => $command],
+        ]);
+
+        new UntilReminder($io)->run([]);
+    }
+
     private function reason(array $emitted): string
     {
         return (string) ($emitted[0]['reason'] ?? '');
@@ -123,6 +137,46 @@ final class UntilReminderTest extends TestCase
         $this->assertSame([], $this->stop(), 'the blocked agent may hand back to the user');
         $this->assertSame([1 => 'the full test suite passes'], $this->gate()->all());
         $this->assertSame('block', $this->stop()[0]['decision'] ?? null, 'and the gate holds again right after');
+    }
+
+    public function test_a_tool_use_under_the_gate_counts_as_work(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        $this->postToolUse('Read');
+
+        $this->assertSame(1, $this->gate()->workSinceHold());
+    }
+
+    public function test_talking_to_the_gate_and_the_to_do_list_are_not_work(): void
+    {
+        // The two moves an agent can make without touching the problem: reading the gate back to itself
+        // and reordering its to-do list. Counting either would let a `list` + `stuck` pass as an attempt.
+        $this->gate()->add('the suite is green');
+
+        $this->postToolUse('Bash', 'vendor/bin/commandments until list');
+        $this->postToolUse('TodoWrite');
+
+        $this->assertSame(0, $this->gate()->workSinceHold());
+    }
+
+    public function test_work_is_not_counted_when_no_gate_stands(): void
+    {
+        $this->postToolUse('Read');
+
+        $this->assertSame(0, $this->gate()->workSinceHold(), 'an ordinary session pays nothing for the measure');
+    }
+
+    public function test_a_held_stop_restarts_the_work_count(): void
+    {
+        // Work is measured from the LAST hold, so "nothing worked since you were sent back" stays a
+        // statement about this turn — not about the whole session.
+        $this->gate()->add('the suite is green');
+        $this->postToolUse('Read');
+
+        $this->stop();
+
+        $this->assertSame(0, $this->gate()->workSinceHold());
     }
 
     public function test_it_releases_itself_after_the_cap_so_a_wedged_session_can_stop(): void

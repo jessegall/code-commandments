@@ -42,10 +42,20 @@ final class Counter
      */
     public function bump(): int
     {
-        $count = 1 + (is_file($this->path) ? (int) file_get_contents($this->path) : 0);
+        $count = 1 + $this->count();
         $this->write($count);
 
         return $count;
+    }
+
+    /**
+     * The count as it stands, WITHOUT touching it — for a caller that has to READ the heartbeat rather
+     * than drive it ("has anything happened since this counter was last reset?"). Zero when the counter
+     * has never been bumped this session.
+     */
+    public function count(): int
+    {
+        return is_file($this->path) ? (int) file_get_contents($this->path) : 0;
     }
 
     /**

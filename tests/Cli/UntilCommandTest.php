@@ -119,16 +119,51 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([1 => 'tests pass'], $this->gate()->all(), 'the condition stays in force');
     }
 
-    public function test_stuck_is_a_challenge_not_a_refusal_when_other_conditions_stand(): void
+    public function test_stuck_is_a_challenge_not_a_refusal_once_the_list_has_been_worked(): void
     {
-        // `stuck` claims the WHOLE list is blocked, so it prints the others back at the agent — but
-        // the signal is always honoured: a genuinely blocked agent is never trapped by the challenge.
+        // `stuck` claims the WHOLE list is blocked, so it prints the others back at the agent — but an
+        // agent that HAS worked the list is never trapped by the challenge.
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
+        $this->gate()->recordWork();
 
         $this->assertSame(0, $this->exec('stuck'));
         $this->assertTrue($this->gate()->isStuck());
         $this->assertCount(2, $this->gate()->all(), 'and every condition stays in force');
+    }
+
+    public function test_stuck_is_refused_while_several_conditions_stand_and_nothing_was_worked(): void
+    {
+        // #419: a gate holding a dozen never-attempted conditions was emptied by one `stuck`. Claiming
+        // that NOTHING on the list can move without the user is a claim that has to be tested first.
+        $this->exec('add', 'the migration runs');
+        $this->exec('add', 'the changelog has an entry');
+
+        $this->assertSame(2, $this->exec('stuck'));
+        $this->assertFalse($this->gate()->isStuck(), 'no stop is released');
+        $this->assertCount(2, $this->gate()->all(), 'and nothing is dropped either');
+    }
+
+    public function test_a_refused_stuck_goes_through_as_soon_as_the_agent_has_tried(): void
+    {
+        $this->exec('add', 'the migration runs');
+        $this->exec('add', 'the changelog has an entry');
+        $this->assertSame(2, $this->exec('stuck'));
+
+        $this->gate()->recordWork();
+
+        $this->assertSame(0, $this->exec('stuck'), 'the refusal is a challenge, not a lock');
+        $this->assertTrue($this->gate()->isStuck());
+    }
+
+    public function test_a_lone_standing_condition_can_always_be_reported_blocked(): void
+    {
+        // With one condition left there may genuinely be nothing to do but ask, so the untested-claim
+        // refusal never applies — a blocked agent must always have an honest way to hand back.
+        $this->exec('add', 'the user picks one of the two APIs');
+
+        $this->assertSame(0, $this->exec('stuck'));
+        $this->assertTrue($this->gate()->isStuck());
     }
 
     public function test_clear_drops_every_condition(): void
