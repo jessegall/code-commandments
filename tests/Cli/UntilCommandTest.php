@@ -50,10 +50,18 @@ final class UntilCommandTest extends TestCase
         $code = 0;
 
         for ($attempt = 0; $attempt <= 2; $attempt++) {
-            $code = $this->exec('stuck', '--reason=' . $reason);
+            $code = $this->exec('stuck', '--reason=' . $reason, '--blocked=' . $this->everyId());
         }
 
         return $code;
+    }
+
+    /**
+     * Every standing id — what a claim covering the WHOLE list has to name.
+     */
+    private function everyId(): string
+    {
+        return implode(',', array_keys($this->gate()->all()));
     }
 
     private function gate(): UntilGate
@@ -163,7 +171,7 @@ final class UntilCommandTest extends TestCase
     {
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
-        $this->assertSame(2, $this->exec('stuck', '--reason=the user must choose a strategy'));
+        $this->assertSame(2, $this->exec('stuck', '--reason=the user must choose a strategy', '--blocked=1,2'));
 
         $this->gate()->recordWork();
 
@@ -189,19 +197,64 @@ final class UntilCommandTest extends TestCase
         $this->assertFalse($this->gate()->isStuck());
     }
 
+    public function test_a_locally_true_blocker_is_not_a_stuck_agent(): void
+    {
+        // #422, exactly: the agent named ONE condition that genuinely needed the user (a stack trace only
+        // they have) while others stood that it could have worked. Locally true, globally false — and the
+        // old wording asked the local question, so a truthful answer walked straight through.
+        $this->exec('add', 'issue #224 is fixed');
+        $this->exec('add', 'the 89 mechanical edits are done');
+        $this->exec('add', 'the suite is green');
+        $this->gate()->recordWork();
+
+        $code = $this->exec('stuck', '--reason=#224 needs a stack trace only Jesse has', '--blocked=1');
+
+        $this->assertSame(2, $code);
+        $this->assertFalse($this->gate()->isStuck(), 'one blocked item is not a blocked list');
+        $this->assertSame(0, $this->gate()->claimRound(), 'and it never even reaches the challenge');
+    }
+
+    public function test_a_claim_that_names_every_standing_condition_is_heard(): void
+    {
+        // Naming them all is not a formality — it is the claim itself, made explicit. An agent that means
+        // it can still say it, and then answers for all three.
+        $this->exec('add', 'issue #224 is fixed');
+        $this->exec('add', 'issue #228 is decided');
+        $this->gate()->recordWork();
+
+        $this->assertSame(2, $this->exec('stuck', '--reason=both need Jesse', '--blocked=1,2'), 'challenged');
+        $this->assertSame(1, $this->gate()->claimRound(), 'the coverage held, so the challenge began');
+    }
+
+    public function test_the_ids_a_claim_must_cover_follow_the_list_as_it_shrinks(): void
+    {
+        // Ids are stable and keep their gaps, so "every standing id" is whatever still stands — not 1..n.
+        $this->exec('add', 'first');
+        $this->exec('add', 'second');
+        $this->exec('add', 'third');
+        $this->exec('met', '2');
+        $this->gate()->recordWork();
+
+        $this->assertSame(2, $this->exec('stuck', '--reason=all of it needs the user', '--blocked=1,2'),
+            'naming a struck-off id does not cover the standing one');
+        $this->assertSame(2, $this->exec('stuck', '--reason=all of it needs the user', '--blocked=1,3'),
+            'covering both standing ids reaches the challenge');
+        $this->assertSame(1, $this->gate()->claimRound());
+    }
+
     public function test_a_claim_is_challenged_twice_before_the_stop_is_released(): void
     {
         // #420: the agent had worked the list — it just wanted the turn over, and one assertion ended the
         // session. The claim now has to be repeated through two challenges before the gate acts on it.
         $this->exec('add', 'the user picks one of the two APIs');
 
-        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice'), 'first challenge');
+        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice', '--blocked=1'), 'first challenge');
         $this->assertFalse($this->gate()->isStuck());
 
-        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice'), 'second challenge');
+        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice', '--blocked=1'), 'second challenge');
         $this->assertFalse($this->gate()->isStuck());
 
-        $this->assertSame(0, $this->exec('stuck', '--reason=I need the API choice'));
+        $this->assertSame(0, $this->exec('stuck', '--reason=I need the API choice', '--blocked=1'));
         $this->assertTrue($this->gate()->isStuck(), 'stood by twice — the stop is released');
     }
 
@@ -210,12 +263,12 @@ final class UntilCommandTest extends TestCase
         // The whole point of the challenge is to send the agent back to the list. An agent that goes,
         // works, and returns starts the claim again from the beginning — it never resumes mid-way.
         $this->exec('add', 'the user picks one of the two APIs');
-        $this->exec('stuck', '--reason=I need the API choice');
-        $this->exec('stuck', '--reason=I need the API choice');
+        $this->exec('stuck', '--reason=I need the API choice', '--blocked=1');
+        $this->exec('stuck', '--reason=I need the API choice', '--blocked=1');
 
         $this->gate()->dropClaim(); // What a piece of work does, via the PostToolUse hook.
 
-        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice'), 'back to the first challenge');
+        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice', '--blocked=1'), 'back to the first challenge');
         $this->assertFalse($this->gate()->isStuck());
     }
 
@@ -224,7 +277,7 @@ final class UntilCommandTest extends TestCase
         $this->exec('add', 'the user picks one of the two APIs');
         $this->exec('add', 'the suite is green');
         $this->gate()->recordWork();
-        $this->exec('stuck', '--reason=I need the API choice');
+        $this->exec('stuck', '--reason=I need the API choice', '--blocked=1,2');
 
         $this->exec('met', '2');
 

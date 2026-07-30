@@ -365,7 +365,8 @@ final class UntilReminderTest extends TestCase
 
         $this->assertStringContainsString('DRAIN THE LIST FIRST', $reason);
         $this->assertStringContainsString('leave the blocked one for last', $reason);
-        $this->assertStringContainsString('Only when NOTHING left on the list can move', $reason);
+        $this->assertStringContainsString('Only when NOT ONE condition left standing can move', $reason);
+        $this->assertStringContainsString('NOT FOR A BLOCKED ITEM', $reason, 'the LOCAL reading is named and refused (#422)');
     }
 
     public function test_a_paused_gate_holds_nothing_and_says_nothing(): void

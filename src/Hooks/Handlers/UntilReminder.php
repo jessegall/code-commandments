@@ -236,11 +236,13 @@ final class UntilReminder extends Hook
             . "the ones you can advance on your own, finish them, and leave the blocked one for last. Coming back "
             . "with one question and four conditions still untouched wastes the user's turn — coming back with one "
             . "question and everything else DONE is the whole point of the gate.\n"
-            . "Only when NOTHING left on the list can move without the user, run `vendor/bin/commandments until "
-            . "stuck` (NOT `until clear`) and tell them exactly which condition is blocked and what you need — that "
-            . "lets you stop once while keeping every condition in force. While several conditions stand, `stuck` is "
-            . "REFUSED until you have actually worked the list since reading this — a blocker you have only reasoned "
-            . "about is not a blocker you have tested.";
+            . "`stuck` IS NOT FOR A BLOCKED ITEM — it is for a blocked LIST. \"The thing in front of me needs the "
+            . "user\" is not being stuck; that is ONE blocked item and the rest of the list still to work. Leave the "
+            . "blocked one for last and carry on with the others. Only when NOT ONE condition left standing can move "
+            . "without the user may you run `vendor/bin/commandments until stuck --reason=\"<why NONE of them can "
+            . "move>\" --blocked=<every standing id>` (NOT `until clear`) — you have to name them ALL, because that "
+            . "is what the claim says. It is also REFUSED until you have actually worked the list since reading "
+            . "this: a blocker you have only reasoned about is not a blocker you have tested.";
     }
 
     /**

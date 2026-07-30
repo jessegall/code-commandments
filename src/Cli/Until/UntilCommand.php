@@ -33,6 +33,32 @@ final class UntilCommand implements Command
      */
     private const int CHALLENGES = 2;
 
+    /**
+     * How many unaccounted-for conditions a refusal spells out before falling back to a count. Enough to
+     * make the point concrete — the agent should SEE work it forgot it had — without reprinting a list of
+     * 170 back at it.
+     */
+    private const int EXAMPLES = 3;
+
+    /**
+     * The ids in a `--blocked=2,5,9` list. Anything that is not a number is ignored rather than rejected:
+     * a malformed id simply fails to account for its condition, which the coverage check then says plainly.
+     *
+     * @return list<int>
+     */
+    private function ids(string $list): array
+    {
+        $ids = [];
+
+        foreach (explode(',', $list) as $id) {
+            if (trim($id) !== '') {
+                $ids[] = (int) trim($id);
+            }
+        }
+
+        return $ids;
+    }
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -46,12 +72,15 @@ final class UntilCommand implements Command
             ->form('until "<condition>"', 'set a condition (the form the user speaks; `add`/`set` do the same)')
             ->form('until list', 'what stands right now (the default), and what is paused')
             ->form('until met <n>', 'strike condition <n> off as VERIFIED — the gate lifts when none remain')
-            ->form('until stuck --reason="<what you need FROM THE USER>"', 'release ONE stop when you are genuinely blocked, keeping every condition in force — the claim is CHALLENGED twice before it is acted on')
-            ->option('--reason=TEXT', 'the decision or information only the user can give — required, and shown back to them when the claim stands')
+            ->form('until stuck --reason="<why NONE can move>" --blocked=<every id>', 'release ONE stop when NOT ONE standing condition can move without the user — the claim must name every condition and is CHALLENGED twice before it is acted on')
+            ->option('--reason=TEXT', 'why NOT ONE of the standing conditions can move without the user — required, and shown back to them when the claim stands')
+            ->option('--blocked=IDS', 'the conditions waiting on the user, comma-separated. `stuck` covers the WHOLE list, so anything you leave out is work you still owe')
             ->form('until pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
             ->form('until resume', 'put the paused gate back in force')
             ->form('until clear', "drop the gate entirely — the user's call, never an escape hatch")
-            ->note('`stuck` is a claim about the WHOLE list: drain every condition you can advance on your own '
+            ->note('`stuck` is a claim about the WHOLE list, never about the item in hand: being blocked on one '
+                . 'condition while others stand is not being stuck, it is having one blocked item and the rest '
+                . 'still to work. Drain every condition you can advance on your own '
                 . 'before asking the user — and it is TESTED, not taken on trust: while several conditions stand, '
                 . 'a `stuck` with no work done since the gate last sent you back is refused, and every `stuck` must '
                 . 'name what it needs from the user and survive two challenges (running low on context, a big or '
@@ -67,7 +96,11 @@ final class UntilCommand implements Command
             'add', 'set' => $this->add($gate, $this->text($input, from: 1)),
             'list', 'show', 'status' => $this->list($gate),
             'met', 'done', 'satisfied' => $this->met($gate, (int) ($input->arguments()[1] ?? '0')),
-            'stuck', 'blocked' => $this->stuck($gate, (string) $input->option('reason', '')),
+            'stuck', 'blocked' => $this->stuck(
+                $gate,
+                (string) $input->option('reason', ''),
+                $this->ids((string) $input->option('blocked', '')),
+            ),
             'pause', 'hold' => $this->pause($gate),
             'resume', 'unpause', 'continue' => $this->resume($gate),
             'clear', 'cancel', 'drop' => $this->clear($gate),
@@ -172,7 +205,10 @@ final class UntilCommand implements Command
         return 0;
     }
 
-    private function stuck(UntilGate $gate, string $reason): int
+    /**
+     * @param  list<int>  $blocked  the condition ids the agent claims are waiting on the user
+     */
+    private function stuck(UntilGate $gate, string $reason, array $blocked): int
     {
         if (! $gate->isOpen()) {
             fwrite(STDOUT, "No stop conditions in force — nothing to be stuck on.\n");
@@ -188,6 +224,12 @@ final class UntilCommand implements Command
             return $this->reasonRequired();
         }
 
+        $unaccounted = $this->unaccountedFor($gate, $blocked);
+
+        if ($unaccounted !== []) {
+            return $this->notEveryCondition($gate, $unaccounted);
+        }
+
         $round = $gate->advanceClaim($reason);
 
         if ($round <= self::CHALLENGES) {
@@ -198,14 +240,62 @@ final class UntilCommand implements Command
         $gate->dropClaim();
 
         fwrite(STDOUT,
-            "◼ Stop gate paused for ONE stop — you are blocked, so hand back to the user and tell them exactly\n"
-            . "  which condition you cannot meet and why. The condition stays in force: the gate holds again as\n"
-            . "  soon as you continue. (Use `until met <n>` only when a condition actually holds.)\n"
+            "◼ Stop gate released for ONE stop. You have claimed that ALL " . count($gate->all()) . " standing\n"
+            . "  condition(s) need the user — hand back now and put that claim to them in full: what you need,\n"
+            . "  and why not one of the others can move meanwhile. Everything stays in force; the gate holds\n"
+            . "  again the moment you continue. (`until met <n>` only when a condition actually holds.)\n"
             . "  The user is being shown the claim you stood by: \"{$reason}\"\n");
 
-        $this->challengeTheRest($gate);
-
         return 0;
+    }
+
+    /**
+     * Which standing conditions the claim has NOT named. `stuck` says the WHOLE list is waiting on the user,
+     * so the claim has to cover the whole list — every id, one at a time.
+     *
+     * This is the question #422 showed the tool was never asking. It asked "what are you blocked ON?", which
+     * is a LOCAL question with an easy honest answer ("issue #224 needs a stack trace only Jesse has"), and
+     * an agent that answers it truthfully was let through while 168 other conditions stood untouched. The
+     * rule was always global; only the question was local. Naming every id is how an agent finds out, in the
+     * act of composing the command, that its local truth is not the claim `stuck` actually makes.
+     *
+     * @param  list<int>  $blocked  the ids the agent named
+     * @return array<int, string>  the standing conditions it did not, keyed by id
+     */
+    private function unaccountedFor(UntilGate $gate, array $blocked): array
+    {
+        return array_diff_key($gate->all(), array_flip($blocked));
+    }
+
+    /**
+     * Refuse a claim that does not cover the list, and say so in the terms the agent got wrong: not "your
+     * reason is poor" but "you have named N of M — the other K are yours to work".
+     *
+     * @param  array<int, string>  $unaccounted  keyed by id
+     */
+    private function notEveryCondition(UntilGate $gate, array $unaccounted): int
+    {
+        $standing = count($gate->all());
+        $left = count($unaccounted);
+
+        fwrite(STDERR,
+            "✗ `stuck` refused — it is a claim about the WHOLE list, and " . ($standing - $left) . " of {$standing}\n"
+            . "  condition(s) is not the whole list.\n"
+            . "  `stuck` does not mean \"the thing in front of me needs the user\". It means \"NOT ONE of these\n"
+            . "  {$standing} can move without the user\". Being blocked on the item in hand while others stand is\n"
+            . "  not being stuck — it is having one blocked item and {$left} still to work.\n"
+            . "  These {$left} are unaccounted for:\n");
+
+        $this->conditions(array_slice($unaccounted, 0, self::EXAMPLES, preserve_keys: true));
+
+        fwrite(STDERR, $left > self::EXAMPLES
+            ? '  …and ' . ($left - self::EXAMPLES) . " more (`until list`). Go and work them.\n"
+                . "  If you truly mean that every one of the {$standing} is waiting on the user, name them all:\n"
+                . "  `until stuck --reason=\"…\" --blocked=" . implode(',', array_keys($gate->all())) . "`\n"
+            : "  Work those first, or — if every one of them really is waiting on the user — name them all:\n"
+                . "  `until stuck --reason=\"…\" --blocked=" . implode(',', array_keys($gate->all())) . "`\n");
+
+        return 2;
     }
 
     /**
@@ -214,9 +304,10 @@ final class UntilCommand implements Command
      */
     private function reasonRequired(): int
     {
-        return HelpScreen::usage($this, 'a `stuck` must say what it is blocked ON: `until stuck '
-            . '--reason="<the decision or information you need FROM THE USER>"`. Not what is left to do, and '
-            . 'not how much of it — what you need a HUMAN for.');
+        return HelpScreen::usage($this, 'a `stuck` claims the WHOLE list is waiting on the user, so it must '
+            . 'say why NONE of the standing conditions can move: `until stuck --reason="<why not one of these '
+            . 'can move without the user>" --blocked=<every standing id>`. The reason is not "what the item in '
+            . 'hand needs" — that is one blocked item, not a stuck agent.');
     }
 
     /**
@@ -228,28 +319,32 @@ final class UntilCommand implements Command
      */
     private function challenge(UntilGate $gate, string $reason, int $round): int
     {
+        $standing = count($gate->all());
+
         fwrite(STDOUT, $round === 1
-            ? "⚠ Before that stop is released — are you REALLY blocked?\n"
+            ? "⚠ Before that stop is released — you are claiming all {$standing} of these need the user.\n"
                 . "  You said: \"{$reason}\"\n"
-                . "  These are NOT being blocked, they are the work itself: running low on context, too many\n"
-                . "  call sites, a big or mechanical change, \"this needs its own change\", \"I'd be guessing on\n"
-                . "  some of them\", being tired of the task. Being blocked means you need a DECISION or\n"
-                . "  INFORMATION that only the user can give, and that no file, test or command can tell you.\n"
-                . "  Look at what still stands:\n"
-            : "⚠ Once more, and be certain.\n"
+                . "  Read that back against the LIST, not against the item in your hand. `stuck` is not \"this\n"
+                . "  one needs the user\" — it is \"not one of these {$standing} can move without the user\".\n"
+                . "  And these are NOT blockers, they are the work itself: running low on context, too many call\n"
+                . "  sites, a big or mechanical change, \"this needs its own change\", \"I'd be guessing on some\n"
+                . "  of them\", being tired of the task. Blocked means a DECISION or INFORMATION only the user\n"
+                . "  can give, that no file, test or command can tell you:\n"
+            : "⚠ Once more, and be certain — about the OTHERS.\n"
                 . "  You said: \"{$reason}\"\n"
-                . "  Are you 100% sure there is NOTHING on this list you can finish without the user? Not one\n"
-                . "  item you could advance, verify, or knock off on your own first? If there is even one, do\n"
-                . "  that instead — you can always come back to this.\n");
+                . "  The question is not whether that is true of the item you are on. It is: why can NONE of the\n"
+                . "  other " . max(0, $standing - 1) . " move? Take them one at a time and answer for each. If even one could be\n"
+                . "  advanced, verified or knocked off on your own, do that instead — you can come back to this.\n");
 
         $this->conditions($gate->all());
 
         fwrite(STDOUT, $round === 1
-            ? "  If one of these can still move without the user, close it FIRST — going back to work voids\n"
-                . "  this claim, which is exactly right. If you are certain none can, run the same command again\n"
-                . "  to stand by it.\n"
-            : "  Still certain? Run the same command once more and the stop is yours — and the user will be\n"
-                . "  shown the reason you gave, so say something you would defend to their face.\n");
+            ? "  If ANY one of these can still move without the user, close it FIRST — going back to work voids\n"
+                . "  this claim, which is exactly right. If not one of them can, run the same command again to\n"
+                . "  stand by it.\n"
+            : "  Still certain that ALL {$standing} are waiting on the user? Run the same command once more and\n"
+                . "  the stop is yours — and the user will be shown the reason you gave, so say something you\n"
+                . "  would defend to their face.\n");
 
         return 2;
     }
