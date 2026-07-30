@@ -35,10 +35,22 @@ final class UntilGate
         left. Safe to delete — deleting it simply lifts the gate.
         TXT;
 
+    /**
+     * What a pending `stuck` claim is written as — the file exists only between the first attempt and the
+     * release, so a human who finds it is looking at a claim mid-challenge.
+     */
+    private const string CLAIM_EXPLANATION = <<<'TXT'
+        A PENDING `commandments until stuck` claim — the agent has said it is blocked and is being challenged
+        before the gate lets a stop through. The lines above the separator are: how many challenges it has
+        answered so far, then the reason it gave. Cleared the moment the gate holds a stop again, a condition
+        is met, or the gate is paused/resumed/cleared. Safe to delete — that simply restarts the challenge.
+        TXT;
+
     public function __construct(
         private readonly MarkerFile $file,
         private readonly MarkerFile $paused,
         private readonly Counter $work,
+        private readonly MarkerFile $claim,
     ) {}
 
     public static function inSession(Workspace $workspace): self
@@ -47,7 +59,48 @@ final class UntilGate
             new MarkerFile($workspace->path('.until')),
             new MarkerFile($workspace->path('.until.pause')),
             Counter::named($workspace, 'until-work', 'counts the substantive tool uses since the gate last sent the agent back'),
+            new MarkerFile($workspace->path('.until.claim')),
         );
+    }
+
+    /**
+     * How many challenges the standing `stuck` claim has already answered — 0 when none is pending. A claim
+     * survives only until the agent is sent back in ({@see dropClaim}), so it can never be answered half now
+     * and half in an hour's time.
+     */
+    public function claimRound(): int
+    {
+        return (int) $this->claim->value(0, '0');
+    }
+
+    /**
+     * The reason given for the standing claim — '' when none is pending.
+     */
+    public function claimReason(): string
+    {
+        return $this->claim->value(1);
+    }
+
+    /**
+     * Answer one challenge: record $reason (the latest wording wins — an agent that thinks better of its
+     * first answer is not punished for saying so) and return the number of challenges now answered.
+     */
+    public function advanceClaim(string $reason): int
+    {
+        $round = $this->claimRound() + 1;
+
+        $this->claim->write([(string) $round, $this->oneLine($reason)], self::CLAIM_EXPLANATION);
+
+        return $round;
+    }
+
+    /**
+     * Forget any pending claim. Every fresh start does this — a held stop, a met condition, a gate paused,
+     * resumed or cleared — so a half-answered challenge never carries into a situation that has moved on.
+     */
+    public function dropClaim(): void
+    {
+        $this->claim->delete();
     }
 
     /**
@@ -127,6 +180,7 @@ final class UntilGate
         unset($conditions[$id]);
 
         $this->save($conditions, $this->lastId(), blocks: 0, stuck: false);
+        $this->dropClaim(); // Progress: whatever the agent was claiming to be blocked on, the list moved.
 
         return $condition;
     }
@@ -175,6 +229,7 @@ final class UntilGate
     {
         $this->file->delete();
         $this->paused->delete(); // A cleared gate leaves nothing to resume.
+        $this->dropClaim();
     }
 
     /**
@@ -217,6 +272,8 @@ final class UntilGate
         if (! $from->exists()) {
             return false;
         }
+
+        $this->dropClaim(); // A gate that changes sides is a fresh gate — an old claim does not follow it.
 
         if (! $into->exists()) {
             return $from->moveTo($into);

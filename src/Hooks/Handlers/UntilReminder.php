@@ -81,6 +81,8 @@ final class UntilReminder extends Hook
         }
 
         $gate->recordWork();
+        $gate->dropClaim(); // Back at work, so the half-answered `stuck` claim is void: an agent that took
+        // the challenge and carried on starts the next claim from the beginning, never mid-way through.
 
         return $drift->due() ? $this->inject($event, $this->stale()) : $this->pass();
     }

@@ -41,6 +41,21 @@ final class UntilCommandTest extends TestCase
         return $code;
     }
 
+    /**
+     * A `stuck` claim carried all the way through: the two challenges, then the call that stands by it.
+     * Returns the LAST exit code — the one that says whether the stop was released.
+     */
+    private function stuck(string $reason = 'the user must choose between the two APIs'): int
+    {
+        $code = 0;
+
+        for ($attempt = 0; $attempt <= 2; $attempt++) {
+            $code = $this->exec('stuck', '--reason=' . $reason);
+        }
+
+        return $code;
+    }
+
     private function gate(): UntilGate
     {
         return UntilGate::inSession(Workspace::at($this->root));
@@ -114,7 +129,7 @@ final class UntilCommandTest extends TestCase
     {
         $this->exec('add', 'tests pass');
 
-        $this->assertSame(0, $this->exec('stuck'));
+        $this->assertSame(0, $this->stuck());
         $this->assertTrue($this->gate()->isStuck());
         $this->assertSame([1 => 'tests pass'], $this->gate()->all(), 'the condition stays in force');
     }
@@ -127,7 +142,7 @@ final class UntilCommandTest extends TestCase
         $this->exec('add', 'the changelog has an entry');
         $this->gate()->recordWork();
 
-        $this->assertSame(0, $this->exec('stuck'));
+        $this->assertSame(0, $this->stuck());
         $this->assertTrue($this->gate()->isStuck());
         $this->assertCount(2, $this->gate()->all(), 'and every condition stays in force');
     }
@@ -139,7 +154,7 @@ final class UntilCommandTest extends TestCase
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
 
-        $this->assertSame(2, $this->exec('stuck'));
+        $this->assertSame(2, $this->stuck());
         $this->assertFalse($this->gate()->isStuck(), 'no stop is released');
         $this->assertCount(2, $this->gate()->all(), 'and nothing is dropped either');
     }
@@ -148,11 +163,11 @@ final class UntilCommandTest extends TestCase
     {
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
-        $this->assertSame(2, $this->exec('stuck'));
+        $this->assertSame(2, $this->exec('stuck', '--reason=the user must choose a strategy'));
 
         $this->gate()->recordWork();
 
-        $this->assertSame(0, $this->exec('stuck'), 'the refusal is a challenge, not a lock');
+        $this->assertSame(0, $this->stuck(), 'the refusal is a challenge, not a lock');
         $this->assertTrue($this->gate()->isStuck());
     }
 
@@ -162,8 +177,58 @@ final class UntilCommandTest extends TestCase
         // refusal never applies — a blocked agent must always have an honest way to hand back.
         $this->exec('add', 'the user picks one of the two APIs');
 
-        $this->assertSame(0, $this->exec('stuck'));
+        $this->assertSame(0, $this->stuck());
         $this->assertTrue($this->gate()->isStuck());
+    }
+
+    public function test_a_stuck_without_a_reason_is_not_a_claim_at_all(): void
+    {
+        $this->exec('add', 'the user picks one of the two APIs');
+
+        $this->assertSame(2, $this->exec('stuck'));
+        $this->assertFalse($this->gate()->isStuck());
+    }
+
+    public function test_a_claim_is_challenged_twice_before_the_stop_is_released(): void
+    {
+        // #420: the agent had worked the list — it just wanted the turn over, and one assertion ended the
+        // session. The claim now has to be repeated through two challenges before the gate acts on it.
+        $this->exec('add', 'the user picks one of the two APIs');
+
+        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice'), 'first challenge');
+        $this->assertFalse($this->gate()->isStuck());
+
+        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice'), 'second challenge');
+        $this->assertFalse($this->gate()->isStuck());
+
+        $this->assertSame(0, $this->exec('stuck', '--reason=I need the API choice'));
+        $this->assertTrue($this->gate()->isStuck(), 'stood by twice — the stop is released');
+    }
+
+    public function test_going_back_to_work_voids_a_half_answered_claim(): void
+    {
+        // The whole point of the challenge is to send the agent back to the list. An agent that goes,
+        // works, and returns starts the claim again from the beginning — it never resumes mid-way.
+        $this->exec('add', 'the user picks one of the two APIs');
+        $this->exec('stuck', '--reason=I need the API choice');
+        $this->exec('stuck', '--reason=I need the API choice');
+
+        $this->gate()->dropClaim(); // What a piece of work does, via the PostToolUse hook.
+
+        $this->assertSame(2, $this->exec('stuck', '--reason=I need the API choice'), 'back to the first challenge');
+        $this->assertFalse($this->gate()->isStuck());
+    }
+
+    public function test_meeting_a_condition_voids_a_standing_claim(): void
+    {
+        $this->exec('add', 'the user picks one of the two APIs');
+        $this->exec('add', 'the suite is green');
+        $this->gate()->recordWork();
+        $this->exec('stuck', '--reason=I need the API choice');
+
+        $this->exec('met', '2');
+
+        $this->assertSame(0, $this->gate()->claimRound(), 'the list moved — the claim is stale');
     }
 
     public function test_clear_drops_every_condition(): void

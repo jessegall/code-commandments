@@ -25,6 +25,14 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class UntilCommand implements Command
 {
+    /**
+     * How many times a `stuck` claim is put back to the agent before the gate acts on it. Two: the first
+     * asks whether it is a blocker at all, the second asks it to be certain nothing on the list can move
+     * alone. It is friction on purpose — the claim ends a session, and #419/#420 were both made in the
+     * moment an agent wanted the turn to be over. A third round would only teach agents to type it thrice.
+     */
+    private const int CHALLENGES = 2;
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -38,13 +46,17 @@ final class UntilCommand implements Command
             ->form('until "<condition>"', 'set a condition (the form the user speaks; `add`/`set` do the same)')
             ->form('until list', 'what stands right now (the default), and what is paused')
             ->form('until met <n>', 'strike condition <n> off as VERIFIED — the gate lifts when none remain')
-            ->form('until stuck', 'release ONE stop when you are genuinely blocked, keeping every condition in force (refused while several conditions stand and nothing has been worked)')
+            ->form('until stuck --reason="<what you need FROM THE USER>"', 'release ONE stop when you are genuinely blocked, keeping every condition in force — the claim is CHALLENGED twice before it is acted on')
+            ->option('--reason=TEXT', 'the decision or information only the user can give — required, and shown back to them when the claim stands')
             ->form('until pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
             ->form('until resume', 'put the paused gate back in force')
             ->form('until clear', "drop the gate entirely — the user's call, never an escape hatch")
             ->note('`stuck` is a claim about the WHOLE list: drain every condition you can advance on your own '
                 . 'before asking the user — and it is TESTED, not taken on trust: while several conditions stand, '
-                . 'a `stuck` with no work done since the gate last sent you back is refused. Loop-safe — 10 consecutive held stops with no progress release the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
+                . 'a `stuck` with no work done since the gate last sent you back is refused, and every `stuck` must '
+                . 'name what it needs from the user and survive two challenges (running low on context, a big or '
+                . 'mechanical change and "this needs its own change" are the WORK, not a blocker). Going back to '
+                . 'work voids a half-answered claim. Loop-safe — 10 consecutive held stops with no progress release the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
     }
 
     public function run(Input $input): int
@@ -55,7 +67,7 @@ final class UntilCommand implements Command
             'add', 'set' => $this->add($gate, $this->text($input, from: 1)),
             'list', 'show', 'status' => $this->list($gate),
             'met', 'done', 'satisfied' => $this->met($gate, (int) ($input->arguments()[1] ?? '0')),
-            'stuck', 'blocked' => $this->stuck($gate),
+            'stuck', 'blocked' => $this->stuck($gate, (string) $input->option('reason', '')),
             'pause', 'hold' => $this->pause($gate),
             'resume', 'unpause', 'continue' => $this->resume($gate),
             'clear', 'cancel', 'drop' => $this->clear($gate),
@@ -160,7 +172,7 @@ final class UntilCommand implements Command
         return 0;
     }
 
-    private function stuck(UntilGate $gate): int
+    private function stuck(UntilGate $gate, string $reason): int
     {
         if (! $gate->isOpen()) {
             fwrite(STDOUT, "No stop conditions in force — nothing to be stuck on.\n");
@@ -172,16 +184,74 @@ final class UntilCommand implements Command
             return $this->refuse($gate);
         }
 
+        if ($reason === '') {
+            return $this->reasonRequired();
+        }
+
+        $round = $gate->advanceClaim($reason);
+
+        if ($round <= self::CHALLENGES) {
+            return $this->challenge($gate, $reason, $round);
+        }
+
         $gate->markStuck();
+        $gate->dropClaim();
 
         fwrite(STDOUT,
             "◼ Stop gate paused for ONE stop — you are blocked, so hand back to the user and tell them exactly\n"
             . "  which condition you cannot meet and why. The condition stays in force: the gate holds again as\n"
-            . "  soon as you continue. (Use `until met <n>` only when a condition actually holds.)\n");
+            . "  soon as you continue. (Use `until met <n>` only when a condition actually holds.)\n"
+            . "  The user is being shown the claim you stood by: \"{$reason}\"\n");
 
         $this->challengeTheRest($gate);
 
         return 0;
+    }
+
+    /**
+     * `stuck` is a claim, and a claim with no reason cannot be examined at all — by the agent making it or
+     * by the user reading it afterwards.
+     */
+    private function reasonRequired(): int
+    {
+        return HelpScreen::usage($this, 'a `stuck` must say what it is blocked ON: `until stuck '
+            . '--reason="<the decision or information you need FROM THE USER>"`. Not what is left to do, and '
+            . 'not how much of it — what you need a HUMAN for.');
+    }
+
+    /**
+     * Put the claim back to the agent instead of acting on it. The command cannot know whether a blocker is
+     * real, but it knows the shapes that are NOT blockers — and it knows the standing conditions, which the
+     * agent has to look at again to answer. Two rounds: the first asks whether anything on the list can still
+     * move without the user, the second asks it to be certain. The claim is honoured on the round after, so
+     * a genuinely blocked agent is delayed, never trapped.
+     */
+    private function challenge(UntilGate $gate, string $reason, int $round): int
+    {
+        fwrite(STDOUT, $round === 1
+            ? "⚠ Before that stop is released — are you REALLY blocked?\n"
+                . "  You said: \"{$reason}\"\n"
+                . "  These are NOT being blocked, they are the work itself: running low on context, too many\n"
+                . "  call sites, a big or mechanical change, \"this needs its own change\", \"I'd be guessing on\n"
+                . "  some of them\", being tired of the task. Being blocked means you need a DECISION or\n"
+                . "  INFORMATION that only the user can give, and that no file, test or command can tell you.\n"
+                . "  Look at what still stands:\n"
+            : "⚠ Once more, and be certain.\n"
+                . "  You said: \"{$reason}\"\n"
+                . "  Are you 100% sure there is NOTHING on this list you can finish without the user? Not one\n"
+                . "  item you could advance, verify, or knock off on your own first? If there is even one, do\n"
+                . "  that instead — you can always come back to this.\n");
+
+        $this->conditions($gate->all());
+
+        fwrite(STDOUT, $round === 1
+            ? "  If one of these can still move without the user, close it FIRST — going back to work voids\n"
+                . "  this claim, which is exactly right. If you are certain none can, run the same command again\n"
+                . "  to stand by it.\n"
+            : "  Still certain? Run the same command once more and the stop is yours — and the user will be\n"
+                . "  shown the reason you gave, so say something you would defend to their face.\n");
+
+        return 2;
     }
 
     /**

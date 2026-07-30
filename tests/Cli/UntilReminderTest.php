@@ -267,6 +267,22 @@ final class UntilReminderTest extends TestCase
         $this->assertSame([], $this->postToolUse('Read'), 'the list is current — nothing to say');
     }
 
+    public function test_work_voids_a_half_answered_stuck_claim(): void
+    {
+        // The user's rule: the moment the agent accepts the challenge and gets back to work, the claim it
+        // was part-way through is gone. Talking to the gate is not work, so the challenge itself survives.
+        $this->gate()->add('the suite is green');
+        $this->gate()->advanceClaim('I need a decision');
+
+        $this->postToolUse('Bash', 'vendor/bin/commandments until list');
+
+        $this->assertSame(1, $this->gate()->claimRound(), 'gate chatter leaves the claim standing');
+
+        $this->postToolUse('Edit');
+
+        $this->assertSame(0, $this->gate()->claimRound(), 'real work voids it');
+    }
+
     public function test_the_stale_list_nudge_never_fires_without_a_gate(): void
     {
         for ($i = 0; $i < 25; $i++) {
