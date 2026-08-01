@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
+use JesseGall\CodeCommandments\Cli\State\Legend;
+use JesseGall\CodeCommandments\Cli\State\Line;
+use JesseGall\CodeCommandments\Cli\State\State;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -11,22 +15,33 @@ use JesseGall\CodeCommandments\Workspace;
  * The constraint state for the active plan — the natural-language invariants the run must hold to (the
  * global ones from {@see PlanProfile::constraints} plus this run's local additions), and whether the
  * agent has verified them against its branch diff. Verification is a HEAD stamp, fresh only while HEAD
- * is unchanged. Session-scoped like {@see PlanMarker}.
+ * is unchanged. Session-scoped like {@see PlanMarker}, and written in the shared {@see StateFile}
+ * format: the stamp is a named value, the constraints are the list beneath it, and one file holds
+ * both — a stamp that outlived the constraints it vouched for was only ever a way to go wrong.
  */
 final class PlanConstraints
 {
     public function __construct(
-        private readonly string $localPath,
-        private readonly string $verifiedPath,
+        private readonly StateFile $file,
         private readonly PlanProfile $plan,
     ) {}
 
     public static function inSession(Workspace $workspace, PlanProfile $plan): self
     {
-        return new self(
-            $workspace->path('.plan-constraints'),
-            $workspace->path('.constraints-verified'),
-            $plan,
+        return new self(new StateFile($workspace->path('.plan-constraints'), self::legend()), $plan);
+    }
+
+    public static function legend(): Legend
+    {
+        return new Legend(
+            "The invariants THIS plan run must hold to, on top of the project's own "
+                . '(`$config->planExecution(...)->constraints(...)`), and whether the agent has checked its '
+                . 'branch diff against them.',
+            ['verified_at' => 'the git HEAD the constraints were last verified at. A moved HEAD is stale — '
+                . 'there is new work to re-check'],
+            defaults: new State(verified_at: ''),
+            list: 'one constraint per line, added for this run with `commandments plan constrain "<rule>"`.',
+            safe: 'deleting it drops this run\'s extra constraints and asks for the check again',
         );
     }
 
@@ -47,7 +62,7 @@ final class PlanConstraints
      */
     public function local(): array
     {
-        return $this->lines($this->localPath);
+        return $this->file->read()->items();
     }
 
     /**
@@ -55,14 +70,14 @@ final class PlanConstraints
      */
     public function addLocal(string $rule): void
     {
-        $rule = trim($rule);
+        $rule = Line::flatten($rule);
         $existing = $this->local();
 
         if ($rule === '' || in_array($rule, $existing, true)) {
             return;
         }
 
-        $this->write($this->localPath, [...$existing, $rule]);
+        $this->file->write($this->file->read()->withItems([...$existing, $rule]));
     }
 
     /**
@@ -70,7 +85,7 @@ final class PlanConstraints
      */
     public function markVerified(string $head): void
     {
-        $this->write($this->verifiedPath, [$head]);
+        $this->file->write($this->file->read()->with(verified_at: $head));
     }
 
     /**
@@ -79,7 +94,7 @@ final class PlanConstraints
      */
     public function isVerifiedAt(string $head): bool
     {
-        return $head !== '' && ($this->lines($this->verifiedPath)[0] ?? null) === $head;
+        return $head !== '' && $this->file->read()->text('verified_at') === $head;
     }
 
     /**
@@ -87,31 +102,6 @@ final class PlanConstraints
      */
     public function clear(): void
     {
-        @unlink($this->localPath);
-        @unlink($this->verifiedPath);
-    }
-
-    /**
-     * @return list<string>  the non-blank lines of $path, trimmed; [] when the file is absent.
-     */
-    private function lines(string $path): array
-    {
-        if (! is_file($path)) {
-            return [];
-        }
-
-        return array_values(array_filter(
-            array_map('trim', preg_split('/\R/', (string) file_get_contents($path)) ?: []),
-            static fn (string $line): bool => $line !== '',
-        ));
-    }
-
-    /**
-     * @param  list<string>  $lines
-     */
-    private function write(string $path, array $lines): void
-    {
-        @mkdir(dirname($path), 0777, true);
-        @file_put_contents($path, implode("\n", $lines) . "\n");
+        $this->file->delete();
     }
 }

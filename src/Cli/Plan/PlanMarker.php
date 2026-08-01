@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
-
+use JesseGall\CodeCommandments\Cli\State\Legend;
+use JesseGall\CodeCommandments\Cli\State\State;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
-use JesseGall\CodeCommandments\Cli\MarkerFile;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -14,42 +15,55 @@ use JesseGall\CodeCommandments\Workspace;
  * hook. Written when a plan is approved ({@see PlanReminder}), read on every stop to decide whether
  * to re-nudge, and cleared by `commandments plan done` ({@see PlanCommand}) or when the plan branch
  * is merged back to its base. It lives in the session's OWN {@see Workspace} folder, so one
- * session's plan never nudges another — across worktrees AND across concurrent sessions. It stores ONLY the {@see PlanState} counters — nothing config-derived,
- * so the base branch/policy stay live from config. The file format mirrors the other hook markers:
- * value lines, a separator, then a self-describing explanation.
+ * session's plan never nudges another — across worktrees AND across concurrent sessions. It stores
+ * ONLY the {@see PlanState} counters and the stuck signal — nothing config-derived, so the base
+ * branch/policy stay live from config.
+ *
+ * ONE {@see StateFile} in the shared format: the stuck signal is a named value of the plan, not a
+ * marker of its own, so a signal can never be left behind by a plan that has ended.
  */
 final class PlanMarker
 {
-    private const string EXPLANATION = <<<'TXT'
-        Active-plan marker for the code-commandments keep-going Stop hook (`commandments plan-reminder`).
-        The value lines above the separator are: the HEAD at the last nudge, the consecutive no-progress
-        nudge count, and the total nudge count. Written when a plan is approved, read on every stop,
-        cleared by `commandments plan done` or when the branch merges back. Safe to delete — deleting it
-        simply ends the keep-going nudges for this plan.
-        TXT;
-
-    private const string STUCK_EXPLANATION = <<<'TXT'
-        -----
-        Stuck signal for the code-commandments keep-going Stop hook (`commandments plan stuck`). The first
-        line is the HEAD the plan was marked stuck at (for reference). It is ONE-SHOT: it suppresses the
-        next Stop nudge — the agent is blocked and needs the human — then clears itself, so keep-going
-        resumes the moment the agent continues. The plan stays active (it is NOT done). Also cleared on
-        `plan done`. Safe to delete — deleting it just resumes the keep-going nudges.
-        TXT;
-
-    public function __construct(private readonly MarkerFile $file) {}
+    public function __construct(private readonly StateFile $file) {}
 
     public static function inSession(Workspace $workspace): self
     {
-        return new self(new MarkerFile($workspace->path('.plan-active')));
+        return new self(new StateFile($workspace->path('.plan-active'), self::legend()));
+    }
+
+    public static function legend(): Legend
+    {
+        return new Legend(
+            'Active-plan marker for the code-commandments keep-going Stop hook (`commandments plan-reminder`). '
+                . "Written when a plan is approved, read on every stop, cleared by `commandments plan done` or\n"
+                . 'when the branch merges back.',
+            [
+                'head' => 'the git HEAD at the last keep-going nudge',
+                'no_progress_nudges' => 'nudges since HEAD last moved — a spinning agent is capped by it, and '
+                    . 'progress resets it',
+                'total_nudges' => 'every keep-going nudge this plan has had',
+                'stuck' => 'yes = the agent is BLOCKED and needs the human. One-shot: it suppresses the '
+                    . 'next stop nudge and clears itself, and the plan stays ACTIVE (it is NOT done)',
+                'stuck_at' => 'the HEAD it was marked stuck at, for reference (`commandments plan status`)',
+            ],
+            defaults: new State(head: '', no_progress_nudges: 0, total_nudges: 0, stuck: false, stuck_at: ''),
+            safe: 'deleting it simply ends the keep-going nudges for this plan',
+        );
     }
 
     /**
-     * Record that a plan is now active at $head, with the nudge counters reset.
+     * Record that a plan is now active at $head, with the nudge counters reset. A fresh plan starts
+     * from the EMPTY state, so nothing of the plan before it — least of all a stuck signal — carries in.
      */
     public function activate(string $head): void
     {
-        $this->save(new PlanState($head, 0, 0));
+        $this->file->write(new State(
+            head: $head,
+            no_progress_nudges: 0,
+            total_nudges: 0,
+            stuck: false,
+            stuck_at: '',
+        ));
     }
 
     public function isActive(): bool
@@ -66,7 +80,7 @@ final class PlanMarker
      */
     public function markStuck(string $head): void
     {
-        $this->stuck()->write([$head], self::STUCK_EXPLANATION);
+        $this->file->write($this->file->read()->with(stuck: true, stuck_at: $head));
     }
 
     /**
@@ -75,17 +89,14 @@ final class PlanMarker
      */
     public function stuckAt(): ?string
     {
-        return $this->stuck()->exists() ? trim($this->stuck()->value(0)) : null;
+        $state = $this->file->read();
+
+        return $state->flag('stuck') ? trim($state->text('stuck_at')) : null;
     }
 
     public function clearStuck(): void
     {
-        $this->stuck()->delete();
-    }
-
-    private function stuck(): MarkerFile
-    {
-        return new MarkerFile(dirname($this->file->path()) . '/.plan-stuck');
+        $this->file->write($this->file->read()->with(stuck: false, stuck_at: ''));
     }
 
     /**
@@ -99,29 +110,34 @@ final class PlanMarker
         return $state;
     }
 
+    /**
+     * The plan is over — and the stuck signal goes with it, since it is part of the same state.
+     */
     public function clear(): void
     {
         $this->file->delete();
-        $this->clearStuck(); // the plan is over — a lingering stuck signal would outlive it.
     }
 
     /**
-     * The persisted {@see PlanState}, or an empty one when there is no marker (or it's truncated
-     * below its three value lines) — absence is modelled as the empty state, never patched per-field.
+     * The persisted {@see PlanState} — the empty state when there is no marker, since absence is
+     * modelled as the empty state rather than patched per-field.
      */
     private function state(): PlanState
     {
-        $lines = $this->file->values();
+        $state = $this->file->read();
 
-        if (count($lines) < 3) {
-            return new PlanState('', 0, 0);
-        }
-
-        return new PlanState($lines[0], (int) $lines[1], (int) $lines[2]);
+        return new PlanState($state->text('head'), $state->int('no_progress_nudges'), $state->int('total_nudges'));
     }
 
-    private function save(PlanState $state): void
+    /**
+     * Write the nudge counters, keeping whatever stuck signal stands — a nudge is not what resolves it.
+     */
+    private function save(PlanState $plan): void
     {
-        $this->file->write([$state->head, (string) $state->stuck, (string) $state->total], self::EXPLANATION);
+        $this->file->write($this->file->read()->with(
+            head: $plan->head,
+            no_progress_nudges: $plan->stuck,
+            total_nudges: $plan->total,
+        ));
     }
 }

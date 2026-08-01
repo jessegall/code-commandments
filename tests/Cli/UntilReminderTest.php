@@ -148,44 +148,16 @@ final class UntilReminderTest extends TestCase
         $this->assertSame('block', $this->stop()[0]['decision'] ?? null, 'and the gate holds again right after');
     }
 
-    public function test_a_tool_use_under_the_gate_counts_as_work(): void
+    public function test_a_held_stop_drops_what_the_agent_said_was_blocked(): void
     {
+        // A claim is about the list as it stands NOW. Being sent back in spends it, so an agent cannot
+        // mark everything blocked once and coast on that for the rest of the session.
         $this->gate()->add('the suite is green');
-
-        $this->postToolUse('Read');
-
-        $this->assertSame(1, $this->gate()->workSinceHold());
-    }
-
-    public function test_talking_to_the_gate_and_the_to_do_list_are_not_work(): void
-    {
-        // The two moves an agent can make without touching the problem: reading the gate back to itself
-        // and reordering its to-do list. Counting either would let a `list` + `stuck` pass as an attempt.
-        $this->gate()->add('the suite is green');
-
-        $this->postToolUse('Bash', 'vendor/bin/commandments until list');
-        $this->postToolUse('TodoWrite');
-
-        $this->assertSame(0, $this->gate()->workSinceHold());
-    }
-
-    public function test_work_is_not_counted_when_no_gate_stands(): void
-    {
-        $this->postToolUse('Read');
-
-        $this->assertSame(0, $this->gate()->workSinceHold(), 'an ordinary session pays nothing for the measure');
-    }
-
-    public function test_a_held_stop_restarts_the_work_count(): void
-    {
-        // Work is measured from the LAST hold, so "nothing worked since you were sent back" stays a
-        // statement about this turn — not about the whole session.
-        $this->gate()->add('the suite is green');
-        $this->postToolUse('Read');
+        $this->gate()->markBlocked(1, 'the user must pick an API');
 
         $this->stop();
 
-        $this->assertSame(0, $this->gate()->workSinceHold());
+        $this->assertSame([], $this->gate()->blocked());
     }
 
     public function test_it_releases_itself_after_the_cap_so_a_wedged_session_can_stop(): void
@@ -301,7 +273,7 @@ final class UntilReminderTest extends TestCase
 
         $this->gate()->met(1); // Real progress — the agent is working, not spinning.
 
-        $this->assertSame(0, $this->gate()->blocks());
+        $this->assertSame(0, $this->gate()->heldStops());
         $this->assertStringContainsString('Do not stop', $this->reason($this->stop()));
     }
 
@@ -311,7 +283,7 @@ final class UntilReminderTest extends TestCase
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
         $this->assertSame([], $this->stop(), 'the plan owns the stop — one hook pushes the agent back in');
-        $this->assertSame(0, $this->gate()->blocks(), 'and a long grind never burns the release cap');
+        $this->assertSame(0, $this->gate()->heldStops(), 'and a long grind never burns the release cap');
 
         PlanMarker::inSession(Workspace::at($this->root))->clear(); // `plan done`
 
@@ -365,7 +337,7 @@ final class UntilReminderTest extends TestCase
 
         $this->assertStringContainsString('DRAIN THE LIST FIRST', $reason);
         $this->assertStringContainsString('leave the blocked one for last', $reason);
-        $this->assertStringContainsString('Only when NOT ONE condition left standing can move', $reason);
+        $this->assertStringContainsString('until blocked <n>', $reason, 'and the per-condition claim is spelled out');
         $this->assertStringContainsString('NOT FOR A BLOCKED ITEM', $reason, 'the LOCAL reading is named and refused (#422)');
     }
 
@@ -409,6 +381,6 @@ final class UntilReminderTest extends TestCase
         new UntilReminder($io)->run([]);
 
         $this->assertSame([], $io->emitted);
-        $this->assertSame(0, $this->gate()->blocks(), 'and it does not burn a block');
+        $this->assertSame(0, $this->gate()->heldStops(), 'and it does not burn a block');
     }
 }

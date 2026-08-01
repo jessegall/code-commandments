@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Plan;
 
+use JesseGall\CodeCommandments\Cli\State\Legend;
+use JesseGall\CodeCommandments\Cli\State\State;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -18,13 +21,25 @@ use JesseGall\CodeCommandments\Workspace;
 final class PlanTesting
 {
     public function __construct(
-        private readonly string $path,
+        private readonly StateFile $file,
         private readonly PlanProfile $plan,
     ) {}
 
     public static function inSession(Workspace $workspace, PlanProfile $plan): self
     {
-        return new self($workspace->path('.plan-testing'), $plan);
+        return new self(new StateFile($workspace->path('.plan-testing'), self::legend()), $plan);
+    }
+
+    public static function legend(): Legend
+    {
+        return new Legend(
+            'How tests are written and run while THIS plan is ground out (`commandments plan testing '
+                . '"<methodology>"`), re-surfaced by the testing reminder so it survives a long run.',
+            ['methodology' => "this run's chosen methodology. Empty means the project default from "
+                . '`$config->planExecution(...)->testFlow(...)` is in force'],
+            defaults: new State(methodology: ''),
+            safe: "deleting it falls back to the project's default methodology",
+        );
     }
 
     /**
@@ -32,11 +47,7 @@ final class PlanTesting
      */
     public function chosen(): string
     {
-        if (! is_file($this->path)) {
-            return '';
-        }
-
-        return trim((string) file_get_contents($this->path));
+        return $this->file->read()->text('methodology');
     }
 
     /**
@@ -52,16 +63,13 @@ final class PlanTesting
      */
     public function set(string $methodology): void
     {
-        $methodology = trim($methodology);
-
-        if ($methodology === '') {
+        if (trim($methodology) === '') {
             $this->clear();
 
             return;
         }
 
-        @mkdir(dirname($this->path), 0777, true);
-        @file_put_contents($this->path, $methodology . "\n");
+        $this->file->write(new State(methodology: $methodology));
     }
 
     /**
@@ -69,6 +77,6 @@ final class PlanTesting
      */
     public function clear(): void
     {
-        @unlink($this->path);
+        $this->file->delete();
     }
 }

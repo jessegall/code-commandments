@@ -6,7 +6,6 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
-use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -55,10 +54,10 @@ final class UntilReminder extends Hook
     }
 
     /**
-     * Count the WORK done under the gate. `until stuck` is a claim that nothing on the list can move
-     * without the user, and until #419 it was accepted on assertion alone — so the gate measures whether
-     * the agent actually tried between being sent back and claiming to be blocked. Only counted while a
-     * gate stands: an ordinary session pays nothing for this.
+     * Watch the WORK done under the gate — for two things, and only while a gate stands, so an ordinary
+     * session pays nothing for it. Going back to work VOIDS a half-answered `stuck` claim (an agent that
+     * took the challenge and carried on starts the next claim from the beginning), and it is what the
+     * to-do drift is measured in.
      */
     protected function onPostToolUse(HookEvent $event): int
     {
@@ -68,10 +67,8 @@ final class UntilReminder extends Hook
             return $this->pass();
         }
 
-        $drift = $this->drift($event);
-
         if ($event->isTool('TodoWrite')) {
-            $drift->reset(); // The visible list was just trued up — the drift starts over.
+            $gate->resetDrift(); // The visible list was just trued up — the drift starts over.
 
             return $this->pass();
         }
@@ -80,28 +77,14 @@ final class UntilReminder extends Hook
             return $this->pass();
         }
 
-        $gate->recordWork();
-        $gate->dropClaim(); // Back at work, so the half-answered `stuck` claim is void: an agent that took
-        // the challenge and carried on starts the next claim from the beginning, never mid-way through.
+        $gate->dropClaim(); // Back at work, so the half-answered `stuck` claim is void.
 
-        return $drift->due() ? $this->inject($event, $this->stale()) : $this->pass();
-    }
-
-    /**
-     * How far the to-do list the USER can see has drifted from the work actually being done: one count per
-     * piece of work, reset by every `TodoWrite`. A long run of work with no update to that list means the
-     * user is watching a list that no longer describes the session — the thing they cannot check for
-     * themselves. Counted only while a gate stands, so it speaks exactly when the user is waiting on
-     * something.
-     */
-    private function drift(HookEvent $event): Counter
-    {
-        return Counter::named(
-            $event->workspace(),
-            'until-todo-drift',
-            'counts the work done since the visible to-do list was last updated',
-            every: self::DRIFT,
-        );
+        // How far the to-do list the USER can see has drifted from the work actually being done. A long
+        // run of work with no update to that list means the user is watching a list that no longer
+        // describes the session — the thing they cannot check for themselves. It is the GATE's own count,
+        // so it lives and dies with the gate: a count kept beside it in a file of its own used to outlive
+        // it, and the next gate then inherited a drift that had nothing to do with its list.
+        return $gate->driftedFor(self::DRIFT) ? $this->inject($event, $this->stale()) : $this->pass();
     }
 
     private function stale(): string
@@ -177,8 +160,6 @@ final class UntilReminder extends Hook
             return $this->block($this->released($conditions));
         }
 
-        $gate->resetWork(); // This hold is the mark the next `stuck` claim is measured against (#419).
-
         return $this->block($this->hold($conditions));
     }
 
@@ -238,11 +219,12 @@ final class UntilReminder extends Hook
             . "question and everything else DONE is the whole point of the gate.\n"
             . "`stuck` IS NOT FOR A BLOCKED ITEM — it is for a blocked LIST. \"The thing in front of me needs the "
             . "user\" is not being stuck; that is ONE blocked item and the rest of the list still to work. Leave the "
-            . "blocked one for last and carry on with the others. Only when NOT ONE condition left standing can move "
-            . "without the user may you run `vendor/bin/commandments until stuck --reason=\"<why NONE of them can "
-            . "move>\" --blocked=<every standing id>` (NOT `until clear`) — you have to name them ALL, because that "
-            . "is what the claim says. It is also REFUSED until you have actually worked the list since reading "
-            . "this: a blocker you have only reasoned about is not a blocker you have tested.";
+            . "blocked one for last and carry on with the others. When a condition genuinely needs the user, say so "
+            . "AGAINST THAT CONDITION as you meet it — `vendor/bin/commandments until blocked <n> --reason=\"<what "
+            . "only the user can give>\"` — and carry on with the rest. Once EVERY standing condition carries a "
+            . "reason, `vendor/bin/commandments until stuck` (NOT `until clear`) releases one stop. Nothing you said "
+            . "before this message counts: being sent back in DROPS every block, so the claim is about the list as it "
+            . "stands now.";
     }
 
     /**

@@ -104,10 +104,12 @@ so when it says "and N more", run `vendor/bin/commandments until list` to read t
    last one is struck off. Mark the matching to-do item completed at the same time, so the visible
    list tracks the gate.
 3. **Doesn't hold?** Keep working. That is the whole point of the gate.
-4. **Genuinely blocked** — you need a decision, a credential, something you cannot get?
-   `vendor/bin/commandments until stuck`, then tell the user exactly which condition you cannot meet
-   and why. That releases ONE stop while keeping the condition in force; the gate holds again the
-   moment you continue. Read the next section before you reach for it.
+4. **Genuinely blocked** — that ONE condition needs a decision, a credential, something you cannot
+   get? Say so against it: `vendor/bin/commandments until blocked <n> --reason="<what only they can
+   give>"`, and carry on with the rest of the list. Once EVERY standing condition carries a reason,
+   `vendor/bin/commandments until stuck` releases ONE stop so you can hand back — the conditions stay
+   in force, and the gate holds again the moment you continue. Read the next section before you
+   reach for it.
 
 ## Drain the list before you ask
 
@@ -115,9 +117,10 @@ The gate is a QUEUE, and you work it until it stops moving. One condition needin
 block the ones that don't: reorder, take everything you can do on your own, and leave the blocked one
 standing.
 
-- **Blocked on the user?** Park that one mentally, move to the next condition, and keep going.
-- **Only when NOTHING left can move without them** — every remaining condition needs a decision, a
-  credential, an answer only they have — do you run `until stuck` and hand back.
+- **Blocked on the user?** Record it against that condition (`until blocked <n> --reason="…"`), move
+  to the next one, and keep going. You mark them in whatever order you meet them.
+- **Only when NOTHING left can move without them** — every remaining condition carries its own
+  reason — do you run `until stuck` and hand back.
 - **Ask once, ask fully.** If two conditions both need a decision, put both questions in the same
   hand-back. Two stops for two questions is two interruptions where one would have done.
 
@@ -126,9 +129,11 @@ you were going to be busy for an hour anyway. Coming back with a question and ev
 DONE is what the gate is for. The same applies to the to-do list that mirrors it — a blocked item
 moves to the end, it does not become the reason the rest sit still.
 
-`until stuck` is a claim about the WHOLE list, not about one condition. It will name what else is
-standing when you run it — if any of those is something you could still be doing, you called it too
-early.
+`until stuck` is a claim about the WHOLE list, not about one condition — so it is not asserted, it is
+COUNTED. It is refused while a single standing condition has nothing said about it, and it names those
+back at you: if any of them is something you could still be doing, you called it too early. Being sent
+back in DROPS every block, so the claim is always about the list as it stands then, never about what
+you said an hour ago.
 
 **Never** run `until clear` to escape a condition you simply haven't met. `clear` drops the user's
 gate entirely and is theirs to ask for ("forget that condition"). Marking a condition `met` when it
@@ -153,7 +158,8 @@ and tells you to report back. Meeting a condition resets that count — real pro
 | `commandments until "<condition>"` | set a condition (the form the user speaks; `add`/`set` do the same) |
 | `commandments until list` | what stands right now (the default), and what is paused |
 | `commandments until met <n>` | strike condition <n> off as VERIFIED — the gate lifts when none remain |
-| `commandments until stuck --reason="<why NONE can move>" --blocked=<every id>` | release ONE stop when NOT ONE standing condition can move without the user — the claim must name every condition and is CHALLENGED twice before it is acted on |
+| `commandments until blocked <id> --reason="<what only the user can give>"` | record that ONE condition is waiting on the user, and why — the reason is kept against that condition |
+| `commandments until stuck` | release ONE stop, once EVERY standing condition carries a reason. The claim is CHALLENGED twice before it is acted on |
 | `commandments until pause` | THE USER's switch — set the whole gate aside, conditions kept verbatim |
 | `commandments until resume` | put the paused gate back in force |
 | `commandments until clear` | drop the gate entirely — the user's call, never an escape hatch |

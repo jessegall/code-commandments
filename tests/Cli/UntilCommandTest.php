@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\MarkerFile;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Cli\Until\UntilCommand;
 use JesseGall\CodeCommandments\Workspace;
@@ -69,22 +68,6 @@ final class UntilCommandTest extends TestCase
         return UntilGate::inSession(Workspace::at($this->root));
     }
 
-    /**
-     * Plant a LIVE marker holding $conditions (`id<TAB>text` lines) — the only way to reach the state a
-     * pre-#418 session could leave behind: conditions in force WHILE the gate stands paused.
-     */
-    private function live(string ...$conditions): void
-    {
-        $marker = new MarkerFile(Workspace::at($this->root)->path('.until'));
-        $lastId = 0;
-
-        foreach ($conditions as $condition) {
-            $lastId = max($lastId, (int) explode("\t", $condition)[0]);
-        }
-
-        $marker->write(['0', '0', (string) $lastId, ...$conditions], 'planted by a test');
-    }
-
     public function test_a_bare_condition_sets_the_gate(): void
     {
         $this->assertSame(0, $this->exec('the full test suite passes'));
@@ -142,41 +125,78 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([1 => 'tests pass'], $this->gate()->all(), 'the condition stays in force');
     }
 
-    public function test_stuck_is_a_challenge_not_a_refusal_once_the_list_has_been_worked(): void
+    public function test_stuck_is_a_challenge_not_a_refusal_once_every_condition_is_spoken_for(): void
     {
         // `stuck` claims the WHOLE list is blocked, so it prints the others back at the agent — but an
-        // agent that HAS worked the list is never trapped by the challenge.
+        // agent that HAS spoken for every condition is never trapped by the challenge.
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
-        $this->gate()->recordWork();
 
         $this->assertSame(0, $this->stuck());
         $this->assertTrue($this->gate()->isStuck());
         $this->assertCount(2, $this->gate()->all(), 'and every condition stays in force');
     }
 
-    public function test_stuck_is_refused_while_several_conditions_stand_and_nothing_was_worked(): void
+    public function test_stuck_is_refused_while_a_standing_condition_has_nothing_said_about_it(): void
     {
         // #419: a gate holding a dozen never-attempted conditions was emptied by one `stuck`. Claiming
-        // that NOTHING on the list can move without the user is a claim that has to be tested first.
+        // that NOTHING on the list can move without the user is a claim that has to be made condition by
+        // condition — anything unspoken-for is work still owed.
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
 
-        $this->assertSame(2, $this->stuck());
+        $this->assertSame(2, $this->exec('stuck', '--reason=the user must choose', '--blocked=1'));
         $this->assertFalse($this->gate()->isStuck(), 'no stop is released');
         $this->assertCount(2, $this->gate()->all(), 'and nothing is dropped either');
     }
 
-    public function test_a_refused_stuck_goes_through_as_soon_as_the_agent_has_tried(): void
+    public function test_a_refused_stuck_goes_through_once_the_last_condition_is_spoken_for(): void
     {
         $this->exec('add', 'the migration runs');
         $this->exec('add', 'the changelog has an entry');
-        $this->assertSame(2, $this->exec('stuck', '--reason=the user must choose a strategy', '--blocked=1,2'));
+        $this->assertSame(2, $this->exec('stuck', '--reason=the user must choose a strategy', '--blocked=1'));
+        $this->assertSame(0, $this->gate()->claimRound(), 'a partial claim never reaches the challenge');
 
-        $this->gate()->recordWork();
+        $this->exec('blocked', '2', '--reason=the wording is the user\'s call');
 
         $this->assertSame(0, $this->stuck(), 'the refusal is a challenge, not a lock');
         $this->assertTrue($this->gate()->isStuck());
+    }
+
+    public function test_a_condition_is_marked_blocked_with_its_own_reason(): void
+    {
+        // The reason belongs to the CONDITION, not to a counter beside the gate: an agent works the list
+        // in its own order, so what matters is which of these is waiting on the user, and for what.
+        $this->exec('add', 'issue #224 is fixed');
+        $this->exec('add', 'the suite is green');
+
+        $this->assertSame(0, $this->exec('blocked', '1', '--reason=needs a stack trace only Jesse has'));
+
+        $this->assertSame([1 => 'needs a stack trace only Jesse has'], $this->gate()->blocked());
+        $this->assertSame([2 => 'the suite is green'], $this->gate()->unblocked(), 'the rest is still work');
+    }
+
+    public function test_marking_a_condition_blocked_needs_a_reason_and_a_standing_id(): void
+    {
+        $this->exec('add', 'the suite is green');
+
+        $this->assertSame(2, $this->exec('blocked', '1'), 'a claim with no reason is no claim');
+        $this->assertSame(2, $this->exec('blocked', '7', '--reason=whatever'), 'and no such condition');
+        $this->assertSame([], $this->gate()->blocked());
+    }
+
+    public function test_a_held_stop_drops_every_block_so_the_claim_is_made_afresh(): void
+    {
+        // Being sent back in is the point: what the agent said about the list an hour ago is not a claim
+        // about the list it is looking at now.
+        $this->exec('add', 'issue #224 is fixed');
+        $this->exec('add', 'the suite is green');
+        $this->exec('blocked', '1,2', '--reason=needs a decision from the user');
+
+        $this->gate()->recordBlock(); // what the Stop hook does when it holds a stop
+
+        $this->assertSame([], $this->gate()->blocked());
+        $this->assertSame(2, $this->exec('stuck'), 'so `stuck` is back to being unearned');
     }
 
     public function test_a_lone_standing_condition_can_always_be_reported_blocked(): void
@@ -205,7 +225,6 @@ final class UntilCommandTest extends TestCase
         $this->exec('add', 'issue #224 is fixed');
         $this->exec('add', 'the 89 mechanical edits are done');
         $this->exec('add', 'the suite is green');
-        $this->gate()->recordWork();
 
         $code = $this->exec('stuck', '--reason=#224 needs a stack trace only Jesse has', '--blocked=1');
 
@@ -220,7 +239,6 @@ final class UntilCommandTest extends TestCase
         // it can still say it, and then answers for all three.
         $this->exec('add', 'issue #224 is fixed');
         $this->exec('add', 'issue #228 is decided');
-        $this->gate()->recordWork();
 
         $this->assertSame(2, $this->exec('stuck', '--reason=both need Jesse', '--blocked=1,2'), 'challenged');
         $this->assertSame(1, $this->gate()->claimRound(), 'the coverage held, so the challenge began');
@@ -233,7 +251,6 @@ final class UntilCommandTest extends TestCase
         $this->exec('add', 'second');
         $this->exec('add', 'third');
         $this->exec('met', '2');
-        $this->gate()->recordWork();
 
         $this->assertSame(2, $this->exec('stuck', '--reason=all of it needs the user', '--blocked=1,2'),
             'naming a struck-off id does not cover the standing one');
@@ -276,7 +293,6 @@ final class UntilCommandTest extends TestCase
     {
         $this->exec('add', 'the user picks one of the two APIs');
         $this->exec('add', 'the suite is green');
-        $this->gate()->recordWork();
         $this->exec('stuck', '--reason=I need the API choice', '--blocked=1,2');
 
         $this->exec('met', '2');
@@ -317,19 +333,6 @@ final class UntilCommandTest extends TestCase
 
         $this->assertSame([1 => 'first', 3 => 'third'], $this->gate()->all());
         $this->assertSame(2, $this->exec('met', '2'), 'a stale met on the struck id is an error, not a mis-strike');
-    }
-
-    public function test_a_legacy_marker_without_ids_reads_back_with_positional_ids(): void
-    {
-        // A pre-stable-ids marker still holds bare condition texts — it must keep gating (never
-        // silently lift mid-session on upgrade) and renumber once into stable ids.
-        $marker = Workspace::at($this->root)->path('.until');
-        mkdir(dirname($marker), 0777, true);
-        file_put_contents($marker, "0\n0\ntests pass\nreadme updated\n-----\nlegacy\n");
-
-        $this->assertSame([1 => 'tests pass', 2 => 'readme updated'], $this->gate()->all());
-        $this->assertSame(0, $this->exec('met', '1'));
-        $this->assertSame([2 => 'readme updated'], $this->gate()->all());
     }
 
     public function test_pause_sets_the_whole_gate_aside_and_resume_puts_it_back(): void
@@ -401,33 +404,6 @@ final class UntilCommandTest extends TestCase
         $this->assertSame([1 => 'tests pass'], $this->gate()->pausedConditions(), 'and it survives intact');
     }
 
-    public function test_a_split_gate_left_by_an_older_session_folds_back_together(): void
-    {
-        // #403/#418: a version before the fix wrote a condition set mid-pause to the LIVE marker, so a
-        // session can be upgraded mid-flight with both markers on disk. Neither side may be lost:
-        // pausing merges into what is set aside, resuming folds the set-aside ones in behind the live.
-        $this->exec('add', 'A');
-        $this->exec('pause');
-        $this->live("1\tB");
-
-        $this->assertSame(0, $this->exec('pause'));
-
-        $this->assertSame([1 => 'A', 2 => 'B'], $this->gate()->pausedConditions(), 'B continues past A');
-        $this->assertSame([], $this->gate()->all(), 'and nothing is left holding');
-    }
-
-    public function test_resume_folds_the_paused_conditions_in_behind_a_split_gates_live_ones(): void
-    {
-        $this->exec('add', 'A');
-        $this->exec('pause');
-        $this->live("1\tB");
-
-        $this->assertSame(0, $this->exec('resume'));
-
-        $this->assertSame([1 => 'B', 2 => 'A'], $this->gate()->all());
-        $this->assertFalse($this->gate()->isPaused());
-    }
-
     public function test_pausing_the_same_condition_twice_does_not_double_it(): void
     {
         $this->exec('add', 'A');
@@ -448,18 +424,6 @@ final class UntilCommandTest extends TestCase
         $this->exec('resume');
 
         $this->assertSame([1 => 'A'], $this->gate()->all());
-    }
-
-    public function test_meeting_a_split_gates_live_condition_leaves_the_paused_one_intact(): void
-    {
-        $this->exec('add', 'tests pass');
-        $this->exec('pause');
-        $this->live("1\tthe docs build");
-
-        $this->exec('met', '1');
-
-        $this->assertTrue($this->gate()->isPaused(), 'the paused gate is untouched state, not an empty gate');
-        $this->assertSame([1 => 'tests pass'], $this->gate()->pausedConditions());
     }
 
     public function test_list_shows_what_is_paused_alongside_what_stands(): void

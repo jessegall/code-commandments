@@ -17,6 +17,7 @@ use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
+use JesseGall\CodeCommandments\Cli\State\Migration;
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration so a
  * Publishes the current skills, CLAUDE.md briefing, config surface, and Claude Code hooks
@@ -61,6 +62,7 @@ final class Sync implements Command
         $this->ensureCommandmentsGitignore($consumer);
         HookRegistry::wire("{$consumer}/.claude/settings.json", HookRegistry::forProject($consumer));
         $this->removeLegacyArtifacts($consumer);
+        $this->migrateState($consumer);
 
         fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");
 
@@ -118,6 +120,21 @@ final class Sync implements Command
         if (! is_file($path) || (string) file_get_contents($path) !== $content) {
             @mkdir(dirname($path), 0777, true);
             file_put_contents($path, $content);
+        }
+    }
+
+    /**
+     * Bring the project's session state up to the current file FORMAT — once, on the sync that follows
+     * the upgrade ({@see Migration}). Deleting these files would be simpler, but the stop gate's
+     * conditions and a plan's constraints are things the USER asked for; an upgrade must not throw
+     * away instructions the agent is meant to be held to. Silent when there is nothing to convert.
+     */
+    private function migrateState(string $consumer): void
+    {
+        $converted = new Migration(Workspace::at($consumer))->run();
+
+        if ($converted !== []) {
+            fwrite(STDOUT, '↻ session state upgraded — carried over ' . implode(', ', $converted) . ".\n");
         }
     }
 

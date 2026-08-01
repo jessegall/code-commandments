@@ -4,26 +4,35 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
+use JesseGall\CodeCommandments\Cli\State\Legend;
+use JesseGall\CodeCommandments\Cli\State\State;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
  * A tiny persisted counter for ANY recurring hook signal — the shared heartbeat under the reminder
  * hooks. {@see named} builds one from a kebab-case slug (the session's `.{slug}-count` file); drive it
  * by hand ({@see bump}/{@see reset}/{@see clear}) or via `Counter::named($ws, 'my-thing')->due(25)`.
- * Session-scoped ({@see Workspace::path}); the `.*-count` naming convention lets {@see clearAll} wipe
- * the session's counters, so a new counter joins the fresh-session reset just by using {@see named}.
+ * Session-scoped ({@see Workspace::path}) and written in the shared {@see StateFile} format, so the
+ * number carries its NAME and its meaning rather than sitting bare on line one; the `.*-count` naming
+ * convention lets {@see clearAll} wipe the session's counters, so a new counter joins the
+ * fresh-session reset just by using {@see named}.
+ *
+ * A counter that belongs to a larger piece of state does NOT live here — it lives in that state's own
+ * file, as a named value beside what it counts (the stop gate's to-do drift is a value of
+ * {@see \JesseGall\CodeCommandments\Cli\Until\UntilGate}). A count in a file of its own outlives the
+ * thing it counts, and a stale count read against a fresh gate is a bug, not a rounding error.
  */
 final class Counter
 {
     public function __construct(
-        private readonly string $path,
-        private readonly string $explanation,
+        private readonly StateFile $file,
         private readonly int $every = 25,
     ) {}
 
     /**
      * A counter named by a kebab-case $slug — the general factory. Its file is the session's
-     * `.{slug}-count`; $describe is an optional one-line note written beneath the count so the file
+     * `.{slug}-count`; $describe is an optional one-line note written into the legend so the file
      * self-documents. $every is this counter's OWN cadence — how many calls between fires
      * ({@see due}/{@see firstThenEvery}) — so each counter picks its own rhythm (a chatty nudge every
      * 10, a steady one every 25).
@@ -31,9 +40,17 @@ final class Counter
     public static function named(Workspace $workspace, string $slug, string $describe = '', int $every = 25): self
     {
         return new self(
-            $workspace->path('.' . $slug . '-count'),
-            self::note($slug, $describe),
+            new StateFile($workspace->path('.' . $slug . '-count'), self::legend($slug, $describe)),
             $every,
+        );
+    }
+
+    private static function legend(string $slug, string $describe): Legend
+    {
+        return new Legend(
+            "Code-commandments counter `{$slug}` — a hook heartbeat.",
+            ['count' => 'the running count' . ($describe === '' ? '' : ". It {$describe}")],
+            defaults: new State(count: 0),
         );
     }
 
@@ -55,7 +72,7 @@ final class Counter
      */
     public function count(): int
     {
-        return is_file($this->path) ? (int) file_get_contents($this->path) : 0;
+        return $this->file->read()->int('count');
     }
 
     /**
@@ -94,7 +111,7 @@ final class Counter
 
     public function clear(): void
     {
-        @unlink($this->path);
+        $this->file->delete();
     }
 
     /**
@@ -112,15 +129,6 @@ final class Counter
 
     private function write(int $count): void
     {
-        @mkdir(dirname($this->path), 0777, true);
-        @file_put_contents($this->path, $count . "\n" . $this->explanation . "\n");
-    }
-
-    private static function note(string $slug, string $describe): string
-    {
-        $tail = $describe === '' ? '' : " It {$describe}.";
-
-        return "-----\nCode-commandments counter `{$slug}` (a hook heartbeat). The number on the first line is "
-            . "the running count.{$tail} Safe to delete — it regenerates.";
+        $this->file->write(new State(count: $count));
     }
 }
