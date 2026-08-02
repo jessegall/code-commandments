@@ -48,4 +48,26 @@ final class StringMatchMirrorsEnumDetectorTest extends TestCase
         // the ->value form (EnumValueMatch's job), excluded here.
         $this->assertSame(['S::mirrors'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_leaves_a_match_over_a_count_alone_though_an_int_enum_shares_its_ordinals(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        enum Priority: int {
+            case BeforeHostCodeLoads = 0;
+            case AfterHostCodeLoads = 1;
+        }
+        class S {
+            public function counted(int $many, string $one, string $more): string {
+                return match ($many) {
+                    0 => 'None yet',
+                    1 => '1 '.$one,
+                    default => $many.' '.$more,
+                };
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new StringMatchMirrorsEnumDetector)->find(Codebase::fromString($code)));
+    }
 }

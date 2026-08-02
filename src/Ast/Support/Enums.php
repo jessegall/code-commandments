@@ -60,14 +60,22 @@ final class Enums
 
     /**
      * Do these two-plus literals all belong to a single backed enum's cases — i.e.
-     * are they an enum's values spelled out as loose strings/ints?
+     * are they an enum's values spelled out as loose strings?
+     *
+     * A NUMBER is never evidence. `'pending'`/`'shipped'` are names, and finding them
+     * loose beside an enum that owns them says the enum was bypassed; `0`/`1` are
+     * quantities that belong to every pluralisation, index test and retry counter in
+     * a codebase, so an int-backed enum whose ordinals happen to start at 0 would
+     * mirror all of them. Nothing in the AST separates a count from a case ordinal —
+     * only the author's intent does — so numeric literals are dropped before the
+     * comparison, and a set with fewer than two names left over mirrors nothing.
      *
      * @param  list<string>  $literals
      * @param  array<string, list<string>>  $casesByEnum
      */
     public static function mirroredBy(array $literals, array $casesByEnum): bool
     {
-        $literals = array_unique($literals);
+        $literals = array_unique(array_filter($literals, static fn (string $literal): bool => ! is_numeric($literal)));
 
         if (count($literals) < 2) {
             return false;
