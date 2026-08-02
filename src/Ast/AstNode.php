@@ -3576,6 +3576,31 @@ class AstNode
     }
 
     /**
+     * The name of the call this node is an ARGUMENT TO — `hasOne` for the `Picker::class` in
+     * `$this->hasOne(Picker::class)` — or null when it is not an argument at all.
+     *
+     * It climbs, because a node is rarely the whole argument: the `Name` inside `Picker::class` and
+     * the `Picker::class` around it are both passed to the same call, and a caller holding either
+     * deserves the same answer. Named and positional arguments read alike, since both wear an `Arg`.
+     * Only the IMMEDIATE call counts — the climb stops at the first call it meets, so a value nested
+     * in `hasOne(alias(Picker::class))` is an argument to `alias`, not to `hasOne`.
+     */
+    public function argumentOfCall(): ?string
+    {
+        for ($node = $this; $node->node !== null; $node = $node->parent()) {
+            if ($node->node instanceof Arg) {
+                return $node->parent()->callName();
+            }
+
+            if ($node !== $this && $node->callName() !== null) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * This node's call / attribute arguments (variadic placeholders dropped).
      *
      * @return list<Arg>

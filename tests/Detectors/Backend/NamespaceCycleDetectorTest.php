@@ -113,6 +113,53 @@ final class NamespaceCycleDetectorTest extends TestCase
         $this->assertSame([], $this->scopes($code));
     }
 
+    public function test_the_two_ends_of_an_association_are_not_a_cycle(): void
+    {
+        // Eloquent requires BOTH ends of a relation to name each other's class, so there is no arrow
+        // to invert: cutting either one deletes the relation rather than redirecting it.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Models {
+            class User {
+                public function picker() { return $this->hasOne(\Domain\Picking\Picker::class); }
+            }
+        }
+        namespace Domain\Picking {
+            class Picker {
+                public function user() { return $this->belongsTo(\App\Models\User::class); }
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->scopes($code));
+    }
+
+    public function test_a_real_reach_beside_an_association_is_still_the_cycle(): void
+    {
+        // The exemption is narrow: it covers the class named as the far END of a relation, nothing
+        // else the model happens to reach for. A registry lookup back into the models is a genuine
+        // arrow and stays reported.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Models {
+            class Variant {
+                public function product() { return $this->belongsTo(\Domain\Catalog\Product::class); }
+                public function lookup() { return \Domain\Catalog\SearchIndex::apply($this); }
+            }
+        }
+        namespace Domain\Catalog {
+            class Product {
+                public function variants() { return $this->hasMany(\App\Models\Variant::class); }
+            }
+            class SearchIndex {
+                public static function apply(\App\Models\Variant $variant) { return null; }
+            }
+        }
+        PHP;
+
+        $this->assertSame(['App\Models\Variant::lookup'], $this->scopes($code));
+    }
+
     /**
      * @return list<string>
      */

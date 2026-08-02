@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Packages\Tags\Association;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 /**
@@ -68,8 +70,28 @@ final class NamespaceGraph
                 continue;
             }
 
+            if (self::declaresAnAssociation($codebase, $reference)) {
+                continue;
+            }
+
             $this->arrows[$from][$to][] = $reference;
         }
+    }
+
+    /**
+     * Does this reference merely name the OTHER END of a two-way association — `Picker::class` in
+     * `$this->hasOne(Picker::class)`, answered by a `belongsTo(User::class)` on the far side?
+     *
+     * Such a reference is real, so it stays in {@see $references} and a proposed layer declaration
+     * still permits it. But it draws no ARROW, because an association has no direction to draw:
+     * the mapper requires both ends to name each other, so removing either one deletes the relation
+     * instead of redirecting it, and the pair of namespaces was never a cycle to cut. Which calls
+     * declare an association is a framework's fact, and it arrives through the exemption registry —
+     * the graph itself knows no ORM.
+     */
+    private static function declaresAnAssociation(Codebase $codebase, NodeMatch $reference): bool
+    {
+        return Exemptions::has(Association::class, $codebase, null, $reference->argumentOfCall());
     }
 
     /**

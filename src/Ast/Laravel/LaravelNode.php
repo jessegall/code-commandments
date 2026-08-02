@@ -102,6 +102,18 @@ final class LaravelNode extends NodeMatch
     public const array BINDING_METHODS = ['bind', 'bindIf', 'singleton', 'singletonIf', 'scoped', 'scopedIf', 'instance'];
 
     /**
+     * The Eloquent methods that DECLARE a relation, each taking the class at the other end —
+     * `$this->hasOne(Picker::class)` answered by `$this->belongsTo(User::class)`. An association is
+     * symmetric and Eloquent requires both ends to name each other, so a class named here is the
+     * counterpart of a two-way link, not a dependency one namespace chose to take on.
+     */
+    public const array RELATION_METHODS = [
+        'hasOne', 'hasOneThrough', 'hasMany', 'hasManyThrough',
+        'belongsTo', 'belongsToMany',
+        'morphOne', 'morphMany', 'morphToMany', 'morphedByMany',
+    ];
+
+    /**
      * The queueable contract — a job the framework SERIALIZES onto a queue and later revives itself.
      */
     public const string SHOULD_QUEUE = 'Illuminate\\Contracts\\Queue\\ShouldQueue';

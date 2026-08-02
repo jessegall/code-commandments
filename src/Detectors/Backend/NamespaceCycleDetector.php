@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\NamespaceGraph;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Packages\Exemptable;
+use JesseGall\CodeCommandments\Packages\Tags\Association;
 use JesseGall\CodeCommandments\Sins\Backend\NamespaceCycle;
 use JesseGall\CodeCommandments\Sins\Sin;
 
@@ -15,13 +17,25 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * `App\Orders` reaches back — so the pair is one unit wearing two names. A cycle is wrong under any
  * stack, so unlike {@see NamespaceDependencyDetector} this fires with no declaration. The findings
  * are the THINNER direction's arrows ({@see NamespaceGraph::arrowsClosingAMutualPair}), the edits
- * that make the pair point one way again. Points at dependency-direction.
+ * that make the pair point one way again. A reference tagged `Association` draws no arrow at all —
+ * both ends of a relation must name each other, so there is nothing to invert. Points at
+ * dependency-direction.
  */
-final class NamespaceCycleDetector implements Detector
+final class NamespaceCycleDetector implements Detector, Exemptable
 {
     public function sin(): Sin
     {
         return new NamespaceCycle();
+    }
+
+    /**
+     * The subject is the REFERENCE — which call it is an argument to — not the class or method it
+     * sits in, so {@see NamespaceGraph} applies it as it builds the graph rather than the central
+     * `ExemptBy` scopes. Declared here so `commandments exemptions` still lists what quiets the rule.
+     */
+    public function exemptions(): array
+    {
+        return [Association::class => []];
     }
 
     public function find(Codebase $codebase): array

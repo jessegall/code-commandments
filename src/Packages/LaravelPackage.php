@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Packages;
 
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;
+use JesseGall\CodeCommandments\Packages\Tags\Association;
 use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Packages\Tags\CompositionRoot;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
@@ -38,6 +39,10 @@ final class LaravelPackage extends Package
 
         // No-container: Eloquent builds a cast itself, no DI — a loose array param is the convention.
         $exemptions->exempt(NoContainer::class)->classes(...LaravelNode::CAST_CONTRACTS);
+
+        // Associations: a relation names the class at the OTHER end, and Eloquent requires both ends to
+        // name each other — so neither reference carries a direction, and the pair is not a cycle.
+        $exemptions->exempt(Association::class)->methods(...LaravelNode::RELATION_METHODS);
 
         // Composition root: a service provider's register/boot wires config() into the typed objects it
         // binds — config reads there are the sanctioned composition root, not a config-in-a-class smell.
