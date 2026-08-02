@@ -56,6 +56,14 @@ final class PositionalTupleReturnDetectorTest extends TestCase
             public function record(int $a, int $b, int $c): array {
                 return ['a' => $a, 'b' => $b, 'c' => $c];
             }
+            // three lists of the same type concatenated — no position means anything
+            public function interactions(array $performed, array $asked, array $puts): array {
+                return [...$performed, ...$asked, ...$puts];
+            }
+            // a spread among plain items is still not a tuple — the length is unknown
+            public function withHead(array $rest, int $a, int $b): array {
+                return [$a, $b, ...$rest];
+            }
         }
         PHP;
 

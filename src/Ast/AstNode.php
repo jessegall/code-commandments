@@ -656,7 +656,10 @@ class AstNode
      * Several independent values smuggled as a list to dodge a value object; the
      * caller must destructure by position, where order is unchecked and unnamed. A
      * single-source projection (`[$row->a, $row->b, $row->c]` — one variable) or a
-     * list of literals is a collection, not a tuple, and is left alone.
+     * list of literals is a collection, not a tuple, and is left alone. So is a
+     * CONCATENATION (`[...$a, ...$b, ...$c]`): a spread contributes however many
+     * elements its operand happens to hold, so it occupies no position a caller
+     * could destructure — the array's length is not even known at the call site.
      */
     public function isPositionalTuple(): bool
     {
@@ -667,7 +670,7 @@ class AstNode
         $variableRoots = [];
 
         foreach ($this->node->items as $item) {
-            if (! $item instanceof ArrayItem || $item->key !== null) {
+            if (! $item instanceof ArrayItem || $item->key !== null || $item->unpack) {
                 return false;
             }
 

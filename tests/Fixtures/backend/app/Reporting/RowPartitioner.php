@@ -59,4 +59,22 @@ final class RowPartitioner
 
         return new Partitioned($valid, $invalid, $errors);
     }
+
+    /**
+     * A CONCATENATION, not a tuple: three lists of the same element type spread into
+     * one flat list, in the order the caller must apply them. No position carries a
+     * meaning — element 0 is a row exactly as element 9 is — and the length is
+     * whatever the operands happen to hold, so there is nothing to destructure.
+     *
+     * @param  list<string>  $header
+     * @param  list<string>  $body
+     * @param  list<string>  $footer
+     *
+     * @return list<string>
+     */
+    #[Righteous(PositionalTupleReturn::class)]
+    public function concatenated(array $header, array $body, array $footer): array
+    {
+        return [...$header, ...$body, ...$footer];
+    }
 }
