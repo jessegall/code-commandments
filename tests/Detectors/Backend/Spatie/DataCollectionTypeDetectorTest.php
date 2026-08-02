@@ -97,6 +97,66 @@ final class DataCollectionTypeDetectorTest extends TestCase
         $this->assertSame([], $rewrites, 'a docblock-only element is left for a hand-fix, never scraped');
     }
 
+    public function test_the_scribe_retypes_the_matching_param_docblock_and_drops_the_dead_import(): void
+    {
+        // #436: retyping the signature alone left the file saying two things at once — a `@param
+        // DataCollection<…>` contradicting the real `array`, and an import nothing spelled any more.
+        $php = self::PRELUDE . <<<'PHP'
+        class Page extends Data {
+            /**
+             * @param  DataCollection<int, NodeData>  $nodes
+             * @param  array<string>  $icons
+             */
+            public function __construct(
+                #[DataCollectionOf(NodeData::class)]
+                public readonly DataCollection $nodes,
+                public readonly DataCollection $rows,
+                public readonly array $icons = [],
+            ) {}
+        }
+        PHP;
+
+        // The `$rows` param has no `#[DataCollectionOf]`, so it is left for a hand-fix — and while it
+        // stands, the import is still spelled and must survive.
+        $stillNamed = $this->fix($php);
+
+        $this->assertStringContainsString('use Spatie\LaravelData\DataCollection;', $stillNamed);
+        $this->assertStringContainsString('@param  array<int, NodeData>  $nodes', $stillNamed);
+
+        $fixed = $this->fix(str_replace("        public readonly DataCollection \$rows,\n", '', $php));
+
+        $this->assertStringContainsString('@param  array<int, NodeData>  $nodes', $fixed);
+        $this->assertStringContainsString('@param  array<string>  $icons', $fixed);
+        $this->assertStringNotContainsString('DataCollection<', $fixed);
+        $this->assertStringNotContainsString('use Spatie\LaravelData\DataCollection;', $fixed);
+        $this->assertStringContainsString('use Spatie\LaravelData\Data;', $fixed);
+    }
+
+    public function test_the_scribe_keeps_an_import_a_nested_docblock_type_still_spells(): void
+    {
+        // `array<string, DataCollection<string, X>>` is a map OF collections — the scribe never
+        // retypes it, so the name is still written and the import is still owed.
+        $php = self::PRELUDE . <<<'PHP'
+        class Page extends Data {
+            /**
+             * @param  DataCollection<int, NodeData>  $nodes
+             * @param  array<string, DataCollection<string, NodeData>>  $grouped
+             */
+            public function __construct(
+                #[DataCollectionOf(NodeData::class)]
+                public readonly DataCollection $nodes,
+                public readonly array $grouped = [],
+            ) {}
+        }
+        PHP;
+
+        $fixed = $this->fix($php);
+
+        $this->assertStringContainsString('@param  array<int, NodeData>  $nodes', $fixed);
+        $this->assertStringContainsString('@param  array<string, DataCollection<string, NodeData>>  $grouped', $fixed);
+        $this->assertStringContainsString('use Spatie\LaravelData\DataCollection;', $fixed);
+    }
+
     private function hits(string $body): int
     {
         return count((new DataCollectionTypeDetector)->find(Codebase::fromString(self::PRELUDE . $body, '/proj/app/File.php')));

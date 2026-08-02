@@ -9,6 +9,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Param;
+use PhpParser\Node\UseItem;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\ClassLike;
@@ -122,6 +123,53 @@ final class Writer
         if ($namespace->name !== null && ($semicolon = Span::after($this->source, $namespace->name->getEndFilePos(), ';')) !== null) {
             $this->insertAt($semicolon + 1, "\n\nuse {$fqcn};");
         }
+    }
+
+    /**
+     * Drop `use $fqcn;` — the inverse of {@see ensureImport}, for a fix that leaves an import with
+     * nothing to name. Only the one clause goes: a grouped `use A, B;` keeps its siblings, so a name
+     * the file still spells keeps its import. No-op when the import isn't there.
+     */
+    public function dropImport(string $fqcn): void
+    {
+        $namespace = $this->class?->getAttribute('parent');
+
+        if (! $namespace instanceof Namespace_) {
+            return;
+        }
+
+        foreach ($namespace->stmts as $stmt) {
+            if (! $stmt instanceof Use_) {
+                continue;
+            }
+
+            foreach ($stmt->uses as $used) {
+                if (ltrim($used->name->toString(), '\\') !== $fqcn) {
+                    continue;
+                }
+
+                count($stmt->uses) === 1 ? $this->deleteStatementLine($stmt) : $this->dropClause($stmt, $used);
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * Remove ONE clause from a grouped `use A, B, C;` — the clause plus the comma that joins it to
+     * its neighbour, taken from whichever side keeps the remaining list well-formed.
+     */
+    private function dropClause(Use_ $use, UseItem $clause): void
+    {
+        $index = array_search($clause, $use->uses, true);
+        $previous = $index > 0 ? $use->uses[$index - 1] : null;
+
+        $start = $previous === null ? $clause->getStartFilePos() : $previous->getEndFilePos() + 1;
+        $end = $previous === null
+            ? (Span::after($this->source, $clause->getEndFilePos(), ',') ?? $clause->getEndFilePos()) + 1
+            : $clause->getEndFilePos() + 1;
+
+        $this->draft->edit(new Span($this->path, $this->source, $start, Span::skipWhitespace($this->source, $end)), '');
     }
 
     /**

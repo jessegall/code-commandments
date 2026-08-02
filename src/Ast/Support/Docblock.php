@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Support\ClassName;
+
 /**
  * The SHAPE of a docblock — its delimiters, not its prose. A docblock reads as a block: the opening
  * delimiter stands on its own line, every line of content carries one star, and the closing delimiter
@@ -100,6 +102,68 @@ final class Docblock
         }
 
         return true;
+    }
+
+    /**
+     * The block with ONE tag's type re-headed — `@param DataCollection<int, X> $content` becomes
+     * `@param array<int, X> $content` for `retype($text, 'content', 'Spatie\…\DataCollection',
+     * 'array')`. The tag documenting `$name` is found by the name it speaks about, so sibling
+     * `@param`s are untouched.
+     *
+     * Only the OUTERMOST head changes, and only when it really is $from: the generic arguments, the
+     * description, the spacing and every other line survive byte-for-byte. A docblock an author
+     * wrote is not a scribe's to reformat — the fix owes it one true word, not a new block. A
+     * property's `@var` is re-headed the same way, since a promoted property is documented either way.
+     */
+    public static function retype(string $text, string $name, string $from, string $to): string
+    {
+        $name = preg_quote($name, '/');
+        $rehead = static fn (array $m): string => $m[1] . (self::reheaded(rtrim($m[2]), $from, $to) ?? $m[2]) . $m[3];
+
+        // The type runs up to the `$name` it documents, NOT to the first space: `DataCollection<int,
+        // NodeData>` carries spaces inside its own generic arguments.
+        $text = preg_replace_callback('/(@param\s+)(.+?)(\s+(?:\.\.\.)?&?\$' . $name . '\b)/', $rehead, $text) ?? $text;
+        $text = preg_replace_callback('/(@var\s+)(.+?)(\s+\$' . $name . '\b)/', $rehead, $text) ?? $text;
+
+        // A property's `@var` names no variable — its type is the rest of the line.
+        return preg_replace_callback('/(@var\s+)([^\r\n]+?)(\s*)$/m', $rehead, $text) ?? $text;
+    }
+
+    /**
+     * Does this block name $fqcn (or its short name) anywhere in a tag's type? The question an import
+     * has to answer before it can be dropped: a `use` line is dead only once nothing SPELLS the name,
+     * and a docblock spells it as surely as a signature does — `@param array<string,
+     * DataCollection<string, X>>` keeps the import alive even after every native type has moved on.
+     */
+    public static function mentionsType(string $text, string $fqcn): bool
+    {
+        $short = ClassName::short($fqcn);
+
+        return preg_match('/(?<![\w\\\\])' . preg_quote($short, '/') . '\b/', $text) === 1;
+    }
+
+    /**
+     * $type with its outermost head swapped from $from to $to, or null when the head is something
+     * else. `?DataCollection<int, X>` and the fully-qualified spelling both count — a nullable marker
+     * is not part of the name, and an author may write either.
+     */
+    private static function reheaded(string $type, string $from, string $to): ?string
+    {
+        $prefix = str_starts_with($type, '?') ? '?' : '';
+        $head = substr($type, strlen($prefix));
+        $short = ClassName::short($from);
+
+        foreach ([$from, '\\' . $from, $short] as $spelling) {
+            if ($head === $spelling) {
+                return $prefix . $to;
+            }
+
+            if (str_starts_with($head, $spelling . '<')) {
+                return $prefix . $to . substr($head, strlen($spelling));
+            }
+        }
+
+        return null;
     }
 
     /**
