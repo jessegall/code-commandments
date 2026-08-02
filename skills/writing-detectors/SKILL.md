@@ -161,7 +161,10 @@ code happens to do today.
 
 Only when the fix is **mechanical and unambiguous** — one right answer the rewrite can always
 produce (drop a redundant return type, hoist a stray member, reshape a docblock). Then implement
-`Repentable` and name a scribe.
+`Repentable`, name a scribe, and write it: **[`reference/scribes.md`](reference/scribes.md)** has
+the whole contract — what a `RepentScribe` returns, the `Draft`/`Writer`/`Span` layers that do all
+the editing (never a regex, never line surgery), how the `ScribeChain` runs it, a worked example,
+and how to prove one with `repent --dry-run`.
 
 Most rules should not. If the honest fix depends on what the code MEANS — which value object to
 introduce, where absence really belongs, what to name the thing — an auto-fix would launder the
@@ -178,7 +181,9 @@ auto-fix is worse than no auto-fix.
 5. Write the `where()` chain — AST/semantic, one check per line.
 6. **Probe it.** Every form you mean to catch, plus the near-misses.
 7. **Calibrate** on real code. Tighten, or cut.
-8. `vendor/bin/commandments sync` — publishes your skill so the agent can load what the finding
+8. **Auto-fix it?** Only if the fix is mechanical — then write the scribe
+   ([`reference/scribes.md`](reference/scribes.md)) and preview it with `repent --dry-run`.
+9. `vendor/bin/commandments sync` — publishes your skill so the agent can load what the finding
    points at.
 
 ## Reference
