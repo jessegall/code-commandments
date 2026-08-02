@@ -20,9 +20,9 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
  * different field/string, begging to be one parameterised method. Groups that are
  * byte-identical are left to `DuplicateFunctionDetector`; this catches the near
  * misses it can't see. A 12-body-node floor skips trivial look-alikes. Excluded, as
- * in the exact detector: a pure manifest, a constructor, a sole `return <expr>;`
- * descriptor/delegate, a guard accessor, and a `@deprecated` declaration. Points at
- * fix-at-the-source.
+ * in the exact detector: a pure manifest, a constructor, a sole-expression
+ * descriptor/delegate (`return <expr>;` or one call statement), a guard accessor, and a
+ * `@deprecated` declaration. Points at fix-at-the-source.
  */
 final class NearDuplicateFunctionDetector implements Detector, Exemptable
 {
@@ -72,7 +72,7 @@ final class NearDuplicateFunctionDetector implements Detector, Exemptable
             // to hoist. Two of them that "differ only in their literals" are differing only in DATA, and
             // every extraction merely relocates that data (issues #364, #366). The exact detector already
             // exempts this shape; a literal-BLIND match needs the guard more, not less.
-            if ($match->isSoleReturnExpression()) {
+            if ($match->isSoleReturnExpression() || $match->isSoleExpressionStatement()) {
                 continue;
             }
 

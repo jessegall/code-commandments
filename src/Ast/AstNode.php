@@ -1584,6 +1584,27 @@ class AstNode
     }
 
     /**
+     * The VOID twin of {@see isSoleReturnExpression}: a body that is exactly one expression statement
+     * and nothing else — `$this->database->statement(<<<'SQL' … SQL, [$a, $b, $c, $d]);`.
+     *
+     * Same reasoning, same verdict. One call is a named one-line delegate, not a copy-pasted
+     * procedure: there is no control-flow skeleton to hoist, so what two of them share is the API
+     * they both call, and what they DIFFER in is the data they hand it. Parameterising that would
+     * collapse two intent-revealing steps behind a generic runner and relocate the data, not remove
+     * a duplicate.
+     */
+    public function isSoleExpressionStatement(): bool
+    {
+        if (! $this->isFunctionDeclaration()) {
+            return false;
+        }
+
+        $stmts = $this->node->stmts ?? [];
+
+        return count($stmts) === 1 && $stmts[0] instanceof Expression;
+    }
+
+    /**
      * The `new self(...)`/`new static(...)` a WITHER re-threads its whole field list through — a body
      * that is one `return new self($this->a, $this->b, $changed, $this->d);`, carrying most fields
      * across untouched to alter one or two. Every new field must then be added to N of these, and
