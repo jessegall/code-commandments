@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use Shop\Enums\ProductCategory;
 
 /**
  * Builds the search facets as a loose string-keyed bag instead of a Facets value
@@ -64,6 +65,23 @@ final class FacetService
             'categories' => $this->byCategory(),
             'price_buckets' => $this->byPrice(),
             'ratings' => $this->byRating(),
+        ];
+    }
+
+    /**
+     * A LOOKUP TABLE, not a record: every value is the same type, so the rows are interchangeable
+     * and the keys are data rather than field names. `array<string, ProductCategory>` already
+     * states the whole thing — there is nothing left for a value object to name, and making one
+     * would turn a keyed lookup into a linear scan. No marker: NOT this sin.
+     *
+     * @return array<string, ProductCategory>
+     */
+    public function legacyCategories(): array
+    {
+        return [
+            'home-and-garden' => ProductCategory::Apparel,
+            'garden-furniture' => ProductCategory::Apparel,
+            'gadgets' => ProductCategory::Electronics,
         ];
     }
 

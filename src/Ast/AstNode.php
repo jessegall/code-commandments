@@ -796,6 +796,40 @@ class AstNode
     }
 
     /**
+     * Is this array literal a LOOKUP TABLE rather than a record — a keyed map whose every value is a
+     * constant of ONE class (`'dashboard.view' => Permission::SHOPFLOOR, 'orders.index' => …`)?
+     *
+     * A record's fields DIFFER — that is what makes them fields, and what a value object is for. A
+     * table's values are interchangeable: each is the same type, the keys are data rather than
+     * names, and `array<string, Permission>` already states the whole thing. There is nothing to
+     * name, so there is no value object owed — turning the rows into objects would only make the
+     * lookup linear.
+     *
+     * Deliberately narrow: a class-constant is a closed, already-typed value, so a map of them is a
+     * table by construction. A homogeneous map of CONSTRUCTED objects is not covered — those really
+     * can be a record whose fields happen to share a type (`['shipping' => new Money(5), 'handling'
+     * => new Money(2)]`).
+     */
+    public function isHomogeneousLookupTable(): bool
+    {
+        if (! $this->node instanceof Array_ || count($this->node->items) < 2) {
+            return false;
+        }
+
+        $classes = [];
+
+        foreach ($this->node->items as $item) {
+            if (! $item instanceof ArrayItem || ! $item->value instanceof ClassConstFetch || ! $item->value->class instanceof Name) {
+                return false;
+            }
+
+            $classes[$item->value->class->toString()] = true;
+        }
+
+        return count($classes) === 1;
+    }
+
+    /**
      * The string keys of this array literal — `['type' => …, 'properties' => …]`
      * yields `['type', 'properties']`. Empty when not an array literal.
      *

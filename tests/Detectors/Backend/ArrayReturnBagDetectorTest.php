@@ -82,4 +82,42 @@ final class ArrayReturnBagDetectorTest extends TestCase
 
         $this->assertSame(['Composer::money'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_leaves_a_lookup_table_of_one_types_constants_alone(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        class S
+        {
+            // a dictionary: every value is a Permission, the keys are data, and
+            // array<string, Permission> is already the total type
+            public function table(): array
+            {
+                return [
+                    'dashboard.view' => Permission::SERVES_CUSTOMERS,
+                    'orders.index' => Permission::SERVES_CUSTOMERS,
+                    'orders.create' => Permission::RUNS_THE_SHIFT,
+                ];
+            }
+
+            // values of DIFFERENT types are fields of one concept — still a bag
+            public function mixed(): array
+            {
+                return ['method' => Permission::SERVES_CUSTOMERS, 'currency' => Currency::EUR];
+            }
+
+            // a homogeneous map of CONSTRUCTED objects can still be a record
+            public function charges(): array
+            {
+                return ['shipping' => new Money(5), 'handling' => new Money(2)];
+            }
+        }
+        PHP;
+
+        $hits = (new ArrayReturnBagDetector)->find(Codebase::fromString($code));
+        $scopes = array_map(static fn ($m): string => $m->scope(), $hits);
+        sort($scopes);
+
+        $this->assertSame(['S::charges', 'S::mixed'], $scopes);
+    }
 }
