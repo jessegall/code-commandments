@@ -211,6 +211,129 @@ class AstNode
     }
 
     /**
+     * Is this `instanceof` the HEAD of a type switch — the first of two or more type tests on the
+     * SAME subject, each deciding a different branch of the same function? The shape that asks a
+     * value what it is instead of telling it what to do, whatever it is spelled as: an `if`/`elseif`
+     * ladder, a run of sequential `if`s that each return, or a `match (true)` over arms.
+     *
+     * Two tests in ONE condition (`$x instanceof A || $x instanceof B`) are a single question about
+     * membership, not a switch — they share a branch point, so they count once. Only the earliest
+     * test reports, so one switch yields one finding however many arms it has.
+     */
+    public function isTypeSwitchHead(): bool
+    {
+        if (! $this->node instanceof Instanceof_) {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+        $ownBranchPoint = self::branchPointOf($this->node);
+
+        if ($function === null || $ownBranchPoint === null) {
+            return false;
+        }
+
+        $subject = new self($this->node->expr)->exactHash();
+        $branchPoints = [];
+        $classes = [];
+
+        foreach (new NodeFinder()->findInstanceOf([$function], Instanceof_::class) as $test) {
+            $branchPoint = self::branchPointOf($test);
+
+            if ($branchPoint === null) {
+                continue;
+            }
+
+            // `if ($a instanceof L && $b instanceof L)` switches on a PAIR: two subjects, one set of
+            // branches, one sin. Whichever test comes first speaks for it.
+            if ($branchPoint === $ownBranchPoint && $test->getStartFilePos() < $this->node->getStartFilePos()) {
+                return false;
+            }
+
+            if (new self($test->expr)->exactHash() !== $subject) {
+                continue;
+            }
+
+            if ($test->getStartFilePos() < $this->node->getStartFilePos()) {
+                return false; // an earlier test on this subject already heads the switch
+            }
+
+            $branchPoints[spl_object_id($branchPoint)] = true;
+            $classes[$test->class instanceof Name ? $test->class->toString() : ''] = true;
+        }
+
+        return count($branchPoints) >= 2 && count($classes) >= 2;
+    }
+
+    /**
+     * The classes a type switch headed by this node tests — read on an {@see isTypeSwitchHead} node,
+     * so a caller can ask whether the codebase OWNS them. It only owns a fix if it owns every one:
+     * you cannot give `DOMText` a method.
+     *
+     * @return list<string>
+     */
+    public function typeSwitchClasses(): array
+    {
+        if (! $this->node instanceof Instanceof_) {
+            return [];
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return [];
+        }
+
+        $subject = new self($this->node->expr)->exactHash();
+        $classes = [];
+
+        foreach (new NodeFinder()->findInstanceOf([$function], Instanceof_::class) as $test) {
+            if (self::branchPointOf($test) === null || new self($test->expr)->exactHash() !== $subject) {
+                continue;
+            }
+
+            $classes[$test->class instanceof Name ? $test->class->toString() : ''] = true;
+        }
+
+        return array_keys($classes);
+    }
+
+    /**
+     * The branch this expression DECIDES — the nearest enclosing `if`/`elseif`/ternary whose condition
+     * it forms part of, or the `match` arm it guards. Null when it decides nothing (a returned
+     * boolean, an argument, a condition inside some branch's body rather than its head). Two tests
+     * sharing one branch point are one question asked once.
+     */
+    private static function branchPointOf(Node $test): ?Node
+    {
+        $child = $test;
+        $parent = $child->getAttribute('parent');
+
+        while ($parent instanceof Node && ! $parent instanceof FunctionLike) {
+            if ($parent instanceof If_ && $parent->cond === $child) {
+                return $parent;
+            }
+
+            if ($parent instanceof ElseIf_ && $parent->cond === $child) {
+                return $parent;
+            }
+
+            if ($parent instanceof Ternary && $parent->cond === $child) {
+                return $parent;
+            }
+
+            if ($parent instanceof MatchArm && in_array($child, $parent->conds ?? [], true)) {
+                return $parent;
+            }
+
+            $child = $parent;
+            $parent = $parent->getAttribute('parent');
+        }
+
+        return null;
+    }
+
+    /**
      * Is this a `for` whose step does NOT advance a counter — one that assigns the next thing
      * instead (`$one = $one instanceof Traceable ? $one->getAbove() : null`)? A `for` promises
      * init-test-step over an induction variable, so its header can be read at a glance; a step that

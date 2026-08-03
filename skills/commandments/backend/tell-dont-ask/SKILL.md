@@ -111,6 +111,8 @@ If yes — and you're reaching past its surface into its structure — that's wh
   _Move the method onto the object (`$node->edges()`)._
 - Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
   _Move the lookup onto the object that owns the identity._
+- Let each type answer for itself; never branch on what a value IS when a method on it could say what it DOES.
+  _A method on the shared interface, implemented per type — so a new type needs no edit here at all._
 
 ## Bad → good
 
@@ -146,15 +148,37 @@ public function forItemDirect(CatalogItem $item): array
 }
 ```
 
+```php
+// Bad
+public function price(Freightable $freight): int
+{
+    if ($freight instanceof ExpressFreight) {
+        return $freight->weightGrams() * 12 + 500;
+    } elseif ($freight instanceof PalletFreight) {
+        return $freight->pallets() * 4_000;
+    }
+
+    return $freight->weightGrams() * 3;
+}
+
+// Good
+public function priceTold(PricedFreight $freight): int
+{
+    return $freight->priceCents();
+}
+```
+
 ## When it fires
 
 - Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object — `FeatureEnvyDetector`
 - Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator — `KeyedLookupEnvyDetector`
+- two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do — `TypeSwitchDetector`
 
 ## Checklist
 
 - [ ] Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
 - [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
+- [ ] Let each type answer for itself; never branch on what a value IS when a method on it could say what it DOES.
 
 ## Related skills
 
