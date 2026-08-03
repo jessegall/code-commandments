@@ -79,12 +79,18 @@ final class FixtureExamples
      * The source of the declaration the attribute decorates — the tightest one (the
      * method if it's on a method, else the class) — dedented, with the marker attribute
      * lines removed so only the example code shows.
+     *
+     * The slice starts at the DOCBLOCK, not the declaration. A node's start line excludes its doc
+     * comment, and for a whole family of sins the docblock IS the subject: cut it away and
+     * `ceremony-docblock` published a bad and a good example that differed only in the method's
+     * name, with the thing being taught deleted from both.
      */
     private static function declarationSource(NodeMatch $match): string
     {
         $node = $match->enclosingFunction() ?? $match->enclosingClass() ?? $match->node;
         $lines = file($match->file->path) ?: [];
-        $slice = array_slice($lines, $node->getStartLine() - 1, $node->getEndLine() - $node->getStartLine() + 1);
+        $start = min($node->getDocComment()?->getStartLine() ?? $node->getStartLine(), $node->getStartLine());
+        $slice = array_slice($lines, $start - 1, $node->getEndLine() - $start + 1);
 
         $kept = array_filter(
             array_map(static fn (string $line): string => rtrim($line, "\n"), $slice),

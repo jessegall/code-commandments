@@ -272,6 +272,10 @@ All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the tru
 
 ```php
 // Bad
+/**
+ * A row from the legacy CSV importer — every field nullable, so a malformed row is
+ * indistinguishable from a valid one and every consumer must re-validate.
+ */
 final class LegacyImportRow extends Data
 {
     public function __construct(
@@ -288,6 +292,10 @@ final class LegacyImportRow extends Data
 }
 
 // Good
+/**
+ * The same row with its required fields non-nullable: `::from()` fails hard on a
+ * real miss, so a valid row can't be confused with a malformed one.
+ */
 final class ImportRow extends Data
 {
     public function __construct(
@@ -403,6 +411,13 @@ final class GalleryPage extends Data
 
 ```php
 // Bad
+/**
+ * A discount coupon with public (non-promoted) properties and validation rules.
+ * Here the `@method` collides with the real static `rules()` — the collision sin
+ * is not specific to factories or to promoted-constructor classes.
+ *
+ * @method static array rules()
+ */
 final class CouponData extends Data
 {
     public string $code;
@@ -419,6 +434,12 @@ final class CouponData extends Data
 }
 
 // Good
+/**
+ * A voucher whose `@method` hint describes only the invisible magic `::from()`,
+ * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+ *
+ * @method static static from(string $code)
+ */
 final class VoucherData extends Data
 {
     public string $code;
@@ -475,6 +496,10 @@ Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` +
 
 ```php
 // Bad
+/**
+ * @param  array<int, array<string, mixed>>  $rows
+ * @return array<int, CustomerData>
+ */
 public function importBatch(array $rows): array
 {
     $customers = [];
@@ -490,6 +515,10 @@ public function importBatch(array $rows): array
 }
 
 // Good
+/**
+ * @param  array<int, array<string, mixed>>  $rows
+ * @return iterable<int, CustomerData>
+ */
 public function importBatchCleanly(array $rows): iterable
 {
     $customers = CustomerData::collect($rows);
@@ -513,6 +542,10 @@ public function __construct(
 ) {}
 
 // Good
+/**
+ * RIGHTEOUS: a value object slot fed a value that arrives ready (a passed-through argument, not built
+ * here). The mapping isn't done at the call site, so a cast isn't forced — the detector must NOT flag it.
+ */
 #[\JesseGall\CodeCommandments\Testing\Righteous(\JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast::class)]
 final class CleanInboundData extends \Spatie\LaravelData\Data
 {
@@ -603,6 +636,9 @@ Data class not `final` / props not `readonly` promoted
 
 ```php
 // Bad
+/**
+ * Stock level transfer object, left non-final.
+ */
 class StockLevelData extends Data
 {
     public function __construct(
@@ -632,6 +668,9 @@ class StockLevelData extends Data
 }
 
 // Good
+/**
+ * The same DTO sealed: a value type is a leaf, not a base to extend.
+ */
 final class StockSnapshotData extends Data
 {
     public function __construct(

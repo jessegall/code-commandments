@@ -110,6 +110,10 @@ two namespaces that reference each other — neither can be read, tested or move
 
 ```php
 // Bad
+/**
+ * Shipping reaches for this enum all over; this is the ONE place the enum reaches back, and it
+ * welds the two namespaces into a single unit — neither can now be lifted out alone.
+ */
 public function rateCents(int $weightGrams): int
 {
     // An enum case can never be built by the container, so resolving the
@@ -118,6 +122,11 @@ public function rateCents(int $weightGrams): int
 }
 
 // Good
+/**
+ * Nudges a customer before their cover lapses. It reads the warranty terms freely — and the
+ * warranty knows nothing of reminders, so the arrow points ONE way and either side can still be
+ * lifted out on its own. A dependency is not a cycle.
+ */
 final class RenewalReminder
 {
     public function dueInDays(WarrantyPolicy $policy): int
@@ -133,12 +142,19 @@ a declared layer references a layer it may not use (the arrow points back up)
 
 ```php
 // Bad
+/**
+ * Reaching two layers up for a page's heading. The toolbar is only "shared" until the first
+ * page it knows by name — after this it can never appear on any other one.
+ */
 public function caption(): string
 {
     return Dashboard::heading();
 }
 
 // Good
+/**
+ * A panel, assembled from the UI primitives.
+ */
 class Panel
 {
     public function __construct(public readonly string $title) {}

@@ -170,6 +170,11 @@ A page object injects a service (`#[FromContainer]`, …) into a public property
 
 ```php
 // Bad
+/**
+ * A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
+ * with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
+ * is not — one un-hidden service is enough to leak into the frontend type.
+ */
 #[TypeScript]
 final class CatalogPage extends Data
 {
@@ -202,6 +207,12 @@ final class CatalogPage extends Data
 }
 
 // Good
+/**
+ * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
+ * `#[Hidden]` (so it never reaches the frontend type), every slot is a `#[Computed]` hook seeded from
+ * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
+ * constructor — the InjectedServiceNotHidden detector must NOT flag it.
+ */
 #[TypeScript]
 final class ReportPage extends Data
 {
@@ -239,6 +250,11 @@ public function marker(): array
 }
 
 // Good
+/**
+ * RIGHTEOUS look-alikes the output-transform detector must NOT flag: a getter composing the object's OWN
+ * scalar fields, a getter drawing from TWO different receivers (a genuine view composite), and a getter
+ * projecting a nested `Data` (just a shape of another payload). None is a single value object hand-flattened.
+ */
 final class WireShapesPage extends Data
 {
     // Own fields — receiver is $this (this Data), not a value object.
@@ -270,6 +286,10 @@ A page object travels back in a response but carries no `#[TypeScript]` — the 
 
 ```php
 // Bad
+/**
+ * Slots including a typed collection, all filled straight from the injected builder in the
+ * constructor — each a self-contained projection that a `#[Computed]` hook would carry.
+ */
 final class MetricsPage extends Data
 {
     public readonly StatCard $headline;
@@ -307,6 +327,12 @@ final class MetricsPage extends Data
 }
 
 // Good
+/**
+ * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
+ * `#[Hidden]` (so it never reaches the frontend type), every slot is a `#[Computed]` hook seeded from
+ * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
+ * constructor — the InjectedServiceNotHidden detector must NOT flag it.
+ */
 #[TypeScript]
 final class ReportPage extends Data
 {
@@ -343,6 +369,12 @@ public function aiEnabled(): bool
 }
 
 // Good
+/**
+ * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
+ * `#[Hidden]` (so it never reaches the frontend type), every slot is a `#[Computed]` hook seeded from
+ * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
+ * constructor — the InjectedServiceNotHidden detector must NOT flag it.
+ */
 #[TypeScript]
 final class ReportPage extends Data
 {
@@ -379,6 +411,11 @@ public function __construct(
 ) {}
 
 // Good
+/**
+ * RIGHTEOUS: transformers that the detector must NOT flag — a custom transformer PAIRED with the
+ * transformed TS type (both `#[TypeScriptType]` and `#[LiteralTypeScriptType]` forms), and a built-in
+ * transformer whose target type the generator already knows.
+ */
 final class WirePairedData extends Data
 {
     public function __construct(

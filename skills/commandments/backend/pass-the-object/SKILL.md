@@ -74,6 +74,10 @@ a bool-only chooser whose callers all compute the flag off the same object (take
 
 ```php
 // Bad
+/**
+ * The job decides this, but the job never gets here — only its answer does, re-derived by each
+ * caller. Take the job and ask it.
+ */
 public function forDraft(bool $draft): int
 {
     return match ($draft) {
@@ -83,6 +87,10 @@ public function forDraft(bool $draft): int
 }
 
 // Good
+/**
+ * The chooser that ASKS instead of being told. The rule about corners lives here, once, with
+ * the object it is about — so no caller can hold a half-remembered copy of it.
+ */
 public function cornerInset(): string
 {
     return $this->inZenMode() || $this->hasPanelOpen() ? 'tight' : 'wide';
@@ -103,6 +111,10 @@ public function priceFor(ProductCatalogue $catalogue, string $sku): int
 }
 
 // Good
+/**
+ * Demands the resolved variant — the caller resolves it once by sku and owns
+ * the "not found" failure, so this only prices what it is handed.
+ */
 public function priceForVariant(Variant $variant): int
 {
     return $variant->basePriceCents() + $this->markupCents;

@@ -71,6 +71,11 @@ The SAME compound guard condition recurs in ≥2 places — the same check spell
 
 ```php
 // Bad
+/**
+ * @param  list<mixed>  $items
+ *
+ * @return list<mixed>
+ */
 public function promote(array $items): array
 {
     $ready = [];

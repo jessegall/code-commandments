@@ -58,6 +58,9 @@ String-indexing (`$arr['key']`) a structured array param (an unborn type)
 
 ```php
 // Bad
+/**
+ * @param  array<string, mixed>  $row
+ */
 public function normalize(array $row): void
 {
     $this->products->upsert(
@@ -68,6 +71,11 @@ public function normalize(array $row): void
 }
 
 // Good
+/**
+ * PHP's serialization protocol hands `__unserialize` the raw property bag — the
+ * array parameter is dictated by the LANGUAGE, so string-indexing it here (and in
+ * the private helper fed only that bag) is the canonical parse point, not a sin (#340).
+ */
 public function __unserialize(array $data): void
 {
     $this->pendingSku = $data['sku'];
@@ -81,6 +89,9 @@ Returning a multi-field string-keyed array literal (a bag that should be a value
 
 ```php
 // Bad
+/**
+ * @return array<string, int|string>
+ */
 public function daily(int $day): array
 {
     $currency = config('shop.currency');
@@ -94,6 +105,10 @@ public function daily(int $day): array
 }
 
 // Good
+/**
+ * The same daily figures as a typed report value object — named fields, not a
+ * loose string-keyed bag.
+ */
 public function dailyReport(int $day): DailyReport
 {
     $gross = $this->orders->grossForDay($day);
@@ -166,6 +181,10 @@ public function record(string $shopId, string $userId, string $channelId): strin
 }
 
 // Good
+/**
+ * The clump named: one value object carries the three fields that travelled
+ * together.
+ */
 public function recordAccess(AccessContext $context): string
 {
     return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
@@ -184,9 +203,75 @@ public function withValue(?string $value): self
 }
 
 // Good
+/**
+ * Righteous: says only what changes, so a new field never touches this method.
+ */
 public function withOrder(int $order): self
 {
     return clone($this, ['order' => $order]);
+}
+```
+
+### mutable-value-object
+
+a value type that writes its own field after construction — two holders of the same value, and one of them can change it under the other
+
+```php
+// Bad
+/**
+ * A postal address that relocates itself. Whatever recorded "the address this parcel was quoted
+ * for" now holds a different address, and nothing near the quote did that.
+ */
+final class PostalAddress
+{
+    public function __construct(
+        private string $line,
+        private string $postcode,
+        private string $city,
+        private string $country,
+    ) {}
+
+    public function relocate(string $line, string $postcode, string $city): void
+    {
+        $this->line = $line;
+        $this->postcode = $postcode;
+        $this->city = $city;
+    }
+
+    public function oneLine(): string
+    {
+        return "{$this->line}, {$this->postcode} {$this->city}, {$this->country}";
+    }
+
+    public function isDomestic(): bool
+    {
+        return $this->country === 'NL';
+    }
+
+    public function label(): array
+    {
+        return [$this->line, "{$this->postcode} {$this->city}", strtoupper($this->country)];
+    }
+}
+
+// Good
+/**
+ * The same markup, derived instead of changed: discounting answers with a NEW markup and leaves
+ * every existing holder of this one with exactly what they were given.
+ */
+final class DerivedMarkup
+{
+    public function __construct(private readonly float $percentage) {}
+
+    public function discountedBy(float $points): self
+    {
+        return new self($this->percentage - $points);
+    }
+
+    public function appliedTo(int $cents): int
+    {
+        return (int) round($cents * (1 + $this->percentage / 100));
+    }
 }
 ```
 
@@ -196,6 +281,11 @@ Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — b
 
 ```php
 // Bad
+/**
+ * @param  list<string>  $rows
+ *
+ * @return array{0: list<string>, 1: list<string>, 2: list<string>}
+ */
 public function partition(array $rows): array
 {
     $valid = [];
@@ -216,6 +306,12 @@ public function partition(array $rows): array
 }
 
 // Good
+/**
+ * The three buckets named in a typed object — callers read `->valid`, not a
+ * position the order could silently rot.
+ *
+ * @param  list<string>  $rows
+ */
 public function partitionTyped(array $rows): Partitioned
 {
     $valid = [];
@@ -242,6 +338,10 @@ Returning a raw decoded boundary array (`json_decode(...)`) untyped
 
 ```php
 // Bad
+/**
+ * @param  list<string>  $symbols
+ * @return array<string, mixed>
+ */
 public function rates(string $base, array $symbols): array
 {
     $query = http_build_query([
@@ -253,6 +353,9 @@ public function rates(string $base, array $symbols): array
 }
 
 // Good
+/**
+ * @param  list<string>  $symbols
+ */
 public function ratesTyped(string $base, array $symbols): RateTable
 {
     $query = http_build_query([
@@ -323,7 +426,7 @@ final class LooseCard extends Data
 - A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object — `CoupledFieldsDetector`
 - The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) — `DataClumpDetector`
 - A wither rebuilds its object by re-spelling every constructor field, so each new field must be threaded through N of them — `HandRolledWitherDetector`
-- a value type that writes its own field after construction — two holders of the same value, and one of them can change it under the other
+- a value type that writes its own field after construction — two holders of the same value, and one of them can change it under the other — `MutableValueObjectDetector`
 - Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
 - Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
 - A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of NESTING the existing `Wire{type, label}` — width instead of depth — `FlatFieldClusterDetector`

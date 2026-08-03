@@ -58,6 +58,9 @@ A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as c
 
 ```php
 // Bad
+/**
+ * Payment states as loose string constants — a closed set that should be a backed enum.
+ */
 final class PaymentStatuses
 {
     /**
@@ -82,6 +85,10 @@ final class PaymentStatuses
 }
 
 // Good
+/**
+ * The sealed set as a native backed enum — the cases now have a home for behaviour
+ * and the type proves only a real band can flow through. Rates as basis points.
+ */
 enum TaxBand: int
 {
     case Standard = 2100;
@@ -138,6 +145,9 @@ public function colour(Product $product): string
 }
 
 // Good
+/**
+ * The mapping lives ON the enum; the call site just asks for the colour.
+ */
 public function colourViaEnum(Product $product): string
 {
     return $product->category->badgeColour();
@@ -179,6 +189,10 @@ public function for(Product $product): ?string
 }
 
 // Good
+/**
+ * The default arm throws a named exception, so an unhandled priority fails
+ * loudly instead of being swallowed into null.
+ */
 public function strictFor(Product $product): string
 {
     return match ($product->priority) {

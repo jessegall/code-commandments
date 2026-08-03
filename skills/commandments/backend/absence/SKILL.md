@@ -97,6 +97,9 @@ An array is built by spreading a conditional element — `...($x ? ['k' => $x] :
 
 ```php
 // Bad
+/**
+ * @return array{number: string, discount?: array{coupon: string, applied: bool}}
+ */
 public function lines(): array
 {
     return [
@@ -106,6 +109,9 @@ public function lines(): array
 }
 
 // Good
+/**
+ * @return array{number: string, coupon: string}
+ */
 public function summary(): array
 {
     return [
@@ -127,6 +133,10 @@ public function byBarcode(string $barcode): ?Product
 }
 
 // Good
+/**
+ * Resolve-or-throw: a scanned barcode must exist, so the absence is decided
+ * once at the source and the return type tells the truth.
+ */
 public function requireByBarcode(string $barcode): Product
 {
     return Product::query()->where('barcode', $barcode)->first()
@@ -140,6 +150,14 @@ Nullable callback normalised in the body instead of a Null Object default
 
 ```php
 // Bad
+/**
+ * @template T
+ *
+ * @param  Closure(): T  $work
+ * @param  Closure(int): void|null  $onRetry
+ *
+ * @return T
+ */
 public function run(Closure $work, Closure | null $onRetry = null): mixed
 {
     while (true) {
@@ -160,6 +178,13 @@ public function run(Closure $work, Closure | null $onRetry = null): mixed
 }
 
 // Good
+/**
+ * @template T
+ *
+ * @param  Closure(): T  $work
+ *
+ * @return T
+ */
 public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 {
     while (true) {

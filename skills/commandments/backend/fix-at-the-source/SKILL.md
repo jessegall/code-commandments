@@ -142,6 +142,9 @@ public function checksum(int $base, int $count): string
 
 ```php
 // Bad
+/**
+ * @param  array<string, mixed>  $row
+ */
 public function normalize(array $row): void
 {
     $this->products->upsert(
@@ -152,6 +155,10 @@ public function normalize(array $row): void
 }
 
 // Good
+/**
+ * Absence is decided at the source: a typed row guarantees its fields, so no
+ * empty-string / zero fake is manufactured here.
+ */
 public function persist(ImportRow $row): void
 {
     $this->products->upsert($row->sku, $row->name, $row->stock);
@@ -178,6 +185,10 @@ public function accumulateFrom(int $start): int
 }
 
 // Good
+/**
+ * The duplicated scorers collapsed into one parameterised pass — the per-entry
+ * weight is an argument, so there is no rhyming twin to extract.
+ */
 public function scoreFrom(int $start, int $weight): int
 {
     return array_reduce(

@@ -88,6 +88,9 @@ public function carrierNameOrFail(Shipment $shipment): string
 
 ```php
 // Bad
+/**
+ * @return array<string, mixed>
+ */
 public function forecast(string $city): array
 {
     try {
@@ -100,6 +103,9 @@ public function forecast(string $city): array
 }
 
 // Good
+/**
+ * @return array<string, mixed>
+ */
 public function forecastOrThrow(string $city): array
 {
     try {

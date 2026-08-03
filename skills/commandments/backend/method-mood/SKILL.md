@@ -66,12 +66,20 @@ A `bool` about the object's own state named as a bare verb — `binds()`, `spins
 
 ```php
 // Bad
+/**
+ * A bool about the line itself, named as a claim instead of a question.
+ */
 public function reports(): bool
 {
     return $this->level === 'error';
 }
 
 // Good
+/**
+ * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
+ * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
+ * dangles, so it must NOT flag.
+ */
 final class HonestDoc
 {
     /**
@@ -110,6 +118,9 @@ A command named in the third person — `hides()`, `entersTestMode()` — where 
 
 ```php
 // Bad
+/**
+ * The fluent form of the same mistake: chainable, still an order.
+ */
 public function clears(): static
 {
     $this->entries = [];
@@ -118,6 +129,10 @@ public function clears(): static
 }
 
 // Good
+/**
+ * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
+ * count stand at the head of the class, so one read of the top says everything this object holds.
+ */
 final class CheckoutSession
 {
     private const int TTL = 1800;

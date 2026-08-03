@@ -142,6 +142,9 @@ Indirect feature envy — a method that uses an owned object's IDENTITY as a key
 
 ```php
 // Bad
+/**
+ * @return list<string>
+ */
 public function forItem(CatalogItem $item): array
 {
     return $this->registry->has($item->code)
@@ -150,6 +153,12 @@ public function forItem(CatalogItem $item): array
 }
 
 // Good
+/**
+ * The item knows its own reserved SKUs — ask it directly instead of using its
+ * code as a key back into a registry.
+ *
+ * @return list<string>
+ */
 public function forItemDirect(CatalogItem $item): array
 {
     return $item->reservedSkus();

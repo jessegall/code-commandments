@@ -75,6 +75,10 @@ enum ShippingMethod: string
 }
 
 // Good
+/**
+ * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
+ * count stand at the head of the class, so one read of the top says everything this object holds.
+ */
 final class CheckoutSession
 {
     private const int TTL = 1800;
@@ -124,6 +128,7 @@ A declaration in the head of a class that arrives after something belonging belo
 
 ```php
 // Bad
+/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
 final class LogLine
 {
     public string $level = 'info';
@@ -145,6 +150,10 @@ final class LogLine
 }
 
 // Good
+/**
+ * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
+ * count stand at the head of the class, so one read of the top says everything this object holds.
+ */
 final class CheckoutSession
 {
     private const int TTL = 1800;

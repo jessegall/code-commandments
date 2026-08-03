@@ -49,6 +49,10 @@ History/archaeology comments ("formerly / used to be / refactored / no longer an
 
 ```php
 // Bad
+/**
+ * @param  array<string, mixed>  $filters
+ * @return array<int, mixed>
+ */
 public function search(array $filters): array
 {
     $perPage = config('shop.catalog.per_page');
@@ -61,6 +65,11 @@ public function search(array $filters): array
 }
 
 // Good
+/**
+ * A comment that describes the present code and its runtime, in present tense.
+ *
+ * @return array<int, mixed>
+ */
 public function searchSorted(string $term): array
 {
     // the cached rank may no longer exist; the flag previously bound is used to scope the column
@@ -76,6 +85,15 @@ Multi-paragraph class docblock (class too big)
 
 ```php
 // Bad
+/**
+ * This class is responsible for importing legacy orders from the old system.
+ * It was originally extracted from the monolith during the 2023 migration and
+ * has been refactored several times since. It reads the legacy CSV export, maps
+ * each row to a customer, and creates the order. Previously this logic lived in
+ * the OrderController but was moved here to keep controllers thin.
+ *
+ * TODO: remove once the legacy importer is fully decommissioned.
+ */
 final class LegacyOrderImporter
 {
     // previously this returned an array, now it returns a Customer or null
@@ -108,6 +126,9 @@ final class LegacyOrderImporter
 }
 
 // Good
+/**
+ * Imports legacy orders from the old CSV export.
+ */
 final class TidyOrderImporter
 {
     public function import(string $email): void
@@ -123,12 +144,19 @@ Docblock that only restates the typed signature (`@param Type $x`, no descriptio
 
 ```php
 // Bad
+/**
+ * @param  int  $points
+ * @param  string  $name
+ */
 public function award(int $points, string $name): string
 {
     return $name . ':' . $points;
 }
 
 // Good
+/**
+ * Renders the customer-facing tier label, e.g. "gold:500".
+ */
 public function awardLabel(int $points, string $name): string
 {
     return $name . ':' . $points;
@@ -141,6 +169,10 @@ A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not
 
 ```php
 // Bad
+/**
+ * Moderates product reviews. The scoring model lives in {@see \Shop\Trust\GhostScorer}, which no longer
+ * exists — the documentation was never repointed.
+ */
 final class ReviewDoc
 {
     public function approve(int $stars, bool $verified): bool
@@ -160,6 +192,11 @@ final class ReviewDoc
 }
 
 // Good
+/**
+ * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
+ * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
+ * dangles, so it must NOT flag.
+ */
 final class HonestDoc
 {
     /**
@@ -198,6 +235,7 @@ A docblock whose delimiter shares a line with its text — a one-liner, or a blo
 
 ```php
 // Bad
+/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
 final class LogLine
 {
     public string $level = 'info';
@@ -219,6 +257,11 @@ final class LogLine
 }
 
 // Good
+/**
+ * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
+ * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
+ * dangles, so it must NOT flag.
+ */
 final class HonestDoc
 {
     /**
@@ -323,6 +366,11 @@ final class Itinerary
 }
 
 // Good
+/**
+ * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
+ * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
+ * dangles, so it must NOT flag.
+ */
 final class HonestDoc
 {
     /**

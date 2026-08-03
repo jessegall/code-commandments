@@ -212,12 +212,18 @@ class AstNode
     }
 
     /**
-     * Does this CLASS change one of its own declared fields after it has been built — a write to
-     * `$this->field` from any method other than the constructor? The question that separates a value
-     * from a record: two holders of the same value must be able to rely on it staying that value.
+     * Does this CLASS change what it IS after it has been built — a write, from some method other
+     * than the constructor, to a field the constructor established? Two holders of the same value
+     * must be able to rely on it staying that value, and one such write breaks all of them at once.
      *
-     * A `??=` write does not count. Filling a lazily-computed field changes nothing a caller can
-     * observe — the value was always going to be that; it just had not been worked out yet.
+     * Only CONSTRUCTED fields count, which is what separates a value from a machine made of scalars.
+     * A field declared with a default and never taken by the constructor (`private int $offset = 0`)
+     * is working state — a cursor, a tally, a buffer — and advancing it is the object doing its job,
+     * not a value changing underfoot. A class with no constructor holds no value at all.
+     *
+     * Two further writes do not count. A `??=` fills a lazily-computed field, which changes nothing a
+     * caller can observe. And a mutation inside a method that returns `$this` is a fluent BUILDER
+     * accumulating — a recognised, deliberate shape, not a value corrupted.
      */
     public function mutatesOwnFieldsAfterConstruction(): bool
     {
@@ -225,25 +231,90 @@ class AstNode
             return false;
         }
 
-        $declared = [];
+        $constructed = $this->constructedFieldNames();
 
+        if ($constructed === []) {
+            return false;
+        }
+
+        // EVERY field must be identity. One field the constructor doesn't take — a `$failures = 0`,
+        // a cursor, a `new NullView` handed to itself — means this object keeps working state, and a
+        // thing with working state is a machine that happens to be made of values, not a value.
         foreach ($this->fields() as $field) {
-            $declared[$field->name] = true;
+            if (! isset($constructed[$field->name])) {
+                return false;
+            }
         }
 
         foreach ($this->node->getMethods() as $method) {
-            if ($method->name->toString() === '__construct') {
+            if ($method->name->toString() === '__construct' || self::returnsThis($method)) {
                 continue;
             }
 
             foreach (new NodeFinder()->find([$method], self::isFieldWrite(...)) as $write) {
-                if (isset($declared[self::selfPropertyOf($write->var) ?? ''])) {
+                if (isset($constructed[self::selfPropertyOf($write->var) ?? ''])) {
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * The fields the CALLER established — promoted parameters, and fields the constructor assigns
+     * straight from a parameter. These are what the object was asked to be.
+     *
+     * A field the constructor computes for itself (`$this->view = new NullView`) is NOT identity: the
+     * caller never said it, so it is the object's own starting state.
+     *
+     * @return array<string, true>
+     */
+    private function constructedFieldNames(): array
+    {
+        $constructor = $this->getConstructor();
+
+        if (! $constructor instanceof ClassMethod) {
+            return [];
+        }
+
+        $names = [];
+        $parameters = [];
+
+        foreach ($constructor->params as $param) {
+            if (! $param->var instanceof Variable || ! is_string($param->var->name)) {
+                continue;
+            }
+
+            $parameters[$param->var->name] = true;
+
+            if ($param->flags !== 0) {
+                $names[$param->var->name] = true; // promoted — the parameter IS the field
+            }
+        }
+
+        foreach (new NodeFinder()->findInstanceOf([$constructor], Assign::class) as $assign) {
+            $name = self::selfPropertyOf($assign->var);
+
+            if ($name !== null && $assign->expr instanceof Variable && isset($parameters[$assign->expr->name])) {
+                $names[$name] = true;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Does this method hand back `$this` — the mark of a fluent call meant to be chained?
+     */
+    private static function returnsThis(ClassMethod $method): bool
+    {
+        return new NodeFinder()->findFirst(
+            [$method],
+            static fn (Node $node): bool => $node instanceof Return_
+                && $node->expr instanceof Variable
+                && $node->expr->name === 'this',
+        ) !== null;
     }
 
     /**

@@ -101,6 +101,10 @@ A `route('x')` lookup naming a route no registration mints — a stringly cross-
 
 ```php
 // Bad
+/**
+ * A misspelt name buried in a menu array: every other entry resolves, so the page renders until a
+ * user clicks THIS one.
+ */
 public function menu(): array
 {
     return [
@@ -110,6 +114,9 @@ public function menu(): array
 }
 
 // Good
+/**
+ * Righteous: the name is exactly the one the route registers.
+ */
 public function home(): string
 {
     return route('dashboard');
@@ -170,6 +177,11 @@ public function print(string $sku): string
 }
 
 // Good
+/**
+ * The real, routed controllers — each the ONE home for its operation, delegating INTO a domain service.
+ * That is the righteous shape: the RouteDelegatesToController detector must not flag them (their delegate
+ * is a service, not another routed controller).
+ */
 final class ExportController
 {
     public function __construct(private readonly WorkflowExporter $exporter) {}

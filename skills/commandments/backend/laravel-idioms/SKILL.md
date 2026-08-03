@@ -64,6 +64,10 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ```php
 // Bad
+/**
+ * @param  array<string, mixed>  $filters
+ * @return array<int, mixed>
+ */
 public function search(array $filters): array
 {
     $perPage = config('shop.catalog.per_page');
@@ -76,6 +80,11 @@ public function search(array $filters): array
 }
 
 // Good
+/**
+ * Injects the typed settings object instead of reading config in the body.
+ *
+ * @return array<int, mixed>
+ */
 public function searchTop(string $term, string $sort): array
 {
     return $this->run($term, $sort, $this->settings->perPage);
@@ -152,6 +161,10 @@ public function idleTimeout(): int
 }
 
 // Good
+/**
+ * Righteous: the file states no default for this one (`env('SHOP_SUPPORT_EMAIL')` alone), so the
+ * fallback here is the ONLY answer to "what if it is absent" — one source of truth, not two.
+ */
 public function supportEmail(): string
 {
     return $this->stringOr('kiosk.support_email', 'help@shop.test');

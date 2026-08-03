@@ -63,6 +63,10 @@ Class `extends Concurrent` instead of composing `Concurrent<self>`
 
 ```php
 // Bad
+/**
+ * Live order stage the frontend polls — but welded to the proxy by subclassing
+ * instead of composing a Concurrent<self> behind ::for().
+ */
 final class LiveOrderTracker extends Concurrent
 {
     public string $stage = 'received';
@@ -74,6 +78,10 @@ final class LiveOrderTracker extends Concurrent
 }
 
 // Good
+/**
+ * The clean twin: a plain domain object handed out thread-safe by a `::for()`
+ * factory that wraps it in a `Concurrent<self>` — composition, not inheritance.
+ */
 final class LiveOrderStage
 {
     public string $stage = 'received';

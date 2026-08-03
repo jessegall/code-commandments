@@ -54,6 +54,9 @@ Reach for this the moment you are about to write:
 
 ```php
 // Bad
+/**
+ * @param  array<string, array<int, string>>  $manifest
+ */
 public function fanOut(string $carrier, array $manifest): void
 {
     foreach ($manifest[$carrier] ?? [] as $parcel) {
@@ -62,6 +65,9 @@ public function fanOut(string $carrier, array $manifest): void
 }
 
 // Good
+/**
+ * @param  array<string, array<int, string>>  $manifest
+ */
 public function fanOutGuarded(string $carrier, array $manifest): void
 {
     if (! isset($manifest[$carrier])) {
@@ -80,6 +86,9 @@ public function fanOutGuarded(string $carrier, array $manifest): void
 
 ```php
 // Bad
+/**
+ * @param  array<string, int>  $overrides
+ */
 public function resolve(Product $product, array $overrides, string $region): int
 {
     if (array_key_exists($region, $overrides)) {
@@ -94,6 +103,12 @@ public function resolve(Product $product, array $overrides, string $region): int
 }
 
 // Good
+/**
+ * The same resolution flattened: preconditions become guard clauses, so the
+ * happy path runs unindented at the top level.
+ *
+ * @param  array<string, int>  $overrides
+ */
 public function resolveFlat(Product $product, array $overrides, string $region): int
 {
     if (! array_key_exists($region, $overrides)) {
@@ -167,6 +182,9 @@ Loop body (multi-statement) wrapped in an `if` instead of `continue` guard
 
 ```php
 // Bad
+/**
+ * @param  array<int, object>  $rows
+ */
 public function process(array $rows): void
 {
     foreach ($rows as $row) {
@@ -178,6 +196,9 @@ public function process(array $rows): void
 }
 
 // Good
+/**
+ * @param  array<int, object>  $rows
+ */
 public function process(array $rows): void
 {
     foreach ($rows as $row) {
@@ -203,6 +224,10 @@ private function band(int $score): string
 }
 
 // Good
+/**
+ * The same decision as a `match (true)` — each band reads on its own line, no
+ * precedence trap.
+ */
 private function bandMatched(int $score): string
 {
     return match (true) {
@@ -253,6 +278,10 @@ public function nearestWhile(object $widget): string
 
 ```php
 // Bad
+/**
+ * @param  array<int, Product>  $products
+ * @return array<int, Product>
+ */
 public function inStock(array $products): array
 {
     $available = [];
@@ -269,6 +298,13 @@ public function inStock(array $products): array
 }
 
 // Good
+/**
+ * The guard handles the absent case and `continue`s; the happy path runs
+ * unindented with no redundant `else`.
+ *
+ * @param  array<int, Product>  $products
+ * @return array<int, Product>
+ */
 public function available(array $products): array
 {
     $available = [];
@@ -313,6 +349,10 @@ a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothin
 
 ```php
 // Bad
+/**
+ * @param  array<string, array<int, object>>  $below
+ * @return array<int, string>
+ */
 public function collapsed(string $id, array $below): array
 {
     $gone = [];
@@ -327,6 +367,10 @@ public function collapsed(string $id, array $below): array
 }
 
 // Good
+/**
+ * @param  array<string, array<int, object>>  $below
+ * @return array<int, string>
+ */
 public function collapsedBranched(string $id, array $below): array
 {
     $gone = [];

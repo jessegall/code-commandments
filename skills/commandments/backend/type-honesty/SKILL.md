@@ -65,6 +65,10 @@ public function covers(string $date): bool
 }
 
 // Good
+/**
+ * Resolve-or-throw: the invariant ("focus() ran first") is asserted, not papered
+ * over with a fake default for a state that can only be a bug.
+ */
 public function coversOrFail(string $date): bool
 {
     if ($this->period === null) {
@@ -81,6 +85,9 @@ Phantom nullable — a field typed `?T` (promoted param or declared property, an
 
 ```php
 // Bad
+/**
+ * The packing slip — carries the delivery address on to the shipment label.
+ */
 final class PackingSlip
 {
     public ?ShippingAddress $deliverTo = null;
@@ -92,6 +99,11 @@ final class PackingSlip
 }
 
 // Good
+/**
+ * RIGHTEOUS: `$note` is a genuine optional — a shopper may leave delivery instructions or not, and its
+ * reader ({@see DeliveryNotePrinter}) null-checks it before use. A guard exists in its flow, so the
+ * `?string` is honest and the detector leaves it alone.
+ */
 final class DeliveryInstruction
 {
     public function __construct(
@@ -107,6 +119,10 @@ An arrow function whose return type only repeats what its one expression provabl
 
 ```php
 // Bad
+/**
+ * Aggregates parcel weights into a histogram. accumulateFrom is the same loop as
+ * the pricing and shipping scorers — same shape, different names and constant.
+ */
 final class WeightAggregator
 {
     /**
@@ -183,6 +199,10 @@ final class WeightAggregator
 }
 
 // Good
+/**
+ * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
+ * count stand at the head of the class, so one read of the top says everything this object holds.
+ */
 final class CheckoutSession
 {
     private const int TTL = 1800;
@@ -232,6 +252,10 @@ Scratch state on `$this` — a method that saves one of its own fields to a loca
 
 ```php
 // Bad
+/**
+ * @param  list<string>  $routes
+ * @return list<string>
+ */
 public function nest(string $segment, array $routes): array
 {
     $parent = $this->prefix;
@@ -245,6 +269,10 @@ public function nest(string $segment, array $routes): array
 }
 
 // Good
+/**
+ * @param  list<string>  $routes
+ * @return list<string>
+ */
 public function nestUnder(string $prefix, string $segment, array $routes): array
 {
     $nested = ltrim($prefix . '/' . $segment, '/');
@@ -267,6 +295,9 @@ public function draft(string $slug): WorkflowRowData
 }
 
 // Good
+/**
+ * Righteous: the timestamp is real, so the envelope's promise holds.
+ */
 public function publish(string $slug, string $name, string $stamp): WorkflowRowData
 {
     return new WorkflowRowData($slug, $name, null, true, $stamp);
@@ -279,6 +310,11 @@ A `get` hook that reads nothing from `$this` — a stored property wearing compu
 
 ```php
 // Bad
+/**
+ * Rebuilds the SAME value object on every read — nothing comes from `$this`, so the
+ * construction belongs in the constructor (a `new`/static call can't be a property
+ * default), not in a per-read hook.
+ */
 final class LabelPrintDefaults
 {
     public Weight $maxParcelWeight {
@@ -307,6 +343,9 @@ final class LabelPrintDefaults
 }
 
 // Good
+/**
+ * The righteous twin: every hook here EARNS its syntax — derived from `$this`, or a get/set pair.
+ */
 final class GlowingTile implements AnimatedTile
 {
     private string $easingMode = 'in';
