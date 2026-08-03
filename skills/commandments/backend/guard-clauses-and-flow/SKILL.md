@@ -40,6 +40,8 @@ Reach for this the moment you are about to write:
 - Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
 - Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
   _A `match`, or early-return guards._
+- Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
+  _A `while` over an explicit cursor — or better, an iterator on the type being walked, so the caller never holds the cursor at all._
 - Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
 - Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
 - Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
@@ -189,6 +191,36 @@ private function bandMatched(int $score): string
 
 ```php
 // Bad
+public function nearest(object $widget): string
+{
+    for ($one = $widget; $one !== null; $one = $one->stacked ? $one->above : null) {
+        if ($one->caption !== '') {
+            return $one->caption;
+        }
+    }
+
+    return 'untitled';
+}
+
+// Good
+public function nearestWhile(object $widget): string
+{
+    $one = $widget;
+
+    while ($one !== null) {
+        if ($one->caption !== '') {
+            return $one->caption;
+        }
+
+        $one = $one->stacked ? $one->above : null;
+    }
+
+    return 'untitled';
+}
+```
+
+```php
+// Bad
 public function inStock(array $products): array
 {
     $available = [];
@@ -279,6 +311,7 @@ public function collapsedBranched(string $id, array $below): array
 - `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `InlineThrowDetector`
 - Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`
 - Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
+- a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes — `NonCountingForDetector`
 - `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
 - a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
 - a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value — `TernaryStatementDetector`
@@ -291,6 +324,7 @@ public function collapsedBranched(string $id, array $below): array
 - [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
 - [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
 - [ ] Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
+- [ ] Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
 - [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
 - [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
 - [ ] Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.

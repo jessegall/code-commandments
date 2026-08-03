@@ -23,6 +23,12 @@ use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\AssignOp\Coalesce as CoalesceAssign;
+use PhpParser\Node\Expr\AssignOp\Minus as MinusAssign;
+use PhpParser\Node\Expr\AssignOp\Plus as PlusAssign;
+use PhpParser\Node\Expr\PostDec;
+use PhpParser\Node\Expr\PostInc;
+use PhpParser\Node\Expr\PreDec;
+use PhpParser\Node\Expr\PreInc;
 use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
@@ -202,6 +208,43 @@ class AstNode
         }
 
         return new self($this->node instanceof Ternary && $this->node->if === null ? $this->node->cond : null);
+    }
+
+    /**
+     * Is this a `for` whose step does NOT advance a counter — one that assigns the next thing
+     * instead (`$one = $one instanceof Traceable ? $one->getAbove() : null`)? A `for` promises
+     * init-test-step over an induction variable, so its header can be read at a glance; a step that
+     * computes where to go next is a WALK, and it turns all three clauses into a puzzle. Every
+     * counted spelling is a step — `$i++`, `++$i`, `$i--`, `$i += 2` — so a genuine counted loop
+     * never qualifies, however its bound is worked out. A bare `for (;;)` has no step to judge.
+     */
+    public function isNonCountingFor(): bool
+    {
+        if (! $this->node instanceof For_ || $this->node->loop === []) {
+            return false;
+        }
+
+        foreach ($this->node->loop as $step) {
+            if (self::advancesACounter($step)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Does this step expression move a counter along — the four spellings of "one more" (`$i++`,
+     * `++$i`, `$i--`, `--$i`) plus a compound `$i += n` / `$i -= n`?
+     */
+    private static function advancesACounter(Node $step): bool
+    {
+        return $step instanceof PostInc
+            || $step instanceof PreInc
+            || $step instanceof PostDec
+            || $step instanceof PreDec
+            || $step instanceof PlusAssign
+            || $step instanceof MinusAssign;
     }
 
     /**
