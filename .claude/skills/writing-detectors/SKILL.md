@@ -49,8 +49,11 @@ to register.
    look-alikes it must NOT flag.
 2. **Implement** the detector + any engine helper it needs.
 3. **Prove it in the fixture** ([[detector-fixtures]]): mark `#[Sinful(YourSin::class)]`
-   (name the SIN, not the detector) on ≥3 DIVERSE examples and keep a righteous twin it
-   must not flag.
+   (name the SIN, not the detector) on ≥3 DIVERSE examples, keep a `#[Righteous]` twin it
+   must not flag, and write a `#[Fixed]` twin — the sinful code REPAIRED the way your
+   rule says. The `#[Fixed]` one is what the published skill shows as "Good", so it must
+   contain the construct your `rule`/`suggestion` names; a righteous exemption in its
+   place teaches the escape hatch instead of the fix.
 4. **Validate on real code.** Run `bin/commandments judge ../workflows/src
    --sin=your-sin` and read the hits. Real false positives → tighten the
    detector (a principled `reject`, not a name list) before shipping.

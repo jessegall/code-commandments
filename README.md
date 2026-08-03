@@ -505,8 +505,15 @@ Each detector must also fire on **≥3 genuinely different** examples.
 
 Any unmarked code is already "righteous", so the whole rest of the fixture guards
 against false positives; you don't mark good code. One `#[Righteous]` /
-`<!-- @righteous -->` per detector is required: it sources the good-code example
-for the generated skill docs.
+`<!-- @righteous -->` per detector is required: a deliberate look-alike the
+detector must NOT flag.
+
+A third marker, `#[Fixed(...)]`, is the one the docs publish as "Good": the
+sinful code **repaired the way the rule says**. It is a different claim from
+`#[Righteous]` — a righteous twin is usually a documented *exemption*, code that
+legitimately dodges the rule, whereas a fixed twin is what the bad code should
+become. The generated `## Bad → good` prefers `#[Fixed]` and falls back to
+`#[Righteous]` only where none exists.
 
 ### Testing your own detectors
 

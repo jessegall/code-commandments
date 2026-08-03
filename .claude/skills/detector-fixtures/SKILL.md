@@ -54,6 +54,37 @@ Every detector needs a deliberate **look-alike that it must NOT flag**, so the
 next to `::from()`-in-a-loop. A file can be righteous for one detector and sinful
 for another.
 
+## `#[Fixed]` — the RESOLUTION, and not the same thing as righteous
+
+`#[Righteous]` is a claim about the **detector**: a look-alike it must not flag,
+which in practice is usually a documented *exemption* — code that legitimately
+dodges the rule. `#[Fixed]` is a claim about the **fix**: the `#[Sinful]` code
+repaired the way that sin's rule says to repair it.
+
+```php
+#[Sinful(NullableCallback::class)]
+public function run(Closure $work, ?Closure $onRetry = null): mixed   // null-normalised in the body
+
+#[Fixed(NullableCallback::class)]
+public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed   // the rule's own fix
+```
+
+They coincide only by accident, and publishing the first as the second taught the
+exemption instead of the fix — a whole audit's worth of skills said "make the
+parameter required" where the rule said "default it to a Null Object". So the
+generated `## Bad → good` prefers `#[Fixed]` and falls back to `#[Righteous]`
+only where none exists; **the fallback is a stopgap, not a design**.
+
+Rules of thumb:
+
+- Put the `#[Fixed]` twin in the **same class** as its `#[Sinful]` — the renderer
+  prefers a same-class pair, so the reader gets one coherent before/after.
+- Repair *that* scenario. A fix for a different method teaches nothing.
+- Show the construct the sin's own `rule`/`suggestion` names — if the rule says
+  `#[WithCast]`, the fix must contain `#[WithCast]`.
+- A resolution must also go unflagged, so `#[Fixed]` implies `#[Righteous]`, never
+  the reverse. `FixedIsTheResolutionTest` fails if a detector flags its own fix.
+
 ## Diagnostics
 
 A quick per-detector diversity/FP probe: scan the fixture (or workflows) with

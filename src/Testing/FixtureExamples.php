@@ -12,10 +12,12 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 
 /**
- * Extracts each detector's worked example from the fixture — the `#[Sinful]`-marked
- * declaration (the BAD half) and its `#[Righteous]` twin (the GOOD half) — as real,
- * parsed, tested source. The skill docs are generated from these, so a bad → good
- * example can never rot: it IS the fixture the detector is proven against.
+ * Extracts each detector's worked example from the fixture — the `#[Sinful]`-marked declaration
+ * (the BAD half) and its resolution (the GOOD half) — as real, parsed, tested source. The skill
+ * docs are generated from these, so a bad → good example can never rot: it IS the fixture the
+ * detector is proven against. The good half comes from {@see Fixed} where one exists and falls back
+ * to {@see Righteous} only where none does — a stopgap, not a design, since a righteous twin is a
+ * look-alike the detector must not flag (usually an EXEMPTION) rather than the bad code repaired.
  */
 final class FixtureExamples
 {
@@ -26,6 +28,7 @@ final class FixtureExamples
     public static function extract(Codebase $fixture, array $detectors): array
     {
         $sinful = self::sourcesByDetector($fixture, 'Sinful');
+        $fixed = self::sourcesByDetector($fixture, 'Fixed');
         $righteous = self::sourcesByDetector($fixture, 'Righteous');
 
         $examples = [];
@@ -33,12 +36,36 @@ final class FixtureExamples
         foreach ($detectors as $detector) {
             $keys = [$detector->sin()::class, $detector::class, $detector->sin()->slug(), $detector->sin()->name()];
             $bad = ExampleText::forKeys($sinful, $keys);
-            $good = ExampleText::forKeys($righteous, $keys);
+            $good = ExampleText::forKeys($fixed, $keys) ?: ExampleText::forKeys($righteous, $keys);
 
             $examples[$detector::class] = ExampleText::pair($bad, $good, 'class');
         }
 
         return $examples;
+    }
+
+    /**
+     * Which sins have a real RESOLUTION in the fixture, and which are still falling back to a
+     * righteous look-alike — the coverage the enforcement test reads, and the answer to "is this
+     * skill's good example actually the fix?".
+     *
+     * @param  list<Detector>  $detectors
+     * @return list<class-string<Detector>>  the detectors with no `#[Fixed]` twin
+     */
+    public static function withoutResolution(Codebase $fixture, array $detectors): array
+    {
+        $fixed = self::sourcesByDetector($fixture, 'Fixed');
+        $missing = [];
+
+        foreach ($detectors as $detector) {
+            $keys = [$detector->sin()::class, $detector::class, $detector->sin()->slug(), $detector->sin()->name()];
+
+            if (ExampleText::forKeys($fixed, $keys) === []) {
+                $missing[] = $detector::class;
+            }
+        }
+
+        return $missing;
     }
 
     /**
@@ -94,7 +121,9 @@ final class FixtureExamples
 
         $kept = array_filter(
             array_map(static fn (string $line): string => rtrim($line, "\n"), $slice),
-            static fn (string $line): bool => ! str_contains($line, '#[Sinful(') && ! str_contains($line, '#[Righteous('),
+            static fn (string $line): bool => ! str_contains($line, '#[Sinful(')
+                && ! str_contains($line, '#[Righteous(')
+                && ! str_contains($line, '#[Fixed('),
         );
 
         return ExampleText::dedent(array_values($kept));

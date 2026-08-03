@@ -5,6 +5,7 @@ namespace Shop\Support;
 use JesseGall\CodeCommandments\Sins\Backend\NullableCallback;
 
 use Closure;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -47,6 +48,7 @@ final class RetryRunner
      *
      * @return T
      */
+    #[Fixed(NullableCallback::class)]
     #[Righteous(NullableCallback::class)]
     public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
     {

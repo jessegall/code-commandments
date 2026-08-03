@@ -82,7 +82,9 @@ Before you write or touch any detector, load these via the **Skill tool**:
 2. **`detector-engine`** — the fluent AST DSL (`Codebase` → `Query` →
    `AstNode`/`NodeMatch`), the call graph, the variable trace, and where a new
    helper belongs (the layering rule).
-3. **`detector-fixtures`** — the self-checking fixture: `#[Sinful]` = spec, the
+3. **`detector-fixtures`** — the self-checking fixture: `#[Sinful]` = spec, `#[Fixed]` =
+   the RESOLUTION the docs publish as "Good" (distinct from `#[Righteous]`, which is a
+   look-alike the detector must not flag — usually an exemption, not a fix), the
    ≥3-diverse-scenarios rule, righteous twins.
 
 They encode the cardinal rules: **AST/semantic signals over name/suffix matching**
