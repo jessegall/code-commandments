@@ -44,12 +44,11 @@ final class RetryRunner
      * @template T
      *
      * @param  Closure(): T  $work
-     * @param  Closure(int): void  $onRetry  a no-op closure stands in when the caller doesn't care
      *
      * @return T
      */
     #[Righteous(NullableCallback::class)]
-    public function runWith(Closure $work, Closure $onRetry): mixed
+    public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
     {
         while (true) {
             $this->attempts++;

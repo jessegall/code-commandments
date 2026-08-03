@@ -840,6 +840,16 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Is the class NAMED here a value rather than a service — the same walk {@see isValueType} does over
+     * a type declaration, asked of a class directly. The seam a caller needs when it holds a declaration
+     * (a `whereClass()` match) instead of a type node, so nobody has to build a synthetic `Name` to ask.
+     */
+    public function classIsValueType(?string $fqcn): bool
+    {
+        return $fqcn !== null && $this->isValueType(new Name($fqcn));
+    }
+
+    /**
      * @return array<string, Class_>  class FQCN => declaration node
      */
     private function classNodeMap(): array

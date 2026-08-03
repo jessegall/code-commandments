@@ -22,6 +22,7 @@ use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\AssignOp;
 use PhpParser\Node\Expr\AssignOp\Coalesce as CoalesceAssign;
 use PhpParser\Node\Expr\AssignOp\Minus as MinusAssign;
 use PhpParser\Node\Expr\AssignOp\Plus as PlusAssign;
@@ -208,6 +209,52 @@ class AstNode
         }
 
         return new self($this->node instanceof Ternary && $this->node->if === null ? $this->node->cond : null);
+    }
+
+    /**
+     * Does this CLASS change one of its own declared fields after it has been built — a write to
+     * `$this->field` from any method other than the constructor? The question that separates a value
+     * from a record: two holders of the same value must be able to rely on it staying that value.
+     *
+     * A `??=` write does not count. Filling a lazily-computed field changes nothing a caller can
+     * observe — the value was always going to be that; it just had not been worked out yet.
+     */
+    public function mutatesOwnFieldsAfterConstruction(): bool
+    {
+        if (! $this->node instanceof ClassLike) {
+            return false;
+        }
+
+        $declared = [];
+
+        foreach ($this->fields() as $field) {
+            $declared[$field->name] = true;
+        }
+
+        foreach ($this->node->getMethods() as $method) {
+            if ($method->name->toString() === '__construct') {
+                continue;
+            }
+
+            foreach (new NodeFinder()->find([$method], self::isFieldWrite(...)) as $write) {
+                if (isset($declared[self::selfPropertyOf($write->var) ?? ''])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this node a write that REPLACES what a field holds — `=` or a compound `+=`/`.=`, but never
+     * `??=`, which only fills a blank that was always going to be filled that way.
+     */
+    private static function isFieldWrite(Node $node): bool
+    {
+        return ($node instanceof Assign || $node instanceof AssignOp)
+            && ! $node instanceof CoalesceAssign
+            && $node->var instanceof PropertyFetch;
     }
 
     /**

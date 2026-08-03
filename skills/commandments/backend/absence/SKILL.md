@@ -160,7 +160,7 @@ public function run(Closure $work, Closure | null $onRetry = null): mixed
 }
 
 // Good
-public function runWith(Closure $work, Closure $onRetry): mixed
+public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 {
     while (true) {
         $this->attempts++;

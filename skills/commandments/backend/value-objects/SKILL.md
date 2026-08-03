@@ -41,6 +41,8 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
   _A value object the params fold into (`Money::of()`, `NodePosition`)._
 - A wither changes ONE thing: say only what changes. `clone($this, ['x' => $x])` states the intent; re-listing every field states the constructor again, N times over.
   _Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])` — `repent` does it for you._
+- Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.
+  _`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)._
 - Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
   _A small `readonly` result object._
 - Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
@@ -321,6 +323,7 @@ final class LooseCard extends Data
 - A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object — `CoupledFieldsDetector`
 - The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) — `DataClumpDetector`
 - A wither rebuilds its object by re-spelling every constructor field, so each new field must be threaded through N of them — `HandRolledWitherDetector`
+- a value type that writes its own field after construction — two holders of the same value, and one of them can change it under the other
 - Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position — `PositionalTupleReturnDetector`
 - Returning a raw decoded boundary array (`json_decode(...)`) untyped — `RawDecodedArrayReturnDetector`
 - A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of NESTING the existing `Wire{type, label}` — width instead of depth — `FlatFieldClusterDetector`
@@ -332,6 +335,7 @@ final class LooseCard extends Data
 - [ ] Fields that move as a unit are one type: extract the clump into a value object and hold THAT; never mirror a datum that already lives on a nested object.
 - [ ] Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
 - [ ] A wither changes ONE thing: say only what changes. `clone($this, ['x' => $x])` states the intent; re-listing every field states the constructor again, N times over.
+- [ ] Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.
 - [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
 - [ ] Return a typed object from a decoded boundary; never hand back a raw `json_decode(...)` array.
 - [ ] When scalar fields on a Data class share a prefix that names a value object the codebase already declares, they restate that object flat. Nest them into the existing sub-object and shed the prefix — `wireType`/`wireLabel` become `wire: Wire{type, label}`.
