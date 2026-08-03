@@ -52,6 +52,10 @@ Reach for this the moment you write:
 
 ## Bad → good
 
+### const-class-enum
+
+A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum
+
 ```php
 // Bad
 final class PaymentStatuses
@@ -86,6 +90,10 @@ enum TaxBand: int
 }
 ```
 
+### enum-case-or-chain
+
+`$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test
+
 ```php
 // Bad
 public function clearsImmediately(PaymentMethod $method): bool
@@ -108,6 +116,10 @@ public function clearsImmediatelyClean(PaymentMethod $method): bool
     return $method->isInstant();
 }
 ```
+
+### enum-value-match
+
+`match`/`switch` over an enum's `->value` at a call site (homeless method)
 
 ```php
 // Bad
@@ -132,6 +144,10 @@ public function colourViaEnum(Product $product): string
 }
 ```
 
+### in-array-mirrors-enum
+
+`in_array($x, [literals])` whose literals mirror an existing enum's cases
+
 ```php
 // Bad
 public function allowed(string $method): bool
@@ -145,6 +161,10 @@ public function allowedClean(string $method): bool
     return PaymentMethod::tryFrom($method) !== null;
 }
 ```
+
+### match-default-returns-null
+
+`match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing
 
 ```php
 // Bad
@@ -169,6 +189,10 @@ public function strictFor(Product $product): string
     };
 }
 ```
+
+### string-match-mirrors-enum
+
+`match`/`switch` over string/int literals that mirror an existing backed enum's case values
 
 ```php
 // Bad

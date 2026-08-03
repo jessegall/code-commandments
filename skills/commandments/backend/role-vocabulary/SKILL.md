@@ -62,6 +62,10 @@ added; a marker interface is checked by the compiler.
 
 ## Bad → good
 
+### nullable-registry-lookup
+
+A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw)
+
 ```php
 // Bad
 public function get(string $key): ?object

@@ -58,6 +58,10 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ## Bad → good
 
+### config-read
+
+`config('…')` read inside a class
+
 ```php
 // Bad
 public function search(array $filters): array
@@ -78,6 +82,10 @@ public function searchTop(string $term, string $sort): array
 }
 ```
 
+### container-reach
+
+`app()`/`resolve()` reach inside a container-resolved class
+
 ```php
 // Bad
 public function pay(Request $request): array
@@ -97,6 +105,10 @@ public function payClean(PaymentProcessor $processor, string $token, int $amount
 }
 ```
 
+### dead-config-key
+
+A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt
+
 ```php
 // Bad
 static fn (): null => null;
@@ -109,6 +121,10 @@ public function register(): void
     $this->app->singleton('shop.stocktake.cycle', static fn (): int => (int) config('stocktake.cycle_days'));
 }
 ```
+
+### dead-event-wiring
+
+An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring
 
 ```php
 // Bad
@@ -124,6 +140,10 @@ public function register(): void
 }
 ```
 
+### duplicated-config-default
+
+A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently
+
 ```php
 // Bad
 public function idleTimeout(): int
@@ -138,6 +158,10 @@ public function supportEmail(): string
 }
 ```
 
+### facade-call
+
+Laravel facade call (`Cache::`, `Log::`, `Mail::` …)
+
 ```php
 // Bad
 public function handle(): void
@@ -151,6 +175,10 @@ public function failed(\Throwable $failure): void
     App::make(StockReconciler::class)->abandon($failure->getMessage());
 }
 ```
+
+### mass-update-at-call-site
+
+Bare `$model->update([...])` mass-array update at a call site
 
 ```php
 // Bad
@@ -169,6 +197,10 @@ public function verifyNamed(Customer $customer): void
 }
 ```
 
+### model-mutation-at-call-site
+
+Set-property-then-`save()` at a call site (should be an intention method)
+
 ```php
 // Bad
 public function suspend(Customer $customer, string $reason): void
@@ -184,6 +216,10 @@ public function suspendNamed(Customer $customer, string $reason): void
     $customer->suspend($reason);
 }
 ```
+
+### orphaned-binding
+
+A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor
 
 ```php
 // Bad
@@ -209,6 +245,10 @@ public function register(): void
 }
 ```
 
+### raw-request-input
+
+Raw `->input()/->get()/->query()/->post()` on a Request
+
 ```php
 // Bad
 public function handle(Request $request): string
@@ -228,6 +268,10 @@ public function handleTyped(Request $request): string
     return $id . ':' . $name;
 }
 ```
+
+### request-accessor-recast
+
+Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class
 
 ```php
 // Bad

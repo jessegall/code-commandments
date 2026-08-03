@@ -71,6 +71,10 @@ invokable serving the paths a spec requires.
 
 ## Bad → good
 
+### boundary-duplicated-operation
+
+The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift
+
 ```php
 // Bad
 public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, PrintLog $log): string
@@ -91,6 +95,10 @@ public function handle(LabelPrinting $printing): int
 }
 ```
 
+### dangling-route-name
+
+A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500
+
 ```php
 // Bad
 public function menu(): array
@@ -108,6 +116,10 @@ public function home(): string
 }
 ```
 
+### duplicate-route
+
+Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)
+
 ```php
 // Bad
 public function feed(): void
@@ -122,6 +134,10 @@ public function sitemap(): void
     Route::get('/sitemap', [SitemapController::class, 'show'])->name('sitemap');
 }
 ```
+
+### duplicate-route-action
+
+Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice
 
 ```php
 // Bad
@@ -141,6 +157,10 @@ final class LabelController
     }
 }
 ```
+
+### route-delegates-to-controller
+
+A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one
 
 ```php
 // Bad

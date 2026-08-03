@@ -43,6 +43,10 @@ if the codebase already uses them — structural, not narrative.) Everything els
 
 ## Bad → good
 
+### archaeology-comment
+
+History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted")
+
 ```php
 // Bad
 public function search(array $filters): array
@@ -65,6 +69,10 @@ public function searchSorted(string $term): array
     return $this->run($term, $sort, $this->settings->perPage);
 }
 ```
+
+### bloated-docblock
+
+Multi-paragraph class docblock (class too big)
 
 ```php
 // Bad
@@ -109,6 +117,10 @@ final class TidyOrderImporter
 }
 ```
 
+### ceremony-docblock
+
+Docblock that only restates the typed signature (`@param Type $x`, no description)
+
 ```php
 // Bad
 public function award(int $points, string $name): string
@@ -122,6 +134,10 @@ public function awardLabel(int $points, string $name): string
     return $name . ':' . $points;
 }
 ```
+
+### dangling-doc-reference
+
+A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is
 
 ```php
 // Bad
@@ -175,6 +191,10 @@ final class HonestDoc
     }
 }
 ```
+
+### inline-docblock
+
+A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content
 
 ```php
 // Bad
@@ -231,6 +251,10 @@ final class HonestDoc
 }
 ```
 
+### negative-space-comment
+
+A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code")
+
 ```php
 // Bad
 public function get(string $code): SkuEntry
@@ -246,6 +270,10 @@ public function has(string $code): bool
     return $code !== '';
 }
 ```
+
+### restated-comment
+
+An inline comment that only spells the statement below it back in prose ("// save the order" over `$this->orders->save($order)`)
 
 ```php
 // Bad
@@ -264,6 +292,10 @@ public function apply(string $coupon): void
     }
 }
 ```
+
+### stacked-docblock
+
+Two or more docblocks stacked on one declaration — PHP reads only the last, so the ones above it are documentation nobody sees
 
 ```php
 // Bad

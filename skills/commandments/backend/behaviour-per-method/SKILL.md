@@ -63,6 +63,10 @@ halves have an obvious name, they are already two methods — give them their na
 
 ## Bad → good
 
+### flag-argument
+
+a method whose whole body branches on a `bool` parameter — two methods sharing one name
+
 ```php
 // Bad
 public function announce(string $message, bool $urgent): void

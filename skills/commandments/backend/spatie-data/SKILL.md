@@ -266,6 +266,10 @@ if you think you need one, you probably want a typed accessor / method on the cl
 
 ## Bad → good
 
+### all-nullable-data
+
+All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth)
+
 ```php
 // Bad
 final class LegacyImportRow extends Data
@@ -299,6 +303,10 @@ final class ImportRow extends Data
     }
 }
 ```
+
+### all-optional-data
+
+Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used
 
 ```php
 // Bad
@@ -346,6 +354,10 @@ final class Panel extends Data
 }
 ```
 
+### data-collection-type
+
+A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration
+
 ```php
 // Bad
 final class RosterPage extends Data
@@ -385,6 +397,10 @@ final class GalleryPage extends Data
 }
 ```
 
+### data-method-hint-collision
+
+`@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`)
+
 ```php
 // Bad
 final class CouponData extends Data
@@ -413,6 +429,10 @@ final class VoucherData extends Data
     }
 }
 ```
+
+### hook-missing-computed
+
+A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it
 
 ```php
 // Bad
@@ -449,6 +469,10 @@ final class TagCloud extends Data
 }
 ```
 
+### manual-hydration-loop
+
+Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()`
+
 ```php
 // Bad
 public function importBatch(array $rows): array
@@ -478,6 +502,10 @@ public function importBatchCleanly(array $rows): iterable
 }
 ```
 
+### manual-input-cast
+
+A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once
+
 ```php
 // Bad
 public function __construct(
@@ -493,6 +521,10 @@ final class CleanInboundData extends \Spatie\LaravelData\Data
     ) {}
 }
 ```
+
+### nested-type-missing-typescript
+
+A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)
 
 ```php
 // Bad
@@ -543,6 +575,10 @@ final class EnumSlotRighteous extends Data
 }
 ```
 
+### new-data-object
+
+`new <Data subclass>` instead of `::from()` / a `fromX()` factory
+
 ```php
 // Bad
 public function build(Customer $customer): CustomerData
@@ -560,6 +596,10 @@ public function buildFrom(Customer $customer): CustomerData
     return CustomerData::from($customer);
 }
 ```
+
+### non-final-data
+
+Data class not `final` / props not `readonly` promoted
 
 ```php
 // Bad
@@ -602,6 +642,10 @@ final class StockSnapshotData extends Data
 }
 ```
 
+### null-to-optional-map
+
+A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs)
+
 ```php
 // Bad
 public function position(): OptCoords|Optional
@@ -626,6 +670,10 @@ final class LazyRelationRow extends Data
     }
 }
 ```
+
+### nullable-wire-object
+
+A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent")
 
 ```php
 // Bad
@@ -681,6 +729,10 @@ final class WireStage extends Data
     }
 }
 ```
+
+### prefer-optional-create
+
+A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer
 
 ```php
 // Bad

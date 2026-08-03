@@ -112,6 +112,10 @@ is born, and every `Command` that exists is real.
 
 ## Bad → good
 
+### duplicate-function
+
+Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)
+
 ```php
 // Bad
 public function fingerprint(int $base, int $count): string
@@ -132,6 +136,10 @@ public function checksum(int $base, int $count): string
 }
 ```
 
+### manufactured-fake-fill
+
+`?? <empty literal>` filling a required slot (manufactured fake)
+
 ```php
 // Bad
 public function normalize(array $row): void
@@ -149,6 +157,10 @@ public function persist(ImportRow $row): void
     $this->products->upsert($row->sku, $row->name, $row->stock);
 }
 ```
+
+### near-duplicate-function
+
+Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)
 
 ```php
 // Bad

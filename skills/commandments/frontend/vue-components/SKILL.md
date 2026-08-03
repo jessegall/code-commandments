@@ -41,6 +41,10 @@ unit out, props in.
 
 ## Bad → good
 
+### compound-inline-component
+
+A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component
+
 ```vue
 // Bad
 <Dialog v-model:open="open">
@@ -73,6 +77,10 @@ unit out, props in.
 <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
 ```
 
+### deep-data-reach
+
+A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop
+
 ```vue
 // Bad
 <section class="order-detail__customer">
@@ -85,6 +93,10 @@ unit out, props in.
 // Good
 <OrderCustomer :customer="order.customer" />
 ```
+
+### deep-nested
+
+Template markup nested far too deep — extract a subtree as its own component
 
 ```vue
 // Bad
@@ -117,6 +129,10 @@ unit out, props in.
 <SettingsCardBody :settings="settings" />
 ```
 
+### duplicate-element
+
+Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component
+
 ```vue
 // Bad
 <article class="review-card">
@@ -139,6 +155,10 @@ unit out, props in.
 </template>
 ```
 
+### prop-drilling
+
+A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits
+
 ```vue
 // Bad
 <NotificationBell :items="notifications" />
@@ -146,6 +166,10 @@ unit out, props in.
 // Good
 <UserAvatar :src="avatarUrl" />
 ```
+
+### prop-mutation
+
+A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op)
 
 ```vue
 // Bad

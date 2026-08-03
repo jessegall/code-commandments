@@ -91,6 +91,10 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Bad → good
 
+### conditional-array-spread
+
+An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present'
+
 ```php
 // Bad
 public function lines(): array
@@ -111,6 +115,10 @@ public function summary(): array
 }
 ```
 
+### de-nulled-finder
+
+Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it)
+
 ```php
 // Bad
 public function byBarcode(string $barcode): ?Product
@@ -125,6 +133,10 @@ public function requireByBarcode(string $barcode): Product
         ?? throw ProductNotFound::forBarcode($barcode);
 }
 ```
+
+### nullable-callback
+
+Nullable callback normalised in the body instead of a Null Object default
 
 ```php
 // Bad
@@ -165,6 +177,10 @@ public function runWith(Closure $work, Closure $onRetry): mixed
     }
 }
 ```
+
+### option-as-nullable
+
+`Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`
 
 ```php
 // Bad

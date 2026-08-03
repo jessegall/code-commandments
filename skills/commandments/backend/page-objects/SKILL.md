@@ -136,6 +136,10 @@ page object — the composed thing on the wire — is exactly where they earn th
 
 ## Bad → good
 
+### constructor-orchestration
+
+A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place
+
 ```php
 // Bad
 public function __construct(
@@ -159,6 +163,10 @@ public function __construct(
     $this->movers = Lazy::closure(fn (): array => $this->sales->movers());
 }
 ```
+
+### injected-service-not-hidden
+
+A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type
 
 ```php
 // Bad
@@ -218,6 +226,10 @@ final class ReportPage extends Data
 }
 ```
 
+### manual-output-transform
+
+A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape
+
 ```php
 // Bad
 #[Computed]
@@ -251,6 +263,10 @@ final class WireShapesPage extends Data
 
 }
 ```
+
+### page-object-missing-typescript
+
+A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked
 
 ```php
 // Bad
@@ -315,6 +331,10 @@ final class ReportPage extends Data
 }
 ```
 
+### service-location-in-page-object
+
+A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`
+
 ```php
 // Bad
 public function aiEnabled(): bool
@@ -346,6 +366,10 @@ final class ReportPage extends Data
     ) {}
 }
 ```
+
+### transformer-without-ts-type
+
+A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type
 
 ```php
 // Bad

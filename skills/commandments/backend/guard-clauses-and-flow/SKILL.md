@@ -48,6 +48,10 @@ Reach for this the moment you are about to write:
 
 ## Bad → good
 
+### coalesced-loop-subject
+
+`foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard
+
 ```php
 // Bad
 public function fanOut(string $carrier, array $manifest): void
@@ -69,6 +73,10 @@ public function fanOutGuarded(string $carrier, array $manifest): void
     }
 }
 ```
+
+### deep-nesting
+
+`if` nested 3-deep (a pyramid — hoist guards / extract)
 
 ```php
 // Bad
@@ -100,6 +108,10 @@ public function resolveFlat(Product $product, array $overrides, string $region):
 }
 ```
 
+### if-else-ladder
+
+if/elseif ladder of 4+ branches (should be match/dispatch)
+
 ```php
 // Bad
 public function band(int $grams): string
@@ -127,6 +139,10 @@ public function bandByMatch(int $grams): string
 }
 ```
 
+### inline-throw
+
+`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)
+
 ```php
 // Bad
 public function carrierName(Shipment $shipment): string
@@ -144,6 +160,10 @@ public function carrierNameGuarded(Shipment $shipment): string
     return $shipment->carrier->displayName();
 }
 ```
+
+### loop-inverted-guard
+
+Loop body (multi-statement) wrapped in an `if` instead of `continue` guard
 
 ```php
 // Bad
@@ -171,6 +191,10 @@ public function process(array $rows): void
 }
 ```
 
+### nested-ternary
+
+Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)
+
 ```php
 // Bad
 private function band(int $score): string
@@ -188,6 +212,10 @@ private function bandMatched(int $score): string
     };
 }
 ```
+
+### non-counting-for
+
+a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes
 
 ```php
 // Bad
@@ -218,6 +246,10 @@ public function nearestWhile(object $widget): string
     return 'untitled';
 }
 ```
+
+### redundant-else
+
+`else` after an `if` branch that already returns/throws (redundant)
 
 ```php
 // Bad
@@ -253,6 +285,10 @@ public function available(array $products): array
 }
 ```
 
+### short-circuit-statement
+
+a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise
+
 ```php
 // Bad
 public function send(string $address, bool $subscribed): void
@@ -270,6 +306,10 @@ public function sendGuarded(string $address, bool $subscribed): void
     $this->mailer->send($address, 'Your weekly digest', $this->digest());
 }
 ```
+
+### ternary-statement
+
+a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value
 
 ```php
 // Bad

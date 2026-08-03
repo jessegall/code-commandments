@@ -53,6 +53,10 @@ field, or a value object, and delete the defence.
 
 ## Bad → good
 
+### masked-invariant
+
+Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet"
+
 ```php
 // Bad
 public function covers(string $date): bool
@@ -70,6 +74,10 @@ public function coversOrFail(string $date): bool
     return $this->period->includes($date);
 }
 ```
+
+### phantom-nullable
+
+Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens
 
 ```php
 // Bad
@@ -92,6 +100,10 @@ final class DeliveryInstruction
     ) {}
 }
 ```
+
+### redundant-arrow-return-type
+
+An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property
 
 ```php
 // Bad
@@ -214,6 +226,10 @@ final class CheckoutSession
 }
 ```
 
+### scratch-state-restore
+
+Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input
+
 ```php
 // Bad
 public function nest(string $segment, array $routes): array
@@ -237,6 +253,10 @@ public function nestUnder(string $prefix, string $segment, array $routes): array
 }
 ```
 
+### placeholder-filled-data
+
+A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none
+
 ```php
 // Bad
 public function draft(string $slug): WorkflowRowData
@@ -252,6 +272,10 @@ public function publish(string $slug, string $name, string $stamp): WorkflowRowD
     return new WorkflowRowData($slug, $name, null, true, $stamp);
 }
 ```
+
+### useless-property-hook
+
+A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax
 
 ```php
 // Bad

@@ -113,7 +113,9 @@ final class SkillRenderer
     /**
      * The `## Bad → good` section — one worked example per sin from the fixture, DEDUPED
      * by bad source so a `#[Sinful]` method carrying several sins shows once, not once
-     * per sin.
+     * per sin. Each example is HEADED by the sin (or sins) it demonstrates: a reader
+     * scrolling a stack of before/afters has to be able to tell which rule each one is
+     * about, and a shared example names every sin it covers rather than the first alone.
      *
      * @param  list<Sin>  $sins
      * @param  array<class-string, array{bad: ?string, good: ?string}>  $examples
@@ -121,8 +123,11 @@ final class SkillRenderer
     private function badGood(array $sins, array $examples): string
     {
         $detectors = $this->detectorsBySin();
-        $blocks = [];
-        $seen = [];
+
+        /**
+         * @var array<string, array{example: array{bad: ?string, good: ?string}, sins: list<Sin>}> $grouped
+         */
+        $grouped = [];
 
         foreach ($sins as $sin) {
             $detector = $detectors[$sin::class] ?? null;
@@ -132,18 +137,23 @@ final class SkillRenderer
                 continue;
             }
 
-            // Dedupe by the bad+good PAIR: a `#[Sinful]` method shared by several sins
+            // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
             // shows once when the fix is the same, but distinct fixes of the same bad
             // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
             $key = ($example['bad'] ?? '') . "\0" . ($example['good'] ?? '');
 
-            if (($example['bad'] ?? '') !== '' && isset($seen[$key])) {
-                continue;
+            if (($example['bad'] ?? '') === '') {
+                $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
             }
 
-            $seen[$key] = true;
+            $grouped[$key]['example'] = $example;
+            $grouped[$key]['sins'][] = $sin;
+        }
 
-            if (($block = $this->example($sin, $example)) !== '') {
+        $blocks = [];
+
+        foreach ($grouped as $group) {
+            if (($block = $this->example($group['sins'], $group['example'])) !== '') {
                 $blocks[] = $block;
             }
         }
@@ -152,9 +162,13 @@ final class SkillRenderer
     }
 
     /**
+     * One before/after, headed by the sin it demonstrates and that sin's one-line symptom, so the
+     * example stands on its own instead of relying on its position in the stack.
+     *
+     * @param  list<Sin>  $sins  every sin this one example demonstrates
      * @param  array{bad: ?string, good: ?string}  $example
      */
-    private function example(Sin $sin, array $example): string
+    private function example(array $sins, array $example): string
     {
         $parts = [];
 
@@ -166,13 +180,21 @@ final class SkillRenderer
             $parts[] = "// Good\n{$example['good']}";
         }
 
-        if ($parts === []) {
+        if ($parts === [] || $sins === []) {
             return '';
         }
 
-        $fence = str_starts_with($sin->slug(), 'frontend/') ? 'vue' : 'php';
+        $fence = str_starts_with($sins[0]->slug(), 'frontend/') ? 'vue' : 'php';
+        $heading = '### ' . implode(' · ', array_map(static fn (Sin $sin): string => $sin->name(), $sins));
 
-        return "```{$fence}\n" . implode("\n\n", $parts) . "\n```";
+        // One sin: the heading already names it, so the symptom stands alone. Several: each
+        // line says which of them it belongs to.
+        $symptoms = count($sins) === 1
+            ? [$sins[0]->description()]
+            : array_map(static fn (Sin $sin): string => "_{$sin->name()}_ — {$sin->description()}", $sins);
+
+        return "{$heading}\n\n" . implode("\n\n", $symptoms) . "\n\n"
+            . "```{$fence}\n" . implode("\n\n", $parts) . "\n```";
     }
 
     /**

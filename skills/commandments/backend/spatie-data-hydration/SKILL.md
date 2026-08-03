@@ -85,6 +85,10 @@ recomputed at every construction site. A boundary that renames keys (snake ↔ c
 
 ## Bad → good
 
+### data-to-array-roundtrip
+
+A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build
+
 ```php
 // Bad
 public function make(?HeaderCopy $header): HeaderHolder
@@ -98,6 +102,10 @@ public function fromData(HeaderCopy $header): MetaHolder
     return MetaHolder::from(['meta' => $header->toArray(), 'kind' => 'header']);
 }
 ```
+
+### derived-collection-cast
+
+A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation
 
 ```php
 // Bad
@@ -118,6 +126,10 @@ public function build(): ThemedLegend
     return ThemedLegend::from(['chips' => array_map(fn (ShipState $s) => StateChip::themed($s, $this->theme), ShipState::cases())]);
 }
 ```
+
+### hand-key-remap
+
+A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`
 
 ```php
 // Bad
@@ -143,6 +155,10 @@ public function transformed(string $id): InvoiceData
 }
 ```
 
+### redundant-enum-unwrap
+
+An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum
+
 ```php
 // Bad
 public function open(PaymentMethod $method, string $reference): PaymentIntent
@@ -161,6 +177,10 @@ public function track(OrderStatus $status): TrackedOrder
 }
 ```
 
+### redundant-native-cast
+
+An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar
+
 ```php
 // Bad
 public function map(object $shipment): ShipmentTimes
@@ -177,6 +197,10 @@ public function build(string $code): TolerantState
     return TolerantState::from(['state' => FulfilmentState::tryFrom($code), 'raw' => $code]);
 }
 ```
+
+### redundant-nested-from
+
+A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array
 
 ```php
 // Bad

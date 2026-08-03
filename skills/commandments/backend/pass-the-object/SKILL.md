@@ -68,6 +68,10 @@ the parameter to the resolved type.
 
 ## Bad → good
 
+### computed-boolean-argument
+
+a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it)
+
 ```php
 // Bad
 public function forDraft(bool $draft): int
@@ -84,6 +88,10 @@ public function cornerInset(): string
     return $this->inZenMode() || $this->hasPanelOpen() ? 'tight' : 'wide';
 }
 ```
+
+### param-resolved-from-param
+
+Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging
 
 ```php
 // Bad

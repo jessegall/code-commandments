@@ -65,6 +65,10 @@ change; the operation you kept repeating becomes first-class.
 
 ## Bad → good
 
+### repeated-guard
+
+The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name
+
 ```php
 // Bad
 public function promote(array $items): array
@@ -87,6 +91,10 @@ public function shippable($order, $address): bool
 }
 ```
 
+### repeated-named-call
+
+The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type
+
 ```php
 // Bad
 public function hydrate(UiNode $node, string $name): UiNode
@@ -102,6 +110,10 @@ public function decorate(UiNode $node, string $title): UiNode
     return $node->copyWith(chrome: CardMeta::from(['title' => $title, 'tone' => 'plain'])->toArray());
 }
 ```
+
+### repeated-type-guard
+
+The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named
 
 ```php
 // Bad

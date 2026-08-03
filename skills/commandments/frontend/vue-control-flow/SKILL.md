@@ -41,6 +41,10 @@ The element reads as one thing (content + styling), the `<template>` as another
 
 ## Bad → good
 
+### control-flow-on-element
+
+`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`
+
 ```vue
 // Bad
 <span v-if="status === 'paid'" class="badge badge-green">Paid</span>
@@ -50,6 +54,10 @@ The element reads as one thing (content + styling), the `<template>` as another
   <span class="badge badge-green">Paid</span>
 </template>
 ```
+
+### index-as-key
+
+`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted
 
 ```vue
 // Bad
@@ -63,6 +71,10 @@ The element reads as one thing (content + styling), the `<template>` as another
 </template>
 ```
 
+### loop-with-condition
+
+`v-for` and `v-if`/`v-else-if` on the SAME element — the condition is re-evaluated every iteration
+
 ```vue
 // Bad
 <li v-for="tag in tags" v-if="tag.visible" :key="tag.id" class="review-tag">{{ tag.label }}</li>
@@ -74,6 +86,10 @@ The element reads as one thing (content + styling), the `<template>` as another
   </template>
 </template>
 ```
+
+### switch-case
+
+A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
 
 ```vue
 // Bad

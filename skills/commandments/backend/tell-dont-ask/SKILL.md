@@ -116,6 +116,10 @@ If yes — and you're reaching past its surface into its structure — that's wh
 
 ## Bad → good
 
+### feature-envy
+
+Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object
+
 ```php
 // Bad
 public function suspend(Customer $customer, string $reason): void
@@ -132,6 +136,10 @@ public function suspendByTelling(Customer $customer, string $reason): void
 }
 ```
 
+### keyed-lookup-envy
+
+Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator
+
 ```php
 // Bad
 public function forItem(CatalogItem $item): array
@@ -147,6 +155,10 @@ public function forItemDirect(CatalogItem $item): array
     return $item->reservedSkus();
 }
 ```
+
+### type-switch
+
+two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do
 
 ```php
 // Bad

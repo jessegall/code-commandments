@@ -50,6 +50,10 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 
 ## Bad → good
 
+### array-bag
+
+String-indexing (`$arr['key']`) a structured array param (an unborn type)
+
 ```php
 // Bad
 public function normalize(array $row): void
@@ -68,6 +72,10 @@ public function __unserialize(array $data): void
     $this->pendingStock = $this->migrateStock($data);
 }
 ```
+
+### array-return-bag
+
+Returning a multi-field string-keyed array literal (a bag that should be a value object)
 
 ```php
 // Bad
@@ -94,6 +102,10 @@ public function dailyReport(int $day): DailyReport
     );
 }
 ```
+
+### coupled-fields
+
+A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object
 
 ```php
 // Bad
@@ -140,6 +152,10 @@ final class OrderContext
 }
 ```
 
+### data-clump
+
+The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object)
+
 ```php
 // Bad
 public function record(string $shopId, string $userId, string $channelId): string
@@ -154,6 +170,10 @@ public function recordAccess(AccessContext $context): string
 }
 ```
 
+### hand-rolled-wither
+
+A wither rebuilds its object by re-spelling every constructor field, so each new field must be threaded through N of them
+
 ```php
 // Bad
 public function withValue(?string $value): self
@@ -167,6 +187,10 @@ public function withOrder(int $order): self
     return clone($this, ['order' => $order]);
 }
 ```
+
+### positional-tuple-return
+
+Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position
 
 ```php
 // Bad
@@ -210,6 +234,10 @@ public function partitionTyped(array $rows): Partitioned
 }
 ```
 
+### raw-decoded-array-return
+
+Returning a raw decoded boundary array (`json_decode(...)`) untyped
+
 ```php
 // Bad
 public function rates(string $base, array $symbols): array
@@ -233,6 +261,10 @@ public function ratesTyped(string $base, array $symbols): RateTable
     return RateTable::from(json_decode($this->http->get("https://fx.test/latest?{$query}"), true));
 }
 ```
+
+### flat-field-cluster
+
+A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of NESTING the existing `Wire{type, label}` — width instead of depth
 
 ```php
 // Bad

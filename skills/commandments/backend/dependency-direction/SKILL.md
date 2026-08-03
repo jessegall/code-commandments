@@ -104,6 +104,10 @@ almost always something smaller than the class you were about to reach for.
 
 ## Bad → good
 
+### namespace-cycle
+
+two namespaces that reference each other — neither can be read, tested or moved alone
+
 ```php
 // Bad
 public function rateCents(int $weightGrams): int
@@ -122,6 +126,10 @@ final class RenewalReminder
     }
 }
 ```
+
+### namespace-dependency
+
+a declared layer references a layer it may not use (the arrow points back up)
 
 ```php
 // Bad

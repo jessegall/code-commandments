@@ -43,6 +43,10 @@ Inside the system, invariants throw. At the *one* untrusted edge, you catch-log-
 
 ## Bad → good
 
+### generic-exception
+
+`throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type
+
 ```php
 // Bad
 public function carrierName(Shipment $shipment): string
@@ -57,6 +61,10 @@ public function carrierNameNamed(Shipment $shipment): string
         ?? throw CarrierMissing::for($shipment->id);
 }
 ```
+
+### message-at-throw
+
+Message string built at the throw site (no domain values / named factory)
 
 ```php
 // Bad
@@ -73,6 +81,10 @@ public function carrierNameOrFail(Shipment $shipment): string
     return $carrier->displayName();
 }
 ```
+
+### swallow-catch
+
+`catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)
 
 ```php
 // Bad
@@ -101,6 +113,10 @@ public function forecastOrThrow(string $city): array
     }
 }
 ```
+
+### wrapping-without-cause
+
+Wrapping a caught exception without passing it as `previous`/cause
 
 ```php
 // Bad

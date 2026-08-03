@@ -60,6 +60,10 @@ nothing — a missed narration costs a reader a moment, a false one costs them t
 
 ## Bad → good
 
+### bare-state-predicate
+
+A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs
+
 ```php
 // Bad
 public function reports(): bool
@@ -99,6 +103,10 @@ final class HonestDoc
     }
 }
 ```
+
+### narrated-command
+
+A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one
 
 ```php
 // Bad

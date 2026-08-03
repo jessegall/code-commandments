@@ -57,6 +57,10 @@ The house pattern (and the one you want): the wrapped value is a **plain class**
 
 ## Bad → good
 
+### concurrent-subclass
+
+Class `extends Concurrent` instead of composing `Concurrent<self>`
+
 ```php
 // Bad
 final class LiveOrderTracker extends Concurrent
