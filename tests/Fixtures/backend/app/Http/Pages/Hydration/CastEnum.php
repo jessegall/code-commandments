@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\RedundantNativeCast;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -21,6 +22,16 @@ final class OrderStateBuilder
     public function fromCode(string $code): OrderState
     {
         return OrderState::from(['state' => FulfilmentState::from($code), 'caption' => $this->captionFor($code)]);
+    }
+
+    /**
+     * The FIX: the raw code goes straight into the `state` slot — Spatie's native enum cast builds the
+     * `FulfilmentState` from it.
+     */
+    #[Fixed(RedundantNativeCast::class)]
+    public function fromRawCode(string $code): OrderState
+    {
+        return OrderState::from(['state' => $code, 'caption' => $this->captionFor($code)]);
     }
 
     private function captionFor(string $code): string

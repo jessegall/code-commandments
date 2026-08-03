@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages\FlatCluster;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\FlatFieldCluster;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -45,4 +46,18 @@ final class PortView extends Data
     {
         return strtoupper($prefix) . '/' . $this->wireLabel . '/' . $this->slot();
     }
+}
+
+/**
+ * The same view with its depth restored: the wire{Type,Socket,Label} trio is NESTED as the one `Wire` the
+ * codebase already declares, so each member sheds the prefix and the value object is modelled once.
+ */
+#[TypeScript]
+#[Fixed(FlatFieldCluster::class)]
+final class NestedPortView extends Data
+{
+    public function __construct(
+        public readonly Wire $wire,
+        public readonly int $index,
+    ) {}
 }

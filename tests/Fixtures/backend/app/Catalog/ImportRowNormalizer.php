@@ -5,6 +5,7 @@ namespace Shop\Catalog;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Repositories\ProductRepository;
@@ -33,6 +34,18 @@ final class ImportRowNormalizer
             $row['name'] ?? '',
             (int) ($row['stock'] ?? 0),
         );
+    }
+
+    /**
+     * The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
+     * fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    #[Fixed(ArrayBag::class)]
+    public function ingest(array $row): void
+    {
+        $this->persist(ImportRow::from($row));
     }
 
     /**

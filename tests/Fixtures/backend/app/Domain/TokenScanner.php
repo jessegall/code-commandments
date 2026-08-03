@@ -3,6 +3,7 @@
 namespace Shop\Domain;
 
 use JesseGall\CodeCommandments\Sins\Backend\RepeatedTypeGuard;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /*
@@ -30,5 +31,22 @@ final class TokenScanner
         }
 
         return $count;
+    }
+
+    /**
+     * The narrowing promoted to a NAME: `isBalancedBrace()` holds `$t instanceof Brace &&
+     * $t->close instanceof Brace` once, and every site asks the predicate instead of copying the chain.
+     *
+     * @param  list<mixed>  $tokens
+     */
+    #[Fixed(RepeatedTypeGuard::class)]
+    public function balanced(array $tokens): int
+    {
+        return count(array_filter($tokens, $this->isBalancedBrace(...)));
+    }
+
+    private function isBalancedBrace($t): bool
+    {
+        return $t instanceof Brace && $t->close instanceof Brace;
     }
 }

@@ -91,15 +91,23 @@ A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates i
 
 ```php
 // Bad
-public function make(?HeaderCopy $header): HeaderHolder
+public function hold(BadgeCopy $badge, string $status): BadgeHolder
 {
-    return HeaderHolder::from(['header' => ($header ?? $this->default)->toArray()]);
+    $toned = new BadgeCopy($badge->label, $this->toneFor($status));
+
+    return BadgeHolder::from(['badge' => $toned->toArray()]);
 }
 
 // Good
-public function fromData(HeaderCopy $header): MetaHolder
+/**
+ * The FIX: the `badge` slot is typed `BadgeCopy`, so it takes the object as-is — no `->toArray()`,
+ * no rebuild.
+ */
+public function holdReady(BadgeCopy $badge, string $status): BadgeHolder
 {
-    return MetaHolder::from(['meta' => $header->toArray(), 'kind' => 'header']);
+    $toned = new BadgeCopy($badge->label, $this->toneFor($status));
+
+    return BadgeHolder::from(['badge' => $toned]);
 }
 ```
 
@@ -109,21 +117,19 @@ A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call s
 
 ```php
 // Bad
-public function ofSize(int $size): TileGrid
+public function build(): ShipStatusLegend
 {
-    $size = min($size, self::MAX);
-
-    if ($size < 1) {
-        return TileGrid::from(['tiles' => []]);
-    }
-
-    return TileGrid::from(['tiles' => array_map(GridTile::make(...), range(0, $size - 1))]);
+    return ShipStatusLegend::from(['chips' => array_map(StateChip::for(...), ShipState::cases())]);
 }
 
 // Good
-public function build(): ThemedLegend
+/**
+ * The FIX: the raw enum cases are passed straight in — the `#[WithCast(StateChipCast::class)]` on the
+ * `chips` property derives each `StateChip`, so there is no `array_map` at the call site.
+ */
+public function buildCast(): CastShipStatusLegend
 {
-    return ThemedLegend::from(['chips' => array_map(fn (ShipState $s) => StateChip::themed($s, $this->theme), ShipState::cases())]);
+    return CastShipStatusLegend::from(['chips' => ShipState::cases()]);
 }
 ```
 
@@ -144,14 +150,13 @@ public function import(): ContractData
 }
 
 // Good
-public function transformed(string $id): InvoiceData
+/**
+ * The FIX: the source row is passed WHOLE — the class-level `#[MapInputName(SnakeCaseMapper::class)]`
+ * does the snake→camel translation, so no caller writes it out again.
+ */
+public function importMapped(): MappedContractData
 {
-    $row = $this->gateway->fetch($id);
-
-    return InvoiceData::from([
-        'invoiceNumber' => strtoupper($row['invoice_number']),
-        'amountCents' => $row['amount_cents'],
-    ]);
+    return MappedContractData::from($this->rows->next());
 }
 ```
 
@@ -161,19 +166,19 @@ An enum is unwrapped to `->value` at a hydration site (`'status' => $order->stat
 
 ```php
 // Bad
-public function open(PaymentMethod $method, string $reference): PaymentIntent
+public function summarise(Basket $basket): CheckoutSummary
 {
-    if ($reference === '') {
-        $reference = 'pending';
-    }
-
-    return PaymentIntent::from(['method' => $method->value, 'reference' => $reference]);
+    return CheckoutSummary::from(['status' => $basket->status->value, 'lines' => count($basket->items)]);
 }
 
 // Good
-public function track(OrderStatus $status): TrackedOrder
+/**
+ * The FIX: the enum itself goes into its own enum slot — Spatie's enum cast keeps it, so there is
+ * nothing to unwrap and re-hydrate.
+ */
+public function summariseWhole(Basket $basket): CheckoutSummary
 {
-    return TrackedOrder::from(['status' => $status]);
+    return CheckoutSummary::from(['status' => $basket->status, 'lines' => count($basket->items)]);
 }
 ```
 
@@ -183,18 +188,19 @@ An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTi
 
 ```php
 // Bad
-public function map(object $shipment): ShipmentTimes
+public function fromCode(string $code): OrderState
 {
-    return ShipmentTimes::from([
-        'shippedAt' => Carbon::parse($shipment->shipped_at),
-        'carrier' => $shipment->carrier,
-    ]);
+    return OrderState::from(['state' => FulfilmentState::from($code), 'caption' => $this->captionFor($code)]);
 }
 
 // Good
-public function build(string $code): TolerantState
+/**
+ * The FIX: the raw code goes straight into the `state` slot — Spatie's native enum cast builds the
+ * `FulfilmentState` from it.
+ */
+public function fromRawCode(string $code): OrderState
 {
-    return TolerantState::from(['state' => FulfilmentState::tryFrom($code), 'raw' => $code]);
+    return OrderState::from(['state' => $code, 'caption' => $this->captionFor($code)]);
 }
 ```
 
@@ -204,18 +210,19 @@ A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates
 
 ```php
 // Bad
-public function compose(): TabBar
+public function build(int $count): BadgeStrip
 {
-    return TabBar::from(['tabs' => [
-        TabCopy::from(['id' => 'edit', 'title' => 'Edit']),
-        TabCopy::from(['id' => 'preview', 'title' => 'Preview']),
-    ]]);
+    return BadgeStrip::from(['badge' => BadgeCopy::from(['label' => $this->pluralise($count), 'tone' => 'info'])]);
 }
 
 // Good
-public function fromModel(object $model): ReadyBadgeStrip
+/**
+ * The FIX: the plain array goes straight into the `badge` slot — the parent `::from` hydrates the
+ * nested `BadgeCopy` itself.
+ */
+public function buildPlain(int $count): BadgeStrip
 {
-    return ReadyBadgeStrip::from(['badge' => BadgeCopy::from($model)]);
+    return BadgeStrip::from(['badge' => ['label' => $this->pluralise($count), 'tone' => 'info']]);
 }
 ```
 

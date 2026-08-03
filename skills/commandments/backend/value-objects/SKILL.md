@@ -72,14 +72,14 @@ public function normalize(array $row): void
 
 // Good
 /**
- * PHP's serialization protocol hands `__unserialize` the raw property bag — the
- * array parameter is dictated by the LANGUAGE, so string-indexing it here (and in
- * the private helper fed only that bag) is the canonical parse point, not a sin (#340).
+ * The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
+ * fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
+ *
+ * @param  array<string, mixed>  $row
  */
-public function __unserialize(array $data): void
+public function ingest(array $row): void
 {
-    $this->pendingSku = $data['sku'];
-    $this->pendingStock = $this->migrateStock($data);
+    $this->persist(ImportRow::from($row));
 }
 ```
 
@@ -150,22 +150,17 @@ final class ShelfPlan
 }
 
 // Good
-final class OrderContext
+/**
+ * The same band holding the value object instead of its parts: one `PriceRange|null` says "banded or not"
+ * in one field, so the half-present state (floor set, ceil absent) cannot be spelled and the pair-guard
+ * that existed only to reject it is gone.
+ */
+final class BandedPrice
 {
     public function __construct(
-        public readonly Shopper $shopper,
-        public readonly Voucher $voucher,
+        public readonly ?PriceRange $range = null,
+        public readonly string $currency = 'EUR',
     ) {}
-
-    public function heading(): array
-    {
-        return [$this->shopper, $this->voucher->code];
-    }
-
-    public function footer(): array
-    {
-        return [$this->shopper, $this->voucher->code];
-    }
 }
 ```
 
@@ -204,7 +199,8 @@ public function withValue(?string $value): self
 
 // Good
 /**
- * Righteous: says only what changes, so a new field never touches this method.
+ * The wither saying ONLY what changes: `clone($this, ['order' => $order])` states the intent, so a
+ * seventh field never touches this method — and the constructor is stated once, not N times over.
  */
 public function withOrder(int $order): self
 {
@@ -256,21 +252,20 @@ final class PostalAddress
 
 // Good
 /**
- * The same markup, derived instead of changed: discounting answers with a NEW markup and leaves
- * every existing holder of this one with exactly what they were given.
+ * The same reading, derived instead of re-scaled: `readonly` on the CLASS makes it final once built, and
+ * `withCelsius()` answers with a NEW reading — so whatever recorded this one still describes the
+ * temperature that was actually measured.
  */
-final class DerivedMarkup
+final readonly class CalibratedReading
 {
-    public function __construct(private readonly float $percentage) {}
+    public function __construct(
+        public float $degrees,
+        public string $scale,
+    ) {}
 
-    public function discountedBy(float $points): self
+    public function withCelsius(): self
     {
-        return new self($this->percentage - $points);
-    }
-
-    public function appliedTo(int $cents): int
-    {
-        return (int) round($cents * (1 + $this->percentage / 100));
+        return new self(($this->degrees - 32) * 5 / 9, 'C');
     }
 }
 ```
@@ -282,53 +277,33 @@ Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — b
 ```php
 // Bad
 /**
- * @param  list<string>  $rows
- *
- * @return array{0: list<string>, 1: list<string>, 2: list<string>}
+ * @return array{0: string, 1: list<string>, 2: int, 3: string}
  */
-public function partition(array $rows): array
+public function unpack(string $reference): array
 {
-    $valid = [];
-    $invalid = [];
-    $errors = [];
+    $parts = explode(':', $reference);
+    $order = $parts[0];
+    $lines = array_slice($parts, 1);
+    $count = count($lines);
+    $currency = strtoupper(substr($order, 0, 3));
 
-    foreach ($rows as $row) {
-        if ($row === '') {
-            $errors[] = 'empty row';
-        } elseif (str_contains($row, ';')) {
-            $valid[] = $row;
-        } else {
-            $invalid[] = $row;
-        }
-    }
-
-    return [$valid, $invalid, $errors];
+    return [$order, $lines, $count, $currency];
 }
 
 // Good
 /**
- * The three buckets named in a typed object — callers read `->valid`, not a
- * position the order could silently rot.
- *
- * @param  list<string>  $rows
+ * The same reference, answered with a named result: the caller reads `->currency`, not `[3]`, so
+ * adding a field never silently re-numbers what everyone else destructured.
  */
-public function partitionTyped(array $rows): Partitioned
+public function parse(string $reference): CheckoutReference
 {
-    $valid = [];
-    $invalid = [];
-    $errors = [];
+    $parts = explode(':', $reference);
 
-    foreach ($rows as $row) {
-        if ($row === '') {
-            $errors[] = 'empty row';
-        } elseif (str_contains($row, ';')) {
-            $valid[] = $row;
-        } else {
-            $invalid[] = $row;
-        }
-    }
-
-    return new Partitioned($valid, $invalid, $errors);
+    return new CheckoutReference(
+        order: $parts[0],
+        lines: array_slice($parts, 1),
+        currency: strtoupper(substr($parts[0], 0, 3)),
+    );
 }
 ```
 
@@ -409,12 +384,16 @@ final class PortView extends Data
 }
 
 // Good
+/**
+ * The same view with its depth restored: the wire{Type,Socket,Label} trio is NESTED as the one `Wire` the
+ * codebase already declares, so each member sheds the prefix and the value object is modelled once.
+ */
 #[TypeScript]
-final class LooseCard extends Data
+final class NestedPortView extends Data
 {
     public function __construct(
-        public readonly string $metaTitle,
-        public readonly int $metaCount,
+        public readonly Wire $wire,
+        public readonly int $index,
     ) {}
 }
 ```

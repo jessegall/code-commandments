@@ -3,6 +3,7 @@
 namespace Shop\Warranty;
 
 use JesseGall\CodeCommandments\Sins\Backend\MutableValueObject;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -37,5 +38,24 @@ final class Temperature
     public function belowFreezing(): bool
     {
         return $this->scale === 'C' ? $this->degrees < 0 : $this->degrees < 32;
+    }
+}
+
+/**
+ * The same reading, derived instead of re-scaled: `readonly` on the CLASS makes it final once built, and
+ * `withCelsius()` answers with a NEW reading — so whatever recorded this one still describes the
+ * temperature that was actually measured.
+ */
+#[Fixed(MutableValueObject::class)]
+final readonly class CalibratedReading
+{
+    public function __construct(
+        public float $degrees,
+        public string $scale,
+    ) {}
+
+    public function withCelsius(): self
+    {
+        return new self(($this->degrees - 32) * 5 / 9, 'C');
     }
 }

@@ -3,6 +3,7 @@
 namespace Shop\Sockets;
 
 use JesseGall\CodeCommandments\Sins\Backend\HandRolledWither;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -28,8 +29,10 @@ final readonly class InputSocket
     }
 
     /**
-     * Righteous: says only what changes, so a new field never touches this method.
+     * The wither saying ONLY what changes: `clone($this, ['order' => $order])` states the intent, so a
+     * seventh field never touches this method — and the constructor is stated once, not N times over.
      */
+    #[Fixed(HandRolledWither::class)]
     #[Righteous(HandRolledWither::class)]
     public function withOrder(int $order): self
     {

@@ -5,6 +5,7 @@ namespace Shop\Reporting;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Repositories\OrderRepository;
@@ -53,6 +54,7 @@ final class SalesReport
      * The same daily figures as a typed report value object — named fields, not a
      * loose string-keyed bag.
      */
+    #[Fixed(ArrayReturnBag::class)]
     #[Righteous(ArrayReturnBag::class)]
     public function dailyReport(int $day): DailyReport
     {

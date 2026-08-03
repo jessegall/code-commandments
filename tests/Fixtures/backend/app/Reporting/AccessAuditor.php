@@ -4,6 +4,7 @@ namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\DataClump;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -21,6 +22,7 @@ final class AccessAuditor
      * The clump named: one value object carries the three fields that travelled
      * together.
      */
+    #[Fixed(DataClump::class)]
     #[Righteous(DataClump::class)]
     public function recordAccess(AccessContext $context): string
     {

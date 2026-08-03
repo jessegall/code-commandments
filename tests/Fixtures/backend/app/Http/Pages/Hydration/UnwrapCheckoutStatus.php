@@ -4,6 +4,7 @@ namespace Shop\Http\Pages\Hydration;
 
 use Shop\Enums\OrderStatus;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\RedundantEnumUnwrap;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -30,5 +31,15 @@ final class CheckoutSummaryFactory
     public function summarise(Basket $basket): CheckoutSummary
     {
         return CheckoutSummary::from(['status' => $basket->status->value, 'lines' => count($basket->items)]);
+    }
+
+    /**
+     * The FIX: the enum itself goes into its own enum slot — Spatie's enum cast keeps it, so there is
+     * nothing to unwrap and re-hydrate.
+     */
+    #[Fixed(RedundantEnumUnwrap::class)]
+    public function summariseWhole(Basket $basket): CheckoutSummary
+    {
+        return CheckoutSummary::from(['status' => $basket->status, 'lines' => count($basket->items)]);
     }
 }

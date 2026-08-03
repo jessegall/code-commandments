@@ -152,15 +152,28 @@ public function __construct(
 }
 
 // Good
-public function __construct(
-    #[Hidden]
-    #[FromContainer(SalesReporter::class)]
-    public readonly SalesReporter $sales,
-) {
-    $totals = $this->sales->totals();
-    $this->summary = $totals->summary();
-    $this->home = $totals->homeLink();
-    $this->movers = Lazy::closure(fn (): array => $this->sales->movers());
+/**
+ * The FIX for the same overview: every slot is a `#[Computed]` get-hook that projects itself from the
+ * injected reporter, so the class declares WHAT each field is next to HOW it is projected — and the
+ * constructor is left holding nothing but the seed.
+ */
+#[TypeScript]
+final class ComputedOverviewPage extends Data
+{
+    #[Computed]
+    public MenuLink $primary { get => $this->sales->primaryLink(); }
+
+    #[Computed]
+    public MenuLink $secondary { get => $this->sales->secondaryLink(); }
+
+    #[Computed]
+    public CartLine $featured { get => $this->sales->featuredLine(); }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(SalesReporter::class)]
+        public readonly SalesReporter $sales,
+    ) {}
 }
 ```
 
@@ -208,32 +221,39 @@ final class CatalogPage extends Data
 
 // Good
 /**
- * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
- * `#[Hidden]` (so it never reaches the frontend type), every slot is a `#[Computed]` hook seeded from
- * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
- * constructor — the InjectedServiceNotHidden detector must NOT flag it.
+ * The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
+ * reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
  */
 #[TypeScript]
-final class ReportPage extends Data
+final class HiddenCatalogPage extends Data
 {
-    #[Computed]
-    public string $timeRange { get => $this->request->timeRange(); }
+    public readonly MenuLink $home;
 
-    #[Computed]
-    public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
+    public readonly MenuLink $active;
 
-    /**
-     * @var list<StatCard>|Lazy
-     */
-    #[Computed]
-    #[DataCollectionOf(StatCard::class)]
-    public array|Lazy $statistics { get => Lazy::closure(fn () => []); }
+    public readonly CartLine $featured;
+
+    public static function for(string $category): self
+    {
+        return self::from(['category' => $category]);
+    }
 
     public function __construct(
         #[Hidden]
-        #[FromContainer(ReportRequest::class)]
-        public readonly ReportRequest $request,
+        #[FromContainer(CatalogReader::class)]
+        public readonly CatalogReader $reader,
+
+        #[Hidden]
+        #[FromContainer(FacetBuilder::class)]
+        public readonly FacetBuilder $facetBuilder,
+
+        public readonly string $category,
     ) {}
+
+    public function trail(): string
+    {
+        return $this->category . ': ' . $this->active->label;
+    }
 }
 ```
 
@@ -250,34 +270,12 @@ public function marker(): array
 }
 
 // Good
-/**
- * RIGHTEOUS look-alikes the output-transform detector must NOT flag: a getter composing the object's OWN
- * scalar fields, a getter drawing from TWO different receivers (a genuine view composite), and a getter
- * projecting a nested `Data` (just a shape of another payload). None is a single value object hand-flattened.
- */
-final class WireShapesPage extends Data
-{
-    // Own fields — receiver is $this (this Data), not a value object.
-    #[Computed]
-    public array $fullName { get => ['first' => $this->first, 'last' => $this->last]; }
-
-    // Two different receivers — a real composite, not one object flattened.
-    #[Computed]
-    public array $totals { get => ['price' => $this->price->cents, 'tax' => $this->tax->cents]; }
-
-    // Receiver resolves to a nested Data — just a projection of another payload.
-    #[Computed]
-    public array $line { get => ['sku' => $this->lead->sku, 'qty' => $this->lead->qty]; }
-
-    public function __construct(
-        public readonly string $first,
-        public readonly string $last,
-        public readonly Money $price,
-        public readonly Money $tax,
-        public readonly CartLine $lead,
-    ) {}
-
-}
+public function __construct(
+    #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+    public readonly Money $priceInEuro,
+    public readonly string $sku,
+    public readonly int $quantity,
+) {}
 ```
 
 ### page-object-missing-typescript
@@ -328,32 +326,27 @@ final class MetricsPage extends Data
 
 // Good
 /**
- * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
- * `#[Hidden]` (so it never reaches the frontend type), every slot is a `#[Computed]` hook seeded from
- * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
- * constructor — the InjectedServiceNotHidden detector must NOT flag it.
+ * The FIX for the same dashboard: `#[TypeScript]` on the page object, so the transformer generates the
+ * frontend type the `.vue` page binds its props against — the payload contract is checked, not `any`.
+ * (The reporter is injected `#[Hidden]`, so only the page data reaches that type.)
  */
 #[TypeScript]
-final class ReportPage extends Data
+final class TypedDashboardPage extends Data
 {
-    #[Computed]
-    public string $timeRange { get => $this->request->timeRange(); }
+    public readonly StatCard $revenue;
 
-    #[Computed]
-    public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
-
-    /**
-     * @var list<StatCard>|Lazy
-     */
-    #[Computed]
-    #[DataCollectionOf(StatCard::class)]
-    public array|Lazy $statistics { get => Lazy::closure(fn () => []); }
+    public readonly StatCard $orders;
 
     public function __construct(
         #[Hidden]
-        #[FromContainer(ReportRequest::class)]
-        public readonly ReportRequest $request,
+        #[FromContainer(SalesReporter::class)]
+        public readonly SalesReporter $sales,
     ) {}
+
+    public function caption(): string
+    {
+        return $this->revenue->label . ' / ' . $this->orders->value;
+    }
 }
 ```
 
@@ -370,32 +363,27 @@ public function aiEnabled(): bool
 
 // Good
 /**
- * The righteous page-object shape, taken from the real Smart Farmers pattern: the request is injected
- * `#[Hidden]` (so it never reaches the frontend type), every slot is a `#[Computed]` hook seeded from
- * it, and the heavy list is deferred with `Lazy`. Nothing leaks, nothing is orchestrated in a
- * constructor — the InjectedServiceNotHidden detector must NOT flag it.
+ * The FIX for the same status page: the health service is pulled through the container declaratively —
+ * `#[Hidden] #[FromContainer(ContainersService::class)]` on a promoted property — so the getter reads an
+ * injected collaborator instead of reaching out with `app()`.
  */
 #[TypeScript]
-final class ReportPage extends Data
+final class InjectedStatusPage extends Data
 {
-    #[Computed]
-    public string $timeRange { get => $this->request->timeRange(); }
-
-    #[Computed]
-    public MenuLink $primaryAction { get => new MenuLink('Export', '/export'); }
-
-    /**
-     * @var list<StatCard>|Lazy
-     */
-    #[Computed]
-    #[DataCollectionOf(StatCard::class)]
-    public array|Lazy $statistics { get => Lazy::closure(fn () => []); }
-
     public function __construct(
+        public readonly StatCard $uptime,
+        public readonly StatCard $load,
+        public readonly MenuLink $refresh,
+
         #[Hidden]
-        #[FromContainer(ReportRequest::class)]
-        public readonly ReportRequest $request,
+        #[FromContainer(ContainersService::class)]
+        public readonly ContainersService $containers,
     ) {}
+
+    public function isHealthy(): bool
+    {
+        return $this->containers->healthy();
+    }
 }
 ```
 
@@ -411,24 +399,10 @@ public function __construct(
 ) {}
 
 // Good
-/**
- * RIGHTEOUS: transformers that the detector must NOT flag — a custom transformer PAIRED with the
- * transformed TS type (both `#[TypeScriptType]` and `#[LiteralTypeScriptType]` forms), and a built-in
- * transformer whose target type the generator already knows.
- */
-final class WirePairedData extends Data
-{
-    public function __construct(
-        #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
-        public readonly Money $price,
-
-        #[LiteralTypeScriptType('[number, number]'), WithTransformer(GeoPointTransformer::class)]
-        public readonly GeoPoint $location,
-
-        #[WithTransformer(DateTimeInterfaceTransformer::class)]
-        public readonly \Carbon\Carbon $createdAt,
-    ) {}
-}
+public function __construct(
+    #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+    public readonly Money $price,
+) {}
 ```
 
 ## When it fires

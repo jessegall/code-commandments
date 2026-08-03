@@ -3,6 +3,7 @@
 namespace Shop\Domain;
 
 use JesseGall\CodeCommandments\Sins\Backend\CoupledFields;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /*
@@ -23,4 +24,27 @@ final class PriceBand
     {
         return $this->floor !== null && $this->ceil !== null ? [$this->floor, $this->ceil] : [];
     }
+}
+
+/* The clump extracted: the two halves that only ever moved together ARE the range. */
+final readonly class PriceRange
+{
+    public function __construct(
+        public int $floor,
+        public int $ceil,
+    ) {}
+}
+
+/**
+ * The same band holding the value object instead of its parts: one `PriceRange|null` says "banded or not"
+ * in one field, so the half-present state (floor set, ceil absent) cannot be spelled and the pair-guard
+ * that existed only to reject it is gone.
+ */
+#[Fixed(CoupledFields::class)]
+final class BandedPrice
+{
+    public function __construct(
+        public readonly ?PriceRange $range = null,
+        public readonly string $currency = 'EUR',
+    ) {}
 }

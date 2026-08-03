@@ -71,28 +71,19 @@ The SAME compound guard condition recurs in ≥2 places — the same check spell
 
 ```php
 // Bad
-/**
- * @param  list<mixed>  $items
- *
- * @return list<mixed>
- */
-public function promote(array $items): array
+public function allow($user, $account): bool
 {
-    $ready = [];
-
-    foreach ($items as $item) {
-        if ($item->published && $item->approved) {
-            $ready[] = $item;
-        }
-    }
-
-    return $ready;
+    return $user->active && $account->verified;
 }
 
 // Good
-public function shippable($order, $address): bool
+/**
+ * The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
+ * every site asks the predicate, so the condition has one home and moves in one place.
+ */
+public function review($user, $account): string
 {
-    return $order->paid && $address->confirmed;
+    return $this->isLocked($user, $account) ? 'locked' : 'open';
 }
 ```
 
@@ -102,17 +93,19 @@ The same `with`-style (variadic) method is called with the same named argument a
 
 ```php
 // Bad
-public function hydrate(UiNode $node, string $name): UiNode
+public function hydrate(UiNode $node, string $title, string $state): UiNode
 {
-    $required = in_array($name, $this->requiredPorts, true);
-
-    return $node->copyWith(metadata: PortMeta::from(['name' => $name, 'required' => $required])->toArray());
+    return $node->copyWith(metadata: CardMeta::from(['title' => $title, 'tone' => $this->tone($state)])->toArray());
 }
 
 // Good
-public function decorate(UiNode $node, string $title): UiNode
+/**
+ * The repeated call promoted to a method on the receiver's type: `UiNode::withMetadata()` does the
+ * `copyWith(metadata: $meta->toArray())`, so the call site says WHAT it does and says it once.
+ */
+public function decorate(UiNode $node, CardMeta $meta): UiNode
 {
-    return $node->copyWith(chrome: CardMeta::from(['title' => $title, 'tone' => 'plain'])->toArray());
+    return $node->withMetadata($meta);
 }
 ```
 
@@ -122,15 +115,21 @@ The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y inst
 
 ```php
 // Bad
-public function routable($e): bool
+public function opens($t): bool
 {
-    return $e instanceof Wire && $e->from instanceof Port && $e->to instanceof Port;
+    return $t instanceof Bracket && $t->pair instanceof Bracket;
 }
 
 // Good
-public function accepts($n): bool
+/**
+ * The narrowing promoted to a NAME: `isBalancedBrace()` holds `$t instanceof Brace &&
+ * $t->close instanceof Brace` once, and every site asks the predicate instead of copying the chain.
+ *
+ * @param  list<mixed>  $tokens
+ */
+public function balanced(array $tokens): int
 {
-    return $n instanceof Element && $n->attribute instanceof Marker;
+    return count(array_filter($tokens, $this->isBalancedBrace(...)));
 }
 ```
 

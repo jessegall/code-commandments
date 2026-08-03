@@ -7,13 +7,17 @@ use Shop\Http\Pages\AccountPage;
 use Shop\Http\Pages\AiWorkflowPage;
 use Shop\Http\Pages\CatalogPage;
 use Shop\Http\Pages\CheckoutSummaryPage;
+use Shop\Http\Pages\ComputedOverviewPage;
 use Shop\Http\Pages\DashboardPage;
+use Shop\Http\Pages\HiddenCatalogPage;
+use Shop\Http\Pages\InjectedStatusPage;
 use Shop\Http\Pages\MetricsPage;
 use Shop\Http\Pages\OverviewPage;
 use Shop\Http\Pages\PrintQueuePage;
 use Shop\Http\Pages\ReportPage;
 use Shop\Http\Pages\SystemStatusPage;
 use Shop\Http\Pages\TimelinePage;
+use Shop\Http\Pages\TypedDashboardPage;
 use Shop\Http\Pages\WarehousePage;
 
 /**
@@ -80,5 +84,25 @@ final class PageController extends Controller
     public function warehouse(): WarehousePage
     {
         return WarehousePage::from([]);
+    }
+
+    public function typedDashboard(): TypedDashboardPage
+    {
+        return TypedDashboardPage::from([]);
+    }
+
+    public function hiddenCatalog(): HiddenCatalogPage
+    {
+        return HiddenCatalogPage::for('books');
+    }
+
+    public function computedOverview(): ComputedOverviewPage
+    {
+        return ComputedOverviewPage::from([]);
+    }
+
+    public function injectedStatus(): InjectedStatusPage
+    {
+        return InjectedStatusPage::from([]);
     }
 }

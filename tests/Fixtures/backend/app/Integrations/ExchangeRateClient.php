@@ -4,6 +4,7 @@ namespace Shop\Integrations;
 
 use JesseGall\CodeCommandments\Sins\Backend\RawDecodedArrayReturn;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\HttpClient;
@@ -33,6 +34,7 @@ final class ExchangeRateClient
     /**
      * @param  list<string>  $symbols
      */
+    #[Fixed(RawDecodedArrayReturn::class)]
     #[Righteous(RawDecodedArrayReturn::class)]
     public function ratesTyped(string $base, array $symbols): RateTable
     {

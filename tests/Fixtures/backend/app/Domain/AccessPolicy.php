@@ -3,6 +3,7 @@
 namespace Shop\Domain;
 
 use JesseGall\CodeCommandments\Sins\Backend\RepeatedGuard;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /*
@@ -25,6 +26,26 @@ final class AccessPolicy
         $ok = $account->verified;
 
         return $live && $ok ? 'granted' : 'denied';
+    }
+
+    /**
+     * The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
+     * every site asks the predicate, so the condition has one home and moves in one place.
+     */
+    #[Fixed(RepeatedGuard::class)]
+    public function review($user, $account): string
+    {
+        return $this->isLocked($user, $account) ? 'locked' : 'open';
+    }
+
+    public function reinstate($user, $account): bool
+    {
+        return $this->isLocked($user, $account);
+    }
+
+    private function isLocked($user, $account): bool
+    {
+        return $user->suspended && $account->frozen;
     }
 
     public function describe(string $role, int $level): string

@@ -15,6 +15,15 @@ trait WithChanges
     {
         return $this;
     }
+
+    /**
+     * The operation the call sites kept spelling out, named ONCE on the type: the `copyWith(metadata: …)`
+     * mapping AND the `->toArray()` flatten live here, so every site is `$node->withMetadata($meta)`.
+     */
+    public function withMetadata(Data $meta): static
+    {
+        return $this->copyWith(metadata: $meta->toArray());
+    }
 }
 
 final class UiNode

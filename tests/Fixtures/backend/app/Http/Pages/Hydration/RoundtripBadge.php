@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataToArrayRoundtrip;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -23,6 +24,18 @@ final class BadgeHolderBuilder
         $toned = new BadgeCopy($badge->label, $this->toneFor($status));
 
         return BadgeHolder::from(['badge' => $toned->toArray()]);
+    }
+
+    /**
+     * The FIX: the `badge` slot is typed `BadgeCopy`, so it takes the object as-is — no `->toArray()`,
+     * no rebuild.
+     */
+    #[Fixed(DataToArrayRoundtrip::class)]
+    public function holdReady(BadgeCopy $badge, string $status): BadgeHolder
+    {
+        $toned = new BadgeCopy($badge->label, $this->toneFor($status));
+
+        return BadgeHolder::from(['badge' => $toned]);
     }
 
     private function toneFor(string $status): string
