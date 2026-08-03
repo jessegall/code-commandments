@@ -267,7 +267,10 @@ final class UntilCommand implements Command
     {
         $left = $gate->unblocked();
 
-        fwrite(STDOUT, '◼ Condition ' . implode(', ', $marked) . " marked as waiting on the user.\n");
+        fwrite(STDOUT, '◼ Condition ' . implode(', ', $marked) . " marked as waiting on the user.\n"
+            . "  NOW say so on the to-do list the user can SEE (TodoWrite), and do NOT tick it off: a blocked\n"
+            . "  item is not a done item. Leave it open, and put what you need from them where they will read\n"
+            . "  it — a list that shows a blocker as completed is worse than one that is merely stale.\n");
 
         if ($left === []) {
             fwrite(STDOUT,
