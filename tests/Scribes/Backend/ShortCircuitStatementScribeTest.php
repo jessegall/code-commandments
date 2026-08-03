@@ -87,9 +87,9 @@ final class ShortCircuitStatementScribeTest extends ScribeTestCase
         );
     }
 
-    public function test_parenthesises_a_flipped_comparison(): void
+    public function test_flips_an_equality_at_the_operator(): void
     {
-        // `!` binds tighter than `===`, so the negated left side keeps its parentheses.
+        // An equality has an exact inverse, so the flipped condition reads as a human writes it.
         $php = <<<'PHP'
         <?php
 
@@ -104,7 +104,7 @@ final class ShortCircuitStatementScribeTest extends ScribeTestCase
 
         $fixed = $this->fixStable($php);
 
-        $this->assertStringContainsString("if (! (\$entry['cents'] === 0)) {", $fixed);
+        $this->assertStringContainsString("if (\$entry['cents'] !== 0) {", $fixed);
     }
 
     public function test_opens_the_block_in_the_files_own_brace_style(): void

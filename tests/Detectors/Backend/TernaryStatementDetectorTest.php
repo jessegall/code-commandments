@@ -27,6 +27,12 @@ final class TernaryStatementDetectorTest extends TestCase
             public function short(?string $name): void {
                 $name ?: $this->warn();
             }
+            public function asserted(?string $name): void {
+                $name ?: throw NameMissing::of();
+            }
+            public function throwsOneArmOfTwo(?string $name): void {
+                $this->known($name) ? $this->accept($name) : throw NameMissing::of();
+            }
             public function assigned(array $row): string {
                 $label = $row['name'] ? $row['name'] : 'anonymous';
 
@@ -52,6 +58,11 @@ final class TernaryStatementDetectorTest extends TestCase
 
         $hits = (new TernaryStatementDetector)->find(Codebase::fromString($code));
 
-        $this->assertSame(['T::walk', 'T::short'], array_map(static fn ($m): string => $m->scope(), $hits));
+        // `asserted` is the `?:` twin of `$name || throw …` — one action, and it is leaving.
+        // `throwsOneArmOfTwo` still has a real arm doing work, so the branch is genuinely hidden.
+        $this->assertSame(
+            ['T::walk', 'T::short', 'T::throwsOneArmOfTwo'],
+            array_map(static fn ($m): string => $m->scope(), $hits),
+        );
     }
 }

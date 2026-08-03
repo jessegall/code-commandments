@@ -48,9 +48,9 @@ final class LoopInvertedGuardScribeTest extends ScribeTestCase
         $this->assertStringContainsString("            \$this->store(\$row);\n            \$this->log(\$row);", $fixed);
     }
 
-    public function test_keeps_the_parentheses_a_comparison_actually_needs(): void
+    public function test_flips_an_equality_at_the_operator(): void
     {
-        // `!` binds tighter than `===`, so THIS condition cannot lose its parentheses.
+        // An equality has an exact inverse, so it takes one — not a `!` and a pair of parentheses.
         $php = <<<'PHP'
         <?php
 
@@ -68,7 +68,31 @@ final class LoopInvertedGuardScribeTest extends ScribeTestCase
         }
         PHP;
 
-        $this->assertStringContainsString("if (! (\$row->state === 'ready')) {", $this->fixStable($php));
+        $this->assertStringContainsString("if (\$row->state !== 'ready') {", $this->fixStable($php));
+    }
+
+    public function test_keeps_the_parentheses_a_relational_comparison_actually_needs(): void
+    {
+        // `<` and `>=` are BOTH false for a NAN operand, so they are not inverses: this one keeps
+        // the faithful `!`, which `!` binding tighter than `<` means it cannot lose its parentheses.
+        $php = <<<'PHP'
+        <?php
+
+        class Processor
+        {
+            public function run(array $rows): void
+            {
+                foreach ($rows as $row) {
+                    if ($row->weight < 250.0) {
+                        $this->store($row);
+                        $this->log($row);
+                    }
+                }
+            }
+        }
+        PHP;
+
+        $this->assertStringContainsString("if (! (\$row->weight < 250.0)) {", $this->fixStable($php));
     }
 
     public function test_writes_the_guard_in_the_files_own_brace_style(): void

@@ -56,6 +56,34 @@ final class ShortCircuitStatementDetectorTest extends TestCase
         );
     }
 
+    public function test_spares_an_assertion_whose_only_outcome_is_leaving(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        class S {
+            public function dispatch(object $renderable): void {
+                $renderable instanceof Interactive || throw TargetCannotReceiveSignal::for(
+                    $this->target,
+                    $renderable::class,
+                );
+
+                $renderable->receive($this->signal);
+            }
+            public function assertThenWork(object $renderable): void {
+                $renderable->isReady() or throw NotReady::for($renderable);
+            }
+            public function guardsRealWork(object $renderable): void {
+                $renderable->isReady() || $renderable->prepare();
+            }
+        }
+        PHP;
+
+        $hits = (new ShortCircuitStatementDetector)->find(Codebase::fromString($code));
+
+        // A `throw` on the right hides no branch — only `guardsRealWork` conceals a consequence.
+        $this->assertSame(['S::guardsRealWork'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
+
     public function test_reports_the_outermost_short_circuit_only(): void
     {
         $code = <<<'PHP'
