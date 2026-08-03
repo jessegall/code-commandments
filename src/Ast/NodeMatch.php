@@ -21,6 +21,10 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Stmt\For_;
+use PhpParser\Node\Stmt\Foreach_;
+use PhpParser\Node\Stmt\If_;
+use PhpParser\Node\Stmt\While_;
 use PhpParser\NodeFinder;
 
 /**
@@ -260,6 +264,29 @@ class NodeMatch extends AstNode implements Located
             $this->node->getStartFilePos(),
             $this->node->getEndFilePos() + 1,
         );
+    }
+
+    /**
+     * How a CONTROL STRUCTURE opens in this match's file — `' {'` (K&R) or `"\n{$indent}{"` (Allman),
+     * sampled from the first `if`/`foreach`/`for`/`while` the file already contains. The companion to
+     * {@see Span::blockOpener} for a scribe that emits a block where NO brace stands today (so it has
+     * nothing local to read the style from): a file that puts its braces on their own line gets the
+     * same back, and a fix a human has to reformat is only half a fix (#416). K&R when the file holds
+     * no control structure to learn from — PHP's own default for one.
+     */
+    public function controlBlockOpener(string $indent): string
+    {
+        $sample = new NodeFinder()->findFirst(
+            $this->file->ast,
+            static fn (Node $node): bool => $node instanceof If_
+                || $node instanceof Foreach_
+                || $node instanceof For_
+                || $node instanceof While_,
+        );
+
+        return $sample === null
+            ? ' {'
+            : Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent);
     }
 
     /**

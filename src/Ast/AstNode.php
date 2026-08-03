@@ -27,6 +27,8 @@ use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\BinaryOp\Identical;
+use PhpParser\Node\Expr\BinaryOp\LogicalAnd;
+use PhpParser\Node\Expr\BinaryOp\LogicalOr;
 use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\Cast;
@@ -159,6 +161,38 @@ class AstNode
     public function isCoalesce(): bool
     {
         return $this->node instanceof Coalesce;
+    }
+
+    /**
+     * Is this a short-circuiting logical operator — `&&`, `||`, and their low-precedence
+     * `and`/`or` spellings? The operators that evaluate their right side CONDITIONALLY, so
+     * one written where a value is discarded ({@see resultIsDiscarded}) is branching, not
+     * a boolean.
+     */
+    public function isShortCircuit(): bool
+    {
+        return $this->node instanceof BooleanAnd
+            || $this->node instanceof BooleanOr
+            || $this->node instanceof LogicalAnd
+            || $this->node instanceof LogicalOr;
+    }
+
+    /**
+     * The left-hand side of a short-circuit ({@see isShortCircuit}) — the CONDITION when the
+     * operator branches. An empty node when this isn't one.
+     */
+    public function shortCircuitLeft(): self
+    {
+        return new self($this->isShortCircuit() ? $this->node->left : null);
+    }
+
+    /**
+     * The right-hand side of a short-circuit ({@see isShortCircuit}) — the guarded work when
+     * the operator branches. An empty node when this isn't one.
+     */
+    public function shortCircuitRight(): self
+    {
+        return new self($this->isShortCircuit() ? $this->node->right : null);
     }
 
     /**

@@ -39,6 +39,7 @@ Reach for this the moment you are about to write:
 - Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
   _A `match`, or early-return guards._
 - Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
+- Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
 
 ## Bad → good
 
@@ -195,6 +196,24 @@ public function available(array $products): array
 }
 ```
 
+```php
+// Bad
+public function send(string $address, bool $subscribed): void
+{
+    $subscribed && $this->mailer->send($address, 'Your weekly digest', $this->digest());
+}
+
+// Good
+public function sendGuarded(string $address, bool $subscribed): void
+{
+    if (! $subscribed) {
+        return;
+    }
+
+    $this->mailer->send($address, 'Your weekly digest', $this->digest());
+}
+```
+
 ## When it fires
 
 - `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`
@@ -203,6 +222,7 @@ public function available(array $products): array
 - Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`
 - Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
 - `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
+- a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
 
 ## Checklist
 
@@ -212,6 +232,7 @@ public function available(array $products): array
 - [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
 - [ ] Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
 - [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
+- [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
 
 ## Related skills
 
