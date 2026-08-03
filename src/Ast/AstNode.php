@@ -164,6 +164,55 @@ class AstNode
     }
 
     /**
+     * Is this the expression a `foreach` ITERATES — the collection in its header, not the loop
+     * variable and not anything in its body?
+     */
+    public function isLoopSubject(): bool
+    {
+        $parent = $this->node?->getAttribute('parent');
+
+        return $parent instanceof Foreach_ && $parent->expr === $this->node;
+    }
+
+    /**
+     * Does this expression answer absence with an EMPTY COLLECTION — a `?? []` or a `?: []`? The
+     * shape that turns "there may be nothing here" into "here is nothing", silently, inside
+     * whatever expression it sits in.
+     */
+    public function fallsBackToEmptyCollection(): bool
+    {
+        if ($this->isCoalesce()) {
+            return $this->coalesceRight()->isEmptyArrayLiteral();
+        }
+
+        return $this->node instanceof Ternary
+            && $this->node->if === null
+            && new self($this->node->else)->isEmptyArrayLiteral();
+    }
+
+    /**
+     * The value an absence-fallback TESTS — the left of a `??`, the condition of a `?:`. The
+     * companion to {@see fallsBackToEmptyCollection}, so a caller can ask WHOSE absence is being
+     * answered without caring which of the two spellings said it. An empty node when this is neither.
+     */
+    public function fallbackSubject(): self
+    {
+        if ($this->isCoalesce()) {
+            return $this->coalesceLeft();
+        }
+
+        return new self($this->node instanceof Ternary && $this->node->if === null ? $this->node->cond : null);
+    }
+
+    /**
+     * Is this a ternary — the full `a ? b : c` or the short `a ?: c`?
+     */
+    public function isTernary(): bool
+    {
+        return $this->node instanceof Ternary;
+    }
+
+    /**
      * Is this a short-circuiting logical operator — `&&`, `||`, and their low-precedence
      * `and`/`or` spellings? The operators that evaluate their right side CONDITIONALLY, so
      * one written where a value is discarded ({@see resultIsDiscarded}) is branching, not
@@ -3654,6 +3703,49 @@ class AstNode
         }
 
         return null;
+    }
+
+    /**
+     * The variable a reach is ROOTED at — `$below` in `$below[$id]['kids']`, `$row` in `$row->a->b`.
+     * Null when the chain bottoms out at anything else: `$this`, a static property, a call result, a
+     * literal. The "whose structure is this?" primitive.
+     */
+    public function rootVariableName(): ?string
+    {
+        $node = $this->node;
+
+        while ($node instanceof ArrayDimFetch || $node instanceof PropertyFetch || $node instanceof NullsafePropertyFetch) {
+            $node = $node->var;
+        }
+
+        if (! $node instanceof Variable || ! is_string($node->name) || $node->name === 'this') {
+            return null;
+        }
+
+        return $node->name;
+    }
+
+    /**
+     * Does this expression reach into a value the enclosing function was HANDED — a chain rooted at
+     * one of its own parameters? The structural line between inspecting your OWN state (whose shape
+     * you own, and whose emptiness is an ordinary answer) and inspecting a caller's (whose shape is
+     * a PRECONDITION, and so belongs in a guard at the door).
+     */
+    public function reachesIntoParameter(): bool
+    {
+        $root = $this->rootVariableName();
+
+        if ($root === null) {
+            return false;
+        }
+
+        foreach ($this->enclosingFunction()?->getParams() ?? [] as $param) {
+            if ($param->var instanceof Variable && $param->var->name === $root) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

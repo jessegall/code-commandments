@@ -31,6 +31,8 @@ Reach for this the moment you are about to write:
 
 ## Rules
 
+- State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
+  _An early `return` when the collection is absent, so the loop iterates something that is THERE._
 - Flatten with guard clauses — never nest `if`s three deep into a pyramid.
 - Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
   _A `match`, a method on the type, or polymorphic dispatch._
@@ -40,8 +42,31 @@ Reach for this the moment you are about to write:
   _A `match`, or early-return guards._
 - Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
 - Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
+- Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
 
 ## Bad → good
+
+```php
+// Bad
+public function fanOut(string $carrier, array $manifest): void
+{
+    foreach ($manifest[$carrier] ?? [] as $parcel) {
+        $this->queued[$carrier][] = $parcel;
+    }
+}
+
+// Good
+public function fanOutGuarded(string $carrier, array $manifest): void
+{
+    if (! isset($manifest[$carrier])) {
+        return;
+    }
+
+    foreach ($manifest[$carrier] as $parcel) {
+        $this->queued[$carrier][] = $parcel;
+    }
+}
+```
 
 ```php
 // Bad
@@ -214,8 +239,41 @@ public function sendGuarded(string $address, bool $subscribed): void
 }
 ```
 
+```php
+// Bad
+public function collapsed(string $id, array $below): array
+{
+    $gone = [];
+
+    foreach ($below[$id] as $child) {
+        $this->isOpen($child->id)
+            ? array_push($gone, ...$this->collapsed($child->id, $below))
+            : $gone[] = $child->id;
+    }
+
+    return $gone;
+}
+
+// Good
+public function collapsedBranched(string $id, array $below): array
+{
+    $gone = [];
+
+    foreach ($below[$id] as $child) {
+        if ($this->isOpen($child->id)) {
+            array_push($gone, ...$this->collapsedBranched($child->id, $below));
+        } else {
+            $gone[] = $child->id;
+        }
+    }
+
+    return $gone;
+}
+```
+
 ## When it fires
 
+- `foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
 - `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`
 - if/elseif ladder of 4+ branches (should be match/dispatch) — `IfElseLadderDetector`
 - `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `InlineThrowDetector`
@@ -223,9 +281,11 @@ public function sendGuarded(string $address, bool $subscribed): void
 - Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
 - `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
 - a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
+- a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value — `TernaryStatementDetector`
 
 ## Checklist
 
+- [ ] State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
 - [ ] Flatten with guard clauses — never nest `if`s three deep into a pyramid.
 - [ ] Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
 - [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
@@ -233,6 +293,7 @@ public function sendGuarded(string $address, bool $subscribed): void
 - [ ] Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
 - [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
 - [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
+- [ ] Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
 
 ## Related skills
 

@@ -276,17 +276,39 @@ class NodeMatch extends AstNode implements Located
      */
     public function controlBlockOpener(string $indent): string
     {
-        $sample = new NodeFinder()->findFirst(
+        $sample = $this->controlStructureSample();
+
+        return $sample === null
+            ? ' {'
+            : Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent);
+    }
+
+    /**
+     * Does this match's file stand a control structure's brace on its OWN line (Allman)? The same
+     * sample {@see controlBlockOpener} reads, as the question rather than the text — so a scribe
+     * emitting a keyword BETWEEN two blocks (an `else`, a `catch`) can place it in the file's style
+     * without picking apart the opener string.
+     */
+    public function controlBracesOnOwnLine(): bool
+    {
+        $sample = $this->controlStructureSample();
+
+        return $sample !== null && Span::braceOnItsOwnLine($this->file->source, $sample->getStartFilePos());
+    }
+
+    /**
+     * The first control structure the file contains — whatever a scribe learns the file's block
+     * style from. Null when it holds none.
+     */
+    private function controlStructureSample(): ?Node
+    {
+        return new NodeFinder()->findFirst(
             $this->file->ast,
             static fn (Node $node): bool => $node instanceof If_
                 || $node instanceof Foreach_
                 || $node instanceof For_
                 || $node instanceof While_,
         );
-
-        return $sample === null
-            ? ' {'
-            : Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent);
     }
 
     /**

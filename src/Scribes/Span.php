@@ -110,9 +110,10 @@ final class Span
 
     /**
      * Does the first `{` at/after $pos begin its own line — a newline standing between the header and
-     * the brace?
+     * the brace? The Allman-vs-K&R question itself, for a caller that needs the verdict rather than
+     * the opener text {@see blockOpener} builds from it (placing an `else` between two blocks, say).
      */
-    private static function braceOnItsOwnLine(string $source, int $pos): bool
+    public static function braceOnItsOwnLine(string $source, int $pos): bool
     {
         $brace = self::after($source, $pos, '{');
 
