@@ -108,6 +108,8 @@ is born, and every `Command` that exists is real.
 - Extract copy-pasted code — two functions with an identical AST must become one.
 - Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
   _Throw a named exception at the boundary, or bake a real default into the signature._
+- Hold changing state on an INSTANCE someone owns and passes; never write a static property.
+  _Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down._
 - Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
 
 ## Bad → good
@@ -165,6 +167,28 @@ public function persist(ImportRow $row): void
 }
 ```
 
+### mutable-static-state
+
+a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing
+
+```php
+// Bad
+public static function record(string $at, string $message): void
+{
+    self::$entries[] = "[{$at}] {$message}";
+
+    if (count(self::$entries) > self::KEEP) {
+        self::$entries = array_slice(self::$entries, -self::KEEP);
+    }
+}
+
+// Good
+public function for(string $region): float
+{
+    return $this->table[$region] ?? 1.0;
+}
+```
+
 ### near-duplicate-function
 
 Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)
@@ -203,12 +227,14 @@ public function scoreFrom(int $start, int $weight): int
 
 - Copy-pasted code — two+ functions with an identical AST (formatting/comments aside) — `DuplicateFunctionDetector`
 - `?? <empty literal>` filling a required slot (manufactured fake) — `ManufacturedFakeFillDetector`
+- a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing — `MutableStaticStateDetector`
 - Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone) — `NearDuplicateFunctionDetector`
 
 ## Checklist
 
 - [ ] Extract copy-pasted code — two functions with an identical AST must become one.
 - [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
+- [ ] Hold changing state on an INSTANCE someone owns and passes; never write a static property.
 - [ ] Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
 
 ## Related skills

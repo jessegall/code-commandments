@@ -212,6 +212,93 @@ class AstNode
     }
 
     /**
+     * Is this a write to a STATIC property — `self::$table = …`, `static::$seen++`, `Rates::$table = []`?
+     * State that outlives every instance and belongs to no one: whoever writes last wins, order of
+     * execution becomes load-bearing, and one test leaks into the next.
+     *
+     * A `??=` does not count. Filling a memo (`self::$parsed[$key] ??= …`) adds no state a caller can
+     * observe — ask twice, get the same answer either way. Nor does a declaration's own initialiser,
+     * which is not a write at all.
+     */
+    public function isStaticStateWrite(): bool
+    {
+        $node = $this->node;
+
+        if ($node instanceof PostInc || $node instanceof PreInc || $node instanceof PostDec || $node instanceof PreDec) {
+            return $node->var instanceof StaticPropertyFetch;
+        }
+
+        if (! ($node instanceof Assign || $node instanceof AssignOp) || $node instanceof CoalesceAssign) {
+            return false;
+        }
+
+        $target = self::staticTargetOf($node->var);
+
+        return $target !== null && ! $this->memoisesThatStatic($target);
+    }
+
+    /**
+     * Is this write just FILLING a memo — does the enclosing function test that very static for
+     * presence before writing it (`if (self::$brands === null)`, an early `return` on
+     * `isset(self::$cache[$k])`)? Memoisation adds nothing a caller can observe: ask twice, get the
+     * same answer either way, and the only thing the static holds is the answer it already gave.
+     *
+     * The presence test is what separates a memo from a tally. `self::$count = self::$count + 1`
+     * also reads before it writes, but it asks what the value IS rather than whether it is THERE —
+     * so it stays a global that changes, which is the sin.
+     */
+    private function memoisesThatStatic(StaticPropertyFetch $target): bool
+    {
+        $function = $this->enclosingFunction();
+        $name = $target->name instanceof Identifier ? $target->name->toString() : null;
+
+        if ($function === null || $name === null) {
+            return false;
+        }
+
+        foreach (new NodeFinder()->find([$function], self::isPresenceTest(...)) as $test) {
+            foreach (new NodeFinder()->findInstanceOf([$test], StaticPropertyFetch::class) as $read) {
+                if ($read->name instanceof Identifier && $read->name->toString() === $name) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this expression asking whether something is THERE — `isset`, `empty`, `array_key_exists`,
+     * or a comparison against `null`?
+     */
+    private static function isPresenceTest(Node $node): bool
+    {
+        if ($node instanceof Isset_ || $node instanceof Empty_) {
+            return true;
+        }
+
+        if ($node instanceof FuncCall && $node->name instanceof Name && $node->name->toLowerString() === 'array_key_exists') {
+            return true;
+        }
+
+        return ($node instanceof Identical || $node instanceof NotIdentical)
+            && (new self($node->left)->isNull() || new self($node->right)->isNull());
+    }
+
+    /**
+     * The static property a write LANDS on, seeing through an index (`self::$rows['k'] = …` still
+     * writes `self::$rows`). Null when the target is not static state.
+     */
+    private static function staticTargetOf(Node $target): ?StaticPropertyFetch
+    {
+        while ($target instanceof ArrayDimFetch) {
+            $target = $target->var;
+        }
+
+        return $target instanceof StaticPropertyFetch ? $target : null;
+    }
+
+    /**
      * Does this CLASS change what it IS after it has been built — a write, from some method other
      * than the constructor, to a field the constructor established? Two holders of the same value
      * must be able to rely on it staying that value, and one such write breaks all of them at once.
