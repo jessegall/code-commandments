@@ -27,11 +27,16 @@ final class TernaryStatementDetectorTest extends TestCase
             public function short(?string $name): void {
                 $name ?: $this->warn();
             }
-            public function asserted(?string $name): void {
+            public function checkOrThrow(?string $name): void {
                 $name ?: throw NameMissing::of();
             }
             public function throwsOneArmOfTwo(?string $name): void {
                 $this->known($name) ? $this->accept($name) : throw NameMissing::of();
+            }
+            public function throwFeedsAValue(?string $name): string {
+                $label = $name ?: throw NameMissing::of();
+
+                return $label;
             }
             public function assigned(array $row): string {
                 $label = $row['name'] ? $row['name'] : 'anonymous';
@@ -58,10 +63,10 @@ final class TernaryStatementDetectorTest extends TestCase
 
         $hits = (new TernaryStatementDetector)->find(Codebase::fromString($code));
 
-        // `asserted` is the `?:` twin of `$name || throw …` — one action, and it is leaving.
-        // `throwsOneArmOfTwo` still has a real arm doing work, so the branch is genuinely hidden.
+        // A check-or-throw statement is an `if` check like any other; only `throwFeedsAValue`
+        // escapes, because there the ternary's result is READ.
         $this->assertSame(
-            ['T::walk', 'T::short', 'T::throwsOneArmOfTwo'],
+            ['T::walk', 'T::short', 'T::checkOrThrow', 'T::throwsOneArmOfTwo'],
             array_map(static fn ($m): string => $m->scope(), $hits),
         );
     }

@@ -205,19 +205,6 @@ class AstNode
     }
 
     /**
-     * Is this a SHORT ternary whose one action is a `throw` — `$name ?: throw Missing::of()`? The
-     * `?:` synonym of `$name || throw …`: an assertion, not a hidden branch, because its only other
-     * outcome is leaving. A FULL ternary always has a second arm doing real work, so it never
-     * qualifies however either arm is spelled.
-     */
-    public function soleTernaryActionIsThrow(): bool
-    {
-        return $this->node instanceof Ternary
-            && $this->node->if === null
-            && $this->node->else instanceof Throw_;
-    }
-
-    /**
      * Is this a ternary — the full `a ? b : c` or the short `a ?: c`?
      */
     public function isTernary(): bool

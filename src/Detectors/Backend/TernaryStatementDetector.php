@@ -19,8 +19,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * code around it: both arms must be expressions, so an assignment gets jammed into an expression
  * slot and a call is picked for being callable rather than for being clear — and the value the
  * whole thing evaluates to (a push's new count, an assignment's value) is meaningless and dropped.
- * Sibling of {@see ShortCircuitStatementDetector}: same disguise, two arms instead of one — and it
- * spares the same assertion, `$name ?: throw Missing::of()`, whose one action is to leave.
+ * Sibling of {@see ShortCircuitStatementDetector}: same disguise, two arms instead of one.
  */
 final class TernaryStatementDetector implements Detector, Repentable
 {
@@ -39,7 +38,6 @@ final class TernaryStatementDetector implements Detector, Repentable
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isTernary())
             ->where(static fn (AstNode $node): bool => $node->resultIsDiscarded())
-            ->reject(static fn (AstNode $node): bool => $node->soleTernaryActionIsThrow())
             ->get();
     }
 }

@@ -63,6 +63,18 @@ final class Span
     }
 
     /**
+     * The leading whitespace of the line $pos sits on, whatever else precedes $pos on it — the indent the
+     * whole line, and so its continuation lines, are laid out against. The wider companion to
+     * {@see ownLineIndent}, which answers only "is $pos itself the first thing on its line".
+     */
+    public static function lineIndentAt(string $source, int $pos): string
+    {
+        $prefix = self::indentAt($source, $pos);
+
+        return substr($prefix, 0, strlen($prefix) - strlen(ltrim($prefix)));
+    }
+
+    /**
      * The byte offset of $needle's LAST occurrence before $pos, or null. The one sanctioned "search back
      * to a delimiter/keyword from an AST position" — so a scribe never hand-rolls `strrpos` over the source.
      */
@@ -158,13 +170,18 @@ final class Span
     }
 
     /**
-     * This span's text re-indented to sit cleanly at a new base indent — the original
-     * column is stripped from every continuation line, then $base is applied. Lifting
-     * a nested block out to the top of a new file without dragging its old indentation.
+     * This span's text re-indented to sit cleanly at a new base indent — the indentation of the LINE
+     * it begins on is stripped from every continuation line, then $base is applied. Lifting a nested
+     * block out to the top of a new file without dragging its old indentation.
+     *
+     * The line's indent, not the span's own {@see column}: a span that begins mid-line (an operand
+     * lifted out of `$cond || throw Refused::for(…)` spanning several lines) has a column far to the
+     * right of the block its continuation lines are laid out against, and stripping THAT would flatten
+     * them instead of shifting them. For a span that starts its line the two are the same number.
      */
     public function reindent(string $base = '    '): string
     {
-        return self::reindentText($this->text(), $this->column(), $base);
+        return self::reindentText($this->text(), strlen(self::lineIndentAt($this->source, $this->start)), $base);
     }
 
     /**

@@ -17,9 +17,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * Nothing reads the boolean it produces, so the `&&` isn't computing a value at all: it is a
  * CONDITION and a consequence, written as an expression to save an `if`. The branch is real
  * either way; only its shape is hidden, at the exact place a body's flow should be readable. A
- * `throw` on the right is exempt — `$x instanceof Y || throw Refused::for($x);` is an ASSERTION,
- * the precondition and its bail side by side, hiding nothing because its only outcome is leaving;
- * the same line {@see InlineThrowDetector} draws for a `?? throw` that feeds nothing.
+ * `throw` on the right is no exception: `$x instanceof Y || throw Refused::for($x);` IS an `if`
+ * check, so it is written as one. (A `throw` feeding a VALUE — `$v = $x ?? throw Missing::of();` —
+ * is untouched: nothing is discarded there, so no branch is in disguise.)
  */
 final class ShortCircuitStatementDetector implements Detector, Repentable
 {
@@ -38,7 +38,6 @@ final class ShortCircuitStatementDetector implements Detector, Repentable
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isShortCircuit())
             ->where(static fn (AstNode $node): bool => $node->resultIsDiscarded())
-            ->reject(static fn (AstNode $node): bool => $node->shortCircuitRight()->isThrow())
             ->get();
     }
 }

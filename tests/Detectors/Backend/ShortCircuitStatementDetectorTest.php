@@ -56,7 +56,7 @@ final class ShortCircuitStatementDetectorTest extends TestCase
         );
     }
 
-    public function test_spares_an_assertion_whose_only_outcome_is_leaving(): void
+    public function test_flags_a_check_or_throw_but_never_a_throw_that_feeds_a_value(): void
     {
         $code = <<<'PHP'
         <?php
@@ -69,19 +69,28 @@ final class ShortCircuitStatementDetectorTest extends TestCase
 
                 $renderable->receive($this->signal);
             }
-            public function assertThenWork(object $renderable): void {
+            public function lowPrecedenceThrow(object $renderable): void {
                 $renderable->isReady() or throw NotReady::for($renderable);
             }
-            public function guardsRealWork(object $renderable): void {
-                $renderable->isReady() || $renderable->prepare();
+            public function fedToAValue(array $config): string {
+                $region = $config['region'] ?? throw RegionMissing::of();
+
+                return $region;
+            }
+            public function fedToAProperty(array $config): void {
+                $this->region = $config['region'] ?? throw RegionMissing::of();
             }
         }
         PHP;
 
         $hits = (new ShortCircuitStatementDetector)->find(Codebase::fromString($code));
 
-        // A `throw` on the right hides no branch — only `guardsRealWork` conceals a consequence.
-        $this->assertSame(['S::guardsRealWork'], array_map(static fn ($m): string => $m->scope(), $hits));
+        // A check-or-throw statement is an `if` check and is written as one; a `?? throw` FEEDING
+        // a value discards nothing, so no branch is in disguise there.
+        $this->assertSame(
+            ['S::dispatch', 'S::lowPrecedenceThrow'],
+            array_map(static fn ($m): string => $m->scope(), $hits),
+        );
     }
 
     public function test_reports_the_outermost_short_circuit_only(): void

@@ -132,6 +132,55 @@ final class ShortCircuitStatementScribeTest extends ScribeTestCase
         );
     }
 
+    public function test_shifts_a_multi_line_right_side_with_the_block_it_moves_into(): void
+    {
+        $php = <<<'PHP'
+        <?php
+
+        class Dispatch
+        {
+            public function to(object $renderable): void
+            {
+                $renderable instanceof Interactive || throw TargetCannotReceiveSignal::for(
+                    $this->target,
+                    $renderable::class,
+                );
+            }
+        }
+        PHP;
+
+        $fixed = $this->fixStable($php);
+
+        // Every continuation line moves the same step the `throw` itself does — the arguments do
+        // not stay behind at the old indent.
+        $this->assertStringContainsString(
+            "        if (! (\$renderable instanceof Interactive)) {\n"
+            . "            throw TargetCannotReceiveSignal::for(\n"
+            . "                \$this->target,\n"
+            . "                \$renderable::class,\n"
+            . "            );\n"
+            . "        }",
+            $fixed,
+        );
+    }
+
+    public function test_leaves_a_throw_that_feeds_a_value(): void
+    {
+        $php = <<<'PHP'
+        <?php
+
+        class Dispatch
+        {
+            public function region(array $config): string
+            {
+                return $config['region'] ?? throw RegionMissing::of();
+            }
+        }
+        PHP;
+
+        $this->assertFalse($this->rewrote($php));
+    }
+
     public function test_leaves_a_short_circuit_whose_result_is_read(): void
     {
         $php = <<<'PHP'
