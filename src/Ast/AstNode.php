@@ -212,6 +212,93 @@ class AstNode
     }
 
     /**
+     * Does this CLASS do WORK while it is being built — does its constructor ask a collaborator or a
+     * static to do something, rather than just accepting what it was handed? Construction should
+     * establish what an object IS. A constructor that reaches out makes merely HAVING the object
+     * depend on a network, a database or a clock, so it cannot be built in a test, and its side
+     * effects fire at a moment the caller never chose.
+     *
+     * A method call on `$this` does not count — a constructor calling its own private helper is
+     * still only assembling itself. Nor does `new`: BUILDING a collaborator is construction, where
+     * asking an existing one for something is work.
+     */
+    public function constructorHasSideEffect(): bool
+    {
+        $constructor = $this->getConstructor();
+
+        if (! $constructor instanceof ClassMethod) {
+            return false;
+        }
+
+        $parameters = [];
+
+        foreach ($constructor->params as $param) {
+            if ($param->var instanceof Variable && is_string($param->var->name)) {
+                $parameters[$param->var->name] = true;
+            }
+        }
+
+        foreach (new NodeFinder()->find([$constructor], self::isOutwardCall(...)) as $call) {
+            if (self::asksACollaborator($call, $parameters) && new self($call)->resultIsDiscarded()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this an instance being told to do something — a method call on some object? Static calls
+     * are out of scope here: a named constructor reads like a factory that does real work, and the
+     * infrastructure ones belong to the rules that already name them.
+     */
+    private static function isOutwardCall(Node $node): bool
+    {
+        return $node instanceof MethodCall || $node instanceof NullsafeMethodCall;
+    }
+
+    /**
+     * Is this call acting on a COLLABORATOR — one the constructor was handed, or one already held as
+     * a field? Everything else in a constructor is assembly: a `$this->…` helper (and a fluent run of
+     * them) is the object putting itself together, `new Icon($x)->size(…)` is a value being built and
+     * configured, and a plain function is a computation.
+     *
+     * @param  array<string, true>  $parameters  the constructor's own parameter names
+     */
+    private static function asksACollaborator(Node $call, array $parameters): bool
+    {
+        $receiver = self::receiverRootOf($call);
+
+        if ($receiver instanceof Variable && is_string($receiver->name)) {
+            return isset($parameters[$receiver->name]);
+        }
+
+        return $receiver instanceof PropertyFetch && new self($receiver->var)->isThisVariable();
+    }
+
+    /**
+     * What a call is ultimately received BY — following a fluent chain back to whatever started it.
+     */
+    private static function receiverRootOf(Node $call): ?Node
+    {
+        $receiver = $call instanceof MethodCall || $call instanceof NullsafeMethodCall ? $call->var : null;
+
+        while ($receiver instanceof MethodCall || $receiver instanceof NullsafeMethodCall) {
+            $receiver = $receiver->var;
+        }
+
+        return $receiver;
+    }
+
+    /**
+     * Is this the `$this` variable?
+     */
+    public function isThisVariable(): bool
+    {
+        return $this->node instanceof Variable && $this->node->name === 'this';
+    }
+
+    /**
      * Is this a write to a STATIC property — `self::$table = …`, `static::$seen++`, `Rates::$table = []`?
      * State that outlives every instance and belongs to no one: whoever writes last wins, order of
      * execution becomes load-bearing, and one test leaks into the next.

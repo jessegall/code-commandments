@@ -105,6 +105,8 @@ is born, and every `Command` that exists is real.
 
 ## Rules
 
+- Let a constructor establish what the object IS; never let building one change anything outside it.
+  _Keep the collaborator as a field and act on it from the method that someone actually calls._
 - Extract copy-pasted code — two functions with an identical AST must become one.
 - Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
   _Throw a named exception at the boundary, or bake a real default into the signature._
@@ -113,6 +115,45 @@ is born, and every `Command` that exists is real.
 - Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
 
 ## Bad → good
+
+### constructor-side-effect
+
+a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world
+
+```php
+// Bad
+/**
+ * Warms the export the moment anyone builds one, so merely HAVING a LedgerExport costs a request
+ * — and nothing in the code that constructed it asked for that.
+ */
+final class LedgerExport
+{
+    public function __construct(private readonly HttpClient $client, private readonly string $period)
+    {
+        $this->client->get("/ledger/{$period}/warm");
+    }
+
+    public function body(): string
+    {
+        return $this->client->get("/ledger/{$this->period}");
+    }
+}
+
+// Good
+/**
+ * The same export, built for free. It holds the client and does the fetching when someone asks
+ * for rows, which is the moment the caller chose.
+ */
+final class LazyLedgerExport
+{
+    public function __construct(private readonly HttpClient $client, private readonly string $period) {}
+
+    public function body(): string
+    {
+        return $this->client->get("/ledger/{$this->period}");
+    }
+}
+```
 
 ### duplicate-function
 
@@ -225,6 +266,7 @@ public function scoreFrom(int $start, int $weight): int
 
 ## When it fires
 
+- a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world — `ConstructorSideEffectDetector`
 - Copy-pasted code — two+ functions with an identical AST (formatting/comments aside) — `DuplicateFunctionDetector`
 - `?? <empty literal>` filling a required slot (manufactured fake) — `ManufacturedFakeFillDetector`
 - a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing — `MutableStaticStateDetector`
@@ -232,6 +274,7 @@ public function scoreFrom(int $start, int $weight): int
 
 ## Checklist
 
+- [ ] Let a constructor establish what the object IS; never let building one change anything outside it.
 - [ ] Extract copy-pasted code — two functions with an identical AST must become one.
 - [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
 - [ ] Hold changing state on an INSTANCE someone owns and passes; never write a static property.
