@@ -4,6 +4,7 @@ namespace Shop\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DeadConfigKey;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 
 /**
@@ -12,6 +13,7 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  */
 class SettingsServiceProvider extends ServiceProvider
 {
+    #[Fixed(DeadConfigKey::class)]
     #[Righteous(DeadConfigKey::class)]
     public function register(): void
     {

@@ -14,7 +14,7 @@ use Attribute;
  * should become). A fix the detector still flags is not one, so this implies righteous but never
  * the reverse. Repeatable; `$detector` (class or slug) matches {@see Sinful}.
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION | Attribute::IS_REPEATABLE)]
 final class Fixed
 {
     public function __construct(

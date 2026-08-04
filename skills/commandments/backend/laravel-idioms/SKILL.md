@@ -97,20 +97,27 @@ public function searchTop(string $term, string $sort): array
 
 ```php
 // Bad
-public function pay(Request $request): array
+public function charge(string $token, int $amountCents): bool
 {
-    $processor = app(PaymentProcessor::class);
-    $token = $request->input('token');
+    $gateway = app(PaymentGatewayRegistry::class)->get('default');
 
-    $result = $processor->charge($token, (int) $request->input('amount'));
+    if ($amountCents <= 0) {
+        throw new \RuntimeException("Cannot charge a non-positive amount: {$amountCents}");
+    }
 
-    return ['ok' => $result];
+    Log::info('charging', ['amount' => $amountCents]);
+
+    return $gateway->send($token, $amountCents);
 }
 
 // Good
-public function payClean(PaymentProcessor $processor, string $token, int $amount): array
+/**
+ * The registry is a declared constructor parameter, so the class states what it needs and the
+ * container hands it over — nothing reaches back into the container from the body.
+ */
+public function captureAuthorised(int $amountCents): void
 {
-    return ['ok' => $processor->charge($token, $amount)];
+    $this->gateways->get('default')->capture($amountCents);
 }
 ```
 
@@ -162,12 +169,12 @@ public function idleTimeout(): int
 
 // Good
 /**
- * Righteous: the file states no default for this one (`env('SHOP_SUPPORT_EMAIL')` alone), so the
- * fallback here is the ONLY answer to "what if it is absent" — one source of truth, not two.
+ * `config/kiosk.php` owns the default, so the reader states nothing about absence — it asks for
+ * the value and there is one place to edit it.
  */
-public function supportEmail(): string
+public function idleTimeoutSeconds(): int
 {
-    return $this->stringOr('kiosk.support_email', 'help@shop.test');
+    return $this->int('kiosk.idle_timeout');
 }
 ```
 
@@ -177,15 +184,21 @@ Laravel facade call (`Cache::`, `Log::`, `Mail::` …)
 
 ```php
 // Bad
-public function handle(): void
+public function notify(string $email, string $type): void
 {
-    Log::info('reconciling');
+    $template = config('shop.templates.' . $type);
+
+    Mail::raw($template, function ($message) use ($email) {
+        $message->to($email);
+    });
 }
 
 // Good
-public function failed(\Throwable $failure): void
+public function notifyClean(string $email, string $template): void
 {
-    App::make(StockReconciler::class)->abandon($failure->getMessage());
+    $this->mailer->raw($template, function ($message) use ($email) {
+        $message->to($email);
+    });
 }
 ```
 
@@ -236,25 +249,24 @@ A container binding whose abstract nothing ever resolves — dead wiring that re
 
 ```php
 // Bad
-public function register(): void
+public function boot(): void
 {
-    $channel = self::CHANNEL;
+    if (! $this->ratesEnabled) {
+        return;
+    }
 
-    $this->app->singleton(AuditTrail::class, static function () use ($channel): AuditTrail {
-        $trail = new AuditTrail($channel);
-
-        $trail->record('booted');
-
-        return $trail;
-    });
+    $this->app->instance(CourierRates::class, new TableCourierRates());
 }
 
 // Good
+/**
+ * The rates registration went out with the courier that needed it. What is left is wiring a
+ * consumer actually asks for: RegionCoverage type-hints a ZoneTable, so this binding answers a
+ * resolve.
+ */
 public function register(): void
 {
-    $this->app->singleton(CourierRegistry::class, static fn () => new CourierRegistry);
-
-    $this->app->bind(CourierApi::class, static fn ($app): CourierApi => $app->make(CourierRegistry::class)->preferred());
+    $this->app->singleton(ZoneTable::class);
 }
 ```
 
@@ -264,21 +276,32 @@ Raw `->input()/->get()/->query()/->post()` on a Request
 
 ```php
 // Bad
-public function handle(Request $request): string
+public function search(Request $request): array
 {
-    $id = $request->get('id');
-    $name = $request->get('name');
+    $term = $request->input('q');
+    $category = $request->input('category');
 
-    return $id . ':' . $name;
+    return Product::query()
+        ->where('name', 'like', "%{$term}%")
+        ->where('category', $category)
+        ->get()
+        ->all();
 }
 
 // Good
-public function handleTyped(Request $request): string
+/**
+ * The same search, read through named getters on a `FormRequest` subclass — the key strings and
+ * their types live once, in the request, instead of at every call site.
+ *
+ * @return list<Product>
+ */
+public function searchNamed(SearchProductRequest $request): array
 {
-    $id = $request->string('id');
-    $name = $request->string('name');
-
-    return $id . ':' . $name;
+    return Product::query()
+        ->where('name', 'like', "%{$request->term()}%")
+        ->where('category', $request->category())
+        ->get()
+        ->all();
 }
 ```
 
@@ -288,21 +311,33 @@ Re-coercing a typed request accessor at a call site — `$request->string('id')-
 
 ```php
 // Bad
-public function handle(Request $request): string
+/**
+ * @return list<Product>
+ */
+public function search(Request $request): array
 {
-    $nodeId = (string) $request->string('nodeId');
-    $direction = (string) $request->string('direction');
+    $term = $request->string('q')->toString();
 
-    return $nodeId.'->'.$direction;
+    return Product::query()
+        ->where('name', 'like', "%{$term}%")
+        ->get()
+        ->all();
 }
 
 // Good
-public function handleNamed(MoveNodeRequest $request): string
+/**
+ * The coercion moved onto the typed request as `term()`, so the call site asks a named getter for
+ * an already-`string` value instead of recasting an accessor.
+ *
+ * @return list<Product>
+ */
+public function searchNamed(SearchProductRequest $request): array
 {
-    $nodeId = $request->nodeId();
-    $direction = $request->direction();
-
-    return $nodeId.'->'.$direction;
+    return Product::query()
+        ->where('name', 'like', "%{$request->term()}%")
+        ->orderBy('name')
+        ->get()
+        ->all();
 }
 ```
 

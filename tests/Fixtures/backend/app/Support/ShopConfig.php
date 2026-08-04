@@ -3,6 +3,7 @@
 namespace Shop\Support;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicatedConfigDefault;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -27,6 +28,21 @@ final class ShopConfig
     public function supportEmail(): string
     {
         return $this->stringOr('kiosk.support_email', 'help@shop.test');
+    }
+
+    /**
+     * `config/kiosk.php` owns the default, so the reader states nothing about absence — it asks for
+     * the value and there is one place to edit it.
+     */
+    #[Fixed(DuplicatedConfigDefault::class)]
+    public function idleTimeoutSeconds(): int
+    {
+        return $this->int('kiosk.idle_timeout');
+    }
+
+    private function int(string $key): int
+    {
+        return 0;
     }
 
     private function intOr(string $key, int $fallback): int

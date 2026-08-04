@@ -19,6 +19,15 @@ final class InboundControllers
         return InboundOrderData::from(['price' => new Money($cents, $code)]);
     }
 
+    /**
+     * The call site of the FIXED data: the RAW cents go straight in — the `#[WithCast(MoneyCast::class)]`
+     * on the property owns the mapping, so nothing is hand-built here.
+     */
+    public function castOrder(int $cents): CastInboundOrderData
+    {
+        return CastInboundOrderData::from(['price' => $cents]);
+    }
+
     public function place(float $lat, float $lng): InboundPlaceData
     {
         $source = ['spot' => new GeoPoint($lat, $lng), 'radius' => 50];

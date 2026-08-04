@@ -4,6 +4,7 @@ namespace Shop\Customers;
 
 use JesseGall\CodeCommandments\Sins\Backend\PhpTypes\OptionAsNullable;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\PhpTypes\Option;
@@ -21,6 +22,7 @@ final class CustomerLocator
         return Option::none();
     }
 
+    #[Fixed(OptionAsNullable::class)]
     #[Righteous(OptionAsNullable::class)]
     public function locateHonestly(string $email): Option
     {

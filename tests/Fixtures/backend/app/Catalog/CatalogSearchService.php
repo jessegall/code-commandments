@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -40,6 +41,7 @@ final class CatalogSearchService
      *
      * @return array<int, mixed>
      */
+    #[Fixed(ConfigRead::class)]
     #[Righteous(ConfigRead::class)]
     public function searchTop(string $term, string $sort): array
     {

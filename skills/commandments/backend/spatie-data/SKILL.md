@@ -293,21 +293,28 @@ final class LegacyImportRow extends Data
 
 // Good
 /**
- * The same row with its required fields non-nullable: `::from()` fails hard on a
- * real miss, so a valid row can't be confused with a malformed one.
+ * The FIX for {@see LegacyImportRow}: every field retyped to the truth. The three the importer cannot
+ * work without are non-nullable and undefaulted, so `::from()` fails hard on a malformed row; the one
+ * that is GENUINELY absent-or-present is `string|Optional = new Optional()`, which the wire OMITS
+ * rather than shipping as `null`. No `?? 0` is needed anywhere downstream.
  */
-final class ImportRow extends Data
+final class RetypedImportRow extends Data
 {
     public function __construct(
         public readonly string $sku,
         public readonly int $quantity,
-        public readonly ?int $priceCents = null,
-        public readonly ?string $note = null,
+        public readonly int $priceCents,
+        public readonly string|Optional $note = new Optional(),
     ) {}
 
     public function lineTotal(): int
     {
-        return $this->quantity * ($this->priceCents ?? 0);
+        return $this->quantity * $this->priceCents;
+    }
+
+    public function annotated(): string
+    {
+        return $this->note instanceof Optional ? $this->sku : $this->sku . ' — ' . $this->note;
     }
 }
 ```
@@ -352,13 +359,29 @@ final class GridBox extends Data
 }
 
 // Good
-final class Panel extends Data
+/**
+ * The FIX for {@see GridBox}: every leaf gets a CONCRETE default — a box always has a column count,
+ * a span and a gap — and the optionality moves UP to the container field where the box itself may be
+ * absent (`LayoutBox|Optional $grid = new Optional()`). Present means valid; absent is one question,
+ * asked once, at the place that owns it.
+ */
+final class LayoutBox extends Data
 {
     public function __construct(
-        public readonly string $id,
-        public readonly string|Optional $title = new Optional(),
-        public readonly string|Optional $subtitle = new Optional(),
+        public readonly int $columns = 1,
+        public readonly int $span = 1,
+        public readonly int $gap = 0,
     ) {}
+
+    public function template(): string
+    {
+        return "grid-template-columns: repeat({$this->columns}, 1fr); gap: {$this->gap}px";
+    }
+
+    public function area(int $rows): int
+    {
+        return $rows * $this->columns;
+    }
 }
 ```
 
@@ -392,16 +415,27 @@ final class RosterPage extends Data
 }
 
 // Good
-final class GalleryPage extends Data
+/**
+ * The FIX for {@see RosterPage}: the roster is typed `array` and declares its element type with
+ * `#[DataCollectionOf(Member::class)]`. The element typing drives hydration and nested validation,
+ * and the generated TypeScript is a clean `Member[]` instead of `undefined<number, Member>`.
+ */
+final class SquadPage extends Data
 {
     /**
-     * @param list<Photo> $photos
+     * @param list<Member> $members
      */
     public function __construct(
-        public readonly string $album,
-        #[DataCollectionOf(Photo::class)]
-        public readonly array $photos = [],
+        public readonly string $club,
+        public readonly int $season,
+        #[DataCollectionOf(Member::class)]
+        public readonly array $members = [],
     ) {}
+
+    public function squadSize(): int
+    {
+        return count($this->members);
+    }
 }
 ```
 
@@ -435,18 +469,27 @@ final class CouponData extends Data
 
 // Good
 /**
- * A voucher whose `@method` hint describes only the invisible magic `::from()`,
- * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+ * The FIX for {@see InvoiceData}: the `@method` tag names the INVISIBLE magic `from()` — the one
+ * method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
+ * below it, so no hint re-declares a real method.
  *
- * @method static static from(string $code)
+ * @method static static from(mixed ...$payloads)
  */
-final class VoucherData extends Data
+final class CreditNoteData extends Data
 {
-    public string $code;
+    public function __construct(
+        public readonly int $orderId,
+        public readonly int $refundedCents,
+        public readonly string $reference,
+    ) {}
 
-    public static function fromCode(string $code): static
+    public static function fromOrder(Order $order): self
     {
-        return new static(code: $code);
+        return self::from([
+            'orderId' => $order->id,
+            'refundedCents' => $order->total_cents,
+            'reference' => 'CN-' . $order->id,
+        ]);
     }
 }
 ```
@@ -478,15 +521,24 @@ final class DockShell extends Data
 }
 
 // Good
-final class TagCloud extends Data
+/**
+ * The FIX for {@see DockShell}: the get-only hook is stamped `#[Computed]`, so Spatie treats `docks`
+ * as an OUTPUT-only value it derives after hydration — it is no longer expected in `::from()`.
+ */
+final class ComputedDockShell extends Data
 {
     #[Computed]
-    public array $tags { get => array_keys($this->counts); }
+    public array $docks { get => $this->dockSet->all(); }
 
-    /**
-     * @param array<string, int> $counts
-     */
-    public function __construct(public readonly array $counts) {}
+    public function __construct(
+        public readonly DockSet $dockSet,
+        public readonly string $side,
+    ) {}
+
+    public function facing(): string
+    {
+        return $this->side === 'port' ? 'starboard' : 'port';
+    }
 }
 ```
 
@@ -498,36 +550,29 @@ Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` +
 // Bad
 /**
  * @param  array<int, array<string, mixed>>  $rows
- * @return array<int, CustomerData>
+ * @return array<int, ProductData>
  */
-public function importBatch(array $rows): array
+public function map(array $rows): array
 {
-    $customers = [];
-    $total = count($rows);
+    $products = [];
 
-    for ($i = 0; $i < $total; $i++) {
-        $customer = CustomerData::from($rows[$i]);
-        $this->mailer->send($customer->email, 'Welcome', 'Thanks for joining.');
-        $customers[$i] = $customer;
+    foreach ($rows as $row) {
+        $products[] = ProductData::from($row);
     }
 
-    return $customers;
+    return $products;
 }
 
 // Good
 /**
+ * The FIX for {@see map()}: one pass, no loop — `::collect()` maps every row itself, and the
+ * element type is declared once on the receiving `#[DataCollectionOf(ProductData::class)]` slot.
+ *
  * @param  array<int, array<string, mixed>>  $rows
- * @return iterable<int, CustomerData>
  */
-public function importBatchCleanly(array $rows): iterable
+public function collectAll(array $rows): mixed
 {
-    $customers = CustomerData::collect($rows);
-
-    foreach ($customers as $customer) {
-        $this->mailer->send($customer->email, 'Welcome', 'Thanks for joining.');
-    }
-
-    return $customers;
+    return ProductData::collect($rows);
 }
 ```
 
@@ -543,15 +588,21 @@ public function __construct(
 
 // Good
 /**
- * RIGHTEOUS: a value object slot fed a value that arrives ready (a passed-through argument, not built
- * here). The mapping isn't done at the call site, so a cast isn't forced — the detector must NOT flag it.
+ * The FIX for {@see InboundOrderData}: the `simple → complex` mapping moves ONTO the property as a
+ * `#[WithCast(MoneyCast::class)]`, so every call site hands `::from()` the RAW cents (see
+ * {@see InboundControllers::castOrder()}) and the cast builds the `Money` in one place.
  */
-#[\JesseGall\CodeCommandments\Testing\Righteous(\JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualInputCast::class)]
-final class CleanInboundData extends \Spatie\LaravelData\Data
+final class CastInboundOrderData extends Data
 {
     public function __construct(
+        #[WithCast(MoneyCast::class)]
         public readonly Money $price,
     ) {}
+
+    public function priceLabel(): string
+    {
+        return $this->price->formatted();
+    }
 }
 ```
 
@@ -598,13 +649,26 @@ final class WirePanel extends Data
 }
 
 // Good
+/**
+ * The FIX for {@see RosterBoard}: the nested Data the wire reaches is itself stamped `#[TypeScript]`,
+ * so the transformer generates a real `CrewSeat` type instead of `undefined` for every element.
+ */
 #[TypeScript]
-final class EnumSlotRighteous extends Data
+final class CrewBoard extends Data
 {
+    /**
+     * @param list<CrewSeat> $crew
+     */
     public function __construct(
-        public readonly string $subject,
-        public readonly Priority $priority,
+        public readonly string $flight,
+        #[DataCollectionOf(CrewSeat::class)]
+        public readonly array $crew = [],
     ) {}
+
+    public function headcount(): int
+    {
+        return count($this->crew);
+    }
 }
 ```
 
@@ -614,19 +678,24 @@ final class EnumSlotRighteous extends Data
 
 ```php
 // Bad
-public function build(Customer $customer): CustomerData
+public function legacyPresent(Order $order): OrderData
 {
-    return new CustomerData(
-        id: $customer->id,
-        name: $customer->name,
-        email: $customer->email,
+    return new OrderData(
+        id: $order->id,
+        status: $order->status,
+        totalCents: $order->total_cents,
+        lines: [],
     );
 }
 
 // Good
-public function buildFrom(Customer $customer): CustomerData
+/**
+ * The FIX for {@see legacyPresent()}: the same order presented through the magic factory —
+ * `OrderData::from($order)` runs the casts, mappers and validation a raw `new` skips.
+ */
+public function present(Order $order): OrderData
 {
-    return CustomerData::from($customer);
+    return OrderData::from($order);
 }
 ```
 
@@ -669,15 +738,21 @@ class StockLevelData extends Data
 
 // Good
 /**
- * The same DTO sealed: a value type is a leaf, not a base to extend.
+ * The FIX for {@see OpenProfileData}: the same profile SEALED — `final`, with `readonly` promoted
+ * properties. A DTO is a leaf value, not a base to extend or mutate.
  */
-final class StockSnapshotData extends Data
+final class SealedProfileData extends Data
 {
     public function __construct(
-        public readonly string $sku,
-        public readonly int $available,
-        public readonly string $status,
+        public readonly string $displayName,
+        public readonly string $locale,
+        public readonly bool $marketingOptIn,
     ) {}
+
+    public function label(): string
+    {
+        return $this->displayName . ' (' . $this->locale . ')';
+    }
 }
 ```
 
@@ -693,20 +768,13 @@ public function position(): OptCoords|Optional
 }
 
 // Good
-final class LazyRelationRow extends Data
+/**
+ * The FIX: the null→`Optional` map lives in ONE named factory — `OptCoords::optionalOrMissing()`
+ * (the scaffolded `OptionalOrMissing` trait) — so no producer re-derives it with a ternary.
+ */
+public function requestedPosition(): OptCoords|Optional
 {
-    public function __construct(
-        public readonly string $label,
-        public readonly OptRange|Optional $range = new Optional(),
-    ) {}
-
-    public static function fromRow(object $row): self
-    {
-        return self::from([
-            'label' => $row->label,
-            'range' => $row->relationLoaded('range') ? $row->range : Optional::create(),
-        ]);
-    }
+    return OptCoords::optionalOrMissing($this->rawPosition);
 }
 ```
 
@@ -749,22 +817,33 @@ final class WireNode extends Data
 }
 
 // Good
+/**
+ * The FIX for {@see WireNode}: the genuinely-absent band is typed `Band|Optional = new Optional()`,
+ * not `?Band = null`. The wire now OMITS the key entirely when there is no band — which is what the
+ * frontend's `gauge.band?.` reads as "absent" — instead of shipping `"band": null`.
+ */
 #[TypeScript]
-final class WireStage extends Data
+final class WireDial extends Data
 {
-    #[Computed]
-    public StagePhase|null $phase {
-        get => $this->resolvePhase();
-    }
-
     public function __construct(
-        public readonly string $id,
-        public readonly bool $ready = false,
+        public readonly int $percent,
+        public readonly int $floor = 0,
+        public readonly int $ceiling = 100,
+        public readonly Band|Optional $band = new Optional(),
     ) {}
 
-    private function resolvePhase(): StagePhase|null
+    public function needle(): int
     {
-        return $this->ready ? null : StagePhase::Setup;
+        return max($this->floor, min($this->ceiling, $this->percent));
+    }
+
+    public function ramp(): string
+    {
+        if ($this->band instanceof Optional) {
+            return '#22c55e';
+        }
+
+        return $this->band === Band::Danger ? '#ef4444' : '#f59e0b';
     }
 }
 ```
@@ -775,27 +854,24 @@ A raw `new Optional` is constructed in a runtime expression where Spatie's built
 
 ```php
 // Bad
-public function position(): OptCoords|Optional
+public function latest(): OptTag|Optional
 {
-    return $this->rawPosition === null ? new Optional : OptCoords::from($this->rawPosition);
+    return $this->memo ?? new Optional;
 }
 
 // Good
-final class Placement extends Data
+/**
+ * The FIX: Spatie's own `Optional::create()` factory replaces the raw `new Optional` — a static
+ * call is legal here, so the factory is what belongs (only a parameter/property DEFAULT, where a
+ * call is illegal, keeps `new Optional`).
+ */
+public function lastKnown(): OptTag|Optional
 {
-    public function __construct(
-        public readonly string $label,
-        public readonly OptCoords|Optional $at = new Optional(),
-    ) {}
-
-    public function fallback(bool $absent): OptCoords|Optional
-    {
-        if ($absent) {
-            return Optional::create();
-        }
-
-        return OptCoords::from([]);
+    if ($this->memo === null) {
+        return Optional::create();
     }
+
+    return $this->memo;
 }
 ```
 

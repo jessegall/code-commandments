@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
@@ -35,6 +36,7 @@ final class ProductFinder
      * Resolve-or-throw: a scanned barcode must exist, so the absence is decided
      * once at the source and the return type tells the truth.
      */
+    #[Fixed(DeNulledFinder::class)]
     #[Righteous(DeNulledFinder::class)]
     public function requireByBarcode(string $barcode): Product
     {

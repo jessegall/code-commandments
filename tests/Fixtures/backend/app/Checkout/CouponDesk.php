@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
 use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -29,6 +30,16 @@ final class CouponDesk
     public function load(int $cartId): void
     {
         // store the cart snapshot
+        $this->snapshot = CartSnapshot::of($cartId);
+    }
+
+    /**
+     * The comment now carries what the code cannot: WHY the snapshot is taken once.
+     */
+    #[Fixed(RestatedComment::class)]
+    public function open(int $cartId): void
+    {
+        // the cart is frozen at checkout entry, so a coupon is weighed against the cart as it was then
         $this->snapshot = CartSnapshot::of($cartId);
     }
 

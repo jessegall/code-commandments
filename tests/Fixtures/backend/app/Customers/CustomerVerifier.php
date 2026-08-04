@@ -4,6 +4,7 @@ namespace Shop\Customers;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\MassUpdateAtCallSite;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
@@ -24,6 +25,7 @@ final class CustomerVerifier
         ]);
     }
 
+    #[Fixed(MassUpdateAtCallSite::class)]
     #[Righteous(MassUpdateAtCallSite::class)]
     public function verifyNamed(Customer $customer): void
     {

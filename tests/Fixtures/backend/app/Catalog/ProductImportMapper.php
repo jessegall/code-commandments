@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualHydrationLoop;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
 
@@ -35,10 +36,12 @@ final class ProductImportMapper
     }
 
     /**
-     * The righteous way: one pass, no loop — Spatie maps each row itself.
+     * The FIX for {@see map()}: one pass, no loop — `::collect()` maps every row itself, and the
+     * element type is declared once on the receiving `#[DataCollectionOf(ProductData::class)]` slot.
      *
      * @param  array<int, array<string, mixed>>  $rows
      */
+    #[Fixed(ManualHydrationLoop::class)]
     public function collectAll(array $rows): mixed
     {
         return ProductData::collect($rows);

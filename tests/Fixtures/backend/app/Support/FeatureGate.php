@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -37,6 +38,16 @@ final class FeatureGate
     public function factory(): callable
     {
         return fn (): FeatureGate => new FeatureGate($this->environment);
+    }
+
+    /**
+     * The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
+     * `fn () => $this->overrides` says everything the annotation did.
+     */
+    #[Fixed(RedundantArrowReturnType::class)]
+    public function overridesReader(): callable
+    {
+        return fn () => $this->overrides;
     }
 
     public function override(string $flag, bool $on): void

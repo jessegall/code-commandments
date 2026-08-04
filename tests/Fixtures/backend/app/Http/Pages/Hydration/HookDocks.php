@@ -3,7 +3,9 @@
 namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\HookMissingComputed;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\Computed;
 use Spatie\LaravelData\Data;
 
 /*
@@ -28,5 +30,26 @@ final class DockShell extends Data
     public function onSide(string $side): bool
     {
         return $this->side === $side;
+    }
+}
+
+/**
+ * The FIX for {@see DockShell}: the get-only hook is stamped `#[Computed]`, so Spatie treats `docks`
+ * as an OUTPUT-only value it derives after hydration — it is no longer expected in `::from()`.
+ */
+#[Fixed(HookMissingComputed::class)]
+final class ComputedDockShell extends Data
+{
+    #[Computed]
+    public array $docks { get => $this->dockSet->all(); }
+
+    public function __construct(
+        public readonly DockSet $dockSet,
+        public readonly string $side,
+    ) {}
+
+    public function facing(): string
+    {
+        return $this->side === 'port' ? 'starboard' : 'port';
     }
 }

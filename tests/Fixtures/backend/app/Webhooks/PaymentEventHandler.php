@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Sins\Backend\GenericException;
 use JesseGall\CodeCommandments\Sins\Backend\InlineThrow;
 use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -30,6 +31,24 @@ final class PaymentEventHandler
         $type = $event['type'];
 
         $this->record($type, $event['id'] ?? throw new \InvalidArgumentException('event id is required'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $event
+     */
+    #[Fixed(ArchaeologyComment::class)]
+    public function handleRefund(array $event): void
+    {
+        // a refund carries no id of its own, so the charge reference identifies the row
+        $this->record('refund', $this->reference($event));
+    }
+
+    /**
+     * @param  array<string, mixed>  $event
+     */
+    private function reference(array $event): string
+    {
+        return 'ref';
     }
 
     private function record(string $type, string $id): void {}

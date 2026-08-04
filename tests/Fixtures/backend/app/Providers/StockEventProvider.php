@@ -5,6 +5,7 @@ namespace Shop\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DeadEventWiring;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Events\PriceChanged;
@@ -17,6 +18,7 @@ use Shop\Events\StockReconciled;
  */
 class StockEventProvider extends ServiceProvider
 {
+    #[Fixed(DeadEventWiring::class)]
     #[Righteous(DeadEventWiring::class)]
     public function register(): void
     {

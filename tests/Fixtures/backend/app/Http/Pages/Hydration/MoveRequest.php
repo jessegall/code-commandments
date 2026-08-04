@@ -4,6 +4,7 @@ namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\PreferOptionalCreate;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Optional;
 
@@ -25,5 +26,15 @@ final class MoveRequest
     public function position(): OptCoords|Optional
     {
         return $this->rawPosition === null ? new Optional : OptCoords::from($this->rawPosition);
+    }
+
+    /**
+     * The FIX: the null→`Optional` map lives in ONE named factory — `OptCoords::optionalOrMissing()`
+     * (the scaffolded `OptionalOrMissing` trait) — so no producer re-derives it with a ternary.
+     */
+    #[Fixed(NullToOptionalMap::class)]
+    public function requestedPosition(): OptCoords|Optional
+    {
+        return OptCoords::optionalOrMissing($this->rawPosition);
     }
 }

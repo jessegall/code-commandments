@@ -4,9 +4,11 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\AllNullableData;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Optional;
 
 /**
  * A row from the legacy CSV importer — every field nullable, so a malformed row is
@@ -45,6 +47,33 @@ final class ImportRow extends Data
     public function lineTotal(): int
     {
         return $this->quantity * ($this->priceCents ?? 0);
+    }
+}
+
+/**
+ * The FIX for {@see LegacyImportRow}: every field retyped to the truth. The three the importer cannot
+ * work without are non-nullable and undefaulted, so `::from()` fails hard on a malformed row; the one
+ * that is GENUINELY absent-or-present is `string|Optional = new Optional()`, which the wire OMITS
+ * rather than shipping as `null`. No `?? 0` is needed anywhere downstream.
+ */
+#[Fixed(AllNullableData::class)]
+final class RetypedImportRow extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $quantity,
+        public readonly int $priceCents,
+        public readonly string|Optional $note = new Optional(),
+    ) {}
+
+    public function lineTotal(): int
+    {
+        return $this->quantity * $this->priceCents;
+    }
+
+    public function annotated(): string
+    {
+        return $this->note instanceof Optional ? $this->sku : $this->sku . ' — ' . $this->note;
     }
 }
 

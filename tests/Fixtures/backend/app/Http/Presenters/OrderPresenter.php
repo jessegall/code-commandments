@@ -5,12 +5,18 @@ namespace Shop\Http\Presenters;
 use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NewDataObject;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\OrderData;
 use Shop\Models\Order;
 
 final class OrderPresenter
 {
+    /**
+     * The FIX for {@see legacyPresent()}: the same order presented through the magic factory —
+     * `OrderData::from($order)` runs the casts, mappers and validation a raw `new` skips.
+     */
+    #[Fixed(NewDataObject::class)]
     public function present(Order $order): OrderData
     {
         return OrderData::from($order);

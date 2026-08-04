@@ -66,16 +66,27 @@ public function covers(string $date): bool
 
 // Good
 /**
- * Resolve-or-throw: the invariant ("focus() ran first") is asserted, not papered
- * over with a fake default for a state that can only be a bug.
+ * The FIX for {@see GradeSelector}: the invariant is made CERTAIN instead of masked — the batch is
+ * held non-nullable (a grading pass without one cannot be constructed), so the read is a plain
+ * `$this->batch->permits($sku)` with no `?->` and no fake `?? false` answering an impossible state.
  */
-public function coversOrFail(string $date): bool
+final class OpenGradeSelector
 {
-    if ($this->period === null) {
-        throw LedgerNotFocused::beforeCovers();
+    public function __construct(private readonly ActiveBatch $batch) {}
+
+    /**
+     * @param  list<string>  $skus
+     * @return list<string>
+     */
+    public function passing(array $skus): array
+    {
+        return array_values(array_filter($skus, fn (string $sku) => $this->batch->permits($sku)));
     }
 
-    return $this->period->includes($date);
+    public function accepts(string $sku): bool
+    {
+        return $this->batch->permits($sku);
+    }
 }
 ```
 
@@ -100,16 +111,21 @@ final class PackingSlip
 
 // Good
 /**
- * RIGHTEOUS: `$note` is a genuine optional — a shopper may leave delivery instructions or not, and its
- * reader ({@see DeliveryNotePrinter}) null-checks it before use. A guard exists in its flow, so the
- * `?string` is honest and the detector leaves it alone.
+ * The FIX for {@see Order}: `$shipTo` is typed `ShippingAddress` — NOT nullable. Every reader
+ * already assumed it, so the type now says so and construction fails hard on a real miss instead
+ * of carrying a null nobody ever guards.
  */
-final class DeliveryInstruction
+final class ConfirmedOrder
 {
     public function __construct(
-        public readonly ?string $note,
-        public readonly bool $signatureRequired,
+        public readonly ShippingAddress $shipTo,
+        public readonly string $reference,
     ) {}
+
+    public function routingLine(): string
+    {
+        return $this->reference . ' @ ' . $this->shipTo->postalCode();
+    }
 }
 ```
 
@@ -120,129 +136,69 @@ An arrow function whose return type only repeats what its one expression provabl
 ```php
 // Bad
 /**
- * Aggregates parcel weights into a histogram. accumulateFrom is the same loop as
- * the pricing and shipping scorers — same shape, different names and constant.
+ * Decides whether a named feature is on — the default arm answers "false" for an
+ * unknown flag, masking a typo as a disabled feature.
  */
-final class WeightAggregator
+final class FeatureGate
 {
-    /**
-     * @var list<int>
-     */
-    private array $entries = [];
+    /** @var array<string, bool> */
+    private array $overrides = [];
 
-    private string $unit = 'g';
+    public function __construct(private readonly string $environment) {}
 
     /**
-     * The fluent form of the same mistake: chainable, still an order.
+     * No argument, so it can only be describing the gate — which is what a question is for.
      */
-    public function clears(): static
+    public function tracks(): bool
     {
-        $this->entries = [];
-
-        return $this;
+        return $this->environment !== 'testing';
     }
 
     /**
-     * A literal proves its own type.
+     * A construction spells the class it builds; the annotation repeats it.
      */
-    public function unit(): callable
+    public function factory(): callable
     {
-        return fn (): string => 'g';
-    }
-
-    public function push(int $grams): void
-    {
-        $this->entries[] = $grams;
+        return fn (): FeatureGate => new FeatureGate($this->environment);
     }
 
     /**
-     * @return array<string, int>
+     * The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
+     * `fn () => $this->overrides` says everything the annotation did.
      */
-    public function histogram(int $bucketSize): array
+    public function overridesReader(): callable
     {
-        $buckets = [];
-
-        // loop over the entries
-        foreach ($this->entries as $grams) {
-            $key = $this->unit . (intdiv($grams, $bucketSize) * $bucketSize);
-            $buckets[$key] = ($buckets[$key] ?? 0) + 1;
-        }
-
-        return $buckets;
+        return fn () => $this->overrides;
     }
 
-    public function accumulateFrom(int $start): int
+    public function override(string $flag, bool $on): void
     {
-        $total = $start;
-
-        foreach ($this->entries as $row) {
-            if ($row > 0) {
-                $total += $row * 5;
-            }
-        }
-
-        return $total;
+        $this->overrides[$flag] = $on;
     }
 
-    /**
-     * The duplicated scorers collapsed into one parameterised pass — the per-entry
-     * weight is an argument, so there is no rhyming twin to extract.
-     */
-    public function scoreFrom(int $start, int $weight): int
+    public function isProduction(): bool
     {
-        return array_reduce(
-            array_filter($this->entries, static fn (int $row): bool => $row > 0),
-            static fn (int $total, int $row): int => $total + $row * $weight,
-            $start,
-        );
+        return $this->environment === 'production';
+    }
+
+    public function enabled(string $flag): bool
+    {
+        return match ($flag) {
+            'new-checkout' => true,
+            'legacy-import' => false,
+            default => false,
+        };
     }
 }
 
 // Good
 /**
- * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
- * count stand at the head of the class, so one read of the top says everything this object holds.
+ * The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
+ * `fn () => $this->overrides` says everything the annotation did.
  */
-final class CheckoutSession
+public function overridesReader(): callable
 {
-    private const int TTL = 1800;
-
-    public static int $started = 0;
-
-    public string $currency = 'EUR';
-
-    private int $itemCount = 0;
-
-    public bool $isEmpty { get => $this->itemCount === 0; }
-
-    /**
-     * @return Concurrent<self>
-     */
-    public static function for(int $customerId): Concurrent
-    {
-        return new Concurrent(
-            key: "checkout:{$customerId}",
-            default: new self,
-            ttl: self::TTL,
-        );
-    }
-
-    /**
-     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
-     * nothing here can prove. Both tell the reader something the code does not.
-     */
-    public function readers(): array
-    {
-        return [
-            fn (): ?int => $this->itemCount,
-            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
-        ];
-    }
-
-    public function addItem(): void
-    {
-        $this->itemCount++;
-    }
+    return fn () => $this->overrides;
 }
 ```
 
@@ -252,32 +208,26 @@ Scratch state on `$this` — a method that saves one of its own fields to a loca
 
 ```php
 // Bad
-/**
- * @param  list<string>  $routes
- * @return list<string>
- */
-public function nest(string $segment, array $routes): array
+public function revalue(string $basis): void
 {
-    $parent = $this->prefix;
-    $this->prefix = ltrim($parent . '/' . $segment, '/');
+    $previous = $this->basis;
+    $this->basis = $basis;
 
-    try {
-        return array_map(fn (string $route): string => $this->prefix . '#' . $route, $routes);
-    } finally {
-        $this->prefix = $parent;
-    }
+    $this->trail[] = sprintf('priced on %s', $this->basis);
+
+    $this->basis = $previous;
 }
 
 // Good
 /**
- * @param  list<string>  $routes
- * @return list<string>
+ * The FIX: the basis is this call's input, so it stays a PARAMETER and is read from there —
+ * `$this->basis` is never written, and the save/restore pair disappears with it.
  */
-public function nestUnder(string $prefix, string $segment, array $routes): array
+public function revalueOn(string $basis, int $lots): void
 {
-    $nested = ltrim($prefix . '/' . $segment, '/');
-
-    return array_map(fn (string $route): string => $nested . '#' . $route, $routes);
+    for ($lot = 0; $lot < $lots; $lot++) {
+        $this->trail[] = sprintf('lot %d priced on %s', $lot, $basis);
+    }
 }
 ```
 
@@ -287,20 +237,37 @@ A required non-nullable `string` slot handed `''` — the type promises a value 
 
 ```php
 // Bad
-public function draft(string $slug): WorkflowRowData
+public function refuse(string $reason, bool $retryable): AiReplyData
 {
-    $name = $slug === '' ? self::UNTITLED : $slug;
+    $this->refusals[] = $reason;
 
-    return new WorkflowRowData($slug, $name, null, false, '');
+    if ($retryable) {
+        return new AiReplyData(message: '', success: false, error: 'retry_later');
+    }
+
+    return new AiReplyData(message: '', success: false, error: $reason);
 }
 
 // Good
 /**
- * Righteous: the timestamp is real, so the envelope's promise holds.
+ * The FIX for {@see ActivateWorkflow}: the required `updatedAt` slot is handed the REAL value — the
+ * command holds the clock that owns the timestamp and reads it, instead of filling the promise with
+ * `''` to satisfy the signature.
  */
-public function publish(string $slug, string $name, string $stamp): WorkflowRowData
+final class StampedActivateWorkflow
 {
-    return new WorkflowRowData($slug, $name, null, true, $stamp);
+    public function __construct(private readonly WorkflowClock $clock) {}
+
+    public function activate(string $slug): WorkflowRowData
+    {
+        return new WorkflowRowData(
+            slug: $slug,
+            name: $slug,
+            trigger: null,
+            active: true,
+            updatedAt: $this->clock->stamp(),
+        );
+    }
 }
 ```
 
@@ -344,35 +311,24 @@ final class LabelPrintDefaults
 
 // Good
 /**
- * The righteous twin: every hook here EARNS its syntax — derived from `$this`, or a get/set pair.
+ * The FIX for {@see TileAnimation}: the same tile with both hooks made STORED properties — the
+ * constant body became a property default, the constructed one is assigned ONCE in the constructor.
+ * A plain property satisfies the interface's `{ get; }` just as well as a hook did.
  */
-final class GlowingTile implements AnimatedTile
+final class StoredTileAnimation implements AnimatedTile
 {
-    private string $easingMode = 'in';
+    public ?string $enterEffect = null;
 
-    /**
-     * Derived from own state — a real computed property.
-     */
-    public ?string $enterEffect { get => $this->intensity > 5 ? 'flash' : 'fade'; }
+    public ?string $leaveEffect;
 
-    /**
-     * Delegates to own behaviour — still reads the instance.
-     */
-    public ?string $leaveEffect { get => $this->resolveLeave(); }
-
-    /**
-     * A get/set pair is judged as a unit — the setter earns the hook syntax.
-     */
-    public string $easing {
-        get => 'ease-' . $this->easingMode;
-        set => strtolower($value);
+    public function __construct(private readonly string $tileId)
+    {
+        $this->leaveEffect = implode('+', ['fade', 'morph']);
     }
 
-    public function __construct(private readonly int $intensity) {}
-
-    private function resolveLeave(): ?string
+    public function tileId(): string
     {
-        return $this->intensity > 0 ? 'shrink' : null;
+        return $this->tileId;
     }
 }
 ```

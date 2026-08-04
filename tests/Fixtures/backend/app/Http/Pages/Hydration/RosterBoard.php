@@ -3,6 +3,7 @@
 namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NestedTypeMissingTypeScript;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Data;
@@ -47,5 +48,38 @@ final class Seat extends Data
         public readonly string $row,
         public readonly int $number,
         public readonly bool $taken = false,
+    ) {}
+}
+
+/**
+ * The FIX for {@see RosterBoard}: the nested Data the wire reaches is itself stamped `#[TypeScript]`,
+ * so the transformer generates a real `CrewSeat` type instead of `undefined` for every element.
+ */
+#[Fixed(NestedTypeMissingTypeScript::class)]
+#[TypeScript]
+final class CrewBoard extends Data
+{
+    /**
+     * @param list<CrewSeat> $crew
+     */
+    public function __construct(
+        public readonly string $flight,
+        #[DataCollectionOf(CrewSeat::class)]
+        public readonly array $crew = [],
+    ) {}
+
+    public function headcount(): int
+    {
+        return count($this->crew);
+    }
+}
+
+#[TypeScript]
+final class CrewSeat extends Data
+{
+    public function __construct(
+        public readonly string $deck,
+        public readonly int $position,
+        public readonly bool $assigned = false,
     ) {}
 }

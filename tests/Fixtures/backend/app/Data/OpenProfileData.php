@@ -4,6 +4,7 @@ namespace Shop\Data;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 
@@ -37,5 +38,24 @@ class OpenProfileData extends Data
     public function canEmail(): bool
     {
         return $this->marketingOptIn;
+    }
+}
+
+/**
+ * The FIX for {@see OpenProfileData}: the same profile SEALED — `final`, with `readonly` promoted
+ * properties. A DTO is a leaf value, not a base to extend or mutate.
+ */
+#[Fixed(NonFinalData::class)]
+final class SealedProfileData extends Data
+{
+    public function __construct(
+        public readonly string $displayName,
+        public readonly string $locale,
+        public readonly bool $marketingOptIn,
+    ) {}
+
+    public function label(): string
+    {
+        return $this->displayName . ' (' . $this->locale . ')';
     }
 }

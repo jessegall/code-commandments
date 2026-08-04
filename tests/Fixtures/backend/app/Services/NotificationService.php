@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
 
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Support\Facades\Mail;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -25,6 +26,7 @@ final class NotificationService
         });
     }
 
+    #[Fixed(FacadeCall::class)]
     #[Righteous(FacadeCall::class)]
     public function notifyClean(string $email, string $template): void
     {

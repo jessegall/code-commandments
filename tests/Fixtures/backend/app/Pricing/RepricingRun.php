@@ -4,6 +4,7 @@ namespace Shop\Pricing;
 
 use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -29,5 +30,17 @@ final class RepricingRun
         $this->trail[] = sprintf('priced on %s', $this->basis);
 
         $this->basis = $previous;
+    }
+
+    /**
+     * The FIX: the basis is this call's input, so it stays a PARAMETER and is read from there —
+     * `$this->basis` is never written, and the save/restore pair disappears with it.
+     */
+    #[Fixed(ScratchStateRestore::class)]
+    public function revalueOn(string $basis, int $lots): void
+    {
+        for ($lot = 0; $lot < $lots; $lot++) {
+            $this->trail[] = sprintf('lot %d priced on %s', $lot, $basis);
+        }
     }
 }

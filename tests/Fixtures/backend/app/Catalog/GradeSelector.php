@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\MaskedInvariant;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -41,6 +42,31 @@ final class GradeSelector
     public function accepts(string $sku): bool
     {
         return $this->batch?->permits($sku) ?? false;
+    }
+}
+
+/**
+ * The FIX for {@see GradeSelector}: the invariant is made CERTAIN instead of masked — the batch is
+ * held non-nullable (a grading pass without one cannot be constructed), so the read is a plain
+ * `$this->batch->permits($sku)` with no `?->` and no fake `?? false` answering an impossible state.
+ */
+#[Fixed(MaskedInvariant::class)]
+final class OpenGradeSelector
+{
+    public function __construct(private readonly ActiveBatch $batch) {}
+
+    /**
+     * @param  list<string>  $skus
+     * @return list<string>
+     */
+    public function passing(array $skus): array
+    {
+        return array_values(array_filter($skus, fn (string $sku) => $this->batch->permits($sku)));
+    }
+
+    public function accepts(string $sku): bool
+    {
+        return $this->batch->permits($sku);
     }
 }
 

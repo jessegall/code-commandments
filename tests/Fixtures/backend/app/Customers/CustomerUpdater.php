@@ -5,6 +5,7 @@ namespace Shop\Customers;
 use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ModelMutationAtCallSite;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
@@ -24,6 +25,7 @@ final class CustomerUpdater
         $customer->save();
     }
 
+    #[Fixed(ModelMutationAtCallSite::class)]
     #[Righteous(ModelMutationAtCallSite::class)]
     public function suspendNamed(Customer $customer, string $reason): void
     {

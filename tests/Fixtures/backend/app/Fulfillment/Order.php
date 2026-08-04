@@ -3,6 +3,7 @@
 namespace Shop\Fulfillment;
 
 use JesseGall\CodeCommandments\Sins\Backend\PhantomNullable;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -21,5 +22,24 @@ final class Order
     public function stage(PickList $pickList): void
     {
         $pickList->deliverTo = $this->shipTo;
+    }
+}
+
+/**
+ * The FIX for {@see Order}: `$shipTo` is typed `ShippingAddress` — NOT nullable. Every reader
+ * already assumed it, so the type now says so and construction fails hard on a real miss instead
+ * of carrying a null nobody ever guards.
+ */
+#[Fixed(PhantomNullable::class)]
+final class ConfirmedOrder
+{
+    public function __construct(
+        public readonly ShippingAddress $shipTo,
+        public readonly string $reference,
+    ) {}
+
+    public function routingLine(): string
+    {
+        return $this->reference . ' @ ' . $this->shipTo->postalCode();
     }
 }

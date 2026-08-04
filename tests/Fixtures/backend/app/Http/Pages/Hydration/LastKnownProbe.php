@@ -4,6 +4,7 @@ namespace Shop\Http\Pages\Hydration;
 
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\PreferOptionalCreate;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Optional;
 
@@ -35,5 +36,20 @@ final class LastKnownProbe
     public function latest(): OptTag|Optional
     {
         return $this->memo ?? new Optional;
+    }
+
+    /**
+     * The FIX: Spatie's own `Optional::create()` factory replaces the raw `new Optional` — a static
+     * call is legal here, so the factory is what belongs (only a parameter/property DEFAULT, where a
+     * call is illegal, keeps `new Optional`).
+     */
+    #[Fixed(PreferOptionalCreate::class)]
+    public function lastKnown(): OptTag|Optional
+    {
+        if ($this->memo === null) {
+            return Optional::create();
+        }
+
+        return $this->memo;
     }
 }

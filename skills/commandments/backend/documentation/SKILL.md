@@ -50,32 +50,24 @@ History/archaeology comments ("formerly / used to be / refactored / no longer an
 ```php
 // Bad
 /**
- * @param  array<string, mixed>  $filters
- * @return array<int, mixed>
+ * @param  array<string, mixed>  $event
  */
-public function search(array $filters): array
+public function handle(array $event): void
 {
-    $perPage = config('shop.catalog.per_page');
+    // formerly lived inline in the StripeController; was extracted here
+    $type = $event['type'];
 
-    // formerly filtered in PHP; refactored into the query builder in v3
-    $term = $filters['q'];
-    $sort = $filters['sort'];
-
-    return $this->run($term, $sort, $perPage);
+    $this->record($type, $event['id'] ?? throw new \InvalidArgumentException('event id is required'));
 }
 
 // Good
 /**
- * A comment that describes the present code and its runtime, in present tense.
- *
- * @return array<int, mixed>
+ * @param  array<string, mixed>  $event
  */
-public function searchSorted(string $term): array
+public function handleRefund(array $event): void
 {
-    // the cached rank may no longer exist; the flag previously bound is used to scope the column
-    $sort = $term === '' ? 'rank' : 'relevance';
-
-    return $this->run($term, $sort, $this->settings->perPage);
+    // a refund carries no id of its own, so the charge reference identifies the row
+    $this->record('refund', $this->reference($event));
 }
 ```
 
@@ -127,13 +119,15 @@ final class LegacyOrderImporter
 
 // Good
 /**
- * Imports legacy orders from the old CSV export.
+ * Renders the monthly sales spreadsheet finance imports by hand.
  */
-final class TidyOrderImporter
+final class MonthlySalesReport
 {
-    public function import(string $email): void
+    public function __construct(private readonly SalesGrouping $grouping) {}
+
+    public function render(int $month): string
     {
-        Customer::query()->where('email', $email)->firstOrFail();
+        return $this->grouping->for($month) . "-report.xlsx";
     }
 }
 ```
@@ -145,21 +139,22 @@ Docblock that only restates the typed signature (`@param Type $x`, no descriptio
 ```php
 // Bad
 /**
- * @param  int  $points
- * @param  string  $name
+ * @param  int  $sequence
+ * @return  string
  */
-public function award(int $points, string $name): string
+public function format(int $sequence): string
 {
-    return $name . ':' . $points;
+    return sprintf('%s-%06d', $this->prefix, $sequence);
 }
 
 // Good
 /**
- * Renders the customer-facing tier label, e.g. "gold:500".
+ * Renders the number finance quotes on a remittance — the sequence is zero-padded to six digits
+ * so invoices sort lexically in the ledger export.
  */
-public function awardLabel(int $points, string $name): string
+public function formatForRemittance(int $sequence): string
 {
-    return $name . ':' . $points;
+    return sprintf('%s-%06d', $this->prefix, $sequence);
 }
 ```
 
@@ -170,62 +165,23 @@ A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not
 ```php
 // Bad
 /**
- * Moderates product reviews. The scoring model lives in {@see \Shop\Trust\GhostScorer}, which no longer
- * exists — the documentation was never repointed.
+ * Picks the cheapest carrier. Rates come from {@see \Shop\Shipping\RemovedRateBook} — deleted, so the
+ * link is stale.
  */
-final class ReviewDoc
+public function cheapest(string $zone, float $weight): string
 {
-    public function approve(int $stars, bool $verified): bool
-    {
-        return $verified && $stars >= 3;
-    }
-
-    public function flagged(string $body): bool
-    {
-        return str_contains($body, 'spam');
-    }
-
-    public function digest(int $count): string
-    {
-        return $count === 1 ? '1 review' : "{$count} reviews";
-    }
+    return $weight > 10.0 ? "freight:{$zone}" : "parcel:{$zone}";
 }
 
 // Good
 /**
- * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
- * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
- * dangles, so it must NOT flag.
+ * Picks the cheapest carrier for a heavy parcel. Rates come from
+ * {@see \Shop\Shipping\ShippingRateRegistry} — the class the rate book became, so the reference
+ * resolves.
  */
-final class HonestDoc
+public function cheapestFreight(string $zone): string
 {
-    /**
-     * A question about its own state — the mood a bool is supposed to wear.
-     */
-    public function isTallied(): bool
-    {
-        return true;
-    }
-
-    /**
-     * A relational predicate: it takes what it compares against, so the third person is correct.
-     *
-     * @param string $needle The word to look for.
-     */
-    public function contains(string $needle): bool
-    {
-        return $needle !== '';
-    }
-
-    /**
-     * The count, floored at zero.
-     *
-     * @param int $items How many were seen.
-     */
-    public function tally(int $items): int
-    {
-        return max(0, $items);
-    }
+    return "freight:{$zone}";
 }
 ```
 
@@ -258,38 +214,20 @@ final class LogLine
 
 // Good
 /**
- * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
- * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
- * dangles, so it must NOT flag.
+ * A node in a test log tree — it holds its own children, so a failure is knowledge it could answer.
  */
-final class HonestDoc
+final class LogEntry
 {
-    /**
-     * A question about its own state — the mood a bool is supposed to wear.
-     */
-    public function isTallied(): bool
-    {
-        return true;
-    }
+    public string $level = 'info';
 
     /**
-     * A relational predicate: it takes what it compares against, so the third person is correct.
-     *
-     * @param string $needle The word to look for.
+     * @var list<LogEntry>
      */
-    public function contains(string $needle): bool
-    {
-        return $needle !== '';
-    }
+    public array $children = [];
 
-    /**
-     * The count, floored at zero.
-     *
-     * @param int $items How many were seen.
-     */
-    public function tally(int $items): int
+    public function isError(): bool
     {
-        return max(0, $items);
+        return $this->level === 'error';
     }
 }
 ```
@@ -307,10 +245,14 @@ public function get(string $code): SkuEntry
 }
 
 // Good
-public function has(string $code): bool
+/**
+ * The affirmative form of the same note: it states what the registry DOES, so a reader never has
+ * to be talked out of a suspicion the code never raised.
+ */
+public function entry(string $code): SkuEntry
 {
-    // a random probe key still reads cleanly through the same path
-    return $code !== '';
+    // an unknown code answers with an empty entry, so a caller never tests for absence
+    return new SkuEntry();
 }
 ```
 
@@ -327,12 +269,13 @@ public function load(int $cartId): void
 }
 
 // Good
-public function apply(string $coupon): void
+/**
+ * The comment now carries what the code cannot: WHY the snapshot is taken once.
+ */
+public function open(int $cartId): void
 {
-    // a coupon may be presented twice; the desk keeps both, and the till reconciles them later
-    if ($this->honours($coupon)) {
-        $this->applied[] = $coupon;
-    }
+    // the cart is frozen at checkout entry, so a coupon is weighed against the cart as it was then
+    $this->snapshot = CartSnapshot::of($cartId);
 }
 ```
 
@@ -342,64 +285,48 @@ Two or more docblocks stacked on one declaration — PHP reads only the last, so
 
 ```php
 // Bad
-final class Itinerary
+/**
+ * A plain on-disk report file — NOT an Eloquent model, even though it has a
+ * save(). Mutating-then-saving one is just building a file, not the model-at-the-
+ * call-site sin.
+ */
+final class ReportFile
 {
-    /**
-     * How each leg is carried, in order.
-     */
-    /**
-     * @var list<string>
-     */
-    public array $legModes = [];
+    public string $name = '';
 
-    public string $reference = '';
+    public string $contents = '';
 
-    public static int $planned = 0;
+    private const string EXTENSION = '.csv';
 
     /**
-     * The relational twin `covers($leg)` would be fine; with nothing to compare, this is a question.
+     * Writes the report where the export job expects it.
      */
-    public function covers(): bool
+    /**
+     * The second block PHP never hands to a reader.
+     */
+    public function save(): void
     {
-        return $this->legModes !== [];
+        // write to disk
+    }
+
+    /**
+     * Writes the report where the export job expects it — the second block folded in, so the one
+     * block PHP hands a reader says everything both used to.
+     */
+    public function archive(): void
+    {
+        $this->save();
     }
 }
 
 // Good
 /**
- * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
- * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
- * dangles, so it must NOT flag.
+ * Writes the report where the export job expects it — the second block folded in, so the one
+ * block PHP hands a reader says everything both used to.
  */
-final class HonestDoc
+public function archive(): void
 {
-    /**
-     * A question about its own state — the mood a bool is supposed to wear.
-     */
-    public function isTallied(): bool
-    {
-        return true;
-    }
-
-    /**
-     * A relational predicate: it takes what it compares against, so the third person is correct.
-     *
-     * @param string $needle The word to look for.
-     */
-    public function contains(string $needle): bool
-    {
-        return $needle !== '';
-    }
-
-    /**
-     * The count, floored at zero.
-     *
-     * @param int $items How many were seen.
-     */
-    public function tally(int $items): int
-    {
-        return max(0, $items);
-    }
+    $this->save();
 }
 ```
 

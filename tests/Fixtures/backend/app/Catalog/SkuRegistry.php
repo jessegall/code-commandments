@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
 use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -39,6 +40,17 @@ final class SkuRegistry
         return $this->has($item->code)
             ? $this->get($item->code)->reservedSkus
             : [];
+    }
+
+    /**
+     * The affirmative form of the same note: it states what the registry DOES, so a reader never has
+     * to be talked out of a suspicion the code never raised.
+     */
+    #[Fixed(NegativeSpaceComment::class)]
+    public function entry(string $code): SkuEntry
+    {
+        // an unknown code answers with an empty entry, so a caller never tests for absence
+        return new SkuEntry();
     }
 
     #[Sinful(NegativeSpaceComment::class)]

@@ -4,6 +4,7 @@ namespace Shop\Domain;
 
 use JesseGall\CodeCommandments\Sins\Backend\UselessPropertyHook;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -32,6 +33,29 @@ final class TileAnimation implements AnimatedTile
     }
 
     public function __construct(private readonly string $tileId) {}
+}
+
+/**
+ * The FIX for {@see TileAnimation}: the same tile with both hooks made STORED properties — the
+ * constant body became a property default, the constructed one is assigned ONCE in the constructor.
+ * A plain property satisfies the interface's `{ get; }` just as well as a hook did.
+ */
+#[Fixed(UselessPropertyHook::class)]
+final class StoredTileAnimation implements AnimatedTile
+{
+    public ?string $enterEffect = null;
+
+    public ?string $leaveEffect;
+
+    public function __construct(private readonly string $tileId)
+    {
+        $this->leaveEffect = implode('+', ['fade', 'morph']);
+    }
+
+    public function tileId(): string
+    {
+        return $this->tileId;
+    }
 }
 
 /**

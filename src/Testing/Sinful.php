@@ -10,7 +10,7 @@ use Attribute;
  * Marks fixture declarations as containing sins. Repeatable. Parameters: detector
  * (skill slug or Detector::class) and optional line number. Read off AST by SinMarkers.
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION | Attribute::IS_REPEATABLE)]
 final class Sinful
 {
     public function __construct(

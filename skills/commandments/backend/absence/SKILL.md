@@ -110,14 +110,11 @@ public function lines(): array
 
 // Good
 /**
- * @return array{number: string, coupon: string}
+ * @return array{key: string, label?: string, icon?: string}
  */
-public function summary(): array
+public function toArray(): array
 {
-    return [
-        'number' => $this->number,
-        'coupon' => $this->coupon ?? 'none',
-    ];
+    return Payload::of(key: $this->key, label: $this->label, icon: $this->icon);
 }
 ```
 

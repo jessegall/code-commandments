@@ -8,10 +8,13 @@ use JesseGall\CodeCommandments\Sins\Backend\GenericException;
 use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
 
 use Illuminate\Support\Facades\Log;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class PaymentProcessor
 {
+    public function __construct(private readonly PaymentGatewayRegistry $gateways) {}
+
     // Righteous twin (ContainerReach): a class resolving ITSELF from a static factory
     // is the construction seam that gives a static entry point constructor DI — not a
     // dependency reach.
@@ -42,5 +45,15 @@ final class PaymentProcessor
     {
         $gateway = resolve(PaymentGatewayRegistry::class)->get('default');
         $gateway->capture($amountCents);
+    }
+
+    /**
+     * The registry is a declared constructor parameter, so the class states what it needs and the
+     * container hands it over — nothing reaches back into the container from the body.
+     */
+    #[Fixed(ContainerReach::class)]
+    public function captureAuthorised(int $amountCents): void
+    {
+        $this->gateways->get('default')->capture($amountCents);
     }
 }

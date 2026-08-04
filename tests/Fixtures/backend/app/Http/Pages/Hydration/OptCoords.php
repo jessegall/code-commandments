@@ -9,6 +9,8 @@ use Spatie\LaravelData\Data;
  */
 final class OptCoords extends Data
 {
+    use OptionalOrMissing;
+
     public function __construct(
         public readonly int $x = 0,
         public readonly int $y = 0,
