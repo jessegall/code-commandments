@@ -111,28 +111,23 @@ two namespaces that reference each other — neither can be read, tested or move
 ```php
 // Bad
 /**
- * Shipping reaches for this enum all over; this is the ONE place the enum reaches back, and it
- * welds the two namespaces into a single unit — neither can now be lifted out alone.
+ * Claims reads the policy from two places; this is the single arrow pointing back, and it is
+ * what stops the warranty terms from being read, tested, or reused without the claims desk.
  */
-public function rateCents(int $weightGrams): int
+public function firstClaim(): Claim
 {
-    // An enum case can never be built by the container, so resolving the
-    // rate registry through app() is the only option here.
-    return app(ShippingRateRegistry::class)->for($this)->quote($weightGrams);
+    return new Claim($this->months);
 }
 
 // Good
 /**
- * Nudges a customer before their cover lapses. It reads the warranty terms freely — and the
- * warranty knows nothing of reminders, so the arrow points ONE way and either side can still be
- * lifted out on its own. A dependency is not a cycle.
+ * The FIX: the arrow back into Claims is gone. The policy states its side of the relationship as a
+ * contract it OWNS (`CoverageClaim`), the claims desk implements it, and Warranty can now be read,
+ * tested and lifted out with nothing from the desk coming along.
  */
-final class RenewalReminder
+public function coveredMonthsOf(CoverageClaim $claim): int
 {
-    public function dueInDays(WarrantyPolicy $policy): int
-    {
-        return $policy->months * 30 - 14;
-    }
+    return min($claim->claimedMonths(), $this->months);
 }
 ```
 
@@ -143,30 +138,24 @@ a declared layer references a layer it may not use (the arrow points back up)
 ```php
 // Bad
 /**
- * Reaching two layers up for a page's heading. The toolbar is only "shared" until the first
- * page it knows by name — after this it can never appear on any other one.
+ * The arrow pointing back up: Elements is the bottom of the stack, yet this one hands out a
+ * Panel — the thing Shared assembles FROM badges. Elements can no longer be read, reused or
+ * moved without Shared coming along.
  */
-public function caption(): string
+public function inPanel(): Panel
 {
-    return Dashboard::heading();
+    return new Panel($this->label);
 }
 
 // Good
 /**
- * A panel, assembled from the UI primitives.
+ * The FIX: the arrow inverted. The badge hands out only what it owns — a token from the layer
+ * BELOW it — and Shared assembles the panel from that. Elements names nothing above itself, so it
+ * reads, tests and moves on its own again.
  */
-class Panel
+public function accent(): Accent
 {
-    public function __construct(public readonly string $title) {}
-
-    /**
-     * The arrow the stack declares: Shared reaches DOWN into the tokens, which is exactly what
-     * `mayUse` permits. Nothing down there learns that panels exist.
-     */
-    public function accent(): Accent
-    {
-        return new Accent('primary');
-    }
+    return new Accent($this->label);
 }
 ```
 

@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\ParamResolvedFromParam;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -28,6 +29,7 @@ final class VariantPricer
      * Demands the resolved variant — the caller resolves it once by sku and owns
      * the "not found" failure, so this only prices what it is handed.
      */
+    #[Fixed(ParamResolvedFromParam::class)]
     #[Righteous(ParamResolvedFromParam::class)]
     public function priceForVariant(Variant $variant): int
     {

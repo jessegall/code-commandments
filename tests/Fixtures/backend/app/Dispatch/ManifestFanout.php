@@ -3,6 +3,7 @@
 namespace Shop\Dispatch;
 
 use JesseGall\CodeCommandments\Sins\Backend\CoalescedLoopSubject;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -32,6 +33,7 @@ final class ManifestFanout
     /**
      * @param  array<string, array<int, string>>  $manifest
      */
+    #[Fixed(CoalescedLoopSubject::class)]
     #[Righteous(CoalescedLoopSubject::class)]
     public function fanOutGuarded(string $carrier, array $manifest): void
     {

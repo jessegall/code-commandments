@@ -4,6 +4,7 @@ namespace Shop\Payments;
 
 use JesseGall\CodeCommandments\Sins\Backend\StringMatchMirrorsEnum;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Enums\PaymentMethod;
@@ -25,6 +26,7 @@ final class GatewayRouter
         };
     }
 
+    #[Fixed(StringMatchMirrorsEnum::class)]
     #[Righteous(StringMatchMirrorsEnum::class)]
     public function endpointClean(PaymentMethod $method): string
     {

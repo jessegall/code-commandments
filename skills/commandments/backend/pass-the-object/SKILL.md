@@ -75,25 +75,24 @@ a bool-only chooser whose callers all compute the flag off the same object (take
 ```php
 // Bad
 /**
- * The job decides this, but the job never gets here — only its answer does, re-derived by each
- * caller. Take the job and ask it.
+ * Told, not asked: the editor is what this is ABOUT, yet the signature names only the answer.
+ * Every caller has to remember which of the editor's modes count — and the one that forgets
+ * the panel leaves the corners tucked in mid-mode.
  */
-public function forDraft(bool $draft): int
+public static function of(bool $tucked): string
 {
-    return match ($draft) {
-        true => 150,
-        false => 300,
-    };
+    return $tucked ? 'tight' : 'wide';
 }
 
 // Good
 /**
- * The chooser that ASKS instead of being told. The rule about corners lives here, once, with
- * the object it is about — so no caller can hold a half-remembered copy of it.
+ * The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
+ * itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
+ * half-remembered copy of it, and none can forget the panel.
  */
-public function cornerInset(): string
+public static function for(KioskEditor $editor): string
 {
-    return $this->inZenMode() || $this->hasPanelOpen() ? 'tight' : 'wide';
+    return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
 }
 ```
 

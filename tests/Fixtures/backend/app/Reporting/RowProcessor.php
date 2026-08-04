@@ -4,6 +4,7 @@ namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\LoopInvertedGuard;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -41,6 +42,7 @@ final class GuardedRowProcessor
     /**
      * @param  array<int, object>  $rows
      */
+    #[Fixed(LoopInvertedGuard::class)]
     #[Righteous(LoopInvertedGuard::class)]
     public function process(array $rows): void
     {

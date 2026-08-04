@@ -76,48 +76,22 @@ enum ShippingMethod: string
 
 // Good
 /**
- * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
- * count stand at the head of the class, so one read of the top says everything this object holds.
+ * The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
+ * enum is the whole inventory and the behaviour sits below it.
  */
-final class CheckoutSession
+enum CollectionMethod: string
 {
-    private const int TTL = 1800;
+    case Standard = 'standard';
+    case Express = 'express';
+    case Pickup = 'pickup';
 
-    public static int $started = 0;
-
-    public string $currency = 'EUR';
-
-    private int $itemCount = 0;
-
-    public bool $isEmpty { get => $this->itemCount === 0; }
-
-    /**
-     * @return Concurrent<self>
-     */
-    public static function for(int $customerId): Concurrent
+    public function surchargeCents(): int
     {
-        return new Concurrent(
-            key: "checkout:{$customerId}",
-            default: new self,
-            ttl: self::TTL,
-        );
-    }
-
-    /**
-     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
-     * nothing here can prove. Both tell the reader something the code does not.
-     */
-    public function readers(): array
-    {
-        return [
-            fn (): ?int => $this->itemCount,
-            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
-        ];
-    }
-
-    public function addItem(): void
-    {
-        $this->itemCount++;
+        return match ($this) {
+            self::Standard => 0,
+            self::Express => 750,
+            self::Pickup => 100,
+        };
     }
 }
 ```
@@ -147,52 +121,36 @@ final class LogLine
     {
         return $this->level === 'error';
     }
+
+    /**
+     * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
+     * reads as English at the call site, where `if ($line->reports())` reads as a claim.
+     */
+    public function isErrored(): bool
+    {
+        return $this->level === 'error';
+    }
 }
 
 // Good
 /**
- * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
- * count stand at the head of the class, so one read of the top says everything this object holds.
+ * The FIX: the same three fields in the one fixed sequence — the static counter first, then the
+ * instance state. `$planned` has MOVED UP past the two it arrived after; nothing else changed.
  */
-final class CheckoutSession
+final class PlannedItinerary
 {
-    private const int TTL = 1800;
-
-    public static int $started = 0;
-
-    public string $currency = 'EUR';
-
-    private int $itemCount = 0;
-
-    public bool $isEmpty { get => $this->itemCount === 0; }
+    public static int $planned = 0;
 
     /**
-     * @return Concurrent<self>
+     * @var list<string>
      */
-    public static function for(int $customerId): Concurrent
-    {
-        return new Concurrent(
-            key: "checkout:{$customerId}",
-            default: new self,
-            ttl: self::TTL,
-        );
-    }
+    public array $legModes = [];
 
-    /**
-     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
-     * nothing here can prove. Both tell the reader something the code does not.
-     */
-    public function readers(): array
-    {
-        return [
-            fn (): ?int => $this->itemCount,
-            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
-        ];
-    }
+    public string $reference = '';
 
-    public function addItem(): void
+    public function isEmpty(): bool
     {
-        $this->itemCount++;
+        return $this->legModes === [];
     }
 }
 ```

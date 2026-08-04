@@ -4,6 +4,7 @@ namespace Shop\Integrations;
 
 use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\HttpClient;
@@ -35,6 +36,7 @@ final class WeatherClient
     /**
      * @return array<string, mixed>
      */
+    #[Fixed(SwallowCatch::class)]
     #[Righteous(SwallowCatch::class)]
     public function forecastOrThrow(string $city): array
     {

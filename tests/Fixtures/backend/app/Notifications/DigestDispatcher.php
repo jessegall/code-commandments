@@ -3,6 +3,7 @@
 namespace Shop\Notifications;
 
 use JesseGall\CodeCommandments\Sins\Backend\ShortCircuitStatement;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Contracts\Mailer;
@@ -22,6 +23,7 @@ final class DigestDispatcher
         $subscribed && $this->mailer->send($address, 'Your weekly digest', $this->digest());
     }
 
+    #[Fixed(ShortCircuitStatement::class)]
     #[Righteous(ShortCircuitStatement::class)]
     public function sendGuarded(string $address, bool $subscribed): void
     {

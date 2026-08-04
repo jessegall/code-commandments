@@ -4,6 +4,7 @@ namespace Shop\Reporting;
 
 use JesseGall\CodeCommandments\Sins\Backend\WrappingWithoutCause;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Exceptions\IntegrationException;
@@ -24,6 +25,7 @@ final class ExportUploader
         }
     }
 
+    #[Fixed(WrappingWithoutCause::class)]
     #[Righteous(WrappingWithoutCause::class)]
     public function uploadChecked(string $path): void
     {

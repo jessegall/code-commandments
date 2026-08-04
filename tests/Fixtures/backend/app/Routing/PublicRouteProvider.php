@@ -5,6 +5,7 @@ namespace Shop\Routing;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicateRoute;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -25,6 +26,18 @@ final class PublicRouteProvider extends ServiceProvider
     public function sitemap(): void
     {
         Route::get('/sitemap', [SitemapController::class, 'show'])->name('sitemap');
+    }
+
+    /**
+     * The FIX: `[CatalogueListController, 'list']` is registered ONCE. The second URL survives as a
+     * REDIRECT, so there is a single handler — and its name, middleware and constraints have no twin
+     * to drift away from.
+     */
+    #[Fixed(DuplicateRoute::class)]
+    public function catalogue(): void
+    {
+        Route::get('/catalogue', [CatalogueListController::class, 'list'])->name('catalogue');
+        Route::redirect('/products.rss', '/catalogue');
     }
 
     public function cacheSeconds(bool $edge): int

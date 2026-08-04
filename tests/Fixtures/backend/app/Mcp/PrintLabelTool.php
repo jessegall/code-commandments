@@ -6,6 +6,8 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\BoundaryDuplicatedOperation;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\JsonSchema;
+use JesseGall\CodeCommandments\Testing\Fixed;
+use Shop\Labels\LabelPrinting;
 use Shop\Labels\LabelQueue;
 use Shop\Labels\LabelRenderer;
 use Shop\Labels\PrintLog;
@@ -38,6 +40,17 @@ final class PrintLabelTool extends Tool
         $log->record($job);
 
         return $this->answer($job);
+    }
+
+    /**
+     * The FIX: render-queue-record is hoisted into `LabelPrinting`, the ONE home for the operation, and
+     * every face calls it. What is left at this boundary is the only work that is genuinely its own —
+     * translating the protocol and shaping the answer an agent reads.
+     */
+    #[Fixed(BoundaryDuplicatedOperation::class)]
+    public function handleDelegating(string $sku, LabelPrinting $printing): string
+    {
+        return $this->answer($printing->print($sku));
     }
 
     private function answer(string $job): string

@@ -4,6 +4,7 @@ namespace Shop\Legacy;
 
 use JesseGall\CodeCommandments\Sins\Backend\ConstClassEnum;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -33,6 +34,7 @@ final class TaxBands
  * The sealed set as a native backed enum — the cases now have a home for behaviour
  * and the type proves only a real band can flow through. Rates as basis points.
  */
+#[Fixed(ConstClassEnum::class)]
 #[Righteous(ConstClassEnum::class)]
 enum TaxBand: int
 {

@@ -3,6 +3,7 @@
 namespace Shop\Http\View;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DanglingRouteName;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -23,6 +24,20 @@ final class DashboardLinks
         return [
             ['label' => 'Home', 'href' => route('dashboard')],
             ['label' => 'Overview', 'href' => route('dashbord')],
+        ];
+    }
+
+    /**
+     * The FIX: the same menu, with every `route(...)` naming a route the table actually registers —
+     * `dashbord` was pointed back at a name `routes/web.php` mints (`reports.daily`). The vocabulary is
+     * closed, so the reference and the registration are renamed in the same breath.
+     */
+    #[Fixed(DanglingRouteName::class)]
+    public function registeredMenu(): array
+    {
+        return [
+            ['label' => 'Home', 'href' => route('dashboard')],
+            ['label' => 'Overview', 'href' => route('reports.daily')],
         ];
     }
 

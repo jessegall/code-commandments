@@ -4,6 +4,7 @@ namespace Shop\Realtime;
 
 use JesseGall\CodeCommandments\Sins\Backend\Concurrent\ConcurrentSubclass;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\Concurrent\Concurrent;
@@ -27,6 +28,7 @@ final class LiveOrderTracker extends Concurrent
  * The clean twin: a plain domain object handed out thread-safe by a `::for()`
  * factory that wraps it in a `Concurrent<self>` — composition, not inheritance.
  */
+#[Fixed(ConcurrentSubclass::class)]
 #[Righteous(ConcurrentSubclass::class)]
 final class LiveOrderStage
 {

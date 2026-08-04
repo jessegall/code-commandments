@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -33,6 +34,7 @@ final class ReservedSkus
      *
      * @return list<string>
      */
+    #[Fixed(KeyedLookupEnvy::class)]
     #[Righteous(KeyedLookupEnvy::class)]
     public function forItemDirect(CatalogItem $item): array
     {

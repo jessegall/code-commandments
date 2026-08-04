@@ -3,6 +3,7 @@
 namespace Shop\Kiosk;
 
 use JesseGall\CodeCommandments\Sins\Backend\ComputedBooleanArgument;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -19,5 +20,16 @@ final class CornerInset
     public static function of(bool $tucked): string
     {
         return $tucked ? 'tight' : 'wide';
+    }
+
+    /**
+     * The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
+     * itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
+     * half-remembered copy of it, and none can forget the panel.
+     */
+    #[Fixed(ComputedBooleanArgument::class)]
+    public static function for(KioskEditor $editor): string
+    {
+        return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
     }
 }

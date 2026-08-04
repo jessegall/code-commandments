@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
@@ -32,6 +33,7 @@ final class StockBadge
     /**
      * The mapping lives ON the enum; the call site just asks for the colour.
      */
+    #[Fixed(EnumValueMatch::class)]
     #[Righteous(EnumValueMatch::class)]
     public function colourViaEnum(Product $product): string
     {

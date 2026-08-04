@@ -28,6 +28,8 @@ final class DetectorPerformanceTest extends TestCase
     {
         $codebase = Codebase::scan(dirname(__DIR__, 2) . '/Fixtures/backend');
 
+        $this->warmSharedIndexes($codebase);
+
         $times = [];
 
         foreach (Catalog::backend() as $detector) {
@@ -45,6 +47,27 @@ final class DetectorPerformanceTest extends TestCase
                 sprintf('%s took %.3fs — a runtime anomaly (ceiling %.3fs). Likely an O(n²) rebuild per candidate; memoise it.', $name, $seconds, $ceiling),
             );
         }
+    }
+
+    /**
+     * Build the structures the whole codebase SHARES before anything is timed — the node buckets,
+     * the call graph, the value-flow and projection readers. Each is lazy and built once, so
+     * whichever detector happens to want one first would otherwise be billed for all of it: a
+     * one-time cost of a second charged to an arbitrary rule, which read as that rule being
+     * pathological and named a different innocent detector on every run.
+     *
+     * What this test is FOR is a detector that rebuilds an index per candidate. Warming here is what
+     * makes it measure that, and only that.
+     */
+    private function warmSharedIndexes(Codebase $codebase): void
+    {
+        foreach ($codebase->nodes() as $ignored) {
+            // touching the iterator is what builds the buckets every selector reads
+        }
+
+        $codebase->index();
+        $codebase->valueFlow();
+        $codebase->projection();
     }
 
     /**

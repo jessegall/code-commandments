@@ -4,6 +4,7 @@ namespace Shop\Shipping;
 
 use JesseGall\CodeCommandments\Sins\Backend\IfElseLadder;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -37,6 +38,7 @@ final class RateLadder
         }
     }
 
+    #[Fixed(IfElseLadder::class)]
     #[Righteous(IfElseLadder::class)]
     public function bandByMatch(int $grams): string
     {

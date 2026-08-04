@@ -4,6 +4,7 @@ namespace Shop\Catalog;
 
 use JesseGall\CodeCommandments\Sins\Backend\DeepNesting;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Product;
@@ -36,6 +37,7 @@ final class PriceResolver
      *
      * @param  array<string, int>  $overrides
      */
+    #[Fixed(DeepNesting::class)]
     #[Righteous(DeepNesting::class)]
     public function resolveFlat(Product $product, array $overrides, string $region): int
     {

@@ -87,11 +87,14 @@ public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, 
 }
 
 // Good
-public function handle(LabelPrinting $printing): int
+/**
+ * The FIX: render-queue-record is hoisted into `LabelPrinting`, the ONE home for the operation, and
+ * every face calls it. What is left at this boundary is the only work that is genuinely its own —
+ * translating the protocol and shaping the answer an agent reads.
+ */
+public function handleDelegating(string $sku, LabelPrinting $printing): string
 {
-    $printing->print((string) $this->argument('sku'));
-
-    return 0;
+    return $this->answer($printing->print($sku));
 }
 ```
 
@@ -115,11 +118,16 @@ public function menu(): array
 
 // Good
 /**
- * Righteous: the name is exactly the one the route registers.
+ * The FIX: the same menu, with every `route(...)` naming a route the table actually registers —
+ * `dashbord` was pointed back at a name `routes/web.php` mints (`reports.daily`). The vocabulary is
+ * closed, so the reference and the registration are renamed in the same breath.
  */
-public function home(): string
+public function registeredMenu(): array
 {
-    return route('dashboard');
+    return [
+        ['label' => 'Home', 'href' => route('dashboard')],
+        ['label' => 'Overview', 'href' => route('reports.daily')],
+    ];
 }
 ```
 
@@ -136,9 +144,15 @@ public function feed(): void
 }
 
 // Good
-public function sitemap(): void
+/**
+ * The FIX: `[CatalogueListController, 'list']` is registered ONCE. The second URL survives as a
+ * REDIRECT, so there is a single handler — and its name, middleware and constraints have no twin
+ * to drift away from.
+ */
+public function catalogue(): void
 {
-    Route::get('/sitemap', [SitemapController::class, 'show'])->name('sitemap');
+    Route::get('/catalogue', [CatalogueListController::class, 'list'])->name('catalogue');
+    Route::redirect('/products.rss', '/catalogue');
 }
 ```
 
@@ -154,14 +168,9 @@ public function build(ReportExportRequest $request): string
 }
 
 // Good
-final class LabelController
+public function trend(ReportExportRequest $request): string
 {
-    public function __construct(private readonly LabelPrinter $printer) {}
-
-    public function print(string $sku): string
-    {
-        return $this->printer->print($sku);
-    }
+    return $this->trends->plot($request);
 }
 ```
 
@@ -171,25 +180,20 @@ A route action forwards to ANOTHER controller's action (`return $this->otherCont
 
 ```php
 // Bad
-public function print(string $sku): string
+public function run(string $id): string
 {
-    return $this->labels->print($sku);
+    return $this->export->run($id);
 }
 
 // Good
 /**
- * The real, routed controllers — each the ONE home for its operation, delegating INTO a domain service.
- * That is the righteous shape: the RouteDelegatesToController detector must not flag them (their delegate
- * is a service, not another routed controller).
+ * The FIX: the wrapper is gone. This action delegates INTO the domain — the same `WorkflowExporter`
+ * the export controller calls — with the admin translation (`exportForAudit`) named on the service,
+ * so there is no second HTTP door hanging off another controller.
  */
-final class ExportController
+public function audit(string $id): string
 {
-    public function __construct(private readonly WorkflowExporter $exporter) {}
-
-    public function run(string $id): string
-    {
-        return $this->exporter->export($id);
-    }
+    return $this->exporter->exportForAudit($id);
 }
 ```
 

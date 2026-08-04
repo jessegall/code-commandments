@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Testing\FixtureExamples;
 use JesseGall\CodeCommandments\Testing\Marker;
 use JesseGall\CodeCommandments\Testing\SinMarkers;
 use PHPUnit\Framework\TestCase;
@@ -20,12 +21,26 @@ use PHPUnit\Framework\TestCase;
  * the sin. A "fix" the detector still flags is not a fix, and shipping one would teach a reader
  * to make the same mistake twice.
  *
- * Coverage — that EVERY sin carries a resolution rather than falling back to its `#[Righteous]`
- * look-alike — is enforced separately, once the canon is filled in.
+ * Coverage is enforced here too: every sin must carry one. A sin without a resolution falls back to
+ * its `#[Righteous]` look-alike, which is usually a documented EXEMPTION — so the skill quietly
+ * teaches the escape hatch instead of the fix, and nothing fails to say so.
  */
 final class FixedIsTheResolutionTest extends TestCase
 {
     private const string FIXTURE = __DIR__ . '/../Fixtures/backend';
+
+    public function test_every_sin_carries_a_resolution(): void
+    {
+        $missing = FixtureExamples::withoutResolution(Codebase::scan(self::FIXTURE), Catalog::backend());
+
+        $this->assertSame(
+            [],
+            array_map(ClassName::short(...), $missing),
+            "These sins have no #[Fixed] twin, so their published 'good' example falls back to a\n"
+            . "righteous look-alike — code that legitimately DODGES the rule rather than obeying it.\n"
+            . 'Add the fix to the fixture; see the `detector-fixtures` skill.',
+        );
+    }
 
     public function test_no_detector_flags_the_code_marked_as_its_own_fix(): void
     {

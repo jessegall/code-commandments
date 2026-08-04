@@ -32,6 +32,7 @@ final class CustomerUpdater
         $customer->suspend($reason);
     }
 
+    #[Fixed(FeatureEnvy::class)]
     #[Righteous(FeatureEnvy::class)]
     public function suspendByTelling(Customer $customer, string $reason): void
     {

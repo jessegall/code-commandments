@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
 use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -29,6 +30,18 @@ final class WeightAggregator
      */
     #[Sinful(NarratedCommand::class)]
     public function clears(): static
+    {
+        $this->entries = [];
+
+        return $this;
+    }
+
+    /**
+     * The FIX is the NAME: drop the -s. Still fluent, still the same body — but `$weights->clear()`
+     * is the order the call site is actually giving, instead of a description of one.
+     */
+    #[Fixed(NarratedCommand::class)]
+    public function clear(): static
     {
         $this->entries = [];
 
@@ -83,6 +96,7 @@ final class WeightAggregator
      * The duplicated scorers collapsed into one parameterised pass — the per-entry
      * weight is an argument, so there is no rhyming twin to extract.
      */
+    #[Fixed(NearDuplicateFunction::class)]
     #[Righteous(NearDuplicateFunction::class)]
     public function scoreFrom(int $start, int $weight): int
     {

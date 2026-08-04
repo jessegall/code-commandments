@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
 use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
 
 use Shop\Enums\PaymentMethod;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -29,6 +30,7 @@ final class InstantSettlement
         return $method === PaymentMethod::Card || $method === PaymentMethod::Ideal;
     }
 
+    #[Fixed(EnumCaseOrChain::class)]
     #[Righteous(EnumCaseOrChain::class)]
     public function clearsImmediatelyClean(PaymentMethod $method): bool
     {

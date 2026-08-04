@@ -3,6 +3,7 @@
 namespace Shop\Shipping;
 
 use JesseGall\CodeCommandments\Sins\Backend\TypeSwitch;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -51,6 +52,11 @@ final class ConsignmentFee
         return $freight->weightGrams() * 3;
     }
 
+    /**
+     * The FIX: one method on the shared interface, implemented per freight type. Each kind answers
+     * for itself, so a new kind needs no edit here at all.
+     */
+    #[Fixed(TypeSwitch::class)]
     #[Righteous(TypeSwitch::class)]
     public function priceTold(PricedFreight $freight): int
     {

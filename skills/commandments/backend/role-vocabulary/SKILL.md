@@ -74,6 +74,10 @@ public function get(string $key): ?object
 }
 
 // Good
+/**
+ * The FIX: the store resolves-or-throws. A missing key is a named failure at the source
+ * (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
+ */
 public function resolve(string $key): object
 {
     return $this->channels[$key] ?? throw UnknownChannel::forKey($key);

@@ -5,6 +5,7 @@ namespace Shop\Reporting;
 use JesseGall\CodeCommandments\Sins\Backend\NegativeSpaceComment;
 use JesseGall\CodeCommandments\Sins\Backend\NestedTernary;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -31,6 +32,7 @@ final class GradeCalculator
      * The same decision as a `match (true)` — each band reads on its own line, no
      * precedence trap.
      */
+    #[Fixed(NestedTernary::class)]
     #[Righteous(NestedTernary::class)]
     private function bandMatched(int $score): string
     {

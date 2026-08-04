@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\GenericException;
 use JesseGall\CodeCommandments\Sins\Backend\InlineThrow;
 use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Shipment;
@@ -24,6 +25,7 @@ final class TrackingFormatter
         return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
     }
 
+    #[Fixed(GenericException::class)]
     #[Righteous(GenericException::class)]
     public function carrierNameNamed(Shipment $shipment): string
     {
@@ -31,6 +33,7 @@ final class TrackingFormatter
             ?? throw CarrierMissing::for($shipment->id);
     }
 
+    #[Fixed(InlineThrow::class)]
     #[Righteous(InlineThrow::class)]
     public function carrierNameGuarded(Shipment $shipment): string
     {
@@ -41,6 +44,7 @@ final class TrackingFormatter
         return $shipment->carrier->displayName();
     }
 
+    #[Fixed(MessageAtThrow::class)]
     #[Righteous(MessageAtThrow::class)]
     public function carrierNameOrFail(Shipment $shipment): string
     {

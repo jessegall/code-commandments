@@ -30,6 +30,16 @@ final class LogLine
     {
         return $this->level === 'error';
     }
+
+    /**
+     * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
+     * reads as English at the call site, where `if ($line->reports())` reads as a claim.
+     */
+    #[Fixed(BareStatePredicate::class)]
+    public function isErrored(): bool
+    {
+        return $this->level === 'error';
+    }
 }
 
 /**

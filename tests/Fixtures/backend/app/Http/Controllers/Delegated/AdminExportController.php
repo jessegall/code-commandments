@@ -3,6 +3,7 @@
 namespace Shop\Http\Controllers\Delegated;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RouteDelegatesToController;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -12,12 +13,26 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class AdminExportController
 {
-    public function __construct(private readonly ExportController $export) {}
+    public function __construct(
+        private readonly ExportController $export,
+        private readonly WorkflowExporter $exporter,
+    ) {}
 
     #[Sinful(RouteDelegatesToController::class)]
     public function run(string $id): string
     {
         return $this->export->run($id);
+    }
+
+    /**
+     * The FIX: the wrapper is gone. This action delegates INTO the domain — the same `WorkflowExporter`
+     * the export controller calls — with the admin translation (`exportForAudit`) named on the service,
+     * so there is no second HTTP door hanging off another controller.
+     */
+    #[Fixed(RouteDelegatesToController::class)]
+    public function audit(string $id): string
+    {
+        return $this->exporter->exportForAudit($id);
     }
 
     public function history(array $ids): int

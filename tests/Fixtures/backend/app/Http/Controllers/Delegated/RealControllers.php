@@ -49,6 +49,11 @@ final class WorkflowExporter
     {
         return $id;
     }
+
+    public function exportForAudit(string $id): string
+    {
+        return 'audit-' . $id;
+    }
 }
 
 final class LabelPrinter

@@ -173,9 +173,11 @@ public function fingerprint(int $base, int $count): string
 }
 
 // Good
-public function checksum(int $base, int $count): string
+public static function of(int $base, int $count): string
 {
-    return $this->fingerprint($base, $count);
+    $steps = array_map(static fn (int $i): int => $i * 2, range(0, max(0, $count - 1)));
+
+    return md5((string) ($base + array_sum($steps)));
 }
 ```
 
@@ -186,25 +188,36 @@ public function checksum(int $base, int $count): string
 ```php
 // Bad
 /**
- * @param  array<string, mixed>  $row
+ * @param  array<int, array<string, mixed>>  $rows
  */
-public function normalize(array $row): void
+public function import(array $rows): void
 {
-    $this->products->upsert(
-        $row['sku'] ?? '',
-        $row['name'] ?? '',
-        (int) ($row['stock'] ?? 0),
-    );
+    foreach ($rows as $row) {
+        $customer = $this->findCustomer($row['email'] ?? '');
+
+        // changed from update() to direct assignment in v2
+        if ($customer !== null) {
+            $customer->imported = true;
+            $customer->save();
+        }
+    }
 }
 
 // Good
 /**
- * Absence is decided at the source: a typed row guarantees its fields, so no
- * empty-string / zero fake is manufactured here.
+ * The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
+ * throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
+ * that fake all the way to the import — the throw stops the row here, where the truth is known.
+ *
+ * @param  array<int, array<string, mixed>>  $rows
  */
-public function persist(ImportRow $row): void
+public function importStrictly(array $rows): void
 {
-    $this->products->upsert($row->sku, $row->name, $row->stock);
+    foreach ($rows as $row) {
+        $email = $row['email'] ?? throw new MissingImportEmail();
+
+        $this->findCustomer($email)?->markImported();
+    }
 }
 ```
 

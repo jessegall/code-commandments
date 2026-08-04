@@ -183,6 +183,10 @@ public function price(Freightable $freight): int
 }
 
 // Good
+/**
+ * The FIX: one method on the shared interface, implemented per freight type. Each kind answers
+ * for itself, so a new kind needs no edit here at all.
+ */
 public function priceTold(PricedFreight $freight): int
 {
     return $freight->priceCents();

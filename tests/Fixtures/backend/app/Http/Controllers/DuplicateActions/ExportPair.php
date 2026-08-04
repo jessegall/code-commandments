@@ -4,6 +4,7 @@ namespace Shop\Http\Controllers\DuplicateActions;
 
 use Illuminate\Foundation\Http\FormRequest;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicateRouteAction;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -78,5 +79,29 @@ final class AnalyticsExportController
             $days <= 31 => 'month',
             default => 'quarter',
         };
+    }
+}
+
+/**
+ * The FIX: the second door onto the export is DELETED. `ReportExportController::build` is the one entry
+ * point, `/analytics/export` now routes straight at it, and analytics keeps only the action that is
+ * genuinely its own — one operation, one entry point.
+ */
+final class AnalyticsTrendController
+{
+    public function __construct(private readonly TrendBuilder $trends) {}
+
+    #[Fixed(DuplicateRouteAction::class)]
+    public function trend(ReportExportRequest $request): string
+    {
+        return $this->trends->plot($request);
+    }
+}
+
+final class TrendBuilder
+{
+    public function plot(ReportExportRequest $request): string
+    {
+        return 'trend';
     }
 }

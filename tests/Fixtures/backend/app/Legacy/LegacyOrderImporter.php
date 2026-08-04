@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Models\Customer;
@@ -49,11 +50,33 @@ final class LegacyOrderImporter
         }
     }
 
+    /**
+     * The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
+     * throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
+     * that fake all the way to the import — the throw stops the row here, where the truth is known.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    #[Fixed(ManufacturedFakeFill::class)]
+    public function importStrictly(array $rows): void
+    {
+        foreach ($rows as $row) {
+            $email = $row['email'] ?? throw new MissingImportEmail();
+
+            $this->findCustomer($email)?->markImported();
+        }
+    }
+
     public function emailKnown(string $email): bool
     {
         return $this->findCustomer($email)?->exists ?? false;
     }
 }
+
+/**
+ * The named failure the strict import throws — the row is refused where it is read.
+ */
+final class MissingImportEmail extends \RuntimeException {}
 
 /**
  * Imports legacy orders from the old CSV export.

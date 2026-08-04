@@ -5,6 +5,7 @@ namespace Shop\Shipping;
 use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
 use JesseGall\CodeCommandments\Sins\Backend\StackedDocblock;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 #[Sinful(MemberOutOfOrder::class)]
@@ -30,5 +31,27 @@ final class Itinerary
     public function covers(): bool
     {
         return $this->legModes !== [];
+    }
+}
+
+/**
+ * The FIX: the same three fields in the one fixed sequence — the static counter first, then the
+ * instance state. `$planned` has MOVED UP past the two it arrived after; nothing else changed.
+ */
+#[Fixed(MemberOutOfOrder::class)]
+final class PlannedItinerary
+{
+    public static int $planned = 0;
+
+    /**
+     * @var list<string>
+     */
+    public array $legModes = [];
+
+    public string $reference = '';
+
+    public function isEmpty(): bool
+    {
+        return $this->legModes === [];
     }
 }

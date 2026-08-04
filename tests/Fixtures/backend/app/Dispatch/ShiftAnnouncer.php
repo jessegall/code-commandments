@@ -3,6 +3,7 @@
 namespace Shop\Dispatch;
 
 use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Labels\PrintLog;
@@ -32,6 +33,7 @@ final class ShiftAnnouncer
      * The same two announcements, named. The call site now says which one it wanted, and each half
      * is free to grow its own parameters without the other having to ignore them.
      */
+    #[Fixed(FlagArgument::class)]
     #[Righteous(FlagArgument::class)]
     public function announceUrgently(string $message): void
     {

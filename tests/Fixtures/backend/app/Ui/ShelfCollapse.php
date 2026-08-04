@@ -3,6 +3,7 @@
 namespace Shop\Ui;
 
 use JesseGall\CodeCommandments\Sins\Backend\TernaryStatement;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -35,6 +36,7 @@ final class ShelfCollapse
      * @param  array<string, array<int, object>>  $below
      * @return array<int, string>
      */
+    #[Fixed(TernaryStatement::class)]
     #[Righteous(TernaryStatement::class)]
     public function collapsedBranched(string $id, array $below): array
     {

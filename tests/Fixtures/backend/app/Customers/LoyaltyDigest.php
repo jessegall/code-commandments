@@ -4,6 +4,7 @@ namespace Shop\Customers;
 
 use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -61,5 +62,21 @@ final class LoyaltyDigest
     public function checksum(int $base, int $count): string
     {
         return $this->fingerprint($base, $count);
+    }
+}
+
+/**
+ * The FIX: the copies are GONE. The loop the loyalty, sales and stock digests each kept their own
+ * copy of now lives here once — each digest calls `DigestFingerprint::of(...)` and none of them owns
+ * a `fingerprint()` any more, so the next change is made in one place or nowhere.
+ */
+final class DigestFingerprint
+{
+    #[Fixed(DuplicateFunction::class)]
+    public static function of(int $base, int $count): string
+    {
+        $steps = array_map(static fn (int $i): int => $i * 2, range(0, max(0, $count - 1)));
+
+        return md5((string) ($base + array_sum($steps)));
     }
 }

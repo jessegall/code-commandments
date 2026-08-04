@@ -4,6 +4,7 @@ namespace Shop\Enums;
 
 use JesseGall\CodeCommandments\Sins\Backend\MemberAfterMethod;
 use JesseGall\CodeCommandments\Sins\Backend\NamespaceCycle;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Shipping\ShippingRateRegistry;
 
@@ -26,4 +27,25 @@ enum ShippingMethod: string
     }
 
     case Pickup = 'pickup';
+}
+
+/**
+ * The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
+ * enum is the whole inventory and the behaviour sits below it.
+ */
+#[Fixed(MemberAfterMethod::class)]
+enum CollectionMethod: string
+{
+    case Standard = 'standard';
+    case Express = 'express';
+    case Pickup = 'pickup';
+
+    public function surchargeCents(): int
+    {
+        return match ($this) {
+            self::Standard => 0,
+            self::Express => 750,
+            self::Pickup => 100,
+        };
+    }
 }

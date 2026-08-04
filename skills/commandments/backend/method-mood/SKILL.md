@@ -76,39 +76,12 @@ public function reports(): bool
 
 // Good
 /**
- * Righteous twin: its cross-references resolve — a first-party {@see \Shop\Catalog\SkuRegistry} that exists,
- * and a vendor {@see \Illuminate\Support\Collection} that lives in another package (left unverified). Neither
- * dangles, so it must NOT flag.
+ * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
+ * reads as English at the call site, where `if ($line->reports())` reads as a claim.
  */
-final class HonestDoc
+public function isErrored(): bool
 {
-    /**
-     * A question about its own state — the mood a bool is supposed to wear.
-     */
-    public function isTallied(): bool
-    {
-        return true;
-    }
-
-    /**
-     * A relational predicate: it takes what it compares against, so the third person is correct.
-     *
-     * @param string $needle The word to look for.
-     */
-    public function contains(string $needle): bool
-    {
-        return $needle !== '';
-    }
-
-    /**
-     * The count, floored at zero.
-     *
-     * @param int $items How many were seen.
-     */
-    public function tally(int $items): int
-    {
-        return max(0, $items);
-    }
+    return $this->level === 'error';
 }
 ```
 
@@ -130,49 +103,14 @@ public function clears(): static
 
 // Good
 /**
- * Transient per-customer checkout state, shared across requests. Righteous twin: the TTL and the item
- * count stand at the head of the class, so one read of the top says everything this object holds.
+ * The FIX is the NAME: drop the -s. Still fluent, still the same body — but `$weights->clear()`
+ * is the order the call site is actually giving, instead of a description of one.
  */
-final class CheckoutSession
+public function clear(): static
 {
-    private const int TTL = 1800;
+    $this->entries = [];
 
-    public static int $started = 0;
-
-    public string $currency = 'EUR';
-
-    private int $itemCount = 0;
-
-    public bool $isEmpty { get => $this->itemCount === 0; }
-
-    /**
-     * @return Concurrent<self>
-     */
-    public static function for(int $customerId): Concurrent
-    {
-        return new Concurrent(
-            key: "checkout:{$customerId}",
-            default: new self,
-            ttl: self::TTL,
-        );
-    }
-
-    /**
-     * Righteous: one type WIDENS what the expression yields, the other annotates an expression
-     * nothing here can prove. Both tell the reader something the code does not.
-     */
-    public function readers(): array
-    {
-        return [
-            fn (): ?int => $this->itemCount,
-            fn (): int => $this->itemCount > 0 ? $this->itemCount : 0,
-        ];
-    }
-
-    public function addItem(): void
-    {
-        $this->itemCount++;
-    }
+    return $this;
 }
 ```
 

@@ -111,6 +111,22 @@ final class LegacyOrderImporter
         }
     }
 
+    /**
+     * The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
+     * throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
+     * that fake all the way to the import — the throw stops the row here, where the truth is known.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    public function importStrictly(array $rows): void
+    {
+        foreach ($rows as $row) {
+            $email = $row['email'] ?? throw new MissingImportEmail();
+
+            $this->findCustomer($email)?->markImported();
+        }
+    }
+
     public function emailKnown(string $email): bool
     {
         return $this->findCustomer($email)?->exists ?? false;
@@ -207,6 +223,15 @@ final class LogLine
      * A bool about the line itself, named as a claim instead of a question.
      */
     public function reports(): bool
+    {
+        return $this->level === 'error';
+    }
+
+    /**
+     * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
+     * reads as English at the call site, where `if ($line->reports())` reads as a claim.
+     */
+    public function isErrored(): bool
     {
         return $this->level === 'error';
     }

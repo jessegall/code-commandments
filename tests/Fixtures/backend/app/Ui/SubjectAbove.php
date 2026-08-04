@@ -3,6 +3,7 @@
 namespace Shop\Ui;
 
 use JesseGall\CodeCommandments\Sins\Backend\NonCountingFor;
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -26,6 +27,7 @@ final class SubjectAbove
         return 'untitled';
     }
 
+    #[Fixed(NonCountingFor::class)]
     #[Righteous(NonCountingFor::class)]
     public function nearestWhile(object $widget): string
     {

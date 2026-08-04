@@ -4,6 +4,7 @@ namespace Shop\Payments;
 
 use JesseGall\CodeCommandments\Sins\Backend\InArrayMirrorsEnum;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Enums\PaymentMethod;
@@ -22,6 +23,7 @@ final class MethodWhitelist
         return in_array($method, ['card', 'ideal', 'paypal'], true);
     }
 
+    #[Fixed(InArrayMirrorsEnum::class)]
     #[Righteous(InArrayMirrorsEnum::class)]
     public function allowedClean(string $method): bool
     {

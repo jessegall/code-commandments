@@ -4,6 +4,7 @@ namespace Shop\Support;
 
 use JesseGall\CodeCommandments\Sins\Backend\NullableRegistryLookup;
 
+use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -25,6 +26,11 @@ final class NotificationChannels
         return $this->channels[$key] ?? null;
     }
 
+    /**
+     * The FIX: the store resolves-or-throws. A missing key is a named failure at the source
+     * (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
+     */
+    #[Fixed(NullableRegistryLookup::class)]
     #[Righteous(NullableRegistryLookup::class)]
     public function resolve(string $key): object
     {
