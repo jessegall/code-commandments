@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
@@ -363,6 +364,16 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function whereClass(): Query
     {
         return new Query($this, static fn (Node $node): bool => $node instanceof Class_, [Class_::class]);
+    }
+
+    /**
+     * Every FILE in this codebase, as something a rule can judge by NAME — `whereFile()` opens the
+     * same fluent query the frontend's does ({@see \JesseGall\CodeCommandments\Files\FileQuery}),
+     * because a path is not a language.
+     */
+    public function whereFile(): FileQuery
+    {
+        return new FileQuery(array_map(static fn (ParsedFile $file): string => $file->path, $this->files));
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
 use FilesystemIterator;
@@ -103,6 +104,23 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function components(): array
     {
         return $this->components;
+    }
+
+    /**
+     * Every FILE in this codebase — its components and the `.ts` modules beside them — as something
+     * a rule can judge by NAME. The SAME query the backend's `whereFile()` opens
+     * ({@see \JesseGall\CodeCommandments\Files\FileQuery}): a path is not a language, so the
+     * machinery that judges one is not written twice.
+     */
+    public function whereFile(): FileQuery
+    {
+        $paths = array_map(static fn (Sfc $component): string => $component->path, $this->components);
+
+        foreach ($this->standaloneTypes as $type) {
+            $paths[] = $type->file;
+        }
+
+        return new FileQuery(array_values(array_unique($paths)));
     }
 
     /**

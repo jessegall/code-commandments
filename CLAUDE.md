@@ -150,7 +150,8 @@ every time you start building.
 **`Codebase` (`src/Ast/Codebase.php`) — whole-program.** Selectors open a query:
 `whereClass`, `whereInterface`, `whereField`, `whereMethod`, `whereMethodDeclaration`, `whereNew`,
 `whereNewExtending`, `whereStaticCall`, `whereFunction`, `whereGetterHook`, `whereAssign`,
-`whereParamType`, `whereAttribute`, `whereComment`, `whereClassExtending`, `where(Closure)`.
+`whereParamType`, `whereAttribute`, `whereComment`, `whereClassExtending`, `whereFile` (the shared
+`Files\FileQuery` — a rule judges a file's NAME, same selector on both engines), `where(Closure)`.
 Graph/resolve: `extends`, `implements` (the WHOLE contract graph — parent chain and interface-extends), `isEnum`, **`isValueType`** (value vs service — walks
 the chain), `classNamed` (a class decl), **`declarationMatch`** (ANY class-like incl. enum, with
 its file), `index()` (call graph → `callersOf`), `valueFlow()` (field-nil provenance).
