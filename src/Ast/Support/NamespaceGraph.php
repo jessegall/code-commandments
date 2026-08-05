@@ -82,6 +82,10 @@ final class NamespaceGraph
      * Does this reference merely name the OTHER END of a two-way association — `Picker::class` in
      * `$this->hasOne(Picker::class)`, answered by a `belongsTo(User::class)` on the far side?
      *
+     * The same holds for a reference an ATTRIBUTE makes — `#[ObservedBy(OrderObserver::class)]`, whose
+     * observer names the model straight back: the framework mandates both ends, so there is no arrow
+     * to invert and cutting either side deletes the behaviour (#450).
+     *
      * Such a reference is real, so it stays in {@see $references} and a proposed layer declaration
      * still permits it. But it draws no ARROW, because an association has no direction to draw:
      * the mapper requires both ends to name each other, so removing either one deletes the relation
@@ -91,7 +95,8 @@ final class NamespaceGraph
      */
     private static function declaresAnAssociation(Codebase $codebase, NodeMatch $reference): bool
     {
-        return Exemptions::has(Association::class, $codebase, null, $reference->argumentOfCall());
+        return Exemptions::has(Association::class, $codebase, null, $reference->argumentOfCall())
+            || Exemptions::hasAttribute(Association::class, $codebase, $reference->enclosingAttributeName());
     }
 
     /**

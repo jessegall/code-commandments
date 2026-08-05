@@ -65,6 +65,20 @@ final class Exemptions
         return $clause !== null && $clause->matches($codebase, $class, $method);
     }
 
+    /**
+     * Is a reference sitting inside $attribute exempt under $tag — `#[ObservedBy(...)]` naming the
+     * other end of a binding the framework mandates? The attribute twin of {@see has}: a reference
+     * made BY a declaration's attribute is not the declaring code's own choice (#450).
+     *
+     * @param  class-string|string  $tag
+     */
+    public static function hasAttribute(string $tag, Codebase $codebase, ?string $attribute): bool
+    {
+        $clause = self::registry()->clauses[Exemption::resolve($tag)] ?? null;
+
+        return $clause !== null && $clause->matchesAttribute($codebase, $attribute);
+    }
+
     private static function registry(): self
     {
         if (self::$registry !== null) {

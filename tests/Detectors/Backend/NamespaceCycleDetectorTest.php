@@ -163,6 +163,47 @@ final class NamespaceCycleDetectorTest extends TestCase
     /**
      * @return list<string>
      */
+    public function test_a_framework_binding_attribute_draws_no_arrow(): void
+    {
+        // Issue #450: `#[ObservedBy]` mandates BOTH ends — the model names its observer, the observer
+        // type-hints the model — so there is nothing to invert. Reported after the "fix" (moving to
+        // Model::observe in a provider) silently stopped the observer firing for every subclass.
+        $code = <<<'PHP'
+        <?php
+        namespace Illuminate\Database\Eloquent\Attributes { class ObservedBy {} }
+        namespace App\Models {
+            use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+
+            #[ObservedBy(\App\Observers\OrderObserver::class)]
+            class Order {}
+        }
+        namespace App\Observers {
+            class OrderObserver { public function created(\App\Models\Order $order): void {} }
+        }
+        PHP;
+
+        $this->assertSame([], $this->scopes($code));
+    }
+
+    public function test_an_ordinary_attribute_reference_still_draws_its_arrow(): void
+    {
+        // Only a binding the framework MANDATES is exempt. An attribute that merely names a class is
+        // an ordinary dependency, and a pair that points both ways through one is still a cycle.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Support { class Tagged {} }
+        namespace App\Models {
+            #[\App\Support\Tagged(\App\Observers\OrderObserver::class)]
+            class Order {}
+        }
+        namespace App\Observers {
+            class OrderObserver { public function created(\App\Models\Order $order): void {} }
+        }
+        PHP;
+
+        $this->assertNotSame([], $this->scopes($code));
+    }
+
     private function scopes(string $code): array
     {
         $hits = new NamespaceCycleDetector()->find(Codebase::fromString($code));

@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Packages\LaravelPackage;
 use JesseGall\CodeCommandments\Packages\Package;
 use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;
+use JesseGall\CodeCommandments\Packages\Tags\Association;
 use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Packages\Tags\CompositionRoot;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
@@ -167,6 +168,21 @@ final class ExemptionsTest extends TestCase
         $this->assertTrue(Exemptions::has(ConsumerExemption::class, $codebase, 'App\\Widget'));
     }
 
+    public function test_a_project_can_declare_its_own_attribute_coupling_deliberate(): void
+    {
+        // The second half of #450: a consumer had no supported way to say "this attribute binding is
+        // deliberate" — a Clause selected calls and classes only, and an attribute is neither.
+        $codebase = Codebase::fromString('<?php namespace App { class Widget {} }');
+
+        $this->assertFalse(Exemptions::hasAttribute(Association::class, $codebase, 'App\\Attributes\\BoundTo'));
+
+        Exemptions::usePackages(AttributeBindingPackage::class);
+
+        $this->assertTrue(Exemptions::hasAttribute(Association::class, $codebase, 'App\\Attributes\\BoundTo'));
+        $this->assertFalse(Exemptions::hasAttribute(Association::class, $codebase, 'App\\Attributes\\Other'));
+        $this->assertFalse(Exemptions::hasAttribute(Association::class, $codebase, null), 'ordinary code is not in an attribute');
+    }
+
     protected function tearDown(): void
     {
         // usePackages() sets a static; reset it so a consumer package can't leak into other tests.
@@ -194,5 +210,14 @@ final class ConsumerPackage extends Package
     public function register(Exemptions $exemptions): void
     {
         $exemptions->exempt(ConsumerExemption::class)->classes('App\\Widget');
+    }
+}
+
+/** A project's own package — declares that a binding stated by ITS attribute draws no arrow. */
+final class AttributeBindingPackage extends Package
+{
+    public function register(Exemptions $exemptions): void
+    {
+        $exemptions->exempt(Association::class)->attributes('App\\Attributes\\BoundTo');
     }
 }

@@ -7,8 +7,9 @@ namespace JesseGall\CodeCommandments\Packages;
 use JesseGall\CodeCommandments\Ast\Codebase;
 
 /**
- * Holds exemption rules for a tag—whole classes, class methods, global methods—answering
- * whether a finding is covered by extends or implements.
+ * Holds exemption rules for a tag — whole classes, class methods, global methods, and the
+ * ATTRIBUTES a reference can sit inside — answering whether a finding is covered by extends or
+ * implements.
  */
 final class Clause
 {
@@ -26,6 +27,11 @@ final class Clause
      * @var list<string>
      */
     private array $methods = [];
+
+    /**
+     * @var list<class-string>
+     */
+    private array $attributes = [];
 
     /**
      * Exempt whole classes — a class extending/implementing any of these is exempt for every method.
@@ -66,6 +72,30 @@ final class Clause
         $this->methods = [...$this->methods, ...$methods];
 
         return $this;
+    }
+
+    /**
+     * Exempt references made INSIDE an attribute — `#[ObservedBy(OrderObserver::class)]`. A
+     * declaration's attribute states a binding the framework mandates, so what it names is not the
+     * declaring code's own choice of dependency; a call cannot express that, which is why the
+     * attribute is selectable in its own right (#450).
+     *
+     * @param  class-string  ...$attributes
+     */
+    public function attributes(string ...$attributes): self
+    {
+        $this->attributes = [...$this->attributes, ...$attributes];
+
+        return $this;
+    }
+
+    /**
+     * Does this clause exempt a reference sitting inside $attribute? False for a null one — ordinary
+     * code is never covered by an attribute rule.
+     */
+    public function matchesAttribute(Codebase $codebase, ?string $attribute): bool
+    {
+        return $attribute !== null && $this->isA($codebase, ltrim($attribute, '\\'), $this->attributes);
     }
 
     /**

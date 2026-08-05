@@ -114,6 +114,20 @@ final class LaravelNode extends NodeMatch
     ];
 
     /**
+     * The Eloquent attributes that BIND a model to a collaborator, each naming the class at the other
+     * end — `#[ObservedBy(OrderObserver::class)]`, whose observer type-hints the model straight back.
+     * The framework mandates both ends (an observer without its model, or a model without its
+     * observer, is not the same behaviour), so a class named here is the counterpart of a two-way
+     * binding, not a dependency the declaring namespace chose to take on.
+     */
+    public const array BINDING_ATTRIBUTES = [
+        'Illuminate\\Database\\Eloquent\\Attributes\\ObservedBy',
+        'Illuminate\\Database\\Eloquent\\Attributes\\ScopedBy',
+        'Illuminate\\Database\\Eloquent\\Attributes\\CollectedBy',
+        'Illuminate\\Database\\Eloquent\\Attributes\\UsePolicy',
+    ];
+
+    /**
      * The queueable contract — a job the framework SERIALIZES onto a queue and later revives itself.
      */
     public const string SHOULD_QUEUE = 'Illuminate\\Contracts\\Queue\\ShouldQueue';

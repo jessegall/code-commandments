@@ -17,6 +17,7 @@ use PhpParser\Comment\Doc;
 use PhpParser\Modifiers;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\Attribute;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
@@ -4233,6 +4234,23 @@ class AstNode
 
             if ($node !== $this && $node->callName() !== null) {
                 return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The ATTRIBUTE this node sits inside — `Illuminate\…\ObservedBy` for the `OrderObserver::class`
+     * in `#[ObservedBy(OrderObserver::class)]` — or null when it is ordinary code. The attribute twin
+     * of {@see argumentOfCall}: an attribute argument is a reference made by a DECLARATION, and what
+     * the declaration means is the attribute's to say.
+     */
+    public function enclosingAttributeName(): ?string
+    {
+        for ($node = $this; $node->node !== null; $node = $node->parent()) {
+            if ($node->node instanceof Attribute) {
+                return $node->node->name->toString();
             }
         }
 

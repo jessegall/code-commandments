@@ -913,6 +913,7 @@ namespace App\Commandments;
 
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Packages\Package;
+use JesseGall\CodeCommandments\Packages\Tags\Association;
 use JesseGall\CodeCommandments\Packages\Tags\Boundary;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 
@@ -927,6 +928,11 @@ final class AcmePackage extends Package
         // an Acme handler's schema() is an array by contract
         $exemptions->exempt(ContractMethod::class)
             ->on(\Acme\Rpc\Handler::class, 'schema');
+
+        // a reference an ATTRIBUTE makes: #[BoundTo(X::class)] mandates both ends, so the
+        // name it carries is not a dependency this namespace chose — it draws no cycle arrow
+        $exemptions->exempt(Association::class)
+            ->attributes(\Acme\Attributes\BoundTo::class);
     }
 }
 ```

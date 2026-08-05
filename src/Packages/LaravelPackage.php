@@ -44,6 +44,11 @@ final class LaravelPackage extends Package
         // name each other — so neither reference carries a direction, and the pair is not a cycle.
         $exemptions->exempt(Association::class)->methods(...LaravelNode::RELATION_METHODS);
 
+        // The same binding stated as an ATTRIBUTE: `#[ObservedBy(OrderObserver::class)]` is answered by
+        // the observer naming the model, and the framework mandates both ends — replacing it with a
+        // registration elsewhere is not the same behaviour, so the reference draws no arrow either.
+        $exemptions->exempt(Association::class)->attributes(...LaravelNode::BINDING_ATTRIBUTES);
+
         // Composition root: a service provider's register/boot wires config() into the typed objects it
         // binds — config reads there are the sanctioned composition root, not a config-in-a-class smell.
         $exemptions->exempt(CompositionRoot::class)->classes(LaravelNode::SERVICE_PROVIDER);
