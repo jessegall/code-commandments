@@ -104,6 +104,41 @@ final class PhantomNullableDetectorTest extends TestCase
         $this->assertSame(['total'], $this->fields($php));
     }
 
+    public function test_does_not_flag_a_field_guarded_through_a_docblocked_collection(): void
+    {
+        // Issue #449: the field IS assumed present in one place (`Labels::of`), which is what puts it in
+        // the frame — but it is guarded in another class, behind `foreach ($order->payments as $payment)`.
+        // PHP types the container and stops there, so the loop variable went unresolved and that guard
+        // was never counted; the field read as never-guarded and was flagged.
+        $php = <<<'PHP'
+        <?php
+        namespace App;
+        class Money { public function cents(): int { return 1; } }
+        class Payment {
+            public function __construct(
+                public readonly ?Money $total = null,
+            ) {}
+        }
+        class Order { /** @var list<Payment> */ public array $payments = []; }
+        class Labels {
+            public function of(Payment $payment): int { return $payment->total->cents(); }
+        }
+        class Refunds {
+            public function pick(Order $order): ?Payment {
+                foreach ($order->payments as $payment) {
+                    if ($payment->total === null) { continue; }
+
+                    return $payment;
+                }
+
+                return null;
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->fields($php), 'a guard behind a docblocked collection still counts');
+    }
+
     public function test_does_not_flag_a_field_with_no_reads(): void
     {
         $php = <<<'PHP'

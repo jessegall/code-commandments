@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\ParsedFile;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
@@ -59,7 +60,7 @@ final class TypeResolver
     private array $methodVariadic = [];
 
     /**
-     * @var array<string, array<string, string>>  fqcn => field => element type of its #[DataCollectionOf]
+     * @var array<string, array<string, string>>  fqcn => field => the element type its collection holds
      */
     private array $collectionElement = [];
 
@@ -194,9 +195,11 @@ final class TypeResolver
     }
 
     /**
-     * The element type a `#[DataCollectionOf(X::class)]` on $field declares — the X each item of the
-     * collection hydrates to. Resolved to the declaring class (an inherited collection reads its base's
-     * attribute). Null when $field carries no `#[DataCollectionOf]`.
+     * The element type $field's collection holds — the X each item is. Stated by a
+     * `#[DataCollectionOf(X::class)]` or, where PHP's own type stops at the container, by the
+     * docblock (`@var list<X>`, `X[]`, `Collection<int, X>` — {@see DocType}). Resolved to the
+     * declaring class, so an inherited collection reads its base's declaration. Null when $field
+     * declares no element type anywhere.
      */
     public function collectionElementOf(?string $fqcn, string $field): ?string
     {
@@ -309,6 +312,26 @@ final class TypeResolver
     }
 
     /**
+     * Record the element type a field's DOCBLOCK declares (`@var list<Payment>`, `Payment[]`,
+     * `@param Collection<int, Payment> $payments`), resolved through the file's imports
+     * ({@see DocType}). PHP types the container and stops, so without this a `foreach` over an
+     * ordinary typed collection loses its loop variable and every answer about it goes unresolved
+     * (#449). A `#[DataCollectionOf]` is the stronger statement and is never overwritten.
+     */
+    private function recordDocumentedElement(string $fqcn, string $field, ?string $docblock, ?string $variable, ParsedFile $file): void
+    {
+        if (isset($this->collectionElement[$fqcn][$field])) {
+            return;
+        }
+
+        $written = DocType::elementNamed($docblock, $variable);
+
+        if ($written !== null) {
+            $this->collectionElement[$fqcn][$field] = DocType::resolve($written, $file);
+        }
+    }
+
+    /**
      * Record the element type a field's `#[DataCollectionOf(X::class)]` declares, so a `foreach` over
      * that typed collection can type its loop variable. The one Spatie-specific read in the resolver —
      * kept to this method — because that attribute is the only place the element type is stated.
@@ -407,10 +430,13 @@ final class TypeResolver
                     }
                 }
 
+                $constructor = $class instanceof Class_ ? $class->getMethod('__construct')?->getDocComment()?->getText() : null;
+
                 foreach (AstNode::constructorParamsOf($class) as $param) {
                     if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
                         $this->fieldType[$fqcn][$param->var->name] = self::typeName($param->type);
                         $this->recordCollectionElement($fqcn, $param->var->name, $param->attrGroups);
+                        $this->recordDocumentedElement($fqcn, $param->var->name, $param->getDocComment()?->getText() ?? $constructor, $param->var->name, $file);
                     }
                 }
 
@@ -418,6 +444,7 @@ final class TypeResolver
                     foreach ($property->props as $declared) {
                         $this->fieldType[$fqcn][$declared->name->toString()] = self::typeName($property->type);
                         $this->recordCollectionElement($fqcn, $declared->name->toString(), $property->attrGroups);
+                        $this->recordDocumentedElement($fqcn, $declared->name->toString(), $property->getDocComment()?->getText(), null, $file);
                     }
                 }
 
