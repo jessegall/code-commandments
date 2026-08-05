@@ -69,6 +69,25 @@ final class UntilReminderTest extends TestCase
         return $io->emitted;
     }
 
+    /**
+     * A `TodoWrite` as the harness reports it — the list the user is watching, in the order it was written.
+     *
+     * @param  list<array<string, string>>  $todos
+     * @return list<array<string, mixed>>
+     */
+    private function todoWrite(array $todos): array
+    {
+        $io = new CapturingHookIO(new FakeGit($this->root), [
+            'hook_event_name' => 'PostToolUse',
+            'tool_name' => 'TodoWrite',
+            'tool_input' => ['todos' => $todos],
+        ]);
+
+        new UntilReminder($io)->run([]);
+
+        return $io->emitted;
+    }
+
     private function context(array $emitted): string
     {
         return (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
@@ -237,6 +256,53 @@ final class UntilReminderTest extends TestCase
         $this->postToolUse('TodoWrite');
 
         $this->assertSame([], $this->postToolUse('Read'), 'the list is current — nothing to say');
+    }
+
+    public function test_it_asks_for_the_current_item_at_the_top_of_the_visible_list(): void
+    {
+        // The user reads the first line of the list to see where the agent is. An in-progress item buried
+        // behind finished and pending ones makes them scan for it.
+        $this->gate()->add('the suite is green');
+
+        $emitted = $this->todoWrite([
+            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
+            ['content' => 'Match children by id', 'status' => 'completed'],
+            ['content' => 'Fix the rename dialog', 'activeForm' => 'Fixing the rename dialog', 'status' => 'in_progress'],
+        ]);
+
+        $context = $this->context($emitted);
+        $this->assertStringContainsString('Fixing the rename dialog', $context, 'it names the item, as the user reads it');
+        $this->assertStringContainsString('#3', $context, 'and where it is buried');
+        $this->assertStringContainsString('TodoWrite', $context);
+    }
+
+    public function test_it_is_silent_when_the_list_already_leads_with_the_current_item(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        $this->assertSame([], $this->todoWrite([
+            ['content' => 'Fix the rename dialog', 'status' => 'in_progress'],
+            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
+        ]));
+    }
+
+    public function test_a_list_with_nothing_in_progress_is_not_nudged(): void
+    {
+        // Nothing is being buried — a list of pending work makes no claim about the current moment.
+        $this->gate()->add('the suite is green');
+
+        $this->assertSame([], $this->todoWrite([
+            ['content' => 'Match children by id', 'status' => 'completed'],
+            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
+        ]));
+    }
+
+    public function test_the_ordering_nudge_never_fires_without_a_gate(): void
+    {
+        $this->assertSame([], $this->todoWrite([
+            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
+            ['content' => 'Fix the rename dialog', 'status' => 'in_progress'],
+        ]));
     }
 
     public function test_work_voids_a_half_answered_stuck_claim(): void

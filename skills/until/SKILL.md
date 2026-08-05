@@ -39,6 +39,18 @@ to-do list (TodoWrite) as a pending item, so the user can see at a glance what i
 gate's marker file is invisible to them; the to-do list is not. Keep the two in sync: when you strike
 a condition off with `until met <n>`, mark its to-do item completed in the same breath.
 
+### Lead with what you are doing NOW
+
+**The item in progress goes at the TOP of the list, always.** Every time you start a new item, move it
+to the first line — same items, same statuses, only the order changes. The user reads that first line
+to answer "where is it right now?", and an in-progress item buried at #7 makes them scan a list to find
+out. A `PostToolUse` hook checks each `TodoWrite` while a gate stands and tells you when the list does
+not lead with the current item.
+
+Order the rest as you like — what is next, then what is parked — but never reorder by marking something
+completed to get it out of the way. The list has to stay true; leading with the current item is about
+making a true list *readable*.
+
 ### A to-do item is NOT a gate
 
 The two are not interchangeable, and only one of them survives you:

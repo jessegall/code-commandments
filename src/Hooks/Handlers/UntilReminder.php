@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\TodoList;
 
 /**
  * The user-set stop gate — a `Stop` hook that holds the agent while any condition set with
@@ -18,7 +19,10 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  * conditions rather than to assume them, and says how to end the gate honestly: `until met <n>` when
  * one holds, `until stuck` when it is truly blocked. It leads with the COUNT and spells out only the
  * {@see EXCERPT} oldest conditions — a gate holding dozens of parked tasks would otherwise re-print the
- * whole list on every single stop — and points at `until list` for the rest. Loop-safe: {@see MAX_BLOCKS} consecutive holds
+ * whole list on every single stop — and points at `until list` for the rest. It also keeps the one thing
+ * the user can see honest: the visible to-do list must be current ({@see DRIFT}) and must LEAD with the
+ * item in progress ({@see buried}), so "what is it doing right now?" is answered by the first line.
+ * Loop-safe: {@see MAX_BLOCKS} consecutive holds
  * without progress release the gate, so a wedged session can always stop (striking a condition off
  * resets the count).
  */
@@ -70,7 +74,12 @@ final class UntilReminder extends Hook
         if ($event->isTool('TodoWrite')) {
             $gate->resetDrift(); // The visible list was just trued up — the drift starts over.
 
-            return $this->pass();
+            $todos = $event->todos();
+
+            // Trued up, but is it READABLE? The user watches this list to see what is happening now; an
+            // in-progress item sitting at #7 makes them scan for it. Said the moment the list is written,
+            // where the fix is one more `TodoWrite` away.
+            return $todos->leadsWithCurrent() ? $this->pass() : $this->inject($event, $this->buried($todos));
         }
 
         if (! $this->isWork($event)) {
@@ -87,12 +96,27 @@ final class UntilReminder extends Hook
         return $gate->driftedFor(self::DRIFT) ? $this->inject($event, $this->stale()) : $this->pass();
     }
 
+    /**
+     * The list is current but LEADS WITH THE WRONG THING — the item in progress is buried behind items
+     * that are finished or not started. One `TodoWrite` fixes it, so it is said at the point of writing.
+     */
+    private function buried(TodoList $todos): string
+    {
+        return "Code Commandments — your to-do list does not lead with what you are DOING. \"{$todos->current()}\" "
+            . "is in progress but sits at #{$todos->position()}, so the user has to scan the list to find out where "
+            . "you are. Rewrite it now (TodoWrite) with the in-progress item FIRST — every time you start a new "
+            . "item, it moves to the top. Same items, same statuses, only the order changes; do not mark anything "
+            . "completed to get it out of the way. The first line of that list is the one thing the user can check "
+            . "at a glance, so it must be the thing you are on.";
+    }
+
     private function stale(): string
     {
         return "Code Commandments — " . self::DRIFT . " pieces of work have gone by without a single update to "
             . "your to-do list, so the list the USER IS WATCHING no longer describes what you are doing. True it "
             . "up NOW (TodoWrite): mark what is genuinely finished as completed, add what you have taken on since, "
-            . "and make sure every standing stop condition appears on it. Do not report an item done there unless "
+            . "put the item you are working on at the TOP, and make sure every standing stop condition appears on "
+            . "it. Do not report an item done there unless "
             . "you have verified it — a to-do list that is merely optimistic is worse than a stale one.";
     }
 

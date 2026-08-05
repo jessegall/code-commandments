@@ -11,7 +11,8 @@ Do this now, in order:
    only to make it a checkable statement rather than a task).
 2. Surface it: add the SAME condition to your to-do list (TodoWrite) as a pending item, so the user
    can see at a glance what is holding you. Keep it in sync — mark that item completed when you run
-   `until met <n>`.
+   `until met <n>`, and keep whatever you are working on at the TOP of the list, so its first line
+   always says where you are.
 3. Load the `commandments-until` skill (Skill tool) and follow it — it is the discipline for working
    under a gate.
 4. Get to work on making the condition hold. From here every stop you attempt is held by the Stop
