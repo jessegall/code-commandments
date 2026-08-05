@@ -26,6 +26,7 @@ use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassConst;
@@ -374,6 +375,16 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function whereFile(): FileQuery
     {
         return new FileQuery(array_map(static fn (ParsedFile $file): string => $file->path, $this->files));
+    }
+
+    /**
+     * Every string LITERAL. The words a user reads are values, not identifiers, so an identifier
+     * sweep never sees them (#441) — pair this with {@see AstNode::argumentOfCall} /
+     * {@see AstNode::enclosingAttributeName} to judge only the literals reaching a text position.
+     */
+    public function whereString(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof String_, [String_::class]);
     }
 
     /**

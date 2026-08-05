@@ -148,7 +148,7 @@ the right layer (never inline in the detector). This is not a walk-only rule —
 every time you start building.
 
 **`Codebase` (`src/Ast/Codebase.php`) — whole-program.** Selectors open a query:
-`whereClass`, `whereInterface`, `whereField`, `whereMethod`, `whereMethodDeclaration`, `whereNew`,
+`whereClass`, `whereInterface`, `whereString` (a literal — the words a USER reads), `whereField`, `whereMethod`, `whereMethodDeclaration`, `whereNew`,
 `whereNewExtending`, `whereStaticCall`, `whereFunction`, `whereGetterHook`, `whereAssign`,
 `whereParamType`, `whereAttribute`, `whereComment`, `whereClassExtending`, `whereFile` (the shared
 `Files\FileQuery` — a rule judges a file's NAME, same selector on both engines), `where(Closure)`.

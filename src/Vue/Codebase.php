@@ -132,6 +132,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Every static TEXT node — the words a user actually reads, with no `{{ … }}` in them. Copy is
+     * where a project's vocabulary shows up outside its identifiers (a caption reading "Taken" over
+     * what is an input), and a rule could see only the code around it (#441). Interpolated text is
+     * excluded: what it renders is decided elsewhere, so there is nothing here to read.
+     */
+    public function whereText(): Query
+    {
+        return new Query(fn () => $this->nodes(), static fn (Element $element): bool => $element->isStaticText());
+    }
+
+    /**
      * Elements of one of the given tags.
      */
     public function whereTag(string ...$tags): Query
