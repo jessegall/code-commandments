@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Discovery;
 
 /**
- * Every teaching skill that ships, discovered from the `Backend/` and `Frontend/`
- * folders — the skill twin of {@see \JesseGall\CodeCommandments\Detectors\Catalog}
- * and {@see \JesseGall\CodeCommandments\Sins\Catalog}. Ordered by each skill's
- * {@see Skill::$order} so the consumer briefing keeps its curated sequence
- * (`fix-at-the-source` first). A consumer's own `Skills/` class auto-enrols.
+ * Every teaching skill in force for a project — the ones that ship, discovered from the `Backend/`
+ * and `Frontend/` folders, PLUS the ones the project wrote into `.commandments/custom/`
+ * ({@see Custom::skills}) — the skill twin of {@see \JesseGall\CodeCommandments\Detectors\Catalog}
+ * and {@see \JesseGall\CodeCommandments\Sins\Catalog}. A project's own skill is a first-class
+ * member: it is published, briefed and counted exactly like a shipped one, so an agent is told it
+ * exists (#443). Ordered by each skill's {@see Skill::$order} so the consumer briefing keeps its
+ * curated sequence (`fix-at-the-source` first).
  */
 final class Catalog
 {
@@ -36,13 +39,14 @@ final class Catalog
     }
 
     /**
-     * Every skill, both engines, in briefing order.
+     * Every skill in force for $project — both engines and the project's own — in briefing order.
+     * $project is the consumer root the custom folder is read from; null resolves the current one.
      *
      * @return list<Skill>
      */
-    public static function all(): array
+    public static function all(?string $project = null): array
     {
-        $skills = [...self::backend(), ...self::frontend()];
+        $skills = [...self::backend(), ...self::frontend(), ...Custom::skills($project)];
 
         usort($skills, static fn (Skill $a, Skill $b): int => $a->order <=> $b->order);
 
@@ -54,9 +58,9 @@ final class Catalog
      *
      * @return list<Skill>
      */
-    public static function inTier(Tier $tier): array
+    public static function inTier(Tier $tier, ?string $project = null): array
     {
-        return array_values(array_filter(self::all(), static fn (Skill $skill): bool => $skill->tier === $tier));
+        return array_values(array_filter(self::all($project), static fn (Skill $skill): bool => $skill->tier === $tier));
     }
 
     /**

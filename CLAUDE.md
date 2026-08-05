@@ -219,7 +219,9 @@ config composes, so a `->detector(...)` line can name a class no autoloader know
 auto-RUNS — a detector still earns its place in `$config->detector(...)` — but everything AROUND the
 run treats it as a first-class citizen: a project skill is published by `sync` through the very same
 {@see Skills\SkillRenderer} as a shipped one, projecting its own sins into its rules and checklist,
-and `judge --list` lists a project's detectors beside the shipped set. It is also always named AS the
+and BRIEFED like one — {@see Skills\Catalog} discovers a project's skills beside the shipped set, so the
+consumer's CLAUDE.md tier lists name it (marked as the project's own) instead of leaving an agent unaware
+that the skill its finding points at exists (#443) — and `judge --list` lists a project's detectors beside the shipped set. It is also always named AS the
 project's: a finding from a project-local detector prints `[Name (custom)]` in the console and the
 checklist (with a note that the fix belongs in `.commandments/custom/`), and `report --detector=` refuses
 to file against it — the package cannot answer for a rule it does not ship ({@see Custom::owns} is the

@@ -318,7 +318,7 @@ final class Sync implements Command
     private function injectClaudeSection(string $consumer): void
     {
         $path = "{$consumer}/CLAUDE.md";
-        $block = ClaudeSection::render();
+        $block = ClaudeSection::render($consumer);
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
 
         $begin = strpos($existing, ClaudeSection::BEGIN);
@@ -354,7 +354,11 @@ final class Sync implements Command
             new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST,
         ) as $item) {
-            $item->isDir() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
+            if ($item->isDir()) {
+                @rmdir($item->getPathname());
+            } else {
+                @unlink($item->getPathname());
+            }
         }
 
         @rmdir($dir);

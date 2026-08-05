@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Custom;
+
 /**
  * Renders the auto-managed "Skills — load before you work" block injected into a
  * consumer's CLAUDE.md. The prose is fixed; the two skill lists are generated from
@@ -15,10 +17,13 @@ final class ClaudeSection
 
     public const string END = '<!-- END: code-commandments skills -->';
 
-    public static function render(): string
+    /**
+     * @param  string|null  $project  the consumer root, so its OWN skills are briefed too
+     */
+    public static function render(?string $project = null): string
     {
-        $mandatory = self::bullets(Tier::Mandatory);
-        $keepInMind = self::bullets(Tier::KeepInMind);
+        $mandatory = self::bullets(Tier::Mandatory, $project);
+        $keepInMind = self::bullets(Tier::KeepInMind, $project);
 
         $body = <<<MD
         ## Skills — load before you work
@@ -102,6 +107,11 @@ final class ClaudeSection
         it genuinely holds; if you are truly blocked, `vendor/bin/commandments until stuck` hands
         back to the user while keeping the condition in force. Never `until clear` to escape a
         condition you simply haven't met.
+
+        **Keep the to-do list the user can SEE honest.** Mirror every condition into it (TodoWrite),
+        mark an item completed the moment you strike its condition off — and keep whatever you are
+        working on at the **TOP** of the list, moving it up each time you start a new item. Its first
+        line is the one thing the user can check at a glance, so it must say where you are right now.
 
         **The same gate is where mid-work interjections go.** When the user speaks while you are
         already working, decide what their message IS: **steering** the work in hand (a correction,
@@ -191,8 +201,15 @@ final class ClaudeSection
         return self::BEGIN . "\n" . $body . "\n" . self::END;
     }
 
-    private static function bullets(Tier $tier): string
+    /**
+     * One tier's bullets, the project's own skills named AS the project's — a rule it wrote is fixed
+     * and edited in `.commandments/custom/`, never upstream, so the briefing says whose it is (#414).
+     */
+    private static function bullets(Tier $tier, ?string $project): string
     {
-        return implode("\n", array_map(static fn (Skill $skill): string => $skill->bullet(), Catalog::inTier($tier)));
+        $bullet = static fn (Skill $skill): string => $skill->bullet()
+            . (Custom::owns($skill, $project) ? ' _(this project\'s own — `.commandments/custom/`)_' : '');
+
+        return implode("\n", array_map($bullet, Catalog::inTier($tier, $project)));
     }
 }
