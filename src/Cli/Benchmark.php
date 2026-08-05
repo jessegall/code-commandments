@@ -58,7 +58,7 @@ final class Benchmark
             $sin = $detector->sin();
 
             foreach ($matches as $match) {
-                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file->path, $match->location(), $match->scope());
+                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope());
             }
         }
 

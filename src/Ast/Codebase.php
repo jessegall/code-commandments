@@ -33,6 +33,7 @@ use PhpParser\Node\Stmt\TraitUse;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Enum_;
+use PhpParser\Node\Stmt\Interface_;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\UnionType;
@@ -365,6 +366,15 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Every INTERFACE declaration — the contract side of the codebase, which {@see whereClass}
+     * (a `Class_` selector) never matches. Refine with predicates on the node the same way.
+     */
+    public function whereInterface(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof Interface_, [Interface_::class]);
+    }
+
+    /**
      * Every method declaration. Refine with predicates on the node (return type,
      * name, …).
      */
@@ -585,10 +595,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * Does $class implement $interface — declared directly, or inherited from a
-     * parent class up the extends chain? (Interface-extends-interface is not walked;
-     * the common case is a class declaring the contract it fulfils, e.g. a cast
-     * implementing `CastsAttributes`.)
+     * Does $class implement $interface — declared directly, inherited from a parent class up the
+     * extends chain, or reached through an interface that EXTENDS it? The whole graph is walked,
+     * because marking a family with a base contract (`interface ClientAction extends Bedrock`) is
+     * how code says what it IS, and a rule that classifies by type must see through the
+     * intermediate (#448).
      */
     public function implements(?string $class, string $interface): bool
     {
@@ -596,20 +607,30 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             return false;
         }
 
-        $class = ltrim($class, '\\');
         $interface = ltrim($interface, '\\');
         $interfaces = $this->interfaceMap();
         $parents = $this->parentMap();
+        $queue = [ltrim($class, '\\')];
         $seen = [];
 
-        while ($class !== null && ! isset($seen[$class])) {
-            $seen[$class] = true;
-
-            if (in_array($interface, $interfaces[$class] ?? [], true)) {
-                return true;
+        while (($current = array_pop($queue)) !== null) {
+            if (isset($seen[$current])) {
+                continue;
             }
 
-            $class = $parents[$class] ?? null;
+            $seen[$current] = true;
+
+            foreach ($interfaces[$current] ?? [] as $contract) {
+                if ($contract === $interface) {
+                    return true;
+                }
+
+                $queue[] = $contract; // An interface carries the contracts IT extends.
+            }
+
+            if (isset($parents[$current])) {
+                $queue[] = $parents[$current];
+            }
         }
 
         return false;
@@ -1006,7 +1027,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * @return array<string, list<string>>  class FQCN => directly-implemented interface FQCNs
+     * The contract graph: what each declaration answers for DIRECTLY — a class or enum through its
+     * `implements`, and an interface through the interfaces it EXTENDS, which is the same edge under
+     * another keyword and is what lets {@see implements} see through a base contract.
+     *
+     * @return array<string, list<string>>  declaration FQCN => the interface FQCNs it names directly
      */
     private function interfaceMap(): array
     {
@@ -1018,17 +1043,19 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $finder = new NodeFinder;
 
         foreach ($this->files as $file) {
-            foreach ($finder->find($file->ast, static fn (Node $node): bool => $node instanceof Class_) as $class) {
+            foreach ($finder->find($file->ast, static fn (Node $node): bool => $node instanceof Class_ || $node instanceof Enum_ || $node instanceof Interface_) as $declaration) {
                 /**
-                 * @var Class_ $class
+                 * @var Class_|Enum_|Interface_ $declaration
                  */
-                if (($class->namespacedName ?? null) === null) {
+                if (($declaration->namespacedName ?? null) === null) {
                     continue;
                 }
 
-                $map[$class->namespacedName->toString()] = array_map(
+                $contracts = $declaration instanceof Interface_ ? $declaration->extends : $declaration->implements;
+
+                $map[$declaration->namespacedName->toString()] = array_map(
                     static fn (Name $name): string => $name->toString(),
-                    $class->implements,
+                    $contracts,
                 );
             }
         }

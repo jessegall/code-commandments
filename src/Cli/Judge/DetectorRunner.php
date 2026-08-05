@@ -89,7 +89,7 @@ final class DetectorRunner
      * Reduce a detector's matches to lightweight findings (no AST node survives —
      * only the strings the report needs).
      *
-     * @param  list<\JesseGall\CodeCommandments\Ast\NodeMatch>  $matches
+     * @param  list<\JesseGall\CodeCommandments\Located>  $matches
      * @return list<Finding>
      */
     private static function findings(string $detector, string $skill, string $sin, array $matches, Detector $rule, Codebase $codebase, bool $custom = false): array
@@ -101,7 +101,7 @@ final class DetectorRunner
             $location = $match->location();
             $twins = array_values(array_diff($buckets[spl_object_id($match)] ?? [], [$location]));
 
-            $findings[] = new Finding($detector, $skill, $sin, $match->file->path, $location, $match->scope(), $twins, $custom);
+            $findings[] = new Finding($detector, $skill, $sin, $match->file(), $location, $match->scope(), $twins, $custom);
         }
 
         return $findings;
