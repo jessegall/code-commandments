@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Doc;
+namespace JesseGall\CodeCommandments\Tests\Support;
 
-use JesseGall\CodeCommandments\Cli\Doc\GeneratedBlock;
-use JesseGall\CodeCommandments\Cli\Doc\MalformedBlock;
+use JesseGall\CodeCommandments\Support\GeneratedBlock;
+use JesseGall\CodeCommandments\Support\MalformedBlock;
 use PHPUnit\Framework\TestCase;
 
 /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Doc;
+namespace JesseGall\CodeCommandments\Support;
 
 /**
  * A document whose generated-block markers cannot be read as ONE block — two of them, a BEGIN with

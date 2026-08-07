@@ -80,6 +80,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Rules
 
+- Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
+  _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
 - Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
   _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
 - Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
@@ -90,6 +92,26 @@ If you can't point at one of those, you do **not** have an honest null — go ba
   _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
 ## Bad → good
+
+### cancelled-coalesce
+
+`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`
+
+```php
+----------[ Bad ]----------
+
+public function hasSession(?string $sessionId): bool
+{
+    return ($sessionId ?? '') !== '';
+}
+
+----------[ Good ]----------
+
+public function hasSessionStated(?string $sessionId): bool
+{
+    return $sessionId !== null && $sessionId !== '';
+}
+```
 
 ### conditional-array-spread
 
@@ -206,6 +228,7 @@ public function locateHonestly(string $email): Option
 
 ## When it fires
 
+- `??` cancelled by the comparison it sits in — `($x ?? '') !== ''` — `CancelledCoalesceDetector`
 - An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present' — `ConditionalArraySpreadDetector`
 - Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
 - Nullable callback normalised in the body instead of a Null Object default — `NullableCallbackDetector`
@@ -213,6 +236,7 @@ public function locateHonestly(string $email): Option
 
 ## Checklist
 
+- [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
 - [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
 - [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
 - [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.

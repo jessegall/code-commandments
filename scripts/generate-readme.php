@@ -198,7 +198,7 @@ $skillsBlock = "\n" . implode("\n", $skillLines) . "\n";
  * Replace the content between a `<!-- BEGIN: $name … -->` and `<!-- END: $name -->`.
  */
 $replaceSection = static function (string $readme, string $name, string $content): string {
-    $replaced = \JesseGall\CodeCommandments\Cli\Doc\GeneratedBlock::replace($readme, $name, $content);
+    $replaced = \JesseGall\CodeCommandments\Support\GeneratedBlock::replace($readme, $name, $content);
 
     if ($replaced === null) {
         fwrite(STDERR, "README {$name} markers not found.\n");

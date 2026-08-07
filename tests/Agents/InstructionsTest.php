@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Agents;
 
 use JesseGall\CodeCommandments\Agents\Instructions;
-use JesseGall\CodeCommandments\Cli\Doc\GeneratedBlock;
+use JesseGall\CodeCommandments\Support\GeneratedBlock;
 use PHPUnit\Framework\TestCase;
 
 /**

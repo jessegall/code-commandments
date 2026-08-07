@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Testing\Example;
 
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -28,7 +29,7 @@ final class SkillRenderer
     private const string FIX_AT_THE_SOURCE = 'backend/fix-at-the-source';
 
     /**
-     * @param  array<class-string<Detector>, array{bad: ?string, good: ?string}>  $examples
+     * @param  array<class-string<Detector>, Example>  $examples
      */
     public function render(Skill $skill, array $examples = []): string
     {
@@ -136,14 +137,14 @@ final class SkillRenderer
      * about, and a shared example names every sin it covers rather than the first alone.
      *
      * @param  list<Sin>  $sins
-     * @param  array<class-string, array{bad: ?string, good: ?string}>  $examples
+     * @param  array<class-string, Example>  $examples
      */
     private function badGood(array $sins, array $examples): string
     {
         $detectors = $this->detectorsBySin();
 
         /**
-         * @var array<string, array{example: array{bad: ?string, good: ?string}, sins: list<Sin>}> $grouped
+         * @var array<string, array{example: Example, sins: list<Sin>}> $grouped
          */
         $grouped = [];
 
@@ -158,9 +159,9 @@ final class SkillRenderer
             // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
             // shows once when the fix is the same, but distinct fixes of the same bad
             // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
-            $key = ($example['bad'] ?? '') . "\0" . ($example['good'] ?? '');
+            $key = ($example->bad ?? '') . "\0" . ($example->good ?? '');
 
-            if (($example['bad'] ?? '') === '') {
+            if (($example->bad ?? '') === '') {
                 $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
             }
 
@@ -184,20 +185,19 @@ final class SkillRenderer
      * example stands on its own instead of relying on its position in the stack.
      *
      * @param  list<Sin>  $sins  every sin this one example demonstrates
-     * @param  array{bad: ?string, good: ?string}  $example
      */
-    private function example(array $sins, array $example): string
+    private function example(array $sins, Example $example): string
     {
         $parts = [];
 
         // A banner rather than a `// Bad` comment: the halves are the two things a reader is here to
         // compare, and a comment line reads as part of the code beneath it.
-        if (($example['bad'] ?? null) !== null) {
-            $parts[] = self::banner('Bad') . "\n\n{$example['bad']}";
+        if ($example->bad !== null) {
+            $parts[] = self::banner('Bad') . "\n\n{$example->bad}";
         }
 
-        if (($example['good'] ?? null) !== null) {
-            $parts[] = self::banner('Good') . "\n\n{$example['good']}";
+        if ($example->good !== null) {
+            $parts[] = self::banner('Good') . "\n\n{$example->good}";
         }
 
         if ($parts === [] || $sins === []) {

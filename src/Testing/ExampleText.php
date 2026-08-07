@@ -35,19 +35,18 @@ final class ExampleText
      *
      * @param  list<array<string, mixed>>  $bad
      * @param  list<array<string, mixed>>  $good
-     * @return array{bad: mixed, good: mixed}
      */
-    public static function pair(array $bad, array $good, string $key): array
+    public static function pair(array $bad, array $good, string $key): Example
     {
         foreach ($bad as $b) {
             foreach ($good as $g) {
                 if ($b[$key] === $g[$key]) {
-                    return ['bad' => $b['source'], 'good' => $g['source']];
+                    return new Example($b['source'], $g['source']);
                 }
             }
         }
 
-        return ['bad' => $bad[0]['source'] ?? null, 'good' => $good[0]['source'] ?? null];
+        return new Example($bad[0]['source'] ?? null, $good[0]['source'] ?? null);
     }
 
     /**
@@ -62,9 +61,10 @@ final class ExampleText
      */
     public static function lifted(string $source): string
     {
+        // `explode` always yields at least one element, so the first line is never absent.
         $lines = explode("\n", ltrim($source, "\n"));
 
-        if (trim($lines[0] ?? '') !== '/**') {
+        if (trim($lines[0]) !== '/**') {
             return $source;
         }
 
@@ -91,20 +91,6 @@ final class ExampleText
         $code = array_slice($lines, $at);
 
         return $prose === [] ? implode("\n", $code) : implode("\n", [...$prose, '', ...$code]);
-    }
-
-    /**
-     * Both halves of a pair lifted, when this skill's examples want lifting.
-     *
-     * @param  array{bad: mixed, good: mixed}  $pair
-     * @return array{bad: ?string, good: ?string}
-     */
-    public static function liftedPair(array $pair, bool $lift): array
-    {
-        return [
-            'bad' => is_string($pair['bad']) && $lift ? self::lifted($pair['bad']) : $pair['bad'],
-            'good' => is_string($pair['good']) && $lift ? self::lifted($pair['good']) : $pair['good'],
-        ];
     }
 
     /**

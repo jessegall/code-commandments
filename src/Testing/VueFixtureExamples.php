@@ -21,7 +21,7 @@ final class VueFixtureExamples
 {
     /**
      * @param  list<Detector>  $detectors
-     * @return array<class-string<Detector>, array{bad: ?string, good: ?string}>
+     * @return array<class-string<Detector>, Example>
      */
     public static function extract(Codebase $codebase, array $detectors): array
     {
@@ -33,15 +33,13 @@ final class VueFixtureExamples
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
             $bad = ExampleText::forKeys($sinful, $keys);
-            $pair = ExampleText::pair($bad, ExampleText::forKeys($righteous, $keys), 'file');
+            $example = ExampleText::pair($bad, ExampleText::forKeys($righteous, $keys), 'file');
 
             // A repeated block shown once is not repeated — the same rule as the backend's
             // duplicates, asked of the same interface, and labelled with the component it is in.
-            if ($detector instanceof RecurrenceDetector && count($bad) > 1) {
-                $pair['bad'] = ExampleText::group($bad, 'file', lift: false, open: '<!--', close: ' -->');
-            }
-
-            $examples[$detector::class] = $pair;
+            $examples[$detector::class] = $detector instanceof RecurrenceDetector && count($bad) > 1
+                ? $example->withBad(ExampleText::group($bad, 'file', lift: false, open: '<!--', close: ' -->'))
+                : $example;
         }
 
         return $examples;
@@ -50,7 +48,7 @@ final class VueFixtureExamples
     /**
      * @param  list<array{file: string, source: string}>  $bad
      * @param  list<array{file: string, source: string}>  $good
-     * @return array{bad: ?string, good: ?string}
+     * @return Example
      *
      * @param  array<string, list<array{file: string, source: string}>>  $sources
      * @param  list<string>  $keys

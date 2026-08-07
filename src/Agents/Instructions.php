@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Agents;
 
-use JesseGall\CodeCommandments\Cli\Doc\GeneratedBlock;
-use JesseGall\CodeCommandments\Cli\Doc\MalformedBlock;
+use JesseGall\CodeCommandments\Support\GeneratedBlock;
+use JesseGall\CodeCommandments\Support\MalformedBlock;
 use JesseGall\CodeCommandments\Support\File;
 
 /**
@@ -38,10 +38,17 @@ final class Instructions
             return false;
         }
 
-        $original = is_file($this->path) ? (string) file_get_contents($this->path) : null;
-        $document = $this->withoutBom($original ?? '');
-        $eol = $this->endOfLine($document);
         $block = GeneratedBlock::begin($name, 'composer update') . "\n" . trim($body) . "\n" . GeneratedBlock::end($name);
+
+        // No file yet is its own case, answered first. Treating it as an empty document would ask
+        // every step below to reason about a document nobody wrote.
+        if (! is_file($this->path)) {
+            return $this->save(null, '# ' . basename($this->path, '.md') . "\n\n{$block}\n");
+        }
+
+        $original = (string) file_get_contents($this->path);
+        $document = $this->withoutBom($original);
+        $eol = $this->endOfLine($document);
 
         try {
             $updated = GeneratedBlock::replace($this->normalised($document), $name, "\n" . trim($body) . "\n");
@@ -51,9 +58,7 @@ final class Instructions
             return false;
         }
 
-        $updated ??= $original === null
-            ? "# " . basename($this->path, '.md') . "\n\n{$block}\n"
-            : rtrim($this->normalised($document), "\n") . "\n\n{$block}\n";
+        $updated ??= rtrim($this->normalised($document), "\n") . "\n\n{$block}\n";
 
         return $this->save($original, $this->restore($updated, $eol, $original));
     }

@@ -44,6 +44,10 @@ final class ConsumerRoot
     {
         $home = getenv('HOME') ?: getenv('USERPROFILE');
 
-        return is_string($home) && $home !== '' ? (realpath($home) ?: $home) : null;
+        if (! is_string($home) || $home === '') {
+            return null;
+        }
+
+        return realpath($home) ?: $home;
     }
 }

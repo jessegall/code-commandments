@@ -34,9 +34,11 @@ use PhpParser\Node\Expr\PreInc;
 use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
 use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\BinaryOp\Equal;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\Node\Expr\BinaryOp\LogicalAnd;
 use PhpParser\Node\Expr\BinaryOp\LogicalOr;
+use PhpParser\Node\Expr\BinaryOp\NotEqual;
 use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\Cast;
@@ -717,6 +719,35 @@ class AstNode
     public function coalesceLeft(): self
     {
         return new self($this->node instanceof Coalesce ? $this->node->left : null);
+    }
+
+    /**
+     * Is this `??` CANCELLED by the equality it sits in — `($x ?? '') !== ''`?
+     *
+     * The fallback and the thing it is compared against are the same expression, so the branch it
+     * chooses says "absent" and "equal to the fallback" with one voice. Whether that conflation is
+     * the sin depends on the fallback being a manufactured one, which the caller asks separately —
+     * this predicate answers only the shape.
+     *
+     * Sameness is asked of {@see StructuralHash}, the engine's own answer to "are these the same
+     * expression", so a fallback written differently from the operand it cancels is still caught and
+     * a genuine default (`?? 'EUR'`) never matches.
+     */
+    public function isCancelledCoalesce(): bool
+    {
+        if (! $this->node instanceof Coalesce) {
+            return false;
+        }
+
+        $parent = $this->parent()->node;
+
+        if (! $parent instanceof Identical && ! $parent instanceof NotIdentical && ! $parent instanceof Equal && ! $parent instanceof NotEqual) {
+            return false;
+        }
+
+        $other = $parent->left === $this->node ? $parent->right : $parent->left;
+
+        return StructuralHash::of($other) === StructuralHash::of($this->node->right);
     }
 
     /**

@@ -30,6 +30,14 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetector, Exemptable
 {
     /**
+     * Minimum body AST-node count to compare. Higher than the exact detector's
+     * floor (12): a fuzzy, name-and-literal-blind match collides by coincidence far
+     * more often at small sizes, so a near-duplicate must be a method of real
+     * substance — not a one-line delegation or a short array that merely rhymes.
+     */
+    private const int MIN_BODY_NODES = 20;
+
+    /**
      * The bucket a finding belongs to — its literal-blind SHAPE, the same fingerprint {@see find}
      * groups by. Declared rather than inherited from {@see RecurringPattern} because the rule here is
      * cross-bucket: a member with a byte-identical twin belongs to the exact detector instead, which
@@ -39,14 +47,6 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
     {
         return $finding instanceof NodeMatch ? $finding->shapeHash() : null;
     }
-
-    /**
-     * Minimum body AST-node count to compare. Higher than the exact detector's
-     * floor (12): a fuzzy, name-and-literal-blind match collides by coincidence far
-     * more often at small sizes, so a near-duplicate must be a method of real
-     * substance — not a one-line delegation or a short array that merely rhymes.
-     */
-    private const int MIN_BODY_NODES = 20;
 
     public function sin(): Sin
     {

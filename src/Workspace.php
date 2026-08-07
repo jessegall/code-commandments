@@ -66,7 +66,11 @@ final class Workspace
      */
     public static function at(string $root, ?string $sessionId = null): self
     {
-        return new self($root, ($sessionId ?? '') !== '' ? $sessionId : (getenv('CLAUDE_CODE_SESSION_ID') ?: null));
+        if (($sessionId ?? '') !== '') {
+            return new self($root, $sessionId);
+        }
+
+        return new self($root, getenv('CLAUDE_CODE_SESSION_ID') ?: null);
     }
 
     /**

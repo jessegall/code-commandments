@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Doc;
+namespace JesseGall\CodeCommandments\Support;
 
 /**
  * The `<!-- BEGIN: name … -->` / `<!-- END: name -->` block a document reserves for generated
