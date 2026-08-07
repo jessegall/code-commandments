@@ -16,6 +16,15 @@ final class ComponentGraph
      */
     private function __construct(private readonly array $incoming) {}
 
+    /**
+     * The graph of NO components — nothing renders anything, so no usage is ever found. What
+     * {@see PropTypes::none} is built over.
+     */
+    public static function empty(): self
+    {
+        return new self([]);
+    }
+
     public static function of(Codebase $codebase): self
     {
         $incoming = [];

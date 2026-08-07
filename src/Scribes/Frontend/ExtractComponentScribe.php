@@ -51,7 +51,7 @@ final class ExtractComponentScribe extends RepentScribe
 
     private ?ComponentLibrary $library = null;
 
-    private ?PropTypes $propTypes = null;
+    private PropTypes $propTypes;
 
     private ?TypeOracle $oracle = null;
 
@@ -65,7 +65,10 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private array $resolved = [];
 
-    private function __construct(private readonly string $strategy) {}
+    private function __construct(private readonly string $strategy)
+    {
+        $this->propTypes = PropTypes::none();
+    }
 
     /**
      * Hand the scribe the codebase's existing components, so a boundary that an existing
@@ -82,9 +85,9 @@ final class ExtractComponentScribe extends RepentScribe
     /**
      * Hand the scribe the codebase's top-down prop typing, so a forwarded prop the source
      * can't type LOCALLY is traced up the render tree to its origin instead of falling back
-     * to `unknown`. Null disables the cross-component trace (local resolution only).
+     * to `unknown`. It starts as {@see PropTypes::none}, which traces nothing.
      */
-    public function withPropTypes(?PropTypes $propTypes): self
+    public function withPropTypes(PropTypes $propTypes): self
     {
         $this->propTypes = $propTypes;
 
@@ -764,7 +767,7 @@ final class ExtractComponentScribe extends RepentScribe
                     ?? $script->declaredType($prop)
                     ?? self::tracedType($boundary, $script, $prop)
                     ?? self::inertiaFormType($script, $prop) // a local `const x = useForm({…})`
-                    ?? $this->propTypes?->typeOf($boundary->sfc, $prop) // trace up the render tree
+                    ?? $this->propTypes->typeOf($boundary->sfc, $prop) // trace up the render tree
                     ?? 'unknown');
             }
         }

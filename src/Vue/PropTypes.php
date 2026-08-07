@@ -17,6 +17,16 @@ final class PropTypes
     public function __construct(private readonly ComponentGraph $graph) {}
 
     /**
+     * The typing that traces NOTHING — over an empty graph, so a component is asked only about its
+     * own declarations and the climb ends immediately. What a caller that has no codebase to trace
+     * through holds, instead of a null every read has to defend against.
+     */
+    public static function none(): self
+    {
+        return new self(ComponentGraph::empty());
+    }
+
+    /**
      * The type of $prop on $component — its locally declared type, or, failing that, traced
      * up the render tree to wherever the value actually originates. Null when the trail runs
      * cold.
