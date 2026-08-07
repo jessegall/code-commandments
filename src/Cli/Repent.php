@@ -20,6 +20,7 @@ use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Runs the Scribes through {@see ScribeChain}: in-place fixers then component extractors, each
@@ -66,8 +67,8 @@ final class Repent implements Command
 
     public function run(Input $input): int
     {
-        $path = rtrim($input->firstArgument() ?? '.', '/');
-        $only = $input->option('only') ?? $input->option('sin');
+        $path = rtrim($input->firstArgument()->unwrapOr('.'), '/');
+        $only = $input->option('only')->or($input->option('sin'));
         $this->ignorePackages = $input->hasFlag('ignore-package-requirements');
 
         if (! is_dir($path)) {
@@ -86,7 +87,7 @@ final class Repent implements Command
 
         // The SAME roots `judge` reads (config.php's paths()) decide what `repent` rewrites — so it
         // never touches `tests/` (or anything outside the declared roots) that judge wouldn't flag.
-        $roots = new SourceRoots()->resolve($path, $input->firstArgument() !== null);
+        $roots = new SourceRoots()->resolve($path, $input->firstArgument()->isSome());
 
         return $input->hasFlag('dry-run')
             ? $this->preview($path, $roots, $scope, $only, $input->option('dry-run'))
@@ -96,7 +97,7 @@ final class Repent implements Command
     /**
      * @param  list<string>  $roots  the declared source roots to scan and rewrite
      */
-    private function apply(string $path, array $roots, Scope $scope, ?string $only): int
+    private function apply(string $path, array $roots, Scope $scope, Option $only): int
     {
         $converged = $this->converge($roots, $scope, $only);
         $written = new RewriteApplier()->apply($converged);
@@ -203,7 +204,7 @@ final class Repent implements Command
     /**
      * @param  list<string>  $roots  the declared source roots to scan and rewrite
      */
-    private function preview(string $path, array $roots, Scope $scope, ?string $only, ?string $file): int
+    private function preview(string $path, array $roots, Scope $scope, Option $only, Option $file): int
     {
         // The converged result is diffed against pristine disk (converge writes nothing), so the
         // dry-run is exactly what an apply would produce — a fixpoint, not a single sweep.
@@ -219,9 +220,9 @@ final class Repent implements Command
             return 0;
         }
 
-        if ($file !== null) {
-            file_put_contents($file, $diff);
-            $this->out("\033[2m↳ dry-run diff written to {$file}\033[0m\n");
+        foreach ($file as $target) {
+            file_put_contents($target, $diff);
+            $this->out("\033[2m↳ dry-run diff written to {$target}\033[0m\n");
             $this->reportHint();
 
             return 0;
@@ -263,7 +264,7 @@ final class Repent implements Command
      * @param  list<string>  $roots  the declared source roots to scan and rewrite
      * @return array<string, string>  path => final content
      */
-    private function converge(array $roots, Scope $scope, ?string $only): array
+    private function converge(array $roots, Scope $scope, Option $only): array
     {
         $steps = array_values($this->chain($only)->steps());
         $overlay = new WorkingCopy();
@@ -304,7 +305,7 @@ final class Repent implements Command
      * `.commandments/repent.php` (a `fn (ScribeChain): ScribeChain`) to reorder if they
      * have one, then narrowed by `--only`.
      */
-    private function chain(?string $only): ScribeChain
+    private function chain(Option $only): ScribeChain
     {
         $chain = ScribeChain::default($this->ignorePackages ? static fn () => true : null);
         $config = Workspace::at($this->io->projectRoot())->shared('repent.php');
@@ -317,7 +318,7 @@ final class Repent implements Command
             }
         }
 
-        return $chain->matching($only);
+        return $only->mapOr($chain, static fn (string $match): ScribeChain => $chain->matching($match));
     }
 
 

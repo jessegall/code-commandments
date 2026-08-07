@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Support\Name;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * `commandments make <Name>` — scaffold a commandment of the project's OWN: the three classes a rule
@@ -50,20 +51,22 @@ final class Make implements Command
 
     public function run(Input $input): int
     {
-        $name = $input->firstArgument();
+        $named = $input->firstArgument();
 
-        if ($name === null || Name::studly($name) === '') {
+        if (! $named->isSomeAnd(static fn (string $name): bool => Name::studly($name) !== '')) {
             return HelpScreen::usage($this, 'name the commandment, e.g. `commandments make NullableElementReturn`.');
         }
 
-        $engine = Engine::parse($input->option('engine'));
+        $name = $named->unwrap();
+        $engine = $input->option('engine');
+        $parsed = $engine->mapOr(Engine::Backend, Engine::parse(...));
 
-        if ($engine === null) {
-            return HelpScreen::usage($this, "unknown --engine={$input->option('engine')} — it is `backend` or `frontend`.");
+        if ($parsed === null) {
+            return HelpScreen::usage($this, "unknown --engine={$engine->unwrap()} — it is `backend` or `frontend`.");
         }
 
         $root = getcwd();
-        $blueprint = $this->blueprint($name, $engine, $input->option('skill'), $root);
+        $blueprint = $this->blueprint($name, $parsed, $input->option('skill'), $root);
         $force = $input->hasFlag('force');
 
         if (($clash = $this->existing($blueprint, $force)) !== []) {
@@ -87,16 +90,16 @@ final class Make implements Command
      * other value becomes the slug of a new project skill; with no `--skill` at all the slug is
      * derived from the sin's own name.
      */
-    private function blueprint(string $name, Engine $engine, ?string $skill, string $root): Blueprint
+    private function blueprint(string $name, Engine $engine, Option $skill, string $root): Blueprint
     {
         $dir = Workspace::custom($root);
-        $existing = $skill === null ? null : $this->skillMatching($skill, $root);
+        $existing = $skill->mapOr(null, fn (string $query) => $this->skillMatching($query, $root));
 
         if ($existing !== null) {
             return Blueprint::of($name, $engine, $existing->slug, $existing::class, $dir);
         }
 
-        $slug = $skill ?? Name::kebab($name);
+        $slug = $skill->unwrapOr(Name::kebab($name));
 
         // A slug with no engine prefix gets this detector's, so a custom skill files itself
         // alongside the shipped ones instead of sitting loose at the top of the report.

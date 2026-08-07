@@ -34,7 +34,7 @@ final class HookRunner implements Command
 
     public function run(Input $input): int
     {
-        $class = ltrim((string) ($input->firstArgument() ?? ''), '\\');
+        $class = ltrim($input->firstArgument()->unwrapOr(''), '\\');
 
         if ($class === '' || ! class_exists($class) || ! is_subclass_of($class, Hook::class)) {
             return HelpScreen::usage($this, "'{$class}' is not a runnable " . Hook::class . '.');

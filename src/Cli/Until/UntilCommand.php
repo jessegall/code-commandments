@@ -44,13 +44,14 @@ final class UntilCommand implements Command
      * The ids in a `--blocked=2,5,9` list. Anything that is not a number is ignored rather than rejected:
      * a malformed id simply fails to account for its condition, which the coverage check then says plainly.
      *
+     * @param  list<string>  $list
      * @return list<int>
      */
-    private function ids(string $list): array
+    private function ids(array $list): array
     {
         $ids = [];
 
-        foreach (explode(',', $list) as $id) {
+        foreach ($list as $id) {
             if (trim($id) !== '') {
                 $ids[] = (int) trim($id);
             }
@@ -95,19 +96,19 @@ final class UntilCommand implements Command
     {
         $gate = UntilGate::inSession(Workspace::at($this->io->projectRoot()));
 
-        return match ($input->firstArgument('list')) {
+        return match ($input->firstArgument()->unwrapOr('list')) {
             'add', 'set' => $this->add($gate, $this->text($input, from: 1)),
             'list', 'show', 'status' => $this->list($gate),
-            'met', 'done', 'satisfied' => $this->met($gate, (int) ($input->arguments()[1] ?? '0')),
+            'met', 'done', 'satisfied' => $this->met($gate, $input->argument(1)->mapOr(0, intval(...))),
             'blocked' => $this->blocked(
                 $gate,
-                $this->ids((string) ($input->arguments()[1] ?? '')),
-                (string) $input->option('reason', ''),
+                $this->ids($input->listArgument(1)),
+                $input->option('reason')->unwrapOr(''),
             ),
             'stuck' => $this->stuck(
                 $gate,
-                $this->ids((string) $input->option('blocked', '')),
-                (string) $input->option('reason', ''),
+                $this->ids($input->list('blocked')),
+                $input->option('reason')->unwrapOr(''),
             ),
             'pause', 'hold' => $this->pause($gate),
             'resume', 'unpause', 'continue' => $this->resume($gate),

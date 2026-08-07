@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
+use JesseGall\PhpTypes\Option;
 use JesseGall\CodeCommandments\InvalidConfiguration;
 
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
@@ -62,7 +63,7 @@ final class Kernel
         }
 
         if ($input->wantsHelp()) {
-            return $this->help($named === '' ? null : $named);
+            return $this->help(Option::fromTruthy($named));
         }
 
         $command = $named === '' ? 'judge' : $named;
@@ -88,12 +89,15 @@ final class Kernel
     /**
      * The help screen for one verb, or the overview when it names none (or names one we don't have).
      */
-    private function help(?string $verb): int
+    private function help(Option $verb): int
     {
         $screen = new HelpScreen($this->commands());
-        $handler = $verb === null ? null : ($this->registry[$verb] ?? null);
+        $handler = $verb->andThen(fn (string $named): Option => Option::fromNullable($this->registry[$named] ?? null));
 
-        echo $handler === null ? $screen->overview() : $screen->page($handler);
+        echo $handler->mapOrElse(
+            static fn (): string => $screen->overview(),
+            static fn (Command $command): string => $screen->page($command),
+        );
 
         return 0;
     }

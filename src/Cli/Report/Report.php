@@ -71,15 +71,16 @@ final class Report implements Command
 
     public function run(Input $input): int
     {
-        $detector = $input->option('detector');
-        $reason = $input->option('reason');
+        $given = $input->option('reason');
         $refs = $this->references($input);
 
-        if ($reason === null) {
+        if ($given->isNone()) {
             return $this->usage('--reason is required — say what is wrong.');
         }
 
-        if ($detector !== null) {
+        $reason = $given->unwrap();
+
+        foreach ($input->option('detector') as $detector) {
             return $this->detectorReport($input, $detector, $reason, $refs);
         }
 
@@ -95,7 +96,7 @@ final class Report implements Command
             return 2;
         }
 
-        $title = '[bug-report] ' . ($input->option('title') ?? $this->summarise($reason));
+        $title = '[bug-report] ' . $input->option('title')->unwrapOrElse(fn () => $this->summarise($reason));
         $body = "**Report:**\n{$reason}\n"
             . $this->renderReferences($refs)
             . "\n_Filed via `commandments report` from a consumer project._\n";
@@ -127,13 +128,12 @@ final class Report implements Command
             return 2;
         }
 
-        $bestDesign = $input->option('best-design');
-        $bestDesign = ($bestDesign !== null && trim($bestDesign) !== '') ? $bestDesign : null;
+        $bestDesign = $input->option('best-design')->filter(static fn (string $design): bool => trim($design) !== '');
 
         // Only the design-smell detectors that opt in (RequiresBestDesign, on the detector OR its
         // sin) demand a `--best-design`; every other detector-report leaves it optional. So a
         // report against a marked detector without one is refused with the litmus.
-        if ($bestDesign === null && $this->requiresBestDesign($detector)) {
+        if ($bestDesign->isNone() && $this->requiresBestDesign($detector)) {
             fwrite(STDERR,
                 "A detector-report against {$detector} REQUIRES --best-design: the cleanest design you\n"
                 . "  can conceive for this code. The litmus — a report is only valid when the flagged code\n"
@@ -146,7 +146,7 @@ final class Report implements Command
 
         // A detector-report is a FLAT assertion — reject a reason (or a volunteered best-design) that
         // hedges, since a hedge concedes the finding is real. Deferral language is never a report.
-        if (($hedge = $this->firstHedge($reason, $bestDesign ?? '')) !== null) {
+        if (($hedge = $this->firstHedge($reason, $bestDesign->unwrapOr(''))) !== null) {
             fwrite(STDERR,
                 "✋ Your report hedges (\"{$hedge}\"). A detector-report is a FLAT assertion: the flagged\n"
                 . "  code is correct, the detector is wrong — full stop. A hedge means the finding is\n"
@@ -167,12 +167,10 @@ final class Report implements Command
 
         $body = "**Detector:** `{$detector}`\n\n"
             . "**Report (why the flagged code is CORRECT and the detector is wrong):**\n{$reason}\n\n"
-            . ($bestDesign !== null
-                ? "**Cleanest design the reporter can conceive:**\n{$bestDesign}\n\n"
+            . $bestDesign->mapOr('', static fn (string $design): string => "**Cleanest design the reporter can conceive:**\n{$design}\n\n"
                 . "> ⚖️ Maintainer litmus: a valid detector-report needs the flagged code to ALREADY BE the\n"
                 . "> cleanest design. If the design above differs from the flagged code at all, THAT design is\n"
-                . "> the owed fix — close this report; the fix is still owed.\n"
-                : '')
+                . "> the owed fix — close this report; the fix is still owed.\n")
             . $this->renderReferences($refs)
             . "\n_Filed via `commandments report` from a consumer project._\n";
 
@@ -225,9 +223,8 @@ final class Report implements Command
     {
         $values = $input->repeated('ref');
 
-        if (($file = $input->option('file')) !== null) {
-            $line = $input->option('line');
-            $values[] = $line !== null ? "{$file}:{$line}" : $file;
+        foreach ($input->option('file') as $file) {
+            $values[] = $input->option('line')->mapOr($file, static fn (string $line): string => "{$file}:{$line}");
         }
 
         return array_values(array_filter(array_map(CodeReference::parse(...), $values)));

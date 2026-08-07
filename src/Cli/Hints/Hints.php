@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Auto-fixes Spatie Data magic surface: renames non-`from…` factories to
@@ -85,13 +86,13 @@ final class Hints implements Command
     /**
      * @param  array<string, string>  $rewrites
      */
-    private function preview(array $rewrites, string $base, ?string $file): int
+    private function preview(array $rewrites, string $base, Option $file): int
     {
         $diff = new UnifiedDiff()->of($rewrites, $base);
 
-        if ($file !== null) {
-            file_put_contents($file, $diff);
-            $this->out("\033[2m↳ dry-run diff for " . count($rewrites) . " file(s) written to {$file}\033[0m\n");
+        foreach ($file as $target) {
+            file_put_contents($target, $diff);
+            $this->out("\033[2m↳ dry-run diff for " . count($rewrites) . " file(s) written to {$target}\033[0m\n");
 
             return 0;
         }

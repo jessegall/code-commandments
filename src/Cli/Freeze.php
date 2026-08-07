@@ -29,11 +29,13 @@ final class Freeze implements Command
 
     public function run(Input $input): int
     {
-        $path = $input->firstArgument();
+        $named = $input->firstArgument();
 
-        if ($path === null) {
+        if ($named->isNone()) {
             return HelpScreen::usage($this, 'Name the file to ' . $input->command() . '.');
         }
+
+        $path = $named->unwrap();
 
         if (! is_file($path)) {
             fwrite(STDERR, "No such file: {$path}\n");

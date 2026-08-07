@@ -28,9 +28,9 @@ enum Moment: string
      * Resolve the token a user typed to a moment, defaulting to {@see Complete} — the end gate is
      * the common case, so a bare `commandments checks` runs it.
      */
-    public static function fromToken(?string $token): self
+    public static function fromToken(string $token): self
     {
-        return self::tryFrom((string) $token) ?? self::Complete;
+        return self::tryFrom($token) ?? self::Complete;
     }
 
     /**

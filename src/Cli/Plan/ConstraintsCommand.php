@@ -43,7 +43,7 @@ final class ConstraintsCommand implements Command
         $plan = Config::load($root)->planExecutionSettings();
         $constraints = PlanConstraints::inSession(Workspace::at($root), $plan);
 
-        return match ($input->firstArgument('list')) {
+        return match ($input->firstArgument()->unwrapOr('list')) {
             'list' => $this->list($constraints),
             'add' => $this->add($constraints, $input),
             'check' => $this->check($constraints, $plan->baseBranch()),

@@ -16,9 +16,10 @@ final class MomentTest extends TestCase
         }
     }
 
-    public function test_from_token_defaults_to_complete(): void
+    public function test_an_unknown_token_falls_back_to_complete(): void
     {
-        $this->assertSame(Moment::Complete, Moment::fromToken(null), 'a bare `checks` runs the end gate');
+        // A token that names no moment runs the end gate. A bare `checks` — no token at all — is
+        // the CALLER's default now (`Checks::run`), so this reader never has to answer for absence.
         $this->assertSame(Moment::Complete, Moment::fromToken('nonsense'));
         $this->assertSame(Moment::Start, Moment::fromToken('start'));
     }

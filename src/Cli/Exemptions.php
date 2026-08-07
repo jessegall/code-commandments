@@ -30,9 +30,10 @@ final class Exemptions implements Command
 
     public function run(Input $input): int
     {
-        $query = $input->firstArgument();
-
-        return $query === null ? $this->listAll() : $this->listFor($query);
+        return $input->firstArgument()->mapOrElse(
+            fn () => $this->listAll(),
+            fn (string $query) => $this->listFor($query),
+        );
     }
 
     private function listAll(): int

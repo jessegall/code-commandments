@@ -46,7 +46,7 @@ final class PlanCommand implements Command
         $root = $this->io->projectRoot();
         $marker = PlanMarker::inSession(Workspace::at($root));
 
-        return match ($input->firstArgument('status')) {
+        return match ($input->firstArgument()->unwrapOr('status')) {
             'done', 'finish', 'complete' => $this->done($marker, $root),
             'stuck', 'blocked' => $this->stuck($marker, $root),
             'status' => $this->status($marker, $root),

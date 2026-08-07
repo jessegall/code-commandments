@@ -19,9 +19,9 @@ enum Engine: string
     /**
      * The engine named on the command line, or null when the word names neither.
      */
-    public static function parse(?string $name): ?self
+    public static function parse(string $name): ?self
     {
-        return $name === null ? self::Backend : self::tryFrom(strtolower($name));
+        return self::tryFrom(strtolower($name));
     }
 
     /**

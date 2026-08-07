@@ -335,7 +335,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function alwaysHandBuiltAtConstruction(): bool
     {
-        return $this->asField()->isSomeAnd(fn (ClassField $field): bool => $this->handBuiltEverywhere($field));
+        return $this->asField()->isSomeAnd(fn (ClassField $field) => $this->handBuiltEverywhere($field));
     }
 
     /**

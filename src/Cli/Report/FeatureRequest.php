@@ -29,13 +29,13 @@ final class FeatureRequest implements Command
 
     public function run(Input $input): int
     {
-        $title = $input->option('title');
-        $reason = $input->option('reason');
+        $given = $input->option('title')->zip($input->option('reason'));
 
-        if ($title === null || $reason === null) {
+        if ($given->isNone()) {
             return HelpScreen::usage($this, '--title and --reason are both required.');
         }
 
+        [$title, $reason] = $given->unwrap();
         $body = "**Proposal:**\n{$reason}\n\n_Filed via `commandments feature-request` from a consumer project._\n";
 
         return new GitHubIssue()->file("[feature-request] {$title}", $body);

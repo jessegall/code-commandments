@@ -42,7 +42,7 @@ final class TestingCommand implements Command
         $plan = Config::load($root)->planExecutionSettings();
         $testing = PlanTesting::inSession(Workspace::at($root), $plan);
 
-        return match ($input->firstArgument('show')) {
+        return match ($input->firstArgument()->unwrapOr('show')) {
             'show', 'list', 'status' => $this->show($testing),
             'set', 'use', 'choose' => $this->set($testing, $input),
             default => $this->usage(),

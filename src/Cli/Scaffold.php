@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Sins\Scaffold as ScaffoldFile;
 use JesseGall\CodeCommandments\Sins\ScaffoldTarget;
 use JesseGall\CodeCommandments\Sins\Sin;
-
+use JesseGall\PhpTypes\Option;
 /**
  * Generates reusable helpers (scaffolds) that a sin's fix needs, injected with namespace into source root.
  * Pairs with `repent` for call-site fixing; idempotent and skips existing files.
@@ -53,7 +53,7 @@ final class Scaffold implements Command
         $skipped = [];
 
         foreach (Sins::every() as $candidate) {
-            if ($sin !== null && ! $candidate->matches($sin)) {
+            if ($sin->isSomeAnd(static fn (string $query): bool => ! $candidate->matches($query))) {
                 continue;
             }
 
@@ -159,10 +159,10 @@ final class Scaffold implements Command
      * @param  list<string>  $created
      * @param  list<string>  $skipped
      */
-    private function report(array $created, array $skipped, ?string $sin, bool $dryRun): int
+    private function report(array $created, array $skipped, Option $sin, bool $dryRun): int
     {
         if ($created === [] && $skipped === []) {
-            $where = $sin === null ? 'No sin' : "--sin={$sin}";
+            $where = $sin->mapOr('No sin', static fn (string $query): string => "--sin={$query}");
             $this->out("\033[2m{$where} provides a scaffold (most fixes are domain-specific).\033[0m\n");
 
             return 0;

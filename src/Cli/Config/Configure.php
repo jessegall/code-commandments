@@ -40,12 +40,13 @@ final class Configure implements Command
     public function run(Input $input): int
     {
         $action = $input->command();
-        $query = $input->firstArgument();
+        $named = $input->firstArgument();
 
-        if ($query === null) {
+        if ($named->isNone()) {
             return HelpScreen::usage($this, "Name the sin or skill to {$action}.");
         }
 
+        $query = $named->unwrap();
         $target = $this->resolve($query);
 
         if ($target === null) {

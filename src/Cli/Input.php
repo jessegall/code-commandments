@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\PhpTypes\Option;
+
 /**
  * The parsed command line — built ONCE from `$argv` and handed to a {@see Command}. It is the
  * single place a flag is understood: a command never re-scans `$argv`, it asks the Input. Tokens
@@ -84,17 +86,26 @@ final class Input
         return $this->arguments;
     }
 
-    public function argument(int $index): ?string
+    /**
+     * The positional at $index — none when the command line did not carry one there. A caller
+     * that has a sensible default says so itself (`->unwrapOr('list')`), so the default is
+     * written where it MEANS something rather than smuggled through this reader.
+     *
+     * @return Option<string>
+     */
+    public function argument(int $index): Option
     {
-        return $this->arguments[$index] ?? null;
+        return Option::fromNullable($this->arguments[$index] ?? null);
     }
 
     /**
-     * The first positional, or $default — the common "path or subcommand" read.
+     * The first positional — the common "path or subcommand" read.
+     *
+     * @return Option<string>
      */
-    public function firstArgument(?string $default = null): ?string
+    public function firstArgument(): Option
     {
-        return $this->arguments[0] ?? $default;
+        return $this->argument(0);
     }
 
     /**
@@ -116,11 +127,14 @@ final class Input
     }
 
     /**
-     * The value of a `--name=value` option, or null when absent (or given bare).
+     * The value of a `--name=value` option — none when absent, and none when given bare
+     * (`--name` with no value is a flag; see {@see hasFlag} and {@see optional}).
+     *
+     * @return Option<string>
      */
-    public function option(string $name, ?string $default = null): ?string
+    public function option(string $name): Option
     {
-        return $this->options[$name] ?? $default;
+        return Option::fromNullable($this->options[$name] ?? null);
     }
 
     /**
@@ -160,9 +174,29 @@ final class Input
      */
     public function list(string $name): array
     {
-        $value = $this->options[$name] ?? null;
+        return self::commas($this->option($name));
+    }
 
-        return $value === null ? [] : array_values(array_filter(explode(',', $value)));
+    /**
+     * A POSITIONAL given as a comma-list (`until blocked 2,5,7`) — the positional twin of
+     * {@see list}, so a command reads either shape the same way.
+     *
+     * @return list<string>
+     */
+    public function listArgument(int $index): array
+    {
+        return self::commas($this->argument($index));
+    }
+
+    /**
+     * A comma-list value, split and emptied of blanks — absent is simply the empty list.
+     *
+     * @param  Option<string>  $value
+     * @return list<string>
+     */
+    private static function commas(Option $value): array
+    {
+        return $value->mapOr([], static fn (string $raw): array => array_values(array_filter(explode(',', $raw))));
     }
 
     /**

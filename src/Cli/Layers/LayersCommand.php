@@ -49,7 +49,7 @@ final class LayersCommand implements Command
     {
         // The incremental moves come first: they edit the DECLARED stack and never scan, so a growing
         // codebase does not have to re-propose (and hand-delete) the whole block to add one arrow.
-        return match ($input->firstArgument()) {
+        return match ($input->firstArgument()->unwrapOr('propose')) {
             'add' => $this->add($input),
             'allow' => $this->allow($input),
             default => $this->propose($input),
@@ -72,7 +72,7 @@ final class LayersCommand implements Command
         $layers = $config->layers();
         $namespace = self::normalise($namespace);
         $existing = $layers[$namespace] ?? [];
-        $added = array_values(array_diff(self::namespaces($input->option('may-use')), $existing));
+        $added = array_values(array_diff(self::namespaces($input->list('may-use')), $existing));
 
         $declared = array_key_exists($namespace, $layers);
         $layers[$namespace] = [...$existing, ...$added];
@@ -148,7 +148,7 @@ final class LayersCommand implements Command
         // The scan can be pointed anywhere; the config being proposed to is always THIS project.
         $given = $input->firstArgument();
         $project = (string) getcwd();
-        $roots = new SourceRoots()->resolve($given ?? $project, $given !== null);
+        $roots = new SourceRoots()->resolve($given->unwrapOr($project), $given->isSome());
         $graph = NamespaceGraph::forCodebase(Codebase::scan($roots));
 
         $order = $graph->dependencyOrder();
@@ -257,13 +257,9 @@ final class LayersCommand implements Command
      *
      * @return list<string>
      */
-    private static function namespaces(?string $option): array
+    private static function namespaces(array $option): array
     {
-        if ($option === null || trim($option) === '') {
-            return [];
-        }
-
-        return array_values(array_filter(array_map(self::normalise(...), explode(',', $option))));
+        return array_values(array_filter(array_map(self::normalise(...), $option)));
     }
 
     /**

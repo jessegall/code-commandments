@@ -31,6 +31,7 @@ use JesseGall\CodeCommandments\Cli\Benchmark;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Scans a path and runs Sin Detectors, outputting findings grouped by skill (filterable by --skill/--sin).
@@ -105,7 +106,8 @@ final class Judge implements Command
         $frontend = $this->select($configured['frontend'], $options->skill, $options->sin);
 
         if ($detectors === [] && $frontend === []) {
-            fwrite(STDERR, "No detector matched --skill={$options->skill} --sin={$options->sin}\n");
+            $named = "--skill={$options->skill->unwrapOr('')} --sin={$options->sin->unwrapOr('')}";
+            fwrite(STDERR, "No detector matched {$named}\n");
 
             return 2;
         }
@@ -120,7 +122,7 @@ final class Judge implements Command
 
         // Scoping to a checklist (`--repent=ID|latest`) must NOT write a new one — it
         // would clobber the very file it's reading. Force `--no-checklist` there.
-        $checklist = Scope::repent($input->raw()) !== null ? null : $options->checklist;
+        $checklist = Scope::repent($input->raw()) !== null ? Option::none() : $options->checklist;
 
         return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands(), $this->scaffoldCommands());
     }
@@ -178,7 +180,7 @@ final class Judge implements Command
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend  Vue detectors
      * @param  list<string>  $exclude
      */
-    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, ?string $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable): int
+    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, Option $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable): int
     {
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
@@ -227,11 +229,11 @@ final class Judge implements Command
         $report = new SinReport($path, $findings, $fixable, $scaffoldable);
         $this->line($report->console());
 
-        if ($checklist !== null) {
-            @mkdir(dirname($checklist), 0755, true);
-            $this->archive($checklist);
-            file_put_contents($checklist, $report->checklist());
-            $this->line("\033[2m↳ checklist written to {$checklist} — fix each item, then delete its line\033[0m");
+        foreach ($checklist as $target) {
+            @mkdir(dirname($target), 0755, true);
+            $this->archive($target);
+            file_put_contents($target, $report->checklist());
+            $this->line("\033[2m↳ checklist written to {$target} — fix each item, then delete its line\033[0m");
         }
 
         return 1;
@@ -386,16 +388,21 @@ final class Judge implements Command
      * @param  list<Detector>  $detectors
      * @return list<Detector>
      */
-    private function select(array $detectors, ?string $skill, ?string $sin): array
+    private function select(array $detectors, Option $skill, Option $sin): array
     {
         return array_values(array_filter($detectors, static function (RootDetector $candidate) use ($skill, $sin): bool {
             // `--skill` is a LENIENT slug match — `--skill=page` scopes `backend/page-objects`.
-            if ($skill !== null && ! str_contains(Sin::normalise($candidate->sin()->slug()), Sin::normalise($skill))) {
+            $misses = $skill->isSomeAnd(static fn (string $query): bool => ! str_contains(
+                Sin::normalise($candidate->sin()->slug()),
+                Sin::normalise($query),
+            ));
+
+            if ($misses) {
                 return false;
             }
 
             // `--sin` matches the sin's name OR its skill slug — `--sin=page` scopes the whole group.
-            return $sin === null || $candidate->sin()->scopes($sin);
+            return $sin->isNoneOr(static fn (string $query): bool => $candidate->sin()->scopes($query));
         }));
     }
 
@@ -415,10 +422,12 @@ final class Judge implements Command
         return false;
     }
 
-    private function deleteChecklist(?string $checklist): void
+    private function deleteChecklist(Option $checklist): void
     {
-        if ($checklist !== null && is_file($checklist)) {
-            @unlink($checklist);
+        foreach ($checklist as $target) {
+            if (is_file($target)) {
+                @unlink($target);
+            }
         }
     }
 

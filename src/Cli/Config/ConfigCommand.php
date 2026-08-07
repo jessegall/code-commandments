@@ -37,10 +37,10 @@ final class ConfigCommand implements Command
 
     public function run(Input $input): int
     {
-        return match ($input->firstArgument()) {
-            null => $this->about(),
+        return match ($input->firstArgument()->unwrapOr('about')) {
+            'about' => $this->about(),
             'reindex' => $this->reindex(),
-            default => $this->usage($input->firstArgument()),
+            default => $this->usage($input->firstArgument()->unwrap()),
         };
     }
 
@@ -94,7 +94,7 @@ final class ConfigCommand implements Command
         return 'dev';
     }
 
-    private function usage(?string $subcommand): int
+    private function usage(string $subcommand): int
     {
         return HelpScreen::usage($this, "Unknown subcommand '{$subcommand}'.");
     }

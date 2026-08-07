@@ -37,7 +37,7 @@ final class Checks implements Command
     public function run(Input $input): int
     {
         $root = ConsumerRoot::from(getcwd() ?: '.') ?? (getcwd() ?: '.');
-        $moment = Moment::fromToken($input->firstArgument());
+        $moment = $input->firstArgument()->mapOr(Moment::Complete, Moment::fromToken(...));
         $commands = $this->commands($moment, Config::load()->planExecutionSettings(), $root);
 
         if ($input->hasFlag('list')) {

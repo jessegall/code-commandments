@@ -80,7 +80,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             $source = $overlay->read($file);
 
             if ($source !== null) {
-                $components = [...$components, ...self::readable(static fn (): array => [Sfc::parse($source, $file)], $file)];
+                $components = [...$components, ...self::readable(static fn () => [Sfc::parse($source, $file)], $file)];
             }
         }
 
@@ -91,7 +91,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
             if ($source !== null) {
                 $standaloneTypes = [...$standaloneTypes, ...self::readable(
-                    static fn (): array => TypeDeclaration::fromScript(new Script($source), $file, $source),
+                    static fn () => TypeDeclaration::fromScript(new Script($source), $file, $source),
                     $file,
                 )];
             }
