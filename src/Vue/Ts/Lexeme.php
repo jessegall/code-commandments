@@ -37,18 +37,18 @@ final readonly class Lexeme
     }
 
     /**
-     * Does this lexeme OPEN a bracketed group? A depth counter asks it of every token, and asking
+     * Is this lexeme the OPENING bracket of a group? A depth counter asks it of every token, and asking
      * the token beats testing its kind and then handing its text to {@see Token}.
      */
-    public function opensGroup(): bool
+    public function isGroupOpener(): bool
     {
         return $this->isPunct() && Token::opensGroup($this->value);
     }
 
     /**
-     * Does this lexeme CLOSE a bracketed group?
+     * Is this lexeme the CLOSING bracket of a group?
      */
-    public function closesGroup(): bool
+    public function isGroupCloser(): bool
     {
         return $this->isPunct() && Token::closesGroup($this->value);
     }

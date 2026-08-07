@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Custom;
+
+use JesseGall\CodeCommandments\Cli\Judge\DetectorAttempt;
+
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
@@ -41,7 +45,7 @@ final class Benchmark
             $before = memory_get_usage();
             $start = hrtime(true);
 
-            $matches = $detector->find($codebase);
+            $matches = DetectorAttempt::of($short, Custom::owns($detector), static fn (): array => $detector->find($codebase));
 
             $seconds = (hrtime(true) - $start) / 1e9;
             $bytes = memory_get_usage() - $before;

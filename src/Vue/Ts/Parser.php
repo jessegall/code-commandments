@@ -910,9 +910,9 @@ final class Parser
                 break;
             }
 
-            if ($token->opensGroup()) {
+            if ($token->isGroupOpener()) {
                 $depth++;
-            } elseif ($token->closesGroup()) {
+            } elseif ($token->isGroupCloser()) {
                 $depth--;
             }
 
@@ -1077,9 +1077,9 @@ final class Parser
                 }
             }
 
-            if ($token->opensGroup()) {
+            if ($token->isGroupOpener()) {
                 $depth++;
-            } elseif ($token->closesGroup()) {
+            } elseif ($token->isGroupCloser()) {
                 $depth--;
             }
 

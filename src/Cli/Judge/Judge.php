@@ -372,8 +372,10 @@ final class Judge implements Command
             $parts = explode('\\', $detector::class);
             $short = end($parts);
 
-            foreach ($detector->find($codebase) as $match) {
-                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope(), custom: Custom::owns($detector));
+            $custom = Custom::owns($detector);
+
+            foreach (DetectorAttempt::of($short, $custom, static fn (): array => $detector->find($codebase)) as $match) {
+                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope(), custom: $custom);
             }
         }
 
