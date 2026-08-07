@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
-use JesseGall\CodeCommandments\Cli\State\Migration;
+use JesseGall\CodeCommandments\Cli\Migration;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\PlanExecution;

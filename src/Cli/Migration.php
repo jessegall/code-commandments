@@ -2,13 +2,17 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\State;
+namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\Cli\Until\Condition;
 use JesseGall\CodeCommandments\Cli\Until\UntilGate;
+use JesseGall\CodeCommandments\Cli\State\LegacyLines;
+use JesseGall\CodeCommandments\Cli\State\Legend;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
+use JesseGall\CodeCommandments\Cli\State\State;
 use JesseGall\CodeCommandments\Workspace;
 
 /**

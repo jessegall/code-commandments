@@ -19,7 +19,7 @@ use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
-use JesseGall\CodeCommandments\Cli\State\Migration;
+use JesseGall\CodeCommandments\Cli\Migration;
 use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\File;
 /**
