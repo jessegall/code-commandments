@@ -1104,9 +1104,9 @@ final class SpatieDataNode extends NodeMatch
         $nullable = false;
 
         foreach ($type->types as $member) {
-            if ($member instanceof Identifier && strtolower($member->toString()) === 'null') {
-                $nullable = true;
-            } elseif ($member instanceof Name && strtolower($member->toString()) === 'null') {
+            // `null` arrives as an Identifier or a Name depending on how the union was written; both
+            // say the same thing, so they are one branch.
+            if (($member instanceof Identifier || $member instanceof Name) && strtolower($member->toString()) === 'null') {
                 $nullable = true;
             } elseif ($member instanceof Name) {
                 $classes[] = ltrim($member->toString(), '\\');

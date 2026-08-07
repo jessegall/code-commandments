@@ -623,15 +623,19 @@ final class Script
             for ($j = $i + 3; $j < $count; $j++) {
                 $value = $this->tokens[$j]['value'];
 
-                if (Token::opensGroup($value)) {
-                    $depth++;
-                } elseif (Token::closesGroup($value)) {
-                    $depth--;
-                } elseif ($depth === 0 && $value === ';') {
+                // A `;` is neither an opener nor a closer, so testing for the terminator first reads
+                // the same tokens the ladder did — and leaves the depth a plain sum.
+                if ($depth === 0 && $value === ';') {
                     $to = $this->tokens[$j]['start'];
 
                     break;
                 }
+
+                $depth += match (true) {
+                    Token::opensGroup($value) => 1,
+                    Token::closesGroup($value) => -1,
+                    default => 0,
+                };
             }
 
             return trim(substr($this->source, $from, $to - $from));
