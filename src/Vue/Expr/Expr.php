@@ -218,7 +218,11 @@ final class Expr
         return $fields === [] ? null : '{ ' . implode('; ', $fields) . ' }';
     }
 
-    public function asCall(): ?array
+    /**
+     * This expression as a CALL — null when it isn't one, or when an argument cannot be read back
+     * verbatim (so nothing that forwards the call can spell it wrong).
+     */
+    public function asCall(): ?CallExpression
     {
         if ($this->kind !== ExprKind::Call) {
             return null;
@@ -242,7 +246,7 @@ final class Expr
             $arguments[] = $source;
         }
 
-        return ['name' => (string) $callee->get('name'), 'arguments' => $arguments];
+        return new CallExpression((string) $callee->get('name'), $arguments);
     }
 
     /**

@@ -534,7 +534,7 @@ final class Boundary
             foreach ($element->eventBindings() as $name => $expression) {
                 $call = $expression->asCall();
 
-                if ($call === null || ! in_array($call['name'], $locals, true)) {
+                if ($call === null || ! in_array($call->name, $locals, true)) {
                     continue;
                 }
 
@@ -542,14 +542,19 @@ final class Boundary
                 // not a forwardable function — rewriting it would mint an event literally named
                 // `emit`. Leave it, so the reach/rewrite mismatch refuses the extraction (a clean
                 // emit-reforward is a future enhancement).
-                if ($call['name'] === $emit) {
+                if ($call->name === $emit) {
                     continue;
                 }
 
                 foreach ($element->attributeSpan($name) as [$start, $end]) {
-                    $arguments = $call['arguments'] === [] ? '' : ', '.implode(', ', $call['arguments']);
-                    $edits[] = [$start, $end, "{$name}=\"\$emit('{$call['name']}'{$arguments})\""];
-                    $events[$call['name']] = max($events[$call['name']] ?? 0, count($call['arguments']));
+                    $edits[] = [$start, $end, "{$name}=\"\$emit('{$call->name}'{$call->trailingArguments()})\""];
+
+                    // An event declares the MOST arguments any handler passes it, so the first
+                    // handler seen sets the arity and a wider one raises it.
+                    if (! isset($events[$call->name]) || $events[$call->name] < $call->arity()) {
+                        $events[$call->name] = $call->arity();
+                    }
+
                     $rewrites++;
                 }
             }

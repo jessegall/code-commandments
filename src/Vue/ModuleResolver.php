@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Support\Path;
+
 /**
  * Resolves import specifiers to real files on disk—relative, aliased, and barrel/extensionless
  * paths; bare specifiers resolve to null.
@@ -23,7 +25,7 @@ final class ModuleResolver
     private static array $byRoot = [];
 
     /**
-     * @var list<array{prefix: string, dir: string}>  longest prefix first
+     * @var list<ModuleAlias>  longest prefix first
      */
     private array $aliases;
 
@@ -35,10 +37,10 @@ final class ModuleResolver
         $entries = [];
 
         foreach ($aliases as $prefix => $dir) {
-            $entries[] = ['prefix' => $prefix, 'dir' => rtrim($dir, '/')];
+            $entries[] = ModuleAlias::of($prefix, $dir);
         }
 
-        usort($entries, static fn (array $a, array $b): int => strlen($b['prefix']) <=> strlen($a['prefix']));
+        usort($entries, ModuleAlias::longestFirst(...));
 
         $this->aliases = $entries;
     }
@@ -57,21 +59,19 @@ final class ModuleResolver
 
     private static function projectRoot(string $dir): string
     {
-        while (true) {
+        $last = $dir;
+
+        foreach (Path::selfAndAncestors($dir) as $candidate) {
             foreach (self::ROOT_MARKERS as $marker) {
-                if (is_file($dir . '/' . $marker)) {
-                    return $dir;
+                if (is_file($candidate . '/' . $marker)) {
+                    return $candidate;
                 }
             }
 
-            $parent = dirname($dir);
-
-            if ($parent === $dir) {
-                return $dir; // filesystem root — no project markers, resolve relatives only
-            }
-
-            $dir = $parent;
+            $last = $candidate;
         }
+
+        return $last; // filesystem root — no project markers, resolve relatives only
     }
 
     /**
@@ -100,12 +100,8 @@ final class ModuleResolver
         }
 
         foreach ($this->aliases as $alias) {
-            if ($specifier === $alias['prefix']) {
-                return $alias['dir'];
-            }
-
-            if (str_starts_with($specifier, $alias['prefix'] . '/')) {
-                return $alias['dir'] . substr($specifier, strlen($alias['prefix']));
+            foreach ($alias->resolve($specifier) as $path) {
+                return $path;
             }
         }
 
