@@ -20,6 +20,7 @@ use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
 use JesseGall\CodeCommandments\Cli\State\Migration;
 use JesseGall\CodeCommandments\Support\Directory;
+use JesseGall\CodeCommandments\Support\File;
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration so a
  * Publishes the current skills, CLAUDE.md briefing, config surface, and Claude Code hooks
@@ -55,6 +56,7 @@ final class Sync implements Command
             return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in.');
         }
 
+        $lock = $this->lock($consumer);
         $packageRoot = dirname(__DIR__, 2);
 
         $published = $this->publishSkills("{$packageRoot}/skills/commandments", $consumer)
@@ -73,7 +75,46 @@ final class Sync implements Command
 
         fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");
 
+        $this->unlock($lock);
+
         return 0;
+    }
+
+    /**
+     * Hold the project's sync lock for the length of the run, waiting for another one to finish
+     * rather than interleaving with it. A sync clears the published skills and writes them back; two
+     * at once (a CI matrix, a second worktree, an editor firing `composer install` under a manual
+     * one) means one deleting what the other just wrote. Null when the lock cannot be taken at all,
+     * which is not worth refusing over — the lock is a courtesy, not a permission.
+     *
+     * @return ?resource
+     */
+    private function lock(string $consumer)
+    {
+        $path = Workspace::at($consumer)->shared('.sync.lock');
+
+        @mkdir(dirname($path), 0775, true);
+
+        $handle = @fopen($path, 'c');
+
+        if ($handle === false) {
+            return null;
+        }
+
+        flock($handle, LOCK_EX);
+
+        return $handle;
+    }
+
+    /**
+     * @param  ?resource  $lock
+     */
+    private function unlock($lock): void
+    {
+        if ($lock !== null) {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     /**
@@ -126,7 +167,7 @@ final class Sync implements Command
 
         if (! is_file($path) || (string) file_get_contents($path) !== $content) {
             @mkdir(dirname($path), 0777, true);
-            file_put_contents($path, $content);
+            File::write($path, $content);
         }
     }
 
@@ -221,7 +262,7 @@ final class Sync implements Command
         }
 
         if ($existing !== '') {
-            file_put_contents($path, $existing);
+            File::write($path, $existing);
         }
     }
 
@@ -281,7 +322,7 @@ final class Sync implements Command
             $dir = "{$consumer}/.claude/skills/{$skill->id()}";
 
             @mkdir($dir, 0775, true);
-            file_put_contents("{$dir}/SKILL.md", $renderer->render($skill));
+            File::write("{$dir}/SKILL.md", $renderer->render($skill));
             $count++;
         }
 
@@ -344,7 +385,7 @@ final class Sync implements Command
         }
 
         if ($updated !== $existing) {
-            file_put_contents($path, $updated);
+            File::write($path, $updated);
         }
     }
 
