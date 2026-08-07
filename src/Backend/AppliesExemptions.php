@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Packages;
+namespace JesseGall\CodeCommandments\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Packages\Exemptable;
+use JesseGall\CodeCommandments\Packages\Exemption;
+use JesseGall\CodeCommandments\Packages\ExemptBy;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 
 /**

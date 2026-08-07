@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Packages;
 
-use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\ClassAncestry;
 
 /**
  * Holds exemption rules for a tag — whole classes, class methods, global methods, and the
@@ -93,7 +93,7 @@ final class Clause
      * Does this clause exempt a reference sitting inside $attribute? False for a null one — ordinary
      * code is never covered by an attribute rule.
      */
-    public function matchesAttribute(Codebase $codebase, ?string $attribute): bool
+    public function matchesAttribute(ClassAncestry $codebase, ?string $attribute): bool
     {
         return $attribute !== null && $this->isA($codebase, ltrim($attribute, '\\'), $this->attributes);
     }
@@ -102,7 +102,7 @@ final class Clause
      * Does this clause exempt ($class, $method)? A null $method asks only the class-level rules; a
      * null $class only the global methods.
      */
-    public function matches(Codebase $codebase, ?string $class, ?string $method = null): bool
+    public function matches(ClassAncestry $codebase, ?string $class, ?string $method = null): bool
     {
         if ($class !== null && $this->isA($codebase, $class, $this->classes)) {
             return true;
@@ -128,7 +128,7 @@ final class Clause
     /**
      * @param  list<class-string>  $bases
      */
-    private function isA(Codebase $codebase, string $class, array $bases): bool
+    private function isA(ClassAncestry $codebase, string $class, array $bases): bool
     {
         return array_any($bases, static fn (string $base): bool => $codebase->isA($class, $base));
     }

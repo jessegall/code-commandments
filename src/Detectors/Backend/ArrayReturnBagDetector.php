@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Packages\AppliesExemptions;
+use JesseGall\CodeCommandments\Backend\AppliesExemptions;
 use JesseGall\CodeCommandments\Packages\ExemptBy;
 use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\ArrayReturning;

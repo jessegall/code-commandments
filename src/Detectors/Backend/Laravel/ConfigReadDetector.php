@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Packages\AppliesExemptions;
+use JesseGall\CodeCommandments\Backend\AppliesExemptions;
 use JesseGall\CodeCommandments\Packages\ExemptBy;
 use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\CompositionRoot;

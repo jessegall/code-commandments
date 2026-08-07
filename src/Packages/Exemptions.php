@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Packages;
 
-use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\ClassAncestry;
 
 /**
  * Tag-keyed exemption registry that decouples packages from detectors. Packages register
@@ -54,7 +54,7 @@ final class Exemptions
      *
      * @param  class-string|string  $tag
      */
-    public function has(string $tag, Codebase $codebase, ?string $class, ?string $method = null): bool
+    public function has(string $tag, ClassAncestry $codebase, ?string $class, ?string $method = null): bool
     {
         $clause = $this->clauses[Exemption::resolve($tag)] ?? null;
 
@@ -68,7 +68,7 @@ final class Exemptions
      *
      * @param  class-string|string  $tag
      */
-    public function hasAttribute(string $tag, Codebase $codebase, ?string $attribute): bool
+    public function hasAttribute(string $tag, ClassAncestry $codebase, ?string $attribute): bool
     {
         $clause = $this->clauses[Exemption::resolve($tag)] ?? null;
 
