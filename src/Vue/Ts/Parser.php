@@ -773,7 +773,7 @@ final class Parser
         $this->expectPunct('(');
         $params = [];
 
-        while (! $this->atPunct(')') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy(')')) {
             $rest = $this->advanceIfThreeDots();
 
             if (! $this->peek()?->isIdentifier() && ! $this->atPunct('{') && ! $this->atPunct('[')) {
@@ -817,7 +817,7 @@ final class Parser
         $this->advance(); // `(`
         $arguments = [];
 
-        while (! $this->atPunct(')') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy(')')) {
             $start = $this->peek()?->start ?? 0;
             $end = $this->consumeExpression([',', ')']);
             $arguments[] = trim(substr($this->source, $start, $end - $start));
@@ -910,9 +910,9 @@ final class Parser
                 break;
             }
 
-            if ($token->isPunct() && Token::opensGroup($token->value)) {
+            if ($token->opensGroup()) {
                 $depth++;
-            } elseif ($token->isPunct() && Token::closesGroup($token->value)) {
+            } elseif ($token->closesGroup()) {
                 $depth--;
             }
 
@@ -1077,9 +1077,9 @@ final class Parser
                 }
             }
 
-            if ($token->isPunct() && Token::opensGroup($token->value)) {
+            if ($token->opensGroup()) {
                 $depth++;
-            } elseif ($token->isPunct() && Token::closesGroup($token->value)) {
+            } elseif ($token->closesGroup()) {
                 $depth--;
             }
 

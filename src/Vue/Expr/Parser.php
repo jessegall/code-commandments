@@ -419,7 +419,7 @@ final class Parser
     {
         $params = [];
 
-        while (! $this->isPunct(')') && ! $this->isEof()) {
+        while ($this->insideGroupClosedBy(')')) {
             if ($this->isPunct('{') || $this->isPunct('[')) {
                 foreach ($this->patternNames() as $name) {
                     $params[] = new Expr(ExprKind::Identifier, ['name' => $name]);
@@ -548,7 +548,7 @@ final class Parser
         $this->expect('(');
         $arguments = [];
 
-        while (! $this->isPunct(')') && ! $this->isEof()) {
+        while ($this->insideGroupClosedBy(')')) {
             $arguments[] = $this->expression();
 
             if (! $this->isPunct(',')) {
@@ -603,6 +603,15 @@ final class Parser
         $token = $this->peek();
 
         return $token['type'] === 'punct' && $token['value'] === $value;
+    }
+
+    /**
+     * Is there more to read inside a group that ends with $closer? Stop AT the closer, and stop at
+     * EOF too, so a group whose closer never arrives cannot spin.
+     */
+    private function insideGroupClosedBy(string $closer): bool
+    {
+        return ! $this->isPunct($closer) && ! $this->isEof();
     }
 
     private function isEof(): bool
