@@ -4078,7 +4078,7 @@ class AstNode
      */
     public static function memberNameOf(?Node $expr): ?string
     {
-        if (! self::isPropertyRead($expr) && ! self::isMethodSend($expr)) {
+        if (! self::isPropertyRead($expr) && ! self::isMethodSend($expr) && ! $expr instanceof StaticCall) {
             return null;
         }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\TypeName;
+
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
@@ -164,7 +166,7 @@ final class OwnStateMask
 
         if ($type instanceof UnionType) {
             foreach ($type->types as $member) {
-                if (($member instanceof Identifier || $member instanceof Name) && strtolower($member->toString()) === 'null') {
+                if (TypeName::isNullMember($member)) {
                     return true;
                 }
             }

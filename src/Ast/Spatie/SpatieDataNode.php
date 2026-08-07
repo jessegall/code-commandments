@@ -597,13 +597,13 @@ final class SpatieDataNode extends NodeMatch
     private static function readsScopedAccessor(Node $node): bool
     {
         foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
-            if ($call->name instanceof Identifier && $call->name->toString() === 'current') {
+            if (AstNode::memberNameOf($call) === 'current') {
                 return true;
             }
         }
 
         foreach (new NodeFinder()->findInstanceOf($node, MethodCall::class) as $call) {
-            if ($call->name instanceof Identifier && $call->name->toString() === 'current') {
+            if (AstNode::memberNameOf($call) === 'current') {
                 return true;
             }
         }
@@ -1106,7 +1106,7 @@ final class SpatieDataNode extends NodeMatch
         foreach ($type->types as $member) {
             // `null` arrives as an Identifier or a Name depending on how the union was written; both
             // say the same thing, so they are one branch.
-            if (($member instanceof Identifier || $member instanceof Name) && strtolower($member->toString()) === 'null') {
+            if (TypeName::isNullMember($member)) {
                 $nullable = true;
             } elseif ($member instanceof Name) {
                 $classes[] = ltrim($member->toString(), '\\');
