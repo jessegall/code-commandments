@@ -95,8 +95,8 @@ final class NamespaceGraph
      */
     private static function declaresAnAssociation(Codebase $codebase, NodeMatch $reference): bool
     {
-        return Exemptions::has(Association::class, $codebase, null, $reference->argumentOfCall())
-            || Exemptions::hasAttribute(Association::class, $codebase, $reference->enclosingAttributeName());
+        return $codebase->exemptions()->has(Association::class, $codebase, null, $reference->argumentOfCall())
+            || $codebase->exemptions()->hasAttribute(Association::class, $codebase, $reference->enclosingAttributeName());
     }
 
     /**

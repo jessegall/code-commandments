@@ -49,8 +49,8 @@ trait AppliesExemptions
     private static function matchesExemption(string $tag, ExemptBy $scope, NodeMatch $finding, Codebase $codebase): bool
     {
         return match ($scope) {
-            ExemptBy::EnclosingClass => Exemptions::has($tag, $codebase, $finding->enclosingClassName()),
-            ExemptBy::EnclosingMethod => Exemptions::has($tag, $codebase, $finding->enclosingClassName(), $finding->enclosingFunctionName()),
+            ExemptBy::EnclosingClass => $codebase->exemptions()->has($tag, $codebase, $finding->enclosingClassName()),
+            ExemptBy::EnclosingMethod => $codebase->exemptions()->has($tag, $codebase, $finding->enclosingClassName(), $finding->enclosingFunctionName()),
         };
     }
 }

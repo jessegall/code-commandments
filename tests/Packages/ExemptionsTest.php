@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The open exemption registry — a package tags its framework's types, a detector reads the tag, and
  * neither names the other. The clause matching is the crux, so it's tested directly; the built-in
- * LaravelPackage is checked end-to-end through the static {@see Exemptions::has}.
+ * LaravelPackage is checked end-to-end through {@see Exemptions::has} on the scan.
  */
 final class ExemptionsTest extends TestCase
 {
@@ -66,9 +66,9 @@ final class ExemptionsTest extends TestCase
 
         // A DataPipe/Cast is built once and cached, so a request-scoped DI dependency would go stale —
         // exempt from array-bag AND container-reach.
-        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\HydratePipe'));
-        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\MoneyCast'));
-        $this->assertFalse(Exemptions::has(NoContainer::class, $codebase, 'App\\Plain'));
+        $this->assertTrue($codebase->exemptions()->has(NoContainer::class, $codebase, 'App\\HydratePipe'));
+        $this->assertTrue($codebase->exemptions()->has(NoContainer::class, $codebase, 'App\\MoneyCast'));
+        $this->assertFalse($codebase->exemptions()->has(NoContainer::class, $codebase, 'App\\Plain'));
     }
 
     public function test_service_providers_are_composition_roots(): void
@@ -82,8 +82,8 @@ final class ExemptionsTest extends TestCase
             }
             PHP);
 
-        $this->assertTrue(Exemptions::has(CompositionRoot::class, $codebase, 'App\\AppServiceProvider'));
-        $this->assertFalse(Exemptions::has(CompositionRoot::class, $codebase, 'App\\Plain'));
+        $this->assertTrue($codebase->exemptions()->has(CompositionRoot::class, $codebase, 'App\\AppServiceProvider'));
+        $this->assertFalse($codebase->exemptions()->has(CompositionRoot::class, $codebase, 'App\\Plain'));
     }
 
     public function test_a_clause_exempts_whole_classes_and_specific_methods_and_global_methods(): void
@@ -127,18 +127,18 @@ final class ExemptionsTest extends TestCase
             }
             PHP);
 
-        $this->assertTrue(Exemptions::has(Boundary::class, $codebase, 'App\\StoreOrder'));
-        $this->assertTrue(Exemptions::has(ArrayReturning::class, $codebase, 'App\\StoreOrder'));
-        $this->assertTrue(Exemptions::has(ContractMethod::class, $codebase, 'App\\StoreOrder', 'rules'));
-        $this->assertFalse(Exemptions::has(ContractMethod::class, $codebase, 'App\\StoreOrder', 'somethingElse'));
-        $this->assertTrue(Exemptions::has(NoContainer::class, $codebase, 'App\\MoneyCast'));
+        $this->assertTrue($codebase->exemptions()->has(Boundary::class, $codebase, 'App\\StoreOrder'));
+        $this->assertTrue($codebase->exemptions()->has(ArrayReturning::class, $codebase, 'App\\StoreOrder'));
+        $this->assertTrue($codebase->exemptions()->has(ContractMethod::class, $codebase, 'App\\StoreOrder', 'rules'));
+        $this->assertFalse($codebase->exemptions()->has(ContractMethod::class, $codebase, 'App\\StoreOrder', 'somethingElse'));
+        $this->assertTrue($codebase->exemptions()->has(NoContainer::class, $codebase, 'App\\MoneyCast'));
     }
 
     public function test_an_unregistered_tag_exempts_nothing(): void
     {
         $codebase = Codebase::fromString('<?php class Foo {}');
 
-        $this->assertFalse(Exemptions::has(ConsumerExemption::class, $codebase, 'Foo'));
+        $this->assertFalse($codebase->exemptions()->has(ConsumerExemption::class, $codebase, 'Foo'));
     }
 
     public function test_a_tag_that_is_not_an_exemption_is_rejected(): void
@@ -146,7 +146,7 @@ final class ExemptionsTest extends TestCase
         $codebase = Codebase::fromString('<?php class Foo {}');
 
         $this->expectException(\InvalidArgumentException::class);
-        Exemptions::has(self::class, $codebase, 'Foo');
+        $codebase->exemptions()->has(self::class, $codebase, 'Foo');
     }
 
     public function test_a_slug_resolves_to_its_exemption_class(): void
@@ -159,13 +159,13 @@ final class ExemptionsTest extends TestCase
     {
         $codebase = Codebase::fromString('<?php namespace App { class Widget {} }');
 
-        // Before registering: the consumer's own tag/class is unknown.
-        $this->assertFalse(Exemptions::has(ConsumerExemption::class, $codebase, 'App\\Widget'));
+        // A scan that knows only the shipped roster: the consumer's own tag/class is unknown.
+        $this->assertFalse($codebase->exemptions()->has(ConsumerExemption::class, $codebase, 'App\\Widget'));
 
-        Exemptions::usePackages(ConsumerPackage::class);
+        // The same path the CLI takes from Config::package() — the scan is HANDED the packages.
+        $withConsumer = $codebase->withExemptions(Exemptions::forPackages(ConsumerPackage::class));
 
-        // Now its exemption is live — the same path the CLI takes from Config::package().
-        $this->assertTrue(Exemptions::has(ConsumerExemption::class, $codebase, 'App\\Widget'));
+        $this->assertTrue($withConsumer->exemptions()->has(ConsumerExemption::class, $withConsumer, 'App\\Widget'));
     }
 
     public function test_a_project_can_declare_its_own_attribute_coupling_deliberate(): void
@@ -174,19 +174,13 @@ final class ExemptionsTest extends TestCase
         // deliberate" — a Clause selected calls and classes only, and an attribute is neither.
         $codebase = Codebase::fromString('<?php namespace App { class Widget {} }');
 
-        $this->assertFalse(Exemptions::hasAttribute(Association::class, $codebase, 'App\\Attributes\\BoundTo'));
+        $this->assertFalse($codebase->exemptions()->hasAttribute(Association::class, $codebase, 'App\\Attributes\\BoundTo'));
 
-        Exemptions::usePackages(AttributeBindingPackage::class);
+        $bound = $codebase->withExemptions(Exemptions::forPackages(AttributeBindingPackage::class));
 
-        $this->assertTrue(Exemptions::hasAttribute(Association::class, $codebase, 'App\\Attributes\\BoundTo'));
-        $this->assertFalse(Exemptions::hasAttribute(Association::class, $codebase, 'App\\Attributes\\Other'));
-        $this->assertFalse(Exemptions::hasAttribute(Association::class, $codebase, null), 'ordinary code is not in an attribute');
-    }
-
-    protected function tearDown(): void
-    {
-        // usePackages() sets a static; reset it so a consumer package can't leak into other tests.
-        Exemptions::usePackages();
+        $this->assertTrue($bound->exemptions()->hasAttribute(Association::class, $bound, 'App\\Attributes\\BoundTo'));
+        $this->assertFalse($bound->exemptions()->hasAttribute(Association::class, $bound, 'App\\Attributes\\Other'));
+        $this->assertFalse($bound->exemptions()->hasAttribute(Association::class, $bound, null), 'ordinary code is not in an attribute');
     }
 }
 

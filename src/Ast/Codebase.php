@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Support\NoOp;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
 use JesseGall\CodeCommandments\ExcludedPaths;
+use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
 use PhpParser\Comment\Doc;
@@ -120,7 +121,32 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      */
     private ?array $sourceByPath = null;
 
+    private ?Exemptions $exemptions = null;
+
     private function __construct(private readonly array $files) {}
+
+    /**
+     * The exemptions in force for THIS scan — what every registered package declares its own
+     * boundary types are excused from. A scan the CLI built carries the consumer's packages too
+     * ({@see scan}); one built in a test carries the shipped roster, which is what a test means by
+     * "no consumer packages".
+     */
+    public function exemptions(): Exemptions
+    {
+        return $this->exemptions ??= Exemptions::forPackages();
+    }
+
+    /**
+     * The same codebase, consulting $exemptions — how the CLI hands a scan the packages the
+     * project's config named, instead of pushing them into a static and hoping it happened first.
+     */
+    public function withExemptions(Exemptions $exemptions): self
+    {
+        $clone = clone $this;
+        $clone->exemptions = $exemptions;
+
+        return $clone;
+    }
 
     /**
      * A query match for a node — a plain {@see NodeMatch}, or the $as decorator a typed `where`

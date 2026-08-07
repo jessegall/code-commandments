@@ -57,7 +57,7 @@ final class SwallowCatchDetector implements Detector, Exemptable
 
         return $types !== [] && array_all(
             $types,
-            static fn (string $type) => Exemptions::has(ControlSignal::class, $codebase, $type),
+            static fn (string $type) => $codebase->exemptions()->has(ControlSignal::class, $codebase, $type),
         );
     }
 }

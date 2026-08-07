@@ -125,6 +125,6 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
 
     private function isContractDeclarationHook(Codebase $codebase, NodeMatch $match): bool
     {
-        return Exemptions::has(ContractMethod::class, $codebase, $match->enclosingClassName(), $match->enclosingFunctionName());
+        return $codebase->exemptions()->has(ContractMethod::class, $codebase, $match->enclosingClassName(), $match->enclosingFunctionName());
     }
 }

@@ -76,6 +76,6 @@ final class ParamResolvedFromParamDetector implements Detector, Exemptable
             return false;
         }
 
-        return Exemptions::has(Boundary::class, $codebase, $type->toString());
+        return $codebase->exemptions()->has(Boundary::class, $codebase, $type->toString());
     }
 }

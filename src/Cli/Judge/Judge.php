@@ -98,7 +98,6 @@ final class Judge implements Command
         // Apply the project's `.commandments/config.php` (disable / detector / package / configure)
         // to the shipped catalogs before the CLI `--skill`/`--sin` narrowing.
         $config = Config::load();
-        Exemptions::usePackages(...$config->packages());
 
         // `--ignore-package-requirements` lets one checkout judge ANY project's tree — a
         // package-gated rule (Spatie/Laravel/…) is kept even though THIS project doesn't
@@ -198,12 +197,16 @@ final class Judge implements Command
 
         // Pruned during the WALK, not filtered out of the findings: a monorepo's build output is
         // megabytes this run would otherwise read and parse in full before discarding every sin.
-        $excluded = ExcludedPaths::under($path, Config::load($path)->excludedPaths());
+        $config = Config::load($path);
+        $excluded = ExcludedPaths::under($path, $config->excludedPaths());
 
         $progress = new ProgressBar;
 
         $parseStart = hrtime(true);
-        $codebase = Codebase::scan($roots, $progress->phase('parsing'), excluded: $excluded);
+        // The scan CARRIES the exemptions it will be judged under — the shipped packages plus any
+        // this project's config named — so no detector depends on a static having been written first.
+        $codebase = Codebase::scan($roots, $progress->phase('parsing'), excluded: $excluded)
+            ->withExemptions(Exemptions::forPackages(...$config->packages()));
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
         if ($benchmark) {

@@ -77,20 +77,15 @@ final class SwallowCatchDetectorTest extends TestCase
             array_map(static fn ($m): string => $m->scope(), (new SwallowCatchDetector)->find($codebase)),
         );
 
-        Exemptions::usePackages(SignalPackage::class);
+        $tagged = $codebase->withExemptions(Exemptions::forPackages(SignalPackage::class));
 
         // Tagged ONCE at the base Signal (the clause matches through extends), both signal catches go
         // quiet. The `catch (Throwable)` hydration absorb and the mixed `BreakSignal | RuntimeException`
         // catch still sin — the first swallows real errors, the second still has a failing alternative.
         $this->assertSame(
             ['Engine\\Loader::hydrate', 'Engine\\Mixed_::run'],
-            array_map(static fn ($m): string => $m->scope(), (new SwallowCatchDetector)->find($codebase)),
+            array_map(static fn ($m): string => $m->scope(), (new SwallowCatchDetector)->find($tagged)),
         );
-    }
-
-    protected function tearDown(): void
-    {
-        Exemptions::usePackages();
     }
 }
 

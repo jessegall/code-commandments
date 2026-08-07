@@ -372,7 +372,7 @@ final class FeatureEnvy
      */
     private function isBoundaryType(string $owner): bool
     {
-        return Exemptions::has(Boundary::class, $this->codebase, $owner);
+        return $this->codebase->exemptions()->has(Boundary::class, $this->codebase, $owner);
     }
 
     /**

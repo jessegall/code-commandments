@@ -13,16 +13,6 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 final class Exemptions
 {
     /**
-     * The aggregated registry (every package's registrations), built once.
-     */
-    private static ?self $registry = null;
-
-    /**
-     * @var list<class-string<Package>> Consumer packages registered via config, beyond the shipped roster.
-     */
-    private static array $extra = [];
-
-    /**
      * @var array<class-string, Clause> tag => its clause
      */
     private array $clauses = [];
@@ -40,16 +30,22 @@ final class Exemptions
     }
 
     /**
-     * Register the consumer's own {@see Package} classes (from `Config::package(...)`), beyond the
-     * shipped roster — the CLI calls this once, before any detector runs, so their exemptions are
-     * live for the scan. Rebuilds the aggregated registry on the next query.
+     * Every registered package's exemptions, aggregated: the shipped roster plus any the consumer's
+     * config named. Built ONCE and handed to the scan that will consult it ({@see Codebase}), so no
+     * caller has to push a package list into a static before the first detector runs — which made
+     * the order those two things happened in load-bearing.
      *
-     * @param  class-string<Package>  ...$packages
+     * @param  class-string<Package>  ...$consumers
      */
-    public static function usePackages(string ...$packages): void
+    public static function forPackages(string ...$consumers): self
     {
-        self::$extra = $packages;
-        self::$registry = null;
+        $registry = new self();
+
+        foreach ([...Catalog::all(), ...array_map(static fn (string $class): Package => new $class, $consumers)] as $package) {
+            $package->register($registry);
+        }
+
+        return $registry;
     }
 
     /**
@@ -58,9 +54,9 @@ final class Exemptions
      *
      * @param  class-string|string  $tag
      */
-    public static function has(string $tag, Codebase $codebase, ?string $class, ?string $method = null): bool
+    public function has(string $tag, Codebase $codebase, ?string $class, ?string $method = null): bool
     {
-        $clause = self::registry()->clauses[Exemption::resolve($tag)] ?? null;
+        $clause = $this->clauses[Exemption::resolve($tag)] ?? null;
 
         return $clause !== null && $clause->matches($codebase, $class, $method);
     }
@@ -72,25 +68,10 @@ final class Exemptions
      *
      * @param  class-string|string  $tag
      */
-    public static function hasAttribute(string $tag, Codebase $codebase, ?string $attribute): bool
+    public function hasAttribute(string $tag, Codebase $codebase, ?string $attribute): bool
     {
-        $clause = self::registry()->clauses[Exemption::resolve($tag)] ?? null;
+        $clause = $this->clauses[Exemption::resolve($tag)] ?? null;
 
         return $clause !== null && $clause->matchesAttribute($codebase, $attribute);
-    }
-
-    private static function registry(): self
-    {
-        if (self::$registry !== null) {
-            return self::$registry;
-        }
-
-        $registry = new self();
-
-        foreach ([...Catalog::all(), ...array_map(static fn (string $class): Package => new $class, self::$extra)] as $package) {
-            $package->register($registry);
-        }
-
-        return self::$registry = $registry;
     }
 }
