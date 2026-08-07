@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A detector's result is reduced to a {@see \JesseGall\CodeCommandments\Cli\Judge\Finding} through the
+ * A detector's result is reduced to a {@see \JesseGall\CodeCommandments\Finding} through the
  * {@see Located} CONTRACT and nothing else. The runner used to read a `file` PROPERTY instead, so a
  * result that satisfied the published interface crashed on a null property (#446) — a rule the package
  * documents must be implementable exactly as documented.

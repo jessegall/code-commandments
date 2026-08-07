@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
-use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
+use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 use PHPUnit\Framework\TestCase;
 
 /**

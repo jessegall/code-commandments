@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
+use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 
 /**
  * `commandments layers` — read the dependency stack a project ALREADY has and propose the

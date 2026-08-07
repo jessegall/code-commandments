@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
-use JesseGall\CodeCommandments\Cli\Judge\Finding;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Detectors\Backend\Laravel\FacadeCallDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\RepeatedGuardDetector;

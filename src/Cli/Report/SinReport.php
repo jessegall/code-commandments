@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Report;
 
 
-use JesseGall\CodeCommandments\Cli\Judge\Finding;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Cli\Scaffold;
 use JesseGall\CodeCommandments\Skills\Skill;
 /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
+use JesseGall\CodeCommandments\Finding;
+
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
 

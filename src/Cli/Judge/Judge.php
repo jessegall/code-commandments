@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
+use JesseGall\CodeCommandments\Finding;
+
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Bridge\Bridge;
 use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
+use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;

@@ -12,7 +12,6 @@ use JesseGall\CodeCommandments\Detectors\Catalog as DetectorCatalog;
 use JesseGall\CodeCommandments\Packages\Catalog as PackageCatalog;
 use JesseGall\CodeCommandments\Skills\Catalog as SkillCatalog;
 
-use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;

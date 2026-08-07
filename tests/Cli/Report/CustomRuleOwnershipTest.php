@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli\Report;
 
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Judge\Finding;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Cli\Report\GitHubIssue;
 use JesseGall\CodeCommandments\Cli\Report\Report;
 use JesseGall\CodeCommandments\Cli\Report\SinReport;

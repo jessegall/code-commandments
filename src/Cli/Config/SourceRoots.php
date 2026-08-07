@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Judge;
+namespace JesseGall\CodeCommandments\Cli\Config;
 
 use JesseGall\CodeCommandments\Config;
 
-use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 /**
  * Resolves the source roots a CLI command scans — the ONE resolution `judge` and `repent` share,
  * so neither can scope differently. An explicit path is scanned exactly as given; otherwise the

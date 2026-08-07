@@ -15,7 +15,7 @@ use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Sharded;
 
 use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
-use JesseGall\CodeCommandments\Cli\Judge\Finding;
+use JesseGall\CodeCommandments\Finding;
 /**
  * The profiler that runs every detector one at a time, timing each `find()` call
  * and memory usage. Produces the same findings as the parallel runner but with

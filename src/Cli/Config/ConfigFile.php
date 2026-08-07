@@ -14,7 +14,6 @@ use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
 
-use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
 /**
  * The project's `.commandments/config.php` as an editable thing — it owns the scaffold template
  * and the read/write of the `$config->disable(…)` call that `commandments disable`/`enable`

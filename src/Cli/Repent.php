@@ -17,7 +17,7 @@ use JesseGall\CodeCommandments\WorkingCopy;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
-use JesseGall\CodeCommandments\Cli\Judge\SourceRoots;
+use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\PhpTypes\Option;

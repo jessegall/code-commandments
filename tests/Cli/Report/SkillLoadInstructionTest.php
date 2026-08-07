@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli\Report;
 
-use JesseGall\CodeCommandments\Cli\Judge\Finding;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
 use JesseGall\CodeCommandments\Skills\Skill;
 use PHPUnit\Framework\TestCase;

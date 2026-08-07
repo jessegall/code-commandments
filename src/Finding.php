@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Judge;
+namespace JesseGall\CodeCommandments;
 
 /**
  * One sin a detector flagged, reduced to the strings the report needs and nothing
