@@ -85,7 +85,7 @@ final class Migration
 
         $source = $live ?? $paused;
         $conditions = $this->conditions($source);
-        $lastId = max($this->headerOf($source) === 3 ? (int) $source[2] : 0, ...[0, ...array_map(
+        $lastId = max($this->headerOf($source) === 3 ? $source->int(2) : 0, ...[0, ...array_map(
             fn (Condition $c): int => $c->id,
             $conditions,
         )]);
@@ -100,15 +100,15 @@ final class Migration
             return $this->drop($dir, ['.until', '.until.pause', '.until.claim']);
         }
 
-        $claim = $this->legacy("{$dir}/.until.claim") ?? [];
+        $claim = $this->legacy("{$dir}/.until.claim") ?? new LegacyLines();
 
         new StateFile("{$dir}/.until", UntilGate::legend())->write(new State(
-            held_stops: (int) ($source[0] ?? 0),
+            held_stops: $source->int(0),
             todo_drift: $this->count("{$dir}/.until-todo-drift-count"),
             last_id: $lastId,
             paused: $live === null,
-            stuck: ($source[1] ?? '0') === '1',
-            claim_round: (int) ($claim[0] ?? 0),
+            stuck: $source->isFlagged(1),
+            claim_round: $claim->int(0),
         )->withItems(array_map(fn (Condition $c): string => $c->line(), $conditions)));
 
         $this->delete($dir, ['.until.pause', '.until.claim', '.until-work-count', '.until-todo-drift-count']);
@@ -128,13 +128,14 @@ final class Migration
         }
 
         $stuck = $this->legacy("{$dir}/.plan-stuck");
+        $signal = $stuck ?? new LegacyLines(); // no file at all reads as the empty signal
 
         new StateFile("{$dir}/.plan-active", PlanMarker::legend())->write(new State(
-            head: $marker[0] ?? '',
-            no_progress_nudges: (int) ($marker[1] ?? 0),
-            total_nudges: (int) ($marker[2] ?? 0),
+            head: $marker->text(0),
+            no_progress_nudges: $marker->int(1),
+            total_nudges: $marker->int(2),
             stuck: $stuck !== null,
-            stuck_at: $stuck[0] ?? '',
+            stuck_at: $signal->text(0),
         ));
 
         $this->delete($dir, ['.plan-stuck']);
@@ -154,10 +155,10 @@ final class Migration
             return null;
         }
 
-        $verified = $this->lines("{$dir}/.constraints-verified") ?? [];
+        $verified = new LegacyLines($this->lines("{$dir}/.constraints-verified") ?? []);
 
         new StateFile("{$dir}/.plan-constraints", PlanConstraints::legend())
-            ->write(new State(verified_at: $verified[0] ?? '')->withItems($rules));
+            ->write(new State(verified_at: $verified->text(0))->withItems($rules));
 
         $this->delete($dir, ['.constraints-verified']);
 
@@ -206,11 +207,11 @@ final class Migration
      *
      * @return list<string>|null
      */
-    private function legacy(string $path): ?array
+    private function legacy(string $path): ?LegacyLines
     {
         $lines = $this->lines($path);
 
-        return $lines === null || $this->isCurrent($lines) ? null : $lines;
+        return $lines === null || $this->isCurrent($lines) ? null : new LegacyLines($lines);
     }
 
     /**
@@ -252,14 +253,13 @@ final class Migration
      * The conditions of an old gate marker: `id<TAB>text` lines, or — from before stable ids — bare
      * condition texts, which take their position as their id.
      *
-     * @param  list<string>  $marker
      * @return list<Condition>
      */
-    private function conditions(array $marker): array
+    private function conditions(LegacyLines $marker): array
     {
         $conditions = [];
 
-        foreach (array_slice($marker, $this->headerOf($marker)) as $line) {
+        foreach ($marker->from($this->headerOf($marker)) as $line) {
             $condition = Condition::read($line);
             $conditions[] = $condition ?? new Condition(count($conditions) + 1, $line);
         }
@@ -270,17 +270,15 @@ final class Migration
     /**
      * How many header lines an old gate marker carries before its conditions: three once ids were
      * stable (blocks, stuck, last-id), two before that — the third line was a condition itself.
-     *
-     * @param  list<string>  $marker
      */
-    private function headerOf(array $marker): int
+    private function headerOf(LegacyLines $marker): int
     {
-        return ctype_digit($marker[2] ?? '') ? 3 : 2;
+        return $marker->isNumeric(2) ? 3 : 2;
     }
 
     private function count(string $path): int
     {
-        return (int) (($this->lines($path) ?? [])[0] ?? 0);
+        return new LegacyLines($this->lines($path) ?? [])->int(0);
     }
 
     /**
