@@ -572,11 +572,9 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * The SOURCE a file was parsed from — the overlay-aware content, so a scribe splices
-     * against exactly the bytes its node offsets index, never a stale `file_get_contents`
-     * (which, mid-`repent`, would predate the same run's earlier edits). Resolve-or-throw: a path
-     * this codebase never parsed is a mistake in the caller, and a scribe handed an empty source
-     * would splice against nothing and write the result out.
+     * The SOURCE a file was parsed from — the overlay-aware content, so a scribe splices against
+     * exactly the bytes its node offsets index, including this run's own earlier edits.
+     * Resolve-or-throw ({@see UnknownFile}): the caller names a path this codebase holds.
      */
     public function sourceOf(string $path): string
     {
