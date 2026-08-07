@@ -237,7 +237,7 @@ final class NamespaceGraph
         $order = self::topological($shape);
         $ordered = [];
 
-        foreach ([...$order['ordered'], ...$order['cyclic']] as $layer) {
+        foreach ($order->all() as $layer) {
             $ordered[$layer] = $shape[$layer];
         }
 
@@ -277,9 +277,8 @@ final class NamespaceGraph
      * with the ones no order could place, because they sit in a cycle. What a proposed layer
      * declaration reads off: the first entry may use nothing, the last may use everything before it.
      *
-     * @return array{ordered: list<string>, cyclic: list<string>}
      */
-    public function dependencyOrder(): array
+    public function dependencyOrder(): DependencyOrder
     {
         // Every namespace, including those only ever referenced — they are the bottom of the stack,
         // and an order that left them out would describe the wrong shape.
@@ -292,9 +291,8 @@ final class NamespaceGraph
      * yields the same answer.
      *
      * @param  array<string, list<string>>  $edges
-     * @return array{ordered: list<string>, cyclic: list<string>}
      */
-    private static function topological(array $edges): array
+    private static function topological(array $edges): DependencyOrder
     {
         $remaining = array_keys($edges);
         $ordered = [];
@@ -311,7 +309,7 @@ final class NamespaceGraph
             if ($free === []) {
                 sort($remaining);
 
-                return ['ordered' => $ordered, 'cyclic' => $remaining];
+                return new DependencyOrder($ordered, $remaining);
             }
 
             sort($free);
@@ -319,7 +317,7 @@ final class NamespaceGraph
             $remaining = array_values(array_diff($remaining, $free));
         }
 
-        return ['ordered' => $ordered, 'cyclic' => []];
+        return new DependencyOrder($ordered, []);
     }
 
     /**

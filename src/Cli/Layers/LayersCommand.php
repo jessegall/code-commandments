@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Layers;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Support\DependencyOrder;
 use JesseGall\CodeCommandments\Ast\Support\NamespaceGraph;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
@@ -165,13 +166,12 @@ final class LayersCommand implements Command
     }
 
     /**
-     * @param  array{ordered: list<string>, cyclic: list<string>}  $order
      * @param  list<string>  $foundation
      * @param  array<string, list<string>>  $proposed
      */
-    private function report(NamespaceGraph $graph, array $order, array $foundation, array $proposed, bool $floorOnly): void
+    private function report(NamespaceGraph $graph, DependencyOrder $order, array $foundation, array $proposed, bool $floorOnly): void
     {
-        $total = count($order['ordered']) + count($order['cyclic']);
+        $total = $order->total();
 
         $this->line("\033[1mNamespace layers\033[0m — {$total} namespaces");
 
@@ -189,11 +189,11 @@ final class LayersCommand implements Command
             $this->line(sprintf('      … and %d more', count($foundation) - 12));
         }
 
-        if ($order['cyclic'] !== []) {
+        if ($order->hasCycles()) {
             $this->line('');
             $this->line(sprintf(
                 "  \033[33m%d\033[0m sit in a cycle — declared below as they stand, each permitting the other:",
-                count($order['cyclic']),
+                count($order->cyclic),
             ));
 
             foreach (array_slice($graph->mutualPairs(), 0, 8) as [$from, $to]) {

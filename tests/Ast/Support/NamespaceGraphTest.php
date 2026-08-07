@@ -59,8 +59,8 @@ final class NamespaceGraphTest extends TestCase
     {
         $order = $this->graph($this->stack())->dependencyOrder();
 
-        $this->assertSame(['App\Core', 'App\Web'], $order['ordered']);
-        $this->assertSame([], $order['cyclic']);
+        $this->assertSame(['App\Core', 'App\Web'], $order->ordered);
+        $this->assertSame([], $order->cyclic);
     }
 
     public function test_a_cycle_is_reported_as_unorderable_rather_than_forced(): void
@@ -73,8 +73,8 @@ final class NamespaceGraphTest extends TestCase
 
         $order = $this->graph($code)->dependencyOrder();
 
-        $this->assertSame([], $order['ordered']);
-        $this->assertSame(['App\Core', 'App\Web'], $order['cyclic']);
+        $this->assertSame([], $order->ordered);
+        $this->assertSame(['App\Core', 'App\Web'], $order->cyclic);
     }
 
     public function test_a_mutual_pair_names_the_thinner_direction(): void
