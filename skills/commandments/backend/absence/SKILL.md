@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-absence
-description: Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something "can be missing". Answers when it is OK to return null and when it is a bug.
+description: "Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug."
 ---
 
 # Absence — model "might not be there" honestly
@@ -80,6 +80,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Rules
 
+- Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
+  _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
 - Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
   _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
 - Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
@@ -91,15 +93,33 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Bad → good
 
+### cancelled-coalesce
+
+`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`
+
+```php
+----------[ Bad ]----------
+
+public function hasSession(?string $sessionId): bool
+{
+    return ($sessionId ?? '') !== '';
+}
+
+----------[ Good ]----------
+
+public function hasSessionStated(?string $sessionId): bool
+{
+    return $sessionId !== null && $sessionId !== '';
+}
+```
+
 ### conditional-array-spread
 
 An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present'
 
 ```php
-// Bad
-/**
- * @return array{number: string, discount?: array{coupon: string, applied: bool}}
- */
+----------[ Bad ]----------
+
 public function lines(): array
 {
     return [
@@ -108,10 +128,8 @@ public function lines(): array
     ];
 }
 
-// Good
-/**
- * @return array{key: string, label?: string, icon?: string}
- */
+----------[ Good ]----------
+
 public function toArray(): array
 {
     return Payload::of(key: $this->key, label: $this->label, icon: $this->icon);
@@ -123,17 +141,18 @@ public function toArray(): array
 Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function byBarcode(string $barcode): ?Product
 {
     return Product::query()->where('barcode', $barcode)->first();
 }
 
-// Good
-/**
- * Resolve-or-throw: a scanned barcode must exist, so the absence is decided
- * once at the source and the return type tells the truth.
- */
+----------[ Good ]----------
+
+// Resolve-or-throw: a scanned barcode must exist, so the absence is decided
+// once at the source and the return type tells the truth.
+
 public function requireByBarcode(string $barcode): Product
 {
     return Product::query()->where('barcode', $barcode)->first()
@@ -146,15 +165,8 @@ public function requireByBarcode(string $barcode): Product
 Nullable callback normalised in the body instead of a Null Object default
 
 ```php
-// Bad
-/**
- * @template T
- *
- * @param  Closure(): T  $work
- * @param  Closure(int): void|null  $onRetry
- *
- * @return T
- */
+----------[ Bad ]----------
+
 public function run(Closure $work, Closure | null $onRetry = null): mixed
 {
     while (true) {
@@ -174,14 +186,8 @@ public function run(Closure $work, Closure | null $onRetry = null): mixed
     }
 }
 
-// Good
-/**
- * @template T
- *
- * @param  Closure(): T  $work
- *
- * @return T
- */
+----------[ Good ]----------
+
 public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 {
     while (true) {
@@ -205,13 +211,15 @@ public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function locate(string $email): ?Option
 {
     return Option::none();
 }
 
-// Good
+----------[ Good ]----------
+
 public function locateHonestly(string $email): Option
 {
     return Option::fromTruthy($email);
@@ -220,6 +228,7 @@ public function locateHonestly(string $email): Option
 
 ## When it fires
 
+- `??` cancelled by the comparison it sits in — `($x ?? '') !== ''` — `CancelledCoalesceDetector`
 - An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present' — `ConditionalArraySpreadDetector`
 - Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
 - Nullable callback normalised in the body instead of a Null Object default — `NullableCallbackDetector`
@@ -227,6 +236,7 @@ public function locateHonestly(string $email): Option
 
 ## Checklist
 
+- [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
 - [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
 - [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
 - [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.

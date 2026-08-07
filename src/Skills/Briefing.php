@@ -5,17 +5,22 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
- * Renders the auto-managed "Skills — load before you work" block injected into a
- * consumer's CLAUDE.md. The prose is fixed; the two skill lists are generated from
- * {@see Catalog}, so adding or re-tiering a skill updates the briefing.
+ * The briefing every agent reads — the block placed in a project's `AGENTS.md`, addressed to no
+ * assistant in particular: the disciplines, the skills that teach them, the commands that find and
+ * fix them. What is true of only ONE agent belongs on that agent
+ * ({@see \JesseGall\CodeCommandments\Agents\Agent::instructions}). The prose is fixed; the two
+ * skill lists come from {@see Catalog}, so adding or re-tiering a skill updates the briefing.
  */
-final class ClaudeSection
+final class Briefing
 {
-    public const string BEGIN = '<!-- BEGIN: code-commandments skills (auto-managed — do not edit between these markers) -->';
-
-    public const string END = '<!-- END: code-commandments skills -->';
+    /**
+     * The canon's own block name, distinct from the one an agent's file carries — so that where a
+     * project has made one file a link to the other, the two blocks sit side by side.
+     */
+    public const string BLOCK = 'code-commandments briefing';
 
     /**
      * @param  string|null  $project  the consumer root, so its OWN skills are briefed too
@@ -24,15 +29,17 @@ final class ClaudeSection
     {
         $mandatory = self::bullets(Tier::Mandatory, $project);
         $keepInMind = self::bullets(Tier::KeepInMind, $project);
+        $library = Workspace::LIBRARY;
 
-        $body = <<<MD
+        return <<<MD
         ## Skills — load before you work
 
-        Code style in this package lives in the code-commandments skills, installed under
-        `.claude/skills/` and loaded **via the Skill tool by the exact id in each bullet
-        below** — `commandments-backend-<name>` / `commandments-frontend-<name>` (e.g.
-        `commandments-backend-absence`). They are the source of truth for every
-        architecture/style decision — read the relevant one before writing or reviewing
+        Code style in this project lives in the code-commandments skills, published to
+        `{$library}/` and loaded **by the exact id in each bullet below** —
+        `commandments-backend-<name>` / `commandments-frontend-<name>` (e.g.
+        `commandments-backend-absence`). HOW you load one is your own business: some agents
+        have a tool for it, some a `/`-command, some want the file read. The id is the same
+        either way, and so is the rule — read the relevant skill before writing or reviewing
         code. Two tiers.
 
         ### ⚠️ THE MOST IMPORTANT RULE — TRACE TO THE SOURCE
@@ -100,18 +107,18 @@ final class ClaudeSection
         by their nature cannot move.
 
         **Stop conditions — when the user says "keep going until X".** Record it at once:
-        `vendor/bin/commandments until "<condition>"` (the user can also fire `/until <condition>`
-        themselves). While it stands you may not stop: every stop is held and sends you back to
-        VERIFY the condition — actually run the command and read the output, never assume it holds
-        because you did the work. Strike one off with `vendor/bin/commandments until met <n>` once
-        it genuinely holds; if you are truly blocked, `vendor/bin/commandments until stuck` hands
-        back to the user while keeping the condition in force. Never `until clear` to escape a
-        condition you simply haven't met.
+        `vendor/bin/commandments until "<condition>"`. While it stands you may not stop: every
+        stop is held and sends you back to VERIFY the condition — actually run the command and
+        read the output, never assume it holds because you did the work. Strike one off with
+        `vendor/bin/commandments until met <n>` once it genuinely holds; if you are truly
+        blocked, `vendor/bin/commandments until stuck` hands back to the user while keeping the
+        condition in force. Never `until clear` to escape a condition you simply haven't met.
 
-        **Keep the to-do list the user can SEE honest.** Mirror every condition into it (TodoWrite),
-        mark an item completed the moment you strike its condition off — and keep whatever you are
-        working on at the **TOP** of the list, moving it up each time you start a new item. Its first
-        line is the one thing the user can check at a glance, so it must say where you are right now.
+        **Keep the to-do list the user can SEE honest.** Mirror every condition into whatever
+        visible list your agent keeps, mark an item done the moment you strike its condition
+        off — and keep whatever you are working on at the **TOP**, moving it up each time you
+        start a new item. Its first line is the one thing the user can check at a glance, so it
+        must say where you are right now.
 
         **The same gate is where mid-work interjections go.** When the user speaks while you are
         already working, decide what their message IS: **steering** the work in hand (a correction,
@@ -130,16 +137,15 @@ final class ClaudeSection
         file (or even read past a sin while working in it), fix it at the source per the
         rule above. Every finding on code you come across is yours to resolve.
 
-        **Do the writing yourself — never delegate edits to a subagent.** You may
-        dispatch subagents ONLY for READ-ONLY work: research, codebase exploration,
-        search. EVERY write — every file edit, creation, or rewrite — must be done by
-        YOU directly, never handed to a spawned agent. A subagent holds these
-        disciplines and this project's context more shallowly than you do, so a
-        delegated edit is how violations slip in. Read-only fan-out is welcome; the
-        writing is yours alone.
+        **Do the writing yourself.** If your agent can dispatch other agents, use them ONLY
+        for READ-ONLY work: research, codebase exploration, search. EVERY write — every file
+        edit, creation, or rewrite — must be done by YOU directly, never handed to one you
+        spawned. A dispatched agent holds these disciplines and this project's context more
+        shallowly than you do, so a delegated edit is how violations slip in. Read-only
+        fan-out is welcome; the writing is yours alone.
 
         **MANDATORY LOAD — load these at the start of every coding session, before you
-        explore-to-plan or edit a single line** (via the Skill tool):
+        explore-to-plan or edit a single line:**
 
         {$mandatory}
 
@@ -197,8 +203,6 @@ final class ClaudeSection
         construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
         fixes call sites).
         MD;
-
-        return self::BEGIN . "\n" . $body . "\n" . self::END;
     }
 
     /**

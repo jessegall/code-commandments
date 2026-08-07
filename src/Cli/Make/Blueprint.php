@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Make;
 
+use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Support\Name;
 
 /**
@@ -116,12 +117,13 @@ final class Blueprint
     }
 
     /**
-     * The skill's loadable id — `commandments-<slug with slashes flattened>`, the name the agent
-     * passes to the Skill tool once `sync` has published it.
+     * The skill's loadable id — the name an agent loads it by once `sync` has published it. One
+     * home for the flatten ({@see Skill::idFor}), because the id is also the published DIRECTORY
+     * name on both sides of a link: drift leaves an agent pointed at nothing.
      */
     public function skillId(): string
     {
-        return 'commandments-' . str_replace('/', '-', $this->slug);
+        return Skill::idFor($this->slug);
     }
 
     /**

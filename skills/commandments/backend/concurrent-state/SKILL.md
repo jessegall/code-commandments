@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-concurrent-state
-description: How to model state shared across processes (web request ↔ queue worker ↔ cron) — a plain domain class with behaviour methods plus a static `::for($id): Concurrent<self>` factory that owns the cache key, default, and TTL (jessegall/concurrent). Read this FIRST whenever you reach for `Cache::get/put` with a hand-built key, a static/global for cross-request state, a polled status / progress / counter / pointer shared between a request and a worker, or `new Concurrent(...)`.
+description: "How to model state shared across processes (web request ↔ queue worker ↔ cron) — a plain domain class with behaviour methods plus a static `::for($id): Concurrent<self>` factory that owns the cache key, default, and TTL (jessegall/concurrent). Read this FIRST whenever you reach for `Cache::get/put` with a hand-built key, a static/global for cross-request state, a polled status / progress / counter / pointer shared between a request and a worker, or `new Concurrent(...)`."
 ---
 
 # Concurrent state — a plain object behind `::for()`
@@ -62,11 +62,11 @@ The house pattern (and the one you want): the wrapped value is a **plain class**
 Class `extends Concurrent` instead of composing `Concurrent<self>`
 
 ```php
-// Bad
-/**
- * Live order stage the frontend polls — but welded to the proxy by subclassing
- * instead of composing a Concurrent<self> behind ::for().
- */
+----------[ Bad ]----------
+
+// Live order stage the frontend polls — but welded to the proxy by subclassing
+// instead of composing a Concurrent<self> behind ::for().
+
 final class LiveOrderTracker extends Concurrent
 {
     public string $stage = 'received';
@@ -77,11 +77,11 @@ final class LiveOrderTracker extends Concurrent
     }
 }
 
-// Good
-/**
- * The clean twin: a plain domain object handed out thread-safe by a `::for()`
- * factory that wraps it in a `Concurrent<self>` — composition, not inheritance.
- */
+----------[ Good ]----------
+
+// The clean twin: a plain domain object handed out thread-safe by a `::for()`
+// factory that wraps it in a `Concurrent<self>` — composition, not inheritance.
+
 final class LiveOrderStage
 {
     public string $stage = 'received';

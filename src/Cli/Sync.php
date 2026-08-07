@@ -5,35 +5,31 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Workspace;
 
-use JesseGall\CodeCommandments\Custom;
-use JesseGall\CodeCommandments\Skills\ClaudeSection;
-use JesseGall\CodeCommandments\Skills\SkillRenderer;
-use JesseGall\CodeCommandments\Skills\Catalog as Skills;
+use JesseGall\CodeCommandments\Agents\Agent;
+use JesseGall\CodeCommandments\Agents\Catalog as Agents;
+use JesseGall\CodeCommandments\Agents\Instructions;
+use JesseGall\CodeCommandments\Agents\SkillLink;
+use JesseGall\CodeCommandments\Skills\Briefing;
+use JesseGall\CodeCommandments\Skills\Library;
 
-use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
 use JesseGall\CodeCommandments\Cli\State\Migration;
+use JesseGall\CodeCommandments\Support\Directory;
+use JesseGall\CodeCommandments\Support\File;
 /**
- * `commandments sync` — refresh the consumer's code-commandments integration so a
- * Publishes the current skills, CLAUDE.md briefing, config surface, and Claude Code hooks
- * into the consumer on install and every `composer update`. Idempotent; runs in the
- * consumer's working directory.
+ * `commandments sync` — refresh the consumer's code-commandments integration on install and every
+ * `composer update`. Publishes the skills into the project's library, points every {@see Agent} at
+ * them, writes the shared `AGENTS.md` briefing, and refreshes the config surface. Idempotent, and
+ * it knows nothing about any particular assistant: which folders exist is each agent's business.
  */
 final class Sync implements Command
 {
-    /**
-     * The standalone, hand-written skills — NOT the {@see Skills\Catalog} teaching skills projected
-     * from sins, but process skills that ship as-is (`executing-plans`, `until`,
-     * `writing-detectors`). Each is published flat under `.claude/skills/commandments-<slug>/`, the
-     * same convention the teaching skills use.
-     */
-    private const array STANDALONE = ['executing-plans', 'until', 'writing-detectors'];
-
     public function names(): array
     {
         return ['sync'];
@@ -41,32 +37,88 @@ final class Sync implements Command
 
     public function help(): Help
     {
-        return Help::of("Refresh this project's code-commandments integration — publish the skills, refresh the CLAUDE.md briefing and the config surface, and wire the Claude Code hooks.")
+        return Help::of("Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them.")
             ->form('sync', 'run it (idempotent; composer runs it for you on every install/update once `install` has wired it)');
     }
 
     public function run(Input $input): int
     {
-        $consumer = getcwd();
-        $packageRoot = dirname(__DIR__, 2);
+        $consumer = ConsumerRoot::from(getcwd() ?: '.');
 
-        $published = $this->publishSkills("{$packageRoot}/skills/commandments", $consumer)
-            + $this->publishStandaloneSkills("{$packageRoot}/skills", $consumer)
-            + $this->publishCustomSkills($consumer);
-        $this->publishCommands("{$packageRoot}/commands", $consumer);
-        $this->injectClaudeSection($consumer);
-        $this->ensureGitignored("{$consumer}/.gitignore");
+        if ($consumer === null) {
+            return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in.');
+        }
+
+        $lock = $this->lock($consumer);
+        $packageRoot = dirname(__DIR__, 2);
+        $agents = Agents::forProject($consumer);
+
+        // The ignore rules go in FIRST. They are pure and idempotent, and everything after this
+        // writes generated files into the project — a run that fails halfway (a project's own
+        // config.php can fatal while its skills are being rendered) should not leave a tree of them
+        // showing up as untracked.
+        $this->ensureGitignored("{$consumer}/.gitignore", $agents);
+
+        $library = new Library(Workspace::at($consumer));
+        $published = $library->publish($packageRoot);
+
+        // And the canon is written BEFORE anything points at it: an agent's own file is rewritten to
+        // import `AGENTS.md`, and a failure between the two would leave it importing a file that
+        // isn't there — which agents ignore in silence, so the briefing would simply be gone.
+        $this->injectCanon($consumer);
+        $this->wireAgents($consumer, $packageRoot, $agents, $library, $published);
+
         $this->ensureConfigStub($consumer);
         $this->ensurePlanExecution($consumer);
         $this->ensureDisableMenus($consumer);
         $this->ensureCommandmentsGitignore($consumer);
-        HookRegistry::wire("{$consumer}/.claude/settings.json", HookRegistry::forProject($consumer));
         $this->removeLegacyArtifacts($consumer);
         $this->migrateState($consumer);
 
-        fwrite(STDOUT, "↻ code-commandments synced — {$published} skills published, CLAUDE.md briefing refreshed.\n");
+        $names = implode(', ', array_map(static fn (Agent $agent): string => $agent->name(), $agents));
+
+        fwrite(STDOUT, '↻ code-commandments synced — ' . count($published) . " skills published to " . Workspace::LIBRARY . ", read by {$names}.\n");
+
+        $this->unlock($lock);
 
         return 0;
+    }
+
+    /**
+     * Hold the project's sync lock for the length of the run, waiting for another one to finish
+     * rather than interleaving with it. A sync clears the published skills and writes them back; two
+     * at once (a CI matrix, a second worktree, an editor firing `composer install` under a manual
+     * one) means one deleting what the other just wrote. Null when the lock cannot be taken at all,
+     * which is not worth refusing over — the lock is a courtesy, not a permission.
+     *
+     * @return ?resource
+     */
+    private function lock(string $consumer)
+    {
+        $path = Workspace::at($consumer)->shared('.sync.lock');
+
+        @mkdir(dirname($path), 0775, true);
+
+        $handle = @fopen($path, 'c');
+
+        if ($handle === false) {
+            return null;
+        }
+
+        flock($handle, LOCK_EX);
+
+        return $handle;
+    }
+
+    /**
+     * @param  ?resource  $lock
+     */
+    private function unlock($lock): void
+    {
+        if ($lock !== null) {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     /**
@@ -119,7 +171,7 @@ final class Sync implements Command
 
         if (! is_file($path) || (string) file_get_contents($path) !== $content) {
             @mkdir(dirname($path), 0777, true);
-            file_put_contents($path, $content);
+            File::write($path, $content);
         }
     }
 
@@ -172,37 +224,37 @@ final class Sync implements Command
     }
 
     /**
-     * Everything the package GENERATES is regenerated, not hand-authored — the judge
-     * checklist and any future state live under `.commandments/`, so its contents are
-     * ignored. The ONE exception is `.commandments/config.php`, the project's own
-     * hand-written config, which stays tracked. The published skills must sit in
-     * `.claude/skills/` for the Skill tool to find them, so they're ignored there.
-     * Re-asserted on every sync so consumers pick it up on `composer update`. Idempotent.
+     * Everything the package GENERATES is regenerated, not hand-authored — so the library and every
+     * agent's view of it are ignored. Each agent states its own entries; the library's is stated
+     * here, because it belongs to no one agent. Re-asserted on every sync, idempotent.
+     *
+     * @param  list<Agent>  $agents
      */
-    private function ensureGitignored(string $path): void
+    private function ensureGitignored(string $path, array $agents): void
     {
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
 
-        // Strip earlier RULE forms — the folder now carries its OWN `.commandments/.gitignore`
-        // (see {@see ensureCommandmentsGitignore}), so its rules no longer belong in the root: a
-        // bare `.commandments/`, the `.commandments/*` + `!config.php` pair, and the old
-        // `!repent.php` negation are all migrated out. Comments are left as-is (harmless).
-        // Also migrate the earlier published-skills rule `.claude/skills/commandments/` — it never
-        // matched the FLAT `commandments-*` dirs skills actually publish to; the glob below does.
-        $stale = ['.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php', '.claude/skills/commandments/'];
+        // Rule forms we have retired, removed by exact line so a rule the USER wrote is never taken
+        // for one of ours. The `.commandments/` family moved into that folder's own ignore file. The
+        // nested `.claude/skills/commandments/` never matched anything. And the TRAILING SLASH on
+        // the published-skills rule now actively fails: a slash means "directory only", and git
+        // records a symlink as a file, so once the published skills became links that rule stopped
+        // ignoring them. It has to go rather than sit alongside the corrected form, because the
+        // check below is a substring one — the old line would answer for the new.
+        $stale = [
+            '.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php',
+            '.claude/skills/commandments/', '.claude/skills/commandments-*/',
+        ];
         $existing = implode("\n", array_filter(
             explode("\n", $existing),
             static fn (string $line): bool => ! in_array(trim($line), $stale, true),
         ));
 
-        $entries = [
-            // Every published skill lives OUTSIDE `.commandments/` (flat under `.claude/skills/
-            // commandments-*/`), so this glob is the one root entry the package still manages.
-            '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*/',
-            // The slash commands are published the same way and for the same reason: generated, never
-            // hand-edited — a consumer's own commands in that folder stay tracked.
-            '# code-commandments published slash commands (regenerated on composer update)' => '.claude/commands/until.md',
-        ];
+        $entries = ['# code-commandments skill library (regenerated on composer update)' => Workspace::LIBRARY . '/commandments-*/'];
+
+        foreach ($agents as $agent) {
+            $entries = [...$entries, ...$agent->ignored()];
+        }
 
         foreach ($entries as $comment => $entry) {
             if (str_contains($existing, $entry)) {
@@ -214,176 +266,86 @@ final class Sync implements Command
         }
 
         if ($existing !== '') {
-            file_put_contents($path, $existing);
+            File::write($path, $existing);
         }
-    }
-
-    private function publishSkills(string $source, string $consumer): int
-    {
-        $this->removeLegacySkills($consumer);
-
-        $count = 0;
-
-        foreach (Skills::all() as $skill) {
-            $from = "{$source}/{$skill->slug}";
-            // FLAT, one level deep — Claude Code discovers `.claude/skills/<id>/SKILL.md`
-            // and the directory name IS the Skill-tool invocation (`commandments-backend-absence`).
-            // A nested `commandments/backend/absence/` is never found.
-            $to = "{$consumer}/.claude/skills/{$skill->id()}";
-
-            if (is_dir($from)) {
-                $this->copyDir($from, $to);
-                $count++;
-            }
-        }
-
-        return $count;
     }
 
     /**
-     * Publish the package's slash commands into `.claude/commands/` — the HUMAN's handle on the
-     * agent-facing verbs (currently `/until "<condition>"`). A skill teaches the agent; a command
-     * lets the user fire it in one line. Regenerated on every sync like the skills, so a consumer
-     * picks up new commands on `composer update`.
+     * The canon briefing — the one document EVERY agent is meant to read, in the file most of them
+     * already do. An agent that cannot read it gets a file of its own that imports this one, so the
+     * disciplines are written down once however many assistants a project uses.
      */
-    private function publishCommands(string $source, string $consumer): void
+    private function injectCanon(string $consumer): void
+    {
+        new Instructions("{$consumer}/AGENTS.md", $consumer)->inject(Briefing::BLOCK, Briefing::render($consumer));
+    }
+
+    /**
+     * Point each agent at what it reads: a link per skill into the library, the commands it offers a
+     * human, its own instructions file when it cannot read the canon, and whatever else it wires for
+     * itself. An agent whose folder IS the library needs none of it.
+     *
+     * @param  list<Agent>  $agents
+     * @param  list<string>  $published
+     */
+    private function wireAgents(string $consumer, string $packageRoot, array $agents, Library $library, array $published): void
+    {
+        $link = new SkillLink();
+        $canon = new Instructions("{$consumer}/AGENTS.md", $consumer);
+
+        foreach ($agents as $agent) {
+            if (($skills = $agent->skillsDir()) !== null) {
+                // The ancient nested scheme, from before skills were published flat. It belongs to
+                // the agent whose folder it is in, not to the library.
+                Directory::delete("{$consumer}/{$skills}/commandments");
+
+                foreach ($published as $id) {
+                    $link->point("{$consumer}/{$skills}/{$id}", $library->path($id));
+                }
+
+                $library->reconcile("{$consumer}/{$skills}", $published);
+            }
+
+            if (($commands = $agent->commandsDir()) !== null) {
+                $this->publishCommands("{$packageRoot}/commands", "{$consumer}/{$commands}");
+            }
+
+            $this->injectAgentInstructions($consumer, $agent, $canon);
+
+            $agent->wire($consumer);
+        }
+    }
+
+    /**
+     * An agent's own instructions file, for the one that cannot read the canon. Skipped when it
+     * turns out to BE the canon — a project may well have made `CLAUDE.md` a link to `AGENTS.md`,
+     * and writing both would put two blocks in one file.
+     */
+    private function injectAgentInstructions(string $consumer, Agent $agent, Instructions $canon): void
+    {
+        $file = $agent->instructionsFile();
+
+        if ($file === null) {
+            return;
+        }
+
+        $instructions = new Instructions("{$consumer}/{$file}", $consumer);
+
+        if (! $instructions->isSameFileAs($canon)) {
+            $instructions->inject($agent->blockName(), $agent->instructions());
+        }
+    }
+
+    /**
+     * Publish the package's commands into an agent's command folder — the HUMAN's handle on the
+     * agent-facing verbs (currently `/until "<condition>"`). A skill teaches the agent; a command
+     * lets the user fire it in one line.
+     */
+    private function publishCommands(string $source, string $target): void
     {
         foreach (glob("{$source}/*.md") ?: [] as $command) {
-            $to = "{$consumer}/.claude/commands/" . basename($command);
-
-            @mkdir(dirname($to), 0777, true);
-            copy($command, $to);
-        }
-    }
-
-    /**
-     * Publish the PROJECT's own skills — the {@see Skill} classes it wrote into
-     * `.commandments/custom/` ({@see Custom::skills}) — rendered by the SAME
-     * {@see SkillRenderer} that generates the shipped ones, into the same flat
-     * `.claude/skills/commandments-<slug>/` home. There is no second renderer and no second
-     * publishing rule: a project's rule points at a skill the agent can actually load, exactly
-     * as a shipped rule does. Regenerated every sync, so editing the Skill class is how the
-     * document changes — never the markdown.
-     */
-    private function publishCustomSkills(string $consumer): int
-    {
-        $renderer = new SkillRenderer();
-        $count = 0;
-
-        foreach (Custom::skills($consumer) as $skill) {
-            $dir = "{$consumer}/.claude/skills/{$skill->id()}";
-
-            @mkdir($dir, 0775, true);
-            file_put_contents("{$dir}/SKILL.md", $renderer->render($skill));
-            $count++;
-        }
-
-        return $count;
-    }
-
-    private function publishStandaloneSkills(string $source, string $consumer): int
-    {
-        $count = 0;
-
-        foreach (self::STANDALONE as $slug) {
-            $from = "{$source}/{$slug}";
-            $to = "{$consumer}/.claude/skills/commandments-{$slug}";
-
-            if (is_dir($from)) {
-                $this->copyDir($from, $to);
-                $count++;
-            }
-        }
-
-        return $count;
-    }
-
-    /**
-     * Clear previously-published skills before republishing the current flat set: the
-     * broken NESTED scheme (`.claude/skills/commandments/`) and any stale flat
-     * `commandments-*` dirs (so a renamed/dropped skill doesn't linger). Published skills
-     * are regenerated and gitignored, so deleting them is always safe.
-     */
-    private function removeLegacySkills(string $consumer): void
-    {
-        if (is_dir("{$consumer}/.claude/skills/commandments")) {
-            $this->deleteDir("{$consumer}/.claude/skills/commandments");
-        }
-
-        foreach (glob("{$consumer}/.claude/skills/commandments-*", GLOB_ONLYDIR) ?: [] as $stale) {
-            $this->deleteDir($stale);
-        }
-    }
-
-    private function injectClaudeSection(string $consumer): void
-    {
-        $path = "{$consumer}/CLAUDE.md";
-        $block = ClaudeSection::render($consumer);
-        $existing = is_file($path) ? (string) file_get_contents($path) : '';
-
-        $begin = strpos($existing, ClaudeSection::BEGIN);
-        $end = strpos($existing, ClaudeSection::END);
-
-        if ($begin !== false && $end !== false) {
-            $updated = substr($existing, 0, $begin) . $block . substr($existing, $end + strlen(ClaudeSection::END));
-        } elseif ($existing === '') {
-            $updated = "# CLAUDE.md\n\n{$block}\n";
-        } else {
-            // Insert the block right after the first heading/line.
-            $split = strpos($existing, "\n");
-            $head = $split === false ? $existing : substr($existing, 0, $split + 1);
-            $rest = $split === false ? '' : substr($existing, $split + 1);
-            $updated = $head . "\n" . $block . "\n" . $rest;
-        }
-
-        if ($updated !== $existing) {
-            file_put_contents($path, $updated);
-        }
-    }
-
-    private function deleteDir(string $dir): void
-    {
-        if (! is_dir($dir)) {
-            return;
-        }
-
-        /**
-         * @var \SplFileInfo $item
-         */
-        foreach (new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        ) as $item) {
-            if ($item->isDir()) {
-                @rmdir($item->getPathname());
-            } else {
-                @unlink($item->getPathname());
-            }
-        }
-
-        @rmdir($dir);
-    }
-
-    private function copyDir(string $from, string $to): void
-    {
-        if (! is_dir($to) && ! mkdir($to, 0775, true) && ! is_dir($to)) {
-            return;
-        }
-
-        /**
-         * @var \SplFileInfo $item
-         */
-        foreach (new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($from, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST,
-        ) as $item) {
-            $target = $to . '/' . substr($item->getPathname(), strlen($from) + 1);
-
-            if ($item->isDir()) {
-                @mkdir($target, 0775, true);
-            } else {
-                copy($item->getPathname(), $target);
-            }
+            @mkdir($target, 0775, true);
+            File::write($target . '/' . basename($command), (string) file_get_contents($command));
         }
     }
 }

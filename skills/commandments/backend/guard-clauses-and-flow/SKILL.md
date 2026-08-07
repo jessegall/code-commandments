@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-guard-clauses-and-flow
-description: How a method body is shaped — validate preconditions at the TOP with early return/throw, keep the body flat (no if/elseif/else ladders, no deep nesting), and run the happy path last. NEVER bury a check inline (`($x ?? throw …)->y()`) or in a nested branch. Read this BEFORE writing a method body, a precondition/null check, an `if`, or anything that throws or returns early.
+description: "How a method body is shaped — validate preconditions at the TOP with early return/throw, keep the body flat (no if/elseif/else ladders, no deep nesting), and run the happy path last. NEVER bury a check inline (`($x ?? throw …)->y()`) or in a nested branch. Read this BEFORE writing a method body, a precondition/null check, an `if`, or anything that throws or returns early."
 ---
 
 # Guard clauses & flow — check at the top, then go straight
@@ -53,10 +53,8 @@ Reach for this the moment you are about to write:
 `foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard
 
 ```php
-// Bad
-/**
- * @param  array<string, array<int, string>>  $manifest
- */
+----------[ Bad ]----------
+
 public function fanOut(string $carrier, array $manifest): void
 {
     foreach ($manifest[$carrier] ?? [] as $parcel) {
@@ -64,10 +62,8 @@ public function fanOut(string $carrier, array $manifest): void
     }
 }
 
-// Good
-/**
- * @param  array<string, array<int, string>>  $manifest
- */
+----------[ Good ]----------
+
 public function fanOutGuarded(string $carrier, array $manifest): void
 {
     if (! isset($manifest[$carrier])) {
@@ -85,10 +81,8 @@ public function fanOutGuarded(string $carrier, array $manifest): void
 `if` nested 3-deep (a pyramid — hoist guards / extract)
 
 ```php
-// Bad
-/**
- * @param  array<string, int>  $overrides
- */
+----------[ Bad ]----------
+
 public function resolve(Product $product, array $overrides, string $region): int
 {
     if (array_key_exists($region, $overrides)) {
@@ -102,13 +96,11 @@ public function resolve(Product $product, array $overrides, string $region): int
     return $product->price_cents;
 }
 
-// Good
-/**
- * The same resolution flattened: preconditions become guard clauses, so the
- * happy path runs unindented at the top level.
- *
- * @param  array<string, int>  $overrides
- */
+----------[ Good ]----------
+
+// The same resolution flattened: preconditions become guard clauses, so the
+// happy path runs unindented at the top level.
+
 public function resolveFlat(Product $product, array $overrides, string $region): int
 {
     if (! array_key_exists($region, $overrides)) {
@@ -128,7 +120,8 @@ public function resolveFlat(Product $product, array $overrides, string $region):
 if/elseif ladder of 4+ branches (should be match/dispatch)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function band(int $grams): string
 {
     if ($grams < 250) {
@@ -142,7 +135,8 @@ public function band(int $grams): string
     }
 }
 
-// Good
+----------[ Good ]----------
+
 public function bandByMatch(int $grams): string
 {
     return match (true) {
@@ -159,13 +153,15 @@ public function bandByMatch(int $grams): string
 `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function carrierName(Shipment $shipment): string
 {
     return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
 }
 
-// Good
+----------[ Good ]----------
+
 public function carrierNameGuarded(Shipment $shipment): string
 {
     if ($shipment->carrier === null) {
@@ -181,10 +177,8 @@ public function carrierNameGuarded(Shipment $shipment): string
 Loop body (multi-statement) wrapped in an `if` instead of `continue` guard
 
 ```php
-// Bad
-/**
- * @param  array<int, object>  $rows
- */
+----------[ Bad ]----------
+
 public function process(array $rows): void
 {
     foreach ($rows as $row) {
@@ -195,10 +189,8 @@ public function process(array $rows): void
     }
 }
 
-// Good
-/**
- * @param  array<int, object>  $rows
- */
+----------[ Good ]----------
+
 public function process(array $rows): void
 {
     foreach ($rows as $row) {
@@ -217,17 +209,18 @@ public function process(array $rows): void
 Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 private function band(int $score): string
 {
     return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
 }
 
-// Good
-/**
- * The same decision as a `match (true)` — each band reads on its own line, no
- * precedence trap.
- */
+----------[ Good ]----------
+
+// The same decision as a `match (true)` — each band reads on its own line, no
+// precedence trap.
+
 private function bandMatched(int $score): string
 {
     return match (true) {
@@ -243,7 +236,8 @@ private function bandMatched(int $score): string
 a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function nearest(object $widget): string
 {
     for ($one = $widget; $one !== null; $one = $one->stacked ? $one->above : null) {
@@ -255,7 +249,8 @@ public function nearest(object $widget): string
     return 'untitled';
 }
 
-// Good
+----------[ Good ]----------
+
 public function nearestWhile(object $widget): string
 {
     $one = $widget;
@@ -277,11 +272,8 @@ public function nearestWhile(object $widget): string
 `else` after an `if` branch that already returns/throws (redundant)
 
 ```php
-// Bad
-/**
- * @param  array<int, Product>  $products
- * @return array<int, Product>
- */
+----------[ Bad ]----------
+
 public function inStock(array $products): array
 {
     $available = [];
@@ -297,14 +289,11 @@ public function inStock(array $products): array
     return $available;
 }
 
-// Good
-/**
- * The guard handles the absent case and `continue`s; the happy path runs
- * unindented with no redundant `else`.
- *
- * @param  array<int, Product>  $products
- * @return array<int, Product>
- */
+----------[ Good ]----------
+
+// The guard handles the absent case and `continue`s; the happy path runs
+// unindented with no redundant `else`.
+
 public function available(array $products): array
 {
     $available = [];
@@ -326,13 +315,15 @@ public function available(array $products): array
 a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function send(string $address, bool $subscribed): void
 {
     $subscribed && $this->mailer->send($address, 'Your weekly digest', $this->digest());
 }
 
-// Good
+----------[ Good ]----------
+
 public function sendGuarded(string $address, bool $subscribed): void
 {
     if (! $subscribed) {
@@ -348,11 +339,8 @@ public function sendGuarded(string $address, bool $subscribed): void
 a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value
 
 ```php
-// Bad
-/**
- * @param  array<string, array<int, object>>  $below
- * @return array<int, string>
- */
+----------[ Bad ]----------
+
 public function collapsed(string $id, array $below): array
 {
     $gone = [];
@@ -366,11 +354,8 @@ public function collapsed(string $id, array $below): array
     return $gone;
 }
 
-// Good
-/**
- * @param  array<string, array<int, object>>  $below
- * @return array<int, string>
- */
+----------[ Good ]----------
+
 public function collapsedBranched(string $id, array $below): array
 {
     $gone = [];

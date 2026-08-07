@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-role-vocabulary
-description: The three recurring structural roles — Registry (keyed store), Set (membership), Resolver (first-match dispatch) — each with a name and a contract. If a class IS one of these shapes, name it `*Registry`/`*Set`/`*Resolver` and extend the scaffolded base; if it's NAMED one, it must behave like one. Read this BEFORE you hand-roll a keyed store / lookup table, an add-and-iterate collection, or an if/elseif chain that picks the first matching handler — or name a class `*Registry`/`*Set`/`*Resolver`.
+description: "The three recurring structural roles — Registry (keyed store), Set (membership), Resolver (first-match dispatch) — each with a name and a contract. If a class IS one of these shapes, name it `*Registry`/`*Set`/`*Resolver` and extend the scaffolded base; if it's NAMED one, it must behave like one. Read this BEFORE you hand-roll a keyed store / lookup table, an add-and-iterate collection, or an if/elseif chain that picks the first matching handler — or name a class `*Registry`/`*Set`/`*Resolver`."
 ---
 
 # Role vocabulary — the name is the contract
@@ -67,17 +67,18 @@ added; a marker interface is checked by the compiler.
 A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function get(string $key): ?object
 {
     return $this->channels[$key] ?? null;
 }
 
-// Good
-/**
- * The FIX: the store resolves-or-throws. A missing key is a named failure at the source
- * (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
- */
+----------[ Good ]----------
+
+// The FIX: the store resolves-or-throws. A missing key is a named failure at the source
+// (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
+
 public function resolve(string $key): object
 {
     return $this->channels[$key] ?? throw UnknownChannel::forKey($key);

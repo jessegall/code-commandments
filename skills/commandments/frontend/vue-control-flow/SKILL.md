@@ -1,6 +1,6 @@
 ---
 name: commandments-frontend-vue-control-flow
-description: Dispatch on a single value with the published <SwitchCase :value> component (a slot per case), never a v-if / v-else-if chain that re-tests the SAME subject against a different literal. A chain of `x === 'a'` / `x === 'b'` is one decision wearing many conditionals. Read this BEFORE writing a v-if/v-else-if chain in a Vue template.
+description: "Dispatch on a single value with the published <SwitchCase :value> component (a slot per case), never a v-if / v-else-if chain that re-tests the SAME subject against a different literal. A chain of `x === 'a'` / `x === 'b'` is one decision wearing many conditionals. Read this BEFORE writing a v-if/v-else-if chain in a Vue template."
 ---
 
 # Vue control flow — dispatch on a value, don't chain conditionals
@@ -46,10 +46,12 @@ The element reads as one thing (content + styling), the `<template>` as another
 `v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <span v-if="status === 'paid'" class="badge badge-green">Paid</span>
 
-// Good
+----------[ Good ]----------
+
 <template v-if="status === 'paid'">
   <span class="badge badge-green">Paid</span>
 </template>
@@ -60,12 +62,14 @@ The element reads as one thing (content + styling), the `<template>` as another
 `:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <template v-for="(order, index) in orders" :key="index">
   <li class="account__order">{{ order.reference }}</li>
 </template>
 
-// Good
+----------[ Good ]----------
+
 <template v-for="(address, index) in customer.addresses" :key="address.id">
   <li class="account__address">{{ address.line }}</li>
 </template>
@@ -76,10 +80,12 @@ The element reads as one thing (content + styling), the `<template>` as another
 `v-for` and `v-if`/`v-else-if` on the SAME element — the condition is re-evaluated every iteration
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <li v-for="tag in tags" v-if="tag.visible" :key="tag.id" class="review-tag">{{ tag.label }}</li>
 
-// Good
+----------[ Good ]----------
+
 <template v-for="tag in tags" :key="tag.id">
   <template v-if="tag.visible">
     <li class="review-tag">{{ tag.label }}</li>
@@ -92,10 +98,12 @@ The element reads as one thing (content + styling), the `<template>` as another
 A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <span v-if="status === 'paid'" class="badge badge-green">Paid</span>
 
-// Good
+----------[ Good ]----------
+
 <SwitchCase :value="status">
   <template #paid><span class="badge badge-green">Paid</span></template>
   <template #pending><span class="badge badge-amber">Pending</span></template>

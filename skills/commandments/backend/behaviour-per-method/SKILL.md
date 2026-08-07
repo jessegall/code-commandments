@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-behaviour-per-method
-description: A parameter that selects WHICH behaviour runs rather than feeding one. When a method's whole body is `if ($flag) { … } else { … }`, it is two methods sharing a name, and every call site reads `render($order, true)` — a truth value that says nothing about what it asked for. Split it into two named methods and let the caller say which it wants. Read this before adding a `bool` parameter, before writing a method whose body is one branch on a parameter, and when a call site passes a bare `true`/`false` literal.
+description: "A parameter that selects WHICH behaviour runs rather than feeding one. When a method's whole body is `if ($flag) { … } else { … }`, it is two methods sharing a name, and every call site reads `render($order, true)` — a truth value that says nothing about what it asked for. Split it into two named methods and let the caller say which it wants. Read this before adding a `bool` parameter, before writing a method whose body is one branch on a parameter, and when a call site passes a bare `true`/`false` literal."
 ---
 
 # One method, one behaviour — never a flag that picks
@@ -68,11 +68,11 @@ halves have an obvious name, they are already two methods — give them their na
 a method whose whole body branches on a `bool` parameter — two methods sharing one name
 
 ```php
-// Bad
-/**
- * Two announcements sharing a name. At the call site this reads `announce($msg, true)` — true
- * what? Nobody can tell without opening this method.
- */
+----------[ Bad ]----------
+
+// Two announcements sharing a name. At the call site this reads `announce($msg, true)` — true
+// what? Nobody can tell without opening this method.
+
 public function announce(string $message, bool $urgent): void
 {
     if ($urgent) {
@@ -82,11 +82,11 @@ public function announce(string $message, bool $urgent): void
     }
 }
 
-// Good
-/**
- * The same two announcements, named. The call site now says which one it wanted, and each half
- * is free to grow its own parameters without the other having to ignore them.
- */
+----------[ Good ]----------
+
+// The same two announcements, named. The call site now says which one it wanted, and each half
+// is free to grow its own parameters without the other having to ignore them.
+
 public function announceUrgently(string $message): void
 {
     $this->log->record('SIREN ' . strtoupper($message));

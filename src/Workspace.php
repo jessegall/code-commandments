@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
+use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
 /**
@@ -29,6 +30,14 @@ final class Workspace
      * folder's `.gitignore`.
      */
     public const string CUSTOM = 'custom';
+
+    /**
+     * Where the published skills REALLY live, relative to the project root — the one library every
+     * agent reads, directly or through a link of its own. `.agents/skills` is the cross-agent
+     * location rather than any one assistant's folder, so the agent that reads it natively needs no
+     * link at all and the rest get one.
+     */
+    public const string LIBRARY = '.agents/skills';
 
     /**
      * The session folder for a run with no session id at all (a human terminal, CI).
@@ -57,7 +66,11 @@ final class Workspace
      */
     public static function at(string $root, ?string $sessionId = null): self
     {
-        return new self($root, ($sessionId ?? '') !== '' ? $sessionId : (getenv('CLAUDE_CODE_SESSION_ID') ?: null));
+        if ($sessionId !== null && $sessionId !== '') {
+            return new self($root, $sessionId);
+        }
+
+        return new self($root, getenv('CLAUDE_CODE_SESSION_ID') ?: null);
     }
 
     /**
@@ -116,6 +129,16 @@ final class Workspace
     public function root(): string
     {
         return $this->root;
+    }
+
+    /**
+     * The skill library's absolute path — `<root>/.agents/skills`. It sits OUTSIDE `.commandments/`
+     * because it is not our workspace: it is a directory the agents themselves read, which a project
+     * may also keep hand-written skills in. We own only the entries we published there.
+     */
+    public function library(): string
+    {
+        return $this->root . '/' . self::LIBRARY;
     }
 
     /**
@@ -184,22 +207,8 @@ final class Workspace
             }
 
             if ((filemtime($dir) ?: 0) < $cutoff) {
-                self::deleteDir($dir);
+                Directory::delete($dir);
             }
         }
-    }
-
-    private static function deleteDir(string $dir): void
-    {
-        foreach (scandir($dir) ?: [] as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-
-            $path = $dir . '/' . $entry;
-            is_dir($path) ? self::deleteDir($path) : @unlink($path);
-        }
-
-        @rmdir($dir);
     }
 }

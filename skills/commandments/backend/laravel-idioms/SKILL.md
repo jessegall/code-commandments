@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-laravel-idioms
-description: Use the framework's typed/injected mechanisms and keep behaviour on the model — read request input through TYPED accessors behind named getters (never raw `->input()`), read a Fluent/ValueBag through typed accessors (never untyped `->get()`), inject every dependency through the constructor (never `app()`/facade/`new`), query through named Eloquent scopes (not repeated where-clauses), and mutate through intention-revealing model methods (never a bare `update([...])` or `$model->x = y; save()` at a call site). Read this BEFORE you call `->input()`/`->get()`, reach for a dependency, write a query, or update a model.
+description: "Use the framework's typed/injected mechanisms and keep behaviour on the model — read request input through TYPED accessors behind named getters (never raw `->input()`), read a Fluent/ValueBag through typed accessors (never untyped `->get()`), inject every dependency through the constructor (never `app()`/facade/`new`), query through named Eloquent scopes (not repeated where-clauses), and mutate through intention-revealing model methods (never a bare `update([...])` or `$model->x = y; save()` at a call site). Read this BEFORE you call `->input()`/`->get()`, reach for a dependency, write a query, or update a model."
 ---
 
 # Laravel idioms — typed access, injected deps, behaviour on the model
@@ -63,11 +63,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 `config('…')` read inside a class
 
 ```php
-// Bad
-/**
- * @param  array<string, mixed>  $filters
- * @return array<int, mixed>
- */
+----------[ Bad ]----------
+
 public function search(array $filters): array
 {
     $perPage = config('shop.catalog.per_page');
@@ -79,12 +76,10 @@ public function search(array $filters): array
     return $this->run($term, $sort, $perPage);
 }
 
-// Good
-/**
- * Injects the typed settings object instead of reading config in the body.
- *
- * @return array<int, mixed>
- */
+----------[ Good ]----------
+
+// Injects the typed settings object instead of reading config in the body.
+
 public function searchTop(string $term, string $sort): array
 {
     return $this->run($term, $sort, $this->settings->perPage);
@@ -96,7 +91,8 @@ public function searchTop(string $term, string $sort): array
 `app()`/`resolve()` reach inside a container-resolved class
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function charge(string $token, int $amountCents): bool
 {
     $gateway = app(PaymentGatewayRegistry::class)->get('default');
@@ -110,11 +106,11 @@ public function charge(string $token, int $amountCents): bool
     return $gateway->send($token, $amountCents);
 }
 
-// Good
-/**
- * The registry is a declared constructor parameter, so the class states what it needs and the
- * container hands it over — nothing reaches back into the container from the body.
- */
+----------[ Good ]----------
+
+// The registry is a declared constructor parameter, so the class states what it needs and the
+// container hands it over — nothing reaches back into the container from the body.
+
 public function captureAuthorised(int $amountCents): void
 {
     $this->gateways->get('default')->capture($amountCents);
@@ -126,10 +122,12 @@ public function captureAuthorised(int $amountCents): void
 A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 static fn (): null => null;
 
-// Good
+----------[ Good ]----------
+
 public function register(): void
 {
     $this->app->singleton('shop.kiosk.timeout', static fn (): int => (int) config('kiosk.idle_timeout'));
@@ -143,13 +141,15 @@ public function register(): void
 An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function boot(): void
 {
     Event::listen(StockReconciled::class, 'Shop\\Listeners\\NotifyWarehouse');
 }
 
-// Good
+----------[ Good ]----------
+
 public function register(): void
 {
     Event::listen(PriceChanged::class, 'Shop\\Listeners\\RepricePublications');
@@ -161,17 +161,18 @@ public function register(): void
 A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function idleTimeout(): int
 {
     return $this->intOr('kiosk.idle_timeout', 120);
 }
 
-// Good
-/**
- * `config/kiosk.php` owns the default, so the reader states nothing about absence — it asks for
- * the value and there is one place to edit it.
- */
+----------[ Good ]----------
+
+// `config/kiosk.php` owns the default, so the reader states nothing about absence — it asks for
+// the value and there is one place to edit it.
+
 public function idleTimeoutSeconds(): int
 {
     return $this->int('kiosk.idle_timeout');
@@ -183,7 +184,8 @@ public function idleTimeoutSeconds(): int
 Laravel facade call (`Cache::`, `Log::`, `Mail::` …)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function notify(string $email, string $type): void
 {
     $template = config('shop.templates.' . $type);
@@ -193,7 +195,8 @@ public function notify(string $email, string $type): void
     });
 }
 
-// Good
+----------[ Good ]----------
+
 public function notifyClean(string $email, string $template): void
 {
     $this->mailer->raw($template, function ($message) use ($email) {
@@ -207,7 +210,8 @@ public function notifyClean(string $email, string $template): void
 Bare `$model->update([...])` mass-array update at a call site
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function verify(Customer $customer): void
 {
     $customer->update([
@@ -216,7 +220,8 @@ public function verify(Customer $customer): void
     ]);
 }
 
-// Good
+----------[ Good ]----------
+
 public function verifyNamed(Customer $customer): void
 {
     $customer->markVerified($this->now);
@@ -228,7 +233,8 @@ public function verifyNamed(Customer $customer): void
 Set-property-then-`save()` at a call site (should be an intention method)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function suspend(Customer $customer, string $reason): void
 {
     $customer->suspended = true;
@@ -236,7 +242,8 @@ public function suspend(Customer $customer, string $reason): void
     $customer->save();
 }
 
-// Good
+----------[ Good ]----------
+
 public function suspendNamed(Customer $customer, string $reason): void
 {
     $customer->suspend($reason);
@@ -248,7 +255,8 @@ public function suspendNamed(Customer $customer, string $reason): void
 A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function boot(): void
 {
     if (! $this->ratesEnabled) {
@@ -258,12 +266,12 @@ public function boot(): void
     $this->app->instance(CourierRates::class, new TableCourierRates());
 }
 
-// Good
-/**
- * The rates registration went out with the courier that needed it. What is left is wiring a
- * consumer actually asks for: RegionCoverage type-hints a ZoneTable, so this binding answers a
- * resolve.
- */
+----------[ Good ]----------
+
+// The rates registration went out with the courier that needed it. What is left is wiring a
+// consumer actually asks for: RegionCoverage type-hints a ZoneTable, so this binding answers a
+// resolve.
+
 public function register(): void
 {
     $this->app->singleton(ZoneTable::class);
@@ -275,7 +283,8 @@ public function register(): void
 Raw `->input()/->get()/->query()/->post()` on a Request
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function search(Request $request): array
 {
     $term = $request->input('q');
@@ -288,13 +297,11 @@ public function search(Request $request): array
         ->all();
 }
 
-// Good
-/**
- * The same search, read through named getters on a `FormRequest` subclass — the key strings and
- * their types live once, in the request, instead of at every call site.
- *
- * @return list<Product>
- */
+----------[ Good ]----------
+
+// The same search, read through named getters on a `FormRequest` subclass — the key strings and
+// their types live once, in the request, instead of at every call site.
+
 public function searchNamed(SearchProductRequest $request): array
 {
     return Product::query()
@@ -310,10 +317,8 @@ public function searchNamed(SearchProductRequest $request): array
 Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class
 
 ```php
-// Bad
-/**
- * @return list<Product>
- */
+----------[ Bad ]----------
+
 public function search(Request $request): array
 {
     $term = $request->string('q')->toString();
@@ -324,13 +329,11 @@ public function search(Request $request): array
         ->all();
 }
 
-// Good
-/**
- * The coercion moved onto the typed request as `term()`, so the call site asks a named getter for
- * an already-`string` value instead of recasting an accessor.
- *
- * @return list<Product>
- */
+----------[ Good ]----------
+
+// The coercion moved onto the typed request as `term()`, so the call site asks a named getter for
+// an already-`string` value instead of recasting an accessor.
+
 public function searchNamed(SearchProductRequest $request): array
 {
     return Product::query()

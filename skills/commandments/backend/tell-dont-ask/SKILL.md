@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-tell-dont-ask
-description: Behaviour belongs with the data it operates on (feature envy, Fowler). If a method reaches through ONE other object's internal structure — looping its collection, walking its tree of parts — to work out something the object should answer itself, that logic is exiled from its home; Move the Method onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). Read this BEFORE you write a `*Detector`/`*Walker`/`*Finder` that iterates one object's collection from the outside. NOTE the exception: a policy/Strategy over the object's flat scalar fields (a grade, a label, a classification) is NOT envy.
+description: "Behaviour belongs with the data it operates on (feature envy, Fowler). If a method reaches through ONE other object's internal structure — looping its collection, walking its tree of parts — to work out something the object should answer itself, that logic is exiled from its home; Move the Method onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). Read this BEFORE you write a `*Detector`/`*Walker`/`*Finder` that iterates one object's collection from the outside. NOTE the exception: a policy/Strategy over the object's flat scalar fields (a grade, a label, a classification) is NOT envy."
 ---
 
 # Tell, don't ask — behaviour belongs with its data
@@ -121,7 +121,8 @@ If yes — and you're reaching past its surface into its structure — that's wh
 Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function suspend(Customer $customer, string $reason): void
 {
     $customer->suspended = true;
@@ -129,7 +130,8 @@ public function suspend(Customer $customer, string $reason): void
     $customer->save();
 }
 
-// Good
+----------[ Good ]----------
+
 public function suspendByTelling(Customer $customer, string $reason): void
 {
     $customer->suspend($reason);
@@ -141,10 +143,8 @@ public function suspendByTelling(Customer $customer, string $reason): void
 Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator
 
 ```php
-// Bad
-/**
- * @return list<string>
- */
+----------[ Bad ]----------
+
 public function forItem(CatalogItem $item): array
 {
     return $this->registry->has($item->code)
@@ -152,13 +152,11 @@ public function forItem(CatalogItem $item): array
         : [];
 }
 
-// Good
-/**
- * The item knows its own reserved SKUs — ask it directly instead of using its
- * code as a key back into a registry.
- *
- * @return list<string>
- */
+----------[ Good ]----------
+
+// The item knows its own reserved SKUs — ask it directly instead of using its
+// code as a key back into a registry.
+
 public function forItemDirect(CatalogItem $item): array
 {
     return $item->reservedSkus();
@@ -170,7 +168,8 @@ public function forItemDirect(CatalogItem $item): array
 two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function price(Freightable $freight): int
 {
     if ($freight instanceof ExpressFreight) {
@@ -182,11 +181,11 @@ public function price(Freightable $freight): int
     return $freight->weightGrams() * 3;
 }
 
-// Good
-/**
- * The FIX: one method on the shared interface, implemented per freight type. Each kind answers
- * for itself, so a new kind needs no edit here at all.
- */
+----------[ Good ]----------
+
+// The FIX: one method on the shared interface, implemented per freight type. Each kind answers
+// for itself, so a new kind needs no edit here at all.
+
 public function priceTold(PricedFreight $freight): int
 {
     return $freight->priceCents();

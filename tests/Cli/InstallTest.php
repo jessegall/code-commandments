@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Install;
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,12 +31,31 @@ final class InstallTest extends TestCase
     protected function tearDown(): void
     {
         chdir($this->cwd);
-        @unlink($this->dir . '/.claude/settings.json');
-        @rmdir($this->dir . '/.claude');
-        @unlink($this->dir . '/composer.json');
-        @array_map('unlink', glob($this->dir . '/.commandments/*') ?: []);
-        @rmdir($this->dir . '/.commandments');
-        @rmdir($this->dir);
+        // `install` runs `sync`, which publishes a whole skill tree in here — deleting the handful
+        // of files this test writes itself left every run's temp directory behind.
+        exec('rm -rf ' . escapeshellarg($this->dir));
+    }
+
+    public function test_it_refuses_a_composer_json_it_cannot_read_rather_than_replace_it(): void
+    {
+        $manifest = "\xEF\xBB\xBF{\n  \"require\": {\"vendor/thing\": \"^1.0\"}\n}\n";
+        file_put_contents($this->dir . '/composer.json', $manifest);
+
+        ob_start();
+        $status = new Install()->run(Input::of('install'));
+        ob_get_clean();
+
+        $this->assertSame(2, $status);
+        $this->assertSame($manifest, file_get_contents($this->dir . '/composer.json'), 'an unreadable manifest is left exactly as it was');
+    }
+
+    public function test_it_refuses_settings_json_it_cannot_read_rather_than_replace_it(): void
+    {
+        $settings = "{\n  // a comment makes this unreadable to json_decode\n  \"permissions\": {}\n}\n";
+        file_put_contents($this->dir . '/.claude/settings.json', $settings);
+
+        $this->assertFalse(HookRegistry::wire($this->dir . '/.claude/settings.json'));
+        $this->assertSame($settings, file_get_contents($this->dir . '/.claude/settings.json'), "the user's settings survive");
     }
 
     public function test_it_keeps_the_projects_own_hooks_and_wires_remind_under_post_tool_use(): void

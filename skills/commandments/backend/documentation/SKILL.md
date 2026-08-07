@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-documentation
-description: How to document — and mostly NOT. Docblocks are 1–2 lines (3 max), present-tense, about the code as it is NOW; inline comments are RARE and only ever explain a non-obvious *why*; NEVER narrate the past or a change ("previously…", "used to…", "now we…", "refactored to…"). Read this the MOMENT you are about to write a docblock (`/**`), an inline comment (`//`), or a class/method description.
+description: "How to document — and mostly NOT. Docblocks are 1–2 lines (3 max), present-tense, about the code as it is NOW; inline comments are RARE and only ever explain a non-obvious *why*; NEVER narrate the past or a change (\"previously…\", \"used to…\", \"now we…\", \"refactored to…\"). Read this the MOMENT you are about to write a docblock (`/**`), an inline comment (`//`), or a class/method description."
 ---
 
 # Documentation — concise, present-tense, rare
@@ -48,7 +48,8 @@ if the codebase already uses them — structural, not narrative.) Everything els
 History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted")
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /**
  * @param  array<string, mixed>  $event
  */
@@ -60,7 +61,8 @@ public function handle(array $event): void
     $this->record($type, $event['id'] ?? throw new \InvalidArgumentException('event id is required'));
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * @param  array<string, mixed>  $event
  */
@@ -76,7 +78,8 @@ public function handleRefund(array $event): void
 Multi-paragraph class docblock (class too big)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /**
  * This class is responsible for importing legacy orders from the old system.
  * It was originally extracted from the monolith during the 2023 migration and
@@ -133,7 +136,8 @@ final class LegacyOrderImporter
     }
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * Renders the monthly sales spreadsheet finance imports by hand.
  */
@@ -153,7 +157,8 @@ final class MonthlySalesReport
 Docblock that only restates the typed signature (`@param Type $x`, no description)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /**
  * @param  int  $sequence
  * @return  string
@@ -163,7 +168,8 @@ public function format(int $sequence): string
     return sprintf('%s-%06d', $this->prefix, $sequence);
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * Renders the number finance quotes on a remittance — the sequence is zero-padded to six digits
  * so invoices sort lexically in the ledger export.
@@ -179,7 +185,8 @@ public function formatForRemittance(int $sequence): string
 A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /**
  * Picks the cheapest carrier. Rates come from {@see \Shop\Shipping\RemovedRateBook} — deleted, so the
  * link is stale.
@@ -189,7 +196,8 @@ public function cheapest(string $zone, float $weight): string
     return $weight > 10.0 ? "freight:{$zone}" : "parcel:{$zone}";
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * Picks the cheapest carrier for a heavy parcel. Rates come from
  * {@see \Shop\Shipping\ShippingRateRegistry} — the class the rate book became, so the reference
@@ -206,7 +214,8 @@ public function cheapestFreight(string $zone): string
 A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
 final class LogLine
 {
@@ -237,7 +246,8 @@ final class LogLine
     }
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * A node in a test log tree — it holds its own children, so a failure is knowledge it could answer.
  */
@@ -262,14 +272,16 @@ final class LogEntry
 A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code")
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function get(string $code): SkuEntry
 {
     // no magic here; a missing code yields an empty entry
     return new SkuEntry();
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * The affirmative form of the same note: it states what the registry DOES, so a reader never has
  * to be talked out of a suspicion the code never raised.
@@ -286,14 +298,16 @@ public function entry(string $code): SkuEntry
 An inline comment that only spells the statement below it back in prose ("// save the order" over `$this->orders->save($order)`)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function load(int $cartId): void
 {
     // store the cart snapshot
     $this->snapshot = CartSnapshot::of($cartId);
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * The comment now carries what the code cannot: WHY the snapshot is taken once.
  */
@@ -309,7 +323,8 @@ public function open(int $cartId): void
 Two or more docblocks stacked on one declaration — PHP reads only the last, so the ones above it are documentation nobody sees
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /**
  * A plain on-disk report file — NOT an Eloquent model, even though it has a
  * save(). Mutating-then-saving one is just building a file, not the model-at-the-
@@ -344,7 +359,8 @@ final class ReportFile
     }
 }
 
-// Good
+----------[ Good ]----------
+
 /**
  * Writes the report where the export job expects it — the second block folded in, so the one
  * block PHP hands a reader says everything both used to.

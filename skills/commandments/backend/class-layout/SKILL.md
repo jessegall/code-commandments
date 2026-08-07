@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-class-layout
-description: Where a declaration goes in a class: every trait use, constant, property and property hook stands at the TOP, above the constructor — never between two methods, never appended at the bottom. Read this when you add a constant or a field to an existing class, or when you are about to write a declaration below a method.
+description: "Where a declaration goes in a class: every trait use, constant, property and property hook stands at the TOP, above the constructor — never between two methods, never appended at the bottom. Read this when you add a constant or a field to an existing class, or when you are about to write a declaration below a method."
 ---
 
 # Class layout — state first, then behaviour
@@ -54,7 +54,8 @@ not solve a crowded inventory by scattering the inventory.
 A trait use, constant, property, property hook or enum case declared BELOW a method — state a reader only meets after the behaviour that uses it
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 enum ShippingMethod: string
 {
     case Standard = 'standard';
@@ -74,11 +75,11 @@ enum ShippingMethod: string
     case Pickup = 'pickup';
 }
 
-// Good
-/**
- * The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
- * enum is the whole inventory and the behaviour sits below it.
- */
+----------[ Good ]----------
+
+// The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
+// enum is the whole inventory and the behaviour sits below it.
+
 enum CollectionMethod: string
 {
     case Standard = 'standard';
@@ -101,7 +102,8 @@ enum CollectionMethod: string
 A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 /** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
 final class LogLine
 {
@@ -132,11 +134,11 @@ final class LogLine
     }
 }
 
-// Good
-/**
- * The FIX: the same three fields in the one fixed sequence — the static counter first, then the
- * instance state. `$planned` has MOVED UP past the two it arrived after; nothing else changed.
- */
+----------[ Good ]----------
+
+// The FIX: the same three fields in the one fixed sequence — the static counter first, then the
+// instance state. `$planned` has MOVED UP past the two it arrived after; nothing else changed.
+
 final class PlannedItinerary
 {
     public static int $planned = 0;

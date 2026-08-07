@@ -43,8 +43,8 @@ final class Stubs
         /**
          * TODO — one line on what discipline this skill teaches.
          *
-         * Its `SKILL.md` is GENERATED from this class on every `sync`, into
-         * `.claude/skills/{$blueprint->skillId()}/`. Never edit that markdown; edit this class.
+         * Its `SKILL.md` is GENERATED from this class on every `sync`, published as
+         * `{$blueprint->skillId()}`. Never edit that markdown; edit this class.
          */
         final class {$skill} extends {$base}
         {
@@ -65,7 +65,7 @@ final class Stubs
             public function trigger(): string
             {
                 // WHEN to load this skill, phrased as the situation — it becomes the frontmatter
-                // `description:` the Skill tool matches an agent's task against.
+                // `description:` an agent matches its task against.
                 return 'TODO — Read this when …';
             }
 

@@ -35,19 +35,85 @@ final class ExampleText
      *
      * @param  list<array<string, mixed>>  $bad
      * @param  list<array<string, mixed>>  $good
-     * @return array{bad: mixed, good: mixed}
      */
-    public static function pair(array $bad, array $good, string $key): array
+    public static function pair(array $bad, array $good, string $key): Example
     {
         foreach ($bad as $b) {
             foreach ($good as $g) {
                 if ($b[$key] === $g[$key]) {
-                    return ['bad' => $b['source'], 'good' => $g['source']];
+                    return new Example($b['source'], $g['source']);
                 }
             }
         }
 
-        return ['bad' => $bad[0]['source'] ?? null, 'good' => $good[0]['source'] ?? null];
+        return new Example($bad[0]['source'] ?? null, $good[0]['source'] ?? null);
+    }
+
+    /**
+     * A marked declaration rewritten for the docs: its leading docblock becomes plain `//` lines
+     * ABOVE the snippet, and the `@param`/`@return` tags go.
+     *
+     * The docblock on a fixture is two things at once — an explanation written for the reader of
+     * this skill, and PHP the reader has to look past to reach the code. Lifting it keeps the
+     * explanation and drops the ceremony, so the snippet under it is only ever the code the example
+     * is about. Where the docblock IS the subject (the sins about documentation itself) the caller
+     * asks for it verbatim instead: lifting it there would delete the thing being taught.
+     */
+    public static function lifted(string $source): string
+    {
+        // `explode` always yields at least one element, so the first line is never absent.
+        $lines = explode("\n", ltrim($source, "\n"));
+
+        if (trim($lines[0]) !== '/**') {
+            return $source;
+        }
+
+        $prose = [];
+        $at = 1;
+
+        for (; $at < count($lines); $at++) {
+            $line = trim($lines[$at]);
+
+            if ($line === '*/') {
+                $at++;
+
+                break;
+            }
+
+            $line = trim(ltrim($line, '*'));
+
+            // A tag documents the SIGNATURE, which the snippet states for itself.
+            if ($line !== '' && ! str_starts_with($line, '@')) {
+                $prose[] = "// {$line}";
+            }
+        }
+
+        $code = array_slice($lines, $at);
+
+        return $prose === [] ? implode("\n", $code) : implode("\n", [...$prose, '', ...$code]);
+    }
+
+    /**
+     * Several occurrences shown as ONE example, each headed by where it lives.
+     *
+     * Some sins are a relationship rather than a property: a duplicate shown once is not a
+     * duplicate, and a reader given one copy has no way to see what it is a copy OF. So every member
+     * of the group is shown, and named, because the point is that they are in different places.
+     *
+     * @param  list<array<string, string>>  $occurrences
+     * @param  string  $key  which field names the place — the class on one engine, the file on the other
+     * @param  string  $open  how a comment opens in the language being shown, and $close how it ends
+     */
+    public static function group(array $occurrences, string $key, bool $lift, string $open = '//', string $close = ''): string
+    {
+        $blocks = [];
+
+        foreach ($occurrences as $occurrence) {
+            $source = $lift ? self::lifted($occurrence['source']) : $occurrence['source'];
+            $blocks[] = "{$open} in {$occurrence[$key]}{$close}\n{$source}";
+        }
+
+        return implode("\n\n", $blocks);
     }
 
     /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli\Doc;
 
+use JesseGall\CodeCommandments\Cli\Doc\AgentCatalog;
+use JesseGall\CodeCommandments\Cli\Doc\CommandTable;
 use JesseGall\CodeCommandments\Cli\Doc\HookCatalog;
 use JesseGall\CodeCommandments\Cli\Doc\PlanExecutionOptions;
 use PHPUnit\Framework\TestCase;
@@ -55,6 +57,20 @@ final class ConfigDocsTest extends TestCase
             trim(HookCatalog::table()),
             $this->marker('hooks-table'),
             'the README hooks table is stale — run `composer readme`.',
+        );
+
+        $this->assertSame(
+            trim(AgentCatalog::table()),
+            $this->marker('agents-table'),
+            'the README agents table is stale — run `composer readme`.',
+        );
+
+        // The command table is projected from every command's own `help()`, so an edit there
+        // silently staled the README until this held it: nothing else in the suite reads it.
+        $this->assertSame(
+            trim(CommandTable::overview()),
+            $this->marker('commands-table'),
+            'the README command table is stale — run `composer readme`.',
         );
     }
 

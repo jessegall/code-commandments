@@ -77,14 +77,23 @@ final class HookRegistry
     /**
      * Wire $hookClasses into the settings at $path. Returns true when the file actually changed.
      *
+     * A settings file that exists but does not READ as JSON is left alone and reported. It used to
+     * decode to `null`, which cast to an empty array — and the write below then replaced the user's
+     * whole settings file, permissions and MCP servers and their own hooks included, with nothing
+     * but ours. We are a guest in that file; we may add to it, never rebuild it from nothing.
+     *
      * @param  list<class-string<Hook>>  $hookClasses
      */
     public static function wire(string $path, array $hookClasses = self::BUILTINS): bool
     {
-        /**
-         * @var array<string, mixed> $settings
-         */
-        $settings = is_file($path) ? (array) json_decode((string) file_get_contents($path), true) : [];
+        $settings = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+
+        if (! is_array($settings)) {
+            fwrite(STDERR, "⚠ {$path} is not readable JSON — hooks left unwired rather than overwrite it.\n");
+
+            return false;
+        }
+
         $before = json_encode($settings);
 
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);

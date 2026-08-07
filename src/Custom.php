@@ -22,14 +22,25 @@ final class Custom
     private static array $loaded = [];
 
     /**
-     * The project's own {@see Skill} classes — each published to `.claude/skills/commandments-<slug>/`
-     * on sync, exactly like a shipped one.
+     * The project's own {@see Skill} classes — each published into the project's skill library on
+     * sync, exactly like a shipped one.
      *
      * @return list<Skill>
      */
     public static function skills(?string $dir = null): array
     {
         return self::instancesOf(Skill::class, $dir);
+    }
+
+    /**
+     * The project's own {@see Agents\Agent} classes — an assistant it wires itself into that we do
+     * not ship. Published into exactly like a shipped one.
+     *
+     * @return list<Agents\Agent>
+     */
+    public static function agents(?string $dir = null): array
+    {
+        return self::instancesOf(Agents\Agent::class, $dir);
     }
 
     /**

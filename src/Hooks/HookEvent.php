@@ -65,7 +65,19 @@ final class HookEvent
      */
     public function isSubagent(): bool
     {
-        return ($this->payload['agent_id'] ?? '') !== '' || ($this->payload['agent_type'] ?? '') !== '';
+        return $this->named('agent_id') || $this->named('agent_type');
+    }
+
+    /**
+     * Does the payload carry a real value under $key? Absent and blank are asked SEPARATELY rather
+     * than coalesced into one another: the harness omits a field it has nothing for, and a blank one
+     * is a field it filled with nothing — different facts, even where the answer here is the same.
+     */
+    private function named(string $key): bool
+    {
+        $value = $this->payload[$key] ?? null;
+
+        return $value !== null && $value !== '';
     }
 
     /**

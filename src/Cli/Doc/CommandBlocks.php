@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Doc;
 
 use FilesystemIterator;
+use JesseGall\CodeCommandments\Support\GeneratedBlock;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 

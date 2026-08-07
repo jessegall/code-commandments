@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The report doesn't say "read a file" — a passive line an agent skims past. It names the exact Skill-tool
- * id to LOAD, and warns that a skill believed-loaded may have been dropped by a compaction, so it must be
+ * id to LOAD — by id alone, since how a skill is loaded differs per agent — and warns that a skill believed-loaded may have been dropped by a compaction, so it must be
  * loaded again rather than fixed from memory. Both surfaces (console + checklist) carry the imperative.
  */
 final class SkillLoadInstructionTest extends TestCase
@@ -23,15 +23,15 @@ final class SkillLoadInstructionTest extends TestCase
         ]);
     }
 
-    public function test_console_names_the_skill_tool_id_to_load(): void
+    public function test_console_names_the_skill_id_to_load(): void
     {
         $console = $this->report()->console();
 
-        // The exact invocation name the Skill tool loads — reused from Skill, never re-spelled here.
+        // The exact id an agent loads — reused from Skill, never re-spelled here.
         $this->assertSame('commandments-backend-value-objects', Skill::idFor('backend/value-objects'));
         $this->assertStringContainsString('commandments-backend-value-objects', $console);
-        $this->assertStringContainsString('Skill tool', $console);
-        $this->assertStringContainsString('LOAD this skill', $console);
+        $this->assertStringNotContainsString("Skill tool", $console, "naming one agent's mechanism is an instruction the others cannot follow");
+        $this->assertStringContainsString('LOAD the skill', $console);
     }
 
     public function test_console_warns_a_believed_loaded_skill_may_be_gone(): void
@@ -42,12 +42,12 @@ final class SkillLoadInstructionTest extends TestCase
         $this->assertStringContainsString('load it again', strtolower($console));
     }
 
-    public function test_checklist_names_the_skill_tool_id_and_the_reload_warning(): void
+    public function test_checklist_names_the_skill_id_and_the_reload_warning(): void
     {
         $checklist = $this->report()->checklist();
 
         $this->assertStringContainsString('`commandments-backend-value-objects`', $checklist);
-        $this->assertStringContainsString('invoke the Skill tool', $checklist);
+        $this->assertStringNotContainsString("Skill tool", $checklist, "the checklist is read by whichever agent ran judge");
         // The header step and the section header both drop "read the file" for "load it, don't trust memory".
         $this->assertStringContainsString('LOAD the skill', $checklist);
         $this->assertStringContainsString('compaction', strtolower($checklist));

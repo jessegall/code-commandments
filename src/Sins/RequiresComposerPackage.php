@@ -19,11 +19,4 @@ namespace JesseGall\CodeCommandments\Sins;
  * The check falls back to "present" when the manifest can't be read, so an unknown
  * environment never over-filters.
  */
-interface RequiresComposerPackage extends RequiresPackage
-{
-    /**
-     * The Composer `vendor/name` this sin needs. The sin is filtered out — it never runs
-     * and never shows up — when that package isn't installed in the project being judged.
-     */
-    public function requiredComposerPackage(): string;
-}
+interface RequiresComposerPackage extends RequiresPackage {}

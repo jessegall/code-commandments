@@ -1,6 +1,6 @@
 ---
 name: commandments-writing-detectors
-description: How to write a commandment of your OWN — a project-local rule that judges every file from then on. Read this BEFORE writing or changing a detector in `.commandments/custom/`, when the user asks for a new rule/check/detector, when `commandments make` points you here, or when you are about to reach for a PhpParser node class or a regex to inspect code.
+description: "How to write a commandment of your OWN — a project-local rule that judges every file from then on. Read this BEFORE writing or changing a detector in `.commandments/custom/`, when the user asks for a new rule/check/detector, when `commandments make` points you here, or when you are about to reach for a PhpParser node class or a regex to inspect code."
 ---
 
 # Writing your own commandments
@@ -78,7 +78,7 @@ for the rules the package ships and refuses a project-local one.
 **The Skill teaches.** It is what a finding sends the reader to, and the source of truth for what
 good looks like. You write the prose (`title`, `trigger`, `intro`, `summary`, `principle`); the
 rules, examples and checklist are **projected from its sins** on every `sync`, so they cannot
-drift. Its `SKILL.md` is generated into `.claude/skills/commandments-<slug>/` — **edit the class,
+drift. Its `SKILL.md` is generated into the project's skill library as `commandments-<slug>` — **edit the class,
 never the markdown.** Point at a shipped skill instead when your rule belongs to a discipline that
 already exists.
 

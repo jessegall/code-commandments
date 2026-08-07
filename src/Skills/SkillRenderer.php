@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Testing\Example;
 
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -28,7 +29,7 @@ final class SkillRenderer
     private const string FIX_AT_THE_SOURCE = 'backend/fix-at-the-source';
 
     /**
-     * @param  array<class-string<Detector>, array{bad: ?string, good: ?string}>  $examples
+     * @param  array<class-string<Detector>, Example>  $examples
      */
     public function render(Skill $skill, array $examples = []): string
     {
@@ -51,11 +52,29 @@ final class SkillRenderer
         return implode("\n\n", array_filter($blocks, static fn (string $block): bool => $block !== '')) . "\n";
     }
 
+    /**
+     * The rule this half of an example shows, as a divider inside the fence.
+     */
+    private static function banner(string $half): string
+    {
+        return '----------[ ' . $half . ' ]----------';
+    }
+
     private function frontmatter(Skill $skill): string
     {
-        // The `name` is display-only (the DIRECTORY name is the Skill-tool invocation),
-        // but we set it to the flat id so the `/skills` listing matches what you load.
-        return "---\nname: {$skill->id()}\ndescription: {$skill->trigger()}\n---";
+        // The `name` is display-only for some agents (the DIRECTORY name is the invocation) and
+        // REQUIRED by others, so it is always written, as the flat id — the same string the
+        // directory is named, which is what the spec asks for. It is `[a-z0-9-]` by construction,
+        // so it needs no quoting.
+        //
+        // The `description` is arbitrary prose and MUST be quoted: a plain YAML scalar may not
+        // contain `": "`, and a `#` after a space opens a comment. Unquoted, a trigger carrying
+        // either is not YAML at all — a lenient reader shrugs, a strict one skips the skill
+        // silently. A YAML double-quoted scalar is a superset of a JSON string, so encoding it as
+        // JSON is exactly the escape the format wants, for any prose a skill can carry.
+        $description = json_encode($skill->trigger(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        return "---\nname: {$skill->id()}\ndescription: {$description}\n---";
     }
 
     private function blockquote(string $text): string
@@ -118,14 +137,14 @@ final class SkillRenderer
      * about, and a shared example names every sin it covers rather than the first alone.
      *
      * @param  list<Sin>  $sins
-     * @param  array<class-string, array{bad: ?string, good: ?string}>  $examples
+     * @param  array<class-string, Example>  $examples
      */
     private function badGood(array $sins, array $examples): string
     {
         $detectors = $this->detectorsBySin();
 
         /**
-         * @var array<string, array{example: array{bad: ?string, good: ?string}, sins: list<Sin>}> $grouped
+         * @var array<string, array{example: Example, sins: list<Sin>}> $grouped
          */
         $grouped = [];
 
@@ -140,9 +159,9 @@ final class SkillRenderer
             // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
             // shows once when the fix is the same, but distinct fixes of the same bad
             // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
-            $key = ($example['bad'] ?? '') . "\0" . ($example['good'] ?? '');
+            $key = ($example->bad ?? '') . "\0" . ($example->good ?? '');
 
-            if (($example['bad'] ?? '') === '') {
+            if ($example->bad === null || $example->bad === '') {
                 $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
             }
 
@@ -166,18 +185,19 @@ final class SkillRenderer
      * example stands on its own instead of relying on its position in the stack.
      *
      * @param  list<Sin>  $sins  every sin this one example demonstrates
-     * @param  array{bad: ?string, good: ?string}  $example
      */
-    private function example(array $sins, array $example): string
+    private function example(array $sins, Example $example): string
     {
         $parts = [];
 
-        if (($example['bad'] ?? null) !== null) {
-            $parts[] = "// Bad\n{$example['bad']}";
+        // A banner rather than a `// Bad` comment: the halves are the two things a reader is here to
+        // compare, and a comment line reads as part of the code beneath it.
+        if ($example->bad !== null) {
+            $parts[] = self::banner('Bad') . "\n\n{$example->bad}";
         }
 
-        if (($example['good'] ?? null) !== null) {
-            $parts[] = "// Good\n{$example['good']}";
+        if ($example->good !== null) {
+            $parts[] = self::banner('Good') . "\n\n{$example->good}";
         }
 
         if ($parts === [] || $sins === []) {

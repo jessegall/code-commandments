@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Vue\Codebase;
+use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Sfc;
@@ -20,7 +21,7 @@ final class VueFixtureExamples
 {
     /**
      * @param  list<Detector>  $detectors
-     * @return array<class-string<Detector>, array{bad: ?string, good: ?string}>
+     * @return array<class-string<Detector>, Example>
      */
     public static function extract(Codebase $codebase, array $detectors): array
     {
@@ -31,7 +32,14 @@ final class VueFixtureExamples
 
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
-            $examples[$detector::class] = ExampleText::pair(ExampleText::forKeys($sinful, $keys), ExampleText::forKeys($righteous, $keys), 'file');
+            $bad = ExampleText::forKeys($sinful, $keys);
+            $example = ExampleText::pair($bad, ExampleText::forKeys($righteous, $keys), 'file');
+
+            // A repeated block shown once is not repeated — the same rule as the backend's
+            // duplicates, asked of the same interface, and labelled with the component it is in.
+            $examples[$detector::class] = $detector instanceof RecurrenceDetector && count($bad) > 1
+                ? $example->withBad(ExampleText::group($bad, 'file', lift: false, open: '<!--', close: ' -->'))
+                : $example;
         }
 
         return $examples;
@@ -40,7 +48,7 @@ final class VueFixtureExamples
     /**
      * @param  list<array{file: string, source: string}>  $bad
      * @param  list<array{file: string, source: string}>  $good
-     * @return array{bad: ?string, good: ?string}
+     * @return Example
      *
      * @param  array<string, list<array{file: string, source: string}>>  $sources
      * @param  list<string>  $keys

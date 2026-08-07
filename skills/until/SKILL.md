@@ -1,6 +1,6 @@
 ---
 name: commandments-until
-description: How to use `commandments until` — the stop gate the user sets when they say "keep going until X", "don't stop until the tests pass", "work until the build is green". Read this when the user asks you to set an until/stop condition, when you invoke /until, or when a Stop-gate hook message sends you back to verify a condition (`until met`, `until stuck`, `until clear`).
+description: "How to use `commandments until` — the stop gate the user sets when they say \"keep going until X\", \"don't stop until the tests pass\", \"work until the build is green\". Read this when the user asks you to set an until/stop condition, when you invoke /until, or when a Stop-gate hook message sends you back to verify a condition (`until met`, `until stuck`, `until clear`)."
 ---
 
 # The `until` stop gate

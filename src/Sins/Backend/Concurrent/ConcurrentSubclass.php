@@ -21,8 +21,13 @@ final class ConcurrentSubclass extends Sin implements RequiresComposerPackage
         );
     }
 
-    public function requiredComposerPackage(): string
+    public function requiredPackage(): string
     {
         return 'jessegall/concurrent';
+    }
+
+    public function ecosystem(): string
+    {
+        return 'composer';
     }
 }

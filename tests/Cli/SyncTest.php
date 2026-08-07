@@ -42,7 +42,15 @@ final class SyncTest extends TestCase
     {
         $this->sync();
 
-        $this->assertFileExists("{$this->consumer}/.claude/skills/commandments-executing-plans/SKILL.md");
+        // The skill is a REAL file in the library, and the agent's folder is a link to it. Asserting
+        // only that the path is readable would pass just as well if the link were a silent copy —
+        // the whole single-source property could be dead and the test still green.
+        $this->assertFileExists("{$this->consumer}/.agents/skills/commandments-executing-plans/SKILL.md");
+        $this->assertTrue(is_link("{$this->consumer}/.claude/skills/commandments-executing-plans"));
+        $this->assertSame(
+            realpath("{$this->consumer}/.agents/skills/commandments-executing-plans"),
+            realpath("{$this->consumer}/.claude/skills/commandments-executing-plans"),
+        );
 
         // Config gained a planExecution block, its onComplete inferred from composer scripts.
         $this->assertSame(
@@ -55,8 +63,102 @@ final class SyncTest extends TestCase
         $this->assertStringContainsString(' hooks ', $settings, 'the dispatcher entry point is wired');
         $this->assertStringContainsString('@code-commandments-managed', $settings);
 
-        // The published-skills glob covers the flat commandments-* dirs.
-        $this->assertStringContainsString('.claude/skills/commandments-*/', (string) file_get_contents("{$this->consumer}/.gitignore"));
+        $ignore = (string) file_get_contents("{$this->consumer}/.gitignore");
+        $this->assertStringContainsString('.agents/skills/commandments-*/', $ignore);
+        // WITHOUT a trailing slash: a slash means "directory only", and git records a symlink as a
+        // file — so the slashed form stopped ignoring the published skills the moment they became
+        // links, and every one of them would show up untracked.
+        $this->assertStringContainsString(".claude/skills/commandments-*\n", $ignore);
+        $this->assertStringNotContainsString(".claude/skills/commandments-*/\n", $ignore);
+    }
+
+    public function test_a_project_on_the_old_layout_migrates_in_one_sync(): void
+    {
+        // Everything a consumer wired by an older release has: skills COPIED into the agent's own
+        // folder, the briefing inline in CLAUDE.md under the markers that release used, and the
+        // ignore rule whose trailing slash no longer matches. None of it should need a human.
+        $copied = "{$this->consumer}/.claude/skills/commandments-executing-plans";
+        @mkdir($copied, 0775, true);
+        file_put_contents("{$copied}/SKILL.md", "an old release's copy\n");
+        file_put_contents("{$this->consumer}/.gitignore", "/vendor\n\n# code-commandments published skills (regenerated on composer update)\n.claude/skills/commandments-*/\n");
+        file_put_contents("{$this->consumer}/CLAUDE.md", "# My project\n\nmy own standing orders\n\n"
+            . "<!-- BEGIN: code-commandments skills (auto-generated, run `composer update`) -->\nthe old inline briefing\n<!-- END: code-commandments skills -->\n\nmore of my own\n");
+
+        $this->sync();
+
+        $claude = (string) file_get_contents("{$this->consumer}/CLAUDE.md");
+
+        $this->assertTrue(is_link($copied), 'the copied directory became a link');
+        $this->assertFileExists("{$this->consumer}/.agents/skills/commandments-executing-plans/SKILL.md");
+        $this->assertStringContainsString('@AGENTS.md', $claude, 'the inline briefing became an import of the canon');
+        $this->assertStringNotContainsString('the old inline briefing', $claude);
+        $this->assertStringContainsString("# My project\n\nmy own standing orders\n", $claude, "and the project's own words are untouched");
+        $this->assertStringContainsString("more of my own\n", $claude);
+        $this->assertStringContainsString('TRACE TO THE SOURCE', (string) file_get_contents("{$this->consumer}/AGENTS.md"));
+        $this->assertStringNotContainsString(".claude/skills/commandments-*/\n", (string) file_get_contents("{$this->consumer}/.gitignore"));
+        $this->assertStringContainsString("/vendor\n", (string) file_get_contents("{$this->consumer}/.gitignore"), "the project's own ignore lines survive");
+    }
+
+    public function test_a_second_sync_changes_nothing_at_all(): void
+    {
+        $this->sync();
+        $before = $this->fingerprint();
+
+        $this->sync();
+
+        // Not just "the config is untouched": a sync that deleted every published skill and wrote
+        // none back would have passed that. This is every file we manage, byte for byte.
+        $this->assertSame($before, $this->fingerprint());
+    }
+
+    public function test_a_hand_written_skill_of_the_projects_own_is_never_swept(): void
+    {
+        // `.agents/skills` is a shared folder — a project may keep its own skills beside ours, and
+        // one of them may perfectly well be named like ours.
+        @mkdir("{$this->consumer}/.agents/skills/commandments-mine", 0775, true);
+        file_put_contents("{$this->consumer}/.agents/skills/commandments-mine/SKILL.md", "mine, not yours\n");
+
+        $this->sync();
+        $this->sync();
+
+        $this->assertSame("mine, not yours\n", file_get_contents("{$this->consumer}/.agents/skills/commandments-mine/SKILL.md"));
+    }
+
+    /**
+     * Every file this package manages in the consumer, with its contents — links by what they point
+     * at rather than what they resolve to, so a link quietly becoming a copy shows up as a change.
+     *
+     * @return array<string, string>
+     */
+    private function fingerprint(): array
+    {
+        $found = [];
+
+        foreach (['.agents', '.claude', '.commandments'] as $dir) {
+            if (! is_dir("{$this->consumer}/{$dir}")) {
+                continue;
+            }
+
+            /**
+             * @var \SplFileInfo $file
+             */
+            foreach (new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator("{$this->consumer}/{$dir}", \FilesystemIterator::SKIP_DOTS),
+            ) as $file) {
+                $path = substr($file->getPathname(), strlen($this->consumer) + 1);
+                $found[$path] = $file->isLink() ? 'link:' . readlink($file->getPathname()) : (string) md5_file($file->getPathname());
+            }
+        }
+
+        foreach (['AGENTS.md', 'CLAUDE.md', '.gitignore'] as $file) {
+            if (is_file("{$this->consumer}/{$file}")) {
+                $found[$file] = (string) md5_file("{$this->consumer}/{$file}");
+            }
+        }
+
+        ksort($found);
+
+        return $found;
     }
 
     public function test_sync_removes_legacy_flat_state_files(): void

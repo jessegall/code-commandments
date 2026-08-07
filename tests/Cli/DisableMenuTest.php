@@ -45,10 +45,7 @@ final class DisableMenuTest extends TestCase
         $this->assertStringContainsString('// Sins\Frontend\SwitchCase::class,', $config);
         $this->assertStringContainsString('$disabledHooks = function (Config $config): void {', $config);
         $this->assertStringContainsString('// Hooks\Handlers\JudgeReminder::class,', $config);
-        $this->assertStringContainsString('use ($disabledSkills, $disabledSins, $disabledHooks)', $config);
-        $this->assertStringContainsString('$disabledSkills($config);', $config);
-        $this->assertStringContainsString('$disabledSins($config);', $config);
-        $this->assertStringContainsString('$disabledHooks($config);', $config);
+        $this->assertMenusAreCarriedAndCalled($config);
         $this->assertValidPhp();
     }
 
@@ -181,7 +178,7 @@ final class DisableMenuTest extends TestCase
 
         $config = $this->config();
         $this->assertStringContainsString('\JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,', $config, 'human line kept');
-        $this->assertStringContainsString('use ($disabledSkills, $disabledSins, $disabledHooks)', $config);
+        $this->assertMenusAreCarriedAndCalled($config);
         $this->assertStringContainsString('// Skills\Backend\ValueObjects::class,', $config);
         $this->assertValidPhp();
     }
@@ -233,5 +230,19 @@ final class DisableMenuTest extends TestCase
         exec('php -l ' . escapeshellarg($this->path()) . ' 2>&1', $output, $exit);
 
         $this->assertSame(0, $exit, implode("\n", $output));
+    }
+
+    /**
+     * EVERY menu is carried on the closure's `use (…)` clause and invoked — asserted from the menu
+     * list rather than a fixed spelling, so adding one cannot pass here while being silently dead in
+     * the config (a menu written but never called is valid PHP, so `php -l` sees nothing).
+     */
+    private function assertMenusAreCarriedAndCalled(string $config): void
+    {
+        foreach (['disabledSkills', 'disabledSins', 'disabledHooks', 'disabledAgents'] as $menu) {
+            $this->assertStringContainsString("\${$menu}", $config, "the {$menu} menu is defined");
+            $this->assertStringContainsString("\${$menu}(\$config);", $config, "the {$menu} menu is actually invoked");
+            $this->assertMatchesRegularExpression('/use \([^)]*\\$' . $menu . '\b[^)]*\)/', $config, "the {$menu} menu is carried into the closure");
+        }
     }
 }
