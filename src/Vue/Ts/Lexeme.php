@@ -46,6 +46,22 @@ final readonly class Lexeme
     }
 
     /**
+     * Is this lexeme the OPENING bracket of a TYPE — the `<` of `Ref<T>` and its kin?
+     */
+    public function isTypeOpener(): bool
+    {
+        return $this->isPunct() && Token::opensType($this->value);
+    }
+
+    /**
+     * Is this lexeme the CLOSING bracket of a type?
+     */
+    public function isTypeCloser(): bool
+    {
+        return $this->isPunct() && Token::closesType($this->value);
+    }
+
+    /**
      * Is this lexeme the CLOSING bracket of a group?
      */
     public function isGroupCloser(): bool

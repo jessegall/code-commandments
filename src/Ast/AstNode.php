@@ -3092,14 +3092,10 @@ class AstNode
         }
 
         // Only the root of the chain is flagged, so one tree yields one finding.
-        $parent = $this->node->getAttribute('parent');
-
-        while ($parent instanceof Node && ! $parent instanceof FunctionLike) {
-            if ($parent instanceof Ternary) {
+        foreach (self::ancestorsWithinFunction($this->node) as $ancestor) {
+            if ($ancestor instanceof Ternary) {
                 return false;
             }
-
-            $parent = $parent->getAttribute('parent');
         }
 
         foreach ([$this->node->if, $this->node->else] as $branch) {

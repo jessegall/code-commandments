@@ -968,9 +968,9 @@ final class Parser
                 }
             }
 
-            if ($token->isPunct() && Token::opensType($token->value)) {
+            if ($token->isTypeOpener()) {
                 $depth++;
-            } elseif ($token->isPunct() && Token::closesType($token->value)) {
+            } elseif ($token->isTypeCloser()) {
                 $depth--;
             }
 
@@ -1038,9 +1038,9 @@ final class Parser
                 return;
             }
 
-            if ($token->isPunct() && Token::opensType($token->value)) {
+            if ($token->isTypeOpener()) {
                 $depth++;
-            } elseif ($token->isPunct() && Token::closesType($token->value)) {
+            } elseif ($token->isTypeCloser()) {
                 if ($depth === 0 && $token->isPunct('}')) {
                     return;
                 }
