@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Hints;
+namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use PhpParser\Node\Stmt\Class_;
 

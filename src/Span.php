@@ -56,10 +56,21 @@ final class Span
      */
     public static function indentAt(string $source, int $pos): string
     {
-        $lineStart = strrpos(substr($source, 0, $pos), "\n");
-        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+        $lineStart = self::lineStartAt($source, $pos);
 
         return substr($source, $lineStart, $pos - $lineStart);
+    }
+
+    /**
+     * The byte offset the line containing $pos BEGINS at — the start of the source when nothing
+     * precedes it. The one place the walk back to a line boundary is written, so a scribe splicing
+     * a whole line in front of a declaration never hand-rolls it.
+     */
+    public static function lineStartAt(string $source, int $pos): int
+    {
+        $newline = strrpos(substr($source, 0, $pos), "\n");
+
+        return $newline === false ? 0 : $newline + 1;
     }
 
     /**

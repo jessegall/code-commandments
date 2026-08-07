@@ -224,6 +224,27 @@ final class Docblock
     }
 
     /**
+     * The docblock's lines — delimiters and all — with every `@<tag>` entry removed. What a
+     * regenerator keeps when it is about to write a fresh set of that tag: the hand-written prose
+     * survives, the generated lines go. A tag is matched whole, so `@method` never strips a
+     * `@methods`.
+     *
+     * @return list<string>
+     */
+    public static function withoutTag(string $text, string $tag): array
+    {
+        $kept = [];
+
+        foreach (self::lines($text) as $line) {
+            if (preg_match('/^\s*\*?\s*@' . preg_quote($tag, '/') . '\b/', $line) !== 1) {
+                $kept[] = $line;
+            }
+        }
+
+        return $kept;
+    }
+
+    /**
      * The docblock's content lines, stripped of the delimiters and the per-line `*`, with any leading
      * and trailing blank lines dropped. A blank line INSIDE (the paragraph break before `@param`) is
      * kept as an empty entry.

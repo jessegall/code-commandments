@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Hints;
+namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Scribes\Edit;
+use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Scribes\Scribe;
 use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node;
@@ -251,7 +253,7 @@ final class DataHintScribe extends Scribe
                 return null;
             }
 
-            $insertAt = $this->lineStart($source, $class->getStartFilePos());
+            $insertAt = Span::lineStartAt($source, $class->getStartFilePos());
             $block = "{$indent}/**\n";
 
             foreach ($methodLines as $line) {
@@ -263,13 +265,9 @@ final class DataHintScribe extends Scribe
             return Edit::insertAt($insertAt, $block);
         }
 
-        $kept = [];
-
-        foreach (preg_split('/\R/', $doc->getText()) ?: [] as $line) {
-            if (preg_match('/^\s*\*?\s*@method\b/', $line) !== 1) {
-                $kept[] = $line;
-            }
-        }
+        // The block's own prose is kept and only the generated `@method` lines are dropped — which
+        // is the docblock's SHAPE, so {@see Docblock} answers it rather than this scribe scraping.
+        $kept = Docblock::withoutTag($doc->getText(), 'method');
 
         // $kept still ends with the closing ` */` line; inject before it.
         $closing = array_pop($kept);
@@ -478,15 +476,9 @@ final class DataHintScribe extends Scribe
 
     private function indentOf(Class_ $class, string $source): string
     {
-        $start = $this->lineStart($source, $class->getStartFilePos());
+        $start = Span::lineStartAt($source, $class->getStartFilePos());
 
         return substr($source, $start, $class->getStartFilePos() - $start);
     }
 
-    private function lineStart(string $source, int $offset): int
-    {
-        $newline = strrpos(substr($source, 0, $offset), "\n");
-
-        return $newline === false ? 0 : $newline + 1;
-    }
 }

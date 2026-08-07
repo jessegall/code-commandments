@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Cli\Hints\DataHintScribe;
+use JesseGall\CodeCommandments\Scribes\Backend\DataHintScribe;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;

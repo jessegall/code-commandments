@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
-use JesseGall\CodeCommandments\Cli\Hints\DataHintScribe;
+use JesseGall\CodeCommandments\Scribes\Backend\DataHintScribe;
 
 /**
  * The roll of Scribes the `scribe` command runs. (An explicit list, not a glob —

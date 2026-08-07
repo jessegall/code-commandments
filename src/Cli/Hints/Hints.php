@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Scribes\Backend\DataHintScribe;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
