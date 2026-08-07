@@ -190,8 +190,8 @@ final class ValueFlow
                 $assume[] = $occurrence;
                 $chains[] = $path;
             } else {
-                foreach ($this->follow($occurrence, $key, $seenSlots) as [$downstream, $edge, $nextKey]) {
-                    $queue[] = [$downstream, $edge, $path, $nextKey];
+                foreach ($this->follow($occurrence, $key, $seenSlots) as $reached) {
+                    $queue[] = [$reached->match, $reached->edge, $path, $reached->key];
                 }
             }
         }
@@ -206,7 +206,7 @@ final class ValueFlow
      * flows the array the same ways, and yields the value back out at an element read or a `::from()`.
      *
      * @param  array<string, true>  $seenSlots
-     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     * @return list<Reached>
      */
     private function follow(NodeMatch $occurrence, ?string $key, array &$seenSlots): array
     {
@@ -235,7 +235,7 @@ final class ValueFlow
      * `[<value>]` / `['k' => <value>]` → the array that now carries the value, keyed by its literal key
      * (or `*` for an index / dynamic key). From here the CARRIER flows.
      *
-     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     * @return list<Reached>
      */
     private function viaArrayInsertion(NodeMatch $occurrence): array
     {
@@ -251,14 +251,14 @@ final class ValueFlow
             return [];
         }
 
-        return [[new NodeMatch($array, $occurrence->file, $this->codebase), 'array', $this->literalKey($item)]];
+        return [new Reached(new NodeMatch($array, $occurrence->file, $this->codebase), 'array', $this->literalKey($item))];
     }
 
     /**
      * The value coming back OUT of the array this carrier holds: an element read (`$arr['k']`,
      * `$arr[0]`), a `foreach ($arr as $v)`, or a spread (`[...$arr]`) that re-carries it.
      *
-     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     * @return list<Reached>
      */
     private function viaArrayElement(NodeMatch $occurrence, string $key): array
     {
@@ -266,7 +266,7 @@ final class ValueFlow
         $parent = $node?->getAttribute('parent');
 
         if ($parent instanceof ArrayDimFetch && $parent->var === $node) {
-            return $this->keyMatches($parent->dim, $key) ? [[new NodeMatch($parent, $occurrence->file, $this->codebase), 'element', null]] : [];
+            return $this->keyMatches($parent->dim, $key) ? [new Reached(new NodeMatch($parent, $occurrence->file, $this->codebase), 'element')] : [];
         }
 
         if ($parent instanceof Foreach_ && $parent->expr === $node && AstNode::variableNameOf($parent->valueVar) !== null) {
@@ -275,7 +275,7 @@ final class ValueFlow
 
         // `[...$arr]` — the spread re-carries the element into the surrounding array, key intact.
         if ($parent instanceof ArrayItem && $parent->unpack && $parent->getAttribute('parent') instanceof Array_) {
-            return [[new NodeMatch($parent->getAttribute('parent'), $occurrence->file, $this->codebase), 'spread', $key]];
+            return [new Reached(new NodeMatch($parent->getAttribute('parent'), $occurrence->file, $this->codebase), 'spread', $key)];
         }
 
         return [];
@@ -331,11 +331,11 @@ final class ValueFlow
      * Tag each occurrence with the edge kind that reached it and the key it now carries.
      *
      * @param  list<NodeMatch>  $downstream
-     * @return list<array{0: NodeMatch, 1: string, 2: ?string}>
+     * @return list<Reached>
      */
     private function keyed(array $downstream, string $edge, ?string $key): array
     {
-        return array_map(static fn (NodeMatch $match) => [$match, $edge, $key], $downstream);
+        return array_map(static fn (NodeMatch $match) => new Reached($match, $edge, $key), $downstream);
     }
 
     /**
@@ -377,17 +377,18 @@ final class ValueFlow
             return [];
         }
 
-        [$fqcn, $method, $param] = $target;
-        $name = AstNode::variableNameOf($param->var) !== null ? $param->var->name : null;
+        $slot = $target->slot();
 
-        if ($name === null || ! $this->markSlot("P:{$fqcn}::{$method}#{$name}", $seenSlots)) {
+        if ($slot === null || ! $this->markSlot($slot, $seenSlots)) {
             return [];
         }
 
-        $downstream = $this->readsOf($name, $this->methodNode($fqcn, $method), $this->fileForClass()[$fqcn] ?? null);
+        $fqcn = $target->callee->class;
+        $name = (string) $target->name();
+        $downstream = $this->readsOf($name, $this->methodNode($fqcn, $target->callee->method), $this->fileForClass()[$fqcn] ?? null);
 
         // A promoted parameter also becomes the object's field — follow that slot too.
-        if ($param->flags !== 0) {
+        if ($target->isPromoted()) {
             $downstream = [...$downstream, ...$this->fieldSlotReads($fqcn, $name, $seenSlots)];
         }
 
@@ -462,24 +463,23 @@ final class ValueFlow
 
         $target = $this->targetParam($parent->getAttribute('parent'), $parent);
 
-        return $target !== null && ! TypeResolver::paramAcceptsNull($target[2]);
+        return $target !== null && ! TypeResolver::paramAcceptsNull($target->param);
     }
 
     /**
      * Resolve which parameter an argument lands on — by name for a named argument, by position
-     * otherwise — as `[calleeFqcn, method, Param]`, or null when the callee/param can't be resolved.
-     *
-     * @return array{0: string, 1: string, 2: Param}|null
+     * otherwise. Null when the callee or the parameter can't be resolved.
      */
-    private function targetParam(?Node $call, Arg $arg): ?array
+    private function targetParam(?Node $call, Arg $arg): ?ParamTarget
     {
-        $callee = $this->callee($call);
+        $resolved = $this->callee($call);
 
-        if ($callee === null) {
+        if ($resolved === null) {
             return null;
         }
 
-        [$fqcn, $method] = $callee;
+        [$fqcn, $method] = $resolved;
+        $callee = new Callee($fqcn, $method);
         $params = array_values($this->methodNode($fqcn, $method)?->params ?? []);
 
         if ($params === []) {
@@ -489,7 +489,7 @@ final class ValueFlow
         if ($arg->name instanceof Identifier) {
             foreach ($params as $param) {
                 if ($param->var instanceof Variable && $param->var->name === $arg->name->toString()) {
-                    return [$fqcn, $method, $param];
+                    return new ParamTarget($callee, $param);
                 }
             }
 
@@ -499,7 +499,7 @@ final class ValueFlow
         $position = $this->positionOf($call, $arg);
         $param = $position === null ? null : ($params[$position] ?? null);
 
-        return $param === null ? null : [$fqcn, $method, $param];
+        return $param === null ? null : new ParamTarget($callee, $param);
     }
 
     /**
