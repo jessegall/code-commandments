@@ -26,6 +26,23 @@ use PhpParser\Node\Stmt\Property;
 final class OptionNode extends NodeMatch
 {
     /**
+     * The name the type is written under. Matched SHORT on purpose: a codebase imports it
+     * (`use JesseGall\PhpTypes\Option;`) and writes `Option` from then on, and a project with an
+     * `Option` of its own means the same thing by it.
+     */
+    public const string NAME = 'Option';
+
+    /**
+     * Is $class the `Option` type? An Option is a VALUE by construction — an immutable wrapper
+     * around a maybe-present value — which is what lets {@see \JesseGall\CodeCommandments\Ast\Codebase::isValueType}
+     * vouch for a field holding one without being able to read the vendor class it lives in.
+     */
+    public static function isOption(?string $class): bool
+    {
+        return $class !== null && ClassName::short($class) === self::NAME;
+    }
+
+    /**
      * Does this declaration (param, property, or return) type something as a nullable `Option`
      * — `?Option` / `Option | null` — an Option wearing a null costume?
      */
@@ -40,7 +57,7 @@ final class OptionNode extends NodeMatch
 
         $class = TypeName::nullableClass($type);
 
-        return $class !== null && ClassName::short($class) === 'Option';
+        return self::isOption($class);
     }
 
     /**

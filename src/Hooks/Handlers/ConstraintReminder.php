@@ -40,15 +40,7 @@ final class ConstraintReminder extends Hook
             return $this->pass();
         }
 
-        $this->io->emit([
-            'suppressOutput' => true,
-            'hookSpecificOutput' => [
-                'hookEventName' => 'PostToolUse',
-                'additionalContext' => $this->reminder($active),
-            ],
-        ]);
-
-        return 0;
+        return $this->quietly($event, $this->reminder($active));
     }
 
     protected function onManualRun(HookEvent $event): int

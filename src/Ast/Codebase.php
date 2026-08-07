@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\CodeCommandments\Ast\PhpTypes\OptionNode;
+
 use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Support\Invokable;
@@ -901,7 +903,7 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
             return false; // a union of classes, `mixed`, `object`, or a shape we won't vouch for
         }
 
-        if ($this->isEnum($class)) {
+        if ($this->isEnum($class) || OptionNode::isOption($class)) {
             return true;
         }
 

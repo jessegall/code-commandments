@@ -171,8 +171,8 @@ final class PlanReminderTest extends TestCase
 
         $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'sha1');
 
-        $this->assertSame('block', $emitted[0]['decision'] ?? null);
-        $this->assertStringContainsString("plan isn't finished", (string) ($emitted[0]['reason'] ?? ''));
+        $this->assertTrue($emitted[0]->blockReason->isSome());
+        $this->assertStringContainsString("plan isn't finished", $emitted[0]->blockReason->unwrapOr(''));
     }
 
     public function test_stop_gives_up_after_the_stuck_cap_with_no_progress(): void
@@ -247,7 +247,7 @@ final class PlanReminderTest extends TestCase
             $this->assertNotSame([], $emitted, "best-effort nudge {$i}");
         }
 
-        $reason = (string) ($emitted[0]['reason'] ?? '');
+        $reason = $emitted[0]->blockReason->unwrapOr('');
         $this->assertStringContainsString('BEST-EFFORT', $reason);
         $this->assertStringContainsString('DEFERRED', $reason);
         $this->assertStringContainsString('retry every deferred step', $reason);
@@ -263,8 +263,8 @@ final class PlanReminderTest extends TestCase
 
         $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'sha0');
 
-        $this->assertSame('block', $emitted[0]['decision'] ?? null, 'a stuck signal does not pause a relentless run');
-        $reason = (string) ($emitted[0]['reason'] ?? '');
+        $this->assertTrue($emitted[0]->blockReason->isSome(), 'a stuck signal does not pause a relentless run');
+        $reason = $emitted[0]->blockReason->unwrapOr('');
         $this->assertStringContainsString('RELENTLESS', $reason);
         $this->assertStringContainsString('SKIP', $reason);
         $this->assertStringNotContainsString('plan stuck', $reason, 'relentless never teaches plan stuck');
@@ -293,7 +293,7 @@ final class PlanReminderTest extends TestCase
         $done = [['id' => 'a', 'type' => 'subagent', 'status' => 'completed']];
         $emitted = $this->fireWith(['hook_event_name' => 'Stop', 'background_tasks' => $done], 'sha1');
 
-        $this->assertSame('block', $emitted[0]['decision'] ?? null, 'a settled task still lets the plan nudge');
+        $this->assertTrue($emitted[0]->blockReason->isSome(), 'a settled task still lets the plan nudge');
     }
 
     /**
@@ -333,7 +333,7 @@ final class PlanReminderTest extends TestCase
         // The agent continued (no commit needed) — the next stop gets a normal keep-going nudge.
         $emitted = $this->fire(['hook_event_name' => 'Stop'], head: 'sha0');
 
-        $this->assertSame('block', $emitted[0]['decision'] ?? null, 'keep-going resumes once the agent continues');
+        $this->assertTrue($emitted[0]->blockReason->isSome(), 'keep-going resumes once the agent continues');
     }
 
     public function test_stop_clears_the_marker_once_back_on_the_base_branch(): void
@@ -375,7 +375,7 @@ final class PlanReminderTest extends TestCase
      */
     private function context(array $emitted): string
     {
-        return (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        return $emitted[0]->context->unwrapOr('');
     }
 
     private function marker(): PlanMarker

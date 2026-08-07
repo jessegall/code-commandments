@@ -117,7 +117,7 @@ final class SourceReminderTest extends TestCase
      */
     private function context(array $emitted): string
     {
-        return (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        return $emitted[0]->context->unwrapOr('');
     }
 
     private function writeConfig(string $body): void

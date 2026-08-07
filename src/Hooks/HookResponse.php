@@ -7,10 +7,10 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\PhpTypes\Option;
 
 /**
- * What the harness is told after every handler for one moment has run. Three shapes and no more:
- * SILENT, a BLOCK carrying the joined reasons, or injected CONTEXT (suppressed from the transcript
- * only when every handler that spoke asked). A block wins over context, because a handler that
- * stops the agent has said the more important thing.
+ * What the harness is told after a hook moment — three shapes and no more: SILENT, a BLOCK carrying a
+ * reason, or injected CONTEXT (kept out of the transcript when the handler asked). A block wins over
+ * context, and it is the ONE place the wire shape is written ({@see json}), so a handler names what it
+ * wants to say and never the protocol's own keys.
  */
 final readonly class HookResponse
 {
@@ -25,7 +25,7 @@ final readonly class HookResponse
     ) {}
 
     /**
-     * Nothing to say — the handlers all stayed quiet.
+     * Nothing to say.
      */
     public static function silent(): self
     {
@@ -33,36 +33,49 @@ final readonly class HookResponse
     }
 
     /**
-     * Everything the handlers emitted for one moment, merged into the single response the harness
-     * reads.
-     *
-     * @param  list<array<string, mixed>>  $emitted  each handler's payload, in order
+     * Block-and-continue: the agent reads $reason and gets one more turn.
      */
-    public static function merge(array $emitted): self
+    public static function blocking(string $reason): self
     {
-        $emissions = array_map(HookEmission::of(...), $emitted);
+        return new self(Option::some($reason), Option::none());
+    }
+
+    /**
+     * A non-blocking context injection: the tool/turn proceeds and the agent reads $context. When
+     * $quietly, the harness keeps it out of the transcript — a heartbeat the user never sees.
+     */
+    public static function injecting(string $context, bool $quietly = false): self
+    {
+        return new self(Option::none(), Option::some($context), $quietly);
+    }
+
+    /**
+     * Everything the handlers said for one moment, merged into the single response the harness reads.
+     *
+     * @param  list<self>  $responses  each handler's response, in order
+     */
+    public static function merge(array $responses): self
+    {
         $reasons = [];
         $contexts = [];
-        $suppress = true;
+        $quietly = true;
 
-        foreach ($emissions as $emission) {
-            foreach ($emission->blockReason() as $reason) {
+        foreach ($responses as $response) {
+            foreach ($response->blockReason as $reason) {
                 $reasons[] = $reason;
             }
 
-            foreach ($emission->context() as $context) {
+            foreach ($response->context as $context) {
                 $contexts[] = $context;
-                $suppress = $suppress && $emission->suppressesOutput();
+                $quietly = $quietly && $response->suppressOutput;
             }
         }
 
         if ($reasons !== []) {
-            return new self(Option::some(implode("\n\n", $reasons)), Option::none());
+            return self::blocking(implode("\n\n", $reasons));
         }
 
-        return $contexts === []
-            ? self::silent()
-            : new self(Option::none(), Option::some(implode("\n\n", $contexts)), $suppress);
+        return $contexts === [] ? self::silent() : self::injecting(implode("\n\n", $contexts), $quietly);
     }
 
     /**
@@ -74,21 +87,25 @@ final readonly class HookResponse
     }
 
     /**
-     * This response in the harness's own protocol — the ONE place the wire shape is written.
-     * Meaningless when {@see isSilent}, which a caller asks first.
-     *
-     * @return array<string, mixed>
+     * This response in the harness's own protocol, encoded — the ONE place the wire shape exists, and
+     * it exists only on its way out. Meaningless when {@see isSilent}, which a caller asks first.
      */
-    public function payload(string $event): array
+    public function json(string $event): string
     {
         foreach ($this->blockReason as $reason) {
-            return ['decision' => 'block', 'reason' => $reason];
+            return self::encode(['decision' => 'block', 'reason' => $reason]);
         }
 
-        $response = [
-            'hookSpecificOutput' => ['hookEventName' => $event, 'additionalContext' => $this->context->unwrapOr('')],
-        ];
+        $injection = ['hookSpecificOutput' => ['hookEventName' => $event, 'additionalContext' => $this->context->unwrapOr('')]];
 
-        return $this->suppressOutput ? [...$response, 'suppressOutput' => true] : $response;
+        return self::encode($this->suppressOutput ? [...$injection, 'suppressOutput' => true] : $injection);
+    }
+
+    /**
+     * @param  array<string, mixed>  $wire
+     */
+    private static function encode(array $wire): string
+    {
+        return json_encode($wire, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
     }
 }

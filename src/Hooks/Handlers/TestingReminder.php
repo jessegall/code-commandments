@@ -41,15 +41,7 @@ final class TestingReminder extends Hook
             return $this->pass();
         }
 
-        $this->io->emit([
-            'suppressOutput' => true,
-            'hookSpecificOutput' => [
-                'hookEventName' => 'PostToolUse',
-                'additionalContext' => $this->reminder($method),
-            ],
-        ]);
-
-        return 0;
+        return $this->quietly($event, $this->reminder($method));
     }
 
     protected function onManualRun(HookEvent $event): int

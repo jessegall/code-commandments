@@ -131,6 +131,17 @@ abstract class Hook
     }
 
     /**
+     * Inject $context QUIETLY: the agent reads it, the user's transcript does not show it. The shape
+     * a heartbeat wants — a reminder that fires on tool use should not fill the terminal.
+     */
+    protected function quietly(HookEvent $event, string $context): int
+    {
+        $this->io->inject($event->name(), $context, quietly: true);
+
+        return 0;
+    }
+
+    /**
      * Stay silent — emit nothing.
      */
     protected function pass(): int

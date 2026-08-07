@@ -75,7 +75,7 @@ final class HookDispatchTest extends TestCase
         }
 
         $this->assertCount(1, $emitted, 'one merged response, not one per handler');
-        $context = (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        $context = $emitted[0]->context->unwrapOr('');
         $this->assertStringContainsString('trace every fix to its SOURCE', $context, 'the cardinal-rule reminder');
         $this->assertStringContainsString('No frontend logic.', $context, 'the constraint reminder');
     }
@@ -87,8 +87,8 @@ final class HookDispatchTest extends TestCase
 
         $emitted = $this->dispatch(['hook_event_name' => 'Stop']);
 
-        $this->assertSame('block', $emitted[0]['decision'] ?? null);
-        $this->assertStringContainsString("plan isn't finished", (string) ($emitted[0]['reason'] ?? ''));
+        $this->assertTrue($emitted[0]->blockReason->isSome());
+        $this->assertStringContainsString("plan isn't finished", $emitted[0]->blockReason->unwrapOr(''));
     }
 
     public function test_stop_is_silent_while_parked_on_background_work(): void

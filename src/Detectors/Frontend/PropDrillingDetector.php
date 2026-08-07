@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
+use JesseGall\CodeCommandments\Vue\PropForward;
 use JesseGall\CodeCommandments\Vue\Script;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
@@ -49,7 +50,7 @@ final class PropDrillingDetector implements Detector
             foreach ($this->conduits($component) as $forwards) {
                 foreach ($forwards as $forward) {
                     if ($this->forwardsToAnotherConduit($forward, $component)) {
-                        $findings[spl_object_id($forward['element']->node)] = $forward['element'];
+                        $findings[spl_object_id($forward->element->node)] = $forward->element;
                     }
                 }
             }
@@ -61,14 +62,12 @@ final class PropDrillingDetector implements Detector
     /**
      * Whether the child a forward targets resolves to a component that is ALSO a conduit for
      * the same (child-side) prop — i.e. the prop keeps being piped, not consumed.
-     *
-     * @param  array{element: ElementMatch, childProp: string}  $forward
      */
-    private function forwardsToAnotherConduit(array $forward, Sfc $parent): bool
+    private function forwardsToAnotherConduit(PropForward $forward, Sfc $parent): bool
     {
-        $child = $this->resolveChild($forward['element']->tag, $parent);
+        $child = $this->resolveChild($forward->element->tag, $parent);
 
-        return $child !== null && isset($this->conduits($child)[$forward['childProp']]);
+        return $child !== null && isset($this->conduits($child)[$forward->childProp]);
     }
 
     /**
@@ -76,7 +75,7 @@ final class PropDrillingDetector implements Detector
      * nowhere else (not in another binding/interpolation/directive, not as `props.x` in the
      * script). Keyed by prop, each carrying the forward site(s) and the child-side prop name.
      *
-     * @return array<string, list<array{element: ElementMatch, childProp: string}>>
+     * @return array<string, list<PropForward>>
      */
     private function conduits(Sfc $component): array
     {
@@ -94,7 +93,7 @@ final class PropDrillingDetector implements Detector
         }
 
         $reads = [];     // prop => count of expressions that read it
-        $forwards = [];  // prop => list<array{element, childProp}>
+        $forwards = [];  // prop => list<PropForward>
 
         foreach ($component->elements()->get() as $element) {
             foreach ($element->expressions() as $expression) {
@@ -113,7 +112,7 @@ final class PropDrillingDetector implements Detector
                 $chain = $expression->asChain();
 
                 if ($chain !== null && count($chain) === 1 && isset($props[$chain[0]])) {
-                    $forwards[$chain[0]][] = ['element' => $element, 'childProp' => $childProp];
+                    $forwards[$chain[0]][] = new PropForward($element, $childProp);
                 }
             }
         }

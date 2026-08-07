@@ -50,15 +50,7 @@ final class WorkingState extends Hook
             return $this->pass();
         }
 
-        $this->io->emit([
-            'suppressOutput' => true,
-            'hookSpecificOutput' => [
-                'hookEventName' => 'PostToolUse',
-                'additionalContext' => $this->refreshNudge($this->record($event)->path()),
-            ],
-        ]);
-
-        return 0;
+        return $this->quietly($event, $this->refreshNudge($this->record($event)->path()));
     }
 
     protected function onSessionStart(HookEvent $event): int

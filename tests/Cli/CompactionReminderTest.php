@@ -57,6 +57,6 @@ final class CompactionReminderTest extends TestCase
     {
         $emitted = $this->emit($source);
 
-        return $emitted === [] ? '' : (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        return $emitted === [] ? '' : $emitted[0]->context->unwrapOr('');
     }
 }

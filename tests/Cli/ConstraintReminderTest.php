@@ -41,7 +41,7 @@ final class ConstraintReminderTest extends TestCase
 
     private function context(array $emitted): string
     {
-        return (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        return $emitted[0]->context->unwrapOr('');
     }
 
     private function writeConstraint(): void

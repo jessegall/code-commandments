@@ -53,15 +53,7 @@ final class Remind extends Hook
             return $this->pass();
         }
 
-        $this->io->emit([
-            'suppressOutput' => true,
-            'hookSpecificOutput' => [
-                'hookEventName' => 'PostToolUse',
-                'additionalContext' => self::REMINDER,
-            ],
-        ]);
-
-        return 0;
+        return $this->quietly($event, self::REMINDER);
     }
 
     protected function onManualRun(HookEvent $event): int

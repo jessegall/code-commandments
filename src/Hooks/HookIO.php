@@ -67,30 +67,29 @@ class HookIO
      */
     public function block(string $reason): void
     {
-        $this->emit(['decision' => 'block', 'reason' => $reason]);
+        $this->emit(HookResponse::blocking($reason), 'Stop');
     }
 
     /**
      * A non-blocking context injection: the tool/turn proceeds; Claude reads $context as context.
-     * Silent on an event with no context channel — better nothing than an invalid payload.
+     * When $quietly the harness keeps it out of the transcript. Silent on an event with no context
+     * channel — better nothing than an invalid payload.
      */
-    public function inject(string $event, string $context): void
+    public function inject(string $event, string $context, bool $quietly = false): void
     {
         if (! in_array($event, self::INJECTABLE, true)) {
             return;
         }
 
-        $this->emit(['hookSpecificOutput' => [
-            'hookEventName' => $event,
-            'additionalContext' => $context,
-        ]]);
+        $this->emit(HookResponse::injecting($context, $quietly), $event);
     }
 
     /**
-     * @param  array<string, mixed>  $payload
+     * Hand $response to the harness for $event. The wire shape is the response's own
+     * ({@see HookResponse::json}); this only writes it.
      */
-    public function emit(array $payload): void
+    public function emit(HookResponse $response, string $event): void
     {
-        fwrite(STDOUT, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+        fwrite(STDOUT, $response->json($event));
     }
 }

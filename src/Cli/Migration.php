@@ -100,7 +100,7 @@ final class Migration
         if ($live->isSome()) {
             foreach ($paused as $setAside) {
                 foreach ($this->conditions($setAside) as $condition) {
-                    $conditions[] = new Condition(++$lastId, $condition->text);
+                    $conditions[] = Condition::stated(++$lastId, $condition->text);
                 }
             }
         }
@@ -271,7 +271,7 @@ final class Migration
 
         foreach ($marker->from($this->headerOf($marker)) as $line) {
             $condition = Condition::read($line);
-            $conditions[] = $condition ?? new Condition(count($conditions) + 1, $line);
+            $conditions[] = $condition ?? Condition::stated(count($conditions) + 1, $line);
         }
 
         return $conditions;

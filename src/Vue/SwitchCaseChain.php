@@ -20,7 +20,7 @@ final class SwitchCaseChain
     private const int CASES = 2;
 
     /**
-     * @param  list<array{key: ?string, element: Element}>  $branches  key null = the `v-else` default
+     * @param  list<SwitchCase>  $branches
      */
     private function __construct(
         public readonly string $subject,
@@ -35,7 +35,7 @@ final class SwitchCaseChain
      */
     public function span(): Span
     {
-        $tail = $this->branches[count($this->branches) - 1]['element'];
+        $tail = $this->branches[count($this->branches) - 1]->element;
 
         return new Span($this->head->file(), $this->head->sfc->source, $this->head->start, $tail->end);
     }
@@ -46,72 +46,76 @@ final class SwitchCaseChain
             return null;
         }
 
-        [$subject, $key] = self::equality($head->attribute(Directive::If));
+        $test = self::equality($head->attribute(Directive::If));
 
-        if ($subject === null) {
-            return null;
-        }
-
-        $branches = [['key' => $key, 'element' => $head]];
-
-        foreach ($head->followingElements() as $sibling) {
-            if ($sibling->hasAttribute(Directive::ElseIf)) {
-                [$next, $caseKey] = self::equality($sibling->attribute(Directive::ElseIf));
-
-                if ($next !== $subject) {
-                    return null;
-                }
-
-                $branches[] = ['key' => $caseKey, 'element' => $sibling];
-
-                continue;
-            }
-
-            if ($sibling->hasAttribute(Directive::Else)) {
-                $branches[] = ['key' => null, 'element' => $sibling];
-            }
-
-            break;
-        }
-
-        $cases = count(array_filter($branches, static fn (array $branch): bool => $branch['key'] !== null));
-
-        return $cases >= self::CASES ? new self($subject, $branches, $head) : null;
+        return $test->isNone() ? null : self::from($head, $test->unwrap());
     }
 
     /**
-     * Split a `subject === literal` test into [subject, caseKey] by reading the
-     * parsed expression: the top node must be an `===`/`==` whose left is a
-     * variable / member chain and whose right is a single literal. A compound
-     * `a === 'x' || a === 'y'` parses to a top-level `||`, not an equality, so it
+     * The chain $head opens, given the test it makes — every following `v-else-if` on the SAME
+     * subject, then an optional `v-else`. Null when a sibling tests something else (that is two
+     * conditionals, not one switch) or when too few cases remain to be worth a `<SwitchCase>`.
+     */
+    private static function from(ElementMatch $head, EqualityTest $test): ?self
+    {
+        $branches = [SwitchCase::matching($test->key, $head)];
+
+        foreach ($head->followingElements() as $sibling) {
+            if (! $sibling->hasAttribute(Directive::ElseIf)) {
+                if ($sibling->hasAttribute(Directive::Else)) {
+                    $branches[] = SwitchCase::fallback($sibling);
+                }
+
+                break;
+            }
+
+            $next = self::equality($sibling->attribute(Directive::ElseIf))
+                ->filter(static fn (EqualityTest $each): bool => $each->sharesSubjectWith($test));
+
+            if ($next->isNone()) {
+                return null;
+            }
+
+            $branches[] = SwitchCase::matching($next->unwrap()->key, $sibling);
+        }
+
+        $cases = count(array_filter($branches, static fn (SwitchCase $branch): bool => ! $branch->isFallback()));
+
+        return $cases >= self::CASES ? new self($test->subject, $branches, $head) : null;
+    }
+
+    /**
+     * Read a `subject === literal` test off the parsed expression: the top node must be an
+     * `===`/`==` whose left is a variable / member chain and whose right is a single literal. A
+     * compound `a === 'x' || a === 'y'` parses to a top-level `||`, not an equality, so it
      * structurally disqualifies the chain — no pattern matching.
      *
      * @param  Option<string>  $expression
-     * @return array{0: ?string, 1: ?string}
+     * @return Option<EqualityTest>
      */
-    private static function equality(Option $expression): array
+    private static function equality(Option $expression): Option
     {
         if ($expression->isNone()) {
-            return [null, null];
+            return Option::none();
         }
 
         $node = Parser::parse($expression->unwrap());
 
         if (! $node->is(ExprKind::Binary) || ! in_array($node->get('op'), ['===', '=='], true)) {
-            return [null, null];
+            return Option::none();
         }
 
         $left = $node->get('left');
         $right = $node->get('right');
 
         if (! $left instanceof Expr || ! $right instanceof Expr || ! $right->is(ExprKind::Literal)) {
-            return [null, null];
+            return Option::none();
         }
 
         if (! in_array($left->kind, [ExprKind::Identifier, ExprKind::Member, ExprKind::Index], true)) {
-            return [null, null];
+            return Option::none();
         }
 
-        return [$left->source(), (string) $right->get('value')];
+        return Option::some(new EqualityTest($left->source(), (string) $right->get('value')));
     }
 }

@@ -90,12 +90,12 @@ final class UntilReminderTest extends TestCase
 
     private function context(array $emitted): string
     {
-        return (string) ($emitted[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        return $emitted[0]->context->unwrapOr('');
     }
 
     private function reason(array $emitted): string
     {
-        return (string) ($emitted[0]['reason'] ?? '');
+        return $emitted[0]->blockReason->unwrapOr('');
     }
 
     private function gate(): UntilGate
@@ -115,7 +115,7 @@ final class UntilReminderTest extends TestCase
 
         $emitted = $this->stop();
 
-        $this->assertSame('block', $emitted[0]['decision'] ?? null);
+        $this->assertTrue($emitted[0]->blockReason->isSome());
         $reason = $this->reason($emitted);
         $this->assertStringContainsString('1. the full test suite passes', $reason);
         $this->assertStringContainsString('2. the README is updated', $reason);
@@ -164,7 +164,7 @@ final class UntilReminderTest extends TestCase
 
         $this->assertSame([], $this->stop(), 'the blocked agent may hand back to the user');
         $this->assertSame([1 => 'the full test suite passes'], $this->gate()->all());
-        $this->assertSame('block', $this->stop()[0]['decision'] ?? null, 'and the gate holds again right after');
+        $this->assertTrue($this->stop()[0]->blockReason->isSome(), 'and the gate holds again right after');
     }
 
     public function test_a_held_stop_drops_what_the_agent_said_was_blocked(): void
@@ -360,7 +360,7 @@ final class UntilReminderTest extends TestCase
     {
         $this->gate()->add('the changelog has an entry');
 
-        $context = (string) ($this->prompt()[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        $context = $this->prompt()[0]->context->unwrapOr('');
 
         $this->assertStringContainsString('STEERING', $context, 'work in hand is done now');
         $this->assertStringContainsString('PARK', $context, 'a separate/deferred task is parked');
@@ -373,7 +373,7 @@ final class UntilReminderTest extends TestCase
         // no stop and dies with the session — so the deferred task was silently lost.
         $this->gate()->add('the changelog has an entry');
 
-        $context = (string) ($this->prompt()[0]['hookSpecificOutput']['additionalContext'] ?? '');
+        $context = $this->prompt()[0]->context->unwrapOr('');
 
         $this->assertStringContainsString('add it to the to-do list', $context, 'the wording is named as a deferral');
         $this->assertStringContainsString('A TO-DO ITEM IS NOT PARKING', $context);

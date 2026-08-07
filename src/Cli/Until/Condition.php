@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Until;
 
 use JesseGall\CodeCommandments\Cli\State\Line;
+use JesseGall\PhpTypes\Option;
 
 /**
  * One thing the user said must hold before the agent may stop — its STABLE id, its text, and the
@@ -13,11 +14,22 @@ use JesseGall\CodeCommandments\Cli\State\Line;
  */
 final readonly class Condition
 {
+    /**
+     * @param  Option<string>  $blockedBecause
+     */
     public function __construct(
         public int $id,
         public string $text,
-        public string $blockedBecause = '',
+        public Option $blockedBecause,
     ) {}
+
+    /**
+     * A condition as the user has just stated it — nothing is blocking it yet.
+     */
+    public static function stated(int $id, string $text): self
+    {
+        return new self($id, $text, Option::none());
+    }
 
     /**
      * The condition as the file stores it: `id<TAB>text`, and the reason as a third column once there
@@ -25,9 +37,7 @@ final readonly class Condition
      */
     public function line(): string
     {
-        return $this->blockedBecause === ''
-            ? "{$this->id}\t{$this->text}"
-            : "{$this->id}\t{$this->text}\t{$this->blockedBecause}";
+        return implode("\t", [$this->id, $this->text, ...$this->blockedBecause]);
     }
 
     /**
@@ -41,12 +51,14 @@ final readonly class Condition
             return null;
         }
 
-        return new self((int) $parts[0], $parts[1], $parts[2] ?? '');
+        [$id, $text, $reason] = array_pad($parts, 3, '');
+
+        return new self((int) $id, $text, Option::fromTruthy($reason));
     }
 
     public function isBlocked(): bool
     {
-        return $this->blockedBecause !== '';
+        return $this->blockedBecause->isSome();
     }
 
     /**
@@ -55,7 +67,7 @@ final readonly class Condition
      */
     public function blockedBy(string $reason): self
     {
-        return new self($this->id, $this->text, Line::flatten($reason));
+        return $this->because(Option::fromTruthy(Line::flatten($reason)));
     }
 
     /**
@@ -64,6 +76,18 @@ final readonly class Condition
      */
     public function unblocked(): self
     {
-        return new self($this->id, $this->text);
+        return $this->because(Option::none());
+    }
+
+    /**
+     * The same condition — same id, same words — carrying $reason instead of whatever it carried.
+     * The one place the statement itself is re-spelled, so a claim about it is a line rather than a
+     * rebuild.
+     *
+     * @param  Option<string>  $reason
+     */
+    private function because(Option $reason): self
+    {
+        return new self($this->id, $this->text, $reason);
     }
 }

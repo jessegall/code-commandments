@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
-use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Support\ComposerManifest;
+use JesseGall\PhpTypes\Option;
 
 /**
  * The MINIMUM PHP version the judged project commits to, read from its composer.json `require.php`.
@@ -20,7 +21,10 @@ final class PhpTarget
      */
     private const string CLONE_WITH = '8.5';
 
-    private function __construct(private readonly ?string $minimum) {}
+    /**
+     * @param  Option<string>  $minimum
+     */
+    private function __construct(private readonly Option $minimum) {}
 
     /**
      * Can the project use clone-with? Unknown constraint (no composer.json in scope, or a constraint
@@ -28,52 +32,28 @@ final class PhpTarget
      */
     public function supportsCloneWith(): bool
     {
-        return $this->minimum !== null && version_compare($this->minimum, self::CLONE_WITH, '>=');
+        return $this->minimum->isSomeAnd(static fn (string $version): bool => version_compare($version, self::CLONE_WITH, '>='));
     }
 
     protected static function build(Codebase $codebase): static
     {
         foreach ($codebase->files() as $file) {
-            $manifest = self::manifestFor($file->path);
-
-            if ($manifest !== null) {
-                return new self(self::minimumOf($manifest));
+            foreach (ComposerManifest::nearest($file->path) as $manifest) {
+                return new self($manifest->phpConstraint()->andThen(self::lowestOf(...)));
             }
         }
 
-        return new self(null);
-    }
-
-    /**
-     * The nearest ancestor composer.json's decoded contents, or null.
-     */
-    private static function manifestFor(string $path): ?array
-    {
-        foreach (Path::selfAndAncestors(dirname($path)) as $dir) {
-            if (! is_file($dir . '/composer.json')) {
-                continue;
-            }
-
-            $decoded = json_decode((string) file_get_contents($dir . '/composer.json'), true);
-
-            return is_array($decoded) ? $decoded : null;
-        }
-
-        return null;
+        return new self(Option::none());
     }
 
     /**
      * The lowest version a `require.php` constraint admits — `^8.5`, `>=8.4`, `~8.5.0` and `8.5.*`
-     * all yield their leading `major.minor`. Null when there is no constraint to read.
+     * all yield their leading `major.minor`. None when no clause reads as a version.
+     *
+     * @return Option<string>
      */
-    private static function minimumOf(array $manifest): ?string
+    private static function lowestOf(string $constraint): Option
     {
-        $constraint = $manifest['require']['php'] ?? null;
-
-        if (! is_string($constraint)) {
-            return null;
-        }
-
         // A composite constraint (`>=8.2 <9.0`, `8.3 || 8.4`) is bounded by its lowest clause.
         $clauses = explode(' ', str_replace(['||', ',', '|'], ' ', $constraint));
         $lowest = null;
@@ -93,6 +73,6 @@ final class PhpTarget
             $lowest = $lowest === null || version_compare($normalised, $lowest, '<') ? $normalised : $lowest;
         }
 
-        return $lowest;
+        return Option::fromNullable($lowest);
     }
 }

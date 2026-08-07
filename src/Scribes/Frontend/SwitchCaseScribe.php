@@ -37,13 +37,13 @@ final class SwitchCaseScribe extends RepentScribe
         $slots = [];
 
         foreach ($chain->branches as $index => $branch) {
-            $element = $branch['element'];
+            $element = $branch->element;
             $directive = match (true) {
                 $index === 0 => Directive::If,
-                $branch['key'] === null => Directive::Else,
+                $branch->isFallback() => Directive::Else,
                 default => Directive::ElseIf,
             };
-            $name = $branch['key'] ?? 'default';
+            $name = $branch->slot();
             // The branch source with its structural directive spliced out by its KNOWN span.
             $stripped = $element->sourceOmitting($span->source, $element->start, $element->end, [$directive]);
 

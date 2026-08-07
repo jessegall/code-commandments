@@ -52,7 +52,7 @@ final class HookDispatch implements Command
         $merged = HookResponse::merge($recorder->emitted);
 
         if (! $merged->isSilent()) {
-            $this->io->emit($merged->payload($event->name()));
+            $this->io->emit($merged, $event->name());
         }
 
         return 0;

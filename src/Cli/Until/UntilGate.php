@@ -154,7 +154,7 @@ final class UntilGate
         // the one before it — and it is one more thing a standing claim never accounted for.
         $this->write(
             $state->with(last_id: $id, held_stops: 0, stuck: false, claim_round: 0),
-            [...$conditions, new Condition($id, $text)],
+            [...$conditions, Condition::stated($id, $text)],
         );
 
         return $id;
@@ -202,7 +202,10 @@ final class UntilGate
      */
     public function blocked(): array
     {
-        return $this->texts(array_filter($this->standing(), fn (Condition $c): bool => $c->isBlocked()), reason: true);
+        return array_map(
+            static fn (Condition $c): string => $c->blockedBecause->unwrapOr($c->text),
+            array_filter($this->standing(), static fn (Condition $c): bool => $c->isBlocked()),
+        );
     }
 
     /**
@@ -215,7 +218,7 @@ final class UntilGate
      */
     public function unblocked(): array
     {
-        return $this->texts(array_filter($this->standing(), fn (Condition $c): bool => ! $c->isBlocked()));
+        return $this->texts(array_filter($this->standing(), static fn (Condition $c): bool => ! $c->isBlocked()));
     }
 
     /**
@@ -381,14 +384,11 @@ final class UntilGate
 
     /**
      * @param  array<int, Condition>  $conditions
-     * @return array<int, string>  id → the condition's text, or its blocked reason when $reason
+     * @return array<int, string>  id → the condition's text
      */
-    private function texts(array $conditions, bool $reason = false): array
+    private function texts(array $conditions): array
     {
-        return array_map(
-            fn (Condition $c): string => $reason ? $c->blockedBecause : $c->text,
-            $conditions,
-        );
+        return array_map(static fn (Condition $c): string => $c->text, $conditions);
     }
 
     /**

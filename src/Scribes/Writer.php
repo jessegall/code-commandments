@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes;
 use JesseGall\CodeCommandments\Span;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Ast\ParsedFile;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Closure;
@@ -30,14 +31,13 @@ final class Writer
 {
     private function __construct(
         private readonly Draft $draft,
-        private readonly string $path,
-        private readonly string $source,
+        private readonly ParsedFile $file,
         private readonly ?ClassLike $class,
     ) {}
 
     public static function for(Draft $draft, NodeMatch $match): self
     {
-        return new self($draft, $match->file->path, $match->file->source, $match->enclosingClass());
+        return new self($draft, $match->file, $match->enclosingClass());
     }
 
     /**
@@ -45,7 +45,7 @@ final class Writer
      */
     public function replace(Node $node, string $text): void
     {
-        $this->draft->edit(new Span($this->path, $this->source, $node->getStartFilePos(), $node->getEndFilePos() + 1), $text);
+        $this->draft->edit($this->file->span($node->getStartFilePos(), $node->getEndFilePos() + 1), $text);
     }
 
     /**
@@ -53,7 +53,7 @@ final class Writer
      */
     public function textOf(Node $node): string
     {
-        return self::slice($this->source, $node);
+        return self::slice($this->file->source, $node);
     }
 
     /**
@@ -69,7 +69,7 @@ final class Writer
      */
     public function insertAt(int $offset, string $text): void
     {
-        $this->draft->edit(new Span($this->path, $this->source, $offset, $offset), $text);
+        $this->draft->edit($this->file->span($offset, $offset), $text);
     }
 
     /**
@@ -84,11 +84,11 @@ final class Writer
             ? $node->getStartFilePos()
             : end($node->attrGroups)->getEndFilePos() + 1;
 
-        $keywordStart = Span::skipWhitespace($this->source, $insertAt);
-        $lead = substr($this->source, $insertAt, $keywordStart - $insertAt);
-        $indent = Span::indentAt($this->source, $node->getStartFilePos());
+        $keywordStart = Span::skipWhitespace($this->file->source, $insertAt);
+        $lead = substr($this->file->source, $insertAt, $keywordStart - $insertAt);
+        $indent = Span::indentAt($this->file->source, $node->getStartFilePos());
 
-        $this->draft->edit(new Span($this->path, $this->source, $insertAt, $keywordStart), $lead . "{$attribute}\n{$indent}");
+        $this->draft->edit($this->file->span($insertAt, $keywordStart), $lead . "{$attribute}\n{$indent}");
 
         if ($importFqcn !== null) {
             $this->ensureImport($importFqcn);
@@ -122,7 +122,7 @@ final class Writer
             return;
         }
 
-        if ($namespace->name !== null && ($semicolon = Span::after($this->source, $namespace->name->getEndFilePos(), ';')) !== null) {
+        if ($namespace->name !== null && ($semicolon = Span::after($this->file->source, $namespace->name->getEndFilePos(), ';')) !== null) {
             $this->insertAt($semicolon + 1, "\n\nuse {$fqcn};");
         }
     }
@@ -172,10 +172,10 @@ final class Writer
 
         $start = $previous === null ? $clause->getStartFilePos() : $previous->getEndFilePos() + 1;
         $end = $previous === null
-            ? (Span::after($this->source, $clause->getEndFilePos(), ',') ?? $clause->getEndFilePos()) + 1
+            ? (Span::after($this->file->source, $clause->getEndFilePos(), ',') ?? $clause->getEndFilePos()) + 1
             : $clause->getEndFilePos() + 1;
 
-        $this->draft->edit(new Span($this->path, $this->source, $start, Span::skipWhitespace($this->source, $end)), '');
+        $this->draft->edit($this->file->span($start, Span::skipWhitespace($this->file->source, $end)), '');
     }
 
     /**
@@ -191,11 +191,11 @@ final class Writer
         $modifiersStart = $node->attrGroups === []
             ? $node->getStartFilePos()
             : end($node->attrGroups)->getEndFilePos() + 1;
-        $keywordStart = Span::skipWhitespace($this->source, $modifiersStart, $typeStart);
-        $modifiers = substr($this->source, $keywordStart, $typeStart - $keywordStart);
+        $keywordStart = Span::skipWhitespace($this->file->source, $modifiersStart, $typeStart);
+        $modifiers = substr($this->file->source, $keywordStart, $typeStart - $keywordStart);
 
         $this->draft->edit(
-            new Span($this->path, $this->source, $keywordStart, $typeStart),
+            $this->file->span($keywordStart, $typeStart),
             str_replace("{$modifier} ", '', $modifiers),
         );
     }
@@ -211,7 +211,7 @@ final class Writer
         }
 
         $start = $function->returnType->getStartFilePos();
-        $colon = Span::before($this->source, $start, ':');
+        $colon = Span::before($this->file->source, $start, ':');
 
         $this->rewrite(new Edit($colon ?? $start, $function->returnType->getEndFilePos() + 1, ''));
     }
@@ -256,7 +256,7 @@ final class Writer
      */
     public function rewrite(Edit $edit): void
     {
-        $this->draft->edit(new Span($this->path, $this->source, $edit->start, $edit->end), $edit->text);
+        $this->draft->edit($this->file->span($edit->start, $edit->end), $edit->text);
     }
 
     /**
@@ -272,8 +272,8 @@ final class Writer
 
         foreach ($nodes as $node) {
             [$start, $end] = $this->declarationBounds($node);
-            $blocks[] = trim(Span::slice($this->source, $start, $end - 1), "\n");
-            $this->draft->edit(new Span($this->path, $this->source, $start, $end), '');
+            $blocks[] = trim(Span::slice($this->file->source, $start, $end - 1), "\n");
+            $this->draft->edit($this->file->span($start, $end), '');
         }
 
         if ($blocks !== []) {
@@ -306,19 +306,19 @@ final class Writer
                 $opensGroup = $index === 0;
                 $blank = $pieces !== [] && ($opensGroup || $this->hasBlankLineAbove($start));
 
-                $pieces[] = ($blank ? "\n" : '') . Span::slice($this->source, $start, $node->getEndFilePos());
+                $pieces[] = ($blank ? "\n" : '') . Span::slice($this->file->source, $start, $node->getEndFilePos());
             }
         }
 
         $first = $this->lineStartOf($nodes[0]);
         $last = $nodes[count($nodes) - 1]->getEndFilePos() + 1;
 
-        $this->draft->edit(new Span($this->path, $this->source, $first, $last), implode("\n", $pieces));
+        $this->draft->edit($this->file->span($first, $last), implode("\n", $pieces));
     }
 
     private function hasBlankLineAbove(int $lineStart): bool
     {
-        return $lineStart >= 2 && $this->source[$lineStart - 1] === "\n" && $this->source[$lineStart - 2] === "\n";
+        return $lineStart >= 2 && $this->file->source[$lineStart - 1] === "\n" && $this->file->source[$lineStart - 2] === "\n";
     }
 
     /**
@@ -333,13 +333,13 @@ final class Writer
     {
         $start = $this->lineStartOf($node);
 
-        while ($start >= 2 && $this->source[$start - 1] === "\n" && $this->source[$start - 2] === "\n") {
+        while ($start >= 2 && $this->file->source[$start - 1] === "\n" && $this->file->source[$start - 2] === "\n") {
             $start--;
         }
 
         $end = $node->getEndFilePos() + 1;
 
-        return [$start, ($this->source[$end] ?? '') === "\n" ? $end + 1 : $end];
+        return [$start, ($this->file->source[$end] ?? '') === "\n" ? $end + 1 : $end];
     }
 
     /**
@@ -354,7 +354,7 @@ final class Writer
             $start = min($start, $comment->getStartFilePos());
         }
 
-        $newlineBefore = Span::before($this->source, $start, "\n");
+        $newlineBefore = Span::before($this->file->source, $start, "\n");
 
         return $newlineBefore === null ? 0 : $newlineBefore + 1;
     }
@@ -364,14 +364,14 @@ final class Writer
      */
     public function deleteStatementLine(Node $statement): void
     {
-        $newlineBefore = Span::before($this->source, $statement->getStartFilePos(), "\n");
+        $newlineBefore = Span::before($this->file->source, $statement->getStartFilePos(), "\n");
         $start = $newlineBefore === null ? 0 : $newlineBefore + 1;
         $end = $statement->getEndFilePos() + 1;
 
-        if (($this->source[$end] ?? '') === "\n") {
+        if (($this->file->source[$end] ?? '') === "\n") {
             $end++;
         }
 
-        $this->draft->edit(new Span($this->path, $this->source, $start, $end), '');
+        $this->draft->edit($this->file->span($start, $end), '');
     }
 }

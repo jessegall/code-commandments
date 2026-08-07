@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 final class RecordingHookIO extends HookIO
 {
     /**
-     * @var list<array<string, mixed>>  every payload a handler emitted, in order
+     * @var list<HookResponse>  every response a handler emitted, in order
      */
     public array $emitted = [];
 
@@ -31,8 +31,8 @@ final class RecordingHookIO extends HookIO
         return $this->payload;
     }
 
-    public function emit(array $payload): void
+    public function emit(HookResponse $response, string $event): void
     {
-        $this->emitted[] = $payload;
+        $this->emitted[] = $response;
     }
 }

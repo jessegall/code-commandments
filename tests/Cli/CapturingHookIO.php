@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 /**
@@ -13,7 +14,7 @@ use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
  */
 final class CapturingHookIO extends HookIO
 {
-    /** @var list<array<string, mixed>> Every payload the hook emitted, in order. */
+    /** @var list<HookResponse> Every response the hook emitted, in order. */
     public array $emitted = [];
 
     /**
@@ -29,8 +30,8 @@ final class CapturingHookIO extends HookIO
         return $this->stub;
     }
 
-    public function emit(array $payload): void
+    public function emit(HookResponse $response, string $event): void
     {
-        $this->emitted[] = $payload;
+        $this->emitted[] = $response;
     }
 }
