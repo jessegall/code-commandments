@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Vue\Ts\Lexeme;
+use JesseGall\CodeCommandments\Vue\Ts\Lexer;
 use JesseGall\CodeCommandments\Vue\Ts\Node\CallExpr;
 use JesseGall\CodeCommandments\Vue\Ts\Node\CompositeType;
 use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionType;
@@ -38,7 +40,7 @@ final class Script
     private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
 
     /**
-     * @var list<array{kind: string, value: string, start: int, end: int}>
+     * @var list<Lexeme>
      */
     private array $tokens;
 
@@ -46,7 +48,13 @@ final class Script
 
     public function __construct(private readonly string $source)
     {
-        $this->tokens = $this->lex($source);
+        // ONE lexer for `<script setup>` — the same {@see Lexer} the TS parser reads, so the two
+        // can never drift. Numbers are dropped because nothing this class asks about is one, and
+        // dropping them AFTER a shared lex is what stops `1_000` lexing as `1` + an identifier.
+        $this->tokens = array_values(array_filter(
+            new Lexer()->tokenize($source),
+            static fn (Lexeme $lexeme): bool => ! $lexeme->is(Token::NUMBER),
+        ));
     }
 
     /**
@@ -143,8 +151,8 @@ final class Script
             $close = $this->matchingParen($open);
 
             for ($k = $open + 1; $k < $close; $k++) {
-                if ($this->tokens[$k]['kind'] === Token::STRING) {
-                    return $this->unquoteString($this->tokens[$k]['value']);
+                if ($this->tokens[$k]->kind === Token::STRING) {
+                    return $this->unquoteString($this->tokens[$k]->value);
                 }
             }
         }
@@ -248,15 +256,15 @@ final class Script
     private function declaration(int $keywordAt, int $nameAt, int $bodyAt): array
     {
         return [
-            'name' => $this->tokens[$nameAt]['value'],
+            'name' => $this->tokens[$nameAt]->value,
             'fields' => array_keys($this->readFields($bodyAt)),
-            'offset' => $this->tokens[$keywordAt]['start'],
+            'offset' => $this->tokens[$keywordAt]->start,
         ];
     }
 
     private function isIdentifier(int $i): bool
     {
-        return ($this->tokens[$i]['kind'] ?? null) === Token::IDENTIFIER;
+        return ($this->tokens[$i]->kind ?? null) === Token::IDENTIFIER;
     }
 
     /**
@@ -372,8 +380,8 @@ final class Script
                     continue;
                 }
 
-                if (($this->tokens[$j + 1] ?? null) !== null && $this->tokens[$j + 1]['kind'] === Token::STRING) {
-                    $specifiers[] = $this->unquoteString($this->tokens[$j + 1]['value']);
+                if (($this->tokens[$j + 1] ?? null) !== null && $this->tokens[$j + 1]->kind === Token::STRING) {
+                    $specifiers[] = $this->unquoteString($this->tokens[$j + 1]->value);
                 }
 
                 break;
@@ -589,7 +597,7 @@ final class Script
 
             $close = $this->matchingParen($i + 2);
 
-            return substr($this->source, $this->tokens[$i + 2]['start'], $this->tokens[$close]['end'] - $this->tokens[$i + 2]['start']);
+            return substr($this->source, $this->tokens[$i + 2]->start, $this->tokens[$close]->end - $this->tokens[$i + 2]->start);
         }
 
         return null;
@@ -613,17 +621,17 @@ final class Script
                 return null;
             }
 
-            $from = $this->tokens[$i + 3]['start'];
+            $from = $this->tokens[$i + 3]->start;
             $depth = 0;
-            $to = $this->tokens[$count - 1]['end'];
+            $to = $this->tokens[$count - 1]->end;
 
             for ($j = $i + 3; $j < $count; $j++) {
-                $value = $this->tokens[$j]['value'];
+                $value = $this->tokens[$j]->value;
 
                 // A `;` is neither an opener nor a closer, so testing for the terminator first reads
                 // the same tokens the ladder did — and leaves the depth a plain sum.
                 if ($depth === 0 && $value === ';') {
-                    $to = $this->tokens[$j]['start'];
+                    $to = $this->tokens[$j]->start;
 
                     break;
                 }
@@ -672,7 +680,7 @@ final class Script
         $count = count($this->tokens);
 
         for (; $i < $count; $i++) {
-            $value = $this->tokens[$i]['value'];
+            $value = $this->tokens[$i]->value;
 
             if ($depth === 0 && in_array($value, ['{', '=', ';', ',', '}'], true)) {
                 break; // the body brace, the `=>` arrow, or a terminator — the type ended.
@@ -710,7 +718,7 @@ final class Script
         $count = count($this->tokens);
 
         for ($i = $open; $i < $count; $i++) {
-            $value = $this->tokens[$i]['value'];
+            $value = $this->tokens[$i]->value;
 
             if (Token::opensGroup($value)) {
                 $depth++;
@@ -734,7 +742,7 @@ final class Script
         $count = count($this->tokens);
 
         for (; $i < $count; $i++) {
-            $value = $this->tokens[$i]['value'];
+            $value = $this->tokens[$i]->value;
 
             if (Token::opensType($value)) {
                 $depth++;
@@ -763,13 +771,13 @@ final class Script
         $count = count($this->tokens);
 
         while ($i < $count && ! $this->isPunct($i, '}')) {
-            if ($this->tokens[$i]['kind'] !== Token::IDENTIFIER) {
+            if ($this->tokens[$i]->kind !== Token::IDENTIFIER) {
                 $i++;
 
                 continue;
             }
 
-            $name = $this->tokens[$i]['value'];
+            $name = $this->tokens[$i]->value;
             $i++;
 
             if ($this->isPunct($i, '?')) {
@@ -814,7 +822,7 @@ final class Script
 
         for (; $i < $count; $i++) {
             $token = $this->tokens[$i];
-            $value = $token['value'];
+            $value = $token->value;
 
             // The `=>` of a function type is two tokens: the `=` is NOT an initializer and the
             // `>` is NOT a generic close. Consume both so `(x: T) => R` reads whole — otherwise
@@ -822,7 +830,7 @@ final class Script
             if ($value === '=' && $this->isPunct($i + 1, '>')) {
                 $pieces[] = '=';
                 $pieces[] = '>';
-                $previousEnd = $this->tokens[$i + 1]['end'];
+                $previousEnd = $this->tokens[$i + 1]->end;
                 $i++;
 
                 continue;
@@ -836,7 +844,7 @@ final class Script
             // A depth-0 line break ends the type: interface/type members are newline-
             // terminated when written without a `;`. A break INSIDE `{…}`/`(…)`/`<…>`
             // (depth > 0) is part of a multi-line member, so it does not end the type.
-            if ($depth === 0 && $previousEnd !== null && $this->newlineBetween($previousEnd, $token['start'])) {
+            if ($depth === 0 && $previousEnd !== null && $this->newlineBetween($previousEnd, $token->start)) {
                 break;
             }
 
@@ -847,7 +855,7 @@ final class Script
             }
 
             $pieces[] = $value;
-            $previousEnd = $token['end'];
+            $previousEnd = $token->end;
         }
 
         if ($i < $count && $this->isPunct($i, ';')) {
@@ -857,57 +865,22 @@ final class Script
         return [implode('', $pieces), $i];
     }
 
-    // ---- lexer ----------------------------------------------------------------
-
     /**
-     * @return list<array{kind: string, value: string, start: int, end: int}>
+     * The token at $i — {@see Lexeme::none} past the end, so a lookahead asks its question
+     * straight instead of testing for absence first.
      */
-    private function lex(string $source): array
+    private function at(int $i): Lexeme
     {
-        $tokens = [];
-        $length = strlen($source);
-        $i = 0;
-
-        while ($i < $length) {
-            $char = $source[$i];
-
-            if (ctype_space($char)) {
-                $i++;
-            } elseif ($char === '/' && ($source[$i + 1] ?? '') === '/') {
-                $i = (($nl = strpos($source, "\n", $i)) === false) ? $length : $nl;
-            } elseif ($char === '/' && ($source[$i + 1] ?? '') === '*') {
-                $i = (($end = strpos($source, '*/', $i)) === false) ? $length : $end + 2;
-            } elseif ($char === '"' || $char === "'" || $char === '`') {
-                $start = $i;
-                $i = StringScan::skip($source, $i, $char, $length);
-                $tokens[] = ['kind' => Token::STRING, 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
-            } elseif (ctype_alpha($char) || $char === '_' || $char === '$') {
-                $start = $i;
-                while ($i < $length && (ctype_alnum($source[$i]) || $source[$i] === '_' || $source[$i] === '$')) {
-                    $i++;
-                }
-                $tokens[] = ['kind' => Token::IDENTIFIER, 'value' => substr($source, $start, $i - $start), 'start' => $start, 'end' => $i];
-            } elseif (ctype_digit($char)) {
-                while ($i < $length && (ctype_alnum($source[$i]) || $source[$i] === '.')) {
-                    $i++;
-                }
-            } else {
-                $tokens[] = ['kind' => Token::PUNCTUATION, 'value' => $char, 'start' => $i, 'end' => $i + 1];
-                $i++;
-            }
-        }
-
-        return $tokens;
+        return $this->tokens[$i] ?? Lexeme::none(strlen($this->source));
     }
-
 
     private function isId(int $i, string $value): bool
     {
-        return ($this->tokens[$i] ?? null) !== null && $this->tokens[$i]['kind'] === Token::IDENTIFIER && $this->tokens[$i]['value'] === $value;
+        return $this->at($i)->isIdentifier($value);
     }
 
     private function isPunct(int $i, string $value): bool
     {
-        return ($this->tokens[$i] ?? null) !== null && $this->tokens[$i]['kind'] === Token::PUNCTUATION && $this->tokens[$i]['value'] === $value;
+        return $this->at($i)->isPunct($value);
     }
 }

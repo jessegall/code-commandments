@@ -9,6 +9,18 @@ use PHPUnit\Framework\TestCase;
 
 final class ScriptTest extends TestCase
 {
+    public function test_a_numeric_separator_is_not_read_as_an_identifier(): void
+    {
+        // The bug this shares a lexer to kill: Script had its OWN copy of the TS lexer whose number
+        // arm stopped at `_`, so `1_000` lexed as the number `1` (dropped) plus an IDENTIFIER
+        // `_000` — a name that is not in the source, offered to anything asking what this script
+        // declares. One lexer, and the separator is part of the literal.
+        $script = new Script('const limit = 1_000; const rate = ref<number>(2);');
+
+        $this->assertSame('number', $script->declaredType('rate'), 'the shared lex still reads the rest of the script');
+        $this->assertNull($script->declaredType('_000'), '`_000` is not a declaration — it is half of `1_000`');
+    }
+
     public function test_a_function_return_type_does_not_swallow_the_body(): void
     {
         // The bug: `(): Promise<void> { … }` read the BODY `{…}` as an object type, leaking
