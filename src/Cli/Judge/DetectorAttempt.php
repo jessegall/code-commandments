@@ -7,13 +7,9 @@ namespace JesseGall\CodeCommandments\Cli\Judge;
 use Closure;
 
 /**
- * One detector's run, survivable. A rule that breaks on some shape of code costs its own findings
- * and nothing else: the others have already done their work, and a report missing one of them beats
- * no report at all.
- *
- * It is REPORTED, never swallowed — a silent skip reads as "that rule found nothing", which is the
- * one wrong conclusion to leave a reader with. A project's own rule is named as theirs, because we
- * cannot answer for a rule we did not ship.
+ * One detector's run, survivable: a rule that breaks costs its own findings and nothing else, and is
+ * REPORTED rather than swallowed — a silent skip reads as "that rule found nothing", the one wrong
+ * conclusion to leave a reader with. A project's own rule is named as theirs.
  */
 final class DetectorAttempt
 {

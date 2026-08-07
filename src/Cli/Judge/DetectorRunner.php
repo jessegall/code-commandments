@@ -79,7 +79,7 @@ final class DetectorRunner
             $custom = Custom::owns($detector); // Resolved in the PARENT: a worker's finding must already
             // know whose rule it came from, and the answer never depends on where it ran.
 
-            $tasks[] = static fn (): array => DetectorAttempt::of($short, $custom, static fn (): array => self::findings(
+            $tasks[] = static fn () => DetectorAttempt::of($short, $custom, static fn () => self::findings(
                 $short,
                 $sin->slug(),
                 $sin->name(),
