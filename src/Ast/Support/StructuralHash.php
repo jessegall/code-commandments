@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
+
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use PhpParser\Node;
@@ -48,14 +50,14 @@ final class StructuralHash
      */
     private static function serialize(Node $node, bool $normalize, array $aliases = [], array $inlining = []): string
     {
-        if ($aliases !== [] && $node instanceof Variable && is_string($node->name)
+        if ($aliases !== [] && AstNode::variableNameOf($node) !== null
             && isset($aliases[$node->name]) && ! isset($inlining[$node->name])) {
             return self::serialize($aliases[$node->name], $normalize, $aliases, $inlining + [$node->name => true]);
         }
 
         if ($normalize) {
             $blanked = match (true) {
-                $node instanceof Variable && is_string($node->name) => 'Variable(name:s:$)',
+                AstNode::variableNameOf($node) !== null => 'Variable(name:s:$)',
                 $node instanceof String_ => 'String_(value:s:_)',
                 $node instanceof Int_, $node instanceof Float_ => 'Num(value:n:_)',
                 default => null,

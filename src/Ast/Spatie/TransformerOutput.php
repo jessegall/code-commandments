@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Spatie;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
@@ -88,7 +90,7 @@ final class TransformerOutput
         $map = [];
 
         foreach ($finder->findInstanceOf($ast, Assign::class) as $assign) {
-            if ($assign->var instanceof Variable && is_string($assign->var->name)) {
+            if (AstNode::variableNameOf($assign->var) !== null) {
                 $map[$assign->var->name] = $assign->expr;
             }
         }
@@ -112,7 +114,7 @@ final class TransformerOutput
             return $left === null || $right === null ? null : $left . $right;
         }
 
-        if ($expr instanceof Variable && is_string($expr->name)) {
+        if (AstNode::variableNameOf($expr) !== null) {
             $bound = $assignments[$expr->name] ?? null;
 
             return $bound === null ? null : self::evaluate($bound, $file, $assignments);

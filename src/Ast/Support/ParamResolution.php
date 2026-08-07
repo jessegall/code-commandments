@@ -82,7 +82,7 @@ final class ParamResolution
         foreach ($method->params as $param) {
             $type = $this->baseType($param->type);
 
-            if ($param->var instanceof Variable && is_string($param->var->name)
+            if (AstNode::variableNameOf($param->var) !== null
                 && $type instanceof Name
                 && ! str_starts_with($type->getLast(), 'Reflection')
                 && ! $codebase->isEnum($type->toString())) {
@@ -105,7 +105,7 @@ final class ParamResolution
         foreach ($method->params as $param) {
             $type = $this->baseType($param->type);
 
-            if ($param->var instanceof Variable && is_string($param->var->name)
+            if (AstNode::variableNameOf($param->var) !== null
                 && $type instanceof Identifier && in_array($type->toString(), self::KEY_TYPES, true)) {
                 $names[] = $param->var->name;
             }
@@ -205,7 +205,7 @@ final class ParamResolution
         }
 
         if ($parent instanceof Assign && $parent->expr === $node
-            && $parent->var instanceof Variable && is_string($parent->var->name)) {
+            && AstNode::variableNameOf($parent->var) !== null) {
             return $parent->var->name;
         }
 

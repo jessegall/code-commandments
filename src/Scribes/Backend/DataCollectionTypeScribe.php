@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
+
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Scribes\Draft;
@@ -174,7 +176,7 @@ final class DataCollectionTypeScribe extends RepentScribe
     private static function nameOf(Node $declaration): ?string
     {
         if ($declaration instanceof Param) {
-            return $declaration->var instanceof Variable && is_string($declaration->var->name) ? $declaration->var->name : null;
+            return AstNode::variableNameOf($declaration->var) !== null ? $declaration->var->name : null;
         }
 
         return $declaration instanceof Property ? $declaration->props[0]->name->toString() : null;

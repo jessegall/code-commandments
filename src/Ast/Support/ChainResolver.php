@@ -121,7 +121,7 @@ final class ChainResolver
             foreach ($constructor->params as $param) {
                 $type = self::typeName($param->type);
 
-                if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name) && $type !== null) {
+                if ($param->flags !== 0 && AstNode::variableNameOf($param->var) !== null && $type !== null) {
                     $types[$param->var->name] = $type;
                 }
             }

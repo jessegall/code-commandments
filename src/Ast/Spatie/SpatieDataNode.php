@@ -1464,7 +1464,7 @@ final class SpatieDataNode extends NodeMatch
             return $this->fromCallOwningArgument($parent);
         }
 
-        if ($parent instanceof Assign && $parent->var instanceof Variable && is_string($parent->var->name)) {
+        if ($parent instanceof Assign && AstNode::variableNameOf($parent->var) !== null) {
             return $this->fromCallForLocal($parent->var->name);
         }
 
@@ -1702,7 +1702,7 @@ final class SpatieDataNode extends NodeMatch
         $params = [];
 
         foreach ($fn->getParams() as $param) {
-            if ($param->var instanceof Variable && is_string($param->var->name)) {
+            if (AstNode::variableNameOf($param->var) !== null) {
                 $params[$param->var->name] = true;
             }
         }

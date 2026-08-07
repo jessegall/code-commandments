@@ -99,7 +99,7 @@ final class PhantomNullableDetector implements ChainDetector
     private static function fieldName(?Node $node): ?string
     {
         if ($node instanceof Param) {
-            return $node->var instanceof Variable && is_string($node->var->name) ? $node->var->name : null;
+            return AstNode::variableNameOf($node->var) !== null ? $node->var->name : null;
         }
 
         return $node instanceof PropertyItem ? $node->name->toString() : null;

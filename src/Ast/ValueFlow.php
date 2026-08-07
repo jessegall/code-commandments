@@ -261,7 +261,7 @@ final class ValueFlow
             return $this->keyMatches($parent->dim, $key) ? [[new NodeMatch($parent, $occurrence->file, $this->codebase), 'element', null]] : [];
         }
 
-        if ($parent instanceof Foreach_ && $parent->expr === $node && $parent->valueVar instanceof Variable && is_string($parent->valueVar->name)) {
+        if ($parent instanceof Foreach_ && $parent->expr === $node && AstNode::variableNameOf($parent->valueVar) !== null) {
             return $this->keyed($this->readsOf($parent->valueVar->name, $this->enclosingFunction($node), $occurrence->file), 'element', null);
         }
 
@@ -370,7 +370,7 @@ final class ValueFlow
         }
 
         [$fqcn, $method, $param] = $target;
-        $name = $param->var instanceof Variable && is_string($param->var->name) ? $param->var->name : null;
+        $name = AstNode::variableNameOf($param->var) !== null ? $param->var->name : null;
 
         if ($name === null || ! $this->markSlot("P:{$fqcn}::{$method}#{$name}", $seenSlots)) {
             return [];

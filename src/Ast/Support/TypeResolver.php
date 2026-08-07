@@ -217,7 +217,7 @@ final class TypeResolver
 
     private function resolve(Node $expr, array $locals, ?string $selfFqcn): ?string
     {
-        if ($expr instanceof Variable && is_string($expr->name)) {
+        if (AstNode::variableNameOf($expr) !== null) {
             return $expr->name === 'this' ? $selfFqcn : ($locals[$expr->name] ?? null);
         }
 
@@ -292,20 +292,20 @@ final class TypeResolver
         $locals = $this->capturedTypes($function, $selfFqcn);
 
         foreach ($function->getParams() as $param) {
-            if ($param->var instanceof Variable && is_string($param->var->name)) {
+            if (AstNode::variableNameOf($param->var) !== null) {
                 $locals[$param->var->name] = self::typeName($param->type);
             }
         }
 
         foreach (new NodeFinder()->findInstanceOf($function, Assign::class) as $assign) {
-            if ($assign->var instanceof Variable && is_string($assign->var->name)) {
+            if (AstNode::variableNameOf($assign->var) !== null) {
                 $locals[$assign->var->name] = $this->resolve($assign->expr, $locals, $selfFqcn);
             }
         }
 
         // `foreach ($this->songs as $song)` types $song from the collection's declared element type.
         foreach (new NodeFinder()->findInstanceOf($function, Foreach_::class) as $each) {
-            if (! ($each->valueVar instanceof Variable && is_string($each->valueVar->name) && $each->expr instanceof PropertyFetch && $each->expr->name instanceof Identifier)) {
+            if (! (AstNode::variableNameOf($each->valueVar) !== null && $each->expr instanceof PropertyFetch && $each->expr->name instanceof Identifier)) {
                 continue;
             }
 
@@ -398,7 +398,7 @@ final class TypeResolver
         $captured = [];
 
         foreach ($function->uses as $use) {
-            if ($use->var instanceof Variable && is_string($use->var->name)) {
+            if (AstNode::variableNameOf($use->var) !== null) {
                 $captured[$use->var->name] = $outer[$use->var->name] ?? null;
             }
         }
@@ -442,7 +442,7 @@ final class TypeResolver
                 $constructor = $class instanceof Class_ ? $class->getMethod('__construct')?->getDocComment()?->getText() : null;
 
                 foreach (AstNode::constructorParamsOf($class) as $param) {
-                    if (! ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name))) {
+                    if (! ($param->flags !== 0 && AstNode::variableNameOf($param->var) !== null)) {
                         continue;
                     }
 
@@ -493,7 +493,7 @@ final class TypeResolver
             || $param->type instanceof NullableType
             || ($param->type instanceof Identifier && strtolower($param->type->toString()) === 'mixed')
             || ($param->type instanceof Node\UnionType && self::unionHasNull($param->type))
-            || ($param->default instanceof ConstFetch && $param->default->name->toLowerString() === 'null');
+            || (AstNode::isNullConstant($param->default));
     }
 
     private static function unionHasNull(Node\UnionType $type): bool

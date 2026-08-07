@@ -236,7 +236,7 @@ class AstNode
         $parameters = [];
 
         foreach ($constructor->params as $param) {
-            if ($param->var instanceof Variable && is_string($param->var->name)) {
+            if (AstNode::variableNameOf($param->var) !== null) {
                 $parameters[$param->var->name] = true;
             }
         }
@@ -272,7 +272,7 @@ class AstNode
     {
         $receiver = self::receiverRootOf($call);
 
-        if ($receiver instanceof Variable && is_string($receiver->name)) {
+        if (AstNode::variableNameOf($receiver) !== null) {
             return isset($parameters[$receiver->name]);
         }
 
@@ -798,7 +798,7 @@ class AstNode
      */
     public function isNull(): bool
     {
-        return $this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'null';
+        return AstNode::isNullConstant($this->node);
     }
 
     /**
@@ -1691,7 +1691,7 @@ class AstNode
         $names = [];
 
         foreach ($this->constructorParams() as $param) {
-            if (($param->flags & Modifiers::PUBLIC) !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
+            if (($param->flags & Modifiers::PUBLIC) !== 0 && AstNode::variableNameOf($param->var) !== null) {
                 $names[] = $param->var->name;
             }
         }
@@ -1726,7 +1726,7 @@ class AstNode
         $fields = [];
 
         foreach (self::constructorParamsOf($class) as $param) {
-            if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
+            if ($param->flags !== 0 && AstNode::variableNameOf($param->var) !== null) {
                 $fields[] = new ClassField(
                     name: $param->var->name,
                     type: $param->type,
@@ -1781,7 +1781,7 @@ class AstNode
      */
     public function asField(): ?ClassField
     {
-        if ($this->node instanceof Param && $this->node->flags !== 0 && $this->node->var instanceof Variable && is_string($this->node->var->name)) {
+        if ($this->node instanceof Param && $this->node->flags !== 0 && AstNode::variableNameOf($this->node->var) !== null) {
             return new ClassField(
                 name: $this->node->var->name,
                 type: $this->node->type,
@@ -2633,11 +2633,11 @@ class AstNode
             $target = self::selfPropertyOf($assign->var);
             $source = self::selfPropertyOf($assign->expr);
 
-            if ($source !== null && $assign->var instanceof Variable && is_string($assign->var->name)) {
+            if ($source !== null && AstNode::variableNameOf($assign->var) !== null) {
                 $savedInto[$source] = $assign->var->name;
             }
 
-            if ($target !== null && $assign->expr instanceof Variable && is_string($assign->expr->name)) {
+            if ($target !== null && AstNode::variableNameOf($assign->expr) !== null) {
                 $restoredFrom[$target][] = $assign->expr->name;
             }
         }
@@ -2982,7 +2982,7 @@ class AstNode
         foreach ($this->node->params as $param) {
             $type = self::typeToString($param->type);
 
-            if ($type !== null && $param->var instanceof Variable && is_string($param->var->name)) {
+            if ($type !== null && AstNode::variableNameOf($param->var) !== null) {
                 $nativeTypes[$param->var->name] = $type;
             }
         }
@@ -3179,7 +3179,7 @@ class AstNode
         $substance = 0;
 
         foreach ($conjuncts as $conjunct) {
-            $target = $conjunct instanceof Variable && is_string($conjunct->name) && isset($aliases[$conjunct->name])
+            $target = AstNode::variableNameOf($conjunct) !== null && isset($aliases[$conjunct->name])
                 ? $aliases[$conjunct->name]
                 : $conjunct;
             $substance += self::reachCount($target);
@@ -3206,7 +3206,7 @@ class AstNode
         $rhs = [];
 
         foreach ((new NodeFinder)->findInstanceOf($function, Assign::class) as $assign) {
-            if (! ($assign->var instanceof Variable && is_string($assign->var->name))) {
+            if (! (AstNode::variableNameOf($assign->var) !== null)) {
                 continue;
             }
 
@@ -3695,7 +3695,7 @@ class AstNode
 
     protected static function isNullableCallbackWithNullDefault(Param $param): bool
     {
-        $isNull = $param->default instanceof ConstFetch && $param->default->name->toLowerString() === 'null';
+        $isNull = AstNode::isNullConstant($param->default);
 
         if (! $isNull) {
             return false;
@@ -3886,7 +3886,7 @@ class AstNode
         $types = [];
 
         foreach ($this->node->params as $param) {
-            if ($param->var instanceof Variable && is_string($param->var->name)) {
+            if (AstNode::variableNameOf($param->var) !== null) {
                 $types[$param->var->name] = TypeName::simpleName($param->type);
             }
         }
@@ -4052,6 +4052,24 @@ class AstNode
     }
 
     /**
+     * The NAME of a plain variable — `$order` → `order` — or null for anything else, including one
+     * named dynamically (`$$field`), which no static reader can follow. The pair of tests every
+     * caller was writing to ask "is this a variable I can name?".
+     */
+    public static function variableNameOf(?Node $expr): ?string
+    {
+        return $expr instanceof Variable && is_string($expr->name) ? $expr->name : null;
+    }
+
+    /**
+     * Is $expr the `null` constant, however it was cased?
+     */
+    public static function isNullConstant(?Node $expr): bool
+    {
+        return $expr instanceof ConstFetch && $expr->name->toLowerString() === 'null';
+    }
+
+    /**
      * Is $expr a property READ off something — `$o->total`, or `$o?->total`? The nullsafe form asks
      * the same question with a different operator, which is why every caller was writing the pair
      * out by hand.
@@ -4151,7 +4169,7 @@ class AstNode
         $names = [];
 
         foreach (self::expressionNodes($node) as $child) {
-            if ($child instanceof Variable && is_string($child->name)) {
+            if (AstNode::variableNameOf($child) !== null) {
                 $names[] = $child->name;
             }
         }

@@ -399,7 +399,7 @@ final class FeatureEnvy
         foreach ($method->params as $param) {
             $type = TypeName::simpleName($param->type);
 
-            if ($type !== null && $param->var instanceof Variable && is_string($param->var->name)) {
+            if ($type !== null && AstNode::variableNameOf($param->var) !== null) {
                 $types[$param->var->name] = $type;
             }
         }
