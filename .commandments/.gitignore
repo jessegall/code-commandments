@@ -1,0 +1,6 @@
+# code-commandments generated state; config.php and custom/ stay tracked
+*
+!.gitignore
+!config.php
+!custom/
+!custom/**

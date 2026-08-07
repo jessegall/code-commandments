@@ -18,6 +18,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\CompactionReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
 use JesseGall\CodeCommandments\Cli\Sync;
+use JesseGall\CodeCommandments\Support\Binary;
 /**
  * Wires code-commandments' Claude Code hooks into `.claude/settings.json` — one stamped entry per
  * distinct MOMENT, each running the {@see HookDispatch} entry point that fans out to the handler
@@ -26,9 +27,11 @@ use JesseGall\CodeCommandments\Cli\Sync;
  */
 final class HookRegistry
 {
-    // Anchored at $CLAUDE_PROJECT_DIR (the absolute project root the harness gives every hook) — a
-    // relative `vendor/bin/...` silently dies when Claude's working directory isn't the project root.
-    private const string BINARY = 'php "$CLAUDE_PROJECT_DIR/vendor/bin/commandments"';
+    /**
+     * The settings file we are a guest in. Stated here, once, because wiring a hook is something we
+     * do for a PROJECT — where the harness keeps its settings is our business, not the caller's.
+     */
+    private const string SETTINGS = '.claude/settings.json';
 
     /**
      * The stamp appended to every command we wire — a trailing shell comment (ignored when the hook
@@ -75,7 +78,7 @@ final class HookRegistry
     }
 
     /**
-     * Wire $hookClasses into the settings at $path. Returns true when the file actually changed.
+     * Wire $hookClasses into the project at $root. Returns true when its settings actually changed.
      *
      * A settings file that exists but does not READ as JSON is left alone and reported. It used to
      * decode to `null`, which cast to an empty array — and the write below then replaced the user's
@@ -84,8 +87,9 @@ final class HookRegistry
      *
      * @param  list<class-string<Hook>>  $hookClasses
      */
-    public static function wire(string $path, array $hookClasses = self::BUILTINS): bool
+    public static function wire(string $root, array $hookClasses = self::BUILTINS): bool
     {
+        $path = "{$root}/" . self::SETTINGS;
         $settings = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
 
         if (! is_array($settings)) {
@@ -99,7 +103,7 @@ final class HookRegistry
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);
 
         foreach (self::moments($hookClasses) as $event => $matcher) {
-            $group = ['hooks' => [['type' => 'command', 'command' => self::command()]]];
+            $group = ['hooks' => [['type' => 'command', 'command' => self::command($root)]]];
 
             if ($matcher !== null) {
                 $group = ['matcher' => $matcher] + $group;
@@ -123,10 +127,14 @@ final class HookRegistry
     /**
      * The stamped command every wired moment runs — the {@see HookDispatch} entry point, which reads
      * the event from the payload and fans out to the registry.
+     *
+     * Anchored at `$CLAUDE_PROJECT_DIR` (the absolute project root the harness gives every hook): a
+     * relative path silently dies when Claude's working directory isn't the project root. Which
+     * executable it points at is {@see Binary}'s to answer, not ours to assume.
      */
-    private static function command(): string
+    private static function command(string $root): string
     {
-        return self::BINARY . ' hooks ' . self::STAMP;
+        return 'php "$CLAUDE_PROJECT_DIR/' . Binary::in($root) . '" hooks ' . self::STAMP;
     }
 
     /**

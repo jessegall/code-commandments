@@ -257,6 +257,28 @@ agent twin of the sin/detector/skill ones, auto-enrolling like SKILLS (a project
 need a harness event protocol and the `$CLAUDE_PROJECT_DIR` anchor — which is the difference between a
 discipline that is ENFORCED and one merely written down; say so rather than implying parity.
 
+**🪞 THIS PACKAGE IS A CONSUMER OF ITSELF — the skills we ship are the skills we work under.**
+`skills/commandments/**` is the SOURCE; it is not a place any agent can load from. So `sync` runs on
+this repo too, publishing the curriculum into our own `.agents/skills/` and linking it where each
+agent looks — which is why a `judge` finding here can say "load `commandments-backend-absence`" and
+mean it. It is wired to stay current, never re-run by hand: `composer sins` regenerates the sources
+and republishes them, composer's `post-install-cmd`/`post-update-cmd` re-sync a fresh checkout,
+`composer skills` is the explicit verb, and the pre-commit hook lists `commandments sync` in its
+{@see GENERATORS} beside the other generators — because `AGENTS.md` and `CLAUDE.md` are OUR generated
+artifacts now ({@see Skills\Briefing} + each agent's `instructions()`), and an edit to the briefing
+must not be able to leave them stale. The package's own hand-written skills (`developing-features`,
+`writing-detectors`, …) live in that same library, symlinked into `.claude/skills/` and committed —
+one home, so they are not Claude-only either. **Whatever you add for a consumer, we get too: verify
+it HERE first.**
+
+**⚙️ Where the executable is, is a FACT — {@see Support\Binary}, never a literal.** Every command we
+write INTO a project (a wired hook, a `checks` gate, the composer sync call) has to name a file that
+is really there. `vendor/bin/commandments` is right for a consumer and wrong for exactly one project
+— this one, because composer never shims a package's own `bin` into its own `vendor` — so hardcoding
+it meant every hook here failed on every tool call, silently. `Binary::in($root)` answers it once:
+the shim when present, the checkout's own `bin/` otherwise, and the shim as the fallback so wiring a
+project before its first `composer install` still writes the command that will work.
+
 **📄 The briefing is `AGENTS.md`; `CLAUDE.md` imports it.** {@see Skills\Briefing} renders the canon,
 addressed to no agent in particular, into `AGENTS.md`; an agent that cannot read it declares its own
 file, and Claude's is `@AGENTS.md` plus what is true only there (the Skill tool, `TodoWrite`, hooks).
@@ -345,3 +367,31 @@ deletes the file).
   carry multiple markers (and a detector may have more than 3 marked locations —
   ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid detection
   just because another detector also flags it; double-mark the fixture instead.
+
+<!-- BEGIN: code-commandments skills (auto-generated, run `composer update`) -->
+@AGENTS.md
+
+## Working here as Claude Code
+
+The briefing above is the canon, shared with every agent. These are the parts of it
+that have a specific name in this harness:
+
+- **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
+  e.g. `commandments-backend-absence`. The published skills are linked into
+  `.claude/skills/`, so they also autocomplete as `/`-commands.
+- **The visible to-do list is `TodoWrite`.** Mirror every `until` condition into it,
+  mark an item completed the moment you strike its condition off, and keep the item
+  you are working on FIRST — the list is checked, and you will be sent back to
+  reorder it when its first line does not say what you are doing right now.
+- **Never delegate a write to a subagent.** Dispatch them for read-only work as much
+  as you like; every edit is yours.
+- `/until "<condition>"` is available as a slash command, so the user can set a stop
+  condition themselves.
+
+**The disciplines here are ENFORCED, not just written down.** Hooks are wired into
+`.claude/settings.json`: the cardinal rule resurfaces as you work, `judge` is nudged
+before risky commands and on stop, an approved plan is ground to completion, and a
+standing `until` condition holds every stop until you have VERIFIED it. That is a
+property of this agent alone — under an agent with no hook protocol the same
+disciplines are documents you are asked to follow, and nothing checks that you did.
+<!-- END: code-commandments skills -->

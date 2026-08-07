@@ -11,19 +11,25 @@ declare(strict_types=1);
  *
  *   - README.md excerpts + README.{sins,scribes,skills}.md tables  ← Detectors\Catalog  (generate-readme.php)
  *   - skills/commandments/.../SKILL.md  ← Sins/ + Skills/ + fixtures  (generate-skills.php)
+ *   - AGENTS.md + CLAUDE.md  ← Skills\Briefing + each Agent's instructions  (commandments sync)
+ *
+ * That last one is this package consuming ITSELF: `sync` publishes our own skills into
+ * `.agents/skills/` and links them where each agent looks, so a rule we ship is a rule we
+ * can load while working here. Its tracked outputs are regenerated alongside the rest.
  *
  * Register it ONCE (writes .git/hooks/pre-commit → this script):
  *
  *   php scripts/hooks/PreCommit.php --install
  *
- * Add another generated artifact? Append a line to {@see GENERATORS} — never touch the
+ * Add another generated artifact? Append an entry to {@see GENERATORS} — never touch the
  * git hook again.
  */
 
-/** generator script => paths (relative to the repo root) it generates into. */
+/** Each generated artifact: the argv that regenerates it, and the paths it writes into. */
 const GENERATORS = [
-    'scripts/generate-readme.php' => ['README.md', 'README.sins.md', 'README.scribes.md', 'README.skills.md'],
-    'scripts/generate-skills.php' => ['skills/commandments'],
+    ['run' => ['scripts/generate-readme.php'], 'paths' => ['README.md', 'README.sins.md', 'README.scribes.md', 'README.skills.md']],
+    ['run' => ['scripts/generate-skills.php'], 'paths' => ['skills/commandments']],
+    ['run' => ['bin/commandments', 'sync'], 'paths' => ['AGENTS.md', 'CLAUDE.md', '.gitignore']],
 ];
 
 $root = rtrim((string) shell_exec('git rev-parse --show-toplevel 2>/dev/null'), "\n");
@@ -51,11 +57,13 @@ if ($docSins !== 0) {
 
 $restaged = [];
 
-foreach (GENERATORS as $generator => $paths) {
-    passthru('php ' . escapeshellarg("{$root}/{$generator}") . ' > /dev/null 2>&1', $generated);
+foreach (GENERATORS as ['run' => $argv, 'paths' => $paths]) {
+    $command = 'php ' . implode(' ', [escapeshellarg("{$root}/{$argv[0]}"), ...array_map('escapeshellarg', array_slice($argv, 1))]);
+
+    passthru("{$command} > /dev/null 2>&1", $generated);
 
     if ($generated !== 0) {
-        fwrite(STDERR, "✗ {$generator} failed\n");
+        fwrite(STDERR, '✗ ' . implode(' ', $argv) . " failed\n");
         exit(1);
     }
 

@@ -9,8 +9,10 @@ use JesseGall\CodeCommandments\Moment;
 use JesseGall\CodeCommandments\PlanProfile;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\ConsumerRoot;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Support\Binary;
 /**
  * Runs PlanProfile checks for a plan moment (`start`, `phase`, `complete`); the `complete` gate
  * appends `judge --branch` to ensure plans finish judged.
@@ -34,8 +36,9 @@ final class Checks implements Command
 
     public function run(Input $input): int
     {
+        $root = ConsumerRoot::from(getcwd() ?: '.') ?? (getcwd() ?: '.');
         $moment = Moment::fromToken($input->firstArgument());
-        $commands = $this->commands($moment, Config::load()->planExecutionSettings());
+        $commands = $this->commands($moment, Config::load()->planExecutionSettings(), $root);
 
         if ($input->hasFlag('list')) {
             foreach ($commands as $command) {
@@ -52,18 +55,22 @@ final class Checks implements Command
      * The ordered commands for a moment — the declared bucket, plus `judge --branch` when the
      * moment {@see Moment::appendsJudge appends it}. Pure, so the resolution is directly testable.
      *
+     * Our own calls name the executable the project at $root actually HAS ({@see Binary}), which is
+     * the `vendor/` shim for a consumer and the checkout's own `bin/` for a project that is itself.
+     *
      * @return list<string>
      */
-    public function commands(Moment $moment, PlanProfile $plan): array
+    public function commands(Moment $moment, PlanProfile $plan, string $root): array
     {
         $commands = $plan->checksFor($moment);
+        $binary = Binary::in($root);
 
         if ($moment->appendsJudge()) {
-            $commands[] = 'vendor/bin/commandments judge --branch=' . $plan->baseBranch();
+            $commands[] = "{$binary} judge --branch=" . $plan->baseBranch();
         }
 
         if ($this->appendsConstraintCheck($moment, $plan)) {
-            $commands[] = 'vendor/bin/commandments constraints check';
+            $commands[] = "{$binary} constraints check";
         }
 
         return $commands;

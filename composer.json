@@ -38,8 +38,14 @@
     },
     "scripts": {
         "readme": "@php scripts/generate-readme.php",
-        "sins": "@php scripts/generate-skills.php",
-        "judge": "@php bin/commandments judge"
+        "sins": [
+            "@php scripts/generate-skills.php",
+            "@php bin/commandments sync"
+        ],
+        "judge": "@php bin/commandments judge",
+        "skills": "@php bin/commandments sync",
+        "post-install-cmd": "@php bin/commandments sync",
+        "post-update-cmd": "@php bin/commandments sync"
     },
     "config": {
         "sort-packages": true
