@@ -24,6 +24,11 @@ final class CallExpr extends Node
         public readonly array $arguments = [],
     ) {}
 
+    public function callTo(string $callee): ?self
+    {
+        return $this->callee === $callee ? $this : null;
+    }
+
     public function firstTypeArgument(): ?TypeNode
     {
         return $this->typeArguments[0] ?? null;
