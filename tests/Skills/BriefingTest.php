@@ -18,13 +18,11 @@ final class BriefingTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/cc-briefing-' . uniqid('', true);
         mkdir($this->root . '/.commandments/custom', 0777, true);
-        Custom::forget();
     }
 
     protected function tearDown(): void
     {
         exec('rm -rf ' . escapeshellarg($this->root));
-        Custom::forget();
     }
 
     public function test_renders_a_marked_block_listing_every_skill_in_its_tier(): void

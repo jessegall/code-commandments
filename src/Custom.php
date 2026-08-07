@@ -17,7 +17,7 @@ use ReflectionClass;
 final class Custom
 {
     /**
-     * @var array<string, list<class-string>>  project root => the classes its custom folder declared
+     * @var array<string, list<class-string>>  a SNAPSHOT of the folder => the classes it declared
      */
     private static array $loaded = [];
 
@@ -93,15 +93,6 @@ final class Custom
     }
 
     /**
-     * Forget what a project's folder declared, so the next read discovers it afresh — for tests and
-     * for a long-lived process that has just scaffolded a new file.
-     */
-    public static function forget(): void
-    {
-        self::$loaded = [];
-    }
-
-    /**
      * Every instantiable class the project's custom folder declared that is a $type.
      *
      * @template T of object
@@ -134,23 +125,43 @@ final class Custom
     private static function classes(?string $dir): array
     {
         $root = Workspace::custom($dir);
+        $files = Workspace::customFiles($dir);
+        $key = self::snapshot($root, $files);
 
-        if (isset(self::$loaded[$root])) {
-            return self::$loaded[$root];
+        if (isset(self::$loaded[$key])) {
+            return self::$loaded[$key];
         }
 
         $before = get_declared_classes();
 
-        foreach (Workspace::customFiles($dir) as $file) {
+        foreach ($files as $file) {
             require_once $file;
         }
 
-        $declared = array_values(array_diff(get_declared_classes(), $before));
+        // Ownership is BY FILE, always. Diffing `get_declared_classes()` sees only what THIS
+        // require added, so a folder read a second time — after a rule was scaffolded, or in a test
+        // that just wrote one — would report the new class and LOSE the ones an earlier read had
+        // already loaded. The folder is the test of ownership either way.
+        return self::$loaded[$key] = self::declaredUnder($root);
+    }
 
-        // A file already required by an earlier `Config::load()` in this process declares nothing
-        // new, so fall back to matching every loaded class BY ITS FILE — the folder is the test of
-        // ownership either way, and this keeps a second read from coming back empty.
-        return self::$loaded[$root] = $declared === [] ? self::declaredUnder($root) : $declared;
+    /**
+     * What the folder HELD when it was read — its path, and every file's name, size and mtime. The
+     * memo is keyed by this rather than by the root, so a rule scaffolded since the last read is
+     * simply a different key and discovers itself. Nothing has to remember to invalidate it, which
+     * is what the `forget()` this replaces was for: a long-lived process that had just written a
+     * new file, and every test that wrote one.
+     *
+     * @param  list<string>  $files
+     */
+    private static function snapshot(string $root, array $files): string
+    {
+        $stamps = array_map(
+            static fn (string $file): string => $file . ':' . (string) @filesize($file) . ':' . (string) @filemtime($file),
+            $files,
+        );
+
+        return $root . "\0" . implode("\0", $stamps);
     }
 
     /**
@@ -160,12 +171,21 @@ final class Custom
      */
     private static function declaredUnder(string $root): array
     {
+        // Both sides RESOLVED, exactly as {@see owns} does it: reflection reports a class's REAL
+        // path, so an unresolved root (a symlinked project, or a macOS temp dir under /var) would
+        // match nothing and the folder would look empty.
+        $resolved = realpath($root);
+
+        if ($resolved === false) {
+            return [];
+        }
+
         $classes = [];
 
         foreach (get_declared_classes() as $class) {
             $file = new ReflectionClass($class)->getFileName();
 
-            if ($file !== false && str_starts_with($file, $root . DIRECTORY_SEPARATOR)) {
+            if ($file !== false && str_starts_with($file, $resolved . DIRECTORY_SEPARATOR)) {
                 $classes[] = $class;
             }
         }

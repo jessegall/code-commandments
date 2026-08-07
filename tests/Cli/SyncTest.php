@@ -236,9 +236,7 @@ final class SyncTest extends TestCase
         }
         PHP);
 
-        Custom::forget();
         $this->sync();
-        Custom::forget();
 
         $skill = "{$this->consumer}/.claude/skills/commandments-backend-house-style/SKILL.md";
 

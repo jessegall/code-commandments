@@ -29,13 +29,11 @@ final class CustomRuleOwnershipTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/cc-own-' . uniqid('', true);
         mkdir($this->root . '/.commandments/custom', 0777, true);
-        Custom::forget();
     }
 
     protected function tearDown(): void
     {
         exec('rm -rf ' . escapeshellarg($this->root));
-        Custom::forget();
     }
 
     public function test_the_console_report_and_checklist_name_a_custom_rule_as_custom(): void
