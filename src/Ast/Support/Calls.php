@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
+
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -22,7 +24,7 @@ final class Calls
      */
     public static function name(Node $node): ?string
     {
-        if (($node instanceof MethodCall || $node instanceof NullsafeMethodCall || $node instanceof StaticCall)
+        if ((AstNode::isMethodSend($node) || $node instanceof StaticCall)
             && $node->name instanceof Identifier) {
             return $node->name->toString();
         }

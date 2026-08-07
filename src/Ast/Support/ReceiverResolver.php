@@ -26,7 +26,7 @@ final class ReceiverResolver
     {
         $node = $match->node;
 
-        if (! ($node instanceof MethodCall || $node instanceof NullsafeMethodCall)) {
+        if (! (AstNode::isMethodSend($node))) {
             return null;
         }
 

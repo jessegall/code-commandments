@@ -257,7 +257,7 @@ class AstNode
      */
     private static function isOutwardCall(Node $node): bool
     {
-        return $node instanceof MethodCall || $node instanceof NullsafeMethodCall;
+        return AstNode::isMethodSend($node);
     }
 
     /**
@@ -284,9 +284,9 @@ class AstNode
      */
     private static function receiverRootOf(Node $call): ?Node
     {
-        $receiver = $call instanceof MethodCall || $call instanceof NullsafeMethodCall ? $call->var : null;
+        $receiver = AstNode::isMethodSend($call) ? $call->var : null;
 
-        while ($receiver instanceof MethodCall || $receiver instanceof NullsafeMethodCall) {
+        while (AstNode::isMethodSend($receiver)) {
             $receiver = $receiver->var;
         }
 
@@ -1105,7 +1105,7 @@ class AstNode
     {
         $parent = $this->parent()->node;
 
-        return ($parent instanceof MethodCall || $parent instanceof NullsafeMethodCall) && $parent->var === $this->node;
+        return (AstNode::isMethodSend($parent)) && $parent->var === $this->node;
     }
 
     /**
@@ -1155,7 +1155,7 @@ class AstNode
      */
     public function methodCallName(): ?string
     {
-        return ($this->node instanceof MethodCall || $this->node instanceof NullsafeMethodCall) && $this->node->name instanceof Identifier
+        return (AstNode::isMethodSend($this->node)) && $this->node->name instanceof Identifier
             ? $this->node->name->toString()
             : null;
     }
@@ -1378,13 +1378,13 @@ class AstNode
             return is_string($expr->name) ? '$' . $expr->name : null;
         }
 
-        if ($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch) {
+        if (AstNode::isPropertyRead($expr)) {
             $base = self::fetchPath($expr->var);
 
             return $base !== null && $expr->name instanceof Identifier ? $base . '->' . $expr->name->toString() : null;
         }
 
-        if ($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) {
+        if (AstNode::isMethodSend($expr)) {
             $base = self::fetchPath($expr->var);
 
             return $base !== null && $expr->name instanceof Identifier ? $base . '->' . $expr->name->toString() . '()' : null;
@@ -4019,7 +4019,7 @@ class AstNode
             default => null,
         };
 
-        return ($subject instanceof PropertyFetch || $subject instanceof NullsafePropertyFetch)
+        return (AstNode::isPropertyRead($subject))
             && $subject->name instanceof Identifier
             && $subject->name->toString() === 'value';
     }
@@ -4031,9 +4031,38 @@ class AstNode
      */
     public function isPropertyFetchNamed(string $name): bool
     {
-        return ($this->node instanceof PropertyFetch || $this->node instanceof NullsafePropertyFetch)
-            && $this->node->name instanceof Identifier
-            && $this->node->name->toString() === $name;
+        return self::isPropertyRead($this->node) && self::memberNameOf($this->node) === $name;
+    }
+
+    /**
+     * Is $expr a property READ off something — `$o->total`, or `$o?->total`? The nullsafe form asks
+     * the same question with a different operator, which is why every caller was writing the pair
+     * out by hand.
+     */
+    public static function isPropertyRead(?Node $expr): bool
+    {
+        return $expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch;
+    }
+
+    /**
+     * Is $expr a method CALL on something — `$o->total()`, or `$o?->total()`?
+     */
+    public static function isMethodSend(?Node $expr): bool
+    {
+        return $expr instanceof MethodCall || $expr instanceof NullsafeMethodCall;
+    }
+
+    /**
+     * The member NAME a fetch or call writes out — `$o?->total()` → `total` — or null when the node
+     * accesses no member, or names one dynamically (`$o->$field`), which no static reader can follow.
+     */
+    public static function memberNameOf(?Node $expr): ?string
+    {
+        if (! self::isPropertyRead($expr) && ! self::isMethodSend($expr)) {
+            return null;
+        }
+
+        return $expr->name instanceof Identifier ? $expr->name->toString() : null;
     }
 
     /**
@@ -4283,7 +4312,7 @@ class AstNode
     {
         $node = $this->node;
 
-        while ($node instanceof ArrayDimFetch || $node instanceof PropertyFetch || $node instanceof NullsafePropertyFetch) {
+        while ($node instanceof ArrayDimFetch || AstNode::isPropertyRead($node)) {
             $node = $node->var;
         }
 

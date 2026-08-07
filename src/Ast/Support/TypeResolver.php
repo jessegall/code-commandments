@@ -245,7 +245,7 @@ final class TypeResolver
             return $owner === null ? null : ($this->fieldType[$owner][$expr->name->toString()] ?? null);
         }
 
-        if (($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) && $expr->name instanceof Identifier) {
+        if ((AstNode::isMethodSend($expr)) && $expr->name instanceof Identifier) {
             $receiver = $this->resolve($expr->var, $locals, $selfFqcn);
 
             if ($receiver === null) {

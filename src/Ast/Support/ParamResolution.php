@@ -199,7 +199,7 @@ final class ParamResolution
         $node = $call;
         $parent = $node->getAttribute('parent');
 
-        while (($parent instanceof MethodCall || $parent instanceof NullsafeMethodCall) && $parent->var === $node) {
+        while ((AstNode::isMethodSend($parent)) && $parent->var === $node) {
             $node = $parent;
             $parent = $node->getAttribute('parent');
         }
@@ -229,7 +229,7 @@ final class ParamResolution
 
             $parent = $variable->getAttribute('parent');
 
-            $isPropertyRead = ($parent instanceof PropertyFetch || $parent instanceof NullsafePropertyFetch)
+            $isPropertyRead = (AstNode::isPropertyRead($parent))
                 && $parent->var === $variable;
 
             if (! $isPropertyRead) {

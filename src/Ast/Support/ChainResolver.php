@@ -69,7 +69,7 @@ final class ChainResolver
             return is_string($expr->name) ? ($paramTypes[$expr->name] ?? null) : null;
         }
 
-        if ($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch) {
+        if (AstNode::isPropertyRead($expr)) {
             $base = $this->resolveOwner($expr->var, $paramTypes);
 
             return $base !== null && $expr->name instanceof Identifier
@@ -77,7 +77,7 @@ final class ChainResolver
                 : null;
         }
 
-        if (($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) && $expr->args === []) {
+        if ((AstNode::isMethodSend($expr)) && $expr->args === []) {
             $base = $this->resolveOwner($expr->var, $paramTypes);
 
             return $base !== null && $expr->name instanceof Identifier

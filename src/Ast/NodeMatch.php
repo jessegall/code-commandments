@@ -168,7 +168,7 @@ class NodeMatch extends AstNode implements Located
      */
     private function declaredReturnAdmitsNull(Node $expr): bool
     {
-        if ($expr instanceof MethodCall || $expr instanceof NullsafeMethodCall) {
+        if (AstNode::isMethodSend($expr)) {
             $receiver = ReceiverResolver::typeOf(new self($expr, $this->file, $this->codebase));
 
             return $expr->name instanceof Identifier
@@ -210,7 +210,7 @@ class NodeMatch extends AstNode implements Located
 
         foreach ($arguments as $argument) {
             $asked = new NodeFinder()->find([$argument->value], static fn (Node $node): bool =>
-                $node instanceof MethodCall || $node instanceof NullsafeMethodCall || $node instanceof PropertyFetch);
+                AstNode::isMethodSend($node) || $node instanceof PropertyFetch);
 
             if ($asked === []) {
                 return null;

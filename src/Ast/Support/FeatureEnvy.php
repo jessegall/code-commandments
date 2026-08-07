@@ -383,7 +383,7 @@ final class FeatureEnvy
     {
         return $node instanceof PropertyFetch
             || $node instanceof NullsafePropertyFetch
-            || (($node instanceof MethodCall || $node instanceof NullsafeMethodCall) && $node->args === []);
+            || ((AstNode::isMethodSend($node)) && $node->args === []);
     }
 
     /**

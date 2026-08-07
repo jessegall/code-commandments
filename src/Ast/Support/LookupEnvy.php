@@ -231,7 +231,7 @@ final class LookupEnvy
     private function throughCollaborator(Node $expr): bool
     {
         while ($this->isMemberAccess($expr)) {
-            if ($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch) {
+            if (AstNode::isPropertyRead($expr)) {
                 return true;
             }
 

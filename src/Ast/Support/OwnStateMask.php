@@ -139,7 +139,7 @@ final class OwnStateMask
      */
     private static function ownProperty(Node $expr): ?string
     {
-        return ($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch)
+        return (AstNode::isPropertyRead($expr))
             && $expr->var instanceof Variable
             && $expr->var->name === 'this'
             && $expr->name instanceof Identifier

@@ -287,7 +287,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     public function whereMethod(string ...$names): Query
     {
         return new Query($this, static fn (Node $node): bool =>
-            ($node instanceof MethodCall || $node instanceof NullsafeMethodCall)
+            (AstNode::isMethodSend($node))
             && $node->name instanceof Identifier
             && ($names === [] || in_array($node->name->toString(), $names, true)),
             [MethodCall::class, NullsafeMethodCall::class]);
