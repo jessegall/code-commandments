@@ -39,7 +39,7 @@ final class DanglingDocReferenceDetector implements Detector
 
     private function hasDanglingReference(AstNode $node, Codebase $codebase): bool
     {
-        $root = ClassName::root($node->enclosingClassName() ?? '');
+        $root = ClassName::root($node->enclosingClassName());
 
         if ($root === '') {
             return false;

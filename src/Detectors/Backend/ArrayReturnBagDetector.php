@@ -54,7 +54,7 @@ final class ArrayReturnBagDetector implements Detector, Exemptable
             ->reject(static fn (AstNode $node): bool => $node->isHomogeneousLookupTable())
             ->reject(static fn (AstNode $node): bool => $codebase->projection()->ofTypedObject($node))
             ->reject(static fn (AstNode $node): bool => $node->enclosingFunctionReturnsShapedArray())
-            ->reject(static fn (AstNode $node): bool => $codebase->overridesMethod($node->enclosingClassName(), $node->enclosingFunctionName() ?? ''))
+            ->reject(static fn (AstNode $node): bool => $codebase->overridesMethod($node->enclosingClassName(), $node->enclosingFunctionName()))
             ->get(), $codebase);
     }
 }

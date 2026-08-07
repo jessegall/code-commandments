@@ -75,8 +75,12 @@ final class ValueFlow
     /**
      * How the value of $fqcn::$field is consumed across the whole program.
      */
-    public function verdict(string $fqcn, string $field): FlowVerdict
+    public function verdict(?string $fqcn, string $field): FlowVerdict
     {
+        if ($fqcn === null) {
+            return FlowVerdict::untraceable(); // an anonymous class has no field to trace
+        }
+
         $fqcn = ltrim($fqcn, '\\');
 
         if (! isset($this->verdicts["{$fqcn}::{$field}"])) {
@@ -112,8 +116,12 @@ final class ValueFlow
      *
      * @return list<string>
      */
-    public function chainPath(string $fqcn, string $field): array
+    public function chainPath(?string $fqcn, string $field): array
     {
+        if ($fqcn === null) {
+            return []; // an anonymous class declares no field anything reaches through
+        }
+
         $deepest = [];
 
         foreach ($this->terminals($this->fieldReads()[ltrim($fqcn, '\\')][$field] ?? [])['chains'] as $chain) {

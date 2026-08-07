@@ -693,9 +693,11 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      * is autoloadable (catching a vendor ancestor), else via the parsed class graph
      * (an in-codebase ancestor) — mirroring how the engine resolves `isA`.
      */
-    public function overridesMethod(?string $class, string $method): bool
+    public function overridesMethod(?string $class, ?string $method): bool
     {
-        if ($class === null || $method === '') {
+        // Neither half readable means nothing to compare — said here, so no caller invents an
+        // empty name to ask about.
+        if ($class === null || $method === null || $method === '') {
             return false;
         }
 

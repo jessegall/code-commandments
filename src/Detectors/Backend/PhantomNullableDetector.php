@@ -33,7 +33,7 @@ final class PhantomNullableDetector implements ChainDetector
     {
         $field = self::fieldName($finding->node);
 
-        return $field === null ? [] : $codebase->valueFlow()->chainPath($finding->enclosingClassName() ?? '', $field);
+        return $field === null ? [] : $codebase->valueFlow()->chainPath($finding->enclosingClassName(), $field);
     }
 
     public function find(Codebase $codebase): array
@@ -48,7 +48,7 @@ final class PhantomNullableDetector implements ChainDetector
                 continue;
             }
 
-            $fqcn = ltrim(($node->namespacedName ?? null)?->toString() ?? '', '\\');
+            $fqcn = AstNode::declaredClassNameOf($node);
 
             foreach ($this->nullableFields($node) as [$field, $name]) {
                 if ($codebase->wrap($field, $class->file)->declaresNullableWireType()) {

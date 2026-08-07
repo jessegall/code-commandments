@@ -22,9 +22,11 @@ final class ClassName
      * The FIRST namespace segment of a fully-qualified name — `App\Data\OrderData` → `App`. The vendor root
      * a cross-reference is judged first-party against.
      */
-    public static function root(string $fqcn): string
+    public static function root(?string $fqcn): string
     {
-        return explode('\\', ltrim($fqcn, '\\'))[0];
+        // A class that cannot be named has no root namespace — `''`, which is what every caller
+        // then tests for, rather than each manufacturing the empty name to ask about.
+        return $fqcn === null ? '' : explode('\\', ltrim($fqcn, '\\'))[0];
     }
 
     /**
