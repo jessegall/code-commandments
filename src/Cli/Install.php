@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 /**
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
@@ -31,16 +32,19 @@ final class Install implements Command
 
     public function run(Input $input): int
     {
-        $composerPath = getcwd() . '/composer.json';
+        $consumer = ConsumerRoot::from(getcwd() ?: '.');
 
-        if (! is_file($composerPath)) {
-            fwrite(STDERR, "No composer.json in " . getcwd() . "\n");
-
-            return 2;
+        if ($consumer === null) {
+            return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — there is no project here to wire.');
         }
 
-        $wired = $this->wireComposerScripts($composerPath);
-        $hooked = HookRegistry::wire(getcwd() . '/.claude/settings.json', HookRegistry::forProject(getcwd()));
+        $wired = $this->wireComposerScripts("{$consumer}/composer.json");
+
+        if ($wired === null) {
+            return HelpScreen::usage($this, "{$consumer}/composer.json is not readable JSON — fix it first; rewriting it from here would throw away everything it declares.");
+        }
+
+        $hooked = HookRegistry::wire("{$consumer}/.claude/settings.json", HookRegistry::forProject($consumer));
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"
@@ -53,12 +57,20 @@ final class Install implements Command
         return (new Sync)->run($input);
     }
 
-    private function wireComposerScripts(string $path): bool
+    /**
+     * Add our sync call to the project's composer scripts. Null when the file cannot be READ as
+     * JSON — a BOM, a stray comment, a half-written save. Decoding failure used to fall through to
+     * an empty array, and the write below then replaced the whole manifest with nothing but our two
+     * hooks: every dependency the project declared, gone.
+     */
+    private function wireComposerScripts(string $path): ?bool
     {
-        /**
-         * @var array<string, mixed> $composer
-         */
         $composer = json_decode((string) file_get_contents($path), true);
+
+        if (! is_array($composer)) {
+            return null;
+        }
+
         $scripts = is_array($composer['scripts'] ?? null) ? $composer['scripts'] : [];
         $changed = false;
 

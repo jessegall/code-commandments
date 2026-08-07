@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Custom;
@@ -48,7 +49,12 @@ final class Sync implements Command
 
     public function run(Input $input): int
     {
-        $consumer = getcwd();
+        $consumer = ConsumerRoot::from(getcwd() ?: '.');
+
+        if ($consumer === null) {
+            return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in.');
+        }
+
         $packageRoot = dirname(__DIR__, 2);
 
         $published = $this->publishSkills("{$packageRoot}/skills/commandments", $consumer)
