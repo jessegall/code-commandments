@@ -298,13 +298,15 @@ final class TypeResolver
 
         // `foreach ($this->songs as $song)` types $song from the collection's declared element type.
         foreach (new NodeFinder()->findInstanceOf($function, Foreach_::class) as $each) {
-            if ($each->valueVar instanceof Variable && is_string($each->valueVar->name) && $each->expr instanceof PropertyFetch && $each->expr->name instanceof Identifier) {
-                $owner = $this->resolve($each->expr->var, $locals, $selfFqcn);
-                $element = $owner === null ? null : ($this->collectionElement[$owner][$each->expr->name->toString()] ?? null);
+            if (! ($each->valueVar instanceof Variable && is_string($each->valueVar->name) && $each->expr instanceof PropertyFetch && $each->expr->name instanceof Identifier)) {
+                continue;
+            }
 
-                if ($element !== null) {
-                    $locals[$each->valueVar->name] = $element;
-                }
+            $owner = $this->resolve($each->expr->var, $locals, $selfFqcn);
+            $element = $owner === null ? null : ($this->collectionElement[$owner][$each->expr->name->toString()] ?? null);
+
+            if ($element !== null) {
+                $locals[$each->valueVar->name] = $element;
             }
         }
 
@@ -433,11 +435,13 @@ final class TypeResolver
                 $constructor = $class instanceof Class_ ? $class->getMethod('__construct')?->getDocComment()?->getText() : null;
 
                 foreach (AstNode::constructorParamsOf($class) as $param) {
-                    if ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name)) {
-                        $this->fieldType[$fqcn][$param->var->name] = self::typeName($param->type);
-                        $this->recordCollectionElement($fqcn, $param->var->name, $param->attrGroups);
-                        $this->recordDocumentedElement($fqcn, $param->var->name, $param->getDocComment()?->getText() ?? $constructor, $param->var->name, $file);
+                    if (! ($param->flags !== 0 && $param->var instanceof Variable && is_string($param->var->name))) {
+                        continue;
                     }
+
+                    $this->fieldType[$fqcn][$param->var->name] = self::typeName($param->type);
+                    $this->recordCollectionElement($fqcn, $param->var->name, $param->attrGroups);
+                    $this->recordDocumentedElement($fqcn, $param->var->name, $param->getDocComment()?->getText() ?? $constructor, $param->var->name, $file);
                 }
 
                 foreach ($class->getProperties() as $property) {

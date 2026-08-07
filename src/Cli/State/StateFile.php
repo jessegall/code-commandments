@@ -6,22 +6,10 @@ namespace JesseGall\CodeCommandments\Cli\State;
 
 /**
  * The ONE format every session-scoped state file is written in — the stop gate, the plan marker, the
- * plan's constraints and testing choice, every hook counter. Three sections, divided by `-----`:
- *
- *   name: value          ← the state, NAMED (never a positional line a reader must count to)
- *   -----
- *   a thing              ← the list, when this file keeps one (conditions, constraints)
- *   -----
- *   the {@see Legend}    ← what all of it means, and that deleting the file is safe
- *
- * The owners ({@see \JesseGall\CodeCommandments\Cli\Until\UntilGate}, {@see \JesseGall\CodeCommandments\Cli\Plan\PlanMarker},
- * {@see \JesseGall\CodeCommandments\Hooks\Counter}) own WHAT the values mean and declare it in their
- * {@see Legend}; this owns how they are read and written, so the format is stated once and can never
- * drift between them. A file whose legend declares no list has two sections instead of three.
- *
- * Everything one feature knows belongs in ONE file: the gate's conditions, its held-stop count, its
- * work count and its pending claim are one state, so lifting the gate deletes all of it at once and
- * no half of it can survive to be read against the next one.
+ * plan's constraints and testing choice, every hook counter. An owner declares WHAT its values mean
+ * in its own {@see Legend} and this owns how they are read and written ({@see write} draws the
+ * layout), so the format is stated once; everything one feature knows lives in ONE file, so lifting
+ * it deletes all of that state at once.
  */
 final class StateFile
 {
@@ -60,8 +48,14 @@ final class StateFile
     }
 
     /**
-     * Write $state, followed by the list section (when this file keeps one) and the legend that says
-     * what all of it means. Creates the session folder as needed.
+     * Write $state, then the list section (when this file keeps one), then the legend — three
+     * sections divided by `-----`, or two where the legend declares no list. Creates the folder.
+     *
+     *   name: value          ← the state, NAMED (never a positional line a reader must count to)
+     *   -----
+     *   a thing              ← the list, when this file keeps one (conditions, constraints)
+     *   -----
+     *   the {@see Legend}    ← what all of it means, and that deleting the file is safe
      */
     public function write(State $state): void
     {
@@ -136,9 +130,8 @@ final class StateFile
     }
 
     /**
-     * $state, checked against the legend: every value it carries must be one this file DECLARES. A
-     * name that isn't is a typo or an undocumented addition, and both are bugs the file would
-     * otherwise swallow.
+     * $state, checked against the legend: every value it carries must be one this file DECLARES, so
+     * a typo or an undocumented addition throws here where it is written.
      */
     private function declared(State $state): State
     {

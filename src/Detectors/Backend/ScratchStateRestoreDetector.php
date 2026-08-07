@@ -29,7 +29,7 @@ final class ScratchStateRestoreDetector implements Detector
     {
         return $codebase
             ->whereMethodDeclaration()
-            ->where(static fn (AstNode $node): bool => $node->savesAndRestoresOwnState())
+            ->where(static fn (AstNode $node): bool => $node->hasOwnStateSaveAndRestore())
             ->get();
     }
 }

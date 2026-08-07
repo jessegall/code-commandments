@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\State;
 
 /**
- * A state value was written or read under a name its {@see Legend} does not declare — a typo, or a
- * value someone added to a file without saying what it means. Both are bugs, and both used to be
- * silent: the write landed in the file, every reader went on answering with its default, and the
- * state simply never moved.
- *
- * The legend is the SCHEMA, not just the prose: a name that isn't in it does not exist.
+ * A state value whose name is missing from its {@see Legend} — a typo, or a value added to a file
+ * without saying what it means. The legend is the schema, so the message lists the names it declares.
  */
 final class UnknownValue extends \InvalidArgumentException
 {

@@ -35,7 +35,7 @@ final class RedundantEnumUnwrapDetector implements Detector, Repentable
     {
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isPropertyFetchNamed('value'))
-            ->where(static fn (SpatieDataNode $node): bool => $node->unwrapsEnumIntoItsOwnEnumSlot())
+            ->where(static fn (SpatieDataNode $node): bool => $node->isEnumUnwrapIntoItsOwnSlot())
             ->get();
     }
 }

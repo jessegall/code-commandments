@@ -189,24 +189,19 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function prime(array $findings): void
     {
-        $this->collector = [];
-
         // The dry render must NOT leak into the real pass: its create()s call library->register(),
         // and the real dispatch would then "reuse" those phantom components — emitting an import +
         // call-site rewrite to a component file the real pass never creates (a dangling import that
-        // guts the source and breaks the build). Run it against a CLONE of the library and restore
-        // the pristine one before the real render, so only real creates register for reuse.
-        $pristine = $this->library;
-        $this->library = $pristine !== null ? clone $pristine : null;
+        // guts the source and breaks the build). So it runs on a THROWAWAY scribe holding a COPY of
+        // the library: everything the dry pass records or registers is discarded with it, and this
+        // scribe is never in a dry state for a moment — including when the render throws.
+        $dry = clone $this;
+        $dry->collector = [];
+        $dry->library = $this->library !== null ? clone $this->library : null;
 
-        $this->dispatch($findings); // resolveTypes records each component's unknowns via consultOracle
+        $dry->dispatch($findings); // resolveTypes records each component's unknowns via consultOracle
 
-        $this->library = $pristine;
-
-        $queries = $this->collector;
-        $this->collector = null;
-
-        $this->resolved = $this->oracle?->resolveAll($queries) ?? [];
+        $this->resolved = $this->oracle?->resolveAll($dry->collector ?? []) ?? [];
     }
 
     // ---- strategies -----------------------------------------------------------
@@ -472,7 +467,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
     {
-        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->rendersSlots(), $boundary->contentSpan()->column(), array_keys($boundary->emitEvents()));
+        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->hasSlots(), $boundary->contentSpan()->column(), array_keys($boundary->emitEvents()));
         $draft->edit($boundary->contentSpan(), $usage);
         self::import($draft, $boundary->sfc, $component, $name);
     }
@@ -903,11 +898,13 @@ final class ExtractComponentScribe extends RepentScribe
     private static function syntheticTypeImports(Script $script, array $types): string
     {
         foreach ($types as $type) {
-            if (str_contains($type, 'InertiaForm<')) {
-                $source = $script->importSpecifier('useForm') ?? '@inertiajs/vue3';
-
-                return "import type { InertiaForm } from '{$source}';";
+            if (! str_contains($type, 'InertiaForm<')) {
+                continue;
             }
+
+            $source = $script->importSpecifier('useForm') ?? '@inertiajs/vue3';
+
+            return "import type { InertiaForm } from '{$source}';";
         }
 
         return '';
@@ -1021,11 +1018,13 @@ final class ExtractComponentScribe extends RepentScribe
 
         foreach ($script->imports() as $import) {
             foreach ($import['names'] as $name) {
-                if (self::mentions($used, $name)) {
-                    $kept[] = $import['statement'];
-
-                    break;
+                if (! self::mentions($used, $name)) {
+                    continue;
                 }
+
+                $kept[] = $import['statement'];
+
+                break;
             }
         }
 
@@ -1169,10 +1168,12 @@ final class ExtractComponentScribe extends RepentScribe
         $rootReadElsewhere = false;
 
         foreach (self::chains($block) as $chain) {
-            if (($chain[0] ?? null) === $root && array_slice($chain, 0, count($prefix)) !== $prefix) {
-                $rootReadElsewhere = true;
-                break;
+            if (! (($chain[0] ?? null) === $root && array_slice($chain, 0, count($prefix)) !== $prefix)) {
+                continue;
             }
+
+            $rootReadElsewhere = true;
+            break;
         }
 
         $props = $rootReadElsewhere ? $free : array_values(array_diff($free, [$root]));

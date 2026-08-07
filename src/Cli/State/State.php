@@ -5,23 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\State;
 
 /**
- * The contents of a {@see StateFile}, decoded — NAMED values ("held-stops: 3"), and, for a file that
- * keeps one, the list of things beneath them (the conditions of a gate, the constraints of a plan).
- *
- * Values are read and written BY NAME, as PHP named arguments:
- *
- *     new State(head: $head, total_nudges: 0)          // a whole state, written fresh
- *     $state->with(stuck: true, stuck_at: $head)       // the same state, adjusted
- *     $state->int('total_nudges')                      // read back
- *
- * PHP identifiers cannot carry a dash, so a name is spelled with UNDERSCORES in code and rendered with
- * dashes in the file (`total_nudges` → `total-nudges`); {@see name} is the one place that is decided,
- * and reads accept either spelling. Immutable: every change returns a new state, so a caller reads,
- * adjusts and writes back in one line instead of reassembling a positional line array and hoping the
- * order still matches the reader.
- *
- * Absence is modelled as the empty state, never as a missing file a caller has to test for — every
- * read of a name that isn't there answers with its default.
+ * The contents of a {@see StateFile}, decoded — NAMED values ("held-stops: 3") read and written as
+ * PHP named arguments, and, for a file that keeps one, the list beneath them (a gate's conditions, a
+ * plan's constraints). Immutable, so a caller reads, adjusts and writes back in one line; and total,
+ * so the empty state answers every read with its default instead of making a caller test for a
+ * missing file.
  */
 final class State
 {

@@ -8,7 +8,7 @@ namespace JesseGall\CodeCommandments;
  * The three moments of a plan's life the {@see PlanExecution} profile hangs checks on, and the
  * token the `commandments checks <moment>` command selects one by. {@see Start} runs once before
  * the first phase, {@see Phase} after each phase, and {@see Complete} at the very end — the only
- * moment that {@see appendsJudge appends `judge --branch`}, so a plan can never finish unjudged.
+ * moment that {@see hasJudgeGate appends `judge --branch`}, so a plan can never finish unjudged.
  */
 enum Moment: string
 {
@@ -37,7 +37,7 @@ enum Moment: string
      * Does this moment append `judge --branch` after its declared checks? Only {@see Complete}
      * does — the end gate always judges the whole branch; the earlier moments stay fast.
      */
-    public function appendsJudge(): bool
+    public function hasJudgeGate(): bool
     {
         return $this === self::Complete;
     }

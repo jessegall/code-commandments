@@ -503,13 +503,14 @@ final class SpatieDataNode extends NodeMatch
         }
 
         foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
-            if ($call->name instanceof Identifier && $call->class instanceof Name) {
-                // Spatie `::from(...)` runs the constructor; a named static factory (`::for`) is a real method.
-                $method = $call->name->toString() === 'from' ? '__construct' : $call->name->toString();
+            if (! ($call->name instanceof Identifier && $call->class instanceof Name)) {
+                continue;
+            }
 
-                if ($this->crossInto($this->resolveSelfClass($call->class->toString(), $selfClass), $method, $depth, $visited)) {
-                    return true;
-                }
+            $method = $call->name->toString() === 'from' ? '__construct' : $call->name->toString();
+
+            if ($this->crossInto($this->resolveSelfClass($call->class->toString(), $selfClass), $method, $depth, $visited)) {
+                return true;
             }
         }
 
@@ -622,7 +623,7 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $count = $this->getConstructor(fn (ClassMethod $ctor): int => count(array_filter(
+        $count = $this->fromConstructor(fn (ClassMethod $ctor): int => count(array_filter(
             new NodeFinder()->findInstanceOf($ctor->stmts ?? [], Assign::class),
             static fn (Assign $assign) => self::assignsThisPropertyNamed($assign, $name),
         )));
@@ -796,7 +797,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function everyConstructorParamOptional(): bool
     {
-        $promoted = $this->getConstructor(
+        $promoted = $this->fromConstructor(
             static fn (ClassMethod $ctor): array => array_filter($ctor->params, static fn (Param $p): bool => $p->flags !== 0),
         );
 
@@ -1276,7 +1277,7 @@ final class SpatieDataNode extends NodeMatch
      * (the mirror of {@see constructsNativeCastValue}: that constructs scalar→enum, this destructures
      * enum→scalar). The detector prefilters to a `->value` fetch; here we decide what the receiver IS.
      */
-    public function unwrapsEnumIntoItsOwnEnumSlot(): bool
+    public function isEnumUnwrapIntoItsOwnSlot(): bool
     {
         if (! $this->node instanceof PropertyFetch && ! $this->node instanceof NullsafePropertyFetch) {
             return false;
@@ -1328,12 +1329,14 @@ final class SpatieDataNode extends NodeMatch
         }
 
         foreach (new NodeFinder()->findInstanceOf($callee, StaticCall::class) as $from) {
-            if ($from->name instanceof Identifier && $from->name->toString() === 'from' && $this->soleArgumentIsVariable($from, $param->var->name)) {
-                $owner = $this->constructedFromInClass($from, $ownerClass);
+            if (! ($from->name instanceof Identifier && $from->name->toString() === 'from' && $this->soleArgumentIsVariable($from, $param->var->name))) {
+                continue;
+            }
 
-                if ($owner !== null && $this->codebase->extends($owner, self::DATA)) {
-                    return TypeResolver::forCodebase($this->codebase)->propertyTypeOf($owner, $key);
-                }
+            $owner = $this->constructedFromInClass($from, $ownerClass);
+
+            if ($owner !== null && $this->codebase->extends($owner, self::DATA)) {
+                return TypeResolver::forCodebase($this->codebase)->propertyTypeOf($owner, $key);
             }
         }
 

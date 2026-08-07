@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
-use InvalidArgumentException;
 
 /**
  * The built-in Vue directive names, so detectors name them as `Directive::If`
@@ -49,6 +48,11 @@ enum Directive: string
             return $directive->value;
         }
 
-        return (self::tryFrom($directive) ?? throw new InvalidArgumentException("Unknown Vue directive: {$directive}"))->value;
+        $known = self::tryFrom($directive) ?? throw UnknownDirective::for(
+            $directive,
+            array_map(static fn (self $case): string => $case->value, self::cases()),
+        );
+
+        return $known->value;
     }
 }

@@ -130,10 +130,12 @@ final class ComponentLibrary
             $match = null;
 
             foreach ($blockFields as $object => $objectFields) {
-                if (! isset($used[$object]) && self::sameSet($fields, $objectFields)) {
-                    $match = $object;
-                    break;
+                if (isset($used[$object]) || ! self::sameSet($fields, $objectFields)) {
+                    continue;
                 }
+
+                $match = $object;
+                break;
             }
 
             if ($match === null) {

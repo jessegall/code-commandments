@@ -307,15 +307,17 @@ final class DataHintScribe extends Scribe
                 $factories = [];
 
                 foreach ($class->getMethods() as $method) {
-                    if ($this->isObjectFactory($method, $fqcn)) {
-                        $name = $method->name->toString();
-                        $factories[] = new Factory(
-                            $name,
-                            $method->name,
-                            array_values($method->params),
-                            str_starts_with($name, 'from') && $name !== 'from',
-                        );
+                    if (! $this->isObjectFactory($method, $fqcn)) {
+                        continue;
                     }
+
+                    $name = $method->name->toString();
+                    $factories[] = new Factory(
+                        $name,
+                        $method->name,
+                        array_values($method->params),
+                        str_starts_with($name, 'from') && $name !== 'from',
+                    );
                 }
 
                 $classes[$fqcn] = new DataClass($file->path, $class, $factories);

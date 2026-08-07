@@ -12,24 +12,10 @@ use JesseGall\CodeCommandments\Cli\Until\UntilGate;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
- * Carries a project's session state forward when the FORMAT of these files changes — run on every
- * `sync`, which is what `composer update` triggers, so a consumer upgrades without noticing.
- *
- * It exists for one reason: some of this state is the USER's. A counter is a heartbeat and losing it
- * costs nothing, but the conditions of a stop gate are what the user asked for, and a plan's local
- * constraints are what they told the agent to hold to. Deleting those on an upgrade would quietly
- * throw away instructions the agent is meant to be held to — so what carries intent is CONVERTED, and
- * only the pure heartbeats are dropped.
- *
- * The old shape it reads: positional value lines (`0`, `0`, `5`) above a `-----`, one concern per
- * file — a gate in `.until`, its paused twin in `.until.pause`, its claim in `.until.claim`, its
- * counts in `.until-work-count`/`.until-todo-drift-count`, a plan in `.plan-active` with its stuck
- * signal in `.plan-stuck`, constraints split across `.plan-constraints`/`.constraints-verified`. All
- * of it becomes one {@see StateFile} per feature, named and self-describing.
- *
- * ONE-SHOT, and it says so: {@see FORMAT} is stamped into the project when it has run, and a project
- * already at that number is skipped. When every consumer has upgraded, this class can be deleted
- * whole — nothing else depends on it.
+ * Carries a project's session state forward when the FORMAT of these files changes, on every `sync`.
+ * What holds the USER's intent is CONVERTED — a stop gate's conditions and a plan's constraints are
+ * instructions the agent is meant to be held to — and only the heartbeats are dropped. One-shot:
+ * {@see FORMAT} is stamped into the project once it has run.
  */
 final class Migration
 {
@@ -213,7 +199,10 @@ final class Migration
 
     /**
      * The value lines of an OLD marker — everything above the `-----` — or null when the file isn't
-     * there or has already been converted.
+     * there or has already been converted. The old shape is positional (`0`, `0`, `5`) with one
+     * concern per file: a gate in `.until`, its paused twin in `.until.pause`, its claim in
+     * `.until.claim`, a plan in `.plan-active` with its stuck signal in `.plan-stuck`, constraints
+     * split across `.plan-constraints`/`.constraints-verified`.
      *
      * @return list<string>|null
      */

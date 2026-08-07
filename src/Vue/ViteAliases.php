@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
@@ -80,10 +81,14 @@ final class ViteAliases
     private static function relativeDir(Expr $expression, Script $script, array $seen): ?string
     {
         return match ($expression->kind) {
-            Expr::IDENTIFIER => self::identifierDir((string) $expression->get('name'), $script, $seen),
-            Expr::LITERAL => self::literalPath($expression),
-            Expr::CALL => self::callDir($expression, $script, $seen),
-            default => null,
+            ExprKind::Identifier => self::identifierDir((string) $expression->get('name'), $script, $seen),
+            ExprKind::Literal => self::literalPath($expression),
+            ExprKind::Call => self::callDir($expression, $script, $seen),
+            // Nothing else reduces to a directory. Named rather than defaulted so a config shape
+            // we could resolve has to be turned down here on purpose.
+            ExprKind::Member, ExprKind::Index, ExprKind::Unary, ExprKind::Binary,
+            ExprKind::Conditional, ExprKind::Array, ExprKind::Object, ExprKind::Arrow,
+            ExprKind::For, ExprKind::Assign, ExprKind::Unknown => null,
         };
     }
 
@@ -128,7 +133,7 @@ final class ViteAliases
         $segments = [self::relativeDir($arguments[0], $script, $seen) ?? ''];
 
         foreach (array_slice($arguments, 1) as $argument) {
-            if ($argument instanceof Expr && $argument->kind === Expr::LITERAL) {
+            if ($argument instanceof Expr && $argument->kind === ExprKind::Literal) {
                 $segments[] = self::literalPath($argument);
             }
         }
@@ -144,10 +149,14 @@ final class ViteAliases
             return null;
         }
 
+        // Only these two shapes NAME anything; the rest have no callee name to give, which is the
+        // answer rather than an oversight. Named so a new shape that does have one is not missed.
         return match ($callee->kind) {
-            Expr::IDENTIFIER => (string) $callee->get('name'),
-            Expr::MEMBER => (string) $callee->get('property'),
-            default => null,
+            ExprKind::Identifier => (string) $callee->get('name'),
+            ExprKind::Member => (string) $callee->get('property'),
+            ExprKind::Literal, ExprKind::Index, ExprKind::Call, ExprKind::Unary, ExprKind::Binary,
+            ExprKind::Conditional, ExprKind::Array, ExprKind::Object, ExprKind::Arrow,
+            ExprKind::For, ExprKind::Assign, ExprKind::Unknown => null,
         };
     }
 

@@ -18,10 +18,15 @@ final class BranchChanges implements ChangeScope
     public function restrictTo(string $path): ?array
     {
         $root = $this->git->root($path);
-        $changed = $root === null ? null : $this->git->changedVsBranch($root, $this->base);
+
+        if ($root === null) {
+            throw ScopeUnavailable::notAGitRepository($path);
+        }
+
+        $changed = $this->git->changedVsBranch($root, $this->base);
 
         if ($changed === null) {
-            throw new ScopeUnavailable("Not a git repository, or base ref '{$this->base}' not found: {$path}");
+            throw ScopeUnavailable::baseRefMissing($this->base, $path);
         }
 
         return $changed;

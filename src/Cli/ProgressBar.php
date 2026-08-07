@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Support\Invokable;
+
 /**
  * A minimal carriage-return progress bar for the `judge` command, drawn on STDERR
  * so it never mixes into the findings or the checklist on STDOUT. It is fully
@@ -77,6 +79,15 @@ final class ProgressBar
 
         $this->current = min($this->total, $this->current + 1);
         $this->render('judging', $label);
+    }
+
+    /**
+     * This bar as a `($done, $total)` reporter for one named phase — what a long job takes so it
+     * can report progress without knowing there is a bar, or whether anyone is watching.
+     */
+    public function phase(string $phase): Invokable
+    {
+        return new ProgressPhase($this, $phase);
     }
 
     /**

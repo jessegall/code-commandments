@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\Invokable;
+use JesseGall\CodeCommandments\Support\NoOp;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
 use JesseGall\CodeCommandments\ExcludedPaths;
@@ -236,10 +238,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      * parsed once.
      *
      * @param  string|list<string>  $path  one source root, or several
-     * @param  \Closure(int, int): void|null  $onProgress
+     * @param  Invokable  $onProgress  called `($done, $total)` per file; silent by default
      * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
+     * @param  ExcludedPaths  $excluded  subtrees pruned from the walk, never read
      */
-    public static function scan(string|array $path, ?\Closure $onProgress = null, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths()): self
+    public static function scan(string|array $path, Invokable $onProgress = new NoOp, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths()): self
     {
         $paths = [];
 
@@ -264,9 +267,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
                 $files[] = self::parse($code, $file);
             }
 
-            if ($onProgress !== null) {
-                $onProgress($index + 1, $total);
-            }
+            $onProgress($index + 1, $total);
         }
 
         return new self($files);
@@ -875,9 +876,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $visited[$class] = true;
 
         foreach ($declaration->fields() as $field) {
-            if (! $this->isValueType($field->type, $depth - 1, $visited)) {
-                return false; // holds a service (or something we can't vouch for) → this is a service, not a value
+            if ($this->isValueType($field->type, $depth - 1, $visited)) {
+                continue;
             }
+
+            return false; // holds a service (or something we can't vouch for) → this is a service, not a value
         }
 
         return true;
@@ -1111,15 +1114,16 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     {
         try {
             $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($code) ?? [];
+            $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
+
+            return new ParsedFile($path, $traverser->traverse($ast), $code);
         } catch (\PhpParser\Error) {
-            // A file that doesn't parse (a syntax error, a stub, a partial edit) is not
-            // worth crashing the whole run for — skip its contents and carry on.
+            // A file the parser rejects is not worth crashing the whole run for — skip its
+            // contents and carry on. RESOLVING names throws the same way as reading them: a
+            // duplicate `use` alias is refused by the name resolver, mid-traversal, long after
+            // the syntax parsed. One such file used to end a scan of thousands.
             return new ParsedFile($path, [], $code);
         }
-
-        $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
-
-        return new ParsedFile($path, $traverser->traverse($ast), $code);
     }
 
     /**

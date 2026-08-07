@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Packages;
 
-use InvalidArgumentException;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Discovery;
 
@@ -69,11 +68,9 @@ abstract class Exemption
             }
         }
 
-        throw new InvalidArgumentException(sprintf(
-            '"%s" is not an exemption — pass an %s subclass or a known slug (%s).',
+        throw UnknownExemption::for(
             $tagOrSlug,
-            self::class,
-            implode(', ', array_map(static fn (string $c): string => new $c()->slug(), self::all())),
-        ));
+            array_map(static fn (string $class): string => new $class()->slug(), self::all()),
+        );
     }
 }

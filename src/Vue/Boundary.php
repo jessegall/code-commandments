@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
@@ -368,7 +369,7 @@ final class Boundary
      * and the call site must FORWARD the host's slots to the new component — otherwise the
      * slotted bodies render empty (the extracted component's `<slot>`s get nothing).
      */
-    public function rendersSlots(): bool
+    public function hasSlots(): bool
     {
         return $this->node->renders('slot');
     }
@@ -396,7 +397,7 @@ final class Boundary
 
             // `@event="x = …"` — a handler assigning the value (the readonly-prop trap, #256).
             foreach ($element->expressions() as $expression) {
-                if ($expression->is(Expr::ASSIGN)) {
+                if ($expression->is(ExprKind::Assign)) {
                     foreach ($expression->get('target')->roots() as $root) {
                         $models[] = $root;
                     }
@@ -581,11 +582,13 @@ final class Boundary
         }
 
         foreach (isset($carried[Directive::For->value]) ? [':key', 'key'] : [] as $key) {
-            if ($this->node->hasAttribute($key)) {
-                $carried[$key] = $this->node->attribute($key);
-
-                break;
+            if (! $this->node->hasAttribute($key)) {
+                continue;
             }
+
+            $carried[$key] = $this->node->attribute($key);
+
+            break;
         }
 
         return $carried;

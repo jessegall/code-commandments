@@ -36,14 +36,16 @@ final class TransformerOutput
             $path = realpath($file->path) ?: $file->path;
 
             foreach ($finder->findInstanceOf($file->ast, MethodCall::class) as $call) {
-                if ($call->name instanceof Identifier
+                if (! ($call->name instanceof Identifier
                     && $call->name->toString() === 'outputDirectory'
-                    && isset($call->args[0])) {
-                    $directory = self::evaluate($call->args[0]->value, $path, $assignments);
+                    && isset($call->args[0]))) {
+                    continue;
+                }
 
-                    if ($directory !== null) {
-                        return self::normalise($directory);
-                    }
+                $directory = self::evaluate($call->args[0]->value, $path, $assignments);
+
+                if ($directory !== null) {
+                    return self::normalise($directory);
                 }
             }
 

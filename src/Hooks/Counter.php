@@ -14,14 +14,9 @@ use JesseGall\CodeCommandments\Workspace;
  * hooks. {@see named} builds one from a kebab-case slug (the session's `.{slug}-count` file); drive it
  * by hand ({@see bump}/{@see reset}/{@see clear}) or via `Counter::named($ws, 'my-thing')->due(25)`.
  * Session-scoped ({@see Workspace::path}) and written in the shared {@see StateFile} format, so the
- * number carries its NAME and its meaning rather than sitting bare on line one; the `.*-count` naming
- * convention lets {@see clearAll} wipe the session's counters, so a new counter joins the
- * fresh-session reset just by using {@see named}.
- *
- * A counter that belongs to a larger piece of state does NOT live here — it lives in that state's own
- * file, as a named value beside what it counts (the stop gate's to-do drift is a value of
- * {@see \JesseGall\CodeCommandments\Cli\Until\UntilGate}). A count in a file of its own outlives the
- * thing it counts, and a stale count read against a fresh gate is a bug, not a rounding error.
+ * number carries its name and meaning; the `.*-count` convention lets {@see clearAll} wipe them all.
+ * Use it only for a counter that stands ALONE — one belonging to a larger state is a named value in
+ * that state's own file, so it cannot outlive the thing it counts.
  */
 final class Counter
 {

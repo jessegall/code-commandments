@@ -982,13 +982,13 @@ class AstNode
             || $last instanceof Break_
             || ($last instanceof Expression && $last->expr instanceof Throw_);
 
-        return $bailsOut && new self($this->node->cond)->readsThisState();
+        return $bailsOut && new self($this->node->cond)->isThisStateRead();
     }
 
     /**
      * Does this expression read any `$this->…` property?
      */
-    private function readsThisState(): bool
+    private function isThisStateRead(): bool
     {
         return new NodeFinder()->findFirst(
             [$this->node],
@@ -1227,7 +1227,7 @@ class AstNode
      * container is a static factory's construction seam (`Foo::make()` giving a static entry
      * point constructor DI), not a dependency reach.
      */
-    public function resolvesEnclosingClass(): bool
+    public function isEnclosingClassResolution(): bool
     {
         $enclosing = $this->enclosingClassName();
 
@@ -1523,26 +1523,30 @@ class AstNode
     }
 
     /**
-     * The `__construct` declaration of the class this node is in (or IS). Called bare, returns the
-     * `ClassMethod` or null when the class has no explicit constructor. Given a closure, it runs the
-     * closure ONLY when a constructor exists and returns its result (null otherwise) — so a caller
-     * acts on the constructor without a null check: `$node->getConstructor(fn (ClassMethod $c) => …)`.
-     * The one place `getMethod('__construct')` lives — read the constructor through this.
+     * The `__construct` declaration of the class this node is in (or IS), or null where the class
+     * declares none. The one place `getMethod('__construct')` lives — read the constructor through
+     * this, or through {@see fromConstructor} to act on one without the null check.
+     */
+    public function getConstructor(): ?ClassMethod
+    {
+        return self::constructorOf($this->enclosingClass());
+    }
+
+    /**
+     * $with applied to the constructor, or null when the class declares none — the reading form,
+     * for a caller that wants something OUT of the constructor and has nothing to say about a
+     * class without one.
      *
      * @template T
      *
-     * @param  (\Closure(ClassMethod): T)|null  $with
-     * @return ($with is null ? ClassMethod|null : T|null)
+     * @param  \Closure(ClassMethod): T  $with
+     * @return T|null
      */
-    public function getConstructor(?\Closure $with = null): mixed
+    public function fromConstructor(\Closure $with): mixed
     {
-        $constructor = self::constructorOf($this->enclosingClass());
+        $constructor = $this->getConstructor();
 
-        if ($constructor === null || $with === null) {
-            return $constructor;
-        }
-
-        return $with($constructor);
+        return $constructor === null ? null : $with($constructor);
     }
 
     /**
@@ -1774,7 +1778,7 @@ class AstNode
     /**
      * Is this an assignment to one of `$this`'s properties — `$this->foo = …`?
      */
-    public function assignsThisProperty(): bool
+    public function isThisPropertyAssignment(): bool
     {
         return $this->node instanceof Assign
             && $this->node->var instanceof PropertyFetch
@@ -1788,7 +1792,7 @@ class AstNode
      */
     public function assignedPropertyName(): ?string
     {
-        return $this->assignsThisProperty() ? $this->node->var->name->toString() : null;
+        return $this->isThisPropertyAssignment() ? $this->node->var->name->toString() : null;
     }
 
     /**
@@ -1879,7 +1883,7 @@ class AstNode
      * Is this class member declared BELOW a method of the same class — state a reader only meets after
      * the behaviour that uses it? False for a node outside a class body, and for the methods themselves.
      */
-    public function followsAMethodInItsClass(): bool
+    public function isBelowAMethodInItsClass(): bool
     {
         $seenMethod = false;
 
@@ -2254,7 +2258,7 @@ class AstNode
                 return null;
             }
 
-            if (new self($arg->value)->readsOwnProperty()) {
+            if (new self($arg->value)->isOwnPropertyRead()) {
                 $carried++;
             } else {
                 $changed++;
@@ -2292,7 +2296,7 @@ class AstNode
      * Is this expression a plain `$this->prop` read — a field carried across verbatim, as opposed to a
      * value computed or passed in? The primitive behind "which arguments ride along unchanged".
      */
-    public function readsOwnProperty(): bool
+    public function isOwnPropertyRead(): bool
     {
         return $this->node instanceof PropertyFetch
             && $this->node->var instanceof Variable
@@ -2577,7 +2581,7 @@ class AstNode
      * dance only makes sense when the field is per-call scratch state mutated for
      * the duration of the call; the data is really an input that should be passed.
      */
-    public function savesAndRestoresOwnState(): bool
+    public function hasOwnStateSaveAndRestore(): bool
     {
         if (! $this->isFunctionDeclaration() || $this->node->stmts === null) {
             return false;
@@ -2587,7 +2591,7 @@ class AstNode
         // HANDED (`bind($target, $callback)`, `withinMutation(…, $callback)`) sets the
         // field for the duration of code it doesn't own — you can't thread a parameter
         // into a closure's transitive callees. That's the Context pattern, not a lie.
-        if ($this->acceptsCallable()) {
+        if ($this->hasCallableParam()) {
             return false;
         }
 
@@ -2620,7 +2624,7 @@ class AstNode
      * Does this function declare a parameter typed `callable` or `Closure`? Such a
      * method runs code it was handed — the hallmark of the dynamic-scope pattern.
      */
-    protected function acceptsCallable(): bool
+    protected function hasCallableParam(): bool
     {
         foreach ($this->node->params as $param) {
             foreach (self::typeNames($param->type) as $name) {

@@ -40,12 +40,14 @@ final class Enums
                 $values = [];
 
                 foreach ($enum->stmts as $stmt) {
-                    if ($stmt instanceof EnumCase && $stmt->expr !== null) {
-                        $value = self::literal($stmt->expr);
+                    if (! ($stmt instanceof EnumCase && $stmt->expr !== null)) {
+                        continue;
+                    }
 
-                        if ($value !== null) {
-                            $values[] = $value;
-                        }
+                    $value = self::literal($stmt->expr);
+
+                    if ($value !== null) {
+                        $values[] = $value;
                     }
                 }
 

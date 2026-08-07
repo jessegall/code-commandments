@@ -11,16 +11,11 @@ use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
- * The per-session record that a plan is being executed — the state behind the keep-going Stop
- * hook. Written when a plan is approved ({@see PlanReminder}), read on every stop to decide whether
- * to re-nudge, and cleared by `commandments plan done` ({@see PlanCommand}) or when the plan branch
- * is merged back to its base. It lives in the session's OWN {@see Workspace} folder, so one
- * session's plan never nudges another — across worktrees AND across concurrent sessions. It stores
- * ONLY the {@see PlanState} counters and the stuck signal — nothing config-derived, so the base
- * branch/policy stay live from config.
- *
- * ONE {@see StateFile} in the shared format: the stuck signal is a named value of the plan, not a
- * marker of its own, so a signal can never be left behind by a plan that has ended.
+ * The per-session record that a plan is being executed — the state behind the keep-going Stop hook,
+ * written on approval, read at every stop, cleared by `commandments plan done`. It is ONE
+ * {@see StateFile} in the session's own {@see Workspace} folder, carrying the {@see PlanState}
+ * counters and the stuck signal as named values: one session never nudges another, nothing
+ * config-derived goes stale in it, and a signal cannot outlive the plan it belongs to.
  */
 final class PlanMarker
 {

@@ -64,12 +64,8 @@ final class Module extends Node
     public function call(string $callee): ?CallExpr
     {
         foreach ($this->body as $node) {
-            if ($node instanceof CallExpr && $node->callee === $callee) {
-                return $node;
-            }
-
-            if ($node instanceof VariableDecl && $node->initCall?->callee === $callee) {
-                return $node->initCall;
+            if (($call = $node->callTo($callee)) !== null) {
+                return $call;
             }
         }
 
@@ -123,11 +119,7 @@ final class Module extends Node
         $names = [];
 
         foreach ($this->body as $node) {
-            if ($node instanceof VariableDecl) {
-                $names = [...$names, ...$node->pattern->names()];
-            } elseif ($node instanceof FunctionDecl) {
-                $names[] = $node->name;
-            }
+            $names = [...$names, ...$node->declaredNames()];
         }
 
         return $names;

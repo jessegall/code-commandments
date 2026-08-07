@@ -161,13 +161,15 @@ final class Tokenizer
         $tag = trim(substr($this->html, $lt + 2, ($gt === false ? strlen($this->html) : $gt) - ($lt + 2)));
 
         for ($depth = count($this->stack) - 1; $depth >= 1; $depth--) {
-            if ($this->stack[$depth]['tag'] === $tag) {
-                while (count($this->stack) - 1 >= $depth) {
-                    $this->fold($end);
-                }
-
-                break;
+            if ($this->stack[$depth]['tag'] !== $tag) {
+                continue;
             }
+
+            while (count($this->stack) - 1 >= $depth) {
+                $this->fold($end);
+            }
+
+            break;
         }
 
         return $end;

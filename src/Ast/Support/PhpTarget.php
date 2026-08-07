@@ -49,11 +49,13 @@ final class PhpTarget
     private static function manifestFor(string $path): ?array
     {
         for ($dir = dirname($path); $dir !== '/' && $dir !== '' && $dir !== '.'; $dir = dirname($dir)) {
-            if (is_file($dir . '/composer.json')) {
-                $decoded = json_decode((string) file_get_contents($dir . '/composer.json'), true);
-
-                return is_array($decoded) ? $decoded : null;
+            if (! is_file($dir . '/composer.json')) {
+                continue;
             }
+
+            $decoded = json_decode((string) file_get_contents($dir . '/composer.json'), true);
+
+            return is_array($decoded) ? $decoded : null;
         }
 
         return null;

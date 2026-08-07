@@ -25,6 +25,11 @@ final class FunctionDecl extends Node
         public readonly string $bodySource = '',
     ) {}
 
+    public function declaredNames(): array
+    {
+        return [$this->name];
+    }
+
     public function signature(): FunctionType
     {
         return new FunctionType($this->params, $this->returnType ?? new KeywordType('void'));

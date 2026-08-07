@@ -149,11 +149,13 @@ final class ScribeChain
     private function insert(string $name, ScribeStep $step, int $offset): self
     {
         foreach ($this->steps as $index => $existing) {
-            if ($existing->name() === $name) {
-                array_splice($this->steps, $index + $offset, 0, [$step]);
-
-                return $this;
+            if ($existing->name() !== $name) {
+                continue;
             }
+
+            array_splice($this->steps, $index + $offset, 0, [$step]);
+
+            return $this;
         }
 
         return $this->append($step);

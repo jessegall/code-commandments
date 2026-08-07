@@ -407,22 +407,16 @@ final class Parser
      */
     private function tryArrowSignature(): array
     {
-        $start = $this->pos;
-
-        try {
+        return $this->speculate(function (): array {
             $params = $this->parseParams();
             $returnType = $this->advanceIfPunct(':') ? $this->parseType() : null;
 
-            if ($this->atPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
-                return [$params, $returnType];
+            if (! $this->atPunct('=') || ! ($this->at(1)?->isPunct('>') ?? false)) {
+                throw new Unparsed();
             }
-        } catch (Unparsed) {
-            // not an arrow — fall through
-        }
 
-        $this->pos = $start;
-
-        return [null, null];
+            return [$params, $returnType];
+        }) ?? [null, null];
     }
 
     private function parsePattern(): Pattern
@@ -495,23 +489,28 @@ final class Parser
 
     private function parseType(): TypeNode
     {
-        $start = $this->pos;
         $this->typeDepth++;
 
         try {
-            if ($this->typeDepth > self::MAX_TYPE_DEPTH) { // pathologically nested — keep it verbatim
-                throw new Unparsed();
+            $type = $this->speculate(function (): TypeNode {
+                if ($this->typeDepth > self::MAX_TYPE_DEPTH) { // pathologically nested — keep it verbatim
+                    throw new Unparsed();
+                }
+
+                $type = $this->parseUnion();
+
+                if ($this->atId('extends')) { // a conditional type — not modelled; keep whole region
+                    throw new Unparsed();
+                }
+
+                return $type;
+            });
+
+            if ($type !== null) {
+                return $type;
             }
 
-            $type = $this->parseUnion();
-
-            if ($this->atId('extends')) { // a conditional type — not modelled; keep whole region
-                throw new Unparsed();
-            }
-
-            return $type;
-        } catch (Unparsed) {
-            $this->pos = $start;
+            $start = $this->pos; // speculate rewound us to where the type began
             $verbatim = $this->captureTypeVerbatim();
 
             // Guarantee progress: if the verbatim reader consumed nothing (a stray terminator that
@@ -641,22 +640,23 @@ final class Parser
 
     private function parseParenOrFunction(): TypeNode
     {
-        $start = $this->pos;
-
-        try {
+        $function = $this->speculate(function (): FunctionType {
             $params = $this->parseParams();
 
-            if ($this->atPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
-                $this->advance();
-                $this->advance(); // `=>`
-
-                return new FunctionType($params, $this->parseType());
+            if (! $this->atPunct('=') || ! ($this->at(1)?->isPunct('>') ?? false)) {
+                throw new Unparsed();
             }
-        } catch (Unparsed) {
-            // fall through to the parenthesised-type reading
+
+            $this->advance();
+            $this->advance(); // `=>`
+
+            return new FunctionType($params, $this->parseType());
+        });
+
+        if ($function !== null) {
+            return $function;
         }
 
-        $this->pos = $start;
         $this->expectPunct('(');
         $inner = $this->parseType();
         $this->expectPunct(')');
@@ -800,19 +800,13 @@ final class Parser
 
     private function tryCall(): ?CallExpr
     {
-        $start = $this->pos;
-
-        try {
+        return $this->speculate(function (): CallExpr {
             $callee = $this->qualifiedName();
             $typeArguments = $this->atPunct('<') ? $this->parseTypeArguments() : [];
             $arguments = $this->atPunct('(') ? $this->parseArguments() : [];
 
             return new CallExpr($callee, $typeArguments, $arguments);
-        } catch (Unparsed) {
-            $this->pos = $start;
-
-            return null;
-        }
+        });
     }
 
     /**
@@ -839,6 +833,31 @@ final class Parser
     }
 
     // ---- cursor + skipping ----------------------------------------------------
+
+    /**
+     * Read $parse from where we stand, rewinding to it when the guess turns out to be wrong.
+     *
+     * The grammar is ambiguous in several places — `(a: T) => R` against a parenthesised type, a
+     * call against a bare name — so reading it means guessing and being able to take the guess
+     * back. This is the ONE place the cursor moves backwards, so a speculative read cannot forget
+     * to rewind; on {@see Unparsed} the caller is handed null, standing exactly where it started.
+     *
+     * @template T
+     * @param  callable(): T  $parse
+     * @return T|null
+     */
+    private function speculate(callable $parse): mixed
+    {
+        $start = $this->pos;
+
+        try {
+            return $parse();
+        } catch (Unparsed) {
+            $this->pos = $start;
+
+            return null;
+        }
+    }
 
     private function qualifiedName(): string
     {

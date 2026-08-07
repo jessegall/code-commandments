@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
@@ -97,18 +98,18 @@ final class SwitchCaseChain
 
         $node = Parser::parse($expression);
 
-        if (! $node->is(Expr::BINARY) || ! in_array($node->get('op'), ['===', '=='], true)) {
+        if (! $node->is(ExprKind::Binary) || ! in_array($node->get('op'), ['===', '=='], true)) {
             return [null, null];
         }
 
         $left = $node->get('left');
         $right = $node->get('right');
 
-        if (! $left instanceof Expr || ! $right instanceof Expr || ! $right->is(Expr::LITERAL)) {
+        if (! $left instanceof Expr || ! $right instanceof Expr || ! $right->is(ExprKind::Literal)) {
             return [null, null];
         }
 
-        if (! in_array($left->kind, [Expr::IDENTIFIER, Expr::MEMBER, Expr::INDEX], true)) {
+        if (! in_array($left->kind, [ExprKind::Identifier, ExprKind::Member, ExprKind::Index], true)) {
             return [null, null];
         }
 

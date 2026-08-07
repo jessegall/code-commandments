@@ -49,11 +49,13 @@ final class UnifiedDiff
 
         foreach ($headers as $prefix => $replacement) {
             foreach ($lines as $index => $line) {
-                if (str_starts_with($line, $prefix)) {
-                    $lines[$index] = $replacement;
-
-                    break;
+                if (! str_starts_with($line, $prefix)) {
+                    continue;
                 }
+
+                $lines[$index] = $replacement;
+
+                break;
             }
         }
 

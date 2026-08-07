@@ -54,7 +54,7 @@ final readonly class PlanProfile
         return $this->branchPrefix;
     }
 
-    public function pushesEachPhase(): bool
+    public function isEachPhasePushed(): bool
     {
         return $this->pushEachPhase;
     }
@@ -92,7 +92,7 @@ final readonly class PlanProfile
     /**
      * Whether the agent keeps a living working-state record while a plan runs — off by default.
      */
-    public function tracksWorkingState(): bool
+    public function isWorkingStateTracked(): bool
     {
         return $this->trackWorkingState;
     }

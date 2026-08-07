@@ -26,6 +26,16 @@ final class VariableDecl extends Node
         public readonly ?TypeNode $initReturnType = null,
     ) {}
 
+    public function callTo(string $callee): ?CallExpr
+    {
+        return $this->initCall?->callee === $callee ? $this->initCall : null;
+    }
+
+    public function declaredNames(): array
+    {
+        return $this->pattern->names();
+    }
+
     public function render(): string
     {
         $type = $this->typeAnnotation !== null ? ': ' . $this->typeAnnotation->render() : '';

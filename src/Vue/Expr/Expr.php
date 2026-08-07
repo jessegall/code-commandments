@@ -10,26 +10,11 @@ namespace JesseGall\CodeCommandments\Vue\Expr;
  */
 final class Expr
 {
-    public const string IDENTIFIER = 'identifier';
-    public const string LITERAL = 'literal';
-    public const string MEMBER = 'member';      // a.b / a?.b
-    public const string INDEX = 'index';        // a[b]
-    public const string CALL = 'call';          // f(...)
-    public const string UNARY = 'unary';        // !a, -a
-    public const string BINARY = 'binary';      // a === b, a || b, a + b, a ? :
-    public const string CONDITIONAL = 'conditional';
-    public const string ARRAY = 'array';
-    public const string OBJECT = 'object';
-    public const string ARROW = 'arrow';
-    public const string FOR = 'for';            // v-for: aliases (in|of) iterable
-    public const string ASSIGN = 'assign';      // target = value (an event handler write)
-    public const string UNKNOWN = 'unknown';
-
     /**
      * @param  array<string, mixed>  $props
      */
     public function __construct(
-        public readonly string $kind,
+        public readonly ExprKind $kind,
         public readonly array $props = [],
     ) {}
 
@@ -38,7 +23,7 @@ final class Expr
         return $this->props[$key] ?? null;
     }
 
-    public function is(string $kind): bool
+    public function is(ExprKind $kind): bool
     {
         return $this->kind === $kind;
     }
@@ -59,15 +44,15 @@ final class Expr
     public function memberDepth(array $transparent = []): int
     {
         return match ($this->kind) {
-            self::MEMBER => max($this->chainLength($transparent), $this->child('object')->memberDepth($transparent)),
-            self::INDEX => max($this->chainLength($transparent), $this->child('object')->memberDepth($transparent), $this->child('index')->memberDepth($transparent)),
-            self::CALL => max($this->calleeDataDepth($transparent), $this->maxOf($this->children('arguments'), $transparent)),
-            self::UNARY => $this->child('argument')->memberDepth($transparent),
-            self::BINARY => max($this->child('left')->memberDepth($transparent), $this->child('right')->memberDepth($transparent)),
-            self::CONDITIONAL => max($this->child('test')->memberDepth($transparent), $this->child('then')->memberDepth($transparent), $this->child('else')->memberDepth($transparent)),
-            self::ARRAY => $this->maxOf($this->children('elements'), $transparent),
-            self::OBJECT => $this->maxOf($this->children('values'), $transparent),
-            self::ARROW => $this->child('body')->memberDepth($transparent),
+            ExprKind::Member => max($this->chainLength($transparent), $this->child('object')->memberDepth($transparent)),
+            ExprKind::Index => max($this->chainLength($transparent), $this->child('object')->memberDepth($transparent), $this->child('index')->memberDepth($transparent)),
+            ExprKind::Call => max($this->calleeDataDepth($transparent), $this->maxOf($this->children('arguments'), $transparent)),
+            ExprKind::Unary => $this->child('argument')->memberDepth($transparent),
+            ExprKind::Binary => max($this->child('left')->memberDepth($transparent), $this->child('right')->memberDepth($transparent)),
+            ExprKind::Conditional => max($this->child('test')->memberDepth($transparent), $this->child('then')->memberDepth($transparent), $this->child('else')->memberDepth($transparent)),
+            ExprKind::Array => $this->maxOf($this->children('elements'), $transparent),
+            ExprKind::Object => $this->maxOf($this->children('values'), $transparent),
+            ExprKind::Arrow => $this->child('body')->memberDepth($transparent),
             default => 0,
         };
     }
@@ -83,18 +68,21 @@ final class Expr
     public function roots(): array
     {
         $roots = match ($this->kind) {
-            self::IDENTIFIER => [(string) $this->get('name')],
-            self::MEMBER => $this->child('object')->roots(),
-            self::INDEX => array_merge($this->child('object')->roots(), $this->child('index')->roots()),
-            self::CALL => array_merge($this->child('callee')->roots(), $this->rootsOf($this->children('arguments'))),
-            self::UNARY => $this->child('argument')->roots(),
-            self::BINARY => array_merge($this->child('left')->roots(), $this->child('right')->roots()),
-            self::CONDITIONAL => array_merge($this->child('test')->roots(), $this->child('then')->roots(), $this->child('else')->roots()),
-            self::ARRAY => $this->rootsOf($this->children('elements')),
-            self::OBJECT => $this->rootsOf($this->children('values')),
-            self::ARROW => array_values(array_diff($this->child('body')->roots(), $this->rootsOf($this->children('params')))),
-            self::ASSIGN => array_merge($this->child('target')->roots(), $this->child('value')->roots()),
-            default => [],
+            ExprKind::Identifier => [(string) $this->get('name')],
+            ExprKind::Member => $this->child('object')->roots(),
+            ExprKind::Index => array_merge($this->child('object')->roots(), $this->child('index')->roots()),
+            ExprKind::Call => array_merge($this->child('callee')->roots(), $this->rootsOf($this->children('arguments'))),
+            ExprKind::Unary => $this->child('argument')->roots(),
+            ExprKind::Binary => array_merge($this->child('left')->roots(), $this->child('right')->roots()),
+            ExprKind::Conditional => array_merge($this->child('test')->roots(), $this->child('then')->roots(), $this->child('else')->roots()),
+            ExprKind::Array => $this->rootsOf($this->children('elements')),
+            ExprKind::Object => $this->rootsOf($this->children('values')),
+            ExprKind::Arrow => array_values(array_diff($this->child('body')->roots(), $this->rootsOf($this->children('params')))),
+            ExprKind::Assign => array_merge($this->child('target')->roots(), $this->child('value')->roots()),
+            // A literal reads nothing, and neither `for` (its own aliases are bindings, not reads)
+            // nor an unparsed fragment can be walked. Named rather than defaulted: a kind that
+            // holds children must say so here, or extraction silently loses the props it needs.
+            ExprKind::Literal, ExprKind::For, ExprKind::Unknown => [],
         };
 
         return array_values(array_unique($roots));
@@ -122,10 +110,10 @@ final class Expr
      */
     private function gatherCalled(array &$names): void
     {
-        if ($this->kind === self::CALL) {
+        if ($this->kind === ExprKind::Call) {
             $callee = $this->props['callee'] ?? null;
 
-            if ($callee instanceof self && $callee->kind === self::IDENTIFIER) {
+            if ($callee instanceof self && $callee->kind === ExprKind::Identifier) {
                 $names[] = (string) $callee->get('name');
             }
         }
@@ -161,11 +149,16 @@ final class Expr
     public function asChain(): ?array
     {
         return match ($this->kind) {
-            self::IDENTIFIER => [(string) $this->get('name')],
-            self::MEMBER => ($base = $this->child('object')->asChain()) !== null
+            ExprKind::Identifier => [(string) $this->get('name')],
+            ExprKind::Member => ($base = $this->child('object')->asChain()) !== null
                 ? array_merge($base, [(string) $this->get('property')])
                 : null,
-            default => null,
+            // Null is this method's ANSWER, not an unhandled case — an operator, a call or an
+            // index anywhere means it is not a plain data path. Named so that a kind which IS
+            // one has to be added here rather than inheriting "no" from a default.
+            ExprKind::Literal, ExprKind::Index, ExprKind::Call, ExprKind::Unary, ExprKind::Binary,
+            ExprKind::Conditional, ExprKind::Array, ExprKind::Object, ExprKind::Arrow,
+            ExprKind::For, ExprKind::Assign, ExprKind::Unknown => null,
         };
     }
 
@@ -185,13 +178,13 @@ final class Expr
      */
     public function callee(): ?string
     {
-        if ($this->kind !== self::CALL) {
+        if ($this->kind !== ExprKind::Call) {
             return null;
         }
 
         $callee = $this->child('callee');
 
-        return $callee->is(self::IDENTIFIER) ? (string) $callee->get('name') : null;
+        return $callee->is(ExprKind::Identifier) ? (string) $callee->get('name') : null;
     }
 
     /**
@@ -201,7 +194,7 @@ final class Expr
      */
     public function argument(int $index): ?self
     {
-        return $this->kind === self::CALL ? ($this->children('arguments')[$index] ?? null) : null;
+        return $this->kind === ExprKind::Call ? ($this->children('arguments')[$index] ?? null) : null;
     }
 
     /**
@@ -212,7 +205,7 @@ final class Expr
      */
     public function objectShape(): ?string
     {
-        if ($this->kind !== self::OBJECT) {
+        if ($this->kind !== ExprKind::Object) {
             return null;
         }
 
@@ -227,13 +220,13 @@ final class Expr
 
     public function asCall(): ?array
     {
-        if ($this->kind !== self::CALL) {
+        if ($this->kind !== ExprKind::Call) {
             return null;
         }
 
         $callee = $this->child('callee');
 
-        if (! $callee->is(self::IDENTIFIER)) {
+        if (! $callee->is(ExprKind::Identifier)) {
             return null;
         }
 
@@ -261,7 +254,7 @@ final class Expr
      */
     public function literalType(): ?string
     {
-        if ($this->kind !== self::LITERAL) {
+        if ($this->kind !== ExprKind::Literal) {
             return null;
         }
 
@@ -288,17 +281,23 @@ final class Expr
     public function inferType(): ?string
     {
         return match ($this->kind) {
-            self::LITERAL => $this->literalType(),
-            self::UNARY => match ((string) $this->get('op')) {
+            ExprKind::Literal => $this->literalType(),
+            // Every operator the parser can emit, and no fallback arm: one it learns to produce
+            // without a type decided here must fail rather than quietly infer nothing.
+            ExprKind::Unary => match ((string) $this->get('op')) {
                 '!' => 'boolean',
                 'typeof' => 'string',
                 '-', '+' => 'number',
-                default => null,
             },
-            self::BINARY => $this->binaryType(),
-            self::CONDITIONAL => $this->unionType([$this->child('then'), $this->child('else')]),
-            self::ARRAY => $this->arrayType(),
-            default => null,
+            ExprKind::Binary => $this->binaryType(),
+            ExprKind::Conditional => $this->unionType([$this->child('then'), $this->child('else')]),
+            ExprKind::Array => $this->arrayType(),
+            // Deliberately un-inferred: only a type checker could resolve what these evaluate to,
+            // and a wrong guess is worse than none. Named so a kind we COULD infer is not
+            // silently written off the moment the parser learns to produce it.
+            ExprKind::Identifier, ExprKind::Member, ExprKind::Index, ExprKind::Call,
+            ExprKind::Object, ExprKind::Arrow, ExprKind::For, ExprKind::Assign,
+            ExprKind::Unknown => null,
         };
     }
 
@@ -337,7 +336,7 @@ final class Expr
      */
     public function returnType(): ?string
     {
-        return $this->kind === self::ARROW ? $this->child('body')->inferType() : null;
+        return $this->kind === ExprKind::Arrow ? $this->child('body')->inferType() : null;
     }
 
     /**
@@ -390,7 +389,7 @@ final class Expr
      */
     public function objectEntries(): array
     {
-        if ($this->kind !== self::OBJECT) {
+        if ($this->kind !== ExprKind::Object) {
             return [];
         }
 
@@ -416,11 +415,11 @@ final class Expr
     {
         // A call's RECEIVER is data, but the method itself is not a field:
         // `order.customer.greet()` reaches the data `order.customer`, not `…greet`.
-        if ($this->kind === self::CALL) {
+        if ($this->kind === ExprKind::Call) {
             $callee = $this->props['callee'] ?? null;
 
             if ($callee instanceof self) {
-                $receiver = $callee->is(self::MEMBER) || $callee->is(self::INDEX) ? $callee->child('object') : $callee;
+                $receiver = $callee->is(ExprKind::Member) || $callee->is(ExprKind::Index) ? $callee->child('object') : $callee;
                 $receiver->gatherChains($chains);
             }
 
@@ -476,11 +475,11 @@ final class Expr
     public function source(): string
     {
         return match ($this->kind) {
-            self::IDENTIFIER => (string) $this->get('name'),
-            self::LITERAL => (string) $this->get('raw'),
-            self::MEMBER => $this->child('object')->source() . ($this->get('optional') ? '?.' : '.') . $this->get('property'),
-            self::INDEX => $this->child('object')->source() . '[' . $this->child('index')->source() . ']',
-            self::CALL => $this->child('callee')->source() . '(…)',
+            ExprKind::Identifier => (string) $this->get('name'),
+            ExprKind::Literal => (string) $this->get('raw'),
+            ExprKind::Member => $this->child('object')->source() . ($this->get('optional') ? '?.' : '.') . $this->get('property'),
+            ExprKind::Index => $this->child('object')->source() . '[' . $this->child('index')->source() . ']',
+            ExprKind::Call => $this->child('callee')->source() . '(…)',
             default => '',
         };
     }
@@ -496,9 +495,9 @@ final class Expr
     private function chainLength(array $transparent = []): int
     {
         return match ($this->kind) {
-            self::MEMBER => $this->child('object')->chainLength($transparent) + (in_array((string) $this->get('property'), $transparent, true) ? 0 : 1),
-            self::INDEX => $this->child('object')->chainLength($transparent) + 1,
-            self::IDENTIFIER => 0,
+            ExprKind::Member => $this->child('object')->chainLength($transparent) + (in_array((string) $this->get('property'), $transparent, true) ? 0 : 1),
+            ExprKind::Index => $this->child('object')->chainLength($transparent) + 1,
+            ExprKind::Identifier => 0,
             default => 0,
         };
     }
@@ -513,7 +512,7 @@ final class Expr
     {
         $callee = $this->child('callee');
 
-        if ($callee->is(self::MEMBER) || $callee->is(self::INDEX)) {
+        if ($callee->is(ExprKind::Member) || $callee->is(ExprKind::Index)) {
             return $callee->child('object')->chainLength($transparent);
         }
 
@@ -524,7 +523,7 @@ final class Expr
     {
         $value = $this->props[$key] ?? null;
 
-        return $value instanceof self ? $value : new self(self::UNKNOWN);
+        return $value instanceof self ? $value : new self(ExprKind::Unknown);
     }
 
     /**
