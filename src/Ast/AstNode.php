@@ -1395,16 +1395,12 @@ class AstNode
             return is_string($expr->name) ? '$' . $expr->name : null;
         }
 
-        if (AstNode::isPropertyRead($expr)) {
+        if (self::isPropertyRead($expr) || self::isMethodSend($expr)) {
             $base = self::fetchPath($expr->var);
+            $name = self::memberNameOf($expr);
+            $call = self::isMethodSend($expr) ? '()' : '';
 
-            return $base !== null && $expr->name instanceof Identifier ? $base . '->' . $expr->name->toString() : null;
-        }
-
-        if (AstNode::isMethodSend($expr)) {
-            $base = self::fetchPath($expr->var);
-
-            return $base !== null && $expr->name instanceof Identifier ? $base . '->' . $expr->name->toString() . '()' : null;
+            return $base !== null && $name !== null ? "{$base}->{$name}{$call}" : null;
         }
 
         return null;
@@ -2786,7 +2782,7 @@ class AstNode
         return $this->node === null
             || $this->isNull()
             || ($this->node instanceof ConstFetch && $this->node->name->toLowerString() === 'false')
-            || ($this->node instanceof Array_ && $this->node->items === []);
+            || $this->isEmptyArrayLiteral();
     }
 
     /**

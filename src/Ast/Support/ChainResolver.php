@@ -72,17 +72,17 @@ final class ChainResolver
         if (AstNode::isPropertyRead($expr)) {
             $base = $this->resolveOwner($expr->var, $paramTypes);
 
-            return $base !== null && $expr->name instanceof Identifier
-                ? ($this->propertyTypes[$base][$expr->name->toString()] ?? null)
-                : null;
+            $name = AstNode::memberNameOf($expr);
+
+            return $base !== null && $name !== null ? ($this->propertyTypes[$base][$name] ?? null) : null;
         }
 
-        if ((AstNode::isMethodSend($expr)) && $expr->args === []) {
+        if (AstNode::isMethodSend($expr) && $expr->args === []) {
             $base = $this->resolveOwner($expr->var, $paramTypes);
 
-            return $base !== null && $expr->name instanceof Identifier
-                ? ($this->returnTypes[$base][strtolower($expr->name->toString())] ?? null)
-                : null;
+            $name = AstNode::memberNameOf($expr);
+
+            return $base !== null && $name !== null ? ($this->returnTypes[$base][strtolower($name)] ?? null) : null;
         }
 
         return null;
