@@ -22,4 +22,27 @@ abstract class TypeNode extends Node
     {
         return [];
     }
+
+    /**
+     * This type with Vue's reactive WRAPPERS removed — `Ref<V>` is `V`, because a template reads a
+     * top-level ref as its value. A type that wraps nothing is already its own unwrapping, which is
+     * why this is answered by the type rather than by an `instanceof` ladder outside it.
+     */
+    public function unwrapRef(): self
+    {
+        return $this;
+    }
+
+    /**
+     * The FIELDS this type resolves to — `{ a: A }` has them inline; a named reference has none of
+     * its own, so it is handed $declared to look its name up with. A type that is neither declares
+     * no fields. The caller passes HOW to resolve a name and the type decides whether it needs to.
+     *
+     * @param  callable(string): array<string, string>  $declared
+     * @return array<string, string>
+     */
+    public function fieldsWith(callable $declared): array
+    {
+        return [];
+    }
 }

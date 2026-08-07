@@ -34,12 +34,6 @@ final class Script
     private const array REACTIVE = ['ref', 'computed', 'shallowRef', 'toRef', 'customRef', 'reactive'];
 
     /**
-     * The names Vue auto-unwraps in a template — a top-level `ref()`/`computed()` binding reads as
-     * its value, so a prop typed after one takes the value type, never the wrapper.
-     */
-    private const array REF_WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
-
-    /**
      * @var list<Lexeme>
      */
     private array $tokens;
@@ -414,12 +408,10 @@ final class Script
             return [];
         }
 
+        // `defineProps<{ … }>()` carries its fields; `defineProps<Props>()` names a type declared
+        // elsewhere. Which of those it is, is the TYPE's to know — it is handed the lookup.
         foreach ($call->firstTypeArgument() as $shape) {
-            return match (true) {
-                $shape instanceof ObjectType => $shape->fields(),          // defineProps<{ … }>()
-                $shape instanceof NamedType => $this->typeFields($shape->name), // defineProps<Props>()
-                default => [],
-            };
+            return $shape->fieldsWith($this->typeFields(...));
         }
 
         return []; // `defineProps()` with no type argument states no props
@@ -541,47 +533,11 @@ final class Script
      */
     public static function unwrapRef(string $type): string
     {
-        $unwrapped = self::unwrapRefNode(TsParser::type($type))->render();
+        $unwrapped = TsParser::type($type)->unwrapRef()->render();
 
         return $unwrapped === '' ? $type : $unwrapped;
     }
 
-    /**
-     * Peel the ref wrapper off a type NODE (never a string) — a `Ref<V>`/`Ref<V, S>` becomes its READ
-     * type `V` (the first argument, the getter side of a writable ref), and a union `Ref<V> | null`
-     * unwraps each member (`V | null`). Anything else is returned unchanged, so the call is a no-op on
-     * a plain type. Working over the AST (not string prefixes) handles the two-arg and union forms a
-     * naive `str_starts_with`/`str_ends_with` check missed ({@see unwrapRef}, issue #320).
-     */
-    private static function unwrapRefNode(TypeNode $type): TypeNode
-    {
-        if ($type instanceof NamedType && in_array($type->name, self::REF_WRAPPERS, true) && $type->arguments !== []) {
-            return $type->arguments[0];
-        }
-
-        if ($type instanceof CompositeType) {
-            // Unwrapping `Ref<V | null> | null` nests a `V | null` union inside the outer one; flatten
-            // same-operator members, then collapse the now-duplicate `null` so the type reads clean.
-            $flattened = [];
-
-            foreach (array_map(self::unwrapRefNode(...), $type->members) as $member) {
-                $flattened = $member instanceof CompositeType && $member->operator === $type->operator
-                    ? [...$flattened, ...$member->members]
-                    : [...$flattened, $member];
-            }
-
-            $seen = [];
-            $unique = array_values(array_filter($flattened, static function (TypeNode $member) use (&$seen): bool {
-                $rendered = $member->render();
-
-                return isset($seen[$rendered]) ? false : ($seen[$rendered] = true);
-            }));
-
-            return count($unique) === 1 ? $unique[0] : new CompositeType($type->operator, $unique);
-        }
-
-        return $type;
-    }
 
     private function isDeclarator(int $i): bool
     {

@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Scribes;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Detectors\Repentable;
-use JesseGall\CodeCommandments\Detectors\RunsLast;
 use JesseGall\CodeCommandments\Scribes\Backend\DetectorStep as BackendDetectorStep;
 use JesseGall\CodeCommandments\Scribes\Frontend\DetectorStep as FrontendDetectorStep;
 
@@ -52,7 +51,8 @@ final class ScribeChain
             }
 
             $step = new BackendDetectorStep($detector);
-            if ($detector instanceof RunsLast) {
+
+            if ($step->isNormaliser()) {
                 $normalisers[] = $step;
             } else {
                 $fixers[] = $step;

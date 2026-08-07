@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Detectors\RunsLast;
 
 /**
  * A chain step running a repentable detector's scribe over findings; concrete steps implement
@@ -32,6 +33,17 @@ abstract class DetectorStep implements ScribeStep
     public function extractsComponents(): bool
     {
         return false;
+    }
+
+    /**
+     * Does this step run AFTER every content fix — a NORMALISER, whose rewrite only reshapes what
+     * the content rules already accepted ({@see RunsLast})? Asked of the STEP, like
+     * {@see extractsComponents} beside it, so the chain composes two questions instead of one
+     * question and one `instanceof` on the detector behind it.
+     */
+    public function isNormaliser(): bool
+    {
+        return $this->repentable() instanceof RunsLast;
     }
 
     /**

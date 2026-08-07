@@ -27,4 +27,9 @@ final class ObjectType extends TypeNode
 
         return '{ ' . implode('; ', array_map(static fn (Member $m): string => $m->render(), $this->members)) . ' }';
     }
+
+    public function fieldsWith(callable $declared): array
+    {
+        return $this->fields();
+    }
 }

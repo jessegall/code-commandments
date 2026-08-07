@@ -13,6 +13,12 @@ namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 final class NamedType extends TypeNode
 {
     /**
+     * The names Vue auto-unwraps in a template — a top-level `ref()`/`computed()` binding reads as
+     * its value, so a prop typed after one takes the VALUE type, never the wrapper.
+     */
+    private const array WRAPPERS = ['Ref', 'ComputedRef', 'ShallowRef', 'WritableComputedRef', 'MaybeRef', 'MaybeRefOrGetter'];
+
+    /**
      * @param  list<TypeNode>  $arguments
      */
     public function __construct(
@@ -38,5 +44,17 @@ final class NamedType extends TypeNode
         }
 
         return $names;
+    }
+
+    public function unwrapRef(): TypeNode
+    {
+        return in_array($this->name, self::WRAPPERS, true) && $this->arguments !== []
+            ? $this->arguments[0]
+            : $this;
+    }
+
+    public function fieldsWith(callable $declared): array
+    {
+        return $declared($this->name);
     }
 }
