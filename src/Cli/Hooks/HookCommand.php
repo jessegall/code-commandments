@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Hooks;
+namespace JesseGall\CodeCommandments\Cli\Hooks;
+
+use JesseGall\CodeCommandments\Hooks\Hook;
 
 
 use JesseGall\CodeCommandments\Cli\Command;

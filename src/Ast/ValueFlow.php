@@ -690,7 +690,7 @@ final class ValueFlow
     {
         foreach (AstNode::ancestorsOf($function) as $current) {
             if ($current instanceof Class_) {
-                return ltrim(($current->namespacedName ?? null)?->toString() ?? '', '\\') ?: null;
+                return AstNode::declaredClassNameOf($current);
             }
         }
 

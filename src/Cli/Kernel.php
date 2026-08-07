@@ -7,9 +7,9 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
 use JesseGall\CodeCommandments\InvalidConfiguration;
 
-use JesseGall\CodeCommandments\Hooks\HookDispatch;
-use JesseGall\CodeCommandments\Hooks\HookRunner;
-use JesseGall\CodeCommandments\Hooks\HookCommand;
+use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
+use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
+use JesseGall\CodeCommandments\Cli\Hooks\HookCommand;
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;

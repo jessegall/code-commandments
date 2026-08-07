@@ -2,7 +2,14 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Hooks;
+namespace JesseGall\CodeCommandments\Cli\Hooks;
+
+use JesseGall\CodeCommandments\Hooks\Hook;
+use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Hooks\HookResponse;
+use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
 
 
 use JesseGall\CodeCommandments\Cli\Command;

@@ -403,7 +403,7 @@ final class LaravelNode extends NodeMatch
     public function inQueuedJobHook(): bool
     {
         return $this->codebase->implements($this->enclosingClassName(), self::SHOULD_QUEUE)
-            && in_array($this->enclosingFunctionName() ?? '', self::QUEUE_HOOKS, true);
+            && in_array($this->enclosingFunctionName(), self::QUEUE_HOOKS, true);
     }
 
     /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Hooks\HookRunner;
+use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Input;
 use PHPUnit\Framework\TestCase;
 

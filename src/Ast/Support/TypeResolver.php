@@ -423,7 +423,7 @@ final class TypeResolver
 
         foreach ($codebase->files() as $file) {
             foreach ($finder->findInstanceOf($file->ast, ClassLike::class) as $class) {
-                $fqcn = ltrim(($class->namespacedName ?? null)?->toString() ?? '', '\\');
+                $fqcn = AstNode::declaredClassNameOf($class) ?? '';
 
                 if ($fqcn === '') {
                     continue;

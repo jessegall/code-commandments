@@ -4548,7 +4548,19 @@ class AstNode
             return null;
         }
 
-        return ($class->namespacedName ?? null)?->toString() ?? $class->name?->toString();
+        return self::declaredClassNameOf($class) ?? $class->name?->toString();
+    }
+
+    /**
+     * The fully-qualified name php-parser resolved for a class-like DECLARATION, or null for one
+     * that has none — an anonymous class. The raw-node twin of {@see enclosingClassName}, which
+     * falls back to the written name when the resolver had nothing to qualify.
+     */
+    public static function declaredClassNameOf(?Node $declaration): ?string
+    {
+        $name = ($declaration->namespacedName ?? null)?->toString();
+
+        return $name === null ? null : (ltrim($name, '\\') ?: null);
     }
 
     /**
