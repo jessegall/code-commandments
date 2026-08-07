@@ -9,7 +9,7 @@ namespace JesseGall\CodeCommandments\Vue\Expr;
  * into an {@see Expr} tree. A hand-written lexer + Pratt parser — NO regex: member
  * chains, calls, equality and the rest are recovered as structure, the way the
  * backend recovers them from php-parser. Unfamiliar syntax degrades to an
- * {@see Expr::UNKNOWN} node rather than throwing, so a detector always gets a tree.
+ * {@see ExprKind::Unknown} node rather than throwing, so a detector always gets a tree.
  */
 final class Parser
 {
@@ -64,7 +64,7 @@ final class Parser
         $keyword = $parser->forKeyword();
         $iterable = $parser->expression();
 
-        return new Expr(Expr::FOR, ['aliases' => $aliases, 'keyword' => $keyword, 'iterable' => $iterable]);
+        return new Expr(ExprKind::For, ['aliases' => $aliases, 'keyword' => $keyword, 'iterable' => $iterable]);
     }
 
     /**
@@ -135,7 +135,7 @@ final class Parser
         if ($this->isPunct('=')) {
             $this->next();
 
-            return new Expr(Expr::ASSIGN, ['target' => $left, 'value' => $this->expression()]);
+            return new Expr(ExprKind::Assign, ['target' => $left, 'value' => $this->expression()]);
         }
 
         return $left;
@@ -151,7 +151,7 @@ final class Parser
             $this->expect(':');
             $else = $this->expression();
 
-            return new Expr(Expr::CONDITIONAL, ['test' => $test, 'then' => $then, 'else' => $else]);
+            return new Expr(ExprKind::Conditional, ['test' => $test, 'then' => $then, 'else' => $else]);
         }
 
         return $test;
@@ -179,7 +179,7 @@ final class Parser
 
             $this->next();
             $right = $this->binary(self::PRECEDENCE[$operator] + 1);
-            $left = new Expr(Expr::BINARY, ['op' => $operator, 'left' => $left, 'right' => $right]);
+            $left = new Expr(ExprKind::Binary, ['op' => $operator, 'left' => $left, 'right' => $right]);
         }
 
         return $left;
@@ -192,13 +192,13 @@ final class Parser
         if ($token['type'] === 'punct' && in_array($token['value'], ['!', '-', '+'], true)) {
             $this->next();
 
-            return new Expr(Expr::UNARY, ['op' => $token['value'], 'argument' => $this->unary()]);
+            return new Expr(ExprKind::Unary, ['op' => $token['value'], 'argument' => $this->unary()]);
         }
 
         if ($token['type'] === 'name' && $token['value'] === 'typeof') {
             $this->next();
 
-            return new Expr(Expr::UNARY, ['op' => 'typeof', 'argument' => $this->unary()]);
+            return new Expr(ExprKind::Unary, ['op' => 'typeof', 'argument' => $this->unary()]);
         }
 
         return $this->postfix();
@@ -258,19 +258,19 @@ final class Parser
         while (true) {
             if ($this->isPunct('.')) {
                 $this->next();
-                $node = new Expr(Expr::MEMBER, ['object' => $node, 'property' => $this->name(), 'optional' => false]);
+                $node = new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => false]);
             } elseif ($this->isPunct('?.')) {
                 $this->next();
                 $node = $this->isPunct('[') || $this->isPunct('(')
                     ? $this->tail($node, true)
-                    : new Expr(Expr::MEMBER, ['object' => $node, 'property' => $this->name(), 'optional' => true]);
+                    : new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => true]);
             } elseif ($this->isPunct('[')) {
                 $this->next();
                 $index = $this->expression();
                 $this->expect(']');
-                $node = new Expr(Expr::INDEX, ['object' => $node, 'index' => $index]);
+                $node = new Expr(ExprKind::Index, ['object' => $node, 'index' => $index]);
             } elseif ($this->isPunct('(')) {
-                $node = new Expr(Expr::CALL, ['callee' => $node, 'arguments' => $this->arguments()]);
+                $node = new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments()]);
             } else {
                 break;
             }
@@ -289,10 +289,10 @@ final class Parser
             $index = $this->expression();
             $this->expect(']');
 
-            return new Expr(Expr::INDEX, ['object' => $node, 'index' => $index, 'optional' => $optional]);
+            return new Expr(ExprKind::Index, ['object' => $node, 'index' => $index, 'optional' => $optional]);
         }
 
-        return new Expr(Expr::CALL, ['callee' => $node, 'arguments' => $this->arguments(), 'optional' => $optional]);
+        return new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments(), 'optional' => $optional]);
     }
 
     private function primary(): Expr
@@ -303,29 +303,29 @@ final class Parser
             $this->next();
 
             if (in_array($token['value'], ['true', 'false', 'null', 'undefined'], true)) {
-                return new Expr(Expr::LITERAL, ['value' => $token['value'], 'raw' => $token['value']]);
+                return new Expr(ExprKind::Literal, ['value' => $token['value'], 'raw' => $token['value']]);
             }
 
             if ($this->isPunct('=>')) {
                 $this->next();
-                $param = new Expr(Expr::IDENTIFIER, ['name' => $token['value']]);
+                $param = new Expr(ExprKind::Identifier, ['name' => $token['value']]);
 
-                return new Expr(Expr::ARROW, ['params' => [$param], 'body' => $this->expression()]);
+                return new Expr(ExprKind::Arrow, ['params' => [$param], 'body' => $this->expression()]);
             }
 
-            return new Expr(Expr::IDENTIFIER, ['name' => $token['value']]);
+            return new Expr(ExprKind::Identifier, ['name' => $token['value']]);
         }
 
         if ($token['type'] === 'num') {
             $this->next();
 
-            return new Expr(Expr::LITERAL, ['value' => $token['value'], 'raw' => $token['value']]);
+            return new Expr(ExprKind::Literal, ['value' => $token['value'], 'raw' => $token['value']]);
         }
 
         if ($token['type'] === 'str') {
             $this->next();
 
-            return new Expr(Expr::LITERAL, ['value' => $this->unquote($token['value']), 'raw' => $token['value']]);
+            return new Expr(ExprKind::Literal, ['value' => $this->unquote($token['value']), 'raw' => $token['value']]);
         }
 
         if ($this->isPunct('(')) {
@@ -345,7 +345,7 @@ final class Parser
             $this->next();
         }
 
-        return new Expr(Expr::UNKNOWN);
+        return new Expr(ExprKind::Unknown);
     }
 
     private function group(): Expr
@@ -361,13 +361,13 @@ final class Parser
             $this->expect(')');
             $this->skipArrowMarker();
 
-            return new Expr(Expr::ARROW, ['params' => $params, 'body' => $this->expression()]);
+            return new Expr(ExprKind::Arrow, ['params' => $params, 'body' => $this->expression()]);
         }
 
         if ($this->isPunct(')')) {
             $this->next();
 
-            return new Expr(Expr::UNKNOWN);
+            return new Expr(ExprKind::Unknown);
         }
 
         $inner = $this->expression();
@@ -422,10 +422,10 @@ final class Parser
         while (! $this->isPunct(')') && ! $this->isEof()) {
             if ($this->isPunct('{') || $this->isPunct('[')) {
                 foreach ($this->patternNames() as $name) {
-                    $params[] = new Expr(Expr::IDENTIFIER, ['name' => $name]);
+                    $params[] = new Expr(ExprKind::Identifier, ['name' => $name]);
                 }
             } elseif ($this->peek()['type'] === 'name') {
-                $params[] = new Expr(Expr::IDENTIFIER, ['name' => $this->peek()['value']]);
+                $params[] = new Expr(ExprKind::Identifier, ['name' => $this->peek()['value']]);
                 $this->next();
             }
 
@@ -506,7 +506,7 @@ final class Parser
 
         $this->expect(']');
 
-        return new Expr(Expr::ARRAY, ['elements' => $elements]);
+        return new Expr(ExprKind::Array, ['elements' => $elements]);
     }
 
     private function objectLiteral(): Expr
@@ -537,7 +537,7 @@ final class Parser
 
         $this->expect('}');
 
-        return new Expr(Expr::OBJECT, ['values' => $values, 'keys' => $keys]);
+        return new Expr(ExprKind::Object, ['values' => $values, 'keys' => $keys]);
     }
 
     /**

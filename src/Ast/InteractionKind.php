@@ -63,12 +63,16 @@ enum InteractionKind: string
     /**
      * Is this interaction a null guard — the variable being checked for, or
      * routed around, absence?
+     *
+     * Every case is named rather than defaulted, so a kind added later cannot
+     * quietly answer "no" — it has to be decided here.
      */
     public function deNulls(): bool
     {
         return match ($this) {
             self::NullChecked, self::Coalesced, self::Nullsafe => true,
-            default => false,
+            self::Assigned, self::Argument, self::MethodCall, self::PropertyFetch,
+            self::PropertyWrite, self::Returned, self::Read => false,
         };
     }
 }

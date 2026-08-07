@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Script;
 
@@ -64,7 +65,7 @@ final class PropMutationDetector implements Detector
 
         // An assignment in a handler (`@click="prop = …"`) writes the prop directly.
         foreach ($element->expressions() as $expression) {
-            if ($expression->is(Expr::ASSIGN) && self::isPropTarget($expression->get('target'), $props, $locals)) {
+            if ($expression->is(ExprKind::Assign) && self::isPropTarget($expression->get('target'), $props, $locals)) {
                 return true;
             }
         }

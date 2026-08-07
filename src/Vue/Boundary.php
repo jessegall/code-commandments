@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
 
 /**
@@ -396,7 +397,7 @@ final class Boundary
 
             // `@event="x = …"` — a handler assigning the value (the readonly-prop trap, #256).
             foreach ($element->expressions() as $expression) {
-                if ($expression->is(Expr::ASSIGN)) {
+                if ($expression->is(ExprKind::Assign)) {
                     foreach ($expression->get('target')->roots() as $root) {
                         $models[] = $root;
                     }
