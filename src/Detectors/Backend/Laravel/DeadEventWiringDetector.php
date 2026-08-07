@@ -34,7 +34,7 @@ final class DeadEventWiringDetector implements Detector
             ->where(static fn (LaravelNode $node): bool => $node->listenedEventClass() !== null)
             ->where(static fn (LaravelNode $node): bool => $codebase->declarationMatch($node->listenedEventClass()) !== null)
             ->reject(static fn (LaravelNode $node): bool => $codebase->isInterface($node->listenedEventClass()))
-            ->reject(static fn (LaravelNode $node): bool => $codebase->isEverProduced($node->listenedEventClass() ?? '', LaravelNode::EVENT_DISPATCHERS))
+            ->reject(static fn (LaravelNode $node): bool => $codebase->isEverProduced($node->listenedEventClass(), LaravelNode::EVENT_DISPATCHERS))
             ->get();
     }
 

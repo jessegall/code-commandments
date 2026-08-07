@@ -42,7 +42,7 @@ final class ArrayBagDetector implements Detector, Exemptable
     {
         return $this->exempt($codebase
             ->where(static fn (AstNode $node): bool => $node->arrayKeyIsString())
-            ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName() ?? ''))
+            ->where(static fn (AstNode $node): bool => $node->enclosingParamIsArray($node->arrayBaseName()))
             ->reject(static fn (NodeMatch $node): bool => $node->isWithinSerializationBoundary())
             ->reject(static fn (AstNode $node): bool => $node->isWithinNamedConstructor())
             ->get(), $codebase);

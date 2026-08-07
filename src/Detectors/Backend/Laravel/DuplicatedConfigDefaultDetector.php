@@ -34,7 +34,7 @@ final class DuplicatedConfigDefaultDetector implements Detector
             ->where(static fn (AstNode $node): bool => $node->stringArgument() !== null)
             ->where(static fn (AstNode $node): bool => $node->argumentCount() >= 2)
             ->reject(static fn (AstNode $node): bool => $node->resultIsDiscarded())
-            ->where(static fn (AstNode $node): bool => $keys->declaresDefault($node->stringArgument() ?? ''))
+            ->where(static fn (AstNode $node): bool => $keys->declaresDefault($node->stringArgument()))
             ->get();
     }
 

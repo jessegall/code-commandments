@@ -50,9 +50,10 @@ final class ConfigKeys
      * `env('VAR', <fallback>)` carrying one? If so, a reader supplying its own fallback states the
      * same decision a second time, and the two drift the moment either is edited.
      */
-    public function declaresDefault(string $key): bool
+    public function declaresDefault(?string $key): bool
     {
-        return isset($this->defaults[$key]);
+        // A read whose key is not a literal declares nothing here — it is not the empty key.
+        return $key !== null && isset($this->defaults[$key]);
     }
 
     /**

@@ -32,7 +32,7 @@ final class OrphanedBindingDetector implements Detector
 
         return $codebase
             ->where(static fn (LaravelNode $node): bool => $node->boundAbstract() !== null)
-            ->reject(static fn (LaravelNode $node): bool => $bindings->isResolvedSomewhere($node->boundAbstract() ?? ''))
+            ->reject(static fn (LaravelNode $node): bool => $bindings->isResolvedSomewhere($node->boundAbstract()))
             ->get();
     }
 }

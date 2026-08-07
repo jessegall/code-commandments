@@ -37,7 +37,7 @@ final class DanglingRouteNameDetector implements Detector
 
         return $codebase
             ->where(static fn (LaravelNode $node): bool => $node->routeNameReference() !== null)
-            ->reject(static fn (LaravelNode $node): bool => $vocabulary->isRegistered($node->routeNameReference() ?? ''))
+            ->reject(static fn (LaravelNode $node): bool => $vocabulary->isRegistered($node->routeNameReference()))
             ->get();
     }
 }

@@ -4419,9 +4419,10 @@ class AstNode
     /**
      * Is $name a parameter of the enclosing function typed `array`?
      */
-    public function enclosingParamIsArray(string $name): bool
+    public function enclosingParamIsArray(?string $name): bool
     {
-        return self::isArrayType($this->enclosingParamType($name));
+        // No name to look up means no such parameter — not a parameter called ''.
+        return $name !== null && self::isArrayType($this->enclosingParamType($name));
     }
 
     /**

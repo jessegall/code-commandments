@@ -38,9 +38,10 @@ final class ContainerBindings
      * Does anything outside a binding registration reach for $abstract? False means the wiring is
      * dead — nothing can ever ask the container for it.
      */
-    public function isResolvedSomewhere(string $abstract): bool
+    public function isResolvedSomewhere(?string $abstract): bool
     {
-        return isset($this->referenced[$abstract]);
+        // An abstract that could not be named is not one anything reaches for.
+        return $abstract !== null && isset($this->referenced[$abstract]);
     }
 
     /**

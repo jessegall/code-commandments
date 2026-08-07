@@ -799,8 +799,14 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      *
      * @param  list<string>  $statically  constructor-free spellings (`dispatch`, `broadcast`, …)
      */
-    public function isEverProduced(string $fqcn, array $statically = []): bool
+    public function isEverProduced(?string $fqcn, array $statically = []): bool
     {
+        // Nothing produces a class whose name could not be read, so a caller never has to
+        // manufacture one to ask.
+        if ($fqcn === null) {
+            return false;
+        }
+
         $produced = $this->whereNew()
             ->where(fn (AstNode $node) => $this->isA($node->newClassName(), $fqcn))
             ->count() > 0;
@@ -810,7 +816,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         }
 
         return $this->whereStaticCall()
-            ->where(static fn (AstNode $node): bool => in_array($node->staticCallMethod() ?? '', $statically, true))
+            ->where(static fn (AstNode $node): bool => in_array($node->staticCallMethod(), $statically, true))
             ->where(fn (AstNode $node) => $this->isA($node->staticCallClass(), $fqcn))
             ->count() > 0;
     }

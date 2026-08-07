@@ -67,8 +67,14 @@ final class RouteNames
      * A LEAF name composed at runtime (`->name($x)` on a route, not a group) is different: that name is
      * unknowable in any form, so the vocabulary is no longer closed and everything answers true.
      */
-    public function isRegistered(string $name): bool
+    public function isRegistered(?string $name): bool
     {
+        // A reference whose name could not be read is not a REGISTERED one. Answering that here
+        // is why no caller has to invent an empty string and ask whether *that* is registered.
+        if ($name === null) {
+            return false;
+        }
+
         if ($this->dynamic || isset($this->names[$name])) {
             return true;
         }
