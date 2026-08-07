@@ -101,10 +101,13 @@ final class ConfigKeys
                 }
             }
 
+            // The one place a config file may have nothing to walk — the recursion below it always
+            // descends into a real array, so `collect` never has to ask.
             $prefix = self::configPrefixOf($file->path);
+            $returned = self::returnedArray($file->ast);
 
-            if ($prefix !== null) {
-                self::collect(self::returnedArray($file->ast), $prefix, $declared, $defaults);
+            if ($prefix !== null && $returned !== null) {
+                self::collect($returned, $prefix, $declared, $defaults);
             }
         }
 
@@ -169,9 +172,9 @@ final class ConfigKeys
      * @param  array<int, string>   $declared
      * @param  array<string, true>  $defaults
      */
-    private static function collect(?Array_ $array, string $prefix, array &$declared, array &$defaults): void
+    private static function collect(Array_ $array, string $prefix, array &$declared, array &$defaults): void
     {
-        foreach ($array?->items ?? [] as $item) {
+        foreach ($array->items as $item) {
             if (! $item instanceof ArrayItem || ! $item->key instanceof String_) {
                 continue;
             }

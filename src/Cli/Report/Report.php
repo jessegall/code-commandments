@@ -241,8 +241,7 @@ final class Report implements Command
         $snippet = new CodeSnippet();
 
         foreach ($refs as $ref) {
-            $where = $ref->path . ($ref->startLine !== null ? ':' . $ref->startLine . ($ref->endLine !== null ? "-{$ref->endLine}" : '') : '');
-            $out .= "\n**Where:** `{$where}`\n";
+            $out .= "\n**Where:** `{$ref->label()}`\n";
 
             $code = $snippet->forFile($ref->path, $ref->startLine, $ref->endLine);
 

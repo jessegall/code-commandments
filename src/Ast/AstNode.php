@@ -4609,7 +4609,13 @@ class AstNode
     {
         $name = ($declaration->namespacedName ?? null)?->toString();
 
-        return $name === null ? null : (ltrim($name, '\\') ?: null);
+        if ($name === null) {
+            return null;
+        }
+
+        $qualified = ltrim($name, '\\');
+
+        return $qualified === '' ? null : $qualified;
     }
 
     /**

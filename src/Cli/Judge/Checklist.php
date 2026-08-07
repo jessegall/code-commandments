@@ -47,7 +47,11 @@ final class Checklist
      */
     public function fingerprint(): ?string
     {
-        return is_file($this->path) ? md5_file($this->path) ?: null : null;
+        if (! is_file($this->path)) {
+            return null;
+        }
+
+        return md5_file($this->path) ?: null;
     }
 
     /**

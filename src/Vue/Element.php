@@ -530,8 +530,12 @@ class Element
      */
     public function ancestors(): iterable
     {
-        for ($ancestor = $this->parent; $ancestor !== null; $ancestor = $ancestor->parent) {
+        $ancestor = $this->parent;
+
+        while ($ancestor !== null) {
             yield $ancestor;
+
+            $ancestor = $ancestor->parent;
         }
     }
 

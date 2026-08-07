@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
+use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\MethodCall;
@@ -177,8 +178,12 @@ final class RouteNames
      */
     private static function groupPrefix(Node $group): string
     {
-        foreach (($group->args ?? []) as $arg) {
-            if (($arg->value ?? null) instanceof Array_ && ($as = self::arrayValue($arg->value, 'as')) !== null) {
+        // Only a CALL carries arguments, and the type says so — `$group->args ?? []` asked every
+        // node kind a question three of them cannot answer.
+        $arguments = $group instanceof CallLike ? $group->getArgs() : [];
+
+        foreach ($arguments as $arg) {
+            if ($arg->value instanceof Array_ && ($as = self::arrayValue($arg->value, 'as')) !== null) {
                 return $as;
             }
         }

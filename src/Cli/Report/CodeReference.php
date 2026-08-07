@@ -20,6 +20,21 @@ final readonly class CodeReference
     ) {}
 
     /**
+     * How this reference is written back — `path`, `path:42`, `path:40-58`. The round trip of
+     * {@see parse}, so the issue body never re-derives the spelling it was given.
+     */
+    public function label(): string
+    {
+        if ($this->startLine === null) {
+            return $this->path;
+        }
+
+        $span = $this->endLine === null ? '' : "-{$this->endLine}";
+
+        return "{$this->path}:{$this->startLine}{$span}";
+    }
+
+    /**
      * Parse a `--ref` value: `path`, `path:LINE`, or `path:START-END`. The line spec is the tail
      * after the LAST colon and only when it's numeric (or a numeric range) — so a bare path, even
      * an unusual one, is never mis-split. A blank value yields null.
