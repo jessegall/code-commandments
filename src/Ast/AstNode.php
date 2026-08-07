@@ -723,13 +723,6 @@ class AstNode
     }
 
     /**
-     * The same climb over a RAW php-parser node, for the analyses that hold one rather than a match
-     * ({@see Support\TypeResolver}, {@see ValueFlow}). The walk lives once; a caller says which
-     * ancestor it is looking for, never how to reach it.
-     *
-     * @return iterable<Node>
-     */
-    /**
      * The ancestors above this node that are still inside the SAME function — the climb stops at the
      * function boundary, since "what am I inside of" almost never means the caller.
      *
@@ -766,6 +759,13 @@ class AstNode
             && $parent->cond === $subject;
     }
 
+    /**
+     * The same climb over a RAW php-parser node, for the analyses that hold one rather than a match
+     * ({@see Support\TypeResolver}, {@see ValueFlow}). The walk lives once; a caller says which
+     * ancestor it is looking for, never how to reach it.
+     *
+     * @return iterable<Node>
+     */
     public static function ancestorsOf(?Node $node): iterable
     {
         $current = $node?->getAttribute('parent');
