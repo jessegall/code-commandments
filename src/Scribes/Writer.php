@@ -148,7 +148,11 @@ final class Writer
                     continue;
                 }
 
-                count($stmt->uses) === 1 ? $this->deleteStatementLine($stmt) : $this->dropClause($stmt, $used);
+                if (count($stmt->uses) === 1) {
+                    $this->deleteStatementLine($stmt);
+                } else {
+                    $this->dropClause($stmt, $used);
+                }
 
                 return;
             }

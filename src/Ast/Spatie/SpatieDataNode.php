@@ -1001,8 +1001,11 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $type = $this->node instanceof Param ? $this->node->type
-            : ($this->node instanceof Property ? $this->node->type : null);
+        $type = match (true) {
+            $this->node instanceof Param => $this->node->type,
+            $this->node instanceof Property => $this->node->type,
+            default => null,
+        };
 
         return self::typeMentionsDataCollection($type);
     }
@@ -1056,7 +1059,11 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $type = $this->node instanceof Param ? $this->node->type : ($this->node instanceof Property ? $this->node->type : null);
+        $type = match (true) {
+            $this->node instanceof Param => $this->node->type,
+            $this->node instanceof Property => $this->node->type,
+            default => null,
+        };
         $inner = self::nullableClassName($type);
 
         return $inner !== null && ($this->codebase->extends($inner, self::DATA) || $this->codebase->isEnum($inner));

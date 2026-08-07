@@ -845,7 +845,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         // `T | null` / `T | Optional` — the field holds a value T that may be absent; classify T.
         if ($type instanceof UnionType) {
             $core = array_values(array_filter($type->types, static function (Node $member): bool {
-                $name = $member instanceof Name ? $member->getLast() : ($member instanceof Identifier ? $member->toString() : '');
+                $name = match (true) {
+                    $member instanceof Name => $member->getLast(),
+                    $member instanceof Identifier => $member->toString(),
+                    default => '',
+                };
 
                 return strcasecmp($name, 'null') !== 0 && $name !== 'Optional';
             }));

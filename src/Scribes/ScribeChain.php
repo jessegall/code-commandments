@@ -52,7 +52,11 @@ final class ScribeChain
             }
 
             $step = new BackendDetectorStep($detector);
-            $detector instanceof RunsLast ? $normalisers[] = $step : $fixers[] = $step;
+            if ($detector instanceof RunsLast) {
+                $normalisers[] = $step;
+            } else {
+                $fixers[] = $step;
+            }
         }
 
         // Frontend (Vue) Repentables — fixers in place, extractors run last.
@@ -62,7 +66,11 @@ final class ScribeChain
             }
 
             $step = new FrontendDetectorStep($detector);
-            $step->extractsComponents() ? $extractors[] = $step : $fixers[] = $step;
+            if ($step->extractsComponents()) {
+                $extractors[] = $step;
+            } else {
+                $fixers[] = $step;
+            }
         }
 
         foreach ([...$fixers, ...$extractors, ...$normalisers] as $step) {

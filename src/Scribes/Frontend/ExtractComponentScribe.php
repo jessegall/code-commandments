@@ -878,7 +878,11 @@ final class ExtractComponentScribe extends RepentScribe
         $depth = 0;
 
         for ($i = 0, $length = strlen($rest); $i < $length; $i++) {
-            $depth += $rest[$i] === '<' ? 1 : ($rest[$i] === '>' ? -1 : 0);
+            $depth += match (true) {
+                $rest[$i] === '<' => 1,
+                $rest[$i] === '>' => -1,
+                default => 0,
+            };
 
             if ($depth === 0) {
                 return trim(substr($rest, 1, $i - 1)) ?: null;
