@@ -49,10 +49,10 @@ final class HookDispatch implements Command
             }
         }
 
-        $merged = HookResponse::merge($recorder->emitted, $event->name());
+        $merged = HookResponse::merge($recorder->emitted);
 
-        if ($merged !== null) {
-            $this->io->emit($merged);
+        if (! $merged->isSilent()) {
+            $this->io->emit($merged->payload($event->name()));
         }
 
         return 0;

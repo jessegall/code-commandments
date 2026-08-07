@@ -11,7 +11,7 @@ final class HookResponseTest extends TestCase
 {
     public function test_no_emissions_is_silence(): void
     {
-        $this->assertNull(HookResponse::merge([], 'PostToolUse'));
+        $this->assertTrue(HookResponse::merge([])->isSilent());
     }
 
     public function test_a_block_wins_and_joins_the_reasons(): void
@@ -20,7 +20,7 @@ final class HookResponseTest extends TestCase
             ['decision' => 'block', 'reason' => 'did you judge?'],
             ['hookSpecificOutput' => ['additionalContext' => 'a stray inject']],
             ['decision' => 'block', 'reason' => 'keep going.'],
-        ], 'Stop');
+        ])->payload('Stop');
 
         $this->assertSame('block', $merged['decision']);
         $this->assertSame("did you judge?\n\nkeep going.", $merged['reason']);
@@ -31,7 +31,7 @@ final class HookResponseTest extends TestCase
         $merged = HookResponse::merge([
             ['suppressOutput' => true, 'hookSpecificOutput' => ['additionalContext' => 'trace to the source']],
             ['suppressOutput' => true, 'hookSpecificOutput' => ['additionalContext' => 'hold to the constraints']],
-        ], 'PostToolUse');
+        ])->payload('PostToolUse');
 
         $this->assertSame('PostToolUse', $merged['hookSpecificOutput']['hookEventName']);
         $this->assertSame("trace to the source\n\nhold to the constraints", $merged['hookSpecificOutput']['additionalContext']);
@@ -43,7 +43,7 @@ final class HookResponseTest extends TestCase
         $merged = HookResponse::merge([
             ['suppressOutput' => true, 'hookSpecificOutput' => ['additionalContext' => 'a']],
             ['hookSpecificOutput' => ['additionalContext' => 'b']],
-        ], 'PostToolUse');
+        ])->payload('PostToolUse');
 
         $this->assertArrayNotHasKey('suppressOutput', $merged);
         $this->assertSame("a\n\nb", $merged['hookSpecificOutput']['additionalContext']);
@@ -51,9 +51,9 @@ final class HookResponseTest extends TestCase
 
     public function test_empty_contexts_are_ignored(): void
     {
-        $this->assertNull(HookResponse::merge([
+        $this->assertTrue(HookResponse::merge([
             ['hookSpecificOutput' => ['additionalContext' => '']],
             ['suppressOutput' => true],
-        ], 'PostToolUse'));
+        ])->isSilent());
     }
 }

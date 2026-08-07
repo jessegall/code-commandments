@@ -40,8 +40,8 @@ final class ConfigDocsTest extends TestCase
         $this->assertNotEmpty($hooks);
 
         foreach ($hooks as $hook) {
-            $this->assertNotSame('', trim($hook['summary']), "the `{$hook['name']}` hook has no summary() — document it.");
-            $this->assertNotSame('', trim($hook['events']), "the `{$hook['name']}` hook binds no events.");
+            $this->assertNotSame('', trim($hook->summary), "the `{$hook->name}` hook has no summary() — document it.");
+            $this->assertNotSame('', trim($hook->events), "the `{$hook->name}` hook binds no events.");
         }
     }
 

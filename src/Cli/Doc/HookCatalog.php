@@ -26,26 +26,25 @@ final class HookCatalog
         $rows = "| Hook | Events | What it does |\n|---|---|---|\n";
 
         foreach (self::all() as $hook) {
-            $summary = str_replace('|', '\|', $hook['summary']);
-            $rows .= "| `{$hook['name']}` | `{$hook['events']}` | {$summary} |\n";
+            $rows .= $hook->row();
         }
 
         return $rows;
     }
 
     /**
-     * @return list<array{name: string, events: string, summary: string}>
+     * @return list<HookEntry>
      */
     public static function all(): array
     {
-        return array_map(static function (string $class): array {
+        return array_map(static function (string $class): HookEntry {
             $hook = new $class();
 
-            return [
-                'name' => new ReflectionClass($class)->getShortName(),
-                'events' => self::events($hook),
-                'summary' => $hook->summary(),
-            ];
+            return new HookEntry(
+                new ReflectionClass($class)->getShortName(),
+                self::events($hook),
+                $hook->summary(),
+            );
         }, HookRegistry::BUILTINS);
     }
 
