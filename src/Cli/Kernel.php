@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
+use JesseGall\CodeCommandments\InvalidConfiguration;
 
 use JesseGall\CodeCommandments\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Hooks\HookRunner;
@@ -73,7 +74,15 @@ final class Kernel
             return 2;
         }
 
-        return $handler->run($input);
+        try {
+            return $handler->run($input);
+        } catch (InvalidConfiguration $invalid) {
+            // The project's own config is the one input we can name precisely, so say what is wrong
+            // with it in a sentence instead of handing back a stack trace from inside the engine.
+            fwrite(STDERR, "✗ .commandments/config.php: {$invalid->getMessage()}\n");
+
+            return 2;
+        }
     }
 
     /**

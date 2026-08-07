@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Files\FileQuery;
+use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
 use FilesystemIterator;
@@ -50,17 +51,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      * @param  string|list<string>  $path
      * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
      */
-    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy()): self
+    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths()): self
     {
         $vue = [];
         $typeScript = [];
 
         foreach ((array) $path as $root) {
-            foreach (self::filesIn($root, 'vue') as $file) {
+            foreach (self::filesIn($root, 'vue', $excluded) as $file) {
                 $vue[$file] = true;
             }
 
-            foreach (self::filesIn($root, 'ts') as $file) {
+            foreach (self::filesIn($root, 'ts', $excluded) as $file) {
                 $typeScript[$file] = true;
             }
 
@@ -237,7 +238,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * @return iterable<string>
      */
-    private static function filesIn(string $path, string $extension): iterable
+    private static function filesIn(string $path, string $extension, ExcludedPaths $excluded = new ExcludedPaths()): iterable
     {
         if (is_file($path)) {
             if (pathinfo($path, PATHINFO_EXTENSION) === $extension) {
@@ -253,14 +254,15 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
 
         $directory = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
 
-        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file): bool {
+        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file) use ($excluded): bool {
             if (! $file->isDir()) {
                 return true;
             }
 
             return ! $file->isLink()
                 && ! str_starts_with($file->getFilename(), '.')
-                && ! in_array($file->getFilename(), ['vendor', 'node_modules'], true);
+                && ! in_array($file->getFilename(), ['vendor', 'node_modules'], true)
+                && ! $excluded->covers($file->getPathname());
         });
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {

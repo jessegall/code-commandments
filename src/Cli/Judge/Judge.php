@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
@@ -186,10 +187,14 @@ final class Judge implements Command
         // to judge (auto-detected + scaffolded into the config on first run).
         $roots = new SourceRoots()->resolve($path, $pathGiven);
 
+        // Pruned during the WALK, not filtered out of the findings: a monorepo's build output is
+        // megabytes this run would otherwise read and parse in full before discarding every sin.
+        $excluded = ExcludedPaths::under($path, Config::load($path)->excludedPaths());
+
         $progress = new ProgressBar;
 
         $parseStart = hrtime(true);
-        $codebase = Codebase::scan($roots, $progress->phase('parsing'));
+        $codebase = Codebase::scan($roots, $progress->phase('parsing'), excluded: $excluded);
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
         if ($benchmark) {
@@ -204,7 +209,7 @@ final class Judge implements Command
 
         // The Vue detectors run over the SAME roots — `judge` is engine-agnostic, so a
         // path with `.vue` files reports its frontend sins alongside the backend ones.
-        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend, $codebase));
+        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend, $codebase, $excluded));
 
         $findings = $this->keep($findings, $exclude, $scope);
 
@@ -338,13 +343,13 @@ final class Judge implements Command
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
      * @return list<Finding>
      */
-    private function frontendFindings(string|array $roots, array $frontend, Codebase $backend): array
+    private function frontendFindings(string|array $roots, array $frontend, Codebase $backend, ExcludedPaths $excluded): array
     {
         if ($frontend === []) {
             return [];
         }
 
-        $codebase = VueCodebase::scan($roots);
+        $codebase = VueCodebase::scan($roots, excluded: $excluded);
 
         // The Bridge is the only place both engines meet: the backend publishes its
         // Data shapes, the frontend detectors that ask for them receive them here.

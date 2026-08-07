@@ -68,6 +68,7 @@ final class Sync implements Command
         $this->injectCanon($consumer);
         $this->wireAgents($consumer, $packageRoot, $agents, $library, $published);
 
+        $this->ensureComposerHook($consumer);
         $this->ensureConfigStub($consumer);
         $this->ensurePlanExecution($consumer);
         $this->ensureDisableMenus($consumer);
@@ -118,6 +119,18 @@ final class Sync implements Command
         if ($lock !== null) {
             flock($lock, LOCK_UN);
             fclose($lock);
+        }
+    }
+
+    /**
+     * Re-assert the composer call that runs this command ({@see ComposerScripts}). It is the one
+     * piece of wiring that cannot repair itself — while it is absent or points at a path this
+     * project doesn't have, no upgrade runs us, so no upgrade can notice.
+     */
+    private function ensureComposerHook(string $consumer): void
+    {
+        if (new ComposerScripts($consumer)->ensure() === true) {
+            fwrite(STDOUT, "↻ composer post-install/post-update now call `commandments sync`.\n");
         }
     }
 

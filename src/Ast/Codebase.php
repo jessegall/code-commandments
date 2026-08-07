@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Support\Invokable;
 use JesseGall\CodeCommandments\Support\NoOp;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
+use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\WorkingCopy;
 use FilesystemIterator;
 use PhpParser\Comment\Doc;
@@ -239,13 +240,14 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      * @param  string|list<string>  $path  one source root, or several
      * @param  Invokable  $onProgress  called `($done, $total)` per file; silent by default
      * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
+     * @param  ExcludedPaths  $excluded  subtrees pruned from the walk, never read
      */
-    public static function scan(string|array $path, Invokable $onProgress = new NoOp, WorkingCopy $overlay = new WorkingCopy()): self
+    public static function scan(string|array $path, Invokable $onProgress = new NoOp, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths()): self
     {
         $paths = [];
 
         foreach ((array) $path as $root) {
-            foreach (self::phpFilesIn($root) as $file) {
+            foreach (self::phpFilesIn($root, $excluded) as $file) {
                 $paths[$file] = true;
             }
 
@@ -1124,15 +1126,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * @return iterable<string>
      */
-    private static function phpFilesIn(string $path): iterable
+    private static function phpFilesIn(string $path, ExcludedPaths $excluded = new ExcludedPaths()): iterable
     {
         if (is_file($path)) {
-            yield $path;
+            if (! $excluded->covers($path)) {
+                yield $path;
+            }
 
             return;
         }
 
-        if (! is_dir($path)) {
+        if (! is_dir($path) || $excluded->covers($path)) {
             return;
         }
 
@@ -1141,7 +1145,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         // Never descend into dependency / VCS / test / tooling trees — they aren't
         // app code under review, and parsing them all exhausts memory on a
         // project-root scan. (`tests`, `.claude`, etc. are excluded by default.)
-        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file): bool {
+        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file) use ($excluded): bool {
             if (! $file->isDir()) {
                 return true;
             }
@@ -1159,7 +1163,10 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
                 return false;
             }
 
-            return ! in_array($name, self::SKIP_DIRS, true);
+            // An excluded subtree is pruned HERE, not filtered out of the findings later: a
+            // monorepo's build output is megabytes the run would otherwise read and parse in full
+            // before discarding every sin it found there.
+            return ! in_array($name, self::SKIP_DIRS, true) && ! $excluded->covers($file->getPathname());
         });
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {
