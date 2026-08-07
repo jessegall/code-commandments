@@ -87,18 +87,11 @@ final class Script
     /**
      * Every import, with the names it binds and its exact source text.
      *
-     * @return list<array{names: list<string>, statement: string}>
+     * @return list<ImportStatement>
      */
     public function imports(): array
     {
-        return array_map(static function (ImportDecl $import): array {
-            $statement = $import->render();
-
-            return [
-                'names' => array_keys($import->bindings),
-                'statement' => str_ends_with($statement, ';') ? $statement : "{$statement};",
-            ];
-        }, $this->ast()->imports);
+        return array_map(ImportStatement::of(...), $this->ast()->imports);
     }
 
     /**

@@ -363,7 +363,7 @@ final class Boundary
         $names = [];
 
         foreach (new Script($this->sfc->scriptContent())->imports() as $import) {
-            $names = [...$names, ...$import['names']];
+            $names = [...$names, ...$import->names];
         }
 
         return $names;

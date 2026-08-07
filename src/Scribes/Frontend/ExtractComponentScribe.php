@@ -1025,14 +1025,8 @@ final class ExtractComponentScribe extends RepentScribe
         $kept = [];
 
         foreach ($script->imports() as $import) {
-            foreach ($import['names'] as $name) {
-                if (! self::mentions($used, $name)) {
-                    continue;
-                }
-
-                $kept[] = $import['statement'];
-
-                break;
+            if ($import->bindsAny(static fn (string $name): bool => self::mentions($used, $name))) {
+                $kept[] = $import->statement;
             }
         }
 
