@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Ast\Support;
+namespace JesseGall\CodeCommandments\Ast\Laravel;
+
+use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 

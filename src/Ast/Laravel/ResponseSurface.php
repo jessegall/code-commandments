@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Ast\Support;
+namespace JesseGall\CodeCommandments\Ast\Laravel;
+
+use JesseGall\CodeCommandments\Ast\Support\MemoisedPerCodebase;
+use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;

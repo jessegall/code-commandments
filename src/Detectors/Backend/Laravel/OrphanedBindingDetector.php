@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Support\ContainerBindings;
+use JesseGall\CodeCommandments\Ast\Laravel\ContainerBindings;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\OrphanedBinding;
 use JesseGall\CodeCommandments\Sins\Sin;

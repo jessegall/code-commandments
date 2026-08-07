@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
-use JesseGall\CodeCommandments\Ast\Support\PageObject;
+use JesseGall\CodeCommandments\Ast\Laravel\PageObject;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;

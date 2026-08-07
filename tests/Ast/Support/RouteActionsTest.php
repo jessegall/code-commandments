@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Support\RouteActions;
+use JesseGall\CodeCommandments\Ast\Laravel\RouteActions;
 use PHPUnit\Framework\TestCase;
 
 final class RouteActionsTest extends TestCase

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
-use JesseGall\CodeCommandments\Ast\Support\RouteActions;
+use JesseGall\CodeCommandments\Ast\Laravel\RouteActions;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicateRoute;
 use JesseGall\CodeCommandments\Sins\Sin;

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
-use JesseGall\CodeCommandments\Ast\Support\RouteNames;
+use JesseGall\CodeCommandments\Ast\Laravel\RouteNames;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DanglingRouteName;
 use JesseGall\CodeCommandments\Sins\Sin;

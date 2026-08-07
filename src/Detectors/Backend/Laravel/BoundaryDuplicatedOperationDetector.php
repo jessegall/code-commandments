@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend\Laravel;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\Support\BoundaryOperations;
+use JesseGall\CodeCommandments\Ast\Laravel\BoundaryOperations;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\BoundaryDuplicatedOperation;
 use JesseGall\CodeCommandments\Sins\Sin;

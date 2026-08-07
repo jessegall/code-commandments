@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Ast\Laravel;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
-use JesseGall\CodeCommandments\Ast\Support\RouteActions;
+use JesseGall\CodeCommandments\Ast\Laravel\RouteActions;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Array_;
@@ -282,7 +282,7 @@ final class LaravelNode extends NodeMatch
 
     /**
      * The same read from a RAW node, for the cross-file analysis that indexes registrations before any
-     * match objects exist ({@see \JesseGall\CodeCommandments\Ast\Support\ContainerBindings}). The
+     * match objects exist ({@see \JesseGall\CodeCommandments\Ast\Laravel\ContainerBindings}). The
      * binding-method vocabulary is stated once, here.
      */
     public static function boundAbstractOf(Node $node): ?string

@@ -6,8 +6,8 @@ namespace JesseGall\CodeCommandments\Tests\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
-use JesseGall\CodeCommandments\Ast\Support\PageObject;
-use JesseGall\CodeCommandments\Ast\Support\ResponseSurface;
+use JesseGall\CodeCommandments\Ast\Laravel\PageObject;
+use JesseGall\CodeCommandments\Ast\Laravel\ResponseSurface;
 use PHPUnit\Framework\TestCase;
 
 final class PageObjectTest extends TestCase
