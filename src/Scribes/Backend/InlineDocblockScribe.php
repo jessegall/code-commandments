@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Scribes\Writer;
 
 /**

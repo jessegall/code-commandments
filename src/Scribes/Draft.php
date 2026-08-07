@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use JesseGall\CodeCommandments\Span;
+
 /**
  * The fluent rewrite builder for {@see RepentScribe} — the detector query's mirror. Composes
  * {@see from}, {@see map}/{@see collapse}, {@see replace}/{@see create}, {@see rewrites} to map

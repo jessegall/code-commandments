@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Located;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 
 /**
  * A matched {@see Element} that knows WHERE it is — Vue's {@see Located} twin of backend's

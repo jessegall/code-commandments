@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use JesseGall\CodeCommandments\Span;
+
 /**
  * One byte-range replacement in a source string: the half-open range `[start, end)` becomes `text`.
  * Half-open is {@see Span}'s convention and therefore the engine's — a pure insertion is

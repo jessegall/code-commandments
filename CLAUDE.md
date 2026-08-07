@@ -185,8 +185,11 @@ local assignments; `propertyTypeOf`, `collectionElementOf`, `declaringClassOf`),
 literal the wire shape of a type that ALREADY exists, or an unborn one?). A package's own knowledge
 is on its decorator node (`Ast\{Spatie,Laravel,…}\*Node`), stated once.
 
-**Rewriting:** one `Scribes\Writer` (all edits) over `Scribes\Draft`; `Scribes\Span` owns ALL
-offset math (incl. `blockOpener` — a new block wears the FILE's brace style, never the scribe's).
+**Rewriting:** one `Scribes\Writer` (all edits) over `Scribes\Draft`, each edit a `Scribes\Edit`
+(half-open `[start, end)`, the ONE `+1` off php-parser's inclusive end in `Scribe::replaceNode`);
+the root `Span` owns ALL offset math (incl. `blockOpener` — a new block wears the FILE's brace
+style, never the scribe's). `Span` is a shared primitive beside `Codebase`/`Detector`/`Located`,
+not a scribe concept — Ast, Vue, Detectors and Scribes all locate through it.
 Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser`.
 
 ## Commands

@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Workspace;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use JesseGall\CodeCommandments\Span;
+
 /**
  * The fix half of a repentable detector; takes findings and expresses fixes through the
  * fluent Draft builder, engine-agnostic over findings with Spans.

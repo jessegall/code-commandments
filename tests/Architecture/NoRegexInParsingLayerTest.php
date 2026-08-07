@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  *   2. Hand-rolled SOURCE SCANNING (`strpos`/`strrpos`/`strstr`) across the WHOLE detection +
  *      scribe + engine layer — the "fake regex" dodge (hunt for `<Tag`, scan a docblock for a
  *      type). The AST already knows positions; query it, or add a reusable primitive to the
- *      offset util {@see \JesseGall\CodeCommandments\Scribes\Span} so every scribe shares it.
+ *      offset util {@see \JesseGall\CodeCommandments\Span} so every scribe shares it.
  *   3. Hand-rolled CHAR LEXING (`ctype_*`) in the BACKEND detector/scribe layer — the backend
  *      has php-parser + {@see Span}; building a token/skipping whitespace by hand is a lexer the
  *      engine already provides, so `ctype_*` there is always a bypass.
@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  *      A missing write op is a method to ADD to the Writer, not a raw edit in the scribe.
  *
  * The ONLY exemptions are the genuine LEXERS (where char/delimiter scanning IS the job), the
- * byte-offset utility {@see \JesseGall\CodeCommandments\Scribes\Span} (newline/offset math), and the
+ * byte-offset utility {@see \JesseGall\CodeCommandments\Span} (newline/offset math), and the
  * compiler-diagnostic reader {@see \JesseGall\CodeCommandments\Vue\Oracle\TscDiagnostics} — which
  * scans `vue-tsc`'s flat log OUTPUT, not source code, so text scanning is likewise its whole job.
  * Prefix/suffix classification (`str_starts_with`/`str_ends_with` on a name/FQCN/path) is

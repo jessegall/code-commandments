@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Frontend;
 use Closure;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Vue\Attribute;
 use JesseGall\CodeCommandments\Vue\Boundary;
 use JesseGall\CodeCommandments\Vue\Codebase;

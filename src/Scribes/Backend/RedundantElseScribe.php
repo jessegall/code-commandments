@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use PhpParser\Node\Stmt\If_;
 
 /**

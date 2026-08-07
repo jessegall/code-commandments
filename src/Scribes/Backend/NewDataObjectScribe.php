@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Scribes\NeedsCodebase;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;

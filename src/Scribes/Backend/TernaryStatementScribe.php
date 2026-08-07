@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\Negation;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Scribes\Writer;
 use PhpParser\Node;
 use PhpParser\Node\Expr;

@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Ast\Support\ExpressionType;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Located;
-use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;

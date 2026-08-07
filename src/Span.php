@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Scribes;
+namespace JesseGall\CodeCommandments;
 
 /**
  * Where a finding sits in its file — the path, that file's full source, and the

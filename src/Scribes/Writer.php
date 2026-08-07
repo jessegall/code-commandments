@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use JesseGall\CodeCommandments\Span;
+
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;

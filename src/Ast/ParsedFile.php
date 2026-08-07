@@ -9,7 +9,7 @@ use PhpParser\Node;
 /**
  * A parsed source file: its path, its name-resolved, parent-linked AST, and its
  * original source. The raw `source` is retained so a finding can expose its byte
- * range AS a {@see \JesseGall\CodeCommandments\Scribes\Span} the scribe layer rewrites
+ * range AS a {@see \JesseGall\CodeCommandments\Span} the scribe layer rewrites
  * through (see {@see NodeMatch::span()}).
  */
 final class ParsedFile
