@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Expr;
 
+use JesseGall\CodeCommandments\Vue\Token;
+
 /**
  * Parses a Vue binding expression (the JS in `:x="…"` / `v-if="…"` / `{{ … }}`)
  * into an {@see Expr} tree. A hand-written lexer + Pratt parser — NO regex: member
@@ -255,28 +257,61 @@ final class Parser
     {
         $node = $this->primary();
 
-        while (true) {
-            if ($this->isPunct('.')) {
-                $this->next();
-                $node = new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => false]);
-            } elseif ($this->isPunct('?.')) {
-                $this->next();
-                $node = $this->isPunct('[') || $this->isPunct('(')
-                    ? $this->tail($node, true)
-                    : new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => true]);
-            } elseif ($this->isPunct('[')) {
-                $this->next();
-                $index = $this->expression();
-                $this->expect(']');
-                $node = new Expr(ExprKind::Index, ['object' => $node, 'index' => $index]);
-            } elseif ($this->isPunct('(')) {
-                $node = new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments()]);
-            } else {
-                break;
-            }
+        while (($extended = $this->extended($node)) !== null) {
+            $node = $extended;
         }
 
         return $node;
+    }
+
+    /**
+     * $node with the NEXT postfix operator applied — `.x`, `?.x`, `[i]` or `(args)` — or null when
+     * the next token is none of those, which is where the chain ends. One operator per arm, so a
+     * new one is a line rather than another rung.
+     */
+    private function extended(Expr $node): ?Expr
+    {
+        return match (true) {
+            $this->isPunct('.') => $this->member($node, optional: false),
+            $this->isPunct('?.') => $this->optionalMember($node),
+            $this->isPunct('[') => $this->index($node),
+            $this->isPunct('(') => new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments()]),
+            default => null,
+        };
+    }
+
+    /**
+     * `$node.name`, or `$node?.name` when $optional.
+     */
+    private function member(Expr $node, bool $optional): Expr
+    {
+        $this->next();
+
+        return new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => $optional]);
+    }
+
+    /**
+     * What follows a `?.` — an optional member, or the `?.[`/`?.(` forms {@see tail} builds.
+     */
+    private function optionalMember(Expr $node): Expr
+    {
+        $this->next();
+
+        return $this->isPunct('[') || $this->isPunct('(')
+            ? $this->tail($node, true)
+            : new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => true]);
+    }
+
+    /**
+     * `$node[index]`.
+     */
+    private function index(Expr $node): Expr
+    {
+        $this->next();
+        $index = $this->expression();
+        $this->expect(']');
+
+        return new Expr(ExprKind::Index, ['object' => $node, 'index' => $index]);
     }
 
     /**
@@ -451,11 +486,10 @@ final class Parser
         $depth = 0;
 
         do {
-            if ($this->isPunct('{') || $this->isPunct('[')) {
-                $depth++;
-            } elseif ($this->isPunct('}') || $this->isPunct(']')) {
-                $depth--;
-            } elseif ($this->peek()['type'] === 'name') {
+            $change = $this->depthChange();
+            $depth += $change;
+
+            if ($change === 0 && $this->peek()['type'] === 'name') {
                 $names[] = $this->peek()['value'];
             }
 
@@ -479,12 +513,7 @@ final class Parser
                 return;
             }
 
-            if ($this->isPunct('(') || $this->isPunct('[') || $this->isPunct('{')) {
-                $depth++;
-            } elseif ($this->isPunct(')') || $this->isPunct(']') || $this->isPunct('}')) {
-                $depth--;
-            }
-
+            $depth += $this->depthChange();
             $this->next();
         }
     }
@@ -596,6 +625,26 @@ final class Parser
     private function next(): void
     {
         $this->pos++;
+    }
+
+    /**
+     * What the token under the cursor does to a bracket DEPTH — +1 for an opener, -1 for a closer,
+     * 0 for anything else. Two scans that must stay inside a group were each spelling the same
+     * six-bracket ladder; this says it once, from {@see Token}'s own idea of a group.
+     */
+    private function depthChange(): int
+    {
+        $token = $this->peek();
+
+        if ($token['type'] !== 'punct') {
+            return 0;
+        }
+
+        return match (true) {
+            Token::opensGroup($token['value']) => 1,
+            Token::closesGroup($token['value']) => -1,
+            default => 0,
+        };
     }
 
     private function isPunct(string $value): bool
