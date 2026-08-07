@@ -18,9 +18,26 @@ final class Expr
         public readonly array $props = [],
     ) {}
 
+    /**
+     * The value of $key on this expression — resolve-or-THROW. Which properties a kind carries is
+     * fixed by the kind, so asking for one it does not have is a programming error rather than an
+     * absence; returning null for it made a typo'd key read as "not set". A property that is
+     * legitimately optional is present and null, which is why {@see has} is the probe.
+     */
     public function get(string $key): mixed
     {
-        return $this->props[$key] ?? null;
+        return array_key_exists($key, $this->props)
+            ? $this->props[$key]
+            : throw UnknownProperty::of($this->kind, $key, array_keys($this->props));
+    }
+
+    /**
+     * Does this expression CARRY $key at all — the question to ask when the kind is not already
+     * known from the branch you are in.
+     */
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->props);
     }
 
     public function is(ExprKind $kind): bool

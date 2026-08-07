@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 
+use JesseGall\PhpTypes\Option;
+
 /**
  * An object-destructuring pattern — `const { taxes, taxRate, formatTaxLabel } = useTaxTypes()`,
  * with aliasing (`{ a: b }` binds `b` from key `a`) and rest (`{ ...rest }`). It maps each bound
@@ -27,11 +29,15 @@ final class ObjectPattern extends Pattern
     }
 
     /**
-     * The source key a bound local came from — `{ a: b }` → `keyFor('b') === 'a'`; null if unbound.
+     * The source key a bound local came from — `{ a: b }` → `keyFor('b')` is `a`. None when this
+     * pattern binds no such local, which a caller tracing a composable's field has to handle
+     * either way.
+     *
+     * @return Option<string>
      */
-    public function keyFor(string $local): ?string
+    public function keyFor(string $local): Option
     {
-        return $this->entries[$local] ?? null;
+        return Option::fromNullable($this->entries[$local] ?? null);
     }
 
     public function render(): string

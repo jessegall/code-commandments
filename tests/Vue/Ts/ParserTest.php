@@ -82,7 +82,7 @@ final class ParserTest extends TestCase
     public function test_defineprops_type_argument_is_a_real_object_type(): void
     {
         $module = Parser::module('const props = defineProps<{ items: Row[]; onPick: (id: string) => void; label?: string }>();');
-        $shape = $module->call('defineProps')?->firstTypeArgument();
+        $shape = $module->call('defineProps')?->firstTypeArgument()->unwrap();
 
         $this->assertInstanceOf(ObjectType::class, $shape);
         $this->assertSame(
@@ -105,7 +105,7 @@ final class ParserTest extends TestCase
         $decl = $module->variable('taxes');
 
         $this->assertSame('useTaxTypes', $decl?->initCall?->callee);
-        $this->assertSame('taxes', $decl?->pattern->keyFor('taxes'));
+        $this->assertSame('taxes', $decl?->pattern->keyFor('taxes')->unwrap());
     }
 
     public function test_reactive_initializer_is_captured_as_a_call(): void
@@ -170,7 +170,7 @@ final class ParserTest extends TestCase
             TS);
 
         // It parsed without throwing (the point), and still recovered the real facts.
-        $shape = $module->call('defineProps')?->firstTypeArgument();
+        $shape = $module->call('defineProps')?->firstTypeArgument()->unwrap();
         $this->assertInstanceOf(ObjectType::class, $shape);
         $this->assertSame('(a: number) => void', $shape->fields()['cb']);
         $this->assertSame('computed', $module->variable('x')?->initCall?->callee);

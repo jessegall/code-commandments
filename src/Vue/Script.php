@@ -77,7 +77,7 @@ final class Script
             return null;
         }
 
-        if (($argument = $call->firstTypeArgument()) !== null) {
+        foreach ($call->firstTypeArgument() as $argument) {
             return $argument->render();
         }
 
@@ -408,13 +408,21 @@ final class Script
      */
     public function propTypes(): array
     {
-        $shape = $this->definePropsCall()?->firstTypeArgument();
+        $call = $this->definePropsCall();
 
-        return match (true) {
-            $shape instanceof ObjectType => $shape->fields(),          // defineProps<{ … }>()
-            $shape instanceof NamedType => $this->typeFields($shape->name), // defineProps<Props>()
-            default => [],
-        };
+        if ($call === null) {
+            return [];
+        }
+
+        foreach ($call->firstTypeArgument() as $shape) {
+            return match (true) {
+                $shape instanceof ObjectType => $shape->fields(),          // defineProps<{ … }>()
+                $shape instanceof NamedType => $this->typeFields($shape->name), // defineProps<Props>()
+                default => [],
+            };
+        }
+
+        return []; // `defineProps()` with no type argument states no props
     }
 
     /**

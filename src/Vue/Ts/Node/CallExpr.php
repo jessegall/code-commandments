@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 
+use JesseGall\PhpTypes\Option;
+
 /**
  * A call the parser tracks structurally — a macro (`defineProps<{…}>()`, `defineEmits<…>()`,
  * `defineModel<T>('name')`), a composable (`useTaxTypes()`), or a reactive wrapper (`ref(false)`).
@@ -29,9 +31,15 @@ final class CallExpr extends Node
         return $this->callee === $callee ? $this : null;
     }
 
-    public function firstTypeArgument(): ?TypeNode
+    /**
+     * The call's first TYPE argument — the `T` of `defineProps<T>()`. None when it has none, which
+     * is the ordinary case for a call that is not a typed macro.
+     *
+     * @return Option<TypeNode>
+     */
+    public function firstTypeArgument(): Option
     {
-        return $this->typeArguments[0] ?? null;
+        return Option::fromNullable($this->typeArguments[0] ?? null);
     }
 
     /**
