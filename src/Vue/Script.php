@@ -300,11 +300,15 @@ final class Script
     public function propsVariable(): ?string
     {
         return $this->assignedFrom(static function (VariableDecl $decl): bool {
-            $callee = $decl->initCall?->callee;
+            $call = $decl->initCall;
+
+            if ($call === null) {
+                return false;
+            }
 
             // `const props = defineProps(…)` or `const props = withDefaults(defineProps(…), …)`.
-            return $callee === 'defineProps'
-                || ($callee === 'withDefaults' && str_starts_with($decl->initCall->arguments[0] ?? '', 'defineProps'));
+            return $call->callee === 'defineProps'
+                || ($call->callee === 'withDefaults' && $call->firstArgumentStartsWith('defineProps'));
         });
     }
 

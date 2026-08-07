@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\PhpTypes\Option;
+
 /**
  * Parsed SFC with top-level blocks and tokenized template tree. Block splitting
  * separate from template parsing (script/style raw, template parsed to Elements).
@@ -131,12 +133,15 @@ final class Sfc
 
     /**
      * The byte offset where the `<script setup>` body begins (preferring a `setup`
-     * block, else any `<script>`) — where a scribe splices a component import. Null
-     * when the component has no script block at all.
+     * block, else any `<script>`) — where a scribe splices a component import. None
+     * when the component has no script block at all, which is a different EDIT for a
+     * writer to make, not a position to invent.
+     *
+     * @return Option<int>
      */
-    public function scriptContentStart(): ?int
+    public function scriptContentStart(): Option
     {
-        $fallback = null;
+        $fallback = Option::none();
 
         foreach ($this->blocks as $block) {
             if ($block->tag !== 'script') {
@@ -144,10 +149,10 @@ final class Sfc
             }
 
             if ($block->hasAttribute('setup')) {
-                return $block->start;
+                return Option::some($block->start);
             }
 
-            $fallback ??= $block->start;
+            $fallback = $fallback->or(Option::some($block->start));
         }
 
         return $fallback;

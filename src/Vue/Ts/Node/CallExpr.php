@@ -35,6 +35,18 @@ final class CallExpr extends Node
     }
 
     /**
+     * Does this call's FIRST argument begin with $prefix — the test behind "is this a
+     * `withDefaults(defineProps(…), …)`?". A call with no arguments begins with nothing, which
+     * is the call's own business to know rather than its reader's.
+     */
+    public function firstArgumentStartsWith(string $prefix): bool
+    {
+        $first = $this->arguments[0] ?? null;
+
+        return $first !== null && str_starts_with($first, $prefix);
+    }
+
+    /**
      * The first argument's string literal value (unquoted), or null when it isn't a string —
      * `defineModel('open')` → `open`, `useRoute()` → null.
      */
@@ -42,7 +54,7 @@ final class CallExpr extends Node
     {
         $first = $this->arguments[0] ?? null;
 
-        if ($first === null || ! in_array($first[0] ?? '', ['"', "'", '`'], true)) {
+        if ($first === null || $first === '' || ! in_array($first[0], ['"', "'", '`'], true)) {
             return null;
         }
 

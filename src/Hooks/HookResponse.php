@@ -18,10 +18,11 @@ final class HookResponse
      */
     public static function merge(array $emitted, string $event): ?array
     {
+        $emissions = array_map(HookEmission::of(...), $emitted);
         $reasons = [];
 
-        foreach ($emitted as $payload) {
-            if (($payload['decision'] ?? null) === 'block' && ($reason = trim((string) ($payload['reason'] ?? ''))) !== '') {
+        foreach ($emissions as $emission) {
+            foreach ($emission->blockReason() as $reason) {
                 $reasons[] = $reason;
             }
         }
@@ -33,12 +34,10 @@ final class HookResponse
         $contexts = [];
         $suppress = true;
 
-        foreach ($emitted as $payload) {
-            $context = $payload['hookSpecificOutput']['additionalContext'] ?? null;
-
-            if (is_string($context) && $context !== '') {
+        foreach ($emissions as $emission) {
+            foreach ($emission->context() as $context) {
                 $contexts[] = $context;
-                $suppress = $suppress && (($payload['suppressOutput'] ?? false) === true);
+                $suppress = $suppress && $emission->suppressesOutput();
             }
         }
 

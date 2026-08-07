@@ -82,11 +82,14 @@ final class PhpTarget
             $version = ltrim(trim($clause), '^~>=< ');
             $parts = explode('.', $version);
 
-            if (! is_numeric($parts[0] ?? '')) {
+            // `explode` always yields a first part, so the major is simply there; only the MINOR
+            // can be missing (`^8`), and that is the one absence worth stating.
+            if (! is_numeric($parts[0])) {
                 continue;
             }
 
-            $normalised = $parts[0] . '.' . (is_numeric($parts[1] ?? '') ? $parts[1] : '0');
+            $minor = count($parts) > 1 && is_numeric($parts[1]) ? $parts[1] : '0';
+            $normalised = $parts[0] . '.' . $minor;
             $lowest = $lowest === null || version_compare($normalised, $lowest, '<') ? $normalised : $lowest;
         }
 

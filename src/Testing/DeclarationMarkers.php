@@ -46,8 +46,10 @@ final class DeclarationMarkers
     {
         $names = [];
 
-        for ($n = $at - 1; $n >= 1; $n--) {
-            $text = trim($lines[$n - 1] ?? '');
+        // Start from the last line that EXISTS: a declaration reported past the end of the slice
+        // has nothing above it to read, rather than a run of empty strings to skip.
+        for ($n = min($at - 1, count($lines)); $n >= 1; $n--) {
+            $text = trim($lines[$n - 1]);
 
             if ($text === '') {
                 continue;

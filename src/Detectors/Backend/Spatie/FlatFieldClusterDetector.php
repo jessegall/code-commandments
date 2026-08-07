@@ -151,7 +151,13 @@ final class FlatFieldClusterDetector implements Detector
         $shapes = [];
 
         foreach ($codebase->whereClass()->get() as $class) {
-            $short = strtolower(ClassName::short($class->enclosingClassName() ?? ''));
+            $declared = $class->enclosingClassName();
+
+            if ($declared === null) {
+                continue; // an anonymous class names no shape
+            }
+
+            $short = strtolower(ClassName::short($declared));
 
             if ($short === '') {
                 continue;

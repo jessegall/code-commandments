@@ -569,11 +569,18 @@ final class ExtractComponentScribe extends RepentScribe
     private static function import(Draft $draft, Sfc $sfc, string $component, string $name): void
     {
         $statement = "import {$name} from '" . self::relativeImport($sfc->path, $component) . "';\n";
-        $start = $sfc->scriptContentStart();
+        // Two different edits, not one edit with a hole in it: a file that HAS a script block gets
+        // the import spliced just inside it; a file with none gets a whole `<script setup>` minted
+        // at the very top.
+        foreach ($sfc->scriptContentStart() as $at) {
+            $draft->edit(new Span($sfc->path, $sfc->source, $at, $at), "\n{$statement}");
+
+            return;
+        }
 
         $draft->edit(
-            new Span($sfc->path, $sfc->source, $start ?? 0, $start ?? 0),
-            $start !== null ? "\n{$statement}" : "<script setup lang=\"ts\">\n{$statement}</script>\n\n",
+            new Span($sfc->path, $sfc->source, 0, 0),
+            "<script setup lang=\"ts\">\n{$statement}</script>\n\n",
         );
     }
 

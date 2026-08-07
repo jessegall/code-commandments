@@ -76,7 +76,10 @@ final class DataHintScribe extends Scribe
                 }
             }
 
-            $edit = $this->docblockEdit($class->node, $source, $this->methodLines($class, $source, $collectUsed[$fqcn] ?? false, $docblockOnly));
+            // `$collectUsed` is a SET of the classes whose `collect()` is called — membership, not a
+            // flag with a value, so `isset` asks it directly instead of reading a `false` that was
+            // never stored.
+            $edit = $this->docblockEdit($class->node, $source, $this->methodLines($class, $source, isset($collectUsed[$fqcn]), $docblockOnly));
 
             if ($edit !== null) {
                 $editsByFile[$class->file][] = $edit;
