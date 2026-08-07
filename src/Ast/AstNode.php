@@ -605,19 +605,7 @@ class AstNode
         $parent = $child->getAttribute('parent');
 
         while ($parent instanceof Node && ! $parent instanceof FunctionLike) {
-            if ($parent instanceof If_ && $parent->cond === $child) {
-                return $parent;
-            }
-
-            if ($parent instanceof ElseIf_ && $parent->cond === $child) {
-                return $parent;
-            }
-
-            if ($parent instanceof Ternary && $parent->cond === $child) {
-                return $parent;
-            }
-
-            if ($parent instanceof MatchArm && in_array($child, $parent->conds ?? [], true)) {
+            if (self::isConditionOf($parent, $child)) {
                 return $parent;
             }
 
@@ -741,6 +729,43 @@ class AstNode
      *
      * @return iterable<Node>
      */
+    /**
+     * The ancestors above this node that are still inside the SAME function — the climb stops at the
+     * function boundary, since "what am I inside of" almost never means the caller.
+     *
+     * @return iterable<Node>
+     */
+    public static function ancestorsWithinFunction(?Node $node): iterable
+    {
+        foreach (self::ancestorsOf($node) as $ancestor) {
+            if ($ancestor instanceof FunctionLike) {
+                return;
+            }
+
+            yield $ancestor;
+        }
+    }
+
+    /**
+     * Is $subject the CONDITION $parent decides on — the test of an `if`/`elseif`/`while`/`do`, the
+     * question a ternary or a `match` asks, or one of a match arm's? Every branching construct keeps
+     * its test in the same place, so naming the construct first was the long way round.
+     */
+    public static function isConditionOf(?Node $parent, Node $subject): bool
+    {
+        if ($parent instanceof MatchArm) {
+            return in_array($subject, $parent->conds ?? [], true);
+        }
+
+        return ($parent instanceof If_
+            || $parent instanceof ElseIf_
+            || $parent instanceof While_
+            || $parent instanceof Do_
+            || $parent instanceof Ternary
+            || $parent instanceof Match_)
+            && $parent->cond === $subject;
+    }
+
     public static function ancestorsOf(?Node $node): iterable
     {
         $current = $node?->getAttribute('parent');
@@ -3719,8 +3744,7 @@ class AstNode
                 || $parent instanceof BooleanNot
                 || $parent instanceof BooleanAnd
                 || $parent instanceof BooleanOr
-                || ($parent instanceof If_ && $parent->cond === $variable)
-                || ($parent instanceof Ternary && $parent->cond === $variable);
+                || self::isConditionOf($parent, $variable);
 
             if ($isNullGuard) {
                 return true;
@@ -3900,13 +3924,7 @@ class AstNode
             $decides = $parent instanceof BooleanNot
                 || $parent instanceof BooleanAnd
                 || $parent instanceof BooleanOr
-                || ($parent instanceof If_ && $parent->cond === $variable)
-                || ($parent instanceof ElseIf_ && $parent->cond === $variable)
-                || ($parent instanceof While_ && $parent->cond === $variable)
-                || ($parent instanceof Do_ && $parent->cond === $variable)
-                || ($parent instanceof Ternary && $parent->cond === $variable)
-                || ($parent instanceof Match_ && $parent->cond === $variable)
-                || ($parent instanceof MatchArm && in_array($variable, $parent->conds ?? [], true));
+                || self::isConditionOf($parent, $variable);
 
             if ($decides) {
                 return true;
