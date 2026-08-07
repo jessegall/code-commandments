@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Ast\Laravel\PageObject;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
+use JesseGall\PhpTypes\Option;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
@@ -1261,36 +1262,38 @@ final class SpatieDataNode extends NodeMatch
      * enclosing single-argument `SomeData::from([...])` on a `Data` class, crossing at most one list-literal
      * wrapper (so an element of a `#[DataCollectionOf]` list resolves too). Null when this node is not in
      * such a hydration-argument position. The ONE walk every "auto-hydration would do this" detector shares.
+     *
+     * @return Option<HydrationSlot>
      */
-    public function hydrationSlot(): ?HydrationSlot
+    public function hydrationSlot(): Option
     {
         if (! $this->node instanceof Node) {
-            return null;
+            return Option::none();
         }
 
         [$key, $keyedItem, $valueInList] = $this->keyedHydrationItem($this->node);
 
         if ($key === null || ! $keyedItem instanceof ArrayItem) {
-            return null;
+            return Option::none();
         }
 
         $call = $this->soleFromCallOf($keyedItem);
 
         if ($call === null) {
-            return null;
+            return Option::none();
         }
 
         $owner = $this->constructedFrom($call);
 
         if ($owner === null || ! $this->codebase->extends($owner, self::DATA)) {
-            return null;
+            return Option::none();
         }
 
         $resolver = TypeResolver::forCodebase($this->codebase);
         $declared = $resolver->propertyTypeOf($owner, $key);
         $element = $resolver->collectionElementOf($owner, $key);
 
-        return new HydrationSlot(
+        return Option::some(new HydrationSlot(
             ownerFqcn: $owner,
             property: $key,
             declaredType: $declared,
@@ -1298,7 +1301,7 @@ final class SpatieDataNode extends NodeMatch
             elementType: $element ?? $declared,
             valueInList: $valueInList,
             destHasCast: $this->propertyHasCast($owner, $key),
-        );
+        ));
     }
 
     /**
@@ -1326,9 +1329,11 @@ final class SpatieDataNode extends NodeMatch
             return false; // the receiver isn't an enum — `->value` is an ordinary member, not a backing unwrap
         }
 
-        $slotType = $this->hydrationSlot()?->elementType ?? $this->forwardedEnumSlotType();
+        $slotType = $this->hydrationSlot()
+            ->andThen(static fn (HydrationSlot $slot): Option => Option::fromNullable($slot->elementType))
+            ->or(Option::fromNullable($this->forwardedEnumSlotType()));
 
-        return $slotType !== null && ltrim($slotType, '\\') === ltrim($enum, '\\');
+        return $slotType->isSomeAnd(static fn (string $type): bool => ltrim($type, '\\') === ltrim($enum, '\\'));
     }
 
     /**
@@ -1607,13 +1612,9 @@ final class SpatieDataNode extends NodeMatch
      */
     public function hydratesAnAutoBuiltSlot(): bool
     {
-        $slot = $this->hydrationSlot();
-
-        if ($slot === null || $slot->valueInList !== $slot->isCollection) {
-            return false;
-        }
-
-        return $slot->elementType !== null && $slot->elementType === $this->constructedClass();
+        return $this->hydrationSlot()->isSomeAnd(fn (HydrationSlot $slot): bool => $slot->valueInList === $slot->isCollection
+            && $slot->elementType !== null
+            && $slot->elementType === $this->constructedClass());
     }
 
     /**
@@ -1622,7 +1623,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function hydrationSlotHasCast(): bool
     {
-        return $this->hydrationSlot()?->destHasCast ?? false;
+        return $this->hydrationSlot()->isSomeAnd(static fn (HydrationSlot $slot): bool => $slot->destHasCast);
     }
 
     /**
@@ -1667,18 +1668,19 @@ final class SpatieDataNode extends NodeMatch
      */
     public function mappedFactoryDerivesElement(): bool
     {
-        $slot = $this->hydrationSlot();
         $factory = $this->mappedFactory();
 
-        if ($slot === null || ! $slot->isCollection || $slot->elementType === null || $factory === null) {
+        if ($factory === null || in_array($factory->method, ['from', 'collect'], true) || $factory->closesOverContext) {
             return false;
         }
 
-        if (in_array($factory->method, ['from', 'collect'], true) || $factory->closesOverContext) {
+        if (! $this->extendsData($factory->class)) {
             return false;
         }
 
-        return $this->extendsData($factory->class) && $factory->returnsType === $slot->elementType;
+        return $this->hydrationSlot()->isSomeAnd(static fn (HydrationSlot $slot): bool => $slot->isCollection
+            && $slot->elementType !== null
+            && $factory->returnsType === $slot->elementType);
     }
 
     private function extendsData(string $class): bool
@@ -1788,9 +1790,16 @@ final class SpatieDataNode extends NodeMatch
      */
     public function slotAcceptsNativeCast(): bool
     {
-        $slot = $this->hydrationSlot();
+        return $this->hydrationSlot()->isSomeAnd($this->acceptsNativeCast(...));
+    }
 
-        if ($slot === null || $slot->declaredType === null) {
+    /**
+     * Would Spatie's own casting fill $slot from the scalar this node constructs? An enum construction
+     * must land in exactly that enum's slot; anything else must land in a natively-cast (non-enum) type.
+     */
+    private function acceptsNativeCast(HydrationSlot $slot): bool
+    {
+        if ($slot->declaredType === null) {
             return false;
         }
 
@@ -1890,8 +1899,6 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $slot = $this->hydrationSlot();
-
-        return $slot !== null && $slot->elementType === $receiver;
+        return $this->hydrationSlot()->isSomeAnd(static fn (HydrationSlot $slot): bool => $slot->elementType === $receiver);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
+use JesseGall\PhpTypes\Option;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
@@ -371,12 +372,23 @@ final class ValueFlow
             return [];
         }
 
-        $target = $this->targetParam($parent->getAttribute('parent'), $parent);
-
-        if ($target === null) {
-            return [];
+        foreach ($this->targetParam($parent->getAttribute('parent'), $parent) as $target) {
+            return $this->readsReachedThrough($target, $seenSlots);
         }
 
+        return [];
+    }
+
+    /**
+     * Everything the value reaches once it has landed on $target — the parameter's own reads, plus, when
+     * the parameter is promoted, the reads of the field it becomes. Empty when the slot has already been
+     * walked, which is what stops a cycle.
+     *
+     * @param  array<string, true>  $seenSlots
+     * @return list<NodeMatch>
+     */
+    private function readsReachedThrough(ParamTarget $target, array &$seenSlots): array
+    {
         $slot = $target->slot();
 
         if ($slot === null || ! $this->markSlot($slot, $seenSlots)) {
@@ -387,12 +399,11 @@ final class ValueFlow
         $name = (string) $target->name();
         $downstream = $this->readsOf($name, $this->methodNode($fqcn, $target->callee->method), $this->fileForClass()[$fqcn] ?? null);
 
-        // A promoted parameter also becomes the object's field — follow that slot too.
-        if ($target->isPromoted()) {
-            $downstream = [...$downstream, ...$this->fieldSlotReads($fqcn, $name, $seenSlots)];
+        if (! $target->isPromoted()) {
+            return $downstream;
         }
 
-        return $downstream;
+        return [...$downstream, ...$this->fieldSlotReads($fqcn, $name, $seenSlots)];
     }
 
     /**
@@ -461,43 +472,35 @@ final class ValueFlow
             return false;
         }
 
-        $target = $this->targetParam($parent->getAttribute('parent'), $parent);
-
-        return $target !== null && ! TypeResolver::paramAcceptsNull($target->param);
+        return $this->targetParam($parent->getAttribute('parent'), $parent)
+            ->isSomeAnd(static fn (ParamTarget $target): bool => ! TypeResolver::paramAcceptsNull($target->param));
     }
 
     /**
      * Resolve which parameter an argument lands on — by name for a named argument, by position
-     * otherwise. Null when the callee or the parameter can't be resolved.
+     * otherwise. None when the callee or the parameter can't be resolved.
+     *
+     * @return Option<ParamTarget>
      */
-    private function targetParam(?Node $call, Arg $arg): ?ParamTarget
+    private function targetParam(?Node $call, Arg $arg): Option
     {
         $callee = $this->callee($call);
 
         if ($callee === null) {
-            return null;
+            return Option::none();
         }
 
-        $params = array_values($this->methodNode($callee->class, $callee->method)?->params ?? []);
+        $params = ParamList::of($this->methodNode($callee->class, $callee->method));
 
-        if ($params === []) {
-            return null;
+        if ($params->isEmpty()) {
+            return Option::none();
         }
 
-        if ($arg->name instanceof Identifier) {
-            foreach ($params as $param) {
-                if ($param->var instanceof Variable && $param->var->name === $arg->name->toString()) {
-                    return new ParamTarget($callee, $param);
-                }
-            }
+        $landed = $arg->name instanceof Identifier
+            ? $params->named($arg->name->toString())
+            : Option::fromNullable($this->positionOf($call, $arg))->andThen($params->at(...));
 
-            return null;
-        }
-
-        $position = $this->positionOf($call, $arg);
-        $param = $position === null ? null : ($params[$position] ?? null);
-
-        return $param === null ? null : new ParamTarget($callee, $param);
+        return $landed->map(static fn (Param $param) => new ParamTarget($callee, $param));
     }
 
     /**

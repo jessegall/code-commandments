@@ -4482,12 +4482,8 @@ class AstNode
      */
     public function enclosingParamType(string $name): ?Node
     {
-        $function = $this->enclosingFunction();
-
-        foreach ($function?->getParams() ?? [] as $param) {
-            if ($param->var instanceof Variable && $param->var->name === $name) {
-                return $param->type;
-            }
+        foreach (ParamList::of($this->enclosingFunction())->named($name) as $param) {
+            return $param->type;
         }
 
         return null;
