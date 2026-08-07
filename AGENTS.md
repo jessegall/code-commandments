@@ -141,6 +141,7 @@ Do not start work without all of them loaded.
 - **`commandments-backend-tell-dont-ask`** — behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception.
 - **`commandments-backend-pass-the-object`** — demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure).
 - **`commandments-backend-concurrent-state`** — state shared across requests/workers (`::for($id): Concurrent<self>`).
+- **`commandments-backend-templates`** — a multi-line string is a heredoc that SHOWS its output, never a list of line fragments joined.
 - **`commandments-frontend-vue-components`** — extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop.
 - **`commandments-frontend-vue-control-flow`** — dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject.
 - **`commandments-backend-dependency-direction`** — a declared layer may only reference the layers it declared it may use — down the stack, never back up, never sideways; the direction is enforced from the project's own layer declaration.

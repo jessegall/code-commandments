@@ -50,6 +50,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\Backend\Spatie\SpatieData::class,
         // Skills\Backend\Spatie\SpatieDataHydration::class,
         // Skills\Backend\TellDontAsk::class,
+        // Skills\Backend\Templates::class,
         // Skills\Backend\TypeHonesty::class,
         // Skills\Backend\ValueObjects::class,
 
@@ -69,6 +70,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\ArchaeologyComment::class,
         // Sins\Backend\ArrayBag::class,
         // Sins\Backend\ArrayReturnBag::class,
+        // Sins\Backend\AssembledTemplate::class,
         // Sins\Backend\BareStatePredicate::class,
         // Sins\Backend\BloatedDocblock::class,
         // Sins\Backend\CancelledCoalesce::class,

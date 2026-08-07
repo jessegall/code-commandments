@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Span;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
@@ -312,6 +313,34 @@ class NodeMatch extends AstNode implements Located
                 || $node instanceof For_
                 || $node instanceof While_,
         ));
+    }
+
+    /**
+     * The array LITERAL this call's $index'th argument is — written inline, or the one a local
+     * variable was assigned in the same function. The array a caller is really passing, so a rule
+     * about its CONTENTS keeps working when the author names it first.
+     */
+    public function argumentArrayLiteral(int $index): ?Array_
+    {
+        $argument = $this->argument($index);
+
+        if ($argument->node instanceof Array_) {
+            return $argument->node;
+        }
+
+        if (! $argument->node instanceof Variable) {
+            return null;
+        }
+
+        foreach (new self($argument->node, $this->file, $this->codebase)->trace() as $interaction) {
+            $assigned = $interaction->node->node->getAttribute('parent');
+
+            if ($assigned instanceof Assign && $assigned->expr instanceof Array_) {
+                return $assigned->expr;
+            }
+        }
+
+        return null;
     }
 
     /**

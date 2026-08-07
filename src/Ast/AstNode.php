@@ -909,6 +909,51 @@ class AstNode
     }
 
     /**
+     * The $index'th ARGUMENT of this call, as a node — a null-object when the call has no such
+     * argument, so a caller reads `$call->argument(1)->…` without first asking whether it is there.
+     */
+    public function argument(int $index): self
+    {
+        $arguments = $this->arguments();
+
+        return new self($arguments[$index]->value ?? null);
+    }
+
+    /**
+     * Is this expression a LINE separator — a string literal of nothing but newlines, or `PHP_EOL`?
+     * What tells "these parts are lines" from "these parts are fields" at a `implode`/`explode`.
+     */
+    public function isNewlineSeparator(): bool
+    {
+        if ($this->node instanceof ConstFetch) {
+            return $this->node->name->toString() === 'PHP_EOL';
+        }
+
+        return $this->node instanceof String_
+            && $this->node->value !== ''
+            && trim($this->node->value, "\r\n") === '';
+    }
+
+    /**
+     * The STRING-LITERAL items of an array literal, in order — the parts of it that are fixed text
+     * rather than something the program computed.
+     *
+     * @return list<string>
+     */
+    public static function literalItemsOf(Array_ $array): array
+    {
+        $literals = [];
+
+        foreach ($array->items as $item) {
+            if ($item instanceof ArrayItem && $item->value instanceof String_) {
+                $literals[] = $item->value->value;
+            }
+        }
+
+        return $literals;
+    }
+
+    /**
      * Is this a HOOKED property declaration (`public T $x { get => …; }`) — or a promoted
      * param with hooks? A hooked property is COMPUTED, not a stored slot: hydration never
      * writes it, so slot-shaped advice (e.g. "type it `T | Optional`") does not apply to it.

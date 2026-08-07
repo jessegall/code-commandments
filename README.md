@@ -624,7 +624,7 @@ The teaching layer: one discipline each, the doc an agent reads to fix a sin.
 Every `SKILL.md` is generated from its class (`composer sins`).
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
-_25 skills. Full table in [README.skills.md](README.skills.md)._
+_26 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
 ## Sins & detectors
