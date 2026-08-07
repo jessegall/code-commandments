@@ -21,6 +21,7 @@
     ],
     "require": {
         "php": "^8.4",
+        "jessegall/php-types": "^1.14",
         "nikic/php-parser": "^5.0"
     },
     "require-dev": {

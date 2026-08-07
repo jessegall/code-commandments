@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\PhpTypes\Option;
+
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
@@ -1778,34 +1780,37 @@ class AstNode
     }
 
     /**
-     * This node read as a single {@see ClassField} — when it IS one field declaration: a promoted
-     * constructor parameter or a declared property (its first declared name). Null for anything else.
+     * This node read as a single {@see ClassField}, when it IS one field declaration — a promoted
+     * constructor parameter, or a declared property (its first declared name). The absence rides in
+     * the type: every reader has to say what it means for a node not to be a field.
+     *
+     * @return Option<ClassField>
      */
-    public function asField(): ?ClassField
+    public function asField(): Option
     {
         if ($this->node instanceof Param && $this->node->flags !== 0 && AstNode::variableNameOf($this->node->var) !== null) {
-            return new ClassField(
+            return Option::some(new ClassField(
                 name: $this->node->var->name,
                 type: $this->node->type,
                 attributeGroups: $this->node->attrGroups,
                 isPublic: ($this->node->flags & Modifiers::PUBLIC) !== 0,
                 isPromoted: true,
                 docComment: $this->node->getDocComment()?->getText(),
-            );
+            ));
         }
 
         if ($this->node instanceof Property && $this->node->props !== []) {
-            return new ClassField(
+            return Option::some(new ClassField(
                 name: $this->node->props[0]->name->toString(),
                 type: $this->node->type,
                 attributeGroups: $this->node->attrGroups,
                 isPublic: $this->node->isPublic(),
                 isPromoted: false,
                 docComment: $this->node->getDocComment()?->getText(),
-            );
+            ));
         }
 
-        return null;
+        return Option::none();
     }
 
     /**

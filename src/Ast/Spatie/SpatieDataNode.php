@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Spatie;
 
+use JesseGall\CodeCommandments\Ast\ClassField;
+
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
@@ -160,9 +162,9 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $field = $this->codebase->wrap($carrier, $this->file)->asField();
-
-        return $field !== null && ! $field->hasAttribute('TypeScriptType', 'LiteralTypeScriptType');
+        return $this->codebase->wrap($carrier, $this->file)->asField()->isSomeAnd(
+            static fn (ClassField $field): bool => ! $field->hasAttribute('TypeScriptType', 'LiteralTypeScriptType'),
+        );
     }
 
     /**
@@ -333,10 +335,17 @@ final class SpatieDataNode extends NodeMatch
      */
     public function alwaysHandBuiltAtConstruction(): bool
     {
-        $field = $this->asField();
+        return $this->asField()->isSomeAnd(fn (ClassField $field): bool => $this->handBuiltEverywhere($field));
+    }
+
+    /**
+     * The question above, once there IS a field to ask it of.
+     */
+    private function handBuiltEverywhere(ClassField $field): bool
+    {
         $data = $this->enclosingClassName();
 
-        if ($field === null || ! $field->isPublic || $data === null || ! $this->isDataClass()) {
+        if (! $field->isPublic || $data === null || ! $this->isDataClass()) {
             return false;
         }
 
@@ -899,12 +908,11 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $field = $this->asField();
+        $onTheWire = $this->asField()->isSomeAnd(static fn (ClassField $field): bool => $field->isPublic
+            && ! $field->hasAttribute('Hidden')
+            && ! $field->hasAttribute('TypeScriptType', 'LiteralTypeScriptType'));
 
-        if ($field === null
-            || ! $field->isPublic
-            || $field->hasAttribute('Hidden')
-            || $field->hasAttribute('TypeScriptType', 'LiteralTypeScriptType')) {
+        if (! $onTheWire) {
             return false;
         }
 
