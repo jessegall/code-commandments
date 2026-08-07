@@ -21,6 +21,26 @@ final readonly class Lexeme
         public int $end,
     ) {}
 
+    /**
+     * The NULL lexeme — what a parser gets when it looks past the last token. It answers every
+     * `is…` question with `false` (its kind is one no lexer emits), so a lookahead reads
+     * `$this->at(1)->isPunct(',')` instead of `($this->at(1)?->isPunct(',') ?? false)`. Its span
+     * sits at $at, the end of the source, so a span taken from it still points somewhere real.
+     */
+    public static function none(int $at): self
+    {
+        return new self(Token::NONE, '', $at, $at);
+    }
+
+    /**
+     * Is this the past-the-end lexeme — the one question that IS about absence, for the few
+     * places that must stop rather than simply not match.
+     */
+    public function isNone(): bool
+    {
+        return $this->kind === Token::NONE;
+    }
+
     public function is(string $kind, ?string $value = null): bool
     {
         return $this->kind === $kind && ($value === null || $this->value === $value);

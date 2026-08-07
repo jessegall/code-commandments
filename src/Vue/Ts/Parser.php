@@ -115,10 +115,28 @@ final class Parser
         return new Module($imports, $body);
     }
 
+    /**
+     * One statement — or null for one this grammar does not model. This is where the class's TOTAL
+     * contract is kept: a statement that runs off the end of the source (`function f(` in a
+     * truncated file) leaves the cursor mid-construct, so the failure is caught HERE and recovered
+     * by skipping to the statement's end, exactly as an unmodelled construct already is. Without
+     * it an `Unparsed` escapes `module()`, which promises it never fails.
+     */
     private function parseStatement(): ?Node
     {
+        try {
+            return $this->parseModelledStatement();
+        } catch (Unparsed) {
+            $this->skipStatement();
+
+            return null;
+        }
+    }
+
+    private function parseModelledStatement(): ?Node
+    {
         // `import` DECLARATION only — not `import.meta` / dynamic `import(…)`, which are expressions.
-        if ($this->atId('import') && ! ($this->at(1)?->isPunct('.') ?? false) && ! ($this->at(1)?->isPunct('(') ?? false)) {
+        if ($this->atId('import') && ! $this->at(1)->isPunct('.') && ! $this->at(1)->isPunct('(')) {
             return $this->parseImport();
         }
 
@@ -132,7 +150,7 @@ final class Parser
             return $this->parseInterface();
         }
 
-        if ($this->atId('type') && ($this->at(1)?->isIdentifier() ?? false)) {
+        if ($this->atId('type') && $this->at(1)->isIdentifier()) {
             return $this->parseTypeAlias();
         }
 
@@ -140,7 +158,7 @@ final class Parser
             return $this->parseVariable();
         }
 
-        if ($this->atId('function') || ($this->atId('async') && ($this->at(1)?->isIdentifier('function') ?? false))) {
+        if ($this->atId('function') || ($this->atId('async') && $this->at(1)->isIdentifier('function'))) {
             return $this->parseFunction();
         }
 
@@ -162,7 +180,7 @@ final class Parser
 
     private function parseImport(): ImportDecl
     {
-        $start = $this->peek()?->start ?? 0;
+        $start = $this->peek()->start;
         $bindings = [];
         $source = null;
         $typeOnly = false;
@@ -174,7 +192,7 @@ final class Parser
         }
 
         // `import X = App.Http.View.Page;` (TS import-equals alias)
-        if ($this->peek()?->isIdentifier() && ($this->at(1)?->isPunct('=') ?? false)) {
+        if ($this->peek()->isIdentifier() && $this->at(1)->isPunct('=')) {
             $local = $this->advance()->value;
             $this->advance(); // `=`
             $bindings[$local] = $this->qualifiedName();
@@ -183,8 +201,8 @@ final class Parser
 
             if ($this->atId('from')) {
                 $this->advance();
-                $source = $this->peek()?->is(Token::STRING) ? substr($this->advance()->value, 1, -1) : null;
-            } elseif ($this->peek()?->is(Token::STRING)) {
+                $source = $this->peek()->is(Token::STRING) ? substr($this->advance()->value, 1, -1) : null;
+            } elseif ($this->peek()->is(Token::STRING)) {
                 $source = substr($this->advance()->value, 1, -1); // side-effect `import '...'`
             }
         }
@@ -201,7 +219,7 @@ final class Parser
     {
         $bindings = [];
 
-        if ($this->peek()?->isIdentifier() && ! $this->atPunct('{') && ! $this->atPunct('*')) {
+        if ($this->peek()->isIdentifier() && ! $this->atPunct('{') && ! $this->atPunct('*')) {
             $bindings[$this->advance()->value] = 'default';
 
             if ($this->atPunct(',')) {
@@ -274,7 +292,7 @@ final class Parser
         if ($this->atPunct('=')) {
             $this->advance();
             $this->advanceIfId('await'); // `= await useX()` — trace through to the call
-            $initStart = $this->peek()?->start ?? 0;
+            $initStart = $this->peek()->start;
 
             if ($this->atCall()) {
                 $initCall = $this->tryCall();
@@ -308,7 +326,7 @@ final class Parser
             $returnType = $this->parseType();
         }
 
-        $bodyStart = ($this->peek()?->start ?? 0) + 1; // just past the opening `{`
+        $bodyStart = $this->peek()->start + 1; // just past the opening `{`
         $returnObject = $this->skipBodyCapturingReturn();
         $bodyEnd = $this->lexemes[$this->pos - 1]->start ?? $bodyStart; // the closing `}`
         $bodySource = $bodyEnd > $bodyStart ? substr($this->source, $bodyStart, $bodyEnd - $bodyStart) : '';
@@ -334,7 +352,7 @@ final class Parser
         $returnObject = null;
 
         while (! $this->eof() && $depth > 0) {
-            if ($depth === 1 && $this->atId('return') && ($this->at(1)?->isPunct('{') ?? false)) {
+            if ($depth === 1 && $this->atId('return') && $this->at(1)->isPunct('{')) {
                 $this->advance(); // `return`
                 $returnObject = $this->parseObjectShape();
 
@@ -371,12 +389,12 @@ final class Parser
             if ($this->atThreeDots()) {
                 $this->advanceIfThreeDots();
                 $this->consumeExpression([',', '}']);
-            } elseif ($this->peek()?->isIdentifier() || ($this->peek()?->is(Token::STRING) ?? false)) {
+            } elseif ($this->peek()->isIdentifier() || $this->peek()->is(Token::STRING)) {
                 $key = $this->advance()->value;
 
                 if (! $this->advanceIfPunct(':')) {
                     $shape[$key] = $key; // shorthand `{ a }`
-                } elseif ($this->peek()?->isIdentifier() && (($this->at(1)?->isPunct(',') ?? false) || ($this->at(1)?->isPunct('}') ?? false))) {
+                } elseif ($this->peek()->isIdentifier() && ($this->at(1)->isPunct(',') || $this->at(1)->isPunct('}'))) {
                     $shape[$key] = $this->advance()->value; // alias `{ a: b }`
                 } else {
                     $shape[$key] = null; // a computed value — only a type checker could resolve it
@@ -411,7 +429,7 @@ final class Parser
             $params = $this->parseParams();
             $returnType = $this->advanceIfPunct(':') ? $this->parseType() : null;
 
-            if (! $this->atPunct('=') || ! ($this->at(1)?->isPunct('>') ?? false)) {
+            if (! $this->atPunct('=') || ! $this->at(1)->isPunct('>')) {
                 throw new Unparsed();
             }
 
@@ -576,8 +594,8 @@ final class Parser
     {
         $token = $this->peek();
 
-        if ($token === null) {
-            throw new Unparsed();
+        if ($token->isNone()) {
+            throw new Unparsed(); // a primary type was expected and the source ended
         }
 
         if ($token->isPunct('(')) {
@@ -592,7 +610,7 @@ final class Parser
             return $this->parseTuple();
         }
 
-        if ($token->isPunct('-') && ($this->at(1)?->is(Token::NUMBER) ?? false)) {
+        if ($token->isPunct('-') && $this->at(1)->is(Token::NUMBER)) {
             $this->advance();
 
             return new LiteralType('-' . $this->advance()->value);
@@ -643,7 +661,7 @@ final class Parser
         $function = $this->speculate(function (): FunctionType {
             $params = $this->parseParams();
 
-            if (! $this->atPunct('=') || ! ($this->at(1)?->isPunct('>') ?? false)) {
+            if (! $this->atPunct('=') || ! $this->at(1)->isPunct('>')) {
                 throw new Unparsed();
             }
 
@@ -718,7 +736,7 @@ final class Parser
         $members = [];
 
         while ($this->insideGroupClosedBy('}')) {
-            $named = $this->peek()?->isIdentifier() || ($this->peek()?->is(Token::STRING) ?? false) || $this->atId('readonly');
+            $named = $this->peek()->isIdentifier() || $this->peek()->is(Token::STRING) || $this->atId('readonly');
 
             if (! $named) {
                 if ($strict) {
@@ -776,7 +794,7 @@ final class Parser
         while ($this->insideGroupClosedBy(')')) {
             $rest = $this->advanceIfThreeDots();
 
-            if (! $this->peek()?->isIdentifier() && ! $this->atPunct('{') && ! $this->atPunct('[')) {
+            if (! $this->peek()->isIdentifier() && ! $this->atPunct('{') && ! $this->atPunct('[')) {
                 throw new Unparsed(); // a param we can't name (destructured param type) — bail
             }
 
@@ -818,7 +836,7 @@ final class Parser
         $arguments = [];
 
         while ($this->insideGroupClosedBy(')')) {
-            $start = $this->peek()?->start ?? 0;
+            $start = $this->peek()->start;
             $end = $this->consumeExpression([',', ')']);
             $arguments[] = trim(substr($this->source, $start, $end - $start));
 
@@ -850,8 +868,8 @@ final class Parser
      */
     private function atCall(): bool
     {
-        return ($this->peek()?->isIdentifier() ?? false)
-            && (($this->at(1)?->isPunct('(') ?? false) || ($this->at(1)?->isPunct('<') ?? false));
+        return $this->peek()->isIdentifier()
+            && ($this->at(1)->isPunct('(') || $this->at(1)->isPunct('<'));
     }
 
     /**
@@ -883,7 +901,7 @@ final class Parser
     {
         $name = $this->advance()->value;
 
-        while ($this->atPunct('.') && ($this->at(1)?->isIdentifier() ?? false)) {
+        while ($this->atPunct('.') && $this->at(1)->isIdentifier()) {
             $this->advance();
             $name .= '.' . $this->advance()->value;
         }
@@ -901,7 +919,7 @@ final class Parser
     private function consumeExpression(array $stops): int
     {
         $depth = 0;
-        $end = $this->peek()?->start ?? strlen($this->source);
+        $end = $this->peek()->start;
 
         while (! $this->eof()) {
             $token = $this->peek();
@@ -931,7 +949,7 @@ final class Parser
     private function captureTypeVerbatim(): string
     {
         $depth = 0;
-        $start = $this->peek()?->start ?? 0;
+        $start = $this->peek()->start;
         $end = $start;
         $prev = null;
 
@@ -943,7 +961,7 @@ final class Parser
             // corrupts the depth count (the bug this whole rewrite exists to kill). At depth 0 an
             // `=>` instead ENDS the type — it is the arrow of the enclosing arrow function — so we
             // let the `=` terminator below stop us, leaving the arrow for the caller.
-            if ($depth > 0 && $token->isPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
+            if ($depth > 0 && $token->isPunct('=') && $this->at(1)->isPunct('>')) {
                 $end = $this->at(1)->end;
                 $this->advance();
                 $this->advance();
@@ -1014,7 +1032,7 @@ final class Parser
 
     private function skipDefaultValue(): void
     {
-        if ($this->atPunct('=') && ! ($this->at(1)?->isPunct('>') ?? false)) {
+        if ($this->atPunct('=') && ! $this->at(1)->isPunct('>')) {
             $this->advance();
             $this->consumeExpression([',', ')', '}', ']']);
         }
@@ -1027,7 +1045,7 @@ final class Parser
         while (! $this->eof()) {
             $token = $this->peek();
 
-            if ($token->isPunct('=') && ($this->at(1)?->isPunct('>') ?? false)) {
+            if ($token->isPunct('=') && $this->at(1)->isPunct('>')) {
                 $this->advance();
                 $this->advance(); // the `=>` arrow, kept from corrupting the depth
 
@@ -1059,7 +1077,7 @@ final class Parser
     private function consumeToStatementEnd(): int
     {
         $depth = 0;
-        $end = $this->peek()?->start ?? strlen($this->source);
+        $end = $this->peek()->start;
         $previousEnd = null;
 
         while (! $this->eof()) {
@@ -1093,7 +1111,7 @@ final class Parser
 
     private function consumeUntilPunct(string $value): string
     {
-        $start = $this->peek()?->start ?? 0;
+        $start = $this->peek()->start;
         $end = $start;
 
         while (! $this->eof() && ! $this->atPunct($value)) {
@@ -1131,12 +1149,12 @@ final class Parser
 
         $next = $this->at(1);
 
-        return $next !== null && ! ($next->isPunct('?') || $next->isPunct(':') || $next->isPunct('('));
+        return ! $next->isNone() && ! ($next->isPunct('?') || $next->isPunct(':') || $next->isPunct('('));
     }
 
     private function atThreeDots(): bool
     {
-        return $this->atPunct('.') && ($this->at(1)?->isPunct('.') ?? false) && ($this->at(2)?->isPunct('.') ?? false);
+        return $this->atPunct('.') && $this->at(1)->isPunct('.') && $this->at(2)->isPunct('.');
     }
 
     private function advanceIfThreeDots(): bool
@@ -1152,14 +1170,21 @@ final class Parser
         return true;
     }
 
-    private function peek(): ?Lexeme
+    /**
+     * The token the cursor is on — {@see Lexeme::none} past the end, never null, so a lookahead
+     * question is asked straight rather than through a `?->… ?? false`.
+     */
+    private function peek(): Lexeme
     {
-        return $this->lexemes[$this->pos] ?? null;
+        return $this->at(0);
     }
 
-    private function at(int $offset): ?Lexeme
+    /**
+     * The token $offset ahead of the cursor — {@see Lexeme::none} past the end.
+     */
+    private function at(int $offset): Lexeme
     {
-        return $this->lexemes[$this->pos + $offset] ?? null;
+        return $this->lexemes[$this->pos + $offset] ?? Lexeme::none(strlen($this->source));
     }
 
     private function advance(): Lexeme
@@ -1177,12 +1202,12 @@ final class Parser
 
     private function atId(string $value): bool
     {
-        return $this->peek()?->isIdentifier($value) ?? false;
+        return $this->peek()->isIdentifier($value);
     }
 
     private function atPunct(string $value): bool
     {
-        return $this->peek()?->isPunct($value) ?? false;
+        return $this->peek()->isPunct($value);
     }
 
     private function expectPunct(string $value): void

@@ -17,6 +17,13 @@ final class Token
     public const string STRING = 'string';
     public const string NUMBER = 'num';
 
+    /**
+     * PAST THE END. Not a kind any lexer emits — the kind the token a parser asks for when there
+     * is none wears, so "is the next token a `,`?" is answered with `false` rather than a null a
+     * caller has to defend against.
+     */
+    public const string NONE = 'none';
+
     // ---- punctuation ----------------------------------------------------------
     public const string PAREN_OPEN = '(';
     public const string PAREN_CLOSE = ')';
