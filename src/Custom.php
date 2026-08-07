@@ -22,8 +22,8 @@ final class Custom
     private static array $loaded = [];
 
     /**
-     * The project's own {@see Skill} classes — each published to `.claude/skills/commandments-<slug>/`
-     * on sync, exactly like a shipped one.
+     * The project's own {@see Skill} classes — each published into the project's skill library on
+     * sync, exactly like a shipped one.
      *
      * @return list<Skill>
      */

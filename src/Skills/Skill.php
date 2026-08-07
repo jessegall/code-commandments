@@ -71,10 +71,10 @@ abstract class Skill
     }
 
     /**
-     * The skill's flat, loadable id — the `.claude/skills/<id>/` directory it's published
-     * to AND its `SKILL.md` frontmatter `name`, so the Skill tool can find it. Claude Code
-     * discovers skills one level deep, so the engine/slug is flattened with `-`:
-     * `backend/absence` → `commandments-backend-absence`.
+     * The skill's flat, loadable id — the directory it is published to in the library AND its
+     * `SKILL.md` frontmatter `name`, which agents require to agree. They discover skills one level
+     * deep, so the engine/slug is flattened with `-`: `backend/absence` →
+     * `commandments-backend-absence`.
      */
     public function id(): string
     {
@@ -82,9 +82,9 @@ abstract class Skill
     }
 
     /**
-     * The loadable id for a bare slug — the same flatten every consumer of "how a skill is named for the
-     * Skill tool" shares (the report that tells an agent which skill to load, the publisher that writes the
-     * directory), so the invocation name has ONE home and never drifts from where the skill is published.
+     * The loadable id for a bare slug — the same flatten every consumer of "how a skill is named"
+     * shares (the report that tells an agent which skill to load, the publisher that writes the
+     * directory), so the id has ONE home and never drifts from where the skill is published.
      */
     public static function idFor(string $slug): string
     {
@@ -92,11 +92,22 @@ abstract class Skill
     }
 
     /**
-     * The skill rendered as a briefing bullet — by the id the Skill tool loads.
+     * The skill rendered as a briefing bullet — by the id an agent loads it with.
      */
     public function bullet(): string
     {
         return "- **`{$this->id()}`** — {$this->summary()}";
+    }
+
+    /**
+     * Tell an agent to load the skill for $slug — the ONE wording, so the console report, the
+     * checklist and the scaffolder all say it the same way. It names the skill and stops: HOW a
+     * skill is loaded differs per agent (a tool, a `/`-command, reading the file), and naming one
+     * agent's mechanism is an instruction the others cannot follow.
+     */
+    public static function loadInstruction(string $slug): string
+    {
+        return 'LOAD the skill `' . self::idFor($slug) . '` before fixing';
     }
 
     /**

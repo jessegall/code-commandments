@@ -244,6 +244,31 @@ or `commands:all`) — which `composer sins` fills from the live CLI; `HelpTest`
 block is stale or any command declares no help. So adding a subcommand means adding ONE `->form(...)`
 line, and it appears everywhere.
 
+**🤖 An AGENT is a class — `src/Agents/`.** The disciplines are documents, not one assistant's
+format, so they are published ONCE into the project's skill library (`.agents/skills/`,
+{@see Workspace::LIBRARY}) and every agent is pointed at it: Codex reads that folder natively, Claude
+Code gets a per-skill **symlink** into `.claude/skills/` ({@see Agents\SkillLink} — relative on POSIX,
+absolute on Windows whose `symlink` resolves a relative target against the process cwd, with a
+content-idempotent copy fallback where the filesystem has no links). An {@see Agents\Agent} states only
+what actually differs — the folder it discovers skills in, the file it reads instructions from, whether
+it `enforces()` via hooks — so a new assistant is a class, never a branch in `Sync`; the catalog is the
+agent twin of the sin/detector/skill ones, auto-enrolling like SKILLS (a project's own lives in
+`.commandments/custom/`, and `$config->disable(...)` turns one off). **Hooks stay Claude-only** — they
+need a harness event protocol and the `$CLAUDE_PROJECT_DIR` anchor — which is the difference between a
+discipline that is ENFORCED and one merely written down; say so rather than implying parity.
+
+**📄 The briefing is `AGENTS.md`; `CLAUDE.md` imports it.** {@see Skills\Briefing} renders the canon,
+addressed to no agent in particular, into `AGENTS.md`; an agent that cannot read it declares its own
+file, and Claude's is `@AGENTS.md` plus what is true only there (the Skill tool, `TodoWrite`, hooks).
+The canon is written and verified BEFORE any pointer to it. Both go through {@see Agents\Instructions},
+which is the ONE rule about a file the user owns: **inject, never overwrite.** Markers are line-anchored
+(our own docs SHOW them, so a quoted one is prose), anything ambiguous — two blocks, a BEGIN with no
+END, an END above its BEGIN — REFUSES to write and says why, a file with no block is APPENDED to (never
+"after the first line", which lands inside front-matter or an open code fence), line endings/BOM are
+preserved, a path resolving outside the project is left alone, and sameness is decided by inode
+(`realpath` strings answer `false === false` on a fresh project and ignore case-insensitive collisions).
+Writes go through {@see Support\File::write} (temp + rename) under a per-project sync lock.
+
 **Plan execution — the `executing-plans` discipline.** On plan approval a `PostToolUse`/
 `ExitPlanMode` hook loads the standalone `executing-plans` skill and injects the project's
 profile; the agent then branches, works phase-by-phase (scoped tests + `checks phase`, commit

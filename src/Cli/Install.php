@@ -26,7 +26,7 @@ final class Install implements Command
 
     public function help(): Help
     {
-        return Help::of('Wire a consumer project up once — the composer sync hook, the Claude Code hook suite (cardinal-rule reminder, judge nudge, plan-execution hooks) and .gitignore — then sync.')
+        return Help::of('Wire a consumer project up once — the composer sync hook, every agent it supports (skills, AGENTS.md, and under Claude Code the hook suite) and .gitignore — then sync.')
             ->form('install', 'wire it (idempotent; every hook we write is stamped, so your own hooks are never touched)');
     }
 

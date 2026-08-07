@@ -78,7 +78,7 @@ for the rules the package ships and refuses a project-local one.
 **The Skill teaches.** It is what a finding sends the reader to, and the source of truth for what
 good looks like. You write the prose (`title`, `trigger`, `intro`, `summary`, `principle`); the
 rules, examples and checklist are **projected from its sins** on every `sync`, so they cannot
-drift. Its `SKILL.md` is generated into `.claude/skills/commandments-<slug>/` — **edit the class,
+drift. Its `SKILL.md` is generated into the project's skill library as `commandments-<slug>` — **edit the class,
 never the markdown.** Point at a shipped skill instead when your rule belongs to a discipline that
 already exists.
 

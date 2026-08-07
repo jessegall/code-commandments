@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Agents\Catalog as Agents;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
@@ -37,6 +38,8 @@ final class DisableMenu
 
     private const string HOOKS_VAR = 'disabledHooks';
 
+    private const string AGENTS_VAR = 'disabledAgents';
+
     private const string PACKAGE_NS = 'JesseGall\\CodeCommandments\\';
 
     private const string BACKEND_SEPARATOR = '// ----------[ Backend ]----------';
@@ -65,9 +68,9 @@ final class DisableMenu
             return;
         }
 
-        $this->ensureImport('Skills');
-        $this->ensureImport('Sins');
-        $this->ensureImport('Hooks');
+        foreach ($this->menus() as $menu) {
+            $this->ensureImport($menu['import']);
+        }
 
         foreach ($this->menus() as $menu) {
             $this->ensureDefinition($menu['var'], $menu['purpose'], $menu['refs'], $menu['grouped']);
@@ -84,19 +87,35 @@ final class DisableMenu
     // ----------[ Menu contents ]----------
 
     /**
-     * The menus this manages, each self-describing: its closure variable, its one-line purpose, the
-     * canonical references it lists, and whether those group by engine. Rules (skills, sins) group
-     * Backend/Frontend; hooks are engine-agnostic, so their menu is a flat list.
+     * The menus this manages, each self-describing: its closure variable, the namespace it needs
+     * imported, its one-line purpose, the canonical references it lists, and whether those group by
+     * engine. Rules (skills, sins) group Backend/Frontend; hooks and agents are engine-agnostic, so
+     * their menus are flat lists.
      *
-     * @return list<array{var: string, purpose: string, refs: list<string>, grouped: bool}>
+     * EVERY pass reads this one list — the import, the definition, the `use (…)` clause, the call
+     * and the reconcile. A menu declared here but missing from one of those passes would be written
+     * into the config and never invoked: a silently dead switch, which `php -l` cannot see.
+     *
+     * @return list<array{var: string, import: string, purpose: string, refs: list<string>, grouped: bool}>
      */
     private function menus(): array
     {
         return [
-            ['var' => self::SKILLS_VAR, 'purpose' => 'Uncomment a line to disable that skill (every detector it teaches).', 'refs' => $this->skillRefs(), 'grouped' => true],
-            ['var' => self::SINS_VAR, 'purpose' => 'Uncomment a line to disable that single sin.', 'refs' => $this->sinRefs(), 'grouped' => true],
-            ['var' => self::HOOKS_VAR, 'purpose' => 'Uncomment a line to disable that Claude Code hook (a wired nudge).', 'refs' => $this->hookRefs(), 'grouped' => false],
+            ['var' => self::SKILLS_VAR, 'import' => 'Skills', 'purpose' => 'Uncomment a line to disable that skill (every detector it teaches).', 'refs' => $this->skillRefs(), 'grouped' => true],
+            ['var' => self::SINS_VAR, 'import' => 'Sins', 'purpose' => 'Uncomment a line to disable that single sin.', 'refs' => $this->sinRefs(), 'grouped' => true],
+            ['var' => self::HOOKS_VAR, 'import' => 'Hooks', 'purpose' => 'Uncomment a line to disable that Claude Code hook (a wired nudge).', 'refs' => $this->hookRefs(), 'grouped' => false],
+            ['var' => self::AGENTS_VAR, 'import' => 'Agents', 'purpose' => 'Uncomment a line to stop publishing into that agent (its skills, its instructions file, its hooks).', 'refs' => $this->agentRefs(), 'grouped' => false],
         ];
+    }
+
+    /**
+     * Every shipped agent as a package-relative class reference.
+     *
+     * @return list<string>
+     */
+    private function agentRefs(): array
+    {
+        return $this->refs(array_map(static fn (object $agent): string => $agent::class, Agents::all()));
     }
 
     /**
@@ -249,7 +268,7 @@ final class DisableMenu
      */
     private function ensureUseClause(): void
     {
-        foreach ([self::SKILLS_VAR, self::SINS_VAR, self::HOOKS_VAR] as $var) {
+        foreach (array_column($this->menus(), 'var') as $var) {
             $closure = $this->returnClosure();
 
             if ($this->carries($closure, $var)) {
@@ -275,7 +294,7 @@ final class DisableMenu
      */
     private function ensureCalls(): void
     {
-        foreach ([self::SKILLS_VAR, self::SINS_VAR, self::HOOKS_VAR] as $var) {
+        foreach (array_column($this->menus(), 'var') as $var) {
             $closure = $this->returnClosure();
             $body = substr($this->source(), $closure->getStartFilePos(), $closure->getEndFilePos() - $closure->getStartFilePos());
 

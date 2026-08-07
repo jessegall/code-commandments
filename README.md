@@ -20,6 +20,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Freezing a file](#freezing-a-file)
+- [Agents](#agents)
 - [Hooks](#hooks)
 - [How detectors are tested](#how-detectors-are-tested)
 - [Skills](#skills)
@@ -123,8 +124,8 @@ Exit code is non-zero when sins are found.
 | `commandments report --reason="…" --ref=PATH:LINE` | File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug. |
 | `commandments feature-request --title="…" --reason="…"` | File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule. |
 | `commandments freeze <path>` | Mark a file intentionally immutable, or lift the mark. A frozen file is still scanned (so cross-file rules stay correct) but never flagged and never rewritten. |
-| `commandments sync` | Refresh this project's code-commandments integration — publish the skills, refresh the CLAUDE.md briefing and the config surface, and wire the Claude Code hooks. |
-| `commandments install` | Wire a consumer project up once — the composer sync hook, the Claude Code hook suite (cardinal-rule reminder, judge nudge, plan-execution hooks) and .gitignore — then sync. |
+| `commandments sync` | Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them. |
+| `commandments install` | Wire a consumer project up once — the composer sync hook, every agent it supports (skills, AGENTS.md, and under Claude Code the hook suite) and .gitignore — then sync. |
 | `commandments remind` | PostToolUse hook that counts tool uses and surfaces the cardinal rule once every INTERVAL—a steady heartbeat keeping 'trace to the source' present. |
 | `commandments judge-reminder` | A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set. |
 | `commandments plan-reminder` | The plan-execution Hook wired to `PostToolUse/ExitPlanMode` and `Stop`. |
@@ -263,12 +264,68 @@ Freeze only what is genuinely immutable. A finding you disagree with belongs in 
 `report`; a rule you want off belongs in `disable` — freezing is for files that by
 their nature cannot move.
 
+## Agents
+
+The disciplines are documents, not one assistant's format — so they are published
+once and every agent reads the same copy.
+
+`install` (and every `composer update`, via `sync`) writes the skills into your
+project's `.agents/skills/` library and points each agent at them. Nothing to
+configure: an agent enrols itself, and `$config->disable(\JesseGall\CodeCommandments\Agents\CodexAgent::class)`
+turns one off like any other rule.
+
+<!-- BEGIN: agents-table (auto-generated, run `composer readme`) -->
+| Agent | Skills | Instructions | Enforced by hooks | What it gets |
+|---|---|---|---|---|
+| **Claude Code** | `.claude/skills` _(links)_ | `CLAUDE.md` | yes | skills, `CLAUDE.md` (imports `AGENTS.md`), and the hooks — the only agent whose disciplines are enforced rather than only written down |
+| **Codex** | `.agents/skills` _(read directly)_ | `AGENTS.md` | no | skills and `AGENTS.md`, both read where they already live — no links, no hooks |
+<!-- END: agents-table -->
+
+The briefing splits the same way. **`AGENTS.md`** carries the canon — the cardinal
+rule, the skills to load, the checklist workflow — addressed to no agent in
+particular, and read natively by Codex, Cursor, Copilot and the rest of the
+`AGENTS.md` ecosystem. **`CLAUDE.md`** is a thin file that imports it (`@AGENTS.md`)
+and adds only what is true in that harness. Both are **injected, never overwritten**:
+a block between markers, appended if your file has none, and every other line of
+your own left exactly as it was.
+
+Your project writes its own agent the same way it writes its own rules — an
+`Agents\Agent` subclass in `.commandments/custom/`, discovered beside the shipped
+ones.
+
+### Hooks are Claude Code only
+
+A hook needs a harness that fires events at us — `PostToolUse`, `Stop`,
+`UserPromptSubmit` — and hands over a project root to anchor on. Claude Code offers
+that protocol; Codex has a rich customisation stack of its own (skills, MCP,
+subagents, `config.toml`) but no hook events, so there is nothing to wire.
+
+That difference is worth being plain about, because it is the difference between a
+discipline that is **enforced** and one that is merely **written down**. Under Claude
+Code the cardinal rule resurfaces as you work, `judge` is nudged before risky
+commands and on stop, an approved plan is ground to completion, and a standing
+`until` condition holds every stop until it has been verified. Under any other agent
+all of that is still available — the skills, `AGENTS.md`, and `judge` / `repent` /
+`until` / `plan` as ordinary CLI verbs — but nothing checks that the agent used them.
+
+One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`
+([`Workspace`](src/Workspace.php)), so under another agent every run shares the
+`default` session folder. Fine for one session at a time; concurrent runs would
+share a checklist.
+
+**Migrating from an older release.** It happens on the next `composer update`, with
+nothing to configure: the skills move to the library, `.claude/skills/` becomes
+links, the inline `CLAUDE.md` briefing becomes the `@AGENTS.md` import, and the
+ignore rules are corrected. Expect a one-time diff — files genuinely move, and if
+you had force-committed `.claude/skills/` you will see those deletions.
+
 ## Hooks
 
 `install` (and every `composer update`, via `sync`) wires a set of **Claude Code
 hooks** into `.claude/settings.json`: the cardinal-rule reminder, the "did you
 judge?" nudge, and the plan-execution hooks. They self-heal: a hook change reaches
-every project on the next `composer update`.
+every project on the next `composer update`. They are Claude Code only — see
+[Agents](#agents) for what that means under a different assistant.
 
 **Your own hooks are never touched.** Every wired command carries a
 `# @code-commandments-managed` stamp, and re-wiring strips only stamped commands.

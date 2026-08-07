@@ -96,6 +96,11 @@ final class ClaudeAgent extends Agent
         ];
     }
 
+    public function enforces(): bool
+    {
+        return true;
+    }
+
     public function wire(string $root): bool
     {
         return HookRegistry::wire("{$root}/.claude/settings.json", HookRegistry::forProject($root));

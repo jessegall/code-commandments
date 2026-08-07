@@ -37,7 +37,7 @@ final class Sync implements Command
 
     public function help(): Help
     {
-        return Help::of("Refresh this project's code-commandments integration — publish the skills, refresh the CLAUDE.md briefing and the config surface, and wire the Claude Code hooks.")
+        return Help::of("Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them.")
             ->form('sync', 'run it (idempotent; composer runs it for you on every install/update once `install` has wired it)');
     }
 

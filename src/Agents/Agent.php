@@ -83,6 +83,16 @@ abstract class Agent
     }
 
     /**
+     * Does this agent's harness ENFORCE the disciplines rather than only carry them? True when it
+     * offers a hook protocol we can wire into, so a rule can hold the agent to something. Stated
+     * rather than inferred from {@see wire}, because the docs must answer it without running it.
+     */
+    public function enforces(): bool
+    {
+        return false;
+    }
+
+    /**
      * Anything else this agent needs wired into the project — hooks, settings — done once per sync.
      * Returns whether it changed something. Most agents have nothing here: a hook protocol is a
      * thing an assistant either offers or doesn't.

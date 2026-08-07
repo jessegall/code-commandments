@@ -84,7 +84,7 @@ final class SinReport
 
         foreach ($this->bySkill as $skill => $findings) {
             $lines[] = "\n\033[1;33m{$skill}\033[0m  (" . count($findings) . ')';
-            $lines[] = "  \033[1;36m↳ LOAD this skill before fixing: invoke the Skill tool → " . Skill::idFor($skill) . "\033[0m";
+            $lines[] = "  \033[1;36m↳ " . Skill::loadInstruction($skill) . "\033[0m";
             $lines[] = "    \033[2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.\033[0m";
 
             if ($this->hasCustom($findings)) {
@@ -117,7 +117,7 @@ final class SinReport
     }
 
     /**
-     * The Markdown task list: LOAD the section's skill (via the Skill tool), fix the sin at `file:line`,
+     * The Markdown task list: LOAD the section's skill, fix the sin at `file:line`,
      * delete the line. When it's empty, a clean re-run deletes the file.
      */
     public function checklist(): string
@@ -129,7 +129,7 @@ final class SinReport
             . "`?? default`, a cast, or a null-check.\n\n"
             . "**This file is your worklist. Work it straight down, deleting as you go — do NOT "
             . "stop to re-check.** For each line, top to bottom, do exactly this:\n\n"
-            . "1. **LOAD the skill named in the section header — invoke the Skill tool with it.** It "
+            . "1. **LOAD the skill named in the section header.** It "
             . "teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat "
             . "it as NOT loaded (a context compaction may have silently dropped its instructions while "
             . "leaving you the impression they're still there) and load it again before touching the "
@@ -148,7 +148,7 @@ final class SinReport
 
         foreach ($this->bySkill as $skill => $findings) {
             $out .= "\n## {$skill}\n\n"
-                . "> ▶ **Load this skill first — invoke the Skill tool: `" . Skill::idFor($skill) . "`.** "
+                . "> ▶ **" . Skill::loadInstruction($skill) . ".** "
                 . "It teaches every fix below. Don't work from memory, and don't assume it's still loaded "
                 . "from earlier — a compaction can drop it silently — load it again if in any doubt.\n\n";
 

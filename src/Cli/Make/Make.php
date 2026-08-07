@@ -189,7 +189,7 @@ final class Make implements Command
     {
         $steps = [];
 
-        $steps[] = "\033[1mLoad the skill\033[0m — Skill tool → \033[36mcommandments-writing-detectors\033[0m. It lists the engine\n"
+        $steps[] = "\033[1mLoad the skill\033[0m \033[36mcommandments-writing-detectors\033[0m. It lists the engine\n"
             . "     predicates that ALREADY exist; hand-rolling one that does is the mistake this command exists to prevent.";
 
         if ($blueprint->skill !== null) {

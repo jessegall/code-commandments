@@ -46,9 +46,11 @@ final class GeneratedBlock
 
         // $content verbatim between the two marker LINES — it arrives with the blank lines its
         // author wants around it, and a block that reflows on every refresh is a block that shows
-        // up in every diff.
+        // up in every diff. The one thing not left to the caller is the newline before END: without
+        // it the marker is glued onto the last line of the content and stops being a marker at all,
+        // which the NEXT refresh can only report as a broken block.
         return implode("\n", array_slice($lines, 0, $begins[0] + 1))
-            . $content
+            . (str_ends_with($content, "\n") ? $content : $content . "\n")
             . implode("\n", array_slice($lines, $ends[0]));
     }
 
