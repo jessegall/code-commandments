@@ -99,27 +99,33 @@ final class Tokenizer
         return $root;
     }
 
-    private function openTag(int $lt, string $tag): int
+    /**
+     * Where the `>` that closes an open tag sits, scanning from $from. A quoted attribute value is
+     * stepped over whole ({@see StringScan}), so the `>` in `:title="a > b"` does not end the tag —
+     * which is the only reason this is a scan and not a `strpos`. End of source when there is none.
+     */
+    private function tagEnd(int $from): int
     {
         $length = strlen($this->html);
-        $i = $lt + 1 + strlen($tag);
-        $quote = null;
 
-        while ($i < $length) {
+        for ($i = $from; $i < $length; $i++) {
             $char = $this->html[$i];
 
-            if ($quote !== null) {
-                if ($char === $quote) {
-                    $quote = null;
-                }
-            } elseif ($char === '"' || $char === "'") {
-                $quote = $char;
-            } elseif ($char === '>') {
-                break;
+            if ($char === '>') {
+                return $i;
             }
 
-            $i++;
+            if ($char === '"' || $char === "'") {
+                $i = StringScan::skip($this->html, $i, $char, $length) - 1;
+            }
         }
+
+        return $length;
+    }
+
+    private function openTag(int $lt, string $tag): int
+    {
+        $i = $this->tagEnd($lt + 1 + strlen($tag));
 
         $inner = substr($this->html, $lt + 1 + strlen($tag), $i - ($lt + 1 + strlen($tag)));
         $selfClosing = str_ends_with(rtrim($inner), '/');
