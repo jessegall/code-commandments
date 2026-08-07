@@ -1388,11 +1388,11 @@ final class SpatieDataNode extends NodeMatch
             return [null, null];
         }
 
-        if ($call instanceof MethodCall && AstNode::memberNameOf($call) !== null) {
-            $owner = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName());
-        } elseif (Callee::ofStaticCall($call)->isSome()) {
-            $owner = Callee::ofStaticCall($call)->unwrap()->resolvedAgainst($this->enclosingClassName())->class;
-        } else {
+        $owner = Callee::methodOfCall($call)->isSome()
+            ? TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName())
+            : Callee::ofStaticCall($call)->mapOr(null, fn (Callee $c): string => $c->resolvedAgainst($this->enclosingClassName())->class);
+
+        if ($owner === null) {
             return [null, null];
         }
 

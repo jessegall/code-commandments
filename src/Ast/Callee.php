@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
@@ -37,6 +38,20 @@ final readonly class Callee
         }
 
         return Option::some(new self(ltrim($call->class->toString(), '\\'), $call->name->toString()));
+    }
+
+    /**
+     * The METHOD a `->` call names, when it names one statically — `$order->total()` is `total`.
+     * The receiver's TYPE is the CALLER's to resolve, since each holds its own resolver and
+     * context, so this answers only the half that is written down.
+     *
+     * @return Option<string>
+     */
+    public static function methodOfCall(?Node $call): Option
+    {
+        return $call instanceof MethodCall && $call->name instanceof Identifier
+            ? Option::some($call->name->toString())
+            : Option::none();
     }
 
     /**

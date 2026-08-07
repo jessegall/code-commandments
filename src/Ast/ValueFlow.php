@@ -472,15 +472,13 @@ final class ValueFlow
      */
     private function targetParam(?Node $call, Arg $arg): ?ParamTarget
     {
-        $resolved = $this->callee($call);
+        $callee = $this->callee($call);
 
-        if ($resolved === null) {
+        if ($callee === null) {
             return null;
         }
 
-        [$fqcn, $method] = $resolved;
-        $callee = new Callee($fqcn, $method);
-        $params = array_values($this->methodNode($fqcn, $method)?->params ?? []);
+        $params = array_values($this->methodNode($callee->class, $callee->method)?->params ?? []);
 
         if ($params === []) {
             return null;
@@ -505,23 +503,21 @@ final class ValueFlow
     /**
      * The class + method a call dispatches to — a `$typed->method()`, `Class::method()`, or
      * `new Class(...)` (→ `__construct`). Null when the receiver/class can't be resolved.
-     *
-     * @return array{0: string, 1: string}|null
      */
-    private function callee(?Node $call): ?array
+    private function callee(?Node $call): ?Callee
     {
-        if ($call instanceof MethodCall && AstNode::memberNameOf($call) !== null) {
+        foreach (Callee::methodOfCall($call) as $method) {
             $type = $this->types->typeOf($call->var, $this->enclosingFunction($call), $this->enclosingClassOf($call));
 
-            return $type === null ? null : [$type, $call->name->toString()];
+            return $type === null ? null : new Callee($type, $method);
         }
 
         foreach (Callee::ofStaticCall($call) as $callee) {
-            return [$callee->class, $callee->method];
+            return $callee;
         }
 
         if ($call instanceof New_ && $call->class instanceof Name) {
-            return [ltrim($call->class->toString(), '\\'), '__construct'];
+            return new Callee(ltrim($call->class->toString(), '\\'), '__construct');
         }
 
         return null;
