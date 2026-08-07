@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Ast\TypeName;
@@ -164,7 +165,7 @@ final class ResponseSurface
 
     private static function enclosingFunction(Node $node): ?FunctionLike
     {
-        for ($current = $node->getAttribute('parent'); $current instanceof Node; $current = $current->getAttribute('parent')) {
+        foreach (AstNode::ancestorsOf($node) as $current) {
             if ($current instanceof FunctionLike) {
                 return $current;
             }
@@ -175,7 +176,7 @@ final class ResponseSurface
 
     private static function enclosingClassName(Node $node): ?string
     {
-        for ($current = $node->getAttribute('parent'); $current instanceof Node; $current = $current->getAttribute('parent')) {
+        foreach (AstNode::ancestorsOf($node) as $current) {
             if ($current instanceof ClassLike) {
                 return ($current->namespacedName ?? null)?->toString();
             }

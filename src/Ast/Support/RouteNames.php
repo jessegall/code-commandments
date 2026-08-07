@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Laravel\LaravelNode;
 use JesseGall\CodeCommandments\Ast\TypeName;
@@ -154,7 +155,7 @@ final class RouteNames
     {
         $segments = [];
 
-        for ($current = $node; $current instanceof Node; $current = $current->getAttribute('parent')) {
+        foreach (AstNode::selfAndAncestorsOf($node) as $current) {
             if (! $current instanceof FunctionLike) {
                 continue;
             }
@@ -185,7 +186,7 @@ final class RouteNames
         // Walk the whole chain, not just its method links: `Route::name('admin.')->group(…)` carries the
         // prefix on the STATIC call at the root, while `Route::prefix('x')->name('admin.')->group(…)`
         // carries it on a method link partway down.
-        for ($link = $group; $link instanceof Node; $link = $link instanceof MethodCall ? $link->var : null) {
+        foreach (AstNode::chainLinks($group) as $link) {
             if (self::callName($link) === 'name') {
                 return self::literalArg($link) ?? '';
             }
@@ -235,9 +236,7 @@ final class RouteNames
      */
     private static function rootsAtRouter(Node $node): bool
     {
-        for ($link = $node; $link instanceof MethodCall; $link = $link->var) {
-            // walk to the root of the chain
-        }
+        $link = AstNode::chainRootOf($node);
 
         if ($link instanceof StaticCall) {
             return $link->class instanceof Name
@@ -259,7 +258,7 @@ final class RouteNames
             return false;
         }
 
-        for ($scope = $variable; $scope instanceof Node; $scope = $scope->getAttribute('parent')) {
+        foreach (AstNode::selfAndAncestorsOf($variable) as $scope) {
             if (! $scope instanceof FunctionLike) {
                 continue;
             }

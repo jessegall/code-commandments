@@ -1196,7 +1196,11 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        for ($node = $this->node?->getAttribute('parent'); $node instanceof Node && $node !== $loop; $node = $node->getAttribute('parent')) {
+        foreach (AstNode::ancestorsOf($this->node) as $node) {
+            if ($node === $loop) {
+                break;
+            }
+
             if ($node instanceof If_ || $node instanceof Else_ || $node instanceof ElseIf_ || $node instanceof Match_ || $node instanceof Ternary) {
                 return true;
             }

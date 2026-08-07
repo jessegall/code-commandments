@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\Ast\Codebase;
 
 /**
@@ -48,7 +49,7 @@ final class PhpTarget
      */
     private static function manifestFor(string $path): ?array
     {
-        for ($dir = dirname($path); $dir !== '/' && $dir !== '' && $dir !== '.'; $dir = dirname($dir)) {
+        foreach (Path::selfAndAncestors(dirname($path)) as $dir) {
             if (! is_file($dir . '/composer.json')) {
                 continue;
             }

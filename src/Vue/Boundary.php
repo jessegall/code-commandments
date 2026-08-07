@@ -656,8 +656,8 @@ final class Boundary
      */
     private function ancestorLoopVar(): Option
     {
-        for ($node = $this->node->parent; $node !== null; $node = $node->parent) {
-            $var = $node->loopVar();
+        foreach ($this->node->ancestors() as $ancestor) {
+            $var = $ancestor->loopVar();
 
             if ($var->isSome()) {
                 return $var;

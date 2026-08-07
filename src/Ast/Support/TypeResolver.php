@@ -110,11 +110,7 @@ final class TypeResolver
      */
     public function declaringClassOf(?string $fqcn, string $field): ?string
     {
-        $seen = [];
-
-        for ($class = ltrim((string) $fqcn, '\\'); $class !== '' && ! isset($seen[$class]); $class = $this->parentOf[$class] ?? '') {
-            $seen[$class] = true;
-
+        foreach ($this->ancestry($fqcn) as $class) {
             if (array_key_exists($field, $this->fieldType[$class] ?? [])) {
                 return $class;
             }
@@ -124,27 +120,39 @@ final class TypeResolver
     }
 
     /**
+     * A class and then every class it extends, nearest first — the PARENT-CLASS chain, not the AST
+     * one. It stops when the chain runs out OR loops back on itself, so a codebase whose `extends`
+     * edges form a cycle cannot hang the resolver.
+     *
+     * @return iterable<string>
+     */
+    private function ancestry(?string $fqcn): iterable
+    {
+        $seen = [];
+        $class = ltrim((string) $fqcn, '\\');
+
+        while ($class !== '' && ! isset($seen[$class])) {
+            $seen[$class] = true;
+
+            yield $class;
+
+            $class = $this->parentOf[$class] ?? '';
+        }
+    }
+
+    /**
      * The class that actually DECLARES $method reachable from $fqcn — $fqcn itself, or the nearest ancestor
      * that declares it. Lets calls to an inherited method (on different subclasses of one base) group to the
      * single owning class. Null when no class in the chain declares it.
      */
     public function declaringClassOfMethod(?string $fqcn, string $method): ?string
     {
-        $seen = [];
-        $class = ltrim((string) $fqcn, '\\');
-
-        // The PARENT-CLASS chain, not the AST one: climb until a class declares the method, the
-        // chain runs out, or it loops back on itself.
-        while ($class !== '' && ! isset($seen[$class])) {
-            $seen[$class] = true;
-
+        foreach ($this->ancestry($fqcn) as $class) {
             $owner = $this->methodDeclaredBy($class, $method, []);
 
             if ($owner !== null) {
                 return $owner;
             }
-
-            $class = $this->parentOf[$class] ?? '';
         }
 
         return null;

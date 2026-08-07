@@ -523,6 +523,19 @@ class Element
     }
 
     /**
+     * Every element ABOVE this one, innermost first, up to the fragment root — the climb
+     * "what am I inside of?", the mirror of {@see descendants}.
+     *
+     * @return iterable<Element>
+     */
+    public function ancestors(): iterable
+    {
+        for ($ancestor = $this->parent; $ancestor !== null; $ancestor = $ancestor->parent) {
+            yield $ancestor;
+        }
+    }
+
+    /**
      * Every element in this subtree, self excluded, in document order — the whole
      * reach of a component when walking it for clusters.
      *

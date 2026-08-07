@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Oracle;
 
+use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Vue\Sfc;
@@ -27,15 +28,15 @@ final class VueTscOracle implements TypeOracle
      */
     public static function locate(string $path, ?ProcessRunner $runner = null): ?self
     {
-        for ($dir = is_dir($path) ? rtrim($path, '/') : dirname($path); ; $dir = $parent) {
+        $from = is_dir($path) ? rtrim($path, '/') : dirname($path);
+
+        foreach (Path::selfAndAncestors($from) as $dir) {
             if (self::available($dir)) {
                 return new self($dir, $runner ?? new ShellProcessRunner());
             }
-
-            if (($parent = dirname($dir)) === $dir) {
-                return null;
-            }
         }
+
+        return null;
     }
 
     /**

@@ -17,4 +17,26 @@ final class Path
     {
         return str_starts_with($path, $base . '/') ? substr($path, strlen($base) + 1) : $path;
     }
+
+    /**
+     * $dir and then every directory above it, up to the filesystem root — the climb "which
+     * ancestor holds this?" behind every search for a `composer.json`, a `node_modules`, or a
+     * project root. Each of those wrote the walk out by hand, with its own idea of when to stop.
+     *
+     * @return iterable<string>
+     */
+    public static function selfAndAncestors(string $dir): iterable
+    {
+        while (true) {
+            yield $dir;
+
+            $parent = dirname($dir);
+
+            if ($parent === $dir) {
+                return;
+            }
+
+            $dir = $parent;
+        }
+    }
 }

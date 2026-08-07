@@ -82,7 +82,7 @@ final class DuplicateElementDetector implements Detector, RecurrenceDetector, Re
      */
     private function nestedInRepeat(Element $element, array $repeated): bool
     {
-        for ($ancestor = $element->parent; $ancestor !== null; $ancestor = $ancestor->parent) {
+        foreach ($element->ancestors() as $ancestor) {
             if ($ancestor->isElement() && isset($repeated[$ancestor->structureHash()])) {
                 return true;
             }

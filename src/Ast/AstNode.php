@@ -792,6 +792,55 @@ class AstNode
     }
 
     /**
+     * The same climb, starting AT a raw php-parser node — the static twin of
+     * {@see selfAndAncestors}, for an analysis whose answer may be the node it was handed
+     * ("is this call, or a call it sits inside, a route group?").
+     *
+     * @return iterable<Node>
+     */
+    public static function selfAndAncestorsOf(?Node $node): iterable
+    {
+        if (! $node instanceof Node) {
+            return;
+        }
+
+        yield $node;
+        yield from self::ancestorsOf($node);
+    }
+
+    /**
+     * Every LINK of a method-call chain, outermost first, down to the expression it is rooted in:
+     * `Route::name('admin.')->prefix('x')->group(…)` yields the `group` call, the `prefix` call,
+     * the `name` call, then the `Route::` static call. A fact can be carried on any link, so a
+     * caller that only looked at the outermost one read half the chain.
+     *
+     * @return iterable<Node>
+     */
+    public static function chainLinks(?Node $node): iterable
+    {
+        while ($node instanceof Node) {
+            yield $node;
+
+            $node = $node instanceof MethodCall || $node instanceof NullsafeMethodCall ? $node->var : null;
+        }
+    }
+
+    /**
+     * What a method-call chain is rooted IN — the static call, `new`, variable or literal the
+     * `->` links hang off. Null for no node at all.
+     */
+    public static function chainRootOf(?Node $node): ?Node
+    {
+        $root = null;
+
+        foreach (self::chainLinks($node) as $link) {
+            $root = $link;
+        }
+
+        return $root;
+    }
+
+    /**
      * Is this `??` CANCELLED by the equality it sits in — `($x ?? '') !== ''`?
      *
      * The fallback and the thing it is compared against are the same expression, so the branch it
