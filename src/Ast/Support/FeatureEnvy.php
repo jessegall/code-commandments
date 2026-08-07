@@ -202,7 +202,7 @@ final class FeatureEnvy
             }
         }
 
-        $parent = $class instanceof Class_ && $class->extends instanceof Name ? $class->extends->toString() : null;
+        $parent = AstNode::parentClassNameOf($class);
         $seen = [];
 
         while ($parent !== null && ! isset($seen[$parent])) {

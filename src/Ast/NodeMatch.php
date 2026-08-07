@@ -175,7 +175,7 @@ class NodeMatch extends AstNode implements Located
                 && $this->codebase->methodReturnsNullable($receiver, $expr->name->toString());
         }
 
-        if ($expr instanceof StaticCall && $expr->class instanceof Name && $expr->name instanceof Identifier) {
+        if (AstNode::staticCallClassNameOf($expr) !== null && AstNode::memberNameOf($expr) !== null) {
             $class = in_array($expr->class->toString(), ['self', 'static', 'parent'], true)
                 ? $this->enclosingClassName()
                 : $expr->class->toString();

@@ -502,7 +502,7 @@ final class ValueFlow
      */
     private function callee(?Node $call): ?array
     {
-        if ($call instanceof MethodCall && $call->name instanceof Identifier) {
+        if ($call instanceof MethodCall && AstNode::memberNameOf($call) !== null) {
             $type = $this->types->typeOf($call->var, $this->enclosingFunction($call), $this->enclosingClassOf($call));
 
             return $type === null ? null : [$type, $call->name->toString()];

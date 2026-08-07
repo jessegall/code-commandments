@@ -225,7 +225,7 @@ final class TypeResolver
             return ltrim($expr->class->toString(), '\\');
         }
 
-        if ($expr instanceof StaticCall && $expr->class instanceof Name && $expr->name instanceof Identifier) {
+        if (AstNode::staticCallClassNameOf($expr) !== null && AstNode::memberNameOf($expr) !== null) {
             $class = ltrim($expr->class->toString(), '\\');
             $method = $expr->name->toString();
             $return = $this->returnType[$class][$method] ?? null;
@@ -358,7 +358,7 @@ final class TypeResolver
                 $arg = $attribute->args[0]->value ?? null;
 
                 $element = match (true) {
-                    $arg instanceof ClassConstFetch && $arg->class instanceof Name => ltrim($arg->class->toString(), '\\'),
+                    ($constClass = AstNode::classConstClassOf($arg)) !== null => $constClass,
                     $arg instanceof String_ => ltrim($arg->value, '\\'),
                     default => null,
                 };
@@ -429,7 +429,7 @@ final class TypeResolver
                     continue;
                 }
 
-                if ($class instanceof Class_ && $class->extends instanceof Name) {
+                if (AstNode::parentClassNameOf($class) !== null) {
                     $this->parentOf[$fqcn] = ltrim($class->extends->toString(), '\\');
                 }
 

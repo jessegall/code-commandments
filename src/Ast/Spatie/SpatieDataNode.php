@@ -174,9 +174,9 @@ final class SpatieDataNode extends NodeMatch
     {
         $argument = $attribute->args[0]->value ?? null;
 
-        return $argument instanceof ClassConstFetch && $argument->class instanceof Name
-            ? ClassName::short($argument->class->toString())
-            : null;
+        $class = AstNode::classConstClassOf($argument);
+
+        return $class === null ? null : ClassName::short($class);
     }
 
     /**
@@ -1381,7 +1381,7 @@ final class SpatieDataNode extends NodeMatch
             return [null, null];
         }
 
-        if ($call instanceof MethodCall && $call->name instanceof Identifier) {
+        if ($call instanceof MethodCall && AstNode::memberNameOf($call) !== null) {
             $owner = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName());
         } elseif ($call instanceof StaticCall && $call->name instanceof Identifier && $call->class instanceof Name) {
             $class = $call->class->toString();

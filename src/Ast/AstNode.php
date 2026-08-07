@@ -4084,6 +4084,38 @@ class AstNode
     }
 
     /**
+     * The class of a `Class::method()` AS WRITTEN — null when the call names it dynamically. The
+     * raw-node twin of {@see staticCallClass}, which additionally resolves `self`/`static` and so
+     * needs the enclosing context this one does not have.
+     */
+    public static function staticCallClassNameOf(?Node $expr): ?string
+    {
+        return $expr instanceof StaticCall && $expr->class instanceof Name ? $expr->class->toString() : null;
+    }
+
+    /**
+     * The class a `X::class` literal names, or null for anything else — including one whose class is
+     * an expression, which no static reader can follow.
+     */
+    public static function classConstClassOf(?Node $expr): ?string
+    {
+        return $expr instanceof ClassConstFetch && $expr->class instanceof Name
+            ? ltrim($expr->class->toString(), '\\')
+            : null;
+    }
+
+    /**
+     * The name of the class $declaration extends, or null when it extends nothing (or is not a
+     * class at all).
+     */
+    public static function parentClassNameOf(?Node $declaration): ?string
+    {
+        return $declaration instanceof Class_ && $declaration->extends instanceof Name
+            ? $declaration->extends->toString()
+            : null;
+    }
+
+    /**
      * Is $expr the `null` constant, however it was cased?
      */
     public static function isNullConstant(?Node $expr): bool
