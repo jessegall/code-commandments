@@ -467,7 +467,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
     {
-        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->rendersSlots(), $boundary->contentSpan()->column(), array_keys($boundary->emitEvents()));
+        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->hasSlots(), $boundary->contentSpan()->column(), array_keys($boundary->emitEvents()));
         $draft->edit($boundary->contentSpan(), $usage);
         self::import($draft, $boundary->sfc, $component, $name);
     }

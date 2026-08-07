@@ -151,7 +151,7 @@ final class PlanReminder extends Hook
 
     private function approvedNudge(PlanProfile $plan, PlanWorkingState $working): string
     {
-        $push = $plan->pushesEachPhase() ? ', then commit and push' : ', then commit (push once at the end)';
+        $push = $plan->isEachPhasePushed() ? ', then commit and push' : ', then commit (push once at the end)';
 
         return "Code Commandments — a plan was just approved. Before writing any code, load the "
             . "`commandments-executing-plans` skill (Skill tool) and follow it. This project's plan profile:\n"
@@ -195,12 +195,12 @@ final class PlanReminder extends Hook
 
     /**
      * The working-state bullet for the approval nudge — shown only when the project opted into
-     * {@see PlanProfile::tracksWorkingState}. It tells the agent to keep the living record current after
+     * {@see PlanProfile::isWorkingStateTracked}. It tells the agent to keep the living record current after
      * each phase AND each important event, so a context compaction never loses the conversational deltas.
      */
     private function workingStateSection(PlanProfile $plan, PlanWorkingState $working): string
     {
-        if (! $plan->tracksWorkingState()) {
+        if (! $plan->isWorkingStateTracked()) {
             return '';
         }
 

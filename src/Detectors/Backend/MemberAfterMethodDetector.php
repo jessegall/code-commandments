@@ -34,7 +34,7 @@ final class MemberAfterMethodDetector implements Detector, Repentable
     {
         return $codebase
             ->whereClassMember()
-            ->where(fn (AstNode $n): bool => $n->followsAMethodInItsClass())
+            ->where(fn (AstNode $n): bool => $n->isBelowAMethodInItsClass())
             ->get();
     }
 }

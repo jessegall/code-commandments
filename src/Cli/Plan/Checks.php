@@ -53,7 +53,7 @@ final class Checks implements Command
 
     /**
      * The ordered commands for a moment — the declared bucket, plus `judge --branch` when the
-     * moment {@see Moment::appendsJudge appends it}. Pure, so the resolution is directly testable.
+     * moment {@see Moment::hasJudgeGate appends it}. Pure, so the resolution is directly testable.
      *
      * Our own calls name the executable the project at $root actually HAS ({@see Binary}), which is
      * the `vendor/` shim for a consumer and the checkout's own `bin/` for a project that is itself.
@@ -65,7 +65,7 @@ final class Checks implements Command
         $commands = $plan->checksFor($moment);
         $binary = Binary::in($root);
 
-        if ($moment->appendsJudge()) {
+        if ($moment->hasJudgeGate()) {
             $commands[] = "{$binary} judge --branch=" . $plan->baseBranch();
         }
 

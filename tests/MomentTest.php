@@ -25,8 +25,8 @@ final class MomentTest extends TestCase
 
     public function test_only_complete_appends_judge(): void
     {
-        $this->assertTrue(Moment::Complete->appendsJudge());
-        $this->assertFalse(Moment::Start->appendsJudge());
-        $this->assertFalse(Moment::Phase->appendsJudge());
+        $this->assertTrue(Moment::Complete->hasJudgeGate());
+        $this->assertFalse(Moment::Start->hasJudgeGate());
+        $this->assertFalse(Moment::Phase->hasJudgeGate());
     }
 }

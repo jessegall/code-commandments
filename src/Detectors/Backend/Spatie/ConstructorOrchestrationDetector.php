@@ -34,7 +34,7 @@ final class ConstructorOrchestrationDetector implements Detector, Repentable
     {
         return $codebase
             ->whereAssign()
-            ->where(static fn (AstNode $node): bool => $node->assignsThisProperty())
+            ->where(static fn (AstNode $node): bool => $node->isThisPropertyAssignment())
             ->where(static fn (AstNode $node): bool => $node->enclosingFunctionName() === '__construct')
             ->where(static fn (SpatieDataNode $node): bool => $node->isPageObject())
             ->where(static fn (SpatieDataNode $node): bool => $node->assignedPropertyIsPublicSlot())

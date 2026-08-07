@@ -35,7 +35,7 @@ final class MemberOutOfOrderDetector implements Detector, Repentable
     {
         return $codebase
             ->whereClassMember()
-            ->reject(fn (AstNode $n): bool => $n->followsAMethodInItsClass())
+            ->reject(fn (AstNode $n): bool => $n->isBelowAMethodInItsClass())
             ->where(fn (AstNode $n): bool => $n->breaksClassLayoutOrder())
             ->get();
     }

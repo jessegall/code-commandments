@@ -369,7 +369,7 @@ final class Boundary
      * and the call site must FORWARD the host's slots to the new component — otherwise the
      * slotted bodies render empty (the extracted component's `<slot>`s get nothing).
      */
-    public function rendersSlots(): bool
+    public function hasSlots(): bool
     {
         return $this->node->renders('slot');
     }

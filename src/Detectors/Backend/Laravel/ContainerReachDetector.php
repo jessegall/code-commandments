@@ -44,7 +44,7 @@ final class ContainerReachDetector implements Detector, Exemptable
             ->whereFunction('app', 'resolve')
             ->reject(static fn (AstNode $node): bool => $node->isInEnum())
             ->where(static fn (AstNode $node): bool => $node->firstArgIsClassLiteral())
-            ->reject(static fn (AstNode $node): bool => $node->resolvesEnclosingClass())
+            ->reject(static fn (AstNode $node): bool => $node->isEnclosingClassResolution())
             ->where(static fn (AstNode $node) => Container::resolves($codebase, $node->enclosingClassName()))
             ->get(), $codebase);
     }

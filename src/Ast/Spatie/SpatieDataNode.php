@@ -1276,7 +1276,7 @@ final class SpatieDataNode extends NodeMatch
      * (the mirror of {@see constructsNativeCastValue}: that constructs scalar→enum, this destructures
      * enum→scalar). The detector prefilters to a `->value` fetch; here we decide what the receiver IS.
      */
-    public function unwrapsEnumIntoItsOwnEnumSlot(): bool
+    public function isEnumUnwrapIntoItsOwnSlot(): bool
     {
         if (! $this->node instanceof PropertyFetch && ! $this->node instanceof NullsafePropertyFetch) {
             return false;

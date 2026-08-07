@@ -93,7 +93,7 @@ final class WorkingState extends Hook
     private function active(HookEvent $event): bool
     {
         return PlanMarker::inSession($event->workspace())->isActive()
-            && Config::load($event->root)->planExecutionSettings()->tracksWorkingState();
+            && Config::load($event->root)->planExecutionSettings()->isWorkingStateTracked();
     }
 
     private function shape(): string

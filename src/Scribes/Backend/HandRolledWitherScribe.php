@@ -54,7 +54,7 @@ final class HandRolledWitherScribe extends RepentScribe
         $entries = [];
 
         foreach ($new->args as $index => $arg) {
-            if (new AstNode($arg->value)->readsOwnProperty()) {
+            if (new AstNode($arg->value)->isOwnPropertyRead()) {
                 continue;
             }
 

@@ -25,7 +25,7 @@ final class PlanExecutionTest extends TestCase
 
         $this->assertSame('main', $plan->baseBranch());
         $this->assertSame('plan/', $plan->prefix());
-        $this->assertFalse($plan->pushesEachPhase(), 'push once at the end by default');
+        $this->assertFalse($plan->isEachPhasePushed(), 'push once at the end by default');
         $this->assertNull($plan->mode(), 'a plan mode is opt-in — unmanaged by default');
         $this->assertSame([], $plan->checksFor(Moment::Complete));
     }
@@ -49,9 +49,9 @@ final class PlanExecutionTest extends TestCase
 
     public function test_working_state_tracking_is_off_by_default_and_opt_in(): void
     {
-        $this->assertFalse(new PlanExecution()->build()->tracksWorkingState(), 'off by default');
-        $this->assertTrue(new PlanExecution()->trackWorkingState()->build()->tracksWorkingState());
-        $this->assertFalse(new PlanExecution()->trackWorkingState(false)->build()->tracksWorkingState());
+        $this->assertFalse(new PlanExecution()->build()->isWorkingStateTracked(), 'off by default');
+        $this->assertTrue(new PlanExecution()->trackWorkingState()->build()->isWorkingStateTracked());
+        $this->assertFalse(new PlanExecution()->trackWorkingState(false)->build()->isWorkingStateTracked());
     }
 
     public function test_test_flow_defaults_empty_and_is_carried_into_the_profile(): void
@@ -113,7 +113,7 @@ final class PlanExecutionTest extends TestCase
             ->planExecutionSettings();
 
         $this->assertSame(PlanMode::Autonomous, $plan->mode());
-        $this->assertTrue($plan->pushesEachPhase());
+        $this->assertTrue($plan->isEachPhasePushed());
         $this->assertSame(['composer test'], $plan->checksFor(Moment::Complete));
     }
 
