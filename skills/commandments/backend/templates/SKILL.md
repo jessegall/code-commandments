@@ -73,9 +73,59 @@ sit in it.
 - State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.
   _A heredoc (`<<<PHP` / `<<<'PHP'`), with the computed part as one interpolation._
 
+## Bad → good
+
+### assembled-template
+
+A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it
+
+```php
+----------[ Bad ]----------
+
+// The docblock delimiters are separate elements and the indentation is spaces
+// inside a quote — the output has to be assembled in the reader's head.
+
+public function stub(string $class): string
+{
+    $lines = [
+        '/**',
+        " * A {$class}, generated. Do not edit.",
+        ' */',
+        "final class {$class}",
+        '{',
+        '    public function handle(): void',
+        '    {',
+        '    }',
+        '}',
+    ];
+
+    return implode("\n", $lines);
+}
+
+----------[ Good ]----------
+
+// The FIX: one heredoc at the shape it emits. The docblock reads as a docblock,
+// the indentation is real whitespace, and the class name sits where it lands.
+
+public function stated(string $class): string
+{
+    return <<<PHP
+        /**
+         * A {$class}, generated. Do not edit.
+         */
+        final class {$class}
+        {
+            public function handle(): void
+            {
+            }
+        }
+        PHP;
+}
+```
+
 ## When it fires
 
-- A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it
+- A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it — `AssembledTemplateDetector`
 
 ## Checklist
 

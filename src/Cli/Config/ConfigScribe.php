@@ -205,21 +205,21 @@ final class ConfigScribe
             ? "// \$plan->onComplete('composer test');            // the end gate; judge --branch runs after"
             : '$plan->onComplete(' . $this->renderRoots($checks) . ');';
 
-        $lines = [
-            '$config->planExecution(function (\JesseGall\CodeCommandments\PlanExecution $plan): void {',
-            "        // \$plan->branchFrom('main')->branchPrefix('plan/')->pushEachPhase();  // branch + push cadence",
-            '        // $plan->mode(\JesseGall\CodeCommandments\PlanMode::Autonomous);  // Supervised | Autonomous | BestEffort | Relentless (never stop)',
-            "        // \$plan->onStart('composer install');          // once, before the first phase",
-            "        // \$plan->eachPhase('composer lint');           // after each phase — keep it fast",
-            "        {$onComplete}",
-            "        // \$plan->constraint('The frontend is presentation-only; all logic lives in the backend.');",
-            '        // $plan->enforceConstraintsEachPhase();        // force the constraint check each phase, not just at the end',
-            "        // \$plan->testFlow('Write and run the tests for each phase before committing it.');  // default test methodology, offered at approval",
-            '        // $plan->trackWorkingState();                  // keep a living working-state record that survives context compaction',
-            '    });',
-        ];
+        $block = <<<PHP
+        \$config->planExecution(function (\JesseGall\CodeCommandments\PlanExecution \$plan): void {
+                // \$plan->branchFrom('main')->branchPrefix('plan/')->pushEachPhase();  // branch + push cadence
+                // \$plan->mode(\JesseGall\CodeCommandments\PlanMode::Autonomous);  // Supervised | Autonomous | BestEffort | Relentless (never stop)
+                // \$plan->onStart('composer install');          // once, before the first phase
+                // \$plan->eachPhase('composer lint');           // after each phase — keep it fast
+                {$onComplete}
+                // \$plan->constraint('The frontend is presentation-only; all logic lives in the backend.');
+                // \$plan->enforceConstraintsEachPhase();        // force the constraint check each phase, not just at the end
+                // \$plan->testFlow('Write and run the tests for each phase before committing it.');  // default test methodology, offered at approval
+                // \$plan->trackWorkingState();                  // keep a living working-state record that survives context compaction
+            });
+        PHP;
 
-        return implode("\n", $lines) . "\n\n    ";
+        return $block . "\n\n    ";
     }
 
     /**

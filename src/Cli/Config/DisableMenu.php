@@ -214,18 +214,23 @@ final class DisableMenu
             return;
         }
 
-        $lines = [
-            '/**',
-            " * {$purpose} New entries are appended on composer update; your edits are kept.",
-            ' */',
-            "\${$var} = function (Config \$config): void {",
-            '    $config->disable(',
-            ...array_map(static fn (string $entry): string => $entry === '' ? '' : "        {$entry}", $this->entries($refs, $grouped)),
-            '    );',
-            '};',
-        ];
+        $entries = implode("\n", array_map(
+            static fn (string $entry): string => $entry === '' ? '' : "        {$entry}",
+            $this->entries($refs, $grouped),
+        ));
 
-        $this->splice($this->returnStatement()->getStartFilePos(), implode("\n", $lines) . "\n\n");
+        $definition = <<<PHP
+            /**
+             * {$purpose} New entries are appended on composer update; your edits are kept.
+             */
+            \${$var} = function (Config \$config): void {
+                \$config->disable(
+            {$entries}
+                );
+            };
+            PHP;
+
+        $this->splice($this->returnStatement()->getStartFilePos(), $definition . "\n\n");
     }
 
     /**

@@ -10,13 +10,12 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\AssembledTemplate;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Unpublished;
 
 /**
  * Detects a fixed multi-line template built as an array of line fragments and joined with a
  * newline. Points at backend/templates.
  */
-final class AssembledTemplateDetector implements Detector, Unpublished
+final class AssembledTemplateDetector implements Detector
 {
     /**
      * Fewer lines than this is a pair, not a template — its shape is already visible.
