@@ -260,8 +260,7 @@ final class DataHintScribe extends Scribe
 
             $block .= "{$indent} */\n";
 
-            // A pure insertion replaces nothing: end before start so no char is eaten.
-            return new Edit($insertAt, $insertAt - 1, $block);
+            return Edit::insertAt($insertAt, $block);
         }
 
         $kept = [];
@@ -285,7 +284,7 @@ final class DataHintScribe extends Scribe
 
         $kept[] = $closing;
 
-        return new Edit($doc->getStartFilePos(), $doc->getEndFilePos(), implode("\n", $kept));
+        return $this->replaceNode($doc, implode("\n", $kept));
     }
 
     /**

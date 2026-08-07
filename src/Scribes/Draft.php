@@ -22,7 +22,7 @@ final class Draft
     private array $sources = [];
 
     /**
-     * @var array<string, list<array{start: int, end: int, text: string}>>
+     * @var array<string, list<Edit>>  path => the replacements drafted against it
      */
     private array $edits = [];
 
@@ -129,11 +129,11 @@ final class Draft
     public function edit(Span $span, string $text): self
     {
         $this->sources[$span->path] = $span->source;
-        $edit = ['start' => $span->start, 'end' => $span->end, 'text' => $text];
+        $edit = new Edit($span->start, $span->end, $text);
 
         // Identical edits collapse — two occurrences importing the same component at
         // the same offset is one import, not two.
-        if (! in_array($edit, $this->edits[$span->path] ?? [], true)) {
+        if (! array_any($this->edits[$span->path] ?? [], $edit->equals(...))) {
             $this->edits[$span->path][] = $edit;
         }
 
@@ -161,21 +161,18 @@ final class Draft
         $rewrites = $this->creates;
 
         foreach ($this->edits as $path => $edits) {
-            // Right-to-left; at a shared start apply the WIDER edit first so a zero-width insert
-            // (e.g. stamp an attribute) composes with an abutting replace (e.g. drop a modifier)
-            // that begins at the same offset, instead of one being skipped as an overlap.
-            usort($edits, static fn (array $a, array $b): int => ($b['start'] <=> $a['start']) ?: ($b['end'] <=> $a['end']));
+            usort($edits, Edit::lastFirst(...));
 
             $source = $this->sources[$path];
             $consumed = strlen($source) + 1;
 
             foreach ($edits as $edit) {
-                if ($edit['end'] > $consumed) {
+                if ($edit->end > $consumed) {
                     continue; // overlaps a region already rewritten (a nested finding)
                 }
 
-                $source = substr($source, 0, $edit['start']) . $edit['text'] . substr($source, $edit['end']);
-                $consumed = $edit['start'];
+                $source = $edit->appliedTo($source);
+                $consumed = $edit->start;
             }
 
             $rewrites[$path] = $source;

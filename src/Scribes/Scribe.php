@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Scribes;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
+use PhpParser\Comment;
 use PhpParser\Node;
 
 /**
@@ -32,20 +33,22 @@ abstract class Scribe
      */
     protected function applyEdits(string $source, array $edits): string
     {
-        usort($edits, static fn (Edit $a, Edit $b): int => $b->start <=> $a->start);
+        usort($edits, Edit::lastFirst(...));
 
         foreach ($edits as $edit) {
-            $source = substr($source, 0, $edit->start) . $edit->text . substr($source, $edit->end + 1);
+            $source = $edit->appliedTo($source);
         }
 
         return $source;
     }
 
     /**
-     * An edit that replaces a node's source span with $text.
+     * An edit that replaces the source a node — or a docblock, which carries the same span and is
+     * not a node — occupies. php-parser reports an INCLUSIVE end and an {@see Edit}'s is half-open,
+     * so this is the ONE place that conversion is written.
      */
-    protected function replaceNode(Node $node, string $text): Edit
+    protected function replaceNode(Node|Comment $node, string $text): Edit
     {
-        return new Edit($node->getStartFilePos(), $node->getEndFilePos(), $text);
+        return new Edit($node->getStartFilePos(), $node->getEndFilePos() + 1, $text);
     }
 }
