@@ -16,4 +16,14 @@ final readonly class HookBinding
         public string $event,
         public ?string $matcher = null,
     ) {}
+
+    /**
+     * How this binding is written where a reader meets it — `PostToolUse`, or
+     * `PostToolUse/ExitPlanMode` when a matcher scopes it. The binding's own spelling, so a
+     * catalogue listing them does not re-derive it.
+     */
+    public function label(): string
+    {
+        return $this->matcher === null ? $this->event : "{$this->event}/{$this->matcher}";
+    }
 }

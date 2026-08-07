@@ -218,11 +218,7 @@ final class PlanReminder extends Hook
      */
     private function constraintsSection(PlanProfile $plan): string
     {
-        $global = '';
-
-        foreach ($plan->constraints() as $rule) {
-            $global .= "\n    - {$rule}";
-        }
+        $global = $plan->constraintBullets();
 
         return "\n• Constraints: ask the user (AskUserQuestion) whether this run has any architectural "
             . "constraints to hold to — invariants `judge` can't check (e.g. \"no logic in the frontend\") — "

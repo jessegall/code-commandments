@@ -185,4 +185,22 @@ final class State
 
         return Line::flatten((string) $value);
     }
+
+    /**
+     * Every value as a `name<sep>value` line, in declaration order — the state's own contents,
+     * written out. The FORMAT is the file's ({@see StateFile} passes its separator); which values
+     * there are, and in what order, is the state's.
+     *
+     * @return list<string>
+     */
+    public function assignments(string $separator): array
+    {
+        $lines = [];
+
+        foreach ($this->values as $name => $value) {
+            $lines[] = $name . $separator . $value;
+        }
+
+        return $lines;
+    }
 }

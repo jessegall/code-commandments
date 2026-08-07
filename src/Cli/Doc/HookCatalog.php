@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Doc;
 
+use JesseGall\CodeCommandments\Hooks\HookBinding;
+
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use ReflectionClass;
@@ -52,11 +54,7 @@ final class HookCatalog
      */
     private static function events(Hook $hook): string
     {
-        $events = [];
-
-        foreach ($hook->bindings() as $binding) {
-            $events[] = $binding->matcher === null ? $binding->event : "{$binding->event}/{$binding->matcher}";
-        }
+        $events = array_map(static fn (HookBinding $binding): string => $binding->label(), $hook->bindings());
 
         return implode(', ', array_values(array_unique($events)));
     }

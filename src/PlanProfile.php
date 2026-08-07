@@ -96,4 +96,19 @@ final readonly class PlanProfile
     {
         return $this->trackWorkingState;
     }
+
+    /**
+     * The project's global constraints as the indented bullets a nudge prints — empty when there
+     * are none. The profile holds them, so it writes them out; a reminder says only where they go.
+     */
+    public function constraintBullets(): string
+    {
+        $bullets = '';
+
+        foreach ($this->constraints as $rule) {
+            $bullets .= "\n    - {$rule}";
+        }
+
+        return $bullets;
+    }
 }

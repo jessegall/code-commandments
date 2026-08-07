@@ -161,13 +161,7 @@ final class StateFile
      */
     private function assignments(State $state): array
     {
-        $lines = [];
-
-        foreach ($state->values() as $name => $value) {
-            $lines[] = $name . self::ASSIGN . $value;
-        }
-
-        return $lines;
+        return $state->assignments(self::ASSIGN);
     }
 
     /**
