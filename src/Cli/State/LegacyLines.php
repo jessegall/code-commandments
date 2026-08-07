@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\State;
 
 /**
- * The value lines of a marker in the OLD positional format, read BY POSITION and total at every
- * one: a file written by an older release may be shorter than the one that reads it, and a line
- * that was never written is simply the empty value for its kind.
- *
- * That answer lives here rather than at each read. A `?? ''` spelled out per line is the same
- * decision made eight times, and the eighth is the one that gets it wrong.
+ * The value lines of a marker in the OLD positional format, read by position and TOTAL at every one:
+ * a file an older release wrote may be shorter than the one reading it, so a line that was never
+ * written reads as the empty value for its kind — decided here, once, rather than at each read.
  */
 final readonly class LegacyLines
 {
