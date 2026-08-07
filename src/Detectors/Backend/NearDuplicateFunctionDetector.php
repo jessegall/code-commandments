@@ -9,6 +9,9 @@ use JesseGall\CodeCommandments\Sins\Backend\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Codebase as BaseCodebase;
+use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
+use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
@@ -24,8 +27,19 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
  * descriptor/delegate (`return <expr>;` or one call statement), a guard accessor, and a
  * `@deprecated` declaration. Points at fix-at-the-source.
  */
-final class NearDuplicateFunctionDetector implements Detector, Exemptable
+final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetector, Exemptable
 {
+    /**
+     * The bucket a finding belongs to — its literal-blind SHAPE, the same fingerprint {@see find}
+     * groups by. Declared rather than inherited from {@see RecurringPattern} because the rule here is
+     * cross-bucket: a member with a byte-identical twin belongs to the exact detector instead, which
+     * no per-bucket loop can express.
+     */
+    public function groupKey(Located $finding, BaseCodebase $codebase): ?string
+    {
+        return $finding instanceof NodeMatch ? $finding->shapeHash() : null;
+    }
+
     /**
      * Minimum body AST-node count to compare. Higher than the exact detector's
      * floor (12): a fuzzy, name-and-literal-blind match collides by coincidence far

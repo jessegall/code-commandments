@@ -46,6 +46,18 @@ abstract class Skill
     abstract public function principle(): string;
 
     /**
+     * Does this skill's worked example need its docblocks left exactly where they are?
+     *
+     * Normally a fixture's docblock is lifted into `//` lines above the snippet — it is an
+     * explanation for the reader, not part of the code being shown. For a skill ABOUT documentation
+     * the docblock is the subject: lift it and the example no longer demonstrates anything.
+     */
+    public function examplesKeepDocblocks(): bool
+    {
+        return false;
+    }
+
+    /**
      * The related skills, each `class-string<Skill>` => one-line note. Rendered into the
      * footer with the link GENERATED from the target skill's current slug — reference a
      * skill by CLASS, never a slug string, so a rename never leaves a stale link.

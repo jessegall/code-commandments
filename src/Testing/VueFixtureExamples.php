@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Vue\Codebase;
+use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\Sfc;
@@ -31,7 +32,16 @@ final class VueFixtureExamples
 
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
-            $examples[$detector::class] = ExampleText::pair(ExampleText::forKeys($sinful, $keys), ExampleText::forKeys($righteous, $keys), 'file');
+            $bad = ExampleText::forKeys($sinful, $keys);
+            $pair = ExampleText::pair($bad, ExampleText::forKeys($righteous, $keys), 'file');
+
+            // A repeated block shown once is not repeated — the same rule as the backend's
+            // duplicates, asked of the same interface, and labelled with the component it is in.
+            if ($detector instanceof RecurrenceDetector && count($bad) > 1) {
+                $pair['bad'] = ExampleText::group($bad, 'file', lift: false, open: '<!--', close: ' -->');
+            }
+
+            $examples[$detector::class] = $pair;
         }
 
         return $examples;

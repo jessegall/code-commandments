@@ -121,11 +121,11 @@ is born, and every `Command` that exists is real.
 a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world
 
 ```php
-// Bad
-/**
- * Warms the export the moment anyone builds one, so merely HAVING a LedgerExport costs a request
- * — and nothing in the code that constructed it asked for that.
- */
+----------[ Bad ]----------
+
+// Warms the export the moment anyone builds one, so merely HAVING a LedgerExport costs a request
+// — and nothing in the code that constructed it asked for that.
+
 final class LedgerExport
 {
     public function __construct(private readonly HttpClient $client, private readonly string $period)
@@ -139,11 +139,11 @@ final class LedgerExport
     }
 }
 
-// Good
-/**
- * The same export, built for free. It holds the client and does the fetching when someone asks
- * for rows, which is the moment the caller chose.
- */
+----------[ Good ]----------
+
+// The same export, built for free. It holds the client and does the fetching when someone asks
+// for rows, which is the moment the caller chose.
+
 final class LazyLedgerExport
 {
     public function __construct(private readonly HttpClient $client, private readonly string $period) {}
@@ -160,7 +160,9 @@ final class LazyLedgerExport
 Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
+// in Shop\Customers\LoyaltyDigest
 public function fingerprint(int $base, int $count): string
 {
     $total = $base;
@@ -172,7 +174,32 @@ public function fingerprint(int $base, int $count): string
     return md5((string) $total);
 }
 
-// Good
+// in Shop\Reporting\SalesDigest
+public function fingerprint(int $base, int $count): string
+{
+    $total = $base;
+
+    for ($i = 0; $i < $count; $i++) {
+        $total += $i * 2;
+    }
+
+    return md5((string) $total);
+}
+
+// in Shop\Catalog\StockDigest
+public function fingerprint(int $base, int $count): string
+{
+    $total = $base;
+
+    for ($i = 0; $i < $count; $i++) {
+        $total += $i * 2;
+    }
+
+    return md5((string) $total);
+}
+
+----------[ Good ]----------
+
 public static function of(int $base, int $count): string
 {
     $steps = array_map(static fn (int $i): int => $i * 2, range(0, max(0, $count - 1)));
@@ -186,10 +213,8 @@ public static function of(int $base, int $count): string
 `?? <empty literal>` filling a required slot (manufactured fake)
 
 ```php
-// Bad
-/**
- * @param  array<int, array<string, mixed>>  $rows
- */
+----------[ Bad ]----------
+
 public function import(array $rows): void
 {
     foreach ($rows as $row) {
@@ -203,14 +228,12 @@ public function import(array $rows): void
     }
 }
 
-// Good
-/**
- * The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
- * throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
- * that fake all the way to the import — the throw stops the row here, where the truth is known.
- *
- * @param  array<int, array<string, mixed>>  $rows
- */
+----------[ Good ]----------
+
+// The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
+// throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
+// that fake all the way to the import — the throw stops the row here, where the truth is known.
+
 public function importStrictly(array $rows): void
 {
     foreach ($rows as $row) {
@@ -226,7 +249,8 @@ public function importStrictly(array $rows): void
 a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public static function record(string $at, string $message): void
 {
     self::$entries[] = "[{$at}] {$message}";
@@ -236,7 +260,8 @@ public static function record(string $at, string $message): void
     }
 }
 
-// Good
+----------[ Good ]----------
+
 public function for(string $region): float
 {
     return $this->table[$region] ?? 1.0;
@@ -248,7 +273,9 @@ public function for(string $region): float
 Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
+// in Shop\Reporting\WeightAggregator
 public function accumulateFrom(int $start): int
 {
     $total = $start;
@@ -262,11 +289,39 @@ public function accumulateFrom(int $start): int
     return $total;
 }
 
-// Good
-/**
- * The duplicated scorers collapsed into one parameterised pass — the per-entry
- * weight is an argument, so there is no rhyming twin to extract.
- */
+// in Shop\Shipping\RouteCostEstimator
+public function estimateFrom(int $surcharge): int
+{
+    $cost = $surcharge;
+
+    foreach ($this->entries as $leg) {
+        if ($leg > 0) {
+            $cost += $leg * 3;
+        }
+    }
+
+    return $cost;
+}
+
+// in Shop\Pricing\TierScorer
+public function scoreFrom(int $seed): int
+{
+    $score = $seed;
+
+    foreach ($this->entries as $weight) {
+        if ($weight > 0) {
+            $score += $weight * 2;
+        }
+    }
+
+    return $score;
+}
+
+----------[ Good ]----------
+
+// The duplicated scorers collapsed into one parameterised pass — the per-entry
+// weight is an argument, so there is no rhyming twin to extract.
+
 public function scoreFrom(int $start, int $weight): int
 {
     return array_reduce(

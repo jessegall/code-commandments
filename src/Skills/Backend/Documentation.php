@@ -18,6 +18,16 @@ final class Documentation extends Skill
         );
     }
 
+    /**
+     * Here the docblock IS the code under discussion — a bloated one, a ceremonial one, two stacked
+     * on a declaration. Lifting it into comments above the snippet would delete the subject and
+     * leave two examples differing only in a method name.
+     */
+    public function examplesKeepDocblocks(): bool
+    {
+        return true;
+    }
+
     public function title(): string
     {
         return "Documentation — concise, present-tense, rare";

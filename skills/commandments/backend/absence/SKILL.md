@@ -96,10 +96,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present'
 
 ```php
-// Bad
-/**
- * @return array{number: string, discount?: array{coupon: string, applied: bool}}
- */
+----------[ Bad ]----------
+
 public function lines(): array
 {
     return [
@@ -108,10 +106,8 @@ public function lines(): array
     ];
 }
 
-// Good
-/**
- * @return array{key: string, label?: string, icon?: string}
- */
+----------[ Good ]----------
+
 public function toArray(): array
 {
     return Payload::of(key: $this->key, label: $this->label, icon: $this->icon);
@@ -123,17 +119,18 @@ public function toArray(): array
 Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function byBarcode(string $barcode): ?Product
 {
     return Product::query()->where('barcode', $barcode)->first();
 }
 
-// Good
-/**
- * Resolve-or-throw: a scanned barcode must exist, so the absence is decided
- * once at the source and the return type tells the truth.
- */
+----------[ Good ]----------
+
+// Resolve-or-throw: a scanned barcode must exist, so the absence is decided
+// once at the source and the return type tells the truth.
+
 public function requireByBarcode(string $barcode): Product
 {
     return Product::query()->where('barcode', $barcode)->first()
@@ -146,15 +143,8 @@ public function requireByBarcode(string $barcode): Product
 Nullable callback normalised in the body instead of a Null Object default
 
 ```php
-// Bad
-/**
- * @template T
- *
- * @param  Closure(): T  $work
- * @param  Closure(int): void|null  $onRetry
- *
- * @return T
- */
+----------[ Bad ]----------
+
 public function run(Closure $work, Closure | null $onRetry = null): mixed
 {
     while (true) {
@@ -174,14 +164,8 @@ public function run(Closure $work, Closure | null $onRetry = null): mixed
     }
 }
 
-// Good
-/**
- * @template T
- *
- * @param  Closure(): T  $work
- *
- * @return T
- */
+----------[ Good ]----------
+
 public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 {
     while (true) {
@@ -205,13 +189,15 @@ public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function locate(string $email): ?Option
 {
     return Option::none();
 }
 
-// Good
+----------[ Good ]----------
+
 public function locateHonestly(string $email): Option
 {
     return Option::fromTruthy($email);

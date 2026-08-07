@@ -51,6 +51,86 @@ final class ExampleText
     }
 
     /**
+     * A marked declaration rewritten for the docs: its leading docblock becomes plain `//` lines
+     * ABOVE the snippet, and the `@param`/`@return` tags go.
+     *
+     * The docblock on a fixture is two things at once — an explanation written for the reader of
+     * this skill, and PHP the reader has to look past to reach the code. Lifting it keeps the
+     * explanation and drops the ceremony, so the snippet under it is only ever the code the example
+     * is about. Where the docblock IS the subject (the sins about documentation itself) the caller
+     * asks for it verbatim instead: lifting it there would delete the thing being taught.
+     */
+    public static function lifted(string $source): string
+    {
+        $lines = explode("\n", ltrim($source, "\n"));
+
+        if (trim($lines[0] ?? '') !== '/**') {
+            return $source;
+        }
+
+        $prose = [];
+        $at = 1;
+
+        for (; $at < count($lines); $at++) {
+            $line = trim($lines[$at]);
+
+            if ($line === '*/') {
+                $at++;
+
+                break;
+            }
+
+            $line = trim(ltrim($line, '*'));
+
+            // A tag documents the SIGNATURE, which the snippet states for itself.
+            if ($line !== '' && ! str_starts_with($line, '@')) {
+                $prose[] = "// {$line}";
+            }
+        }
+
+        $code = array_slice($lines, $at);
+
+        return $prose === [] ? implode("\n", $code) : implode("\n", [...$prose, '', ...$code]);
+    }
+
+    /**
+     * Both halves of a pair lifted, when this skill's examples want lifting.
+     *
+     * @param  array{bad: mixed, good: mixed}  $pair
+     * @return array{bad: ?string, good: ?string}
+     */
+    public static function liftedPair(array $pair, bool $lift): array
+    {
+        return [
+            'bad' => is_string($pair['bad']) && $lift ? self::lifted($pair['bad']) : $pair['bad'],
+            'good' => is_string($pair['good']) && $lift ? self::lifted($pair['good']) : $pair['good'],
+        ];
+    }
+
+    /**
+     * Several occurrences shown as ONE example, each headed by where it lives.
+     *
+     * Some sins are a relationship rather than a property: a duplicate shown once is not a
+     * duplicate, and a reader given one copy has no way to see what it is a copy OF. So every member
+     * of the group is shown, and named, because the point is that they are in different places.
+     *
+     * @param  list<array<string, string>>  $occurrences
+     * @param  string  $key  which field names the place — the class on one engine, the file on the other
+     * @param  string  $open  how a comment opens in the language being shown, and $close how it ends
+     */
+    public static function group(array $occurrences, string $key, bool $lift, string $open = '//', string $close = ''): string
+    {
+        $blocks = [];
+
+        foreach ($occurrences as $occurrence) {
+            $source = $lift ? self::lifted($occurrence['source']) : $occurrence['source'];
+            $blocks[] = "{$open} in {$occurrence[$key]}{$close}\n{$source}";
+        }
+
+        return implode("\n\n", $blocks);
+    }
+
+    /**
      * $lines with their common leading indentation removed (blank lines ignored when measuring).
      *
      * @param  list<string>  $lines

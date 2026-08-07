@@ -73,23 +73,23 @@ the parameter to the resolved type.
 a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it)
 
 ```php
-// Bad
-/**
- * Told, not asked: the editor is what this is ABOUT, yet the signature names only the answer.
- * Every caller has to remember which of the editor's modes count — and the one that forgets
- * the panel leaves the corners tucked in mid-mode.
- */
+----------[ Bad ]----------
+
+// Told, not asked: the editor is what this is ABOUT, yet the signature names only the answer.
+// Every caller has to remember which of the editor's modes count — and the one that forgets
+// the panel leaves the corners tucked in mid-mode.
+
 public static function of(bool $tucked): string
 {
     return $tucked ? 'tight' : 'wide';
 }
 
-// Good
-/**
- * The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
- * itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
- * half-remembered copy of it, and none can forget the panel.
- */
+----------[ Good ]----------
+
+// The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
+// itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
+// half-remembered copy of it, and none can forget the panel.
+
 public static function for(KioskEditor $editor): string
 {
     return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
@@ -101,7 +101,8 @@ public static function for(KioskEditor $editor): string
 Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function priceFor(ProductCatalogue $catalogue, string $sku): int
 {
     $variant = $catalogue->variantBySku($sku);
@@ -109,11 +110,11 @@ public function priceFor(ProductCatalogue $catalogue, string $sku): int
     return $variant->basePriceCents() + $this->markupCents;
 }
 
-// Good
-/**
- * Demands the resolved variant — the caller resolves it once by sku and owns
- * the "not found" failure, so this only prices what it is handed.
- */
+----------[ Good ]----------
+
+// Demands the resolved variant — the caller resolves it once by sku and owns
+// the "not found" failure, so this only prices what it is handed.
+
 public function priceForVariant(Variant $variant): int
 {
     return $variant->basePriceCents() + $this->markupCents;

@@ -68,11 +68,11 @@ halves have an obvious name, they are already two methods — give them their na
 a method whose whole body branches on a `bool` parameter — two methods sharing one name
 
 ```php
-// Bad
-/**
- * Two announcements sharing a name. At the call site this reads `announce($msg, true)` — true
- * what? Nobody can tell without opening this method.
- */
+----------[ Bad ]----------
+
+// Two announcements sharing a name. At the call site this reads `announce($msg, true)` — true
+// what? Nobody can tell without opening this method.
+
 public function announce(string $message, bool $urgent): void
 {
     if ($urgent) {
@@ -82,11 +82,11 @@ public function announce(string $message, bool $urgent): void
     }
 }
 
-// Good
-/**
- * The same two announcements, named. The call site now says which one it wanted, and each half
- * is free to grow its own parameters without the other having to ignore them.
- */
+----------[ Good ]----------
+
+// The same two announcements, named. The call site now says which one it wanted, and each half
+// is free to grow its own parameters without the other having to ignore them.
+
 public function announceUrgently(string $message): void
 {
     $this->log->record('SIREN ' . strtoupper($message));

@@ -46,7 +46,8 @@ unit out, props in.
 A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <Dialog v-model:open="open">
   <DialogContent class="sm:max-w-md">
     <DialogHeader>
@@ -73,7 +74,8 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a
   </DialogContent>
 </Dialog>
 
-// Good
+----------[ Good ]----------
+
 <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
 ```
 
@@ -82,7 +84,8 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a
 A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <section class="order-detail__customer">
   <h2 class="section-title">Customer</h2>
   <p class="customer-name">{{ order.customer.fullName }}</p>
@@ -90,7 +93,8 @@ A CLUSTER of elements in a sizeable template all reaching deep into the same nes
   <p class="customer-phone">{{ order.customer.phone }}</p>
 </section>
 
-// Good
+----------[ Good ]----------
+
 <OrderCustomer :customer="order.customer" />
 ```
 
@@ -99,7 +103,8 @@ A CLUSTER of elements in a sizeable template all reaching deep into the same nes
 Template markup nested far too deep — extract a subtree as its own component
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <div class="settings-card__body">
   <div class="accordion">
     <div class="accordion__item">
@@ -125,7 +130,8 @@ Template markup nested far too deep — extract a subtree as its own component
   </div>
 </div>
 
-// Good
+----------[ Good ]----------
+
 <SettingsCardBody :settings="settings" />
 ```
 
@@ -134,7 +140,9 @@ Template markup nested far too deep — extract a subtree as its own component
 Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/ProductReviewList.vue -->
 <article class="review-card">
   <header class="review-head">
     <Avatar class="size-8" />
@@ -143,7 +151,55 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
   <p class="review-body">Exactly as described, shipped fast.</p>
 </article>
 
-// Good
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/ProductReviewList.vue -->
+<article class="review-card">
+  <header class="review-head">
+    <Avatar class="size-8" />
+    <strong class="review-author">Verified buyer</strong>
+  </header>
+  <p class="review-body">Exactly as described, shipped fast.</p>
+</article>
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/FilterSidebar.vue -->
+<fieldset class="filter-group">
+  <legend class="filter-legend">Brand</legend>
+  <label class="filter-option"><input type="checkbox" /> Any brand</label>
+</fieldset>
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/FilterSidebar.vue -->
+<fieldset class="filter-group">
+  <legend class="filter-legend">Brand</legend>
+  <label class="filter-option"><input type="checkbox" /> Any brand</label>
+</fieldset>
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/CheckoutPromoBanner.vue -->
+<div class="promo-strip">
+  <span class="promo-icon">%</span>
+  <strong class="promo-headline">Free shipping this week</strong>
+  <small class="promo-terms">On orders over 50.</small>
+</div>
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/BasketPromoBanner.vue -->
+<div class="promo-strip">
+  <span class="promo-icon">%</span>
+  <strong class="promo-headline">Free shipping this week</strong>
+  <small class="promo-terms">On orders over 50.</small>
+</div>
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/OrderLineItems.vue -->
+<tr class="line-item">
+  <td class="line-item__name">Sample product</td>
+  <td class="line-item__qty">1</td>
+</tr>
+
+<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/OrderLineItems.vue -->
+<tr class="line-item">
+  <td class="line-item__name">Sample product</td>
+  <td class="line-item__qty">1</td>
+</tr>
+
+----------[ Good ]----------
+
 <template v-for="review in reviews" :key="review.id">
   <article class="review-card">
     <header class="review-head">
@@ -160,10 +216,12 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
 A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <NotificationBell :items="notifications" />
 
-// Good
+----------[ Good ]----------
+
 <UserAvatar :src="avatarUrl" />
 ```
 
@@ -172,12 +230,14 @@ A prop forwarded through a chain of 2+ components, none of which read it — pip
 A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op)
 
 ```vue
-// Bad
+----------[ Bad ]----------
+
 <Collapsible v-model:open="expanded">
   <CollapsibleTrigger>Advanced</CollapsibleTrigger>
 </Collapsible>
 
-// Good
+----------[ Good ]----------
+
 <Collapsible v-model:open="panelOpen">
   <CollapsibleTrigger>Advanced</CollapsibleTrigger>
 </Collapsible>

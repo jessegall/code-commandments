@@ -51,6 +51,14 @@ final class SkillRenderer
         return implode("\n\n", array_filter($blocks, static fn (string $block): bool => $block !== '')) . "\n";
     }
 
+    /**
+     * The rule this half of an example shows, as a divider inside the fence.
+     */
+    private static function banner(string $half): string
+    {
+        return '----------[ ' . $half . ' ]----------';
+    }
+
     private function frontmatter(Skill $skill): string
     {
         // The `name` is display-only for some agents (the DIRECTORY name is the invocation) and
@@ -182,12 +190,14 @@ final class SkillRenderer
     {
         $parts = [];
 
+        // A banner rather than a `// Bad` comment: the halves are the two things a reader is here to
+        // compare, and a comment line reads as part of the code beneath it.
         if (($example['bad'] ?? null) !== null) {
-            $parts[] = "// Bad\n{$example['bad']}";
+            $parts[] = self::banner('Bad') . "\n\n{$example['bad']}";
         }
 
         if (($example['good'] ?? null) !== null) {
-            $parts[] = "// Good\n{$example['good']}";
+            $parts[] = self::banner('Good') . "\n\n{$example['good']}";
         }
 
         if ($parts === [] || $sins === []) {

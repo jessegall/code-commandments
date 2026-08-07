@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Testing;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
@@ -37,8 +38,17 @@ final class FixtureExamples
             $keys = [$detector->sin()::class, $detector::class, $detector->sin()->slug(), $detector->sin()->name()];
             $bad = ExampleText::forKeys($sinful, $keys);
             $good = ExampleText::forKeys($fixed, $keys) ?: ExampleText::forKeys($righteous, $keys);
+            $lift = ! $detector->sin()->skill()->examplesKeepDocblocks();
 
-            $examples[$detector::class] = ExampleText::pair($bad, $good, 'class');
+            $pair = ExampleText::liftedPair(ExampleText::pair($bad, $good, 'class'), $lift);
+
+            // A RECURRENCE sin is a relationship, not a property: its example is the whole GROUP, or
+            // it shows a duplicate with nothing to be a duplicate of.
+            if ($detector instanceof RecurrenceDetector && count($bad) > 1) {
+                $pair['bad'] = ExampleText::group($bad, 'class', $lift);
+            }
+
+            $examples[$detector::class] = $pair;
         }
 
         return $examples;

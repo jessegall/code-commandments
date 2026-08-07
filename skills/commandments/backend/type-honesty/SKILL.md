@@ -58,18 +58,19 @@ field, or a value object, and delete the defence.
 Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet"
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function covers(string $date): bool
 {
     return $this->period?->includes($date) ?? false;
 }
 
-// Good
-/**
- * The FIX for {@see GradeSelector}: the invariant is made CERTAIN instead of masked — the batch is
- * held non-nullable (a grading pass without one cannot be constructed), so the read is a plain
- * `$this->batch->permits($sku)` with no `?->` and no fake `?? false` answering an impossible state.
- */
+----------[ Good ]----------
+
+// The FIX for {@see GradeSelector}: the invariant is made CERTAIN instead of masked — the batch is
+// held non-nullable (a grading pass without one cannot be constructed), so the read is a plain
+// `$this->batch->permits($sku)` with no `?->` and no fake `?? false` answering an impossible state.
+
 final class OpenGradeSelector
 {
     public function __construct(private readonly ActiveBatch $batch) {}
@@ -95,10 +96,10 @@ final class OpenGradeSelector
 Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens
 
 ```php
-// Bad
-/**
- * The packing slip — carries the delivery address on to the shipment label.
- */
+----------[ Bad ]----------
+
+// The packing slip — carries the delivery address on to the shipment label.
+
 final class PackingSlip
 {
     public ?ShippingAddress $deliverTo = null;
@@ -109,12 +110,12 @@ final class PackingSlip
     }
 }
 
-// Good
-/**
- * The FIX for {@see Order}: `$shipTo` is typed `ShippingAddress` — NOT nullable. Every reader
- * already assumed it, so the type now says so and construction fails hard on a real miss instead
- * of carrying a null nobody ever guards.
- */
+----------[ Good ]----------
+
+// The FIX for {@see Order}: `$shipTo` is typed `ShippingAddress` — NOT nullable. Every reader
+// already assumed it, so the type now says so and construction fails hard on a real miss instead
+// of carrying a null nobody ever guards.
+
 final class ConfirmedOrder
 {
     public function __construct(
@@ -134,11 +135,11 @@ final class ConfirmedOrder
 An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property
 
 ```php
-// Bad
-/**
- * Decides whether a named feature is on — the default arm answers "false" for an
- * unknown flag, masking a typo as a disabled feature.
- */
+----------[ Bad ]----------
+
+// Decides whether a named feature is on — the default arm answers "false" for an
+// unknown flag, masking a typo as a disabled feature.
+
 final class FeatureGate
 {
     /** @var array<string, bool> */
@@ -191,11 +192,11 @@ final class FeatureGate
     }
 }
 
-// Good
-/**
- * The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
- * `fn () => $this->overrides` says everything the annotation did.
- */
+----------[ Good ]----------
+
+// The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
+// `fn () => $this->overrides` says everything the annotation did.
+
 public function overridesReader(): callable
 {
     return fn () => $this->overrides;
@@ -207,7 +208,8 @@ public function overridesReader(): callable
 Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function revalue(string $basis): void
 {
     $previous = $this->basis;
@@ -218,11 +220,11 @@ public function revalue(string $basis): void
     $this->basis = $previous;
 }
 
-// Good
-/**
- * The FIX: the basis is this call's input, so it stays a PARAMETER and is read from there —
- * `$this->basis` is never written, and the save/restore pair disappears with it.
- */
+----------[ Good ]----------
+
+// The FIX: the basis is this call's input, so it stays a PARAMETER and is read from there —
+// `$this->basis` is never written, and the save/restore pair disappears with it.
+
 public function revalueOn(string $basis, int $lots): void
 {
     for ($lot = 0; $lot < $lots; $lot++) {
@@ -236,7 +238,8 @@ public function revalueOn(string $basis, int $lots): void
 A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function refuse(string $reason, bool $retryable): AiReplyData
 {
     $this->refusals[] = $reason;
@@ -248,12 +251,12 @@ public function refuse(string $reason, bool $retryable): AiReplyData
     return new AiReplyData(message: '', success: false, error: $reason);
 }
 
-// Good
-/**
- * The FIX for {@see ActivateWorkflow}: the required `updatedAt` slot is handed the REAL value — the
- * command holds the clock that owns the timestamp and reads it, instead of filling the promise with
- * `''` to satisfy the signature.
- */
+----------[ Good ]----------
+
+// The FIX for {@see ActivateWorkflow}: the required `updatedAt` slot is handed the REAL value — the
+// command holds the clock that owns the timestamp and reads it, instead of filling the promise with
+// `''` to satisfy the signature.
+
 final class StampedActivateWorkflow
 {
     public function __construct(private readonly WorkflowClock $clock) {}
@@ -276,12 +279,12 @@ final class StampedActivateWorkflow
 A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax
 
 ```php
-// Bad
-/**
- * Rebuilds the SAME value object on every read — nothing comes from `$this`, so the
- * construction belongs in the constructor (a `new`/static call can't be a property
- * default), not in a per-read hook.
- */
+----------[ Bad ]----------
+
+// Rebuilds the SAME value object on every read — nothing comes from `$this`, so the
+// construction belongs in the constructor (a `new`/static call can't be a property
+// default), not in a per-read hook.
+
 final class LabelPrintDefaults
 {
     public Weight $maxParcelWeight {
@@ -309,12 +312,12 @@ final class LabelPrintDefaults
     }
 }
 
-// Good
-/**
- * The FIX for {@see TileAnimation}: the same tile with both hooks made STORED properties — the
- * constant body became a property default, the constructed one is assigned ONCE in the constructor.
- * A plain property satisfies the interface's `{ get; }` just as well as a hook did.
- */
+----------[ Good ]----------
+
+// The FIX for {@see TileAnimation}: the same tile with both hooks made STORED properties — the
+// constant body became a property default, the constructed one is assigned ONCE in the constructor.
+// A plain property satisfies the interface's `{ get; }` just as well as a hook did.
+
 final class StoredTileAnimation implements AnimatedTile
 {
     public ?string $enterEffect = null;

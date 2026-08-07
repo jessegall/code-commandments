@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Ast\NodeMatch;
 
 /**
  * Two-or-more functions/methods with an identical AST — the same code copy-pasted,
@@ -20,7 +20,7 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * declaration (a frozen snapshot you never refactor toward) are excluded, so incidental
  * likeness across independent classes isn't flagged. Points at fix-at-the-source.
  */
-final class DuplicateFunctionDetector implements Detector
+final class DuplicateFunctionDetector extends RecurringPattern
 {
     /**
      * Minimum body AST-node count for a declaration to be worth comparing — below
@@ -33,28 +33,19 @@ final class DuplicateFunctionDetector implements Detector
         return new DuplicateFunction();
     }
 
-    public function find(Codebase $codebase): array
+    protected function candidates(Codebase $codebase): array
     {
-        $byHash = [];
+        return $codebase
+            ->whereMethodDeclaration()
+            ->where(static fn (NodeMatch $match): bool => $match->bodyNodeCount() >= self::MIN_BODY_NODES)
+            ->reject(static fn (NodeMatch $match): bool => $match->isGuardedAccessor())
+            ->reject(static fn (NodeMatch $match): bool => $match->isSoleReturnExpression())
+            ->reject(static fn (NodeMatch $match): bool => $match->isDeprecated())
+            ->get();
+    }
 
-        foreach ($codebase->whereMethodDeclaration()->get() as $match) {
-            if ($match->bodyNodeCount() >= self::MIN_BODY_NODES
-                && ! $match->isGuardedAccessor()
-                && ! $match->isSoleReturnExpression()
-                && ! $match->isDeprecated()
-            ) {
-                $byHash[$match->structuralHash()][] = $match;
-            }
-        }
-
-        $findings = [];
-
-        foreach ($byHash as $matches) {
-            if (count($matches) >= 2) {
-                array_push($findings, ...$matches);
-            }
-        }
-
-        return $findings;
+    protected function fingerprint(NodeMatch $finding, Codebase $codebase): ?string
+    {
+        return $finding->structuralHash();
     }
 }

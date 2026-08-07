@@ -48,13 +48,15 @@ Inside the system, invariants throw. At the *one* untrusted edge, you catch-log-
 `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function carrierName(Shipment $shipment): string
 {
     return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
 }
 
-// Good
+----------[ Good ]----------
+
 public function carrierNameNamed(Shipment $shipment): string
 {
     return $shipment->carrier?->displayName()
@@ -67,13 +69,15 @@ public function carrierNameNamed(Shipment $shipment): string
 Message string built at the throw site (no domain values / named factory)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function carrierName(Shipment $shipment): string
 {
     return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
 }
 
-// Good
+----------[ Good ]----------
+
 public function carrierNameOrFail(Shipment $shipment): string
 {
     $carrier = $shipment->carrier ?? throw CarrierMissing::for($shipment->id);
@@ -87,10 +91,8 @@ public function carrierNameOrFail(Shipment $shipment): string
 `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)
 
 ```php
-// Bad
-/**
- * @return array<string, mixed>
- */
+----------[ Bad ]----------
+
 public function forecast(string $city): array
 {
     try {
@@ -102,10 +104,8 @@ public function forecast(string $city): array
     }
 }
 
-// Good
-/**
- * @return array<string, mixed>
- */
+----------[ Good ]----------
+
 public function forecastOrThrow(string $city): array
 {
     try {
@@ -125,7 +125,8 @@ public function forecastOrThrow(string $city): array
 Wrapping a caught exception without passing it as `previous`/cause
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function upload(string $path): void
 {
     try {
@@ -135,7 +136,8 @@ public function upload(string $path): void
     }
 }
 
-// Good
+----------[ Good ]----------
+
 public function uploadChecked(string $path): void
 {
     try {

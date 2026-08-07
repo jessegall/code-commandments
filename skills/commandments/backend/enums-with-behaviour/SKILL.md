@@ -57,10 +57,10 @@ Reach for this the moment you write:
 A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum
 
 ```php
-// Bad
-/**
- * Payment states as loose string constants — a closed set that should be a backed enum.
- */
+----------[ Bad ]----------
+
+// Payment states as loose string constants — a closed set that should be a backed enum.
+
 final class PaymentStatuses
 {
     /**
@@ -84,11 +84,11 @@ final class PaymentStatuses
     const REFUNDED = 'refunded';
 }
 
-// Good
-/**
- * The sealed set as a native backed enum — the cases now have a home for behaviour
- * and the type proves only a real band can flow through. Rates as basis points.
- */
+----------[ Good ]----------
+
+// The sealed set as a native backed enum — the cases now have a home for behaviour
+// and the type proves only a real band can flow through. Rates as basis points.
+
 enum TaxBand: int
 {
     case Standard = 2100;
@@ -102,7 +102,8 @@ enum TaxBand: int
 `$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function clearsImmediately(PaymentMethod $method): bool
 {
     // not a coincidence — card and iDEAL both clear on the same rail
@@ -113,7 +114,8 @@ public function clearsImmediately(PaymentMethod $method): bool
     return $method === PaymentMethod::Card || $method === PaymentMethod::Ideal;
 }
 
-// Good
+----------[ Good ]----------
+
 public function clearsImmediatelyClean(PaymentMethod $method): bool
 {
     if ($this->retries > 3) {
@@ -129,7 +131,8 @@ public function clearsImmediatelyClean(PaymentMethod $method): bool
 `match`/`switch` over an enum's `->value` at a call site (homeless method)
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function colour(Product $product): string
 {
     switch ($product->category->value) {
@@ -144,10 +147,10 @@ public function colour(Product $product): string
     }
 }
 
-// Good
-/**
- * The mapping lives ON the enum; the call site just asks for the colour.
- */
+----------[ Good ]----------
+
+// The mapping lives ON the enum; the call site just asks for the colour.
+
 public function colourViaEnum(Product $product): string
 {
     return $product->category->badgeColour();
@@ -159,13 +162,15 @@ public function colourViaEnum(Product $product): string
 `in_array($x, [literals])` whose literals mirror an existing enum's cases
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function allowed(string $method): bool
 {
     return in_array($method, ['card', 'ideal', 'paypal'], true);
 }
 
-// Good
+----------[ Good ]----------
+
 public function allowedClean(string $method): bool
 {
     return PaymentMethod::tryFrom($method) !== null;
@@ -177,7 +182,8 @@ public function allowedClean(string $method): bool
 `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function for(Product $product): ?string
 {
     return match ($product->priority) {
@@ -188,11 +194,11 @@ public function for(Product $product): ?string
     };
 }
 
-// Good
-/**
- * The default arm throws a named exception, so an unhandled priority fails
- * loudly instead of being swallowed into null.
- */
+----------[ Good ]----------
+
+// The default arm throws a named exception, so an unhandled priority fails
+// loudly instead of being swallowed into null.
+
 public function strictFor(Product $product): string
 {
     return match ($product->priority) {
@@ -209,7 +215,8 @@ public function strictFor(Product $product): string
 `match`/`switch` over string/int literals that mirror an existing backed enum's case values
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function endpoint(string $method): string
 {
     return match ($method) {
@@ -220,7 +227,8 @@ public function endpoint(string $method): string
     };
 }
 
-// Good
+----------[ Good ]----------
+
 public function endpointClean(PaymentMethod $method): string
 {
     return match ($method) {

@@ -141,7 +141,8 @@ page object — the composed thing on the wire — is exactly where they earn th
 A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function __construct(
     #[Hidden]
     #[FromContainer(FacetBuilder::class)]
@@ -151,12 +152,12 @@ public function __construct(
     $this->cards = $this->builder->cards();
 }
 
-// Good
-/**
- * The FIX for the same overview: every slot is a `#[Computed]` get-hook that projects itself from the
- * injected reporter, so the class declares WHAT each field is next to HOW it is projected — and the
- * constructor is left holding nothing but the seed.
- */
+----------[ Good ]----------
+
+// The FIX for the same overview: every slot is a `#[Computed]` get-hook that projects itself from the
+// injected reporter, so the class declares WHAT each field is next to HOW it is projected — and the
+// constructor is left holding nothing but the seed.
+
 #[TypeScript]
 final class ComputedOverviewPage extends Data
 {
@@ -182,12 +183,12 @@ final class ComputedOverviewPage extends Data
 A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type
 
 ```php
-// Bad
-/**
- * A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
- * with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
- * is not — one un-hidden service is enough to leak into the frontend type.
- */
+----------[ Bad ]----------
+
+// A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
+// with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
+// is not — one un-hidden service is enough to leak into the frontend type.
+
 #[TypeScript]
 final class CatalogPage extends Data
 {
@@ -219,11 +220,11 @@ final class CatalogPage extends Data
     }
 }
 
-// Good
-/**
- * The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
- * reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
- */
+----------[ Good ]----------
+
+// The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
+// reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
+
 #[TypeScript]
 final class HiddenCatalogPage extends Data
 {
@@ -262,14 +263,16 @@ final class HiddenCatalogPage extends Data
 A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 #[Computed]
 public function marker(): array
 {
     return ['lat' => $this->origin->lat, 'lng' => $this->origin->lng, 'origin' => $this->origin->label()];
 }
 
-// Good
+----------[ Good ]----------
+
 public function __construct(
     #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
     public readonly Money $priceInEuro,
@@ -283,11 +286,11 @@ public function __construct(
 A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked
 
 ```php
-// Bad
-/**
- * Slots including a typed collection, all filled straight from the injected builder in the
- * constructor — each a self-contained projection that a `#[Computed]` hook would carry.
- */
+----------[ Bad ]----------
+
+// Slots including a typed collection, all filled straight from the injected builder in the
+// constructor — each a self-contained projection that a `#[Computed]` hook would carry.
+
 final class MetricsPage extends Data
 {
     public readonly StatCard $headline;
@@ -324,12 +327,12 @@ final class MetricsPage extends Data
     }
 }
 
-// Good
-/**
- * The FIX for the same dashboard: `#[TypeScript]` on the page object, so the transformer generates the
- * frontend type the `.vue` page binds its props against — the payload contract is checked, not `any`.
- * (The reporter is injected `#[Hidden]`, so only the page data reaches that type.)
- */
+----------[ Good ]----------
+
+// The FIX for the same dashboard: `#[TypeScript]` on the page object, so the transformer generates the
+// frontend type the `.vue` page binds its props against — the payload contract is checked, not `any`.
+// (The reporter is injected `#[Hidden]`, so only the page data reaches that type.)
+
 #[TypeScript]
 final class TypedDashboardPage extends Data
 {
@@ -355,18 +358,19 @@ final class TypedDashboardPage extends Data
 A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function aiEnabled(): bool
 {
     return app(AiService::class)->isEnabled();
 }
 
-// Good
-/**
- * The FIX for the same status page: the health service is pulled through the container declaratively —
- * `#[Hidden] #[FromContainer(ContainersService::class)]` on a promoted property — so the getter reads an
- * injected collaborator instead of reaching out with `app()`.
- */
+----------[ Good ]----------
+
+// The FIX for the same status page: the health service is pulled through the container declaratively —
+// `#[Hidden] #[FromContainer(ContainersService::class)]` on a promoted property — so the getter reads an
+// injected collaborator instead of reaching out with `app()`.
+
 #[TypeScript]
 final class InjectedStatusPage extends Data
 {
@@ -392,13 +396,15 @@ final class InjectedStatusPage extends Data
 A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type
 
 ```php
-// Bad
+----------[ Bad ]----------
+
 public function __construct(
     #[WithTransformer(MoneyTransformer::class)]
     public readonly Money $price,
 ) {}
 
-// Good
+----------[ Good ]----------
+
 public function __construct(
     #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
     public readonly Money $price,
