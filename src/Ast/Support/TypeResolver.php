@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\TypeName;
+
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\ParsedFile;
@@ -497,7 +499,7 @@ final class TypeResolver
     private static function unionHasNull(Node\UnionType $type): bool
     {
         foreach ($type->types as $member) {
-            if ($member instanceof Identifier && strtolower($member->toString()) === 'null') {
+            if (TypeName::isNullMember($member)) {
                 return true;
             }
         }

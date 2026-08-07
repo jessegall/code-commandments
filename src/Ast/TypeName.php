@@ -78,7 +78,7 @@ final class TypeName
     {
         $members = array_values(array_filter(
             $type->types,
-            static fn (Node $member): bool => ! ($member instanceof Identifier && strtolower($member->toString()) === 'null'),
+            static fn (Node $member): bool => ! self::isNullMember($member),
         ));
 
         return count($members) === 1 ? $members[0] : null;
@@ -94,7 +94,7 @@ final class TypeName
             return self::class($type->type);
         }
 
-        if ($type instanceof UnionType && self::unionHasNull($type)) {
+        if (self::isNullableUnion($type)) {
             return self::singleClassOfUnion($type);
         }
 
@@ -106,7 +106,7 @@ final class TypeName
      */
     public static function isNullable(?Node $type): bool
     {
-        return $type instanceof NullableType || ($type instanceof UnionType && self::unionHasNull($type));
+        return $type instanceof NullableType || (self::isNullableUnion($type));
     }
 
     /**
@@ -118,7 +118,7 @@ final class TypeName
             return $type->type instanceof Identifier && $type->type->toString() === 'array';
         }
 
-        if ($type instanceof UnionType && self::unionHasNull($type)) {
+        if (self::isNullableUnion($type)) {
             foreach ($type->types as $member) {
                 if ($member instanceof Identifier && $member->toString() === 'array') {
                     return true;
@@ -177,7 +177,7 @@ final class TypeName
         $classes = [];
 
         foreach ($type->types as $member) {
-            if ($member instanceof Identifier && strtolower($member->toString()) === 'null') {
+            if (self::isNullMember($member)) {
                 continue;
             }
 
@@ -193,14 +193,28 @@ final class TypeName
         return count($classes) === 1 ? $classes[0] : null;
     }
 
+    /**
+     * Is $member the `null` of a union — `T|null`, whatever its case, and whether the parser handed
+     * it over as an Identifier or a Name (both spellings reach here depending on context).
+     */
+    public static function isNullMember(Node $member): bool
+    {
+        return ($member instanceof Identifier || $member instanceof Name)
+            && strtolower($member->toString()) === 'null';
+    }
+
+    /**
+     * Is $type a union that includes `null` — the `T|null` half of "nullable"?
+     */
+    public static function isNullableUnion(?Node $type): bool
+    {
+        return $type instanceof UnionType && self::unionHasNull($type);
+    }
+
     private static function unionHasNull(UnionType $type): bool
     {
         foreach ($type->types as $member) {
-            if ($member instanceof Identifier && strtolower($member->toString()) === 'null') {
-                return true;
-            }
-
-            if ($member instanceof Name && strtolower($member->toString()) === 'null') {
+            if (self::isNullMember($member)) {
                 return true;
             }
         }

@@ -119,6 +119,6 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
 
     private function isNullMember(Node $member): bool
     {
-        return $member instanceof Identifier && strtolower($member->toString()) === 'null';
+        return TypeName::isNullMember($member);
     }
 }
