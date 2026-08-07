@@ -985,14 +985,7 @@ class AstNode
             return false;
         }
 
-        $last = end($this->node->stmts);
-
-        $bailsOut = $last instanceof Return_
-            || $last instanceof Continue_
-            || $last instanceof Break_
-            || ($last instanceof Expression && $last->expr instanceof Throw_);
-
-        return $bailsOut && new self($this->node->cond)->isThisStateRead();
+        return self::isBailOut(end($this->node->stmts)) && new self($this->node->cond)->isThisStateRead();
     }
 
     /**
@@ -1130,7 +1123,7 @@ class AstNode
      */
     public function newClassName(): ?string
     {
-        return $this->node instanceof New_ && $this->node->class instanceof Name ? $this->node->class->toString() : null;
+        return $this->newClassNode()?->toString();
     }
 
     /**
@@ -1411,19 +1404,7 @@ class AstNode
      */
     public function stringKeyCount(): int
     {
-        if (! $this->node instanceof Array_) {
-            return 0;
-        }
-
-        $count = 0;
-
-        foreach ($this->node->items as $item) {
-            if ($item instanceof ArrayItem && $item->key instanceof String_) {
-                $count++;
-            }
-        }
-
-        return $count;
+        return count($this->stringKeys());
     }
 
     /**
@@ -3309,12 +3290,20 @@ class AstNode
             return false;
         }
 
-        $last = end($statements);
+        return self::isBailOut(end($statements));
+    }
 
-        return $last instanceof Return_
-            || $last instanceof Continue_
-            || $last instanceof Break_
-            || ($last instanceof Expression && $last->expr instanceof Throw_);
+    /**
+     * Does $statement leave the block for good — a `return`, a `throw`, a `continue` or a `break`?
+     * The tail test behind both "is this a guard clause" and "is that else redundant": if the body
+     * cannot fall through, whatever follows it is not an alternative.
+     */
+    public static function isBailOut(mixed $statement): bool
+    {
+        return $statement instanceof Return_
+            || $statement instanceof Continue_
+            || $statement instanceof Break_
+            || ($statement instanceof Expression && $statement->expr instanceof Throw_);
     }
 
     /**
