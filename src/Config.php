@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments;
 use Closure;
 use Composer\InstalledVersions;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
-use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use ReflectionFunction;
 use ReflectionNamedType;
 
@@ -414,9 +413,20 @@ final class Config
         }
 
         return [
-            'backend' => array_values(array_filter($detectors, static fn (Detector $d): bool => ! $d instanceof FrontendDetector)),
-            'frontend' => array_values(array_filter($detectors, static fn (Detector $d): bool => $d instanceof FrontendDetector)),
+            'backend' => self::ofEngine($detectors, Engine::Backend),
+            'frontend' => self::ofEngine($detectors, Engine::Frontend),
         ];
+    }
+
+    /**
+     * The detectors of one engine, in the order they were registered.
+     *
+     * @param  list<Detector>  $detectors
+     * @return list<Detector>
+     */
+    private static function ofEngine(array $detectors, Engine $engine): array
+    {
+        return array_values(array_filter($detectors, static fn (Detector $d): bool => Engine::of($d) === $engine));
     }
 
     /**

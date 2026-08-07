@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 
 /**
@@ -58,28 +59,22 @@ final class DeclaredFixture implements Fixture
      */
     private static function group(array $detectors): array
     {
-        $backend = [];
-        $frontend = [];
+        $buckets = [];
 
         foreach ($detectors as $detector) {
             if (! $detector instanceof HasFixture) {
                 throw FixtureNotDeclared::for($detector::class);
             }
 
-            match (true) {
-                $detector instanceof BackendDetector => $backend[$detector->fixturePath()][] = $detector,
-                $detector instanceof FrontendDetector => $frontend[$detector->fixturePath()][] = $detector,
-            };
+            $buckets[Engine::of($detector)->value][$detector->fixturePath()][] = $detector;
         }
 
         $fixtures = [];
 
-        foreach ($backend as $path => $group) {
-            $fixtures[] = new BackendFixture($path, $group);
-        }
-
-        foreach ($frontend as $path => $group) {
-            $fixtures[] = new FrontendFixture($path, $group);
+        foreach ($buckets as $engine => $paths) {
+            foreach ($paths as $path => $group) {
+                $fixtures[] = Engine::from($engine)->fixture($path, $group);
+            }
         }
 
         return $fixtures;

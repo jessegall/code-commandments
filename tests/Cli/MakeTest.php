@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Make\Blueprint;
-use JesseGall\CodeCommandments\Cli\Make\Engine;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Cli\Make\Make;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use PHPUnit\Framework\TestCase;

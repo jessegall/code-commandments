@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Make;
 
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Support\Name;
 

@@ -54,7 +54,7 @@ final class RepeatedNamedCallDetector extends RecurringPattern
     protected function fingerprint(NodeMatch $call, Codebase $codebase): ?string
     {
         $resolver = TypeResolver::forCodebase($codebase);
-        $named = $this->namedArguments($call);
+        $named = $call->namedArguments();
 
         if ($named === [] || ! $this->carriesConstruction($named)) {
             return null;
@@ -91,16 +91,6 @@ final class RepeatedNamedCallDetector extends RecurringPattern
             $expr instanceof Array_ => '[]',
             default => $expr::class,
         };
-    }
-
-    /**
-     * The NAMED arguments of $call.
-     *
-     * @return list<Arg>
-     */
-    private function namedArguments(NodeMatch $call): array
-    {
-        return array_values(array_filter($call->arguments(), static fn (Arg $arg): bool => $arg->name instanceof Identifier));
     }
 
     /**

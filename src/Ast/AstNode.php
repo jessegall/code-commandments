@@ -4601,6 +4601,17 @@ class AstNode
     }
 
     /**
+     * The NAMED arguments of this call — `f(total: 3)` but not `f(3)`. A call knows which of its
+     * own arguments carry a name; a caller asking should not have to filter them out itself.
+     *
+     * @return list<Arg>
+     */
+    public function namedArguments(): array
+    {
+        return array_values(array_filter($this->arguments(), static fn (Arg $arg): bool => $arg->name instanceof Identifier));
+    }
+
+    /**
      * The class/interface/trait/enum this node sits in (or is), or null.
      */
     public function enclosingClass(): ?ClassLike

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Make;
 
 use JesseGall\CodeCommandments\Detector;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;

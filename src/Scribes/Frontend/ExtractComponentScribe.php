@@ -321,7 +321,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private static function compoundName(Boundary $boundary): string
     {
-        $title = self::compoundTitle($boundary->node);
+        $title = $boundary->node->staticTextIn('Title')->unwrapOr('');
 
         if ($title === '') {
             return $boundary->name();
@@ -333,28 +333,6 @@ final class ExtractComponentScribe extends RepentScribe
         return str_ends_with($base, $family) ? $base : $base . $family;
     }
 
-    /**
-     * The STATIC text of the compound's title part — a descendant component whose tag ends
-     * in `Title` (`DialogTitle`, `CardTitle`). A dynamic title (`{{ … }}` interpolation) is
-     * not a usable name — pascal-casing a binding expression yields a monster — so it's
-     * ignored and the compound falls back to its structural name.
-     */
-    private static function compoundTitle(Element $node): string
-    {
-        foreach ($node->descendants() as $element) {
-            if (! str_ends_with($element->tag, 'Title')) {
-                continue;
-            }
-
-            foreach ($element->children as $child) {
-                if ($child->isStaticText()) {
-                    return trim($child->text);
-                }
-            }
-        }
-
-        return '';
-    }
 
     /**
      * Words → PascalCase, identifier characters only (no regex — the scribe stays in the

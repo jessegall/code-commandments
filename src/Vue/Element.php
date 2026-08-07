@@ -540,6 +540,31 @@ class Element
     }
 
     /**
+     * The STATIC text of the first descendant whose tag ends in $suffix — the `Delete file` in
+     * `<Dialog><DialogTitle>Delete file</DialogTitle>…`. None when no such descendant carries
+     * static text, which includes an INTERPOLATED one: `{{ … }}` is not a usable label, and
+     * pascal-casing a binding expression yields a monster.
+     *
+     * @return Option<string>
+     */
+    public function staticTextIn(string $suffix): Option
+    {
+        foreach ($this->descendants() as $element) {
+            if (! str_ends_with($element->tag, $suffix)) {
+                continue;
+            }
+
+            foreach ($element->children as $child) {
+                if ($child->isStaticText()) {
+                    return Option::some(trim($child->text));
+                }
+            }
+        }
+
+        return Option::none();
+    }
+
+    /**
      * Every element in this subtree, self excluded, in document order — the whole
      * reach of a component when walking it for clusters.
      *
