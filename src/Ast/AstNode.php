@@ -865,11 +865,7 @@ class AstNode
     {
         $parent = $this->parent()->node;
 
-        if (($parent instanceof NullsafeMethodCall || $parent instanceof NullsafePropertyFetch) && $parent->var === $this->node) {
-            return true;
-        }
-
-        if ($parent instanceof Coalesce && $parent->left === $this->node) {
+        if ($this->isNullsafeReceiver() || $this->isCoalesceLeft()) {
             return true;
         }
 
@@ -1021,10 +1017,10 @@ class AstNode
         $parent = $this->parent()->node;
 
         return match (true) {
-            $parent instanceof Assign && $parent->var === $this->node => InteractionKind::Assigned,
+            $this->isAssignmentTarget() => InteractionKind::Assigned,
             ($parent instanceof Identical || $parent instanceof NotIdentical) && $this->isDeNulled() => InteractionKind::NullChecked,
-            $parent instanceof Coalesce && $parent->left === $this->node => InteractionKind::Coalesced,
-            ($parent instanceof NullsafeMethodCall || $parent instanceof NullsafePropertyFetch) && $parent->var === $this->node => InteractionKind::Nullsafe,
+            $this->isCoalesceLeft() => InteractionKind::Coalesced,
+            $this->isNullsafeReceiver() => InteractionKind::Nullsafe,
             $this->isReturnedValue() => InteractionKind::Returned,
             $this->isCallReceiver() => InteractionKind::MethodCall,
             $parent instanceof PropertyFetch && $parent->var === $this->node => new self($parent)->isAssignmentTarget()
@@ -1062,6 +1058,27 @@ class AstNode
         $parent = $this->parent()->node;
 
         return $parent instanceof Assign && $parent->var === $this->node;
+    }
+
+    /**
+     * Is this the LEFT of a `??` — the value being coalesced away?
+     */
+    public function isCoalesceLeft(): bool
+    {
+        $parent = $this->parent()->node;
+
+        return $parent instanceof Coalesce && $parent->left === $this->node;
+    }
+
+    /**
+     * Is this the RECEIVER of a nullsafe access — the `$x` of `$x?->y` or `$x?->y()`?
+     */
+    public function isNullsafeReceiver(): bool
+    {
+        $parent = $this->parent()->node;
+
+        return ($parent instanceof NullsafeMethodCall || $parent instanceof NullsafePropertyFetch)
+            && $parent->var === $this->node;
     }
 
     /**

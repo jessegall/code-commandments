@@ -145,7 +145,7 @@ final class Parser
         }
 
         // A bare top-level call — a macro (`defineProps<…>()`) or a side-effect call.
-        if ($this->peek()?->isIdentifier() && ($this->at(1)?->isPunct('(') || $this->at(1)?->isPunct('<'))) {
+        if ($this->atCall()) {
             $call = $this->tryCall();
 
             if ($call !== null) {
@@ -218,7 +218,7 @@ final class Parser
         if ($this->atPunct('{')) {
             $this->advance();
 
-            while (! $this->atPunct('}') && ! $this->eof()) {
+            while ($this->insideGroupClosedBy('}')) {
                 $this->advanceIfId('type');
                 $imported = $this->advance()->value;
                 $local = $this->advanceIfId('as') ? $this->advance()->value : $imported;
@@ -276,7 +276,7 @@ final class Parser
             $this->advanceIfId('await'); // `= await useX()` — trace through to the call
             $initStart = $this->peek()?->start ?? 0;
 
-            if ($this->peek()?->isIdentifier() && ($this->at(1)?->isPunct('(') || $this->at(1)?->isPunct('<'))) {
+            if ($this->atCall()) {
                 $initCall = $this->tryCall();
             } elseif ($this->atPunct('(')) {
                 [$initParams, $initReturnType] = $this->tryArrowSignature();
@@ -365,7 +365,7 @@ final class Parser
         $this->advance(); // `{`
         $shape = [];
 
-        while (! $this->atPunct('}') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy('}')) {
             $before = $this->pos;
 
             if ($this->atThreeDots()) {
@@ -438,7 +438,7 @@ final class Parser
         $entries = [];
         $rest = null;
 
-        while (! $this->atPunct('}') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy('}')) {
             if ($this->advanceIfThreeDots()) {
                 $rest = $this->advance()->value;
             } else {
@@ -463,7 +463,7 @@ final class Parser
         $this->advance(); // `[`
         $elements = [];
 
-        while (! $this->atPunct(']') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy(']')) {
             if ($this->atPunct(',')) {
                 $elements[] = null; // a hole
                 $this->advance();
@@ -669,7 +669,7 @@ final class Parser
         $this->advance(); // `[`
         $elements = [];
 
-        while (! $this->atPunct(']') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy(']')) {
             $elements[] = $this->parseType();
 
             if ($this->atPunct(',')) {
@@ -717,7 +717,7 @@ final class Parser
         $this->expectPunct('{');
         $members = [];
 
-        while (! $this->atPunct('}') && ! $this->eof()) {
+        while ($this->insideGroupClosedBy('}')) {
             $named = $this->peek()?->isIdentifier() || ($this->peek()?->is(Token::STRING) ?? false) || $this->atId('readonly');
 
             if (! $named) {
@@ -846,6 +846,26 @@ final class Parser
      * @param  callable(): T  $parse
      * @return T|null
      */
+    /**
+     * Is there more to read inside a group that ends with $closer? The loop condition every
+     * bracketed list shares — stop AT the closer, and stop at EOF too, so a group whose closer never
+     * arrives cannot spin.
+     */
+    private function insideGroupClosedBy(string $closer): bool
+    {
+        return ! $this->atPunct($closer) && ! $this->eof();
+    }
+
+    /**
+     * Does a CALL start here — a name followed by `(`, or by the `<` of its type arguments? The
+     * shape a macro (`defineProps<…>()`) and a plain composable call have in common.
+     */
+    private function atCall(): bool
+    {
+        return ($this->peek()?->isIdentifier() ?? false)
+            && (($this->at(1)?->isPunct('(') ?? false) || ($this->at(1)?->isPunct('<') ?? false));
+    }
+
     private function speculate(callable $parse): mixed
     {
         $start = $this->pos;
