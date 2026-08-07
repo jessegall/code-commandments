@@ -7,13 +7,19 @@ namespace JesseGall\CodeCommandments\Concurrency;
 use Closure;
 
 /**
- * A `map` whose iterations run in parallel across forked processes. Copy-on-write shares
- * pre-fork state with each child; only serializable return values travel back. Falls back to
- * sequential when forking is unavailable, items < 2, or already inside a fork (nesting guard).
+ * A POOL whose `map` runs its iterations in parallel across forked processes — copy-on-write shares
+ * pre-fork state with each child, only serializable return values travel back, and it falls back to
+ * sequential when forking is unavailable or there are fewer than two items. Being a pool you HOLD
+ * rather than a static entry point is also the nesting guard: work runs in parallel only if someone
+ * handed it one of these, and a worker's own copy is already spent ({@see forked}).
  */
 final class Fork
 {
-    private static bool $inWorker = false;
+    /**
+     * May this pool still fork? True in the process that owns it; false in a worker, which holds its
+     * own copy-on-write copy and has already spent it.
+     */
+    private bool $mayFork = true;
 
     /**
      * Apply $fn to each item in parallel, returning results under the original keys
@@ -30,7 +36,7 @@ final class Fork
      * @param  Closure(int): void|null  $onProgress
      * @return array<TKey, TOut>
      */
-    public static function map(iterable $items, Closure $fn, ?int $workers = null, ?Closure $onProgress = null): array
+    public function map(iterable $items, Closure $fn, ?int $workers = null, ?Closure $onProgress = null): array
     {
         $items = is_array($items) ? $items : iterator_to_array($items);
 
@@ -38,11 +44,11 @@ final class Fork
         // there are items), whatever the caller asked for.
         $pool = min($workers ?? self::cpuCount(), self::cpuCount(), count($items));
 
-        if ($pool < 2 || self::$inWorker || ! self::canFork()) {
+        if ($pool < 2 || ! $this->mayFork || ! self::canFork()) {
             return self::sequential($items, $fn, $onProgress);
         }
 
-        return self::forked($items, $fn, $pool, $onProgress);
+        return $this->forked($items, $fn, $pool, $onProgress);
     }
 
     /**
@@ -71,7 +77,7 @@ final class Fork
      * @param  array<array-key, mixed>  $items
      * @return array<array-key, mixed>
      */
-    private static function forked(array $items, Closure $fn, int $pool, ?Closure $onProgress): array
+    private function forked(array $items, Closure $fn, int $pool, ?Closure $onProgress): array
     {
         $keys = array_keys($items);
         $parent = function_exists('posix_getpid') ? posix_getpid() : null;
@@ -112,7 +118,10 @@ final class Fork
             }
 
             if ($pid === 0) {
-                self::$inWorker = true;
+                // In the CHILD. Copy-on-write makes this pool the child's OWN copy, so spending it
+                // here cannot touch the parent's — and work that captured the pool runs its own map
+                // sequentially instead of forking a second generation.
+                $this->mayFork = false;
                 fclose($pair[0]);
 
                 // Stream each result the moment it's ready, as a length-prefixed

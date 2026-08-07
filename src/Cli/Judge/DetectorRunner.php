@@ -19,11 +19,11 @@ use JesseGall\CodeCommandments\Cli\ProgressBar;
 /**
  * Runs detectors in parallel over a shared AST, returning serializable findings (AST nodes
  * stay behind in workers). Work is divided into one task per detector, executed by
- * {@see Fork::map}.
+ * the {@see Fork} pool it is handed.
  */
 final class DetectorRunner
 {
-    public function __construct(private readonly int $parallel) {}
+    public function __construct(private readonly int $parallel, private readonly Fork $fork = new Fork) {}
 
     /**
      * @param  list<Detector>  $detectors
@@ -41,7 +41,7 @@ final class DetectorRunner
 
         $progress->start(count($tasks));
 
-        $byTask = Fork::map(
+        $byTask = $this->fork->map(
             $tasks,
             static fn (Closure $task): array => $task(),
             $this->parallel >= 1 ? $this->parallel : null,
